@@ -17,7 +17,9 @@ export async function GET() {
   );
 
   if (errors || !data?.me) {
-    return NextResponse.json({ user: null }, { status: 200 });
+    // Access token exists but backend rejected it (expired/invalid) — tell
+    // the AuthProvider to retry through /api/auth/refresh.
+    return NextResponse.json({ error: "Token expired" }, { status: 401 });
   }
 
   return NextResponse.json({ user: data.me, accessToken }, { status: 200 });

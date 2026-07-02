@@ -174,7 +174,13 @@ export function useMessaging(
       const ws = new WebSocket(MSG_WS_URL);
       wsRef.current = ws;
       ws.onopen = () => {
-        ws.send(JSON.stringify({ type: "auth", token }));
+        const userTokenMatch = document.cookie.match(/(?:^|;\s*)user_token=([^;]+)/);
+        const userToken = userTokenMatch ? decodeURIComponent(userTokenMatch[1]) : null;
+        ws.send(JSON.stringify({
+          type: "auth",
+          token,
+          tokens: { accessToken: token, userToken },
+        }));
       };
       ws.onmessage = (e) => {
         try {
@@ -463,7 +469,13 @@ export function useChatRoom(
       wsRef.current = ws;
 
       ws.onopen = () => {
-        ws.send(JSON.stringify({ type: "auth", token }));
+        const userTokenMatch = document.cookie.match(/(?:^|;\s*)user_token=([^;]+)/);
+        const userToken = userTokenMatch ? decodeURIComponent(userTokenMatch[1]) : null;
+        ws.send(JSON.stringify({
+          type: "auth",
+          token,
+          tokens: { accessToken: token, userToken },
+        }));
       };
 
       ws.onmessage = (e) => {

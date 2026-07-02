@@ -2,6 +2,7 @@ import http from "node:http";
 import { readFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import crypto from "node:crypto";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -28,12 +29,20 @@ function loadEnv() {
 loadEnv();
 
 const JWT_SECRET = process.env.JWT_SECRET || "change-me-dev-only-jwt-secret";
+const DERIVATION_SECRET = process.env.TOKEN_DERIVATION_SECRET || JWT_SECRET;
 const DB_URL = process.env.DATABASE_URL || "postgresql://nest:nest@localhost:5432/nest?schema=public";
 const PORT = parseInt(process.env.MSG_PORT || "3003", 10);
+const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
+const REDIS_HOST = process.env.REDIS_HOST || "localhost";
+const REDIS_PORT = parseInt(process.env.REDIS_PORT || "6379", 10);
 
 import jwt from "jsonwebtoken";
 import { WebSocketServer } from "ws";
 import { createServer } from "node:http";
+import Redis from "ioredis";
+
+const redis = new Redis(REDIS_PORT, REDIS_HOST, { maxRetriesPerRequest: 3, lazyConnect: true });
+await redis.connect().catch(() => {});
 
 let pg;
 try {
@@ -54,7 +63,6 @@ function parseDbUrl(url) {
 }
 
 const dbConfig = parseDbUrl(DB_URL);
-import Pool from "pg-pool";
 import pgModule from "pg";
 const { Pool: PgPool } = pgModule;
 
@@ -68,7 +76,37 @@ const pool = new PgPool({
   idleTimeoutMillis: 30000,
 });
 
-function verifyToken(token) {
+// --- Token derivation (mirrors nest-js-boilerplate CryptoService) ---
+
+function hmacSha256(secret, data) {
+  return crypto.createHmac("sha256", secret).update(data).digest("hex");
+}
+
+function dateOnly() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function deriveRbacToken(rbacToken) {
+  return `rbac.v1:${hmacSha256(DERIVATION_SECRET, `rbac:${dateOnly()}:${rbacToken}`)}`;
+}
+
+function deriveUserToken(userToken) {
+  return `user.v1:${hmacSha256(DERIVATION_SECRET, `user:${dateOnly()}:${userToken}`)}`;
+}
+
+function buildCompoundKey(accessToken, rbacToken, deviceToken, userToken) {
+  const parts = [
+    hmacSha256(JWT_SECRET, accessToken),
+    deriveRbacToken(rbacToken),
+    hmacSha256(DERIVATION_SECRET, deviceToken),
+    deriveUserToken(userToken),
+  ];
+  return `sess:${parts.join(":")}`;
+}
+
+// --- Auth ---
+
+function verifyJwt(token) {
   try {
     return jwt.verify(token, JWT_SECRET);
   } catch {
@@ -76,11 +114,22 @@ function verifyToken(token) {
   }
 }
 
-function extractToken(req) {
-  const auth = req.headers.authorization;
-  if (auth?.startsWith("Bearer ")) return auth.slice(7);
-  const url = new URL(req.url, "http://localhost");
-  return url.searchParams.get("token") || null;
+/** Verify all four tokens against the Redis compound key. Returns the Redis hash or null. */
+async function verifyTokens(tokens) {
+  if (!tokens?.accessToken || !tokens?.rbacToken || !tokens?.deviceToken || !tokens?.userToken) return null;
+  const key = buildCompoundKey(
+    tokens.accessToken,
+    tokens.rbacToken,
+    tokens.deviceToken,
+    tokens.userToken,
+  );
+  try {
+    const hash = await redis.hgetall(key);
+    if (!hash || !hash.userId) return null;
+    return hash;
+  } catch {
+    return null;
+  }
 }
 
 async function query(text, params) {
@@ -114,9 +163,24 @@ const server = createServer((req, res) => {
   }
 
   async function handle() {
-    const token = extractToken(req);
-    const payload = verifyToken(token);
-    if (!token || !payload) return unauthorized();
+    // HTTP auth: accept JWT Bearer or all 4 tokens as headers
+    const authHeader = req.headers.authorization;
+    let payload;
+    if (authHeader?.startsWith("Bearer ")) {
+      payload = verifyJwt(authHeader.slice(7));
+    }
+    if (!payload) {
+      const tokens = {
+        accessToken: req.headers["x-access-token"],
+        rbacToken: req.headers["x-rbac-token"],
+        deviceToken: req.headers["x-device-token"],
+        userToken: req.headers["x-user-token"],
+      };
+      const hash = await verifyTokens(tokens);
+      if (!hash) return unauthorized();
+      payload = { sub: hash.userId };
+    }
+    if (!payload) return unauthorized();
 
     // GET /api/users
     if (method === "GET" && path === "/api/users") {
@@ -174,6 +238,15 @@ const server = createServer((req, res) => {
       const { text } = JSON.parse(body);
       if (!text?.trim()) return json({ error: "Text is required" }, 400);
 
+      // Friends-only DM enforcement
+      const friends = await query(
+        `SELECT 1 FROM "FriendRequest"
+         WHERE status = 'ACCEPTED'
+           AND ((requesterId = $1 AND addresseeId = $2) OR (requesterId = $2 AND addresseeId = $1))`,
+        [payload.sub, otherId],
+      );
+      if (friends.length === 0) return json({ error: "Not friends" }, 403);
+
       const [row] = await query(
         `INSERT INTO "Message" (id, "senderId", "recipientId", body, "createdAt")
          VALUES (gen_random_uuid(), $1, $2, $3, NOW())
@@ -182,7 +255,6 @@ const server = createServer((req, res) => {
       );
       const msg = formatMessage(row);
 
-      // Deliver via WS if recipient is connected
       const recipientWs = userConnections.get(otherId);
       if (recipientWs?.readyState === 1) {
         sendWs(recipientWs, { type: "direct-message", message: msg });
@@ -215,23 +287,17 @@ function roomKey(name) {
 }
 
 wss.on("connection", (ws, req) => {
-  const url = new URL(req.url, `http://${req.headers.host}`);
-  const token = url.searchParams.get("token");
-  const payload = verifyToken(token);
-  if (!payload) {
-    sendWs(ws, { type: "error", message: "Unauthorized: invalid token" });
-    ws.close(4001, "Unauthorized");
-    return;
-  }
+  let authenticated = false;
+  let authTimer = setTimeout(() => {
+    if (!authenticated) {
+      sendWs(ws, { type: "error", message: "Auth timeout" });
+      ws.close(4001, "Auth timeout");
+    }
+  }, 120_000);
 
-  const userId = payload.sub;
-  const userName = payload.name || payload.email;
-  ws.userId = userId;
-  ws.userName = userName;
+  ws.userId = null;
+  ws.userName = null;
   ws.rooms = new Set();
-  userConnections.set(userId, ws);
-
-  sendWs(ws, { type: "connected", userId, name: userName });
 
   ws.on("message", async (raw) => {
     let data;
@@ -241,11 +307,67 @@ wss.on("connection", (ws, req) => {
       return sendWs(ws, { type: "error", message: "Invalid JSON" });
     }
 
+    // --- Auth via first message ---
+    if (!authenticated) {
+      if (data.type === "auth" && data.tokens) {
+        const hash = await verifyTokens(data.tokens);
+        if (!hash) {
+          // Fallback: single JWT token
+          const payload = data.token ? verifyJwt(data.token) : null;
+          if (!payload) {
+            return sendWs(ws, { type: "error", message: "Auth failed" });
+          }
+          ws.userId = payload.sub;
+          ws.userName = payload.name || payload.email || "User";
+        } else {
+          ws.userId = hash.userId;
+          ws.userName = hash.name || hash.email || "User";
+        }
+        authenticated = true;
+        clearTimeout(authTimer);
+        authTimer = null;
+        userConnections.set(ws.userId, ws);
+        sendWs(ws, { type: "authenticated" });
+        return;
+      }
+      // Legacy single-token fallback
+      if (data.type === "auth" && data.token) {
+        const payload = verifyJwt(data.token);
+        if (!payload) {
+          return sendWs(ws, { type: "error", message: "Auth failed" });
+        }
+        ws.userId = payload.sub;
+        ws.userName = payload.name || payload.email || "User";
+        authenticated = true;
+        clearTimeout(authTimer);
+        authTimer = null;
+        userConnections.set(ws.userId, ws);
+        sendWs(ws, { type: "authenticated" });
+        return;
+      }
+      sendWs(ws, { type: "error", message: "Authenticate first" });
+      ws.close(4001);
+      return;
+    }
+
+    const userId = ws.userId;
+
     switch (data.type) {
-      // --- Direct messaging ---
       case "direct-message": {
         const { recipientId, text } = data;
         if (!recipientId || !text?.trim()) break;
+
+        // Friends-only DM enforcement
+        const friends = await query(
+          `SELECT 1 FROM "FriendRequest"
+           WHERE status = 'ACCEPTED'
+             AND ((requesterId = $1 AND addresseeId = $2) OR (requesterId = $2 AND addresseeId = $1))`,
+          [userId, recipientId],
+        );
+        if (friends.length === 0) {
+          return sendWs(ws, { type: "error", message: "Not friends" });
+        }
+
         const [row] = await query(
           `INSERT INTO "Message" (id, "senderId", "recipientId", body, "createdAt")
            VALUES (gen_random_uuid(), $1, $2, $3, NOW())
@@ -261,18 +383,17 @@ wss.on("connection", (ws, req) => {
         break;
       }
 
-      // --- Chat rooms ---
       case "join-room": {
         const room = data.room;
         if (!room) break;
         ws.rooms.add(room);
         if (!chatRooms.has(room)) chatRooms.set(room, new Set());
         chatRooms.get(room).add(userId);
-        const avatar = getInitials(userName);
+        const avatar = getInitials(ws.userName);
         broadcastToRoom(room, {
           type: "user-joined",
           room,
-          user: { id: userId, name: userName, avatar },
+          user: { id: userId, name: ws.userName, avatar },
           members: [...chatRooms.get(room)].map((uid) => {
             const c = userConnections.get(uid);
             return { id: uid, name: c?.userName || "unknown", avatar: getInitials(c?.userName || "?") };
@@ -290,7 +411,7 @@ wss.on("connection", (ws, req) => {
         broadcastToRoom(room, {
           type: "user-left",
           room,
-          user: { id: userId, name: userName, avatar: getInitials(userName) },
+          user: { id: userId, name: ws.userName, avatar: getInitials(ws.userName) },
           members: [...(chatRooms.get(room) || [])].map((uid) => {
             const c = userConnections.get(uid);
             return { id: uid, name: c?.userName || "unknown", avatar: getInitials(c?.userName || "?") };
@@ -308,8 +429,8 @@ wss.on("connection", (ws, req) => {
           room,
           message: {
             senderId: userId,
-            senderName: userName,
-            avatar: getInitials(userName),
+            senderName: ws.userName,
+            avatar: getInitials(ws.userName),
             body: text.trim(),
             createdAt: new Date().toISOString(),
           },
@@ -323,14 +444,16 @@ wss.on("connection", (ws, req) => {
   });
 
   ws.on("close", () => {
-    if (userConnections.get(userId) === ws) userConnections.delete(userId);
+    if (ws.userId && userConnections.get(ws.userId) === ws) {
+      userConnections.delete(ws.userId);
+    }
     for (const room of ws.rooms) {
-      chatRooms.get(room)?.delete(userId);
+      chatRooms.get(room)?.delete(ws.userId);
       if (chatRooms.get(room)?.size === 0) chatRooms.delete(room);
       broadcastToRoom(room, {
         type: "user-left",
         room,
-        user: { id: userId, name: userName, avatar: getInitials(userName) },
+        user: { id: ws.userId, name: ws.userName, avatar: getInitials(ws.userName) },
         members: [...(chatRooms.get(room) || [])].map((uid) => {
           const c = userConnections.get(uid);
           return { id: uid, name: c?.userName || "unknown", avatar: getInitials(c?.userName || "?") };
@@ -349,13 +472,11 @@ function broadcastToRoom(room, data, excludeWs) {
       sendWs(ws, data);
     }
   }
-  // Always send to the sender too (for confirmation)
   if (excludeWs && excludeWs.readyState === 1) {
     sendWs(excludeWs, data);
   }
 }
 
-// --- Helpers ---
 function formatUser(row) {
   return {
     id: row.id,
@@ -383,7 +504,8 @@ function getInitials(name) {
 }
 
 server.listen(PORT, () => {
-  console.log(`Messaging server running on :${PORT}`);
+  console.log(`Messaging server (Phase 3) running on :${PORT}`);
   console.log(`  HTTP API: http://localhost:${PORT}/api/`);
-  console.log(`  WS:       ws://localhost:${PORT}?token=xxx`);
+  console.log(`  WS:       ws://localhost:${PORT} (auth via first message)`);
+  console.log(`  Redis:    ${REDIS_HOST}:${REDIS_PORT}`);
 });

@@ -44,16 +44,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then(
-        (r) => r.json() as Promise<{ user: User | null; accessToken?: string }>,
-      )
-      .then((data) => {
-        setUser(data.user);
-        setToken(data.accessToken ?? null);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    let retried = false;
+
+    async function load() {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.status === 401 && !retried) {
+          retried = true;
+          await fetch("/api/auth/refresh", { method: "POST" });
+          const retry = await fetch("/api/auth/me");
+          if (retry.ok) {
+            const data = (await retry.json()) as {
+              user: User | null;
+              accessToken?: string;
+            };
+            setUser(data.user);
+            setToken(data.accessToken ?? null);
+            setLoading(false);
+            return;
+          }
+        }
+        if (res.ok) {
+          const data = (await res.json()) as {
+            user: User | null;
+            accessToken?: string;
+          };
+          setUser(data.user);
+          setToken(data.accessToken ?? null);
+        }
+      } catch {
+        /* guest or offline */
+      }
+      setLoading(false);
+    }
+
+    load();
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
