@@ -35,4 +35,21 @@ describe('CryptoService', () => {
     expect(crypto.sha256('hello')).not.toBe(crypto.sha256('world'));
     expect(crypto.randomToken()).not.toBe(crypto.randomToken());
   });
+
+  it('hmacSha256 is deterministic and key-dependent', () => {
+    const key = 'test-secret-key';
+    const data = 'test-data';
+    const hash1 = crypto.hmacSha256(key, data);
+    const hash2 = crypto.hmacSha256(key, data);
+    expect(hash1).toBe(hash2);
+    expect(hash1).toHaveLength(64);
+    expect(crypto.hmacSha256(key, 'other')).not.toBe(hash1);
+    expect(crypto.hmacSha256('other-key', data)).not.toBe(hash1);
+  });
+
+  it('timingSafeEqual compares hex strings securely', () => {
+    expect(crypto.timingSafeEqual('deadbeef', 'deadbeef')).toBe(true);
+    expect(crypto.timingSafeEqual('deadbeef', 'deadbeec')).toBe(false);
+    expect(crypto.timingSafeEqual('deadbeef', 'beef')).toBe(false);
+  });
 });

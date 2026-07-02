@@ -37,10 +37,34 @@ export class DeviceService {
   ) {}
 
   /**
+   * Public handshake endpoint called on every page load (pre-auth).
+   * Sets the device_token cookie if not present, or slides its expiry.
+   * No Device row is created — that happens at login via `resolveForLogin`.
+   */
+  handshake(ctx: RequestContext): { deviceToken: string } {
+    const { req } = ctx;
+    const cookieName = deviceCookieName(this.config);
+    const presented = this.readCookie(req, cookieName);
+    if (presented) {
+      // Slide the cookie expiry.
+      this.writeCookie(req, cookieName, presented);
+      return { deviceToken: presented };
+    }
+    // Mint a landing token (no Device row yet).
+    const token = this.crypto.randomToken();
+    this.writeCookie(req, cookieName, token);
+    return { deviceToken: token };
+  }
+
+  /**
    * Resolve the device for a just-authenticated user from the device-token cookie:
-   *   - cookie present AND its Device row belongs to this user -> reuse it (`changed: false`)
-   *   - cookie missing / unknown id / belongs to another user  -> mint a new Device (`changed: true`)
-   * Always (re)writes the cookie so its expiry slides forward, and records `lastSeenAt`.
+   *   - cookie present AND its Device row belongs to this user -> reuse it (`changed: false`),
+   *     update metadata without rotating the token
+   *   - cookie present but no Device row exists (landing token) -> create Device row
+   *     with the presented token (`changed: true`)
+   *   - cookie present but belongs to another user -> claim it (`changed: true`)
+   *   - cookie missing -> mint a new Device (`changed: true`)
+   * Always (re)writes the cookie so its expiry slides forward.
    */
   async resolveForLogin(
     userId: string,
@@ -53,40 +77,68 @@ export class DeviceService {
 
     const cookieName = deviceCookieName(this.config);
     const presentedToken = this.readCookie(req, cookieName);
-    const token = this.crypto.randomToken();
 
-    // Look up by the random token, not by UUID. Old-format cookies (raw UUID)
-    // won't match — a new Device row is minted (effectively a new device).
+    // Look up by the random token.
     const existing = presentedToken
       ? await this.prisma.device.findUnique({
           where: { token: presentedToken },
         })
       : null;
 
-    const reused = existing !== null && existing.userId === userId;
+    let device: { id: string; token: string };
 
-    const device = reused
-      ? await this.prisma.device.update({
-          where: { id: existing.id },
-          data: { token, lastSeenAt: new Date(), fingerprint, ip },
-        })
-      : await this.prisma.device.create({
-          data: {
-            userId,
-            type: 'WEB',
-            token,
-            fingerprint,
-            ip,
-            lastSeenAt: new Date(),
-          },
-        });
+    if (existing && existing.userId === userId) {
+      // Reuse — do NOT rotate the token, just update metadata.
+      device = await this.prisma.device.update({
+        where: { id: existing.id },
+        data: { lastSeenAt: new Date(), fingerprint, ip },
+      });
+    } else if (presentedToken && !existing) {
+      // Landing token — create Device row with the presented token.
+      device = await this.prisma.device.create({
+        data: {
+          userId,
+          type: 'WEB',
+          token: presentedToken,
+          fingerprint,
+          ip,
+          lastSeenAt: new Date(),
+        },
+      });
+    } else if (existing && existing.userId !== userId) {
+      // Foreign token — claim it by creating a new Device row.
+      const token = this.crypto.randomToken();
+      device = await this.prisma.device.create({
+        data: {
+          userId,
+          type: 'WEB',
+          token,
+          fingerprint,
+          ip,
+          lastSeenAt: new Date(),
+        },
+      });
+    } else {
+      // No cookie — mint a new Device.
+      const token = this.crypto.randomToken();
+      device = await this.prisma.device.create({
+        data: {
+          userId,
+          type: 'WEB',
+          token,
+          fingerprint,
+          ip,
+          lastSeenAt: new Date(),
+        },
+      });
+    }
 
     this.writeCookie(req, cookieName, device.token);
 
     return {
       deviceId: device.id,
       deviceToken: device.token,
-      changed: !reused,
+      changed: !(existing?.userId === userId),
       ip,
       userAgent,
     };

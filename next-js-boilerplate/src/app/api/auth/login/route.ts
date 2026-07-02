@@ -4,6 +4,7 @@ import {
   refreshTokenCookieOptions,
   deviceTokenCookieOptions,
   rbacTokenCookieOptions,
+  userTokenCookieOptions,
 } from "@/lib/cookie";
 import { graphqlFetch } from "@/lib/backend";
 import { withLogging } from "@/lib/request-logger";
@@ -28,6 +29,7 @@ const LOGIN_QUERY = `
       rbacToken
       deviceId
       deviceToken
+      userToken
       user {
         id
         email
@@ -64,6 +66,7 @@ export const POST = withLogging(async (request, log) => {
       rbacToken?: string;
       deviceId?: string;
       deviceToken?: string;
+      userToken?: string;
       user: unknown;
     };
   }>(LOGIN_QUERY, { input: { email, password } });
@@ -75,7 +78,7 @@ export const POST = withLogging(async (request, log) => {
     return NextResponse.json({ error: message }, { status });
   }
 
-  const { accessToken, refreshToken, rbacToken, deviceToken, user } = data.login;
+  const { accessToken, refreshToken, rbacToken, deviceToken, userToken, user } = data.login;
 
   const response = NextResponse.json({ user, accessToken }, { status: 200 });
 
@@ -83,6 +86,7 @@ export const POST = withLogging(async (request, log) => {
   response.cookies.set(refreshTokenCookieOptions(refreshToken));
   if (rbacToken) response.cookies.set(rbacTokenCookieOptions(rbacToken));
   if (deviceToken) response.cookies.set(deviceTokenCookieOptions(deviceToken));
+  if (userToken) response.cookies.set(userTokenCookieOptions(userToken));
 
   log.info({ userId: (user as { id?: string })?.id }, "login succeeded");
   return response;

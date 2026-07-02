@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { ExecutionContext } from '@nestjs/common';
 import { CryptoService } from '../common/crypto/crypto.service';
+import { TokenDerivationService } from './token-derivation.service';
 import { SessionAuthGuard } from './session-auth.guard';
 import type { TokenStoreService } from './token-store.service';
 
@@ -18,22 +19,29 @@ const cryptoConfig = {
 const crypto = new CryptoService(cryptoConfig);
 crypto.onModuleInit();
 
+const derivationConfig = {
+  get: (_key: string, _default?: string) => undefined,
+  getOrThrow: () =>
+    'ced15b2ae4e4ea91413c96ccffbf0b974f8a0c038c77a43eac6d0f053217deca',
+} as unknown as ConfigService;
+const derivation = new TokenDerivationService(crypto, derivationConfig);
+
 interface MockTokenStore {
-  buildKey: jest.Mock<string, [string, string, string]>;
-  read: jest.Mock<Promise<Record<string, string> | null>, [string]>;
-  write: jest.Mock<Promise<void>, [string, Record<string, string>]>;
+  buildKey: jest.Mock<string, [string, string, string, string]>;
+  read: jest.Mock<Promise<Record<string, unknown> | null>, [string]>;
+  write: jest.Mock<Promise<void>, [string, Record<string, unknown>]>;
   revoke: jest.Mock<Promise<void>, [string]>;
 }
 
 function mockTokenStore(): MockTokenStore {
-  const store = new Map<string, Record<string, string>>();
+  const store = new Map<string, Record<string, unknown>>();
   return {
-    buildKey: jest.fn((at: string, rt: string, dt: string) => {
-      const parts = [at, rt, dt].map((t: string) => crypto.sha256(t));
+    buildKey: jest.fn((at: string, rt: string, dt: string, ut: string) => {
+      const parts = [at, rt, dt, ut].map((t: string) => crypto.sha256(t));
       return `sess:${parts.join(':')}`;
     }),
     read: jest.fn((key: string) => Promise.resolve(store.get(key) ?? null)),
-    write: jest.fn((key: string, data: Record<string, string>) => {
+    write: jest.fn((key: string, data: Record<string, unknown>) => {
       store.set(key, { ...data, issuedAt: new Date().toISOString() });
       return Promise.resolve();
     }),
@@ -48,28 +56,27 @@ interface MockRequest {
   headers: Record<string, string | undefined>;
   cookies: Record<string, string>;
   ip: string | null;
-  user: Record<string, string> | undefined;
+  user: Record<string, unknown> | undefined;
 }
 
 function createRequest(overrides: {
   accessToken?: string;
   rbacToken?: string;
   deviceToken?: string;
+  userToken?: string;
   ip?: string;
 }): MockRequest {
-  const { accessToken, rbacToken, deviceToken, ip } = overrides;
+  const { accessToken, rbacToken, deviceToken, userToken, ip } = overrides;
   const cookies: Record<string, string> = {};
   if (accessToken) cookies['access_token'] = accessToken;
   if (rbacToken) cookies['rbac_token'] = rbacToken;
   if (deviceToken) cookies['device_token'] = deviceToken;
+  if (userToken) cookies['user_token'] = userToken;
   const headers: Record<string, string | undefined> = {};
   if (accessToken) headers['authorization'] = `Bearer ${accessToken}`;
   return { headers, cookies, ip: ip ?? null, user: undefined };
 }
 
-// GqlExecutionContext args layout (after normalizeResolverArgs):
-//   [0] = root, [1] = resolver args, [2] = context { req }, [3] = info
-// getContext() calls getArgByIndex(2).
 function gqlCtx(
   req: MockRequest,
 ): Pick<
@@ -121,14 +128,21 @@ describe('SessionAuthGuard', () => {
       jwtService,
       config,
       tokenStore as unknown as TokenStoreService,
+      derivation,
     );
   });
 
   it('authenticates a valid session', async () => {
     const accessToken = await jwtService.signAsync(validPayload);
-    const rbacToken = crypto.randomToken();
+    const rbacToken = derivation.deriveRbacToken('u1', 'FREE');
+    const userToken = derivation.deriveUserToken('u1');
     const deviceToken = crypto.randomToken();
-    const key = tokenStore.buildKey(accessToken, rbacToken, deviceToken);
+    const key = tokenStore.buildKey(
+      accessToken,
+      rbacToken,
+      deviceToken,
+      userToken,
+    );
     await tokenStore.write(key, {
       userId: 'u1',
       email: 'test@test.com',
@@ -138,8 +152,23 @@ describe('SessionAuthGuard', () => {
       ip: '',
       userAgent: '',
       sessionId: 's1',
+      v: '2',
+      name: '',
+      username: '',
+      avatarUrl: '',
+      locale: 'en',
+      timezone: 'UTC',
+      friends: [],
+      unread: 0,
+      orgIds: [],
+      teamIds: [],
     });
-    const req = createRequest({ accessToken, rbacToken, deviceToken });
+    const req = createRequest({
+      accessToken,
+      rbacToken,
+      deviceToken,
+      userToken,
+    });
     const result = await guard.canActivate(
       gqlCtx(req) as unknown as ExecutionContext,
     );
@@ -150,7 +179,11 @@ describe('SessionAuthGuard', () => {
   });
 
   it('throws 401 when access token is missing', async () => {
-    const req = createRequest({ rbacToken: 'rt', deviceToken: 'dt' });
+    const req = createRequest({
+      rbacToken: 'rt',
+      deviceToken: 'dt',
+      userToken: 'ut',
+    });
     req.headers.authorization = undefined;
     req.cookies = {};
     await expect(
@@ -163,15 +196,15 @@ describe('SessionAuthGuard', () => {
     await expect(
       guard.canActivate(
         gqlCtx(
-          createRequest({ accessToken, deviceToken: 'dt' }),
+          createRequest({ accessToken, deviceToken: 'dt', userToken: 'ut' }),
         ) as unknown as ExecutionContext,
       ),
     ).rejects.toThrow(UnauthorizedException);
   });
 
-  it('throws 401 when the Redis key is missing (expired/revoked)', async () => {
+  it('throws 401 when user token is missing', async () => {
     const accessToken = await jwtService.signAsync(validPayload);
-    const rbacToken = crypto.randomToken();
+    const rbacToken = derivation.deriveRbacToken('u1', 'FREE');
     await expect(
       guard.canActivate(
         gqlCtx(
@@ -181,23 +214,96 @@ describe('SessionAuthGuard', () => {
     ).rejects.toThrow(UnauthorizedException);
   });
 
-  it('throws 401 when access token is tampered', async () => {
+  it('throws 401 when user token is from yesterday (midnight cutoff)', async () => {
+    const accessToken = await jwtService.signAsync(validPayload);
+    const rbacToken = derivation.deriveRbacToken('u1', 'FREE');
+    const yesterday = new Date(Date.now() - 86400000);
+    const oldUserToken = derivation.deriveUserToken('u1', yesterday);
     await expect(
       guard.canActivate(
         gqlCtx(
-          createRequest({ accessToken: 'tampered-jwt', rbacToken: 'rt' }),
+          createRequest({ accessToken, rbacToken, userToken: oldUserToken }),
+        ) as unknown as ExecutionContext,
+      ),
+    ).rejects.toThrow(UnauthorizedException);
+  });
+
+  it('throws 401 when the Redis key is missing (expired/revoked)', async () => {
+    const accessToken = await jwtService.signAsync(validPayload);
+    const rbacToken = derivation.deriveRbacToken('u1', 'FREE');
+    const userToken = derivation.deriveUserToken('u1');
+    await expect(
+      guard.canActivate(
+        gqlCtx(
+          createRequest({ accessToken, rbacToken, userToken }),
+        ) as unknown as ExecutionContext,
+      ),
+    ).rejects.toThrow(UnauthorizedException);
+  });
+
+  it('throws 401 when access token is tampered', async () => {
+    const rbacToken = derivation.deriveRbacToken('u1', 'FREE');
+    const userToken = derivation.deriveUserToken('u1');
+    await expect(
+      guard.canActivate(
+        gqlCtx(
+          createRequest({ accessToken: 'tampered-jwt', rbacToken, userToken }),
+        ) as unknown as ExecutionContext,
+      ),
+    ).rejects.toThrow(UnauthorizedException);
+  });
+
+  it('throws 401 when rbac derivation does not match (tier changed)', async () => {
+    const accessToken = await jwtService.signAsync(validPayload);
+    const oldRbac = derivation.deriveRbacToken('u1', 'FREE');
+    const userToken = derivation.deriveUserToken('u1');
+    const deviceToken = crypto.randomToken();
+    const key = tokenStore.buildKey(
+      accessToken,
+      oldRbac,
+      deviceToken,
+      userToken,
+    );
+    // Store with a different tier than the rbac token was derived with
+    await tokenStore.write(key, {
+      userId: 'u1',
+      email: 'test@test.com',
+      role: 'USER',
+      tier: 'PREMIUM',
+      deviceId: 'd1',
+      ip: '',
+      userAgent: '',
+      sessionId: 's1',
+      v: '2',
+      name: '',
+      username: '',
+      avatarUrl: '',
+      locale: 'en',
+      timezone: 'UTC',
+      friends: [],
+      unread: 0,
+      orgIds: [],
+      teamIds: [],
+    });
+    await expect(
+      guard.canActivate(
+        gqlCtx(
+          createRequest({
+            accessToken,
+            rbacToken: oldRbac,
+            deviceToken,
+            userToken,
+          }),
         ) as unknown as ExecutionContext,
       ),
     ).rejects.toThrow(UnauthorizedException);
   });
 
   it('throws 401 when JWT sub does not match the stored userId', async () => {
-    const accessToken = await jwtService.signAsync({
-      ...validPayload,
-      sub: 'u1',
-    });
-    const rbacToken = crypto.randomToken();
-    const key = tokenStore.buildKey(accessToken, rbacToken, '');
+    const accessToken = await jwtService.signAsync(validPayload);
+    const rbacToken = derivation.deriveRbacToken('u1', 'FREE');
+    const userToken = derivation.deriveUserToken('u1');
+    const key = tokenStore.buildKey(accessToken, rbacToken, '', userToken);
     await tokenStore.write(key, {
       userId: 'u2',
       email: 'u2@t.com',
@@ -206,11 +312,21 @@ describe('SessionAuthGuard', () => {
       ip: '',
       userAgent: '',
       sessionId: 's2',
+      v: '2',
+      name: '',
+      username: '',
+      avatarUrl: '',
+      locale: 'en',
+      timezone: 'UTC',
+      friends: [],
+      unread: 0,
+      orgIds: [],
+      teamIds: [],
     });
     await expect(
       guard.canActivate(
         gqlCtx(
-          createRequest({ accessToken, rbacToken }),
+          createRequest({ accessToken, rbacToken, userToken }),
         ) as unknown as ExecutionContext,
       ),
     ).rejects.toThrow(UnauthorizedException);
@@ -218,8 +334,9 @@ describe('SessionAuthGuard', () => {
 
   it('rejects IP mismatch when AUTH_IP_STRICT=true', async () => {
     const accessToken = await jwtService.signAsync(validPayload);
-    const rbacToken = crypto.randomToken();
-    const key = tokenStore.buildKey(accessToken, rbacToken, '');
+    const rbacToken = derivation.deriveRbacToken('u1', 'FREE');
+    const userToken = derivation.deriveUserToken('u1');
+    const key = tokenStore.buildKey(accessToken, rbacToken, '', userToken);
     await tokenStore.write(key, {
       userId: 'u1',
       email: 'test@test.com',
@@ -228,6 +345,16 @@ describe('SessionAuthGuard', () => {
       ip: '10.0.0.1',
       userAgent: '',
       sessionId: 's1',
+      v: '2',
+      name: '',
+      username: '',
+      avatarUrl: '',
+      locale: 'en',
+      timezone: 'UTC',
+      friends: [],
+      unread: 0,
+      orgIds: [],
+      teamIds: [],
     });
     const strictConfig = {
       ...config,
@@ -242,11 +369,12 @@ describe('SessionAuthGuard', () => {
       jwtService,
       strictConfig,
       tokenStore as unknown as TokenStoreService,
+      derivation,
     );
     await expect(
       strictGuard.canActivate(
         gqlCtx(
-          createRequest({ accessToken, rbacToken, ip: '10.0.0.2' }),
+          createRequest({ accessToken, rbacToken, userToken, ip: '10.0.0.2' }),
         ) as unknown as ExecutionContext,
       ),
     ).rejects.toThrow(UnauthorizedException);
@@ -261,13 +389,15 @@ describe('SessionAuthGuard', () => {
       jwtService,
       config,
       brokenStore as unknown as TokenStoreService,
+      derivation,
     );
     const accessToken = await jwtService.signAsync(validPayload);
-    const rbacToken = crypto.randomToken();
+    const rbacToken = derivation.deriveRbacToken('u1', 'FREE');
+    const userToken = derivation.deriveUserToken('u1');
     try {
       await brokenGuard.canActivate(
         gqlCtx(
-          createRequest({ accessToken, rbacToken }),
+          createRequest({ accessToken, rbacToken, userToken }),
         ) as unknown as ExecutionContext,
       );
       expect('should have thrown').toBe('');

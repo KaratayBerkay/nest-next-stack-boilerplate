@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { TokenStoreService } from '../auth/token-store.service';
 import { PushNotificationService } from '../push-notification/push-notification.service';
 import { NotificationGateway } from './notification.gateway';
 import type { NotificationType } from '../@generated/prisma/notification-type.enum';
@@ -19,6 +20,7 @@ export class NotificationService {
     private readonly prisma: PrismaService,
     private readonly gateway: NotificationGateway,
     private readonly push: PushNotificationService,
+    private readonly tokenStore: TokenStoreService,
   ) {}
 
   async create(params: CreateNotificationParams) {
@@ -44,6 +46,9 @@ export class NotificationService {
       params.payload,
     );
 
+    // Increment the unread counter in Redis (fire-and-forget).
+    this.tokenStore.incrUnreadForUser(params.userId, 1).catch(() => {});
+
     return notification;
   }
 
@@ -64,16 +69,32 @@ export class NotificationService {
   }
 
   async markRead(id: string, userId: string) {
-    return this.prisma.notification.updateMany({
+    const result = await this.prisma.notification.updateMany({
       where: { id, userId },
       data: { readAt: new Date() },
     });
+
+    // Recount and rewrite (drift-free — no negative-HINCRBY bookkeeping).
+    if (result.count > 0) {
+      const unread = await this.unreadCount(userId);
+      this.tokenStore
+        .rewriteFieldsForUser(userId, { unread: String(unread) })
+        .catch(() => {});
+    }
+
+    return result;
   }
 
   async markAllRead(userId: string) {
-    return this.prisma.notification.updateMany({
+    await this.prisma.notification.updateMany({
       where: { userId, readAt: null },
       data: { readAt: new Date() },
     });
+
+    // Recount and rewrite (drift-free).
+    const unread = await this.unreadCount(userId);
+    this.tokenStore
+      .rewriteFieldsForUser(userId, { unread: String(unread) })
+      .catch(() => {});
   }
 }

@@ -1,6 +1,6 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { JwtUser } from '../auth/auth.types';
 import { Message } from '../@generated/message/message.model';
@@ -10,7 +10,7 @@ import { MessagingWsGateway } from './messaging-ws.gateway';
 import { Conversation } from './models/conversation.model';
 import { SendMessageInput } from './dto/send-message.input';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(SessionAuthGuard)
 @Resolver()
 export class MessagingResolver {
   constructor(
@@ -44,7 +44,12 @@ export class MessagingResolver {
     @CurrentUser() user: JwtUser,
     @Args('input') input: SendMessageInput,
   ) {
-    return this.ms.sendMessage(user.userId, input.recipientId, input.text);
+    return this.ms.sendMessage(
+      user.userId,
+      input.recipientId,
+      input.text,
+      user.friends,
+    );
   }
 
   @Mutation(() => Boolean)

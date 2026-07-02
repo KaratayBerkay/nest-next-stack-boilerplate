@@ -3,7 +3,8 @@ import type { ResponseCookie } from "next/dist/compiled/@edge-runtime/cookies";
 export const ACCESS_TOKEN_COOKIE = "access_token";
 export const RBAC_TOKEN_COOKIE = "rbac_token";
 export const DEVICE_TOKEN_COOKIE = "device_token";
-const BACKEND_REFRESH_COOKIE = "refresh_token";
+export const USER_TOKEN_COOKIE = "user_token";
+export const BACKEND_REFRESH_COOKIE = "refresh_token";
 
 /**
  * Determine the cookie Domain attribute. Priority:
@@ -127,6 +128,29 @@ export function rbacTokenCookieOptions(
 export function clearRbacTokenCookieOptions(): ResponseCookie {
   return baseOptions({
     name: RBAC_TOKEN_COOKIE,
+    value: "",
+    maxAge: 0,
+  });
+}
+
+export function userTokenCookieOptions(
+  value: string,
+  maxAge?: number,
+): ResponseCookie {
+  return {
+    ...baseOptions({
+      name: USER_TOKEN_COOKIE,
+      value,
+      maxAge: maxAge ?? 60 * 15,
+    }),
+    // Non-httpOnly so client-side JS can read it for messaging WebSocket auth.
+    httpOnly: false,
+  };
+}
+
+export function clearUserTokenCookieOptions(): ResponseCookie {
+  return baseOptions({
+    name: USER_TOKEN_COOKIE,
     value: "",
     maxAge: 0,
   });

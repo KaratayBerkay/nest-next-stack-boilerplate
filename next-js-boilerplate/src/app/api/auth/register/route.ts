@@ -4,6 +4,7 @@ import {
   refreshTokenCookieOptions,
   deviceTokenCookieOptions,
   rbacTokenCookieOptions,
+  userTokenCookieOptions,
 } from "@/lib/cookie";
 import { graphqlFetch } from "@/lib/backend";
 
@@ -15,6 +16,7 @@ const REGISTER_QUERY = `
       rbacToken
       deviceId
       deviceToken
+      userToken
       user {
         id
         email
@@ -53,6 +55,7 @@ export async function POST(request: Request) {
       rbacToken?: string;
       deviceId?: string;
       deviceToken?: string;
+      userToken?: string;
       user: unknown;
     };
   }>(REGISTER_QUERY, { input: { email, password, ...(name ? { name } : {}) } });
@@ -63,7 +66,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status });
   }
 
-  const { accessToken, refreshToken, rbacToken, deviceToken, user } = data.register;
+  const { accessToken, refreshToken, rbacToken, deviceToken, userToken, user } = data.register;
 
   const response = NextResponse.json({ user, accessToken }, { status: 201 });
 
@@ -71,6 +74,7 @@ export async function POST(request: Request) {
   response.cookies.set(refreshTokenCookieOptions(refreshToken));
   if (rbacToken) response.cookies.set(rbacTokenCookieOptions(rbacToken));
   if (deviceToken) response.cookies.set(deviceTokenCookieOptions(deviceToken));
+  if (userToken) response.cookies.set(userTokenCookieOptions(userToken));
 
   return response;
 }

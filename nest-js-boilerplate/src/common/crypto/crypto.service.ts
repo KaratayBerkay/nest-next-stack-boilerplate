@@ -2,7 +2,9 @@ import {
   createCipheriv,
   createDecipheriv,
   createHash,
+  createHmac,
   randomBytes,
+  timingSafeEqual,
 } from 'node:crypto';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -48,6 +50,21 @@ export class CryptoService implements OnModuleInit {
   /** Deterministic hash used to store/look up verification tokens and backup codes. */
   sha256(value: string): string {
     return createHash('sha256').update(value).digest('hex');
+  }
+
+  /** HMAC-SHA256 for token derivation. Output is 64-char hex. */
+  hmacSha256(key: string, data: string): string {
+    return createHmac('sha256', key).update(data).digest('hex');
+  }
+
+  /** Timing-safe comparison of two hex strings. */
+  timingSafeEqual(a: string, b: string): boolean {
+    if (a.length !== b.length) return false;
+    try {
+      return timingSafeEqual(Buffer.from(a, 'hex'), Buffer.from(b, 'hex'));
+    } catch {
+      return false;
+    }
   }
 
   /** AES-256-GCM encrypt -> `iv(12) | authTag(16) | ciphertext` packed into one Buffer. */

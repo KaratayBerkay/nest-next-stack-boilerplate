@@ -54,7 +54,7 @@ export class AdminResolver {
       data: { subscriptionTier: tier },
     });
     // Rewrite live Redis sessions via the reverse index.
-    await this.tokenStore.rewriteTierForUser(userId, tier);
+    await this.tokenStore.rewriteFieldsForUser(userId, { tier });
     return true;
   }
 

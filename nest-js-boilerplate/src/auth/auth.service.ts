@@ -14,11 +14,14 @@ import { MailService } from '../mail/mail.service';
 import { OutboxService } from '../outbox/outbox.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { refreshCookieName, refreshCookieOptions } from './auth-cookie';
-import { AuthPayload } from './auth.types';
+import { AuthPayload, SessionUserInput } from './auth.types';
 import { accessCookieName } from './access-cookie';
 import { rbacCookieName, rbacCookieOptions } from './rbac-cookie';
 import { deviceCookieName } from '../devices/device-cookie';
+import { SessionHydrationService } from './session-hydration.service';
+import { TokenDerivationService } from './token-derivation.service';
 import { TokenStoreService } from './token-store.service';
+import { userCookieName, userCookieOptions } from './user-cookie';
 import { LoginInput } from './dto/login.input';
 import { RegisterInput } from './dto/register.input';
 
@@ -46,6 +49,8 @@ export class AuthService {
     private readonly mail: MailService,
     private readonly devices: DeviceService,
     private readonly tokenStore: TokenStoreService,
+    private readonly hydration: SessionHydrationService,
+    private readonly derivation: TokenDerivationService,
   ) {}
 
   /** Register with credentials, queue a confirmation email, and emit a SIGNUP audit event. */
@@ -354,6 +359,8 @@ export class AuthService {
       });
     }
     this.clearRefreshCookie(ctx);
+    this.clearRbacCookie(ctx);
+    this.clearUserCookie(ctx);
     return true;
   }
 
@@ -362,11 +369,13 @@ export class AuthService {
     const accessToken = this.extractAccessToken(ctx);
     const rbacToken = this.extractRbacToken(ctx);
     const deviceToken = this.extractDeviceToken(ctx);
+    const userToken = this.extractUserToken(ctx);
     if (accessToken && rbacToken) {
       const key = this.tokenStore.buildKey(
         accessToken,
         rbacToken,
         deviceToken ?? '',
+        userToken ?? '',
       );
       await this.tokenStore.revoke(key);
     }
@@ -383,7 +392,11 @@ export class AuthService {
       role: user.role,
     });
 
-    const rbacToken = this.crypto.randomToken();
+    const rbacToken = this.derivation.deriveRbacToken(
+      user.id,
+      user.subscriptionTier ?? 'FREE',
+    );
+    const userToken = this.derivation.deriveUserToken(user.id);
 
     // Persist the refresh session, bound to the resolved device (ip/userAgent recorded too).
     // One active session per device: drop any prior session for this (user, device) first, so
@@ -406,11 +419,15 @@ export class AuthService {
       });
     });
 
-    // Write the Redis compound key (after the Session row commits).
+    // Hydrate the runtime snapshot (4 parallel PG queries on the cold path) then write the
+    // Redis compound key (after the Session row commits).
+    const snapshot = await this.hydration.hydrate(user);
+
     const compoundKey = this.tokenStore.buildKey(
       accessToken,
       rbacToken,
       device?.deviceToken ?? '',
+      userToken,
     );
     await this.tokenStore.write(compoundKey, {
       userId: user.id,
@@ -421,17 +438,20 @@ export class AuthService {
       ip: device?.ip ?? null,
       userAgent: device?.userAgent ?? null,
       sessionId: session.id,
-    });
+      ...snapshot,
+    } as SessionUserInput);
 
     // Deliver the refresh token as an httpOnly, Secure-by-env cookie for browser/SSR clients.
     // It is ALSO returned in the body (below) so API-only clients keep working.
     this.setRefreshCookie(ctx, session.sessionToken);
     this.setRbacCookie(ctx, rbacToken);
+    this.setUserCookie(ctx, userToken);
 
     return {
       accessToken,
       refreshToken: session.sessionToken,
       rbacToken,
+      userToken,
       deviceId: device?.deviceId,
       deviceToken: device?.deviceToken,
       user,
@@ -472,13 +492,26 @@ export class AuthService {
     return (Array.isArray(header) ? header[0] : header) ?? null;
   }
 
+  private extractUserToken(ctx: RequestContext): string | null {
+    const name = userCookieName(this.config);
+    const bag = (ctx.req as unknown as { cookies?: Record<string, string> })
+      .cookies;
+    const fromCookie = bag?.[name] ?? null;
+    if (fromCookie) return fromCookie;
+    const header = ctx.req.headers['x-user-token'];
+    return (Array.isArray(header) ? header[0] : header) ?? null;
+  }
+
   // --- Refresh-cookie I/O. cookie-parser populates req.cookies; Express keeps the response on
   // req.res, which is absent in non-HTTP execution contexts (guarded with ?.). ---
   private readRefreshCookie(ctx: RequestContext): string | null {
     const name = refreshCookieName(this.config);
     const bag = (ctx.req as unknown as { cookies?: Record<string, string> })
       .cookies;
-    return bag?.[name] ?? null;
+    const fromCookie = bag?.[name] ?? null;
+    if (fromCookie) return fromCookie;
+    const header = ctx.req.headers['x-refresh-token'];
+    return (Array.isArray(header) ? header[0] : header) ?? null;
   }
 
   private setRefreshCookie(
@@ -508,5 +541,18 @@ export class AuthService {
   private clearRbacCookie(ctx: RequestContext): void {
     const { maxAge: _maxAge, ...clearOpts } = rbacCookieOptions(this.config);
     ctx.req.res?.clearCookie(rbacCookieName(this.config), clearOpts);
+  }
+
+  private setUserCookie(ctx: RequestContext | undefined, token: string): void {
+    ctx?.req.res?.cookie(
+      userCookieName(this.config),
+      token,
+      userCookieOptions(this.config),
+    );
+  }
+
+  private clearUserCookie(ctx: RequestContext): void {
+    const { maxAge: _maxAge, ...clearOpts } = userCookieOptions(this.config);
+    ctx.req.res?.clearCookie(userCookieName(this.config), clearOpts);
   }
 }

@@ -7,6 +7,15 @@ export interface JwtUser {
   email: string;
   role: string;
   tier: string;
+  name?: string | null;
+  username?: string | null;
+  avatarUrl?: string | null;
+  locale?: string;
+  timezone?: string;
+  friends?: string[];
+  unread?: number;
+  orgIds?: string[];
+  teamIds?: string[];
 }
 
 /** JWT payload we sign on login/register. */
@@ -15,6 +24,37 @@ export interface JwtPayload {
   email: string;
   role: string;
 }
+
+/**
+ * Full user snapshot resolved from the Redis compound key (v2).
+ * All fields are stored in a single HASH per session.
+ */
+export interface SessionUser {
+  userId: string;
+  email: string;
+  role: string;
+  tier: string;
+  deviceId: string | null;
+  ip: string | null;
+  userAgent: string | null;
+  issuedAt: string;
+  sessionId: string;
+  // v2 fields
+  v: string;
+  name: string;
+  username: string;
+  avatarUrl: string;
+  locale: string;
+  timezone: string;
+  friends: string[];
+  unread: number;
+  orgIds: string[];
+  teamIds: string[];
+}
+
+export type SessionUserInput = Omit<SessionUser, 'issuedAt' | 'v'> & {
+  issuedAt?: Date;
+};
 
 /**
  * GraphQL shape of the `me` query: the identity snapshot held in the Redis
@@ -34,19 +74,21 @@ export class SessionUserPayload {
 
   @Field()
   tier!: string;
-}
 
-/** Full user snapshot resolved from the Redis compound key. */
-export interface SessionUser {
-  userId: string;
-  email: string;
-  role: string;
-  tier: string;
-  deviceId: string | null;
-  ip: string | null;
-  userAgent: string | null;
-  issuedAt: string;
-  sessionId: string;
+  @Field({ nullable: true })
+  name?: string;
+
+  @Field({ nullable: true })
+  username?: string;
+
+  @Field({ nullable: true })
+  avatarUrl?: string;
+
+  @Field({ defaultValue: 'en' })
+  locale!: string;
+
+  @Field({ defaultValue: 'UTC' })
+  timezone!: string;
 }
 
 @ObjectType()
@@ -66,9 +108,13 @@ export class AuthPayload {
   @Field(() => String, { nullable: true })
   deviceId?: string;
 
-  /** ≥90-char random device token for the device_token cookie (BFF cookie setting). */
+  /** >=90-char random device token for the device_token cookie (BFF cookie setting). */
   @Field(() => String, { nullable: true })
   deviceToken?: string;
+
+  /** Date-derived user token for the 4th compound-key segment. */
+  @Field(() => String, { nullable: true })
+  userToken?: string;
 
   @Field(() => User)
   user!: User;

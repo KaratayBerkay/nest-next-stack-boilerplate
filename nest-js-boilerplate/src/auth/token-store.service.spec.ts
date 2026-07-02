@@ -10,7 +10,6 @@ function createRedisMock() {
     multi: jest.fn(() => {
       const ops: Array<() => void> = [];
       return {
-        // Support both hset(key, obj) and hset(key, field, value) calling conventions
         hset: (
           key: string,
           fieldOrData: string | Record<string, string>,
@@ -38,6 +37,12 @@ function createRedisMock() {
         del: (key: string) => ops.push(() => store.delete(key)),
         srem: (key: string, member: string) =>
           ops.push(() => reverse.get(key)?.delete(member)),
+        hincrby: (key: string, field: string, delta: number) =>
+          ops.push(() => {
+            const existing = store.get(key) ?? {};
+            const current = Number(existing[field]) || 0;
+            store.set(key, { ...existing, [field]: String(current + delta) });
+          }),
         exec: () => {
           ops.forEach((fn) => fn());
           return Promise.resolve([]);
@@ -106,7 +111,16 @@ describe('TokenStoreService', () => {
     expect(service.buildKey('at1', 'rt1', 'dt2')).not.toBe(key);
   });
 
-  it('writes and reads a session entry', async () => {
+  it('builds a 4-segment key when userToken is provided', () => {
+    const key = service.buildKey('at1', 'rt1', 'dt1', 'ut1');
+    expect(key).toMatch(
+      /^sess:[a-f0-9]{64}:[a-f0-9]{64}:[a-f0-9]{64}:[a-f0-9]{64}$/,
+    );
+    expect(service.buildKey('at1', 'rt1', 'dt1', 'ut1')).toBe(key);
+    expect(service.buildKey('at1', 'rt1', 'dt1', 'ut2')).not.toBe(key);
+  });
+
+  it('writes and reads a session entry with v2 schema', async () => {
     const key = service.buildKey('a', 'b', 'c');
     await service.write(key, {
       userId: 'u1',
@@ -117,11 +131,26 @@ describe('TokenStoreService', () => {
       ip: '127.0.0.1',
       userAgent: 'jest',
       sessionId: 's1',
+      name: 'Test User',
+      username: 'testuser',
+      avatarUrl: '',
+      locale: 'en',
+      timezone: 'UTC',
+      friends: ['f1', 'f2'],
+      unread: 3,
+      orgIds: ['org1'],
+      teamIds: [],
     });
     const read = await service.read(key);
     expect(read).not.toBeNull();
     expect(read!.userId).toBe('u1');
     expect(read!.tier).toBe('FREE');
+    expect(read!.v).toBe('2');
+    expect(read!.name).toBe('Test User');
+    expect(read!.friends).toEqual(['f1', 'f2']);
+    expect(read!.unread).toBe(3);
+    expect(read!.orgIds).toEqual(['org1']);
+    expect(read!.teamIds).toEqual([]);
   });
 
   it('returns null for a missing key', async () => {
@@ -164,7 +193,7 @@ describe('TokenStoreService', () => {
     expect(await service.read(k2)).toBeNull();
   });
 
-  it('rewrites the tier for all live sessions of a user', async () => {
+  it('rewrites fields for all live sessions of a user', async () => {
     const key = service.buildKey('a', 'b', 'c');
     await service.write(key, {
       userId: 'u4',
@@ -174,7 +203,10 @@ describe('TokenStoreService', () => {
       sessionId: 's5',
     });
 
-    const count = await service.rewriteTierForUser('u4', 'PREMIUM');
+    const count = await service.rewriteFieldsForUser('u4', {
+      tier: 'PREMIUM',
+      unread: '0',
+    });
     expect(count).toBe(1);
 
     const session = await service.read(key);
@@ -182,7 +214,7 @@ describe('TokenStoreService', () => {
     expect(session!.tier).toBe('PREMIUM');
   });
 
-  it('skips expired keys during tier rewrite', async () => {
+  it('skips expired keys during fields rewrite', async () => {
     const key = service.buildKey('a', 'b', 'c');
     await service.write(key, {
       userId: 'u5',
@@ -192,6 +224,86 @@ describe('TokenStoreService', () => {
       sessionId: 's6',
     });
     redis._store.delete(key);
-    expect(await service.rewriteTierForUser('u5', 'BASIC')).toBe(0);
+    expect(await service.rewriteFieldsForUser('u5', { tier: 'BASIC' })).toBe(0);
+  });
+
+  it('incrUnreadForUser increments unread for all sessions', async () => {
+    const k1 = service.buildKey('a', 'b', 'c');
+    const k2 = service.buildKey('d', 'e', 'f');
+    await service.write(k1, {
+      userId: 'u6',
+      email: 'u6@t.com',
+      role: 'USER',
+      sessionId: 's7',
+    });
+    await service.write(k2, {
+      userId: 'u6',
+      email: 'u6@t.com',
+      role: 'USER',
+      sessionId: 's8',
+    });
+
+    await service.incrUnreadForUser('u6', 1);
+    expect(Number(redis._store.get(k1)!.unread)).toBe(1);
+    expect(Number(redis._store.get(k2)!.unread)).toBe(1);
+
+    await service.incrUnreadForUser('u6', 2);
+    expect(Number(redis._store.get(k1)!.unread)).toBe(3);
+    expect(Number(redis._store.get(k2)!.unread)).toBe(3);
+  });
+
+  it('reads v1 keys with defaults for v2 fields', async () => {
+    const store = redis._store;
+    const key = 'sess:v1key';
+    store.set(key, {
+      v: '1',
+      userId: 'u7',
+      email: 'v1@t.com',
+      role: 'USER',
+      tier: 'FREE',
+      deviceId: '',
+      ip: '',
+      userAgent: '',
+      issuedAt: new Date().toISOString(),
+      sessionId: 's9',
+    });
+
+    const session = await service.read(key);
+    expect(session).not.toBeNull();
+    expect(session!.v).toBe('1');
+    expect(session!.name).toBe('');
+    expect(session!.friends).toEqual([]);
+    expect(session!.unread).toBe(0);
+  });
+
+  it('handles malformed JSON fields gracefully', async () => {
+    const store = redis._store;
+    const key = 'sess:badjson';
+    store.set(key, {
+      v: '2',
+      userId: 'u8',
+      email: 'bad@t.com',
+      role: 'USER',
+      tier: 'FREE',
+      deviceId: '',
+      ip: '',
+      userAgent: '',
+      issuedAt: new Date().toISOString(),
+      sessionId: 's10',
+      name: '',
+      username: '',
+      avatarUrl: '',
+      locale: 'en',
+      timezone: 'UTC',
+      friends: 'not-json',
+      unread: '5',
+      orgIds: '{bad',
+      teamIds: '',
+    });
+
+    const session = await service.read(key);
+    expect(session!.friends).toEqual([]);
+    expect(session!.orgIds).toEqual([]);
+    expect(session!.unread).toBe(5);
   });
 });

@@ -9,6 +9,8 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { FriendsService } from '../friends/friends.service';
+import { TokenStoreService } from '../auth/token-store.service';
 
 export interface RoomMember {
   socketId: string;
@@ -24,6 +26,8 @@ export class MessagingService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
+    private readonly friends: FriendsService,
+    private readonly tokenStore: TokenStoreService,
   ) {}
 
   async getUsers(currentUserId: string, search?: string) {
@@ -172,12 +176,20 @@ export class MessagingService {
     return { messages: messages.reverse(), hasMore: messages.length === take };
   }
 
-  async sendMessage(senderId: string, recipientId: string, text: string) {
+  async sendMessage(
+    senderId: string,
+    recipientId: string,
+    text: string,
+    friends?: string[],
+  ) {
     if (senderId === recipientId) {
       this.logger.warn(`User ${senderId} attempted to message self`);
       throw new ForbiddenException('Cannot send message to yourself');
     }
-    if (!(await this.areFriends(senderId, recipientId))) {
+    const isFriend = friends
+      ? friends.includes(recipientId)
+      : await this.areFriends(senderId, recipientId);
+    if (!isFriend) {
       this.logger.warn(
         `User ${senderId} attempted to message non-friend ${recipientId}`,
       );
@@ -258,17 +270,17 @@ export class MessagingService {
 
   // --- Friendships ---
 
+  /** Refresh the friends list in Redis for a user. */
+  private async refreshFriendIds(userId: string): Promise<void> {
+    const ids = await this.friends.getFriendIds(userId);
+    this.tokenStore
+      .rewriteFieldsForUser(userId, { friends: JSON.stringify(ids) })
+      .catch(() => {});
+  }
+
   /** Get IDs of all accepted friends */
   async getFriendIds(userId: string): Promise<string[]> {
-    const friendships = await this.prisma.friendship.findMany({
-      where: {
-        status: 'ACCEPTED',
-        OR: [{ requesterId: userId }, { addresseeId: userId }],
-      },
-    });
-    return friendships.map((f) =>
-      f.requesterId === userId ? f.addresseeId : f.requesterId,
-    );
+    return this.friends.getFriendIds(userId);
   }
 
   /** Get accepted friend profiles */
@@ -393,6 +405,9 @@ export class MessagingService {
           where: { id: existing.id },
           data: { status: 'ACCEPTED' },
         });
+        // Rewrite friends list in Redis for both users.
+        this.refreshFriendIds(requesterId);
+        this.refreshFriendIds(addresseeId);
         return { success: true };
       }
       if (existing.status === 'BLOCKED') {
@@ -442,6 +457,9 @@ export class MessagingService {
         data: { status: 'ACCEPTED' },
       });
     }
+    // Rewrite friends list in Redis for both users.
+    this.refreshFriendIds(requesterId);
+    this.refreshFriendIds(userId);
     return { success: true };
   }
 
@@ -480,17 +498,7 @@ export class MessagingService {
 
   /** Check if two users are friends */
   async areFriends(userId1: string, userId2: string): Promise<boolean> {
-    if (userId1 === userId2) return false;
-    const friendship = await this.prisma.friendship.findFirst({
-      where: {
-        OR: [
-          { requesterId: userId1, addresseeId: userId2 },
-          { requesterId: userId2, addresseeId: userId1 },
-        ],
-        status: 'ACCEPTED',
-      },
-    });
-    return !!friendship;
+    return this.friends.areFriends(userId1, userId2);
   }
 
   // --- Chat rooms ---

@@ -73,6 +73,11 @@ export class AuthResolver {
       email: user.email,
       role: user.role,
       tier: user.tier,
+      name: user.name ?? undefined,
+      username: user.username ?? undefined,
+      avatarUrl: user.avatarUrl ?? undefined,
+      locale: user.locale ?? 'en',
+      timezone: user.timezone ?? 'UTC',
     };
   }
 }

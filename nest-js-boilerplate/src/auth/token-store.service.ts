@@ -3,25 +3,20 @@ import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { CryptoService } from '../common/crypto/crypto.service';
 import { REDIS_CLIENT } from '../redis/redis.module';
-
-export interface SessionUser {
-  userId: string;
-  email: string;
-  role: string;
-  tier: string;
-  deviceId: string | null;
-  ip: string | null;
-  userAgent: string | null;
-  issuedAt: string;
-  sessionId: string;
-}
-
-export type SessionUserInput = Omit<SessionUser, 'issuedAt'> & {
-  issuedAt?: Date;
-};
+import type { SessionUser, SessionUserInput } from './auth.types';
 
 const SESS_PREFIX = 'sess:';
 const USER_SESS_PREFIX = 'user:';
+
+function parseJsonField(raw: string | undefined): string[] {
+  if (!raw) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as string[]) : [];
+  } catch {
+    return [];
+  }
+}
 
 @Injectable()
 export class TokenStoreService {
@@ -53,10 +48,12 @@ export class TokenStoreService {
     accessToken: string,
     rbacToken: string,
     deviceToken: string,
+    userToken?: string,
   ): string {
-    const parts = [accessToken, rbacToken, deviceToken].map((t) =>
-      this.crypto.sha256(t),
-    );
+    const tokens = userToken
+      ? [accessToken, rbacToken, deviceToken, userToken]
+      : [accessToken, rbacToken, deviceToken];
+    const parts = tokens.map((t) => this.crypto.sha256(t));
     return `${SESS_PREFIX}${parts.join(':')}`;
   }
 
@@ -68,6 +65,7 @@ export class TokenStoreService {
     const userId = data.userId;
     const pipe = this.redis.multi();
     pipe.hset(key, {
+      v: '2',
       userId: data.userId,
       email: data.email,
       role: data.role,
@@ -77,6 +75,15 @@ export class TokenStoreService {
       userAgent: data.userAgent ?? '',
       issuedAt: (data.issuedAt ?? new Date()).toISOString(),
       sessionId: data.sessionId,
+      name: data.name ?? '',
+      username: data.username ?? '',
+      avatarUrl: data.avatarUrl ?? '',
+      locale: data.locale ?? 'en',
+      timezone: data.timezone ?? 'UTC',
+      friends: JSON.stringify(data.friends ?? []),
+      unread: String(data.unread ?? 0),
+      orgIds: JSON.stringify(data.orgIds ?? []),
+      teamIds: JSON.stringify(data.teamIds ?? []),
     });
     pipe.expire(key, this.ttl);
     pipe.sadd(this.reverseIndexKey(userId), key);
@@ -88,7 +95,8 @@ export class TokenStoreService {
     if (!data || Object.keys(data).length === 0) {
       return null;
     }
-    return {
+    const v = data.v ?? '1';
+    const common = {
       userId: data.userId,
       email: data.email,
       role: data.role,
@@ -98,6 +106,37 @@ export class TokenStoreService {
       userAgent: data.userAgent || null,
       issuedAt: data.issuedAt,
       sessionId: data.sessionId,
+    };
+
+    if (v === '2') {
+      return {
+        ...common,
+        v,
+        name: data.name ?? '',
+        username: data.username ?? '',
+        avatarUrl: data.avatarUrl ?? '',
+        locale: data.locale ?? 'en',
+        timezone: data.timezone ?? 'UTC',
+        friends: parseJsonField(data.friends),
+        unread: Number(data.unread) || 0,
+        orgIds: parseJsonField(data.orgIds),
+        teamIds: parseJsonField(data.teamIds),
+      };
+    }
+
+    // v1 backward compat
+    return {
+      ...common,
+      v: '1',
+      name: '',
+      username: '',
+      avatarUrl: '',
+      locale: 'en',
+      timezone: 'UTC',
+      friends: [],
+      unread: 0,
+      orgIds: [],
+      teamIds: [],
     };
   }
 
@@ -124,7 +163,10 @@ export class TokenStoreService {
     return keys.length;
   }
 
-  async rewriteTierForUser(userId: string, tier: string): Promise<number> {
+  async rewriteFieldsForUser(
+    userId: string,
+    fields: Record<string, string>,
+  ): Promise<number> {
     const reverseKey = this.reverseIndexKey(userId);
     let cursor = '0';
     let updated = 0;
@@ -138,7 +180,6 @@ export class TokenStoreService {
       );
       cursor = nextCursor;
 
-      // Check which keys still exist (TTL-expired keys are skipped)
       const alive: string[] = [];
       const existsResults = await Promise.all(
         members.map((k) => this.redis.exists(k)),
@@ -152,7 +193,7 @@ export class TokenStoreService {
       if (alive.length > 0) {
         const pipe = this.redis.multi();
         for (const key of alive) {
-          pipe.hset(key, 'tier', tier);
+          pipe.hset(key, fields);
         }
         await pipe.exec();
         updated += alive.length;
@@ -160,5 +201,16 @@ export class TokenStoreService {
     } while (cursor !== '0');
 
     return updated;
+  }
+
+  async incrUnreadForUser(userId: string, delta: number): Promise<void> {
+    const reverseKey = this.reverseIndexKey(userId);
+    const keys = await this.redis.smembers(reverseKey);
+    if (keys.length === 0) return;
+    const pipe = this.redis.multi();
+    for (const key of keys) {
+      pipe.hincrby(key, 'unread', delta);
+    }
+    await pipe.exec();
   }
 }

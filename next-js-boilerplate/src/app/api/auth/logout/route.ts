@@ -4,6 +4,7 @@ import {
   clearRefreshCookieOptions,
   clearDeviceCookieOptions,
   clearRbacTokenCookieOptions,
+  clearUserTokenCookieOptions,
 } from "@/lib/cookie";
 import { graphqlFetch } from "@/lib/backend";
 
@@ -21,5 +22,6 @@ export async function POST() {
   response.cookies.set(clearRefreshCookieOptions());
   response.cookies.set(clearRbacTokenCookieOptions());
   response.cookies.set(clearDeviceCookieOptions());
+  response.cookies.set(clearUserTokenCookieOptions());
   return response;
 }

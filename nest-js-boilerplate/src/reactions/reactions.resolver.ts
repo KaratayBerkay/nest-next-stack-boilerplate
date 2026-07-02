@@ -3,12 +3,12 @@ import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Reaction } from '../@generated/reaction/reaction.model';
 import type { JwtUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { CreateReactionInput } from './dto/create-reaction.input';
 import { ReactionsService } from './reactions.service';
 
 // Exercises GraphQL through FK depth (Reaction -> Post -> User) behind the JWT guard.
-@UseGuards(JwtAuthGuard)
+@UseGuards(SessionAuthGuard)
 @Resolver(() => Reaction)
 export class ReactionsResolver {
   constructor(private readonly reactions: ReactionsService) {}
