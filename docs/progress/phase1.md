@@ -43,11 +43,16 @@ no test infra, no CI, no backend code changes (those are Phases 2–4).
 
 ## Phase queue (created when reached)
 
+Re-scoped 2026-07-02 after phase 1 completed: Redis auth management jumped the queue
+(was a P1 backlog item); the e2e suite shifted to phase 3 and everything after moved
+down one. The live queue is maintained in [phase2.md](phase2.md).
+
 | Phase | Scope | Detail |
 | --- | --- | --- |
 | **1 (this)** | Foundations: README, .env.example, messaging-ws, delete ws-server, doc links | [todo/01](../todo/01-stack-integration.md), [todo/05](../todo/05-docs-maintenance.md) |
-| 2 | Cross-stack e2e: `STACK=1` Playwright project against the compose stack (auth round-trip, refresh, SSR/CSR cookies, WS, messaging) | [todo/01](../todo/01-stack-integration.md) |
-| 3 | Root CI: path-filtered app checks + compose smoke job + stack e2e | [todo/01](../todo/01-stack-integration.md) |
-| 4 | Backend warts: negative-timer warning, duplicate `CreateCatDto`, Kafka first-boot race | [todo/02](../todo/02-backend.md) |
-| 5 | Compose hardening (healthchecks, pins, log rotation) + frontend k8s manifests | [todo/04](../todo/04-devops.md) |
-| 6 | Backlog: backend OTel/metrics, Web Push e2e, social auth, seed, publishing, backups | [todo/02](../todo/02-backend.md)–[05](../todo/05-docs-maintenance.md) |
+| 2 | Redis auth: compound-key token store, instant revocation, subscription-tier RBAC | [phase2.md](phase2.md) |
+| 3 | Cross-stack e2e: `STACK=1` Playwright project against the compose stack (auth round-trip, refresh, revocation, tier gates, SSR/CSR cookies, WS, messaging) | [todo/01](../todo/01-stack-integration.md) |
+| 4 | Root CI: path-filtered app checks + compose smoke job + stack e2e | [todo/01](../todo/01-stack-integration.md) |
+| 5 | Backend warts: negative-timer warning, duplicate `CreateCatDto`, Kafka first-boot race | [todo/02](../todo/02-backend.md) |
+| 6 | Compose hardening (healthchecks, pins, log rotation) + frontend k8s manifests | [todo/04](../todo/04-devops.md) |
+| 7 | Backlog: backend OTel/metrics, Web Push e2e, social auth, seed, publishing, backups | [todo/02](../todo/02-backend.md)–[05](../todo/05-docs-maintenance.md) |
