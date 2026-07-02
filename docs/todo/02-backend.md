@@ -27,8 +27,8 @@ container on 2026-07-02.
 - [ ] **Social auth providers** (M) — Google/GitHub OAuth via Passport strategies next
       to the existing local + JWT + MFA setup. `APP_URL`/`FRONTEND_URL` env plumbing
       for callbacks already exists.
-- [ ] **Layered tokens + RBAC in Redis** (L) — role/permission model with Redis-backed
-      session/permission cache; the `authorization/` module is the seam.
+- [x] **Layered tokens + RBAC in Redis** (L) — role/permission model with Redis-backed
+      session/permission cache; the `authorization/` module is the seam. ([phase2.md](../progress/phase2.md))
 - [ ] **Secure-by-env SSR cookies** (S) — cookie `secure`/`sameSite` flags derived from
       env instead of hardcoded (pairs with frontend BFF cookie options).
 - [ ] **Load testing** (M) — k6 or autocannon profiles for the hot paths (auth,

@@ -28,6 +28,7 @@ import { FieldMiddlewareModule } from './field-middleware/field-middleware.modul
 import { GraphqlOtherModule } from './graphql-other/graphql-other.module';
 import { GrpcModule } from './grpc/grpc.module';
 import { HealthModule } from './health/health.module';
+import { RedisModule } from './redis/redis.module';
 import { InterceptorsModule } from './interceptors/interceptors.module';
 import { InterfacesModule } from './interfaces/interfaces.module';
 import { PipesModule } from './pipes/pipes.module';
@@ -154,6 +155,7 @@ import { WsModule } from './ws/ws.module';
     TasksModule,
     ThrottleModule,
     HealthModule,
+    RedisModule,
     ExceptionFiltersModule,
     InterceptorsModule,
     PipesModule,

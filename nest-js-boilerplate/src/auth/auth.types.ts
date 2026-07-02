@@ -6,6 +6,7 @@ export interface JwtUser {
   userId: string;
   email: string;
   role: string;
+  tier: string;
 }
 
 /** JWT payload we sign on login/register. */
@@ -13,6 +14,19 @@ export interface JwtPayload {
   sub: string;
   email: string;
   role: string;
+}
+
+/** Full user snapshot resolved from the Redis compound key. */
+export interface SessionUser {
+  userId: string;
+  email: string;
+  role: string;
+  tier: string;
+  deviceId: string | null;
+  ip: string | null;
+  userAgent: string | null;
+  issuedAt: string;
+  sessionId: string;
 }
 
 @ObjectType()
@@ -23,6 +37,10 @@ export class AuthPayload {
   /** Opaque refresh token backed by a Session row. */
   @Field()
   refreshToken!: string;
+
+  /** Opaque RBAC token delivered as httpOnly cookie; the auth-snapshot handle. */
+  @Field(() => String, { nullable: true })
+  rbacToken?: string;
 
   /** Device ID (UUID, internal FK for Session rows). */
   @Field(() => String, { nullable: true })

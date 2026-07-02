@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { randomUUID } from "node:crypto";
-import { ACCESS_TOKEN_COOKIE, DEVICE_TOKEN_COOKIE } from "@/lib/cookie";
+import { ACCESS_TOKEN_COOKIE, DEVICE_TOKEN_COOKIE, RBAC_TOKEN_COOKIE } from "@/lib/cookie";
 import { defaultLocale, isLocale, resolveLocale } from "@/lib/i18n/config";
 import { defaultVersion, isVersion, isVersionLike } from "@/lib/version/config";
 import { LANG_COOKIE } from "@/constants/i18n";
@@ -165,11 +165,13 @@ export function proxy(request: NextRequest) {
 
   // SSR cookie debug header
   const accessToken = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
+  const rbacToken = request.cookies.get(RBAC_TOKEN_COOKIE)?.value;
   const deviceToken = request.cookies.get(DEVICE_TOKEN_COOKIE)?.value;
   res.headers.set(
     "x-cookies-present",
     JSON.stringify({
       access_token: !!accessToken,
+      rbac_token: !!rbacToken,
       device_token: !!deviceToken,
     }),
   );

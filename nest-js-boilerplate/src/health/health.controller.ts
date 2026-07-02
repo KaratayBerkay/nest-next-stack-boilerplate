@@ -6,6 +6,7 @@ import {
   MemoryHealthIndicator,
   PrismaHealthIndicator,
 } from '@nestjs/terminus';
+import { RedisHealthIndicator } from '../redis/redis-health.indicator';
 import { PrismaService } from '../prisma/prisma.service';
 
 const HEAP_LIMIT = 512 * 1024 * 1024; // 512 MB
@@ -17,6 +18,7 @@ export class HealthController {
     private readonly prisma: PrismaHealthIndicator,
     private readonly memory: MemoryHealthIndicator,
     private readonly db: PrismaService,
+    private readonly redis: RedisHealthIndicator,
   ) {}
 
   // Liveness — is the process itself healthy? No external deps, so a failure here means
@@ -29,13 +31,14 @@ export class HealthController {
     ]);
   }
 
-  // Readiness — can we actually serve requests? Pings the database so a load balancer / k8s
-  // stops routing while the DB is unreachable.
+  // Readiness — can we actually serve requests? Pings the database + redis so a load
+  // balancer / k8s stops routing while an external dep is unreachable.
   @Get('ready')
   @HealthCheck()
   ready(): Promise<HealthCheckResult> {
     return this.health.check([
       () => this.prisma.pingCheck('database', this.db),
+      () => this.redis.pingCheck('redis'),
       () => this.memory.checkHeap('memory_heap', HEAP_LIMIT),
     ]);
   }

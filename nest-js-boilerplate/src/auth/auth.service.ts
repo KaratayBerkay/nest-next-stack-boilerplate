@@ -15,6 +15,10 @@ import { OutboxService } from '../outbox/outbox.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { refreshCookieName, refreshCookieOptions } from './auth-cookie';
 import { AuthPayload } from './auth.types';
+import { accessCookieName } from './access-cookie';
+import { rbacCookieName, rbacCookieOptions } from './rbac-cookie';
+import { deviceCookieName } from '../devices/device-cookie';
+import { TokenStoreService } from './token-store.service';
 import { LoginInput } from './dto/login.input';
 import { RegisterInput } from './dto/register.input';
 
@@ -41,6 +45,7 @@ export class AuthService {
     private readonly outbox: OutboxService,
     private readonly mail: MailService,
     private readonly devices: DeviceService,
+    private readonly tokenStore: TokenStoreService,
   ) {}
 
   /** Register with credentials, queue a confirmation email, and emit a SIGNUP audit event. */
@@ -315,11 +320,13 @@ export class AuthService {
    * Reads the opaque session token from the httpOnly refresh cookie (browser/SSR clients never
    * send it in the body), validates it is live, then re-issues — `issueTokens` dedups per device,
    * so the old session row is replaced and a new refresh cookie is written.
-   * NOTE: refresh-reuse detection + token-family revocation are workstream 2 (layered tokens).
    */
   async refresh(ctx: RequestContext): Promise<AuthPayload> {
     const presented = this.readRefreshCookie(ctx);
     if (!presented) throw new UnauthorizedException('Missing refresh token');
+
+    // Revoke the old Redis compound key before reissuing.
+    await this.revokePresentedKey(ctx);
 
     const session = await this.prisma.session.findUnique({
       where: { sessionToken: presented },
@@ -335,9 +342,11 @@ export class AuthService {
 
   /**
    * Revoke the presented refresh session and clear the cookie. Idempotent: a missing/unknown
-   * cookie still clears and returns true. (tokenVersion bump on logout is workstream 2.)
+   * cookie still clears and returns true.
    */
   async logout(ctx: RequestContext): Promise<boolean> {
+    await this.revokePresentedKey(ctx);
+
     const presented = this.readRefreshCookie(ctx);
     if (presented) {
       await this.prisma.session.deleteMany({
@@ -346,6 +355,21 @@ export class AuthService {
     }
     this.clearRefreshCookie(ctx);
     return true;
+  }
+
+  /** Revoke the Redis compound key for the tokens presented in this request. */
+  private async revokePresentedKey(ctx: RequestContext): Promise<void> {
+    const accessToken = this.extractAccessToken(ctx);
+    const rbacToken = this.extractRbacToken(ctx);
+    const deviceToken = this.extractDeviceToken(ctx);
+    if (accessToken && rbacToken) {
+      const key = this.tokenStore.buildKey(
+        accessToken,
+        rbacToken,
+        deviceToken ?? '',
+      );
+      await this.tokenStore.revoke(key);
+    }
   }
 
   private async issueTokens(
@@ -358,6 +382,8 @@ export class AuthService {
       email: user.email,
       role: user.role,
     });
+
+    const rbacToken = this.crypto.randomToken();
 
     // Persist the refresh session, bound to the resolved device (ip/userAgent recorded too).
     // One active session per device: drop any prior session for this (user, device) first, so
@@ -380,17 +406,70 @@ export class AuthService {
       });
     });
 
+    // Write the Redis compound key (after the Session row commits).
+    const compoundKey = this.tokenStore.buildKey(
+      accessToken,
+      rbacToken,
+      device?.deviceToken ?? '',
+    );
+    await this.tokenStore.write(compoundKey, {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      tier: user.subscriptionTier ?? 'FREE',
+      deviceId: device?.deviceId ?? null,
+      ip: device?.ip ?? null,
+      userAgent: device?.userAgent ?? null,
+      sessionId: session.id,
+    });
+
     // Deliver the refresh token as an httpOnly, Secure-by-env cookie for browser/SSR clients.
     // It is ALSO returned in the body (below) so API-only clients keep working.
     this.setRefreshCookie(ctx, session.sessionToken);
+    this.setRbacCookie(ctx, rbacToken);
 
     return {
       accessToken,
       refreshToken: session.sessionToken,
+      rbacToken,
       deviceId: device?.deviceId,
       deviceToken: device?.deviceToken,
       user,
     };
+  }
+
+  // --- Token extraction from request context ---
+
+  private extractAccessToken(ctx: RequestContext): string | null {
+    const header = ctx.req.headers.authorization;
+    if (header?.startsWith('Bearer ')) {
+      return header.slice(7);
+    }
+    const name = accessCookieName(this.config);
+    const bag = (ctx.req as unknown as { cookies?: Record<string, string> })
+      .cookies;
+    return bag?.[name] ?? null;
+  }
+
+  private extractRbacToken(ctx: RequestContext): string | null {
+    // Cookie first, then header (same precedence pattern as the access token).
+    const name = rbacCookieName(this.config);
+    const bag = (ctx.req as unknown as { cookies?: Record<string, string> })
+      .cookies;
+    const fromCookie = bag?.[name] ?? null;
+    if (fromCookie) return fromCookie;
+    const header = ctx.req.headers['x-rbac-token'];
+    return (Array.isArray(header) ? header[0] : header) ?? null;
+  }
+
+  private extractDeviceToken(ctx: RequestContext): string | null {
+    const name = deviceCookieName(this.config);
+    const bag = (ctx.req as unknown as { cookies?: Record<string, string> })
+      .cookies;
+    const fromCookie = bag?.[name] ?? null;
+    if (fromCookie) return fromCookie;
+    const header = ctx.req.headers['x-device-token'];
+    return (Array.isArray(header) ? header[0] : header) ?? null;
   }
 
   // --- Refresh-cookie I/O. cookie-parser populates req.cookies; Express keeps the response on
@@ -414,8 +493,20 @@ export class AuthService {
   }
 
   private clearRefreshCookie(ctx: RequestContext): void {
-    // clearCookie must match name + path/domain to actually expire the cookie in the browser.
     const { maxAge: _maxAge, ...clearOpts } = refreshCookieOptions(this.config);
     ctx.req.res?.clearCookie(refreshCookieName(this.config), clearOpts);
+  }
+
+  private setRbacCookie(ctx: RequestContext | undefined, token: string): void {
+    ctx?.req.res?.cookie(
+      rbacCookieName(this.config),
+      token,
+      rbacCookieOptions(this.config),
+    );
+  }
+
+  private clearRbacCookie(ctx: RequestContext): void {
+    const { maxAge: _maxAge, ...clearOpts } = rbacCookieOptions(this.config);
+    ctx.req.res?.clearCookie(rbacCookieName(this.config), clearOpts);
   }
 }

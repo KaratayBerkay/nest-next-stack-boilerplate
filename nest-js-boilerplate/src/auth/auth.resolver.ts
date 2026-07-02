@@ -3,12 +3,11 @@ import { Args, Context, Mutation, Query, Resolver } from '@nestjs/graphql';
 import type { Request } from 'express';
 import { User } from '../@generated/user/user.model';
 import { CsrfGuard } from '../csrf/csrf.guard';
-import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from './auth.service';
 import { AuthPayload } from './auth.types';
 import type { JwtUser } from './auth.types';
 import { CurrentUser } from './current-user.decorator';
-import { JwtAuthGuard } from './jwt-auth.guard';
+import { SessionAuthGuard } from './session-auth.guard';
 import { LoginInput } from './dto/login.input';
 import { RegisterInput } from './dto/register.input';
 import { OAuthProfileInput } from './dto/oauth-profile.input';
@@ -16,10 +15,7 @@ import type { OAuthProfile } from './auth.service';
 
 @Resolver()
 export class AuthResolver {
-  constructor(
-    private readonly auth: AuthService,
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly auth: AuthService) {}
 
   @Mutation(() => AuthPayload)
   register(
@@ -65,9 +61,13 @@ export class AuthResolver {
     });
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Query(() => User)
-  me(@CurrentUser() user: JwtUser): Promise<User> {
-    return this.prisma.user.findUniqueOrThrow({ where: { id: user.userId } });
+  /**
+   * Returns the current user from the Redis session — zero Prisma queries on the hot path.
+   * The `SessionAuthGuard` resolves the full user snapshot from the compound Redis key.
+   */
+  @UseGuards(SessionAuthGuard)
+  @Query(() => User, { name: 'me' })
+  me(@CurrentUser() user: JwtUser): JwtUser {
+    return user;
   }
 }

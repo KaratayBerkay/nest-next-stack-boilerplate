@@ -48,6 +48,13 @@ enum UserRole {
   SUPERADMIN
 }
 
+enum SubscriptionTier {
+  FREE
+  BASIC
+  MEDIUM
+  PREMIUM
+}
+
 enum AuthProviderType {
   CREDENTIALS
   GOOGLE
@@ -247,8 +254,9 @@ model User {
   passwordHash  String?
   passwordSetAt DateTime? @db.Timestamptz(6)
 
-  status UserStatus @default(PENDING_VERIFICATION)
-  role   UserRole   @default(USER)
+  status           UserStatus       @default(PENDING_VERIFICATION)
+  role             UserRole         @default(USER)
+  subscriptionTier SubscriptionTier @default(FREE)
 
   avatarUrl       String?
   bio             String?   @db.Text
@@ -329,6 +337,7 @@ model User {
 
   @@index([status])
   @@index([role])
+  @@index([subscriptionTier])
   @@index([referredById])
   @@index([createdAt])
 }

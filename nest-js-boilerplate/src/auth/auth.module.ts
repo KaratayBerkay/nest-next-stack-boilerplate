@@ -6,6 +6,8 @@ import { MailModule } from '../mail/mail.module';
 import { AuthResolver } from './auth.resolver';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { SessionAuthGuard } from './session-auth.guard';
+import { TokenStoreService } from './token-store.service';
 import { OAuthController } from './oauth/oauth.controller';
 import { OAuthService } from './oauth/oauth.service';
 
@@ -27,7 +29,20 @@ import { OAuthService } from './oauth/oauth.service';
     }),
   ],
   controllers: [OAuthController],
-  providers: [AuthService, AuthResolver, JwtAuthGuard, OAuthService],
-  exports: [AuthService, JwtModule, JwtAuthGuard],
+  providers: [
+    AuthService,
+    AuthResolver,
+    JwtAuthGuard,
+    SessionAuthGuard,
+    TokenStoreService,
+    OAuthService,
+  ],
+  exports: [
+    AuthService,
+    JwtModule,
+    JwtAuthGuard,
+    SessionAuthGuard,
+    TokenStoreService,
+  ],
 })
 export class AuthModule {}

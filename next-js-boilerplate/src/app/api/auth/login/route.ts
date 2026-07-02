@@ -3,6 +3,7 @@ import {
   accessTokenCookieOptions,
   refreshTokenCookieOptions,
   deviceTokenCookieOptions,
+  rbacTokenCookieOptions,
 } from "@/lib/cookie";
 import { graphqlFetch } from "@/lib/backend";
 import { withLogging } from "@/lib/request-logger";
@@ -10,12 +11,12 @@ import { withLogging } from "@/lib/request-logger";
 /**
  * Login BFF.
  *
- * The backend sets httpOnly cookies (device_token, refresh_token) via Set-Cookie
+ * The backend sets httpOnly cookies (device_token, refresh_token, rbac_token) via Set-Cookie
  * headers, but the standard Fetch API **strips** Set-Cookie from server-to-server
  * responses — the BFF never receives them.
  *
  * Instead, the backend returns the values in the GraphQL body, and the BFF sets
- * all 3 cookies directly. This also ensures every cookie carries the correct
+ * all 4 cookies directly. This also ensures every cookie carries the correct
  * Domain, SameSite, and Secure options from our central cookie helpers.
  */
 
@@ -24,6 +25,7 @@ const LOGIN_QUERY = `
     login(input: $input) {
       accessToken
       refreshToken
+      rbacToken
       deviceId
       deviceToken
       user {
@@ -59,6 +61,7 @@ export const POST = withLogging(async (request, log) => {
     login: {
       accessToken: string;
       refreshToken: string;
+      rbacToken?: string;
       deviceId?: string;
       deviceToken?: string;
       user: unknown;
@@ -72,12 +75,13 @@ export const POST = withLogging(async (request, log) => {
     return NextResponse.json({ error: message }, { status });
   }
 
-  const { accessToken, refreshToken, deviceToken, user } = data.login;
+  const { accessToken, refreshToken, rbacToken, deviceToken, user } = data.login;
 
   const response = NextResponse.json({ user, accessToken }, { status: 200 });
 
   response.cookies.set(accessTokenCookieOptions(accessToken));
   response.cookies.set(refreshTokenCookieOptions(refreshToken));
+  if (rbacToken) response.cookies.set(rbacTokenCookieOptions(rbacToken));
   if (deviceToken) response.cookies.set(deviceTokenCookieOptions(deviceToken));
 
   log.info({ userId: (user as { id?: string })?.id }, "login succeeded");

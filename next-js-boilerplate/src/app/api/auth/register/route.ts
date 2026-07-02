@@ -3,6 +3,7 @@ import {
   accessTokenCookieOptions,
   refreshTokenCookieOptions,
   deviceTokenCookieOptions,
+  rbacTokenCookieOptions,
 } from "@/lib/cookie";
 import { graphqlFetch } from "@/lib/backend";
 
@@ -11,6 +12,7 @@ const REGISTER_QUERY = `
     register(input: $input) {
       accessToken
       refreshToken
+      rbacToken
       deviceId
       deviceToken
       user {
@@ -48,6 +50,7 @@ export async function POST(request: Request) {
     register: {
       accessToken: string;
       refreshToken: string;
+      rbacToken?: string;
       deviceId?: string;
       deviceToken?: string;
       user: unknown;
@@ -60,12 +63,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status });
   }
 
-  const { accessToken, refreshToken, deviceToken, user } = data.register;
+  const { accessToken, refreshToken, rbacToken, deviceToken, user } = data.register;
 
   const response = NextResponse.json({ user, accessToken }, { status: 201 });
 
   response.cookies.set(accessTokenCookieOptions(accessToken));
   response.cookies.set(refreshTokenCookieOptions(refreshToken));
+  if (rbacToken) response.cookies.set(rbacTokenCookieOptions(rbacToken));
   if (deviceToken) response.cookies.set(deviceTokenCookieOptions(deviceToken));
 
   return response;
