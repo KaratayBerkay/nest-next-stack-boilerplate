@@ -2,8 +2,9 @@ import { Global, Inject, Module, OnApplicationShutdown } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { RedisHealthIndicator } from './redis-health.indicator';
+import { REDIS_CLIENT } from './redis.tokens';
 
-export const REDIS_CLIENT = Symbol('REDIS_CLIENT');
+export { REDIS_CLIENT } from './redis.tokens';
 
 @Global()
 @Module({

@@ -48,6 +48,10 @@ First-run notes:
 ## Docs
 
 - [Backend docs](docs/backend/README.md) — NestJS architecture, design guide, research
+- [Auth flow](docs/backend/AUTH.md) — Redis-backed sessions: token triple, compound
+  key, instant revocation, tier RBAC. Guarded requests fail closed (503) when Redis is
+  down; `JWT_ACCESS_TTL` drives the Redis session TTL, and `AUTH_IP_STRICT=true`
+  rejects requests whose IP differs from the one captured at login (default: warn only)
 - [Frontend docs](docs/frontend/README.md) — Next.js routes, BFF proxy, testing
 - [Todo / roadmap](docs/todo/README.md) — current phase and backlog
 

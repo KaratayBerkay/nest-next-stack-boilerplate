@@ -16,6 +16,26 @@ export interface JwtPayload {
   role: string;
 }
 
+/**
+ * GraphQL shape of the `me` query: the identity snapshot held in the Redis
+ * session hash. Deliberately NOT the full `User` model — serving `me` from the
+ * snapshot keeps guarded requests off Postgres, so only snapshot fields exist.
+ */
+@ObjectType()
+export class SessionUserPayload {
+  @Field()
+  id!: string;
+
+  @Field()
+  email!: string;
+
+  @Field()
+  role!: string;
+
+  @Field()
+  tier!: string;
+}
+
 /** Full user snapshot resolved from the Redis compound key. */
 export interface SessionUser {
   userId: string;

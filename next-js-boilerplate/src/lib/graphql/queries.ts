@@ -1,11 +1,12 @@
+// `me` is served from the Redis session snapshot (no Postgres on the hot path),
+// so only snapshot fields exist: id, email, role, tier.
 export const ME_QUERY = `
   query Me {
     me {
       id
       email
-      name
-      status
       role
+      tier
     }
   }
 `;

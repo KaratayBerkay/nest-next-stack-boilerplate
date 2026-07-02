@@ -10,12 +10,16 @@ import {
   type ReactNode,
 } from "react";
 
+// `name`/`status` only arrive on login/register (full user in AuthPayload);
+// session rehydration via /api/auth/me returns the Redis snapshot, which
+// carries `tier` instead.
 export type User = {
   id: string;
   email: string;
   name?: string;
-  status: string;
+  status?: string;
   role: string;
+  tier?: string;
 };
 
 type AuthResponse = {

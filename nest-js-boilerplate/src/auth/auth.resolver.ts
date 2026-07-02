@@ -4,7 +4,7 @@ import type { Request } from 'express';
 import { User } from '../@generated/user/user.model';
 import { CsrfGuard } from '../csrf/csrf.guard';
 import { AuthService } from './auth.service';
-import { AuthPayload } from './auth.types';
+import { AuthPayload, SessionUserPayload } from './auth.types';
 import type { JwtUser } from './auth.types';
 import { CurrentUser } from './current-user.decorator';
 import { SessionAuthGuard } from './session-auth.guard';
@@ -66,8 +66,13 @@ export class AuthResolver {
    * The `SessionAuthGuard` resolves the full user snapshot from the compound Redis key.
    */
   @UseGuards(SessionAuthGuard)
-  @Query(() => User, { name: 'me' })
-  me(@CurrentUser() user: JwtUser): JwtUser {
-    return user;
+  @Query(() => SessionUserPayload, { name: 'me' })
+  me(@CurrentUser() user: JwtUser): SessionUserPayload {
+    return {
+      id: user.userId,
+      email: user.email,
+      role: user.role,
+      tier: user.tier,
+    };
   }
 }

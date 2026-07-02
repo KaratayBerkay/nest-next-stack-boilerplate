@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies, headers as nextHeaders } from "next/headers";
+import { DEVICE_TOKEN_COOKIE, RBAC_TOKEN_COOKIE } from "./cookie";
 import { serverEnv } from "./env";
 
 export interface BackendResponse<T = unknown> {
@@ -19,6 +20,20 @@ async function forwardedForHeader(): Promise<Record<string, string>> {
   const reqHeaders = await nextHeaders();
   const forwarded = reqHeaders.get("x-forwarded-for");
   return forwarded ? { "x-forwarded-for": forwarded } : {};
+}
+
+async function sessionTokenHeaders(): Promise<Record<string, string>> {
+  // The BFF's cookie names (rbac_token/device_token) don't match the backend's
+  // production `__Secure-` names, so forwarding the Cookie header alone isn't
+  // enough for SessionAuthGuard. Send the guard's server-client fallback
+  // headers instead.
+  const cookieStore = await cookies();
+  const rbac = cookieStore.get(RBAC_TOKEN_COOKIE)?.value;
+  const device = cookieStore.get(DEVICE_TOKEN_COOKIE)?.value;
+  return {
+    ...(rbac ? { "x-rbac-token": rbac } : {}),
+    ...(device ? { "x-device-token": device } : {}),
+  };
 }
 
 export async function backendFetch<T = unknown>(
@@ -75,6 +90,7 @@ export async function graphqlFetch<T>(
       ...(cookieHeader ? { Cookie: cookieHeader } : {}),
       ...(bearerToken ? { Authorization: `Bearer ${bearerToken}` } : {}),
       ...(await forwardedForHeader()),
+      ...(await sessionTokenHeaders()),
     },
     body: JSON.stringify({ query, variables }),
   });

@@ -5,7 +5,7 @@ import {
   HealthIndicatorResult,
 } from '@nestjs/terminus';
 import Redis from 'ioredis';
-import { REDIS_CLIENT } from './redis.module';
+import { REDIS_CLIENT } from './redis.tokens';
 
 @Injectable()
 export class RedisHealthIndicator extends HealthIndicator {
