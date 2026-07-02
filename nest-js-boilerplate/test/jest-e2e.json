@@ -1,0 +1,26 @@
+{
+  "moduleFileExtensions": ["js", "mjs", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "setupFiles": ["<rootDir>/setup-e2e.ts"],
+  "testRegex": ".e2e-spec.ts$",
+  "testPathIgnorePatterns": [
+    "/node_modules/",
+    "cli-plugin.e2e-spec.ts",
+    "openapi-plugin.e2e-spec.ts",
+    "broker-.*\\.e2e-spec\\.ts$",
+    "swc.e2e-spec.ts",
+    "(typeorm|mongoose|mikro-orm|sequelize)\\.e2e-spec\\.ts$"
+  ],
+  "transform": {
+    "^.+\\.m?[tj]s$": [
+      "ts-jest",
+      { "isolatedModules": true, "tsconfig": { "allowJs": true } }
+    ]
+  },
+  "transformIgnorePatterns": [
+    "/node_modules/(?!.*(prisma-graphql-type-decimal|otplib|@otplib|@scure|@noble))"
+  ],
+  "maxWorkers": 1,
+  "forceExit": true
+}

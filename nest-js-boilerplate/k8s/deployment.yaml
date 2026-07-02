@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nest-boilerplate
+  labels:
+    app.kubernetes.io/name: nest-boilerplate
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nest-boilerplate
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nest-boilerplate
+    spec:
+      # SIGTERM -> Nest enableShutdownHooks (Prisma $disconnect, BullMQ drain, outbox timer).
+      # Allow time for in-flight HTTP + BullMQ jobs to finish (preStop sleep + drain).
+      terminationGracePeriodSeconds: 40
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000 # the image's `node` user
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: app
+          image: nest-boilerplate:prod # pin to an immutable tag/digest (e.g. :<git-sha>) in real deployments
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3000
+            - name: grpc
+              containerPort: 5050
+          envFrom:
+            - configMapRef:
+                name: nest-boilerplate-config
+            - secretRef:
+                name: nest-boilerplate-secrets
+          # Boot does Prisma connect + GraphQL schema build -> can be slow. startupProbe gates
+          # liveness/readiness until the app is up, so liveness can stay aggressive afterwards.
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 3
+            failureThreshold: 30 # up to ~90s to come up
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/ready # Terminus: Prisma DB ping + heap
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              # k8s sends SIGTERM and removes the pod from Service endpoints concurrently; this
+              # short sleep lets in-flight LB/Ingress traffic drain before Nest stops accepting.
+              exec:
+                command: ["sleep", "10"]
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              memory: "512Mi" # keep NODE_OPTIONS max-old-space-size (~384) below this
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true # safe: prod keeps the GraphQL SDL in-memory
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp # scratch for Node / Prisma engine under a read-only root fs
+      volumes:
+        - name: tmp
+          emptyDir: {}

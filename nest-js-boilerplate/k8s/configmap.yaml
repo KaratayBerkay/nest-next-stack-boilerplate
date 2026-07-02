@@ -1,0 +1,38 @@
+# Non-secret runtime configuration. Secrets (DATABASE_URL, JWT_SECRET, ...) live in a Secret,
+# see secret.example.yaml. Values here are examples — tune per environment.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nest-boilerplate-config
+  labels:
+    app.kubernetes.io/name: nest-boilerplate
+data:
+  NODE_ENV: "production"
+  PORT: "3000"
+  GRPC_URL: "0.0.0.0:5050"
+
+  # Node runtime tuning — overrides the defaults baked into the image. Keep
+  # max-old-space-size ~75% of the container memory limit (see Deployment resources).
+  NODE_OPTIONS: "--max-old-space-size=384"
+  UV_THREADPOOL_SIZE: "4"
+
+  # Datastores (host/port only; credentials go in the Secret / DATABASE_URL).
+  DATABASE_HOST: "postgres"
+  DATABASE_PORT: "5432"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+
+  # App behavior.
+  LOG_LEVEL: "info"
+  APP_URL: "https://api.example.com"
+  COOKIE_DOMAIN: "example.com"
+  COOKIE_SAMESITE: "lax"
+  JWT_ACCESS_TTL: "900s"
+  OUTBOX_POLL_MS: "5000"
+  MAIL_FROM: "no-reply@example.com"
+  MAIL_REPLY_TO: "support@example.com"
+  FRONTEND_EVENTS_CONSUMER_ENABLED: "false"
+
+  # Web Push (VAPID) — public key + subject are not secrets
+  VAPID_PUBLIC_KEY: "CHANGE_ME"
+  VAPID_SUBJECT: "mailto:admin@example.com"

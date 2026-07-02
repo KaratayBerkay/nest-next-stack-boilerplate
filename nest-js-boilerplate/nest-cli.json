@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "assets": [{ "include": "serve-static/public/**/*", "outDir": "dist" }],
+    "plugins": [
+      {
+        "name": "@nestjs/graphql",
+        "options": {
+          "typeFileNameSuffix": [".gqlmodel.ts"],
+          "introspectComments": true
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "brand": "v1",
+  "navHome": "Ana Sayfa",
+  "navUsers": "Kullanıcılar",
+  "navChatRoom": "Sohbet Odası",
+  "navMessages": "Mesajlar",
+  "navFindFriends": "Arkadaş Bul",
+  "navUiComponents": "UI Bileşenleri",
+  "navErrorTest": "Hata Testi",
+  "navNotFound": "Bulunamadı",
+  "swipeLeftToClose": "Kapatmak için sola kaydırın",
+  "inbox": "Mesajlar",
+  "noUnread": "Okunmamış mesaj yok",
+  "viewAll": "Tüm mesajları gör",
+  "signOut": "Çıkış Yap",
+  "signIn": "Giriş Yap",
+  "account": "Hesap",
+  "close": "Kapat",
+  "authLoading": "Kimlik doğrulama...",
+  "toggleSidebar": "Kenar çubuğunu aç/kapat"
+}

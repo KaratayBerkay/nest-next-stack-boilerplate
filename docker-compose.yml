@@ -1,0 +1,276 @@
+# Root docker-compose for the boilers monorepo — everything runs with one command.
+#
+# Usage:
+#   Start everything:  docker compose up -d
+#   + Kafka:           docker compose --profile kafka up -d
+#   + Brokers:         docker compose --profile brokers up -d
+#   + Mongo:           docker compose --profile mongo up -d
+name: boilers
+
+services:
+  # ──────────────────────────────────────────────────────
+  # Core (always on)
+  # ──────────────────────────────────────────────────────
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-nest}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nest}
+      POSTGRES_DB: ${POSTGRES_DB:-nest}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nest} -d ${POSTGRES_DB:-nest}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ──────────────────────────────────────────────────────
+  # Message / task brokers (profile: brokers)
+  # ──────────────────────────────────────────────────────
+  rabbitmq:
+    image: rabbitmq:4-management
+    profiles: ["brokers", "all"]
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-nest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-nest}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MGMT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmqdata:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+  nats:
+    image: nats:2.10-alpine
+    profiles: ["brokers", "all"]
+    restart: unless-stopped
+    command: ["--jetstream", "--http_port", "8222"]
+    ports:
+      - "${NATS_PORT:-4222}:4222"
+      - "${NATS_MONITOR_PORT:-8222}:8222"
+
+  mqtt:
+    image: eclipse-mosquitto:2
+    profiles: ["brokers", "all"]
+    restart: unless-stopped
+    ports:
+      - "${MQTT_PORT:-1883}:1883"
+    volumes:
+      - mqttdata:/mosquitto/data
+
+  # ──────────────────────────────────────────────────────
+  # Kafka, single-node KRaft (profile: kafka)
+  # ──────────────────────────────────────────────────────
+  kafka:
+    image: apache/kafka:3.9.0
+    profiles: ["kafka", "all"]
+    restart: unless-stopped
+    ports:
+      - "${KAFKA_PORT:-9092}:9092"
+    environment:
+      CLUSTER_ID: 5L6g3nShT-eMCtK--X86sw
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+    volumes:
+      - kafkadata:/var/lib/kafka/data
+
+  # ──────────────────────────────────────────────────────
+  # MongoDB for the Mongoose feature (profile: mongo)
+  # ──────────────────────────────────────────────────────
+  mongo:
+    image: mongo:7
+    profiles: ["mongo", "all"]
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-nest}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-nest}
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongodata:/data/db
+
+  # ──────────────────────────────────────────────────────
+  # Applications
+  # ──────────────────────────────────────────────────────
+  app:
+    build:
+      context: ./nest-js-boilerplate
+      dockerfile: ./prod/docker/backend/Dockerfile.prod
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${APP_PORT:-3000}:3000"
+      - "${GRPC_PORT:-5050}:5050"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-nest}:${POSTGRES_PASSWORD:-nest}@postgres:5432/${POSTGRES_DB:-nest}?schema=public
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_FILE=${LOG_FILE:-logs/app.log}
+      - KAFKA_BROKER=kafka:9092
+      - APP_URL=http://localhost:3000
+      - NEXT_PUBLIC_APP_URL=http://localhost:3200
+    volumes:
+      - ./nest-js-boilerplate/logs:/app/logs
+
+  nextjs:
+    build:
+      context: ./next-js-boilerplate
+      dockerfile: ./prod/docker/frontend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_started
+      fluent-bit:
+        condition: service_started
+    ports:
+      - "${FRONTEND_PORT:-3200}:3100"
+    environment:
+      - NODE_ENV=production
+      - LOG_LEVEL=info
+      - PORT=3100
+      - HOSTNAME=0.0.0.0
+      - APP_URL=http://app:3000
+      - NEXT_PUBLIC_APP_URL=http://localhost:3200
+      - NEXT_PUBLIC_WS_URL=ws://localhost:3200
+      - NEXT_PUBLIC_MSG_WS_URL=ws://localhost:3003
+      - COOKIE_DOMAIN=
+      - KAFKA_BROKER=kafka:9092
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: "fluent-bit:24224"
+        tag: frontend
+
+  # ──────────────────────────────────────────────────────
+  # ELK logging stack
+  # ──────────────────────────────────────────────────────
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - bootstrap.memory_lock=true
+    ulimits:
+      memlock: { soft: -1, hard: -1 }
+    ports:
+      - "${ELASTICSEARCH_PORT:-9200}:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.15.3
+    restart: unless-stopped
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "${KIBANA_PORT:-5601}:5601"
+
+  fluent-bit:
+    image: fluent/fluent-bit:3.1
+    restart: unless-stopped
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    ports:
+      - "${FLUENT_FORWARD_PORT:-24224}:24224"
+    volumes:
+      - ./nest-js-boilerplate/docker/fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
+      - ./nest-js-boilerplate/docker/fluent-bit/parsers.conf:/fluent-bit/etc/parsers.conf:ro
+      - ./nest-js-boilerplate/docker/fluent-bit/level_name.lua:/fluent-bit/etc/level_name.lua:ro
+      - ./nest-js-boilerplate/logs:/logs:ro
+      - fluentbitstate:/state
+
+  # ──────────────────────────────────────────────────────
+  # Object storage
+  # ──────────────────────────────────────────────────────
+  minio:
+    image: quay.io/minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio-setup:
+    image: quay.io/minio/mc:latest
+    restart: no
+    depends_on:
+      minio:
+        condition: service_started
+    entrypoint: >
+      /bin/sh -c "
+      until mc config host add local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin}; do sleep 1; done &&
+      mc mb --ignore-existing local/${MINIO_BUCKET:-uploads} &&
+      mc anonymous set download local/${MINIO_BUCKET:-uploads} &&
+      echo 'MinIO bucket ready'"
+
+volumes:
+  pgdata:
+  redisdata:
+  rabbitmqdata:
+  mqttdata:
+  kafkadata:
+  mongodata:
+  esdata:
+  fluentbitstate:
+  minio_data:

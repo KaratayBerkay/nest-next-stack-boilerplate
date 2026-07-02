@@ -1,0 +1,56 @@
+# DB migrations run as a one-shot Job (NOT in the app pod — the prod image has no prisma CLI,
+# and N replicas would race). Run/await this before rolling out a new Deployment, e.g. as a
+# CI step (`kubectl apply` + `kubectl wait --for=condition=complete`) or a Helm pre-upgrade hook.
+# Uses the `migrate` build target: docker build -f Dockerfile.prod --target migrate -t <repo>:migrate .
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: nest-boilerplate-migrate
+  labels:
+    app.kubernetes.io/name: nest-boilerplate
+    app.kubernetes.io/component: migrate
+spec:
+  backoffLimit: 3
+  activeDeadlineSeconds: 300
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nest-boilerplate
+        app.kubernetes.io/component: migrate
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: migrate
+          image: nest-boilerplate:migrate # pin to an immutable tag/digest in real deployments
+          command: ["pnpm", "exec", "prisma", "migrate", "deploy"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: nest-boilerplate-secrets
+                  key: DATABASE_URL
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              memory: "512Mi"
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}

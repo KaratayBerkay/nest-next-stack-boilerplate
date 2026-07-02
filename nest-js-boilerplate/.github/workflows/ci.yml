@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: nest
+          POSTGRES_PASSWORD: nest
+          POSTGRES_DB: nest
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U nest -d nest"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://nest:nest@localhost:5433/nest?schema=public
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      JWT_SECRET: ci-jwt-secret
+      JWT_ACCESS_TTL: 900s
+      JWT_REFRESH_TTL: 30d
+      ENCRYPTION_KEY: '0000000000000000000000000000000000000000000000000000000000000000'
+      COOKIE_SECRET: ci-cookie-secret
+      CSRF_SECRET: ci-csrf-secret
+      APP_URL: http://localhost:3000
+      GRPC_URL: 0.0.0.0:5050
+      OUTBOX_POLL_MS: '0'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # No `version:` — it's read from package.json's "packageManager" pin (specifying both
+      # errors with ERR_PNPM_BAD_PM_VERSION).
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      # postinstall runs `prisma generate` (needs DATABASE_URL, set above).
+      - run: pnpm install --frozen-lockfile
+
+      # Apply migrations to the CI database before the e2e suite.
+      - run: pnpm db:deploy
+
+      - run: pnpm run build
+      - run: pnpm run lint
+      - run: pnpm test
+      - run: pnpm run test:e2e

@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+// Internal service-to-service contract. Used for in-cluster RPC between this app and
+// other backend services (not exposed to public clients — that's GraphQL/REST/WS).
+package internal;
+
+service Internal {
+  // Unary: liveness/echo probe.
+  rpc Ping (PingRequest) returns (PingReply) {}
+  // Unary: trivial compute to prove typed request/response round-trips.
+  rpc Sum (SumRequest) returns (SumReply) {}
+  // Server streaming: one request -> many responses (Nest streams an Observable).
+  rpc Countdown (CountdownRequest) returns (stream CountdownReply) {}
+}
+
+message PingRequest {
+  string message = 1;
+}
+
+message PingReply {
+  string message = 1;
+  double timestamp = 2;
+}
+
+message SumRequest {
+  repeated int32 numbers = 1;
+}
+
+message SumReply {
+  int32 total = 1;
+}
+
+message CountdownRequest {
+  int32 from = 1;
+}
+
+message CountdownReply {
+  int32 value = 1;
+}

@@ -1,0 +1,11 @@
+.next/
+out/
+build/
+node_modules/
+coverage/
+test-results/
+playwright-report/
+blob-report/
+pnpm-lock.yaml
+docs/
+public/sw.js

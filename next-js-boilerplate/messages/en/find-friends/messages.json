@@ -1,0 +1,18 @@
+{
+  "title": "Find Friends",
+  "addFriends": "Add Friends",
+  "pendingRequests": "Pending Requests",
+  "searchHint": "Type at least 3 characters to search...",
+  "searching": "Searching...",
+  "noUsersFound": "No users found.",
+  "pending": "Pending",
+  "addFriend": "Add Friend",
+  "prev": "Prev",
+  "next": "Next",
+  "noRequests": "No pending friend requests.",
+  "accept": "Accept",
+  "decline": "Decline",
+  "awaiting": "Awaiting response",
+  "sentByYou": "(sent by you)",
+  "usersFound": "{count} users found"
+}

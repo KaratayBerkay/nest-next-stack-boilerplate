@@ -1,0 +1,247 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant touch (&:where(.touch-device, .touch-device *));
+@custom-variant mouse (&:where(.mouse-device, .mouse-device *));
+
+/*
+ * Theme system — each named theme defines its own color palette via CSS
+ * custom properties. Add new themes by dropping another `.theme-*` block.
+ *
+ * The active theme class is set on <html> by the ThemeProvider hook.
+ * Components consume these tokens through the Tailwind mappings below
+ * (e.g. `bg-surface`, `text-fg`, `border-border`).
+ */
+
+/* ── Light (default) ─────────────────────────────────────────────── */
+:root,
+.theme-light {
+  --bg: #ffffff;
+  --fg: #171717;
+  --brand: #4f46e5;
+  --brand-fg: #ffffff;
+  --muted: #71717a;
+  --border: #e4e4e7;
+  --surface: #fafafa;
+  --surface-hover: #f4f4f5;
+}
+
+/* ── Dark ────────────────────────────────────────────────────────── */
+.theme-dark {
+  --bg: #0a0a0a;
+  --fg: #ededed;
+  --brand: #818cf8;
+  --brand-fg: #ffffff;
+  --muted: #a1a1aa;
+  --border: #27272a;
+  --surface: #18181b;
+  --surface-hover: #27272a;
+}
+
+/* ── Ocean ───────────────────────────────────────────────────────── */
+.theme-ocean {
+  --bg: #f0f9ff;
+  --fg: #0c4a6e;
+  --brand: #0284c7;
+  --brand-fg: #ffffff;
+  --muted: #64748b;
+  --border: #bae6fd;
+  --surface: #e0f2fe;
+  --surface-hover: #bae6fd;
+}
+
+/*
+ * theme-violet — a deep purple dark theme.
+ * Apply `.theme-violet` to `<html>` to activate.
+ * Define your custom palette here; all `bg-*` / `text-*` / `border-*`
+ * utilities referencing mapped tokens update automatically.
+ */
+.theme-violet {
+  --bg: #0b0b1a;
+  --fg: #e2e8f0;
+  --brand: #a78bfa;
+  --brand-fg: #0b0b1a;
+  --muted: #94a3b8;
+  --border: #1e293b;
+  --surface: #12122a;
+  --surface-hover: #1a1a3e;
+}
+
+/* ── Map tokens to Tailwind utilities ────────────────────────────── */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-brand: var(--brand);
+  --color-brand-fg: var(--brand-fg);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* ── Theme-aware shadows ─────────────────────────────────────────── */
+@theme inline {
+  --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.08), 0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-md: 0 4px 6px rgb(0 0 0 / 0.07), 0 2px 4px rgb(0 0 0 / 0.04);
+  --shadow-lg: 0 10px 15px rgb(0 0 0 / 0.08), 0 4px 6px rgb(0 0 0 / 0.03);
+  --shadow-xl: 0 20px 25px rgb(0 0 0 / 0.1), 0 8px 10px rgb(0 0 0 / 0.04);
+  --shadow-elevated:
+    0 0 0 1px rgb(0 0 0 / 0.03), 0 2px 4px rgb(0 0 0 / 0.05),
+    0 12px 24px rgb(0 0 0 / 0.1);
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* ── Hidden scrollbar, scroll via swipe/wheel ───────────────────── */
+* {
+  scrollbar-width: none !important;
+}
+*::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* ── Shared surface style (kept for existing pages) ──────────────── */
+.surface {
+  border: 1px solid color-mix(in oklab, currentColor 12%, transparent);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── Animations ──────────────────────────────────────────────────── */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes slide-out-right {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+@theme {
+  --animate-fade-in: fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-fade-in-up: fade-in-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-fade-in-down: fade-in-down 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-scale-in: scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-slide-in-right: slide-in-right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-slide-in-left: slide-in-left 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-slide-out-right: slide-out-right 0.25s cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* ── Transition defaults ─────────────────────────────────────────── */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    @media (prefers-reduced-motion: no-preference) {
+      transition-property:
+        background-color, border-color, color, fill, stroke, opacity,
+        box-shadow, transform;
+      transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+      transition-duration: 200ms;
+    }
+  }
+}
+
+/* ── Device-type utilities (set by useDeviceType) ────────────────── */
+@utility touch-only {
+  display: none;
+  .touch-device & {
+    display: revert;
+  }
+}
+@utility mouse-only {
+  display: none;
+  .mouse-device & {
+    display: revert;
+  }
+}
+
+/* ── Responsive container helper ─────────────────────────────────── */
+@layer utilities {
+  .container-responsive {
+    width: 100%;
+    max-width: 100%;
+  }
+  @media (width >= 40rem) {
+    .container-responsive {
+      max-width: 40rem;
+    }
+  }
+  @media (width >= 48rem) {
+    .container-responsive {
+      max-width: 48rem;
+    }
+  }
+  @media (width >= 64rem) {
+    .container-responsive {
+      max-width: 64rem;
+    }
+  }
+}

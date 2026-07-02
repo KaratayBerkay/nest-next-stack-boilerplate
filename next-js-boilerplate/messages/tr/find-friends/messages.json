@@ -1,0 +1,18 @@
+{
+  "title": "Arkadaş Bul",
+  "addFriends": "Arkadaş Ekle",
+  "pendingRequests": "Bekleyen İstekler",
+  "searchHint": "Aramak için en az 3 karakter yazın...",
+  "searching": "Aranıyor...",
+  "noUsersFound": "Kullanıcı bulunamadı.",
+  "pending": "Bekliyor",
+  "addFriend": "Arkadaş Ekle",
+  "prev": "Önceki",
+  "next": "Sonraki",
+  "noRequests": "Bekleyen arkadaşlık isteği yok.",
+  "accept": "Kabul Et",
+  "decline": "Reddet",
+  "awaiting": "Yanıt bekleniyor",
+  "sentByYou": "(sizin gönderdiğiniz)",
+  "usersFound": "{count} kullanıcı bulundu"
+}

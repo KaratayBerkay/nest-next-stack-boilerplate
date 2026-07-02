@@ -1,0 +1,18 @@
+{
+  "title": "Messages",
+  "connected": "Connected",
+  "disconnected": "Disconnected",
+  "chats": "Chats",
+  "friends": "Friends",
+  "searchUsers": "Search all users...",
+  "searchFriends": "Search friends...",
+  "add": "Add",
+  "noConversations": "No conversations yet",
+  "noFriends": "No friends yet. Find people to add!",
+  "selectConversation": "Select a conversation",
+  "noMessages": "No messages yet. Say hello!",
+  "inputPlaceholder": "Type a message...",
+  "connecting": "Connecting...",
+  "send": "Send",
+  "loading": "Loading..."
+}

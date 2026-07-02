@@ -1,0 +1,36 @@
+# pnpm 11 build-script approval (the "pnpm" field in package.json is no longer read).
+# Each entry is an explicit decision (true = run its postinstall, false = skip it),
+# which prevents pnpm's interactive approval prompt / ERR_PNPM_IGNORED_BUILDS and keeps
+# `pnpm install` reproducible on any machine.
+allowBuilds:
+  # eslint's native TS import resolver ships prebuilt bindings as optional deps -> skip build.
+  unrs-resolver: false
+  # Prisma needs its postinstall (engine download + client generation) to run.
+  '@prisma/client': true
+  '@prisma/engines': true
+  prisma: true
+  esbuild: true
+  # Apollo's bundled protobufjs build is only needed for usage reporting we don't use.
+  '@apollo/protobufjs': false
+  # msgpackr-extract is an OPTIONAL native accelerator for msgpackr (used by BullMQ);
+  # msgpackr falls back to a pure-JS codec without it -> skip the build for portability.
+  msgpackr-extract: false
+  # protobufjs (via @grpc/proto-loader) postinstall only sets up its CLI/codegen tooling;
+  # the published runtime is prebuilt and gRPC works without it -> skip.
+  protobufjs: false
+  # Suites' postinstalls try to patch @suites/unit's shipped .d.ts via a relative `../unit/...`
+  # path that doesn't resolve under pnpm's non-flat node_modules (ENOENT) -> they no-op/error.
+  # Skip them and use the documented `global.d.ts` reference-types config instead (portable).
+  '@suites/di.nestjs': false
+  '@suites/doubles.jest': false
+  # @scarf/scarf is a telemetry/analytics package pulled in transitively; its postinstall only
+  # phones home install stats -> skip it.
+  '@scarf/scarf': false
+  # @swc/core's native binding ships prebuilt as a platform optional dep (like unrs-resolver),
+  # so transform works without its postinstall (verified) -> skip the build for portability.
+  '@swc/core': false
+  # SQLite drivers for the alt-ORM proof modules (TypeORM/MikroORM use better-sqlite3,
+  # Sequelize uses sqlite3). Native addons -> must run their install/build to fetch the
+  # prebuilt binary (or compile). Used only by hermetic :memory: e2e tests, not the app.
+  better-sqlite3: true
+  sqlite3: true

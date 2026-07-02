@@ -1,0 +1,16 @@
+{
+  "title": "Chat Rooms",
+  "connected": "Connected",
+  "connecting": "Connecting...",
+  "rooms": "Rooms",
+  "online": "Online ({count})",
+  "noOneHere": "No one here yet",
+  "noMessages": "No messages yet. Start the conversation!",
+  "send": "Send",
+  "messagePlaceholder": "Message #{room}",
+  "openRooms": "Open rooms",
+  "countOnline": "{count} online",
+  "signInRequired": "Sign in to join chat rooms",
+  "roomMembers": "Members",
+  "loadEarlier": "Load earlier messages"
+}

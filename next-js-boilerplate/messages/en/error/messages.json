@@ -1,0 +1,13 @@
+{
+  "notFound": "Not found",
+  "pageNotFound": "This page could not be found.",
+  "v1NotFound": "This v1 resource does not exist.",
+  "backHome": "Go home",
+  "backToV1": "Back to v1 home",
+  "somethingWentWrong": "Something went wrong",
+  "somethingWentWrongV1": "Something went wrong in v1",
+  "reference": "Reference:",
+  "tryAgain": "Try again",
+  "failedToLoad": "Failed to load messages",
+  "loadingMessages": "Loading messages..."
+}

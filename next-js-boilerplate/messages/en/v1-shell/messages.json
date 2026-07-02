@@ -1,0 +1,21 @@
+{
+  "brand": "v1",
+  "navHome": "Home",
+  "navUsers": "Users",
+  "navChatRoom": "Chat Room",
+  "navMessages": "Messages",
+  "navFindFriends": "Find Friends",
+  "navUiComponents": "UI Components",
+  "navErrorTest": "Error Test",
+  "navNotFound": "Not Found",
+  "swipeLeftToClose": "Swipe left to close",
+  "inbox": "Messages",
+  "noUnread": "No unread messages",
+  "viewAll": "View all messages",
+  "signOut": "Sign Out",
+  "signIn": "Sign In",
+  "account": "Account",
+  "close": "Close",
+  "authLoading": "Auth...",
+  "toggleSidebar": "Toggle sidebar"
+}

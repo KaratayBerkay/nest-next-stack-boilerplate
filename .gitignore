@@ -1,0 +1,68 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.*
+
+# compiled output
+dist/
+dist2/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# testing
+coverage/
+.nyc_output
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# OS
+.DS_Store
+
+# IDEs and editors
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.sublime-workspace
+
+# temp
+.temp
+.tmp
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Prisma
+prisma/*.db
+prisma/migrations/dev.db*
+src/@generated
+src/schema.gql
+
+# vercel
+.vercel
+
+# misc
+*.pem
+.next/
+next-env.d.ts

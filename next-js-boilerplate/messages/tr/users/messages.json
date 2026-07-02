@@ -1,0 +1,11 @@
+{
+  "title": "Kullanıcılar",
+  "tapToView": "Detayları görmek için bir satıra dokunun.",
+  "loading": "Kullanıcılar yükleniyor...",
+  "userNotFound": "Kullanıcı bulunamadı",
+  "backToUsers": "Kullanıcılara Dön",
+  "name": "İsim",
+  "email": "E-posta",
+  "role": "Rol",
+  "swipeBack": "Geri dönmek için sola kaydırın..."
+}

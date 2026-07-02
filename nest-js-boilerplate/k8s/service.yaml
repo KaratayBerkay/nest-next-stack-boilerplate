@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nest-boilerplate
+  labels:
+    app.kubernetes.io/name: nest-boilerplate
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: nest-boilerplate
+  ports:
+    - name: http
+      port: 80
+      targetPort: http # GraphQL / REST / WebSockets
+    - name: grpc
+      port: 5050
+      targetPort: grpc # internal service-to-service gRPC

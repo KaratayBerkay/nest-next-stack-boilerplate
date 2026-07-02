@@ -1,0 +1,18 @@
+{
+  "title": "Mesajlar",
+  "connected": "Bağlandı",
+  "disconnected": "Bağlantı Kesildi",
+  "chats": "Sohbetler",
+  "friends": "Arkadaşlar",
+  "searchUsers": "Tüm kullanıcıları ara...",
+  "searchFriends": "Arkadaşları ara...",
+  "add": "Ekle",
+  "noConversations": "Henüz sohbet yok",
+  "noFriends": "Henüz arkadaş yok. Eklemek için kişi bulun!",
+  "selectConversation": "Bir sohbet seçin",
+  "noMessages": "Henüz mesaj yok. Merhaba de!",
+  "inputPlaceholder": "Bir mesaj yazın...",
+  "connecting": "Bağlanıyor...",
+  "send": "Gönder",
+  "loading": "Yükleniyor..."
+}
