@@ -69,7 +69,10 @@ COPY --from=builder --chown=node:node /app/package.json ./package.json
 COPY --from=builder --chown=node:node /app/prisma ./prisma
 COPY --from=builder --chown=node:node /app/prisma.config.ts ./prisma.config.ts
 USER node
-CMD ["pnpm", "exec", "prisma", "migrate", "deploy"]
+# Invoke the CLI directly: `pnpm exec` (pnpm 11) first verifies deps against the lockfile
+# (absent here) and auto-runs `pnpm install`, which fails read-only as the node user —
+# and corepack would download pnpm from the network at container start.
+CMD ["node_modules/.bin/prisma", "migrate", "deploy"]
 
 ############################################################
 # pruner — drop devDependencies to get the prod-only node_modules for runtime

@@ -88,17 +88,18 @@ services:
     image: apache/kafka:3.9.0
     profiles: ["kafka", "all"]
     restart: unless-stopped
+    # In-network clients (the app) use kafka:9092; host clients use localhost:29092.
     ports:
-      - "${KAFKA_PORT:-9092}:9092"
+      - "${KAFKA_PORT:-29092}:29092"
     environment:
       CLUSTER_ID: 5L6g3nShT-eMCtK--X86sw
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:${KAFKA_PORT:-29092}
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
@@ -126,12 +127,28 @@ services:
   # ──────────────────────────────────────────────────────
   # Applications
   # ──────────────────────────────────────────────────────
+  # One-shot: applies Prisma migrations before the app starts (the runtime image
+  # ships without the prisma CLI by design — see Dockerfile.prod's migrate target).
+  migrate:
+    build:
+      context: ./nest-js-boilerplate
+      dockerfile: ../prod/docker/backend/Dockerfile.prod
+      target: migrate
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-nest}:${POSTGRES_PASSWORD:-nest}@postgres:5432/${POSTGRES_DB:-nest}?schema=public
+
   app:
     build:
       context: ./nest-js-boilerplate
-      dockerfile: ./prod/docker/backend/Dockerfile.prod
+      dockerfile: ../prod/docker/backend/Dockerfile.prod
     restart: unless-stopped
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       redis:
@@ -143,19 +160,33 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - DATABASE_URL=postgresql://${POSTGRES_USER:-nest}:${POSTGRES_PASSWORD:-nest}@postgres:5432/${POSTGRES_DB:-nest}?schema=public
+      # The app reads REDIS_HOST/REDIS_PORT (not REDIS_URL) — defaults are localhost,
+      # which is wrong inside a container.
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - REDIS_URL=redis://redis:6379
+      # Required at boot (getOrThrow). Dev-grade defaults; override via .env in real deploys.
+      - JWT_SECRET=${JWT_SECRET:-dev-only-jwt-secret-change-me}
+      # 64 hex chars — AES-256-GCM key for MFA TOTP secrets.
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-0000000000000000000000000000000000000000000000000000000000000000}
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - LOG_FILE=${LOG_FILE:-logs/app.log}
       - KAFKA_BROKER=kafka:9092
       - APP_URL=http://localhost:3000
+      - FRONTEND_URL=http://localhost:3200
       - NEXT_PUBLIC_APP_URL=http://localhost:3200
+      - MINIO_ENDPOINT=minio
+      - MINIO_PORT=9000
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin}
+      - MINIO_BUCKET=${MINIO_BUCKET:-uploads}
     volumes:
       - ./nest-js-boilerplate/logs:/app/logs
 
   nextjs:
     build:
       context: ./next-js-boilerplate
-      dockerfile: ./prod/docker/frontend/Dockerfile
+      dockerfile: ../prod/docker/frontend/Dockerfile
     restart: unless-stopped
     depends_on:
       app:
@@ -178,7 +209,10 @@ services:
     logging:
       driver: fluentd
       options:
-        fluentd-address: "fluent-bit:24224"
+        # The fluentd log driver runs in the Docker daemon (host side) — compose service
+        # names don't resolve there, so target fluent-bit's host-published forward port.
+        fluentd-address: "localhost:${FLUENT_FORWARD_PORT:-24224}"
+        fluentd-async: "true"
         tag: frontend
 
   # ──────────────────────────────────────────────────────
@@ -259,7 +293,7 @@ services:
         condition: service_started
     entrypoint: >
       /bin/sh -c "
-      until mc config host add local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin}; do sleep 1; done &&
+      until mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin}; do sleep 1; done &&
       mc mb --ignore-existing local/${MINIO_BUCKET:-uploads} &&
       mc anonymous set download local/${MINIO_BUCKET:-uploads} &&
       echo 'MinIO bucket ready'"
