@@ -203,6 +203,9 @@ importers:
       joi:
         specifier: ^18.2.3
         version: 18.2.3
+      jsonwebtoken:
+        specifier: ^9.0.3
+        version: 9.0.3
       kafkajs:
         specifier: ^2.2.4
         version: 2.2.4
@@ -239,6 +242,9 @@ importers:
       pg:
         specifier: ^8.21.0
         version: 8.21.0
+      pg-pool:
+        specifier: ^3.14.0
+        version: 3.14.0(pg@8.21.0)
       pino:
         specifier: ^10.3.1
         version: 10.3.1
