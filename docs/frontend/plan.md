@@ -26,7 +26,7 @@ merge. Use it if you want PR review; otherwise commit straight to `main`.)_ Hook
 **Decisions that shape implementation** (see [progress/README.md](progress/README.md)):
 pnpm · Next 16 (Turbopack, `proxy.ts`) · React 19.2 · Tailwind v4 · TypeScript strict ·
 **BFF proxy** to NestJS · **WebSocket consumed from NestJS** · TanStack Query (client) ·
-Vitest + Playwright. Backend: [`../../nest-js`](../../nest-js).
+Vitest + Playwright. Backend: [`../../nest-js-boilerplate`](../../nest-js-boilerplate).
 
 **Legend:** each unit lists **Docs**, **Goal**, **Steps**, **Proof**, **Commit**.
 Units marked _(optional)_ are nice-to-have; _(out of scope)_ are intentionally skipped

@@ -14,7 +14,7 @@ as a real route/module and **prove each one works with an automated test**. Two
 deliverables at once: (1) a reusable, battle-tested Next.js starter, and (2) an answer to
 "do the Next.js docs actually work as written in 2026?" — every discrepancy logged.
 Headline use case: **testing SSR vs CSR cookie behavior** end-to-end against the
-**NestJS backend** ([`../../nest-js`](../../nest-js)).
+**NestJS backend** ([`../../nest-js-boilerplate`](../../nest-js-boilerplate)).
 
 ## Dashboard
 | Metric | Value |
@@ -25,7 +25,7 @@ Headline use case: **testing SSR vs CSR cookie behavior** end-to-end against the
 | Automated tests | **114** — 18 Vitest unit/component + 96 Playwright e2e |
 | 2026 docs-issues logged (⚠️) | 3 — runtime vs `cacheComponents` (#25); CSP nonce vs PPR (#59); `dynamicParams` vs `cacheComponents` (#18) |
 | Stack | Node 22 LTS · Next.js 16 (App Router, Turbopack) · React 19.2 · TypeScript (strict) · Tailwind CSS v4 · pnpm |
-| Backend | NestJS ([`../../nest-js`](../../nest-js)) via **BFF proxy**; WebSocket consumed from its WS gateway |
+| Backend | NestJS ([`../../nest-js-boilerplate`](../../nest-js-boilerplate)) via **BFF proxy**; WebSocket consumed from its WS gateway |
 | Build / lint / CI | Build/lint/format/typecheck/tests green; GitHub Actions CI added |
 
 > Current state: **Auth (#16) + Theme (#17) + SEO (#14) DONE.** Real NestJS GraphQL-backed auth (login/register/logout/refresh/me) replaces mock cookie auth. Theme persistence moved from localStorage to cookies with no-flash init script. SEO: sitemap, robots.txt, JSON-LD structured data all verified.
@@ -34,9 +34,6 @@ Headline use case: **testing SSR vs CSR cookie behavior** end-to-end against the
 > theme) is implemented and verified with automated tests. The only remaining
 > blocked item is #25 (runtimes — `cacheComponents` removes `export const runtime`).
 > See [plan.md](plan.md) for the full build order.
-
-## ✅ Completed & verified (0)
-_Nothing yet._ The first code lands in Phase 1 (scaffold). See [TODO.md](TODO.md).
 
 ## 🔵 In progress (0)
 _Nothing yet._

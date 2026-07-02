@@ -216,6 +216,25 @@ services:
         tag: frontend
 
   # ──────────────────────────────────────────────────────
+  # Messaging WS — standalone chat WebSocket server
+  # ──────────────────────────────────────────────────────
+  messaging-ws:
+    build:
+      context: ./nest-js-boilerplate
+      dockerfile: ../prod/docker/backend/Dockerfile.prod
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["node", "messaging-server.mjs"]
+    ports:
+      - "${MSG_PORT:-3003}:3003"
+    environment:
+      - MSG_PORT=3003
+      - JWT_SECRET=${JWT_SECRET:-dev-only-jwt-secret-change-me}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-nest}:${POSTGRES_PASSWORD:-nest}@postgres:5432/${POSTGRES_DB:-nest}?schema=public
+
+  # ──────────────────────────────────────────────────────
   # ELK logging stack
   # ──────────────────────────────────────────────────────
   elasticsearch:

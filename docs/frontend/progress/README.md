@@ -3,7 +3,7 @@
 > **Mission:** Implement *every relevant feature in the [Next.js docs](https://nextjs.org/docs)*,
 > prove each one works with a test, log anything that doesn't work as written, and ship the
 > result as our reusable frontend boilerplate — wired to the NestJS backend for SSR/CSR
-> cookie testing. Same methodology as the sibling [`nest-js`](../../../nest-js/docs) project.
+> cookie testing. Same methodology as the sibling [`nest-js-boilerplate`](../../../nest-js-boilerplate) project.
 
 ## How this is tracked
 - **[`nextjs-feature-checklist.md`](nextjs-feature-checklist.md)** — the full **mapping**/test matrix. Source of truth for coverage.

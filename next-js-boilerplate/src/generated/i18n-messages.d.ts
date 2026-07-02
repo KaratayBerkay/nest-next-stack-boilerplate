@@ -3,127 +3,127 @@
 
 export type I18nMessages = {
   "chat-room": {
-    title: string;
-    connected: string;
-    connecting: string;
-    rooms: string;
-    online: string;
-    noOneHere: string;
-    noMessages: string;
-    send: string;
-    messagePlaceholder: string;
-    openRooms: string;
-    countOnline: string;
-    signInRequired: string;
-    roomMembers: string;
-    loadEarlier: string;
-  };
+      "title": string;
+      "connected": string;
+      "connecting": string;
+      "rooms": string;
+      "online": string;
+      "noOneHere": string;
+      "noMessages": string;
+      "send": string;
+      "messagePlaceholder": string;
+      "openRooms": string;
+      "countOnline": string;
+      "signInRequired": string;
+      "roomMembers": string;
+      "loadEarlier": string;
+    }
 
-  error: {
-    notFound: string;
-    pageNotFound: string;
-    v1NotFound: string;
-    backHome: string;
-    backToV1: string;
-    somethingWentWrong: string;
-    somethingWentWrongV1: string;
-    reference: string;
-    tryAgain: string;
-    failedToLoad: string;
-    loadingMessages: string;
-  };
+  "error": {
+      "notFound": string;
+      "pageNotFound": string;
+      "v1NotFound": string;
+      "backHome": string;
+      "backToV1": string;
+      "somethingWentWrong": string;
+      "somethingWentWrongV1": string;
+      "reference": string;
+      "tryAgain": string;
+      "failedToLoad": string;
+      "loadingMessages": string;
+    }
 
   "find-friends": {
-    title: string;
-    addFriends: string;
-    pendingRequests: string;
-    searchHint: string;
-    searching: string;
-    noUsersFound: string;
-    pending: string;
-    addFriend: string;
-    prev: string;
-    next: string;
-    noRequests: string;
-    accept: string;
-    decline: string;
-    awaiting: string;
-    sentByYou: string;
-    usersFound: string;
-  };
+      "title": string;
+      "addFriends": string;
+      "pendingRequests": string;
+      "searchHint": string;
+      "searching": string;
+      "noUsersFound": string;
+      "pending": string;
+      "addFriend": string;
+      "prev": string;
+      "next": string;
+      "noRequests": string;
+      "accept": string;
+      "decline": string;
+      "awaiting": string;
+      "sentByYou": string;
+      "usersFound": string;
+    }
 
-  home: {
-    signIn: string;
-    register: string;
-    chatRoom: string;
-    messages: string;
-    stylingPipeline: string;
-  };
+  "home": {
+      "signIn": string;
+      "register": string;
+      "chatRoom": string;
+      "messages": string;
+      "stylingPipeline": string;
+    }
 
-  i18n: {
-    title: string;
-    greeting: string;
-    description: string;
-  };
+  "i18n": {
+      "title": string;
+      "greeting": string;
+      "description": string;
+    }
 
-  messages: {
-    title: string;
-    connected: string;
-    disconnected: string;
-    chats: string;
-    friends: string;
-    searchUsers: string;
-    searchFriends: string;
-    add: string;
-    noConversations: string;
-    noFriends: string;
-    selectConversation: string;
-    noMessages: string;
-    inputPlaceholder: string;
-    connecting: string;
-    send: string;
-    loading: string;
-  };
+  "messages": {
+      "title": string;
+      "connected": string;
+      "disconnected": string;
+      "chats": string;
+      "friends": string;
+      "searchUsers": string;
+      "searchFriends": string;
+      "add": string;
+      "noConversations": string;
+      "noFriends": string;
+      "selectConversation": string;
+      "noMessages": string;
+      "inputPlaceholder": string;
+      "connecting": string;
+      "send": string;
+      "loading": string;
+    }
 
   "shared/locale-switcher": {
-    switchLabel: string;
-  };
+      "switchLabel": string;
+    }
 
-  users: {
-    title: string;
-    tapToView: string;
-    loading: string;
-    userNotFound: string;
-    backToUsers: string;
-    name: string;
-    email: string;
-    role: string;
-    swipeBack: string;
-  };
+  "users": {
+      "title": string;
+      "tapToView": string;
+      "loading": string;
+      "userNotFound": string;
+      "backToUsers": string;
+      "name": string;
+      "email": string;
+      "role": string;
+      "swipeBack": string;
+    }
 
-  v1: {
-    greeting: string;
-  };
+  "v1": {
+      "greeting": string;
+    }
 
   "v1-shell": {
-    brand: string;
-    navHome: string;
-    navUsers: string;
-    navChatRoom: string;
-    navMessages: string;
-    navFindFriends: string;
-    navUiComponents: string;
-    navErrorTest: string;
-    navNotFound: string;
-    swipeLeftToClose: string;
-    inbox: string;
-    noUnread: string;
-    viewAll: string;
-    signOut: string;
-    signIn: string;
-    account: string;
-    close: string;
-    authLoading: string;
-    toggleSidebar: string;
-  };
+      "brand": string;
+      "navHome": string;
+      "navUsers": string;
+      "navChatRoom": string;
+      "navMessages": string;
+      "navFindFriends": string;
+      "navUiComponents": string;
+      "navErrorTest": string;
+      "navNotFound": string;
+      "swipeLeftToClose": string;
+      "inbox": string;
+      "noUnread": string;
+      "viewAll": string;
+      "signOut": string;
+      "signIn": string;
+      "account": string;
+      "close": string;
+      "authLoading": string;
+      "toggleSidebar": string;
+    }
 };

@@ -102,6 +102,7 @@ COPY --from=builder --chown=node:node /app/package.json ./package.json
 COPY --from=builder --chown=node:node /app/prisma ./prisma
 COPY --from=builder --chown=node:node /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder --chown=node:node /app/proto ./proto
+COPY --from=builder --chown=node:node /app/messaging-server.mjs ./
 
 # In production the GraphQL SDL is kept in-memory (autoSchemaFile honors NODE_ENV), so a
 # read-only root filesystem is safe. This writable dir is kept for non-prod / parity runs where

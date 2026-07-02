@@ -1,8 +1,8 @@
 # Docs
 
-Documentation for the Next.js "implement-the-whole-docs" boilerplate. Local-only
-(the whole `docs/` folder is gitignored), kept the same way as the sibling
-[`nest-js`](../../nest-js/docs) project.
+Documentation for the Next.js "implement-the-whole-docs" boilerplate. Kept the same
+way as the sibling
+[`nest-js-boilerplate`](../../nest-js-boilerplate/docs) project.
 
 - **[STATUS.md](STATUS.md)** — ⭐ start here: one-page snapshot of where the project is, what's done, what's left.
 - **[TODO.md](TODO.md)** — backlog: BFF proxy + httpOnly cookie auth, SSR/CSR cookie demos, SSE, WebSocket-from-NestJS, tests.
@@ -12,5 +12,5 @@ Documentation for the Next.js "implement-the-whole-docs" boilerplate. Local-only
 - **[research/realtime-ssr-csr-cookies.md](research/realtime-ssr-csr-cookies.md)** — BFF proxy, SSR vs CSR cookies, SSE via `ReadableStream`, consuming NestJS WebSockets.
 - **[git-workflow.md](git-workflow.md)** — branching, Conventional Commits, hooks, command cheatsheet.
 
-This project pairs with the **NestJS backend** at [`../../nest-js`](../../nest-js) — the
+This project pairs with the **NestJS backend** at [`../../nest-js-boilerplate`](../../nest-js-boilerplate) — the
 Next.js app talks to it via a BFF proxy and consumes its WebSocket gateway.
