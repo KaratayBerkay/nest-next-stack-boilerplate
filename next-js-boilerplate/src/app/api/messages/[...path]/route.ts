@@ -1,19 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { getAccessToken } from "@/store/ssr-cookies";
+import { sessionTokenHeaders } from "@/lib/backend";
 
 const BACKEND = serverEnv().APP_URL;
 
-function authHeaders(): Record<string, string> {
-  return {
-    "Content-Type": "application/json",
-  };
-}
-
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const token = await getAccessToken();
-  if (!token) return authHeaders();
-  return { ...authHeaders(), Authorization: `Bearer ${token}` };
+  const stHeaders = await sessionTokenHeaders();
+  if (!token) return { "Content-Type": "application/json", ...stHeaders };
+  return { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...stHeaders };
 }
 
 export async function GET(

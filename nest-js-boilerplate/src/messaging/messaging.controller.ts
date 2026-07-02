@@ -5,8 +5,7 @@ import {
   Body,
   Param,
   Query,
-  Headers,
-  UnauthorizedException,
+  UseGuards,
   UseFilters,
   UseInterceptors,
   ValidationPipe,
@@ -17,7 +16,6 @@ import {
   ApiQuery,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { JwtService } from '@nestjs/jwt';
 import { Logger } from 'nestjs-pino';
 import { HttpExceptionFilter } from '../exception-filters/http-exception.filter';
 import { LoggingInterceptor } from '../interceptors/logging.interceptor';
@@ -25,36 +23,22 @@ import { MessagingService } from './messaging.service';
 import { MessagingWsGateway } from './messaging-ws.gateway';
 import { MarkReadInput } from './dto/mark-read.input';
 import { SendMessageRestDto } from './dto/send-message-rest.dto';
+import { SessionAuthGuard } from '../auth/session-auth.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
+import type { JwtUser } from '../auth/auth.types';
 
 @ApiTags('Messaging')
 @ApiBearerAuth()
 @Controller('api')
 @UseFilters(HttpExceptionFilter)
 @UseInterceptors(LoggingInterceptor)
+@UseGuards(SessionAuthGuard)
 export class MessagingController {
   constructor(
-    private readonly jwt: JwtService,
     private readonly ms: MessagingService,
     private readonly wsGateway: MessagingWsGateway,
     private readonly logger: Logger,
   ) {}
-
-  private extractToken(authHeader: string | undefined): string {
-    if (!authHeader)
-      throw new UnauthorizedException('Missing Authorization header');
-    const parts = authHeader.split(' ');
-    if (parts.length !== 2 || parts[0] !== 'Bearer')
-      throw new UnauthorizedException('Invalid Authorization header');
-    return parts[1];
-  }
-
-  private async verify(token: string) {
-    try {
-      return await this.jwt.verifyAsync<{ sub: string }>(token);
-    } catch {
-      throw new UnauthorizedException();
-    }
-  }
 
   // --- Friends ---
 
@@ -69,61 +53,55 @@ export class MessagingController {
     description: 'Optional search query',
   })
   async getFriends(
-    @Headers('authorization') auth: string,
+    @CurrentUser() user: JwtUser,
     @Query('q') q?: string,
   ): Promise<
     { id: string; email: string; name: string | null; avatar: string }[]
   > {
-    const payload = await this.verify(this.extractToken(auth));
-    const result = await this.ms.getFriends(payload.sub, q);
+    const result = await this.ms.getFriends(user.userId, q);
     this.logger.log(`Fetched ${result.length} friends`, 'MessagingController');
     return result;
   }
 
   @Get('friends/requests')
   @ApiOperation({ summary: 'List pending friend requests' })
-  async getFriendRequests(@Headers('authorization') auth: string) {
-    const payload = await this.verify(this.extractToken(auth));
-    return this.ms.getFriendRequests(payload.sub);
+  async getFriendRequests(@CurrentUser() user: JwtUser) {
+    return this.ms.getFriendRequests(user.userId);
   }
 
   @Post('friends/request/:userId')
   @ApiOperation({ summary: 'Send a friend request' })
   async sendFriendRequest(
-    @Headers('authorization') auth: string,
+    @CurrentUser() user: JwtUser,
     @Param('userId') addresseeId: string,
   ) {
-    const payload = await this.verify(this.extractToken(auth));
-    return this.ms.sendFriendRequest(payload.sub, addresseeId);
+    return this.ms.sendFriendRequest(user.userId, addresseeId);
   }
 
   @Post('friends/accept/:userId')
   @ApiOperation({ summary: 'Accept a friend request' })
   async acceptFriendRequest(
-    @Headers('authorization') auth: string,
+    @CurrentUser() user: JwtUser,
     @Param('userId') requesterId: string,
   ) {
-    const payload = await this.verify(this.extractToken(auth));
-    return this.ms.acceptFriendRequest(payload.sub, requesterId);
+    return this.ms.acceptFriendRequest(user.userId, requesterId);
   }
 
   @Post('friends/decline/:userId')
   @ApiOperation({ summary: 'Decline a friend request' })
   async declineFriendRequest(
-    @Headers('authorization') auth: string,
+    @CurrentUser() user: JwtUser,
     @Param('userId') requesterId: string,
   ) {
-    const payload = await this.verify(this.extractToken(auth));
-    return this.ms.declineFriendRequest(payload.sub, requesterId);
+    return this.ms.declineFriendRequest(user.userId, requesterId);
   }
 
   @Get('conversations')
   @ApiOperation({
     summary: 'List conversations with latest message per friend',
   })
-  async getConversations(@Headers('authorization') auth: string) {
-    const payload = await this.verify(this.extractToken(auth));
-    return this.ms.getConversations(payload.sub);
+  async getConversations(@CurrentUser() user: JwtUser) {
+    return this.ms.getConversations(user.userId);
   }
 
   @Get('conversations/:userId/messages')
@@ -139,14 +117,13 @@ export class MessagingController {
     description: 'Page size (default 30)',
   })
   async getMessages(
-    @Headers('authorization') auth: string,
+    @CurrentUser() user: JwtUser,
     @Param('userId') otherUserId: string,
     @Query('before') before?: string,
     @Query('take') take?: string,
   ) {
-    const payload = await this.verify(this.extractToken(auth));
     return this.ms.getMessages(
-      payload.sub,
+      user.userId,
       otherUserId,
       before,
       take ? parseInt(take, 10) : 30,
@@ -156,14 +133,13 @@ export class MessagingController {
   @Post('conversations/:userId/messages')
   @ApiOperation({ summary: 'Send a direct message' })
   async sendMessage(
-    @Headers('authorization') auth: string,
+    @CurrentUser() user: JwtUser,
     @Param('userId') recipientId: string,
     @Body(new ValidationPipe({ transform: true, whitelist: true }))
     body: SendMessageRestDto,
   ) {
-    const payload = await this.verify(this.extractToken(auth));
     const message = await this.ms.sendMessage(
-      payload.sub,
+      user.userId,
       recipientId,
       body.text,
     );
@@ -178,14 +154,13 @@ export class MessagingController {
   @Post('messages/read')
   @ApiOperation({ summary: 'Mark messages from a user as read' })
   async markMessagesRead(
-    @Headers('authorization') auth: string,
+    @CurrentUser() user: JwtUser,
     @Body(new ValidationPipe({ transform: true, whitelist: true }))
     body: MarkReadInput,
   ) {
-    const payload = await this.verify(this.extractToken(auth));
-    const result = await this.ms.markRead(payload.sub, body.userId);
+    const result = await this.ms.markRead(user.userId, body.userId);
     this.wsGateway.broadcastMessageRead(
-      payload.sub,
+      user.userId,
       body.userId,
       result.readAt,
     );
@@ -201,12 +176,11 @@ export class MessagingController {
   @ApiQuery({ name: 'before', required: false })
   @ApiQuery({ name: 'take', required: false })
   async getRoomMessages(
-    @Headers('authorization') auth: string,
+    @CurrentUser() _user: JwtUser,
     @Param('roomId') roomId: string,
     @Query('before') before?: string,
     @Query('take') take?: string,
   ) {
-    await this.verify(this.extractToken(auth));
     return this.ms.getRoomMessages(
       roomId,
       before,

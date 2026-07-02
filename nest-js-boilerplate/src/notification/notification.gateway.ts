@@ -5,6 +5,7 @@ import {
 } from '@nestjs/websockets';
 import { JwtService } from '@nestjs/jwt';
 import { Server, Socket } from 'socket.io';
+import { TokenStoreService } from '../auth/token-store.service';
 import type { JwtPayload } from '../auth/auth.types';
 
 @WebSocketGateway({
@@ -15,10 +16,42 @@ export class NotificationGateway implements OnGatewayConnection {
   @WebSocketServer()
   server!: Server;
 
-  constructor(private readonly jwt: JwtService) {}
+  constructor(
+    private readonly jwt: JwtService,
+    private readonly tokenStore: TokenStoreService,
+  ) {}
 
   handleConnection(client: Socket): void {
-    const token = client.handshake.auth.token as string;
+    const auth = client.handshake.auth as Record<string, string | undefined>;
+    const accessToken = auth.accessToken;
+    const rbacToken = auth.rbacToken;
+    const deviceToken = auth.deviceToken;
+    const userToken = auth.userToken;
+
+    // Try full 4-token auth first.
+    if (accessToken && rbacToken && deviceToken && userToken) {
+      const key = this.tokenStore.buildKey(
+        accessToken,
+        rbacToken,
+        deviceToken,
+        userToken,
+      );
+      this.tokenStore
+        .read(key)
+        .then((hash) => {
+          if (hash?.userId) {
+            (client.data as Record<string, unknown>).userId = hash.userId;
+            client.join(`user:${hash.userId}`);
+          } else {
+            client.disconnect();
+          }
+        })
+        .catch(() => client.disconnect());
+      return;
+    }
+
+    // Fall back to JWT-only (legacy clients).
+    const token = auth.token;
     if (!token || typeof token !== 'string') {
       client.disconnect();
       return;

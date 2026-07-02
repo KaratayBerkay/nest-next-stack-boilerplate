@@ -3,12 +3,12 @@ import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { TeamMember } from '../@generated/team-member/team-member.model';
 import type { JwtUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { CreateTeamMemberInput } from './dto/create-team-member.input';
 import { TeamMembersService } from './team-members.service';
 
 // Exercises GraphQL through FK depth (TeamMember -> Team -> Organization -> User) behind the guard.
-@UseGuards(JwtAuthGuard)
+@UseGuards(SessionAuthGuard)
 @Resolver(() => TeamMember)
 export class TeamMembersResolver {
   constructor(private readonly teamMembers: TeamMembersService) {}

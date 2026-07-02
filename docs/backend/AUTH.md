@@ -133,14 +133,21 @@ The Next.js BFF and the NestJS backend run on potentially different origins with
 different cookie name prefixes (`__Secure-` in prod). The BFF bridges the gap:
 
 1. **`sessionTokenHeaders()`** in `backend.ts` reads the unprefixed BFF cookie names
-   and forwards them as `x-rbac-token`, `x-device-token`, `x-refresh-token` headers.
-2. **`graphqlFetch`** always attaches these headers alongside the full Cookie header.
+   and forwards them as `x-rbac-token`, `x-device-token`, `x-refresh-token`,
+   `x-user-token` headers.
+2. **`graphqlFetch`** and **`backendFetch`** always attach these headers alongside
+   the full Cookie header.
 3. **CSRF echo in refresh** — the BFF refresh route (`POST /api/auth/refresh`):
    a. Calls `GET /csrf/token` on the backend (forwarding `x-forwarded-for`)
    b. Echoes the returned token as `x-csrf-token` + the CSRF cookie
    c. Calls the `Refresh` mutation
 4. **AuthProvider retry** — when `/api/auth/me` returns 401 (access token expired),
    the AuthProvider retries once via `/api/auth/refresh` before falling back to guest.
+5. **Device handshake** — `AuthProvider` calls `POST /api/auth/device-handshake`
+   on every page load, which proxies to backend `POST /devices/handshake` and
+   sets or slides the `device_token` cookie.
+6. **`/api/auth/token`** — returns the full token quadruple (`accessToken`,
+   `rbacToken`, `deviceToken`, `userToken`) for client-side consumers.
 
 ## Subscription-tier RBAC
 
@@ -160,12 +167,14 @@ user's next request, no re-login.
 ## Surface → fields matrix
 
 | Surface | Tokens used | Source |
-|---|---|---|
+|---|---|---|---|
 | GraphQL `me` | all 4 | Redis HGETALL |
 | GraphQL refresh | `refreshToken` (cookie or `x-refresh-token`) | Postgres Session |
-| HTTP REST endpoints | `accessToken` (JWT) | Bearer auth |
-| Notification WS | JWT | first-message `{type:"auth", token}` |
-| Messaging WS (standalone) | JWT + `userToken` | first-message `{type:"auth", tokens}` |
+| GraphQL resolvers | all 4 (via `SessionAuthGuard`) | Redis (compound-key lookup) |
+| HTTP REST endpoints | all 4 (via `SessionAuthGuard`) | Redis (compound-key lookup) |
+| Notification WS (socket.io) | `accessToken` + `rbacToken` + `userToken` (+ optional `deviceToken`) | socket.io `handshake.auth` |
+| Messaging WS (NestJS gateway) | all 4 | `sec-websocket-protocol` header |
+| Messaging WS (standalone server) | all 4 | `sec-websocket-protocol` header |
 | SSE demo | none | unauthenticated |
 
 ## Tier change semantics
@@ -192,22 +201,21 @@ counter in every live session.
 
 ## Messaging WS auth
 
-The standalone messaging server (`messaging-server.mjs` on port 3003) authenticates
-via a first-message protocol:
+Both the NestJS `MessagingWsGateway` and the standalone messaging server
+(`messaging-server.mjs` on port 3003) authenticate using the WebSocket's
+**`sec-websocket-protocol`** header:
 
-```json
-{
-  "type": "auth",
-  "token": "<jwt-access-token>",
-  "tokens": {
-    "accessToken": "<jwt>",
-    "userToken": "<opaque>"
-  }
-}
+```
+sec-websocket-protocol: <accessToken>,<rbacToken>,<deviceToken>,<userToken>
 ```
 
-The server:
-1. Tries the full `tokens` object — derives the compound key and HGETALLs Redis
-2. Falls back to JWT-only verification (legacy clients)
-3. Enforces friends-only DMs — checks `FriendRequest` table with `status = 'ACCEPTED'`
-   before inserting or forwarding any `direct-message`
+The server splits the header on `,`, validates all four tokens via
+`TokenDerivationService` (signature-binding), builds the compound Redis key,
+and performs `HGETALL` to hydrate the session. If any token is tampered, the
+compound key won't match and the connection is rejected.
+
+The client-side `useMessaging` hook reads `userToken` from `document.cookie`
+(getUserToken helper) and sends all four tokens during the WebSocket upgrade.
+
+The server also enforces friends-only DMs — checks `FriendRequest` table with
+`status = 'ACCEPTED'` before inserting or forwarding any `direct-message`.

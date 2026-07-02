@@ -1,6 +1,6 @@
 import "server-only";
 import { cookies, headers as nextHeaders } from "next/headers";
-import { DEVICE_TOKEN_COOKIE, RBAC_TOKEN_COOKIE, BACKEND_REFRESH_COOKIE } from "./cookie";
+import { DEVICE_TOKEN_COOKIE, RBAC_TOKEN_COOKIE, BACKEND_REFRESH_COOKIE, USER_TOKEN_COOKIE } from "./cookie";
 import { serverEnv } from "./env";
 
 export interface BackendResponse<T = unknown> {
@@ -22,18 +22,20 @@ async function forwardedForHeader(): Promise<Record<string, string>> {
   return forwarded ? { "x-forwarded-for": forwarded } : {};
 }
 
-async function sessionTokenHeaders(): Promise<Record<string, string>> {
-  // The BFF's cookie names (rbac_token/device_token/refresh_token) don't
-  // match the backend's production `__Secure-` names, so forwarding the
-  // Cookie header alone isn't enough. Send the fallback headers instead.
+export async function sessionTokenHeaders(): Promise<Record<string, string>> {
+  // The BFF's cookie names don't match the backend's production `__Secure-`
+  // names, so forwarding the Cookie header alone isn't enough. Send the
+  // fallback headers instead.
   const cookieStore = await cookies();
   const rbac = cookieStore.get(RBAC_TOKEN_COOKIE)?.value;
   const device = cookieStore.get(DEVICE_TOKEN_COOKIE)?.value;
   const refresh = cookieStore.get(BACKEND_REFRESH_COOKIE)?.value;
+  const user = cookieStore.get(USER_TOKEN_COOKIE)?.value;
   return {
     ...(rbac ? { "x-rbac-token": rbac } : {}),
     ...(device ? { "x-device-token": device } : {}),
     ...(refresh ? { "x-refresh-token": refresh } : {}),
+    ...(user ? { "x-user-token": user } : {}),
   };
 }
 
@@ -51,6 +53,7 @@ export async function backendFetch<T = unknown>(
       "Content-Type": "application/json",
       ...(cookieHeader ? { Cookie: cookieHeader } : {}),
       ...(await forwardedForHeader()),
+      ...(await sessionTokenHeaders()),
       ...options.headers,
     },
   });

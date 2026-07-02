@@ -9,6 +9,9 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { IncomingMessage } from 'http';
 import { PrismaService } from '../prisma/prisma.service';
 import { MessagingService, RoomMember } from './messaging.service';
+import { TokenStoreService } from '../auth/token-store.service';
+import { TokenDerivationService } from '../auth/token-derivation.service';
+import { CryptoService } from '../common/crypto/crypto.service';
 
 type AuthWs = WebSocket & {
   userId?: string;
@@ -18,6 +21,13 @@ type AuthWs = WebSocket & {
   authenticated: boolean;
   isAlive: boolean;
 };
+
+interface AuthTokens {
+  accessToken: string;
+  rbacToken: string;
+  deviceToken: string;
+  userToken: string;
+}
 
 @Injectable()
 export class MessagingWsGateway implements OnModuleInit, OnModuleDestroy {
@@ -30,6 +40,9 @@ export class MessagingWsGateway implements OnModuleInit, OnModuleDestroy {
     private readonly jwt: JwtService,
     private readonly prisma: PrismaService,
     private readonly ms: MessagingService,
+    private readonly tokenStore: TokenStoreService,
+    private readonly derivation: TokenDerivationService,
+    private readonly crypto: CryptoService,
   ) {}
 
   onModuleInit() {
@@ -45,8 +58,7 @@ export class MessagingWsGateway implements OnModuleInit, OnModuleDestroy {
         authWs.isAlive = true;
       });
 
-      /* authenticate via first message — no token in URL */
-      let authTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+      const authTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
         if (!authWs.authenticated) {
           this.logger.warn('WS auth timeout, closing');
           ws.close();
@@ -54,105 +66,9 @@ export class MessagingWsGateway implements OnModuleInit, OnModuleDestroy {
       }, 120_000);
 
       ws.on('message', (raw: Buffer) => {
-        try {
-          const data = JSON.parse(raw.toString()) as Record<string, unknown>;
-
-          /* handle auth message */
-          if (!authWs.authenticated) {
-            if (data.type === 'auth' && data.token) {
-              this.jwt
-                .verifyAsync<{ sub: string }>(data.token as string)
-                .then(async (payload) => {
-                  authWs.userId = payload.sub;
-                  authWs.socketId =
-                    payload.sub +
-                    ':' +
-                    Date.now().toString(36) +
-                    Math.random().toString(36).slice(2, 7);
-                  const user = await this.prisma.user.findUnique({
-                    where: { id: payload.sub },
-                  });
-                  authWs.userName = user?.name || user?.email || 'Unknown';
-                  authWs.authenticated = true;
-                  if (authTimer) {
-                    clearTimeout(authTimer);
-                    authTimer = null;
-                  }
-                  ws.send(JSON.stringify({ type: 'authenticated' }));
-
-                  const prev = this.onlineCount.get(payload.sub) || 0;
-                  this.onlineCount.set(payload.sub, prev + 1);
-                  if (prev === 0) {
-                    this.broadcastAll({
-                      type: 'user-online',
-                      user: {
-                        id: payload.sub,
-                        name: authWs.userName,
-                        avatar: this.ms.initials(authWs.userName),
-                      },
-                    });
-                  }
-                  // Send current online users to the newly connected client
-                  const onlineUsers = Array.from(this.onlineCount.keys())
-                    .filter((id) => id !== payload.sub)
-                    .map((id) => ({ id }));
-                  ws.send(
-                    JSON.stringify({
-                      type: 'online-users',
-                      users: onlineUsers,
-                    }),
-                  );
-                })
-                .catch(() => {
-                  ws.send(
-                    JSON.stringify({
-                      type: 'error',
-                      message: 'Authentication failed',
-                    }),
-                  );
-                  ws.close();
-                });
-            } else {
-              ws.send(
-                JSON.stringify({
-                  type: 'error',
-                  message: 'Authenticate first',
-                }),
-              );
-              ws.close();
-            }
-            return;
-          }
-
-          switch (data.type as string) {
-            case 'direct-message':
-              this.handleDirectMessage(
-                authWs,
-                data as { recipientId: string; text: string },
-              );
-              break;
-            case 'delivered-ack':
-              this.handleDeliveredAck(authWs, data as { messageId: string });
-              break;
-            case 'join-room':
-              this.handleJoinRoom(authWs, data as { room: string });
-              break;
-            case 'leave-room':
-              this.handleLeaveRoom(authWs, data as { room: string });
-              break;
-            case 'room-message':
-              this.handleRoomMessage(
-                authWs,
-                data as { room: string; text: string; tempId?: string },
-              );
-              break;
-            case 'get-room-counts':
-              this.handleGetRoomCounts(authWs);
-              break;
-          }
-        } catch {
-          // ignore parse errors
-        }
+        this.handleMessage(authWs, raw, authTimer).catch((err) =>
+          this.logger.error('WS message handler error', err),
+        );
       });
 
       ws.on('close', () => {
@@ -194,12 +110,152 @@ export class MessagingWsGateway implements OnModuleInit, OnModuleDestroy {
     }, 30000);
   }
 
+  private async handleMessage(
+    authWs: AuthWs,
+    raw: Buffer,
+    authTimer: ReturnType<typeof setTimeout> | null,
+  ): Promise<void> {
+    let data: Record<string, unknown>;
+    try {
+      data = JSON.parse(raw.toString()) as Record<string, unknown>;
+    } catch {
+      return;
+    }
+
+    if (!authWs.authenticated) {
+      if (data.type === 'auth' && data.tokens) {
+        const tokens = data.tokens as AuthTokens;
+        const key = this.tokenStore.buildKey(
+          tokens.accessToken,
+          tokens.rbacToken,
+          tokens.deviceToken,
+          tokens.userToken,
+        );
+        let hash: Awaited<ReturnType<typeof this.tokenStore.read>> = null;
+        try {
+          hash = await this.tokenStore.read(key);
+        } catch {
+          /* Redis error — fall through to JWT path */
+        }
+        if (hash?.userId) {
+          authWs.userId = hash.userId;
+          authWs.userName = hash.name || hash.email || 'Unknown';
+          authWs.socketId =
+            hash.userId +
+            ':' +
+            Date.now().toString(36) +
+            Math.random().toString(36).slice(2, 7);
+          authWs.authenticated = true;
+          if (authTimer) {
+            clearTimeout(authTimer);
+            authTimer = null;
+          }
+          authWs.send(JSON.stringify({ type: 'authenticated' }));
+          this.handleOnline(authWs);
+          return;
+        }
+      }
+      if (data.type === 'auth' && data.token) {
+        try {
+          const payload = await this.jwt.verifyAsync<{ sub: string }>(
+            data.token as string,
+          );
+          authWs.userId = payload.sub;
+          authWs.socketId =
+            payload.sub +
+            ':' +
+            Date.now().toString(36) +
+            Math.random().toString(36).slice(2, 7);
+          const user = await this.prisma.user.findUnique({
+            where: { id: payload.sub },
+          });
+          authWs.userName = user?.name || user?.email || 'Unknown';
+          authWs.authenticated = true;
+          if (authTimer) {
+            clearTimeout(authTimer);
+            authTimer = null;
+          }
+          authWs.send(JSON.stringify({ type: 'authenticated' }));
+          this.handleOnline(authWs);
+          return;
+        } catch {
+          authWs.send(
+            JSON.stringify({
+              type: 'error',
+              message: 'Authentication failed',
+            }),
+          );
+          authWs.close();
+          return;
+        }
+      }
+      authWs.send(
+        JSON.stringify({
+          type: 'error',
+          message: 'Authenticate first',
+        }),
+      );
+      authWs.close();
+      return;
+    }
+
+    switch (data.type as string) {
+      case 'direct-message':
+        await this.handleDirectMessage(
+          authWs,
+          data as { recipientId: string; text: string },
+        );
+        break;
+      case 'delivered-ack':
+        await this.handleDeliveredAck(authWs, data as { messageId: string });
+        break;
+      case 'join-room':
+        this.handleJoinRoom(authWs, data as { room: string });
+        break;
+      case 'leave-room':
+        this.handleLeaveRoom(authWs, data as { room: string });
+        break;
+      case 'room-message':
+        await this.handleRoomMessage(
+          authWs,
+          data as { room: string; text: string; tempId?: string },
+        );
+        break;
+      case 'get-room-counts':
+        this.handleGetRoomCounts(authWs);
+        break;
+    }
+  }
+
+  private handleOnline(ws: AuthWs) {
+    const prev = this.onlineCount.get(ws.userId!) || 0;
+    this.onlineCount.set(ws.userId!, prev + 1);
+    if (prev === 0) {
+      this.broadcastAll({
+        type: 'user-online',
+        user: {
+          id: ws.userId,
+          name: ws.userName,
+          avatar: this.ms.initials(ws.userName!),
+        },
+      });
+    }
+    const onlineUsers = Array.from(this.onlineCount.keys())
+      .filter((id) => id !== ws.userId)
+      .map((id) => ({ id }));
+    ws.send(
+      JSON.stringify({
+        type: 'online-users',
+        users: onlineUsers,
+      }),
+    );
+  }
+
   onModuleDestroy() {
     if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
     this.wss?.close();
   }
 
-  /** Broadcast a saved DM to the recipient and sender (for multi-tab support). */
   broadcastDirectMessage(
     recipientId: string,
     message: { senderId: string; [key: string]: unknown },
@@ -216,7 +272,6 @@ export class MessagingWsGateway implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  /** Notify the reader and sender that messages were read (multi-tab support). */
   broadcastMessageRead(readerId: string, senderId: string, readAt: string) {
     const msg = JSON.stringify({
       type: 'message-read',
@@ -235,7 +290,6 @@ export class MessagingWsGateway implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  /** Notify the sender that a message was delivered to the recipient. */
   broadcastMessageDelivered(
     senderId: string,
     messageId: string,
@@ -299,7 +353,6 @@ export class MessagingWsGateway implements OnModuleInit, OnModuleDestroy {
 
   private handleJoinRoom(ws: AuthWs, data: { room: string }) {
     if (!ws.userId || !ws.socketId) return;
-    // Leave previous room first so user doesn't linger in old room
     if (ws.room && ws.room !== data.room) {
       const oldMembers = this.ms.leaveRoom(ws.room, ws.socketId);
       this.broadcastToRoom(ws.room, {

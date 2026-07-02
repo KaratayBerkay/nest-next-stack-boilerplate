@@ -47,6 +47,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let retried = false;
 
     async function load() {
+      // Ensure a device_token cookie exists before trying to rehydrate the session.
+      await fetch("/api/auth/device-handshake", { method: "POST" }).catch(
+        () => {},
+      );
+
       try {
         const res = await fetch("/api/auth/me");
         if (res.status === 401 && !retried) {
