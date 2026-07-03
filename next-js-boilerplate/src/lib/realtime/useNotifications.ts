@@ -24,7 +24,13 @@ export function useNotifications() {
       const res = await apiFetch("/api/notifications");
       if (!res.ok) throw new Error("Failed to fetch notifications");
       const data = await res.json();
-      const items = Array.isArray(data) ? data : data.items ?? data ?? [];
+      const items = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.items)
+          ? data.items
+          : Array.isArray(data?.notifications)
+            ? data.notifications
+            : [];
       return { items, hasMore: data?.hasMore ?? false };
     },
     refetchOnWindowFocus: false,

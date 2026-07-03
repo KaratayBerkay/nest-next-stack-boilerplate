@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     MY_NOTIFICATIONS_QUERY,
     {
       cursor: cursor || undefined,
-      take: pageSize + 1,
+      take: pageSize,
     },
     token,
   );
