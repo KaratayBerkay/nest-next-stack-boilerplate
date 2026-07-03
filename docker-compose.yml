@@ -303,8 +303,7 @@ services:
   # Object storage
   # ──────────────────────────────────────────────────────
   minio:
-    # Volume was initialized by a newer MinIO (xl meta v3) — never downgrade this tag.
-    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+    image: quay.io/minio/minio:RELEASE.2025-09-06T17-38-46Z
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
@@ -317,19 +316,20 @@ services:
       - minio_data:/data
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 15s
 
   minio-setup:
-    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
+    image: quay.io/minio/mc:RELEASE.2025-09-06T17-38-46Z
     restart: no
     depends_on:
       minio:
-        condition: service_started
+        condition: service_healthy
     entrypoint: >
       /bin/sh -c "
-      until mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin}; do sleep 1; done &&
+      mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin} &&
       mc mb --ignore-existing local/${MINIO_BUCKET:-uploads} &&
       mc anonymous set download local/${MINIO_BUCKET:-uploads} &&
       echo 'MinIO bucket ready'"
