@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
 import { CHAT_ROOMS } from "@/constants/chat";
 import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
-import { apiFetch } from "@/lib/api-client";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
 import { LoadEarlierButton } from "@/components/LoadEarlierButton";
@@ -15,79 +14,38 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { initials } from "@/lib/initials";
 import { IconX, IconMenu2 } from "@tabler/icons-react";
-
-type RoomMsg = {
-  id: string;
-  senderId: string;
-  senderName: string;
-  body: string;
-  createdAt: string;
-};
+import { useRoom } from "@/lib/realtime/useRoom";
+import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 
 export default function ChatRoomPage() {
   const t = useMessages("chat-room");
   const { user, loading } = useAuth();
   const [room, setRoom] = useState<string>("general");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [messages, setMessages] = useState<RoomMsg[]>([]);
-  const [hasMore, setHasMore] = useState(false);
   const [input, setInput] = useState("");
+  const realtime = useRealtime();
 
+  const { data: messages = [], isLoading: msgsLoading } = useRoom(room);
   const messagesRef = useYSwipeGesture<HTMLDivElement>();
   const { bottomRef, scrollToBottom } = useAutoScroll(messages);
 
-  const fetchRoomMessages = useCallback(
-    async (roomId: string, before?: string) => {
-      try {
-        const params = new URLSearchParams();
-        if (before) params.set("before", before);
-        params.set("take", "30");
-        const res = await apiFetch(
-          `/api/messages/rooms/${roomId}/messages?${params.toString()}`,
-        );
-        if (res.ok) {
-          const data = await res.json();
-          if (before) {
-            setMessages((prev) => [...data.messages, ...prev]);
-          } else {
-            setMessages(data.messages ?? []);
-          }
-          setHasMore(data.hasMore ?? false);
-        }
-      } catch {}
-    },
-    [],
-  );
-
-  useEffect(() => {
-    /* eslint-disable-next-line react-hooks/set-state-in-effect */
-    setMessages([]);
-    fetchRoomMessages(room);
-  }, [room, fetchRoomMessages]);
-
   const handleSend = useCallback(() => {
-    if (!input.trim()) return;
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: `temp-${Date.now()}`,
-        senderId: user?.id ?? "",
-        senderName: user?.name ?? "Me",
-        body: input.trim(),
-        createdAt: new Date().toISOString(),
-      },
-    ]);
+    if (!input.trim() || !realtime) return;
+    const tempId = `temp-${Date.now()}`;
+    realtime.send({
+      type: "room-message",
+      room,
+      text: input.trim(),
+      tempId,
+    });
     setInput("");
     scrollToBottom();
-  }, [input, scrollToBottom, user]);
+  }, [input, scrollToBottom, realtime, room]);
 
-  const selectRoom = useCallback(
-    (r: string) => {
-      setRoom(r);
-      setSidebarOpen(false);
-    },
-    [],
-  );
+  const selectRoom = useCallback((r: string) => {
+    setRoom(r);
+    setSidebarOpen(false);
+  }, []);
 
   if (loading) return <LoadingAuth />;
   if (!user) return <UnauthenticatedMessage message={t.signInRequired} />;
@@ -102,7 +60,6 @@ export default function ChatRoomPage() {
       </div>
 
       <div className="relative flex min-h-0 flex-1 gap-4">
-        {/* Mobile backdrop */}
         {sidebarOpen && (
           <div
             className="fixed inset-0 z-40 bg-black/30 md:hidden"
@@ -110,7 +67,6 @@ export default function ChatRoomPage() {
           />
         )}
 
-        {/* Room sidebar */}
         <div
           className={cn(
             sidebarOpen
@@ -167,7 +123,6 @@ export default function ChatRoomPage() {
           </Tabs>
         </div>
 
-        {/* Chat area */}
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border">
           <div className="flex items-center gap-2 border-b px-4 py-3">
             <button
@@ -193,17 +148,12 @@ export default function ChatRoomPage() {
             ref={messagesRef}
             className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3 select-none"
           >
-            {hasMore && (
-              <LoadEarlierButton
-                compact
-                onClick={() => {
-                  const oldest =
-                    messages.length > 0 ? messages[0].createdAt : undefined;
-                  fetchRoomMessages(room, oldest);
-                }}
-              />
+            {msgsLoading && (
+              <div className="flex flex-1 items-center justify-center">
+                <p className="text-muted text-xs">Loading...</p>
+              </div>
             )}
-            {messages.length === 0 && (
+            {!msgsLoading && messages.length === 0 && (
               <div className="flex flex-1 items-center justify-center">
                 <p className="text-muted text-xs">{t.noMessages}</p>
               </div>

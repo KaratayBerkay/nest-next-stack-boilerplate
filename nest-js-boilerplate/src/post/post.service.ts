@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { FriendsService } from '../friends/friends.service';
-import { PostEventsGateway } from './post-events.gateway';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { NotificationService } from '../notification/notification.service';
 import { CreatePostInput } from './dto/create-post.input';
@@ -26,7 +25,6 @@ export class PostService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly friends: FriendsService,
-    private readonly postEvents: PostEventsGateway,
     private readonly realtime: RealtimeGateway,
     private readonly notifications: NotificationService,
   ) {}
@@ -99,7 +97,6 @@ export class PostService {
       data: updateData,
       include: { author: true },
     });
-    this.postEvents.broadcastPostUpdate(id);
     this.realtime.emitToTopic('feed', {
       renew: 'Feed',
       type: 'Post',
@@ -123,7 +120,6 @@ export class PostService {
       where: { id },
       data: { deletedAt: new Date() },
     });
-    this.postEvents.broadcastPostUpdate(id);
     this.realtime.emitToTopic('feed', {
       renew: 'Feed',
       type: 'Post',

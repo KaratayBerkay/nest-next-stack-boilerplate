@@ -3,7 +3,6 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { PostEventsGateway } from '../post/post-events.gateway';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationService } from '../notification/notification.service';
@@ -16,7 +15,6 @@ export class CommentService {
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationService,
     private readonly realtime: RealtimeGateway,
-    private readonly postEvents: PostEventsGateway,
   ) {}
 
   async create(authorId: string, data: CreateCommentInput) {
@@ -62,7 +60,6 @@ export class CommentService {
       });
     }
 
-    this.postEvents.broadcastPostUpdate(data.postId);
     this.realtime.emitToTopic('feed', {
       renew: 'Feed',
       type: 'Post',
@@ -94,7 +91,6 @@ export class CommentService {
       include: { author: true },
     });
 
-    this.postEvents.broadcastPostUpdate(comment.postId);
     this.realtime.emitToTopic('feed', {
       renew: 'Feed',
       type: 'Post',
@@ -122,7 +118,6 @@ export class CommentService {
       data: { deletedAt: new Date() },
     });
 
-    this.postEvents.broadcastPostUpdate(comment.postId);
     this.realtime.emitToTopic('feed', {
       renew: 'Feed',
       type: 'Post',

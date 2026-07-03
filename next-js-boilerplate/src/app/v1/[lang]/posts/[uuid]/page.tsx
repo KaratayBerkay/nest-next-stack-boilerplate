@@ -10,6 +10,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
 import { imageUrl } from "@/lib/image";
 import { ReactionInline } from "@/components/feed/ReactionButtons";
 import { CommentSection } from "@/components/feed/CommentSection";
@@ -42,51 +43,22 @@ function PostDetailContent() {
   const uuid = params?.uuid ?? "";
   const router = useRouter();
   const { user } = useAuth();
-  const [post, setPost] = useState<Post | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
 
-  const refreshPost = useCallback(async () => {
-    const res = await apiFetch(`/api/posts/${uuid}`);
-    if (!res.ok) return;
-    const data = await res.json();
-    if (data.post) setPost(data.post);
-  }, [uuid]);
+  const { data: post, isLoading, error } = useQuery<Post | null>({
+    queryKey: ["posts", uuid],
+    queryFn: async () => {
+      const res = await apiFetch(`/api/posts/${uuid}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.post ?? null;
+    },
+    staleTime: 30_000,
+  });
 
-  useEffect(() => {
-    let cancelled = false;
-
-    const load = async () => {
-      try {
-        const res = await apiFetch(`/api/posts/${uuid}`);
-        if (cancelled) return;
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          if (!cancelled) setError(body.error ?? `Failed (${res.status})`);
-          return;
-        }
-        const data = await res.json();
-        if (!cancelled) {
-          if (data.post) setPost(data.post);
-          else setError("Post not found");
-        }
-      } catch {
-        if (!cancelled) setError("Network error");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [uuid]);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="text-muted flex animate-pulse items-center justify-center py-20 text-sm">
         Loading...
@@ -94,10 +66,10 @@ function PostDetailContent() {
     );
   }
 
-  if (error) {
+  if (error || !post) {
     return (
       <div className="flex flex-col items-center gap-4 py-20">
-        <p className="text-sm text-red-500">{error}</p>
+        <p className="text-sm text-red-500">{error?.message ?? "Post not found"}</p>
         <button
           onClick={() => router.back()}
           className="text-brand text-xs hover:underline"
@@ -107,8 +79,6 @@ function PostDetailContent() {
       </div>
     );
   }
-
-  if (!post) return null;
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4 px-4 py-6">
@@ -140,7 +110,7 @@ function PostDetailContent() {
               postId={post.id}
               reactions={post.reactions ?? []}
               currentUserId={user?.id}
-              onReactionChange={refreshPost}
+              onReactionChange={() => {}}
             />
             {user && post.author.id === user.id && !editing && (
               <>
@@ -211,8 +181,6 @@ function PostDetailContent() {
                       }),
                     });
                     if (res.ok) {
-                      const data = await res.json();
-                      if (data.post) setPost(data.post);
                       setEditing(false);
                     }
                   } catch {
@@ -258,7 +226,7 @@ function PostDetailContent() {
         postId={post.id}
         comments={post.comments ?? []}
         currentUserId={user?.id}
-        onCommentAdded={refreshPost}
+        onCommentAdded={() => {}}
         maxTopLevel={10}
         pageable
       />

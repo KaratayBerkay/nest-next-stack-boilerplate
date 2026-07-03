@@ -3,13 +3,12 @@ import { AuthModule } from '../auth/auth.module';
 import { FriendsModule } from '../friends/friends.module';
 import { NotificationModule } from '../notification/notification.module';
 import { RealtimeModule } from '../realtime/realtime.module';
-import { PostEventsGateway } from './post-events.gateway';
 import { PostResolver } from './post.resolver';
 import { PostService } from './post.service';
 
 @Module({
   imports: [AuthModule, FriendsModule, NotificationModule, RealtimeModule],
-  providers: [PostResolver, PostService, PostEventsGateway],
-  exports: [PostService, PostEventsGateway],
+  providers: [PostResolver, PostService],
+  exports: [PostService],
 })
 export class PostModule {}

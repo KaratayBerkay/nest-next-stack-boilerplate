@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PostCard } from "@/components/feed/PostCard";
 import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { apiFetch } from "@/lib/api-client";
@@ -20,79 +21,69 @@ interface Post {
 
 const PAGE_SIZE = 5;
 
-export default function FeedPage() {
-  const params = useParams<{ lang: string }>();
-  const lang = params?.lang ?? "en";
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(true);
+function FeedList({ search }: { search: string }) {
+  const queryClient = useQueryClient();
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
+  const [extraPosts, setExtraPosts] = useState<Post[]>([]);
+  const [extraHasMore, setExtraHasMore] = useState(true);
   const cursorRef = useRef<string | null>(null);
   const loadingRef = useRef(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const scrollRef = useYSwipeGesture<HTMLDivElement>();
 
-  const fetchPosts = useCallback(
-    async (cursor?: string) => {
-      const params = new URLSearchParams();
-      params.set("take", String(PAGE_SIZE));
-      if (cursor) params.set("cursor", cursor);
-      if (search) params.set("search", search);
-
-      const res = await apiFetch(`/api/posts?${params}`);
+  const { data, isLoading, error } = useQuery<{
+    posts: Post[];
+    hasMore: boolean;
+    nextCursor: string | null;
+  }>({
+    queryKey: ["feed", "list", search],
+    queryFn: async () => {
+      const p = new URLSearchParams();
+      p.set("take", String(PAGE_SIZE));
+      if (search) p.set("search", search);
+      const res = await apiFetch(`/api/posts?${p}`);
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? "Failed to load posts");
       }
-      return res.json() as Promise<{
-        posts: Post[];
-        hasMore: boolean;
-        nextCursor: string | null;
-      }>;
+      return res.json();
     },
-    [search],
-  );
+    staleTime: 30_000,
+  });
 
-  useEffect(() => {
-    let cancelled = false;
-    cursorRef.current = null;
-    fetchPosts()
-      .then((data) => {
-        if (cancelled) return;
-        setPosts(data.posts);
-        setHasMore(data.hasMore);
-        cursorRef.current = data.nextCursor;
-      })
-      .catch((e: Error) => {
-        if (!cancelled) setError(e.message);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [fetchPosts]);
+  const posts = useMemo(
+    () => [...(data?.posts ?? []), ...extraPosts],
+    [data?.posts, extraPosts],
+  );
+  const hasMore = extraPosts.length > 0 ? extraHasMore : (data?.hasMore ?? false);
 
   const loadMore = useCallback(async () => {
-    if (loadingRef.current || !hasMore) return;
+    if (loadingRef.current || !hasMore || !cursorRef.current) return;
     loadingRef.current = true;
     setLoadingMore(true);
     try {
-      const data = await fetchPosts(cursorRef.current ?? undefined);
-      setPosts((prev) => [...prev, ...data.posts]);
-      setHasMore(data.hasMore);
-      cursorRef.current = data.nextCursor;
+      const p = new URLSearchParams();
+      p.set("take", String(PAGE_SIZE));
+      p.set("cursor", cursorRef.current);
+      if (search) p.set("search", search);
+      const res = await apiFetch(`/api/posts?${p}`);
+      if (!res.ok) return;
+      const result = await res.json();
+      setExtraPosts((prev) => [...prev, ...result.posts]);
+      setExtraHasMore(result.hasMore);
+      cursorRef.current = result.nextCursor;
     } catch {
       // silent
     } finally {
       setLoadingMore(false);
       loadingRef.current = false;
     }
-  }, [fetchPosts, hasMore]);
+  }, [hasMore, search]);
+
+  useEffect(() => {
+    cursorRef.current = data?.nextCursor ?? null;
+  }, [data?.nextCursor]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -134,9 +125,94 @@ export default function FeedPage() {
   };
 
   const handleDeletePost = (postId: string) => {
-    setPosts((prev) => prev.filter((p) => p.id !== postId));
+    setExtraPosts((prev) => prev.filter((p) => p.id !== postId));
     setExpandedPostId((prev) => (prev === postId ? null : prev));
   };
+
+  const newFlag = useQuery<boolean>({
+    queryKey: ["feed", "new-flag"],
+    queryFn: () => false,
+    staleTime: Infinity,
+  }).data;
+
+  const showNewPill = !!newFlag && posts.length > 0;
+
+  const handleLoadNewPosts = () => {
+    queryClient.setQueryData(["feed", "new-flag"], false);
+    setExtraPosts([]);
+    setExtraHasMore(true);
+    cursorRef.current = data?.nextCursor ?? null;
+    queryClient.invalidateQueries({ queryKey: ["feed", "list", search] });
+  };
+
+  return (
+    <div
+      ref={scrollRef}
+      className="flex max-h-[calc(100dvh-8rem)] flex-col gap-3 overflow-y-auto px-1 pb-4"
+    >
+      {showNewPill && (
+        <button
+          onClick={handleLoadNewPosts}
+          className="bg-brand/10 text-brand mx-auto rounded-full px-4 py-1.5 text-xs font-medium transition-colors hover:bg-brand/20"
+        >
+          New posts available — tap to load
+        </button>
+      )}
+
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <p className="text-muted text-sm">Loading...</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="flex items-center justify-center py-12">
+          <p className="text-sm text-red-500">{String(error.message)}</p>
+        </div>
+      )}
+
+      {!isLoading && !error && posts.length === 0 && (
+        <div className="flex flex-col items-center justify-center gap-3 py-12">
+          <p className="text-muted text-sm">No posts yet.</p>
+          <Link
+            href="/v1/en/share"
+            className="bg-brand rounded-lg px-4 py-2 text-sm font-medium text-white"
+          >
+            Be the first to share
+          </Link>
+        </div>
+      )}
+
+      {!isLoading &&
+        posts.map((post) => (
+          <PostCard
+            key={post.id}
+            post={post}
+            isExpanded={expandedPostId === post.id}
+            onToggle={() => handleToggleComments(post.id)}
+            onDelete={handleDeletePost}
+          />
+        ))}
+
+      {!isLoading && hasMore && <div ref={sentinelRef} className="h-4" />}
+
+      {loadingMore && (
+        <div className="flex items-center justify-center py-4">
+          <p className="text-muted text-[10px]">Loading more...</p>
+        </div>
+      )}
+
+      {!hasMore && posts.length > 0 && (
+        <p className="text-muted py-4 text-center text-[10px]">All caught up</p>
+      )}
+    </div>
+  );
+}
+
+export default function FeedPage() {
+  const params = useParams<{ lang: string }>();
+  const lang = params?.lang ?? "en";
+  const [search, setSearch] = useState("");
 
   return (
     <div className="flex h-full flex-col gap-4 overflow-hidden">
@@ -150,7 +226,6 @@ export default function FeedPage() {
         </Link>
       </div>
 
-      {/* Search */}
       <div className="relative">
         <IconSearch
           size={14}
@@ -166,59 +241,7 @@ export default function FeedPage() {
         />
       </div>
 
-      <div
-        ref={scrollRef}
-        className="flex max-h-[calc(100dvh-8rem)] flex-col gap-3 overflow-y-auto px-1 pb-4"
-      >
-        {loading && (
-          <div className="flex items-center justify-center py-12">
-            <p className="text-muted text-sm">Loading...</p>
-          </div>
-        )}
-
-        {error && (
-          <div className="flex items-center justify-center py-12">
-            <p className="text-sm text-red-500">{error}</p>
-          </div>
-        )}
-
-        {!loading && !error && posts.length === 0 && (
-          <div className="flex flex-col items-center justify-center gap-3 py-12">
-            <p className="text-muted text-sm">No posts yet.</p>
-            <Link
-              href={`/v1/${lang}/share`}
-              className="bg-brand rounded-lg px-4 py-2 text-sm font-medium text-white"
-            >
-              Be the first to share
-            </Link>
-          </div>
-        )}
-
-        {!loading &&
-          posts.map((post) => (
-            <PostCard
-              key={post.id}
-              post={post}
-              isExpanded={expandedPostId === post.id}
-              onToggle={() => handleToggleComments(post.id)}
-              onDelete={handleDeletePost}
-            />
-          ))}
-
-        {!loading && hasMore && <div ref={sentinelRef} className="h-4" />}
-
-        {loadingMore && (
-          <div className="flex items-center justify-center py-4">
-            <p className="text-muted text-[10px]">Loading more...</p>
-          </div>
-        )}
-
-        {!hasMore && posts.length > 0 && (
-          <p className="text-muted py-4 text-center text-[10px]">
-            All caught up
-          </p>
-        )}
-      </div>
+      <FeedList key={search} search={search} />
     </div>
   );
 }

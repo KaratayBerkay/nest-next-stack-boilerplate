@@ -3,7 +3,6 @@ import { PrismaService } from '../prisma/prisma.service';
 import { TokenStoreService } from '../auth/token-store.service';
 import { PushNotificationService } from '../push-notification/push-notification.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
-import { NotificationGateway } from './notification.gateway';
 import type { NotificationType } from '../@generated/prisma/notification-type.enum';
 
 interface CreateNotificationParams {
@@ -34,7 +33,6 @@ interface NotificationEmitDto {
 export class NotificationService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly gateway: NotificationGateway,
     private readonly realtime: RealtimeGateway,
     private readonly push: PushNotificationService,
     private readonly tokenStore: TokenStoreService,
@@ -88,13 +86,6 @@ export class NotificationService {
       type: 'Count',
       value: afterCount,
     });
-
-    // Legacy socket.io emit (kept for Stage C removal).
-    try {
-      this.gateway.sendToUser(params.userId, dto);
-    } catch {
-      /* transport failure */
-    }
 
     // Push only if user has no live NOTIFICATION socket.
     if (!this.realtime.hasServiceConnection(params.userId, 'NOTIFICATION')) {

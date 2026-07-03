@@ -93,7 +93,11 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
 
   onModuleInit() {
     const httpServer = this.adapterHost.httpAdapter.getHttpServer() as Server;
-    this.wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+    this.wss = new WebSocketServer({
+      server: httpServer,
+      path: '/ws',
+      maxPayload: 64 * 1024,
+    });
 
     this.wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
       const authWs = ws as AuthWs;
@@ -323,7 +327,9 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
   private handleRegister(ws: AuthWs, data: { services: string[] }) {
     if (!Array.isArray(data.services) || !ws.userId || !ws.deviceTokenHash)
       return;
+    const allowed = new Set(['MESSAGE', 'NOTIFICATION', 'CHAT']);
     for (const svc of data.services) {
+      if (!allowed.has(svc)) continue;
       if (ws.registeredServices?.includes(svc)) continue;
       ws.registeredServices?.push(svc);
       const key = `${svc}:${ws.userId}:${ws.deviceTokenHash}`;

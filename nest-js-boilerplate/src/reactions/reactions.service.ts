@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { PostEventsGateway } from '../post/post-events.gateway';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationService } from '../notification/notification.service';
@@ -11,7 +10,6 @@ export class ReactionsService {
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationService,
     private readonly realtime: RealtimeGateway,
-    private readonly postEvents: PostEventsGateway,
   ) {}
 
   findAll() {
@@ -32,7 +30,6 @@ export class ReactionsService {
       if (existing.type === data.type) {
         await this.prisma.reaction.delete({ where: { id: existing.id } });
         if (targetPostId) {
-          this.postEvents.broadcastPostUpdate(targetPostId);
           this.realtime.emitToTopic('feed', {
             renew: 'Feed',
             type: 'Post',
@@ -55,7 +52,6 @@ export class ReactionsService {
         },
       });
       if (targetPostId) {
-        this.postEvents.broadcastPostUpdate(targetPostId);
         this.realtime.emitToTopic('feed', {
           renew: 'Feed',
           type: 'Post',
@@ -84,7 +80,6 @@ export class ReactionsService {
     });
 
     if (data.postId) {
-      this.postEvents.broadcastPostUpdate(data.postId);
       this.realtime.emitToTopic('feed', {
         renew: 'Feed',
         type: 'Post',
