@@ -307,7 +307,8 @@ services:
   # Object storage
   # ──────────────────────────────────────────────────────
   minio:
-    image: quay.io/minio/minio:RELEASE.2024-11-07T00-52-20Z
+    # Volume was initialized by a newer MinIO (xl meta v3) — never downgrade this tag.
+    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:

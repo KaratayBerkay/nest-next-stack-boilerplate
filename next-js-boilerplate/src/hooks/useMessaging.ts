@@ -216,7 +216,7 @@ export function useMessaging(
         try {
           const data = JSON.parse(e.data);
           // The server answers a bad token quadruple with an error message but
-          // keeps the socket open (120s auth timeout); close it ourselves so
+          // keeps the socket open (15s auth timeout); close it ourselves so
           // the refresh-on-unauthenticated-close path runs immediately.
           if (
             data.type === "error" &&
@@ -565,7 +565,7 @@ export function useChatRoom(
         try {
           const data = JSON.parse(e.data);
           // The server answers a bad token quadruple with an error message but
-          // keeps the socket open (120s auth timeout); close it ourselves so
+          // keeps the socket open (15s auth timeout); close it ourselves so
           // the refresh-on-unauthenticated-close path runs immediately.
           if (
             data.type === "error" &&

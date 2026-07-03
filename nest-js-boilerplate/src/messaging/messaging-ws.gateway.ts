@@ -15,6 +15,7 @@ import { MessagingService, RoomMember } from './messaging.service';
 import { TokenStoreService } from '../auth/token-store.service';
 import { TokenDerivationService } from '../auth/token-derivation.service';
 import { CryptoService } from '../common/crypto/crypto.service';
+import { PushNotificationService } from '../push-notification/push-notification.service';
 
 type AuthWs = WebSocket & {
   userId?: string;
@@ -26,6 +27,8 @@ type AuthWs = WebSocket & {
   deviceTokenHash?: string;
   userToken?: string;
   registeredServices?: string[];
+  /** Set while the connection counts against the per-IP unauthenticated cap. */
+  pendingIp?: string;
 };
 
 interface AuthTokens {
@@ -37,6 +40,20 @@ interface AuthTokens {
 
 @Injectable()
 export class MessagingWsGateway implements OnModuleInit, OnModuleDestroy {
+  /** Max authenticated sockets per user — above this the oldest is closed. */
+  private static readonly MAX_SOCKETS_PER_USER = 20;
+  /**
+   * Max concurrent unauthenticated (auth-pending) sockets per client IP.
+   * NOTE: if the reverse proxy does not send X-Forwarded-For on the /ws
+   * location, all proxied clients share the proxy's address and this acts as
+   * a GLOBAL pending cap — keep it high enough for mass-reconnect bursts
+   * (deploy restarts), low enough to bound connection parking (slots
+   * self-clear via the auth timeout).
+   */
+  private static readonly MAX_PENDING_PER_IP = 50;
+  /** Unauthenticated sockets are closed after this window. */
+  private static readonly AUTH_TIMEOUT_MS = 15_000;
+
   private readonly logger = new Logger(MessagingWsGateway.name);
   private wss!: WebSocketServer;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
@@ -45,6 +62,10 @@ export class MessagingWsGateway implements OnModuleInit, OnModuleDestroy {
   private serviceConnections = new Map<string, Set<WebSocket>>();
   // "SERVICE:userToken" → Set<deviceHash>
   private serviceDeviceIndex = new Map<string, Set<string>>();
+  // userId → Set<AuthWs> in insertion order (oldest first) for the per-user cap
+  private userSockets = new Map<string, Set<AuthWs>>();
+  // client IP → count of auth-pending sockets
+  private pendingByIp = new Map<string, number>();
 
   constructor(
     private readonly adapterHost: HttpAdapterHost,
@@ -54,16 +75,29 @@ export class MessagingWsGateway implements OnModuleInit, OnModuleDestroy {
     private readonly tokenStore: TokenStoreService,
     private readonly derivation: TokenDerivationService,
     private readonly crypto: CryptoService,
+    private readonly push: PushNotificationService,
   ) {}
 
   onModuleInit() {
     const httpServer = this.adapterHost.httpAdapter.getHttpServer() as Server;
     this.wss = new WebSocketServer({ server: httpServer, path: '/ws' });
 
-    this.wss.on('connection', (ws: WebSocket, _req: IncomingMessage) => {
+    this.wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
       const authWs = ws as AuthWs;
       authWs.authenticated = false;
       authWs.isAlive = true;
+
+      // Cap concurrent auth-pending sockets per client IP: real clients
+      // authenticate within ~1s, so this only stops connection parking.
+      const ip = this.clientIp(req);
+      const pending = this.pendingByIp.get(ip) || 0;
+      if (pending >= MessagingWsGateway.MAX_PENDING_PER_IP) {
+        this.logger.warn(`WS pending-connection limit for ${ip}, closing`);
+        ws.close(1013, 'Too many pending connections');
+        return;
+      }
+      authWs.pendingIp = ip;
+      this.pendingByIp.set(ip, pending + 1);
 
       ws.on('pong', () => {
         authWs.isAlive = true;
@@ -74,7 +108,7 @@ export class MessagingWsGateway implements OnModuleInit, OnModuleDestroy {
           this.logger.warn('WS auth timeout, closing');
           ws.close();
         }
-      }, 120_000);
+      }, MessagingWsGateway.AUTH_TIMEOUT_MS);
 
       ws.on('message', (raw: Buffer) => {
         this.handleMessage(authWs, raw, authTimer).catch((err) =>
@@ -85,6 +119,14 @@ export class MessagingWsGateway implements OnModuleInit, OnModuleDestroy {
       ws.on('close', () => {
         const uid = authWs.userId;
         const sid = authWs.socketId;
+        this.releasePending(authWs);
+        if (uid) {
+          const sockets = this.userSockets.get(uid);
+          if (sockets) {
+            sockets.delete(authWs);
+            if (sockets.size === 0) this.userSockets.delete(uid);
+          }
+        }
         // Clean up service-tagged connections
         this.cleanupServiceConnections(authWs);
         if (sid) {
@@ -208,10 +250,29 @@ export class MessagingWsGateway implements OnModuleInit, OnModuleDestroy {
         Date.now().toString(36) +
         Math.random().toString(36).slice(2, 7);
       authWs.authenticated = true;
+      this.releasePending(authWs);
       if (authTimer) {
         clearTimeout(authTimer);
         authTimer = null;
       }
+
+      // Per-user connection cap: register this socket, then close the oldest
+      // ones above the limit (new devices/tabs always win over stale ones).
+      let sockets = this.userSockets.get(hash.userId);
+      if (!sockets) {
+        sockets = new Set<AuthWs>();
+        this.userSockets.set(hash.userId, sockets);
+      }
+      sockets.add(authWs);
+      while (sockets.size > MessagingWsGateway.MAX_SOCKETS_PER_USER) {
+        const oldest: AuthWs = sockets.values().next().value!;
+        sockets.delete(oldest);
+        this.logger.warn(
+          `WS per-user connection limit for ${hash.userId}, closing oldest`,
+        );
+        oldest.close(1013, 'Connection limit reached');
+      }
+
       authWs.send(JSON.stringify({ type: 'authenticated' }));
       this.handleOnline(authWs);
       return;
@@ -246,6 +307,32 @@ export class MessagingWsGateway implements OnModuleInit, OnModuleDestroy {
         this.handleRegister(authWs, data as { services: string[] });
         break;
     }
+  }
+
+  /**
+   * Client IP for rate limiting. Behind the reverse proxy the socket address
+   * is always the proxy, so prefer the LAST X-Forwarded-For entry — the one
+   * appended by our own proxy and not forgeable by the client.
+   */
+  private clientIp(req: IncomingMessage): string {
+    const xff = req.headers['x-forwarded-for'];
+    const raw = Array.isArray(xff) ? xff[xff.length - 1] : xff;
+    if (raw) {
+      const parts = raw.split(',');
+      const last = parts[parts.length - 1].trim();
+      if (last) return last;
+    }
+    return req.socket.remoteAddress ?? 'unknown';
+  }
+
+  /** Release the per-IP auth-pending slot exactly once (auth success or close). */
+  private releasePending(ws: AuthWs) {
+    const ip = ws.pendingIp;
+    if (!ip) return;
+    ws.pendingIp = undefined;
+    const count = this.pendingByIp.get(ip) || 0;
+    if (count <= 1) this.pendingByIp.delete(ip);
+    else this.pendingByIp.set(ip, count - 1);
   }
 
   private handleOnline(ws: AuthWs) {
@@ -291,6 +378,33 @@ export class MessagingWsGateway implements OnModuleInit, OnModuleDestroy {
         client.send(msg);
       }
     });
+    // Recipient has no live MESSAGE-service connection on any device →
+    // fall back to web push so the message isn't silently missed.
+    const recipientToken = this.derivation.deriveUserToken(recipientId);
+    if (!this.hasServiceConnection(recipientToken, 'MESSAGE')) {
+      const sender = message.sender as
+        | { name?: string | null; email?: string }
+        | undefined;
+      const senderName = sender?.name || sender?.email || 'Someone';
+      const body = typeof message.body === 'string' ? message.body : '';
+      this.push
+        .sendToUser(
+          recipientId,
+          `New message from ${senderName}`,
+          body.length > 120 ? body.slice(0, 117) + '...' : body,
+          undefined,
+          { kind: 'direct-message', senderId: message.senderId },
+        )
+        .catch((err: Error) =>
+          this.logger.warn(`Offline push failed: ${err.message}`),
+        );
+    }
+  }
+
+  /** True when the user (by userToken) has at least one open connection registered for the service. */
+  hasServiceConnection(userToken: string, service: string): boolean {
+    const devices = this.serviceDeviceIndex.get(`${service}:${userToken}`);
+    return !!devices && devices.size > 0;
   }
 
   broadcastMessageRead(readerId: string, senderId: string, readAt: string) {

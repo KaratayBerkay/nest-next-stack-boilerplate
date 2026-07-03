@@ -11,6 +11,7 @@ import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { FriendsService } from '../friends/friends.service';
 import { TokenStoreService } from '../auth/token-store.service';
+import { NotificationService } from '../notification/notification.service';
 
 export interface RoomMember {
   socketId: string;
@@ -28,7 +29,27 @@ export class MessagingService {
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
     private readonly friends: FriendsService,
     private readonly tokenStore: TokenStoreService,
+    private readonly notifications: NotificationService,
   ) {}
+
+  /** Fire-and-forget FRIEND_REQUEST notification — never fails the friend operation. */
+  private notifyFriendEvent(userId: string, actorId: string, suffix: string) {
+    void (async () => {
+      const actor = await this.prisma.user.findUnique({
+        where: { id: actorId },
+        select: { name: true, email: true },
+      });
+      const who = actor?.name || actor?.email || 'Someone';
+      await this.notifications.create({
+        userId,
+        actorId,
+        type: 'FRIEND_REQUEST',
+        title: `${who} ${suffix}`,
+      });
+    })().catch((err: Error) =>
+      this.logger.warn(`Friend notification failed: ${err.message}`),
+    );
+  }
 
   async getUsers(currentUserId: string, search?: string) {
     const existing = await this.prisma.friendship.findMany({
@@ -408,6 +429,11 @@ export class MessagingService {
         // Rewrite friends list in Redis for both users.
         this.refreshFriendIds(requesterId);
         this.refreshFriendIds(addresseeId);
+        this.notifyFriendEvent(
+          addresseeId,
+          requesterId,
+          'accepted your friend request',
+        );
         return { success: true };
       }
       if (existing.status === 'BLOCKED') {
@@ -418,12 +444,22 @@ export class MessagingService {
         where: { id: existing.id },
         data: { status: 'PENDING' },
       });
+      this.notifyFriendEvent(
+        addresseeId,
+        requesterId,
+        'sent you a friend request',
+      );
       return { success: true };
     }
 
     await this.prisma.friendship.create({
       data: { requesterId, addresseeId, status: 'PENDING' },
     });
+    this.notifyFriendEvent(
+      addresseeId,
+      requesterId,
+      'sent you a friend request',
+    );
     return { success: true };
   }
 
@@ -460,6 +496,7 @@ export class MessagingService {
     // Rewrite friends list in Redis for both users.
     this.refreshFriendIds(requesterId);
     this.refreshFriendIds(userId);
+    this.notifyFriendEvent(requesterId, userId, 'accepted your friend request');
     return { success: true };
   }
 

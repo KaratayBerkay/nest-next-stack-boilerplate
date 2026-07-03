@@ -32,6 +32,10 @@ export async function publishEvent(
   topic: string,
   event: Record<string, unknown>,
 ): Promise<void> {
+  // KAFKA_BROKER=disabled (or empty) opts out of event publishing entirely —
+  // deployments without the kafka compose profile otherwise retry-storm the logs.
+  const broker = serverEnv().KAFKA_BROKER;
+  if (!broker || broker === "disabled") return;
   const p = await producer();
   try {
     await p.send({
