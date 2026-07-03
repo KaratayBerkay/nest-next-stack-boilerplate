@@ -24,12 +24,7 @@ export class RealtimeClient {
 
   constructor(
     private readonly url: string,
-    private readonly getTokens: () => Promise<{
-      accessToken: string;
-      rbacToken: string;
-      deviceToken: string;
-      userToken: string;
-    } | null>,
+    private readonly getTokens: () => Promise<Record<string, string> | null>,
     private readonly onStatusChange: (status: RealtimeStatus) => void,
     private readonly onFrame: (frame: Record<string, unknown>) => void,
   ) {}

@@ -31,24 +31,108 @@ type RealtimeContextValue = {
 
 const RealtimeContext = createContext<RealtimeContextValue | null>(null);
 
-function dispatchRenewFrame(
-  queryClient: ReturnType<typeof useQueryClient>,
+// ── Module-level helpers ──
+
+const BROWSER_DID_KEY = "rt_did";
+
+function getBrowserDeviceId(): string {
+  try {
+    let id = localStorage.getItem(BROWSER_DID_KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(BROWSER_DID_KEY, id);
+    }
+    return id;
+  } catch {
+    return "";
+  }
+}
+
+async function fetchTokens(
+  token: string,
+): Promise<Record<string, string> | null> {
+  try {
+    const res = await apiFetch("/api/auth/token");
+    if (!res.ok) return null;
+    const json = await res.json();
+    return {
+      accessToken: json.accessToken ?? token,
+      rbacToken: json.rbacToken ?? "",
+      deviceToken: json.deviceToken || getBrowserDeviceId(),
+      userToken: json.userToken ?? "",
+    };
+  } catch {
+    return null;
+  }
+}
+
+// Token cache (30s TTL, keyed by token to auto-invalidate on refresh)
+let _tokKey = "";
+let _tokData: Record<string, string> | null = null;
+let _tokExp = 0;
+
+function cachedFetchTokens(
+  token: string,
+): Promise<Record<string, string> | null> {
+  const key = `t:${token}`;
+  if (_tokKey === key && Date.now() < _tokExp && _tokData) {
+    return Promise.resolve(_tokData);
+  }
+  _tokKey = key;
+  _tokExp = Date.now() + 30_000;
+  return fetchTokens(token).then((d) => {
+    _tokData = d;
+    return d;
+  });
+}
+
+// ── Tab coordination ──
+
+const TAB_ID =
+  typeof crypto !== "undefined"
+    ? crypto.randomUUID()
+    : Math.random().toString(36).slice(2, 10);
+
+const CHANNEL = "rt-coord";
+const ELECTION_MS = 1_200;
+const HEARTBEAT_MS = 10_000;
+const LEADER_TIMEOUT_MS = 25_000;
+
+type Cmd =
+  | { type: "hello"; tabId: string }
+  | { type: "gone"; tabId: string }
+  | { type: "leader"; tabId: string }
+  | { type: "beat"; tabId: string }
+  | { type: "frame"; data: Record<string, unknown> }
+  | { type: "st"; status: RealtimeStatus }
+  | { type: "cmd"; act: string; payload: unknown };
+
+function openBc(): BroadcastChannel | null {
+  try {
+    return new BroadcastChannel(CHANNEL);
+  } catch {
+    return null;
+  }
+}
+
+// ── Renew-frame dispatch ──
+
+function dispatchRenew(
+  qc: ReturnType<typeof useQueryClient>,
   frame: Record<string, unknown>,
 ): void {
   if (!frame.renew) return;
-
   switch (frame.renew as string) {
     case "Notifications": {
       if (frame.type === "Count") {
-        queryClient.setQueryData(["notifications", "count"], frame.value);
+        qc.setQueryData(["notifications", "count"], frame.value);
       } else if (frame.type === "Item") {
-        queryClient.setQueryData(
+        qc.setQueryData(
           ["notifications", "list"],
           (old: unknown[] | undefined) => {
             const list = (old ?? []) as Record<string, unknown>[];
             const item = frame.item as Record<string, unknown>;
-            if (list.some((n) => n.id === item.id))
-              return list;
+            if (list.some((n) => n.id === item.id)) return list;
             return [item, ...list];
           },
         );
@@ -57,7 +141,7 @@ function dispatchRenewFrame(
     }
     case "Messages": {
       if (frame.type === "Conversation") {
-        queryClient.setQueryData(
+        qc.setQueryData(
           ["conversations"],
           (old: unknown[] | undefined) => {
             const list = (old ?? []) as Record<string, unknown>[];
@@ -65,17 +149,14 @@ function dispatchRenewFrame(
               user: { id: string };
             };
             const idx = list.findIndex(
-              (c) =>
-                (c.user as Record<string, unknown>)?.id === conv.user.id,
+              (c) => (c.user as Record<string, unknown>)?.id === conv.user.id,
             );
             if (idx >= 0) {
               const updated = [...list];
-              updated[idx] = { ...updated[idx], ...conv };
+              updated[idx] = { ...(updated[idx] as object), ...conv };
               return updated.sort(
                 (a, b) =>
-                  new Date(
-                    (b.lastTime as string) ?? "",
-                  ).getTime() -
+                  new Date((b.lastTime as string) ?? "").getTime() -
                   new Date((a.lastTime as string) ?? "").getTime(),
               );
             }
@@ -87,9 +168,9 @@ function dispatchRenewFrame(
     }
     case "Feed": {
       if (frame.type === "New") {
-        queryClient.setQueryData(["feed", "new-flag"], true);
+        qc.setQueryData(["feed", "new-flag"], true);
       } else if (frame.type === "Post" && frame.id) {
-        queryClient.invalidateQueries({
+        qc.invalidateQueries({
           queryKey: ["posts", frame.id as string],
           refetchType: "active",
         });
@@ -99,93 +180,279 @@ function dispatchRenewFrame(
   }
 }
 
+// ── Provider ──
+
 export function RealtimeProvider({ children }: { children: ReactNode }) {
   const { token } = useAuth();
   const queryClient = useQueryClient();
-  const clientRef = useRef<RealtimeClient | null>(null);
   const [status, setStatus] = useState<RealtimeStatus>("idle");
-  const subscriptionsRef = useRef<Map<string, Set<FrameHandler>>>(new Map());
+  const subsRef = useRef<Map<string, Set<FrameHandler>>>(new Map());
+  const clientRef = useRef<RealtimeClient | null>(null);
+  const leaderRef = useRef(false);
+  const channelRef = useRef<BroadcastChannel | null>(null);
+
+  // ── Single effect: owns all coordination state ──
 
   useEffect(() => {
     if (!token) return;
-    let destroyed = false;
+    let alive = true;
 
-    const getTokens = async () => {
-      try {
-        const res = await apiFetch("/api/auth/token");
-        if (!res.ok) return null;
-        const data = await res.json();
-        return {
-          accessToken: data.accessToken ?? token,
-          rbacToken: data.rbacToken ?? "",
-          deviceToken: data.deviceToken ?? "",
-          userToken: data.userToken ?? "",
-        };
-      } catch {
-        return null;
-      }
+    // Process an incoming frame (from WS or broadcast)
+    const process = (frame: Record<string, unknown>) => {
+      dispatchRenew(queryClient, frame);
+      const t = frame.type as string;
+      const subs = subsRef.current.get(t);
+      if (subs) for (const h of subs) h(frame);
     };
 
-    const onFrame = (frame: Record<string, unknown>) => {
-      if (destroyed) return;
-      dispatchRenewFrame(queryClient, frame);
-      const subs = subscriptionsRef.current.get(frame.type as string);
-      if (subs) {
-        for (const handler of subs) {
-          handler(frame);
+    // ── Standalone WS (no BroadcastChannel) ──
+
+    const startStandalone = () => {
+      const client = new RealtimeClient(
+        clientEnv.NEXT_PUBLIC_REALTIME_WS_URL,
+        () => {
+          if (!alive) return Promise.resolve(null);
+          return cachedFetchTokens(token);
+        },
+        setStatus,
+        process,
+      );
+      clientRef.current = client;
+      client.connect();
+      client.registerServices(["MESSAGE", "NOTIFICATION"]);
+    };
+
+    const bc = openBc();
+    if (!bc) {
+      startStandalone();
+      return () => {
+        alive = false;
+        clientRef.current?.disconnect();
+        clientRef.current = null;
+      };
+    }
+
+    channelRef.current = bc;
+
+    // ── Leader election ──
+
+    let knownTabs = new Set<string>([TAB_ID]);
+    let electionTimer: ReturnType<typeof setTimeout> | null = null;
+    let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+    let leaderTimeoutTimer: ReturnType<typeof setTimeout> | null = null;
+    let isLeader = false;
+
+    const scheduleReelect = () => {
+      if (leaderTimeoutTimer) clearTimeout(leaderTimeoutTimer);
+      leaderTimeoutTimer = setTimeout(elect, LEADER_TIMEOUT_MS);
+    };
+
+    const elect = () => {
+      if (!alive) return;
+      isLeader = false;
+      leaderRef.current = false;
+      knownTabs = new Set([TAB_ID]);
+      bc.postMessage({ type: "hello", tabId: TAB_ID } satisfies Cmd);
+      if (electionTimer) clearTimeout(electionTimer);
+      electionTimer = setTimeout(() => {
+        if (!alive) return;
+        const sorted = Array.from(knownTabs).sort();
+        if (sorted[0] === TAB_ID) {
+          // Become leader
+          isLeader = true;
+          leaderRef.current = true;
+          bc.postMessage({ type: "leader", tabId: TAB_ID } satisfies Cmd);
+          clientRef.current?.disconnect();
+          const client = new RealtimeClient(
+            clientEnv.NEXT_PUBLIC_REALTIME_WS_URL,
+            () => {
+              if (!alive) return Promise.resolve(null);
+              return cachedFetchTokens(token);
+            },
+            (s) => {
+              setStatus(s);
+              bc.postMessage({ type: "st", status: s } satisfies Cmd);
+              if (s === "down" && isLeader) {
+                isLeader = false;
+                leaderRef.current = false;
+                bc.postMessage({ type: "gone", tabId: TAB_ID } satisfies Cmd);
+              }
+            },
+            (frame) => {
+              process(frame);
+              bc.postMessage({ type: "frame", data: frame } satisfies Cmd);
+            },
+          );
+          clientRef.current = client;
+          client.connect();
+          client.registerServices(["MESSAGE", "NOTIFICATION"]);
+          heartbeatTimer = setInterval(() => {
+            if (alive)
+              bc.postMessage({ type: "beat", tabId: TAB_ID } satisfies Cmd);
+          }, HEARTBEAT_MS);
+        } else {
+          // Become follower
+          isLeader = false;
+          leaderRef.current = false;
+          clientRef.current?.disconnect();
+          clientRef.current = null;
+          setStatus("open");
+          scheduleReelect();
         }
+      }, ELECTION_MS);
+    };
+
+    // ── BroadcastChannel message handler ──
+
+    const onMsg = (e: MessageEvent<Cmd>) => {
+      const m = e.data;
+      switch (m.type) {
+        case "hello":
+          knownTabs.add(m.tabId);
+          break;
+        case "gone":
+          knownTabs.delete(m.tabId);
+          if (!isLeader && m.tabId !== TAB_ID) {
+            // If we're following the departed leader, re-elect
+            // (any follower can detect this)
+            elect();
+          }
+          break;
+        case "leader":
+          if (m.tabId !== TAB_ID && !isLeader) {
+            isLeader = false;
+            leaderRef.current = false;
+            clientRef.current?.disconnect();
+            clientRef.current = null;
+            setStatus("open");
+            scheduleReelect();
+          }
+          break;
+        case "beat":
+          scheduleReelect();
+          break;
+        case "frame":
+          if (!isLeader) process(m.data);
+          break;
+        case "st":
+          if (!isLeader) setStatus(m.status);
+          break;
+        case "cmd":
+          if (isLeader) {
+            if (m.act === "send")
+              clientRef.current?.send(m.payload as Record<string, unknown>);
+            else if (m.act === "watch")
+              clientRef.current?.watch(m.payload as string);
+            else if (m.act === "unwatch")
+              clientRef.current?.unwatch(m.payload as string);
+            else if (m.act === "register")
+              clientRef.current?.registerServices(m.payload as string[]);
+          }
+          break;
       }
     };
 
-    const client = new RealtimeClient(
-      clientEnv.NEXT_PUBLIC_REALTIME_WS_URL,
-      getTokens,
-      setStatus,
-      onFrame,
-    );
+    bc.addEventListener("message", onMsg);
+    elect();
 
-    clientRef.current = client;
-    client.connect();
-    client.registerServices(["MESSAGE", "NOTIFICATION"]);
+    const onUnload = () => {
+      bc.postMessage({ type: "gone", tabId: TAB_ID } satisfies Cmd);
+      if (isLeader) {
+        clientRef.current?.disconnect();
+        clientRef.current = null;
+      }
+    };
+    window.addEventListener("beforeunload", onUnload);
 
     return () => {
-      destroyed = true;
-      client.disconnect();
-      clientRef.current = null;
+      alive = false;
+      window.removeEventListener("beforeunload", onUnload);
+      bc.removeEventListener("message", onMsg);
+      bc.postMessage({ type: "gone", tabId: TAB_ID } satisfies Cmd);
+      if (electionTimer) clearTimeout(electionTimer);
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
+      if (leaderTimeoutTimer) clearTimeout(leaderTimeoutTimer);
+      if (isLeader) {
+        clientRef.current?.disconnect();
+        clientRef.current = null;
+      }
+      bc.close();
+      channelRef.current = null;
     };
   }, [token, queryClient]);
 
+  // ── Public API ──
+
   const send = useCallback((data: Record<string, unknown>) => {
-    clientRef.current?.send(data);
+    if (leaderRef.current) {
+      clientRef.current?.send(data);
+    } else {
+      channelRef.current?.postMessage({
+        type: "cmd",
+        act: "send",
+        payload: data,
+      } satisfies Cmd);
+    }
   }, []);
 
   const subscribe = useCallback(
     (type: string, handler: FrameHandler): (() => void) => {
-      if (!subscriptionsRef.current.has(type))
-        subscriptionsRef.current.set(type, new Set());
-      subscriptionsRef.current.get(type)!.add(handler);
+      if (!subsRef.current.has(type))
+        subsRef.current.set(type, new Set());
+      subsRef.current.get(type)!.add(handler);
       return () => {
-        subscriptionsRef.current.get(type)?.delete(handler);
+        subsRef.current.get(type)?.delete(handler);
       };
     },
     [],
   );
 
   const watch = useCallback((topic: string) => {
-    clientRef.current?.watch(topic);
+    if (leaderRef.current) {
+      clientRef.current?.watch(topic);
+    } else {
+      channelRef.current?.postMessage({
+        type: "cmd",
+        act: "watch",
+        payload: topic,
+      } satisfies Cmd);
+    }
   }, []);
 
   const unwatch = useCallback((topic: string) => {
-    clientRef.current?.unwatch(topic);
+    if (leaderRef.current) {
+      clientRef.current?.unwatch(topic);
+    } else {
+      channelRef.current?.postMessage({
+        type: "cmd",
+        act: "unwatch",
+        payload: topic,
+      } satisfies Cmd);
+    }
   }, []);
 
   const registerServices = useCallback((services: string[]) => {
-    clientRef.current?.registerServices(services);
+    if (leaderRef.current) {
+      clientRef.current?.registerServices(services);
+    } else {
+      channelRef.current?.postMessage({
+        type: "cmd",
+        act: "register",
+        payload: services,
+      } satisfies Cmd);
+    }
   }, []);
 
   return (
     <RealtimeContext.Provider
-      value={{ status, send, subscribe, watch, unwatch, registerServices }}
+      value={{
+        status,
+        send,
+        subscribe,
+        watch,
+        unwatch,
+        registerServices,
+      }}
     >
       {children}
     </RealtimeContext.Provider>
@@ -194,9 +461,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
 
 export function useRealtime(): RealtimeContextValue {
   const ctx = useContext(RealtimeContext);
-  if (!ctx) {
-    throw new Error("useRealtime must be used within RealtimeProvider");
-  }
+  if (!ctx) throw new Error("useRealtime must be used within RealtimeProvider");
   return ctx;
 }
 
