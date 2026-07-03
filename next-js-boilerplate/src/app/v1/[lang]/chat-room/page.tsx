@@ -43,7 +43,7 @@ export default function ChatRoomPage() {
         if (before) params.set("before", before);
         params.set("take", "30");
         const res = await apiFetch(
-          `/api/rooms/${roomId}/messages?${params.toString()}`,
+          `/api/messages/rooms/${roomId}/messages?${params.toString()}`,
         );
         if (res.ok) {
           const data = await res.json();

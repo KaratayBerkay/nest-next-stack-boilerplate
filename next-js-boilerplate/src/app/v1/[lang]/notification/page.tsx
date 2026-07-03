@@ -44,7 +44,10 @@ function NotificationPageContent() {
 
   const markRead = useCallback(async (id: string) => {
     try {
-      await apiFetch(`/api/notifications/${id}/read`, { method: "POST" });
+      await apiFetch("/api/notifications/read", {
+        method: "POST",
+        body: JSON.stringify({ id }),
+      });
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, readAt: new Date().toISOString() } : n)),
       );
@@ -53,7 +56,10 @@ function NotificationPageContent() {
 
   const markAllRead = useCallback(async () => {
     try {
-      await apiFetch("/api/notifications/read-all", { method: "POST" });
+      await apiFetch("/api/notifications/read", {
+        method: "POST",
+        body: JSON.stringify({ all: true }),
+      });
       setNotifications((prev) =>
         prev.map((n) => ({ ...n, readAt: n.readAt ?? new Date().toISOString() })),
       );

@@ -122,7 +122,7 @@ export default function FindFriendsPage() {
 
   const fetchFriends = useCallback(async () => {
     try {
-      const res = await apiFetch("/api/friends");
+      const res = await apiFetch("/api/messages/friends");
       if (res.ok) {
         const data: User[] = await res.json();
         setFriends(data);
@@ -132,7 +132,7 @@ export default function FindFriendsPage() {
 
   const fetchRequests = useCallback(async () => {
     try {
-      const res = await apiFetch("/api/friends/requests");
+      const res = await apiFetch("/api/messages/friends/requests");
       if (res.ok) {
         const data: FriendRequest[] = await res.json();
         setFriendRequests(data);
@@ -208,7 +208,7 @@ export default function FindFriendsPage() {
 
   const sendFriendRequest = useCallback(async (userId: string) => {
     try {
-      const res = await apiFetch(`/api/friends/request/${userId}`, {
+      const res = await apiFetch(`/api/messages/friends/request/${userId}`, {
         method: "POST",
       });
       return res.ok;
@@ -219,7 +219,7 @@ export default function FindFriendsPage() {
 
   const acceptFriendRequest = useCallback(async (userId: string) => {
     try {
-      const res = await apiFetch(`/api/friends/accept/${userId}`, {
+      const res = await apiFetch(`/api/messages/friends/accept/${userId}`, {
         method: "POST",
       });
       if (res.ok) {
@@ -233,7 +233,7 @@ export default function FindFriendsPage() {
 
   const declineFriendRequest = useCallback(async (userId: string) => {
     try {
-      const res = await apiFetch(`/api/friends/decline/${userId}`, {
+      const res = await apiFetch(`/api/messages/friends/decline/${userId}`, {
         method: "POST",
       });
       if (res.ok) {

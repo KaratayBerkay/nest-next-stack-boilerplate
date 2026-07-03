@@ -106,7 +106,7 @@ function MessagesPageContent() {
 
   const fetchConversations = useCallback(async () => {
     try {
-      const res = await apiFetch("/api/conversations");
+      const res = await apiFetch("/api/messages/conversations");
       if (res.ok) {
         const data: Conversation[] = await res.json();
         setConversations(data);
@@ -117,8 +117,8 @@ function MessagesPageContent() {
   const fetchFriends = useCallback(async (q?: string) => {
     try {
       const url = q
-        ? `/api/friends?q=${encodeURIComponent(q)}`
-        : "/api/friends";
+        ? `/api/messages/friends?q=${encodeURIComponent(q)}`
+        : "/api/messages/friends";
       const res = await apiFetch(url);
       if (res.ok) {
         const data: UserInfo[] = await res.json();
@@ -134,7 +134,7 @@ function MessagesPageContent() {
         if (before) params.set("before", before);
         params.set("take", "30");
         const res = await apiFetch(
-          `/api/conversations/${userId}/messages?${params.toString()}`,
+          `/api/messages/conversations/${userId}/messages?${params.toString()}`,
         );
         if (res.ok) {
           const data = await res.json();
@@ -156,7 +156,7 @@ function MessagesPageContent() {
 
   const sendMessage = useCallback(
     async (recipientId: string, text: string) => {
-      const res = await apiFetch(`/api/conversations/${recipientId}/messages`, {
+      const res = await apiFetch(`/api/messages/conversations/${recipientId}/messages`, {
         method: "POST",
         body: JSON.stringify({ text }),
       });
@@ -286,7 +286,7 @@ function MessagesPageContent() {
 
   const sendFriendRequest = useCallback(async (userId: string) => {
     try {
-      const res = await apiFetch(`/api/friends/request/${userId}`, {
+      const res = await apiFetch(`/api/messages/friends/request/${userId}`, {
         method: "POST",
       });
       return res.ok;
