@@ -145,6 +145,11 @@ export class DeviceService {
   }
 
   private readCookie(req: Request, name: string): string | null {
+    // In production the BFF forwards the device token as x-device-token header
+    // because the backend cookie is __Secure-device_token while the BFF stores the
+    // unprefixed name. Check the header first (the BFF sets both), then cookie.
+    const headerToken = req.headers['x-device-token'] as string | undefined;
+    if (headerToken) return headerToken;
     const carrier = req as unknown as CookieCarrier;
     return carrier.cookies?.[name] ?? carrier.signedCookies?.[name] ?? null;
   }

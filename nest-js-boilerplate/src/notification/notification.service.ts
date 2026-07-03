@@ -14,6 +14,21 @@ interface CreateNotificationParams {
   payload?: Record<string, unknown>;
 }
 
+interface NotificationEmitDto {
+  id: string;
+  type: string;
+  title: string;
+  body: string | null;
+  payload: Record<string, unknown>;
+  createdAt: string;
+  actor: {
+    id: string;
+    name: string | null;
+    email: string;
+    avatarUrl: string | null;
+  } | null;
+}
+
 @Injectable()
 export class NotificationService {
   constructor(
@@ -36,18 +51,47 @@ export class NotificationService {
       include: { actor: true },
     });
 
-    this.gateway.sendToUser(params.userId, notification);
-
-    this.push.sendToUser(
-      params.userId,
-      params.title,
-      params.body,
-      undefined,
-      params.payload,
-    );
-
-    // Increment the unread counter in Redis (fire-and-forget).
+    // Increment the unread counter in Redis FIRST (fire-and-forget).
     this.tokenStore.incrUnreadForUser(params.userId, 1).catch(() => {});
+
+    // Build a JSON-safe DTO for emits — raw Prisma rows can include BigInt columns
+    // (reputation, storageQuotaBytes) that crash JSON.stringify.
+    const dto: NotificationEmitDto = {
+      id: notification.id,
+      type: notification.type,
+      title: notification.title,
+      body: notification.body,
+      payload: (notification.payload ?? {}) as Record<string, unknown>,
+      createdAt: notification.createdAt.toISOString(),
+      actor: notification.actor
+        ? {
+            id: notification.actor.id,
+            name: notification.actor.name,
+            email: notification.actor.email,
+            avatarUrl: (notification.actor as Record<string, unknown>)
+              .avatarUrl as string | null,
+          }
+        : null,
+    };
+
+    // Emit via gateway; never let a transport failure fail notification creation.
+    try {
+      this.gateway.sendToUser(params.userId, dto);
+    } catch {
+      /* transport failure — notification persisted, unread counter incremented */
+    }
+
+    this.push
+      .sendToUser(
+        params.userId,
+        params.title,
+        params.body,
+        undefined,
+        params.payload,
+      )
+      .catch(() => {
+        /* push failure — notification still delivered in-app */
+      });
 
     return notification;
   }

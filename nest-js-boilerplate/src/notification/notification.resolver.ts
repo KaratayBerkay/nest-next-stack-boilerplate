@@ -22,7 +22,8 @@ export class NotificationResolver {
 
   @Query(() => Int)
   unreadNotificationCount(@CurrentUser() user: JwtUser) {
-    return this.notificationService.unreadCount(user.userId);
+    // Serve from the Redis hash snapshot — zero PG on the hot path.
+    return user.unread ?? this.notificationService.unreadCount(user.userId);
   }
 
   @Mutation(() => Boolean)

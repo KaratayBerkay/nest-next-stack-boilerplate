@@ -173,14 +173,32 @@ export function useMessaging(
     function connect() {
       const ws = new WebSocket(MSG_WS_URL);
       wsRef.current = ws;
-      ws.onopen = () => {
-        const userTokenMatch = document.cookie.match(/(?:^|;\s*)user_token=([^;]+)/);
-        const userToken = userTokenMatch ? decodeURIComponent(userTokenMatch[1]) : null;
-        ws.send(JSON.stringify({
-          type: "auth",
-          token,
-          tokens: { accessToken: token, userToken },
-        }));
+      ws.onopen = async () => {
+        let accessToken = token;
+        let rbacToken = "";
+        let deviceToken = "";
+        let userToken = "";
+        try {
+          const res = await fetch("/api/auth/token");
+          if (res.ok) {
+            const t = (await res.json()) as {
+              accessToken: string;
+              rbacToken: string;
+              deviceToken: string;
+              userToken: string;
+            };
+            accessToken = t.accessToken;
+            rbacToken = t.rbacToken;
+            deviceToken = t.deviceToken;
+            userToken = t.userToken;
+          }
+        } catch {}
+        ws.send(
+          JSON.stringify({
+            type: "auth",
+            tokens: { accessToken, rbacToken, deviceToken, userToken },
+          }),
+        );
       };
       ws.onmessage = (e) => {
         try {
@@ -468,14 +486,32 @@ export function useChatRoom(
       const ws = new WebSocket(MSG_WS_URL);
       wsRef.current = ws;
 
-      ws.onopen = () => {
-        const userTokenMatch = document.cookie.match(/(?:^|;\s*)user_token=([^;]+)/);
-        const userToken = userTokenMatch ? decodeURIComponent(userTokenMatch[1]) : null;
-        ws.send(JSON.stringify({
-          type: "auth",
-          token,
-          tokens: { accessToken: token, userToken },
-        }));
+      ws.onopen = async () => {
+        let accessToken = token;
+        let rbacToken = "";
+        let deviceToken = "";
+        let userToken = "";
+        try {
+          const res = await fetch("/api/auth/token");
+          if (res.ok) {
+            const t = (await res.json()) as {
+              accessToken: string;
+              rbacToken: string;
+              deviceToken: string;
+              userToken: string;
+            };
+            accessToken = t.accessToken;
+            rbacToken = t.rbacToken;
+            deviceToken = t.deviceToken;
+            userToken = t.userToken;
+          }
+        } catch {}
+        ws.send(
+          JSON.stringify({
+            type: "auth",
+            tokens: { accessToken, rbacToken, deviceToken, userToken },
+          }),
+        );
       };
 
       ws.onmessage = (e) => {

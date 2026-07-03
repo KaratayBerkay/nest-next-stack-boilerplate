@@ -173,17 +173,20 @@ user's next request, no re-login.
 | GraphQL resolvers | all 4 (via `SessionAuthGuard`) | Redis (compound-key lookup) |
 | HTTP REST endpoints | all 4 (via `SessionAuthGuard`) | Redis (compound-key lookup) |
 | Notification WS (socket.io) | `accessToken` + `rbacToken` + `userToken` (+ optional `deviceToken`) | socket.io `handshake.auth` |
-| Messaging WS (NestJS gateway) | all 4 | `sec-websocket-protocol` header |
-| Messaging WS (standalone server) | all 4 | `sec-websocket-protocol` header |
+| Messaging WS (NestJS gateway) | all 4 | first-message `{type:"auth", tokens}` |
+| Messaging WS (standalone server) | all 4 | first-message `{type:"auth", tokens}` |
 | SSE demo | none | unauthenticated |
 
 ## Tier change semantics
 
 `rewriteFieldsForUser(userId, fields)` iterates the reverse index
-`user:{userId}:sessions`, updates each live compound key via `HGETALL` → `HSET`, and
-the change applies on the user's next request — no mid-session rewrite, no forced
-logout, no refresh needed. `incrUnreadForUser` atomically increments the `unread`
-counter in every live session.
+`user:{userId}:sessions`, updates each live compound key via `HGETALL` → `HSET`.
+The guard's rbac derivation check (`deriveRbacToken(hash.userId, hash.tier)`) then
+401s the session's next request because the presented rbacToken was derived from the
+old tier. The client silently auto-refreshes (see BFF bridge below), which re-derives
+the rbac token from the new tier and rehydrates. No forced logout, but one silent
+refresh. `incrUnreadForUser` atomically increments the `unread` counter in every live
+session.
 
 ## Deploy migration notes
 
@@ -202,20 +205,38 @@ counter in every live session.
 ## Messaging WS auth
 
 Both the NestJS `MessagingWsGateway` and the standalone messaging server
-(`messaging-server.mjs` on port 3003) authenticate using the WebSocket's
-**`sec-websocket-protocol`** header:
+(`messaging-server.mjs` on port 3003) authenticate via a **first-message
+protocol** with a 30-second auth timeout:
 
+```json
+{
+  "type": "auth",
+  "tokens": {
+    "accessToken": "<jwt>",
+    "rbacToken": "<opaque>",
+    "deviceToken": "<opaque>",
+    "userToken": "<opaque>"
+  }
+}
 ```
-sec-websocket-protocol: <accessToken>,<rbacToken>,<deviceToken>,<userToken>
-```
 
-The server splits the header on `,`, validates all four tokens via
-`TokenDerivationService` (signature-binding), builds the compound Redis key,
-and performs `HGETALL` to hydrate the session. If any token is tampered, the
-compound key won't match and the connection is rejected.
+The server runs ordered checks matching `SessionAuthGuard`:
+1. Verify the access-token JWT (signature + expiry, zero I/O)
+2. Recompute today's `userToken(payload.sub)` and timing-safe compare
+3. Build the 4-segment compound key → `HGETALL` (miss → reject)
+4. `payload.sub === hash.userId` sanity check
+5. Recompute `rbacToken(hash.userId, hash.tier)` and timing-safe compare
 
-The client-side `useMessaging` hook reads `userToken` from `document.cookie`
-(getUserToken helper) and sends all four tokens during the WebSocket upgrade.
+On success the server responds `{type:"authenticated"}` and sets the user's
+metadata (userId, name, friends) from the Redis hash — **no `User` SELECT**
+on connect. Legacy single-JWT auth (`{type:"auth", token}`) is not supported.
 
-The server also enforces friends-only DMs — checks `FriendRequest` table with
-`status = 'ACCEPTED'` before inserting or forwarding any `direct-message`.
+The client-side `useMessaging` hook fetches all four tokens from the BFF's
+`GET /api/auth/token` on connect.
+
+### Friends-only DM enforcement
+
+Direct messages require `recipientId ∉ friends` (from the Redis hash `friends`
+field, refreshed at connect time). The backend keeps the `friends` field
+up-to-date via `rewriteFieldsForUser` on friendship changes — no Postgres query
+on the DM authorization hot path.

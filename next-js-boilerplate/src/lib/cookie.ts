@@ -137,15 +137,11 @@ export function userTokenCookieOptions(
   value: string,
   maxAge?: number,
 ): ResponseCookie {
-  return {
-    ...baseOptions({
-      name: USER_TOKEN_COOKIE,
-      value,
-      maxAge: maxAge ?? 60 * 15,
-    }),
-    // Non-httpOnly so client-side JS can read it for messaging WebSocket auth.
-    httpOnly: false,
-  };
+  return baseOptions({
+    name: USER_TOKEN_COOKIE,
+    value,
+    maxAge: maxAge ?? 60 * 15,
+  });
 }
 
 export function clearUserTokenCookieOptions(): ResponseCookie {

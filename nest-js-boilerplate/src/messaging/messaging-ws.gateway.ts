@@ -123,79 +123,78 @@ export class MessagingWsGateway implements OnModuleInit, OnModuleDestroy {
     }
 
     if (!authWs.authenticated) {
-      if (data.type === 'auth' && data.tokens) {
-        const tokens = data.tokens as AuthTokens;
-        const key = this.tokenStore.buildKey(
-          tokens.accessToken,
-          tokens.rbacToken,
-          tokens.deviceToken,
-          tokens.userToken,
+      if (data.type !== 'auth' || !data.tokens) {
+        authWs.send(
+          JSON.stringify({ type: 'error', message: 'Authenticate first' }),
         );
-        let hash: Awaited<ReturnType<typeof this.tokenStore.read>> = null;
-        try {
-          hash = await this.tokenStore.read(key);
-        } catch {
-          /* Redis error — fall through to JWT path */
-        }
-        if (hash?.userId) {
-          authWs.userId = hash.userId;
-          authWs.userName = hash.name || hash.email || 'Unknown';
-          authWs.socketId =
-            hash.userId +
-            ':' +
-            Date.now().toString(36) +
-            Math.random().toString(36).slice(2, 7);
-          authWs.authenticated = true;
-          if (authTimer) {
-            clearTimeout(authTimer);
-            authTimer = null;
-          }
-          authWs.send(JSON.stringify({ type: 'authenticated' }));
-          this.handleOnline(authWs);
-          return;
-        }
+        authWs.close();
+        return;
       }
-      if (data.type === 'auth' && data.token) {
-        try {
-          const payload = await this.jwt.verifyAsync<{ sub: string }>(
-            data.token as string,
-          );
-          authWs.userId = payload.sub;
-          authWs.socketId =
-            payload.sub +
-            ':' +
-            Date.now().toString(36) +
-            Math.random().toString(36).slice(2, 7);
-          const user = await this.prisma.user.findUnique({
-            where: { id: payload.sub },
-          });
-          authWs.userName = user?.name || user?.email || 'Unknown';
-          authWs.authenticated = true;
-          if (authTimer) {
-            clearTimeout(authTimer);
-            authTimer = null;
-          }
-          authWs.send(JSON.stringify({ type: 'authenticated' }));
-          this.handleOnline(authWs);
-          return;
-        } catch {
-          authWs.send(
-            JSON.stringify({
-              type: 'error',
-              message: 'Authentication failed',
-            }),
-          );
-          authWs.close();
-          return;
-        }
+      const tokens = data.tokens as AuthTokens;
+      // Ordered checks mirroring SessionAuthGuard + validateSession in messaging-server.mjs
+
+      // 1. Verify JWT — extract the payload (no I/O, delegate to JwtService).
+      let payload: { sub: string };
+      try {
+        payload = this.jwt.verify<{ sub: string }>(tokens.accessToken);
+      } catch {
+        authWs.send(JSON.stringify({ type: 'error', message: 'Auth failed' }));
+        authWs.close();
+        return;
       }
-      authWs.send(
-        JSON.stringify({
-          type: 'error',
-          message: 'Authenticate first',
-        }),
+
+      // 2. Recompute today's userToken and timing-safe compare.
+      const expectedUserToken = this.derivation.deriveUserToken(payload.sub);
+      if (!this.crypto.timingSafeEqual(tokens.userToken, expectedUserToken)) {
+        authWs.send(JSON.stringify({ type: 'error', message: 'Auth failed' }));
+        authWs.close();
+        return;
+      }
+
+      // 3. Build compound key → HGETALL.
+      const key = this.tokenStore.buildKey(
+        tokens.accessToken,
+        tokens.rbacToken,
+        tokens.deviceToken,
+        tokens.userToken,
       );
-      authWs.close();
+      let hash: Awaited<ReturnType<typeof this.tokenStore.read>> = null;
+      try {
+        hash = await this.tokenStore.read(key);
+      } catch {
+        /* Redis error */
+      }
+      if (!hash?.userId || hash.userId !== payload.sub) {
+        authWs.send(JSON.stringify({ type: 'error', message: 'Auth failed' }));
+        authWs.close();
+        return;
+      }
+
+      // 4. Recompute rbacToken from hash.tier.
+      const expectedRbac = this.derivation.deriveRbacToken(
+        hash.userId,
+        hash.tier || 'FREE',
+      );
+      if (!this.crypto.timingSafeEqual(tokens.rbacToken, expectedRbac)) {
+        authWs.send(JSON.stringify({ type: 'error', message: 'Auth failed' }));
+        authWs.close();
+        return;
+      }
+
+      authWs.userId = hash.userId;
+      authWs.userName = hash.name || hash.email || 'Unknown';
+      authWs.socketId =
+        hash.userId +
+        ':' +
+        Date.now().toString(36) +
+        Math.random().toString(36).slice(2, 7);
+      authWs.authenticated = true;
+      if (authTimer) {
+        clearTimeout(authTimer);
+        authTimer = null;
+      }
+      authWs.send(JSON.stringify({ type: 'authenticated' }));
+      this.handleOnline(authWs);
       return;
     }
 

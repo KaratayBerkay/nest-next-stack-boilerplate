@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { FriendsService } from '../friends/friends.service';
 import { PostEventsGateway } from './post-events.gateway';
 import { NotificationService } from '../notification/notification.service';
 import { CreatePostInput } from './dto/create-post.input';
@@ -23,11 +24,12 @@ function slugify(title: string): string {
 export class PostService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly friends: FriendsService,
     private readonly postEvents: PostEventsGateway,
     private readonly notifications: NotificationService,
   ) {}
 
-  async create(authorId: string, data: CreatePostInput) {
+  async create(authorId: string, data: CreatePostInput, friendIds?: string[]) {
     const baseSlug = slugify(data.title);
     const slug = `${baseSlug}-${Date.now().toString(36)}`;
     const post = await this.prisma.post.create({
@@ -44,22 +46,12 @@ export class PostService {
       include: { author: true },
     });
 
-    const friendships = await this.prisma.friendship.findMany({
-      where: {
-        status: 'ACCEPTED',
-        OR: [{ requesterId: authorId }, { addresseeId: authorId }],
-      },
-      select: { requesterId: true, addresseeId: true },
-    });
-
-    const friendIds = new Set<string>();
-    for (const f of friendships) {
-      if (f.requesterId !== authorId) friendIds.add(f.requesterId);
-      if (f.addresseeId !== authorId) friendIds.add(f.addresseeId);
-    }
+    // Use the SessionAuthGuard snapshot when available (zero PG);
+    // fall back to FriendsService only when absent/undefined.
+    const ids = friendIds ?? (await this.friends.getFriendIds(authorId));
 
     await Promise.all(
-      [...friendIds].map((userId) =>
+      ids.map((userId) =>
         this.notifications.create({
           userId,
           actorId: authorId,

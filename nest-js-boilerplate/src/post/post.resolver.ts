@@ -53,7 +53,7 @@ export class PostResolver {
     @CurrentUser() user: JwtUser,
     @Args('data') data: CreatePostInput,
   ) {
-    return this.postService.create(user.userId, data);
+    return this.postService.create(user.userId, data, user.friends);
   }
 
   @Mutation(() => Post)
