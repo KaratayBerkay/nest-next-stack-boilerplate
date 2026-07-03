@@ -2,7 +2,19 @@
 
 > Execution tracker for the sixth phase of the [stack roadmap](../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
-> Created 2026-07-03 · Status: **not started**
+> Created 2026-07-03 · Status: **closed 2026-07-03 — Stage A (T1–T5) + provider (T6) shipped & verified; T7–T14 re-scoped into [phase7.md](phase7.md)**
+
+Close-out (2026-07-03): Stage A and the `RealtimeProvider` are live on prod
+and E2E-verified (WS auth → `register` → `direct-message` event +
+`Messages/Conversation` renew received end-to-end; notification emits + push
+gating confirmed). Two deploy defects were found and fixed during rollout:
+the frontend image must be **rebuilt** with `REALTIME_WS_URL` set (the
+missing var baked the `ws://localhost:3000/ws` fallback — the "WS never
+connects" incident), and Google OAuth returned an empty `providerAccountId`,
+merging every Google login into the first user (fixed + fail-closed guard,
+commit 6392386). The frontend page consumption (T7–T11), stage-C leftovers
+(T12–T13 remainder) and REALTIME.md (T14) move to [phase7.md](phase7.md) —
+its survey has the emitted-vs-consumed matrix.
 
 Re-scope note (2026-07-03): the phase 4 queue had phase 5 = cross-stack e2e and
 phase 6 = root CI. Berkay re-prioritized after reviewing the realtime UX: the
@@ -458,7 +470,7 @@ Sizes: S ≈ ≤half day, M ≈ a day, L ≈ multi-day.
 
 ### Stage A — backend, additive
 
-- [ ] **T1 (L) — `RealtimeModule` extraction + registry fix.**
+- [x] **T1 (L) — `RealtimeModule` extraction + registry fix.**
   Move the gateway to `src/realtime/` as `RealtimeGateway` per D2: strip
   domain deps, add `registerHandler`, `emitToUser/Service/Topic`,
   `hasServiceConnection(userId, …)`, topic `watch`/`unwatch` with the
@@ -470,7 +482,7 @@ Sizes: S ≈ ≤half day, M ≈ a day, L ≈ multi-day.
   *Verify:* existing messaging flows work unchanged against the moved
   gateway (wscat: auth → register MESSAGE → DM echo); gateway file imports
   no Prisma/Messaging/Push symbols.
-- [ ] **T2 (M) — messaging handlers + counts through the registry.**
+- [x] **T2 (M) — messaging handlers + counts through the registry.**
   MessagingModule registers the six chat frame types (bodies move from the
   old gateway next to `MessagingService`); DM send path emits
   `Messages/Conversation` to recipient per D3 and gates its offline push on
@@ -480,7 +492,7 @@ Sizes: S ≈ ≤half day, M ≈ a day, L ≈ multi-day.
   *Verify:* two browsers, same user — read on A zeroes the badge on B
   without reload; third browser as sender sees the read receipt; DM to a
   fully-offline user still triggers exactly one Web Push.
-- [ ] **T3 (S) — notification emits + push gating.**
+- [x] **T3 (S) — notification emits + push gating.**
   `NotificationService.create` emits `Notifications/Item` + `Count` via
   `emitToService` and sends Web Push only when
   `!hasServiceConnection(userId, "NOTIFICATION")` (B7); markRead/markAllRead
@@ -490,21 +502,21 @@ Sizes: S ≈ ≤half day, M ≈ a day, L ≈ multi-day.
   *Verify:* wscat registered for NOTIFICATION receives Item+Count on a
   triggered notification and **no** push arrives; close wscat → push
   arrives.
-- [ ] **T4 (S) — post/feed emits over topics.** Post create → `Feed/New` to
+- [x] **T4 (S) — post/feed emits over topics.** Post create → `Feed/New` to
   topic `feed`; update/comment/reaction → `Feed/Post {id}` to `post:{id}` +
   `feed` (same service-call sites that today call
   `PostEventsGateway.broadcastPostUpdate`). `PostEventsGateway` untouched
   until Stage C.
   *Verify:* wscat watching `feed` and `post:{id}` receives both frame kinds
   on a comment; unauthenticated socket cannot watch.
-- [ ] **T5 (S) — FRIEND_REQUEST payload kind.** `notifyFriendEvent` passes
+- [x] **T5 (S) — FRIEND_REQUEST payload kind.** `notifyFriendEvent` passes
   `payload: { kind: "friend-request" }` / `"friend-accepted"` (B5 backend
   half). *Verify:* new request → notification row payload populated; WS
   Item frame and Web Push `data` both carry it.
 
 ### Stage B — frontend migration
 
-- [ ] **T6 (L) — `RealtimeProvider` + frame dispatch.** Implement D1's
+- [x] **T6 (L) — `RealtimeProvider` + frame dispatch.** Implement D1's
   `realtime-client.ts` + provider (transport extracted from `useMessaging`,
   StrictMode-safe, send queue, watch-replay, degraded mode) and D4's
   renew-frame → react-query dispatch table. Registers
@@ -599,8 +611,9 @@ Sizes: S ≈ ≤half day, M ≈ a day, L ≈ multi-day.
 | --- | --- | --- |
 | 1–4 (done) | See [phase4.md](phase4.md) queue table | — |
 | 5 (skipped-renumbered) | — reserved; e2e moved below — | — |
-| **6 (this)** | Realtime consolidation: one socket, renew protocol, read semantics, click routing | this file |
-| 7 | Cross-stack e2e: `STACK=1` Playwright — now incl. the phase 6 realtime loops | [todo/01](../todo/01-stack-integration.md) |
-| 8 | Root CI: path-filtered app checks + compose smoke + stack e2e | [todo/01](../todo/01-stack-integration.md) |
-| 9 | Backend warts + compose hardening + k8s | [todo/02](../todo/02-backend.md), [todo/04](../todo/04-devops.md) |
-| 10 | Backlog: OTel/metrics, Web Push e2e, social auth, seed, publishing, backups | [todo/02](../todo/02-backend.md)–[05](../todo/05-docs-maintenance.md) |
+| **6 (this, closed)** | Realtime consolidation: one socket, renew protocol, emit points — Stage A + T6 shipped | this file |
+| 7 | Page-level data push (re-scoped T7–T14: page consumers, read semantics, stage-C leftovers) | [phase7.md](phase7.md) |
+| 8 | Cross-stack e2e: `STACK=1` Playwright — now incl. the phase 6+7 realtime loops | [todo/01](../todo/01-stack-integration.md) |
+| 9 | Root CI: path-filtered app checks + compose smoke + stack e2e | [todo/01](../todo/01-stack-integration.md) |
+| 10 | Backend warts + compose hardening + k8s | [todo/02](../todo/02-backend.md), [todo/04](../todo/04-devops.md) |
+| 11 | Backlog: OTel/metrics, Web Push e2e, social auth, seed, publishing, backups | [todo/02](../todo/02-backend.md)–[05](../todo/05-docs-maintenance.md) |
