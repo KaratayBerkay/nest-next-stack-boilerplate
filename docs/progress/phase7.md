@@ -242,18 +242,18 @@ Sizes: S ≈ ≤half day, M ≈ a day, L ≈ multi-day.
 
 ### Stage A — backend
 
-- [ ] **T1 (M) — claim handler + presence registry.** `page` frame with
+- [x] **T1 (M) — claim handler + presence registry.** `page` frame with
   allowlist validation; per-socket claim state; claim→topic/room
   translation; `page:{page}:{userId}` index + `emitToPage`. Unit tests:
   claim replace semantics, invalid page/params rejected, close cleans up,
   midnight-stable keys.
   *Verify:* wscat — auth, claim `feed`, receive `Feed/New` on a post;
   re-claim `messages`, stop receiving feed frames.
-- [ ] **T2 (S) — Redis presence mirror.** `presence:{userId}` hash per D2
+- [x] **T2 (S) — Redis presence mirror.** `presence:{userId}` hash per D2
   (write on claim, field-delete on close, TTL refresh on heartbeat).
   *Verify:* two devices on different pages → `HGETALL presence:{userId}`
   shows both rows live; close one socket → field gone.
-- [ ] **T3 (M) — page-aware emit routing (D3 table).** DM/read/room/feed/
+- [x] **T3 (M) — page-aware emit routing (D3 table).** DM/read/room/feed/
   post emit sites route content frames by claim; chrome renews unchanged;
   friend-event pending-list renew for `friend-request` claimers.
   *Verify:* device on `feed` gets no `direct-message` payloads but its
@@ -261,13 +261,13 @@ Sizes: S ≈ ≤half day, M ≈ a day, L ≈ multi-day.
 
 ### Stage B — client transport
 
-- [ ] **T4 (M) — Web Locks leadership (B9).** Replace election/heartbeat/
+- [x] **T4 (M) — Web Locks leadership (B9).** Replace election/heartbeat/
   timeout machinery; BroadcastChannel keeps fan-out + cmd forwarding;
   standalone fallback.
   *Verify:* 4 tabs → exactly one socket (server-side count); kill the
   leader tab → new socket within 2 s, no dual-leader window (devtools on
   two surviving tabs); hidden leader keeps leadership.
-- [ ] **T5 (M) — refresh-then-reconnect + resync + claim replay
+- [x] **T5 (M) — refresh-then-reconnect + resync + claim replay
   (B10/B11).** Token-cache bust + one `/api/auth/refresh` on auth-fail
   close; invalidate chrome keys + current page key on `authenticated`;
   re-send current claim on every (re)connect.
@@ -277,7 +277,7 @@ Sizes: S ≈ ≤half day, M ≈ a day, L ≈ multi-day.
 
 ### Stage C — pages
 
-- [ ] **T6 (L) — messages page on the cache (B1, R2/R3).**
+- [x] **T6 (L) — messages page on the cache (B1, R2/R3).**
   `useConversation(peerId)` + `useConversations`; provider dispatch per D4;
   optimistic send into the cache (REST response upsert; echoed frame
   dedupes); claim carries the open `peer`; R3 visibility-guarded auto-read.
@@ -286,36 +286,36 @@ Sizes: S ≈ ≤half day, M ≈ a day, L ≈ multi-day.
   until focus; sender ticks progress sent→delivered→read; A's second
   device on the feed page: badge bumps, no message payload received
   (server log), thread correct when it navigates in.
-- [ ] **T7 (M) — notifications live (B2/B3, R4).** `useNotifications()`;
+- [x] **T7 (M) — notifications live (B2/B3, R4).** `useNotifications()`;
   dropdown badge/list from the caches; arithmetic deleted; poll only while
   degraded.
   *Verify:* notification while dropdown closed → badge < 1 s, no HTTP;
   open dropdown → item already present; app open → no OS toast; tab closed
   → OS toast (B3 correct end-to-end).
-- [ ] **T8 (S) — notification page auto-read (B4, R1).**
+- [x] **T8 (S) — notification page auto-read (B4, R1).**
   *Verify:* visit on A → badge zeroes on A and B; item arriving while open
   prepends and stays unread per the recount.
-- [ ] **T9 (M) — feed pill + post detail renew (B5/B6).** Feed claims
+- [x] **T9 (M) — feed pill + post detail renew (B5/B6).** Feed claims
   `feed` (pill → refetch + scroll-top on click, never auto-yank); post
   detail claims `post {id}` — restores live comments/reactions.
   *Verify:* post from B → A's pill < 1 s; comment from B on A's open post
   → renews; navigate feed→post→feed across a reconnect → claims replayed
   (server log).
-- [ ] **T10 (M) — chat-room live (B7).** `useRoom(room)`; claim carries the
+- [x] **T10 (M) — chat-room live (B7).** `useRoom(room)`; claim carries the
   room; history via REST backfill.
   *Verify:* two-browser live chat; backend restart → auto re-claim +
   rejoin, messages flow without reload.
 
 ### Stage D — hardening, deletions, docs
 
-- [ ] **T11 (S) — gateway hardening (B12) + stage-C leftovers (B13).**
+- [x] **T11 (S) — gateway hardening (B12) + stage-C leftovers (B13).**
   `maxPayload`, register allowlist, claim rate-limit; delete
   `NotificationGateway` + `PostEventsGateway` + `socket.io-client`;
   confirm the openresty `/socket.io/` location can be dropped (prod memory).
   *Verify:* `grep -rn "socket.io" src/notification src/post` empty; 128 KiB
   frame from an authed wscat → connection closed, server healthy; backend
   boots; frontend builds.
-- [ ] **T12 (M) — `docs/backend/REALTIME.md`.** Normative: auth handshake
+- [x] **T12 (M) — `docs/backend/REALTIME.md`.** Normative: auth handshake
   (link AUTH.md), **the page-claim protocol + presence keys**, chrome vs
   page-content routing, both frame families, the D4 dispatch table
   (frame → query key), one-store rule, R1–R4, reconnect/replay/resync
