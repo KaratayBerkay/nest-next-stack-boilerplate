@@ -11,5 +11,6 @@ import { MessagingController } from './messaging.controller';
   imports: [AuthModule, FriendsModule, CacheModule.register()],
   controllers: [MessagingController],
   providers: [MessagingResolver, MessagingService, MessagingWsGateway],
+  exports: [MessagingWsGateway],
 })
 export class MessagingModule {}

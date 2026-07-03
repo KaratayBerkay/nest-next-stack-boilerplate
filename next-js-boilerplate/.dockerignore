@@ -6,3 +6,5 @@ e2e
 coverage
 Dockerfile
 docker-compose.yml
+.env
+.env.*

@@ -175,6 +175,45 @@ const server = createServer((req, res) => {
   }
 
   async function handle() {
+    // POST /api/notify — push notification to service-tagged connections
+    // (no JWT/4-token auth — uses shared API key instead)
+    if (method === "POST" && path === "/api/notify") {
+      const apiKey = req.headers["x-notification-key"];
+      if (!NOTIFICATION_API_KEY || apiKey !== NOTIFICATION_API_KEY) {
+        return json({ error: "Unauthorized" }, 401);
+      }
+      const body = await new Promise((resolve, reject) => {
+        let buf = "";
+        req.on("data", (chunk) => (buf += chunk));
+        req.on("end", () => resolve(buf));
+        req.on("error", reject);
+      });
+      try {
+        const { service, userToken, payload } = JSON.parse(body);
+        if (!service || !userToken || !payload) {
+          return json({ error: "Missing required fields: service, userToken, payload" }, 400);
+        }
+        const indexKey = `${service}:${userToken}`;
+        const deviceHashes = serviceDeviceIndex.get(indexKey);
+        let sent = 0;
+        if (deviceHashes) {
+          for (const deviceHash of deviceHashes) {
+            const key = `${service}:${userToken}:${deviceHash}`;
+            const conns = serviceConnections.get(key);
+            if (conns) {
+              for (const ws of conns) {
+                sendWs(ws, payload);
+                sent++;
+              }
+            }
+          }
+        }
+        return json({ sent });
+      } catch (e) {
+        return json({ error: "Invalid JSON" }, 400);
+      }
+    }
+
     // HTTP auth: accept JWT Bearer or 4-token headers
     const authHeader = req.headers.authorization;
     let payload;
@@ -222,44 +261,6 @@ const server = createServer((req, res) => {
         return json(rows.map(formatUser));
       } finally {
         await pool.end();
-      }
-    }
-
-    // POST /api/notify — push notification to service-tagged connections
-    if (method === "POST" && path === "/api/notify") {
-      const apiKey = req.headers["x-notification-key"];
-      if (!NOTIFICATION_API_KEY || apiKey !== NOTIFICATION_API_KEY) {
-        return json({ error: "Unauthorized" }, 401);
-      }
-      const body = await new Promise((resolve, reject) => {
-        let buf = "";
-        req.on("data", (chunk) => (buf += chunk));
-        req.on("end", () => resolve(buf));
-        req.on("error", reject);
-      });
-      try {
-        const { service, userToken, payload } = JSON.parse(body);
-        if (!service || !userToken || !payload) {
-          return json({ error: "Missing required fields: service, userToken, payload" }, 400);
-        }
-        const indexKey = `${service}:${userToken}`;
-        const deviceHashes = serviceDeviceIndex.get(indexKey);
-        let sent = 0;
-        if (deviceHashes) {
-          for (const deviceHash of deviceHashes) {
-            const key = `${service}:${userToken}:${deviceHash}`;
-            const conns = serviceConnections.get(key);
-            if (conns) {
-              for (const ws of conns) {
-                sendWs(ws, payload);
-                sent++;
-              }
-            }
-          }
-        }
-        return json({ sent });
-      } catch (e) {
-        return json({ error: "Invalid JSON" }, 400);
       }
     }
 

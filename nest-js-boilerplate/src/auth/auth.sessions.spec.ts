@@ -119,7 +119,7 @@ describe('AuthResolver sessions surface', () => {
     role: 'USER',
     tier: 'FREE',
     sessionId: 'sess-a',
-  } as JwtUser;
+  };
 
   it('mySessions delegates with the guard-attached session id', async () => {
     const auth = {

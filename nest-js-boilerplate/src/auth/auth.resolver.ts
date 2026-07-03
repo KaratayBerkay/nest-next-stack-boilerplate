@@ -98,10 +98,7 @@ export class AuthResolver {
   @UseGuards(CsrfGuard, SessionAuthGuard)
   @Mutation(() => Boolean)
   async logoutOtherSessions(@CurrentUser() user: JwtUser): Promise<boolean> {
-    await this.auth.logoutOtherSessions(
-      user.userId,
-      user.sessionId,
-    );
+    await this.auth.logoutOtherSessions(user.userId, user.sessionId);
     return true;
   }
 }

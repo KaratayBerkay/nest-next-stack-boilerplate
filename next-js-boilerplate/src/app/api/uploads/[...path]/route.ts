@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
+import { serverEnv } from "@/lib/env";
 
-const MINIO_URL = "http://localhost:9000";
+const MINIO_URL = serverEnv().MINIO_URL;
 
 export async function GET(
   _request: Request,

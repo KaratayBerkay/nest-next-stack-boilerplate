@@ -1,49 +1,26 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { TokenDerivationService } from '../auth/token-derivation.service';
 import { FriendsService } from '../friends/friends.service';
+import { MessagingWsGateway } from '../messaging/messaging-ws.gateway';
 
 @Injectable()
 export class WsNotificationBridge {
   private readonly logger = new Logger(WsNotificationBridge.name);
-  private readonly wsApiUrl: string;
-  private readonly apiKey: string;
 
   constructor(
     private readonly derivation: TokenDerivationService,
     private readonly friends: FriendsService,
-    config: ConfigService,
-  ) {
-    this.wsApiUrl =
-      config.get<string>('MSG_WS_INTERNAL_URL') ?? 'http://localhost:3003';
-    this.apiKey =
-      config.get<string>('NOTIFICATION_API_KEY') ??
-      'dev-notification-api-key-change-in-production';
-  }
+    private readonly wsGateway: MessagingWsGateway,
+  ) {}
 
-  async notifyUser(
+  notifyUser(
     userToken: string,
     service: string,
     payload: Record<string, unknown>,
-  ): Promise<void> {
-    try {
-      const res = await fetch(`${this.wsApiUrl}/api/notify`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-notification-key': this.apiKey,
-        },
-        body: JSON.stringify({ service, userToken, payload }),
-      });
-      if (!res.ok) {
-        this.logger.warn(
-          `notifyUser failed: ${res.status} for service=${service}`,
-        );
-      }
-    } catch (err) {
-      this.logger.error(
-        `notifyUser error for service=${service}: ${(err as Error).message}`,
-      );
+  ): void {
+    const sent = this.wsGateway.sendToService(userToken, service, payload);
+    if (sent === 0) {
+      this.logger.debug(`notifyUser: no connections for service=${service}`);
     }
   }
 
@@ -61,12 +38,10 @@ export class WsNotificationBridge {
       );
       return;
     }
-    await Promise.allSettled(
-      friendIds.map(async (friendId) => {
-        const userToken = this.derivation.deriveUserToken(friendId);
-        const payload = buildPayload(friendId);
-        await this.notifyUser(userToken, service, payload);
-      }),
-    );
+    for (const friendId of friendIds) {
+      const userToken = this.derivation.deriveUserToken(friendId);
+      const payload = buildPayload(friendId);
+      this.notifyUser(userToken, service, payload);
+    }
   }
 }

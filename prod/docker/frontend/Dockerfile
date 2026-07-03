@@ -20,7 +20,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # keep local no-args builds working.
 ARG NEXT_PUBLIC_APP_URL=http://localhost:3100
 ARG NEXT_PUBLIC_WS_URL=ws://localhost:3100
-ARG NEXT_PUBLIC_MSG_WS_URL=ws://localhost:3003
+ARG NEXT_PUBLIC_MSG_WS_URL=ws://localhost:3000/ws
 ARG NEXT_PUBLIC_MINIO_PUBLIC_URL=http://localhost:9000
 ARG NEXT_PUBLIC_VAPID_PUBLIC_KEY=""
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
@@ -35,7 +35,7 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm build
 
 # ---- runner ----
-FROM node:23-alpine AS runner
+FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1

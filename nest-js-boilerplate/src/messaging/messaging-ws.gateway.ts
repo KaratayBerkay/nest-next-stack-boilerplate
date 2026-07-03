@@ -4,9 +4,12 @@ import {
   OnModuleInit,
   Logger,
 } from '@nestjs/common';
+import { HttpAdapterHost } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { WebSocketServer, WebSocket } from 'ws';
+import { Server } from 'http';
 import { IncomingMessage } from 'http';
+import crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { MessagingService, RoomMember } from './messaging.service';
 import { TokenStoreService } from '../auth/token-store.service';
@@ -20,6 +23,9 @@ type AuthWs = WebSocket & {
   room?: string;
   authenticated: boolean;
   isAlive: boolean;
+  deviceTokenHash?: string;
+  userToken?: string;
+  registeredServices?: string[];
 };
 
 interface AuthTokens {
@@ -35,8 +41,13 @@ export class MessagingWsGateway implements OnModuleInit, OnModuleDestroy {
   private wss!: WebSocketServer;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private onlineCount = new Map<string, number>();
+  // "SERVICE:userToken:deviceHash" → Set<WebSocket>
+  private serviceConnections = new Map<string, Set<WebSocket>>();
+  // "SERVICE:userToken" → Set<deviceHash>
+  private serviceDeviceIndex = new Map<string, Set<string>>();
 
   constructor(
+    private readonly adapterHost: HttpAdapterHost,
     private readonly jwt: JwtService,
     private readonly prisma: PrismaService,
     private readonly ms: MessagingService,
@@ -46,8 +57,8 @@ export class MessagingWsGateway implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   onModuleInit() {
-    const port = parseInt(process.env.MSG_WS_PORT || '3003', 10);
-    this.wss = new WebSocketServer({ port });
+    const httpServer = this.adapterHost.httpAdapter.getHttpServer() as Server;
+    this.wss = new WebSocketServer({ server: httpServer, path: '/ws' });
 
     this.wss.on('connection', (ws: WebSocket, _req: IncomingMessage) => {
       const authWs = ws as AuthWs;
@@ -74,6 +85,8 @@ export class MessagingWsGateway implements OnModuleInit, OnModuleDestroy {
       ws.on('close', () => {
         const uid = authWs.userId;
         const sid = authWs.socketId;
+        // Clean up service-tagged connections
+        this.cleanupServiceConnections(authWs);
         if (sid) {
           const affectedRooms = this.ms.leaveAllRooms(sid);
           for (const room of affectedRooms) {
@@ -183,6 +196,12 @@ export class MessagingWsGateway implements OnModuleInit, OnModuleDestroy {
 
       authWs.userId = hash.userId;
       authWs.userName = hash.name || hash.email || 'Unknown';
+      authWs.deviceTokenHash = crypto
+        .createHash('sha256')
+        .update(tokens.deviceToken)
+        .digest('hex');
+      authWs.userToken = this.derivation.deriveUserToken(hash.userId);
+      authWs.registeredServices = [];
       authWs.socketId =
         hash.userId +
         ':' +
@@ -222,6 +241,9 @@ export class MessagingWsGateway implements OnModuleInit, OnModuleDestroy {
         break;
       case 'get-room-counts':
         this.handleGetRoomCounts(authWs);
+        break;
+      case 'register':
+        this.handleRegister(authWs, data as { services: string[] });
         break;
     }
   }
@@ -348,6 +370,82 @@ export class MessagingWsGateway implements OnModuleInit, OnModuleDestroy {
     ws.send(
       JSON.stringify({ type: 'room-counts', rooms: this.ms.getRoomCounts() }),
     );
+  }
+
+  private handleRegister(ws: AuthWs, data: { services: string[] }) {
+    if (!Array.isArray(data.services) || !ws.userToken || !ws.deviceTokenHash)
+      return;
+    for (const svc of data.services) {
+      if (ws.registeredServices?.includes(svc)) continue;
+      ws.registeredServices?.push(svc);
+      const key = `${svc}:${ws.userToken}:${ws.deviceTokenHash}`;
+      const indexKey = `${svc}:${ws.userToken}`;
+      if (!this.serviceConnections.has(key))
+        this.serviceConnections.set(key, new Set());
+      this.serviceConnections.get(key)!.add(ws);
+      if (!this.serviceDeviceIndex.has(indexKey))
+        this.serviceDeviceIndex.set(indexKey, new Set());
+      this.serviceDeviceIndex.get(indexKey)!.add(ws.deviceTokenHash);
+    }
+    ws.send(
+      JSON.stringify({
+        type: 'registered',
+        services: ws.registeredServices,
+      }),
+    );
+  }
+
+  private cleanupServiceConnections(ws: AuthWs) {
+    const svcs = ws.registeredServices;
+    const ut = ws.userToken;
+    const dth = ws.deviceTokenHash;
+    if (!svcs || !ut || !dth) return;
+    for (const svc of svcs) {
+      const key = `${svc}:${ut}:${dth}`;
+      const indexKey = `${svc}:${ut}`;
+      const conns = this.serviceConnections.get(key);
+      if (conns) {
+        conns.delete(ws);
+        if (conns.size === 0) {
+          this.serviceConnections.delete(key);
+          const devices = this.serviceDeviceIndex.get(indexKey);
+          if (devices) {
+            devices.delete(dth);
+            if (devices.size === 0) this.serviceDeviceIndex.delete(indexKey);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Send a payload to all service-tagged connections for a given user (by userToken + service).
+   * Returns the number of connections the message was sent to.
+   */
+  sendToService(
+    userToken: string,
+    service: string,
+    payload: Record<string, unknown>,
+  ): number {
+    const indexKey = `${service}:${userToken}`;
+    const deviceHashes = this.serviceDeviceIndex.get(indexKey);
+    let sent = 0;
+    if (deviceHashes) {
+      for (const deviceHash of deviceHashes) {
+        const key = `${service}:${userToken}:${deviceHash}`;
+        const conns = this.serviceConnections.get(key);
+        if (conns) {
+          const msg = JSON.stringify(payload);
+          for (const ws of conns) {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(msg);
+              sent++;
+            }
+          }
+        }
+      }
+    }
+    return sent;
   }
 
   private handleJoinRoom(ws: AuthWs, data: { room: string }) {
