@@ -33,32 +33,21 @@ const RealtimeContext = createContext<RealtimeContextValue | null>(null);
 
 // ── Module-level helpers ──
 
-const BROWSER_DID_KEY = "rt_did";
-
-function getBrowserDeviceId(): string {
-  try {
-    let id = localStorage.getItem(BROWSER_DID_KEY);
-    if (!id) {
-      id = crypto.randomUUID();
-      localStorage.setItem(BROWSER_DID_KEY, id);
-    }
-    return id;
-  } catch {
-    return "";
-  }
-}
-
 async function fetchTokens(
   token: string,
 ): Promise<Record<string, string> | null> {
   try {
+    // Ensure device_token cookie is set before reading it — the server-issued
+    // deviceToken is part of the token-store key; a random client-side UUID
+    // would cause auth to fail on every reconnect.
+    await apiFetch("/api/auth/device-handshake", { method: "POST" });
     const res = await apiFetch("/api/auth/token");
     if (!res.ok) return null;
     const json = await res.json();
     return {
       accessToken: json.accessToken ?? token,
       rbacToken: json.rbacToken ?? "",
-      deviceToken: json.deviceToken || getBrowserDeviceId(),
+      deviceToken: json.deviceToken ?? "",
       userToken: json.userToken ?? "",
     };
   } catch {
@@ -66,10 +55,11 @@ async function fetchTokens(
   }
 }
 
-// Token cache (30s TTL, keyed by token to auto-invalidate on refresh)
+// Token cache: 30s TTL + in-flight promise dedup
 let _tokKey = "";
 let _tokData: Record<string, string> | null = null;
 let _tokExp = 0;
+let _tokPromise: Promise<Record<string, string> | null> | null = null;
 
 function cachedFetchTokens(
   token: string,
@@ -78,10 +68,16 @@ function cachedFetchTokens(
   if (_tokKey === key && Date.now() < _tokExp && _tokData) {
     return Promise.resolve(_tokData);
   }
+  // Dedup concurrent calls (e.g. leader re-election)
+  if (_tokKey === key && _tokPromise) return _tokPromise;
   _tokKey = key;
-  _tokExp = Date.now() + 30_000;
-  return fetchTokens(token).then((d) => {
-    _tokData = d;
+  _tokPromise = fetchTokens(token);
+  return _tokPromise.then((d) => {
+    _tokPromise = null;
+    if (d) {
+      _tokData = d;
+      _tokExp = Date.now() + 30_000;
+    }
     return d;
   });
 }
