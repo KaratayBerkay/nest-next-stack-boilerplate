@@ -37,10 +37,6 @@ async function fetchTokens(
   token: string,
 ): Promise<Record<string, string> | null> {
   try {
-    // Ensure device_token cookie is set before reading it — the server-issued
-    // deviceToken is part of the token-store key; a random client-side UUID
-    // would cause auth to fail on every reconnect.
-    await apiFetch("/api/auth/device-handshake", { method: "POST" });
     const res = await apiFetch("/api/auth/token");
     if (!res.ok) return null;
     const json = await res.json();
