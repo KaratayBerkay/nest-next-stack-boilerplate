@@ -35,7 +35,9 @@ export const oauthProviders: Record<string, OAuthProviderConfig> = {
     label: 'Google',
     authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
     tokenUrl: 'https://oauth2.googleapis.com/token',
-    userinfoUrl: 'https://www.googleapis.com/oauth2/v2/userinfo',
+    // v3 userinfo is OIDC-compliant and returns the stable id as `sub`;
+    // the legacy v2 endpoint returns it as `id` (accepted as fallback below).
+    userinfoUrl: 'https://www.googleapis.com/oauth2/v3/userinfo',
     scopes: ['openid', 'email', 'profile'],
     clientIdEnv: 'GOOGLE_CLIENT_ID',
     clientSecretEnv: 'GOOGLE_CLIENT_SECRET',
@@ -43,7 +45,11 @@ export const oauthProviders: Record<string, OAuthProviderConfig> = {
       Promise.resolve({
         type: 'GOOGLE',
         provider: 'google',
-        providerAccountId: String((raw.sub as string | null | undefined) ?? ''),
+        providerAccountId: String(
+          (raw.sub as string | null | undefined) ??
+            (raw.id as string | null | undefined) ??
+            '',
+        ),
         email: String((raw.email as string | null | undefined) ?? ''),
         name: String((raw.name as string | null | undefined) ?? '') || null,
       }),

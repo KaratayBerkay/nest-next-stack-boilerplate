@@ -207,6 +207,14 @@ export class AuthService {
     profile: OAuthProfile,
     ctx?: RequestContext,
   ): Promise<AuthPayload> {
+    // Fail closed: an empty providerAccountId would make every user of this
+    // provider collide on the same (provider, '') Account row — i.e. everyone
+    // logs into the first user's account.
+    if (!profile.providerAccountId) {
+      throw new UnauthorizedException(
+        'OAuth profile is missing a provider account id',
+      );
+    }
     const email = profile.email.toLowerCase();
     const account = await this.prisma.account.findUnique({
       where: {
