@@ -2,7 +2,9 @@
 
 > Execution tracker for the third phase of the [stack roadmap](../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
-> Created 2026-07-03 · Status: **planned** (nothing implemented yet).
+> Created 2026-07-03 · Status: **in progress — control run 2026-07-03 found blocking
+> failures** (see [Control run](#control-run--2026-07-03); tasks 1–2 done, 3/6 partial,
+> 4/5/7/8 failing verify).
 
 Re-scope note (2026-07-03): phase 3 was queued as the cross-stack e2e suite
 ([phase2.md](phase2.md) queue); Berkay re-prioritized to **making the Redis session
@@ -180,24 +182,24 @@ unauthenticated demo global buses — explicitly out of scope, unchanged):
 
 ## Tasks
 
-- [ ] **1. Derivation primitives** (`src/common/crypto/`, `src/auth/`)
-  - [ ] `CryptoService.hmacSha256(key, data)`; new `TokenDerivationService`
+- [x] **1. Derivation primitives** (`src/common/crypto/`, `src/auth/`)
+  - [x] `CryptoService.hmacSha256(key, data)`; new `TokenDerivationService`
     (`deriveUserToken`, `deriveRbacToken`, `dateOnly`, timing-safe compare), all
     derive methods taking an optional `date` param; registered + exported by
     `AuthModule`; `TOKEN_DERIVATION_SECRET` env with `JWT_SECRET` fallback
-  - [ ] Verify: unit tests — fixed-date determinism; day rollover changes output;
+  - [x] Verify: unit tests — fixed-date determinism; day rollover changes output;
     tier change changes rbac output; compare is timing-safe
-- [ ] **2. Value enrichment v2** (still on the 3-token key — compiles/ships alone)
-  - [ ] New `src/friends/` module (`getFriendIds` moved from `messaging.service.ts`;
+- [x] **2. Value enrichment v2** (still on the 3-token key — compiles/ships alone)
+  - [x] New `src/friends/` module (`getFriendIds` moved from `messaging.service.ts`;
     `MessagingService` delegates); consolidate the duplicated `SessionUser` interface
     into `auth.types.ts` and extend it with the v2 fields
-  - [ ] `SessionHydrationService`; `TokenStoreService.write/read` v2 schema;
+  - [x] `SessionHydrationService`; `TokenStoreService.write/read` v2 schema;
     `rewriteFieldsForUser` + `incrUnreadForUser` replace `rewriteTierForUser`
     (update `admin.resolver.ts` + specs); `issueTokens` hydrates
-  - [ ] Verify: login → `HGETALL` shows `v=2`, `friends`, `unread`, `name`, `orgIds`,
+  - [x] Verify: login → `HGETALL` shows `v=2`, `friends`, `unread`, `name`, `orgIds`,
     `teamIds`; token-store unit tests cover JSON round-trip + malformed-JSON fallback
 - [ ] **3. 4th token + derived rbac + guard rewrite**
-  - [ ] `src/auth/user-cookie.ts` (mirror `rbac-cookie.ts`; `user_token` /
+  - [x] `src/auth/user-cookie.ts` (mirror `rbac-cookie.ts`; `user_token` /
     `__Secure-user_token`, 15m); `issueTokens` derives rbac + user tokens, sets the
     cookie, returns `AuthPayload.userToken`; 4-param `buildKey`; guard ordered checks
     per design; `extractUserToken` + 4-segment `revokePresentedKey`; widened
@@ -205,33 +207,59 @@ unauthenticated demo global buses — explicitly out of scope, unchanged):
   - [ ] Verify: login → **five** httpOnly cookies; one 4-segment `sess:*` key,
     TTL ≈ 900; guard spec: yesterday-derived user-token → 401 **before** any Redis
     call; tamper any of the four tokens → 401
+    ⚠ Control run 2026-07-03: everything passes **except** the BFF sets `user_token`
+    with `httpOnly: false` (deliberate, so `useMessaging` can read `document.cookie`
+    — see control-run finding G). 4/5 cookies httpOnly.
 - [ ] **4. Consumer refactors + rewrite hooks**
   - [ ] Migrate the real-app resolvers/controller to `SessionAuthGuard` (messaging
     GraphQL + REST, notifications, post, comment, reactions, push); post fan-out uses
     `user.friends` (PG fallback); `areFriends` fast-path; `unreadNotificationCount`
     from the snapshot; `MessagingWsGateway` new auth protocol, name/friends from hash
+    ⚠ Guard migration + `areFriends` fast-path done and verified; **post fan-out
+    still runs the inlined `Friendship` SELECT** (`post.service.ts:47`, resolver
+    passes only `userId`); **`unreadNotificationCount` still runs
+    `prisma.notification.count` per poll**; `MessagingWsGateway` kept a legacy
+    raw-JWT fallback incl. the per-connect `prisma.user.findUnique` (findings A/B/F).
   - [ ] Hooks: `NotificationService.create` → incr; markRead/markAllRead → recount +
     rewrite; **both** friendship-ACCEPT sites → rewrite `friends` for both users;
     `createTeamMember` → rewrite `teamIds`; hook-point comments for profile/org/unfriend
+    ⚠ markRead recount, friendship-ACCEPT (both users) and `createTeamMember` hooks
+    verified working; **the `create` → incr hook never executes** —
+    `NotificationGateway.sendToUser` throws `BigInt` serialization before it runs
+    (finding C).
   - [ ] Verify: Alice (friend of Bob) posts → Bob notified with **no** `Friendship`
     SELECT on the hot path (pg `log_statement='all'`); Bob's `unread` HINCRBY'd and
     `unreadNotificationCount` answers zero-PG; markAllRead resets it; friendship
     accept updates both users' `friends` live (redis-cli)
+    ⚠ FAILS: Friendship SELECT observed in pg log; unread never HINCRBY'd (BigInt
+    crash); count query observed per poll. Friendship-accept propagation and
+    markRead recount **pass** (redis-cli proof).
 - [ ] **5. Device handshake (landing)**
   - [ ] `POST /devices/handshake` (public) + `DeviceService.handshake`;
     `resolveForLogin` reuse-not-rotate per design
+    ⚠ Endpoint + reuse/claim/remint logic exist, but `DeviceService.readCookie`
+    has **no `x-device-token` header fallback** — through the prod-mode BFF the
+    backend never sees the presented token (finding D).
   - [ ] Verify: unit tests — reuse own token, claim landing token into new row,
     foreign token reminted; stack: anonymous first load sets `device_token`
     pre-login, login creates the Device row with **that** token (psql)
+    ⚠ FAILS: **no device-service unit tests exist**; live: handshake re-mints a
+    fresh token on every call, and login created the Device row with a *different*
+    token than the landing one (psql proof).
 - [ ] **6. BFF / frontend**
   - [ ] `USER_TOKEN_COOKIE` in `src/lib/cookie.ts`; login/register/refresh/
     oauth-callback set it from the body, logout clears it; `sessionTokenHeaders()`
     adds `x-user-token` (and applies in `backendFetch` + the `messages/[...path]`
     proxy); `/api/auth/token` returns all four tokens; `useMessaging` sends
     `{type:"auth", tokens}`; `api/device/handshake` route + `AuthProvider` call
-  - [ ] Refresh recovery: backend `x-refresh-token` fallback; BFF refresh route CSRF
+    ⚠ All done and verified **except** `useMessaging`: it sends only
+    `{accessToken, userToken}` (no rbac/device), still sends the legacy `token`
+    field (which is what actually authenticates), and reads `user_token` from
+    `document.cookie` instead of `/api/auth/token` (findings G, and the task-3
+    httpOnly deviation).
+  - [x] Refresh recovery: backend `x-refresh-token` fallback; BFF refresh route CSRF
     echo; `AuthProvider` one-shot retry of `me` via `/api/auth/refresh` on 401
-  - [ ] Verify: full BFF loop against the prod-mode backend — login → 5 cookies →
+  - [x] Verify: full BFF loop against the prod-mode backend — login → 5 cookies →
     `me` OK; forced 401 (yesterday-derived user token, scripted) → auto-refresh
     recovers without user action (proves the CSRF echo end-to-end)
 - [ ] **7. messaging-ws + compose/env**
@@ -239,16 +267,30 @@ unauthenticated demo global buses — explicitly out of scope, unchanged):
     compose: `messaging-ws` gains `REDIS_HOST`, `REDIS_PORT`,
     `TOKEN_DERIVATION_SECRET` + `depends_on: redis: service_healthy`; `app` gains
     `TOKEN_DERIVATION_SECRET`; `.env.example` + README env table updated
+    ⚠ Compose/env parts all done and verified. The `.mjs` itself is broken: its
+    `buildCompoundKey` uses HMACs + `rbac.v1:`/`user.v1:` prefixes instead of the
+    backend's plain per-segment `sha256` → the key **never** matches; legacy raw-JWT
+    auth retained; friends-only DMs query a nonexistent `"FriendRequest"` table
+    (model is `Friendship`) with unquoted camelCase columns (finding E).
   - [ ] Verify: 4-token connect → `authenticated`; `redis-cli DEL <key>` → next
     connect rejected (revocation closed); DM to non-friend → error, to friend →
     delivered; WS connect performs **no** `User` SELECT
+    ⚠ FAILS: 4-token connect → `Auth failed`; raw JWT still connects (revocation
+    open); DM to a *friend* → unhandled pg error **crashes the process** (compose
+    restarted it).
 - [ ] **8. Docs**
   - [ ] Rewrite [docs/backend/AUTH.md](../backend/AUTH.md): token quadruple table,
     derivation formulas, 4-segment key, v2 value schema, UTC-midnight semantics,
     tier-change-via-refresh, handshake flow, the surface→fields matrix, deploy
     migration note, remaining known gaps (NotificationGateway JWT-only, SSE demos,
     no profile-update/unfriend mutations)
-  - [ ] Verify: doc links resolve; `.env.example` matches `docker-compose.yml`
+    ⚠ Rewritten but inaccurate: the "Messaging WS auth" section describes a
+    `sec-websocket-protocol` header handshake **neither server implements** (both
+    use first-message JSON — the deploy notes even say so), claims `useMessaging`
+    sends all four tokens, documents the nonexistent `FriendRequest` table, and the
+    tier-change section says "no refresh needed" contradicting the verified
+    401-→-silent-refresh behaviour (finding I).
+  - [x] Verify: doc links resolve; `.env.example` matches `docker-compose.yml`
     var-for-var
 
 Stretch (not blocking DoD): `NotificationGateway` (socket.io `/notifications`) still
@@ -260,18 +302,85 @@ close in-process (accept a `tokens` handshake payload → `TokenStoreService` lo
 - [ ] `docker compose up -d --build` → all healthy; register/login via BFF → five
   httpOnly cookies; one 4-segment `sess:*` key, TTL ≈ 900, `HGETALL` shows the v2
   fields
+  ⚠ All verified except `user_token` is set `httpOnly: false` by the BFF (task 3 note).
 - [ ] Anonymous landing → device handshake cookie pre-login; login claims the same
   token into the Device row
+  ⚠ Cookie is set pre-login, but the token rotates on every handshake call and login
+  minted a fresh token instead of claiming the landing one (finding D).
 - [ ] Post fan-out, `areFriends`, unread polling, WS connects: zero Postgres on the
   hot path (pg `log_statement='all'` proof, like phase 2's `me` proof)
-- [ ] Midnight cutoff: unit tests (yesterday's date → 401 pre-Redis) + scripted e2e
+  ⚠ `me` and `areFriends` (sendMessage) proven zero-PG; post fan-out and unread
+  polling still hit PG (findings A/B); WS connect rides the legacy JWT path.
+- [x] Midnight cutoff: unit tests (yesterday's date → 401 pre-Redis) + scripted e2e
   (yesterday-derived cookie → 401 → auto-refresh recovers against the prod-mode
   backend)
-- [ ] `setUserTier` on a live session → next request 401 → silent refresh → `me`
+- [x] `setUserTier` on a live session → next request 401 → silent refresh → `me`
   shows the new tier; `@MinTier` gate flips both directions
 - [ ] messaging-ws: revoked/deleted session cannot connect; friends-only DMs enforced;
   friendship accept propagates to both users' hashes without re-login
-- [ ] Backend unit suite green; `.env.example` ↔ `docker-compose.yml` parity
+  ⚠ Friendship-accept propagation **passes**; the other two fail (finding E: raw JWT
+  connects, DM crashes the server).
+- [x] Backend unit suite green (27 suites / 127 tests); `.env.example` ↔
+  `docker-compose.yml` parity (33/33 vars)
+
+## Control run — 2026-07-03
+
+Full verification pass against freshly rebuilt compose images (`app`, `nextjs`,
+`messaging-ws`, `migrate`), prod-mode backend, via the BFF where applicable.
+**Phase 3 is NOT complete.** What passed and what failed:
+
+**Verified working (live):** 4-segment key + TTL + v2 hash on login; `me` zero-PG;
+midnight cutoff (401 pre-Redis by guard order, unit-tested) with full scripted
+refresh recovery through the BFF CSRF echo; tier change → 401 → silent refresh →
+new tier, `@MinTier` flipping both directions; GraphQL messaging `areFriends`
+fast-path (zero Friendship SELECT, non-friend rejected, friend delivered);
+friendship-accept rewriting **all** live sessions of both users; markRead recount →
+hash rewrite (drift-free, healed a real desync during the run); `/api/auth/token`
+quadruple; unit suite 27/127 green; env parity; doc links.
+
+**Findings (blocking):**
+
+- **A — post fan-out hits PG**: `post.service.ts:47` still runs the inlined
+  `Friendship` SELECT (pg-log proof); the resolver passes only `userId`, never
+  `user.friends`; no `FriendsService` fallback wiring.
+- **B — unread polling hits PG**: `notification.resolver.ts` `unreadNotificationCount`
+  → `prisma.notification.count` per poll instead of `user.unread` from the snapshot.
+- **C — unread incr hook dead + createPost crash**: `NotificationGateway.sendToUser`
+  emits the raw notification incl. `actor` (User row has `reputation` /
+  `storageQuotaBytes` BigInt) → socket.io `JSON.stringify` throws "Do not know how
+  to serialize a BigInt" **before** `incrUnreadForUser` runs; observed killing an
+  entire `createPost` mutation. Fix: DTO/sanitize the emitted payload; also consider
+  running the incr before the fallible emit.
+- **D — device handshake broken through the BFF**: `DeviceService.readCookie` reads
+  only `req.cookies` (`__Secure-device_token` in prod); the BFF holds the plain
+  `device_token` cookie and sends `x-device-token` — never read. Live: token
+  re-mints every handshake; login can't claim the landing token. Worse:
+  `AuthProvider` fires the handshake on every page load, so the device cookie
+  rotates while live sessions' 4-segment keys embed the old token → guaranteed
+  401/refresh churn. Fix: header fallback in `readCookie` (mirroring the guard).
+- **E — `messaging-server.mjs` broken end-to-end**: (1) `buildCompoundKey` uses
+  HMACs + `rbac.v1:`/`user.v1:` literal prefixes instead of plain per-segment
+  `sha256` → key never matches the store → 4-token auth always "Auth failed";
+  (2) legacy raw-JWT auth retained → revocation gap wide open; (3) friends-only DM
+  queries nonexistent `"FriendRequest"` (model/table is `Friendship`) with unquoted
+  camelCase columns → unhandled pg error **crashes the process** on any DM (live:
+  container restarted); design wanted `HGET <key> friends`, not PG.
+- **F — NestJS `MessagingWsGateway` legacy fallback**: single-JWT auth path retained
+  incl. the per-connect `prisma.user.findUnique` the design said to drop.
+- **G — `useMessaging` doesn't speak the protocol**: sends only
+  `{accessToken, userToken}` + legacy `token` (the fallback is what authenticates);
+  reads `user_token` via `document.cookie`, which forced the BFF to set it
+  non-httpOnly. Fix: fetch all four from `/api/auth/token` (already implemented),
+  drop the legacy field, restore httpOnly.
+- **H — no device-service unit tests** (task 5 requires reuse / claim / foreign-remint).
+- **I — AUTH.md inaccurate**: documents a `sec-websocket-protocol` header handshake
+  neither server implements, self-contradicts with the deploy notes
+  ("first-message tokens"), documents the `FriendRequest` table, and the tier-change
+  section says "no forced refresh" contrary to design + verified behaviour.
+
+Test residue: users `phase3check@test.dev` (role ADMIN, tier FREE) and
+`phase3bob@test.dev` (friends), a few probe posts/messages/notifications.
+`log_statement` was reset after the pg-log proofs.
 
 ## Phase queue (created when reached)
 
