@@ -113,11 +113,16 @@ caller's identity + authorization snapshot, and any session is revocable instant
     `refresh_token`, `rbac_token`, `device_token`); `/api/auth/me` resolves the user
     from the Redis session; `redis-cli DEL` of the session key → next request comes
     back unauthenticated
-  - [ ] Residual → phase 3: BFF-driven `refresh`/`logout` against the production-mode
+  - [x] Residual → phase 3: BFF-driven `refresh`/`logout` against the production-mode
     backend has **never** worked (unprefixed cookie names + missing CSRF echo, both
     pre-existing since the initial commit). Guarded queries work via the header
     fallback; the recovery flow is deferred to the phase 3 e2e work.
-    Documented in [docs/backend/AUTH.md](../backend/AUTH.md#known-gap-phase-3).
+    ✓ Resolved: `refresh` got its CSRF echo in phase 3 (verified via the
+    midnight-recovery e2e); `logout` was still silently failing (backend 403,
+    key + Session row survived — proven live 2026-07-03) and was fixed
+    2026-07-03 together with the presented-key revoke on refresh (access token
+    now passed as Bearer). Documented in
+    [docs/backend/AUTH.md](../backend/AUTH.md#bff-cookie-bridge).
 - [x] **8. Docs + env**
   - [x] `.env.example` + root README: `AUTH_IP_STRICT` (and note `JWT_ACCESS_TTL`
     drives the Redis TTL)

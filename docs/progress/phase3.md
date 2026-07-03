@@ -2,9 +2,10 @@
 
 > Execution tracker for the third phase of the [stack roadmap](../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
-> Created 2026-07-03 · Status: **in progress — control run 2026-07-03 found blocking
-> failures** (see [Control run](#control-run--2026-07-03); tasks 1–2 done, 3/6 partial,
-> 4/5/7/8 failing verify).
+> Created 2026-07-03 · Status: **complete — verified 2026-07-03**. The first control
+> run found blocking findings A–I (see [Control run](#control-run--2026-07-03)); all
+> were fixed (commit 465a6eb) and the full DoD re-verified live against rebuilt
+> images (see [Re-verify run](#re-verify-run--2026-07-03)).
 
 Re-scope note (2026-07-03): phase 3 was queued as the cross-stack e2e suite
 ([phase2.md](phase2.md) queue); Berkay re-prioritized to **making the Redis session
@@ -198,55 +199,54 @@ unauthenticated demo global buses — explicitly out of scope, unchanged):
     (update `admin.resolver.ts` + specs); `issueTokens` hydrates
   - [x] Verify: login → `HGETALL` shows `v=2`, `friends`, `unread`, `name`, `orgIds`,
     `teamIds`; token-store unit tests cover JSON round-trip + malformed-JSON fallback
-- [ ] **3. 4th token + derived rbac + guard rewrite**
+- [x] **3. 4th token + derived rbac + guard rewrite**
   - [x] `src/auth/user-cookie.ts` (mirror `rbac-cookie.ts`; `user_token` /
     `__Secure-user_token`, 15m); `issueTokens` derives rbac + user tokens, sets the
     cookie, returns `AuthPayload.userToken`; 4-param `buildKey`; guard ordered checks
     per design; `extractUserToken` + 4-segment `revokePresentedKey`; widened
     `req.user` + `SessionUserPayload` (profile fields + `unread`) served by `me`
-  - [ ] Verify: login → **five** httpOnly cookies; one 4-segment `sess:*` key,
+  - [x] Verify: login → **five** httpOnly cookies; one 4-segment `sess:*` key,
     TTL ≈ 900; guard spec: yesterday-derived user-token → 401 **before** any Redis
     call; tamper any of the four tokens → 401
-    ⚠ Control run 2026-07-03: everything passes **except** the BFF sets `user_token`
-    with `httpOnly: false` (deliberate, so `useMessaging` can read `document.cookie`
-    — see control-run finding G). 4/5 cookies httpOnly.
-- [ ] **4. Consumer refactors + rewrite hooks**
-  - [ ] Migrate the real-app resolvers/controller to `SessionAuthGuard` (messaging
+    ✓ Re-verify 2026-07-03: all five cookies httpOnly (`user_token` restored by the
+    finding-G fix — `useMessaging` now fetches tokens from `/api/auth/token`);
+    4-segment key, TTL 879, v2 hash confirmed live.
+- [x] **4. Consumer refactors + rewrite hooks**
+  - [x] Migrate the real-app resolvers/controller to `SessionAuthGuard` (messaging
     GraphQL + REST, notifications, post, comment, reactions, push); post fan-out uses
     `user.friends` (PG fallback); `areFriends` fast-path; `unreadNotificationCount`
     from the snapshot; `MessagingWsGateway` new auth protocol, name/friends from hash
-    ⚠ Guard migration + `areFriends` fast-path done and verified; **post fan-out
-    still runs the inlined `Friendship` SELECT** (`post.service.ts:47`, resolver
-    passes only `userId`); **`unreadNotificationCount` still runs
-    `prisma.notification.count` per poll**; `MessagingWsGateway` kept a legacy
-    raw-JWT fallback incl. the per-connect `prisma.user.findUnique` (findings A/B/F).
-  - [ ] Hooks: `NotificationService.create` → incr; markRead/markAllRead → recount +
+    ✓ Findings A/B/F fixed: resolver passes `user.friends` into
+    `PostService.create` (PG fallback via `FriendsService`);
+    `unreadNotificationCount` returns `user.unread`; `MessagingWsGateway` legacy
+    JWT fallback + per-connect `findUnique` removed.
+  - [x] Hooks: `NotificationService.create` → incr; markRead/markAllRead → recount +
     rewrite; **both** friendship-ACCEPT sites → rewrite `friends` for both users;
     `createTeamMember` → rewrite `teamIds`; hook-point comments for profile/org/unfriend
-    ⚠ markRead recount, friendship-ACCEPT (both users) and `createTeamMember` hooks
-    verified working; **the `create` → incr hook never executes** —
-    `NotificationGateway.sendToUser` throws `BigInt` serialization before it runs
-    (finding C).
-  - [ ] Verify: Alice (friend of Bob) posts → Bob notified with **no** `Friendship`
+    ✓ Finding C fixed: `create` builds a JSON-safe DTO for emits (no BigInt) and
+    runs `incrUnreadForUser` before the fallible emit; verified live (unread 0→1
+    on post fan-out).
+  - [x] Verify: Alice (friend of Bob) posts → Bob notified with **no** `Friendship`
     SELECT on the hot path (pg `log_statement='all'`); Bob's `unread` HINCRBY'd and
     `unreadNotificationCount` answers zero-PG; markAllRead resets it; friendship
     accept updates both users' `friends` live (redis-cli)
-    ⚠ FAILS: Friendship SELECT observed in pg log; unread never HINCRBY'd (BigInt
-    crash); count query observed per poll. Friendship-accept propagation and
-    markRead recount **pass** (redis-cli proof).
-- [ ] **5. Device handshake (landing)**
-  - [ ] `POST /devices/handshake` (public) + `DeviceService.handshake`;
+    ✓ Re-verify 2026-07-03: all pass — pg log for createPost shows only
+    Post/Notification INSERTs + PushSubscription read (no Friendship SELECT);
+    unread HINCRBY'd to 1; three count polls produced **zero** SQL; markAllRead
+    reset hash `unread` to 0; accept updated both hashes live.
+- [x] **5. Device handshake (landing)**
+  - [x] `POST /devices/handshake` (public) + `DeviceService.handshake`;
     `resolveForLogin` reuse-not-rotate per design
-    ⚠ Endpoint + reuse/claim/remint logic exist, but `DeviceService.readCookie`
-    has **no `x-device-token` header fallback** — through the prod-mode BFF the
-    backend never sees the presented token (finding D).
-  - [ ] Verify: unit tests — reuse own token, claim landing token into new row,
+    ✓ Finding D fixed: `readCookie` checks the `x-device-token` header before
+    cookies.
+  - [x] Verify: unit tests — reuse own token, claim landing token into new row,
     foreign token reminted; stack: anonymous first load sets `device_token`
     pre-login, login creates the Device row with **that** token (psql)
-    ⚠ FAILS: **no device-service unit tests exist**; live: handshake re-mints a
-    fresh token on every call, and login created the Device row with a *different*
-    token than the landing one (psql proof).
-- [ ] **6. BFF / frontend**
+    ✓ Re-verify 2026-07-03: `device.service.spec.ts` added (finding H); live:
+    three handshake calls through the BFF echoed the **same** token, and register
+    created the Device row with exactly the landing token (psql
+    `token = landing → t`).
+- [x] **6. BFF / frontend**
   - [x] `USER_TOKEN_COOKIE` in `src/lib/cookie.ts`; login/register/refresh/
     oauth-callback set it from the body, logout clears it; `sessionTokenHeaders()`
     adds `x-user-token` (and applies in `backendFetch` + the `messages/[...path]`
@@ -267,10 +267,14 @@ unauthenticated demo global buses — explicitly out of scope, unchanged):
     runs ordered checks (JWT → userToken → HGETALL → userId → rbac); legacy JWT
     auth removed; friends-only DMs enforced from Redis hash `friends` field; top-level
     `process.on("unhandledRejection")` guard added.
-  - [ ] Verify: 4-token connect → `authenticated`; `redis-cli DEL <key>` → next
+  - [x] Verify: 4-token connect → `authenticated`; `redis-cli DEL <key>` → next
     connect rejected (revocation closed); DM to non-friend → error, to friend →
     delivered; WS connect produces **no** `User` SELECT
-    (requires compose rebuild; live check step 4 once rebuilt)
+    ✓ Re-verify 2026-07-03 (rebuilt image): 4-token connect → `authenticated`;
+    tampered user token → `Auth failed`; legacy `{type:"auth", token}` shape →
+    `Authenticate first` (no fallback); DM to friend delivered / to stranger
+    `Not friends`, process stayed healthy; `DEL <key>` → same valid tokens
+    rejected; zero `User` SELECTs during connects (pg log).
 
 ## Task boxes updated after fix round (2026-07-03)
 
@@ -317,27 +321,29 @@ close in-process (accept a `tokens` handshake payload → `TokenStoreService` lo
 
 ## Definition of done / verify
 
-- [ ] `docker compose up -d --build` → all healthy; register/login via BFF → five
+- [x] `docker compose up -d --build` → all healthy; register/login via BFF → five
   httpOnly cookies; one 4-segment `sess:*` key, TTL ≈ 900, `HGETALL` shows the v2
   fields
-  ⚠ `user_token` now httpOnly (finding G fixed); needs rebuild confirmation.
-- [ ] Anonymous landing → device handshake cookie pre-login; login claims the same
+  ✓ Re-verify 2026-07-03: rebuilt `app`/`nextjs`/`messaging-ws`, all healthy;
+  register → 5/5 httpOnly cookies; 4-segment key, TTL 879, full v2 hash.
+- [x] Anonymous landing → device handshake cookie pre-login; login claims the same
   token into the Device row
-  ⚠ `DeviceService.readCookie` now reads `x-device-token` header (finding D fixed);
-  needs rebuild confirmation.
-- [ ] Post fan-out, `areFriends`, unread polling, WS connects: zero Postgres on the
+  ✓ Re-verify 2026-07-03: token stable across three handshakes; Device row created
+  with the landing token (psql proof).
+- [x] Post fan-out, `areFriends`, unread polling, WS connects: zero Postgres on the
   hot path (pg `log_statement='all'` proof, like phase 2's `me` proof)
-  ⚠ Findings A/B fixed (post fan-out uses `user.friends`, unread returns hash value);
-  WS connect now uses 4-token auth (findings E/F/G fixed); needs rebuild confirmation.
+  ✓ Re-verify 2026-07-03: createPost fan-out shows no `Friendship` SELECT; three
+  unread polls → zero SQL; WS connects → zero `User` SELECTs. (`areFriends` + `me`
+  proven zero-PG in the first control run, code unchanged since.)
 - [x] Midnight cutoff: unit tests (yesterday's date → 401 pre-Redis) + scripted e2e
   (yesterday-derived cookie → 401 → auto-refresh recovers against the prod-mode
   backend)
 - [x] `setUserTier` on a live session → next request 401 → silent refresh → `me`
   shows the new tier; `@MinTier` gate flips both directions
-- [ ] messaging-ws: revoked/deleted session cannot connect; friends-only DMs enforced;
+- [x] messaging-ws: revoked/deleted session cannot connect; friends-only DMs enforced;
   friendship accept propagates to both users' hashes without re-login
-  ⚠ Findings E/F fixed (buildCompoundKey, legacy auth removed, DM from Redis hash);
-  needs rebuild confirmation.
+  ✓ Re-verify 2026-07-03: `DEL <key>` → valid tokens rejected; DM to stranger
+  `Not friends` / to friend delivered; accept updated both live hashes.
 - [x] Backend unit suite green (28 suites / 134 tests, including new device-service
   spec); `.env.example` ↔ `docker-compose.yml` parity (33/33 vars)
 
@@ -381,13 +387,46 @@ Test residue: users `phase3check@test.dev` (role ADMIN, tier FREE) and
 `phase3bob@test.dev` (friends), a few probe posts/messages/notifications.
 `log_statement` was reset after the pg-log proofs.
 
+## Re-verify run — 2026-07-03
+
+Full DoD re-verification after the finding A–I fixes (commit 465a6eb), against
+freshly rebuilt `app`/`nextjs`/`messaging-ws` images (built 05:28, after the fix
+commit), prod-mode backend, via the BFF where applicable. **Everything passes —
+phase 3 is complete.**
+
+- Unit suite: 28 suites / 134 tests green (includes the new `device.service.spec.ts`).
+- Register via BFF → **5/5 httpOnly cookies** (`user_token` httpOnly again); one
+  4-segment `sess:*` key, TTL 879; `HGETALL` shows the full v2 schema.
+- Device handshake (D): token stable across three consecutive BFF handshakes;
+  register created the Device row with **exactly** the landing token (psql).
+- Post fan-out (A/C): friended two fresh users; createPost's pg statements are only
+  Post/Notification INSERTs + a PushSubscription read — **no Friendship SELECT**;
+  recipient's hash `unread` HINCRBY'd 0→1 (the incr hook now runs before the emit,
+  DTO is BigInt-safe).
+- Unread polling (B): `unreadNotificationCount` returned the hash value; **three
+  polls produced zero SQL**; `markAllNotificationsRead` reset hash `unread` to 0.
+- Friendship accept: both users' live hashes updated immediately (redis-cli).
+- messaging-ws (E/F/G): 4-token connect → `authenticated`; tampered user token →
+  `Auth failed`; legacy `{type:"auth", token}` → `Authenticate first` (no legacy
+  path); DM to friend delivered / to stranger `Not friends` with the process
+  staying healthy; `redis-cli DEL <key>` → the same valid tokens rejected
+  (revocation closed); **zero `User` SELECTs** during connects.
+
+Deviation noted (non-blocking): the `.mjs` auth timeout is 120s, not the design's
+30s; the per-send `HGET friends` refresh is a connect-time snapshot instead (the
+hash rewrite hooks keep it fresh; comment in the `.mjs` explains).
+
+Test residue (this run): users `phase3alice-1783045878@test.dev` and
+`phase3bobv-1783045953@test.dev` (friends), two probe posts, one DM.
+`log_statement` was reset again afterwards.
+
 ## Phase queue (created when reached)
 
 | Phase | Scope | Detail |
 | --- | --- | --- |
 | 1 (done) | Foundations: README, .env.example, messaging-ws, delete ws-server, doc links | [phase1.md](phase1.md) |
 | 2 (done, verified) | Redis auth: compound-key token store, instant revocation, subscription-tier RBAC | [phase2.md](phase2.md) |
-| **3 (this)** | Redis session runtime snapshot: 4-token derived key, midnight cutoff, value v2 (friends/profile/unread/memberships), device handshake, messaging-ws Redis wiring, minimal refresh recovery | [todo/02](../todo/02-backend.md) |
+| **3 (this, done, verified)** | Redis session runtime snapshot: 4-token derived key, midnight cutoff, value v2 (friends/profile/unread/memberships), device handshake, messaging-ws Redis wiring, minimal refresh recovery | [todo/02](../todo/02-backend.md) |
 | 4 | Cross-stack e2e: `STACK=1` Playwright (auth round-trip, refresh, revocation, tier gates, SSR/CSR cookies, WS, messaging) — now also covers the 4-token/midnight/messaging-ws flows | [todo/01](../todo/01-stack-integration.md) |
 | 5 | Root CI: path-filtered app checks + compose smoke job + stack e2e | [todo/01](../todo/01-stack-integration.md) |
 | 6 | Backend warts: negative-timer warning, duplicate `CreateCatDto`, Kafka first-boot race | [todo/02](../todo/02-backend.md) |

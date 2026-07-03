@@ -137,10 +137,18 @@ different cookie name prefixes (`__Secure-` in prod). The BFF bridges the gap:
    `x-user-token` headers.
 2. **`graphqlFetch`** and **`backendFetch`** always attach these headers alongside
    the full Cookie header.
-3. **CSRF echo in refresh** — the BFF refresh route (`POST /api/auth/refresh`):
-   a. Calls `GET /csrf/token` on the backend (forwarding `x-forwarded-for`)
-   b. Echoes the returned token as `x-csrf-token` + the CSRF cookie
-   c. Calls the `Refresh` mutation
+3. **CSRF echo in refresh and logout** — `csrfEchoHeaders()` in `backend.ts`
+   (used by `POST /api/auth/refresh` and `POST /api/auth/logout`; the logout
+   echo was added 2026-07-03 — before that the backend 403'd the CSRF-guarded
+   logout, the BFF swallowed the error, and the session survived server-side):
+   a. Calls `GET /csrf/token` on the backend (forwarding `x-forwarded-for` —
+      the CSRF HMAC is IP-bound)
+   b. Echoes the returned token as `x-csrf-token` + the CSRF cookie (this
+      **replaces** the forwarded Cookie header)
+   c. Calls the mutation with the BFF's access-token cookie passed as
+      `Authorization: Bearer`, so the backend can rebuild and revoke the
+      presented compound key (without it `revokePresentedKey` silently no-ops
+      and the old key lives out its TTL)
 4. **AuthProvider retry** — when `/api/auth/me` returns 401 (access token expired),
    the AuthProvider retries once via `/api/auth/refresh` before falling back to guest.
 5. **Device handshake** — `AuthProvider` calls `POST /api/auth/device-handshake`

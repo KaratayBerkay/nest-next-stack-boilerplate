@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import {
+  ACCESS_TOKEN_COOKIE,
   accessTokenCookieOptions,
   refreshTokenCookieOptions,
   deviceTokenCookieOptions,
   rbacTokenCookieOptions,
   userTokenCookieOptions,
 } from "@/lib/cookie";
-import { backendFetch, graphqlFetch } from "@/lib/backend";
+import { csrfEchoHeaders, graphqlFetch } from "@/lib/backend";
 
 const REFRESH_QUERY = `
   mutation Refresh {
@@ -28,43 +30,15 @@ const REFRESH_QUERY = `
   }
 `;
 
-/** Parse the name=value portion from a Set-Cookie header string. */
-function parseSetCookieValue(setCookie: string, cookieName: string): string | null {
-  const re = new RegExp(`(?:^|,\\s*)${cookieName}=([^;]+)`);
-  const m = setCookie.match(re);
-  return m ? `${cookieName}=${m[1]}` : null;
-}
-
-const CSRF_COOKIE_DEV = "csrf-token";
-const CSRF_COOKIE_PROD = "__Host-csrf";
-
-function csrfCookieName(): string {
-  return process.env.NODE_ENV === "production" ? CSRF_COOKIE_PROD : CSRF_COOKIE_DEV;
-}
-
 export async function POST() {
-  // 1. Perform CSRF echo: fetch a fresh CSRF token from the backend.
-  const csrfRes = await backendFetch<{ token: string }>("/csrf/token");
-  const csrfToken = csrfRes.data?.token;
-
-  if (!csrfToken) {
+  // CSRF echo, then call refresh. The access token travels as Bearer so the
+  // backend can revoke the old compound key before reissuing (the echo
+  // replaces the Cookie header — see csrfEchoHeaders).
+  const extraHeaders = await csrfEchoHeaders();
+  if (!extraHeaders) {
     return NextResponse.json({ error: "Session expired" }, { status: 401 });
   }
-
-  // 2. Extract CSRF cookie value from the response Set-Cookie header.
-  const cookieName = csrfCookieName();
-  const setCookieHeader = csrfRes.headers.get("set-cookie");
-  const csrfCookieValue = setCookieHeader
-    ? parseSetCookieValue(setCookieHeader, cookieName)
-    : null;
-
-  // 3. Call the refresh mutation, echoing the CSRF token + cookie.
-  const extraHeaders: Record<string, string> = {
-    "x-csrf-token": csrfToken,
-  };
-  if (csrfCookieValue) {
-    extraHeaders["cookie"] = csrfCookieValue;
-  }
+  const presentedAccessToken = (await cookies()).get(ACCESS_TOKEN_COOKIE)?.value;
 
   const { data, errors } = await graphqlFetch<{
     refresh: {
@@ -76,7 +50,7 @@ export async function POST() {
       userToken?: string;
       user: unknown;
     };
-  }>(REFRESH_QUERY, undefined, undefined, extraHeaders);
+  }>(REFRESH_QUERY, undefined, presentedAccessToken, extraHeaders);
 
   if (errors || !data?.refresh) {
     return NextResponse.json({ error: "Session expired" }, { status: 401 });

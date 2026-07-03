@@ -78,6 +78,43 @@ export interface GraphQlResponse<T> {
   errors?: GraphQlError[];
 }
 
+const CSRF_COOKIE_DEV = "csrf-token";
+const CSRF_COOKIE_PROD = "__Host-csrf";
+
+function csrfCookieName(): string {
+  return process.env.NODE_ENV === "production" ? CSRF_COOKIE_PROD : CSRF_COOKIE_DEV;
+}
+
+/** Parse the name=value portion from a Set-Cookie header string. */
+function parseSetCookieValue(setCookie: string, cookieName: string): string | null {
+  const re = new RegExp(`(?:^|,\\s*)${cookieName}=([^;]+)`);
+  const m = setCookie.match(re);
+  return m ? `${cookieName}=${m[1]}` : null;
+}
+
+/**
+ * Fetch a fresh CSRF token from the backend and build the extra headers that
+ * echo it back (double-submit: `x-csrf-token` + the CSRF cookie). The returned
+ * `cookie` entry REPLACES the forwarded Cookie header in graphqlFetch, so the
+ * session tokens must travel via the Authorization / x-*-token fallbacks.
+ * Returns null when the backend won't issue a token (e.g. unreachable).
+ */
+export async function csrfEchoHeaders(): Promise<Record<string, string> | null> {
+  const csrfRes = await backendFetch<{ token: string }>("/csrf/token");
+  const csrfToken = csrfRes.data?.token;
+  if (!csrfToken) return null;
+
+  const setCookieHeader = csrfRes.headers.get("set-cookie");
+  const csrfCookieValue = setCookieHeader
+    ? parseSetCookieValue(setCookieHeader, csrfCookieName())
+    : null;
+
+  return {
+    "x-csrf-token": csrfToken,
+    ...(csrfCookieValue ? { cookie: csrfCookieValue } : {}),
+  };
+}
+
 export async function graphqlFetch<T>(
   query: string,
   variables?: Record<string, unknown>,
