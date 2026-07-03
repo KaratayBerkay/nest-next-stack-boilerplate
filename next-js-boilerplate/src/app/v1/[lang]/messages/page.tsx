@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api-client";
 import {
   useState,
   useRef,
@@ -272,7 +273,7 @@ function MessagesPageContent() {
                     return;
                   }
                   try {
-                    const res = await fetch(
+                    const res = await apiFetch(
                       `/api/users/search?q=${encodeURIComponent(val)}`,
                     );
                     if (res.ok) setFindResults(await res.json());

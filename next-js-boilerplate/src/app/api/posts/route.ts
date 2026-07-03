@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { graphqlFetch } from "@/lib/backend";
+import { graphqlErrorStatus, graphqlFetch } from "@/lib/backend";
 import { getAccessToken } from "@/store/ssr-cookies";
 import { POSTS_QUERY, CREATE_POST_MUTATION } from "@/lib/graphql/queries";
 
@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   }>(POSTS_QUERY, { cursor: cursor || undefined, take, search }, token);
 
   if (errors) {
-    return NextResponse.json({ error: errors[0].message }, { status: 500 });
+    return NextResponse.json({ error: errors[0].message }, { status: graphqlErrorStatus(errors) });
   }
 
   const all = data?.postList ?? [];
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
   );
 
   if (errors) {
-    return NextResponse.json({ error: errors[0].message }, { status: 500 });
+    return NextResponse.json({ error: errors[0].message }, { status: graphqlErrorStatus(errors) });
   }
 
   return NextResponse.json({ post: data?.createPost }, { status: 201 });

@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/api-client";
 import { useQuery } from "@tanstack/react-query";
 
 export interface EchoResponse {
@@ -6,7 +7,7 @@ export interface EchoResponse {
 }
 
 async function fetchEcho(name: string): Promise<EchoResponse> {
-  const res = await fetch(`/api/echo?name=${encodeURIComponent(name)}`);
+  const res = await apiFetch(`/api/echo?name=${encodeURIComponent(name)}`);
   if (!res.ok) throw new Error(`fetch failed: ${res.status}`);
   return res.json() as Promise<EchoResponse>;
 }

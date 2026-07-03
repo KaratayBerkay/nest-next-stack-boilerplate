@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api-client";
 import { useEffect, useState, useCallback, Suspense } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -50,7 +51,7 @@ function PostDetailContent() {
   const [editContent, setEditContent] = useState("");
 
   const refreshPost = useCallback(async () => {
-    const res = await fetch(`/api/posts/${uuid}`);
+    const res = await apiFetch(`/api/posts/${uuid}`);
     if (!res.ok) return;
     const data = await res.json();
     if (data.post) setPost(data.post);
@@ -63,7 +64,7 @@ function PostDetailContent() {
 
     const load = async () => {
       try {
-        const res = await fetch(`/api/posts/${uuid}`);
+        const res = await apiFetch(`/api/posts/${uuid}`);
         if (cancelled) return;
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
@@ -161,7 +162,7 @@ function PostDetailContent() {
                   description="Are you sure you want to delete this post?"
                   onConfirm={async () => {
                     try {
-                      const res = await fetch(`/api/posts/${post.id}`, {
+                      const res = await apiFetch(`/api/posts/${post.id}`, {
                         method: "DELETE",
                       });
                       if (res.ok)
@@ -204,7 +205,7 @@ function PostDetailContent() {
                 onClick={async () => {
                   if (!editTitle.trim() || !editContent.trim()) return;
                   try {
-                    const res = await fetch(`/api/posts/${post.id}`, {
+                    const res = await apiFetch(`/api/posts/${post.id}`, {
                       method: "PUT",
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({

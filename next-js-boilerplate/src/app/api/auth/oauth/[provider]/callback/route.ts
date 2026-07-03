@@ -21,8 +21,13 @@ const LOGIN_WITH_OAUTH = `
         id
         email
         name
+        username
+        avatarUrl
+        locale
+        timezone
         status
         role
+        tier: subscriptionTier
       }
     }
   }

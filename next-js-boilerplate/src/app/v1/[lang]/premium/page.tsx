@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api-client";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { TierGate } from "@/components/TierGate";
@@ -20,7 +21,7 @@ export default function PremiumPage() {
     setLoadingStats(true);
     setStatsError(null);
     try {
-      const res = await fetch("/api/premium/stats");
+      const res = await apiFetch("/api/premium/stats");
       if (res.ok) {
         const data = await res.json();
         setStats(data.stats);

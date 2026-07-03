@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { graphqlFetch } from "@/lib/backend";
+import { graphqlErrorStatus, graphqlFetch } from "@/lib/backend";
 import { getAccessToken } from "@/store/ssr-cookies";
 import {
   POST_QUERY,
@@ -19,7 +19,7 @@ export async function GET(
   }>(POST_QUERY, { id }, token);
 
   if (errors) {
-    return NextResponse.json({ error: errors[0].message }, { status: 500 });
+    return NextResponse.json({ error: errors[0].message }, { status: graphqlErrorStatus(errors) });
   }
 
   if (!data?.post) {

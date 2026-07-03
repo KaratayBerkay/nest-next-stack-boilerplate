@@ -115,6 +115,20 @@ export async function csrfEchoHeaders(): Promise<Record<string, string> | null> 
   };
 }
 
+/**
+ * HTTP status a BFF route should return for a GraphQL error. UNAUTHENTICATED
+ * must surface as 401 — apiFetch's silent refresh only triggers on 401.
+ */
+export function graphqlErrorStatus(
+  errors: { extensions?: { code?: string } }[] | undefined,
+  fallback = 500,
+): number {
+  const code = errors?.[0]?.extensions?.code;
+  if (code === "UNAUTHENTICATED") return 401;
+  if (code === "FORBIDDEN") return 403;
+  return fallback;
+}
+
 export async function graphqlFetch<T>(
   query: string,
   variables?: Record<string, unknown>,

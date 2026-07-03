@@ -34,8 +34,13 @@ const LOGIN_QUERY = `
         id
         email
         name
+        username
+        avatarUrl
+        locale
+        timezone
         status
         role
+        tier: subscriptionTier
       }
     }
   }

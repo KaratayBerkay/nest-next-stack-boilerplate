@@ -92,6 +92,33 @@ export class SessionUserPayload {
   timezone!: string;
 }
 
+/**
+ * GraphQL shape of the `mySessions` query: a Postgres Session row plus the
+ * computed `current` marker (row id == the guard-attached sessionId). Not the
+ * generated Session model — `current` only exists on this projection, and the
+ * durable token itself must never be exposed.
+ */
+@ObjectType()
+export class SessionInfo {
+  @Field()
+  id!: string;
+
+  @Field(() => String, { nullable: true })
+  ip?: string | null;
+
+  @Field(() => String, { nullable: true })
+  userAgent?: string | null;
+
+  @Field()
+  createdAt!: Date;
+
+  @Field()
+  expiresAt!: Date;
+
+  @Field()
+  current!: boolean;
+}
+
 @ObjectType()
 export class AuthPayload {
   @Field()

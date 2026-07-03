@@ -14,6 +14,21 @@ RUN corepack enable
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# NEXT_PUBLIC_* is inlined into the client bundle at build time — pass the
+# public origins as build args (see docker-compose.yml build.args). Defaults
+# keep local no-args builds working.
+ARG NEXT_PUBLIC_APP_URL=http://localhost:3100
+ARG NEXT_PUBLIC_WS_URL=ws://localhost:3100
+ARG NEXT_PUBLIC_MSG_WS_URL=ws://localhost:3003
+ARG NEXT_PUBLIC_MINIO_PUBLIC_URL=http://localhost:9000
+ARG NEXT_PUBLIC_VAPID_PUBLIC_KEY=""
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
+    NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL \
+    NEXT_PUBLIC_MSG_WS_URL=$NEXT_PUBLIC_MSG_WS_URL \
+    NEXT_PUBLIC_MINIO_PUBLIC_URL=$NEXT_PUBLIC_MINIO_PUBLIC_URL \
+    NEXT_PUBLIC_VAPID_PUBLIC_KEY=$NEXT_PUBLIC_VAPID_PUBLIC_KEY
+
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     --mount=type=cache,id=next-cache,target=/app/.next/cache \
     pnpm config set store-dir /pnpm/store && \

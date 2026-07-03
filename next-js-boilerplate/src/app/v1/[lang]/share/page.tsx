@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api-client";
 import { useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 
@@ -38,7 +39,7 @@ export default function SharePage() {
       if (file && !uploadError) {
         const formData = new FormData();
         formData.set("file", file);
-        const uploadRes = await fetch("/api/upload", {
+        const uploadRes = await apiFetch("/api/upload", {
           method: "POST",
           body: formData,
         });
@@ -52,7 +53,7 @@ export default function SharePage() {
         }
       }
 
-      const res = await fetch("/api/posts", {
+      const res = await apiFetch("/api/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -96,25 +96,25 @@ export function useMessaging(
   }, [selectedUserId]);
 
   const fetchFriends = useCallback(async (q?: string) => {
-    const res = await fetch(
+    const res = await apiFetch(
       `/api/messages/friends${q ? "?q=" + encodeURIComponent(q) : ""}`,
     );
     if (res.ok) setFriends(await res.json());
   }, []);
 
   const fetchFriendRequests = useCallback(async () => {
-    const res = await fetch("/api/messages/friends/requests");
+    const res = await apiFetch("/api/messages/friends/requests");
     if (res.ok) setFriendRequests(await res.json());
   }, []);
 
   const fetchConversations = useCallback(async () => {
-    const res = await fetch("/api/messages/conversations");
+    const res = await apiFetch("/api/messages/conversations");
     if (res.ok) setConversations(await res.json());
   }, []);
 
   const sendFriendRequest = useCallback(
     async (addresseeId: string) => {
-      const res = await fetch(`/api/messages/friends/request/${addresseeId}`, {
+      const res = await apiFetch(`/api/messages/friends/request/${addresseeId}`, {
         method: "POST",
       });
       if (res.ok) fetchFriendRequests();
@@ -125,7 +125,7 @@ export function useMessaging(
 
   const acceptFriendRequest = useCallback(
     async (requesterId: string) => {
-      const res = await fetch(`/api/messages/friends/accept/${requesterId}`, {
+      const res = await apiFetch(`/api/messages/friends/accept/${requesterId}`, {
         method: "POST",
       });
       if (res.ok) {
@@ -141,7 +141,7 @@ export function useMessaging(
   );
 
   const declineFriendRequest = useCallback(async (requesterId: string) => {
-    const res = await fetch(`/api/messages/friends/decline/${requesterId}`, {
+    const res = await apiFetch(`/api/messages/friends/decline/${requesterId}`, {
       method: "POST",
     });
     if (res.ok) {
@@ -153,7 +153,7 @@ export function useMessaging(
   }, []);
 
   const markMessagesRead = useCallback(async (targetUserId: string) => {
-    const res = await fetch("/api/messages/read", {
+    const res = await apiFetch("/api/messages/read", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId: targetUserId }),
@@ -215,6 +215,17 @@ export function useMessaging(
       ws.onmessage = (e) => {
         try {
           const data = JSON.parse(e.data);
+          // The server answers a bad token quadruple with an error message but
+          // keeps the socket open (120s auth timeout); close it ourselves so
+          // the refresh-on-unauthenticated-close path runs immediately.
+          if (
+            data.type === "error" &&
+            !wasAuthenticated &&
+            /auth/i.test(String(data.message ?? ""))
+          ) {
+            ws.close();
+            return;
+          }
           if (data.type === "authenticated") {
             wasAuthenticated = true;
             authFailRetries = 0;
@@ -378,7 +389,7 @@ export function useMessaging(
       const params = new URLSearchParams();
       if (before) params.set("before", before);
       params.set("take", "30");
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/messages/conversations/${userId}/messages?${params}`,
       );
       if (res.ok) {
@@ -403,7 +414,7 @@ export function useMessaging(
     if (checkRateLimit()) return;
     sendingRef.current = true;
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/messages/conversations/${recipientId}/messages`,
         {
           method: "POST",
@@ -481,7 +492,7 @@ export function useChatRoom(
       if (before) params.set("before", before);
       params.set("take", "30");
       try {
-        const res = await fetch(
+        const res = await apiFetch(
           `/api/messages/rooms/${room}/messages?${params}`,
         );
         if (res.ok) {
@@ -552,6 +563,17 @@ export function useChatRoom(
       ws.onmessage = (e) => {
         try {
           const data = JSON.parse(e.data);
+          // The server answers a bad token quadruple with an error message but
+          // keeps the socket open (120s auth timeout); close it ourselves so
+          // the refresh-on-unauthenticated-close path runs immediately.
+          if (
+            data.type === "error" &&
+            !wasAuthenticated &&
+            /auth/i.test(String(data.message ?? ""))
+          ) {
+            ws.close();
+            return;
+          }
           if (data.type === "authenticated") {
             wasAuthenticated = true;
             authFailRetries = 0;
@@ -598,7 +620,9 @@ export function useChatRoom(
         clearPendingTimers();
         sendingRef.current = false;
         if (stopped) return;
-        if (!wasAuthenticated && authFailRetries < MAX_AUTH_FAIL_RETRIES) {
+        const wasAuth = wasAuthenticated;
+        wasAuthenticated = false;
+        if (!wasAuth && authFailRetries < MAX_AUTH_FAIL_RETRIES) {
           authFailRetries++;
           await refreshBeforeReconnect();
         }

@@ -65,6 +65,15 @@ export function AuthProvider({
 
   useEffect(() => {
     if (ssrUser || initialUser) {
+      // SSR-seeded: identity is already known, but in-page consumers (the
+      // messaging WS gate, for one) still need the access token. Fetch the
+      // cookie-derived quadruple — zero-PG on the backend.
+      apiFetch("/api/auth/token")
+        .then((res) => (res.ok ? res.json() : null))
+        .then((t: { accessToken?: string } | null) => {
+          if (t?.accessToken) setToken(t.accessToken);
+        })
+        .catch(() => {});
       return;
     }
 
@@ -101,8 +110,35 @@ export function AuthProvider({
       setToken(null);
     }
 
+    // After a successful silent refresh the tokens may encode a new tier/role
+    // (e.g. an admin changed the user's tier — the refresh minted a new rbac
+    // token). Rehydrate `me` so the rendered identity follows. Plain fetch, not
+    // apiFetch: a 401 here must not re-enter the refresh path.
+    async function onAuthRefreshed() {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = (await res.json()) as {
+            user: User | null;
+            accessToken?: string;
+          };
+          if (data.user) {
+            logoutEventRef.current = false;
+            setUser(data.user);
+            if (data.accessToken) setToken(data.accessToken);
+          }
+        }
+      } catch {
+        /* keep current state */
+      }
+    }
+
     window.addEventListener("auth:logout", onAuthLogout);
-    return () => window.removeEventListener("auth:logout", onAuthLogout);
+    window.addEventListener("auth:refreshed", onAuthRefreshed);
+    return () => {
+      window.removeEventListener("auth:logout", onAuthLogout);
+      window.removeEventListener("auth:refreshed", onAuthRefreshed);
+    };
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {

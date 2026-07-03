@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/api-client";
 import { FrontendEvent } from "./events.schema";
 
 type Listener = (event: FrontendEvent) => void;
@@ -33,7 +34,7 @@ async function flush(): Promise<void> {
   if (batch.length === 0) return;
   const events = batch.splice(0);
   try {
-    await fetch("/api/events", {
+    await apiFetch("/api/events", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ events }),

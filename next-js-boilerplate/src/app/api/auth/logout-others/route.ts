@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
-import { csrfEchoHeaders, graphqlFetch } from "@/lib/backend";
+import { csrfEchoHeaders, graphqlErrorStatus, graphqlFetch } from "@/lib/backend";
 
 const LOGOUT_OTHERS_MUTATION = `
   mutation LogoutOtherSessions {
@@ -26,7 +26,10 @@ export async function POST() {
   );
 
   if (errors) {
-    return NextResponse.json({ error: errors[0].message }, { status: 500 });
+    return NextResponse.json(
+      { error: errors[0].message },
+      { status: graphqlErrorStatus(errors) },
+    );
   }
 
   return NextResponse.json({ ok: data?.logoutOtherSessions ?? false });

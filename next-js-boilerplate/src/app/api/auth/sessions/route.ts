@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
-import { graphqlFetch } from "@/lib/backend";
+import { graphqlErrorStatus, graphqlFetch } from "@/lib/backend";
 
 const MY_SESSIONS_QUERY = `
   query MySessions {
@@ -34,7 +34,10 @@ export async function GET() {
   }>(MY_SESSIONS_QUERY, undefined, accessToken);
 
   if (errors) {
-    return NextResponse.json({ error: errors[0].message }, { status: 500 });
+    return NextResponse.json(
+      { error: errors[0].message },
+      { status: graphqlErrorStatus(errors) },
+    );
   }
 
   return NextResponse.json({ sessions: data?.mySessions ?? [] });

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
-import { csrfEchoHeaders, graphqlFetch } from "@/lib/backend";
+import { csrfEchoHeaders, graphqlErrorStatus, graphqlFetch } from "@/lib/backend";
 
 const SET_USER_TIER_MUTATION = `
-  mutation SetUserTier($userId: ID!, $tier: Tier!) {
+  mutation SetUserTier($userId: String!, $tier: SubscriptionTier!) {
     setUserTier(userId: $userId, tier: $tier)
   }
 `;
@@ -38,9 +38,10 @@ export async function POST(request: NextRequest) {
   );
 
   if (errors) {
-    const status =
-      errors[0]?.extensions?.code === "FORBIDDEN" ? 403 : 500;
-    return NextResponse.json({ error: errors[0].message }, { status });
+    return NextResponse.json(
+      { error: errors[0].message },
+      { status: graphqlErrorStatus(errors) },
+    );
   }
 
   return NextResponse.json({ ok: data?.setUserTier ?? false });

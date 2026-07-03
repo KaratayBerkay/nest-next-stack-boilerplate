@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
-import { graphqlFetch, sessionTokenHeaders } from "@/lib/backend";
+import { graphqlErrorStatus, graphqlFetch, sessionTokenHeaders } from "@/lib/backend";
 
 const PREMIUM_STATS_QUERY = `
   query PremiumStats {
@@ -24,9 +24,10 @@ export async function GET() {
   }>(PREMIUM_STATS_QUERY, undefined, accessToken, await sessionTokenHeaders());
 
   if (errors) {
-    const status =
-      errors[0]?.extensions?.code === "FORBIDDEN" ? 403 : 500;
-    return NextResponse.json({ error: errors[0].message }, { status });
+    return NextResponse.json(
+      { error: errors[0].message },
+      { status: graphqlErrorStatus(errors) },
+    );
   }
 
   return NextResponse.json({ stats: data?.premiumStats });

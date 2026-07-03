@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api-client";
 import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
@@ -85,7 +86,7 @@ export default function SessionsPage() {
   } = useQuery({
     queryKey: ["my-sessions"],
     queryFn: async () => {
-      const res = await fetch("/api/auth/sessions");
+      const res = await apiFetch("/api/auth/sessions");
       if (!res.ok) throw new Error("Failed to load sessions");
       const data = await res.json();
       return (data.sessions ?? []) as Session[];
@@ -96,7 +97,7 @@ export default function SessionsPage() {
     setLoggingOut(true);
     setConfirmOpen(false);
     try {
-      const res = await fetch("/api/auth/logout-others", { method: "POST" });
+      const res = await apiFetch("/api/auth/logout-others", { method: "POST" });
       if (res.ok) {
         refetch();
       }

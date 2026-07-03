@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api-client";
 import { useState, useCallback, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { TIERS, tierLabel } from "@/lib/tier";
@@ -35,7 +36,7 @@ export default function AdminPage() {
     }
     setSearching(true);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/users/search?q=${encodeURIComponent(q)}&take=20`,
       );
       if (res.ok) {
@@ -59,7 +60,7 @@ export default function AdminPage() {
   const setTier = async (userId: string, tier: string) => {
     setStatusMsg(null);
     try {
-      const res = await fetch("/api/admin/set-tier", {
+      const res = await apiFetch("/api/admin/set-tier", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, tier }),

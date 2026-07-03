@@ -2,10 +2,9 @@ import { UseGuards } from '@nestjs/common';
 import { Args, Context, Mutation, Query, Resolver } from '@nestjs/graphql';
 import type { Request } from 'express';
 import { User } from '../@generated/user/user.model';
-import { Session } from '../@generated/session/session.model';
 import { CsrfGuard } from '../csrf/csrf.guard';
 import { AuthService } from './auth.service';
-import { AuthPayload, SessionUserPayload } from './auth.types';
+import { AuthPayload, SessionInfo, SessionUserPayload } from './auth.types';
 import type { JwtUser } from './auth.types';
 import { CurrentUser } from './current-user.decorator';
 import { SessionAuthGuard } from './session-auth.guard';
@@ -87,7 +86,7 @@ export class AuthResolver {
    * by the guard-attached sessionId) is marked with `current: true`.
    */
   @UseGuards(SessionAuthGuard)
-  @Query(() => [Session], { name: 'mySessions' })
+  @Query(() => [SessionInfo], { name: 'mySessions' })
   mySessions(@CurrentUser() user: JwtUser) {
     return this.auth.findUserSessions(user.userId, user.sessionId);
   }

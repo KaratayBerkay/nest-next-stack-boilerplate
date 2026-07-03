@@ -1,5 +1,14 @@
 import { UseGuards } from '@nestjs/common';
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import {
+  Args,
+  Field,
+  Float,
+  Int,
+  Mutation,
+  ObjectType,
+  Query,
+  Resolver,
+} from '@nestjs/graphql';
 import { UserRole } from '../@generated/prisma/user-role.enum';
 import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
 import type { JwtUser } from '../auth/auth.types';
@@ -23,6 +32,18 @@ import { TierGuard } from './tier.guard';
  *
  * `premiumStats` demonstrates the `@MinTier()` gate with `SessionAuthGuard`.
  */
+@ObjectType()
+export class PremiumStatsPayload {
+  @Field(() => Int)
+  totalUsers!: number;
+
+  @Field(() => Int)
+  activeUsers!: number;
+
+  @Field(() => Float)
+  revenue!: number;
+}
+
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Resolver()
 export class AdminResolver {
@@ -61,8 +82,12 @@ export class AdminResolver {
   /** Demo gated resolver: proves tier-based access end-to-end. */
   @UseGuards(SessionAuthGuard, TierGuard)
   @MinTier(SubscriptionTier.BASIC)
-  @Query(() => String, { name: 'premiumStats' })
-  premiumStats(@CurrentUser() user: JwtUser): string {
-    return `Premium stats for ${user.email} (tier: ${user.tier})`;
+  @Query(() => PremiumStatsPayload, { name: 'premiumStats' })
+  async premiumStats(): Promise<PremiumStatsPayload> {
+    const [totalUsers, activeUsers] = await Promise.all([
+      this.prisma.user.count(),
+      this.prisma.user.count({ where: { status: 'ACTIVE' } }),
+    ]);
+    return { totalUsers, activeUsers, revenue: totalUsers * 9.99 };
   }
 }

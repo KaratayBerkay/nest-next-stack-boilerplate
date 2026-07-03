@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api-client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { clientEnv } from "@/lib/env";
 
@@ -59,7 +60,7 @@ export function usePushNotifications() {
         });
         setSubscription(sub);
 
-        await fetch("/api/push/subscribe", {
+        await apiFetch("/api/push/subscribe", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(sub.toJSON()),
@@ -76,7 +77,7 @@ export function usePushNotifications() {
       await subscription.unsubscribe();
       setSubscription(null);
 
-      await fetch("/api/push/unsubscribe", {
+      await apiFetch("/api/push/unsubscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ endpoint: subscription.endpoint }),

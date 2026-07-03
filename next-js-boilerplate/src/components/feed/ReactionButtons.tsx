@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api-client";
 import { useRef, useState } from "react";
 import { IconMoodSmile } from "@tabler/icons-react";
 
@@ -42,7 +43,7 @@ export function ReactionInline({
     if (submitting) return;
     setSubmitting(true);
     try {
-      await fetch("/api/reactions", {
+      await apiFetch("/api/reactions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -112,7 +113,7 @@ export function ReactionRow({
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch("/api/reactions", {
+      const res = await apiFetch("/api/reactions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type, ...(commentId ? { commentId } : {}) }),

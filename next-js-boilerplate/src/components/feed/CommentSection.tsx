@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api-client";
 import { useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -66,7 +67,7 @@ export function CommentSection({
     const oldBody = comments.find((c) => c.id === commentId)?.body;
     setLocalEdits((prev) => ({ ...prev, [commentId]: editingBody.trim() }));
     try {
-      const res = await fetch(`/api/comments/${commentId}`, {
+      const res = await apiFetch(`/api/comments/${commentId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ body: editingBody.trim() }),
@@ -99,7 +100,7 @@ export function CommentSection({
   const handleDelete = async (commentId: string) => {
     setLocalDeletes((prev) => new Set(prev).add(commentId));
     try {
-      const res = await fetch(`/api/comments/${commentId}`, {
+      const res = await apiFetch(`/api/comments/${commentId}`, {
         method: "DELETE",
       });
       if (!res.ok) {
@@ -148,7 +149,7 @@ export function CommentSection({
     const prevReplyTo = replyTo;
     setReplyTo(null);
     try {
-      const res = await fetch("/api/comments", {
+      const res = await apiFetch("/api/comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { graphqlFetch } from "@/lib/backend";
+import { graphqlErrorStatus, graphqlFetch } from "@/lib/backend";
 import { getAccessToken } from "@/store/ssr-cookies";
 import { MY_NOTIFICATIONS_QUERY } from "@/lib/graphql/queries";
 
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
   );
 
   if (errors) {
-    return NextResponse.json({ error: errors[0].message }, { status: 500 });
+    return NextResponse.json({ error: errors[0].message }, { status: graphqlErrorStatus(errors) });
   }
 
   return NextResponse.json({ notifications: data?.myNotifications ?? [] });

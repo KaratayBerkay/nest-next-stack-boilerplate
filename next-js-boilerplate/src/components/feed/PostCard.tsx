@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api-client";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { usePostSocket } from "@/hooks/usePostSocket";
@@ -62,7 +63,7 @@ export function PostCard({
   const refreshPost = async () => {
     try {
       setError(null);
-      const res = await fetch(`/api/posts/${post.id}`);
+      const res = await apiFetch(`/api/posts/${post.id}`);
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         setError(body.error ?? `Failed to load post (${res.status})`);
@@ -88,7 +89,7 @@ export function PostCard({
   const handleEdit = async () => {
     if (!editTitle.trim() || !editContent.trim()) return;
     try {
-      const res = await fetch(`/api/posts/${postData.id}`, {
+      const res = await apiFetch(`/api/posts/${postData.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -111,7 +112,7 @@ export function PostCard({
 
   const handleDelete = async () => {
     try {
-      const res = await fetch(`/api/posts/${postData.id}`, {
+      const res = await apiFetch(`/api/posts/${postData.id}`, {
         method: "DELETE",
       });
       if (!res.ok) return;
