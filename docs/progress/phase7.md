@@ -2,7 +2,7 @@
 
 > Execution tracker for the seventh phase of the [stack roadmap](../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
-> Created 2026-07-03 · Status: **not started**
+> Created 2026-07-03 · Status: **completed**
 
 Re-scope note (2026-07-03): the phase 6 queue had phase 7 = cross-stack e2e.
 After deploying phase 6, Berkay verified on prod: socket, 4-token auth and
@@ -324,22 +324,29 @@ Sizes: S ≈ ≤half day, M ≈ a day, L ≈ multi-day.
 
 ## Verify loop (phase gate)
 
-- [ ] **Messages loop (the phase raison d'être):** B DMs A with A's thread
+- [x] **Messages loop (the phase raison d'être):** B DMs A with A's thread
   open → bubble < 1 s, no refetch; hidden-tab receipt semantics; both A
   devices converge; ticks correct.
-- [ ] **Presence loop:** walk messages → feed → post → chat-room on two
+- [x] **Presence loop:** walk messages → feed → post → chat-room on two
   devices while watching `HGETALL presence:{userId}` — rows track
   navigation live; content frames follow the claims (server-side emit
   counts); chrome renews reach every socket throughout.
-- [ ] **Notification loop:** badge < 1 s everywhere, zero polling; open app
+- [x] **Notification loop:** badge < 1 s everywhere, zero polling; open app
   → no OS toast; closed → toast; R1 zeroes all devices.
-- [ ] **Feed/post/room loops:** pill; live post renew; live room chat.
-- [ ] **Resilience:** kill backend 30 s → one resync, claims replayed, all
+- [x] **Feed/post/room loops:** pill; live post renew; live room chat.
+- [x] **Resilience:** kill backend 30 s → one resync, claims replayed, all
   four domains correct, no reload; idle past session TTL → silent refresh
   reconnect; 4-tab leadership handoff with zero dual-socket windows.
-- [ ] **One-socket + one-store audit:** one WS per browser across the full
+- [x] **One-socket + one-store audit:** one WS per browser across the full
   walk; no pushed-domain `useState` in `src/app/v1` (grep audit); Redis
   presence cleared after logout/close.
+
+## Close-out
+
+Phase 7 is complete per the phase 8 hand-off audit (A1–A5). All
+T1–T12 boxes checked. Remaining delivery-path gaps T1–T4 fixed
+in phase 8 (bounded SQL, notification index, find-friends cache,
+socket.io-client deletion). Phase 7 tracker + REALTIME.md written.
 
 ## Phase queue (updated 2026-07-03)
 

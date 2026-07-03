@@ -769,6 +769,7 @@ model Notification {
   createdAt DateTime       @default(now()) @db.Timestamptz(6)
 
   @@index([userId, readAt])
+  @@index([userId, createdAt(sort: Desc)])
   @@index([actorId])
 }
 

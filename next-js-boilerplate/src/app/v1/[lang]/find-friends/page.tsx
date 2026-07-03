@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useReducer, useRef, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingAuth } from "@/components/LoadingAuth";
@@ -108,8 +109,18 @@ function PaginationBar({
 export default function FindFriendsPage() {
   const t = useMessages("find-friends");
   const { user, loading } = useAuth();
-  const [friends, setFriends] = useState<User[]>([]);
-  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
+  const queryClient = useQueryClient();
+  const { data: friends = [] } = useQuery<User[]>({
+    queryKey: ["friends", "list"],
+    queryFn: () => apiFetch("/api/messages/friends").then((r) => r.json()),
+    enabled: !!user,
+  });
+  const { data: friendRequests = [] } = useQuery<FriendRequest[]>({
+    queryKey: ["friends", "requests"],
+    queryFn: () =>
+      apiFetch("/api/messages/friends/requests").then((r) => r.json()),
+    enabled: !!user,
+  });
   const [search, dispatch] = useReducer(searchReducer, {
     items: [],
     total: 0,
@@ -119,34 +130,6 @@ export default function FindFriendsPage() {
   const [searching, setSearching] = useState(false);
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
   const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  const fetchFriends = useCallback(async () => {
-    try {
-      const res = await apiFetch("/api/messages/friends");
-      if (res.ok) {
-        const data: User[] = await res.json();
-        setFriends(data);
-      }
-    } catch {}
-  }, []);
-
-  const fetchRequests = useCallback(async () => {
-    try {
-      const res = await apiFetch("/api/messages/friends/requests");
-      if (res.ok) {
-        const data: FriendRequest[] = await res.json();
-        setFriendRequests(data);
-      }
-    } catch {}
-  }, []);
-
-  useEffect(() => {
-    if (user) {
-      /* eslint-disable-next-line react-hooks/set-state-in-effect */
-      fetchFriends();
-      fetchRequests();
-    }
-  }, [user, fetchFriends, fetchRequests]);
 
   const pendingIds = new Set(friendRequests.map((r) => r.user.id));
   const friendIds = new Set(friends.map((f) => f.id));
@@ -223,13 +206,11 @@ export default function FindFriendsPage() {
         method: "POST",
       });
       if (res.ok) {
-        setFriendRequests((prev) =>
-          prev.filter((r) => r.user.id !== userId),
-        );
-        fetchFriends();
+        queryClient.invalidateQueries({ queryKey: ["friends", "requests"] });
+        queryClient.invalidateQueries({ queryKey: ["friends", "list"] });
       }
     } catch {}
-  }, [fetchFriends]);
+  }, [queryClient]);
 
   const declineFriendRequest = useCallback(async (userId: string) => {
     try {
@@ -237,12 +218,10 @@ export default function FindFriendsPage() {
         method: "POST",
       });
       if (res.ok) {
-        setFriendRequests((prev) =>
-          prev.filter((r) => r.user.id !== userId),
-        );
+        queryClient.invalidateQueries({ queryKey: ["friends", "requests"] });
       }
     } catch {}
-  }, []);
+  }, [queryClient]);
 
   if (loading) return <LoadingAuth />;
   if (!user)

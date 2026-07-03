@@ -120,59 +120,84 @@ export class MessagingService {
     const friendIds = await this.getFriendIds(userId);
     if (friendIds.length === 0) return [];
 
-    const messages = await this.prisma.message.findMany({
-      where: {
-        OR: [{ senderId: userId }, { recipientId: userId }],
-        AND: [
-          {
-            OR: [
-              { senderId: { in: friendIds } },
-              { recipientId: { in: friendIds } },
-            ],
-          },
-        ],
-      },
-      include: { sender: true, recipient: true },
-      orderBy: { createdAt: 'desc' },
+    const unreads = await this.prisma.message.groupBy({
+      by: ['senderId'],
+      where: { recipientId: userId, readAt: null, senderId: { in: friendIds } },
+      _count: { id: true },
     });
+    const unreadMap = new Map<string, number>(
+      unreads.map((u) => [u.senderId, u._count.id]),
+    );
 
-    const convMap = new Map<
+    const sentMessages = await this.prisma.$queryRawUnsafe<
+      Array<{ id: string; body: string; recipientId: string; createdAt: Date }>
+    >(
+      `SELECT DISTINCT ON ("recipientId") id, body, "recipientId", "createdAt"
+       FROM "Message"
+       WHERE "senderId" = $1::uuid AND "recipientId" = ANY($2::uuid[])
+       ORDER BY "recipientId", "createdAt" DESC`,
+      userId,
+      friendIds,
+    );
+
+    const receivedMessages = await this.prisma.$queryRawUnsafe<
+      Array<{ id: string; body: string; senderId: string; createdAt: Date }>
+    >(
+      `SELECT DISTINCT ON ("senderId") id, body, "senderId", "createdAt"
+       FROM "Message"
+       WHERE "recipientId" = $1::uuid AND "senderId" = ANY($2::uuid[])
+       ORDER BY "senderId", "createdAt" DESC`,
+      userId,
+      friendIds,
+    );
+
+    const latestPerPeer = new Map<
       string,
-      {
-        user: { id: string; email: string; name: string | null };
-        lastMessage: string;
-        lastTime: Date;
-        unread: number;
-      }
+      { lastMessage: string; lastTime: Date }
     >();
-
-    for (const msg of messages) {
-      const otherUserId =
-        msg.senderId === userId ? msg.recipientId : msg.senderId;
-      const otherUser = msg.senderId === userId ? msg.recipient : msg.sender;
-      if (!convMap.has(otherUserId)) {
-        convMap.set(otherUserId, {
-          user: {
-            id: otherUser.id,
-            email: otherUser.email,
-            name: otherUser.name,
-          },
+    for (const msg of sentMessages) {
+      latestPerPeer.set(msg.recipientId, {
+        lastMessage: msg.body,
+        lastTime: msg.createdAt,
+      });
+    }
+    for (const msg of receivedMessages) {
+      const existing = latestPerPeer.get(msg.senderId);
+      if (!existing || msg.createdAt > existing.lastTime) {
+        latestPerPeer.set(msg.senderId, {
           lastMessage: msg.body,
           lastTime: msg.createdAt,
-          unread: 0,
         });
-      }
-      if (msg.recipientId === userId && !msg.readAt) {
-        convMap.get(otherUserId)!.unread += 1;
       }
     }
 
-    const result = Array.from(convMap.values()).map((c) => ({
-      user: { ...c.user, avatar: this.initials(c.user.name || c.user.email) },
-      lastMessage: c.lastMessage,
-      lastTime: c.lastTime,
-      unread: c.unread,
-    }));
+    const peerIds = Array.from(latestPerPeer.keys());
+    const peerUsers = await this.prisma.user.findMany({
+      where: { id: { in: peerIds } },
+      select: { id: true, email: true, name: true },
+    });
+    const userMap = new Map(peerUsers.map((u) => [u.id, u]));
+
+    const result = peerIds
+      .map((peerId) => {
+        const latest = latestPerPeer.get(peerId)!;
+        const user = userMap.get(peerId) ?? {
+          id: peerId,
+          email: 'unknown',
+          name: null as string | null,
+        };
+        return {
+          user: {
+            ...user,
+            avatar: this.initials(user.name || user.email),
+          },
+          lastMessage: latest.lastMessage,
+          lastTime: latest.lastTime,
+          unread: unreadMap.get(peerId) ?? 0,
+        };
+      })
+      .sort((a, b) => b.lastTime.getTime() - a.lastTime.getTime());
+
     await this.cache.set(cacheKey, result, 30_000);
     return result;
   }

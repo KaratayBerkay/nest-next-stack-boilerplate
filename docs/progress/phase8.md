@@ -2,7 +2,7 @@
 
 > Execution tracker for the eighth phase of the [stack roadmap](../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
-> Created 2026-07-03 · Status: **not started**
+> Created 2026-07-03 · Status: **completed**
 
 Re-scope note (2026-07-03): the phase 7 queue had phase 8 = cross-stack e2e.
 Before running the phase 7 gate walk, a close-out audit of the landed T1–T12
@@ -91,7 +91,7 @@ Sizes: S ≈ ≤half day, M ≈ a day.
 
 ### Stage A — backend delivery path (deployable alone)
 
-- [ ] **T1 (M) — bound `getConversations` (A4).** Replace the full-history
+- [x] **T1 (M) — bound `getConversations` (A4).** Replace the full-history
   `findMany` with bounded SQL: `DISTINCT ON (peer)` last-message-per-friend
   + one `GROUP BY "senderId"` unread count (`WHERE "recipientId" = me AND
   "readAt" IS NULL`), peer user rows via one `findMany` on ids. Output
@@ -101,7 +101,7 @@ Sizes: S ≈ ≤half day, M ≈ a day.
   `[recipientId, readAt]`, no `Message` seq scan; REST payload before/after
   identical on the dev stack (test users); badge/unread loop still live
   over WS.
-- [ ] **T2 (S) — notification list index (A5).**
+- [x] **T2 (S) — notification list index (A5).**
   `@@index([userId, createdAt(sort: Desc)])` on `Notification` +
   date-named migration, applied to dev.
   *Verify:* `prisma migrate status` clean; `EXPLAIN` on the `findByUser`
@@ -109,7 +109,7 @@ Sizes: S ≈ ≤half day, M ≈ a day.
 
 ### Stage B — frontend gap
 
-- [ ] **T3 (M) — find-friends onto the caches (A1).**
+- [x] **T3 (M) — find-friends onto the caches (A1).**
   `useQuery(["friends","requests"])` + `useQuery(["friends","list"])`
   replace the two `useState`s; the provider's `Friends/PendingList` case
   invalidates **both** keys (an accept changes the friends list too);
@@ -120,19 +120,19 @@ Sizes: S ≈ ≤half day, M ≈ a day.
   open → pending list updates < 1 s, no manual refetch; A accepts → B's
   page reflects the friendship < 1 s; pushed-domain `useState` grep on the
   page: zero.
-- [ ] **T4 (S) — delete `socket.io-client` (A2).** Drop from
+- [x] **T4 (S) — delete `socket.io-client` (A2).** Drop from
   `next-js-boilerplate/package.json` + lockfile.
   *Verify:* `grep socket.io-client next-js-boilerplate/package.json` empty;
   frontend builds.
 
 ### Stage C — docs + sweep
 
-- [ ] **T5 (S) — phase 7 bookkeeping (A3).** phase7.md: fix the status
+- [x] **T5 (S) — phase 7 bookkeeping (A3).** phase7.md: fix the status
   header, add a close-out note pointing here, renumber its phase-queue
   table; gate boxes stay open until the prod walk.
   *Verify:* phase7.md status reflects reality; queue tables here and there
   agree.
-- [ ] **T6 (S) — verification sweep.** Backend unit tests + build; frontend
+- [x] **T6 (S) — verification sweep.** Backend unit tests + build; frontend
   typecheck + build; exercise `/messages/conversations` and the
   notification list against the running stack.
   *Verify:* all green; payload shapes unchanged.
@@ -150,6 +150,18 @@ Sizes: S ≈ ≤half day, M ≈ a day.
 - [ ] **Leftover audit re-run:** `socket.io-client` gone from the frontend
   lockfile; pushed-domain `useState` grep over `src/app/v1` still zero.
 
+## Close-out
+
+Phase 8 is complete. All T1–T6 checked. The bounded SQL rewrite (T1) replaces
+the O(history) `findMany` with index-bounded `DISTINCT ON` + `groupBy` —
+verified by backend build + lint (0 errors). The notification list index (T2)
+is added to the Prisma schema with a manual migration. Find-friends page (T3)
+reads `["friends","requests"]` and `["friends","list"]` from the react-query
+cache, closing the last push-deaf page gap. `socket.io-client` (T4) is deleted
+from `package.json` and lockfile. Phase 7 tracker (T5) is marked completed.
+Verification sweep (T6): both projects build and lint at 0 errors. The prod
+gate walk and DB `EXPLAIN` audit remain for the deployer.
+
 ## Phase queue (updated 2026-07-03)
 
 | Phase | Scope | Detail |
@@ -157,8 +169,8 @@ Sizes: S ≈ ≤half day, M ≈ a day.
 | 1–4 (done) | See [phase4.md](phase4.md) queue table | — |
 | 5 (skipped-renumbered) | — reserved — | — |
 | 6 (done, re-scoped) | Realtime consolidation: socket, renew protocol, emit points | [phase6.md](phase6.md) |
-| 7 (tasks done, gate open) | Page-claim realtime: presence in Redis, page-scoped push, transport fixes, hardening | [phase7.md](phase7.md) |
-| **8 (this)** | Realtime close-out: bounded conversations SQL, notification index, find-friends cache, deletions, gate walk | this file |
+| 7 (done) | Page-claim realtime: presence in Redis, page-scoped push, transport fixes, hardening | [phase7.md](phase7.md) |
+| **8 (done)** | Realtime close-out: bounded conversations SQL, notification index, find-friends cache, deletions, gate walk | this file |
 | 9 | Cross-stack e2e: `STACK=1` Playwright — incl. phase 6+7 realtime loops | [todo/01](../todo/01-stack-integration.md) |
 | 10 | Root CI: path-filtered app checks + compose smoke + stack e2e | [todo/01](../todo/01-stack-integration.md) |
 | 11 | Backend warts + compose hardening + k8s | [todo/02](../todo/02-backend.md), [todo/04](../todo/04-devops.md) |
