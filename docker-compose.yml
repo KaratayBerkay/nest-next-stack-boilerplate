@@ -204,12 +204,14 @@ services:
       - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
       - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin}
       - MINIO_BUCKET=${MINIO_BUCKET:-uploads}
+    volumes:
+      - ./logs/back:/app/logs
+    command: ["sh", "-c", "mkdir -p /app/logs && node dist/src/main.js 2>&1 | tee /app/logs/app.log"]
     logging:
-      driver: fluentd
+      driver: json-file
       options:
-        fluentd-address: "localhost:${FLUENT_FORWARD_PORT:-24224}"
-        fluentd-async: "true"
-        tag: "app"
+        max-size: "10m"
+        max-file: "3"
 
   nextjs:
     build:
@@ -228,8 +230,6 @@ services:
     depends_on:
       app:
         condition: service_started
-      fluent-bit:
-        condition: service_started
     ports:
       - "${FRONTEND_PORT:-3100}:3100"
     environment:
@@ -246,14 +246,14 @@ services:
       - COOKIE_DOMAIN=${COOKIE_DOMAIN:-}
       - KAFKA_BROKER=${KAFKA_BROKER:-kafka:9092}
       - MINIO_URL=http://minio:9000
+    volumes:
+      - ./logs/front:/app/logs
+    command: ["sh", "-c", "mkdir -p /app/logs && node server.js 2>&1 | tee /app/logs/app.log"]
     logging:
-      driver: fluentd
+      driver: json-file
       options:
-        # The fluentd log driver runs in the Docker daemon (host side) — compose service
-        # names don't resolve there, so target fluent-bit's host-published forward port.
-        fluentd-address: "localhost:${FLUENT_FORWARD_PORT:-24224}"
-        fluentd-async: "true"
-        tag: frontend
+        max-size: "10m"
+        max-file: "3"
 
   # ──────────────────────────────────────────────────────
   # ELK logging stack
