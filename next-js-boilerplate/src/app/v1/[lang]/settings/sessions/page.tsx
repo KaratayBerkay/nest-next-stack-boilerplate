@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
@@ -15,11 +16,7 @@ interface Session {
   current: boolean;
 }
 
-function SessionRow({
-  session,
-}: {
-  session: Session;
-}) {
+function SessionRow({ session }: { session: Session }) {
   const isMobile =
     session.userAgent &&
     /mobile|android|iphone|ipad/i.test(session.userAgent);
@@ -67,8 +64,7 @@ function SessionRow({
 }
 
 function parseUserAgent(ua: string): string {
-  if (ua.includes("Chrome") && !ua.includes("Edg"))
-    return "Chrome";
+  if (ua.includes("Chrome") && !ua.includes("Edg")) return "Chrome";
   if (ua.includes("Firefox")) return "Firefox";
   if (ua.includes("Safari") && !ua.includes("Chrome")) return "Safari";
   if (ua.includes("Edg")) return "Edge";
@@ -78,54 +74,44 @@ function parseUserAgent(ua: string): string {
 
 export default function SessionsPage() {
   const { user, loading } = useAuth();
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const fetchSessions = useCallback(async () => {
-    try {
+  const {
+    data: sessions,
+    error,
+    isLoading: fetching,
+    refetch,
+  } = useQuery({
+    queryKey: ["my-sessions"],
+    queryFn: async () => {
       const res = await fetch("/api/auth/sessions");
-      if (res.ok) {
-        const data = await res.json();
-        setSessions(data.sessions ?? []);
-      } else {
-        setError("Failed to load sessions");
-      }
-    } catch {
-      setError("Network error");
-    }
-  }, []);
+      if (!res.ok) throw new Error("Failed to load sessions");
+      const data = await res.json();
+      return (data.sessions ?? []) as Session[];
+    },
+  });
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchSessions().finally(() => setFetching(false));
-  }, [fetchSessions]);
-
-  const handleLogoutOthers = async () => {
+  const handleLogoutOthers = useCallback(async () => {
     setLoggingOut(true);
     setConfirmOpen(false);
     try {
       const res = await fetch("/api/auth/logout-others", { method: "POST" });
       if (res.ok) {
-        await fetchSessions();
-      } else {
-        setError("Failed to logout other sessions");
+        refetch();
       }
     } catch {
-      setError("Network error");
+      /* ignore */
     } finally {
       setLoggingOut(false);
     }
-  };
+  }, [refetch]);
 
-  const otherCount = sessions.filter((s) => !s.current).length;
+  const otherCount = (sessions ?? []).filter((s) => !s.current).length;
 
   if (loading) return <LoadingAuth />;
   if (!user)
-    return (
-      <UnauthenticatedMessage message="Sign in to manage sessions" />
-    );
+    return <UnauthenticatedMessage message="Sign in to manage sessions" />;
 
   return (
     <div className="flex flex-col gap-6">
@@ -146,7 +132,7 @@ export default function SessionsPage() {
 
       {error && (
         <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
-          {error}
+          {error.message}
         </div>
       )}
 
@@ -154,7 +140,7 @@ export default function SessionsPage() {
         <div className="text-muted flex items-center justify-center py-12 text-sm">
           Loading sessions...
         </div>
-      ) : sessions.length === 0 ? (
+      ) : !sessions || sessions.length === 0 ? (
         <div className="text-muted flex items-center justify-center py-12 text-sm">
           No sessions found.
         </div>
@@ -166,7 +152,6 @@ export default function SessionsPage() {
         </div>
       )}
 
-      {/* Confirm dialog */}
       {confirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-bg mx-4 w-full max-w-sm rounded-xl p-6 shadow-lg">
