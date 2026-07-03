@@ -3,7 +3,6 @@
 import { apiFetch } from "@/lib/api-client";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { usePostSocket } from "@/hooks/usePostSocket";
 import { imageUrl } from "@/lib/image";
 import { ReactionInline } from "./ReactionButtons";
 import { CommentSection } from "./CommentSection";
@@ -107,8 +106,6 @@ export function PostCard({
       // silent
     }
   };
-
-  usePostSocket(isExpanded ? postData.id : null, refreshPost);
 
   const handleDelete = async () => {
     try {

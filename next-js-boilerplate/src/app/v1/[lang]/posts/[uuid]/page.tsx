@@ -10,7 +10,6 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { useAuth } from "@/hooks/useAuth";
-import { usePostSocket } from "@/hooks/usePostSocket";
 import { imageUrl } from "@/lib/image";
 import { ReactionInline } from "@/components/feed/ReactionButtons";
 import { CommentSection } from "@/components/feed/CommentSection";
@@ -56,8 +55,6 @@ function PostDetailContent() {
     const data = await res.json();
     if (data.post) setPost(data.post);
   }, [uuid]);
-
-  usePostSocket(post?.id ?? null, refreshPost);
 
   useEffect(() => {
     let cancelled = false;

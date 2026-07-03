@@ -1,16 +1,24 @@
 "use client";
 
-import { useRef, useState, useMemo } from "react";
+import { useRef, useState, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { apiFetch } from "@/lib/api-client";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import { useBreakpoint } from "@/hooks";
-import {
-  useNotifications,
-  type NotificationItem,
-} from "@/hooks/useNotifications";
 import { IconBell, IconChevronRight } from "@tabler/icons-react";
+
+type NotificationItem = {
+  id: string;
+  type: string;
+  title: string;
+  body?: string;
+  readAt?: string;
+  createdAt: string;
+  actor?: { name?: string };
+  payload?: Record<string, unknown>;
+};
 
 function Badge({ count }: { count: number }) {
   if (count <= 0) return null;
@@ -122,8 +130,8 @@ function NotificationList({
 }
 
 export function NotificationDropdown({ lang = "en" }: { lang?: string }) {
-  const { notifications, unreadCount, markRead, markAllRead, refresh } =
-    useNotifications();
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -133,10 +141,42 @@ export function NotificationDropdown({ lang = "en" }: { lang?: string }) {
     if (isDesktop) setOpen(false);
   });
 
+  const fetchNotifs = useCallback(async () => {
+    try {
+      const res = await apiFetch("/api/notifications");
+      if (res.ok) {
+        const data = await res.json();
+        const items: NotificationItem[] = data.notifications ?? data ?? [];
+        setNotifications(items);
+        setUnreadCount(items.filter((n: NotificationItem) => !n.readAt).length);
+      }
+    } catch {}
+  }, []);
+
+  const markRead = useCallback(async (id: string) => {
+    try {
+      await apiFetch(`/api/notifications/${id}/read`, { method: "POST" });
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, readAt: new Date().toISOString() } : n)),
+      );
+      setUnreadCount((c) => Math.max(0, c - 1));
+    } catch {}
+  }, []);
+
+  const markAllRead = useCallback(async () => {
+    try {
+      await apiFetch("/api/notifications/read-all", { method: "POST" });
+      setNotifications((prev) =>
+        prev.map((n) => ({ ...n, readAt: n.readAt ?? new Date().toISOString() })),
+      );
+      setUnreadCount(0);
+    } catch {}
+  }, []);
+
   const handleToggle = () => {
     const next = !open;
     setOpen(next);
-    if (next) refresh();
+    if (next) fetchNotifs();
   };
 
   const handleNavigate = (n: NotificationItem) => {
@@ -150,9 +190,7 @@ export function NotificationDropdown({ lang = "en" }: { lang?: string }) {
   const content = (
     <NotificationList
       notifications={notifications}
-      onMarkRead={(id) => {
-        markRead(id);
-      }}
+      onMarkRead={markRead}
       onMarkAllRead={markAllRead}
       onNavigate={handleNavigate}
       lang={lang}

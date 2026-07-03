@@ -1,16 +1,14 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useChatRoom, type RoomMember } from "@/hooks/useMessaging";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
 import { CHAT_ROOMS } from "@/constants/chat";
 import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { apiFetch } from "@/lib/api-client";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
-import { OnlineDot } from "@/components/OnlineDot";
-import { RateLimitMessage } from "@/components/RateLimitMessage";
 import { LoadEarlierButton } from "@/components/LoadEarlierButton";
 import { Avatar } from "@/components/ui/Avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui";
@@ -18,37 +16,78 @@ import { cn } from "@/lib/cn";
 import { initials } from "@/lib/initials";
 import { IconX, IconMenu2 } from "@tabler/icons-react";
 
+type RoomMsg = {
+  id: string;
+  senderId: string;
+  senderName: string;
+  body: string;
+  createdAt: string;
+};
+
 export default function ChatRoomPage() {
   const t = useMessages("chat-room");
-  const { user, token, loading } = useAuth();
+  const { user, loading } = useAuth();
   const [room, setRoom] = useState<string>("general");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const {
-    connected,
-    members,
-    messages,
-    roomCounts,
-    rateLimited,
-    hasMore,
-    fetchRoomMessages,
-    sendMessage,
-  } = useChatRoom(token, room, user?.id || null, user?.name || null);
+  const [messages, setMessages] = useState<RoomMsg[]>([]);
+  const [hasMore, setHasMore] = useState(false);
   const [input, setInput] = useState("");
-  const messagesRef = useYSwipeGesture<HTMLDivElement>();
 
+  const messagesRef = useYSwipeGesture<HTMLDivElement>();
   const { bottomRef, scrollToBottom } = useAutoScroll(messages);
+
+  const fetchRoomMessages = useCallback(
+    async (roomId: string, before?: string) => {
+      try {
+        const params = new URLSearchParams();
+        if (before) params.set("before", before);
+        params.set("take", "30");
+        const res = await apiFetch(
+          `/api/rooms/${roomId}/messages?${params.toString()}`,
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (before) {
+            setMessages((prev) => [...data.messages, ...prev]);
+          } else {
+            setMessages(data.messages ?? []);
+          }
+          setHasMore(data.hasMore ?? false);
+        }
+      } catch {}
+    },
+    [],
+  );
+
+  useEffect(() => {
+    /* eslint-disable-next-line react-hooks/set-state-in-effect */
+    setMessages([]);
+    fetchRoomMessages(room);
+  }, [room, fetchRoomMessages]);
 
   const handleSend = useCallback(() => {
     if (!input.trim()) return;
-    sendMessage(input.trim());
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `temp-${Date.now()}`,
+        senderId: user?.id ?? "",
+        senderName: user?.name ?? "Me",
+        body: input.trim(),
+        createdAt: new Date().toISOString(),
+      },
+    ]);
     setInput("");
     scrollToBottom();
-  }, [input, sendMessage, scrollToBottom]);
+  }, [input, scrollToBottom, user]);
 
-  const selectRoom = useCallback((r: string) => {
-    setRoom(r);
-    setSidebarOpen(false);
-  }, []);
+  const selectRoom = useCallback(
+    (r: string) => {
+      setRoom(r);
+      setSidebarOpen(false);
+    },
+    [],
+  );
 
   if (loading) return <LoadingAuth />;
   if (!user) return <UnauthenticatedMessage message={t.signInRequired} />;
@@ -57,10 +96,8 @@ export default function ChatRoomPage() {
     <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
       <div className="flex shrink-0 items-center justify-between">
         <h2 className="text-brand text-sm font-semibold">{t.title}</h2>
-        <span
-          className={`text-xs font-semibold ${connected ? "text-green-600" : "text-red-600"}`}
-        >
-          {connected ? t.connected : t.connecting}
+        <span className="text-muted text-xs">
+          {t.countOnline.replace("{count}", "0")}
         </span>
       </div>
 
@@ -98,7 +135,7 @@ export default function ChatRoomPage() {
                 Rooms
               </TabsTrigger>
               <TabsTrigger value="online" className="flex-1">
-                {t.online.replace("{count}", String(members.length))}
+                {t.online.replace("{count}", "0")}
               </TabsTrigger>
             </TabsList>
 
@@ -117,17 +154,6 @@ export default function ChatRoomPage() {
                   }`}
                 >
                   <span># {r}</span>
-                  {roomCounts[r] > 0 && (
-                    <span
-                      className={`ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                        room === r
-                          ? "bg-white/20 text-white"
-                          : "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                      }`}
-                    >
-                      {roomCounts[r]}
-                    </span>
-                  )}
                 </button>
               ))}
             </TabsContent>
@@ -136,27 +162,7 @@ export default function ChatRoomPage() {
               value="online"
               className="mt-2 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto"
             >
-              {members.length === 0 && (
-                <p className="text-muted px-0.5 text-xs">{t.noOneHere}</p>
-              )}
-              {members.map((m: RoomMember, i) => (
-                <div
-                  key={m.id}
-                  className="animate-fade-in-up hover:bg-surface-hover flex items-center gap-2.5 rounded-lg px-2.5 py-2 transition-colors"
-                  style={{ animationDelay: `${i * 20}ms` }}
-                >
-                  <div className="relative">
-                    <Avatar
-                      fallback={initials(m.name)}
-                      className="bg-brand h-7 w-7 text-[9px] text-white"
-                    />
-                    <OnlineDot className="h-2.5 w-2.5" />
-                  </div>
-                  <span className="text-fg truncate text-xs font-medium">
-                    {m.name}
-                  </span>
-                </div>
-              ))}
+              <p className="text-muted px-0.5 text-xs">{t.noOneHere}</p>
             </TabsContent>
           </Tabs>
         </div>
@@ -172,13 +178,13 @@ export default function ChatRoomPage() {
               <IconMenu2 size={18} className="text-muted shrink-0" />
               <span className="text-sm font-semibold"># {room}</span>
               <span className="text-muted text-xs">
-                {t.countOnline.replace("{count}", String(members.length))}
+                {t.countOnline.replace("{count}", "0")}
               </span>
             </button>
             <div className="hidden md:flex md:items-center md:gap-2">
               <span className="text-sm font-semibold"># {room}</span>
               <span className="text-muted text-xs">
-                {t.countOnline.replace("{count}", String(members.length))}
+                {t.countOnline.replace("{count}", "0")}
               </span>
             </div>
           </div>
@@ -247,19 +253,13 @@ export default function ChatRoomPage() {
                     handleSend();
                   }
                 }}
-                placeholder={
-                  connected
-                    ? t.messagePlaceholder.replace("{room}", room)
-                    : t.connecting
-                }
-                disabled={!connected || rateLimited}
+                placeholder={t.messagePlaceholder.replace("{room}", room)}
                 className="rounded border px-3 py-2 text-sm disabled:opacity-50"
               />
-              {rateLimited && <RateLimitMessage compact />}
             </div>
             <button
               onClick={handleSend}
-              disabled={!connected || !input.trim() || rateLimited}
+              disabled={!input.trim()}
               className="bg-brand rounded-lg px-4 py-2 text-sm text-white disabled:opacity-50"
             >
               {t.send}

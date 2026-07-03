@@ -5,7 +5,6 @@ import {
   useState,
   useRef,
   useEffect,
-  useLayoutEffect,
   useCallback,
   startTransition,
   Suspense,
@@ -16,12 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSearchParams, useParams } from "next/navigation";
 import Link from "next/link";
 import { FIND_FRIENDS_PATH } from "@/constants/routes";
-import {
-  useMessaging,
-  type User,
-  type Message,
-  type FriendRequest,
-} from "@/hooks/useMessaging";
+import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
 import { useDeviceType } from "@/hooks/useDeviceType";
@@ -29,8 +23,6 @@ import { Avatar } from "@/components/ui/Avatar";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
-import { OnlineDot } from "@/components/OnlineDot";
-import { RateLimitMessage } from "@/components/RateLimitMessage";
 import { LoadEarlierButton } from "@/components/LoadEarlierButton";
 import { cn } from "@/lib/cn";
 import { initials } from "@/lib/initials";
@@ -42,6 +34,23 @@ import {
   IconChevronLeft,
   IconPlus,
 } from "@tabler/icons-react";
+
+type UserInfo = { id: string; name: string; email: string; avatar: string };
+type Message = {
+  id: string;
+  senderId: string;
+  recipientId: string;
+  body: string;
+  createdAt: string;
+  readAt: string | null;
+  deliveredAt: string | null;
+};
+type Conversation = {
+  user: UserInfo;
+  lastMessage: string;
+  lastTime: string;
+  unread: number;
+};
 
 export default function MessagesPage() {
   const t = useMessages("messages");
@@ -62,54 +71,140 @@ export default function MessagesPage() {
 
 function MessagesPageContent() {
   const t = useMessages("messages");
-  const { user, token, loading } = useAuth();
+  const { user, loading } = useAuth();
+  const realtime = useRealtime();
   const searchParams = useSearchParams();
   const params = useParams<{ lang: string }>();
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const {
-    friends,
-    friendRequests,
-    conversations,
-    messages: messageStore,
-    connected,
-    onlineUsers,
-    rateLimited,
-    hasMore,
-    fetchFriends,
-    fetchFriendRequests,
-    fetchConversations,
-    fetchMessages,
-    sendMessage,
-    markMessagesRead,
-    sendFriendRequest,
-    acceptFriendRequest,
-    declineFriendRequest,
-  } = useMessaging(token, user?.id || null, selectedUser?.id);
+  const [selectedUser, setSelectedUser] = useState<UserInfo | null>(null);
+  const [friends, setFriends] = useState<UserInfo[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [messageStore, setMessageStore] = useState<Record<string, Message[]>>(
+    {},
+  );
+  const [hasMore, setHasMore] = useState<Record<string, boolean>>({});
   const [input, setInput] = useState("");
   const [search, setSearch] = useState("");
   const [findInput, setFindInput] = useState("");
-  const [findResults, setFindResults] = useState<User[]>([]);
-  const [sentRequestIds, setSentRequestIds] = useState<Set<string>>(new Set());
+  const [findResults, setFindResults] = useState<UserInfo[]>([]);
+  const [sentRequestIds, setSentRequestIds] = useState<Set<string>>(
+    new Set(),
+  );
   const [messageError, setMessageError] = useState<string | null>(null);
   const messagesRef = useYSwipeGesture<HTMLDivElement>();
 
   const [tab, setTab] = useState<"conversations" | "friends">(
     () =>
       (typeof window !== "undefined"
-        ? (sessionStorage.getItem("msg_tab") as "conversations" | "friends")
+        ? (sessionStorage.getItem("msg_tab") as
+            | "conversations"
+            | "friends")
         : null) || "conversations",
   );
   useEffect(() => {
     sessionStorage.setItem("msg_tab", tab);
   }, [tab]);
 
+  const fetchConversations = useCallback(async () => {
+    try {
+      const res = await apiFetch("/api/conversations");
+      if (res.ok) {
+        const data: Conversation[] = await res.json();
+        setConversations(data);
+      }
+    } catch {}
+  }, []);
+
+  const fetchFriends = useCallback(async (q?: string) => {
+    try {
+      const url = q
+        ? `/api/friends?q=${encodeURIComponent(q)}`
+        : "/api/friends";
+      const res = await apiFetch(url);
+      if (res.ok) {
+        const data: UserInfo[] = await res.json();
+        setFriends(data);
+      }
+    } catch {}
+  }, []);
+
+  const fetchMessages = useCallback(
+    async (userId: string, before?: string) => {
+      try {
+        const params = new URLSearchParams();
+        if (before) params.set("before", before);
+        params.set("take", "30");
+        const res = await apiFetch(
+          `/api/conversations/${userId}/messages?${params.toString()}`,
+        );
+        if (res.ok) {
+          const data = await res.json();
+          const msgs: Message[] = data.messages ?? [];
+          if (before) {
+            setMessageStore((prev) => ({
+              ...prev,
+              [userId]: [...msgs, ...(prev[userId] ?? [])],
+            }));
+          } else {
+            setMessageStore((prev) => ({ ...prev, [userId]: msgs }));
+          }
+          setHasMore((prev) => ({ ...prev, [userId]: data.hasMore ?? false }));
+        }
+      } catch {}
+    },
+    [],
+  );
+
+  const sendMessage = useCallback(
+    async (recipientId: string, text: string) => {
+      const res = await apiFetch(`/api/conversations/${recipientId}/messages`, {
+        method: "POST",
+        body: JSON.stringify({ text }),
+      });
+      if (res.ok) {
+        const msg: Message = await res.json();
+        setMessageStore((prev) => ({
+          ...prev,
+          [recipientId]: [...(prev[recipientId] ?? []), msg],
+        }));
+      }
+    },
+    [],
+  );
+
+  const markMessagesRead = useCallback(async (userId: string) => {
+    try {
+      await apiFetch("/api/messages/read", {
+        method: "POST",
+        body: JSON.stringify({ userId }),
+      });
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.user.id === userId ? { ...c, unread: 0 } : c,
+        ),
+      );
+      setMessageStore((prev) => {
+        const msgs = prev[userId];
+        if (!msgs) return prev;
+        return {
+          ...prev,
+          [userId]: msgs.map((m) =>
+            m.senderId === userId && !m.readAt
+              ? { ...m, readAt: new Date().toISOString() }
+              : m,
+          ),
+        };
+      });
+    } catch {}
+  }, []);
+
   useEffect(() => {
     if (user) {
+      /* eslint-disable-next-line react-hooks/set-state-in-effect */
       fetchConversations();
+      /* eslint-disable-next-line react-hooks/set-state-in-effect */
       fetchFriends();
-      fetchFriendRequests();
     }
-  }, [user, fetchConversations, fetchFriends, fetchFriendRequests]);
+  }, [user, fetchConversations, fetchFriends]);
 
   const lastParamRef = useRef<string | null>(null);
   useEffect(() => {
@@ -122,14 +217,21 @@ function MessagesPageContent() {
       startTransition(() => {
         setSelectedUser(match.user);
       });
+      /* eslint-disable-next-line react-hooks/set-state-in-effect */
       markMessagesRead(match.user.id);
+      /* eslint-disable-next-line react-hooks/set-state-in-effect */
       fetchMessages(match.user.id);
     }
   }, [searchParams, conversations, fetchMessages, markMessagesRead]);
 
   useEffect(() => {
-    if (search) fetchFriends(search);
-    else fetchFriends();
+    if (search) {
+      /* eslint-disable-next-line react-hooks/set-state-in-effect */
+      fetchFriends(search);
+    } else {
+      /* eslint-disable-next-line react-hooks/set-state-in-effect */
+      fetchFriends();
+    }
   }, [search, fetchFriends]);
 
   const conversationMessages = selectedUser
@@ -144,7 +246,7 @@ function MessagesPageContent() {
   );
 
   const openConversation = useCallback(
-    async (u: User) => {
+    async (u: UserInfo) => {
       setSelectedUser(u);
       setTab("conversations");
       setSidebarOpen(false);
@@ -179,6 +281,19 @@ function MessagesPageContent() {
     onSwipeRight: useCallback(() => setTab("conversations"), []),
     enabled: isTouch && !!user,
   });
+
+  const connected = realtime?.status === "open";
+
+  const sendFriendRequest = useCallback(async (userId: string) => {
+    try {
+      const res = await apiFetch(`/api/friends/request/${userId}`, {
+        method: "POST",
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }, []);
 
   if (loading) return <LoadingAuth />;
   if (!user)
@@ -358,45 +473,38 @@ function MessagesPageContent() {
             )}
             {tab === "conversations" && (
               <div className="flex flex-col gap-0.5">
-                {[...conversations]
-                  .sort((a, b) => {
-                    const aOn = onlineUsers.has(a.user.id) ? 1 : 0;
-                    const bOn = onlineUsers.has(b.user.id) ? 1 : 0;
-                    return bOn - aOn;
-                  })
-                  .map((c, i) => (
-                    <button
-                      key={c.user.id}
-                      onClick={() => openConversation(c.user)}
-                      className={`animate-fade-in-up hover:bg-surface-hover flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
-                        selectedUser?.id === c.user.id ? "bg-surface" : ""
-                      }`}
-                      style={{ animationDelay: `${i * 20}ms` }}
-                    >
-                      <div className="relative shrink-0">
-                        <Avatar
-                          fallback={initials(c.user.name)}
-                          className="bg-brand h-10 w-10 text-white"
-                        />
-                        {onlineUsers.has(c.user.id) && <OnlineDot />}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="truncate text-sm font-medium">
-                            {c.user.name}
+                {[...conversations].map((c, i) => (
+                  <button
+                    key={c.user.id}
+                    onClick={() => openConversation(c.user)}
+                    className={`animate-fade-in-up hover:bg-surface-hover flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
+                      selectedUser?.id === c.user.id ? "bg-surface" : ""
+                    }`}
+                    style={{ animationDelay: `${i * 20}ms` }}
+                  >
+                    <div className="relative shrink-0">
+                      <Avatar
+                        fallback={initials(c.user.name)}
+                        className="bg-brand h-10 w-10 text-white"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate text-sm font-medium">
+                          {c.user.name}
+                        </span>
+                        {c.unread > 0 && (
+                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                            {c.unread > 99 ? "99+" : c.unread}
                           </span>
-                          {c.unread > 0 && (
-                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                              {c.unread > 99 ? "99+" : c.unread}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-muted mt-0.5 truncate text-sm">
-                          {c.lastMessage}
-                        </p>
+                        )}
                       </div>
-                    </button>
-                  ))}
+                      <p className="text-muted mt-0.5 truncate text-sm">
+                        {c.lastMessage}
+                      </p>
+                    </div>
+                  </button>
+                ))}
               </div>
             )}
             {tab === "friends" &&
@@ -406,33 +514,26 @@ function MessagesPageContent() {
                 </p>
               ) : (
                 <div className="flex flex-col gap-0.5">
-                  {[...friends]
-                    .sort((a, b) => {
-                      const aOn = onlineUsers.has(a.id) ? 1 : 0;
-                      const bOn = onlineUsers.has(b.id) ? 1 : 0;
-                      return bOn - aOn;
-                    })
-                    .map((u, i) => (
-                      <button
-                        key={u.id}
-                        onClick={() => openConversation(u)}
-                        className="animate-fade-in-up hover:bg-surface-hover flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors"
-                        style={{ animationDelay: `${i * 15}ms` }}
-                      >
-                        <div className="relative shrink-0">
-                          <Avatar
-                            fallback={initials(u.name)}
-                            className="bg-brand h-9 w-9 text-white"
-                          />
-                          {onlineUsers.has(u.id) && <OnlineDot />}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <span className="truncate text-sm font-medium">
-                            {u.name}
-                          </span>
-                        </div>
-                      </button>
-                    ))}
+                  {friends.map((u, i) => (
+                    <button
+                      key={u.id}
+                      onClick={() => openConversation(u)}
+                      className="animate-fade-in-up hover:bg-surface-hover flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors"
+                      style={{ animationDelay: `${i * 15}ms` }}
+                    >
+                      <div className="relative shrink-0">
+                        <Avatar
+                          fallback={initials(u.name)}
+                          className="bg-brand h-9 w-9 text-white"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <span className="truncate text-sm font-medium">
+                          {u.name}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
                 </div>
               ))}
           </div>
@@ -544,8 +645,10 @@ function MessagesPageContent() {
                         handleSend();
                       }
                     }}
-                    placeholder={connected ? t.inputPlaceholder : t.connecting}
-                    disabled={!connected || rateLimited}
+                    placeholder={
+                      connected ? t.inputPlaceholder : t.connecting
+                    }
+                    disabled={!connected}
                     className="border-border bg-surface text-fg placeholder:text-muted focus:border-fg w-full rounded-xl border px-4 py-2.5 text-sm transition-colors outline-none disabled:opacity-50"
                   />
                   {messageError && (
@@ -553,11 +656,10 @@ function MessagesPageContent() {
                       {messageError}
                     </p>
                   )}
-                  {rateLimited && <RateLimitMessage />}
                 </div>
                 <button
                   onClick={handleSend}
-                  disabled={!connected || !input.trim() || rateLimited}
+                  disabled={!connected || !input.trim()}
                   className="bg-brand self-end rounded-xl px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
                   Send

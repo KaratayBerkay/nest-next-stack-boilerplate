@@ -7,12 +7,16 @@ import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
 import { Avatar } from "@/components/ui/Avatar";
 import { initials } from "@/lib/initials";
-import {
-  useMessaging,
-  type User,
-  type FriendRequest,
-} from "@/hooks/useMessaging";
+import { apiFetch } from "@/lib/api-client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui";
+
+type User = { id: string; name: string };
+
+type FriendRequest = {
+  id: string;
+  direction: "incoming" | "outgoing";
+  user: User;
+};
 
 const PAGE_SIZE = 10;
 
@@ -103,14 +107,9 @@ function PaginationBar({
 
 export default function FindFriendsPage() {
   const t = useMessages("find-friends");
-  const { user, token, loading } = useAuth();
-  const {
-    friends,
-    friendRequests,
-    sendFriendRequest,
-    acceptFriendRequest,
-    declineFriendRequest,
-  } = useMessaging(token, user?.id || null);
+  const { user, loading } = useAuth();
+  const [friends, setFriends] = useState<User[]>([]);
+  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [search, dispatch] = useReducer(searchReducer, {
     items: [],
     total: 0,
@@ -120,6 +119,34 @@ export default function FindFriendsPage() {
   const [searching, setSearching] = useState(false);
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
   const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  const fetchFriends = useCallback(async () => {
+    try {
+      const res = await apiFetch("/api/friends");
+      if (res.ok) {
+        const data: User[] = await res.json();
+        setFriends(data);
+      }
+    } catch {}
+  }, []);
+
+  const fetchRequests = useCallback(async () => {
+    try {
+      const res = await apiFetch("/api/friends/requests");
+      if (res.ok) {
+        const data: FriendRequest[] = await res.json();
+        setFriendRequests(data);
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      /* eslint-disable-next-line react-hooks/set-state-in-effect */
+      fetchFriends();
+      fetchRequests();
+    }
+  }, [user, fetchFriends, fetchRequests]);
 
   const pendingIds = new Set(friendRequests.map((r) => r.user.id));
   const friendIds = new Set(friends.map((f) => f.id));
@@ -178,6 +205,44 @@ export default function FindFriendsPage() {
     if (friendIds.has(u.id)) return false;
     return true;
   });
+
+  const sendFriendRequest = useCallback(async (userId: string) => {
+    try {
+      const res = await apiFetch(`/api/friends/request/${userId}`, {
+        method: "POST",
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const acceptFriendRequest = useCallback(async (userId: string) => {
+    try {
+      const res = await apiFetch(`/api/friends/accept/${userId}`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        setFriendRequests((prev) =>
+          prev.filter((r) => r.user.id !== userId),
+        );
+        fetchFriends();
+      }
+    } catch {}
+  }, [fetchFriends]);
+
+  const declineFriendRequest = useCallback(async (userId: string) => {
+    try {
+      const res = await apiFetch(`/api/friends/decline/${userId}`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        setFriendRequests((prev) =>
+          prev.filter((r) => r.user.id !== userId),
+        );
+      }
+    } catch {}
+  }, []);
 
   if (loading) return <LoadingAuth />;
   if (!user)

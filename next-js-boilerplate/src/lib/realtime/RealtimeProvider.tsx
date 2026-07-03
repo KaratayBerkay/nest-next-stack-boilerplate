@@ -460,12 +460,10 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useRealtime(): RealtimeContextValue {
-  const ctx = useContext(RealtimeContext);
-  if (!ctx) throw new Error("useRealtime must be used within RealtimeProvider");
-  return ctx;
+export function useRealtime(): RealtimeContextValue | null {
+  return useContext(RealtimeContext);
 }
 
-export function useRealtimeStatus(): RealtimeStatus {
-  return useRealtime().status;
+export function useRealtimeStatus(): RealtimeStatus | null {
+  return useRealtime()?.status ?? null;
 }

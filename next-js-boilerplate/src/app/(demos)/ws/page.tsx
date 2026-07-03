@@ -1,38 +1,56 @@
 "use client";
 
-import { useState } from "react";
-import { useWebSocket } from "@/hooks/useWebSocket";
+import { useState, useCallback } from "react";
+import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 
 const STATUS_LABEL: Record<string, string> = {
+  idle: "Idle",
   connecting: "Connecting...",
-  connected: "Connected",
-  disconnected: "Disconnected",
+  authenticating: "Authenticating...",
+  open: "Connected",
 };
 
 const STATUS_COLOR: Record<string, string> = {
+  idle: "text-gray-600",
   connecting: "text-yellow-600",
-  connected: "text-green-600",
-  disconnected: "text-red-600",
+  authenticating: "text-yellow-600",
+  open: "text-green-600",
 };
 
 export default function WsPage() {
-  const { status, messages, send } = useWebSocket();
+  const realtime = useRealtime();
   const [input, setInput] = useState("");
+  const [msgs, setMsgs] = useState<string[]>([]);
+
+  const handleSend = useCallback(() => {
+    if (!input.trim() || !realtime) return;
+    realtime.send({ type: "echo", body: input.trim() });
+    setMsgs((prev) => [...prev, `> ${input.trim()}`]);
+    setInput("");
+  }, [input, realtime]);
+
+  if (!realtime) {
+    return (
+      <div className="flex flex-col gap-2">
+        <h2 className="text-brand text-sm font-semibold">WebSocket</h2>
+        <p className="text-muted text-sm">Realtime not available.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-2">
       <h2 className="text-brand text-sm font-semibold">WebSocket</h2>
       <p className="text-muted text-sm">
-        Connects to the NestJS WebSocket gateway at{" "}
-        <code className="text-brand">NEXT_PUBLIC_WS_URL</code>.
+        Connects via the RealtimeProvider layer.
       </p>
       <p className="text-xs">
         Status:{" "}
         <span
-          className={`font-semibold ${STATUS_COLOR[status]}`}
+          className={`font-semibold ${STATUS_COLOR[realtime.status]}`}
           data-testid="ws-status"
         >
-          {STATUS_LABEL[status]}
+          {STATUS_LABEL[realtime.status]}
         </span>
       </p>
       <div className="flex gap-2">
@@ -44,11 +62,8 @@ export default function WsPage() {
           data-testid="ws-input"
         />
         <button
-          onClick={() => {
-            send(input);
-            setInput("");
-          }}
-          disabled={status !== "connected"}
+          onClick={handleSend}
+          disabled={realtime.status !== "open"}
           className="bg-brand rounded px-3 py-1 text-xs text-white disabled:opacity-50"
           data-testid="ws-send"
         >
@@ -59,10 +74,10 @@ export default function WsPage() {
         className="flex max-h-48 flex-col gap-0.5 overflow-y-auto rounded border p-2 font-mono text-xs"
         data-testid="ws-messages"
       >
-        {messages.length === 0 && (
+        {msgs.length === 0 && (
           <span className="text-zinc-400">No messages yet.</span>
         )}
-        {messages.map((msg, i) => (
+        {msgs.map((msg, i) => (
           <span key={i}>{msg}</span>
         ))}
       </div>

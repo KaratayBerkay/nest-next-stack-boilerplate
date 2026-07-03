@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, Suspense } from "react";
+import { useCallback, useEffect, useState, Suspense } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   IconBell,
@@ -8,17 +8,57 @@ import {
   IconChevronLeft,
   IconArrowLeft,
 } from "@tabler/icons-react";
-import { useNotifications } from "@/hooks/useNotifications";
+import { apiFetch } from "@/lib/api-client";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { useDeviceType } from "@/hooks/useDeviceType";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 
+type NotificationItem = {
+  id: string;
+  type: string;
+  title: string;
+  body?: string;
+  readAt?: string;
+  createdAt: string;
+  actor?: { name?: string };
+};
+
 function NotificationPageContent() {
   const params = useParams<{ lang: string }>();
   const lang = params?.lang ?? "en";
   const router = useRouter();
-  const { notifications, loading, markRead, markAllRead } = useNotifications();
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    apiFetch("/api/notifications")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        const items: NotificationItem[] = data?.notifications ?? data ?? [];
+        setNotifications(items);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const markRead = useCallback(async (id: string) => {
+    try {
+      await apiFetch(`/api/notifications/${id}/read`, { method: "POST" });
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, readAt: new Date().toISOString() } : n)),
+      );
+    } catch {}
+  }, []);
+
+  const markAllRead = useCallback(async () => {
+    try {
+      await apiFetch("/api/notifications/read-all", { method: "POST" });
+      setNotifications((prev) =>
+        prev.map((n) => ({ ...n, readAt: n.readAt ?? new Date().toISOString() })),
+      );
+    } catch {}
+  }, []);
   const {
     supported,
     permission,
