@@ -230,6 +230,7 @@ export function useMessaging(
             wasAuthenticated = true;
             authFailRetries = 0;
             setConnected(true);
+            ws.send(JSON.stringify({ type: "register", services: ["MESSAGE"] }));
             fetchConversations();
             fetchFriends();
             fetchFriendRequests();
@@ -578,6 +579,7 @@ export function useChatRoom(
             wasAuthenticated = true;
             authFailRetries = 0;
             setConnected(true);
+            ws.send(JSON.stringify({ type: "register", services: ["CHAT"] }));
             ws.send(JSON.stringify({ type: "get-room-counts" }));
             const current = roomRef.current;
             if (current) {

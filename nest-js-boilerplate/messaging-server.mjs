@@ -33,6 +33,7 @@ const DERIVATION_SECRET = process.env.TOKEN_DERIVATION_SECRET || JWT_SECRET;
 const PORT = parseInt(process.env.MSG_PORT || "3003", 10);
 const REDIS_HOST = process.env.REDIS_HOST || "localhost";
 const REDIS_PORT = parseInt(process.env.REDIS_PORT || "6379", 10);
+const NOTIFICATION_API_KEY = process.env.NOTIFICATION_API_KEY || "dev-notification-api-key-change-in-production";
 
 import jwt from "jsonwebtoken";
 import { WebSocketServer } from "ws";
@@ -224,6 +225,44 @@ const server = createServer((req, res) => {
       }
     }
 
+    // POST /api/notify — push notification to service-tagged connections
+    if (method === "POST" && path === "/api/notify") {
+      const apiKey = req.headers["x-notification-key"];
+      if (!NOTIFICATION_API_KEY || apiKey !== NOTIFICATION_API_KEY) {
+        return json({ error: "Unauthorized" }, 401);
+      }
+      const body = await new Promise((resolve, reject) => {
+        let buf = "";
+        req.on("data", (chunk) => (buf += chunk));
+        req.on("end", () => resolve(buf));
+        req.on("error", reject);
+      });
+      try {
+        const { service, userToken, payload } = JSON.parse(body);
+        if (!service || !userToken || !payload) {
+          return json({ error: "Missing required fields: service, userToken, payload" }, 400);
+        }
+        const indexKey = `${service}:${userToken}`;
+        const deviceHashes = serviceDeviceIndex.get(indexKey);
+        let sent = 0;
+        if (deviceHashes) {
+          for (const deviceHash of deviceHashes) {
+            const key = `${service}:${userToken}:${deviceHash}`;
+            const conns = serviceConnections.get(key);
+            if (conns) {
+              for (const ws of conns) {
+                sendWs(ws, payload);
+                sent++;
+              }
+            }
+          }
+        }
+        return json({ sent });
+      } catch (e) {
+        return json({ error: "Invalid JSON" }, 400);
+      }
+    }
+
     json({ error: "Not found" }, 404);
   }
 
@@ -238,6 +277,10 @@ const wss = new WebSocketServer({ server });
 
 const userConnections = new Map();
 const chatRooms = new Map();
+// "SERVICE:userToken:deviceHash" → Set<WebSocket>
+const serviceConnections = new Map();
+// "SERVICE:userToken" → Set<deviceHash>  (reverse index for multi-device broadcast)
+const serviceDeviceIndex = new Map();
 
 function sendWs(ws, data) {
   if (ws.readyState === 1) ws.send(JSON.stringify(data));
@@ -280,6 +323,9 @@ wss.on("connection", (ws) => {
         ws.userName = session.name;
         ws.userFriends = session.friends;
         ws.userTier = session.tier;
+        ws.userToken = deriveUserToken(session.userId);
+        ws.deviceTokenHash = sha256hex(data.tokens.deviceToken || "");
+        ws.registeredServices = [];
         authenticated = true;
         clearTimeout(authTimer);
         authTimer = null;
@@ -398,6 +444,23 @@ wss.on("connection", (ws) => {
         break;
       }
 
+      case "register": {
+        const { services } = data;
+        if (!Array.isArray(services) || !ws.userToken || !ws.deviceTokenHash) break;
+        for (const svc of services) {
+          if (ws.registeredServices.includes(svc)) continue;
+          ws.registeredServices.push(svc);
+          const key = `${svc}:${ws.userToken}:${ws.deviceTokenHash}`;
+          const indexKey = `${svc}:${ws.userToken}`;
+          if (!serviceConnections.has(key)) serviceConnections.set(key, new Set());
+          serviceConnections.get(key).add(ws);
+          if (!serviceDeviceIndex.has(indexKey)) serviceDeviceIndex.set(indexKey, new Set());
+          serviceDeviceIndex.get(indexKey).add(ws.deviceTokenHash);
+        }
+        sendWs(ws, { type: "registered", services: ws.registeredServices });
+        break;
+      }
+
       default:
         sendWs(ws, { type: "error", message: `Unknown type: ${data.type}` });
     }
@@ -406,6 +469,25 @@ wss.on("connection", (ws) => {
   ws.on("close", () => {
     if (ws.userId && userConnections.get(ws.userId) === ws) {
       userConnections.delete(ws.userId);
+    }
+    // Clean up service-tagged connections
+    if (ws.registeredServices && ws.userToken && ws.deviceTokenHash) {
+      for (const svc of ws.registeredServices) {
+        const key = `${svc}:${ws.userToken}:${ws.deviceTokenHash}`;
+        const indexKey = `${svc}:${ws.userToken}`;
+        const conns = serviceConnections.get(key);
+        if (conns) {
+          conns.delete(ws);
+          if (conns.size === 0) {
+            serviceConnections.delete(key);
+            const devices = serviceDeviceIndex.get(indexKey);
+            if (devices) {
+              devices.delete(ws.deviceTokenHash);
+              if (devices.size === 0) serviceDeviceIndex.delete(indexKey);
+            }
+          }
+        }
+      }
     }
     for (const room of ws.rooms) {
       chatRooms.get(room)?.delete(ws.userId);
