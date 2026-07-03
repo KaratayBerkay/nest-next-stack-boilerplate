@@ -96,6 +96,7 @@ describe('SSR/CSR Cookies (e2e)', () => {
   }, 30_000);
 
   afterAll(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     await prisma.session.deleteMany({ where: { userId } });
     await prisma.device.deleteMany({ where: { userId } });
     await prisma.user.deleteMany({ where: { email } });

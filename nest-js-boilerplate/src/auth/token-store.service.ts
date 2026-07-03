@@ -27,7 +27,7 @@ export class TokenStoreService {
     private readonly crypto: CryptoService,
     private readonly config: ConfigService,
   ) {
-    const raw = this.config.get<string>('JWT_ACCESS_TTL', '900s');
+    const raw = this.config.get<string>('SESSION_TTL', '900s');
     const match = raw.match(/^(\d+)([smhd])$/);
     if (!match) {
       this.ttl = 900;
@@ -138,6 +138,11 @@ export class TokenStoreService {
       orgIds: [],
       teamIds: [],
     };
+  }
+
+  /** Extend TTL on the session key (sliding expiration — called on each authenticated request). */
+  async extendTTL(key: string): Promise<void> {
+    await this.redis.expire(key, this.ttl);
   }
 
   async revoke(key: string): Promise<void> {

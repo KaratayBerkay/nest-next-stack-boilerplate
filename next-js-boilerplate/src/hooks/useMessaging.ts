@@ -171,17 +171,6 @@ export function useMessaging(
     let stopped = false;
     let reconnectTimer: ReturnType<typeof setTimeout>;
     let wasAuthenticated = false;
-    let authFailRetries = 0;
-    const MAX_AUTH_FAIL_RETRIES = 3;
-
-    async function refreshBeforeReconnect() {
-      try {
-        await apiFetch("/api/auth/refresh", { method: "POST" });
-      } catch {
-        /* refresh failed — will try connecting anyway */
-      }
-    }
-
     function connect() {
       const ws = new WebSocket(REALTIME_WS_URL);
       wsRef.current = ws;
@@ -228,7 +217,6 @@ export function useMessaging(
           }
           if (data.type === "authenticated") {
             wasAuthenticated = true;
-            authFailRetries = 0;
             setConnected(true);
             ws.send(JSON.stringify({ type: "register", services: ["MESSAGE"] }));
             fetchConversations();
@@ -351,17 +339,8 @@ export function useMessaging(
       };
       ws.onclose = async () => {
         setConnected(false);
-        const wasAuth = wasAuthenticated;
-        wasAuthenticated = false;
         wsRef.current = null;
         if (stopped) return;
-        // If the WS closed without ever authenticating, run a refresh
-        // to rotate stale cookies before reconnecting (midnight cutoff,
-        // tier change, etc.)
-        if (!wasAuth && authFailRetries < MAX_AUTH_FAIL_RETRIES) {
-          authFailRetries++;
-          await refreshBeforeReconnect();
-        }
         reconnectTimer = setTimeout(connect, 2000);
       };
     }
@@ -518,17 +497,6 @@ export function useChatRoom(
     let stopped = false;
     let reconnectTimer: ReturnType<typeof setTimeout>;
     let wasAuthenticated = false;
-    let authFailRetries = 0;
-    const MAX_AUTH_FAIL_RETRIES = 3;
-
-    async function refreshBeforeReconnect() {
-      try {
-        await apiFetch("/api/auth/refresh", { method: "POST" });
-      } catch {
-        /* refresh failed — will try connecting anyway */
-      }
-    }
-
     function connect() {
       const ws = new WebSocket(REALTIME_WS_URL);
       wsRef.current = ws;
@@ -577,7 +545,6 @@ export function useChatRoom(
           }
           if (data.type === "authenticated") {
             wasAuthenticated = true;
-            authFailRetries = 0;
             setConnected(true);
             ws.send(JSON.stringify({ type: "register", services: ["CHAT"] }));
             ws.send(JSON.stringify({ type: "get-room-counts" }));
@@ -622,12 +589,6 @@ export function useChatRoom(
         clearPendingTimers();
         sendingRef.current = false;
         if (stopped) return;
-        const wasAuth = wasAuthenticated;
-        wasAuthenticated = false;
-        if (!wasAuth && authFailRetries < MAX_AUTH_FAIL_RETRIES) {
-          authFailRetries++;
-          await refreshBeforeReconnect();
-        }
         reconnectTimer = setTimeout(connect, 2000);
       };
     }

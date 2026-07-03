@@ -101,7 +101,7 @@ export function AuthProvider({
     load();
   }, [ssrUser, initialUser]);
 
-  // Listen for auth:logout events dispatched by apiFetch on refresh failure.
+  // Listen for auth:logout events dispatched by apiFetch on 401.
   useEffect(() => {
     function onAuthLogout() {
       if (logoutEventRef.current) return;
@@ -110,34 +110,9 @@ export function AuthProvider({
       setToken(null);
     }
 
-    // After a successful silent refresh the tokens may encode a new tier/role
-    // (e.g. an admin changed the user's tier — the refresh minted a new rbac
-    // token). Rehydrate `me` so the rendered identity follows. Plain fetch, not
-    // apiFetch: a 401 here must not re-enter the refresh path.
-    async function onAuthRefreshed() {
-      try {
-        const res = await fetch("/api/auth/me");
-        if (res.ok) {
-          const data = (await res.json()) as {
-            user: User | null;
-            accessToken?: string;
-          };
-          if (data.user) {
-            logoutEventRef.current = false;
-            setUser(data.user);
-            if (data.accessToken) setToken(data.accessToken);
-          }
-        }
-      } catch {
-        /* keep current state */
-      }
-    }
-
     window.addEventListener("auth:logout", onAuthLogout);
-    window.addEventListener("auth:refreshed", onAuthRefreshed);
     return () => {
       window.removeEventListener("auth:logout", onAuthLogout);
-      window.removeEventListener("auth:refreshed", onAuthRefreshed);
     };
   }, []);
 

@@ -38,6 +38,7 @@ describe('Secure-by-env cookies (e2e)', () => {
   };
 
   const clearDb = async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     await prisma.session.deleteMany();
     await prisma.device.deleteMany();
     await prisma.verificationToken.deleteMany();
@@ -95,8 +96,10 @@ describe('Secure-by-env cookies (e2e)', () => {
     const user = await prisma.user.findUniqueOrThrow({ where: { email } });
     userId = user.id;
     // The cookie value is the opaque session token backing a real Session row.
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     const sessions = await prisma.session.findMany({ where: { userId } });
     expect(sessions).toHaveLength(1);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(cookie).toContain(`refresh_token=${sessions[0].sessionToken}`);
   });
 
@@ -110,6 +113,7 @@ describe('Secure-by-env cookies (e2e)', () => {
     expect(JSON.stringify(body.errors)).toMatch(/csrf/i);
 
     // Guard runs before the resolver, so the session is untouched.
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     const sessions = await prisma.session.findMany({ where: { userId } });
     expect(sessions).toHaveLength(1);
   });
@@ -120,6 +124,7 @@ describe('Secure-by-env cookies (e2e)', () => {
     csrfToken = (tokenRes.body as { token: string }).token;
     expect(csrfToken).toBeTruthy();
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     const before = await prisma.session.findFirstOrThrow({ where: { userId } });
 
     // The agent sends the httpOnly device_token + refresh_token + csrf cookies automatically.
@@ -134,10 +139,13 @@ describe('Secure-by-env cookies (e2e)', () => {
 
     const cookie = refreshCookieOf(res);
     expect(cookie).toBeDefined();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(cookie).not.toContain(before.sessionToken); // rotated to a new token
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     const sessions = await prisma.session.findMany({ where: { userId } });
     expect(sessions).toHaveLength(1); // deduped per device, not accumulated
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(sessions[0].sessionToken).not.toBe(before.sessionToken); // old session revoked
   });
 
@@ -156,6 +164,7 @@ describe('Secure-by-env cookies (e2e)', () => {
     // clearCookie expires it immediately (epoch / Max-Age=0) so the browser drops it.
     expect(cookie).toMatch(/Expires=Thu, 01 Jan 1970|Max-Age=0/i);
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     const sessions = await prisma.session.findMany({ where: { userId } });
     expect(sessions).toHaveLength(0); // session revoked
 

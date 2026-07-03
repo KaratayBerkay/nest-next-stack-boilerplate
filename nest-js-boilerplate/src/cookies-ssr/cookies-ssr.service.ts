@@ -1,20 +1,21 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import type { Request, Response } from 'express';
-import type { JwtPayload } from '../auth/auth.types';
-import { CryptoService } from '../common/crypto/crypto.service';
+import type { Request } from 'express';
+import type { JwtPayload, SessionUserInput } from '../auth/auth.types';
 import { DeviceService } from '../devices/device.service';
 import type { RequestContext } from '../devices/device.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { SessionHydrationService } from '../auth/session-hydration.service';
+import { TokenDerivationService } from '../auth/token-derivation.service';
+import { TokenStoreService } from '../auth/token-store.service';
 import { accessCookieName, accessCookieOptions } from '../auth/access-cookie';
-import { refreshCookieName, refreshCookieOptions } from '../auth/auth-cookie';
+import { rbacCookieName, rbacCookieOptions } from '../auth/rbac-cookie';
+import { userCookieName, userCookieOptions } from '../auth/user-cookie';
 import {
   deviceCookieName,
   deviceCookieOptions,
 } from '../devices/device-cookie';
-
-const REFRESH_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30d
 
 @Injectable()
 export class CookiesSsrService {
@@ -24,14 +25,12 @@ export class CookiesSsrService {
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
-    private readonly crypto: CryptoService,
     private readonly devices: DeviceService,
+    private readonly tokenStore: TokenStoreService,
+    private readonly derivation: TokenDerivationService,
+    private readonly hydration: SessionHydrationService,
   ) {}
 
-  /**
-   * Login: issues device + access + refresh cookies with Domain=.COOKIE_DOMAIN
-   * so every subdomain (x.eys.gen.tr) reads them automatically.
-   */
   async login(
     email: string,
     ctx: RequestContext,
@@ -46,27 +45,35 @@ export class CookiesSsrService {
       role: user.role,
     } satisfies JwtPayload);
 
-    const session = await this.prisma.$transaction(async (tx) => {
-      if (device?.deviceId) {
-        await tx.session.deleteMany({
-          where: { userId: user.id, deviceId: device.deviceId },
-        });
-      }
-      return tx.session.create({
-        data: {
-          sessionToken: this.crypto.randomToken(),
-          userId: user.id,
-          expiresAt: new Date(Date.now() + REFRESH_TTL_MS),
-          deviceId: device?.deviceId ?? null,
-          ip: device?.ip ?? null,
-          userAgent: device?.userAgent ?? null,
-        },
-      });
-    });
+    const rbacToken = this.derivation.deriveRbacToken(
+      user.id,
+      user.subscriptionTier ?? 'FREE',
+    );
+    const userToken = this.derivation.deriveUserToken(user.id);
+    const snapshot = await this.hydration.hydrate(user);
+    const compoundKey = this.tokenStore.buildKey(
+      accessToken,
+      rbacToken,
+      device.deviceToken,
+      userToken,
+    );
+    const sessionId = compoundKey;
+    await this.tokenStore.write(compoundKey, {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      tier: user.subscriptionTier ?? 'FREE',
+      deviceId: device.deviceId ?? null,
+      ip: device.ip ?? null,
+      userAgent: device.userAgent ?? null,
+      sessionId,
+      ...snapshot,
+    } as SessionUserInput);
 
     this.setDeviceCookie(ctx, device.deviceToken);
     this.setAccessCookie(ctx, accessToken);
-    this.setRefreshCookie(ctx, session.sessionToken);
+    this.setRbacCookie(ctx, rbacToken);
+    this.setUserCookie(ctx, userToken);
 
     return { user: { id: user.id, email: user.email } };
   }
@@ -74,12 +81,10 @@ export class CookiesSsrService {
   me(ctx: RequestContext): {
     device: string | null;
     access: string | null;
-    refresh: string | null;
     user: { id: string; email: string } | null;
   } {
     const device = this.readCookie(ctx.req, deviceCookieName(this.config));
     const access = this.readCookie(ctx.req, accessCookieName(this.config));
-    const refresh = this.readCookie(ctx.req, refreshCookieName(this.config));
 
     let user: { id: string; email: string } | null = null;
     if (access) {
@@ -87,11 +92,11 @@ export class CookiesSsrService {
         const payload = this.jwt.verify<JwtPayload>(access);
         user = { id: payload.sub, email: payload.email };
       } catch {
-        // access token expired — that's expected, user can refresh
+        // access token expired
       }
     }
 
-    return { device, access, refresh, user };
+    return { device, access, user };
   }
 
   logout(ctx: RequestContext): { ok: true } {
@@ -108,10 +113,6 @@ export class CookiesSsrService {
     req.res?.clearCookie(
       accessCookieName(this.config),
       accessCookieOptions(this.config),
-    );
-    req.res?.clearCookie(
-      refreshCookieName(this.config),
-      refreshCookieOptions(this.config),
     );
   }
 
@@ -131,11 +132,19 @@ export class CookiesSsrService {
     );
   }
 
-  private setRefreshCookie(ctx: RequestContext, value: string): void {
+  private setRbacCookie(ctx: RequestContext, value: string): void {
     ctx.req.res?.cookie(
-      refreshCookieName(this.config),
+      rbacCookieName(this.config),
       value,
-      refreshCookieOptions(this.config),
+      rbacCookieOptions(this.config),
+    );
+  }
+
+  private setUserCookie(ctx: RequestContext, value: string): void {
+    ctx.req.res?.cookie(
+      userCookieName(this.config),
+      value,
+      userCookieOptions(this.config),
     );
   }
 

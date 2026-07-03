@@ -3,10 +3,7 @@ import { WebSocket } from 'ws';
 import { PrismaService } from '../prisma/prisma.service';
 import { MessagingService, RoomMember } from './messaging.service';
 import { PushNotificationService } from '../push-notification/push-notification.service';
-import {
-  RealtimeGateway,
-  type FrameHandler,
-} from '../realtime/realtime.gateway';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 
 type AuthWs = WebSocket & {
   userId?: string;
@@ -47,16 +44,10 @@ export class MessagingWsGateway implements OnModuleInit {
       ),
     );
     this.realtime.registerHandler('join-room', (ws, data) =>
-      this.handleJoinRoom(
-        ws as AuthWs,
-        data as unknown as { room: string },
-      ),
+      this.handleJoinRoom(ws as AuthWs, data as unknown as { room: string }),
     );
     this.realtime.registerHandler('leave-room', (ws, data) =>
-      this.handleLeaveRoom(
-        ws as AuthWs,
-        data as unknown as { room: string },
-      ),
+      this.handleLeaveRoom(ws as AuthWs, data as unknown as { room: string }),
     );
     this.realtime.registerHandler('room-message', (ws, data) =>
       this.handleRoomMessage(
@@ -83,7 +74,7 @@ export class MessagingWsGateway implements OnModuleInit {
       type: 'direct-message',
       message,
     });
-    this.realtime.emitToUser(message.senderId as string, {
+    this.realtime.emitToUser(message.senderId, {
       type: 'direct-message',
       message,
     });

@@ -4,7 +4,7 @@ import type { Request } from 'express';
 import { User } from '../@generated/user/user.model';
 import { CsrfGuard } from '../csrf/csrf.guard';
 import { AuthService } from './auth.service';
-import { AuthPayload, SessionInfo, SessionUserPayload } from './auth.types';
+import { AuthPayload, SessionUserPayload } from './auth.types';
 import type { JwtUser } from './auth.types';
 import { CurrentUser } from './current-user.decorator';
 import { SessionAuthGuard } from './session-auth.guard';
@@ -36,12 +36,6 @@ export class AuthResolver {
   @Mutation(() => User)
   verifyEmail(@Args('token') token: string): Promise<User> {
     return this.auth.verifyEmail(token);
-  }
-
-  @UseGuards(CsrfGuard)
-  @Mutation(() => AuthPayload)
-  refresh(@Context() ctx: { req: Request }): Promise<AuthPayload> {
-    return this.auth.refresh({ req: ctx.req });
   }
 
   @UseGuards(CsrfGuard)
@@ -79,26 +73,5 @@ export class AuthResolver {
       locale: user.locale ?? 'en',
       timezone: user.timezone ?? 'UTC',
     };
-  }
-
-  /**
-   * Lists the caller's live Postgres Session rows. The current session (the one identified
-   * by the guard-attached sessionId) is marked with `current: true`.
-   */
-  @UseGuards(SessionAuthGuard)
-  @Query(() => [SessionInfo], { name: 'mySessions' })
-  mySessions(@CurrentUser() user: JwtUser) {
-    return this.auth.findUserSessions(user.userId, user.sessionId);
-  }
-
-  /**
-   * Revokes all of the caller's sessions EXCEPT the one they are currently using.
-   * CSRF-guarded like `logout`.
-   */
-  @UseGuards(CsrfGuard, SessionAuthGuard)
-  @Mutation(() => Boolean)
-  async logoutOtherSessions(@CurrentUser() user: JwtUser): Promise<boolean> {
-    await this.auth.logoutOtherSessions(user.userId, user.sessionId);
-    return true;
   }
 }

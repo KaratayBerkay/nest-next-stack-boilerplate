@@ -269,7 +269,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     }
     sockets.add(ws);
     while (sockets.size > RealtimeGateway.MAX_SOCKETS_PER_USER) {
-      const oldest: AuthWs = sockets.values().next().value!;
+      const oldest = sockets.values().next().value as AuthWs;
       sockets.delete(oldest);
       this.logger.warn(
         `WS per-user connection limit for ${hash.userId}, closing oldest`,

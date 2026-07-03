@@ -136,6 +136,9 @@ export class SessionAuthGuard implements CanActivate {
       sessionId: sessionUser.sessionId,
     };
 
+    // Step 9: Slide Redis TTL so active sessions survive JWT lifetime.
+    await this.tokenStore.extendTTL(compoundKey);
+
     return true;
   }
 

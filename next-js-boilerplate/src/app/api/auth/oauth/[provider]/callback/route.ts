@@ -4,7 +4,6 @@ import { serverEnv } from "@/lib/env";
 import { graphqlFetch } from "@/lib/backend";
 import {
   accessTokenCookieOptions,
-  refreshTokenCookieOptions,
   deviceTokenCookieOptions,
   rbacTokenCookieOptions,
 } from "@/lib/cookie";
@@ -13,7 +12,6 @@ const LOGIN_WITH_OAUTH = `
   mutation LoginWithOAuth($profile: OAuthProfileInput!) {
     loginWithOAuth(profile: $profile) {
       accessToken
-      refreshToken
       rbacToken
       deviceId
       deviceToken
@@ -75,7 +73,6 @@ export async function GET(
     const { data, errors } = await graphqlFetch<{
       loginWithOAuth: {
         accessToken: string;
-        refreshToken: string;
         rbacToken?: string;
         deviceId?: string;
         deviceToken?: string;
@@ -89,13 +86,12 @@ export async function GET(
       return NextResponse.redirect(loginUrl, 302);
     }
 
-    const { accessToken, refreshToken, rbacToken, deviceToken } = data.loginWithOAuth;
+    const { accessToken, rbacToken, deviceToken } = data.loginWithOAuth;
     const response = NextResponse.redirect(env.NEXT_PUBLIC_APP_URL, 302);
 
     // Set all auth cookies directly from body values (not relayed Set-Cookie headers,
     // which the Fetch API strips from server-to-server responses).
     response.cookies.set(accessTokenCookieOptions(accessToken));
-    response.cookies.set(refreshTokenCookieOptions(refreshToken));
     if (rbacToken)
       response.cookies.set(rbacTokenCookieOptions(rbacToken));
     if (deviceToken)

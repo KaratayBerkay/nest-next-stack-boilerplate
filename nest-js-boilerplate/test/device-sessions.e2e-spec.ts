@@ -49,6 +49,7 @@ describe('Device-bound sessions (e2e)', () => {
   };
 
   const clearDb = async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     await prisma.session.deleteMany();
     await prisma.device.deleteMany();
     await prisma.verificationToken.deleteMany();
@@ -102,16 +103,20 @@ describe('Device-bound sessions (e2e)', () => {
     const user = await prisma.user.findUniqueOrThrow({ where: { email } });
     userId = user.id;
     const devices = await prisma.device.findMany({ where: { userId } });
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     const sessions = await prisma.session.findMany({ where: { userId } });
     expect(devices).toHaveLength(1);
     expect(sessions).toHaveLength(1);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(sessions[0].deviceId).toBe(devices[0].id);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(sessions[0].userAgent).toBe(USER_AGENT); // captured from the request
     expect(devices[0].fingerprint).toBeTruthy(); // sha256(user-agent)
   });
 
   it('reuses the device and dedups the session on repeat login from the same browser', async () => {
     const before = await prisma.device.findFirstOrThrow({ where: { userId } });
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     const firstSession = await prisma.session.findFirstOrThrow({
       where: { userId },
     });
@@ -124,11 +129,14 @@ describe('Device-bound sessions (e2e)', () => {
     expect((res.body as GqlResponse<unknown>).errors).toBeUndefined();
 
     const devices = await prisma.device.findMany({ where: { userId } });
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     const sessions = await prisma.session.findMany({ where: { userId } });
     expect(devices).toHaveLength(1); // no new device row
     expect(devices[0].id).toBe(before.id); // same device reused
     expect(sessions).toHaveLength(1); // session deduped, not duplicated
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(sessions[0].deviceId).toBe(before.id);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(sessions[0].sessionToken).not.toBe(firstSession.sessionToken); // rotated
   });
 
@@ -141,6 +149,7 @@ describe('Device-bound sessions (e2e)', () => {
     expect(deviceCookieOf(res)).toBeDefined(); // a fresh device token is issued
 
     const devices = await prisma.device.findMany({ where: { userId } });
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     const sessions = await prisma.session.findMany({ where: { userId } });
     expect(devices).toHaveLength(2); // a second, distinct device
     expect(sessions).toHaveLength(2); // one session per device (not deduped across devices)

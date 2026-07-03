@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import {
   ACCESS_TOKEN_COOKIE,
   clearAccessTokenCookieOptions,
-  clearRefreshCookieOptions,
   clearDeviceCookieOptions,
   clearRbacTokenCookieOptions,
   clearUserTokenCookieOptions,
@@ -39,7 +38,6 @@ export async function POST() {
   // Clear the BFF cookies regardless — never strand the user logged in locally.
   const response = NextResponse.json({ ok: true, revoked }, { status: 200 });
   response.cookies.set(clearAccessTokenCookieOptions());
-  response.cookies.set(clearRefreshCookieOptions());
   response.cookies.set(clearRbacTokenCookieOptions());
   response.cookies.set(clearDeviceCookieOptions());
   response.cookies.set(clearUserTokenCookieOptions());

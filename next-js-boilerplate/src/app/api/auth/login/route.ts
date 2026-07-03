@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   accessTokenCookieOptions,
-  refreshTokenCookieOptions,
   deviceTokenCookieOptions,
   rbacTokenCookieOptions,
   userTokenCookieOptions,
@@ -25,7 +24,6 @@ const LOGIN_QUERY = `
   mutation Login($input: LoginInput!) {
     login(input: $input) {
       accessToken
-      refreshToken
       rbacToken
       deviceId
       deviceToken
@@ -67,7 +65,6 @@ export const POST = withLogging(async (request, log) => {
   const { data, errors } = await graphqlFetch<{
     login: {
       accessToken: string;
-      refreshToken: string;
       rbacToken?: string;
       deviceId?: string;
       deviceToken?: string;
@@ -83,12 +80,11 @@ export const POST = withLogging(async (request, log) => {
     return NextResponse.json({ error: message }, { status });
   }
 
-  const { accessToken, refreshToken, rbacToken, deviceToken, userToken, user } = data.login;
+  const { accessToken, rbacToken, deviceToken, userToken, user } = data.login;
 
   const response = NextResponse.json({ user, accessToken }, { status: 200 });
 
   response.cookies.set(accessTokenCookieOptions(accessToken));
-  response.cookies.set(refreshTokenCookieOptions(refreshToken));
   if (rbacToken) response.cookies.set(rbacTokenCookieOptions(rbacToken));
   if (deviceToken) response.cookies.set(deviceTokenCookieOptions(deviceToken));
   if (userToken) response.cookies.set(userTokenCookieOptions(userToken));

@@ -57,6 +57,7 @@ describe('Auth + Outbox (e2e)', () => {
     await prisma.mfaBackupCode.deleteMany();
     await prisma.mfaFactor.deleteMany();
     await prisma.verificationToken.deleteMany();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     await prisma.session.deleteMany();
     await prisma.account.deleteMany();
     await prisma.emailMessage.deleteMany();

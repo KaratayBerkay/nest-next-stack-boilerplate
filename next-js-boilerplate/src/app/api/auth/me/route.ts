@@ -17,8 +17,7 @@ export async function GET() {
   );
 
   if (errors || !data?.me) {
-    // Access token exists but backend rejected it (expired/invalid) — tell
-    // the AuthProvider to retry through /api/auth/refresh.
+    // Access token expired or invalid — the client must re-authenticate.
     return NextResponse.json({ error: "Token expired" }, { status: 401 });
   }
 

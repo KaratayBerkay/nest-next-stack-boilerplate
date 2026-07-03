@@ -13,7 +13,6 @@ import type { DeviceContext, RequestContext } from '../devices/device.service';
 import { MailService } from '../mail/mail.service';
 import { OutboxService } from '../outbox/outbox.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { refreshCookieName, refreshCookieOptions } from './auth-cookie';
 import { AuthPayload, SessionUserInput } from './auth.types';
 import { accessCookieName } from './access-cookie';
 import { rbacCookieName, rbacCookieOptions } from './rbac-cookie';
@@ -28,7 +27,6 @@ import { RegisterInput } from './dto/register.input';
 const MAX_FAILED_LOGINS = 5;
 const LOCK_MINUTES = 15;
 const EMAIL_TOKEN_TTL_MS = 1000 * 60 * 60 * 24; // 24h
-const REFRESH_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30d
 
 export interface OAuthProfile {
   type: AuthProviderType;
@@ -320,45 +318,9 @@ export class AuthService {
     });
   }
 
-  /**
-   * Exchange a valid refresh cookie for a fresh access token + rotated session.
-   * Reads the opaque session token from the httpOnly refresh cookie (browser/SSR clients never
-   * send it in the body), validates it is live, then re-issues — `issueTokens` dedups per device,
-   * so the old session row is replaced and a new refresh cookie is written.
-   */
-  async refresh(ctx: RequestContext): Promise<AuthPayload> {
-    const presented = this.readRefreshCookie(ctx);
-    if (!presented) throw new UnauthorizedException('Missing refresh token');
-
-    // Revoke the old Redis compound key before reissuing.
-    await this.revokePresentedKey(ctx);
-
-    const session = await this.prisma.session.findUnique({
-      where: { sessionToken: presented },
-      include: { user: true },
-    });
-    if (!session || session.expiresAt < new Date()) {
-      throw new UnauthorizedException('Invalid or expired refresh token');
-    }
-
-    const device = await this.devices.resolveForLogin(session.userId, ctx);
-    return this.issueTokens(session.user, ctx, device);
-  }
-
-  /**
-   * Revoke the presented refresh session and clear the cookie. Idempotent: a missing/unknown
-   * cookie still clears and returns true.
-   */
+  /** Revoke the Redis compound key for the presented tokens and clear cookies. */
   async logout(ctx: RequestContext): Promise<boolean> {
     await this.revokePresentedKey(ctx);
-
-    const presented = this.readRefreshCookie(ctx);
-    if (presented) {
-      await this.prisma.session.deleteMany({
-        where: { sessionToken: presented },
-      });
-    }
-    this.clearRefreshCookie(ctx);
     this.clearRbacCookie(ctx);
     this.clearUserCookie(ctx);
     return true;
@@ -398,30 +360,10 @@ export class AuthService {
     );
     const userToken = this.derivation.deriveUserToken(user.id);
 
-    // Persist the refresh session, bound to the resolved device (ip/userAgent recorded too).
-    // One active session per device: drop any prior session for this (user, device) first, so
-    // repeat logins from the same browser replace rather than accumulate ("hard dedup").
-    const session = await this.prisma.$transaction(async (tx) => {
-      if (device?.deviceId) {
-        await tx.session.deleteMany({
-          where: { userId: user.id, deviceId: device.deviceId },
-        });
-      }
-      return tx.session.create({
-        data: {
-          sessionToken: this.crypto.randomToken(),
-          userId: user.id,
-          expiresAt: new Date(Date.now() + REFRESH_TTL_MS),
-          deviceId: device?.deviceId ?? null,
-          ip: device?.ip ?? null,
-          userAgent: device?.userAgent ?? null,
-        },
-      });
-    });
-
-    // Hydrate the runtime snapshot (4 parallel PG queries on the cold path) then write the
-    // Redis compound key (after the Session row commits).
+    // Hydrate the runtime snapshot then write the Redis compound key.
     const snapshot = await this.hydration.hydrate(user);
+
+    const sessionId = this.crypto.randomToken();
 
     const compoundKey = this.tokenStore.buildKey(
       accessToken,
@@ -437,83 +379,21 @@ export class AuthService {
       deviceId: device?.deviceId ?? null,
       ip: device?.ip ?? null,
       userAgent: device?.userAgent ?? null,
-      sessionId: session.id,
+      sessionId,
       ...snapshot,
     } as SessionUserInput);
 
-    // Deliver the refresh token as an httpOnly, Secure-by-env cookie for browser/SSR clients.
-    // It is ALSO returned in the body (below) so API-only clients keep working.
-    this.setRefreshCookie(ctx, session.sessionToken);
     this.setRbacCookie(ctx, rbacToken);
     this.setUserCookie(ctx, userToken);
 
     return {
       accessToken,
-      refreshToken: session.sessionToken,
       rbacToken,
       userToken,
       deviceId: device?.deviceId,
       deviceToken: device?.deviceToken,
       user,
     };
-  }
-
-  /**
-   * Find all Postgres Session rows for the given user, returning them ordered by
-   * creation date (newest first). The current session (matching `currentSessionId`)
-   * is identifiable by the caller comparing ids.
-   */
-  async findUserSessions(
-    userId: string,
-    currentSessionId?: string,
-  ): Promise<
-    Array<{
-      id: string;
-      ip: string | null;
-      userAgent: string | null;
-      createdAt: Date;
-      expiresAt: Date;
-      current: boolean;
-    }>
-  > {
-    const rows = await this.prisma.session.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        ip: true,
-        userAgent: true,
-        createdAt: true,
-        expiresAt: true,
-      },
-    });
-    return rows.map((r) => ({
-      ...r,
-      current: r.id === currentSessionId,
-    }));
-  }
-
-  /**
-   * Revoke all Redis sessions for the user, then re-write the current one so the
-   * caller stays logged in. Deletes all Postgres Session rows except the current.
-   */
-  async logoutOtherSessions(
-    userId: string,
-    currentSessionId?: string,
-  ): Promise<void> {
-    // Revoke all Redis compound keys for this user.
-    await this.tokenStore.revokeAllForUser(userId);
-
-    // Delete all Postgres session rows except the current one.
-    if (currentSessionId) {
-      await this.prisma.session.deleteMany({
-        where: { userId, id: { not: currentSessionId } },
-      });
-    } else {
-      await this.prisma.session.deleteMany({
-        where: { userId },
-      });
-    }
   }
 
   // --- Token extraction from request context ---
@@ -558,34 +438,6 @@ export class AuthService {
     if (fromCookie) return fromCookie;
     const header = ctx.req.headers['x-user-token'];
     return (Array.isArray(header) ? header[0] : header) ?? null;
-  }
-
-  // --- Refresh-cookie I/O. cookie-parser populates req.cookies; Express keeps the response on
-  // req.res, which is absent in non-HTTP execution contexts (guarded with ?.). ---
-  private readRefreshCookie(ctx: RequestContext): string | null {
-    const name = refreshCookieName(this.config);
-    const bag = (ctx.req as unknown as { cookies?: Record<string, string> })
-      .cookies;
-    const fromCookie = bag?.[name] ?? null;
-    if (fromCookie) return fromCookie;
-    const header = ctx.req.headers['x-refresh-token'];
-    return (Array.isArray(header) ? header[0] : header) ?? null;
-  }
-
-  private setRefreshCookie(
-    ctx: RequestContext | undefined,
-    token: string,
-  ): void {
-    ctx?.req.res?.cookie(
-      refreshCookieName(this.config),
-      token,
-      refreshCookieOptions(this.config),
-    );
-  }
-
-  private clearRefreshCookie(ctx: RequestContext): void {
-    const { maxAge: _maxAge, ...clearOpts } = refreshCookieOptions(this.config);
-    ctx.req.res?.clearCookie(refreshCookieName(this.config), clearOpts);
   }
 
   private setRbacCookie(ctx: RequestContext | undefined, token: string): void {

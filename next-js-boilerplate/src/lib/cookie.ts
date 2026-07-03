@@ -4,8 +4,6 @@ export const ACCESS_TOKEN_COOKIE = "access_token";
 export const RBAC_TOKEN_COOKIE = "rbac_token";
 export const DEVICE_TOKEN_COOKIE = "device_token";
 export const USER_TOKEN_COOKIE = "user_token";
-export const BACKEND_REFRESH_COOKIE = "refresh_token";
-
 /**
  * Determine the cookie Domain attribute. Priority:
  * 1. Explicit COOKIE_DOMAIN env var (e.g. ".eys.gen.tr")
@@ -71,25 +69,6 @@ export function accessTokenCookieOptions(
 export function clearAccessTokenCookieOptions(): ResponseCookie {
   return baseOptions({
     name: ACCESS_TOKEN_COOKIE,
-    value: "",
-    maxAge: 0,
-  });
-}
-
-export function refreshTokenCookieOptions(
-  value: string,
-  maxAge?: number,
-): ResponseCookie {
-  return baseOptions({
-    name: BACKEND_REFRESH_COOKIE,
-    value,
-    maxAge: maxAge ?? 60 * 60 * 24 * 30,
-  });
-}
-
-export function clearRefreshCookieOptions(): ResponseCookie {
-  return baseOptions({
-    name: BACKEND_REFRESH_COOKIE,
     value: "",
     maxAge: 0,
   });

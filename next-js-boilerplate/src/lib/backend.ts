@@ -1,6 +1,6 @@
 import "server-only";
 import { cookies, headers as nextHeaders } from "next/headers";
-import { DEVICE_TOKEN_COOKIE, RBAC_TOKEN_COOKIE, BACKEND_REFRESH_COOKIE, USER_TOKEN_COOKIE } from "./cookie";
+import { DEVICE_TOKEN_COOKIE, RBAC_TOKEN_COOKIE, USER_TOKEN_COOKIE } from "./cookie";
 import { serverEnv } from "./env";
 
 export interface BackendResponse<T = unknown> {
@@ -29,12 +29,10 @@ export async function sessionTokenHeaders(): Promise<Record<string, string>> {
   const cookieStore = await cookies();
   const rbac = cookieStore.get(RBAC_TOKEN_COOKIE)?.value;
   const device = cookieStore.get(DEVICE_TOKEN_COOKIE)?.value;
-  const refresh = cookieStore.get(BACKEND_REFRESH_COOKIE)?.value;
   const user = cookieStore.get(USER_TOKEN_COOKIE)?.value;
   return {
     ...(rbac ? { "x-rbac-token": rbac } : {}),
     ...(device ? { "x-device-token": device } : {}),
-    ...(refresh ? { "x-refresh-token": refresh } : {}),
     ...(user ? { "x-user-token": user } : {}),
   };
 }

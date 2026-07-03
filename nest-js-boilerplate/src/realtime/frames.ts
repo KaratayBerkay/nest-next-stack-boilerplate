@@ -37,11 +37,29 @@ export type RenewFrame =
 export type EventFrame =
   | { type: 'direct-message'; message: Record<string, unknown> }
   | { type: 'message-read'; readerId: string; senderId: string; readAt: string }
-  | { type: 'message-delivered'; userId: string; messageId: string; deliveredAt: string }
-  | { type: 'room-message'; room: string; message: Record<string, unknown>; tempId?: string }
-  | { type: 'user-joined'; room: string; user: Record<string, unknown>; members: unknown[] }
+  | {
+      type: 'message-delivered';
+      userId: string;
+      messageId: string;
+      deliveredAt: string;
+    }
+  | {
+      type: 'room-message';
+      room: string;
+      message: Record<string, unknown>;
+      tempId?: string;
+    }
+  | {
+      type: 'user-joined';
+      room: string;
+      user: Record<string, unknown>;
+      members: unknown[];
+    }
   | { type: 'user-left'; room: string; members: unknown[] }
-  | { type: 'user-online'; user: { id: string; name?: string; avatar?: string } }
+  | {
+      type: 'user-online';
+      user: { id: string; name?: string; avatar?: string };
+    }
   | { type: 'user-offline'; userId: string }
   | { type: 'online-users'; users: { id: string }[] }
   | { type: 'room-counts'; rooms: Record<string, number> }

@@ -149,7 +149,7 @@ export class MessagingController {
       type: 'direct-message',
       message,
     });
-    this.realtime.emitToUser(message.senderId as string, {
+    this.realtime.emitToUser(message.senderId, {
       type: 'direct-message',
       message,
     });
@@ -172,8 +172,7 @@ export class MessagingController {
     });
     if (!this.realtime.hasServiceConnection(recipientId, 'MESSAGE')) {
       const senderName = sender?.name || sender?.email || 'Someone';
-      const body =
-        typeof message.body === 'string' ? message.body : '';
+      const body = typeof message.body === 'string' ? message.body : '';
       this.push
         .sendToUser(
           recipientId,

@@ -290,7 +290,6 @@ model User {
 
   // auth
   accounts    Account[]
-  sessions    Session[]
   devices     Device[]
   mfaFactors  MfaFactor[]
   backupCodes MfaBackupCode[]
@@ -362,23 +361,6 @@ model Account {
   @@index([userId])
 }
 
-model Session {
-  id           String    @id @default(uuid(7)) @db.Uuid
-  sessionToken String    @unique
-  userId       String    @db.Uuid
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deviceId     String?   @db.Uuid
-  device       Device?   @relation(fields: [deviceId], references: [id], onDelete: SetNull)
-  ip           String?   @db.Inet
-  userAgent    String?   @db.Text
-  expiresAt    DateTime  @db.Timestamptz(6)
-  createdAt    DateTime  @default(now()) @db.Timestamptz(6)
-  lastUsedAt   DateTime? @db.Timestamptz(6)
-
-  @@index([userId])
-  @@index([expiresAt])
-}
-
 model Device {
   id          String     @id @default(uuid(7)) @db.Uuid
   userId      String     @db.Uuid
@@ -391,7 +373,6 @@ model Device {
   fingerprint String?
   trusted     Boolean    @default(false)
   lastSeenAt  DateTime?  @db.Timestamptz(6)
-  sessions    Session[]
   createdAt   DateTime   @default(now()) @db.Timestamptz(6)
 
   @@index([userId])

@@ -92,47 +92,16 @@ export class SessionUserPayload {
   timezone!: string;
 }
 
-/**
- * GraphQL shape of the `mySessions` query: a Postgres Session row plus the
- * computed `current` marker (row id == the guard-attached sessionId). Not the
- * generated Session model — `current` only exists on this projection, and the
- * durable token itself must never be exposed.
- */
-@ObjectType()
-export class SessionInfo {
-  @Field()
-  id!: string;
-
-  @Field(() => String, { nullable: true })
-  ip?: string | null;
-
-  @Field(() => String, { nullable: true })
-  userAgent?: string | null;
-
-  @Field()
-  createdAt!: Date;
-
-  @Field()
-  expiresAt!: Date;
-
-  @Field()
-  current!: boolean;
-}
-
 @ObjectType()
 export class AuthPayload {
   @Field()
   accessToken!: string;
 
-  /** Opaque refresh token backed by a Session row. */
-  @Field()
-  refreshToken!: string;
-
   /** Opaque RBAC token delivered as httpOnly cookie; the auth-snapshot handle. */
   @Field(() => String, { nullable: true })
   rbacToken?: string;
 
-  /** Device ID (UUID, internal FK for Session rows). */
+  /** Device ID (UUID, from DeviceContext — for audit only). */
   @Field(() => String, { nullable: true })
   deviceId?: string;
 

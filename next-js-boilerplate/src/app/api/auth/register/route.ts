@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import {
   accessTokenCookieOptions,
-  refreshTokenCookieOptions,
   deviceTokenCookieOptions,
   rbacTokenCookieOptions,
   userTokenCookieOptions,
@@ -12,7 +11,6 @@ const REGISTER_QUERY = `
   mutation Register($input: RegisterInput!) {
     register(input: $input) {
       accessToken
-      refreshToken
       rbacToken
       deviceId
       deviceToken
@@ -56,7 +54,6 @@ export async function POST(request: Request) {
   const { data, errors } = await graphqlFetch<{
     register: {
       accessToken: string;
-      refreshToken: string;
       rbacToken?: string;
       deviceId?: string;
       deviceToken?: string;
@@ -71,12 +68,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status });
   }
 
-  const { accessToken, refreshToken, rbacToken, deviceToken, userToken, user } = data.register;
+  const { accessToken, rbacToken, deviceToken, userToken, user } = data.register;
 
   const response = NextResponse.json({ user, accessToken }, { status: 201 });
 
   response.cookies.set(accessTokenCookieOptions(accessToken));
-  response.cookies.set(refreshTokenCookieOptions(refreshToken));
   if (rbacToken) response.cookies.set(rbacTokenCookieOptions(rbacToken));
   if (deviceToken) response.cookies.set(deviceTokenCookieOptions(deviceToken));
   if (userToken) response.cookies.set(userTokenCookieOptions(userToken));

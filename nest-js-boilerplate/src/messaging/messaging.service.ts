@@ -505,9 +505,14 @@ export class MessagingService {
     // Rewrite friends list in Redis for both users.
     this.refreshFriendIds(requesterId);
     this.refreshFriendIds(userId);
-    this.notifyFriendEvent(requesterId, userId, 'accepted your friend request', {
-      kind: 'friend-accepted',
-    });
+    this.notifyFriendEvent(
+      requesterId,
+      userId,
+      'accepted your friend request',
+      {
+        kind: 'friend-accepted',
+      },
+    );
     return { success: true };
   }
 
