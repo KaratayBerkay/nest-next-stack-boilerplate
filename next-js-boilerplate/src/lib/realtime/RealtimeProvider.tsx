@@ -91,8 +91,10 @@ const TAB_ID =
 
 const CHANNEL = "rt-coord";
 const ELECTION_MS = 1_200;
-const HEARTBEAT_MS = 10_000;
-const LEADER_TIMEOUT_MS = 25_000;
+// Browser throttles setInterval in background tabs to ~60s, so heartbeat at 30s
+// and give followers a 3x cushion (90s) before re-electing.
+const HEARTBEAT_MS = 30_000;
+const LEADER_TIMEOUT_MS = 90_000;
 
 type Cmd =
   | { type: "hello"; tabId: string }
@@ -237,6 +239,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
     let leaderTimeoutTimer: ReturnType<typeof setTimeout> | null = null;
     let isLeader = false;
+    let visHandler: (() => void) | null = null;
 
     const scheduleReelect = () => {
       if (leaderTimeoutTimer) clearTimeout(leaderTimeoutTimer);
@@ -282,8 +285,13 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
           clientRef.current = client;
           client.connect();
           client.registerServices(["MESSAGE", "NOTIFICATION"]);
+          let visible = true;
+          visHandler = () => {
+            visible = !document.hidden;
+          };
+          document.addEventListener("visibilitychange", visHandler);
           heartbeatTimer = setInterval(() => {
-            if (alive)
+            if (alive && visible)
               bc.postMessage({ type: "beat", tabId: TAB_ID } satisfies Cmd);
           }, HEARTBEAT_MS);
         } else {
@@ -366,6 +374,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       bc.removeEventListener("message", onMsg);
       bc.postMessage({ type: "gone", tabId: TAB_ID } satisfies Cmd);
       if (electionTimer) clearTimeout(electionTimer);
+      if (visHandler) document.removeEventListener("visibilitychange", visHandler);
       if (heartbeatTimer) clearInterval(heartbeatTimer);
       if (leaderTimeoutTimer) clearTimeout(leaderTimeoutTimer);
       if (isLeader) {
