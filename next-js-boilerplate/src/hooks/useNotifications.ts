@@ -67,7 +67,7 @@ export function useNotifications() {
       const token = await fetchToken();
       if (!token || !mounted.current) return;
 
-      const socketUrl = clientEnv.NEXT_PUBLIC_WS_URL.replace(/\/+$/, "");
+      const socketUrl = clientEnv.NEXT_PUBLIC_REALTIME_WS_URL.replace(/\/+$/, "");
       const socket = io(`${socketUrl}/notifications`, {
         auth: { token },
         transports: ["websocket"],

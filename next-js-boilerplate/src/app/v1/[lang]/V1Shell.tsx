@@ -5,7 +5,8 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-import { useMessaging, type Conversation } from "@/hooks/useMessaging";
+import { RealtimeProvider } from "@/lib/realtime/RealtimeProvider";
+import { useConversations, type Conversation } from "@/lib/realtime/useConversations";
 import { useDeviceType, useBreakpoint } from "@/hooks";
 import { useEdgeSwipe } from "@/hooks/useEdgeSwipe";
 import { useClickOutside } from "@/hooks/useClickOutside";
@@ -340,7 +341,7 @@ export function V1Shell({ children }: { children: React.ReactNode }) {
   const lang = params?.lang ?? "";
   const { user, token, loading, logout } = useAuth();
   const t = useMessages("v1-shell");
-  const { conversations } = useMessaging(token, user?.id || null);
+  const { data: conversations = [] } = useConversations();
   const pointer = useDeviceType();
   const isTouch = pointer === "touch";
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -409,7 +410,8 @@ export function V1Shell({ children }: { children: React.ReactNode }) {
   }, [sidebarOpen, close]);
 
   return (
-    <div className="flex h-dvh flex-col">
+    <RealtimeProvider>
+      <div className="flex h-dvh flex-col">
       {/* Header — part of flow so content below fills remaining space exactly */}
       <header className="border-border bg-bg z-50 flex h-14 shrink-0 items-center border-b">
         {/* Hamburger — toggles sidebar on all sizes */}
@@ -520,5 +522,6 @@ export function V1Shell({ children }: { children: React.ReactNode }) {
         </div>
       </div>
     </div>
+    </RealtimeProvider>
   );
 }

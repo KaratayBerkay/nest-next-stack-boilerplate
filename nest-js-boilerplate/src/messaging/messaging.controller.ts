@@ -20,7 +20,8 @@ import { Logger } from 'nestjs-pino';
 import { HttpExceptionFilter } from '../exception-filters/http-exception.filter';
 import { LoggingInterceptor } from '../interceptors/logging.interceptor';
 import { MessagingService } from './messaging.service';
-import { MessagingWsGateway } from './messaging-ws.gateway';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
+import { PushNotificationService } from '../push-notification/push-notification.service';
 import { MarkReadInput } from './dto/mark-read.input';
 import { SendMessageRestDto } from './dto/send-message-rest.dto';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
@@ -36,7 +37,8 @@ import type { JwtUser } from '../auth/auth.types';
 export class MessagingController {
   constructor(
     private readonly ms: MessagingService,
-    private readonly wsGateway: MessagingWsGateway,
+    private readonly realtime: RealtimeGateway,
+    private readonly push: PushNotificationService,
     private readonly logger: Logger,
   ) {}
 
@@ -143,7 +145,47 @@ export class MessagingController {
       recipientId,
       body.text,
     );
-    this.wsGateway.broadcastDirectMessage(recipientId, message);
+    this.realtime.emitToUser(recipientId, {
+      type: 'direct-message',
+      message,
+    });
+    this.realtime.emitToUser(message.senderId as string, {
+      type: 'direct-message',
+      message,
+    });
+    const sender = message.sender as
+      | { id?: string; name?: string | null; email?: string; avatar?: string }
+      | undefined;
+    this.realtime.emitToService(recipientId, 'MESSAGE', {
+      renew: 'Messages',
+      type: 'Conversation',
+      conversation: {
+        user: {
+          id: user.userId,
+          name: user.name || user.email || 'Unknown',
+          avatar: sender?.avatar ?? '',
+        },
+        lastMessage: message.body,
+        lastTime: message.createdAt,
+        unread: 1,
+      },
+    });
+    if (!this.realtime.hasServiceConnection(recipientId, 'MESSAGE')) {
+      const senderName = sender?.name || sender?.email || 'Someone';
+      const body =
+        typeof message.body === 'string' ? message.body : '';
+      this.push
+        .sendToUser(
+          recipientId,
+          `New message from ${senderName}`,
+          body.length > 120 ? body.slice(0, 117) + '...' : body,
+          undefined,
+          { kind: 'direct-message', senderId: message.senderId },
+        )
+        .catch((err: Error) =>
+          this.logger.warn(`Offline push failed: ${err.message}`),
+        );
+    }
     this.logger.log(
       `Message ${message.id} sent to ${recipientId}`,
       'MessagingController',
@@ -159,11 +201,28 @@ export class MessagingController {
     body: MarkReadInput,
   ) {
     const result = await this.ms.markRead(user.userId, body.userId);
-    this.wsGateway.broadcastMessageRead(
-      user.userId,
-      body.userId,
-      result.readAt,
-    );
+    this.realtime.emitToUser(user.userId, {
+      type: 'message-read',
+      readerId: user.userId,
+      senderId: body.userId,
+      readAt: result.readAt,
+    });
+    this.realtime.emitToUser(body.userId, {
+      type: 'message-read',
+      readerId: user.userId,
+      senderId: body.userId,
+      readAt: result.readAt,
+    });
+    this.realtime.emitToService(user.userId, 'MESSAGE', {
+      renew: 'Messages',
+      type: 'Conversation',
+      conversation: {
+        user: { id: body.userId },
+        lastMessage: '',
+        lastTime: '',
+        unread: 0,
+      },
+    });
     this.logger.log(
       `Messages from ${body.userId} marked as read`,
       'MessagingController',

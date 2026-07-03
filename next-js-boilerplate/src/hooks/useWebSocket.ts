@@ -11,7 +11,7 @@ export function useWebSocket() {
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-    const url = clientEnv.NEXT_PUBLIC_WS_URL;
+    const url = clientEnv.NEXT_PUBLIC_REALTIME_WS_URL;
     let reconnectTimer: ReturnType<typeof setTimeout>;
 
     function connect() {

@@ -33,7 +33,12 @@ export class MessagingService {
   ) {}
 
   /** Fire-and-forget FRIEND_REQUEST notification — never fails the friend operation. */
-  private notifyFriendEvent(userId: string, actorId: string, suffix: string) {
+  private notifyFriendEvent(
+    userId: string,
+    actorId: string,
+    suffix: string,
+    payload?: Record<string, unknown>,
+  ) {
     void (async () => {
       const actor = await this.prisma.user.findUnique({
         where: { id: actorId },
@@ -45,6 +50,7 @@ export class MessagingService {
         actorId,
         type: 'FRIEND_REQUEST',
         title: `${who} ${suffix}`,
+        payload,
       });
     })().catch((err: Error) =>
       this.logger.warn(`Friend notification failed: ${err.message}`),
@@ -433,6 +439,7 @@ export class MessagingService {
           addresseeId,
           requesterId,
           'accepted your friend request',
+          { kind: 'friend-accepted' },
         );
         return { success: true };
       }
@@ -448,6 +455,7 @@ export class MessagingService {
         addresseeId,
         requesterId,
         'sent you a friend request',
+        { kind: 'friend-request' },
       );
       return { success: true };
     }
@@ -459,6 +467,7 @@ export class MessagingService {
       addresseeId,
       requesterId,
       'sent you a friend request',
+      { kind: 'friend-request' },
     );
     return { success: true };
   }
@@ -496,7 +505,9 @@ export class MessagingService {
     // Rewrite friends list in Redis for both users.
     this.refreshFriendIds(requesterId);
     this.refreshFriendIds(userId);
-    this.notifyFriendEvent(requesterId, userId, 'accepted your friend request');
+    this.notifyFriendEvent(requesterId, userId, 'accepted your friend request', {
+      kind: 'friend-accepted',
+    });
     return { success: true };
   }
 

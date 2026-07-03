@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TokenStoreService } from '../auth/token-store.service';
 import { PushNotificationService } from '../push-notification/push-notification.service';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { NotificationGateway } from './notification.gateway';
 import type { NotificationType } from '../@generated/prisma/notification-type.enum';
 
@@ -34,6 +35,7 @@ export class NotificationService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly gateway: NotificationGateway,
+    private readonly realtime: RealtimeGateway,
     private readonly push: PushNotificationService,
     private readonly tokenStore: TokenStoreService,
   ) {}
@@ -74,24 +76,40 @@ export class NotificationService {
         : null,
     };
 
-    // Emit via gateway; never let a transport failure fail notification creation.
+    // Emit Item + Count via the consolidated realtime gateway (userId-keyed).
+    this.realtime.emitToService(params.userId, 'NOTIFICATION', {
+      renew: 'Notifications',
+      type: 'Item',
+      item: dto,
+    });
+    const afterCount = await this.unreadCount(params.userId);
+    this.realtime.emitToService(params.userId, 'NOTIFICATION', {
+      renew: 'Notifications',
+      type: 'Count',
+      value: afterCount,
+    });
+
+    // Legacy socket.io emit (kept for Stage C removal).
     try {
       this.gateway.sendToUser(params.userId, dto);
     } catch {
-      /* transport failure — notification persisted, unread counter incremented */
+      /* transport failure */
     }
 
-    this.push
-      .sendToUser(
-        params.userId,
-        params.title,
-        params.body,
-        undefined,
-        params.payload,
-      )
-      .catch(() => {
-        /* push failure — notification still delivered in-app */
-      });
+    // Push only if user has no live NOTIFICATION socket.
+    if (!this.realtime.hasServiceConnection(params.userId, 'NOTIFICATION')) {
+      this.push
+        .sendToUser(
+          params.userId,
+          params.title,
+          params.body,
+          undefined,
+          params.payload,
+        )
+        .catch(() => {
+          /* push failure */
+        });
+    }
 
     return notification;
   }
@@ -118,12 +136,16 @@ export class NotificationService {
       data: { readAt: new Date() },
     });
 
-    // Recount and rewrite (drift-free — no negative-HINCRBY bookkeeping).
     if (result.count > 0) {
       const unread = await this.unreadCount(userId);
       this.tokenStore
         .rewriteFieldsForUser(userId, { unread: String(unread) })
         .catch(() => {});
+      this.realtime.emitToService(userId, 'NOTIFICATION', {
+        renew: 'Notifications',
+        type: 'Count',
+        value: unread,
+      });
     }
 
     return result;
@@ -135,10 +157,14 @@ export class NotificationService {
       data: { readAt: new Date() },
     });
 
-    // Recount and rewrite (drift-free).
     const unread = await this.unreadCount(userId);
     this.tokenStore
       .rewriteFieldsForUser(userId, { unread: String(unread) })
       .catch(() => {});
+    this.realtime.emitToService(userId, 'NOTIFICATION', {
+      renew: 'Notifications',
+      type: 'Count',
+      value: unread,
+    });
   }
 }

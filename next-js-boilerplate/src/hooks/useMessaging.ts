@@ -12,7 +12,7 @@ import { clientEnv } from "@/lib/env";
 import { useRateLimiter } from "@/hooks/useRateLimiter";
 import { apiFetch } from "@/lib/api-client";
 
-const MSG_WS_URL = clientEnv.NEXT_PUBLIC_MSG_WS_URL;
+const REALTIME_WS_URL = clientEnv.NEXT_PUBLIC_REALTIME_WS_URL;
 
 export interface User {
   id: string;
@@ -183,7 +183,7 @@ export function useMessaging(
     }
 
     function connect() {
-      const ws = new WebSocket(MSG_WS_URL);
+      const ws = new WebSocket(REALTIME_WS_URL);
       wsRef.current = ws;
       ws.onopen = async () => {
         let accessToken = token;
@@ -530,7 +530,7 @@ export function useChatRoom(
     }
 
     function connect() {
-      const ws = new WebSocket(MSG_WS_URL);
+      const ws = new WebSocket(REALTIME_WS_URL);
       wsRef.current = ws;
 
       ws.onopen = async () => {

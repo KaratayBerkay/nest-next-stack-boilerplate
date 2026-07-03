@@ -36,6 +36,7 @@ import { LoggingModule } from './logging/logging.module';
 import { MailModule } from './mail/mail.module';
 import { MfaModule } from './mfa/mfa.module';
 import { MessagingModule } from './messaging/messaging.module';
+import { RealtimeModule } from './realtime/realtime.module';
 import { OpenapiModule } from './openapi/openapi.module';
 import { MiddlewareModule } from './middleware/middleware.module';
 import { OutboxModule } from './outbox/outbox.module';
@@ -131,6 +132,7 @@ import { WsModule } from './ws/ws.module';
     TeamMembersModule,
     MfaModule,
     MessagingModule,
+    RealtimeModule,
     ComplexityModule,
     DirectivesModule,
     ExtensionsModule,

@@ -12,19 +12,11 @@ export const serverEnvSchema = z.object({
   MINIO_URL: z.string().url().default("http://localhost:9000"),
 });
 
-function deriveWsUrl(httpUrl: string): string {
-  return httpUrl.replace(/^http/, "ws").replace(/\/$/, "").concat("/ws");
-}
-
 export const clientEnvSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
-  NEXT_PUBLIC_WS_URL: z
+  NEXT_PUBLIC_REALTIME_WS_URL: z
     .string()
-    .regex(/^wss?:\/\//, "expected a ws:// or wss:// URL")
-    .default("ws://localhost:3000"),
-  NEXT_PUBLIC_MSG_WS_URL: z
-    .string()
-    .regex(/^wss?:\/\//, "expected a ws:// or wss:// URL")
+    .regex(/^wss?:\/\//, "expected a ws:// or ws:// URL")
     .default("ws://localhost:3000/ws"),
   NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().default(""),
   NEXT_PUBLIC_MINIO_PUBLIC_URL: z.string().default("http://localhost:9000"),
@@ -35,12 +27,8 @@ export type ClientEnv = z.infer<typeof clientEnvSchema>;
 
 export const clientEnv: ClientEnv = clientEnvSchema.parse({
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-  NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL,
-  NEXT_PUBLIC_MSG_WS_URL:
-    process.env.NEXT_PUBLIC_MSG_WS_URL ??
-    deriveWsUrl(
-      process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-    ),
+  NEXT_PUBLIC_REALTIME_WS_URL:
+    process.env.NEXT_PUBLIC_REALTIME_WS_URL ?? "ws://localhost:3000/ws",
   NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
   NEXT_PUBLIC_MINIO_PUBLIC_URL: process.env.NEXT_PUBLIC_MINIO_PUBLIC_URL,
 });

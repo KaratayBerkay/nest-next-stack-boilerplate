@@ -14,7 +14,7 @@ export function usePostSocket(postId: string | null, onUpdate: () => void) {
 
     // Socket.io lives on the backend origin (NEXT_PUBLIC_WS_URL), not the
     // frontend origin — socket.io-client normalizes ws(s):// to http(s)://.
-    const socket: Socket = io(clientEnv.NEXT_PUBLIC_WS_URL, {
+    const socket: Socket = io(clientEnv.NEXT_PUBLIC_REALTIME_WS_URL, {
       transports: ["websocket", "polling"],
     });
 

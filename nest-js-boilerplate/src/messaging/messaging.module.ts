@@ -4,6 +4,7 @@ import { AuthModule } from '../auth/auth.module';
 import { FriendsModule } from '../friends/friends.module';
 import { NotificationModule } from '../notification/notification.module';
 import { PushNotificationModule } from '../push-notification/push-notification.module';
+import { RealtimeModule } from '../realtime/realtime.module';
 import { MessagingResolver } from './messaging.resolver';
 import { MessagingService } from './messaging.service';
 import { MessagingWsGateway } from './messaging-ws.gateway';
@@ -15,10 +16,11 @@ import { MessagingController } from './messaging.controller';
     FriendsModule,
     NotificationModule,
     PushNotificationModule,
+    RealtimeModule,
     CacheModule.register(),
   ],
   controllers: [MessagingController],
   providers: [MessagingResolver, MessagingService, MessagingWsGateway],
-  exports: [MessagingWsGateway],
+  exports: [],
 })
 export class MessagingModule {}

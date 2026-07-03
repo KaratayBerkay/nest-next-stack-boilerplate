@@ -6,7 +6,7 @@ import type { JwtUser } from '../auth/auth.types';
 import { Message } from '../@generated/message/message.model';
 import { User } from '../@generated/user/user.model';
 import { MessagingService } from './messaging.service';
-import { MessagingWsGateway } from './messaging-ws.gateway';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { Conversation } from './models/conversation.model';
 import { SendMessageInput } from './dto/send-message.input';
 
@@ -15,7 +15,7 @@ import { SendMessageInput } from './dto/send-message.input';
 export class MessagingResolver {
   constructor(
     private readonly ms: MessagingService,
-    private readonly wsGateway: MessagingWsGateway,
+    private readonly realtime: RealtimeGateway,
   ) {}
 
   @Query(() => [User])
@@ -58,11 +58,18 @@ export class MessagingResolver {
     @Args('userId') otherUserId: string,
   ) {
     const result = await this.ms.markRead(user.userId, otherUserId);
-    this.wsGateway.broadcastMessageRead(
-      user.userId,
-      otherUserId,
-      result.readAt,
-    );
+    this.realtime.emitToUser(user.userId, {
+      type: 'message-read',
+      readerId: user.userId,
+      senderId: otherUserId,
+      readAt: result.readAt,
+    });
+    this.realtime.emitToUser(otherUserId, {
+      type: 'message-read',
+      readerId: user.userId,
+      senderId: otherUserId,
+      readAt: result.readAt,
+    });
     return true;
   }
 }

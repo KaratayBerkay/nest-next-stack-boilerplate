@@ -2,12 +2,13 @@ import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { FriendsModule } from '../friends/friends.module';
 import { NotificationModule } from '../notification/notification.module';
+import { RealtimeModule } from '../realtime/realtime.module';
 import { PostEventsGateway } from './post-events.gateway';
 import { PostResolver } from './post.resolver';
 import { PostService } from './post.service';
 
 @Module({
-  imports: [AuthModule, FriendsModule, NotificationModule],
+  imports: [AuthModule, FriendsModule, NotificationModule, RealtimeModule],
   providers: [PostResolver, PostService, PostEventsGateway],
   exports: [PostService, PostEventsGateway],
 })

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PostEventsGateway } from '../post/post-events.gateway';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationService } from '../notification/notification.service';
 import { CreateReactionInput } from './dto/create-reaction.input';
@@ -9,6 +10,7 @@ export class ReactionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationService,
+    private readonly realtime: RealtimeGateway,
     private readonly postEvents: PostEventsGateway,
   ) {}
 
@@ -29,7 +31,19 @@ export class ReactionsService {
       const targetPostId = existing.postId ?? data.postId;
       if (existing.type === data.type) {
         await this.prisma.reaction.delete({ where: { id: existing.id } });
-        if (targetPostId) this.postEvents.broadcastPostUpdate(targetPostId);
+        if (targetPostId) {
+          this.postEvents.broadcastPostUpdate(targetPostId);
+          this.realtime.emitToTopic('feed', {
+            renew: 'Feed',
+            type: 'Post',
+            id: targetPostId,
+          });
+          this.realtime.emitToTopic(`post:${targetPostId}`, {
+            renew: 'Feed',
+            type: 'Post',
+            id: targetPostId,
+          });
+        }
         return { ...existing, deleted: true };
       }
       const updated = await this.prisma.reaction.update({
@@ -40,7 +54,19 @@ export class ReactionsService {
           comment: { select: { authorId: true } },
         },
       });
-      if (targetPostId) this.postEvents.broadcastPostUpdate(targetPostId);
+      if (targetPostId) {
+        this.postEvents.broadcastPostUpdate(targetPostId);
+        this.realtime.emitToTopic('feed', {
+          renew: 'Feed',
+          type: 'Post',
+          id: targetPostId,
+        });
+        this.realtime.emitToTopic(`post:${targetPostId}`, {
+          renew: 'Feed',
+          type: 'Post',
+          id: targetPostId,
+        });
+      }
       return updated;
     }
 
@@ -57,7 +83,19 @@ export class ReactionsService {
       },
     });
 
-    if (data.postId) this.postEvents.broadcastPostUpdate(data.postId);
+    if (data.postId) {
+      this.postEvents.broadcastPostUpdate(data.postId);
+      this.realtime.emitToTopic('feed', {
+        renew: 'Feed',
+        type: 'Post',
+        id: data.postId,
+      });
+      this.realtime.emitToTopic(`post:${data.postId}`, {
+        renew: 'Feed',
+        type: 'Post',
+        id: data.postId,
+      });
+    }
 
     const targetAuthorId =
       reaction.post?.authorId ?? reaction.comment?.authorId;

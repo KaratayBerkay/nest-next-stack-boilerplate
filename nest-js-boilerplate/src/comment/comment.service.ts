@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PostEventsGateway } from '../post/post-events.gateway';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationService } from '../notification/notification.service';
 import { CreateCommentInput } from './dto/create-comment.input';
@@ -14,6 +15,7 @@ export class CommentService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationService,
+    private readonly realtime: RealtimeGateway,
     private readonly postEvents: PostEventsGateway,
   ) {}
 
@@ -61,6 +63,16 @@ export class CommentService {
     }
 
     this.postEvents.broadcastPostUpdate(data.postId);
+    this.realtime.emitToTopic('feed', {
+      renew: 'Feed',
+      type: 'Post',
+      id: data.postId,
+    });
+    this.realtime.emitToTopic(`post:${data.postId}`, {
+      renew: 'Feed',
+      type: 'Post',
+      id: data.postId,
+    });
     return comment;
   }
 
@@ -83,6 +95,16 @@ export class CommentService {
     });
 
     this.postEvents.broadcastPostUpdate(comment.postId);
+    this.realtime.emitToTopic('feed', {
+      renew: 'Feed',
+      type: 'Post',
+      id: comment.postId,
+    });
+    this.realtime.emitToTopic(`post:${comment.postId}`, {
+      renew: 'Feed',
+      type: 'Post',
+      id: comment.postId,
+    });
     return updated;
   }
 
@@ -101,6 +123,16 @@ export class CommentService {
     });
 
     this.postEvents.broadcastPostUpdate(comment.postId);
+    this.realtime.emitToTopic('feed', {
+      renew: 'Feed',
+      type: 'Post',
+      id: comment.postId,
+    });
+    this.realtime.emitToTopic(`post:${comment.postId}`, {
+      renew: 'Feed',
+      type: 'Post',
+      id: comment.postId,
+    });
     return updated;
   }
 
