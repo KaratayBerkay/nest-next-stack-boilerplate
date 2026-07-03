@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { JsonLd } from "@/lib/seo/JsonLd";
@@ -7,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { DeviceTypeInit } from "@/components/DeviceTypeInit";
 import { EventLoggerInit } from "@/components/EventLoggerInit";
 import { PushNotificationInit } from "@/components/PushNotificationInit";
+import { SessionScript } from "@/components/SessionScript";
 import { ThemeInitScript } from "./ThemeInitScript";
 import "./globals.css";
 
@@ -56,6 +58,9 @@ export default function RootLayout({
         <EventLoggerInit />
         <PushNotificationInit />
         <ThemeProvider>
+          <Suspense fallback={null}>
+            <SessionScript />
+          </Suspense>
           <AuthProvider>
             <QueryProvider>{children}</QueryProvider>
           </AuthProvider>

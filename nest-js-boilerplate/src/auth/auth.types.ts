@@ -16,6 +16,7 @@ export interface JwtUser {
   unread?: number;
   orgIds?: string[];
   teamIds?: string[];
+  sessionId?: string;
 }
 
 /** JWT payload we sign on login/register. */

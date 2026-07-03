@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { PostCard } from "@/components/feed/PostCard";
 import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
+import { apiFetch } from "@/lib/api-client";
 import { IconSearch } from "@tabler/icons-react";
 
 interface Post {
@@ -41,7 +42,7 @@ export default function FeedPage() {
       if (cursor) params.set("cursor", cursor);
       if (search) params.set("search", search);
 
-      const res = await fetch(`/api/posts?${params}`);
+      const res = await apiFetch(`/api/posts?${params}`);
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? "Failed to load posts");

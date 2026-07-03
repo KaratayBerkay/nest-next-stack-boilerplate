@@ -6,17 +6,23 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
+import { apiFetch } from "@/lib/api-client";
 
-// `name`/`status` only arrive on login/register (full user in AuthPayload);
-// session rehydration via /api/auth/me returns the Redis snapshot, which
-// carries `tier` instead.
+// Session snapshot fields arrive via /api/auth/me (Redis, zero-PG).
+// Login/register return a subset from AuthPayload; the snapshot is the
+// identity source after the first `me` call.
 export type User = {
   id: string;
   email: string;
   name?: string;
+  username?: string;
+  avatarUrl?: string;
+  locale?: string;
+  timezone?: string;
   status?: string;
   role: string;
   tier?: string;
@@ -38,37 +44,37 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+export function AuthProvider({
+  children,
+  initialUser,
+}: {
+  children: ReactNode;
+  initialUser?: User | null;
+}) {
+  const ssrUser =
+    typeof window !== "undefined"
+      ? (window as { __INITIAL_USER__?: User }).__INITIAL_USER__
+      : undefined;
+
+  const [user, setUser] = useState<User | null>(
+    ssrUser ?? initialUser ?? null,
+  );
   const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!ssrUser && !initialUser);
+  const logoutEventRef = useRef(false);
 
   useEffect(() => {
-    let retried = false;
+    if (ssrUser || initialUser) {
+      return;
+    }
 
     async function load() {
-      // Ensure a device_token cookie exists before trying to rehydrate the session.
       await fetch("/api/auth/device-handshake", { method: "POST" }).catch(
         () => {},
       );
 
       try {
-        const res = await fetch("/api/auth/me");
-        if (res.status === 401 && !retried) {
-          retried = true;
-          await fetch("/api/auth/refresh", { method: "POST" });
-          const retry = await fetch("/api/auth/me");
-          if (retry.ok) {
-            const data = (await retry.json()) as {
-              user: User | null;
-              accessToken?: string;
-            };
-            setUser(data.user);
-            setToken(data.accessToken ?? null);
-            setLoading(false);
-            return;
-          }
-        }
+        const res = await apiFetch("/api/auth/me");
         if (res.ok) {
           const data = (await res.json()) as {
             user: User | null;
@@ -84,6 +90,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     load();
+  }, [ssrUser, initialUser]);
+
+  // Listen for auth:logout events dispatched by apiFetch on refresh failure.
+  useEffect(() => {
+    function onAuthLogout() {
+      if (logoutEventRef.current) return;
+      logoutEventRef.current = true;
+      setUser(null);
+      setToken(null);
+    }
+
+    window.addEventListener("auth:logout", onAuthLogout);
+    return () => window.removeEventListener("auth:logout", onAuthLogout);
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {

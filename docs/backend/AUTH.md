@@ -248,3 +248,54 @@ Direct messages require `recipientId ∉ friends` (from the Redis hash `friends`
 field, refreshed at connect time). The backend keeps the `friends` field
 up-to-date via `rewriteFieldsForUser` on friendship changes — no Postgres query
 on the DM authorization hot path.
+
+## Frontend consumption (Phase 4)
+
+### Silent-refresh contract
+
+The client-side `apiFetch()` wrapper (`src/lib/api-client.ts`) implements the
+401 → single-flight refresh → retry pattern that the backend's midnight-cutoff
+and tier-change semantics require. On N parallel 401s, exactly one refresh
+request is issued (shared promise). Refresh failure dispatches a `window` event
+`auth:logout` that `AuthProvider` listens for.
+
+The WebSocket hooks (`useMessaging`, `useChatRoom`) detect auth-failure closes
+(close before receiving `authenticated`) and run one `apiFetch`-style refresh
+before reconnecting, capped at 3 retries.
+
+### Sessions surface
+
+`mySessions` query (`@UseGuards(SessionAuthGuard)`) returns the caller's live
+Postgres `Session` rows — `id`, `ip`, `userAgent`, `createdAt`, `expiresAt`,
+`current` (identified by `sessionId` from the Redis hash, attached to
+`req.user` by the guard). `logoutOtherSessions` mutation (CSRF-guarded) revokes
+all Redis entries via `revokeAllForUser` then deletes Postgres rows except the
+current one.
+
+### Tier UI gating
+
+Frontend mirror of the tier hierarchy (`src/lib/tier.ts`, source-of-truth
+comment pointing to `nest-js-boilerplate/src/authorization/`). `TierGate`
+component and `useMinTier` hook control render-only visibility; every gated
+request hits the backend's `@MinTier` guard.
+
+### Admin tier panel
+
+`POST /api/admin/set-tier` BFF → backend `setUserTier` mutation. The admin page
+at `/v1/[lang]/admin` is role-gated (render-only; backend `@Roles` enforces).
+
+### SSR seed
+
+`getSessionUser()` server helper (`src/lib/auth-ssr.ts`) resolves the session
+from the `access_token` cookie using the widened `ME_QUERY` — zero Postgres on
+the backend. The root layout passes `initialUser` to `AuthProvider`, eliminating
+the logged-out flash on hard reloads.
+
+### mySessions / logoutOtherSessions resolver
+
+Added to `auth.resolver.ts`:
+
+- `mySessions` query — `@UseGuards(SessionAuthGuard)`, returns `[Session]` ordered by `createdAt desc`. `current` field computed from `req.user.sessionId`.
+- `logoutOtherSessions` mutation — `@UseGuards(CsrfGuard, SessionAuthGuard)`, calls `revokeAllForUser` on all Redis keys, then `deleteMany` on Postgres rows except current.
+
+`sessionId` was added to `JwtUser` interface and attached by `SessionAuthGuard` in step 8.

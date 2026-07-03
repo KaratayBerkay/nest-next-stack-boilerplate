@@ -5,7 +5,7 @@
 > - [`progress/nextjs-feature-checklist.md`](progress/nextjs-feature-checklist.md) — the full feature mapping/test matrix
 > - [`progress/README.md`](progress/README.md) — phases, methodology, decisions log + changelog
 >
-> _Last updated: 2026-06-28 (19:30 UTC) — real auth + theme cookie persistence + SEO landed._
+> _Last updated: 2026-07-03 — Phase 4 frontend feature parity landed (snapshot-driven identity, silent refresh, tier UX, admin panel, sessions page, SSR seed)._
 
 ## What this project is
 A **Next.js 16 (App Router) frontend boilerplate** built the same way as the sibling

@@ -3,8 +3,7 @@
 > Backlog for building the boilerplate. This tracks what's actually in the codebase.
 > Updated live during sessions; cross-refs to the [feature checklist](progress/nextjs-feature-checklist.md).
 >
-> _Last updated: 2026-06-28 (23:30 UTC) — landed **#18 swipe navigation**
-> (Ctrl+Shift+mousemove / touch swipe with axis-lock, cancelGesture, page-registry gating)._
+> _Last updated: 2026-07-03 — landed **Phase 4** frontend feature parity (snapshot identity, silent refresh, tier UX, admin panel, sessions, SSR seed)._
 
 
 **Stats:** 96 e2e + 14 vitest = **110 automated tests**, all green. 1 pre-existing
@@ -32,6 +31,9 @@ skip (standalone Docker build needs Docker engine).
 | 15 | Theme (dark/light mode toggle with localStorage persistence) | ✅ Done | — |
 | 16 | Real auth (NestJS GraphQL: login/register/logout/refresh/me via BFF) | ✅ Done | F42–F46 |
 | 17 | Theme cookie persistence (localStorage → cookie + ThemeInitScript) | ✅ Done | — |
+| 19 | Phase 4 frontend parity: snapshot identity, silent refresh, tier UX | ✅ Done | — |
+| 20 | Phase 4 admin tier panel + sessions/devices page | ✅ Done | — |
+| 21 | Phase 4 SSR seed (getSessionUser + initialUser prop) + dashboard protection | ✅ Done | — |
 
 ---
 

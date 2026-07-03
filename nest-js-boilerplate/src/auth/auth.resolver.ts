@@ -2,6 +2,7 @@ import { UseGuards } from '@nestjs/common';
 import { Args, Context, Mutation, Query, Resolver } from '@nestjs/graphql';
 import type { Request } from 'express';
 import { User } from '../@generated/user/user.model';
+import { Session } from '../@generated/session/session.model';
 import { CsrfGuard } from '../csrf/csrf.guard';
 import { AuthService } from './auth.service';
 import { AuthPayload, SessionUserPayload } from './auth.types';
@@ -79,5 +80,29 @@ export class AuthResolver {
       locale: user.locale ?? 'en',
       timezone: user.timezone ?? 'UTC',
     };
+  }
+
+  /**
+   * Lists the caller's live Postgres Session rows. The current session (the one identified
+   * by the guard-attached sessionId) is marked with `current: true`.
+   */
+  @UseGuards(SessionAuthGuard)
+  @Query(() => [Session], { name: 'mySessions' })
+  mySessions(@CurrentUser() user: JwtUser) {
+    return this.auth.findUserSessions(user.userId, user.sessionId);
+  }
+
+  /**
+   * Revokes all of the caller's sessions EXCEPT the one they are currently using.
+   * CSRF-guarded like `logout`.
+   */
+  @UseGuards(CsrfGuard, SessionAuthGuard)
+  @Mutation(() => Boolean)
+  async logoutOtherSessions(@CurrentUser() user: JwtUser): Promise<boolean> {
+    await this.auth.logoutOtherSessions(
+      user.userId,
+      user.sessionId,
+    );
+    return true;
   }
 }

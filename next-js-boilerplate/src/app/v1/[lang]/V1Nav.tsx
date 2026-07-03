@@ -16,6 +16,8 @@ import {
   IconQuestionMark,
   IconRss,
   IconShare,
+  IconSettings,
+  IconShield,
 } from "@tabler/icons-react";
 
 const AUTH_REQUIRED_HREFS = [
@@ -42,10 +44,28 @@ export function V1Nav({ onNav }: { onNav?: () => void }) {
     { href: "/chat-room", label: t.navChatRoom, Icon: IconMessage },
     { href: "/messages", label: t.navMessages, Icon: IconMail },
     { href: FIND_FRIENDS_PATH, label: t.navFindFriends, Icon: IconUserPlus },
+    { href: "/premium", label: "Premium", Icon: IconShield, auth: true },
+    {
+      href: "/settings/sessions",
+      label: "Sessions",
+      Icon: IconSettings,
+      auth: true,
+    },
     { href: "/ui", label: t.navUiComponents, Icon: IconComponents },
     { href: "/boom", label: t.navErrorTest, Icon: IconAlertTriangle },
     { href: "/missing", label: t.navNotFound, Icon: IconQuestionMark },
   ];
+
+  const isAdmin =
+    user?.role === "ADMIN" || user?.role === "SUPERADMIN";
+  if (isAdmin) {
+    links.push({
+      href: "/admin",
+      label: "Admin",
+      Icon: IconShield,
+      auth: true,
+    });
+  }
 
   return (
     <nav className="flex flex-col gap-0.5" aria-label="v1">

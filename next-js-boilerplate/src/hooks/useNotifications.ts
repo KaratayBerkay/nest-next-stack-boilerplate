@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { io, type Socket } from "socket.io-client";
 import { clientEnv } from "@/lib/env";
+import { apiFetch } from "@/lib/api-client";
 
 export interface NotificationItem {
   id: string;
@@ -28,14 +29,14 @@ export function useNotifications() {
     const mounted = { current: true };
 
     const fetchToken = () =>
-      fetch("/api/auth/token")
+      apiFetch("/api/auth/token")
         .then((r) => r.json() as Promise<{ token: string }>)
         .then((d) => d.token)
         .catch(() => null);
 
     const initialFetch = () =>
       Promise.all([
-        fetch("/api/notifications")
+        apiFetch("/api/notifications")
           .then(
             (r) => r.json() as Promise<{ notifications: NotificationItem[] }>,
           )
@@ -43,7 +44,7 @@ export function useNotifications() {
             if (mounted.current) setNotifications(data.notifications ?? []);
           })
           .catch(() => {}),
-        fetch("/api/notifications/unread-count")
+        apiFetch("/api/notifications/unread-count")
           .then((r) => r.json() as Promise<{ count: number }>)
           .then((data) => {
             if (mounted.current) setUnreadCount(data.count ?? 0);
@@ -53,7 +54,7 @@ export function useNotifications() {
 
     const startPolling = () => {
       intervalRef.current = setInterval(() => {
-        fetch("/api/notifications/unread-count")
+        apiFetch("/api/notifications/unread-count")
           .then((r) => r.json() as Promise<{ count: number }>)
           .then((data) => {
             if (mounted.current) setUnreadCount(data.count ?? 0);
@@ -99,7 +100,7 @@ export function useNotifications() {
 
   const markRead = async (id: string) => {
     try {
-      await fetch("/api/notifications/read", {
+      await apiFetch("/api/notifications/read", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),
@@ -117,7 +118,7 @@ export function useNotifications() {
 
   const markAllRead = async () => {
     try {
-      await fetch("/api/notifications/read", {
+      await apiFetch("/api/notifications/read", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ all: true }),
@@ -134,8 +135,8 @@ export function useNotifications() {
   const refresh = async () => {
     try {
       const [notifRes, countRes] = await Promise.all([
-        fetch("/api/notifications"),
-        fetch("/api/notifications/unread-count"),
+        apiFetch("/api/notifications"),
+        apiFetch("/api/notifications/unread-count"),
       ]);
       const notifData = (await notifRes.json()) as {
         notifications: NotificationItem[];

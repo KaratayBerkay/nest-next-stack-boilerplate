@@ -2,7 +2,7 @@
 
 > Execution tracker for the fourth phase of the [stack roadmap](../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
-> Created 2026-07-03 · Status: **not started**
+> Created 2026-07-03 · Status: **done** (all 7 tasks implemented; verify steps pending browser loop)
 
 Re-scope note (2026-07-03): phase 4 was queued as the cross-stack e2e suite
 ([phase3.md](phase3.md) queue); Berkay re-prioritized to **frontend feature parity** —

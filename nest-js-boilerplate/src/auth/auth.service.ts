@@ -458,6 +458,64 @@ export class AuthService {
     };
   }
 
+  /**
+   * Find all Postgres Session rows for the given user, returning them ordered by
+   * creation date (newest first). The current session (matching `currentSessionId`)
+   * is identifiable by the caller comparing ids.
+   */
+  async findUserSessions(
+    userId: string,
+    currentSessionId?: string,
+  ): Promise<
+    Array<{
+      id: string;
+      ip: string | null;
+      userAgent: string | null;
+      createdAt: Date;
+      expiresAt: Date;
+      current: boolean;
+    }>
+  > {
+    const rows = await this.prisma.session.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        ip: true,
+        userAgent: true,
+        createdAt: true,
+        expiresAt: true,
+      },
+    });
+    return rows.map((r) => ({
+      ...r,
+      current: r.id === currentSessionId,
+    }));
+  }
+
+  /**
+   * Revoke all Redis sessions for the user, then re-write the current one so the
+   * caller stays logged in. Deletes all Postgres Session rows except the current.
+   */
+  async logoutOtherSessions(
+    userId: string,
+    currentSessionId?: string,
+  ): Promise<void> {
+    // Revoke all Redis compound keys for this user.
+    await this.tokenStore.revokeAllForUser(userId);
+
+    // Delete all Postgres session rows except the current one.
+    if (currentSessionId) {
+      await this.prisma.session.deleteMany({
+        where: { userId, id: { not: currentSessionId } },
+      });
+    } else {
+      await this.prisma.session.deleteMany({
+        where: { userId },
+      });
+    }
+  }
+
   // --- Token extraction from request context ---
 
   private extractAccessToken(ctx: RequestContext): string | null {

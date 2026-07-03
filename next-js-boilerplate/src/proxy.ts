@@ -159,6 +159,18 @@ export function proxy(request: NextRequest) {
     return withRequestId(response, requestId);
   }
 
+  // Dashboard protection: redirect to login if no access_token cookie is present.
+  // Token validity is enforced by the backend guard; this is a lightweight
+  // cookie-presence check only.
+  if (pathname.startsWith("/dashboard")) {
+    const accessToken = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
+    if (!accessToken) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/auth/login";
+      return withRequestId(NextResponse.redirect(url, 302), requestId);
+    }
+  }
+
   const res = NextResponse.next();
 
   res.headers.set("x-proxy", "active");

@@ -133,6 +133,7 @@ export class SessionAuthGuard implements CanActivate {
       unread: sessionUser.unread,
       orgIds: sessionUser.orgIds,
       teamIds: sessionUser.teamIds,
+      sessionId: sessionUser.sessionId,
     };
 
     return true;

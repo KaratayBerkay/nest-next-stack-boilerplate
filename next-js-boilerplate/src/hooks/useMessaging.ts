@@ -10,6 +10,7 @@ import {
 import { initials } from "@/lib/initials";
 import { clientEnv } from "@/lib/env";
 import { useRateLimiter } from "@/hooks/useRateLimiter";
+import { apiFetch } from "@/lib/api-client";
 
 const MSG_WS_URL = clientEnv.NEXT_PUBLIC_MSG_WS_URL;
 
@@ -169,6 +170,17 @@ export function useMessaging(
     if (!token) return;
     let stopped = false;
     let reconnectTimer: ReturnType<typeof setTimeout>;
+    let wasAuthenticated = false;
+    let authFailRetries = 0;
+    const MAX_AUTH_FAIL_RETRIES = 3;
+
+    async function refreshBeforeReconnect() {
+      try {
+        await apiFetch("/api/auth/refresh", { method: "POST" });
+      } catch {
+        /* refresh failed — will try connecting anyway */
+      }
+    }
 
     function connect() {
       const ws = new WebSocket(MSG_WS_URL);
@@ -179,7 +191,7 @@ export function useMessaging(
         let deviceToken = "";
         let userToken = "";
         try {
-          const res = await fetch("/api/auth/token");
+          const res = await apiFetch("/api/auth/token");
           if (res.ok) {
             const t = (await res.json()) as {
               accessToken: string;
@@ -204,6 +216,8 @@ export function useMessaging(
         try {
           const data = JSON.parse(e.data);
           if (data.type === "authenticated") {
+            wasAuthenticated = true;
+            authFailRetries = 0;
             setConnected(true);
             fetchConversations();
             fetchFriends();
@@ -323,10 +337,20 @@ export function useMessaging(
           /* ignore */
         }
       };
-      ws.onclose = () => {
+      ws.onclose = async () => {
         setConnected(false);
+        const wasAuth = wasAuthenticated;
+        wasAuthenticated = false;
         wsRef.current = null;
-        if (!stopped) reconnectTimer = setTimeout(connect, 2000);
+        if (stopped) return;
+        // If the WS closed without ever authenticating, run a refresh
+        // to rotate stale cookies before reconnecting (midnight cutoff,
+        // tier change, etc.)
+        if (!wasAuth && authFailRetries < MAX_AUTH_FAIL_RETRIES) {
+          authFailRetries++;
+          await refreshBeforeReconnect();
+        }
+        reconnectTimer = setTimeout(connect, 2000);
       };
     }
 
@@ -481,6 +505,17 @@ export function useChatRoom(
     if (!token) return;
     let stopped = false;
     let reconnectTimer: ReturnType<typeof setTimeout>;
+    let wasAuthenticated = false;
+    let authFailRetries = 0;
+    const MAX_AUTH_FAIL_RETRIES = 3;
+
+    async function refreshBeforeReconnect() {
+      try {
+        await apiFetch("/api/auth/refresh", { method: "POST" });
+      } catch {
+        /* refresh failed — will try connecting anyway */
+      }
+    }
 
     function connect() {
       const ws = new WebSocket(MSG_WS_URL);
@@ -492,7 +527,7 @@ export function useChatRoom(
         let deviceToken = "";
         let userToken = "";
         try {
-          const res = await fetch("/api/auth/token");
+          const res = await apiFetch("/api/auth/token");
           if (res.ok) {
             const t = (await res.json()) as {
               accessToken: string;
@@ -518,6 +553,8 @@ export function useChatRoom(
         try {
           const data = JSON.parse(e.data);
           if (data.type === "authenticated") {
+            wasAuthenticated = true;
+            authFailRetries = 0;
             setConnected(true);
             ws.send(JSON.stringify({ type: "get-room-counts" }));
             const current = roomRef.current;
@@ -555,13 +592,17 @@ export function useChatRoom(
         } catch {}
       };
 
-      ws.onclose = () => {
+      ws.onclose = async () => {
         setConnected(false);
         wsRef.current = null;
-        // Clear pending optimistic timeouts — echoes can't arrive on a new connection
         clearPendingTimers();
         sendingRef.current = false;
-        if (!stopped) reconnectTimer = setTimeout(connect, 2000);
+        if (stopped) return;
+        if (!wasAuthenticated && authFailRetries < MAX_AUTH_FAIL_RETRIES) {
+          authFailRetries++;
+          await refreshBeforeReconnect();
+        }
+        reconnectTimer = setTimeout(connect, 2000);
       };
     }
 

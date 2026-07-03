@@ -1,5 +1,6 @@
-// `me` is served from the Redis session snapshot (no Postgres on the hot path),
-// so only snapshot fields exist: id, email, role, tier.
+// `me` is served from the Redis session snapshot (no Postgres on the hot path).
+// All SessionUserPayload fields must be selected so the frontend User type is
+// fully hydrated on every page load / rehydration.
 export const ME_QUERY = `
   query Me {
     me {
@@ -7,6 +8,11 @@ export const ME_QUERY = `
       email
       role
       tier
+      name
+      username
+      avatarUrl
+      locale
+      timezone
     }
   }
 `;

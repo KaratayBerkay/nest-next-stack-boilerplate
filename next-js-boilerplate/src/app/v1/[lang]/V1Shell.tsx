@@ -12,6 +12,7 @@ import { useClickOutside } from "@/hooks/useClickOutside";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { LOGIN_PATH } from "@/constants/routes";
 import { Avatar } from "@/components/ui/Avatar";
+import { Badge as UiBadge } from "@/components/ui/Badge";
 import { initials } from "@/lib/initials";
 import { cn } from "@/lib/cn";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
@@ -167,7 +168,12 @@ function ProfileDropdown({
   align = "right",
   children,
 }: {
-  user: { name?: string; email: string };
+  user: {
+    name?: string;
+    email: string;
+    avatarUrl?: string;
+    tier?: string;
+  };
   logout: () => void;
   align?: "left" | "right";
   children?: React.ReactNode;
@@ -187,6 +193,11 @@ function ProfileDropdown({
           {user.name || "User"}
         </p>
         <p className="text-muted truncate text-xs">{user.email}</p>
+        {user.tier && (
+          <div className="mt-1">
+            <UiBadge variant="secondary">{user.tier}</UiBadge>
+          </div>
+        )}
       </div>
       <button
         onClick={() => {
@@ -261,7 +272,12 @@ function ProfileSection({
   user,
   logout,
 }: {
-  user: { name?: string; email: string };
+  user: {
+    name?: string;
+    email: string;
+    avatarUrl?: string;
+    tier?: string;
+  };
   logout: () => void;
 }) {
   const t = useMessages("v1-shell");
@@ -276,6 +292,7 @@ function ProfileSection({
         className="hover:bg-surface-hover flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors"
       >
         <Avatar
+          src={user.avatarUrl}
           fallback={initials(user.name || user.email)}
           className="bg-brand h-8 w-8 shrink-0 text-[11px] text-white"
         />
@@ -283,7 +300,14 @@ function ProfileSection({
           <span className="text-fg truncate font-medium">
             {user.name || "User"}
           </span>
-          <span className="text-muted truncate text-xs">{user.email}</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-muted truncate text-xs">{user.email}</span>
+            {user.tier && (
+              <span className="rounded-full border px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider">
+                {user.tier}
+              </span>
+            )}
+          </div>
         </div>
         <IconChevronDown
           size={16}
@@ -418,6 +442,7 @@ export function V1Shell({ children }: { children: React.ReactNode }) {
                 <NotificationDropdown lang={lang} />
                 <ProfileDropdown user={user} logout={logout} align="right">
                   <Avatar
+                    src={user.avatarUrl}
                     fallback={initials(user.name || user.email)}
                     className="bg-brand ring-border h-8 w-8 shrink-0 text-[11px] text-white ring-2"
                   />
