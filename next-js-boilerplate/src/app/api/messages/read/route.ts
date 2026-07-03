@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { getAccessToken } from "@/store/ssr-cookies";
+import { sessionTokenHeaders } from "@/lib/backend";
 
 const BACKEND = serverEnv().APP_URL;
 
@@ -12,11 +13,13 @@ export async function POST(request: NextRequest) {
 
   const body = await request.text();
   const url = `${BACKEND}/api/messages/read`;
+  const stHeaders = await sessionTokenHeaders();
   const res = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
+      ...stHeaders,
     },
     body,
   });
