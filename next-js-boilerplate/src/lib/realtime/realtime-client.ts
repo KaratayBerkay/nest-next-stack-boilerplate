@@ -14,7 +14,9 @@ export class RealtimeClient {
   private sendQueue: Record<string, unknown>[] = [];
   private topicWatches = new Set<string>();
   private registeredServices: string[] = [];
+  private currentClaim: { page: string | null; params?: Record<string, string> } | null = null;
   private authFailRetries = 0;
+  private pendingAuthFail = false;
   private static readonly MAX_AUTH_FAIL_RETRIES = 3;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private backoffTimer: ReturnType<typeof setTimeout> | null = null;
@@ -27,6 +29,7 @@ export class RealtimeClient {
     private readonly getTokens: () => Promise<Record<string, string> | null>,
     private readonly onStatusChange: (status: RealtimeStatus) => void,
     private readonly onFrame: (frame: Record<string, unknown>) => void,
+    private readonly onAuthenticated?: () => void,
   ) {}
 
   connect(): void {
@@ -38,7 +41,16 @@ export class RealtimeClient {
     ws.onopen = async () => {
       if (this.destroyed) return;
       this.setStatus("authenticating");
-      const tokens = await this.getTokens();
+
+      // If we're retrying after an auth failure, bust the token cache first
+      let tokens: Record<string, string> | null = null;
+      if (this.pendingAuthFail) {
+        this.pendingAuthFail = false;
+        tokens = await this.refreshAndFetchTokens();
+      } else {
+        tokens = await this.getTokens();
+      }
+
       if (!tokens || this.destroyed) {
         ws.close();
         return;
@@ -51,14 +63,18 @@ export class RealtimeClient {
       try {
         const data = JSON.parse(e.data) as Record<string, unknown>;
         if (data.type === "error" && /auth/i.test(String(data.message ?? ""))) {
+          this.pendingAuthFail = true;
           ws.close();
           return;
         }
         if (data.type === "authenticated") {
           this.authFailRetries = 0;
+          this.pendingAuthFail = false;
           this.setStatus("open");
           this.flushQueue();
           this.replaySubscriptions();
+          this.replayClaim();
+          this.onAuthenticated?.();
           return;
         }
         this.onFrame(data);
@@ -107,6 +123,11 @@ export class RealtimeClient {
     this.send({ type: "register", services });
   }
 
+  claimPage(page: string | null, params?: Record<string, string>): void {
+    this.currentClaim = { page, params };
+    this.send({ type: "page", page, params });
+  }
+
   getStatus(): RealtimeStatus {
     return this.status;
   }
@@ -134,6 +155,27 @@ export class RealtimeClient {
     for (const topic of this.topicWatches) {
       this.send({ type: "watch", topic });
     }
+  }
+
+  private replayClaim(): void {
+    if (this.currentClaim) {
+      this.send({
+        type: "page",
+        page: this.currentClaim.page,
+        params: this.currentClaim.params,
+      });
+    }
+  }
+
+  private async refreshAndFetchTokens(): Promise<Record<string, string> | null> {
+    try {
+      // Bust the token cache by forcing a refresh
+      const res = await fetch("/api/auth/refresh", { method: "POST" });
+      if (!res.ok) return null;
+    } catch {
+      // Refresh failed — try with existing tokens
+    }
+    return this.getTokens();
   }
 
   private handleDisconnect(): void {

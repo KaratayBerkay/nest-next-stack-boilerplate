@@ -166,5 +166,9 @@ export class NotificationService {
       type: 'Count',
       value: unread,
     });
+    this.realtime.emitToService(userId, 'NOTIFICATION', {
+      renew: 'Notifications',
+      type: 'Read',
+    });
   }
 }

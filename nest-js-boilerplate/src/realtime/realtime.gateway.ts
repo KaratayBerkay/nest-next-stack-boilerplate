@@ -10,6 +10,9 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
 import { IncomingMessage } from 'http';
 import crypto from 'crypto';
+import Redis from 'ioredis';
+import { Inject } from '@nestjs/common';
+import { REDIS_CLIENT } from '../redis/redis.module';
 import { TokenStoreService } from '../auth/token-store.service';
 import { TokenDerivationService } from '../auth/token-derivation.service';
 import { CryptoService } from '../common/crypto/crypto.service';
@@ -26,6 +29,8 @@ type AuthWs = WebSocket & {
   registeredServices?: string[];
   watchedTopics?: string[];
   pendingIp?: string;
+  page?: string | null;
+  pageParams?: Record<string, string>;
 };
 
 interface AuthTokens {
@@ -41,6 +46,15 @@ export type FrameHandler = (
 ) => void | Promise<void>;
 
 const TOPIC_ALLOWLIST = /^(feed|post:[a-z0-9]+)$/;
+
+const PAGE_ALLOWLIST: Record<string, string[]> = {
+  messages: [],
+  'friend-request': [],
+  notification: [],
+  feed: [],
+  post: ['id'],
+  'chat-room': ['room'],
+};
 
 @Injectable()
 export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
@@ -58,6 +72,15 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
   private pendingByIp = new Map<string, number>();
   private topicWatchers = new Map<string, Set<AuthWs>>();
   private handlers = new Map<string, FrameHandler>();
+  private pageClaims = new Map<string, Set<AuthWs>>();
+  private pageJoinCallbacks = new Map<
+    string,
+    (ws: WebSocket, params: Record<string, string>) => void
+  >();
+  private pageLeaveCallbacks = new Map<
+    string,
+    (ws: WebSocket, params: Record<string, string>) => void
+  >();
 
   constructor(
     private readonly adapterHost: HttpAdapterHost,
@@ -65,6 +88,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     private readonly tokenStore: TokenStoreService,
     private readonly derivation: TokenDerivationService,
     private readonly crypto: CryptoService,
+    @Inject(REDIS_CLIENT) private readonly redis: Redis,
   ) {}
 
   onModuleInit() {
@@ -106,6 +130,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       ws.on('close', () => {
         this.releasePending(authWs);
         this.cleanupServiceConnections(authWs);
+        this.cleanupPageClaim(authWs);
         this.cleanupTopicWatches(authWs);
         const uid = authWs.userId;
         if (uid) {
@@ -125,6 +150,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       });
     });
 
+    let heartbeatCount = 0;
     this.heartbeatTimer = setInterval(() => {
       this.wss.clients.forEach((ws) => {
         const client = ws as AuthWs;
@@ -135,6 +161,11 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         client.isAlive = false;
         ws.ping();
       });
+      // Refresh Redis presence TTL every 4th heartbeat (~2 min)
+      heartbeatCount++;
+      if (heartbeatCount % 4 === 0) {
+        this.refreshPresenceTTL().catch(() => {});
+      }
     }, 30000);
   }
 
@@ -186,6 +217,14 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
 
     if (data.type === 'unwatch') {
       this.handleUnwatch(authWs, data as { topic: string });
+      return;
+    }
+
+    if (data.type === 'page') {
+      this.handlePage(
+        authWs,
+        data as { page: string | null; params?: Record<string, string> },
+      );
       return;
     }
 
@@ -383,6 +422,235 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       if (watchers) {
         watchers.delete(ws);
         if (watchers.size === 0) this.topicWatchers.delete(topic);
+      }
+    }
+  }
+
+  // ==================== Page-claim system (Phase 7) ====================
+
+  registerPageCallbacks(
+    page: string,
+    onJoin: (ws: WebSocket, params: Record<string, string>) => void,
+    onLeave: (ws: WebSocket, params: Record<string, string>) => void,
+  ): void {
+    this.pageJoinCallbacks.set(page, onJoin);
+    this.pageLeaveCallbacks.set(page, onLeave);
+  }
+
+  private handlePage(
+    ws: AuthWs,
+    data: { page: string | null; params?: Record<string, string> },
+  ) {
+    if (!ws.userId) return;
+
+    const newPage = data.page;
+    const newParams = data.params;
+
+    // Validate page and params
+    if (newPage !== null) {
+      const allowedParams = PAGE_ALLOWLIST[newPage];
+      if (!allowedParams) {
+        ws.send(JSON.stringify({ type: 'error', message: 'Invalid page' }));
+        return;
+      }
+      const paramKeys = newParams ? Object.keys(newParams) : [];
+      for (const key of paramKeys) {
+        if (!allowedParams.includes(key)) {
+          ws.send(
+            JSON.stringify({
+              type: 'error',
+              message: `Invalid param "${key}" for page "${newPage}"`,
+            }),
+          );
+          return;
+        }
+      }
+      for (const required of allowedParams) {
+        if (!paramKeys.includes(required)) {
+          ws.send(
+            JSON.stringify({
+              type: 'error',
+              message: `Missing required param "${required}" for page "${newPage}"`,
+            }),
+          );
+          return;
+        }
+      }
+    }
+
+    // Clean up old claim (topic/room + index)
+    if (ws.page === 'feed') {
+      this.removeFromTopicWatch(ws, 'feed');
+    } else if (ws.page === 'post' && ws.pageParams?.id) {
+      this.removeFromTopicWatch(ws, `post:${ws.pageParams.id}`);
+    } else if (ws.page === 'chat-room' && ws.pageParams?.room) {
+      const cb = this.pageLeaveCallbacks.get('chat-room');
+      if (cb) cb(ws, ws.pageParams);
+    }
+    // Remove from old page index
+    if (ws.page && ws.page) {
+      const oldKey = `page:${this.buildPageKey(ws.page, ws.pageParams)}:${ws.userId}`;
+      const oldSockets = this.pageClaims.get(oldKey);
+      if (oldSockets) {
+        oldSockets.delete(ws);
+        if (oldSockets.size === 0) this.pageClaims.delete(oldKey);
+      }
+    }
+
+    // Set new claim
+    ws.page = newPage;
+    ws.pageParams = newParams;
+
+    if (newPage === null) return;
+
+    // Add to new page index
+    const newKey = `page:${this.buildPageKey(newPage, newParams)}:${ws.userId}`;
+    if (!this.pageClaims.has(newKey)) {
+      this.pageClaims.set(newKey, new Set());
+    }
+    this.pageClaims.get(newKey)!.add(ws);
+
+    // Translate claim → topic/room membership
+    if (newPage === 'feed') {
+      this.addToTopicWatch(ws, 'feed');
+    } else if (newPage === 'post' && newParams?.id) {
+      this.addToTopicWatch(ws, `post:${newParams.id}`);
+    } else if (newPage === 'chat-room' && newParams?.room) {
+      const cb = this.pageJoinCallbacks.get('chat-room');
+      if (cb) cb(ws, newParams);
+    }
+
+    // Mirror to Redis (fire-and-forget)
+    this.syncPresenceToRedis(ws).catch(() => {});
+  }
+
+  private cleanupPageClaim(ws: AuthWs) {
+    if (!ws.userId) return;
+    // Leave room if applicable
+    if (ws.page === 'chat-room' && ws.pageParams?.room) {
+      const cb = this.pageLeaveCallbacks.get('chat-room');
+      if (cb) cb(ws, ws.pageParams);
+    }
+    // Remove from page index
+    if (ws.page) {
+      const key = `page:${this.buildPageKey(ws.page, ws.pageParams)}:${ws.userId}`;
+      const sockets = this.pageClaims.get(key);
+      if (sockets) {
+        sockets.delete(ws);
+        if (sockets.size === 0) this.pageClaims.delete(key);
+      }
+    }
+    // Remove from Redis presence (fire-and-forget)
+    this.removePresenceFromRedis(ws).catch(() => {});
+  }
+
+  emitToPage(
+    userId: string,
+    pageKey: string,
+    frame: Record<string, unknown>,
+  ): number {
+    const key = `page:${pageKey}:${userId}`;
+    const sockets = this.pageClaims.get(key);
+    if (!sockets) return 0;
+    const msg = JSON.stringify(frame);
+    let sent = 0;
+    for (const ws of sockets) {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(msg);
+        sent++;
+      }
+    }
+    return sent;
+  }
+
+  private buildPageKey(page: string, params?: Record<string, string>): string {
+    if (!params || Object.keys(params).length === 0) return page;
+    const sorted = Object.entries(params).sort(([a], [b]) =>
+      a.localeCompare(b),
+    );
+    return `${page}:${sorted.map(([k, v]) => `${k}:${v}`).join(':')}`;
+  }
+
+  private addToTopicWatch(ws: AuthWs, topic: string) {
+    if (!this.topicWatchers.has(topic))
+      this.topicWatchers.set(topic, new Set());
+    this.topicWatchers.get(topic)!.add(ws);
+    if (!ws.watchedTopics) ws.watchedTopics = [];
+    if (!ws.watchedTopics.includes(topic)) ws.watchedTopics.push(topic);
+  }
+
+  private removeFromTopicWatch(ws: AuthWs, topic: string) {
+    const watchers = this.topicWatchers.get(topic);
+    if (watchers) {
+      watchers.delete(ws);
+      if (watchers.size === 0) this.topicWatchers.delete(topic);
+    }
+    if (ws.watchedTopics) {
+      ws.watchedTopics = ws.watchedTopics.filter((t) => t !== topic);
+    }
+  }
+
+  // ==================== Redis presence mirror (Phase 7 T2) ====================
+
+  private static readonly PRESENCE_TTL = 120; // seconds — safety-net expiry
+
+  private presenceKey(userId: string): string {
+    return `presence:${userId}`;
+  }
+
+  private async syncPresenceToRedis(ws: AuthWs): Promise<void> {
+    if (!ws.userId || !ws.deviceTokenHash || !ws.page) return;
+    const field = ws.deviceTokenHash;
+    const value = JSON.stringify({
+      page: ws.page,
+      params: ws.pageParams ?? {},
+      at: Date.now(),
+    });
+    try {
+      const key = this.presenceKey(ws.userId);
+      const pipe = this.redis.pipeline();
+      pipe.hset(key, field, value);
+      pipe.expire(key, RealtimeGateway.PRESENCE_TTL);
+      await pipe.exec();
+    } catch {
+      /* Redis write failure — non-critical */
+    }
+  }
+
+  private async removePresenceFromRedis(ws: AuthWs): Promise<void> {
+    if (!ws.userId || !ws.deviceTokenHash) return;
+    try {
+      await this.redis.hdel(this.presenceKey(ws.userId), ws.deviceTokenHash);
+    } catch {
+      /* Redis delete failure — non-critical */
+    }
+  }
+
+  private async refreshPresenceTTL(): Promise<void> {
+    const now = Date.now();
+    for (const [, sockets] of this.pageClaims) {
+      for (const ws of sockets) {
+        if (
+          ws.readyState !== WebSocket.OPEN ||
+          !ws.userId ||
+          !ws.deviceTokenHash
+        )
+          continue;
+        try {
+          const key = this.presenceKey(ws.userId);
+          const field = ws.deviceTokenHash;
+          const value = JSON.stringify({
+            page: ws.page,
+            params: ws.pageParams ?? {},
+            at: now,
+          });
+          const pipe = this.redis.pipeline();
+          pipe.hset(key, field, value);
+          pipe.expire(key, RealtimeGateway.PRESENCE_TTL);
+          await pipe.exec();
+        } catch {
+          /* non-critical */
+        }
       }
     }
   }

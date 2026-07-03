@@ -9,15 +9,27 @@ type AuthFrame = { type: "auth"; tokens: AuthTokens };
 type RegisterFrame = { type: "register"; services: string[] };
 type WatchFrame = { type: "watch"; topic: string };
 type UnwatchFrame = { type: "unwatch"; topic: string };
+type PageFrame = {
+  type: "page";
+  page: string | null;
+  params?: Record<string, string>;
+};
 
-export type OutgoingFrame = AuthFrame | RegisterFrame | WatchFrame | UnwatchFrame;
+export type OutgoingFrame =
+  | AuthFrame
+  | RegisterFrame
+  | WatchFrame
+  | UnwatchFrame
+  | PageFrame;
 
 export type RenewFrame =
   | { renew: "Notifications"; type: "Count"; value: number }
   | { renew: "Notifications"; type: "Item"; item: Record<string, unknown> }
+  | { renew: "Notifications"; type: "Read" }
   | { renew: "Messages"; type: "Conversation"; conversation: Record<string, unknown> }
   | { renew: "Feed"; type: "New" }
-  | { renew: "Feed"; type: "Post"; id: string };
+  | { renew: "Feed"; type: "Post"; id: string }
+  | { renew: "Friends"; type: "PendingList" };
 
 export type EventFrame =
   | { type: "direct-message"; message: Record<string, unknown> }

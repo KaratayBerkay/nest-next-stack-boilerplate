@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, Suspense } from "react";
+import { useCallback, useEffect, useMemo, Suspense } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   IconBell,
@@ -13,46 +13,21 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { useDeviceType } from "@/hooks/useDeviceType";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
-
-type NotificationItem = {
-  id: string;
-  type: string;
-  title: string;
-  body?: string;
-  readAt?: string;
-  createdAt: string;
-  actor?: { name?: string };
-};
+import {
+  useNotifications,
+} from "@/lib/realtime/useNotifications";
+import { useQueryClient } from "@tanstack/react-query";
 
 function NotificationPageContent() {
   const params = useParams<{ lang: string }>();
   const lang = params?.lang ?? "en";
   const router = useRouter();
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    apiFetch("/api/notifications")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        const items: NotificationItem[] = data?.notifications ?? data ?? [];
-        setNotifications(items);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
-
-  const markRead = useCallback(async (id: string) => {
-    try {
-      await apiFetch("/api/notifications/read", {
-        method: "POST",
-        body: JSON.stringify({ id }),
-      });
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, readAt: new Date().toISOString() } : n)),
-      );
-    } catch {}
-  }, []);
+  const queryClient = useQueryClient();
+  const { data: notifData, isLoading } = useNotifications();
+  const notifications = useMemo(
+    () => notifData?.items ?? [],
+    [notifData?.items],
+  );
 
   const markAllRead = useCallback(async () => {
     try {
@@ -60,11 +35,33 @@ function NotificationPageContent() {
         method: "POST",
         body: JSON.stringify({ all: true }),
       });
-      setNotifications((prev) =>
-        prev.map((n) => ({ ...n, readAt: n.readAt ?? new Date().toISOString() })),
-      );
+      await queryClient.invalidateQueries({
+        queryKey: ["notifications"],
+      });
     } catch {}
-  }, []);
+  }, [queryClient]);
+
+  useEffect(() => {
+    if (notifications.length > 0) {
+      markAllRead();
+    }
+  }, [notifications.length, markAllRead]);
+
+  const markRead = useCallback(
+    async (id: string) => {
+      try {
+        await apiFetch("/api/notifications/read", {
+          method: "POST",
+          body: JSON.stringify({ id }),
+        });
+        await queryClient.invalidateQueries({
+          queryKey: ["notifications"],
+        });
+      } catch {}
+    },
+    [queryClient],
+  );
+
   const {
     supported,
     permission,
@@ -158,7 +155,7 @@ function NotificationPageContent() {
           </div>
         )}
 
-        {loading ? (
+        {isLoading ? (
           <div className="flex flex-col gap-1 px-1">
             {Array.from({ length: 5 }).map((_, i) => (
               <div

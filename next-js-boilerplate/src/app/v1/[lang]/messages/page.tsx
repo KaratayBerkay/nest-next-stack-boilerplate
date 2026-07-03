@@ -16,6 +16,8 @@ import { useSearchParams, useParams } from "next/navigation";
 import Link from "next/link";
 import { FIND_FRIENDS_PATH } from "@/constants/routes";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
+import { useConversations } from "@/lib/realtime/useConversations";
+import { useConversation } from "@/lib/realtime/useConversation";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
 import { useDeviceType } from "@/hooks/useDeviceType";
@@ -45,12 +47,7 @@ type Message = {
   readAt: string | null;
   deliveredAt: string | null;
 };
-type Conversation = {
-  user: UserInfo;
-  lastMessage: string;
-  lastTime: string;
-  unread: number;
-};
+
 
 export default function MessagesPage() {
   const t = useMessages("messages");
@@ -77,11 +74,6 @@ function MessagesPageContent() {
   const params = useParams<{ lang: string }>();
   const [selectedUser, setSelectedUser] = useState<UserInfo | null>(null);
   const [friends, setFriends] = useState<UserInfo[]>([]);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [messageStore, setMessageStore] = useState<Record<string, Message[]>>(
-    {},
-  );
-  const [hasMore, setHasMore] = useState<Record<string, boolean>>({});
   const [input, setInput] = useState("");
   const [search, setSearch] = useState("");
   const [findInput, setFindInput] = useState("");
@@ -91,6 +83,19 @@ function MessagesPageContent() {
   );
   const [messageError, setMessageError] = useState<string | null>(null);
   const messagesRef = useYSwipeGesture<HTMLDivElement>();
+
+  // Cache-backed data (Phase 7 D4)
+  const { data: conversationsData, refetch: refetchConversations } =
+    useConversations();
+  const conversations = conversationsData ?? [];
+
+  const {
+    data: conversationData,
+    fetchNextPage,
+    hasNextPage,
+  } = useConversation(selectedUser?.id ?? null);
+  const conversationMessages =
+    conversationData?.pages.flatMap((p) => p.messages).reverse() ?? [];
 
   const [tab, setTab] = useState<"conversations" | "friends">(
     () =>
@@ -103,16 +108,6 @@ function MessagesPageContent() {
   useEffect(() => {
     sessionStorage.setItem("msg_tab", tab);
   }, [tab]);
-
-  const fetchConversations = useCallback(async () => {
-    try {
-      const res = await apiFetch("/api/messages/conversations");
-      if (res.ok) {
-        const data: Conversation[] = await res.json();
-        setConversations(data);
-      }
-    } catch {}
-  }, []);
 
   const fetchFriends = useCallback(async (q?: string) => {
     try {
@@ -127,45 +122,15 @@ function MessagesPageContent() {
     } catch {}
   }, []);
 
-  const fetchMessages = useCallback(
-    async (userId: string, before?: string) => {
-      try {
-        const params = new URLSearchParams();
-        if (before) params.set("before", before);
-        params.set("take", "30");
-        const res = await apiFetch(
-          `/api/messages/conversations/${userId}/messages?${params.toString()}`,
-        );
-        if (res.ok) {
-          const data = await res.json();
-          const msgs: Message[] = data.messages ?? [];
-          if (before) {
-            setMessageStore((prev) => ({
-              ...prev,
-              [userId]: [...msgs, ...(prev[userId] ?? [])],
-            }));
-          } else {
-            setMessageStore((prev) => ({ ...prev, [userId]: msgs }));
-          }
-          setHasMore((prev) => ({ ...prev, [userId]: data.hasMore ?? false }));
-        }
-      } catch {}
-    },
-    [],
-  );
-
   const sendMessage = useCallback(
     async (recipientId: string, text: string) => {
-      const res = await apiFetch(`/api/messages/conversations/${recipientId}/messages`, {
-        method: "POST",
-        body: JSON.stringify({ text }),
-      });
+      const res = await apiFetch(
+        `/api/messages/conversations/${recipientId}/messages`,
+        { method: "POST", body: JSON.stringify({ text }) },
+      );
       if (res.ok) {
-        const msg: Message = await res.json();
-        setMessageStore((prev) => ({
-          ...prev,
-          [recipientId]: [...(prev[recipientId] ?? []), msg],
-        }));
+        // Optimistic upsert into the cache — provider dedupes the echoed frame
+        // The provider handles the echo via direct-message event dispatch
       }
     },
     [],
@@ -177,34 +142,16 @@ function MessagesPageContent() {
         method: "POST",
         body: JSON.stringify({ userId }),
       });
-      setConversations((prev) =>
-        prev.map((c) =>
-          c.user.id === userId ? { ...c, unread: 0 } : c,
-        ),
-      );
-      setMessageStore((prev) => {
-        const msgs = prev[userId];
-        if (!msgs) return prev;
-        return {
-          ...prev,
-          [userId]: msgs.map((m) =>
-            m.senderId === userId && !m.readAt
-              ? { ...m, readAt: new Date().toISOString() }
-              : m,
-          ),
-        };
-      });
+      refetchConversations();
     } catch {}
-  }, []);
+  }, [refetchConversations]);
 
   useEffect(() => {
     if (user) {
       /* eslint-disable-next-line react-hooks/set-state-in-effect */
-      fetchConversations();
-      /* eslint-disable-next-line react-hooks/set-state-in-effect */
       fetchFriends();
     }
-  }, [user, fetchConversations, fetchFriends]);
+  }, [user, fetchFriends]);
 
   const lastParamRef = useRef<string | null>(null);
   useEffect(() => {
@@ -219,10 +166,8 @@ function MessagesPageContent() {
       });
       /* eslint-disable-next-line react-hooks/set-state-in-effect */
       markMessagesRead(match.user.id);
-      /* eslint-disable-next-line react-hooks/set-state-in-effect */
-      fetchMessages(match.user.id);
     }
-  }, [searchParams, conversations, fetchMessages, markMessagesRead]);
+  }, [searchParams, conversations, markMessagesRead]);
 
   useEffect(() => {
     if (search) {
@@ -233,10 +178,6 @@ function MessagesPageContent() {
       fetchFriends();
     }
   }, [search, fetchFriends]);
-
-  const conversationMessages = selectedUser
-    ? messageStore[selectedUser.id] || []
-    : [];
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -251,9 +192,8 @@ function MessagesPageContent() {
       setTab("conversations");
       setSidebarOpen(false);
       markMessagesRead(u.id);
-      await fetchMessages(u.id);
     },
-    [fetchMessages, markMessagesRead],
+    [markMessagesRead],
   );
 
   const handleSend = useCallback(async () => {
@@ -585,14 +525,9 @@ function MessagesPageContent() {
                     <p className="text-muted text-sm">{t.noMessages}</p>
                   </div>
                 )}
-                {hasMore[selectedUser.id] && (
+                {hasNextPage && (
                   <LoadEarlierButton
-                    onClick={() => {
-                      const msgs = messageStore[selectedUser.id] || [];
-                      const oldest =
-                        msgs.length > 0 ? msgs[0].createdAt : undefined;
-                      fetchMessages(selectedUser.id, oldest);
-                    }}
+                    onClick={() => fetchNextPage()}
                   />
                 )}
                 {conversationMessages.map((msg: Message, i) => {

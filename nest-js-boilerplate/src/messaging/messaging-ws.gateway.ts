@@ -58,6 +58,13 @@ export class MessagingWsGateway implements OnModuleInit {
     this.realtime.registerHandler('get-room-counts', (ws) =>
       this.handleGetRoomCounts(ws as AuthWs),
     );
+
+    // Page-claim callbacks for chat-room (Phase 7 D1/D2)
+    this.realtime.registerPageCallbacks(
+      'chat-room',
+      (ws, params) => this.handleClaimJoinRoom(ws as AuthWs, params),
+      (ws, params) => this.handleClaimLeaveRoom(ws as AuthWs, params),
+    );
   }
 
   private async handleDirectMessage(
@@ -70,17 +77,10 @@ export class MessagingWsGateway implements OnModuleInit {
       data.recipientId,
       data.text,
     );
-    this.realtime.emitToUser(data.recipientId, {
-      type: 'direct-message',
-      message,
-    });
-    this.realtime.emitToUser(message.senderId, {
-      type: 'direct-message',
-      message,
-    });
     const sender = message.sender as
       | { id?: string; name?: string | null; email?: string; avatar?: string }
       | undefined;
+    // Chrome: Conversation renew to all recipient MESSAGE sockets
     this.realtime.emitToService(data.recipientId, 'MESSAGE', {
       renew: 'Messages',
       type: 'Conversation',
@@ -94,6 +94,15 @@ export class MessagingWsGateway implements OnModuleInit {
         lastTime: message.createdAt,
         unread: 1,
       },
+    });
+    // Page content: DM to messages-page viewers only
+    this.realtime.emitToPage(data.recipientId, 'messages', {
+      type: 'direct-message',
+      message,
+    });
+    this.realtime.emitToPage(message.senderId, 'messages', {
+      type: 'direct-message',
+      message,
     });
     if (!this.realtime.hasServiceConnection(data.recipientId, 'MESSAGE')) {
       const sender = message.sender as
@@ -127,7 +136,7 @@ export class MessagingWsGateway implements OnModuleInit {
       select: { senderId: true },
     });
     if (message) {
-      this.realtime.emitToUser(message.senderId, {
+      this.realtime.emitToPage(message.senderId, 'messages', {
         type: 'message-delivered',
         userId: message.senderId,
         messageId: data.messageId,
@@ -213,5 +222,52 @@ export class MessagingWsGateway implements OnModuleInit {
         rooms: this.ms.getRoomCounts(),
       }),
     );
+  }
+
+  // Phase 7: page-claim room join/leave (chat-room claim translates to room join)
+
+  private handleClaimJoinRoom(ws: AuthWs, params: Record<string, string>) {
+    if (!ws.userId || !ws.socketId || !params.room) return;
+    const room = params.room;
+    if (ws.room && ws.room !== room) {
+      const oldMembers = this.ms.leaveRoom(ws.room, ws.socketId);
+      this.realtime.broadcastToRoom(ws.room, {
+        type: 'user-left',
+        room: ws.room,
+        members: oldMembers,
+      });
+    }
+    ws.room = room;
+    const member: RoomMember = {
+      socketId: ws.socketId,
+      userId: ws.userId,
+      name: ws.userName || 'Unknown',
+    };
+    const members = this.ms.joinRoom(room, member);
+    this.realtime.broadcastToRoom(room, {
+      type: 'user-joined',
+      room,
+      user: member,
+      members,
+    });
+    this.realtime.broadcastAll({
+      type: 'room-counts',
+      rooms: this.ms.getRoomCounts(),
+    });
+  }
+
+  private handleClaimLeaveRoom(ws: AuthWs, params: Record<string, string>) {
+    if (!ws.userId || !ws.socketId || !params.room) return;
+    ws.room = undefined;
+    const members = this.ms.leaveRoom(params.room, ws.socketId);
+    this.realtime.broadcastToRoom(params.room, {
+      type: 'user-left',
+      room: params.room,
+      members,
+    });
+    this.realtime.broadcastAll({
+      type: 'room-counts',
+      rooms: this.ms.getRoomCounts(),
+    });
   }
 }

@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  Suspense,
   useCallback,
   useContext,
   useEffect,
@@ -9,6 +10,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { clientEnv } from "@/lib/env";
@@ -27,6 +29,7 @@ type RealtimeContextValue = {
   watch: (topic: string) => void;
   unwatch: (topic: string) => void;
   registerServices: (services: string[]) => void;
+  claimPage: (page: string | null, params?: Record<string, string>) => void;
 };
 
 const RealtimeContext = createContext<RealtimeContextValue | null>(null);
@@ -78,25 +81,19 @@ function cachedFetchTokens(
   });
 }
 
-// ── Tab coordination ──
+/** Bust the token cache so the next fetch gets fresh tokens. */
+function bustTokenCache(): void {
+  _tokKey = "";
+  _tokData = null;
+  _tokExp = 0;
+  _tokPromise = null;
+}
 
-const TAB_ID =
-  typeof crypto !== "undefined"
-    ? crypto.randomUUID()
-    : Math.random().toString(36).slice(2, 10);
+// ── Tab coordination (BroadcastChannel for fan-out + cmd forwarding) ──
 
 const CHANNEL = "rt-coord";
-const ELECTION_MS = 1_200;
-// Browser throttles setInterval in background tabs to ~60s, so heartbeat at 30s
-// and give followers a 3x cushion (90s) before re-electing.
-const HEARTBEAT_MS = 30_000;
-const LEADER_TIMEOUT_MS = 90_000;
 
 type Cmd =
-  | { type: "hello"; tabId: string }
-  | { type: "gone"; tabId: string }
-  | { type: "leader"; tabId: string }
-  | { type: "beat"; tabId: string }
   | { type: "frame"; data: Record<string, unknown> }
   | { type: "st"; status: RealtimeStatus }
   | { type: "cmd"; act: string; payload: unknown };
@@ -106,6 +103,132 @@ function openBc(): BroadcastChannel | null {
     return new BroadcastChannel(CHANNEL);
   } catch {
     return null;
+  }
+}
+
+// ── Route → page claim mapping ──
+
+function routeToPageClaim(
+  pathname: string | null,
+  searchParams: URLSearchParams | null,
+): { page: string | null; params?: Record<string, string> } {
+  if (!pathname) return { page: null };
+  const sp = searchParams ?? new URLSearchParams();
+  const seg = pathname.split("/").filter(Boolean);
+  // Everything after /v1/{lang}/ is the route path
+  const route = seg.slice(2).join("/");
+
+  if (route === "messages" || route.startsWith("messages")) {
+    const user = sp.get("user");
+    if (user) return { page: "messages", params: { peer: user } };
+    return { page: "messages" };
+  }
+  if (route === "find-friends") {
+    return { page: "friend-request" };
+  }
+  if (route === "notification") {
+    return { page: "notification" };
+  }
+  if (route === "feed") {
+    return { page: "feed" };
+  }
+  if (route.startsWith("posts/")) {
+    const uuid = route.split("/")[1];
+    if (uuid) return { page: "post", params: { id: uuid } };
+    return { page: "feed" };
+  }
+  if (route === "chat-room") {
+    const room = sp.get("room") || "general";
+    return { page: "chat-room", params: { room } };
+  }
+  return { page: null };
+}
+
+// ── Event-frame dispatch (D4: cache writes for pushed events) ──
+
+function dispatchEvent(
+  qc: ReturnType<typeof useQueryClient>,
+  frame: Record<string, unknown>,
+  ownUserId?: string,
+): void {
+  const t = frame.type as string;
+
+  if (t === "direct-message" && ownUserId) {
+    const msg = frame.message as Record<string, unknown> & {
+      id: string;
+      senderId: string;
+      recipientId: string;
+    };
+    if (!msg?.id) return;
+    const peerId =
+      msg.senderId === ownUserId ? msg.recipientId : msg.senderId;
+    // Drop if thread never fetched
+    const existing = qc.getQueryData(["messages", peerId]);
+    if (!existing) return;
+    qc.setQueryData(
+      ["messages", peerId],
+      (old: { messages: Record<string, unknown>[] } | undefined) => {
+        const msgs = old?.messages ?? [];
+        if (msgs.some((m) => m.id === msg.id)) return old;
+        return { ...old, messages: [...msgs, msg] };
+      },
+    );
+  }
+
+  if (t === "message-read" && ownUserId) {
+    const peerId = (frame.senderId as string) ?? "";
+    const existing = qc.getQueryData(["messages", peerId]);
+    if (!existing) return;
+    qc.setQueryData(
+      ["messages", peerId],
+      (old: { messages: Record<string, unknown>[] } | undefined) => {
+        const msgs = old?.messages ?? [];
+        return {
+          ...old,
+          messages: msgs.map((m) =>
+            m.senderId === ownUserId && !m.readAt
+              ? { ...m, readAt: frame.readAt }
+              : m,
+          ),
+        };
+      },
+    );
+  }
+
+  if (t === "message-delivered" && ownUserId) {
+    const peerId = (frame.userId as string) ?? "";
+    const existing = qc.getQueryData(["messages", peerId]);
+    if (!existing) return;
+    qc.setQueryData(
+      ["messages", peerId],
+      (old: { messages: Record<string, unknown>[] } | undefined) => {
+        const msgs = old?.messages ?? [];
+        return {
+          ...old,
+          messages: msgs.map((m) =>
+            m.id === frame.messageId
+              ? { ...m, deliveredAt: frame.deliveredAt }
+              : m,
+          ),
+        };
+      },
+    );
+  }
+
+  if (t === "room-message") {
+    const room = frame.room as string;
+    const msg = frame.message as Record<string, unknown>;
+    if (!room || !msg) return;
+    const existing = qc.getQueryData(["room", room]);
+    if (!existing) return;
+    qc.setQueryData(
+      ["room", room],
+      (old: Record<string, unknown>[] | undefined) => {
+        const msgs = old ?? [];
+        if (msgs.some((m) => m.id === msg.id)) return old;
+        return [...msgs, msg];
+      },
+    );
   }
 }
 
@@ -123,13 +246,15 @@ function dispatchRenew(
       } else if (frame.type === "Item") {
         qc.setQueryData(
           ["notifications", "list"],
-          (old: unknown[] | undefined) => {
-            const list = (old ?? []) as Record<string, unknown>[];
+          (old: { items: Record<string, unknown>[] } | undefined) => {
+            const list = (old?.items ?? []) as Record<string, unknown>[];
             const item = frame.item as Record<string, unknown>;
-            if (list.some((n) => n.id === item.id)) return list;
-            return [item, ...list];
+            if (list.some((n) => n.id === item.id)) return old;
+            return { ...old, items: [item, ...list] };
           },
         );
+      } else if (frame.type === "Read") {
+        qc.invalidateQueries({ queryKey: ["notifications"] });
       }
       break;
     }
@@ -171,19 +296,54 @@ function dispatchRenew(
       }
       break;
     }
+    case "Friends": {
+      if (frame.type === "PendingList") {
+        qc.invalidateQueries({ queryKey: ["friends", "requests"] });
+      }
+      break;
+    }
   }
 }
 
-// ── Provider ──
+// ── Resync on (re)connect (B11) ──
 
-export function RealtimeProvider({ children }: { children: ReactNode }) {
-  const { token } = useAuth();
+function resyncAfterConnect(
+  qc: ReturnType<typeof useQueryClient>,
+  currentClaim: { page: string | null; params?: Record<string, string> } | null,
+): void {
+  // Chrome keys — always invalidate
+  qc.invalidateQueries({ queryKey: ["conversations"] });
+  qc.invalidateQueries({ queryKey: ["notifications", "list"] });
+  qc.invalidateQueries({ queryKey: ["notifications", "count"] });
+
+  // Current page content key
+  if (currentClaim?.page === "feed") {
+    qc.invalidateQueries({ queryKey: ["feed"] });
+  } else if (currentClaim?.page === "post" && currentClaim.params?.id) {
+    qc.invalidateQueries({ queryKey: ["posts", currentClaim.params.id] });
+  } else if (currentClaim?.page === "messages" && currentClaim.params?.peer) {
+    qc.invalidateQueries({
+      queryKey: ["messages", currentClaim.params.peer],
+    });
+  } else if (currentClaim?.page === "chat-room" && currentClaim.params?.room) {
+    qc.invalidateQueries({
+      queryKey: ["room", currentClaim.params.room],
+    });
+  }
+}
+
+// ── Provider (inner — must be inside <Suspense> for useSearchParams) ──
+
+function RealtimeProviderInner({ children }: { children: ReactNode }) {
+  const { token, user } = useAuth();
   const queryClient = useQueryClient();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [status, setStatus] = useState<RealtimeStatus>("idle");
   const subsRef = useRef<Map<string, Set<FrameHandler>>>(new Map());
   const clientRef = useRef<RealtimeClient | null>(null);
-  const leaderRef = useRef(false);
   const channelRef = useRef<BroadcastChannel | null>(null);
+  const claimRef = useRef<{ page: string | null; params?: Record<string, string> } | null>(null);
 
   // ── Single effect: owns all coordination state ──
 
@@ -194,199 +354,211 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     // Process an incoming frame (from WS or broadcast)
     const process = (frame: Record<string, unknown>) => {
       dispatchRenew(queryClient, frame);
+      dispatchEvent(queryClient, frame, user?.id);
       const t = frame.type as string;
       const subs = subsRef.current.get(t);
       if (subs) for (const h of subs) h(frame);
     };
 
-    // ── Standalone WS (no BroadcastChannel) ──
-
-    const startStandalone = () => {
-      const client = new RealtimeClient(
-        clientEnv.NEXT_PUBLIC_REALTIME_WS_URL,
-        () => {
-          if (!alive) return Promise.resolve(null);
-          return cachedFetchTokens(token);
-        },
-        setStatus,
-        process,
-      );
-      clientRef.current = client;
-      client.connect();
-      client.registerServices(["MESSAGE", "NOTIFICATION"]);
-    };
+    // Compute initial claim from current route
+    const initialClaim = routeToPageClaim(pathname, searchParams);
+    claimRef.current = initialClaim;
 
     const bc = openBc();
-    if (!bc) {
-      startStandalone();
+    channelRef.current = bc;
+
+    // ── Web Locks leadership (B9) ──
+
+    if (typeof navigator !== "undefined" && navigator.locks) {
+      let client: RealtimeClient | null = null;
+      let unlockCleanupRef: (() => void) | null = null;
+
+      const onAuthenticated = () => {
+        // Replay current claim
+        if (claimRef.current && client) {
+          client.claimPage(claimRef.current.page, claimRef.current.params);
+        }
+        // Resync any missed data
+        resyncAfterConnect(queryClient, claimRef.current);
+      };
+
+      const createLeader = (): RealtimeClient => {
+        const c = new RealtimeClient(
+          clientEnv.NEXT_PUBLIC_REALTIME_WS_URL,
+          () => {
+            if (!alive) return Promise.resolve(null);
+            return cachedFetchTokens(token);
+          },
+          (s) => {
+            setStatus(s);
+            bc?.postMessage({ type: "st", status: s } satisfies Cmd);
+          },
+          (frame) => {
+            process(frame);
+            bc?.postMessage({ type: "frame", data: frame } satisfies Cmd);
+          },
+          onAuthenticated,
+        );
+        c.connect();
+        c.registerServices(["MESSAGE", "NOTIFICATION"]);
+        // Replay current claim on connect
+        if (claimRef.current) {
+          c.claimPage(claimRef.current.page, claimRef.current.params);
+        }
+        return c;
+      };
+
+      // Request exclusive lock — only one tab per origin can hold it
+      navigator.locks
+        .request(
+          "rt-leader",
+          { mode: "exclusive" },
+          async () => {
+            // This tab is the leader
+            client = createLeader();
+            clientRef.current = client;
+
+            // Keep lock held until tab closes or component unmounts
+            await new Promise<void>((resolve) => {
+              const onUnload = () => {
+                client?.disconnect();
+                resolve();
+              };
+              window.addEventListener("beforeunload", onUnload);
+              // Store cleanup reference for unmount
+              unlockCleanupRef = onUnload;
+            });
+          },
+        )
+        .then(() => {
+          // Lock released (tab closed / crash / unmount)
+          alive = false;
+          client?.disconnect();
+          clientRef.current = null;
+          if (unlockCleanupRef) {
+            window.removeEventListener("beforeunload", unlockCleanupRef);
+          }
+        })
+        .catch(() => {
+          // Lock not acquired — this tab is a follower
+          clientRef.current = null;
+          setStatus("open");
+        });
+
+      // ── BroadcastChannel: frame fan-out + cmd forwarding ──
+
+      if (bc) {
+        const onMsg = (e: MessageEvent<Cmd>) => {
+          const m = e.data;
+          switch (m.type) {
+            case "frame":
+              process(m.data);
+              break;
+            case "st":
+              setStatus(m.status);
+              break;
+            case "cmd":
+              if (client) {
+                if (m.act === "send")
+                  client.send(m.payload as Record<string, unknown>);
+                else if (m.act === "watch")
+                  client.watch(m.payload as string);
+                else if (m.act === "unwatch")
+                  client.unwatch(m.payload as string);
+                else if (m.act === "register")
+                  client.registerServices(m.payload as string[]);
+                else if (m.act === "claim") {
+                  const p = m.payload as {
+                    page: string | null;
+                    params?: Record<string, string>;
+                  };
+                  client.claimPage(p.page, p.params);
+                }
+              }
+              break;
+          }
+        };
+        bc.addEventListener("message", onMsg);
+
+        return () => {
+          alive = false;
+          bc.removeEventListener("message", onMsg);
+          client?.disconnect();
+          clientRef.current = null;
+          bc.close();
+          channelRef.current = null;
+          if (unlockCleanupRef) {
+            window.removeEventListener("beforeunload", unlockCleanupRef);
+          }
+        };
+      }
+
+      // No BroadcastChannel — leader only
       return () => {
         alive = false;
-        clientRef.current?.disconnect();
+        client?.disconnect();
         clientRef.current = null;
+        if (unlockCleanupRef) {
+          window.removeEventListener("beforeunload", unlockCleanupRef);
+        }
       };
     }
 
-    channelRef.current = bc;
+    // ── Fallback: standalone socket per tab (no BroadcastChannel) ──
 
-    // ── Leader election ──
-
-    let knownTabs = new Set<string>([TAB_ID]);
-    let electionTimer: ReturnType<typeof setTimeout> | null = null;
-    let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
-    let leaderTimeoutTimer: ReturnType<typeof setTimeout> | null = null;
-    let isLeader = false;
-    let visHandler: (() => void) | null = null;
-
-    const scheduleReelect = () => {
-      if (leaderTimeoutTimer) clearTimeout(leaderTimeoutTimer);
-      leaderTimeoutTimer = setTimeout(elect, LEADER_TIMEOUT_MS);
-    };
-
-    const elect = () => {
-      if (!alive) return;
-      isLeader = false;
-      leaderRef.current = false;
-      knownTabs = new Set([TAB_ID]);
-      bc.postMessage({ type: "hello", tabId: TAB_ID } satisfies Cmd);
-      if (electionTimer) clearTimeout(electionTimer);
-      electionTimer = setTimeout(() => {
-        if (!alive) return;
-        const sorted = Array.from(knownTabs).sort();
-        if (sorted[0] === TAB_ID) {
-          // Become leader
-          isLeader = true;
-          leaderRef.current = true;
-          bc.postMessage({ type: "leader", tabId: TAB_ID } satisfies Cmd);
-          clientRef.current?.disconnect();
-          const client = new RealtimeClient(
-            clientEnv.NEXT_PUBLIC_REALTIME_WS_URL,
-            () => {
-              if (!alive) return Promise.resolve(null);
-              return cachedFetchTokens(token);
-            },
-            (s) => {
-              setStatus(s);
-              bc.postMessage({ type: "st", status: s } satisfies Cmd);
-              if (s === "down" && isLeader) {
-                isLeader = false;
-                leaderRef.current = false;
-                bc.postMessage({ type: "gone", tabId: TAB_ID } satisfies Cmd);
-              }
-            },
-            (frame) => {
-              process(frame);
-              bc.postMessage({ type: "frame", data: frame } satisfies Cmd);
-            },
-          );
-          clientRef.current = client;
-          client.connect();
-          client.registerServices(["MESSAGE", "NOTIFICATION"]);
-          let visible = true;
-          visHandler = () => {
-            visible = !document.hidden;
-          };
-          document.addEventListener("visibilitychange", visHandler);
-          heartbeatTimer = setInterval(() => {
-            if (alive && visible)
-              bc.postMessage({ type: "beat", tabId: TAB_ID } satisfies Cmd);
-          }, HEARTBEAT_MS);
-        } else {
-          // Become follower
-          isLeader = false;
-          leaderRef.current = false;
-          clientRef.current?.disconnect();
-          clientRef.current = null;
-          setStatus("open");
-          scheduleReelect();
+    const client = new RealtimeClient(
+      clientEnv.NEXT_PUBLIC_REALTIME_WS_URL,
+      () => {
+        if (!alive) return Promise.resolve(null);
+        return cachedFetchTokens(token);
+      },
+      setStatus,
+      process,
+      () => {
+        if (claimRef.current) {
+          client.claimPage(claimRef.current.page, claimRef.current.params);
         }
-      }, ELECTION_MS);
-    };
-
-    // ── BroadcastChannel message handler ──
-
-    const onMsg = (e: MessageEvent<Cmd>) => {
-      const m = e.data;
-      switch (m.type) {
-        case "hello":
-          knownTabs.add(m.tabId);
-          break;
-        case "gone":
-          knownTabs.delete(m.tabId);
-          if (!isLeader && m.tabId !== TAB_ID) {
-            // If we're following the departed leader, re-elect
-            // (any follower can detect this)
-            elect();
-          }
-          break;
-        case "leader":
-          if (m.tabId !== TAB_ID && !isLeader) {
-            isLeader = false;
-            leaderRef.current = false;
-            clientRef.current?.disconnect();
-            clientRef.current = null;
-            setStatus("open");
-            scheduleReelect();
-          }
-          break;
-        case "beat":
-          scheduleReelect();
-          break;
-        case "frame":
-          if (!isLeader) process(m.data);
-          break;
-        case "st":
-          if (!isLeader) setStatus(m.status);
-          break;
-        case "cmd":
-          if (isLeader) {
-            if (m.act === "send")
-              clientRef.current?.send(m.payload as Record<string, unknown>);
-            else if (m.act === "watch")
-              clientRef.current?.watch(m.payload as string);
-            else if (m.act === "unwatch")
-              clientRef.current?.unwatch(m.payload as string);
-            else if (m.act === "register")
-              clientRef.current?.registerServices(m.payload as string[]);
-          }
-          break;
-      }
-    };
-
-    bc.addEventListener("message", onMsg);
-    elect();
-
-    const onUnload = () => {
-      bc.postMessage({ type: "gone", tabId: TAB_ID } satisfies Cmd);
-      if (isLeader) {
-        clientRef.current?.disconnect();
-        clientRef.current = null;
-      }
-    };
-    window.addEventListener("beforeunload", onUnload);
+        resyncAfterConnect(queryClient, claimRef.current);
+      },
+    );
+    clientRef.current = client;
+    client.connect();
+    client.registerServices(["MESSAGE", "NOTIFICATION"]);
+    if (initialClaim.page) {
+      client.claimPage(initialClaim.page, initialClaim.params);
+    }
 
     return () => {
       alive = false;
-      window.removeEventListener("beforeunload", onUnload);
-      bc.removeEventListener("message", onMsg);
-      bc.postMessage({ type: "gone", tabId: TAB_ID } satisfies Cmd);
-      if (electionTimer) clearTimeout(electionTimer);
-      if (visHandler) document.removeEventListener("visibilitychange", visHandler);
-      if (heartbeatTimer) clearInterval(heartbeatTimer);
-      if (leaderTimeoutTimer) clearTimeout(leaderTimeoutTimer);
-      if (isLeader) {
-        clientRef.current?.disconnect();
-        clientRef.current = null;
-      }
-      bc.close();
-      channelRef.current = null;
+      client.disconnect();
+      clientRef.current = null;
     };
-  }, [token, queryClient]);
+  }, [token, queryClient, pathname, searchParams]);
+
+  // ── Route-change claim sending ──
+
+  useEffect(() => {
+    if (!token) return;
+    const claim = routeToPageClaim(pathname, searchParams);
+    claimRef.current = claim;
+
+    if (clientRef.current) {
+      clientRef.current.claimPage(claim.page, claim.params);
+    } else {
+      // Follower: forward claim to leader via BroadcastChannel
+      channelRef.current?.postMessage({
+        type: "cmd",
+        act: "claim",
+        payload: claim,
+      } satisfies Cmd);
+    }
+  }, [pathname, searchParams, token]);
 
   // ── Public API ──
 
   const send = useCallback((data: Record<string, unknown>) => {
-    if (leaderRef.current) {
-      clientRef.current?.send(data);
+    if (clientRef.current) {
+      clientRef.current.send(data);
     } else {
       channelRef.current?.postMessage({
         type: "cmd",
@@ -409,8 +581,8 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   );
 
   const watch = useCallback((topic: string) => {
-    if (leaderRef.current) {
-      clientRef.current?.watch(topic);
+    if (clientRef.current) {
+      clientRef.current.watch(topic);
     } else {
       channelRef.current?.postMessage({
         type: "cmd",
@@ -421,8 +593,8 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const unwatch = useCallback((topic: string) => {
-    if (leaderRef.current) {
-      clientRef.current?.unwatch(topic);
+    if (clientRef.current) {
+      clientRef.current.unwatch(topic);
     } else {
       channelRef.current?.postMessage({
         type: "cmd",
@@ -433,8 +605,8 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const registerServices = useCallback((services: string[]) => {
-    if (leaderRef.current) {
-      clientRef.current?.registerServices(services);
+    if (clientRef.current) {
+      clientRef.current.registerServices(services);
     } else {
       channelRef.current?.postMessage({
         type: "cmd",
@@ -443,6 +615,22 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       } satisfies Cmd);
     }
   }, []);
+
+  const claimPage = useCallback(
+    (page: string | null, params?: Record<string, string>) => {
+      claimRef.current = { page, params };
+      if (clientRef.current) {
+        clientRef.current.claimPage(page, params);
+      } else {
+        channelRef.current?.postMessage({
+          type: "cmd",
+          act: "claim",
+          payload: { page, params },
+        } satisfies Cmd);
+      }
+    },
+    [],
+  );
 
   return (
     <RealtimeContext.Provider
@@ -453,10 +641,21 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
         watch,
         unwatch,
         registerServices,
+        claimPage,
       }}
     >
       {children}
     </RealtimeContext.Provider>
+  );
+}
+
+// ── Provider (outer — wraps inner in Suspense for useSearchParams) ──
+
+export function RealtimeProvider({ children }: { children: ReactNode }) {
+  return (
+    <Suspense>
+      <RealtimeProviderInner>{children}</RealtimeProviderInner>
+    </Suspense>
   );
 }
 

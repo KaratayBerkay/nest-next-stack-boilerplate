@@ -77,7 +77,17 @@ export class MessagingController {
     @CurrentUser() user: JwtUser,
     @Param('userId') addresseeId: string,
   ) {
-    return this.ms.sendFriendRequest(user.userId, addresseeId);
+    const result = await this.ms.sendFriendRequest(user.userId, addresseeId);
+    // Pending-list renew for friend-request page viewers
+    this.realtime.emitToPage(user.userId, 'friend-request', {
+      renew: 'Friends',
+      type: 'PendingList',
+    });
+    this.realtime.emitToPage(addresseeId, 'friend-request', {
+      renew: 'Friends',
+      type: 'PendingList',
+    });
+    return result;
   }
 
   @Post('friends/accept/:userId')
@@ -86,7 +96,16 @@ export class MessagingController {
     @CurrentUser() user: JwtUser,
     @Param('userId') requesterId: string,
   ) {
-    return this.ms.acceptFriendRequest(user.userId, requesterId);
+    const result = await this.ms.acceptFriendRequest(user.userId, requesterId);
+    this.realtime.emitToPage(user.userId, 'friend-request', {
+      renew: 'Friends',
+      type: 'PendingList',
+    });
+    this.realtime.emitToPage(requesterId, 'friend-request', {
+      renew: 'Friends',
+      type: 'PendingList',
+    });
+    return result;
   }
 
   @Post('friends/decline/:userId')
@@ -95,7 +114,16 @@ export class MessagingController {
     @CurrentUser() user: JwtUser,
     @Param('userId') requesterId: string,
   ) {
-    return this.ms.declineFriendRequest(user.userId, requesterId);
+    const result = await this.ms.declineFriendRequest(user.userId, requesterId);
+    this.realtime.emitToPage(user.userId, 'friend-request', {
+      renew: 'Friends',
+      type: 'PendingList',
+    });
+    this.realtime.emitToPage(requesterId, 'friend-request', {
+      renew: 'Friends',
+      type: 'PendingList',
+    });
+    return result;
   }
 
   @Get('conversations')
@@ -145,14 +173,16 @@ export class MessagingController {
       recipientId,
       body.text,
     );
-    this.realtime.emitToUser(recipientId, {
+    // Page content: DM to messages-page viewers only
+    this.realtime.emitToPage(recipientId, 'messages', {
       type: 'direct-message',
       message,
     });
-    this.realtime.emitToUser(message.senderId, {
+    this.realtime.emitToPage(message.senderId, 'messages', {
       type: 'direct-message',
       message,
     });
+    // Chrome: Conversation renew to all recipient MESSAGE sockets
     const sender = message.sender as
       | { id?: string; name?: string | null; email?: string; avatar?: string }
       | undefined;
@@ -200,18 +230,14 @@ export class MessagingController {
     body: MarkReadInput,
   ) {
     const result = await this.ms.markRead(user.userId, body.userId);
-    this.realtime.emitToUser(user.userId, {
+    // Page content: message-read to sender's messages-page viewers
+    this.realtime.emitToPage(body.userId, 'messages', {
       type: 'message-read',
       readerId: user.userId,
       senderId: body.userId,
       readAt: result.readAt,
     });
-    this.realtime.emitToUser(body.userId, {
-      type: 'message-read',
-      readerId: user.userId,
-      senderId: body.userId,
-      readAt: result.readAt,
-    });
+    // Chrome: Conversation renew to reader's MESSAGE sockets
     this.realtime.emitToService(user.userId, 'MESSAGE', {
       renew: 'Messages',
       type: 'Conversation',
