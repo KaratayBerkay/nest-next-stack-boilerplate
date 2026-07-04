@@ -72,6 +72,7 @@ function applyTheme(theme: ThemeName) {
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeName>("light");
 
+  // Intentional hydration guard: set theme once on mount from localStorage/cookie.
   useEffect(() => {
     const initial = getInitialTheme();
     // eslint-disable-next-line react-hooks/set-state-in-effect

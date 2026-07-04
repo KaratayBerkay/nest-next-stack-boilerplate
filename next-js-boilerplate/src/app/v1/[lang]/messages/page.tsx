@@ -77,8 +77,11 @@ function MessagesPageContent() {
   const [selectedUser, setSelectedUser] = useState<UserInfo | null>(null);
   const { data: friends = [] } = useQuery<UserInfo[]>({
     queryKey: ["friends", "list"],
-    queryFn: () =>
-      apiFetch("/api/messages/friends").then((r) => r.json()),
+    queryFn: async () => {
+      const res = await apiFetch("/api/messages/friends");
+      if (!res.ok) throw new Error(`Failed to fetch friends: ${res.status}`);
+      return res.json();
+    },
     enabled: !!user,
   });
   const queryClient = useQueryClient();
@@ -165,7 +168,6 @@ function MessagesPageContent() {
       startTransition(() => {
         setSelectedUser(match.user);
       });
-      /* eslint-disable-next-line react-hooks/set-state-in-effect */
       markMessagesRead(match.user.id);
     }
   }, [searchParams, conversations, markMessagesRead]);
@@ -202,7 +204,7 @@ function MessagesPageContent() {
     } catch {
       setMessageError("Failed to send message. Try again.");
     }
-  }, [selectedUser, input, sendMessage]);
+  }, [selectedUser, input, sendMessage, scrollToBottom]);
 
   const pointer = useDeviceType();
   const isTouch = pointer === "touch";
@@ -213,7 +215,11 @@ function MessagesPageContent() {
     enabled: isTouch && !!user,
   });
 
-  const connected = realtime?.status === "open";
+  const status = realtime?.status ?? "idle";
+  const connectionState =
+    status === "open" ? "online" as const
+    : status === "idle" || status === "down" ? "offline" as const
+    : "connecting" as const;
 
   const sendFriendRequest = useCallback(async (userId: string) => {
     try {
@@ -235,19 +241,31 @@ function MessagesPageContent() {
       <div className="flex shrink-0 items-center justify-between">
         <h2 className="text-brand text-lg font-bold">{t.title}</h2>
         <span
-          className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
-            connected
-              ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-              : "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+          className={`inline-block h-3 w-3 rounded-full ring-2 ring-offset-1 ${
+            connectionState === "online"
+              ? "bg-green-500 ring-green-500"
+              : connectionState === "connecting"
+                ? "bg-green-300 ring-green-300 animate-pulse"
+                : "bg-red-400 ring-red-400"
           }`}
-        >
-          <span
-            className={`h-1.5 w-1.5 rounded-full ${connected ? "bg-green-500" : "bg-red-500"}`}
-          />
-          {connected ? t.connected : t.disconnected}
-        </span>
+          title={
+            connectionState === "online"
+              ? t.connected
+              : connectionState === "connecting"
+                ? "Connecting…"
+                : t.disconnected
+          }
+        />
       </div>
 
+      {connectionState === "connecting" && (
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3">
+          <div className="border-border bg-surface h-8 w-48 animate-pulse rounded-lg border" />
+          <div className="border-border bg-surface h-64 w-full max-w-md animate-pulse rounded-xl border" />
+        </div>
+      )}
+
+      {connectionState !== "connecting" && (
       <div className="relative flex min-h-0 flex-1 gap-4">
         {/* Mobile sidebar backdrop */}
         {sidebarOpen && (
@@ -580,9 +598,9 @@ function MessagesPageContent() {
                       }
                     }}
                     placeholder={
-                      connected ? t.inputPlaceholder : t.connecting
+                      connectionState === "online" ? t.inputPlaceholder : t.connecting
                     }
-                    disabled={!connected}
+                    disabled={connectionState !== "online"}
                     className="border-border bg-surface text-fg placeholder:text-muted focus:border-fg w-full rounded-xl border px-4 py-2.5 text-sm transition-colors outline-none disabled:opacity-50"
                   />
                   {messageError && (
@@ -593,7 +611,7 @@ function MessagesPageContent() {
                 </div>
                 <button
                   onClick={handleSend}
-                  disabled={!connected || !input.trim()}
+                  disabled={connectionState !== "online" || !input.trim()}
                   className="bg-brand self-end rounded-xl px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
                   Send
@@ -603,6 +621,7 @@ function MessagesPageContent() {
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }

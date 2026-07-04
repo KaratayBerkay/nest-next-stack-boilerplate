@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, Suspense } from "react";
+import { useState, useCallback, useEffect, Suspense } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
 import { CHAT_ROOMS } from "@/constants/chat";
@@ -26,11 +26,54 @@ function ChatRoomContent() {
   const [room, setRoom] = useState<string>(initialRoom);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [input, setInput] = useState("");
+  const [roomCounts, setRoomCounts] = useState<Record<string, number>>({});
+  const [roomMembers, setRoomMembers] = useState<
+    { id: string; name: string; avatar?: string }[]
+  >([]);
   const realtime = useRealtime();
 
   const { data: messages = [], isLoading: msgsLoading } = useRoom(room);
   const messagesRef = useYSwipeGesture<HTMLDivElement>();
   const { bottomRef, scrollToBottom } = useAutoScroll(messages);
+
+  // Room presence: subscribe to room-counts, user-joined, user-left (T7).
+  useEffect(() => {
+    if (!realtime) return;
+
+    // Request initial counts.
+    realtime.send({ type: "get-room-counts" });
+
+    const unsubCounts = realtime.subscribe(
+      "room-counts",
+      (frame: Record<string, unknown>) => {
+        setRoomCounts(frame.rooms as Record<string, number>);
+      },
+    );
+
+    const unsubJoined = realtime.subscribe(
+      "user-joined",
+      (frame: Record<string, unknown>) => {
+        if (frame.room === room) {
+          setRoomMembers(frame.members as { id: string; name: string; avatar?: string }[]);
+        }
+      },
+    );
+
+    const unsubLeft = realtime.subscribe(
+      "user-left",
+      (frame: Record<string, unknown>) => {
+        if (frame.room === room) {
+          setRoomMembers(frame.members as { id: string; name: string; avatar?: string }[]);
+        }
+      },
+    );
+
+    return () => {
+      unsubCounts();
+      unsubJoined();
+      unsubLeft();
+    };
+  }, [realtime, room]);
 
   const handleSend = useCallback(() => {
     if (!input.trim() || !realtime) return;
@@ -58,7 +101,7 @@ function ChatRoomContent() {
       <div className="flex shrink-0 items-center justify-between">
         <h2 className="text-brand text-sm font-semibold">{t.title}</h2>
         <span className="text-muted text-xs">
-          {t.countOnline.replace("{count}", "0")}
+          {t.countOnline.replace("{count}", String(roomCounts[room] ?? 0))}
         </span>
       </div>
 
@@ -94,7 +137,7 @@ function ChatRoomContent() {
                 Rooms
               </TabsTrigger>
               <TabsTrigger value="online" className="flex-1">
-                {t.online.replace("{count}", "0")}
+                {t.online.replace("{count}", String(roomCounts[room] ?? 0))}
               </TabsTrigger>
             </TabsList>
 
@@ -102,26 +145,44 @@ function ChatRoomContent() {
               value="rooms"
               className="mt-2 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto"
             >
-              {CHAT_ROOMS.map((r) => (
-                <button
-                  key={r}
-                  onClick={() => selectRoom(r)}
-                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-                    room === r
-                      ? "bg-brand text-white"
-                      : "text-muted hover:bg-surface-hover"
-                  }`}
-                >
-                  <span># {r}</span>
-                </button>
-              ))}
+              {CHAT_ROOMS.map((r) => {
+                const count = roomCounts[r] ?? 0;
+                return (
+                  <button
+                    key={r}
+                    onClick={() => selectRoom(r)}
+                    className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                      room === r
+                        ? "bg-brand text-white"
+                        : "text-muted hover:bg-surface-hover"
+                    }`}
+                  >
+                    <span># {r}</span>
+                    {count > 0 && (
+                      <span className="text-[10px] opacity-60">{count}</span>
+                    )}
+                  </button>
+                );
+              })}
             </TabsContent>
 
             <TabsContent
               value="online"
               className="mt-2 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto"
             >
-              <p className="text-muted px-0.5 text-xs">{t.noOneHere}</p>
+              {roomMembers.length === 0 ? (
+                <p className="text-muted px-0.5 text-xs">{t.noOneHere}</p>
+              ) : (
+                roomMembers.map((m) => (
+                  <div
+                    key={m.id}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2"
+                  >
+                    <span className="h-2 w-2 rounded-full bg-green-500" />
+                    <span className="text-fg text-sm">{m.name}</span>
+                  </div>
+                ))
+              )}
             </TabsContent>
           </Tabs>
         </div>
@@ -136,13 +197,13 @@ function ChatRoomContent() {
               <IconMenu2 size={18} className="text-muted shrink-0" />
               <span className="text-sm font-semibold"># {room}</span>
               <span className="text-muted text-xs">
-                {t.countOnline.replace("{count}", "0")}
+                {t.countOnline.replace("{count}", String(roomCounts[room] ?? 0))}
               </span>
             </button>
             <div className="hidden md:flex md:items-center md:gap-2">
               <span className="text-sm font-semibold"># {room}</span>
               <span className="text-muted text-xs">
-                {t.countOnline.replace("{count}", "0")}
+                {t.countOnline.replace("{count}", String(roomCounts[room] ?? 0))}
               </span>
             </div>
           </div>

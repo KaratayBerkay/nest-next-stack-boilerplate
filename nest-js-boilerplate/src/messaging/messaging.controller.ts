@@ -201,6 +201,13 @@ export class MessagingController {
         unread: unread + 1,
       },
     });
+    // DM unread aggregate to notification bell (T5).
+    const totalDmUnread = await this.ms.getTotalUnreadCount(recipientId);
+    this.realtime.emitToService(recipientId, 'NOTIFICATION', {
+      renew: 'Notifications',
+      type: 'DmCount',
+      value: totalDmUnread,
+    });
     if (!this.realtime.hasServiceConnection(recipientId, 'MESSAGE')) {
       const senderName = sender?.name || sender?.email || 'Someone';
       const body = typeof message.body === 'string' ? message.body : '';
@@ -210,7 +217,11 @@ export class MessagingController {
           `New message from ${senderName}`,
           body.length > 120 ? body.slice(0, 117) + '...' : body,
           undefined,
-          { kind: 'direct-message', senderId: message.senderId },
+          {
+            kind: 'direct-message',
+            senderId: message.senderId,
+            dmCount: totalDmUnread,
+          },
         )
         .catch((err: Error) =>
           this.logger.warn(`Offline push failed: ${err.message}`),
@@ -247,6 +258,13 @@ export class MessagingController {
         user: { id: body.userId },
         unread: 0,
       },
+    });
+    // Decrement bell aggregate (T6).
+    const totalDmUnread = await this.ms.getTotalUnreadCount(user.userId);
+    this.realtime.emitToService(user.userId, 'NOTIFICATION', {
+      renew: 'Notifications',
+      type: 'DmCount',
+      value: totalDmUnread,
     });
     this.logger.log(
       `Messages from ${body.userId} marked as read`,

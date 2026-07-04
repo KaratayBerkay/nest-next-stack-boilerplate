@@ -293,6 +293,12 @@ export class MessagingService {
     });
   }
 
+  async getTotalUnreadCount(userId: string): Promise<number> {
+    return this.prisma.message.count({
+      where: { recipientId: userId, readAt: null },
+    });
+  }
+
   async saveRoomMessage(roomId: string, senderId: string, body: string) {
     if (!isValidRoom(roomId)) {
       throw new NotFoundException(`Unknown room: ${roomId}`);

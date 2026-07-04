@@ -51,3 +51,11 @@ export function useUnreadNotificationCount() {
     staleTime: 30_000,
   });
 }
+
+export function useDmUnreadCount() {
+  return useQuery<number>({
+    queryKey: ["notifications", "dm-count"],
+    queryFn: async () => 0,
+    staleTime: Infinity,
+  });
+}

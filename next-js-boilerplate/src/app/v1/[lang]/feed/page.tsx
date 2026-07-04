@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PostCard } from "@/components/feed/PostCard";
 import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
+import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 import { apiFetch } from "@/lib/api-client";
 import { IconSearch } from "@tabler/icons-react";
 
@@ -23,7 +24,14 @@ const PAGE_SIZE = 5;
 
 function FeedList({ search }: { search: string }) {
   const queryClient = useQueryClient();
+  const realtime = useRealtime();
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
+
+  // Watch the feed topic for live renews (T10).
+  useEffect(() => {
+    realtime?.watch("feed");
+    return () => realtime?.unwatch("feed");
+  }, [realtime]);
   const [extraPosts, setExtraPosts] = useState<Post[]>([]);
   const [extraHasMore, setExtraHasMore] = useState(true);
   const cursorRef = useRef<string | null>(null);

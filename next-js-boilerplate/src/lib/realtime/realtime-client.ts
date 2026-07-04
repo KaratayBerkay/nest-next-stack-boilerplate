@@ -175,7 +175,7 @@ export class RealtimeClient {
   private async refreshAndFetchTokens(): Promise<Record<string, string> | null> {
     try {
       // Bust the token cache by forcing a refresh
-      const res = await fetch("/api/auth/refresh", { method: "POST" });
+      const res = await fetch("/api/auth/token");
       if (!res.ok) return null;
     } catch {
       // Refresh failed — try with existing tokens

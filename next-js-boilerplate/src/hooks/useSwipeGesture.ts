@@ -115,6 +115,7 @@ export function useSwipeGesture(options: UseSwipeOptions = {}) {
 
   const cancelGesture = useCallback(() => {
     keyboardStartXRef.current = null;
+    // eslint-disable-next-line react-compiler/react-compiler
     document.body.style.cursor = ctrlCursorRef.current ?? "";
     ctrlCursorRef.current = null;
     gestureEndedRef.current = true;

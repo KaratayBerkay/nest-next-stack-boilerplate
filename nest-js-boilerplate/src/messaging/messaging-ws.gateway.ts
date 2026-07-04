@@ -96,6 +96,13 @@ export class MessagingWsGateway implements OnModuleInit {
         unread: unread + 1,
       },
     });
+    // DM unread aggregate to notification bell (T5).
+    const totalDmUnread = await this.ms.getTotalUnreadCount(data.recipientId);
+    this.realtime.emitToService(data.recipientId, 'NOTIFICATION', {
+      renew: 'Notifications',
+      type: 'DmCount',
+      value: totalDmUnread,
+    });
     // Page content: DM to messages-page viewers only
     this.realtime.emitToPage(data.recipientId, 'messages', {
       type: 'direct-message',
@@ -117,7 +124,11 @@ export class MessagingWsGateway implements OnModuleInit {
           `New message from ${senderName}`,
           body.length > 120 ? body.slice(0, 117) + '...' : body,
           undefined,
-          { kind: 'direct-message', senderId: message.senderId },
+          {
+            kind: 'direct-message',
+            senderId: message.senderId,
+            dmCount: totalDmUnread,
+          },
         )
         .catch((err: Error) =>
           this.logger.warn(`Offline push failed: ${err.message}`),

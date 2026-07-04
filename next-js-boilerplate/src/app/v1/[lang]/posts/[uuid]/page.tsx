@@ -11,6 +11,7 @@ import {
 } from "@tabler/icons-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
+import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 import { imageUrl } from "@/lib/image";
 import { ReactionInline } from "@/components/feed/ReactionButtons";
 import { CommentSection } from "@/components/feed/CommentSection";
@@ -43,9 +44,18 @@ function PostDetailContent() {
   const uuid = params?.uuid ?? "";
   const router = useRouter();
   const { user } = useAuth();
+  const realtime = useRealtime();
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
+
+  // Watch the post topic for live renews (T11).
+  useEffect(() => {
+    if (!uuid) return;
+    const topic = `post:${uuid}`;
+    realtime?.watch(topic);
+    return () => realtime?.unwatch(topic);
+  }, [realtime, uuid]);
 
   const { data: post, isLoading, error } = useQuery<Post | null>({
     queryKey: ["posts", uuid],

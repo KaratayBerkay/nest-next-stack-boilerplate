@@ -49,7 +49,7 @@ function NotificationPageContent() {
       markedRef.current = true;
       markAllReadOnce();
     }
-  }, [notifications.length]);
+  }, [notifications.length, markAllReadOnce]);
 
   const markRead = useCallback(
     async (id: string) => {

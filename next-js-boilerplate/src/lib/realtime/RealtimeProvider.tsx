@@ -250,6 +250,8 @@ function dispatchRenew(
     case "Notifications": {
       if (frame.type === "Count") {
         qc.setQueryData(["notifications", "count"], frame.value);
+      } else if (frame.type === "DmCount") {
+        qc.setQueryData(["notifications", "dm-count"], frame.value);
       } else if (frame.type === "Item") {
         qc.setQueryData(
           ["notifications", "list"],
@@ -307,6 +309,10 @@ function dispatchRenew(
       } else if (frame.type === "Post" && frame.id) {
         qc.invalidateQueries({
           queryKey: ["posts", frame.id as string],
+          refetchType: "active",
+        });
+        qc.invalidateQueries({
+          queryKey: ["feed", "list"],
           refetchType: "active",
         });
       }

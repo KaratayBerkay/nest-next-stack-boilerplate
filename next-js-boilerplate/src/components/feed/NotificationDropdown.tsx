@@ -11,6 +11,7 @@ import { IconBell, IconChevronRight } from "@tabler/icons-react";
 import {
   useNotifications,
   useUnreadNotificationCount,
+  useDmUnreadCount,
 } from "@/lib/realtime/useNotifications";
 import type { NotificationItem } from "@/lib/realtime/useNotifications";
 import { notificationTarget } from "@/lib/notifications/target";
@@ -128,6 +129,7 @@ function NotificationList({
 export function NotificationDropdown({ lang = "en" }: { lang?: string }) {
   const { data: notifData } = useNotifications();
   const { data: unreadCount = 0 } = useUnreadNotificationCount();
+  const { data: dmCount = 0 } = useDmUnreadCount();
   const notifications = notifData?.items ?? [];
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -192,7 +194,7 @@ export function NotificationDropdown({ lang = "en" }: { lang?: string }) {
         className="text-muted hover:bg-surface-hover relative rounded-lg p-1.5"
       >
         <IconBell size={20} stroke={1.5} />
-        <Badge count={unreadCount} />
+        <Badge count={unreadCount + dmCount} />
       </button>
 
       {open && isDesktop && (
