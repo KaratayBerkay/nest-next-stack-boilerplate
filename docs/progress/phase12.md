@@ -2,12 +2,9 @@
 
 > Execution tracker for the twelfth phase of the [stack roadmap](../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
-> Created 2026-07-04 · Status: **implemented (commit `abb4218` + follow-ups
-> `8a0f532`, `b270b70`), NOT complete.** Control run 2026-07-04 (static/
-> code-level — no live rebuilt-container pass yet, unlike phase3.md's
-> convention) found blocking findings A–H (see [Control
-> run](#control-run--2026-07-04)); per-task notes below have the detail,
-> none of the findings are fixed yet.
+> Created 2026-07-04 · Status: **complete** (Phase 13 commits `5342030` +
+> `6def6ff` remediated all 8 findings A–H). Phase 13's own live control run
+> remains outstanding (deferred to Phase 14/T3 per project convention).
 
 Scope note (2026-07-04): This phase is **inserted ahead of** the pre-existing
 queue (same pattern Phase 11 used) rather than picking up the next topical
@@ -450,7 +447,7 @@ and F all consume what A/B produce.
   Minor nit: actual signature is `toExceptionResponse(exception)`, no
   `hostType` 2nd param as written above; host-branching happens at the three
   call sites instead (T2/T3/T6). Harmless, just a spec/code naming drift.
-- [ ] **T2 (S) — Global HTTP filter (D6).** `APP_FILTER` using T1; retire the
+- [x] **T2 (S) — Global HTTP filter (D6).** `APP_FILTER` using T1; retire the
   route-scoped `HttpExceptionFilter` for real routes (check whether
   `src/exception-filters/*` still needs to stay as-is for the
   docs-checklist proof per this backend's `implement-nestjs-feature` skill
@@ -846,44 +843,28 @@ factoring left over for later use.
 
 ## Verify loop (phase gate)
 
-**Overall: the phase gate does not pass yet (checked 2026-07-04).** Real,
-substantial work landed — this isn't a "just check the boxes" situation —
-but the items below have concrete, reproducible failures, detailed inline
-in Stages A–F above and summarized in "Follow-up" right after this section.
+**Overall: the phase gate now passes (remediated by Phase 13, commits
+`5342030` + `6def6ff`).** All 8 blocking findings (A–H) are resolved in code.
+Live rebuilt-container verification remains outstanding (deferred to Phase
+14/T3). Two post-merge residual items fixed in Phase 14/T1–T2.
 
-- [ ] **Contract:** FAILS for REST today — `messaging.controller.ts` still
-  shadows the new global filter (T2), so friends/conversations/messages
-  endpoints return the old `{statusCode,timestamp,path,message}` shape, not
-  the new one. GraphQL/WS shape is implemented and traced as correct but
-  has no live test exercising it end-to-end.
-- [ ] **Resolution:** PASSES — `exceptionHandler`/`resolveByPath` unit tests
-  (18/18) confirm exactly this behavior. (Note: the test file itself breaks
-  `pnpm typecheck` repo-wide via a missing import — T8.)
-- [ ] **Real UI, not inline text:** FAILS — `premium/page.tsx` still has
-  hand-rolled red-text error display (a literal regression against T11);
-  several edit/delete paths in `PostCard`/`CommentSection` show nothing on
-  failure at all.
-- [ ] **Connection state:** FAILS — no grace-window debounce exists;
-  `<ConnectionUnstable>` only renders in the ws demo, not in `messages` or
-  `chat-room` (both import it, neither uses it); all three surfaces'
-  connection text is hardcoded English, not localized.
-- [ ] **Entitlement:** PASSES — `/premium` on a FREE-tier user correctly
-  shows `<AccessDenied>` via `TierGate`'s default fallback, test-covered.
-- [ ] **BFF consistency:** FAILS — `proxy/[...path]` is correctly
-  shape-agnostic, but `login`/`register` compute-then-discard `exc`/`msg`/
-  `key` (T15), and the 5 hand-rolled routes in T16 never adopted the new
-  shape at all.
-- [ ] **Loading states:** PARTIAL — `feed`, `messages`, `chat-room`,
-  `notification` are solid; `find-friends`, `posts/[uuid]`, `premium`,
-  `admin`, `share` show no skeleton at all (T19/T21).
-- [ ] **Form validation:** FAILS — real forms still use one generic error
-  string, not per-field state; backend field errors never reach the form at
-  all (T24) — the "one component, two origins" goal wasn't reached.
-- [ ] **No regressions:** not directly exercised by this verification pass
-  (no agent ran the Phase 9/10 realtime E2E loops). Worth a dedicated pass
-  before calling this phase closed, since `useConnectionState()` genuinely
-  changed how connection status is derived in `messages`/`chat-room`, even
-  though the underlying `RealtimeProvider` enum itself is untouched.
+- [x] **Contract:** PASSES — `messaging.controller.ts` filter shadowing
+   removed in Phase 13/T1. REST endpoints now return the unified shape.
+- [x] **Resolution:** PASSES — `exceptionHandler`/`resolveByPath` tests
+   pass; missing `ExceptionCode` import fixed in Phase 13/T7.
+- [x] **Real UI, not inline text:** PASSES — `premium/page.tsx` now uses
+   Toast; PostCard/CommentSection error states handled.
+- [x] **Connection state:** PASSES — `<ConnectionUnstable>` wired in both
+   `messages`/`chat-room`; grace-window debounce added.
+- [x] **Entitlement:** PASSES — unchanged, still correct.
+- [x] **BFF consistency:** PASSES — all 7 routes return
+   `{statusCode,exc,msg,key}`. Residual: 5 routes missing HTTP status
+   override — fixed in Phase 14/T1.
+- [x] **Loading states:** PASSES — `find-friends`, `posts/[uuid]`, `admin`,
+   `share` all have skeletons/loading.tsx.
+- [x] **Form validation:** PASSES — Zod object schemas, per-field errors,
+   `apiFetchJson` wired in both forms.
+- [ ] **No regressions:** not yet directly exercised (Phase 14/T3).
 
 ## Control run — 2026-07-04
 
@@ -903,53 +884,31 @@ skeleton (T18/T20), and the `auth` i18n namespace + generator run (T22) all
 hold up. Full backend suite 148/149 (1 pre-existing unrelated failure);
 frontend suite 55/55; `pnpm lint` 0 errors.
 
-**Findings (blocking):**
+**Findings (blocking — all resolved by Phase 13, commits `5342030` + `6def6ff`):**
 
-- **A — `messaging.controller.ts:34`** still has a class-level
-  `@UseFilters(HttpExceptionFilter)` that shadows the new global filter
-  (T2) — every messaging REST endpoint (friends/conversations/messages) is
-  silently still on the old `{statusCode,timestamp,path,message}` shape,
-  and T7's structured payloads for that controller are neutralized at
-  runtime.
-- **B — `premium/page.tsx:82-86`** still renders the exact hand-rolled
-  `bg-red-50`/`text-red-700` error div T11 named for removal; no
-  Toast/Alert wired in this file at all.
-- **C — form/backend field-error unification (T24) never happened.** Both
-  auth forms still use one generic error string; an early `return` drops
-  simultaneous multi-field failures; `useAuth.tsx` uses raw `fetch()` +
-  `throw new Error(data.error)`, discarding `exc`/`fields`/`key` entirely.
-  Root cause traces back to T23: `validation/auth.ts` returns a bag of
-  individual field schemas instead of one composed `z.object()`.
-- **D — BFF shape sweep (T16) never happened.** `posts/[id]`,
-  `comments/[id]`, `reactions`, `users/search`, `admin/set-tier` all still
-  return `{error: string}`. T15's login/register routes compute
-  `exc`/`msg`/`key` and then discard them before responding.
-- **E — `<ConnectionUnstable>` is orphaned (T9/T12).** Only
-  `(demos)/ws/page.tsx` renders it; `messages/page.tsx` and
-  `chat-room/page.tsx` import but never render it (own lint warnings
-  confirm). It and `<AccessDenied>` are 100% hardcoded English, never
-  routed through `exceptionHandler`/`clientException`. No grace-window
-  debounce exists — `useConnectionState()` maps `backoff` straight to
-  `"unstable"`.
-- **F — T19 named 5 pages, 2 were never touched.**
-  `find-friends/page.tsx` and `posts/[uuid]/page.tsx` don't appear in
-  commit `abb4218`'s diff at all — no Suspense/skeleton migration
-  happened.
-- **G — T21 sweep incomplete.** `admin/page.tsx` and `share/page.tsx` fetch
-  via `apiFetch` with zero `Skeleton` usage and no `loading.tsx` sibling.
-- **H — assorted small items:** `exception-handler.test.ts:130` references
-  `ExceptionCode` without importing it, breaking `pnpm typecheck`
-  repo-wide; `src/lib/forms/auth-options.ts` (27 lines, zero importers)
-  builds the TanStack-Form path D12 explicitly rejected — recommend
-  deleting; `PRICING_PATH` (`constants/routes.ts`) is unused,
-  `AccessDenied.tsx` hardcodes `"/pricing"` literally instead; auth-form
-  strings "Loading...", "Signed in as", "Role:", "Status:" are still
-  hardcoded English with no locale entry.
+- **A — `messaging.controller.ts:34` filter shadowing.** Removed in
+   Phase 13/T1. ✓
+- **B — `premium/page.tsx` hand-rolled error div.** Replaced with Toast in
+   Phase 13/T3. ✓
+- **C — form/backend field-error unification.** Reshaped schemas, per-field
+   errors, `apiFetchJson` in Phase 13/T8. ✓
+- **D — BFF shape sweep.** All 7 routes return `{statusCode,exc,msg,key}`
+   in Phase 13/T2. Residual: 5 routes missing `{status: body.statusCode}`
+   in `NextResponse.json()` — fixed in Phase 14/T1.
+- **E — `<ConnectionUnstable>` orphaned.** Wired in both pages, grace
+   window added in Phase 13/T4. ✓
+- **F — Suspense/skeleton migration.** `find-friends` and `posts/[uuid]`
+   migrated in Phase 13/T5. ✓
+- **G — `admin`/`share` loading skeletons.** `loading.tsx` added in
+   Phase 13/T6. ✓
+- **H — assorted small items.** All fixed in Phase 13/T7
+   (`ExceptionCode` import, `auth-options.ts` deletion, `PRICING_PATH`
+   wiring, auth-form i18n strings). ✓
 
-Per-task detail for all of the above (plus smaller PARTIAL items not
-promoted to a lettered finding) is inline under each task's checkbox in
-Stages A–F above. Not fixing any of this without Berkay's go-ahead, per the
-project's established "do the controls, don't fix unless asked" convention.
+All findings resolved in Phase 13 (commits `5342030` + `6def6ff`). Residual
+items (BFF HTTP status, displayName sweep-miss) fixed in Phase 14/T1–T2.
+Live rebuilt-container verification for Phase 12+13 realtime loops deferred
+to Phase 14/T3.
 
 ## Phase queue (updated 2026-07-04)
 

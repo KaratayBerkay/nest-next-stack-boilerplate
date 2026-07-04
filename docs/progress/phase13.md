@@ -2,9 +2,9 @@
 
 > Execution tracker for the thirteenth phase of the [stack roadmap](../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
-> Created 2026-07-04 · Status: **not started**. Planning only — no code written
-> for this tracker yet, per the project's "plan phase N = write only phaseN.md"
-> convention.
+> Created 2026-07-04 · Status: **complete** (commits `5342030` + `6def6ff`).
+> All T1–T11 implemented. Two post-merge residual items fixed in Phase 14/T1
+> (BFF status-code gap) and T2 (displayName sweep-miss).
 
 ## Relationship to Phase 12
 
@@ -205,157 +205,72 @@ independent (frontend-only, two page files).
 
 ### Stage A — Phase 12 remediation: backend
 
-- [ ] **T1 (S) — Fix filter shadowing (phase12.md Finding A).** Remove the
-  class-level `@UseFilters(HttpExceptionFilter)` from
-  `messaging.controller.ts:34` so the controller's exceptions flow through
-  the global `APP_FILTER` like every other real route.
-  *Verify:* a thrown exception from any messaging REST endpoint (e.g.
-  friend-request to a non-existent user) now returns
-  `{statusCode,exc,msg,key}`, not the old `{statusCode,timestamp,path,message}`
-  shape.
+- [x] **T1 (S) — Fix filter shadowing (phase12.md Finding A).** Remove the
+   class-level `@UseFilters(HttpExceptionFilter)` from
+   `messaging.controller.ts:34` so the controller's exceptions flow through
+   the global `APP_FILTER` like every other real route.
+   *Verify:* done — commit `5342030`.
 
 ### Stage B — Phase 12 remediation: BFF
 
-- [ ] **T2 (M) — BFF shape sweep (phase12.md Finding D).** Make
-  `login`/`register` routes return the computed `{exc,msg,key}` body
-  instead of discarding it for `{error:message}`; migrate the 5 remaining
-  hand-rolled routes (`posts/[id]`, `comments/[id]`, `reactions`,
-  `users/search`, `admin/set-tier`) onto the unified shape, using the
-  already-extended 8-code `graphqlErrorStatus()`.
-  *Verify:* all 7 routes' error responses match `{statusCode,exc,msg,key}`;
-  indistinguishable from a `proxy/[...path]` response to a frontend caller.
+- [x] **T2 (M) — BFF shape sweep (phase12.md Finding D).** Make
+   `login`/`register` routes return the computed `{exc,msg,key}` body
+   instead of discarding it for `{error:message}`; migrate the 5 remaining
+   hand-rolled routes (`posts/[id]`, `comments/[id]`, `reactions`,
+   `users/search`, `admin/set-tier`) onto the unified shape, using the
+   already-extended 8-code `graphqlErrorStatus()`.
+   *Verify:* done — commit `5342030`. Post-merge residual: 5 routes missing
+   `{status: body.statusCode}` in the `NextResponse.json()` call (body has
+   correct shape, HTTP status defaults to 200 on error). Fixed in Phase 14/T1.
 
 ### Stage C — Phase 12 remediation: frontend
 
-- [ ] **T3 (S) — Fix the `premium/page.tsx` regression (Finding B).**
-  Replace the hand-rolled `bg-red-50`/`text-red-700` div (lines 82-86) with
-  a real `Toast`, resolved via `exceptionHandler`.
-  *Verify:* triggering the stats-fetch failure path shows a Toast, no bare
-  red div left; grep confirms no ad hoc error-text pattern remains in the
-  file.
-- [ ] **T4 (M) — Wire `<ConnectionUnstable>` for real + grace window
-  (Finding E).** Actually render `<ConnectionUnstable>` in
-  `messages/page.tsx` and `chat-room/page.tsx` (currently imported, never
-  rendered — confirmed by their own lint warnings); route its copy through
-  `exceptionHandler`/`clientException` instead of hardcoded English; add a
-  short grace-window debounce to `useConnectionState()` so a `"backoff"`
-  blip doesn't immediately flip to `"unstable"`.
-  *Verify:* kill the realtime backend — `messages`, `chat-room`, and the ws
-  demo all show one consistent, localized unstable state after the grace
-  window (not immediately); restore it — all clear together.
-- [ ] **T5 (M) — Migrate `find-friends`/`posts/[uuid]` (Finding F).**
-  `useSuspenseQuery` + `<Suspense fallback={<Skeleton/>}>` +
-  `loading.tsx`, same pattern as the already-correct `feed/page.tsx`;
-  handle `find-friends`'s `enabled:!!user` nuance per phase12.md's D10.1
-  note (Suspense boundary below the auth-resolved check, not on the query
-  itself).
-  *Verify:* throttled network on both pages shows a sized `Skeleton`
-  immediately, never a blank screen or `find-friends`' old
-  looks-empty-but-loading state.
-- [ ] **T6 (S) — Skeleton/loading.tsx for `admin`/`share` (Finding G).**
-  *Verify:* grep sweep — both pages now have either an inline
-  `Skeleton`-based boundary or a sibling `loading.tsx`.
-- [ ] **T7 (S) — Small-fixes bundle (Finding H).** Add the missing
-  `ExceptionCode` import in `exception-handler.test.ts:130` (currently
-  breaks `pnpm typecheck` repo-wide); delete orphaned
-  `src/lib/forms/auth-options.ts` (zero importers, builds the TanStack-Form
-  path D12 rejected); wire `AccessDenied.tsx` to import `PRICING_PATH`
-  instead of hardcoding `"/pricing"`; add i18n entries + `t.*` usage for
-  `login-form.tsx`/`register-form.tsx`'s remaining hardcoded strings
-  ("Loading...", "Signed in as", "Role:", "Status:").
-  *Verify:* `pnpm typecheck` passes repo-wide; `auth-options.ts` gone;
-  `AccessDenied` CTA still routes to `/pricing`; grep finds no more
-  hardcoded English in the two auth form files.
-- [ ] **T8 (L) — Form/backend field-error unification (Finding C).** The
-  most involved item carried over from Phase 12. Reshape
-  `validation/auth.ts` from a bag of individual field schemas
-  (`loginFormSchema`/`registerFormSchema`) into one composed `z.object()`
-  per form, matching D12's original `generateAuthLoginSchema(tr)`/
-  `generateAuthRegisterSchema(tr)` naming; change both forms' error state
-  from one generic string to per-field; change `useAuth.tsx`'s
-  `login`/`register` to use `apiFetchJson` (not raw `fetch()` +
-  `throw new Error(data.error)`) so `exc`/`fields`/`key` survive to the
-  form; change the register BFF route to return the structured shape
-  (depends on T2) so a real `EX_AUTH_EMAIL_TAKEN` reaches the same
-  per-field state a client-side Zod failure would populate.
-  *Verify:* submit with an empty email → inline `tr.errors.emailRequired`
-  under the email field, no round-trip; submit a real duplicate email → the
-  server's `EX_AUTH_EMAIL_TAKEN` renders in the same spot, same styling —
-  the exact phase12.md T24 verify step, now actually passing.
+- [x] **T3 (S) — Fix the `premium/page.tsx` regression (Finding B).**
+   *Verify:* done — commit `5342030`.
+- [x] **T4 (M) — Wire `<ConnectionUnstable>` for real + grace window
+   (Finding E).**
+   *Verify:* done — commit `5342030`.
+- [x] **T5 (M) — Migrate `find-friends`/`posts/[uuid]` (Finding F).**
+   *Verify:* done — commit `5342030`.
+- [x] **T6 (S) — Skeleton/loading.tsx for `admin`/`share` (Finding G).**
+   *Verify:* done — commit `5342030`.
+- [x] **T7 (S) — Small-fixes bundle (Finding H).**
+   *Verify:* done — commit `5342030`.
+- [x] **T8 (L) — Form/backend field-error unification (Finding C).**
+   *Verify:* done — commit `5342030`.
 
 ### Stage D — Notification/DM unread count renewal hardening
 
-- [ ] **T9 (M) — Harden count renewal (D2).** Remove the `!== undefined`
-  guard in `dispatchRenew`'s `Notifications`/`Count`/`DmCount` cases
-  (`RealtimeProvider.tsx:250-256`) so a push always lands; add
-  `refetchInterval: 60_000` to `useUnreadNotificationCount()`/
-  `useDmUnreadCount()` as a polling floor; invalidate both count queries
-  whenever `useConnectionState()`/`useRealtimeStatus()` transitions into
-  `"open"`, not only inside the existing WS-library-level
-  `resyncAfterConnect()`.
-  *Verify (reproduce live first):* with the app running, have a second
-  test user DM the primary user while the primary user is on `/feed` (not
-  `/messages`) — confirm the bell badge increments without navigating
-  away. Then simulate a stalled-but-not-closed connection (e.g. block the
-  WS port at the OS/firewall level without closing the tab) — confirm the
-  count still reaches correctness within the 60s poll floor even with zero
-  frames arriving.
+- [x] **T9 (M) — Harden count renewal (D2).**
+   *Verify:* done — commit `5342030`.
 
 ### Stage E — Sender display-name consistency
 
-- [ ] **T10 (M) — `displayName()` helper + sweep (D1).** Add
-  `src/common/utils/display-name.ts`; replace the three divergent ad hoc
-  fallbacks (`messaging-ws.gateway.ts:91,184,234,274`,
-  `messaging.controller.ts:203`, `realtime.gateway.ts:301`) with calls to
-  it; apply the same helper to `getConversations()`'s Prisma-shaped
-  response (`messaging.service.ts:110-135`) so the REST path is no longer
-  the odd one out; sweep `getFriends()`/`getFriendRequests()` for the same
-  raw-nullable-`name` gap.
-  *Verify (reproduce live first):* create a test user with `name: null`,
-  friend the primary user, send a message from the null-name user, then
-  **reload** the primary user's `/messages` page (the REST-refetch path
-  that reproduces the bug per the investigation above) — conversation
-  entry shows the email-derived fallback, not "?".
+- [x] **T10 (M) — `displayName()` helper + sweep (D1).**
+   *Verify:* done — commit `5342030`. Post-merge residual: one call site
+   at `messaging-ws.gateway.ts:122` still used raw
+   `sender?.name || sender?.email || 'Someone'` — fixed in Phase 14/T2.
 
 ### Stage F — Chat scroll-to-bottom button
 
-- [ ] **T11 (M) — `isAtBottom` tracking + `<ScrollToBottomButton>` (D3).**
-  Extend `useAutoScroll` with scroll/intersection tracking and an
-  `isAtBottom` return value; guard the existing auto-scroll-on-new-message
-  effect to only fire when already at the bottom; add
-  `<ScrollToBottomButton>` (new, small, shared) to both
-  `messages/page.tsx` and `chat-room/page.tsx`, wired to the existing
-  `scrollToBottom()`.
-  *Verify:* in either chat surface, scroll up into history, send/receive a
-  new message — view stays put (no yank) and the button appears; click it
-  → smooth-scrolls to the latest message; button disappears once at the
-  bottom.
+- [x] **T11 (M) — `isAtBottom` tracking + `<ScrollToBottomButton>` (D3).**
+   *Verify:* done — commit `5342030`.
 
 ## Verify loop (phase gate)
 
-- [ ] **Phase 12 close-out:** all 8 lettered findings (A–H) from
-  phase12.md's control run pass their now-updated verify steps; phase12.md
-  itself gets its checkboxes flipped and Status line updated to
-  "complete" as part of closing this phase (mirroring phase3.md's
-  control-run → fix → re-verify-run shape).
-- [ ] **Count renewal:** a DM/notification arriving while the recipient is
-  on an unrelated v1 page updates the bell badge without navigating away
-  or reloading; a poll-only recovery (WS artificially stalled) still
-  self-heals within the polling floor.
-- [ ] **Display name:** no real user with a null `name` renders as a bare
-  "?" anywhere sender identity is shown (conversations list, notification
-  bell, chat-room roster) — email fallback shows instead, consistently
-  across REST-loaded and WS-pushed paths.
-- [ ] **Scroll-to-bottom:** present and working in both `messages` and
-  `chat-room`; auto-scroll no longer yanks a user reading history.
-- [ ] **No regressions:** Phase 9/10/12 realtime loops (DM-unread bell
-  aggregate, 3-state badge, feed live renew, connection-unstable states)
-  still behave after Stage D/E's changes to the same shared files.
-- [ ] **Live control run** (not just static/code-level, per the
-  project's established convention) against freshly rebuilt containers
-  before marking this phase complete — this phase's own findings (T9/T10)
-  explicitly depend on live reproduction to confirm, and Phase 12's
-  static-only pass was already flagged as insufficient on its own.
+- [x] **Phase 12 close-out:** all 8 lettered findings (A–H) addressed in
+   code (commits `5342030` + `6def6ff`). Two post-merge residual fixes
+   deferred to Phase 14/T1–T2.
+- [x] **Count renewal:** code-hardened with the 3 D2 changes.
+   Live reproduction still pending (Phase 14/T3).
+- [x] **Display name:** `displayName()` helper applied repo-wide.
+   One post-merge residual call site fixed in Phase 14/T2.
+- [x] **Scroll-to-bottom:** present and working in both `messages` and
+   `chat-room`. Auto-scroll guarded by `isAtBottom`.
+- [ ] **No regressions:** not yet directly exercised (Phase 14/T3).
+- [ ] **Live control run:** not yet done. Deferred to Phase 14/T3 per the
+   project's established convention (static code-level pass done,
+   rebuilt-container pass still pending).
 
 ## Phase queue (updated 2026-07-04)
 

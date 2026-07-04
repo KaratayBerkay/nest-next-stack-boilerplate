@@ -41,9 +41,8 @@ export async function GET(request: NextRequest) {
   ]);
 
   if (usersRes.errors || !usersRes.data) {
-    return NextResponse.json(
-      graphqlErrorBody(usersRes.errors, "Failed to search users"),
-    );
+    const body = graphqlErrorBody(usersRes.errors, "Failed to search users");
+    return NextResponse.json(body, { status: body.statusCode });
   }
 
   const currentUserId = meRes.data?.me?.id;

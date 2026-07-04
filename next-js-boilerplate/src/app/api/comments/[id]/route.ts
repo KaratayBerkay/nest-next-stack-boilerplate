@@ -29,7 +29,8 @@ export async function PUT(
   }>(UPDATE_COMMENT_MUTATION, { id, data: { body: body.body } }, token);
 
   if (errors) {
-    return NextResponse.json(graphqlErrorBody(errors, "GraphQL error"));
+    const body = graphqlErrorBody(errors, "GraphQL error");
+    return NextResponse.json(body, { status: body.statusCode });
   }
 
   return NextResponse.json({ comment: data?.updateComment });
@@ -47,7 +48,8 @@ export async function DELETE(
   }>(DELETE_COMMENT_MUTATION, { id }, token);
 
   if (errors) {
-    return NextResponse.json(graphqlErrorBody(errors, "GraphQL error"));
+    const body = graphqlErrorBody(errors, "GraphQL error");
+    return NextResponse.json(body, { status: body.statusCode });
   }
 
   return NextResponse.json({ comment: data?.deleteComment });

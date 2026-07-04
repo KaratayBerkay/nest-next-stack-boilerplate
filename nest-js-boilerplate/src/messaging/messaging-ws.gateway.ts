@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { MessagingService, RoomMember, isValidRoom } from './messaging.service';
 import { PushNotificationService } from '../push-notification/push-notification.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
+import { displayName } from '../common/utils/display-name';
 
 type AuthWs = WebSocket & {
   userId?: string;
@@ -119,7 +120,7 @@ export class MessagingWsGateway implements OnModuleInit {
       const sender = message.sender as
         | { name?: string | null; email?: string }
         | undefined;
-      const senderName = sender?.name || sender?.email || 'Someone';
+      const senderName = displayName(sender ?? {});
       const body = typeof message.body === 'string' ? message.body : '';
       this.push
         .sendToUser(

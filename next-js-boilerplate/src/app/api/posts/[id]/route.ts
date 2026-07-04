@@ -19,7 +19,8 @@ export async function GET(
   }>(POST_QUERY, { id }, token);
 
   if (errors) {
-    return NextResponse.json(graphqlErrorBody(errors, "GraphQL error"));
+    const body = graphqlErrorBody(errors, "GraphQL error");
+    return NextResponse.json(body, { status: body.statusCode });
   }
 
   if (!data?.post) {
@@ -57,7 +58,8 @@ export async function PUT(
   }>(UPDATE_POST_MUTATION, { id, data: body }, token);
 
   if (errors) {
-    return NextResponse.json(graphqlErrorBody(errors, "GraphQL error"));
+    const body = graphqlErrorBody(errors, "GraphQL error");
+    return NextResponse.json(body, { status: body.statusCode });
   }
 
   return NextResponse.json({ post: data?.updatePost });
@@ -75,7 +77,8 @@ export async function DELETE(
   }>(DELETE_POST_MUTATION, { id }, token);
 
   if (errors) {
-    return NextResponse.json(graphqlErrorBody(errors, "GraphQL error"));
+    const body = graphqlErrorBody(errors, "GraphQL error");
+    return NextResponse.json(body, { status: body.statusCode });
   }
 
   return NextResponse.json({ post: data?.deletePost });
