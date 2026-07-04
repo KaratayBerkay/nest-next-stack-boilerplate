@@ -5,7 +5,6 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -43,45 +42,37 @@ const PageNavigationContext = createContext<PageNavigationContextValue | null>(
 export function PageNavigationProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "";
   const router = useRouter();
-  const [currentPage, setCurrentPage] = useState<PageNode | null>(null);
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
 
+  const currentPage = matchPage(pathname);
+
+  const backPage: PageNode | null = currentPage?.backId
+    ? (getPageNode(currentPage.backId) ?? null)
+    : null;
+
+  const forwardPage: PageNode | null = currentPage?.forwardId
+    ? (getPageNode(currentPage.forwardId) ?? null)
+    : null;
+
+  const navigateToRef = useRef<(targetPage: PageNode) => void>(
+    () => {},
+  );
+
   useEffect(() => {
-    const matched = matchPage(pathname);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCurrentPage(matched);
-    setSuggestion(null);
-  }, [pathname]);
-
-  const backPage: PageNode | null = useMemo(
-    () =>
-      currentPage?.backId ? (getPageNode(currentPage.backId) ?? null) : null,
-    [currentPage],
-  );
-
-  const forwardPage: PageNode | null = useMemo(
-    () =>
-      currentPage?.forwardId
-        ? (getPageNode(currentPage.forwardId) ?? null)
-        : null,
-    [currentPage],
-  );
-
-  const navigateTo = useCallback(
-    (targetPage: PageNode) => {
+    navigateToRef.current = (targetPage: PageNode) => {
       const resolved = buildPath(targetPage, pathname);
-      if (resolved) {
-        router.push(resolved);
-      }
-    },
-    [pathname, router],
-  );
+      if (resolved) router.push(resolved);
+    };
+  }, [pathname, router]);
 
-  const navigateToRef = useRef(navigateTo);
-
+  // Clear swipe suggestion on navigation
+  const prevPathnameRef = useRef(pathname);
   useEffect(() => {
-    navigateToRef.current = navigateTo;
-  }, [navigateTo]);
+    if (prevPathnameRef.current !== pathname) {
+      setSuggestion(null);
+      prevPathnameRef.current = pathname;
+    }
+  }, [pathname]);
 
   const suggestNavigation = useCallback(
     (direction: SuggestDirection, progress: number) => {

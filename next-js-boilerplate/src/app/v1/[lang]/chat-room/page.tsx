@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, Suspense } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
 import { CHAT_ROOMS } from "@/constants/chat";
@@ -15,11 +15,15 @@ import { initials } from "@/lib/initials";
 import { IconX, IconMenu2 } from "@tabler/icons-react";
 import { useRoom } from "@/lib/realtime/useRoom";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
+import { useSearchParams, useRouter } from "next/navigation";
 
-export default function ChatRoomPage() {
+function ChatRoomContent() {
   const t = useMessages("chat-room");
   const { user, loading } = useAuth();
-  const [room, setRoom] = useState<string>("general");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialRoom = searchParams?.get("room") || "general";
+  const [room, setRoom] = useState<string>(initialRoom);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [input, setInput] = useState("");
   const realtime = useRealtime();
@@ -44,11 +48,11 @@ export default function ChatRoomPage() {
   const selectRoom = useCallback((r: string) => {
     setRoom(r);
     setSidebarOpen(false);
-  }, []);
+    router.replace(`?room=${r}`, { scroll: false });
+  }, [router]);
 
   if (loading) return <LoadingAuth />;
   if (!user) return <UnauthenticatedMessage message={t.signInRequired} />;
-
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
       <div className="flex shrink-0 items-center justify-between">
@@ -217,5 +221,19 @@ export default function ChatRoomPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ChatRoomPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="text-muted flex animate-pulse items-center justify-center py-20 text-sm">
+          Loading...
+        </div>
+      }
+    >
+      <ChatRoomContent />
+    </Suspense>
   );
 }

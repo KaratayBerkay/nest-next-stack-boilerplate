@@ -415,6 +415,24 @@ export function V1Shell({ children }: { children: React.ReactNode }) {
     };
   }, [sidebarOpen, close]);
 
+  const router = useRouter();
+
+  // T11: Global SW registration + navigate message listener
+  useEffect(() => {
+    if (typeof window === "undefined" || !("serviceWorker" in navigator))
+      return;
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === "navigate" && e.data?.url) {
+        router.push(e.data.url);
+      }
+    };
+    navigator.serviceWorker.addEventListener("message", handler);
+    return () => {
+      navigator.serviceWorker.removeEventListener("message", handler);
+    };
+  }, [router]);
+
   return (
     <RealtimeProvider>
       <div className="flex h-dvh flex-col">

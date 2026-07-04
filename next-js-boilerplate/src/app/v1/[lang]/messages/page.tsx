@@ -14,7 +14,7 @@ import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useSearchParams, useParams } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { FIND_FRIENDS_PATH } from "@/constants/routes";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
@@ -75,7 +75,12 @@ function MessagesPageContent() {
   const searchParams = useSearchParams();
   const params = useParams<{ lang: string }>();
   const [selectedUser, setSelectedUser] = useState<UserInfo | null>(null);
-  const [friends, setFriends] = useState<UserInfo[]>([]);
+  const { data: friends = [] } = useQuery<UserInfo[]>({
+    queryKey: ["friends", "list"],
+    queryFn: () =>
+      apiFetch("/api/messages/friends").then((r) => r.json()),
+    enabled: !!user,
+  });
   const queryClient = useQueryClient();
   const [input, setInput] = useState("");
   const [search, setSearch] = useState("");
@@ -98,7 +103,7 @@ function MessagesPageContent() {
     hasNextPage,
   } = useConversation(selectedUser?.id ?? null);
   const conversationMessages =
-    conversationData?.pages.flatMap((p) => p.messages).reverse() ?? [];
+    [...(conversationData?.pages ?? [])].reverse().flatMap((p) => p.messages) ?? [];
 
   const [tab, setTab] = useState<"conversations" | "friends">(
     () =>
@@ -111,19 +116,6 @@ function MessagesPageContent() {
   useEffect(() => {
     sessionStorage.setItem("msg_tab", tab);
   }, [tab]);
-
-  const fetchFriends = useCallback(async (q?: string) => {
-    try {
-      const url = q
-        ? `/api/messages/friends?q=${encodeURIComponent(q)}`
-        : "/api/messages/friends";
-      const res = await apiFetch(url);
-      if (res.ok) {
-        const data: UserInfo[] = await res.json();
-        setFriends(data);
-      }
-    } catch {}
-  }, []);
 
   const sendMessage = useCallback(
     async (recipientId: string, text: string) => {
@@ -162,13 +154,6 @@ function MessagesPageContent() {
     } catch {}
   }, [refetchConversations]);
 
-  useEffect(() => {
-    if (user) {
-      /* eslint-disable-next-line react-hooks/set-state-in-effect */
-      fetchFriends();
-    }
-  }, [user, fetchFriends]);
-
   const lastParamRef = useRef<string | null>(null);
   useEffect(() => {
     const userId = searchParams?.get("user");
@@ -184,16 +169,6 @@ function MessagesPageContent() {
       markMessagesRead(match.user.id);
     }
   }, [searchParams, conversations, markMessagesRead]);
-
-  useEffect(() => {
-    if (search) {
-      /* eslint-disable-next-line react-hooks/set-state-in-effect */
-      fetchFriends(search);
-    } else {
-      /* eslint-disable-next-line react-hooks/set-state-in-effect */
-      fetchFriends();
-    }
-  }, [search, fetchFriends]);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -347,8 +322,10 @@ function MessagesPageContent() {
                     const res = await apiFetch(
                       `/api/users/search?q=${encodeURIComponent(val)}`,
                     );
-                    if (res.ok) setFindResults(await res.json());
-                    else setFindResults([]);
+                    if (res.ok) {
+                      const data = await res.json();
+                      setFindResults(data.items ?? []);
+                    } else setFindResults([]);
                   } catch {
                     setFindResults([]);
                   }
@@ -463,14 +440,19 @@ function MessagesPageContent() {
                 ))}
               </div>
             )}
-            {tab === "friends" &&
-              (friends.length === 0 ? (
+            {tab === "friends" && (() => {
+              const filtered = search
+                ? friends.filter((f) =>
+                    f.name?.toLowerCase().includes(search.toLowerCase()),
+                  )
+                : friends;
+              return filtered.length === 0 ? (
                 <p className="text-muted py-16 text-center text-sm">
                   {t.noFriends}
                 </p>
               ) : (
                 <div className="flex flex-col gap-0.5">
-                  {friends.map((u, i) => (
+                  {filtered.map((u, i) => (
                     <button
                       key={u.id}
                       onClick={() => openConversation(u)}
@@ -490,8 +472,9 @@ function MessagesPageContent() {
                       </div>
                     </button>
                   ))}
-                </div>
-              ))}
+              </div>
+            );
+          })()}
           </div>
         </div>
 

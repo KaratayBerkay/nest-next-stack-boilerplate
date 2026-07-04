@@ -150,6 +150,7 @@ function dispatchEvent(
   qc: ReturnType<typeof useQueryClient>,
   frame: Record<string, unknown>,
   ownUserId?: string,
+  sendFrame?: (data: Record<string, unknown>) => void,
 ): void {
   const t = frame.type as string;
 
@@ -175,10 +176,14 @@ function dispatchEvent(
       pages[0] = first;
       return { ...data, pages };
     });
+    // Auto-ack delivery for incoming DMs (T4)
+    if (msg.recipientId === ownUserId && sendFrame) {
+      sendFrame({ type: "delivered-ack", messageId: msg.id });
+    }
   }
 
   if (t === "message-read" && ownUserId) {
-    const peerId = (frame.senderId as string) ?? "";
+    const peerId = (frame.peerId as string) ?? "";
     if (!qc.getQueryData(["messages", peerId])) return;
     qc.setQueryData(["messages", peerId], (old: unknown) => {
       const data = old as
@@ -198,7 +203,7 @@ function dispatchEvent(
   }
 
   if (t === "message-delivered" && ownUserId) {
-    const peerId = (frame.userId as string) ?? "";
+    const peerId = (frame.peerId as string) ?? "";
     if (!qc.getQueryData(["messages", peerId])) return;
     qc.setQueryData(["messages", peerId], (old: unknown) => {
       const data = old as
@@ -274,11 +279,20 @@ function dispatchRenew(
             );
             if (idx >= 0) {
               const updated = [...list];
-              updated[idx] = { ...(updated[idx] as object), ...conv };
+              // Merge only non-empty fields (T5)
+              const merged: Record<string, unknown> = {
+                ...(updated[idx] as Record<string, unknown>),
+              };
+              for (const [k, v] of Object.entries(conv)) {
+                if (v !== undefined && v !== null && v !== "") {
+                  merged[k] = v;
+                }
+              }
+              updated[idx] = merged;
               return updated.sort(
                 (a, b) =>
-                  new Date((b.lastTime as string) ?? "").getTime() -
-                  new Date((a.lastTime as string) ?? "").getTime(),
+                  (new Date((b.lastTime as string) ?? "").getTime() || 0) -
+                  (new Date((a.lastTime as string) ?? "").getTime() || 0),
               );
             }
             return [conv, ...list];
@@ -301,6 +315,7 @@ function dispatchRenew(
     case "Friends": {
       if (frame.type === "PendingList") {
         qc.invalidateQueries({ queryKey: ["friends", "requests"] });
+        qc.invalidateQueries({ queryKey: ["friends", "list"] });
       }
       break;
     }
@@ -347,7 +362,13 @@ function RealtimeProviderInner({ children }: { children: ReactNode }) {
   const channelRef = useRef<BroadcastChannel | null>(null);
   const claimRef = useRef<{ page: string | null; params?: Record<string, string> } | null>(null);
   const userIdRef = useRef(user?.id);
-  userIdRef.current = user?.id;
+  const lockResolveRef = useRef<(() => void) | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // T18(H5): ref write in effect, not render phase
+  useEffect(() => {
+    userIdRef.current = user?.id;
+  }, [user?.id]);
 
   // ── Single effect: owns all coordination state ──
 
@@ -355,34 +376,34 @@ function RealtimeProviderInner({ children }: { children: ReactNode }) {
     if (!token) return;
     let alive = true;
 
-    // Process an incoming frame (from WS or broadcast)
     const process = (frame: Record<string, unknown>) => {
       dispatchRenew(queryClient, frame);
-      dispatchEvent(queryClient, frame, userIdRef.current);
+      dispatchEvent(queryClient, frame, userIdRef.current, (data) => {
+        if (clientRef.current) {
+          clientRef.current.send(data);
+        } else {
+          channelRef.current?.postMessage({
+            type: "cmd",
+            act: "send",
+            payload: data,
+          } satisfies Cmd);
+        }
+      });
       const t = frame.type as string;
       const subs = subsRef.current.get(t);
       if (subs) for (const h of subs) h(frame);
     };
 
-    // Compute initial claim from current route
-    const initialClaim = routeToPageClaim(pathname, searchParams);
-    claimRef.current = initialClaim;
-
     const bc = openBc();
     channelRef.current = bc;
 
-    // ── Web Locks leadership (B9) ──
-
     if (typeof navigator !== "undefined" && navigator.locks) {
       let client: RealtimeClient | null = null;
-      let unlockCleanupRef: (() => void) | null = null;
 
       const onAuthenticated = () => {
-        // Replay current claim
         if (claimRef.current && client) {
           client.claimPage(claimRef.current.page, claimRef.current.params);
         }
-        // Resync any missed data
         resyncAfterConnect(queryClient, claimRef.current);
       };
 
@@ -405,51 +426,43 @@ function RealtimeProviderInner({ children }: { children: ReactNode }) {
         );
         c.connect();
         c.registerServices(["MESSAGE", "NOTIFICATION"]);
-        // Replay current claim on connect
         if (claimRef.current) {
           c.claimPage(claimRef.current.page, claimRef.current.params);
         }
         return c;
       };
 
-      // Request exclusive lock — only one tab per origin can hold it
+      const ac = new AbortController();
+      abortRef.current = ac;
+
       navigator.locks
         .request(
           "rt-leader",
-          { mode: "exclusive" },
+          { mode: "exclusive", signal: ac.signal },
           async () => {
-            // This tab is the leader
             client = createLeader();
             clientRef.current = client;
 
-            // Keep lock held until tab closes or component unmounts
             await new Promise<void>((resolve) => {
+              lockResolveRef.current = resolve;
               const onUnload = () => {
                 client?.disconnect();
                 resolve();
+                lockResolveRef.current = null;
               };
               window.addEventListener("beforeunload", onUnload);
-              // Store cleanup reference for unmount
-              unlockCleanupRef = onUnload;
             });
           },
         )
         .then(() => {
-          // Lock released (tab closed / crash / unmount)
           alive = false;
           client?.disconnect();
           clientRef.current = null;
-          if (unlockCleanupRef) {
-            window.removeEventListener("beforeunload", unlockCleanupRef);
-          }
         })
         .catch(() => {
-          // Lock not acquired — this tab is a follower
           clientRef.current = null;
           setStatus("open");
         });
-
-      // ── BroadcastChannel: frame fan-out + cmd forwarding ──
 
       if (bc) {
         const onMsg = (e: MessageEvent<Cmd>) => {
@@ -491,20 +504,25 @@ function RealtimeProviderInner({ children }: { children: ReactNode }) {
           clientRef.current = null;
           bc.close();
           channelRef.current = null;
-          if (unlockCleanupRef) {
-            window.removeEventListener("beforeunload", unlockCleanupRef);
+          if (lockResolveRef.current) {
+            lockResolveRef.current();
+            lockResolveRef.current = null;
           }
+          ac.abort();
+          abortRef.current = null;
         };
       }
 
-      // No BroadcastChannel — leader only
       return () => {
         alive = false;
         client?.disconnect();
         clientRef.current = null;
-        if (unlockCleanupRef) {
-          window.removeEventListener("beforeunload", unlockCleanupRef);
+        if (lockResolveRef.current) {
+          lockResolveRef.current();
+          lockResolveRef.current = null;
         }
+        ac.abort();
+        abortRef.current = null;
       };
     }
 
@@ -528,8 +546,8 @@ function RealtimeProviderInner({ children }: { children: ReactNode }) {
     clientRef.current = client;
     client.connect();
     client.registerServices(["MESSAGE", "NOTIFICATION"]);
-    if (initialClaim.page) {
-      client.claimPage(initialClaim.page, initialClaim.params);
+    if (claimRef.current?.page) {
+      client.claimPage(claimRef.current.page, claimRef.current.params);
     }
 
     return () => {
@@ -537,7 +555,7 @@ function RealtimeProviderInner({ children }: { children: ReactNode }) {
       client.disconnect();
       clientRef.current = null;
     };
-  }, [token, queryClient, pathname, searchParams]);
+  }, [token, queryClient]);
 
   // ── Route-change claim sending ──
 

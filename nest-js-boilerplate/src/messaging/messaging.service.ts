@@ -13,6 +13,20 @@ import { FriendsService } from '../friends/friends.service';
 import { TokenStoreService } from '../auth/token-store.service';
 import { NotificationService } from '../notification/notification.service';
 
+export const CHAT_ROOMS = [
+  'general',
+  'random',
+  'tech',
+  'design',
+  'music',
+] as const;
+
+export type ChatRoom = (typeof CHAT_ROOMS)[number];
+
+export function isValidRoom(room: string): room is ChatRoom {
+  return CHAT_ROOMS.includes(room as ChatRoom);
+}
+
 export interface RoomMember {
   socketId: string;
   userId: string;
@@ -273,7 +287,16 @@ export class MessagingService {
     };
   }
 
+  async getUnreadCount(userId: string, peerId: string): Promise<number> {
+    return this.prisma.message.count({
+      where: { senderId: peerId, recipientId: userId, readAt: null },
+    });
+  }
+
   async saveRoomMessage(roomId: string, senderId: string, body: string) {
+    if (!isValidRoom(roomId)) {
+      throw new NotFoundException(`Unknown room: ${roomId}`);
+    }
     return this.prisma.roomMessage.create({
       data: { roomId, senderId, body },
       include: { sender: { select: { name: true, email: true } } },
@@ -281,6 +304,9 @@ export class MessagingService {
   }
 
   async getRoomMessages(roomId: string, before?: string, take = 30) {
+    if (!isValidRoom(roomId)) {
+      throw new NotFoundException(`Unknown room: ${roomId}`);
+    }
     const where: Prisma.RoomMessageWhereInput = { roomId };
     if (before) {
       where.createdAt = { lt: new Date(before) };

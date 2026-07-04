@@ -21,6 +21,7 @@ export class RealtimeClient {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private backoffTimer: ReturnType<typeof setTimeout> | null = null;
   private destroyed = false;
+  private onlineHandler: (() => void) | null = null;
   private static readonly BACKOFF_BASE_MS = 1000;
   private static readonly BACKOFF_CAP_MS = 30_000;
 
@@ -94,6 +95,10 @@ export class RealtimeClient {
     this.destroyed = true;
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
     if (this.backoffTimer) clearTimeout(this.backoffTimer);
+    if (this.onlineHandler) {
+      window.removeEventListener("online", this.onlineHandler);
+      this.onlineHandler = null;
+    }
     this.ws?.close();
     this.ws = null;
     this.setStatus("idle");
@@ -202,9 +207,18 @@ export class RealtimeClient {
   private scheduleDegradedRetry(): void {
     const retry = () => {
       if (this.destroyed) return;
+      if (this.reconnectTimer) {
+        clearTimeout(this.reconnectTimer);
+        this.reconnectTimer = null;
+      }
+      if (this.onlineHandler) {
+        window.removeEventListener("online", this.onlineHandler);
+        this.onlineHandler = null;
+      }
       this.authFailRetries = 0;
       this.connect();
     };
+    this.onlineHandler = retry;
     window.addEventListener("online", retry, { once: true });
     this.reconnectTimer = setTimeout(retry, 60_000);
   }

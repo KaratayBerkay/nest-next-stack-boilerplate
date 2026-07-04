@@ -186,6 +186,7 @@ export class MessagingController {
     const sender = message.sender as
       | { id?: string; name?: string | null; email?: string; avatar?: string }
       | undefined;
+    const unread = await this.ms.getUnreadCount(recipientId, user.userId);
     this.realtime.emitToService(recipientId, 'MESSAGE', {
       renew: 'Messages',
       type: 'Conversation',
@@ -197,7 +198,7 @@ export class MessagingController {
         },
         lastMessage: message.body,
         lastTime: message.createdAt,
-        unread: 1,
+        unread: unread + 1,
       },
     });
     if (!this.realtime.hasServiceConnection(recipientId, 'MESSAGE')) {
@@ -236,6 +237,7 @@ export class MessagingController {
       readerId: user.userId,
       senderId: body.userId,
       readAt: result.readAt,
+      peerId: user.userId,
     });
     // Chrome: Conversation renew to reader's MESSAGE sockets
     this.realtime.emitToService(user.userId, 'MESSAGE', {
@@ -243,8 +245,6 @@ export class MessagingController {
       type: 'Conversation',
       conversation: {
         user: { id: body.userId },
-        lastMessage: '',
-        lastTime: '',
         unread: 0,
       },
     });

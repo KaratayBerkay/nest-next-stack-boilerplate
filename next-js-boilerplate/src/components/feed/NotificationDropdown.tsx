@@ -13,6 +13,8 @@ import {
   useUnreadNotificationCount,
 } from "@/lib/realtime/useNotifications";
 import type { NotificationItem } from "@/lib/realtime/useNotifications";
+import { notificationTarget } from "@/lib/notifications/target";
+import { useQueryClient } from "@tanstack/react-query";
 
 function Badge({ count }: { count: number }) {
   if (count <= 0) return null;
@@ -136,14 +138,17 @@ export function NotificationDropdown({ lang = "en" }: { lang?: string }) {
     if (isDesktop) setOpen(false);
   });
 
+  const queryClient = useQueryClient();
+
   const markRead = useCallback(async (id: string) => {
     try {
       await apiFetch("/api/notifications/read", {
         method: "POST",
         body: JSON.stringify({ id }),
       });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     } catch {}
-  }, []);
+  }, [queryClient]);
 
   const markAllRead = useCallback(async () => {
     try {
@@ -151,17 +156,21 @@ export function NotificationDropdown({ lang = "en" }: { lang?: string }) {
         method: "POST",
         body: JSON.stringify({ all: true }),
       });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     } catch {}
-  }, []);
+  }, [queryClient]);
 
   const handleToggle = () => {
     setOpen((prev) => !prev);
   };
 
   const handleNavigate = (n: NotificationItem) => {
-    const postId = n.payload?.postId as string | undefined;
-    if (postId) {
-      router.push(`/v1/${lang}/feed#post-${postId}`);
+    const target = notificationTarget(
+      n.payload as Record<string, unknown> | undefined,
+      lang,
+    );
+    if (target) {
+      router.push(target);
       setOpen(false);
     }
   };

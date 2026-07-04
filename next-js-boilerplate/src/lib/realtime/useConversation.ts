@@ -32,7 +32,7 @@ export function useConversation(peerId: string | null) {
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) =>
       lastPage.hasMore
-        ? lastPage.messages[lastPage.messages.length - 1]?.createdAt
+        ? lastPage.messages[0]?.createdAt
         : undefined,
     enabled: !!peerId,
     staleTime: Infinity,

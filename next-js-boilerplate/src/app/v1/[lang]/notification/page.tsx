@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, Suspense } from "react";
+import { useCallback, useEffect, useMemo, useRef, Suspense } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   IconBell,
@@ -17,6 +17,7 @@ import {
   useNotifications,
 } from "@/lib/realtime/useNotifications";
 import { useQueryClient } from "@tanstack/react-query";
+import { notificationTarget } from "@/lib/notifications/target";
 
 function NotificationPageContent() {
   const params = useParams<{ lang: string }>();
@@ -29,7 +30,9 @@ function NotificationPageContent() {
     [notifData?.items],
   );
 
-  const markAllRead = useCallback(async () => {
+  const markedRef = useRef(false);
+
+  const markAllReadOnce = useCallback(async () => {
     try {
       await apiFetch("/api/notifications/read", {
         method: "POST",
@@ -42,10 +45,11 @@ function NotificationPageContent() {
   }, [queryClient]);
 
   useEffect(() => {
-    if (notifications.length > 0) {
-      markAllRead();
+    if (notifications.length > 0 && !markedRef.current) {
+      markedRef.current = true;
+      markAllReadOnce();
     }
-  }, [notifications.length, markAllRead]);
+  }, [notifications.length]);
 
   const markRead = useCallback(
     async (id: string) => {
@@ -128,7 +132,7 @@ function NotificationPageContent() {
           )}
           {unread.length > 0 && (
             <button
-              onClick={markAllRead}
+              onClick={markAllReadOnce}
               className="text-brand text-xs font-medium hover:underline"
             >
               Mark all read
@@ -179,7 +183,14 @@ function NotificationPageContent() {
           sorted.map((n) => (
             <button
               key={n.id}
-              onClick={() => markRead(n.id)}
+              onClick={() => {
+                markRead(n.id);
+                const target = notificationTarget(
+                  n.payload as Record<string, unknown> | undefined,
+                  lang,
+                );
+                if (target) router.push(target);
+              }}
               className={`hover:bg-surface-hover flex items-start gap-2.5 rounded-xl px-3 py-3 text-left ${
                 !n.readAt ? "bg-brand/5" : ""
               }`}

@@ -100,10 +100,12 @@ function FeedList({ search }: { search: string }) {
     return () => observer.disconnect();
   }, [loadMore, hasMore]);
 
+  const hash = typeof window !== "undefined" ? window.location.hash : "";
   useEffect(() => {
-    const hash = window.location.hash;
     if (!hash.startsWith("#post-")) return;
     const id = hash.replace("#post-", "");
+    let timer: ReturnType<typeof setInterval> | null = null;
+    let timeout: ReturnType<typeof setTimeout> | null = null;
     const tryScroll = () => {
       const el = document.getElementById(`post-${id}`);
       if (el) {
@@ -113,12 +115,21 @@ function FeedList({ search }: { search: string }) {
       return false;
     };
     if (!tryScroll()) {
-      const timer = setInterval(() => {
-        if (tryScroll()) clearInterval(timer);
+      timer = setInterval(() => {
+        if (tryScroll()) {
+          if (timer) clearInterval(timer);
+          if (timeout) clearTimeout(timeout);
+        }
       }, 200);
-      setTimeout(() => clearInterval(timer), 5000);
+      timeout = setTimeout(() => {
+        if (timer) clearInterval(timer);
+      }, 5000);
+      return () => {
+        if (timer) clearInterval(timer);
+        if (timeout) clearTimeout(timeout);
+      };
     }
-  }, [posts]);
+  }, [hash]);
 
   const handleToggleComments = (postId: string) => {
     setExpandedPostId((prev) => (prev === postId ? null : postId));

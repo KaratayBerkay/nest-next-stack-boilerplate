@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { WebSocket } from 'ws';
 import { PrismaService } from '../prisma/prisma.service';
-import { MessagingService, RoomMember } from './messaging.service';
+import { MessagingService, RoomMember, isValidRoom } from './messaging.service';
 import { PushNotificationService } from '../push-notification/push-notification.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 
@@ -80,6 +80,7 @@ export class MessagingWsGateway implements OnModuleInit {
     const sender = message.sender as
       | { id?: string; name?: string | null; email?: string; avatar?: string }
       | undefined;
+    const unread = await this.ms.getUnreadCount(data.recipientId, ws.userId);
     // Chrome: Conversation renew to all recipient MESSAGE sockets
     this.realtime.emitToService(data.recipientId, 'MESSAGE', {
       renew: 'Messages',
@@ -92,7 +93,7 @@ export class MessagingWsGateway implements OnModuleInit {
         },
         lastMessage: message.body,
         lastTime: message.createdAt,
-        unread: 1,
+        unread: unread + 1,
       },
     });
     // Page content: DM to messages-page viewers only
@@ -126,23 +127,24 @@ export class MessagingWsGateway implements OnModuleInit {
 
   private async handleDeliveredAck(ws: AuthWs, data: { messageId: string }) {
     if (!ws.userId) return;
+    const message = await this.prisma.message.findUnique({
+      where: { id: data.messageId },
+      select: { senderId: true, recipientId: true },
+    });
+    if (!message) return;
+    // Only the true recipient can ack delivery
+    if (message.recipientId !== ws.userId) return;
     const deliveredAt = new Date();
     await this.prisma.message.update({
       where: { id: data.messageId },
       data: { deliveredAt },
     });
-    const message = await this.prisma.message.findUnique({
-      where: { id: data.messageId },
-      select: { senderId: true },
+    this.realtime.emitToPage(message.senderId, 'messages', {
+      type: 'message-delivered',
+      peerId: message.recipientId,
+      messageId: data.messageId,
+      deliveredAt: deliveredAt.toISOString(),
     });
-    if (message) {
-      this.realtime.emitToPage(message.senderId, 'messages', {
-        type: 'message-delivered',
-        userId: message.senderId,
-        messageId: data.messageId,
-        deliveredAt: deliveredAt.toISOString(),
-      });
-    }
   }
 
   private handleJoinRoom(ws: AuthWs, data: { room: string }) {
@@ -194,6 +196,10 @@ export class MessagingWsGateway implements OnModuleInit {
     data: { room: string; text: string; tempId?: string },
   ) {
     if (!ws.userId) return;
+    if (!isValidRoom(data.room)) {
+      ws.send(JSON.stringify({ type: 'error', message: 'Invalid room' }));
+      return;
+    }
     const saved = await this.ms.saveRoomMessage(
       data.room,
       ws.userId,
@@ -228,6 +234,10 @@ export class MessagingWsGateway implements OnModuleInit {
 
   private handleClaimJoinRoom(ws: AuthWs, params: Record<string, string>) {
     if (!ws.userId || !ws.socketId || !params.room) return;
+    if (!isValidRoom(params.room)) {
+      ws.send(JSON.stringify({ type: 'error', message: 'Invalid room' }));
+      return;
+    }
     const room = params.room;
     if (ws.room && ws.room !== room) {
       const oldMembers = this.ms.leaveRoom(ws.room, ws.socketId);

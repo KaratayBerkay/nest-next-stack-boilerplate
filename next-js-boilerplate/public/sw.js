@@ -31,8 +31,10 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  var data = event.notification.data;
-  var postId = data && data.postId;
+  var data = event.notification.data || {};
+  var kind = data.kind;
+  var senderId = data.senderId;
+  var postId = data.postId;
 
   event.waitUntil(
     clients
@@ -48,19 +50,23 @@ self.addEventListener("notificationclick", (event) => {
           }
         }
 
-        var url = postId
-          ? "/v1/" + lang + "/feed#post-" + postId
-          : "/v1/" + lang + "/notification";
+        // Build target URL matching the frontend's notificationTarget map
+        var url;
+        if (kind === "direct-message" && senderId) {
+          url = "/v1/" + lang + "/messages?user=" + senderId;
+        } else if (kind === "friend-request" || kind === "friend-accepted") {
+          url = "/v1/" + lang + "/find-friends";
+        } else if (postId) {
+          url = "/v1/" + lang + "/feed#post-" + postId;
+        } else {
+          url = "/v1/" + lang + "/notification";
+        }
 
-        // Focus an existing client on /v1/ if possible
+        // Focus an existing /v1/ client and navigate via postMessage
         for (var j = 0; j < clientList.length; j++) {
           var client = clientList[j];
           if (client.url.indexOf("/v1/") !== -1 && "focus" in client) {
-            // If there's a post and the client is already on the feed, navigate via postMessage
-            if (postId && client.url.indexOf("/feed") !== -1) {
-              client.postMessage({ type: "navigate-post", postId: postId });
-              return client.focus();
-            }
+            client.postMessage({ type: "navigate", url: url });
             return client.focus();
           }
         }

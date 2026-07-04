@@ -47,13 +47,18 @@ export type FrameHandler = (
 
 const TOPIC_ALLOWLIST = /^(feed|post:[a-z0-9]+)$/;
 
-const PAGE_ALLOWLIST: Record<string, string[]> = {
-  messages: [],
-  'friend-request': [],
-  notification: [],
-  feed: [],
-  post: ['id'],
-  'chat-room': ['room'],
+interface PageAllowlistEntry {
+  allowed: string[];
+  key: string[];
+}
+
+const PAGE_ALLOWLIST: Record<string, PageAllowlistEntry> = {
+  messages: { allowed: ['peer'], key: [] },
+  'friend-request': { allowed: [], key: [] },
+  notification: { allowed: [], key: [] },
+  feed: { allowed: [], key: [] },
+  post: { allowed: ['id'], key: ['id'] },
+  'chat-room': { allowed: ['room'], key: ['room'] },
 };
 
 @Injectable()
@@ -454,14 +459,14 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
 
     // Validate page and params
     if (newPage !== null) {
-      const allowedParams = PAGE_ALLOWLIST[newPage];
-      if (!allowedParams) {
+      const entry = PAGE_ALLOWLIST[newPage];
+      if (!entry) {
         ws.send(JSON.stringify({ type: 'error', message: 'Invalid page' }));
         return;
       }
       const paramKeys = newParams ? Object.keys(newParams) : [];
       for (const key of paramKeys) {
-        if (!allowedParams.includes(key)) {
+        if (!entry.allowed.includes(key)) {
           ws.send(
             JSON.stringify({
               type: 'error',
@@ -471,7 +476,8 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
           return;
         }
       }
-      for (const required of allowedParams) {
+      // Required-param check only on key params (identity params)
+      for (const required of entry.key) {
         if (!paramKeys.includes(required)) {
           ws.send(
             JSON.stringify({
@@ -509,7 +515,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
 
     if (newPage === null) return;
 
-    // Add to new page index
+    // Add to new page index — uses only key params for routing
     const newKey = `page:${this.buildPageKey(newPage, newParams)}:${ws.userId}`;
     if (!this.pageClaims.has(newKey)) {
       this.pageClaims.set(newKey, new Set());
@@ -570,11 +576,15 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
   }
 
   private buildPageKey(page: string, params?: Record<string, string>): string {
-    if (!params || Object.keys(params).length === 0) return page;
-    const sorted = Object.entries(params).sort(([a], [b]) =>
-      a.localeCompare(b),
-    );
-    return `${page}:${sorted.map(([k, v]) => `${k}:${v}`).join(':')}`;
+    const entry = PAGE_ALLOWLIST[page];
+    const keyParams = entry?.key ?? [];
+    if (!params || keyParams.length === 0) return page;
+    const relevant = keyParams
+      .filter((k) => params[k] !== undefined)
+      .sort((a, b) => a.localeCompare(b))
+      .map((k) => `${k}:${params[k]}`);
+    if (relevant.length === 0) return page;
+    return `${page}:${relevant.join(':')}`;
   }
 
   private addToTopicWatch(ws: AuthWs, topic: string) {
