@@ -270,7 +270,7 @@ function MessagesPageContent() {
         <div className="flex items-center gap-3">
           <Avatar
             fallback={initials(user?.name ?? user?.email ?? "?")}
-            className={`h-7 w-7 text-[9px] ring-2 ring-offset-1 ${
+            className={`h-8 w-8 text-[10px] ring-2 ${
               connectionState === "online"
                 ? "bg-green-500 text-white ring-green-500"
                 : connectionState === "connecting"

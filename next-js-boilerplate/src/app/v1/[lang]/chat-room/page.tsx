@@ -105,15 +105,15 @@ function ChatRoomContent() {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
       <div className="flex shrink-0 items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h2 className="text-brand text-sm font-semibold">{t.title}</h2>
-          <span
-            className={`inline-block h-2.5 w-2.5 rounded-full ring-2 ring-offset-1 ${
+        <div className="flex items-center gap-3">
+          <Avatar
+            fallback={initials(user?.name ?? user?.email ?? "?")}
+            className={`h-8 w-8 text-[10px] ring-2 ${
               connectionState === "online"
-                ? "bg-green-500 ring-green-500"
+                ? "bg-green-500 text-white ring-green-500"
                 : connectionState === "connecting"
-                  ? "bg-green-300 ring-green-300 animate-pulse"
-                  : "bg-red-400 ring-red-400"
+                  ? "bg-green-300 text-white ring-green-300 animate-pulse"
+                  : "bg-red-400 text-white ring-red-400"
             }`}
             title={
               connectionState === "online" ? "Connected"
@@ -121,6 +121,7 @@ function ChatRoomContent() {
               : "Disconnected"
             }
           />
+          <h2 className="text-brand text-sm font-semibold">{t.title}</h2>
         </div>
         <span className="text-muted text-xs">
           {t.countOnline.replace("{count}", String(roomCounts[room] ?? 0))}
