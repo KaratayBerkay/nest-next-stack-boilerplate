@@ -6,6 +6,7 @@ import {
   getSurface,
 } from "./exception-handler";
 import type { ExceptionResponse } from "./api-client";
+import type { ExceptionCode } from "./exception-handler";
 
 describe("resolveByPath", () => {
   it("resolves a top-level key", () => {

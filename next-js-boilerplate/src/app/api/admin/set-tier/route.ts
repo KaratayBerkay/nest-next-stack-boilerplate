@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
-import { csrfEchoHeaders, graphqlErrorStatus, graphqlFetch } from "@/lib/backend";
+import { csrfEchoHeaders, graphqlErrorBody, graphqlFetch } from "@/lib/backend";
 
 const SET_USER_TIER_MUTATION = `
   mutation SetUserTier($userId: String!, $tier: SubscriptionTier!) {
@@ -12,19 +12,19 @@ const SET_USER_TIER_MUTATION = `
 export async function POST(request: NextRequest) {
   const accessToken = (await cookies()).get(ACCESS_TOKEN_COOKIE)?.value;
   if (!accessToken) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ statusCode: 401, exc: "EX_AUTH_INVALID_CREDENTIALS", msg: "Unauthorized", key: "auth.errors.unauthorized" }, { status: 401 });
   }
 
   let body: { userId: string; tier: string };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Invalid JSON body", key: "errors.invalidJson" }, { status: 400 });
   }
 
   if (!body.userId || !body.tier) {
     return NextResponse.json(
-      { error: "userId and tier are required" },
+      { statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "userId and tier are required", key: "errors.fieldsRequired" },
       { status: 400 },
     );
   }
@@ -39,8 +39,7 @@ export async function POST(request: NextRequest) {
 
   if (errors) {
     return NextResponse.json(
-      { error: errors[0]?.message ?? "GraphQL error" },
-      { status: graphqlErrorStatus(errors) },
+      graphqlErrorBody(errors, "GraphQL error"),
     );
   }
 

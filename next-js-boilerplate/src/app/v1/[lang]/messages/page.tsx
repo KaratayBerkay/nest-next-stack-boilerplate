@@ -20,6 +20,7 @@ import { FIND_FRIENDS_PATH } from "@/constants/routes";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 import { useConversations } from "@/lib/realtime/useConversations";
 import { ConnectionUnstable } from "@/components/ConnectionUnstable";
+import { ScrollToBottomButton } from "@/components/ScrollToBottomButton";
 import { SkeletonConversationSidebar } from "@/components/ui/skeleton-shapes";
 import { useConnectionState } from "@/hooks/useConnectionState";
 import { useConversation } from "@/lib/realtime/useConversation";
@@ -232,7 +233,7 @@ function MessagesPageContent() {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const { bottomRef, scrollToBottom } = useAutoScroll(
+  const { bottomRef, scrollToBottom, isAtBottom } = useAutoScroll(
     conversationMessages,
     !!selectedUser,
   );
@@ -537,7 +538,12 @@ function MessagesPageContent() {
         </div>
 
         {/* Chat area */}
-        {connectionState === "connecting" ? (
+        {connectionState === "unstable" ? (
+          <ConnectionUnstable
+            title={t.disconnected}
+            description={t.connecting}
+          />
+        ) : connectionState === "connecting" ? (
           <div className="border-border bg-bg flex min-h-0 flex-1 flex-col items-center justify-center gap-3 overflow-hidden rounded-xl border">
             <div className="border-border bg-surface h-8 w-48 animate-pulse rounded-lg border" />
             <div className="border-border bg-surface h-64 w-full max-w-md animate-pulse rounded-xl border" />
@@ -581,7 +587,7 @@ function MessagesPageContent() {
             <>
               <div
                 ref={messagesRef}
-                className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4 select-none"
+                className="relative flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4 select-none"
               >
                 {msgsError && (
                   <div className="flex flex-1 items-center justify-center">
@@ -636,6 +642,9 @@ function MessagesPageContent() {
                   );
                 })}
                 <div ref={bottomRef} />
+                {!isAtBottom && selectedUser && conversationMessages.length > 0 && (
+                  <ScrollToBottomButton onClick={scrollToBottom} />
+                )}
               </div>
               <div className="flex gap-3 border-t px-4 py-3">
                 <div className="flex flex-1 flex-col">

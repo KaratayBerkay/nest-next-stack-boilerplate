@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PRICING_PATH } from "@/constants/routes";
 
 interface AccessDeniedProps {
   title?: string;
@@ -11,7 +12,7 @@ export function AccessDenied({
   title = "Access Denied",
   message = "You do not have permission to view this content.",
   ctaLabel = "Upgrade your plan",
-  ctaHref = "/pricing",
+  ctaHref = PRICING_PATH,
 }: AccessDeniedProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-4 py-20">

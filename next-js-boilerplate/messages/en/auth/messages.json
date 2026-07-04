@@ -25,6 +25,10 @@
   "social": {
     "continueWith": "Or continue with"
   },
+  "loading": "Loading...",
+  "signedInAs": "Signed in as {email}",
+  "role": "Role:",
+  "status": "Status:",
   "errors": {
     "emailRequired": "Email is required",
     "emailInvalid": "Invalid email address",

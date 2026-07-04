@@ -25,6 +25,10 @@
   "social": {
     "continueWith": "veya devam et"
   },
+  "loading": "Yükleniyor...",
+  "signedInAs": "{email} olarak giriş yapıldı",
+  "role": "Rol:",
+  "status": "Durum:",
   "errors": {
     "emailRequired": "E-posta gerekli",
     "emailInvalid": "Geçersiz e-posta adresi",

@@ -10,7 +10,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { apiFetch } from "@/lib/api-client";
+import { apiFetch, apiFetchJson } from "@/lib/api-client";
 
 // Session snapshot fields arrive via /api/auth/me (Redis, zero-PG).
 // Login/register return a subset from AuthPayload; the snapshot is the
@@ -121,40 +121,36 @@ export function AuthProvider({
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = (await res.json()) as AuthResponse;
-    if (!res.ok) {
-      throw new Error(
-        data && "error" in data
-          ? (data as unknown as { error: string }).error
-          : "Login failed",
-      );
+    try {
+      const data = await apiFetchJson<AuthResponse>("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      setUser(data.user);
+      if (data.accessToken) setToken(data.accessToken);
+    } catch (err) {
+      const exception = (err as Error & { exception?: unknown }).exception;
+      if (exception) throw exception;
+      throw err;
     }
-    setUser(data.user);
-    if (data.accessToken) setToken(data.accessToken);
   }, []);
 
   const register = useCallback(
     async (email: string, password: string, name?: string) => {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, name }),
-      });
-      const data = (await res.json()) as AuthResponse;
-      if (!res.ok) {
-        throw new Error(
-          data && "error" in data
-            ? (data as unknown as { error: string }).error
-            : "Registration failed",
-        );
+      try {
+        const data = await apiFetchJson<AuthResponse>("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, name }),
+        });
+        setUser(data.user);
+        if (data.accessToken) setToken(data.accessToken);
+      } catch (err) {
+        const exception = (err as Error & { exception?: unknown }).exception;
+        if (exception) throw exception;
+        throw err;
       }
-      setUser(data.user);
-      if (data.accessToken) setToken(data.accessToken);
     },
     [],
   );

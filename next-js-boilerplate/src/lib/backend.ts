@@ -128,6 +128,21 @@ const EXC_TO_STATUS: Record<string, number> = {
   EX_TIER_INSUFFICIENT: 403,
 };
 
+/**
+ * Build a unified error response body from a GraphQL error array.
+ * Returns `{ statusCode, exc, msg, key }` matching the backend's
+ * global APP_FILTER shape.
+ */
+export function graphqlErrorBody(
+  errors: { message: string; extensions?: { code?: string; exc?: string } }[] | undefined,
+  defaultMsg?: string,
+): { statusCode: number; exc: string; msg: string; key: string } {
+  const exc = errors?.[0]?.extensions?.exc ?? "EX_INTERNAL";
+  const msg = errors?.[0]?.message ?? defaultMsg ?? "Internal server error";
+  const key = exc.toLowerCase().replace(/_/g, ".");
+  return { statusCode: graphqlErrorStatus(errors), exc, msg, key };
+}
+
 export function graphqlErrorStatus(
   errors: { extensions?: { code?: string; exc?: string } }[] | undefined,
   fallback = 500,

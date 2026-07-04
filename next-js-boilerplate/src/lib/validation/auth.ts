@@ -1,13 +1,13 @@
 import { z } from "zod";
 
-export function loginFormSchema(errors: {
+export function generateAuthLoginSchema(errors: {
   emailRequired: string;
   emailInvalid: string;
   passwordRequired: string;
   passwordMin: string;
   passwordMax: string;
 }) {
-  return {
+  return z.object({
     email: z
       .string()
       .min(1, errors.emailRequired)
@@ -17,17 +17,17 @@ export function loginFormSchema(errors: {
       .min(1, errors.passwordRequired)
       .min(8, errors.passwordMin)
       .max(128, errors.passwordMax),
-  };
+  });
 }
 
-export function registerFormSchema(errors: {
+export function generateAuthRegisterSchema(errors: {
   emailRequired: string;
   emailInvalid: string;
   passwordRequired: string;
   passwordMin: string;
   passwordMax: string;
 }) {
-  return {
+  return z.object({
     name: z.string().optional(),
     email: z
       .string()
@@ -38,5 +38,8 @@ export function registerFormSchema(errors: {
       .min(1, errors.passwordRequired)
       .min(8, errors.passwordMin)
       .max(128, errors.passwordMax),
-  };
+  });
 }
+
+export const loginFormSchema = generateAuthLoginSchema;
+export const registerFormSchema = generateAuthRegisterSchema;

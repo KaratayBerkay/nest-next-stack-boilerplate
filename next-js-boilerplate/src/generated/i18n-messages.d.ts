@@ -29,6 +29,10 @@ export type I18nMessages = {
       "social": {
         "continueWith": string;
       };
+      "loading": string;
+      "signedInAs": string;
+      "role": string;
+      "status": string;
       "errors": {
         "emailRequired": string;
         "emailInvalid": string;

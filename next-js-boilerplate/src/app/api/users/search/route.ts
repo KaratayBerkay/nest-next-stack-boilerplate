@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { graphqlFetch } from "@/lib/backend";
+import { graphqlErrorBody, graphqlFetch } from "@/lib/backend";
 import { ME_ID_QUERY } from "@/lib/graphql/queries";
 import { getAccessToken } from "@/store/ssr-cookies";
 
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   const accessToken = await getAccessToken();
 
   if (!accessToken) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ statusCode: 401, exc: "EX_AUTH_INVALID_CREDENTIALS", msg: "Unauthorized", key: "auth.errors.unauthorized" }, { status: 401 });
   }
 
   const q = request.nextUrl.searchParams.get("q") || "";
@@ -42,8 +42,7 @@ export async function GET(request: NextRequest) {
 
   if (usersRes.errors || !usersRes.data) {
     return NextResponse.json(
-      { error: usersRes.errors?.[0]?.message ?? "Failed to search users" },
-      { status: 400 },
+      graphqlErrorBody(usersRes.errors, "Failed to search users"),
     );
   }
 

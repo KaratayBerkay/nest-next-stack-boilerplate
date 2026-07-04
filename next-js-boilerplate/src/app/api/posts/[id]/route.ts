@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { graphqlErrorStatus, graphqlFetch } from "@/lib/backend";
+import { graphqlErrorBody, graphqlFetch } from "@/lib/backend";
 import { getAccessToken } from "@/store/ssr-cookies";
 import {
   POST_QUERY,
@@ -19,11 +19,11 @@ export async function GET(
   }>(POST_QUERY, { id }, token);
 
   if (errors) {
-    return NextResponse.json({ error: errors[0]?.message ?? "GraphQL error" }, { status: graphqlErrorStatus(errors) });
+    return NextResponse.json(graphqlErrorBody(errors, "GraphQL error"));
   }
 
   if (!data?.post) {
-    return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    return NextResponse.json({ statusCode: 404, exc: "EX_NOT_FOUND", msg: "Post not found", key: "errors.notFound" }, { status: 404 });
   }
 
   return NextResponse.json({ post: data.post });
@@ -45,11 +45,11 @@ export async function PUT(
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Invalid JSON body", key: "errors.invalidJson" }, { status: 400 });
   }
 
   if (!body.title && !body.content && body.coverImage === undefined) {
-    return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
+    return NextResponse.json({ statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Nothing to update", key: "errors.nothingToUpdate" }, { status: 400 });
   }
 
   const { data, errors } = await graphqlFetch<{
@@ -57,8 +57,7 @@ export async function PUT(
   }>(UPDATE_POST_MUTATION, { id, data: body }, token);
 
   if (errors) {
-    const status = errors[0]?.extensions?.code === "FORBIDDEN" ? 403 : 500;
-    return NextResponse.json({ error: errors[0]?.message ?? "GraphQL error" }, { status });
+    return NextResponse.json(graphqlErrorBody(errors, "GraphQL error"));
   }
 
   return NextResponse.json({ post: data?.updatePost });
@@ -76,8 +75,7 @@ export async function DELETE(
   }>(DELETE_POST_MUTATION, { id }, token);
 
   if (errors) {
-    const status = errors[0]?.extensions?.code === "FORBIDDEN" ? 403 : 500;
-    return NextResponse.json({ error: errors[0]?.message ?? "GraphQL error" }, { status });
+    return NextResponse.json(graphqlErrorBody(errors, "GraphQL error"));
   }
 
   return NextResponse.json({ post: data?.deletePost });

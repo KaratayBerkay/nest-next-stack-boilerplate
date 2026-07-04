@@ -49,6 +49,7 @@ export function useUnreadNotificationCount() {
     },
     refetchOnWindowFocus: false,
     staleTime: 30_000,
+    refetchInterval: 60_000,
   });
 }
 
@@ -62,5 +63,6 @@ export function useDmUnreadCount() {
       return typeof data.count === "number" ? data.count : 0;
     },
     staleTime: 30_000,
+    refetchInterval: 60_000,
   });
 }

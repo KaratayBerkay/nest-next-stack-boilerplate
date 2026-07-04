@@ -88,7 +88,7 @@ export class MessagingWsGateway implements OnModuleInit {
       conversation: {
         user: {
           id: ws.userId,
-          name: ws.userName || 'Unknown',
+          name: ws.userName ?? 'Unknown',
           avatar: sender?.avatar ?? '',
         },
         lastMessage: message.body,
@@ -181,7 +181,7 @@ export class MessagingWsGateway implements OnModuleInit {
     const member: RoomMember = {
       socketId: ws.socketId,
       userId: ws.userId,
-      name: ws.userName || 'Unknown',
+      name: ws.userName ?? 'Unknown',
     };
     const members = this.ms.joinRoom(data.room, member);
     this.realtime.broadcastToRoom(data.room, {
@@ -231,8 +231,8 @@ export class MessagingWsGateway implements OnModuleInit {
       message: {
         id: saved.id,
         senderId: saved.senderId,
-        senderName: ws.userName || 'Unknown',
-        avatar: this.ms.initials(ws.userName || 'Unknown'),
+        senderName: ws.userName ?? 'Unknown',
+        avatar: this.ms.initials(ws.userName ?? 'Unknown'),
         body: saved.body,
         createdAt: saved.createdAt.toISOString(),
       },
@@ -271,7 +271,7 @@ export class MessagingWsGateway implements OnModuleInit {
     const member: RoomMember = {
       socketId: ws.socketId,
       userId: ws.userId,
-      name: ws.userName || 'Unknown',
+      name: ws.userName ?? 'Unknown',
     };
     const members = this.ms.joinRoom(room, member);
     this.realtime.broadcastToRoom(room, {

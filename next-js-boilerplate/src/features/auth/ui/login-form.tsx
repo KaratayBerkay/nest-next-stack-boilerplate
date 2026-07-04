@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { loginFormSchema } from "@/lib/validation/auth";
+import type { ExceptionResponse } from "@/lib/api-client";
 
 export function LoginForm() {
   const t = useMessages("auth");
@@ -14,23 +15,23 @@ export function LoginForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
 
-  const schemas = loginFormSchema(t.errors);
+  const schema = loginFormSchema(t.errors);
 
   if (loading) {
-    return <p className="text-muted text-sm">Loading...</p>;
+    return <p className="text-muted text-sm">{t.loading}</p>;
   }
 
   if (user) {
     return (
       <div className="flex flex-col gap-3">
         <p className="text-sm text-green-600">
-          Signed in as <strong>{user.email}</strong>
+          {t.signedInAs.replace("{email}", user.email)}
         </p>
         <p className="text-muted text-xs">
-          Role: {user.role} &middot; Status: {user.status}
+          {t.role} {user.role} &middot; {t.status} {user.status}
         </p>
       </div>
     );
@@ -38,16 +39,16 @@ export function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setFieldErrors({});
 
-    const emailResult = schemas.email.safeParse(email);
-    const passwordResult = schemas.password.safeParse(password);
-    if (!emailResult.success) {
-      setError(emailResult.error.issues[0]?.message ?? t.errors.emailInvalid);
-      return;
-    }
-    if (!passwordResult.success) {
-      setError(passwordResult.error.issues[0]?.message ?? t.errors.passwordMin);
+    const result = schema.safeParse({ email, password });
+    if (!result.success) {
+      const flat = result.error.flatten().fieldErrors;
+      const errors: Record<string, string> = {};
+      for (const [field, msgs] of Object.entries(flat)) {
+        if (msgs && msgs.length > 0) errors[field] = msgs[0];
+      }
+      setFieldErrors(errors);
       return;
     }
 
@@ -56,11 +57,13 @@ export function LoginForm() {
       await login(email, password);
       router.push("/");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "";
-      if (msg.toLowerCase().includes("credentials") || msg.toLowerCase().includes("email") || msg.toLowerCase().includes("password")) {
-        setError(t.errors.loginFailed);
+      const exc = (err as { exc?: string; field?: string; msg?: string }).exc;
+      const field = (err as { field?: string }).field;
+      const msg = (err as { msg?: string }).msg;
+      if (field) {
+        setFieldErrors({ [field]: msg ?? t.errors.loginFailed });
       } else {
-        setError(t.errors.loginFailed);
+        setFieldErrors({ form: t.errors.loginFailed });
       }
     } finally {
       setSubmitting(false);
@@ -86,6 +89,9 @@ export function LoginForm() {
             className="border-border bg-surface rounded border px-3 py-2 text-sm"
             data-testid="login-email"
           />
+          {fieldErrors.email && (
+            <p className="mt-0.5 text-xs text-red-600">{fieldErrors.email}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1">
@@ -101,11 +107,14 @@ export function LoginForm() {
             className="border-border bg-surface rounded border px-3 py-2 text-sm"
             data-testid="login-password"
           />
+          {fieldErrors.password && (
+            <p className="mt-0.5 text-xs text-red-600">{fieldErrors.password}</p>
+          )}
         </div>
 
-        {error && (
+        {fieldErrors.form && (
           <p className="text-sm text-red-600" data-testid="login-error">
-            {error}
+            {fieldErrors.form}
           </p>
         )}
 

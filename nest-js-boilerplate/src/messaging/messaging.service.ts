@@ -12,6 +12,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { FriendsService } from '../friends/friends.service';
 import { TokenStoreService } from '../auth/token-store.service';
 import { NotificationService } from '../notification/notification.service';
+import { displayName } from '../common/utils/display-name';
 
 export const CHAT_ROOMS = [
   'general',
@@ -58,7 +59,7 @@ export class MessagingService {
         where: { id: actorId },
         select: { name: true, email: true },
       });
-      const who = actor?.name || actor?.email || 'Someone';
+      const who = displayName(actor ?? { name: null, email: 'Someone' });
       await this.notifications.create({
         userId,
         actorId,
@@ -103,7 +104,8 @@ export class MessagingService {
     });
     return users.map((u) => ({
       ...u,
-      avatar: this.initials(u.name || u.email),
+      name: displayName(u),
+      avatar: this.initials(displayName(u)),
     }));
   }
 
@@ -203,7 +205,8 @@ export class MessagingService {
         return {
           user: {
             ...user,
-            avatar: this.initials(user.name || user.email),
+            name: displayName(user),
+            avatar: this.initials(displayName(user)),
           },
           lastMessage: latest.lastMessage,
           lastTime: latest.lastTime,
@@ -402,8 +405,8 @@ export class MessagingService {
     const result = users.map((u) => ({
       id: u.id,
       email: u.email,
-      name: u.name,
-      avatar: this.initials(u.name || u.email),
+      name: displayName(u),
+      avatar: this.initials(displayName(u)),
     }));
     await this.cache.set(cacheKey, result, 30_000);
     return result;
@@ -435,9 +438,9 @@ export class MessagingService {
         direction: 'incoming' as const,
         user: {
           id: r.requester.id,
-          name: r.requester.name,
+          name: displayName(r.requester),
           email: r.requester.email,
-          avatar: this.initials(r.requester.name || r.requester.email),
+          avatar: this.initials(displayName(r.requester)),
         },
         createdAt: r.createdAt,
       })),
@@ -446,9 +449,9 @@ export class MessagingService {
         direction: 'outgoing' as const,
         user: {
           id: r.addressee.id,
-          name: r.addressee.name,
+          name: displayName(r.addressee),
           email: r.addressee.email,
-          avatar: this.initials(r.addressee.name || r.addressee.email),
+          avatar: this.initials(displayName(r.addressee)),
         },
         createdAt: r.createdAt,
       })),

@@ -16,6 +16,7 @@ import { REDIS_CLIENT } from '../redis/redis.module';
 import { TokenStoreService } from '../auth/token-store.service';
 import { TokenDerivationService } from '../auth/token-derivation.service';
 import { CryptoService } from '../common/crypto/crypto.service';
+import { displayName } from '../common/utils/display-name';
 import type { ExceptionCode } from '../common/exceptions/exception-code';
 
 type AuthWs = WebSocket & {
@@ -298,7 +299,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     }
 
     ws.userId = hash.userId;
-    ws.userName = hash.name || hash.email || 'Unknown';
+    ws.userName = displayName(hash);
     ws.deviceTokenHash = crypto
       .createHash('sha256')
       .update(tokens.deviceToken)

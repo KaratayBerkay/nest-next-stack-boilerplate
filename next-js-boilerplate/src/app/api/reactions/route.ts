@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { graphqlErrorStatus, graphqlFetch } from "@/lib/backend";
+import { graphqlErrorBody, graphqlFetch } from "@/lib/backend";
 import { getAccessToken } from "@/store/ssr-cookies";
 import { CREATE_REACTION_MUTATION } from "@/lib/graphql/queries";
 
@@ -10,19 +10,19 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Invalid JSON body", key: "errors.invalidJson" }, { status: 400 });
   }
 
   if (!body.type) {
     return NextResponse.json(
-      { error: "type is required (LIKE | LOVE | LAUGH | WOW | SAD | ANGRY)" },
+      { statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "type is required (LIKE | LOVE | LAUGH | WOW | SAD | ANGRY)", key: "errors.typeRequired" },
       { status: 400 },
     );
   }
 
   if (!body.postId && !body.commentId) {
     return NextResponse.json(
-      { error: "Either postId or commentId is required" },
+      { statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Either postId or commentId is required", key: "errors.targetRequired" },
       { status: 400 },
     );
   }
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
   );
 
   if (errors) {
-    return NextResponse.json({ error: errors[0]?.message ?? "GraphQL error" }, { status: graphqlErrorStatus(errors) });
+    return NextResponse.json(graphqlErrorBody(errors, "GraphQL error"));
   }
 
   return NextResponse.json({ reaction: data?.createReaction }, { status: 201 });

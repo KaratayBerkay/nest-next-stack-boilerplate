@@ -6,7 +6,6 @@ import {
   Param,
   Query,
   UseGuards,
-  UseFilters,
   UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
@@ -17,7 +16,6 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
-import { HttpExceptionFilter } from '../exception-filters/http-exception.filter';
 import { LoggingInterceptor } from '../interceptors/logging.interceptor';
 import { MessagingService } from './messaging.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
@@ -27,11 +25,11 @@ import { SendMessageRestDto } from './dto/send-message-rest.dto';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { JwtUser } from '../auth/auth.types';
+import { displayName } from '../common/utils/display-name';
 
 @ApiTags('Messaging')
 @ApiBearerAuth()
 @Controller('api')
-@UseFilters(HttpExceptionFilter)
 @UseInterceptors(LoggingInterceptor)
 @UseGuards(SessionAuthGuard)
 export class MessagingController {
@@ -200,7 +198,7 @@ export class MessagingController {
       conversation: {
         user: {
           id: user.userId,
-          name: user.name || user.email || 'Unknown',
+          name: displayName(user),
           avatar: sender?.avatar ?? '',
         },
         lastMessage: message.body,
@@ -219,7 +217,7 @@ export class MessagingController {
       !this.realtime.hasServiceConnection(recipientId, 'MESSAGE') &&
       !this.realtime.hasServiceConnection(recipientId, 'NOTIFICATION')
     ) {
-      const senderName = sender?.name || sender?.email || 'Someone';
+      const senderName = displayName(sender ?? { name: null });
       const body = typeof message.body === 'string' ? message.body : '';
       this.push
         .sendToUser(

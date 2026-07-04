@@ -10,7 +10,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 import { imageUrl } from "@/lib/image";
 import { ReactionInline } from "@/components/feed/ReactionButtons";
@@ -58,38 +58,17 @@ function PostDetailContent() {
     return () => realtime?.unwatch(topic);
   }, [realtime, uuid]);
 
-  const { data: post, isLoading, error } = useQuery<Post | null>({
+  const { data: post } = useSuspenseQuery<Post>({
     queryKey: ["posts", uuid],
     queryFn: async () => {
       const res = await apiFetch(`/api/posts/${uuid}`);
-      if (!res.ok) return null;
+      if (!res.ok) throw new Error("Post not found");
       const data = await res.json();
-      return data.post ?? null;
+      if (!data.post) throw new Error("Post not found");
+      return data.post;
     },
     staleTime: 30_000,
   });
-
-  if (isLoading) {
-    return (
-      <div className="text-muted flex animate-pulse items-center justify-center py-20 text-sm">
-        Loading...
-      </div>
-    );
-  }
-
-  if (error || !post) {
-    return (
-      <div className="flex flex-col items-center gap-4 py-20">
-        <p className="text-sm text-red-500">{error?.message ?? "Post not found"}</p>
-        <button
-          onClick={() => router.back()}
-          className="text-brand text-xs hover:underline"
-        >
-          Go back
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4 px-4 py-6">
@@ -242,15 +221,32 @@ function PostDetailContent() {
   );
 }
 
+function PostDetailSkeleton() {
+  return (
+    <div className="mx-auto flex max-w-2xl flex-col gap-4 px-4 py-6">
+      <div className="bg-surface-hover h-4 w-12 animate-pulse rounded" />
+      <div className="border-border surface flex flex-col gap-3 rounded-xl border p-4">
+        <div className="flex items-center gap-3">
+          <div className="bg-surface-hover h-8 w-8 animate-pulse rounded-full" />
+          <div className="flex flex-col gap-1">
+            <div className="bg-surface-hover h-3 w-24 animate-pulse rounded" />
+            <div className="bg-surface-hover h-2 w-16 animate-pulse rounded" />
+          </div>
+        </div>
+        <div className="bg-surface-hover h-6 w-3/4 animate-pulse rounded" />
+        <div className="flex flex-col gap-2">
+          <div className="bg-surface-hover h-3 w-full animate-pulse rounded" />
+          <div className="bg-surface-hover h-3 w-5/6 animate-pulse rounded" />
+          <div className="bg-surface-hover h-3 w-2/3 animate-pulse rounded" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PostDetailPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="text-muted flex animate-pulse items-center justify-center py-20 text-sm">
-          Loading...
-        </div>
-      }
-    >
+    <Suspense fallback={<PostDetailSkeleton />}>
       <ErrorBoundary>
         <PostDetailContent />
       </ErrorBoundary>

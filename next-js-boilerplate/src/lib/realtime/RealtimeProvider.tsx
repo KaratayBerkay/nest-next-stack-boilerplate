@@ -249,11 +249,9 @@ function dispatchRenew(
   switch (frame.renew as string) {
     case "Notifications": {
       if (frame.type === "Count") {
-        if (qc.getQueryData(["notifications", "count"]) !== undefined)
-          qc.setQueryData(["notifications", "count"], frame.value);
+        qc.setQueryData(["notifications", "count"], frame.value);
       } else if (frame.type === "DmCount") {
-        if (qc.getQueryData(["notifications", "dm-count"]) !== undefined)
-          qc.setQueryData(["notifications", "dm-count"], frame.value);
+        qc.setQueryData(["notifications", "dm-count"], frame.value);
       } else if (frame.type === "Item") {
         if (!qc.getQueryData(["notifications", "list"])) {
           qc.invalidateQueries({ queryKey: ["notifications", "list"] });
@@ -615,6 +613,17 @@ function RealtimeProviderInner({ children }: { children: ReactNode }) {
       } satisfies Cmd);
     }
   }, [pathname, searchParams, token]);
+
+  // ── Invalidate count queries on transition to "open" ──
+
+  const prevStatusRef = useRef<RealtimeStatus | null>(null);
+  useEffect(() => {
+    if (prevStatusRef.current !== "open" && status === "open") {
+      queryClient.invalidateQueries({ queryKey: ["notifications", "count"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", "dm-count"] });
+    }
+    prevStatusRef.current = status;
+  }, [status, queryClient]);
 
   // ── Public API ──
 

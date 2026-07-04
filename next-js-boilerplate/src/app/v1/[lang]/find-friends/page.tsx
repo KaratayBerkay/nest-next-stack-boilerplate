@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useReducer, useRef, useCallback } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect, useReducer, useRef, useCallback, Suspense } from "react";
+import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingAuth } from "@/components/LoadingAuth";
@@ -10,6 +10,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { initials } from "@/lib/initials";
 import { apiFetch } from "@/lib/api-client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui";
+import { SkeletonLine, SkeletonMessage } from "@/components/ui/skeleton-shapes";
 
 type User = { id: string; name: string };
 
@@ -106,20 +107,17 @@ function PaginationBar({
   );
 }
 
-export default function FindFriendsPage() {
+function FindFriendsContent({ user: _user }: { user: { id: string } }) {
   const t = useMessages("find-friends");
-  const { user, loading } = useAuth();
   const queryClient = useQueryClient();
-  const { data: friends = [] } = useQuery<User[]>({
+  const { data: friends = [] } = useSuspenseQuery<User[]>({
     queryKey: ["friends", "list"],
     queryFn: () => apiFetch("/api/messages/friends").then((r) => r.json()),
-    enabled: !!user,
   });
-  const { data: friendRequests = [] } = useQuery<FriendRequest[]>({
+  const { data: friendRequests = [] } = useSuspenseQuery<FriendRequest[]>({
     queryKey: ["friends", "requests"],
     queryFn: () =>
       apiFetch("/api/messages/friends/requests").then((r) => r.json()),
-    enabled: !!user,
   });
   const [search, dispatch] = useReducer(searchReducer, {
     items: [],
@@ -184,7 +182,7 @@ export default function FindFriendsPage() {
   };
 
   const filtered = search.items.filter((u) => {
-    if (u.id === user?.id) return false;
+    if (u.id === _user?.id) return false;
     if (friendIds.has(u.id)) return false;
     return true;
   });
@@ -222,10 +220,6 @@ export default function FindFriendsPage() {
       }
     } catch {}
   }, [queryClient]);
-
-  if (loading) return <LoadingAuth />;
-  if (!user)
-    return <UnauthenticatedMessage message="Sign in to find friends" />;
 
   return (
     <div className="flex flex-col gap-6">
@@ -376,5 +370,35 @@ export default function FindFriendsPage() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+export default function FindFriendsPage() {
+  const { user, loading } = useAuth();
+
+  if (loading) return <LoadingAuth />;
+  if (!user)
+    return <UnauthenticatedMessage message="Sign in to find friends" />;
+
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col gap-4 p-4">
+          <SkeletonLine width="30%" className="h-5" />
+          <div className="flex gap-1">
+            <SkeletonLine className="h-8 flex-1" />
+            <SkeletonLine className="h-8 flex-1" />
+          </div>
+          <SkeletonLine width="100%" className="h-9" />
+          <div className="flex flex-col gap-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <SkeletonMessage key={i} />
+            ))}
+          </div>
+        </div>
+      }
+    >
+      <FindFriendsContent user={user} />
+    </Suspense>
   );
 }

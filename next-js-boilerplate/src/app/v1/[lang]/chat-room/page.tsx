@@ -17,6 +17,7 @@ import { useRoom } from "@/lib/realtime/useRoom";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 import { useConnectionState } from "@/hooks/useConnectionState";
 import { ConnectionUnstable } from "@/components/ConnectionUnstable";
+import { ScrollToBottomButton } from "@/components/ScrollToBottomButton";
 import { SkeletonChatMessage } from "@/components/ui/skeleton-shapes";
 import { useSearchParams, useRouter } from "next/navigation";
 
@@ -37,7 +38,7 @@ function ChatRoomContent() {
 
   const { data: messages = [], isLoading: msgsLoading, isError: msgsError } = useRoom(room);
   const messagesRef = useYSwipeGesture<HTMLDivElement>();
-  const { bottomRef, scrollToBottom } = useAutoScroll(messages);
+  const { bottomRef, scrollToBottom, isAtBottom } = useAutoScroll(messages);
 
   // Room presence: subscribe to room-counts, user-joined, user-left (T7).
   useEffect(() => {
@@ -210,6 +211,9 @@ function ChatRoomContent() {
           </Tabs>
         </div>
 
+        {connectionState === "unstable" ? (
+          <ConnectionUnstable title={t.disconnected} description={t.connecting} />
+        ) : (
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border">
           <div className="flex items-center gap-2 border-b px-4 py-3">
             <button
@@ -233,7 +237,7 @@ function ChatRoomContent() {
 
           <div
             ref={messagesRef}
-            className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3 select-none"
+            className="relative flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3 select-none"
           >
             {msgsError && (
               <div className="flex flex-1 items-center justify-center">
@@ -285,6 +289,9 @@ function ChatRoomContent() {
               );
             })}
             <div ref={bottomRef} />
+            {!isAtBottom && messages.length > 0 && (
+              <ScrollToBottomButton onClick={scrollToBottom} />
+            )}
           </div>
 
           <div className="flex gap-2 border-t p-2">
@@ -318,6 +325,7 @@ function ChatRoomContent() {
             </button>
           </div>
         </div>
+        )}
       </div>
     </div>
   );

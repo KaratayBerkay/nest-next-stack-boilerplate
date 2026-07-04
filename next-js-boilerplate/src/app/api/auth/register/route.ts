@@ -5,7 +5,7 @@ import {
   rbacTokenCookieOptions,
   userTokenCookieOptions,
 } from "@/lib/cookie";
-import { graphqlFetch, graphqlErrorStatus } from "@/lib/backend";
+import { graphqlFetch, graphqlErrorBody } from "@/lib/backend";
 
 const REGISTER_QUERY = `
   mutation Register($input: RegisterInput!) {
@@ -43,12 +43,12 @@ export async function POST(request: Request) {
     name = body.name;
     if (!email || !password) {
       return NextResponse.json(
-        { error: "Email and password are required" },
+        { statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Email and password are required", key: "auth.errors.emailRequired" },
         { status: 400 },
       );
     }
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Invalid JSON body", key: "auth.errors.invalidJson" }, { status: 400 });
   }
 
   const { data, errors } = await graphqlFetch<{
@@ -63,9 +63,11 @@ export async function POST(request: Request) {
   }>(REGISTER_QUERY, { input: { email, password, ...(name ? { name } : {}) } });
 
   if (errors || !data?.register) {
-    const message = errors?.[0]?.message ?? "Registration failed";
-    const status = graphqlErrorStatus(errors, 400);
-    return NextResponse.json({ error: message }, { status });
+    const body = graphqlErrorBody(errors, "Registration failed");
+    if (body.exc === "EX_AUTH_EMAIL_TAKEN") {
+      return NextResponse.json({ ...body, field: "email" }, { status: body.statusCode });
+    }
+    return NextResponse.json(body, { status: body.statusCode });
   }
 
   const { accessToken, rbacToken, deviceToken, userToken, user } = data.register;

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { graphqlFetch } from "@/lib/backend";
+import { graphqlErrorBody, graphqlFetch } from "@/lib/backend";
 import { getAccessToken } from "@/store/ssr-cookies";
 import {
   UPDATE_COMMENT_MUTATION,
@@ -17,11 +17,11 @@ export async function PUT(
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Invalid JSON body", key: "errors.invalidJson" }, { status: 400 });
   }
 
   if (!body.body?.trim()) {
-    return NextResponse.json({ error: "Body is required" }, { status: 400 });
+    return NextResponse.json({ statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Body is required", key: "errors.bodyRequired" }, { status: 400 });
   }
 
   const { data, errors } = await graphqlFetch<{
@@ -29,8 +29,7 @@ export async function PUT(
   }>(UPDATE_COMMENT_MUTATION, { id, data: { body: body.body } }, token);
 
   if (errors) {
-    const status = errors[0]?.extensions?.code === "FORBIDDEN" ? 403 : 500;
-    return NextResponse.json({ error: errors[0]?.message ?? "GraphQL error" }, { status });
+    return NextResponse.json(graphqlErrorBody(errors, "GraphQL error"));
   }
 
   return NextResponse.json({ comment: data?.updateComment });
@@ -48,8 +47,7 @@ export async function DELETE(
   }>(DELETE_COMMENT_MUTATION, { id }, token);
 
   if (errors) {
-    const status = errors[0]?.extensions?.code === "FORBIDDEN" ? 403 : 500;
-    return NextResponse.json({ error: errors[0]?.message ?? "GraphQL error" }, { status });
+    return NextResponse.json(graphqlErrorBody(errors, "GraphQL error"));
   }
 
   return NextResponse.json({ comment: data?.deleteComment });

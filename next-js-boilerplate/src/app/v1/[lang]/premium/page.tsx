@@ -6,21 +6,22 @@ import { useAuth } from "@/hooks/useAuth";
 import { TierGate } from "@/components/TierGate";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
+import { useToast } from "@/components/ui/Toast";
+import { exceptionHandler, clientException } from "@/lib/exception-handler";
 
 
 export default function PremiumPage() {
   const { user, loading } = useAuth();
+  const { toast } = useToast();
   const [stats, setStats] = useState<{
     totalUsers: number;
     activeUsers: number;
     revenue: number;
   } | null>(null);
-  const [statsError, setStatsError] = useState<string | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
 
   const loadStats = async () => {
     setLoadingStats(true);
-    setStatsError(null);
     try {
       const res = await apiFetch("/api/premium/stats");
       if (res.ok) {
@@ -28,10 +29,13 @@ export default function PremiumPage() {
         setStats(data.stats);
       } else {
         const data = await res.json();
-        setStatsError(data.error ?? `Error ${res.status}`);
+        const description = data.exc
+          ? exceptionHandler(data)
+          : data.error ?? `Error ${res.status}`;
+        toast({ description, variant: "destructive" });
       }
     } catch {
-      setStatsError("Network error");
+      toast({ description: "Network error", variant: "destructive" });
     } finally {
       setLoadingStats(false);
     }
@@ -76,12 +80,6 @@ export default function PremiumPage() {
                   ${stats.revenue.toLocaleString()}
                 </p>
               </div>
-            </div>
-          )}
-
-          {statsError && (
-            <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
-              {statsError}
             </div>
           )}
         </div>
