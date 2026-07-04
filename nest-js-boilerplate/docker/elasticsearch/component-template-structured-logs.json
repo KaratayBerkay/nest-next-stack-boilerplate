@@ -1,0 +1,46 @@
+{
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0
+    },
+    "mappings": {
+      "dynamic_templates": [
+        {
+          "strings_as_keyword": {
+            "match_mapping_type": "string",
+            "mapping": {
+              "type": "keyword"
+            }
+          }
+        }
+      ],
+      "properties": {
+        "@timestamp": { "type": "date" },
+        "level": { "type": "integer" },
+        "level_name": { "type": "keyword" },
+        "category": { "type": "keyword" },
+        "event": { "type": "keyword" },
+        "token": { "type": "keyword" },
+        "sessionId": { "type": "keyword" },
+        "userId": { "type": "keyword" },
+        "socketId": { "type": "keyword" },
+        "sessionDurationMs": { "type": "long" },
+        "durationMs": { "type": "long" },
+        "httpStatus": { "type": "integer" },
+        "ip": { "type": "ip" },
+        "deviceType": { "type": "keyword" },
+        "deviceId": { "type": "keyword" },
+        "userAgent": { "type": "keyword" },
+        "path": { "type": "keyword" },
+        "method": { "type": "keyword" },
+        "errorMessage": { "type": "text" },
+        "stack": { "type": "text" },
+        "reason": { "type": "keyword" },
+        "detail": { "type": "text" },
+        "service": { "type": "keyword" },
+        "metadata": { "type": "object", "enabled": false }
+      }
+    }
+  }
+}
