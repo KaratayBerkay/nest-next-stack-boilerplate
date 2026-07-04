@@ -6,6 +6,17 @@ import { getAccessToken } from "@/store/ssr-cookies";
 import { graphqlFetch } from "@/lib/backend";
 import { withLogging } from "@/lib/request-logger";
 
+type DeviceType = "desktop" | "mobile" | "tablet" | "bot" | "unknown";
+
+function parseDeviceType(ua?: string | null): DeviceType {
+  if (!ua) return "unknown";
+  const u = ua.toLowerCase();
+  if (/bot|crawler|spider|googlebot|headless/i.test(u)) return "bot";
+  if (/ipad|tablet|playbook|kindle|(android(?!.*mobile))/i.test(u)) return "tablet";
+  if (/mobile|iphone|ipod|blackberry|opera mini|android.*mobile|iemobile/i.test(u)) return "mobile";
+  return "desktop";
+}
+
 const TOPIC = "frontend-events";
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
@@ -78,6 +89,7 @@ export const POST = withLogging(async (request, log) => {
   }
 
   const { events } = parsed.data;
+  const userAgent = request.headers.get("user-agent") ?? undefined;
 
   // Resolve the real user + sessionId from the session and enrich events
   const { userId, sessionId } = await resolveMe();
@@ -85,6 +97,8 @@ export const POST = withLogging(async (request, log) => {
     ...e,
     userId: userId ?? e.userId,
     token: sessionId,
+    ip: ip === "unknown" ? undefined : ip,
+    deviceType: parseDeviceType(e.userAgent ?? userAgent),
   }));
 
   // Fire-and-forget: never block the response on Kafka
