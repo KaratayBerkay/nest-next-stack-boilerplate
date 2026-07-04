@@ -267,23 +267,26 @@ function MessagesPageContent() {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-hidden">
       <div className="flex shrink-0 items-center justify-between">
-        <h2 className="text-brand text-lg font-bold">{t.title}</h2>
-        <span
-          className={`inline-block h-3 w-3 rounded-full ring-2 ring-offset-1 ${
-            connectionState === "online"
-              ? "bg-green-500 ring-green-500"
-              : connectionState === "connecting"
-                ? "bg-green-300 ring-green-300 animate-pulse"
-                : "bg-red-400 ring-red-400"
-          }`}
-          title={
-            connectionState === "online"
-              ? t.connected
-              : connectionState === "connecting"
-                ? "Connecting…"
-                : t.disconnected
-          }
-        />
+        <div className="flex items-center gap-3">
+          <Avatar
+            fallback={initials(user?.name ?? user?.email ?? "?")}
+            className={`h-7 w-7 text-[9px] ring-2 ring-offset-1 ${
+              connectionState === "online"
+                ? "bg-green-500 text-white ring-green-500"
+                : connectionState === "connecting"
+                  ? "bg-green-300 text-white ring-green-300 animate-pulse"
+                  : "bg-red-400 text-white ring-red-400"
+            }`}
+            title={
+              connectionState === "online"
+                ? t.connected
+                : connectionState === "connecting"
+                  ? "Connecting…"
+                  : t.disconnected
+            }
+          />
+          <h2 className="text-brand text-lg font-bold">{t.title}</h2>
+        </div>
       </div>
 
       <div className="relative flex min-h-0 flex-1 gap-4">

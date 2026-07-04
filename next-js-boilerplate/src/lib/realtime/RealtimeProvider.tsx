@@ -402,6 +402,36 @@ function RealtimeProviderInner({ children }: { children: ReactNode }) {
           } satisfies Cmd);
         }
       });
+      // Auto mark as read when a DM arrives for an active conversation.
+      if (
+        frame.type === "direct-message" &&
+        userIdRef.current
+      ) {
+        const msg = frame.message as Record<string, unknown> & {
+          senderId: string;
+          recipientId: string;
+        };
+        if (
+          msg?.recipientId === userIdRef.current &&
+          msg?.senderId &&
+          queryClient.getQueryData(["messages", msg.senderId])
+        ) {
+          queryClient.setQueryData(["conversations"], (old: unknown) => {
+            const list = (old ?? []) as Record<string, unknown>[];
+            return list.map((c) => {
+              const user = c.user as Record<string, unknown> | undefined;
+              if (user?.id === msg.senderId) {
+                return { ...c, unread: 0 };
+              }
+              return c;
+            });
+          });
+          apiFetch("/api/messages/read", {
+            method: "POST",
+            body: JSON.stringify({ userId: msg.senderId }),
+          }).catch(() => {});
+        }
+      }
       const t = frame.type as string;
       const subs = subsRef.current.get(t);
       if (subs) for (const h of subs) h(frame);

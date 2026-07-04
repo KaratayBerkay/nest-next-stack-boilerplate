@@ -260,6 +260,14 @@ export class MessagingController {
       readAt: result.readAt,
       peerId: user.userId,
     });
+    // Chrome: message-read to sender's MESSAGE sockets (tick update).
+    this.realtime.emitToService(body.userId, 'MESSAGE', {
+      type: 'message-read',
+      readerId: user.userId,
+      senderId: body.userId,
+      readAt: result.readAt,
+      peerId: user.userId,
+    });
     // Chrome: Conversation renew to reader's MESSAGE sockets
     this.realtime.emitToService(user.userId, 'MESSAGE', {
       renew: 'Messages',
