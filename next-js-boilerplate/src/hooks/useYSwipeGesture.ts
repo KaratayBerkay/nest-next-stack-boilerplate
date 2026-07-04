@@ -33,7 +33,7 @@ export function useYSwipeGesture<T extends HTMLElement>(enabled = true) {
       if (!target || isIgnored(e.target)) return;
 
       dragging.current = true;
-      const y = "touches" in e ? e.touches[0].clientY : e.clientY;
+      const y = "touches" in e ? (e.touches[0]?.clientY ?? 0) : e.clientY;
       startY.current = y;
       scrollStart.current = target.scrollTop;
       target.style.cursor = "grabbing";
@@ -45,7 +45,7 @@ export function useYSwipeGesture<T extends HTMLElement>(enabled = true) {
       const target = elRef.current;
       if (!target) return;
       e.preventDefault();
-      const y = "touches" in e ? e.touches[0].clientY : e.clientY;
+      const y = "touches" in e ? (e.touches[0]?.clientY ?? 0) : e.clientY;
       target.scrollTop = scrollStart.current + (startY.current - y);
     };
 

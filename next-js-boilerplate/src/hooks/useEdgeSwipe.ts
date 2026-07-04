@@ -32,6 +32,7 @@ export function useEdgeSwipe({
     const isNearEdge = (clientX: number) => clientX <= edgeWidth;
 
     const onTouchStart = (e: TouchEvent) => {
+      if (!e.touches.length) return;
       const x = e.touches[0].clientX;
       if (!isNearEdge(x)) return;
       stateRef.current = {
@@ -44,7 +45,7 @@ export function useEdgeSwipe({
     };
 
     const onTouchMove = (e: TouchEvent) => {
-      if (!stateRef.current.isDragging) return;
+      if (!stateRef.current.isDragging || !e.touches.length) return;
       stateRef.current.currentX = e.touches[0].clientX;
     };
 

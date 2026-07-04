@@ -172,7 +172,7 @@ export function useSwipeGesture(options: UseSwipeOptions = {}) {
     document.addEventListener("keyup", onKeyUp);
 
     const onTouchStart = (e: TouchEvent) => {
-      if (isKeyboardMode()) return;
+      if (isKeyboardMode() || !e.touches.length) return;
       touchOriginRef.current = {
         x: e.touches[0].clientX,
         y: e.touches[0].clientY,
@@ -180,7 +180,7 @@ export function useSwipeGesture(options: UseSwipeOptions = {}) {
       touchAxisLockedRef.current = false;
     };
     const onTouchMove = (e: TouchEvent) => {
-      if (isKeyboardMode()) return;
+      if (isKeyboardMode() || !e.touches.length) return;
 
       if (!stateRef.current.isSwiping) {
         const dx = e.touches[0].clientX - touchOriginRef.current.x;

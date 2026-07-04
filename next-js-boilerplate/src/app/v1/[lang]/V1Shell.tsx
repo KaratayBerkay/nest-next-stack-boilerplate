@@ -385,8 +385,14 @@ export function V1Shell({ children }: { children: React.ReactNode }) {
       if (dx < -50) close();
     };
 
-    const handleTouchStart = (e: TouchEvent) => onStart(e.touches[0].clientX);
-    const handleTouchMove = (e: TouchEvent) => onMove(e.touches[0].clientX);
+    const handleTouchStart = (e: TouchEvent) => {
+      if (!e.touches.length) return;
+      onStart(e.touches[0].clientX);
+    };
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!e.touches.length) return;
+      onMove(e.touches[0].clientX);
+    };
     const handleTouchEnd = () => onEnd();
     const handleMouseDown = (e: MouseEvent) => onStart(e.clientX);
     const handleMouseMove = (e: MouseEvent) => onMove(e.clientX);
