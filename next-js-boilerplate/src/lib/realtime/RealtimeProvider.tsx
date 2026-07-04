@@ -346,6 +346,8 @@ function RealtimeProviderInner({ children }: { children: ReactNode }) {
   const clientRef = useRef<RealtimeClient | null>(null);
   const channelRef = useRef<BroadcastChannel | null>(null);
   const claimRef = useRef<{ page: string | null; params?: Record<string, string> } | null>(null);
+  const userIdRef = useRef(user?.id);
+  userIdRef.current = user?.id;
 
   // ── Single effect: owns all coordination state ──
 
@@ -356,7 +358,7 @@ function RealtimeProviderInner({ children }: { children: ReactNode }) {
     // Process an incoming frame (from WS or broadcast)
     const process = (frame: Record<string, unknown>) => {
       dispatchRenew(queryClient, frame);
-      dispatchEvent(queryClient, frame, user?.id);
+      dispatchEvent(queryClient, frame, userIdRef.current);
       const t = frame.type as string;
       const subs = subsRef.current.get(t);
       if (subs) for (const h of subs) h(frame);
