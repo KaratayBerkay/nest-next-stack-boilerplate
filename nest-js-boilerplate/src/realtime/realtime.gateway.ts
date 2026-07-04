@@ -21,6 +21,7 @@ import type { ExceptionCode } from '../common/exceptions/exception-code';
 
 type AuthWs = WebSocket & {
   userId?: string;
+  sessionId?: string;
   userName?: string;
   socketId?: string;
   room?: string;
@@ -299,6 +300,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     }
 
     ws.userId = hash.userId;
+    ws.sessionId = hash.sessionId;
     ws.userName = displayName(hash);
     ws.deviceTokenHash = crypto
       .createHash('sha256')

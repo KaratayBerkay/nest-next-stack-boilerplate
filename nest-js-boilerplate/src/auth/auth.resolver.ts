@@ -72,6 +72,7 @@ export class AuthResolver {
       avatarUrl: user.avatarUrl ?? undefined,
       locale: user.locale ?? 'en',
       timezone: user.timezone ?? 'UTC',
+      sessionId: user.sessionId,
     };
   }
 }

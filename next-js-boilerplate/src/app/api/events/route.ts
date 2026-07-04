@@ -30,22 +30,24 @@ const ME_QUERY = `
   query Me {
     me {
       id
+      sessionId
     }
   }
 `;
 
-async function resolveUserId(): Promise<string | undefined> {
+interface MeResult {
+  me: { id: string; sessionId?: string | null } | null;
+}
+
+async function resolveMe(): Promise<{ userId?: string; sessionId?: string }> {
   try {
     const token = await getAccessToken();
-    if (!token) return undefined;
-    const { data } = await graphqlFetch<{ me: { id: string } }>(
-      ME_QUERY,
-      undefined,
-      token,
-    );
-    return data?.me?.id;
+    if (!token) return {};
+    const { data } = await graphqlFetch<MeResult>(ME_QUERY, undefined, token);
+    if (!data?.me) return {};
+    return { userId: data.me.id, sessionId: data.me.sessionId ?? undefined };
   } catch {
-    return undefined;
+    return {};
   }
 }
 
@@ -77,11 +79,12 @@ export const POST = withLogging(async (request, log) => {
 
   const { events } = parsed.data;
 
-  // Resolve the real user from the session and overwrite any client-sent userId
-  const userId = await resolveUserId();
+  // Resolve the real user + sessionId from the session and enrich events
+  const { userId, sessionId } = await resolveMe();
   const enriched = events.map((e) => ({
     ...e,
     userId: userId ?? e.userId,
+    token: sessionId,
   }));
 
   // Fire-and-forget: never block the response on Kafka
@@ -91,7 +94,7 @@ export const POST = withLogging(async (request, log) => {
   }).catch(() => {});
 
   log.info(
-    { count: events.length, userId: userId ?? "anonymous" },
+    { count: events.length, userId: userId ?? "anonymous", sessionId },
     "events accepted",
   );
   return NextResponse.json({ accepted: events.length }, { status: 202 });

@@ -90,6 +90,9 @@ export class SessionUserPayload {
 
   @Field({ defaultValue: 'UTC' })
   timezone!: string;
+
+  @Field({ nullable: true })
+  sessionId?: string;
 }
 
 @ObjectType()

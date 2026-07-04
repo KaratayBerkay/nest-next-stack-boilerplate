@@ -220,10 +220,12 @@ services:
       - ./logs/back:/app/logs
     command: ["sh", "-c", "mkdir -p /app/logs && node dist/src/main.js 2>&1 | tee /app/logs/app.log"]
     logging:
-      driver: json-file
+      driver: fluentd
       options:
-        max-size: "10m"
-        max-file: "3"
+        fluentd-address: fluent-bit:24224
+        tag: app
+        # fluentd driver stops `docker logs <container>` from showing output,
+        # but the tee'd bind-mount (./logs/back) preserves host-side tailing.
 
   nextjs:
     build:
@@ -258,10 +260,12 @@ services:
       - ./logs/front:/app/logs
     command: ["sh", "-c", "mkdir -p /app/logs && node server.js 2>&1 | tee /app/logs/app.log"]
     logging:
-      driver: json-file
+      driver: fluentd
       options:
-        max-size: "10m"
-        max-file: "3"
+        fluentd-address: fluent-bit:24224
+        tag: frontend
+        # fluentd driver stops `docker logs <container>` from showing output,
+        # but the tee'd bind-mount (./logs/front) preserves host-side tailing.
 
   # ──────────────────────────────────────────────────────
   # ELK logging stack

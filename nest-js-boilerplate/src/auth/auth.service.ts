@@ -2,6 +2,7 @@ import { hash, verify } from '@node-rs/argon2';
 import {
   ConflictException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -38,6 +39,8 @@ export interface OAuthProfile {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
@@ -345,7 +348,35 @@ export class AuthService {
 
   /** Revoke the Redis compound key for the presented tokens and clear cookies. */
   async logout(ctx: RequestContext): Promise<boolean> {
-    await this.revokePresentedKey(ctx);
+    const accessToken = this.extractAccessToken(ctx);
+    const rbacToken = this.extractRbacToken(ctx);
+    const deviceToken = this.extractDeviceToken(ctx);
+    const userToken = this.extractUserToken(ctx);
+
+    if (accessToken && rbacToken) {
+      const key = this.tokenStore.buildKey(
+        accessToken,
+        rbacToken,
+        deviceToken ?? '',
+        userToken ?? '',
+      );
+      const session = await this.tokenStore.read(key);
+      if (session?.sessionId) {
+        const durationMs = session.issuedAt
+          ? Date.now() - new Date(session.issuedAt).getTime()
+          : 0;
+        this.logger.log({
+          category: 'session',
+          event: 'session.end',
+          token: session.sessionId,
+          userId: session.userId,
+          sessionDurationMs: durationMs,
+          reason: 'logout',
+        });
+      }
+      await this.tokenStore.revoke(key);
+    }
+
     this.clearRbacCookie(ctx);
     this.clearUserCookie(ctx);
     return true;
@@ -407,6 +438,18 @@ export class AuthService {
       sessionId,
       ...snapshot,
     } as SessionUserInput);
+
+    this.logger.log({
+      category: 'session',
+      event: 'session.start',
+      token: sessionId,
+      userId: user.id,
+      ip: device?.ip,
+      deviceId: device?.deviceId,
+      deviceType: null,
+      userAgent: device?.userAgent,
+      issuedAt: new Date().toISOString(),
+    });
 
     this.setRbacCookie(ctx, rbacToken);
     this.setUserCookie(ctx, userToken);
