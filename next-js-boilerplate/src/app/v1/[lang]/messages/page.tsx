@@ -20,7 +20,7 @@ import { FIND_FRIENDS_PATH } from "@/constants/routes";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 import { useConversations } from "@/lib/realtime/useConversations";
 import { ConnectionUnstable } from "@/components/ConnectionUnstable";
-import { ScrollToBottomButton } from "@/components/ScrollToBottomButton";
+import { ScrollToBottomButton } from "@/components/ui/ScrollToBottomButton";
 import { SkeletonConversationSidebar } from "@/components/ui/skeleton-shapes";
 import { useConnectionState } from "@/hooks/useConnectionState";
 import { useConversation } from "@/lib/realtime/useConversation";

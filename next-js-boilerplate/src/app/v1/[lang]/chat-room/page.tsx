@@ -17,7 +17,7 @@ import { useRoom } from "@/lib/realtime/useRoom";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 import { useConnectionState } from "@/hooks/useConnectionState";
 import { ConnectionUnstable } from "@/components/ConnectionUnstable";
-import { ScrollToBottomButton } from "@/components/ScrollToBottomButton";
+import { ScrollToBottomButton } from "@/components/ui/ScrollToBottomButton";
 import { SkeletonChatMessage } from "@/components/ui/skeleton-shapes";
 import { useSearchParams, useRouter } from "next/navigation";
 
