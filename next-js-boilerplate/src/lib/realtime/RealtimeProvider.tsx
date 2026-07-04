@@ -249,19 +249,25 @@ function dispatchRenew(
   switch (frame.renew as string) {
     case "Notifications": {
       if (frame.type === "Count") {
-        qc.setQueryData(["notifications", "count"], frame.value);
+        if (qc.getQueryData(["notifications", "count"]) !== undefined)
+          qc.setQueryData(["notifications", "count"], frame.value);
       } else if (frame.type === "DmCount") {
-        qc.setQueryData(["notifications", "dm-count"], frame.value);
+        if (qc.getQueryData(["notifications", "dm-count"]) !== undefined)
+          qc.setQueryData(["notifications", "dm-count"], frame.value);
       } else if (frame.type === "Item") {
-        qc.setQueryData(
-          ["notifications", "list"],
-          (old: { items: Record<string, unknown>[] } | undefined) => {
-            const list = (old?.items ?? []) as Record<string, unknown>[];
-            const item = frame.item as Record<string, unknown>;
-            if (list.some((n) => n.id === item.id)) return old;
-            return { ...old, items: [item, ...list] };
-          },
-        );
+        if (!qc.getQueryData(["notifications", "list"])) {
+          qc.invalidateQueries({ queryKey: ["notifications", "list"] });
+        } else {
+          qc.setQueryData(
+            ["notifications", "list"],
+            (old: { items: Record<string, unknown>[] } | undefined) => {
+              const list = (old?.items ?? []) as Record<string, unknown>[];
+              const item = frame.item as Record<string, unknown>;
+              if (list.some((n) => n.id === item.id)) return old;
+              return { ...old, items: [item, ...list] };
+            },
+          );
+        }
       } else if (frame.type === "Read") {
         qc.invalidateQueries({ queryKey: ["notifications"] });
       }
@@ -338,6 +344,7 @@ function resyncAfterConnect(
   qc.invalidateQueries({ queryKey: ["conversations"] });
   qc.invalidateQueries({ queryKey: ["notifications", "list"] });
   qc.invalidateQueries({ queryKey: ["notifications", "count"] });
+  qc.invalidateQueries({ queryKey: ["notifications", "dm-count"] });
 
   // Current page content key
   if (currentClaim?.page === "feed") {
@@ -369,7 +376,6 @@ function RealtimeProviderInner({ children }: { children: ReactNode }) {
   const claimRef = useRef<{ page: string | null; params?: Record<string, string> } | null>(null);
   const userIdRef = useRef(user?.id);
   const lockResolveRef = useRef<(() => void) | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
 
   // T18(H5): ref write in effect, not render phase
   useEffect(() => {
@@ -383,6 +389,7 @@ function RealtimeProviderInner({ children }: { children: ReactNode }) {
     let alive = true;
 
     const process = (frame: Record<string, unknown>) => {
+      if (!alive) return;
       dispatchRenew(queryClient, frame);
       dispatchEvent(queryClient, frame, userIdRef.current, (data) => {
         if (clientRef.current) {
@@ -407,9 +414,7 @@ function RealtimeProviderInner({ children }: { children: ReactNode }) {
       let client: RealtimeClient | null = null;
 
       const onAuthenticated = () => {
-        if (claimRef.current && client) {
-          client.claimPage(claimRef.current.page, claimRef.current.params);
-        }
+        // replayClaim in realtime-client already re-sends the page claim.
         resyncAfterConnect(queryClient, claimRef.current);
       };
 
@@ -429,17 +434,17 @@ function RealtimeProviderInner({ children }: { children: ReactNode }) {
             bc?.postMessage({ type: "frame", data: frame } satisfies Cmd);
           },
           onAuthenticated,
+          bustTokenCache,
         );
-        c.connect();
         c.registerServices(["MESSAGE", "NOTIFICATION"]);
         if (claimRef.current) {
           c.claimPage(claimRef.current.page, claimRef.current.params);
         }
+        c.connect();
         return c;
       };
 
       const ac = new AbortController();
-      abortRef.current = ac;
 
       navigator.locks
         .request(
@@ -461,13 +466,14 @@ function RealtimeProviderInner({ children }: { children: ReactNode }) {
           },
         )
         .then(() => {
+          if (!alive) return;
           alive = false;
           client?.disconnect();
           clientRef.current = null;
         })
         .catch(() => {
+          if (!alive) return;
           clientRef.current = null;
-          setStatus("open");
         });
 
       if (bc) {
@@ -515,7 +521,6 @@ function RealtimeProviderInner({ children }: { children: ReactNode }) {
             lockResolveRef.current = null;
           }
           ac.abort();
-          abortRef.current = null;
         };
       }
 
@@ -528,7 +533,6 @@ function RealtimeProviderInner({ children }: { children: ReactNode }) {
           lockResolveRef.current = null;
         }
         ac.abort();
-        abortRef.current = null;
       };
     }
 
@@ -543,18 +547,17 @@ function RealtimeProviderInner({ children }: { children: ReactNode }) {
       setStatus,
       process,
       () => {
-        if (claimRef.current) {
-          client.claimPage(claimRef.current.page, claimRef.current.params);
-        }
+        // replayClaim in realtime-client already re-sends the page claim.
         resyncAfterConnect(queryClient, claimRef.current);
       },
+      bustTokenCache,
     );
-    clientRef.current = client;
-    client.connect();
     client.registerServices(["MESSAGE", "NOTIFICATION"]);
     if (claimRef.current?.page) {
       client.claimPage(claimRef.current.page, claimRef.current.params);
     }
+    clientRef.current = client;
+    client.connect();
 
     return () => {
       alive = false;
@@ -569,6 +572,7 @@ function RealtimeProviderInner({ children }: { children: ReactNode }) {
     if (!token) return;
     const claim = routeToPageClaim(pathname, searchParams);
     claimRef.current = claim;
+    if (!claim.page) return;
 
     if (clientRef.current) {
       clientRef.current.claimPage(claim.page, claim.params);
@@ -587,8 +591,8 @@ function RealtimeProviderInner({ children }: { children: ReactNode }) {
   const send = useCallback((data: Record<string, unknown>) => {
     if (clientRef.current) {
       clientRef.current.send(data);
-    } else {
-      channelRef.current?.postMessage({
+    } else if (channelRef.current) {
+      channelRef.current.postMessage({
         type: "cmd",
         act: "send",
         payload: data,
@@ -602,7 +606,11 @@ function RealtimeProviderInner({ children }: { children: ReactNode }) {
         subsRef.current.set(type, new Set());
       subsRef.current.get(type)!.add(handler);
       return () => {
-        subsRef.current.get(type)?.delete(handler);
+        const s = subsRef.current.get(type);
+        if (s) {
+          s.delete(handler);
+          if (s.size === 0) subsRef.current.delete(type);
+        }
       };
     },
     [],

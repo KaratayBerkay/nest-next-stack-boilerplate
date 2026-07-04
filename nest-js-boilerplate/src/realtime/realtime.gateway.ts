@@ -141,6 +141,8 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         this.cleanupServiceConnections(authWs);
         this.cleanupPageClaim(authWs);
         this.cleanupTopicWatches(authWs);
+        // leaveAllRooms not needed here — page-claim leave callback already
+        // removes socket from chat-room tracking via cleanupPageClaim above.
         const uid = authWs.userId;
         if (uid) {
           const sockets = this.userSockets.get(uid);
@@ -326,6 +328,22 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     }
 
     ws.send(JSON.stringify({ type: 'authenticated' }));
+    // Send initial state snapshot after auth (P1-7).
+    ws.send(
+      JSON.stringify({
+        type: 'room-counts',
+        rooms: {},
+      }),
+    );
+    const onlineUsers = Array.from(this.onlineCount.keys())
+      .filter((id) => id !== hash.userId)
+      .map((id) => ({ id }));
+    ws.send(
+      JSON.stringify({
+        type: 'online-users',
+        users: onlineUsers,
+      }),
+    );
     this.handleOnline(ws);
   }
 

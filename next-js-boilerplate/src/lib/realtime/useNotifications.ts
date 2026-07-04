@@ -55,7 +55,12 @@ export function useUnreadNotificationCount() {
 export function useDmUnreadCount() {
   return useQuery<number>({
     queryKey: ["notifications", "dm-count"],
-    queryFn: async () => 0,
-    staleTime: Infinity,
+    queryFn: async () => {
+      const res = await apiFetch("/api/messages/unread-count");
+      if (!res.ok) return 0;
+      const data = await res.json();
+      return typeof data.count === "number" ? data.count : 0;
+    },
+    staleTime: 30_000,
   });
 }

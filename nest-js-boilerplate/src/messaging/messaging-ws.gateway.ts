@@ -112,7 +112,10 @@ export class MessagingWsGateway implements OnModuleInit {
       type: 'direct-message',
       message,
     });
-    if (!this.realtime.hasServiceConnection(data.recipientId, 'MESSAGE')) {
+    if (
+      !this.realtime.hasServiceConnection(data.recipientId, 'MESSAGE') &&
+      !this.realtime.hasServiceConnection(data.recipientId, 'NOTIFICATION')
+    ) {
       const sender = message.sender as
         | { name?: string | null; email?: string }
         | undefined;
@@ -151,6 +154,12 @@ export class MessagingWsGateway implements OnModuleInit {
       data: { deliveredAt },
     });
     this.realtime.emitToPage(message.senderId, 'messages', {
+      type: 'message-delivered',
+      peerId: message.recipientId,
+      messageId: data.messageId,
+      deliveredAt: deliveredAt.toISOString(),
+    });
+    this.realtime.emitToService(message.senderId, 'MESSAGE', {
       type: 'message-delivered',
       peerId: message.recipientId,
       messageId: data.messageId,

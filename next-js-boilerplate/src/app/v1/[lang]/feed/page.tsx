@@ -32,6 +32,10 @@ function FeedList({ search }: { search: string }) {
     realtime?.watch("feed");
     return () => realtime?.unwatch("feed");
   }, [realtime]);
+  // Reset new-flag on mount so stale flag from previous visit doesn't stick.
+  useEffect(() => {
+    queryClient.setQueryData(["feed", "new-flag"], false);
+  }, [queryClient]);
   const [extraPosts, setExtraPosts] = useState<Post[]>([]);
   const [extraHasMore, setExtraHasMore] = useState(true);
   const cursorRef = useRef<string | null>(null);

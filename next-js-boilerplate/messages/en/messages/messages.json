@@ -14,5 +14,6 @@
   "inputPlaceholder": "Type a message...",
   "connecting": "Connecting...",
   "send": "Send",
-  "loading": "Loading..."
+  "loading": "Loading...",
+  "failedToLoad": "Failed to load messages"
 }

@@ -31,6 +31,7 @@ export class RealtimeClient {
     private readonly onStatusChange: (status: RealtimeStatus) => void,
     private readonly onFrame: (frame: Record<string, unknown>) => void,
     private readonly onAuthenticated?: () => void,
+    private readonly onBustTokenCache?: () => void,
   ) {}
 
   connect(): void {
@@ -101,6 +102,7 @@ export class RealtimeClient {
     }
     this.ws?.close();
     this.ws = null;
+    this.sendQueue = [];
     this.setStatus("idle");
   }
 
@@ -173,12 +175,12 @@ export class RealtimeClient {
   }
 
   private async refreshAndFetchTokens(): Promise<Record<string, string> | null> {
+    this.onBustTokenCache?.();
     try {
-      // Bust the token cache by forcing a refresh
-      const res = await fetch("/api/auth/token");
+      const res = await fetch("/api/auth/token", { method: "GET" });
       if (!res.ok) return null;
     } catch {
-      // Refresh failed — try with existing tokens
+      return null;
     }
     return this.getTokens();
   }

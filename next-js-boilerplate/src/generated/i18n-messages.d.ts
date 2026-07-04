@@ -83,6 +83,7 @@ export type I18nMessages = {
       "connecting": string;
       "send": string;
       "loading": string;
+      "failedToLoad": string;
     }
 
   "shared/locale-switcher": {

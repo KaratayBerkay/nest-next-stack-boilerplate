@@ -14,5 +14,6 @@
   "inputPlaceholder": "Bir mesaj yazın...",
   "connecting": "Bağlanıyor...",
   "send": "Gönder",
-  "loading": "Yükleniyor..."
+  "loading": "Yükleniyor...",
+  "failedToLoad": "Mesajlar yüklenemedi"
 }

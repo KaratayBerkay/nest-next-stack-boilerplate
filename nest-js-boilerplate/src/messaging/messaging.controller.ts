@@ -42,6 +42,13 @@ export class MessagingController {
     private readonly logger: Logger,
   ) {}
 
+  @Get('messages/unread-count')
+  @ApiOperation({ summary: 'Get total unread DM count across all peers' })
+  async getUnreadCount(@CurrentUser() user: JwtUser) {
+    const count = await this.ms.getTotalUnreadCount(user.userId);
+    return { count };
+  }
+
   // --- Friends ---
 
   @Get('friends')
@@ -208,7 +215,10 @@ export class MessagingController {
       type: 'DmCount',
       value: totalDmUnread,
     });
-    if (!this.realtime.hasServiceConnection(recipientId, 'MESSAGE')) {
+    if (
+      !this.realtime.hasServiceConnection(recipientId, 'MESSAGE') &&
+      !this.realtime.hasServiceConnection(recipientId, 'NOTIFICATION')
+    ) {
       const senderName = sender?.name || sender?.email || 'Someone';
       const body = typeof message.body === 'string' ? message.body : '';
       this.push

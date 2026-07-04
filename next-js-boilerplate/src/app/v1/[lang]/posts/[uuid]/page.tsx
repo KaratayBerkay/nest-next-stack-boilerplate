@@ -1,7 +1,7 @@
 "use client";
 
 import { apiFetch } from "@/lib/api-client";
-import { useEffect, useState, useCallback, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   IconArrowLeft,
@@ -10,7 +10,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 import { imageUrl } from "@/lib/image";
 import { ReactionInline } from "@/components/feed/ReactionButtons";
@@ -45,6 +45,7 @@ function PostDetailContent() {
   const router = useRouter();
   const { user } = useAuth();
   const realtime = useRealtime();
+  const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
@@ -120,7 +121,9 @@ function PostDetailContent() {
               postId={post.id}
               reactions={post.reactions ?? []}
               currentUserId={user?.id}
-              onReactionChange={() => {}}
+              onReactionChange={() =>
+                queryClient.invalidateQueries({ queryKey: ["posts", uuid] })
+              }
             />
             {user && post.author.id === user.id && !editing && (
               <>
@@ -138,15 +141,11 @@ function PostDetailContent() {
                   title="Delete post"
                   description="Are you sure you want to delete this post?"
                   onConfirm={async () => {
-                    try {
-                      const res = await apiFetch(`/api/posts/${post.id}`, {
-                        method: "DELETE",
-                      });
-                      if (res.ok)
-                        router.push(`/v1/${params?.lang ?? "en"}/feed`);
-                    } catch {
-                      // silent
-                    }
+                    const res = await apiFetch(`/api/posts/${post.id}`, {
+                      method: "DELETE",
+                    });
+                    if (res.ok)
+                      router.push(`/v1/${params?.lang ?? "en"}/feed`);
                   }}
                 >
                   {(open) => (
@@ -179,9 +178,8 @@ function PostDetailContent() {
             />
             <div className="flex items-center gap-2">
               <button
-                onClick={async () => {
-                  if (!editTitle.trim() || !editContent.trim()) return;
-                  try {
+                  onClick={async () => {
+                    if (!editTitle.trim() || !editContent.trim()) return;
                     const res = await apiFetch(`/api/posts/${post.id}`, {
                       method: "PUT",
                       headers: { "Content-Type": "application/json" },
@@ -192,11 +190,9 @@ function PostDetailContent() {
                     });
                     if (res.ok) {
                       setEditing(false);
+                      queryClient.invalidateQueries({ queryKey: ["posts", uuid] });
                     }
-                  } catch {
-                    // silent
-                  }
-                }}
+                  }}
                 className="bg-brand rounded-lg px-4 py-2 text-sm font-medium text-white"
               >
                 Save
@@ -236,7 +232,9 @@ function PostDetailContent() {
         postId={post.id}
         comments={post.comments ?? []}
         currentUserId={user?.id}
-        onCommentAdded={() => {}}
+              onCommentAdded={() =>
+                queryClient.invalidateQueries({ queryKey: ["posts", uuid] })
+              }
         maxTopLevel={10}
         pageable
       />

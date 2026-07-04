@@ -655,14 +655,10 @@ export class MessagingService {
     return counts;
   }
 
-  getRoomMembers(room: string) {
+  getRoomMembers(room: string): RoomMember[] {
     const roomMap = this.rooms.get(room);
     if (!roomMap) return [];
-    return Array.from(roomMap.values()).map((m) => ({
-      id: m.userId,
-      name: m.name,
-      avatar: this.initials(m.name),
-    }));
+    return Array.from(roomMap.values());
   }
 
   initials(name: string): string {

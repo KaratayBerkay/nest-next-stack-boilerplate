@@ -94,9 +94,36 @@ function MessagesPageContent() {
   );
   const [messageError, setMessageError] = useState<string | null>(null);
   const messagesRef = useYSwipeGesture<HTMLDivElement>();
+  const searchAbortRef = useRef<AbortController | null>(null);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const debouncedSearch = useCallback((val: string) => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(async () => {
+      if (searchAbortRef.current) searchAbortRef.current.abort();
+      if (val.length < 1) {
+        setFindResults([]);
+        return;
+      }
+      const ac = new AbortController();
+      searchAbortRef.current = ac;
+      try {
+        const res = await apiFetch(
+          `/api/users/search?q=${encodeURIComponent(val)}`,
+          { signal: ac.signal },
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (!ac.signal.aborted) setFindResults(data.items ?? []);
+        } else setFindResults([]);
+      } catch {
+        if (!ac.signal.aborted) setFindResults([]);
+      }
+    }, 300);
+  }, []);
 
   // Cache-backed data (Phase 7 D4)
-  const { data: conversationsData, refetch: refetchConversations } =
+  const { data: conversationsData, refetch: refetchConversations, isError: convsError } =
     useConversations();
   const conversations = useMemo(() => conversationsData ?? [], [conversationsData]);
 
@@ -104,6 +131,7 @@ function MessagesPageContent() {
     data: conversationData,
     fetchNextPage,
     hasNextPage,
+    isError: msgsError,
   } = useConversation(selectedUser?.id ?? null);
   const conversationMessages =
     [...(conversationData?.pages ?? [])].reverse().flatMap((p) => p.messages) ?? [];
@@ -258,14 +286,6 @@ function MessagesPageContent() {
         />
       </div>
 
-      {connectionState === "connecting" && (
-        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3">
-          <div className="border-border bg-surface h-8 w-48 animate-pulse rounded-lg border" />
-          <div className="border-border bg-surface h-64 w-full max-w-md animate-pulse rounded-xl border" />
-        </div>
-      )}
-
-      {connectionState !== "connecting" && (
       <div className="relative flex min-h-0 flex-1 gap-4">
         {/* Mobile sidebar backdrop */}
         {sidebarOpen && (
@@ -329,24 +349,10 @@ function MessagesPageContent() {
             <div className="shrink-0">
               <input
                 value={findInput}
-                onChange={async (e) => {
+                onChange={(e) => {
                   const val = e.target.value;
                   setFindInput(val);
-                  if (val.length < 1) {
-                    setFindResults([]);
-                    return;
-                  }
-                  try {
-                    const res = await apiFetch(
-                      `/api/users/search?q=${encodeURIComponent(val)}`,
-                    );
-                    if (res.ok) {
-                      const data = await res.json();
-                      setFindResults(data.items ?? []);
-                    } else setFindResults([]);
-                  } catch {
-                    setFindResults([]);
-                  }
+                  debouncedSearch(val);
                 }}
                 placeholder={t.searchUsers}
                 className="border-border bg-surface text-fg placeholder:text-muted focus:border-fg mt-2 w-full rounded-lg border px-4 py-2.5 text-sm transition-colors outline-none"
@@ -417,7 +423,12 @@ function MessagesPageContent() {
           )}
 
           <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-            {tab === "conversations" && conversations.length === 0 && (
+            {convsError && (
+              <p className="py-16 text-center text-sm text-red-500">
+                {t.failedToLoad}
+              </p>
+            )}
+            {tab === "conversations" && !convsError && conversations.length === 0 && (
               <p className="text-muted py-16 text-center text-sm">
                 {t.noConversations}
               </p>
@@ -497,6 +508,12 @@ function MessagesPageContent() {
         </div>
 
         {/* Chat area */}
+        {connectionState === "connecting" ? (
+          <div className="border-border bg-bg flex min-h-0 flex-1 flex-col items-center justify-center gap-3 overflow-hidden rounded-xl border">
+            <div className="border-border bg-surface h-8 w-48 animate-pulse rounded-lg border" />
+            <div className="border-border bg-surface h-64 w-full max-w-md animate-pulse rounded-xl border" />
+          </div>
+        ) : (
         <div className="border-border bg-bg flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border">
           {/* Mobile: hamburger when no conversation; Desktop: always visible */}
           <div className="flex items-center gap-3 border-b px-4 py-3">
@@ -537,7 +554,12 @@ function MessagesPageContent() {
                 ref={messagesRef}
                 className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4 select-none"
               >
-                {conversationMessages.length === 0 && (
+                {msgsError && (
+                  <div className="flex flex-1 items-center justify-center">
+                    <p className="text-sm text-red-500">{t.failedToLoad}</p>
+                  </div>
+                )}
+                {!msgsError && conversationMessages.length === 0 && (
                   <div className="flex flex-1 items-center justify-center">
                     <p className="text-muted text-sm">{t.noMessages}</p>
                   </div>
@@ -620,8 +642,8 @@ function MessagesPageContent() {
             </>
           )}
         </div>
+        )}
       </div>
-      )}
     </div>
   );
 }
