@@ -15,10 +15,12 @@ function getStack(err: unknown): string | undefined {
 export function useEventLogger(): void {
   const pathname = usePathname();
   const prevPath = useRef<string | null>(null);
-  const enterTime = useRef<number>(Date.now());
+  const enterTime = useRef<number>(0);
 
   // --- Page view / exit tracking ---
   useEffect(() => {
+    if (enterTime.current === 0) enterTime.current = Date.now();
+
     const currentPath = pathname;
     const prev = prevPath.current;
 

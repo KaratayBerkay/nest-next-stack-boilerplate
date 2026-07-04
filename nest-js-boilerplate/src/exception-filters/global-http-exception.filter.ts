@@ -6,6 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
+import type { Request } from 'express';
 import { toExceptionResponse } from '../common/exceptions/to-exception-response';
 import { parseDeviceType } from '../common/utils/device-type';
 
@@ -23,7 +24,7 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
 
     const { httpAdapter } = this.httpAdapterHost;
     const ctx = host.switchToHttp();
-    const request = ctx.getRequest();
+    const request = ctx.getRequest<Request>();
     const response = toExceptionResponse(exception);
 
     const statusCode = response.statusCode;
@@ -33,7 +34,7 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
       category: 'exception',
       event: isServerError ? 'exception.unhandled' : 'exception.handled',
       httpStatus: statusCode,
-      path: httpAdapter.getRequestUrl(request),
+      path: httpAdapter.getRequestUrl(request) as string,
       method: request.method,
       ip: request.ip,
       userAgent: request.headers?.['user-agent'],
