@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   Get,
   HttpCode,
@@ -45,7 +46,11 @@ export class OAuthController {
     @Query('redirect_uri') redirectUri: string,
   ) {
     if (!state || !redirectUri) {
-      throw new Error('Missing state or redirect_uri parameter');
+      throw new BadRequestException({
+        exc: 'EX_VALIDATION_FORM',
+        msg: 'Missing state or redirect_uri parameter',
+        key: 'error.missingOAuthParams',
+      });
     }
     const url = this.oauth.buildAuthUrl(provider, state, redirectUri);
     return { url, statusCode: HttpStatus.FOUND };

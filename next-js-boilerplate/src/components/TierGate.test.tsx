@@ -44,14 +44,14 @@ describe("TierGate", () => {
     expect(screen.getByText("locked")).toBeTruthy();
   });
 
-  it("renders nothing when below tier and no fallback is given", () => {
+  it("renders AccessDenied when below tier and no fallback is given", () => {
     mockAuth.user = { tier: "FREE" };
-    const { container } = render(
+    render(
       <TierGate min="PREMIUM">
         <p>secret</p>
       </TierGate>,
     );
-    expect(container.innerHTML).toBe("");
+    expect(screen.getByText("Access Denied")).toBeTruthy();
   });
 });
 

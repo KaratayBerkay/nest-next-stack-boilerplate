@@ -1,0 +1,38 @@
+{
+  "form": {
+    "login": {
+      "title": "Sign In",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@example.com",
+      "passwordLabel": "Password",
+      "submit": "Sign In",
+      "submitting": "Signing in...",
+      "noAccount": "No account?",
+      "registerLink": "Register"
+    },
+    "register": {
+      "title": "Register",
+      "nameLabel": "Name (optional)",
+      "namePlaceholder": "Your name",
+      "emailLabel": "Email",
+      "passwordLabel": "Password",
+      "submit": "Register",
+      "submitting": "Registering...",
+      "hasAccount": "Already have an account?",
+      "loginLink": "Sign In"
+    }
+  },
+  "social": {
+    "continueWith": "Or continue with"
+  },
+  "errors": {
+    "emailRequired": "Email is required",
+    "emailInvalid": "Invalid email address",
+    "passwordRequired": "Password is required",
+    "passwordMin": "Password must be at least 8 characters",
+    "passwordMax": "Password must be at most 128 characters",
+    "loginFailed": "Email or password is incorrect",
+    "registerFailed": "Registration failed",
+    "emailTaken": "This email is already registered"
+  }
+}

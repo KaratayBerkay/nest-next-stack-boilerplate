@@ -15,6 +15,9 @@ import { initials } from "@/lib/initials";
 import { IconX, IconMenu2 } from "@tabler/icons-react";
 import { useRoom } from "@/lib/realtime/useRoom";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
+import { useConnectionState } from "@/hooks/useConnectionState";
+import { ConnectionUnstable } from "@/components/ConnectionUnstable";
+import { SkeletonChatMessage } from "@/components/ui/skeleton-shapes";
 import { useSearchParams, useRouter } from "next/navigation";
 
 function ChatRoomContent() {
@@ -88,10 +91,7 @@ function ChatRoomContent() {
     scrollToBottom();
   }, [input, scrollToBottom, realtime, room]);
 
-  const connectionState =
-    realtime?.status === "open" ? "online" as const
-    : realtime?.status === "idle" || realtime?.status === "down" ? "offline" as const
-    : "connecting" as const;
+  const connectionState = useConnectionState();
 
   const selectRoom = useCallback((r: string) => {
     setRoom(r);
@@ -241,8 +241,11 @@ function ChatRoomContent() {
               </div>
             )}
             {msgsLoading && !msgsError && (
-              <div className="flex flex-1 items-center justify-center">
-                <p className="text-muted text-xs">Loading...</p>
+              <div className="flex flex-1 flex-col items-center justify-center gap-3 p-4">
+                <SkeletonChatMessage />
+                <SkeletonChatMessage isMe />
+                <SkeletonChatMessage />
+                <SkeletonChatMessage isMe />
               </div>
             )}
             {!msgsLoading && !msgsError && messages.length === 0 && (
@@ -299,8 +302,8 @@ function ChatRoomContent() {
                   connectionState === "online"
                     ? t.messagePlaceholder.replace("{room}", room)
                     : connectionState === "connecting"
-                      ? "Connecting…"
-                      : "Disconnected"
+                      ? t.connecting
+                      : t.disconnected
                 }
                 disabled={connectionState !== "online"}
                 className="rounded border px-3 py-2 text-sm disabled:opacity-50"
@@ -324,8 +327,34 @@ export default function ChatRoomPage() {
   return (
     <Suspense
       fallback={
-        <div className="text-muted flex animate-pulse items-center justify-center py-20 text-sm">
-          Loading...
+        <div className="flex flex-col gap-4 p-4">
+          <div className="flex items-center gap-3">
+            <div className="bg-surface-hover h-8 w-8 animate-pulse rounded-full" />
+            <div className="bg-surface-hover h-4 w-24 animate-pulse rounded" />
+          </div>
+          <div className="relative flex min-h-0 flex-1 gap-4">
+            <div className="border-border bg-bg hidden w-56 flex-col gap-4 rounded-xl border p-4 md:flex">
+              <div className="bg-surface-hover h-8 animate-pulse rounded-md" />
+              <div className="flex flex-col gap-1">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="bg-surface-hover h-8 animate-pulse rounded-lg" />
+                ))}
+              </div>
+            </div>
+            <div className="border-border bg-bg flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border">
+              <div className="border-border flex items-center gap-2 border-b px-4 py-3">
+                <div className="bg-surface-hover h-4 w-20 animate-pulse rounded" />
+              </div>
+              <div className="flex flex-1 flex-col gap-3 p-4">
+                <SkeletonChatMessage />
+                <SkeletonChatMessage isMe />
+                <SkeletonChatMessage />
+              </div>
+              <div className="border-t p-2">
+                <div className="bg-surface-hover h-10 animate-pulse rounded" />
+              </div>
+            </div>
+          </div>
         </div>
       }
     >

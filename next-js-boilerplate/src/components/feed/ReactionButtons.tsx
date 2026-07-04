@@ -2,6 +2,7 @@
 
 import { apiFetch } from "@/lib/api-client";
 import { useRef, useState } from "react";
+import { useToast } from "@/components/ui/Toast";
 import { IconMoodSmile } from "@tabler/icons-react";
 
 const REACTION_TYPES = ["LIKE", "LOVE", "LAUGH", "WOW"] as const;
@@ -35,6 +36,7 @@ export function ReactionInline({
   onReactionChange,
 }: ReactionButtonProps) {
   const [submitting, setSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const total = reactions.length;
   const userReacted = reactions.some((r) => r.userId === currentUserId);
@@ -54,7 +56,7 @@ export function ReactionInline({
       });
       onReactionChange?.();
     } catch {
-      // silent
+      toast({ title: "Failed to react", variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -106,12 +108,11 @@ export function ReactionRow({
   onReactionChange,
 }: ReactionButtonProps) {
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const handleReact = async (type: string) => {
     if (submitting) return;
     setSubmitting(true);
-    setError(null);
     try {
       const res = await apiFetch("/api/reactions", {
         method: "POST",
@@ -120,12 +121,12 @@ export function ReactionRow({
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(data.error ?? `Failed (${res.status})`);
+        toast({ title: data.error ?? `Failed (${res.status})`, variant: "destructive" });
         return;
       }
       onReactionChange?.();
     } catch {
-      setError("Network error");
+      toast({ title: "Network error", variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -133,7 +134,6 @@ export function ReactionRow({
 
   return (
     <div className="flex items-center gap-1">
-      {error && <span className="text-[10px] text-red-500">{error}</span>}
       {REACTION_TYPES.map((type) => {
         const count = reactions.filter((r) => r.type === type).length;
         const active = reactions.some(

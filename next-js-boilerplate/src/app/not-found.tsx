@@ -1,9 +1,26 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getMessages } from "@/lib/i18n/get-messages";
-import { DEFAULT_LANG } from "@/constants/i18n";
+import { LANGS, DEFAULT_LANG } from "@/constants/i18n";
+
+const messages: Record<string, { pageNotFound: string; backHome: string }> = {
+  en: { pageNotFound: "Page not found", backHome: "Back to Home" },
+  tr: { pageNotFound: "Sayfa bulunamadı", backHome: "Ana Sayfaya Dön" },
+};
 
 export default function GlobalNotFound() {
-  const t = getMessages(DEFAULT_LANG, "error");
+  const [lang, setLang] = useState(DEFAULT_LANG);
+
+  useEffect(() => {
+    const accept = navigator.language.slice(0, 2);
+    const preferred: (typeof LANGS)[number] = (LANGS as readonly string[]).includes(accept)
+      ? (accept as (typeof LANGS)[number])
+      : DEFAULT_LANG;
+    setLang(preferred);
+  }, []);
+
+  const t = messages[lang] ?? messages[DEFAULT_LANG];
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
       <h1 className="text-4xl font-bold">404</h1>

@@ -78,7 +78,11 @@ export class PostService {
     const post = await this.prisma.post.findUnique({ where: { id } });
     if (!post || post.deletedAt) throw new NotFoundException('Post not found');
     if (post.authorId !== authorId)
-      throw new ForbiddenException('Not your post');
+      throw new ForbiddenException({
+        exc: 'EX_FORBIDDEN',
+        msg: 'Not your post',
+        key: 'error.notYourPost',
+      });
 
     const updateData: Record<string, unknown> = {};
     if (data.title !== undefined) updateData.title = data.title;
@@ -114,7 +118,11 @@ export class PostService {
     const post = await this.prisma.post.findUnique({ where: { id } });
     if (!post || post.deletedAt) throw new NotFoundException('Post not found');
     if (post.authorId !== authorId)
-      throw new ForbiddenException('Not your post');
+      throw new ForbiddenException({
+        exc: 'EX_FORBIDDEN',
+        msg: 'Not your post',
+        key: 'error.notYourPost',
+      });
 
     const result = await this.prisma.post.update({
       where: { id },

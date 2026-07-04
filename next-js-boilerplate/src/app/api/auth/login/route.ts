@@ -5,7 +5,7 @@ import {
   rbacTokenCookieOptions,
   userTokenCookieOptions,
 } from "@/lib/cookie";
-import { graphqlFetch } from "@/lib/backend";
+import { graphqlFetch, graphqlErrorStatus } from "@/lib/backend";
 import { withLogging } from "@/lib/request-logger";
 
 /**
@@ -75,7 +75,7 @@ export const POST = withLogging(async (request, log) => {
 
   if (errors || !data?.login) {
     const message = errors?.[0]?.message ?? "Login failed";
-    const status = message === "Invalid credentials" ? 401 : 500;
+    const status = graphqlErrorStatus(errors, 500);
     log.warn({ status, email }, "login failed");
     return NextResponse.json({ error: message }, { status });
   }

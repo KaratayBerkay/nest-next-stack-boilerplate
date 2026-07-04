@@ -2,6 +2,7 @@
   "title": "Sohbet Odaları",
   "connected": "Bağlandı",
   "connecting": "Bağlanıyor...",
+  "disconnected": "Bağlantı Kesildi",
   "rooms": "Odalar",
   "online": "Çevrimiçi ({count})",
   "noOneHere": "Henüz kimse yok",

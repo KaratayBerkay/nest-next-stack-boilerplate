@@ -62,7 +62,11 @@ export class MfaService {
     const secret = this.crypto.decrypt(Buffer.from(factor.secret));
     const result = await verifyTotp({ secret, token: code });
     if (!result.valid) {
-      throw new BadRequestException('Invalid TOTP code');
+      throw new BadRequestException({
+        exc: 'EX_VALIDATION_FORM',
+        msg: 'Invalid TOTP code',
+        key: 'mfa.errors.invalidTotp',
+      });
     }
 
     const { codes, hashes } = this.generateBackupCodes();

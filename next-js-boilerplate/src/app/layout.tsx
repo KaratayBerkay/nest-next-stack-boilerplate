@@ -9,6 +9,10 @@ import { DeviceTypeInit } from "@/components/DeviceTypeInit";
 import { EventLoggerInit } from "@/components/EventLoggerInit";
 import { PushNotificationInit } from "@/components/PushNotificationInit";
 import { SessionScript } from "@/components/SessionScript";
+import {
+  ToastProvider,
+  ToastViewport,
+} from "@/components/ui/Toast";
 import { ThemeInitScript } from "./ThemeInitScript";
 import "./globals.css";
 
@@ -62,7 +66,12 @@ export default function RootLayout({
             <SessionScript />
           </Suspense>
           <AuthProvider>
-            <QueryProvider>{children}</QueryProvider>
+            <QueryProvider>
+              <ToastProvider>
+                {children}
+                <ToastViewport />
+              </ToastProvider>
+            </QueryProvider>
           </AuthProvider>
         </ThemeProvider>
         <JsonLd

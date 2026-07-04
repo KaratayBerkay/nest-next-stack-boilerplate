@@ -13,6 +13,7 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { useDeviceType } from "@/hooks/useDeviceType";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
+import { SkeletonMessage } from "@/components/ui/skeleton-shapes";
 import {
   useNotifications,
 } from "@/lib/realtime/useNotifications";
@@ -162,16 +163,7 @@ function NotificationPageContent() {
         {isLoading ? (
           <div className="flex flex-col gap-1 px-1">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div
-                key={i}
-                className="bg-surface-hover/50 flex animate-pulse items-start gap-2.5 rounded-xl px-3 py-3"
-              >
-                <div className="bg-muted h-8 w-8 rounded-full" />
-                <div className="flex-1 space-y-1.5">
-                  <div className="bg-muted h-3 w-3/4 rounded" />
-                  <div className="bg-muted h-2 w-1/2 rounded" />
-                </div>
-              </div>
+              <SkeletonMessage key={i} />
             ))}
           </div>
         ) : sorted.length === 0 ? (
@@ -224,8 +216,13 @@ export default function NotificationPage() {
   return (
     <Suspense
       fallback={
-        <div className="text-muted flex animate-pulse items-center justify-center py-20 text-sm">
-          Loading...
+        <div className="flex flex-col gap-3 p-4">
+          <div className="bg-surface-hover h-4 w-24 animate-pulse rounded" />
+          <div className="flex flex-col gap-1">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <SkeletonMessage key={i} />
+            ))}
+          </div>
         </div>
       }
     >

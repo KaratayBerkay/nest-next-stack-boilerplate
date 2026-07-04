@@ -4,6 +4,7 @@ import { apiFetch } from "@/lib/api-client";
 import { useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { useToast } from "@/components/ui/Toast";
 import { ReactionInline } from "./ReactionButtons";
 import { IconChevronRight, IconPencil, IconTrash } from "@tabler/icons-react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -40,7 +41,7 @@ export function CommentSection({
   const [body, setBody] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
   const [pendingComments, setPendingComments] = useState<Comment[]>([]);
   const [localEdits, setLocalEdits] = useState<Record<string, string>>({});
   const [localDeletes, setLocalDeletes] = useState<Set<string>>(new Set());
@@ -134,7 +135,6 @@ export function CommentSection({
     if (!body.trim() || submitting) return;
     const trimmedBody = body.trim();
     setSubmitting(true);
-    setError(null);
     tempIdCounter.current++;
 
     const temp: Comment = {
@@ -161,7 +161,7 @@ export function CommentSection({
       if (!res.ok) {
         setPendingComments((prev) => prev.filter((c) => c.id !== temp.id));
         const data = await res.json().catch(() => ({}));
-        setError(data.error ?? `Failed (${res.status})`);
+        toast({ title: data.error ?? `Failed (${res.status})`, variant: "destructive" });
         setBody(trimmedBody);
         setReplyTo(prevReplyTo);
         return;
@@ -170,7 +170,7 @@ export function CommentSection({
       onCommentAdded?.();
     } catch {
       setPendingComments((prev) => prev.filter((c) => c.id !== temp.id));
-      setError("Network error");
+      toast({ title: "Network error", variant: "destructive" });
       setBody(trimmedBody);
       setReplyTo(prevReplyTo);
     } finally {
@@ -180,8 +180,6 @@ export function CommentSection({
 
   return (
     <div className="flex flex-col gap-1.5">
-      {error && <p className="text-[9px] text-red-500">{error}</p>}
-
       <form onSubmit={handleSubmit} className="flex gap-1">
         <input
           type="text"

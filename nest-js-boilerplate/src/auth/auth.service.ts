@@ -58,7 +58,12 @@ export class AuthService {
   ): Promise<AuthPayload> {
     const email = input.email.toLowerCase();
     const existing = await this.prisma.user.findUnique({ where: { email } });
-    if (existing) throw new ConflictException('Email already registered');
+    if (existing)
+      throw new ConflictException({
+        exc: 'EX_AUTH_EMAIL_TAKEN',
+        msg: 'Email already registered',
+        key: 'auth.errors.emailTaken',
+      });
 
     const passwordHash = await hash(input.password);
     const rawToken = this.crypto.randomToken();
@@ -122,16 +127,28 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({ where: { email } });
 
     if (!user || !user.passwordHash) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException({
+        exc: 'EX_AUTH_INVALID_CREDENTIALS',
+        msg: 'Invalid credentials',
+        key: 'auth.errors.invalidCredentials',
+      });
     }
     if (user.lockedUntil && user.lockedUntil > new Date()) {
-      throw new UnauthorizedException('Account temporarily locked');
+      throw new UnauthorizedException({
+        exc: 'EX_AUTH_ACCOUNT_LOCKED',
+        msg: 'Account temporarily locked',
+        key: 'auth.errors.accountLocked',
+      });
     }
 
     const ok = await verify(user.passwordHash, input.password);
     if (!ok) {
       await this.registerFailedLogin(user);
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException({
+        exc: 'EX_AUTH_INVALID_CREDENTIALS',
+        msg: 'Invalid credentials',
+        key: 'auth.errors.invalidCredentials',
+      });
     }
 
     await this.prisma.user.update({

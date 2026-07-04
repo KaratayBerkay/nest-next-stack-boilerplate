@@ -2,12 +2,16 @@
 
 import { useState, useCallback } from "react";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
+import { useConnectionState } from "@/hooks/useConnectionState";
+import { ConnectionUnstable } from "@/components/ConnectionUnstable";
 
 const STATUS_LABEL: Record<string, string> = {
   idle: "Idle",
   connecting: "Connecting...",
   authenticating: "Authenticating...",
   open: "Connected",
+  backoff: "Reconnecting...",
+  down: "Disconnected",
 };
 
 const STATUS_COLOR: Record<string, string> = {
@@ -15,10 +19,13 @@ const STATUS_COLOR: Record<string, string> = {
   connecting: "text-yellow-600",
   authenticating: "text-yellow-600",
   open: "text-green-600",
+  backoff: "text-red-600",
+  down: "text-red-600",
 };
 
 export default function WsPage() {
   const realtime = useRealtime();
+  const connectionState = useConnectionState();
   const [input, setInput] = useState("");
   const [msgs, setMsgs] = useState<string[]>([]);
 
@@ -31,11 +38,14 @@ export default function WsPage() {
 
   if (!realtime) {
     return (
-      <div className="flex flex-col gap-2">
-        <h2 className="text-brand text-sm font-semibold">WebSocket</h2>
-        <p className="text-muted text-sm">Realtime not available.</p>
+      <div className="text-muted flex items-center justify-center py-20 text-sm">
+        Realtime not available.
       </div>
     );
+  }
+
+  if (connectionState === "unstable") {
+    return <ConnectionUnstable />;
   }
 
   return (

@@ -4,14 +4,19 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { LOGIN_PATH } from "@/constants/routes";
 import Link from "next/link";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { registerFormSchema } from "@/lib/validation/auth";
 
 export function RegisterForm() {
+  const t = useMessages("auth");
   const { register, user, loading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  const schemas = registerFormSchema(t.errors);
 
   if (loading) {
     return <p className="text-muted text-sm">Loading...</p>;
@@ -33,11 +38,28 @@ export function RegisterForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    const emailResult = schemas.email.safeParse(email);
+    const passwordResult = schemas.password.safeParse(password);
+    if (!emailResult.success) {
+      setError(emailResult.error.issues[0]?.message ?? t.errors.emailInvalid);
+      return;
+    }
+    if (!passwordResult.success) {
+      setError(passwordResult.error.issues[0]?.message ?? t.errors.passwordMin);
+      return;
+    }
+
     setSubmitting(true);
     try {
       await register(email, password, name || undefined);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Registration failed");
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.toLowerCase().includes("already") || msg.toLowerCase().includes("taken")) {
+        setError(t.errors.emailTaken);
+      } else {
+        setError(t.errors.registerFailed);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -45,29 +67,30 @@ export function RegisterForm() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-brand text-sm font-semibold">Register</h2>
+      <h2 className="text-brand text-sm font-semibold">{t.form.register.title}</h2>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
-          <label htmlFor="reg-name" className="text-muted text-xs font-medium">
-            Name (optional)
+          <label htmlFor="reg-name-input" className="text-muted text-xs font-medium">
+            {t.form.register.nameLabel}
           </label>
           <input
-            id="reg-name"
+            id="reg-name-input"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            placeholder={t.form.register.namePlaceholder}
             className="border-border bg-surface rounded border px-3 py-2 text-sm"
             data-testid="reg-name"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="reg-email" className="text-muted text-xs font-medium">
-            Email
+          <label htmlFor="reg-email-input" className="text-muted text-xs font-medium">
+            {t.form.register.emailLabel}
           </label>
           <input
-            id="reg-email"
+            id="reg-email-input"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -79,13 +102,13 @@ export function RegisterForm() {
 
         <div className="flex flex-col gap-1">
           <label
-            htmlFor="reg-password"
+            htmlFor="reg-password-input"
             className="text-muted text-xs font-medium"
           >
-            Password
+            {t.form.register.passwordLabel}
           </label>
           <input
-            id="reg-password"
+            id="reg-password-input"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -108,14 +131,14 @@ export function RegisterForm() {
           className="bg-fg text-bg self-start rounded px-4 py-2 text-sm disabled:opacity-40"
           data-testid="reg-submit"
         >
-          {submitting ? "Registering..." : "Register"}
+          {submitting ? t.form.register.submitting : t.form.register.submit}
         </button>
       </form>
 
       <p className="text-muted text-xs">
-        Already have an account?{" "}
+        {t.form.register.hasAccount}{" "}
         <Link href={LOGIN_PATH} className="text-brand underline">
-          Sign In
+          {t.form.register.loginLink}
         </Link>
       </p>
     </div>

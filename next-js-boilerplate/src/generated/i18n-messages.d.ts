@@ -2,10 +2,50 @@
 // Run `pnpm generate-i18n-types` after adding / updating message files.
 
 export type I18nMessages = {
+  "auth": {
+      "form": {
+        "login": {
+          "title": string;
+          "emailLabel": string;
+          "emailPlaceholder": string;
+          "passwordLabel": string;
+          "submit": string;
+          "submitting": string;
+          "noAccount": string;
+          "registerLink": string;
+        };
+        "register": {
+          "title": string;
+          "nameLabel": string;
+          "namePlaceholder": string;
+          "emailLabel": string;
+          "passwordLabel": string;
+          "submit": string;
+          "submitting": string;
+          "hasAccount": string;
+          "loginLink": string;
+        };
+      };
+      "social": {
+        "continueWith": string;
+      };
+      "errors": {
+        "emailRequired": string;
+        "emailInvalid": string;
+        "passwordRequired": string;
+        "passwordMin": string;
+        "passwordMax": string;
+        "loginFailed": string;
+        "registerFailed": string;
+        "emailTaken": string;
+      };
+    }
+
   "chat-room": {
       "title": string;
       "connected": string;
       "connecting": string;
+      "disconnected": string;
       "rooms": string;
       "online": string;
       "noOneHere": string;

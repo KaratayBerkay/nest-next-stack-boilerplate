@@ -464,7 +464,11 @@ export class MessagingService {
   /** Send a friend request */
   async sendFriendRequest(requesterId: string, addresseeId: string) {
     if (requesterId === addresseeId) {
-      throw new ForbiddenException('Cannot friend yourself');
+      throw new ForbiddenException({
+        exc: 'EX_FORBIDDEN',
+        msg: 'Cannot friend yourself',
+        key: 'friends.errors.cannotFriendYourself',
+      });
     }
 
     // Check both directions to handle mutual requests
@@ -478,11 +482,19 @@ export class MessagingService {
     });
     if (existing) {
       if (existing.status === 'ACCEPTED') {
-        throw new ForbiddenException('Already friends');
+        throw new ForbiddenException({
+          exc: 'EX_CONFLICT_DUPLICATE',
+          msg: 'Already friends',
+          key: 'friends.errors.alreadyFriends',
+        });
       }
       if (existing.status === 'PENDING') {
         if (existing.requesterId === requesterId) {
-          throw new ForbiddenException('Friend request already sent');
+          throw new ForbiddenException({
+            exc: 'EX_CONFLICT_DUPLICATE',
+            msg: 'Friend request already sent',
+            key: 'friends.errors.requestAlreadySent',
+          });
         }
         // Reverse pending request exists — auto-accept both
         await this.prisma.friendship.update({
@@ -501,7 +513,11 @@ export class MessagingService {
         return { success: true };
       }
       if (existing.status === 'BLOCKED') {
-        throw new ForbiddenException('Cannot send friend request');
+        throw new ForbiddenException({
+          exc: 'EX_FORBIDDEN',
+          msg: 'Cannot send friend request',
+          key: 'friends.errors.blocked',
+        });
       }
       // If DECLINED, update to PENDING
       await this.prisma.friendship.update({

@@ -16,6 +16,7 @@ import { REDIS_CLIENT } from '../redis/redis.module';
 import { TokenStoreService } from '../auth/token-store.service';
 import { TokenDerivationService } from '../auth/token-derivation.service';
 import { CryptoService } from '../common/crypto/crypto.service';
+import type { ExceptionCode } from '../common/exceptions/exception-code';
 
 type AuthWs = WebSocket & {
   userId?: string;
@@ -206,9 +207,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
 
     if (!authWs.authenticated) {
       if (data.type !== 'auth' || !data.tokens) {
-        authWs.send(
-          JSON.stringify({ type: 'error', message: 'Authenticate first' }),
-        );
+        this.sendWsError(authWs, 'EX_AUTH_INVALID_CREDENTIALS', 'Authenticate first');
         authWs.close();
         return;
       }
@@ -254,14 +253,14 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     try {
       payload = this.jwt.verify<{ sub: string }>(tokens.accessToken);
     } catch {
-      ws.send(JSON.stringify({ type: 'error', message: 'Auth failed' }));
+      this.sendWsError(ws, 'EX_AUTH_INVALID_CREDENTIALS', 'Auth failed');
       ws.close();
       return;
     }
 
     const expectedUserToken = this.derivation.deriveUserToken(payload.sub);
     if (!this.crypto.timingSafeEqual(tokens.userToken, expectedUserToken)) {
-      ws.send(JSON.stringify({ type: 'error', message: 'Auth failed' }));
+      this.sendWsError(ws, 'EX_AUTH_INVALID_CREDENTIALS', 'Auth failed');
       ws.close();
       return;
     }
@@ -279,7 +278,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       /* Redis error */
     }
     if (!hash?.userId || hash.userId !== payload.sub) {
-      ws.send(JSON.stringify({ type: 'error', message: 'Auth failed' }));
+      this.sendWsError(ws, 'EX_AUTH_INVALID_CREDENTIALS', 'Auth failed');
       ws.close();
       return;
     }
@@ -289,7 +288,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       hash.tier || 'FREE',
     );
     if (!this.crypto.timingSafeEqual(tokens.rbacToken, expectedRbac)) {
-      ws.send(JSON.stringify({ type: 'error', message: 'Auth failed' }));
+      this.sendWsError(ws, 'EX_AUTH_INVALID_CREDENTIALS', 'Auth failed');
       ws.close();
       return;
     }
@@ -375,9 +374,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
   private handleWatch(ws: AuthWs, data: { topic: string }) {
     if (!ws.userId) return;
     if (!TOPIC_ALLOWLIST.test(data.topic)) {
-      ws.send(
-        JSON.stringify({ type: 'error', message: 'Invalid topic pattern' }),
-      );
+      this.sendWsError(ws, 'EX_VALIDATION_FORM', 'Invalid topic pattern');
       return;
     }
     if (!this.topicWatchers.has(data.topic))
@@ -479,29 +476,26 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     if (newPage !== null) {
       const entry = PAGE_ALLOWLIST[newPage];
       if (!entry) {
-        ws.send(JSON.stringify({ type: 'error', message: 'Invalid page' }));
+        this.sendWsError(ws, 'EX_VALIDATION_FORM', `Invalid page "${newPage}"`);
         return;
       }
       const paramKeys = newParams ? Object.keys(newParams) : [];
       for (const key of paramKeys) {
         if (!entry.allowed.includes(key)) {
-          ws.send(
-            JSON.stringify({
-              type: 'error',
-              message: `Invalid param "${key}" for page "${newPage}"`,
-            }),
+          this.sendWsError(
+            ws,
+            'EX_VALIDATION_FORM',
+            `Invalid param "${key}" for page "${newPage}"`,
           );
           return;
         }
       }
-      // Required-param check only on key params (identity params)
       for (const required of entry.key) {
         if (!paramKeys.includes(required)) {
-          ws.send(
-            JSON.stringify({
-              type: 'error',
-              message: `Missing required param "${required}" for page "${newPage}"`,
-            }),
+          this.sendWsError(
+            ws,
+            'EX_VALIDATION_FORM',
+            `Missing required param "${required}" for page "${newPage}"`,
           );
           return;
         }
@@ -698,6 +692,22 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       if (last) return last;
     }
     return req.socket.remoteAddress ?? 'unknown';
+  }
+
+  private sendWsError(
+    ws: WebSocket,
+    exc: ExceptionCode,
+    msg: string,
+    key?: string,
+  ): void {
+    ws.send(
+      JSON.stringify({
+        type: 'error',
+        exc,
+        msg,
+        key: key ?? 'error.ws',
+      }),
+    );
   }
 
   private releasePending(ws: AuthWs) {

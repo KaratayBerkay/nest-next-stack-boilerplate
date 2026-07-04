@@ -1,0 +1,38 @@
+{
+  "form": {
+    "login": {
+      "title": "Giriş Yap",
+      "emailLabel": "E-posta",
+      "emailPlaceholder": "ornek@eposta.com",
+      "passwordLabel": "Şifre",
+      "submit": "Giriş Yap",
+      "submitting": "Giriş yapılıyor...",
+      "noAccount": "Hesabınız yok mu?",
+      "registerLink": "Kayıt Ol"
+    },
+    "register": {
+      "title": "Kayıt Ol",
+      "nameLabel": "İsim (isteğe bağlı)",
+      "namePlaceholder": "Adınız",
+      "emailLabel": "E-posta",
+      "passwordLabel": "Şifre",
+      "submit": "Kayıt Ol",
+      "submitting": "Kaydediliyor...",
+      "hasAccount": "Zaten hesabınız var mı?",
+      "loginLink": "Giriş Yap"
+    }
+  },
+  "social": {
+    "continueWith": "veya devam et"
+  },
+  "errors": {
+    "emailRequired": "E-posta gerekli",
+    "emailInvalid": "Geçersiz e-posta adresi",
+    "passwordRequired": "Şifre gerekli",
+    "passwordMin": "Şifre en az 8 karakter olmalıdır",
+    "passwordMax": "Şifre en fazla 128 karakter olmalıdır",
+    "loginFailed": "E-posta veya şifre hatalı",
+    "registerFailed": "Kayıt başarısız",
+    "emailTaken": "Bu e-posta zaten kayıtlı"
+  }
+}

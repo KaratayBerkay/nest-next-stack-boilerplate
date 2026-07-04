@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   Injectable,
   ForbiddenException,
   NotFoundException,
@@ -23,7 +24,11 @@ export class CommentService {
         where: { authorId, parentId: data.parentId, deletedAt: null },
       });
       if (existing) {
-        throw new Error('You have already replied to this comment');
+        throw new ConflictException({
+          exc: 'EX_CONFLICT_DUPLICATE',
+          msg: 'You have already replied to this comment',
+          key: 'error.commentDuplicateReply',
+        });
       }
     }
 
@@ -80,7 +85,11 @@ export class CommentService {
     if (!comment || comment.deletedAt)
       throw new NotFoundException('Comment not found');
     if (comment.authorId !== authorId)
-      throw new ForbiddenException('Not your comment');
+      throw new ForbiddenException({
+        exc: 'EX_FORBIDDEN',
+        msg: 'Not your comment',
+        key: 'error.notYourComment',
+      });
 
     const updateData: Record<string, unknown> = { body: data.body };
     if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl;
@@ -111,7 +120,11 @@ export class CommentService {
     if (!comment || comment.deletedAt)
       throw new NotFoundException('Comment not found');
     if (comment.authorId !== authorId)
-      throw new ForbiddenException('Not your comment');
+      throw new ForbiddenException({
+        exc: 'EX_FORBIDDEN',
+        msg: 'Not your comment',
+        key: 'error.notYourComment',
+      });
 
     const updated = await this.prisma.comment.update({
       where: { id: commentId },

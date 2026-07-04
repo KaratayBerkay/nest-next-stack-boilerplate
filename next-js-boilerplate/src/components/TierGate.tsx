@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { tierAtLeast, type Tier } from "@/lib/tier";
+import { AccessDenied } from "./AccessDenied";
 
 interface TierGateProps {
   min: Tier;
@@ -15,5 +16,6 @@ export function TierGate({ min, fallback, children }: TierGateProps) {
   const allowed = tierAtLeast(user?.tier, min);
 
   if (allowed) return <>{children}</>;
-  return <>{fallback ?? null}</>;
+  if (fallback !== undefined) return <>{fallback}</>;
+  return <AccessDenied />;
 }

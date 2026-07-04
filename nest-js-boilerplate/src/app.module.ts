@@ -3,7 +3,7 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -23,6 +23,8 @@ import { CryptoModule } from './common/crypto/crypto.module';
 import { CqrsExampleModule } from './cqrs/cqrs.module';
 import { CsrfModule } from './csrf/csrf.module';
 import { ExceptionFiltersModule } from './exception-filters/exception-filters.module';
+import { GlobalHttpExceptionFilter } from './exception-filters/global-http-exception.filter';
+import { toExceptionResponse } from './common/exceptions/to-exception-response';
 import { ExtensionsModule } from './extensions/extensions.module';
 import { FieldMiddlewareModule } from './field-middleware/field-middleware.module';
 import { GraphqlOtherModule } from './graphql-other/graphql-other.module';
@@ -108,6 +110,18 @@ import { WsModule } from './ws/ws.module';
       // Run interceptors (not just guards/filters) on @ResolveField methods too, not only on
       // top-level @Query/@Mutation. Opt-in per resolver via @UseInterceptors. See GraphqlOtherModule.
       fieldResolverEnhancers: ['interceptors'],
+      formatError: (formattedError, error: unknown) => {
+        const gqlErr = error as { originalError?: unknown };
+        const original = gqlErr.originalError ?? error;
+        const unified = toExceptionResponse(original);
+        return {
+          ...formattedError,
+          extensions: {
+            ...formattedError.extensions,
+            ...unified,
+          },
+        };
+      },
     }),
     // Rate limiting: generous global default (per-IP, per-route); tight per-route overrides
     // live on individual handlers via @Throttle. Bound via HttpThrottlerGuard below.
@@ -174,6 +188,10 @@ import { WsModule } from './ws/ws.module';
     AppService,
     // Global rate-limiting guard (skips non-HTTP transports — see HttpThrottlerGuard).
     { provide: APP_GUARD, useClass: HttpThrottlerGuard },
+    // Global HTTP exception filter — produces the unified {statusCode,exc,msg,key} shape.
+    // Non-HTTP contexts (WS, gRPC) are passed through; the old route-scoped filters in
+    // ExceptionFiltersModule stay for the demo controller.
+    { provide: APP_FILTER, useClass: GlobalHttpExceptionFilter },
     // GraphQL query-complexity guard. Registered here (not in ComplexityModule) because it
     // injects GraphQLModule's exported GraphQLSchemaHost, only visible in this scope.
     ComplexityPlugin,

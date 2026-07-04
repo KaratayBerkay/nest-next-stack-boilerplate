@@ -2,6 +2,7 @@
   "title": "Chat Rooms",
   "connected": "Connected",
   "connecting": "Connecting...",
+  "disconnected": "Disconnected",
   "rooms": "Rooms",
   "online": "Online ({count})",
   "noOneHere": "No one here yet",

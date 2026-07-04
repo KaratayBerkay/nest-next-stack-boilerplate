@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { TierGate } from "@/components/TierGate";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
+import { AccessDenied } from "@/components/AccessDenied";
 
 export default function PremiumPage() {
   const { user, loading } = useAuth();
@@ -43,32 +44,7 @@ export default function PremiumPage() {
     <div className="flex flex-col gap-6">
       <h2 className="text-brand text-sm font-semibold">Premium Dashboard</h2>
 
-      <TierGate
-        min="BASIC"
-        fallback={
-          <div className="flex flex-col gap-4">
-            <div className="border-border flex flex-col gap-3 rounded-xl border p-6">
-              <p className="text-muted text-sm">
-                This page is for premium users. Your current tier is{" "}
-                <span className="font-medium uppercase">{user.tier ?? "FREE"}</span>
-                .
-              </p>
-              <button
-                onClick={loadStats}
-                disabled={loadingStats}
-                className="bg-surface hover:bg-surface-hover text-fg self-start rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
-              >
-                {loadingStats ? "Loading..." : "Try anyway"}
-              </button>
-            </div>
-            {statsError && (
-              <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                {statsError}
-              </div>
-            )}
-          </div>
-        }
-      >
+      <TierGate min="BASIC">
         <div className="flex flex-col gap-4">
           <button
             onClick={loadStats}

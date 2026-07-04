@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo, Suspense } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PostCard } from "@/components/feed/PostCard";
 import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 import { apiFetch } from "@/lib/api-client";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
+import { SkeletonFeedList } from "@/components/ui/skeleton-shapes";
 import { IconSearch } from "@tabler/icons-react";
 
 interface Post {
@@ -44,7 +46,7 @@ function FeedList({ search }: { search: string }) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const scrollRef = useYSwipeGesture<HTMLDivElement>();
 
-  const { data, isLoading, error } = useQuery<{
+  const { data } = useSuspenseQuery<{
     posts: Post[];
     hasMore: boolean;
     nextCursor: string | null;
@@ -61,7 +63,6 @@ function FeedList({ search }: { search: string }) {
       }
       return res.json();
     },
-    staleTime: 30_000,
   });
 
   const posts = useMemo(
@@ -182,19 +183,7 @@ function FeedList({ search }: { search: string }) {
         </button>
       )}
 
-      {isLoading && (
-        <div className="flex items-center justify-center py-12">
-          <p className="text-muted text-sm">Loading...</p>
-        </div>
-      )}
-
-      {error && (
-        <div className="flex items-center justify-center py-12">
-          <p className="text-sm text-red-500">{String(error.message)}</p>
-        </div>
-      )}
-
-      {!isLoading && !error && posts.length === 0 && (
+      {posts.length === 0 && (
         <div className="flex flex-col items-center justify-center gap-3 py-12">
           <p className="text-muted text-sm">No posts yet.</p>
           <Link
@@ -206,18 +195,17 @@ function FeedList({ search }: { search: string }) {
         </div>
       )}
 
-      {!isLoading &&
-        posts.map((post) => (
-          <PostCard
-            key={post.id}
-            post={post}
-            isExpanded={expandedPostId === post.id}
-            onToggle={() => handleToggleComments(post.id)}
-            onDelete={handleDeletePost}
-          />
-        ))}
+      {posts.map((post) => (
+        <PostCard
+          key={post.id}
+          post={post}
+          isExpanded={expandedPostId === post.id}
+          onToggle={() => handleToggleComments(post.id)}
+          onDelete={handleDeletePost}
+        />
+      ))}
 
-      {!isLoading && hasMore && <div ref={sentinelRef} className="h-4" />}
+      {hasMore && <div ref={sentinelRef} className="h-4" />}
 
       {loadingMore && (
         <div className="flex items-center justify-center py-4">
@@ -264,7 +252,11 @@ export default function FeedPage() {
         />
       </div>
 
-      <FeedList key={search} search={search} />
+      <ErrorBoundary>
+        <Suspense fallback={<SkeletonFeedList />}>
+          <FeedList key={search} search={search} />
+        </Suspense>
+      </ErrorBoundary>
     </div>
   );
 }

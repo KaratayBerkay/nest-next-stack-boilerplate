@@ -5,14 +5,19 @@ import { useAuth } from "@/hooks/useAuth";
 import { REGISTER_PATH } from "@/constants/routes";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { loginFormSchema } from "@/lib/validation/auth";
 
 export function LoginForm() {
+  const t = useMessages("auth");
   const { login, user, loading } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  const schemas = loginFormSchema(t.errors);
 
   if (loading) {
     return <p className="text-muted text-sm">Loading...</p>;
@@ -34,12 +39,29 @@ export function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    const emailResult = schemas.email.safeParse(email);
+    const passwordResult = schemas.password.safeParse(password);
+    if (!emailResult.success) {
+      setError(emailResult.error.issues[0]?.message ?? t.errors.emailInvalid);
+      return;
+    }
+    if (!passwordResult.success) {
+      setError(passwordResult.error.issues[0]?.message ?? t.errors.passwordMin);
+      return;
+    }
+
     setSubmitting(true);
     try {
       await login(email, password);
       router.push("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.toLowerCase().includes("credentials") || msg.toLowerCase().includes("email") || msg.toLowerCase().includes("password")) {
+        setError(t.errors.loginFailed);
+      } else {
+        setError(t.errors.loginFailed);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -47,18 +69,19 @@ export function LoginForm() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-brand text-sm font-semibold">Sign In</h2>
+      <h2 className="text-brand text-sm font-semibold">{t.form.login.title}</h2>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
-          <label htmlFor="email" className="text-muted text-xs font-medium">
-            Email
+          <label htmlFor="login-email-input" className="text-muted text-xs font-medium">
+            {t.form.login.emailLabel}
           </label>
           <input
-            id="email"
+            id="login-email-input"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            placeholder={t.form.login.emailPlaceholder}
             required
             className="border-border bg-surface rounded border px-3 py-2 text-sm"
             data-testid="login-email"
@@ -66,11 +89,11 @@ export function LoginForm() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="password" className="text-muted text-xs font-medium">
-            Password
+          <label htmlFor="login-password-input" className="text-muted text-xs font-medium">
+            {t.form.login.passwordLabel}
           </label>
           <input
-            id="password"
+            id="login-password-input"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -92,14 +115,14 @@ export function LoginForm() {
           className="bg-fg text-bg self-start rounded px-4 py-2 text-sm disabled:opacity-40"
           data-testid="login-submit"
         >
-          {submitting ? "Signing in..." : "Sign In"}
+          {submitting ? t.form.login.submitting : t.form.login.submit}
         </button>
       </form>
 
       <p className="text-muted text-xs">
-        No account?{" "}
+        {t.form.login.noAccount}{" "}
         <Link href={REGISTER_PATH} className="text-brand underline">
-          Register
+          {t.form.login.registerLink}
         </Link>
       </p>
     </div>

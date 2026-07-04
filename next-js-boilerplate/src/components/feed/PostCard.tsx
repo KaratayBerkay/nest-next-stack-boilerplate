@@ -13,6 +13,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useToast } from "@/components/ui/Toast";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 
@@ -53,29 +54,28 @@ export function PostCard({
   const { user } = useAuth();
   const params = useParams<{ lang: string }>();
   const [postData, setPostData] = useState(post);
-  const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
   const isOwn = user && postData.author.id === user.id;
+  const { toast } = useToast();
 
   const refreshPost = async () => {
     try {
-      setError(null);
       const res = await apiFetch(`/api/posts/${post.id}`);
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setError(body.error ?? `Failed to load post (${res.status})`);
+        toast({ title: body.error ?? `Failed to load post (${res.status})`, variant: "destructive" });
         return;
       }
       const data = await res.json();
       if (data.post) {
         setPostData(data.post);
       } else {
-        setError("Post not found");
+        toast({ title: "Post not found", variant: "destructive" });
       }
     } catch {
-      setError("Network error loading post");
+      toast({ title: "Network error loading post", variant: "destructive" });
     }
   };
 
@@ -246,9 +246,6 @@ export function PostCard({
           </button>
         </div>
       )}
-
-      {/* Error */}
-      {error && <p className="text-[10px] text-red-500">{error}</p>}
 
       {/* Actions */}
       <div className="flex items-center gap-3">

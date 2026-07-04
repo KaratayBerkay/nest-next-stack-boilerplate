@@ -5,7 +5,7 @@ import {
   rbacTokenCookieOptions,
   userTokenCookieOptions,
 } from "@/lib/cookie";
-import { graphqlFetch } from "@/lib/backend";
+import { graphqlFetch, graphqlErrorStatus } from "@/lib/backend";
 
 const REGISTER_QUERY = `
   mutation Register($input: RegisterInput!) {
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
 
   if (errors || !data?.register) {
     const message = errors?.[0]?.message ?? "Registration failed";
-    const status = message.includes("already") ? 409 : 400;
+    const status = graphqlErrorStatus(errors, 400);
     return NextResponse.json({ error: message }, { status });
   }
 
