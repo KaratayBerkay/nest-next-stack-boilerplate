@@ -13,6 +13,10 @@ import {
   ToastProvider,
   ToastViewport,
 } from "@/components/ui/Toast";
+import { MessagesProvider } from "@/lib/i18n/MessagesProvider";
+import { getAllMessages } from "@/lib/i18n/get-all-messages";
+import { DEFAULT_LANG } from "@/constants/i18n";
+import type { I18nMessages } from "@/generated/i18n-messages";
 import { ThemeInitScript } from "./ThemeInitScript";
 import "./globals.css";
 
@@ -48,6 +52,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const messages = getAllMessages<I18nMessages>(DEFAULT_LANG);
   return (
     <html
       lang="en"
@@ -68,7 +73,9 @@ export default function RootLayout({
           <AuthProvider>
             <QueryProvider>
               <ToastProvider>
-                {children}
+                <MessagesProvider messages={messages}>
+                  {children}
+                </MessagesProvider>
                 <ToastViewport />
               </ToastProvider>
             </QueryProvider>
