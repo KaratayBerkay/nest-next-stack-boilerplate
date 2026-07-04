@@ -162,57 +162,59 @@ function dispatchEvent(
     if (!msg?.id) return;
     const peerId =
       msg.senderId === ownUserId ? msg.recipientId : msg.senderId;
-    // Drop if thread never fetched
-    const existing = qc.getQueryData(["messages", peerId]);
-    if (!existing) return;
-    qc.setQueryData(
-      ["messages", peerId],
-      (old: { messages: Record<string, unknown>[] } | undefined) => {
-        const msgs = old?.messages ?? [];
-        if (msgs.some((m) => m.id === msg.id)) return old;
-        return { ...old, messages: [...msgs, msg] };
-      },
-    );
+    if (!qc.getQueryData(["messages", peerId])) return;
+    qc.setQueryData(["messages", peerId], (old: unknown) => {
+      const data = old as
+        | { pages: { messages: Record<string, unknown>[] }[] }
+        | undefined;
+      if (!data?.pages?.length) return old;
+      const pages = [...data.pages];
+      const first = { ...pages[0] };
+      if (first.messages.some((m) => m.id === msg.id)) return old;
+      first.messages = [...first.messages, msg];
+      pages[0] = first;
+      return { ...data, pages };
+    });
   }
 
   if (t === "message-read" && ownUserId) {
     const peerId = (frame.senderId as string) ?? "";
-    const existing = qc.getQueryData(["messages", peerId]);
-    if (!existing) return;
-    qc.setQueryData(
-      ["messages", peerId],
-      (old: { messages: Record<string, unknown>[] } | undefined) => {
-        const msgs = old?.messages ?? [];
-        return {
-          ...old,
-          messages: msgs.map((m) =>
-            m.senderId === ownUserId && !m.readAt
-              ? { ...m, readAt: frame.readAt }
-              : m,
-          ),
-        };
-      },
-    );
+    if (!qc.getQueryData(["messages", peerId])) return;
+    qc.setQueryData(["messages", peerId], (old: unknown) => {
+      const data = old as
+        | { pages: { messages: Record<string, unknown>[] }[] }
+        | undefined;
+      if (!data?.pages?.length) return old;
+      const pages = data.pages.map((page) => ({
+        ...page,
+        messages: page.messages.map((m) =>
+          m.senderId === ownUserId && !m.readAt
+            ? { ...m, readAt: frame.readAt }
+            : m,
+        ),
+      }));
+      return { ...data, pages };
+    });
   }
 
   if (t === "message-delivered" && ownUserId) {
     const peerId = (frame.userId as string) ?? "";
-    const existing = qc.getQueryData(["messages", peerId]);
-    if (!existing) return;
-    qc.setQueryData(
-      ["messages", peerId],
-      (old: { messages: Record<string, unknown>[] } | undefined) => {
-        const msgs = old?.messages ?? [];
-        return {
-          ...old,
-          messages: msgs.map((m) =>
-            m.id === frame.messageId
-              ? { ...m, deliveredAt: frame.deliveredAt }
-              : m,
-          ),
-        };
-      },
-    );
+    if (!qc.getQueryData(["messages", peerId])) return;
+    qc.setQueryData(["messages", peerId], (old: unknown) => {
+      const data = old as
+        | { pages: { messages: Record<string, unknown>[] }[] }
+        | undefined;
+      if (!data?.pages?.length) return old;
+      const pages = data.pages.map((page) => ({
+        ...page,
+        messages: page.messages.map((m) =>
+          m.id === frame.messageId
+            ? { ...m, deliveredAt: frame.deliveredAt }
+            : m,
+        ),
+      }));
+      return { ...data, pages };
+    });
   }
 
   if (t === "room-message") {

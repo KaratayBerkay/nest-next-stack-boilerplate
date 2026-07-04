@@ -14,6 +14,7 @@ import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useSearchParams, useParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { FIND_FRIENDS_PATH } from "@/constants/routes";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
@@ -75,6 +76,7 @@ function MessagesPageContent() {
   const params = useParams<{ lang: string }>();
   const [selectedUser, setSelectedUser] = useState<UserInfo | null>(null);
   const [friends, setFriends] = useState<UserInfo[]>([]);
+  const queryClient = useQueryClient();
   const [input, setInput] = useState("");
   const [search, setSearch] = useState("");
   const [findInput, setFindInput] = useState("");
@@ -130,11 +132,24 @@ function MessagesPageContent() {
         { method: "POST", body: JSON.stringify({ text }) },
       );
       if (res.ok) {
-        // Optimistic upsert into the cache — provider dedupes the echoed frame
-        // The provider handles the echo via direct-message event dispatch
+        const msg = await res.json().catch(() => null);
+        if (msg?.id) {
+          queryClient.setQueryData(["messages", recipientId], (old: unknown) => {
+            const data = old as
+              | { pages: { messages: Record<string, unknown>[] }[] }
+              | undefined;
+            if (!data?.pages?.length) return old;
+            const pages = [...data.pages];
+            const first = { ...pages[0] };
+            if (first.messages.some((m) => m.id === msg.id)) return old;
+            first.messages = [...first.messages, msg];
+            pages[0] = first;
+            return { ...data, pages };
+          });
+        }
       }
     },
-    [],
+    [queryClient],
   );
 
   const markMessagesRead = useCallback(async (userId: string) => {
