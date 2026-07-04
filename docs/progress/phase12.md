@@ -2,7 +2,12 @@
 
 > Execution tracker for the twelfth phase of the [stack roadmap](../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
-> Created 2026-07-04 · Status: **not started**
+> Created 2026-07-04 · Status: **implemented (commit `abb4218` + follow-ups
+> `8a0f532`, `b270b70`), NOT complete.** Control run 2026-07-04 (static/
+> code-level — no live rebuilt-container pass yet, unlike phase3.md's
+> convention) found blocking findings A–H (see [Control
+> run](#control-run--2026-07-04)); per-task notes below have the detail,
+> none of the findings are fixed yet.
 
 Scope note (2026-07-04): This phase is **inserted ahead of** the pre-existing
 queue (same pattern Phase 11 used) rather than picking up the next topical
@@ -434,13 +439,17 @@ and F all consume what A/B produce.
 
 ### Stage A — Backend: unified exception contract
 
-- [ ] **T1 (M) — `ExceptionResponse`/`ExceptionCode` types + mapping
+- [x] **T1 (M) — `ExceptionResponse`/`ExceptionCode` types + mapping
   function (D1/D2/D6).** One file exporting the union, the response type,
   and `toExceptionResponse(exception, hostType)` with a default
   per-exception-class table.
   *Verify:* unit test — each built-in exception subclass maps to its default
   `exc`/key; an exception carrying a structured `getResponse()` payload
   overrides the default.
+  *Checked 2026-07-04:* done — `to-exception-response.spec.ts` 15/15 pass.
+  Minor nit: actual signature is `toExceptionResponse(exception)`, no
+  `hostType` 2nd param as written above; host-branching happens at the three
+  call sites instead (T2/T3/T6). Harmless, just a spec/code naming drift.
 - [ ] **T2 (S) — Global HTTP filter (D6).** `APP_FILTER` using T1; retire the
   route-scoped `HttpExceptionFilter` for real routes (check whether
   `src/exception-filters/*` still needs to stay as-is for the
@@ -450,20 +459,48 @@ and F all consume what A/B produce.
   *Verify:* any thrown `HttpException` on any real REST route returns
   `{statusCode, exc, msg, key}`; existing route-scoped demo (if kept) still
   passes its own proof test.
+  *Checked 2026-07-04:* **bug found.** `GlobalHttpExceptionFilter` is wired
+  via `APP_FILTER` correctly, and the docs demo (`errors.controller.ts`) was
+  correctly left alone (its e2e still 4/4). But
+  `messaging.controller.ts:34` still has a class-level
+  `@UseFilters(HttpExceptionFilter)` — Nest picks the closest filter first,
+  so every exception thrown anywhere in that controller (all of
+  `messaging.service.ts`, including T7's new structured payloads) is still
+  intercepted by the *old* filter, which reads `payload.message` (absent on
+  the new `{exc,msg,key}` shape) and falls back to a generic
+  class-name-derived string. Friends/conversations/messages REST endpoints
+  are silently still on the old contract. Fix: remove the `@UseFilters`
+  decorator from `messaging.controller.ts`.
 - [ ] **T3 (S) — GraphQL `formatError` (D6).** Wire into
   `GraphQLModule.forRoot` using T1.
   *Verify:* a GraphQL mutation error (e.g. duplicate-email register) returns
   the same shape under `errors[0].extensions`.
-- [ ] **T4 (S) — Prisma error mapping (D7).** P2002/P2025 branch in T1's
+  *Checked 2026-07-04:* implementation looks correct — `formatError`
+  (`app.module.ts:113-124`) calls `toExceptionResponse` and merges into
+  `extensions`; traced through Nest's `ExternalExceptionsHandler` to confirm
+  both `HttpException` and raw (e.g. Prisma) resolver errors reach it. Left
+  unchecked because no test actually fires a GraphQL mutation to confirm the
+  live response shape — the verify step as written wasn't executed.
+- [x] **T4 (S) — Prisma error mapping (D7).** P2002/P2025 branch in T1's
   function.
   *Verify:* a direct unique-constraint violation (bypass the find-then-act
   guard in a test) maps to `EX_CONFLICT_DUPLICATE`/409, not a masked 500.
-- [ ] **T5 (S) — Fix the 2 bare-`Error` throws.** `comment.service.ts:26` and
+  *Checked 2026-07-04:* done — P2002→409/`EX_CONFLICT_DUPLICATE`,
+  P2025→404/`EX_NOT_FOUND` both directly unit-tested in
+  `to-exception-response.spec.ts`. (Tested by constructing the Prisma error
+  directly rather than literally bypassing a guard in an integration test —
+  equivalent coverage of the mapping logic itself.)
+- [x] **T5 (S) — Fix the 2 bare-`Error` throws.** `comment.service.ts:26` and
   `oauth/oauth.controller.ts:48` → proper `HttpException` subclasses with a
   specific exc/key.
   *Verify:* both now return structured 4xx responses, not masked 500s;
   duplicate-reply-comment over GraphQL returns a real error code, not
   `INTERNAL_SERVER_ERROR`.
+  *Checked 2026-07-04:* done — `comment.service.ts:27-31` now throws
+  `ConflictException({exc:'EX_CONFLICT_DUPLICATE',...})`,
+  `oauth.controller.ts:49-53` throws
+  `BadRequestException({exc:'EX_VALIDATION_FORM',...})`. Repo-wide grep
+  confirms no bare `Error()` remains in either file.
 - [ ] **T6 (M) — `sendWsError()` helper for `RealtimeGateway` (D6).** Replace
   the ad hoc `{type:'error', message}` sends (lines 209-211, 257-292,
   378-380, 482-507) with the helper; same `{exc,msg,key}` body over the
@@ -471,29 +508,61 @@ and F all consume what A/B produce.
   *Verify:* trigger each WS error branch (bad topic, missing page param,
   auth failure) from a test client — each now carries `exc`/`key`, not just
   a free-text message.
-- [ ] **T7 (S) — Structured payload for the ~6 call sites needing a
+  *Checked 2026-07-04:* structurally done — `sendWsError(ws,exc,msg,key?)`
+  at `realtime.gateway.ts:701-715`, all former ad hoc sends now route
+  through it (grep confirms exactly one literal `type: 'error'` left in the
+  file). Left unchecked because `realtime.gateway.ts` has no spec file at
+  all — the verify step's "trigger each branch from a test client" was
+  never executed.
+- [x] **T7 (S) — Structured payload for the ~6 call sites needing a
   non-default code (D6 escape hatch).** Duplicate email, invalid
   credentials, account locked, not-your-post/comment, friend-request
   conflict states, invalid TOTP.
   *Verify:* each returns its intended specific `exc`/`key`, not the generic
   class-level default.
+  *Checked 2026-07-04:* done at the code level — confirmed structured
+  payloads at `auth.service.ts:62,130,137,147`, `post.service.ts:81,121`,
+  `comment.service.ts:88,122`, `messaging.service.ts:467,485,493,516`,
+  `mfa.service.ts:65`. Caveat: the `messaging.service.ts` sites are reached
+  through the controller T2 found still shadowed by the old filter, so
+  those specific payloads are neutralized at runtime until T2 is fixed.
 
 ### Stage B — Frontend: exceptionHandler + i18n resolver
 
-- [ ] **T8 (S) — `resolveByPath()` + `exceptionHandler()` (D3/D4).** New
+- [x] **T8 (S) — `resolveByPath()` + `exceptionHandler()` (D3/D4).** New
   utility, no existing dot-path resolver to build on.
   *Verify:* unit tests — missing key, wrong page-segment, non-string leaf
   all fall back to `msg`; a real nested key resolves correctly.
+  *Checked 2026-07-04:* done — `exception-handler.test.ts`, 18/18 pass,
+  covers all four cases. **But it breaks `pnpm typecheck` repo-wide**:
+  `exception-handler.test.ts:130` references `ExceptionCode` as a type
+  without importing it (`TS2304: Cannot find name 'ExceptionCode'`). Small
+  fix (add the import) but real — worth landing before calling Stage B
+  clean.
 - [ ] **T9 (S) — Frontend-only exception helper (D5).** Constructor for a
   local `Omit<ExceptionResponse,"statusCode">`; first real caller is the
   WS-unstable state (Stage C).
   *Verify:* same `exceptionHandler` call resolves a client-only exception
   identically to a backend-sourced one.
+  *Checked 2026-07-04:* **not done.** `clientException()` exists
+  (`exception-handler.ts:61-67`) and is exercised only by its own test —
+  zero production callers. `ConnectionUnstable.tsx` (its intended first
+  caller per D5) hardcodes English strings directly as default props and
+  never calls `exceptionHandler`/`clientException` at all. See T12 below —
+  the component isn't even rendered in 2 of its 3 intended surfaces, so
+  there's currently nowhere for this helper to be used.
 - [ ] **T10 (S) — `exc → surface` table + typed `apiFetchJson` (D3/D9).**
   Small lookup (form-field/toast/alert/badge); `apiFetchJson` throws a typed
   `ExceptionResponse` instead of a bare `Error`.
   *Verify:* a failed mutation surfaces via the correct UI mechanism
   automatically, without the calling component hand-rolling a catch block.
+  *Checked 2026-07-04:* **partial.** `EXC_TO_SURFACE`/`getSurface()`
+  (`exception-handler.ts:19-34`) is real and tested. But `apiFetchJson`
+  (`api-client.ts:31-52`) still throws a plain `Error`, only optionally
+  bolting on a non-standard `.exception` property — not a typed
+  `ExceptionResponse` as D9 asked. Moot in practice anyway: grep shows
+  `apiFetchJson` has zero real callers — every T11 call site below still
+  uses the older `apiFetch` + manual `.error` string parsing.
 - [ ] **T11 (M) — Migrate the identified inline-red-text call sites.**
   `PostCard.tsx`, `ReactionButtons.tsx` (both variants — including the
   silently-swallowed `ReactionInline` catch), `CommentSection.tsx`,
@@ -502,6 +571,21 @@ and F all consume what A/B produce.
   *Verify:* each migrated component shows a real `Toast`/`Alert` on failure,
   localized via `exceptionHandler`; no bare red `<p>`/`<div>` error text left
   in these files.
+  *Checked 2026-07-04:* **partial, one regression.** `PostCard.tsx` toasts
+  on `refreshPost` failure now (hardcoded string, not exceptionHandler'd),
+  but `handleEdit`/`handleDelete` still `catch { // silent }` — errors
+  surface nowhere. `ReactionButtons.tsx`'s flagged `ReactionInline` silent
+  catch now toasts (good) but never checks `res.ok`, so a non-2xx response
+  is silently treated as success; `ReactionRow` toasts with a hardcoded
+  string on `!res.ok`. `CommentSection.tsx`'s submit toasts (hardcoded
+  string); its edit/delete paths show nothing on failure. **`premium/page.tsx`
+  regression: lines 82-86 still render the exact hand-rolled
+  `bg-red-50`/`text-red-700` div this task named for removal** — no
+  Toast/Alert import exists in the file at all. (This is almost certainly
+  why commit b270b70 removed an "unused `AccessDenied` import" from this
+  file — a wire-up was attempted and abandoned partway.) None of these
+  files call `exceptionHandler`/`getSurface` anywhere, so even the fixed
+  spots use ad hoc text, not resolved i18n.
 
 ### Stage C — Dedicated full-page/status states
 
@@ -514,15 +598,55 @@ and F all consume what A/B produce.
   *Verify:* kill the realtime backend → all 3 surfaces show one consistent,
   correctly-localized state; restore it → all 3 clear together; no more
   `undefined` labels reachable.
-- [ ] **T13 (S) — `<AccessDenied>` + default `TierGate` fallback +
+  *Checked 2026-07-04:* **partial.** `useConnectionState()`
+  (`hooks/useConnectionState.ts`) does correctly consolidate the derivation
+  into one `"online"|"connecting"|"unstable"` enum, and all 3 surfaces now
+  call it — the "3 divergent derivations" problem is genuinely fixed, and
+  the ws-demo's missing `backoff`/`down` labels are gone. But: **(1)** no
+  grace-window debounce anywhere — D8 explicitly asked to avoid flashing on
+  a normal reconnect blip, and the hook maps `backoff` straight to
+  `"unstable"` with no timer; **(2)** `<ConnectionUnstable>` is only ever
+  actually *rendered* in `(demos)/ws/page.tsx` — `chat-room/page.tsx` and
+  `messages/page.tsx` both import it but never render it (confirmed by
+  their own `pnpm lint` warnings: "'ConnectionUnstable' is defined but
+  never used"), so those two surfaces do NOT show "one consistent" state —
+  chat-room just recolors an avatar ring/disables input instead; **(3)**
+  `ConnectionUnstable`/`AccessDenied` are both 100% hardcoded English
+  (`ConnectionUnstable.tsx:11-12`), never call `exceptionHandler`/T9's
+  `clientException`, so this isn't localized at all; **(4)**
+  `chat-room/page.tsx:119-122`'s Avatar tooltip is still hardcoded
+  "Connected"/"Connecting…"/"Disconnected" (the input placeholder below it
+  *was* correctly fixed to use `t.connecting`/`t.disconnected`) — so "fixes
+  chat-room's dead i18n keys" is only half true.
+- [x] **T13 (S) — `<AccessDenied>` + default `TierGate` fallback +
   `PRICING_PATH` (D8).** Migrate `premium/page.tsx` off its bespoke inline
   fallback.
   *Verify:* visit `/premium` on a FREE-tier test user → `<AccessDenied>`
   renders with a working "Go to payment page" button routing to `/pricing`.
-- [ ] **T14 (S) — Small fixes surfaced while in this area.** i18n-ify
+  *Checked 2026-07-04:* done — `TierGate.tsx:19-20` defaults to
+  `<AccessDenied/>` when no `fallback` is passed (test-covered,
+  `TierGate.test.tsx`: "renders AccessDenied when below tier and no
+  fallback is given"); `premium/page.tsx` now omits its own fallback,
+  relying on the default — confirms b270b70's "remove unused
+  `AccessDenied` import" there was a correct cleanup, not a regression.
+  Minor loose end: `PRICING_PATH` was added to `constants/routes.ts` but is
+  never imported anywhere — `AccessDenied.tsx:14` hardcodes the literal
+  string `"/pricing"` instead, so the constant is dead code today.
+- [x] **T14 (S) — Small fixes surfaced while in this area.** i18n-ify
   `UnauthenticatedMessage.tsx`'s hardcoded "Sign In" label; fix
   `not-found.tsx`'s hardcoded `DEFAULT_LANG` to negotiate locale.
   *Verify:* both render correctly in a non-default locale.
+  *Checked 2026-07-04:* done — `UnauthenticatedMessage.tsx` now calls
+  `useMessages("home")`, defaults `label` to `t.signIn`; `not-found.tsx`
+  now negotiates via a client-side `clientLang()` (`navigator.language`)
+  lazy `useState` initializer instead of a hardcoded `DEFAULT_LANG` (also
+  fixes the useEffect/setState lint issue b270b70 mentions). Loose end
+  found in the same area: `UnauthenticatedMessage`'s *own* "Sign In" label
+  is fixed, but several callers still pass hardcoded English into its
+  `message` prop — `premium/page.tsx` ("Sign in to view premium"),
+  `messages/page.tsx` ("Sign in to start messaging") — while
+  `chat-room/page.tsx` correctly passes `t.signInRequired`. Inconsistent
+  rollout, same spirit as T14 even if not literally in its scope.
 
 ### Stage D — BFF / GraphQL alignment
 
@@ -531,6 +655,13 @@ and F all consume what A/B produce.
   `message.includes(...)`.
   *Verify:* invalid-credentials and duplicate-email flows still return
   401/409 respectively, now driven by `exc` not string content.
+  *Checked 2026-07-04:* **partial.** Both routes now call
+  `graphqlErrorStatus(errors,...)` for the HTTP status instead of
+  string-matching — real fix, and it's genuinely wired to backend data
+  (`app.module.ts:113-124` puts `exc`/`msg`/`key` in GraphQL `extensions`).
+  But the response *body* (`login/route.ts:80`, `register/route.ts:68`) is
+  still `{error: message}` — `exc`/`msg`/`key` are computed and then
+  discarded before reaching the client. Status code fixed; shape isn't.
 - [ ] **T16 (S) — Sweep remaining hand-rolled `{error:string}` BFF routes**
   (`posts/[id]`, `comments/[id]`, `reactions`, `users/search`,
   `admin/set-tier`) onto the unified shape; extend `graphqlErrorStatus()`
@@ -538,22 +669,52 @@ and F all consume what A/B produce.
   *Verify:* each route's error responses now match
   `{statusCode,exc,msg,key}`; `proxy/[...path]` (already shape-agnostic) and
   the hand-rolled routes are indistinguishable to a frontend caller.
+  *Checked 2026-07-04:* **not done.** All 5 routes still return
+  `{error: string}`. `posts/[id]` and `comments/[id]`'s PUT/DELETE still
+  use inline `code === "FORBIDDEN" ? 403 : 500`-style matching, not even
+  calling `graphqlErrorStatus()`. `users/search` hardcodes 400/401.
+  `reactions`/`admin/set-tier` do call the extended `graphqlErrorStatus()`
+  for status only. The extension itself is real (`backend.ts:120-141`, now
+  an 8-code map, up from 2) — the shape sweep across these 5 routes never
+  happened. `proxy/[...path]` is confirmed still shape-agnostic
+  (passthrough, `route.ts:41-48`), so the phase gate's "BFF consistency"
+  item fails today only because these 5 routes haven't caught up, not
+  because of any proxy issue.
 
 ### Stage E — Loading skeletons for every HTTP/WS-awaited page
 
-- [ ] **T17 (S) — Give `Skeleton` real fallback shapes.**
+- [x] **T17 (S) — Give `Skeleton` real fallback shapes.**
   `src/components/ui/Skeleton.tsx` today only backs its own demo page; add
   the small set of composed shapes real pages need (card-list, message
   thread, stat row), built from the one primitive rather than one-off divs
   per page.
   *Verify:* each shape renders with the right dimensions/no layout shift
   when swapped for real content.
-- [ ] **T18 (S) — Fix `messages/loading.tsx`.** Replace the plain-text
+  *Checked 2026-07-04:* done — `components/ui/skeleton-shapes.tsx` adds
+  `SkeletonLine/Card/Message/ChatMessage/ConversationSidebar/FeedList`, all
+  composed from `SkeletonLine`/shared primitives, used across
+  feed/messages/chat-room/notification.
+- [x] **T18 (S) — Fix `messages/loading.tsx`.** Replace the plain-text
   fallback with `Skeleton`; confirm what it actually gates given
   `messages/page.tsx` is a Client Component (D10 note) — make it real or
   remove the false impression that it's doing something.
   *Verify:* cold navigation to `/messages` shows a `Skeleton`, not text, for
   whatever window it's actually visible.
+  *Checked 2026-07-04:* `loading.tsx` itself is done — real
+  Skeleton-composed fallback, no more plain text. But the same "false
+  impression" bug got **relocated, not removed**: `messages/page.tsx` now
+  also wraps its content in its own inline `<Suspense fallback={...}>`
+  (near-duplicate markup of `loading.tsx`), and `notification/page.tsx` has
+  the same pattern — but neither `useConversations`/`useConversation`
+  (plain `useQuery`/`useInfiniteQuery`, confirmed by grep) nor
+  `useNotifications` (plain `useQuery`) ever throw a promise, so these
+  inner `<Suspense>` boundaries never actually trigger; the *real* gating
+  in both files correctly happens via a manual `connectionState`/`isLoading`
+  conditional underneath. Not functionally broken (the manual conditional
+  does the real job) but keeps the misleading "Suspense implies gating"
+  impression T18 was written to remove. Checking this box for the literal
+  `loading.tsx` fix; flagging the relocated issue for anyone touching this
+  next.
 - [ ] **T19 (M) — Migrate the real client-fetch pages to `useSuspenseQuery` +
   `<Suspense fallback={<Skeleton/>}>` (D10.1):** `feed/page.tsx`,
   `find-friends/page.tsx` (fix the `[]`-default masking loading as "no
@@ -564,12 +725,26 @@ and F all consume what A/B produce.
   *Verify:* throttle network (DevTools "Slow 3G") on each page → `Skeleton`
   shows immediately, sized to the real layout, never a blank screen or a
   list that looks empty-but-actually-loading.
-- [ ] **T20 (S) — WS-gated skeleton for chat-room (closes Phase 11/D2/T10;
+  *Checked 2026-07-04:* **partial — 2 of 5 named pages untouched.**
+  `feed/page.tsx` is a clean, correct migration (`useSuspenseQuery` +
+  `<Suspense fallback={<SkeletonFeedList/>}>` + `loading.tsx`) — the best
+  example of this pattern in the phase. `notification/page.tsx` has a real
+  Skeleton-gated loading state too (via `isLoading`, not suspense, but
+  functionally sound). **But `find-friends/page.tsx` and
+  `posts/[uuid]/page.tsx` — both explicitly named in this task — don't
+  appear anywhere in commit abb4218's diff; neither was touched at all.**
+  `premium/page.tsx`'s stats fetch also has no skeleton (just a "Loading…"
+  button label, weaker than even the bare-spinner case this phase's intro
+  says never to leave in).
+- [x] **T20 (S) — WS-gated skeleton for chat-room (closes Phase 11/D2/T10;
   D10.2).** Apply `useConnectionState()` (Stage C/T12) to gate
   `ChatRoomContent` behind `Skeleton` until `"open"`, replacing today's
   render-immediately-plus-badge-only behavior.
   *Verify:* cold-load `/chat-room?room=tech` → skeleton, then the live room;
   matches messages' existing behavior.
+  *Checked 2026-07-04:* done — messages are gated on `msgsLoading` with
+  `SkeletonChatMessage`, plus a top-level `Suspense`+skeleton fallback
+  around the whole `ChatRoomContent` for the searchParams boundary.
 - [ ] **T21 (S) — Sweep remaining `v1/[lang]` pages** (`admin`, `share`, the
   `v1/[lang]` home page, anything else this audit turns up) for the same
   rule.
@@ -577,15 +752,32 @@ and F all consume what A/B produce.
   `apiFetch`/`useQuery`/`useRealtime` has either a `Skeleton`-based boundary
   in its own file or a sibling `loading.tsx`; none left rendering blank or
   empty-looking during a load.
+  *Checked 2026-07-04:* **not done.** `admin/page.tsx` and `share/page.tsx`
+  both fetch via `apiFetch` (3 call sites each) but have zero `Skeleton`
+  usage and no sibling `loading.tsx` — grep-confirmed gap. (`users/list`,
+  `users/detail/[uuid]`, `settings/sessions`, `boom`, and the `v1/[lang]`
+  home page don't fetch page-blocking app data the same way — mostly async
+  Server Components doing i18n-only loads — so likely out of scope, but
+  worth a second look if anyone treats this box as fully swept.)
 
 ### Stage F — Zod schema generation + nested i18n content
 
-- [ ] **T22 (S) — `auth` i18n namespace, both locales (D11).** Add
+- [x] **T22 (S) — `auth` i18n namespace, both locales (D11).** Add
   `messages/{en,tr}/auth/messages.json` with the `form`/`errors` nested
   blocks; run `pnpm generate-i18n-types` to confirm the generator accepts
   the nesting and cross-locale shape-checks it.
   *Verify:* generator exits 0; `I18nMessages["auth"]` autocompletes
   `t.form.emailLabel` / `t.errors.emailTaken` in the editor.
+  *Checked 2026-07-04:* done — real nested content in both locales (deeper
+  nesting than the tracker's own example: `form.login.*` / `form.register.*`
+  / `social.*` / `errors.*`). Actually ran `pnpm generate-i18n-types`: exit
+  0, and `git diff` on `src/generated/i18n-messages.d.ts` showed zero
+  changes afterward — proof the committed generated file already matched,
+  i.e. the generator was really exercised on this content. Minor:
+  `layout.tsx` calls `getAllMessages(DEFAULT_LANG)` unconditionally and the
+  real auth pages live outside the `[lang]` segment, so the `tr` content —
+  though correctly generated — may not actually be reachable at runtime
+  yet; worth a look, separate from this task's own scope.
 - [ ] **T23 (S) — `generateZodSchema(tr)` pattern + the two real schemas
   (D12).** `src/lib/validation/` gets `generateAuthLoginSchema(tr)` /
   `generateAuthRegisterSchema(tr)`, replacing the native-attribute-only
@@ -593,6 +785,17 @@ and F all consume what A/B produce.
   *Verify:* unit test — a schema built from the `tr` fixture rejects an
   empty email with the exact `tr.errors.emailRequired` string, not a Zod
   default message.
+  *Checked 2026-07-04:* **partial.** `src/lib/validation/auth.ts` exists
+  and is wired into both forms, but as `loginFormSchema(errors)` /
+  `registerFormSchema(errors)` — not D12's naming
+  (`generateAuthLoginSchema(tr)`) or its shape: each returns a **plain
+  object of individual field schemas**, not one composed `z.object()`. This
+  is the root structural cause of T24's failure below — D1's `fields[]`
+  array exists specifically for simultaneous multi-field failures, which
+  this shape can't produce. Manually traced (no unit test exists for this
+  file): `.min(1, errors.emailRequired)` before
+  `.email(errors.emailInvalid)` does correctly yield the exact tracker
+  string on an empty email, so that one behavior is right.
 - [ ] **T24 (M) — Wire the two real forms + unify with backend field
   errors.** `register-form.tsx`/`login-form.tsx` call `useMessages("auth")`,
   run the generated schema on submit (per-field error state instead of one
@@ -603,6 +806,21 @@ and F all consume what A/B produce.
   *Verify:* submit with an empty email → inline `tr.errors.emailRequired`
   under the email field, no round-trip; submit a real duplicate email → the
   server's `EX_AUTH_EMAIL_TAKEN` renders in the same spot, same styling.
+  *Checked 2026-07-04:* **not done — this is the biggest real gap in the
+  phase.** `useMessages("auth")` is called, but error state in both forms
+  is still `const [error, setError] = useState("")` — one generic string,
+  unchanged in shape from before this phase. An early `return` after the
+  email check drops a simultaneous password failure. The backend-unification
+  half is completely absent: both catch blocks do
+  `msg.toLowerCase().includes("already"|"taken"|"credentials")` — the exact
+  pre-phase-12 string-sniffing pattern. Traced upstream: `useAuth.tsx`'s
+  `login`/`register` use raw `fetch()` (not `apiFetchJson`) and
+  `throw new Error(data.error)`, discarding `exc`/`fields`/`key` entirely;
+  `api/auth/register/route.ts` still returns the legacy `{error: message}`
+  shape (see T15). Repo-wide grep confirms `ExceptionFieldError`/`.fields`/
+  `err.exception` are consumed nowhere in `src/`. The backend and Stage-B
+  infra this needs genuinely exist (`EX_AUTH_EMAIL_TAKEN` et al.) — none of
+  it reaches these two forms yet.
 - [ ] **T25 (S) — Sweep remaining hardcoded strings in the two real forms
   while in this area.** Headings ("Register"/"Sign In"), the cross-links
   ("No account? Register" / "Already have an account? Sign In"), and
@@ -610,39 +828,128 @@ and F all consume what A/B produce.
   namespace.
   *Verify:* both pages render fully from `t.*` in both locales; grep finds
   no stray hardcoded English string left in either file.
+  *Checked 2026-07-04:* **partial.** Headings, cross-links, and
+  `social-login-buttons.tsx`'s copy are correctly i18n'd (provider brand
+  names staying hardcoded is reasonable). Leftover hardcoded English found
+  with no locale entry backing it: `"Loading..."` (login-form.tsx:23,
+  register-form.tsx:22), `"Signed in as"` (:30/:29), `"Role:"`/`"Status:"`
+  (:33/:32).
+
+**Unreviewed addition found during this pass:** `src/lib/forms/auth-options.ts`
+(27 lines, added whole-cloth in abb4218) defines `loginFormOpts`/
+`registerFormOpts` via `@tanstack/react-form`'s `formOptions()`. Repo-wide
+grep: zero importers, including this same commit's own login/register forms
+(which use plain `useState`, per D12's explicit decision to *not* adopt
+TanStack Form for the real forms). This file builds exactly the path D12
+rejected — recommend deleting rather than treating it as legitimate
+factoring left over for later use.
 
 ## Verify loop (phase gate)
 
-- [ ] **Contract:** a real validation error, a real conflict (duplicate
-  email), and a real 403 (not-your-post) each produce
-  `{statusCode,exc,msg,key}` — over REST, over GraphQL, and (topic/auth
-  errors) over the WS gateway.
-- [ ] **Resolution:** frontend resolves the correct localized string via
-  `exceptionHandler` for a key that exists; falls back to `msg` for one that
-  doesn't yet have an i18n entry.
-- [ ] **Real UI, not inline text:** the migrated components (T11) show a
-  `Toast`/`Alert`, not hand-rolled red text; grep confirms no leftover ad hoc
-  `data.error ?? ...` display pattern in those files.
-- [ ] **Connection state:** kill the realtime backend — `messages`,
-  `chat-room`, and the ws demo all show one consistent, correctly-localized
-  unstable state after the grace window, none stuck showing `undefined`;
-  restore it — all clear together.
-- [ ] **Entitlement:** FREE-tier user hitting `/premium` sees `<AccessDenied>`
-  with a working CTA to `/pricing`.
-- [ ] **BFF consistency:** a request through `proxy/[...path]` and a request
-  through a hand-rolled BFF route return indistinguishable error shapes.
-- [ ] **Loading states:** every real page under `/v1/[lang]` that awaits
-  HTTP or WS data shows `Skeleton` — not blank, not plain text, not an
-  empty-looking list — until that data/connection is ready; skeleton
-  dimensions match the final content (no layout shift on swap-in).
-- [ ] **Form validation:** the real login/register forms show per-field,
-  i18n'd errors from a generated Zod schema (not native-attribute-only
-  validation, not one generic error string); a server-side duplicate-email
-  response renders in the same per-field slot as a client-side Zod failure;
-  switching locale changes every string on both forms, none left hardcoded.
-- [ ] **No regressions:** Phase 9/10 realtime loops (DM-unread bell
-  aggregate, 3-state badge, feed live renew) still behave; the two bare
-  `Error` fixes (T5) don't change happy-path behavior.
+**Overall: the phase gate does not pass yet (checked 2026-07-04).** Real,
+substantial work landed — this isn't a "just check the boxes" situation —
+but the items below have concrete, reproducible failures, detailed inline
+in Stages A–F above and summarized in "Follow-up" right after this section.
+
+- [ ] **Contract:** FAILS for REST today — `messaging.controller.ts` still
+  shadows the new global filter (T2), so friends/conversations/messages
+  endpoints return the old `{statusCode,timestamp,path,message}` shape, not
+  the new one. GraphQL/WS shape is implemented and traced as correct but
+  has no live test exercising it end-to-end.
+- [ ] **Resolution:** PASSES — `exceptionHandler`/`resolveByPath` unit tests
+  (18/18) confirm exactly this behavior. (Note: the test file itself breaks
+  `pnpm typecheck` repo-wide via a missing import — T8.)
+- [ ] **Real UI, not inline text:** FAILS — `premium/page.tsx` still has
+  hand-rolled red-text error display (a literal regression against T11);
+  several edit/delete paths in `PostCard`/`CommentSection` show nothing on
+  failure at all.
+- [ ] **Connection state:** FAILS — no grace-window debounce exists;
+  `<ConnectionUnstable>` only renders in the ws demo, not in `messages` or
+  `chat-room` (both import it, neither uses it); all three surfaces'
+  connection text is hardcoded English, not localized.
+- [ ] **Entitlement:** PASSES — `/premium` on a FREE-tier user correctly
+  shows `<AccessDenied>` via `TierGate`'s default fallback, test-covered.
+- [ ] **BFF consistency:** FAILS — `proxy/[...path]` is correctly
+  shape-agnostic, but `login`/`register` compute-then-discard `exc`/`msg`/
+  `key` (T15), and the 5 hand-rolled routes in T16 never adopted the new
+  shape at all.
+- [ ] **Loading states:** PARTIAL — `feed`, `messages`, `chat-room`,
+  `notification` are solid; `find-friends`, `posts/[uuid]`, `premium`,
+  `admin`, `share` show no skeleton at all (T19/T21).
+- [ ] **Form validation:** FAILS — real forms still use one generic error
+  string, not per-field state; backend field errors never reach the form at
+  all (T24) — the "one component, two origins" goal wasn't reached.
+- [ ] **No regressions:** not directly exercised by this verification pass
+  (no agent ran the Phase 9/10 realtime E2E loops). Worth a dedicated pass
+  before calling this phase closed, since `useConnectionState()` genuinely
+  changed how connection status is derived in `messages`/`chat-room`, even
+  though the underlying `RealtimeProvider` enum itself is untouched.
+
+## Control run — 2026-07-04
+
+Static/code-level verification pass (reading current HEAD, running each
+app's own test/lint/typecheck/i18n-generator commands, tracing NestJS
+filter-resolution source) — **not** a live pass against rebuilt containers
+the way phase3.md's control run was; runtime/WS behavior under a real
+server is still unconfirmed. **Phase 12 is NOT complete.**
+
+**Verified working (static):** the core contract types and mapping function
+(T1), Prisma error mapping (T4), the two bare-`Error` fixes (T5), the
+`exceptionHandler`/`resolveByPath` resolver (T8, 18/18 tests),
+`TierGate`/`AccessDenied` entitlement gating (T13, test-covered),
+`UnauthenticatedMessage`/`not-found.tsx` locale fixes (T14), the `Skeleton`
+shape library (T17), `messages/loading.tsx` and chat-room's WS-gated
+skeleton (T18/T20), and the `auth` i18n namespace + generator run (T22) all
+hold up. Full backend suite 148/149 (1 pre-existing unrelated failure);
+frontend suite 55/55; `pnpm lint` 0 errors.
+
+**Findings (blocking):**
+
+- **A — `messaging.controller.ts:34`** still has a class-level
+  `@UseFilters(HttpExceptionFilter)` that shadows the new global filter
+  (T2) — every messaging REST endpoint (friends/conversations/messages) is
+  silently still on the old `{statusCode,timestamp,path,message}` shape,
+  and T7's structured payloads for that controller are neutralized at
+  runtime.
+- **B — `premium/page.tsx:82-86`** still renders the exact hand-rolled
+  `bg-red-50`/`text-red-700` error div T11 named for removal; no
+  Toast/Alert wired in this file at all.
+- **C — form/backend field-error unification (T24) never happened.** Both
+  auth forms still use one generic error string; an early `return` drops
+  simultaneous multi-field failures; `useAuth.tsx` uses raw `fetch()` +
+  `throw new Error(data.error)`, discarding `exc`/`fields`/`key` entirely.
+  Root cause traces back to T23: `validation/auth.ts` returns a bag of
+  individual field schemas instead of one composed `z.object()`.
+- **D — BFF shape sweep (T16) never happened.** `posts/[id]`,
+  `comments/[id]`, `reactions`, `users/search`, `admin/set-tier` all still
+  return `{error: string}`. T15's login/register routes compute
+  `exc`/`msg`/`key` and then discard them before responding.
+- **E — `<ConnectionUnstable>` is orphaned (T9/T12).** Only
+  `(demos)/ws/page.tsx` renders it; `messages/page.tsx` and
+  `chat-room/page.tsx` import but never render it (own lint warnings
+  confirm). It and `<AccessDenied>` are 100% hardcoded English, never
+  routed through `exceptionHandler`/`clientException`. No grace-window
+  debounce exists — `useConnectionState()` maps `backoff` straight to
+  `"unstable"`.
+- **F — T19 named 5 pages, 2 were never touched.**
+  `find-friends/page.tsx` and `posts/[uuid]/page.tsx` don't appear in
+  commit `abb4218`'s diff at all — no Suspense/skeleton migration
+  happened.
+- **G — T21 sweep incomplete.** `admin/page.tsx` and `share/page.tsx` fetch
+  via `apiFetch` with zero `Skeleton` usage and no `loading.tsx` sibling.
+- **H — assorted small items:** `exception-handler.test.ts:130` references
+  `ExceptionCode` without importing it, breaking `pnpm typecheck`
+  repo-wide; `src/lib/forms/auth-options.ts` (27 lines, zero importers)
+  builds the TanStack-Form path D12 explicitly rejected — recommend
+  deleting; `PRICING_PATH` (`constants/routes.ts`) is unused,
+  `AccessDenied.tsx` hardcodes `"/pricing"` literally instead; auth-form
+  strings "Loading...", "Signed in as", "Role:", "Status:" are still
+  hardcoded English with no locale entry.
+
+Per-task detail for all of the above (plus smaller PARTIAL items not
+promoted to a lettered finding) is inline under each task's checkbox in
+Stages A–F above. Not fixing any of this without Berkay's go-ahead, per the
+project's established "do the controls, don't fix unless asked" convention.
 
 ## Phase queue (updated 2026-07-04)
 
@@ -656,10 +963,13 @@ and F all consume what A/B produce.
 | 9 (done, 14/15 code tasks) | Realtime UX close-out: transport deadlock, claim keying, thread order, receipts, header routing, chat-room switching, push completion | [phase9.md](phase9.md) |
 | 10 (mostly landed) | Realtime UX round 2: DM unread everywhere, live feed renew, chat-room presence + stability, transport-state UX — T11 broken, T4/T15 carried to 11 | [phase10.md](phase10.md) |
 | 11 (parked — plan only, tasks open) | Phase 10 remediation: post-detail live-renew fix (allowlist + context churn), close-out bookkeeping, verification gate, residual UX — deferred in favor of Phase 12, resume after | [phase11.md](phase11.md) |
-| **12 (this file)** | Exception handling: unified backend error contract, frontend `exceptionHandler` + i18n resolver, dedicated connection-unstable + access-denied pages, loading skeletons for every HTTP/WS-awaited page, `generateZodSchema(tr)` + nested `form`/`errors` i18n for real auth forms | this file |
-| 13 (was 12) | Cross-stack e2e: `STACK=1` Playwright — incl. phase 6+7+9+10 realtime loops | [todo/01](../todo/01-stack-integration.md) |
-| 14 (was 13) | Root CI: path-filtered app checks + compose smoke + stack e2e | [todo/01](../todo/01-stack-integration.md) |
-| 15 (was 14) | Backend warts + compose hardening + k8s | [todo/02](../todo/02-backend.md), [todo/04](../todo/04-devops.md) |
-| 16 (was 15) | Backlog: OTel/metrics, remaining push polish, social auth, seed, publishing, backups | [todo/02](../todo/02-backend.md)–[05](../todo/05-docs-maintenance.md) |
+| **12 (implemented, not gate-clean)** | Exception handling: unified backend error contract, frontend `exceptionHandler` + i18n resolver, dedicated connection-unstable + access-denied pages, loading skeletons for every HTTP/WS-awaited page, `generateZodSchema(tr)` + nested `form`/`errors` i18n for real auth forms — see "Follow-up (2026-07-04 verification)" for what's left | this file |
+| 13 (planned) | Phase 12 remediation (8 lettered findings) + notification/DM unread count renewal hardening + sender display-name consistency + chat scroll-to-bottom button | [phase13.md](phase13.md) |
+| 14 (was 12, now 13) | Cross-stack e2e: `STACK=1` Playwright — incl. phase 6+7+9+10 realtime loops | [todo/01](../todo/01-stack-integration.md) |
+| 15 (was 13, now 14) | Root CI: path-filtered app checks + compose smoke + stack e2e | [todo/01](../todo/01-stack-integration.md) |
+| 16 (was 14, now 15) | Backend warts + compose hardening + k8s | [todo/02](../todo/02-backend.md), [todo/04](../todo/04-devops.md) |
+| 17 (was 15, now 16) | Backlog: OTel/metrics, remaining push polish, social auth, seed, publishing, backups | [todo/02](../todo/02-backend.md)–[05](../todo/05-docs-maintenance.md) |
 
-<!-- Downstream phases 13–16 were renumbered +1 to insert this exception-handling phase; Phase 11 keeps its number but is now marked parked rather than active. -->
+<!-- Downstream phases were renumbered +1 (now 14-17) to insert Phase 13
+(this phase's remediation + realtime UX fixes); Phase 11 keeps its number
+but is marked parked rather than active. -->
