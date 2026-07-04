@@ -17,11 +17,23 @@ const CLASS_TO_DEFAULT: {
   exc: ExceptionCode;
   key: string;
 }[] = [
-  { class: ConflictException, exc: 'EX_CONFLICT_DUPLICATE', key: 'error.conflict' },
+  {
+    class: ConflictException,
+    exc: 'EX_CONFLICT_DUPLICATE',
+    key: 'error.conflict',
+  },
   { class: NotFoundException, exc: 'EX_NOT_FOUND', key: 'error.notFound' },
   { class: ForbiddenException, exc: 'EX_FORBIDDEN', key: 'error.forbidden' },
-  { class: UnauthorizedException, exc: 'EX_AUTH_INVALID_CREDENTIALS', key: 'error.unauthorized' },
-  { class: BadRequestException, exc: 'EX_VALIDATION_FORM', key: 'error.badRequest' },
+  {
+    class: UnauthorizedException,
+    exc: 'EX_AUTH_INVALID_CREDENTIALS',
+    key: 'error.unauthorized',
+  },
+  {
+    class: BadRequestException,
+    exc: 'EX_VALIDATION_FORM',
+    key: 'error.badRequest',
+  },
 ];
 
 function getMessage(exception: HttpException): string {
@@ -44,7 +56,7 @@ export function toExceptionResponse(exception: unknown): ExceptionResponse {
           key: typeof obj.key === 'string' ? obj.key : 'error.internal',
           field: typeof obj.field === 'string' ? obj.field : undefined,
           fields: Array.isArray(obj.fields)
-            ? obj.fields as ExceptionResponse['fields']
+            ? (obj.fields as ExceptionResponse['fields'])
             : undefined,
         };
       }
@@ -89,7 +101,8 @@ export function toExceptionResponse(exception: unknown): ExceptionResponse {
     }
   }
 
-  const message = exception instanceof Error ? exception.message : 'Internal server error';
+  const message =
+    exception instanceof Error ? exception.message : 'Internal server error';
   return {
     statusCode: 500,
     exc: 'EX_INTERNAL',

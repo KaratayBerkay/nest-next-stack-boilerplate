@@ -24,7 +24,9 @@ describe('toExceptionResponse', () => {
     });
 
     it('maps NotFoundException to EX_NOT_FOUND / 404', () => {
-      const result = toExceptionResponse(new NotFoundException('User not found'));
+      const result = toExceptionResponse(
+        new NotFoundException('User not found'),
+      );
       expect(result).toEqual({
         statusCode: 404,
         exc: 'EX_NOT_FOUND',
@@ -34,7 +36,9 @@ describe('toExceptionResponse', () => {
     });
 
     it('maps ForbiddenException to EX_FORBIDDEN / 403', () => {
-      const result = toExceptionResponse(new ForbiddenException('Not your post'));
+      const result = toExceptionResponse(
+        new ForbiddenException('Not your post'),
+      );
       expect(result).toEqual({
         statusCode: 403,
         exc: 'EX_FORBIDDEN',
@@ -93,8 +97,16 @@ describe('toExceptionResponse', () => {
           key: 'auth.errors.validationForm',
           field: 'email',
           fields: [
-            { field: 'email', msg: 'Invalid email', key: 'auth.errors.emailInvalid' },
-            { field: 'password', msg: 'Too short', key: 'auth.errors.passwordTooShort' },
+            {
+              field: 'email',
+              msg: 'Invalid email',
+              key: 'auth.errors.emailInvalid',
+            },
+            {
+              field: 'password',
+              msg: 'Too short',
+              key: 'auth.errors.passwordTooShort',
+            },
           ],
         }),
       );
@@ -135,10 +147,13 @@ describe('toExceptionResponse', () => {
 
   describe('Prisma errors', () => {
     it('maps P2002 to EX_CONFLICT_DUPLICATE / 409', () => {
-      const prismaErr = new PrismaClientKnownRequestError('Unique constraint failed', {
-        code: 'P2002',
-        clientVersion: '7.0.0',
-      });
+      const prismaErr = new PrismaClientKnownRequestError(
+        'Unique constraint failed',
+        {
+          code: 'P2002',
+          clientVersion: '7.0.0',
+        },
+      );
       const result = toExceptionResponse(prismaErr);
       expect(result.statusCode).toBe(409);
       expect(result.exc).toBe('EX_CONFLICT_DUPLICATE');

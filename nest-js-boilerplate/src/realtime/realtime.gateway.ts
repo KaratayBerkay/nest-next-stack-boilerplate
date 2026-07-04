@@ -207,7 +207,11 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
 
     if (!authWs.authenticated) {
       if (data.type !== 'auth' || !data.tokens) {
-        this.sendWsError(authWs, 'EX_AUTH_INVALID_CREDENTIALS', 'Authenticate first');
+        this.sendWsError(
+          authWs,
+          'EX_AUTH_INVALID_CREDENTIALS',
+          'Authenticate first',
+        );
         authWs.close();
         return;
       }

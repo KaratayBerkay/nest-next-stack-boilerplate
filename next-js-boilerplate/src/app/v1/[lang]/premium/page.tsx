@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { TierGate } from "@/components/TierGate";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
-import { AccessDenied } from "@/components/AccessDenied";
+
 
 export default function PremiumPage() {
   const { user, loading } = useAuth();
