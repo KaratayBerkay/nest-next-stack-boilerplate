@@ -18,6 +18,7 @@ import { AuthPayload, SessionUserInput } from './auth.types';
 import { accessCookieName } from './access-cookie';
 import { rbacCookieName, rbacCookieOptions } from './rbac-cookie';
 import { deviceCookieName } from '../devices/device-cookie';
+import { parseDeviceType } from '../common/utils/device-type';
 import { SessionHydrationService } from './session-hydration.service';
 import { TokenDerivationService } from './token-derivation.service';
 import { TokenStoreService } from './token-store.service';
@@ -446,7 +447,7 @@ export class AuthService {
       userId: user.id,
       ip: device?.ip,
       deviceId: device?.deviceId,
-      deviceType: null,
+      deviceType: parseDeviceType(device?.userAgent),
       userAgent: device?.userAgent,
       issuedAt: new Date().toISOString(),
     });

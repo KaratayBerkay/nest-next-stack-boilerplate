@@ -4,6 +4,7 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -17,6 +18,7 @@ import { userCookieName } from './user-cookie';
 import { TokenDerivationService } from './token-derivation.service';
 import { TokenStoreService } from './token-store.service';
 import { deviceCookieName } from '../devices/device-cookie';
+import { parseDeviceType } from '../common/utils/device-type';
 
 interface AuthedRequest extends Request {
   user?: JwtUser;
@@ -37,6 +39,8 @@ interface AuthedRequest extends Request {
  */
 @Injectable()
 export class SessionAuthGuard implements CanActivate {
+  private readonly logger = new Logger(SessionAuthGuard.name);
+
   constructor(
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
@@ -113,13 +117,34 @@ export class SessionAuthGuard implements CanActivate {
       throw new UnauthorizedException('RBAC token expired or tier changed');
     }
 
-    // Step 7: IP policy
+    // Step 7: IP / device change detection
     const reqIp = req.ip ?? null;
+    const reqUa = req.headers['user-agent'] ?? null;
     if (reqIp && sessionUser.ip && reqIp !== sessionUser.ip) {
+      this.logger.log({
+        category: 'session',
+        event: 'session.ip_change',
+        token: sessionUser.sessionId,
+        userId: sessionUser.userId,
+        oldIp: sessionUser.ip,
+        newIp: reqIp,
+        userAgent: reqUa,
+        deviceType: parseDeviceType(reqUa),
+      });
       const strict = this.config.get<string>('AUTH_IP_STRICT') === 'true';
       if (strict) {
         throw new UnauthorizedException('IP address mismatch');
       }
+    }
+    if (reqUa && sessionUser.userAgent && reqUa !== sessionUser.userAgent) {
+      this.logger.log({
+        category: 'session',
+        event: 'session.ua_change',
+        token: sessionUser.sessionId,
+        userId: sessionUser.userId,
+        userAgent: reqUa,
+        deviceType: parseDeviceType(reqUa),
+      });
     }
 
     // Step 8: Attach widened user to request.

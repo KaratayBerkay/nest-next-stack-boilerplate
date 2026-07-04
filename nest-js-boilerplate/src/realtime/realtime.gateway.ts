@@ -17,6 +17,7 @@ import { TokenStoreService } from '../auth/token-store.service';
 import { TokenDerivationService } from '../auth/token-derivation.service';
 import { CryptoService } from '../common/crypto/crypto.service';
 import { displayName } from '../common/utils/display-name';
+import { parseDeviceType } from '../common/utils/device-type';
 import type { ExceptionCode } from '../common/exceptions/exception-code';
 
 type AuthWs = WebSocket & {
@@ -122,6 +123,15 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       authWs.pendingIp = ip;
       this.pendingByIp.set(ip, pending + 1);
 
+      const userAgent = req.headers['user-agent'];
+      this.logger.log({
+        category: 'session',
+        event: 'ws.connect',
+        ip,
+        userAgent,
+        deviceType: parseDeviceType(userAgent),
+      });
+
       ws.on('pong', () => {
         authWs.isAlive = true;
       });
@@ -140,13 +150,22 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       });
 
       ws.on('close', () => {
+        const uid = authWs.userId;
+
+        this.logger.log({
+          category: 'session',
+          event: 'ws.disconnect',
+          token: authWs.sessionId,
+          userId: uid,
+          socketId: authWs.socketId,
+        });
+
         this.releasePending(authWs);
         this.cleanupServiceConnections(authWs);
         this.cleanupPageClaim(authWs);
         this.cleanupTopicWatches(authWs);
         // leaveAllRooms not needed here — page-claim leave callback already
         // removes socket from chat-room tracking via cleanupPageClaim above.
-        const uid = authWs.userId;
         if (uid) {
           const sockets = this.userSockets.get(uid);
           if (sockets) {
@@ -169,6 +188,13 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       this.wss.clients.forEach((ws) => {
         const client = ws as AuthWs;
         if (client.isAlive === false) {
+          this.logger.log({
+            category: 'session',
+            event: 'ws.heartbeat_timeout',
+            token: client.sessionId,
+            userId: client.userId,
+            socketId: client.socketId,
+          });
           ws.terminate();
           return;
         }
@@ -259,6 +285,11 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     try {
       payload = this.jwt.verify<{ sub: string }>(tokens.accessToken);
     } catch {
+      this.logger.log({
+        category: 'session',
+        event: 'ws.auth_fail',
+        reason: 'invalid_jwt',
+      });
       this.sendWsError(ws, 'EX_AUTH_INVALID_CREDENTIALS', 'Auth failed');
       ws.close();
       return;
@@ -266,6 +297,12 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
 
     const expectedUserToken = this.derivation.deriveUserToken(payload.sub);
     if (!this.crypto.timingSafeEqual(tokens.userToken, expectedUserToken)) {
+      this.logger.log({
+        category: 'session',
+        event: 'ws.auth_fail',
+        reason: 'user_token_mismatch',
+        userId: payload.sub,
+      });
       this.sendWsError(ws, 'EX_AUTH_INVALID_CREDENTIALS', 'Auth failed');
       ws.close();
       return;
@@ -284,6 +321,12 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       /* Redis error */
     }
     if (!hash?.userId || hash.userId !== payload.sub) {
+      this.logger.log({
+        category: 'session',
+        event: 'ws.auth_fail',
+        reason: 'session_miss',
+        userId: payload.sub,
+      });
       this.sendWsError(ws, 'EX_AUTH_INVALID_CREDENTIALS', 'Auth failed');
       ws.close();
       return;
@@ -294,6 +337,12 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       hash.tier || 'FREE',
     );
     if (!this.crypto.timingSafeEqual(tokens.rbacToken, expectedRbac)) {
+      this.logger.log({
+        category: 'session',
+        event: 'ws.auth_fail',
+        reason: 'rbac_mismatch',
+        userId: payload.sub,
+      });
       this.sendWsError(ws, 'EX_AUTH_INVALID_CREDENTIALS', 'Auth failed');
       ws.close();
       return;
@@ -317,6 +366,14 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     ws.authenticated = true;
     this.releasePending(ws);
     clearTimeout(authTimer);
+
+    this.logger.log({
+      category: 'session',
+      event: 'ws.auth_success',
+      token: hash.sessionId,
+      userId: hash.userId,
+      socketId: ws.socketId,
+    });
 
     let sockets = this.userSockets.get(hash.userId);
     if (!sockets) {
