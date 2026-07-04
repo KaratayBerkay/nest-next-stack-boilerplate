@@ -42,7 +42,7 @@ export async function POST(request: Request) {
   );
 
   if (errors) {
-    return NextResponse.json({ error: errors[0].message }, { status: graphqlErrorStatus(errors) });
+    return NextResponse.json({ error: errors[0]?.message ?? "GraphQL error" }, { status: graphqlErrorStatus(errors) });
   }
 
   return NextResponse.json({ reaction: data?.createReaction }, { status: 201 });

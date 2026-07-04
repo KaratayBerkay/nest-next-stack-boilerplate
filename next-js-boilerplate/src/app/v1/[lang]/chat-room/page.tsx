@@ -8,7 +8,6 @@ import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
-import { LoadEarlierButton } from "@/components/LoadEarlierButton";
 import { Avatar } from "@/components/ui/Avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui";
 import { cn } from "@/lib/cn";

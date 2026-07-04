@@ -25,7 +25,7 @@ export async function GET() {
 
   if (errors) {
     return NextResponse.json(
-      { error: errors[0].message },
+      { error: errors[0]?.message ?? "GraphQL error" },
       { status: graphqlErrorStatus(errors) },
     );
   }

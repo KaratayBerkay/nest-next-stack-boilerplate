@@ -19,7 +19,7 @@ export async function GET(
   }>(POST_QUERY, { id }, token);
 
   if (errors) {
-    return NextResponse.json({ error: errors[0].message }, { status: graphqlErrorStatus(errors) });
+    return NextResponse.json({ error: errors[0]?.message ?? "GraphQL error" }, { status: graphqlErrorStatus(errors) });
   }
 
   if (!data?.post) {
@@ -58,7 +58,7 @@ export async function PUT(
 
   if (errors) {
     const status = errors[0]?.extensions?.code === "FORBIDDEN" ? 403 : 500;
-    return NextResponse.json({ error: errors[0].message }, { status });
+    return NextResponse.json({ error: errors[0]?.message ?? "GraphQL error" }, { status });
   }
 
   return NextResponse.json({ post: data?.updatePost });
@@ -77,7 +77,7 @@ export async function DELETE(
 
   if (errors) {
     const status = errors[0]?.extensions?.code === "FORBIDDEN" ? 403 : 500;
-    return NextResponse.json({ error: errors[0].message }, { status });
+    return NextResponse.json({ error: errors[0]?.message ?? "GraphQL error" }, { status });
   }
 
   return NextResponse.json({ post: data?.deletePost });

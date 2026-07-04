@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       token,
     );
     if (errors) {
-      return NextResponse.json({ error: errors[0].message }, { status: graphqlErrorStatus(errors) });
+      return NextResponse.json({ error: errors[0]?.message ?? "GraphQL error" }, { status: graphqlErrorStatus(errors) });
     }
     return NextResponse.json({ ok: true });
   }
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
   }>(MARK_NOTIFICATION_READ_MUTATION, { id: body.id }, token);
 
   if (errors) {
-    return NextResponse.json({ error: errors[0].message }, { status: graphqlErrorStatus(errors) });
+    return NextResponse.json({ error: errors[0]?.message ?? "GraphQL error" }, { status: graphqlErrorStatus(errors) });
   }
 
   return NextResponse.json({ ok: data?.markNotificationRead });

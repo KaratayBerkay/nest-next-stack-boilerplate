@@ -143,7 +143,7 @@ export default function FindFriendsPage() {
     }
     const skip = p * PAGE_SIZE;
     setSearching(true);
-    fetch(
+    apiFetch(
       `/api/users/search?q=${encodeURIComponent(trimmed)}&take=${PAGE_SIZE}&skip=${skip}`,
     )
       .then((res) => (res.ok ? res.json() : { items: [], total: 0 }))

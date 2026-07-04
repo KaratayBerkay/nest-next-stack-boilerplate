@@ -26,6 +26,9 @@ const AUTH_REQUIRED_HREFS = [
   "/chat-room",
   "/messages",
   FIND_FRIENDS_PATH,
+  "/premium",
+  "/settings/sessions",
+  "/admin",
 ];
 
 export function V1Nav({ onNav }: { onNav?: () => void }) {

@@ -6,6 +6,7 @@ import {
   useRef,
   useEffect,
   useCallback,
+  useMemo,
   startTransition,
   Suspense,
 } from "react";
@@ -87,7 +88,7 @@ function MessagesPageContent() {
   // Cache-backed data (Phase 7 D4)
   const { data: conversationsData, refetch: refetchConversations } =
     useConversations();
-  const conversations = conversationsData ?? [];
+  const conversations = useMemo(() => conversationsData ?? [], [conversationsData]);
 
   const {
     data: conversationData,

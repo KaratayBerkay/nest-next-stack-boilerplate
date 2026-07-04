@@ -30,7 +30,7 @@ export async function PUT(
 
   if (errors) {
     const status = errors[0]?.extensions?.code === "FORBIDDEN" ? 403 : 500;
-    return NextResponse.json({ error: errors[0].message }, { status });
+    return NextResponse.json({ error: errors[0]?.message ?? "GraphQL error" }, { status });
   }
 
   return NextResponse.json({ comment: data?.updateComment });
@@ -49,7 +49,7 @@ export async function DELETE(
 
   if (errors) {
     const status = errors[0]?.extensions?.code === "FORBIDDEN" ? 403 : 500;
-    return NextResponse.json({ error: errors[0].message }, { status });
+    return NextResponse.json({ error: errors[0]?.message ?? "GraphQL error" }, { status });
   }
 
   return NextResponse.json({ comment: data?.deleteComment });
