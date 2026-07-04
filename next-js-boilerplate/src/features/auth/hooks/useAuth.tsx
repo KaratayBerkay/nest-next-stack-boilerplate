@@ -108,6 +108,10 @@ export function AuthProvider({
       logoutEventRef.current = true;
       setUser(null);
       setToken(null);
+      const path = window.location.pathname;
+      if (path !== "/auth/login" && !path.startsWith("/auth/")) {
+        window.location.href = "/auth/login";
+      }
     }
 
     window.addEventListener("auth:logout", onAuthLogout);
