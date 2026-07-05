@@ -2,18 +2,33 @@
 
 > Execution tracker for the seventeenth phase of the [stack roadmap](../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
-> Created 2026-07-05 · Status: **NOT gate-clean (re-verified 2026-07-05
-> across four passes: `aacb05a` → `d75be4b` → lint residual closed →
-> pricing regression test added)**.
+> Created 2026-07-05 · Status: **NOT gate-clean (re-verified twice: 2026-07-05
+> across four passes — `aacb05a` → `d75be4b` → lint residual closed →
+> pricing regression test added — and again 2026-07-06, a full Stage B/D/E
+> code audit)**.
 > Stages A–G's code landed in `e2c0558`/`a7cd6a0` (tracker left at "planning
 > only" the whole time — 6th "commit lands, tracker untouched" occurrence
 > after phases 2/12/13/15/16). A punch list of 6 gaps was found; `aacb05a`
 > fixed 5 of 6 (T28 excluded, needs live infra) but introduced a new bug in
 > the process (`/pricing`'s feature lists shifted one tier); `d75be4b` fixed
-> that too, confirmed correct against the live tree. Remaining open items:
-> T28 (live control run, still not run). `pnpm test` is still green in both
-> packages (207 backend / 77 frontend) — the new pricing regression test
-> now guards the exact mismatch class that shipped in `aacb05a`.
+> that too, confirmed correct against the live tree. `pnpm test` is still
+> green in both packages (207 backend / 77 frontend) — the new pricing
+> regression test now guards the exact mismatch class that shipped in
+> `aacb05a`.
+>
+> **2026-07-06 audit finding: this file itself was a 7th "commit lands,
+> tracker untouched" instance, at the individual-task level this time.**
+> Every remaining unchecked box in Stage B (T7, T8), Stage D (T12, T14,
+> T16), and Stage E (T18, T19, T20, T21, T22, T23, T25) turned out to
+> already have real, correct code in the tree — none of it was reflected
+> in this file before now (unlike T5/T9/T15/T17, which at least already
+> carried a "static re-check" note). See "Second re-verification pass
+> (2026-07-06)" below for the full audit, plus **three real gaps** found in
+> the process that were not previously tracked anywhere: a locale-dropping
+> bug in the pricing→checkout handoff, missing i18n on two pages' new
+> Stage E content, and zero test coverage for most of Stage B/D/E's new
+> surface. Remaining open items: T28 (live control run, still not run) plus
+> the three new gaps.
 
 ## Punch-list fix verification (2026-07-05, commits `aacb05a` → `d75be4b`)
 
@@ -87,6 +102,92 @@ Once this follow-up lands, re-run `pnpm test` (both packages) and do a live
 click-through of `/pricing` in both locales before considering Fix 4 done.
 
 </details>
+
+## Second re-verification pass (2026-07-06) — Stage B/D/E code audit
+
+Berkay asked to re-check whether this phase is actually complete. Rather than
+trust this file's checkboxes, every task still shown as `[ ]` in Stage B, D,
+and E was checked directly against the live tree (file contents, `grep`,
+`wc -l`, `pnpm test`), not just re-read from prior notes.
+
+**Result: the code is much further along than this file showed.** All of the
+following already exist in the tree and structurally match this file's own
+spec, despite carrying no prior acknowledgment here:
+
+| Task | What's actually in the tree |
+| --- | --- |
+| T7 | `post.resolver.ts:84-116` — `reactionBreakdown`/`whoReacted`/`myPostStats` all present with correct `@MinTier(MEDIUM)`/`@MinTier(PREMIUM)` + `TierGuard` |
+| T8 | `friends.resolver.ts` has `suggestedFriends`; `admin.resolver.ts:117-118` has `growthStats` |
+| T12 | `src/features/billing/ui/mock-card-form.tsx` — Luhn + expiry validation via `@/lib/validation/billing`, sends only `{tier, last4, expMonth, expYear}`, shows the 3 D3 test-card hints |
+| T14 | `v1/[lang]/checkout/[tier]/checkout-content.tsx` — full upgrade (card form) / downgrade (one-click) / current-tier states, uses `checkout` i18n namespace |
+| T16 | `constants/routes.ts:7-8` — `checkoutPath(tier, lang)` helper exists; `git grep` confirms no stray hardcoded `/checkout/` string outside it |
+| T18 (`/feed`) | `views/{Free,Basic,Medium,Premium}PageView.tsx` — Free unchanged, Basic re-exports (D6), Medium adds a `myPostStats` sidebar, Premium adds a badge — ladder matches spec |
+| T19 (`/posts/[uuid]`) | Same shape — Medium adds `reactionBreakdown` chart, Premium adds `whoReacted` list on top |
+| T20 (`/messages`) | All 4 views re-export `FreePageView` verbatim (D6, no differentiation planned) — matches spec exactly |
+| T21 (`/chat-room`) | Medium adds a "Join VIP Lounge" button (T9's gate), Premium adds a crown badge; uses the `chat-room` i18n namespace |
+| T22 (`/notification`) | All 4 views re-export (D6) — matches spec |
+| T23 (`/find-friends`) | Medium adds a `suggestedFriends` panel (uses `find-friends` i18n namespace), Premium re-exports Medium (D6, no further delta) — matches spec |
+| T25 (`/settings/sessions`) | All 4 views re-export (D6) — matches spec |
+
+None of these boxes are being checked off by this pass, for the same reason
+T5/T9/T15/T17 stayed unchecked despite static confirmation: this project's
+own established rule is that a task is done only when its verify step
+(usually a live click-through or a live 403 check) actually runs, not when
+the source merely looks right — see the per-task notes added below. What
+*is* new here is that this file previously said nothing at all about most of
+these — a plain, unnoted gap, not even a "static re-check" placeholder.
+
+### Three new gaps found (not on any prior punch list)
+
+1. **Locale dropped in the pricing→checkout handoff.**
+   `(marketing)/pricing/page.tsx:119` calls `checkoutPath(tier)` with no
+   `lang` argument, so `checkoutPath`'s default (`lang = "en"`,
+   `constants/routes.ts:7`) always wins. A Turkish-locale visitor clicking
+   "Upgrade" from `/pricing` lands on `/v1/en/checkout/...`, never
+   `/v1/tr/...` — the locale silently resets. Root cause: `/pricing` sits
+   outside the `[lang]` route group (D9), so `PricingPage` has no `lang` in
+   scope to pass through. **Fix:** read the visitor's locale the same way
+   other locale-aware code outside `[lang]` does (check how the root layout
+   or `MessagesProvider` currently resolves a default locale for this page,
+   since it already renders `t.heading`/`t.subtitle` in the right language)
+   and thread that value into `checkoutPath(tier, lang)` instead of relying
+   on the default.
+2. **Missing i18n on two pages' new Stage E content.** Confirmed via
+   `grep -c "useMessages(" ` across every view file: `feed`'s
+   `MediumPageView.tsx`/`PremiumPageView.tsx` (the new `myPostStats`
+   sidebar) and `posts/[uuid]`'s `MediumPageView.tsx`/`PremiumPageView.tsx`
+   (the new `reactionBreakdown`/`whoReacted` panels) all have **zero**
+   `useMessages()` calls — hardcoded strings throughout ("No posts yet.",
+   "Load stats", "Search posts...", "Post not found", "Delete post", "Are
+   you sure you want to delete this post?"). No `feed` or `posts` namespace
+   exists anywhere under `messages/en/` or `messages/tr/`, unlike
+   `chat-room`/`find-friends`/`premium`/`pricing`/`checkout`, which all got
+   namespaces. (`feed`'s `FreePageView` and `posts/[uuid]`'s `FreePageView`
+   already had zero i18n before this phase too — that part is pre-existing
+   debt, not a regression — but the *new* Stage E panels compound it instead
+   of fixing it.) **Fix:** create `messages/{en,tr}/feed/messages.json` and
+   `messages/{en,tr}/posts/messages.json`, wire `useMessages("feed")` /
+   `useMessages("posts")` into all 4 view files per page (or at minimum the
+   Medium/Premium ones, if Free/Basic's pre-existing gap is deliberately
+   left for a different phase), then `pnpm generate-i18n-types`.
+3. **Zero test coverage for most of Stage B/D/E's new surface.** `pnpm test`
+   is green (207 backend / 77 frontend), but that count hasn't moved for any
+   of this — confirmed no spec file exists for `post.resolver.ts`'s new
+   `@MinTier`-gated fields, `friends.resolver.ts`, or `admin.resolver.ts`'s
+   `growthStats` (backend), nor for any Stage E view file, the checkout
+   page, or `MockCardForm` (frontend). This means the tier-gate enforcement
+   T7/T8 added has no regression protection today — a `@MinTier` decorator
+   could be deleted or misconfigured and no test would catch it, the same
+   class of blind spot this phase's own T10 already fixed for the WS gate.
+   **Fix:** add unit specs for `post.resolver.ts` (403-below/200-at-or-above
+   per field, mirroring `messaging-ws.gateway.spec.ts`'s T10 pattern),
+   `friends.resolver.ts`, and `admin.resolver.ts`'s `growthStats`; add at
+   least one render test per Stage E view file exercising its
+   tier-specific content, plus a `MockCardForm`/checkout-page test covering
+   the Luhn-reject and approved/declined-card paths.
+
+Re-run `pnpm test`/`lint`/`tsc --noEmit` in both packages after each fix, and
+update this file's per-task notes and the table above once each is closed.
 
 ## Punch list to close this phase (priority order, historical)
 
@@ -649,13 +750,22 @@ as their own namespaces are added, or as one sweep after. Stage G is last.
   resolver — grouped `Reaction` counts/rows, own+others' posts readable the same as
   today's existing post queries.
   *Verify:* FREE/BASIC caller gets a 403 on all three; MEDIUM gets the first two but
-  403s on `whoReacted`; PREMIUM gets all three; unit + e2e per field.
+  403s on `whoReacted`; PREMIUM gets all three; unit + e2e per field. Static
+  re-check 2026-07-06: all three fields exist in `post.resolver.ts:84-116` with
+  the correct guards — left unchecked because **no spec file exists at all** for
+  `post.resolver.ts` (checked), so the 403-below/200-at-or-above behavior has
+  never actually been tested, unit or live. See "Second re-verification pass
+  (2026-07-06)" gap #3.
 - [ ] **T8 (S) — `suggestedFriends`/`growthStats` resolver fields (find-friends +
   premium bonuses).** `suggestedFriends` (`@MinTier(MEDIUM)`, simple
   friends-of-friends-not-already-connected query bounded to e.g. 10 rows) on the
   friendship resolver; `growthStats` (`@MinTier(MEDIUM)`, alongside the existing
   `premiumStats`) on `AdminResolver`.
-  *Verify:* same 403-below/200-at-or-above pattern as T7, unit + e2e.
+  *Verify:* same 403-below/200-at-or-above pattern as T7, unit + e2e. Static
+  re-check 2026-07-06: both fields exist (`friends.resolver.ts`'s
+  `suggestedFriends`, `admin.resolver.ts:117-118`'s `growthStats`) — left
+  unchecked for the same reason as T7: no spec file exists for either resolver,
+  so the tier gate is untested. See gap #3 above.
 
 ### Stage C — WS tier gate: VIP chat rooms
 
@@ -701,7 +811,11 @@ as their own namespaces are added, or as one sweep after. Stage G is last.
   Stripe's own test-mode checkout UIs.
   *Verify:* component test — invalid Luhn/expired date blocked client-side with no
   fetch call; valid input calls the route with only the masked fields, never the
-  full PAN.
+  full PAN. Static re-check 2026-07-06: `src/features/billing/ui/mock-card-form.tsx`
+  exists, uses `mockCardFormSchema`/`formatCardNumber`/`getLast4` from
+  `@/lib/validation/billing`, shows the 3 D3 test-card hints, and sends only
+  `{tier, last4, expMonth, expYear}` — matches spec. Left unchecked because no
+  component test exists (checked — no spec file anywhere for this component).
 - [x] **T13 (S) — BFF routes: `api/billing/subscribe/route.ts` (POST),
   `api/billing/history/route.ts` (GET).** Same `graphqlFetch` +
   `sessionTokenHeaders()` + CSRF-echo pattern as `api/admin/set-tier/route.ts`/
@@ -719,7 +833,13 @@ as their own namespaces are added, or as one sweep after. Stage G is last.
   error via `exceptionHandler`, form stays filled for retry.
   *Verify:* live click-through — upgrade with `4242...` succeeds and the shell's
   tier badge updates on next action (no re-login); `0002...` shows a decline with a
-  clear reason and no tier change.
+  clear reason and no tier change. Static re-check 2026-07-06:
+  `checkout/[tier]/checkout-content.tsx` exists and matches this spec (upgrade
+  card form / one-click downgrade / current-tier state, `checkout` i18n
+  namespace). Left unchecked — no live click-through has run (pending T28), and
+  no test file exists for this page either. Also see gap #1 (the pricing→checkout
+  handoff drops `lang`) in "Second re-verification pass (2026-07-06)" above —
+  the checkout page itself is correct, the bug is in how `/pricing` links to it.
 - [ ] **T15 (M) — Rebuild `(marketing)/pricing/page.tsx` for real.** Real i18n copy
   (new `pricing` namespace, D9), CTA per viewer state: logged-out → links to login;
   logged-in + already at/above the tier → "Included" (disabled); logged-in + below →
@@ -731,12 +851,18 @@ as their own namespaces are added, or as one sweep after. Stage G is last.
   Content is now static-confirmed correct for all 4 tiers — left unchecked
   only because the 4 CTA states haven't actually been exercised live yet
   (pending T28).
-- [ ] **T16 (S) — `PRICING_PATH`/new `CHECKOUT_PATH` route constants + nav
+- [x] **T16 (S) — `PRICING_PATH`/new `CHECKOUT_PATH` route constants + nav
   entries.** `PRICING_PATH` already exists (`constants/routes.ts`) — add
   `CHECKOUT_PATH` builder (`(tier: Tier) => \`/v1/${lang}/checkout/${tier}\`` shape,
   matching existing localized-path helpers) and wire the pricing page's CTAs through
   it instead of a hand-built string.
   *Verify:* `git grep` shows no hardcoded `/checkout/` string outside this helper.
+  **Done, re-checked 2026-07-06** — `constants/routes.ts:7-8`'s `checkoutPath(tier,
+  lang)` is the only place `/checkout/` is built, and `pricing/page.tsx` calls it
+  instead of a hand-built string. The helper itself is correct; the bug is one
+  layer up — `pricing/page.tsx` calls it without passing `lang`, so it silently
+  falls back to its own `"en"` default. That's tracked as gap #1 above, not a
+  reason to reopen this box.
 
 ### Stage E — Per-page `{Tier}PageView.tsx` rollout
 
@@ -763,33 +889,59 @@ noted explicitly below where that applies.
   counts). `PremiumPageView`: `MediumPageView`'s content + a cosmetic "Premium"
   badge next to the user's own posts.
   *Verify:* FREE/BASIC see identical markup (same component); MEDIUM sees the new
-  sidebar and a FREE-tier forced API call to `myPostStats` gets a real 403.
+  sidebar and a FREE-tier forced API call to `myPostStats` gets a real 403. Static
+  re-check 2026-07-06: the ladder is implemented correctly in
+  `feed/views/{Free,Basic,Medium,Premium}PageView.tsx`. Left unchecked because no
+  live click-through has run, and — new finding — the Medium/Premium views' new
+  content (the `myPostStats` sidebar, the Premium badge) has **zero i18n**,
+  hardcoded English throughout; see gap #2 above.
 - [ ] **T19 (M) — `/posts/[uuid]` (post detail).** `FreePageView`/`BasicPageView`:
   today's page (reaction **count** only, unchanged). `MediumPageView`: adds T7's
   `reactionBreakdown` chart. `PremiumPageView`: adds T7's `whoReacted` list on top
   of Medium's chart.
   *Verify:* same 3-rung ladder confirmed live + backend 403 below each rung.
+  Static re-check 2026-07-06: the ladder is implemented correctly in
+  `posts/[uuid]/views/{Free,Basic,Medium,Premium}PageView.tsx`. Left unchecked —
+  no live click-through, no backend test for the 403 (same gap #3 as T7), and —
+  new finding — Medium/Premium's new panels have zero i18n, same as T18; see
+  gap #2 above.
 - [ ] **T20 (S) — `/messages`.** No tier differentiation planned (1:1 DMs are core,
   not a monetization axis) — all four views re-export the same existing content
   (D6). Establishes the dispatcher plumbing uniformly even where content doesn't
   differ yet.
   *Verify:* page still renders/behaves identically to today for all 4 tiers; no
-  regression in the existing messages e2e coverage.
+  regression in the existing messages e2e coverage. Static re-check 2026-07-06:
+  all 4 views in `messages/views/` re-export `FreePageView` verbatim, exactly as
+  specified — left unchecked only because no one has re-run the existing
+  messages e2e coverage against this dispatcher shape specifically since it
+  landed (pending T28/T27's e2e run).
 - [ ] **T21 (M) — `/chat-room`.** `FreePageView`/`BasicPageView`: today's page,
   unchanged, no "VIP Lounge" entry point shown. `MediumPageView`: adds a "Join VIP
   Lounge" button that joins the `vip-lounge` room (T9's gate). `PremiumPageView`:
   `MediumPageView`'s content + a small crown badge next to the user's own name in
   any room.
   *Verify:* live click-through — FREE/BASIC never see the VIP button (and a forced
-  WS join attempt is rejected per T9); MEDIUM/PREMIUM join successfully.
+  WS join attempt is rejected per T9); MEDIUM/PREMIUM join successfully. Static
+  re-check 2026-07-06: the ladder is implemented correctly in
+  `chat-room/views/{Free,Basic,Medium,Premium}PageView.tsx`, and — unlike T18/T19
+  — this page's new content does use the `chat-room` i18n namespace correctly.
+  Left unchecked only because the live click-through/WS join hasn't run (pending
+  T28).
 - [ ] **T22 (S) — `/notification`.** No tier differentiation planned — same
   re-export-everywhere shape as T20.
-  *Verify:* unchanged behavior for all 4 tiers.
+  *Verify:* unchanged behavior for all 4 tiers. Static re-check 2026-07-06:
+  confirmed — all 4 views in `notification/views/` re-export `FreePageView`
+  verbatim. Left unchecked for the same reason as T20 (no re-run of existing
+  coverage against this shape yet).
 - [ ] **T23 (M) — `/find-friends`.** `FreePageView`/`BasicPageView`: today's page,
   unchanged. `MediumPageView`/`PremiumPageView`: adds T8's `suggestedFriends` panel
   (Premium re-exports Medium — D6, no further delta identified for this page).
   *Verify:* FREE/BASIC unchanged; MEDIUM/PREMIUM show suggestions; below-MEDIUM
-  forced API call 403s.
+  forced API call 403s. Static re-check 2026-07-06: `find-friends/views/`
+  matches this exactly — Medium adds the `suggestedFriends` panel (correctly
+  using the `find-friends` i18n namespace), Premium re-exports Medium per D6.
+  Left unchecked because the below-MEDIUM 403 has no test (same gap #3 as T7/T8
+  — `friends.resolver.ts` has no spec file) and no live click-through has run.
 - [x] **T24 (S) — `/users/list` + `/users/detail`.** No tier differentiation
   planned (browsing users is core) — re-export shape, same as T20/T22.
   *Verify:* unchanged behavior for all 4 tiers. **Done** — `aacb05a` gave
@@ -798,7 +950,9 @@ noted explicitly below where that applies.
   `page.tsx` renders `FreePageView` directly inside the existing `Suspense`).
 - [ ] **T25 (S) — `/settings` (+ `/settings/sessions`).** No tier differentiation
   planned (account settings are the same for everyone) — re-export shape.
-  *Verify:* unchanged behavior for all 4 tiers.
+  *Verify:* unchanged behavior for all 4 tiers. Static re-check 2026-07-06:
+  confirmed — all 4 views in `settings/sessions/views/` re-export `FreePageView`
+  verbatim. Left unchecked for the same reason as T20/T22.
 
 ### Stage F — i18n
 
@@ -824,7 +978,13 @@ noted explicitly below where that applies.
   every new resolver field; no regression in Stage A's re-confirmed Phase 16
   surface. Re-checked 2026-07-05 post-lint-fix: `pnpm test` green in both
   packages (207 backend / 77 frontend), `pnpm lint` clean on frontend and backend.
-  Left unchecked — `test:e2e` still hasn't been run this session.
+  Left unchecked — `test:e2e` still hasn't been run this session. **Re-checked
+  2026-07-06: still 207/77, unchanged** — confirmed this count has never
+  included `MockCardForm`, the checkout page, any Stage E view file, or the new
+  `post.resolver.ts`/`friends.resolver.ts`/`admin.resolver.ts` fields (T7/T8),
+  none of which have a spec file. This task's own scope ("frontend unit tests
+  for `MockCardForm`/... every new resolver field") was never actually done, not
+  just left unrun — see gap #3 in "Second re-verification pass (2026-07-06)".
 - [ ] **T28 (L) — Live control run against rebuilt containers** (same recipe as
   Phase 3/16: `docker compose --profile all up -d --build`, real HTTP/GraphQL/WS
   traffic, not just mocks). Script: register/login a fresh FREE user → attempt
@@ -846,13 +1006,21 @@ noted explicitly below where that applies.
   since Phase 3, plus a source grep for anywhere a full PAN variable could leak.
 - [ ] **Every `@MinTier`-gated field enforces server-side**, proven by a forced
   below-tier call getting a real 403 — not just the frontend `TierGate` hiding UI.
+  2026-07-06: the decorators are all present and correctly targeted (T7/T8
+  confirmed statically), but **no test of any kind exercises them yet** — no
+  spec file exists for `post.resolver.ts`, `friends.resolver.ts`, or
+  `admin.resolver.ts`. This line cannot be checked until at least one of unit or
+  live verification actually runs.
 - [ ] **The one new WS gate (`vip-` rooms) rejects live**, proven with a real socket
   client forging the join, not a mock.
 - [ ] **Zero regressions**: FREE-tier behavior on every touched page is byte-for-byte
   the same as before this phase (D6) — this is the thing most likely to quietly
   break given 9 pages are being touched at once.
 - [ ] **`pnpm generate-i18n-types` run and committed**, both locales render with no
-  missing-key fallback.
+  missing-key fallback. 2026-07-06: **not true today** — `feed` and
+  `posts/[uuid]`'s Medium/Premium panels have zero i18n coverage (hardcoded
+  English), and neither page has a namespace in `messages/{en,tr}/` at all. See
+  gap #2 above.
 - [ ] **Live control run (T28) passes** before this phase is marked complete —
   static/unit-only verification is not sufficient per this project's established
   lesson (phases 2/12/15/16 all shipped real bugs that only a live rebuilt-container
