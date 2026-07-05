@@ -149,8 +149,19 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         );
       });
 
-      ws.on('close', () => {
+      ws.on('close', (code?: number, reason?: Buffer) => {
         const uid = authWs.userId;
+
+        if (code !== undefined && code !== 1000 && code !== 1001) {
+          this.logger.log({
+            category: 'exception',
+            event: 'connection-loss',
+            token: authWs.sessionId,
+            userId: uid,
+            code,
+            reason: reason?.toString() ?? '',
+          });
+        }
 
         this.logger.log({
           category: 'session',

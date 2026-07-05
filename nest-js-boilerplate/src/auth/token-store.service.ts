@@ -140,6 +140,14 @@ export class TokenStoreService {
     };
   }
 
+  /** Narrow HSET onto a single known compound key. */
+  async updateFields(
+    key: string,
+    fields: Record<string, string>,
+  ): Promise<void> {
+    await this.redis.hset(key, fields);
+  }
+
   /** Extend TTL on the session key (sliding expiration — called on each authenticated request). */
   async extendTTL(key: string): Promise<void> {
     await this.redis.expire(key, this.ttl);

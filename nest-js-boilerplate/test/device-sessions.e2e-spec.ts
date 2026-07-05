@@ -49,8 +49,6 @@ describe('Device-bound sessions (e2e)', () => {
   };
 
   const clearDb = async () => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-    await prisma.session.deleteMany();
     await prisma.device.deleteMany();
     await prisma.verificationToken.deleteMany();
     await prisma.emailMessage.deleteMany();

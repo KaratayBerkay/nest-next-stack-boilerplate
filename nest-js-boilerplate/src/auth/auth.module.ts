@@ -13,6 +13,7 @@ import { TokenStoreService } from './token-store.service';
 import { TokenDerivationService } from './token-derivation.service';
 import { OAuthController } from './oauth/oauth.controller';
 import { OAuthService } from './oauth/oauth.service';
+import { UsernameService } from './username.service';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { OAuthService } from './oauth/oauth.service';
     TokenStoreService,
     TokenDerivationService,
     OAuthService,
+    UsernameService,
   ],
   exports: [
     AuthService,

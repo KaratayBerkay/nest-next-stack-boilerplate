@@ -11,6 +11,8 @@ import { SessionAuthGuard } from './session-auth.guard';
 import { LoginInput } from './dto/login.input';
 import { RegisterInput } from './dto/register.input';
 import { OAuthProfileInput } from './dto/oauth-profile.input';
+import { RequestPasswordResetInput } from './dto/request-password-reset.input';
+import { ResetPasswordInput } from './dto/reset-password.input';
 import type { OAuthProfile } from './auth.service';
 
 @Resolver()
@@ -42,6 +44,18 @@ export class AuthResolver {
   @Mutation(() => Boolean)
   logout(@Context() ctx: { req: Request }): Promise<boolean> {
     return this.auth.logout({ req: ctx.req });
+  }
+
+  @Mutation(() => Boolean)
+  requestPasswordReset(
+    @Args('input') input: RequestPasswordResetInput,
+  ): Promise<boolean> {
+    return this.auth.requestPasswordReset(input.email);
+  }
+
+  @Mutation(() => Boolean)
+  resetPassword(@Args('input') input: ResetPasswordInput): Promise<void> {
+    return this.auth.resetPassword(input.token, input.newPassword);
   }
 
   /** Social login: upsert OAuth-linked account and issue tokens. */

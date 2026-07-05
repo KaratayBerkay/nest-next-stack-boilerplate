@@ -3,16 +3,12 @@ import { Job } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
 import { MAIL_QUEUE } from './mail.constants';
 import { MailTransport } from './mail.transport';
+import { renderTemplate } from './templates/render';
 
 interface MailJob {
   emailId: string;
 }
 
-/**
- * Drains the mail queue and sends each EmailMessage through {@link MailTransport} (Resend in
- * production, a dev logger when no API key is set). The queue, retries, and status tracking are
- * transport-agnostic — only the transport changes between environments.
- */
 @Processor(MAIL_QUEUE)
 export class MailProcessor extends WorkerHost {
   constructor(
@@ -34,9 +30,18 @@ export class MailProcessor extends WorkerHost {
     });
 
     try {
+      const rendered = email.template
+        ? renderTemplate(
+            email.template,
+            (email.variables as Record<string, unknown>) ?? {},
+          )
+        : null;
+
       const sent = await this.transport.send({
         to: email.to,
-        subject: email.subject,
+        subject: rendered?.subject ?? email.subject,
+        html: rendered?.html,
+        text: rendered?.text,
       });
       await this.prisma.emailMessage.update({
         where: { id: email.id },
@@ -55,7 +60,7 @@ export class MailProcessor extends WorkerHost {
           lastError: err instanceof Error ? err.message : String(err),
         },
       });
-      throw err; // let BullMQ retry per the job's backoff policy
+      throw err;
     }
   }
 }

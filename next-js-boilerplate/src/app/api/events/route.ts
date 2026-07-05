@@ -62,8 +62,9 @@ async function resolveMe(): Promise<{ userId?: string; sessionId?: string }> {
   }
 }
 
+const CATEGORY_EVENTS = new Set(["session", "page", "exception"]);
+
 export const POST = withLogging(async (request, log) => {
-  // Rate limit by client IP
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     request.headers.get("x-real-ip") ??
@@ -91,7 +92,6 @@ export const POST = withLogging(async (request, log) => {
   const { events } = parsed.data;
   const userAgent = request.headers.get("user-agent") ?? undefined;
 
-  // Resolve the real user + sessionId from the session and enrich events
   const { userId, sessionId } = await resolveMe();
   const enriched = events.map((e) => ({
     ...e,
@@ -101,11 +101,27 @@ export const POST = withLogging(async (request, log) => {
     deviceType: parseDeviceType(e.userAgent ?? userAgent),
   }));
 
-  // Fire-and-forget: never block the response on Kafka
-  publishEvent(TOPIC, {
-    events: enriched,
-    receivedAt: new Date().toISOString(),
-  }).catch(() => {});
+  const categoryEvents: Record<string, unknown>[] = [];
+  const legacyEvents: Record<string, unknown>[] = [];
+
+  for (const event of enriched) {
+    if (event.category && CATEGORY_EVENTS.has(event.category)) {
+      categoryEvents.push(event);
+    } else {
+      legacyEvents.push(event);
+    }
+  }
+
+  for (const event of categoryEvents) {
+    log.info(event, "category event");
+  }
+
+  if (legacyEvents.length > 0) {
+    publishEvent(TOPIC, {
+      events: legacyEvents,
+      receivedAt: new Date().toISOString(),
+    }).catch(() => {});
+  }
 
   log.info(
     { count: events.length, userId: userId ?? "anonymous", sessionId },

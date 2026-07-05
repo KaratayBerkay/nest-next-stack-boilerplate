@@ -1,33 +1,37 @@
-# Structured Event Logging (Phase 14)
+# Structured Event Logging (Phase 14 / Phase 16)
 
-Three Kibana log categories added in Phase 14 — `session`, `exception`, `page` — each routed
-to a dedicated Elasticsearch index via Fluent Bit `rewrite_tag`.
+Three Kibana log categories — `session`, `exception`, `page` — each routed to a dedicated
+Elasticsearch index via Fluent Bit `rewrite_tag`. Events flow Pino → stdout → Fluent Bit → ES
+from both the backend (NestJS) and frontend (Next.js). Kafka/`frontend-events` remains only
+for events with no `category`.
 
 ## Architecture
 
 ```
-NestJS Logger.log({ category, event, ... })
-        │
-        ▼
-Pino (nestjs-pino) → stdout → Docker fluentd driver → Fluent Bit port 24224
-                                                              │
-                                              route_category.lua (rewrite_tag)
-                                                         ╱    │    ╲
-                                                   session   exception   page
-                                                      │         │         │
-                                                      ▼         ▼         ▼
-                                              session-logs  exception-logs  page-logs
-```
+Backend (NestJS):
+  Logger.log({ category, event, ... })
+    ↓
+  Pino → stdout → Docker fluentd driver → Fluent Bit port 24224
+                                              ↓
+                                  rewrite_tag by $category
+                                    ╱    │    ╲
+                              session exception page
+                                │       │       │
+                                ▼       ▼       ▼
+                        session-logs  exception-logs  page-logs
 
-Fluent Bit's `route_category.lua` reads the `category` field and rewrites the tag so the
-record lands in the correct index. Records without a `category` field keep their original
-tag and go to `app-logs` / `frontend-logs` / `messaging-logs`.
+Frontend (Next.js):
+  useEventLogger → POST /api/events
+    ↓
+  BFF enriches (userId, sessionId, ip, deviceType)
+    ↓
+  category present? → Pino (stdout → Fluent Bit → ES)
+  no category?      → Kafka (frontend-events topic)
+```
 
 ## Categories & Event Types
 
 ### `session` — session-logs
-
-Events:
 
 | event | source | fields |
 |---|---|---|
@@ -43,28 +47,23 @@ Events:
 
 ### `exception` — exception-logs
 
-Events:
-
 | event | source | fields |
 |---|---|---|
 | `exception.unhandled` | `GlobalHttpExceptionFilter` | `httpStatus` (5xx), `path`, `method`, `ip`, `userAgent`, `deviceType`, `errorMessage`, `stack` |
 | `exception.handled` | `GlobalHttpExceptionFilter` | `httpStatus` (4xx), `path`, `method`, `ip`, `userAgent`, `deviceType`, `errorMessage` |
 | `exception.websocket` | `AllWsExceptionsFilter` | `socketId`, `ip`, `userAgent`, `deviceType`, `errorMessage`, `stack` |
 | `exception.ws_handled` | `CustomWsExceptionFilter` | `socketId`, `ip`, `userAgent`, `deviceType`, `detail` |
+| `connection-loss` | `realtime.gateway.ts` — close handler | `token`, `userId`, `code`, `reason` |
+| `device-change` | `DeviceIpMiddleware` | `deviceId`, `previousIp`, `newIp` |
+| `exception` (frontend) | `useEventLogger.ts` | `url`, `exceptionType`, `message`, `stack` |
+| `CLIENT_REQUEST_ERROR` | `instrumentation.ts` — `onRequestError` | `route`, `message` |
 
 ### `page` — page-logs (frontend)
 
-Events:
-
 | event | source | fields |
 |---|---|---|
-| `page.view` | `useEventLogger.ts` — client hook | `url`, `userAgent` |
-| `page.exit` | `useEventLogger.ts` — route change / unmount | `url`, `durationMs`, `userAgent` |
-| `exception` | `useEventLogger.ts` — ErrorEvent/PromiseRejection | `url`, `message`, `filename`, `lineno`, `colno`, `stack` |
-
-Frontend events are batched client-side and POSTed to `/api/events`, where the BFF enriches
-them with `userId`, `sessionId` (via GraphQL `me` query), `ip`, and `deviceType` before
-publishing to the `frontend-events` Kafka topic.
+| `page.view` | `useEventLogger.ts` — client hook | `url`, `category`, `event`, `page` |
+| `page.exit` | `useEventLogger.ts` — route change / unmount | `url`, `category`, `event`, `page`, `durationMs` |
 
 ## Querying in Kibana
 
@@ -100,28 +99,42 @@ GET page-logs/_search
     }
   }
 }
+
+// Connection losses (abnormal WS close codes)
+GET exception-logs/_search
+{
+  "query": {
+    "bool": {
+      "filter": [
+        { "term": { "event": "connection-loss" } },
+        { "range": { "code": { "gt": 1001 } } }
+      ]
+    }
+  }
+}
+
+// Device IP changes
+GET exception-logs/_search
+{
+  "query": { "term": { "event": "device-change" } }
+}
 ```
 
-Kibana data views: `session-logs*`, `exception-logs*`, `page-logs*`, `app-logs*`, `frontend-logs*`.
+Kibana saved searches: `session-logs-search`, `exception-logs-search`, `page-logs-search`
+(imported via `kibana-saved-objects.ndjson`). Data views: `session-logs*`, `exception-logs*`,
+`page-logs*`, `app-logs*`, `frontend-logs*`.
 
 ## Kafka / Frontend-Events Pipeline
 
-Frontend events flow through Kafka as a durable buffer:
+Frontend events *without* a `category` field still flow through Kafka as a durable buffer:
 
 ```
-Client → POST /api/events → graphqlFetch(me) → enrich (userId, sessionId, ip, deviceType)
-                                                    ↓
-                                              publishEvent("frontend-events")
-                                                    ↓
-                                              Kafka → consumer (future)
+Client → POST /api/events → enrich → category? → no → publishEvent("frontend-events") → Kafka
 ```
 
-Kafka is **not** used as the primary log pipeline for backend Node.js logs — those go
-directly stdout → Fluent Bit → Elasticsearch (see `docs/backend/research/logger.md`).
-Frontend events use Kafka only because:
-- They originate on the client and reach the backend via HTTP, so there is no stdout stream to tail.
-- Kafka provides at-least-once delivery for event data that may drive analytics or audit.
-- The Kafka profile already exists (`docker compose --profile kafka up -d`).
+Category-bearing events (`session`, `page`, `exception`) are logged via Pino directly
+(stdout → Fluent Bit → ES) instead, matching the backend's pipeline. This avoids Kafka
+as a dependency for observability data and keeps the critical path simple.
 
 ## ES Index Template
 
@@ -148,6 +161,4 @@ one matching `frontend`) inspect each record's `category` field and rewrite the 
 `session`/`exception`/`page` when it matches, via the `$category ^(session|exception|page)$ $1`
 rule. The corresponding `[OUTPUT]` blocks then send rewritten records to the correct index.
 Records without a `category` field keep their original tag (`app`, `frontend`,
-`messaging-ws`) and route to the general indices. (Fluent Bit's generic `lua` filter plugin
-cannot rewrite tags — its callback contract is strictly `(code, timestamp, record)` — so tag
-rewriting must go through the dedicated `rewrite_tag` filter, not a Lua script.)
+`messaging-ws`) and route to the general indices.

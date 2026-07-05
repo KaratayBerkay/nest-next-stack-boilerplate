@@ -31,6 +31,7 @@ interface MockTokenStore {
   read: jest.Mock<Promise<Record<string, unknown> | null>, [string]>;
   write: jest.Mock<Promise<void>, [string, Record<string, unknown>]>;
   revoke: jest.Mock<Promise<void>, [string]>;
+  extendTTL: jest.Mock<Promise<void>, [string]>;
 }
 
 function mockTokenStore(): MockTokenStore {
@@ -49,6 +50,7 @@ function mockTokenStore(): MockTokenStore {
       store.delete(key);
       return Promise.resolve();
     }),
+    extendTTL: jest.fn(() => Promise.resolve()),
   };
 }
 

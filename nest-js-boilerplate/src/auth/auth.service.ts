@@ -22,6 +22,7 @@ import { parseDeviceType } from '../common/utils/device-type';
 import { SessionHydrationService } from './session-hydration.service';
 import { TokenDerivationService } from './token-derivation.service';
 import { TokenStoreService } from './token-store.service';
+import { UsernameService } from './username.service';
 import { userCookieName, userCookieOptions } from './user-cookie';
 import { LoginInput } from './dto/login.input';
 import { RegisterInput } from './dto/register.input';
@@ -53,6 +54,7 @@ export class AuthService {
     private readonly tokenStore: TokenStoreService,
     private readonly hydration: SessionHydrationService,
     private readonly derivation: TokenDerivationService,
+    private readonly usernames: UsernameService,
   ) {}
 
   /** Register with credentials, queue a confirmation email, and emit a SIGNUP audit event. */
@@ -223,6 +225,98 @@ export class AuthService {
     return user;
   }
 
+  /** Issue a PASSWORD_RESET token inside an existing transaction (shared helper for forgot-password and welcome flow). */
+  private async issuePasswordResetToken(
+    userId: string,
+    email: string,
+    tx: {
+      verificationToken: {
+        create: (data: unknown) => Promise<unknown>;
+      };
+    },
+  ): Promise<string> {
+    const rawToken = this.crypto.randomToken();
+    const tokenHash = this.crypto.sha256(rawToken);
+    await tx.verificationToken.create({
+      data: {
+        userId,
+        type: 'PASSWORD_RESET',
+        tokenHash,
+        identifier: email,
+        expiresAt: new Date(Date.now() + EMAIL_TOKEN_TTL_MS),
+      },
+    });
+    return rawToken;
+  }
+
+  /** Request a password reset. Always returns success regardless of whether the email exists. */
+  async requestPasswordReset(email: string): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+    if (!user) return true;
+
+    const rawToken = await this.prisma.$transaction(async (tx) => {
+      return this.issuePasswordResetToken(user.id, user.email, tx);
+    });
+
+    const resetUrl = `${this.config.get('FRONTEND_URL', 'http://localhost:3000')}/auth/reset-password?token=${rawToken}`;
+    await this.mail.enqueue({
+      to: user.email,
+      userId: user.id,
+      subject: 'Reset your password',
+      template: 'password-reset',
+      variables: { url: resetUrl },
+    });
+
+    return true;
+  }
+
+  /** Consume a password-reset token and set a new password. */
+  async resetPassword(rawToken: string, newPassword: string): Promise<void> {
+    const tokenHash = this.crypto.sha256(rawToken);
+    const token = await this.prisma.verificationToken.findUnique({
+      where: { tokenHash },
+    });
+
+    if (
+      !token ||
+      token.type !== 'PASSWORD_RESET' ||
+      token.consumedAt ||
+      token.expiresAt < new Date() ||
+      !token.userId
+    ) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+
+    const passwordHash = await hash(newPassword);
+    const userId = token.userId;
+    await this.prisma.$transaction(async (tx) => {
+      await tx.verificationToken.update({
+        where: { id: token.id },
+        data: { consumedAt: new Date() },
+      });
+      await tx.user.update({
+        where: { id: userId },
+        data: { passwordHash, passwordSetAt: new Date() },
+      });
+      const user = await tx.user.findUnique({ where: { id: userId } });
+      if (user) {
+        await this.outbox.emit(
+          {
+            aggregateType: 'User',
+            aggregateId: userId,
+            eventType: 'user.password_reset',
+            action: 'PASSWORD_CHANGED',
+            actorId: userId,
+            summary: `Password reset for ${user.email}`,
+          },
+          tx,
+        );
+      }
+    });
+  }
+
   /** Social login: upsert the provider Account, find-or-create the User, issue tokens. */
   async loginWithOAuth(
     profile: OAuthProfile,
@@ -265,18 +359,25 @@ export class AuthService {
     }
 
     // No linked account yet: attach to an existing email or create a verified user.
+    let isNewUser = false;
     const user = await this.prisma.$transaction(async (tx) => {
       const existing = await tx.user.findUnique({ where: { email } });
+      const isNew = !existing;
+      const username = isNew
+        ? await this.usernames.generate(email, tx)
+        : undefined;
       const target =
         existing ??
         (await tx.user.create({
           data: {
             email,
             name: profile.name ?? null,
+            username,
             status: 'ACTIVE',
-            emailVerifiedAt: new Date(), // provider already verified the email
+            emailVerifiedAt: new Date(),
           },
         }));
+      if (isNew) isNewUser = true;
       await tx.account.create({
         data: {
           userId: target.id,
@@ -303,6 +404,27 @@ export class AuthService {
       ? await this.devices.resolveForLogin(user.id, ctx)
       : undefined;
     if (device?.changed) await this.emitNewDevice(user.id, device);
+
+    if (isNewUser) {
+      const rawToken = await this.prisma.$transaction(async (tx) => {
+        return this.issuePasswordResetToken(user.id, user.email, tx);
+      });
+      const setPasswordUrl = `${this.config.get('FRONTEND_URL', 'http://localhost:3000')}/auth/reset-password?token=${rawToken}`;
+      await this.mail.enqueue({
+        to: user.email,
+        userId: user.id,
+        subject: 'Welcome — set your password',
+        template: 'welcome-social',
+        variables: {
+          username: user.username ?? 'unknown',
+          name: user.name,
+          email: user.email,
+          url: setPasswordUrl,
+          provider: profile.provider,
+        },
+      });
+    }
+
     return this.issueTokens(user, ctx, device);
   }
 

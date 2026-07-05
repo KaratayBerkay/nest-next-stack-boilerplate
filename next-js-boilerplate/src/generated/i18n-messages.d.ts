@@ -25,6 +25,21 @@ export type I18nMessages = {
           "hasAccount": string;
           "loginLink": string;
         };
+        "resetPassword": {
+          "title": string;
+          "passwordLabel": string;
+          "confirmPasswordLabel": string;
+          "submit": string;
+          "submitting": string;
+          "success": string;
+          "loginLink": string;
+        };
+        "verifyEmail": {
+          "title": string;
+          "verifying": string;
+          "success": string;
+          "loginLink": string;
+        };
       };
       "social": {
         "continueWith": string;
@@ -42,6 +57,10 @@ export type I18nMessages = {
         "loginFailed": string;
         "registerFailed": string;
         "emailTaken": string;
+        "resetPasswordTokenMissing": string;
+        "resetPasswordFailed": string;
+        "verifyEmailTokenMissing": string;
+        "verifyEmailFailed": string;
       };
     }
 

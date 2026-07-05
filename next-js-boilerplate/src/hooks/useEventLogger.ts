@@ -9,15 +9,11 @@ function getStack(err: unknown): string | undefined {
   return undefined;
 }
 
-/**
- * Hook that automatically captures page navigation events and unhandled errors.
- */
 export function useEventLogger(): void {
   const pathname = usePathname();
   const prevPath = useRef<string | null>(null);
   const enterTime = useRef<number>(0);
 
-  // --- Page view / exit tracking ---
   useEffect(() => {
     if (enterTime.current === 0) enterTime.current = Date.now();
 
@@ -30,6 +26,10 @@ export function useEventLogger(): void {
         eventType: "page.exit",
         url: prev ?? undefined,
         userAgent: navigator.userAgent,
+        category: "page",
+        event: "page.exit",
+        page: prev ?? undefined,
+        durationMs,
         metadata: { durationMs },
       });
     }
@@ -41,16 +41,21 @@ export function useEventLogger(): void {
         eventType: "page.view",
         url: currentPath ?? undefined,
         userAgent: navigator.userAgent,
+        category: "page",
+        event: "page.view",
+        page: currentPath ?? undefined,
       });
     }
   }, [pathname]);
 
-  // --- Unhandled errors ---
   useEffect(() => {
     const onError = (event: ErrorEvent) => {
       eventLogger.emit({
         eventType: "exception",
         url: window.location.pathname,
+        category: "exception",
+        event: "exception",
+        exceptionType: "CLIENT_ERROR",
         metadata: {
           message: event.message,
           filename: event.filename,
@@ -65,6 +70,9 @@ export function useEventLogger(): void {
       eventLogger.emit({
         eventType: "exception",
         url: window.location.pathname,
+        category: "exception",
+        event: "exception",
+        exceptionType: "CLIENT_REJECTION",
         metadata: {
           reason:
             event.reason instanceof Error

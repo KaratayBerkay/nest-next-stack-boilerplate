@@ -24,9 +24,8 @@ container on 2026-07-02.
 
 `docs/backend/README.md` references these as the standing backlog:
 
-- [ ] **Social auth providers** (M) — Google/GitHub OAuth via Passport strategies next
-      to the existing local + JWT + MFA setup. `APP_URL`/`FRONTEND_URL` env plumbing
-      for callbacks already exists.
+- [x] **Social auth providers** (M) — Google/GitHub OAuth implemented directly (PKCE
+      Authorization Code flow, not Passport). See `oauth/` and `AuthService.loginWithOAuth()`.
 - [x] **Layered tokens + RBAC in Redis** (L) — role/permission model with Redis-backed
       session/permission cache; the `authorization/` module is the seam. ([phase2.md](../progress/phase2.md))
 - [ ] **Secure-by-env SSR cookies** (S) — cookie `secure`/`sameSite` flags derived from
@@ -50,8 +49,8 @@ has **no OTel at all** (checked deps 2026-07-02) — so distributed traces stop 
 
 - [ ] **Prisma seed script** (`prisma db seed`) so a fresh stack has demo users/data —
       today the DB starts empty and every demo needs manual registration.
-- [ ] **Dev mail sink** — the mail module reads `RESEND_API_KEY`; add Mailpit to
-      compose and a dev transport so email-confirmation flows are testable offline.
+- [x] **Dev mail sink** — Mailpit added to compose (profile: `mail`/`all`, SMTP on 1025,
+      web UI on 8025). Set `SMTP_HOST=mailpit` in dev to capture outgoing email locally.
 - [ ] **GraphQL persisted queries / depth+complexity budget review** — complexity
       module exists; wire limits to env and document them.
 - [ ] **Outbox relay metrics** — the outbox pattern is implemented; expose lag/failure

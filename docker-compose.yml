@@ -213,6 +213,15 @@ services:
       - X_CLIENT_SECRET=${X_CLIENT_SECRET:-}
       - HUGGING_FACE_CLIENT_ID=${HUGGING_FACE_CLIENT_ID:-}
       - HUGGING_FACE_CLIENT_SECRET=${HUGGING_FACE_CLIENT_SECRET:-}
+      # Email (Resend fallback + SMTP transport)
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - MAIL_FROM=${MAIL_FROM:-onboarding@resend.dev}
+      - MAIL_REPLY_TO=${MAIL_REPLY_TO:-}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_SECURE=${SMTP_SECURE:-false}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
       - MINIO_ENDPOINT=minio
       - MINIO_PORT=9000
       - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
@@ -325,6 +334,17 @@ services:
       - ./nest-js-boilerplate/docker/fluent-bit/parsers.conf:/fluent-bit/etc/parsers.conf:ro
       - ./nest-js-boilerplate/docker/fluent-bit/level_name.lua:/fluent-bit/etc/level_name.lua:ro
       - fluentbitstate:/state
+
+  # ──────────────────────────────────────────────────────
+  # Mailpit — dev SMTP catcher (profile: mail or all)
+  # ──────────────────────────────────────────────────────
+  mailpit:
+    image: axllent/mailpit:latest
+    profiles: ["mail", "all"]
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "${MAILPIT_UI_PORT:-8025}:8025"
 
   # ──────────────────────────────────────────────────────
   # Object storage

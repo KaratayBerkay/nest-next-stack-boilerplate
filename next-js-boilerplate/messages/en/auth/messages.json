@@ -20,6 +20,21 @@
       "submitting": "Registering...",
       "hasAccount": "Already have an account?",
       "loginLink": "Sign In"
+    },
+    "resetPassword": {
+      "title": "Set New Password",
+      "passwordLabel": "New Password",
+      "confirmPasswordLabel": "Confirm Password",
+      "submit": "Set Password",
+      "submitting": "Setting password...",
+      "success": "Your password has been set. You can now sign in.",
+      "loginLink": "Sign In"
+    },
+    "verifyEmail": {
+      "title": "Verify Email",
+      "verifying": "Verifying your email...",
+      "success": "Your email has been verified. You can now sign in.",
+      "loginLink": "Sign In"
     }
   },
   "social": {
@@ -37,6 +52,10 @@
     "passwordMax": "Password must be at most 128 characters",
     "loginFailed": "Email or password is incorrect",
     "registerFailed": "Registration failed",
-    "emailTaken": "This email is already registered"
+    "emailTaken": "This email is already registered",
+    "resetPasswordTokenMissing": "Reset password token is missing",
+    "resetPasswordFailed": "Password reset failed",
+    "verifyEmailTokenMissing": "Verification token is missing",
+    "verifyEmailFailed": "Email verification failed"
   }
 }

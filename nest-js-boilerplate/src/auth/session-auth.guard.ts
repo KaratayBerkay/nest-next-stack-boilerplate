@@ -131,6 +131,7 @@ export class SessionAuthGuard implements CanActivate {
         userAgent: reqUa,
         deviceType: parseDeviceType(reqUa),
       });
+      await this.tokenStore.updateFields(compoundKey, { ip: reqIp });
       const strict = this.config.get<string>('AUTH_IP_STRICT') === 'true';
       if (strict) {
         throw new UnauthorizedException('IP address mismatch');
@@ -145,6 +146,7 @@ export class SessionAuthGuard implements CanActivate {
         userAgent: reqUa,
         deviceType: parseDeviceType(reqUa),
       });
+      await this.tokenStore.updateFields(compoundKey, { userAgent: reqUa });
     }
 
     // Step 8: Attach widened user to request.
