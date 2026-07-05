@@ -63,11 +63,12 @@ export class MessagingController {
     @CurrentUser() user: JwtUser,
     @Query('q') q?: string,
   ): Promise<
-    { id: string; email: string; name: string | null; avatar: string }[]
+    { id: string; email: string; name: string | null; avatar: string; online: boolean }[]
   > {
     const result = await this.ms.getFriends(user.userId, q);
+    const onlineUserIds = new Set(this.realtime.getOnlineUserIds());
     this.logger.log(`Fetched ${result.length} friends`, 'MessagingController');
-    return result;
+    return result.map((f) => ({ ...f, online: onlineUserIds.has(f.id) }));
   }
 
   @Get('friends/requests')
@@ -136,7 +137,12 @@ export class MessagingController {
     summary: 'List conversations with latest message per friend',
   })
   async getConversations(@CurrentUser() user: JwtUser) {
-    return this.ms.getConversations(user.userId);
+    const conversations = await this.ms.getConversations(user.userId);
+    const onlineUserIds = new Set(this.realtime.getOnlineUserIds());
+    return conversations.map((c) => ({
+      ...c,
+      user: { ...c.user, online: onlineUserIds.has(c.user.id) },
+    }));
   }
 
   @Get('conversations/:userId/messages')

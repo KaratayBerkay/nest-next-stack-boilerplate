@@ -23,6 +23,7 @@ import { ConnectionUnstable } from "@/components/ConnectionUnstable";
 import { ScrollToBottomButton } from "@/components/ui/ScrollToBottomButton";
 import { SkeletonConversationSidebar } from "@/components/ui/skeleton-shapes";
 import { useConnectionState } from "@/hooks/useConnectionState";
+import { usePresence } from "@/hooks/usePresence";
 import { useConversation } from "@/lib/realtime/useConversation";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
@@ -275,6 +276,7 @@ function MessagesPageContent() {
   });
 
   const connectionState = useConnectionState();
+  const onlineUsers = usePresence();
 
   const sendFriendRequest = useCallback(async (userId: string) => {
     try {
@@ -479,6 +481,9 @@ function MessagesPageContent() {
                         fallback={initials(c.user.name ?? c.user.email ?? "?")}
                         className="bg-brand h-10 w-10 text-white"
                       />
+                      {(onlineUsers.has(c.user.id) || c.user.online) && (
+                        <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-bg bg-green-500" />
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
@@ -523,6 +528,9 @@ function MessagesPageContent() {
                           fallback={initials(u.name ?? u.email ?? "?")}
                           className="bg-brand h-9 w-9 text-white"
                         />
+                        {onlineUsers.has(u.id) && (
+                          <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-bg bg-green-500" />
+                        )}
                       </div>
                       <div className="min-w-0 flex-1">
                         <span className="truncate text-sm font-medium">
@@ -561,10 +569,15 @@ function MessagesPageContent() {
               >
                 <IconChevronLeft size={18} className="text-muted" />
               </button>
-              <Avatar
-                fallback={initials(selectedUser.name ?? selectedUser.email ?? "?")}
-                className="bg-brand h-8 w-8 shrink-0 text-xs text-white"
-              />
+              <div className="relative shrink-0">
+                <Avatar
+                  fallback={initials(selectedUser.name ?? selectedUser.email ?? "?")}
+                  className="bg-brand h-8 w-8 shrink-0 text-xs text-white"
+                />
+                {onlineUsers.has(selectedUser.id) && (
+                  <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-bg bg-green-500" />
+                )}
+              </div>
               <span className="text-sm font-semibold">
                 {selectedUser.name}
               </span>
