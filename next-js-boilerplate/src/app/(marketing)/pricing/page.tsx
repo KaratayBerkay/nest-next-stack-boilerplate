@@ -66,8 +66,8 @@ export default function PricingPage() {
 
   const FEATURES: Record<Tier, string[]> = {
     FREE: t.featuresBasic,
-    BASIC: t.featuresBasic,
-    MEDIUM: t.featuresMedium,
+    BASIC: t.featuresMedium,
+    MEDIUM: t.featuresPremium,
     PREMIUM: t.featuresPro,
   };
 

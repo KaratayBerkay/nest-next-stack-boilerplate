@@ -192,7 +192,6 @@ export type I18nMessages = {
       "currentPlan": string;
       "included": string;
       "upgrade": string;
-      "featuresFree": string;
       "featuresBasic": string[];
       "featuresMedium": string[];
       "featuresPremium": string[];

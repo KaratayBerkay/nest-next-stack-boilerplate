@@ -4,7 +4,6 @@
   "currentPlan": "Current plan",
   "included": "Included",
   "upgrade": "Upgrade",
-  "featuresFree": "Free",
   "featuresBasic": ["Basic access", "Community support"],
   "featuresMedium": ["Everything in Free", "Priority support", "Basic analytics"],
   "featuresPremium": ["Everything in Medium", "Post stats & reaction breakdown", "VIP room access", "Suggested friends"],
