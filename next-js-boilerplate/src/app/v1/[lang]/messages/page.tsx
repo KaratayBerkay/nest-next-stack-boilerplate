@@ -643,7 +643,7 @@ function MessagesPageContent() {
                 })}
                 <div ref={bottomRef} className="h-px" />
               </div>
-              {!isAtBottom && conversationMessages.length > 0 && (
+              {!isAtBottom && !input && conversationMessages.length > 0 && (
                 <ScrollToBottomButton onClick={scrollToBottom} />
               )}
               <div className="flex gap-3 border-t px-4 py-3">
