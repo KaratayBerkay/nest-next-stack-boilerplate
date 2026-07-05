@@ -4,9 +4,20 @@ import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { PrismaService } from '../prisma/prisma.service';
 import { MessagingService } from './messaging.service';
 import { PushNotificationService } from '../push-notification/push-notification.service';
-import { WebSocket } from 'ws';
 
-function createMockWs(tier = 'FREE'): any {
+interface MockWs {
+  userId: string;
+  userName: string;
+  tier: string;
+  socketId: string;
+  room: string | undefined;
+  authenticated: boolean;
+  isAlive: boolean;
+  send: jest.Mock;
+  sent: string[];
+}
+
+function createMockWs(tier = 'FREE'): MockWs {
   const sent: string[] = [];
   return {
     userId: 'u1',
@@ -21,10 +32,22 @@ function createMockWs(tier = 'FREE'): any {
   };
 }
 
+type GatewayInternal = {
+  handleJoinRoom: (ws: MockWs, data: { room: string }) => void;
+  handleClaimJoinRoom: (ws: MockWs, params: Record<string, string>) => void;
+};
+
 describe('MessagingWsGateway — VIP room tier gate', () => {
   let gateway: MessagingWsGateway;
-  let mockRealtime: any;
-  let mockMs: any;
+  let mockRealtime: {
+    broadcastToRoom: jest.Mock;
+    broadcastAll: jest.Mock;
+  };
+  let mockMs: {
+    joinRoom: jest.Mock;
+    leaveRoom: jest.Mock;
+    getRoomCounts: jest.Mock;
+  };
 
   beforeEach(async () => {
     mockRealtime = {
@@ -53,7 +76,9 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
   describe('handleJoinRoom', () => {
     it('rejects FREE tier joining vip- room', () => {
       const ws = createMockWs('FREE');
-      (gateway as any).handleJoinRoom(ws, { room: 'vip-lounge' });
+      (gateway as unknown as GatewayInternal).handleJoinRoom(ws, {
+        room: 'vip-lounge',
+      });
       expect(ws.send).toHaveBeenCalledWith(
         expect.stringContaining('VIP rooms require MEDIUM tier'),
       );
@@ -62,7 +87,9 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
 
     it('rejects BASIC tier joining vip- room', () => {
       const ws = createMockWs('BASIC');
-      (gateway as any).handleJoinRoom(ws, { room: 'vip-lounge' });
+      (gateway as unknown as GatewayInternal).handleJoinRoom(ws, {
+        room: 'vip-lounge',
+      });
       expect(ws.send).toHaveBeenCalledWith(
         expect.stringContaining('VIP rooms require MEDIUM tier'),
       );
@@ -71,7 +98,9 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
 
     it('allows MEDIUM tier joining vip- room', () => {
       const ws = createMockWs('MEDIUM');
-      (gateway as any).handleJoinRoom(ws, { room: 'vip-lounge' });
+      (gateway as unknown as GatewayInternal).handleJoinRoom(ws, {
+        room: 'vip-lounge',
+      });
       expect(ws.send).not.toHaveBeenCalled();
       expect(mockMs.joinRoom).toHaveBeenCalledWith(
         'vip-lounge',
@@ -81,7 +110,9 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
 
     it('allows PREMIUM tier joining vip- room', () => {
       const ws = createMockWs('PREMIUM');
-      (gateway as any).handleJoinRoom(ws, { room: 'vip-lounge' });
+      (gateway as unknown as GatewayInternal).handleJoinRoom(ws, {
+        room: 'vip-lounge',
+      });
       expect(ws.send).not.toHaveBeenCalled();
       expect(mockMs.joinRoom).toHaveBeenCalledWith(
         'vip-lounge',
@@ -91,7 +122,9 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
 
     it('allows all tiers joining non-vip rooms', () => {
       const ws = createMockWs('FREE');
-      (gateway as any).handleJoinRoom(ws, { room: 'general' });
+      (gateway as unknown as GatewayInternal).handleJoinRoom(ws, {
+        room: 'general',
+      });
       expect(ws.send).not.toHaveBeenCalled();
       expect(mockMs.joinRoom).toHaveBeenCalledWith(
         'general',

@@ -22,7 +22,5 @@ export default function PostDetailPage() {
   if (loading) return <LoadingAuth />;
   if (!user) return <UnauthenticatedMessage message="Sign in to view this post" />;
 
-  const PageView = getTierView(user.tier, VIEWS);
-
-  return <PageView />;
+  return getTierView(user.tier, VIEWS);
 }

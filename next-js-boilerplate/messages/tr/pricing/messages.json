@@ -1,0 +1,16 @@
+{
+  "heading": "Fiyatlandırma",
+  "subtitle": "İhtiyacınıza uygun planı seçin.",
+  "currentPlan": "Mevcut plan",
+  "included": "Dahil",
+  "upgrade": "Yükselt",
+  "featuresFree": "Ücretsiz",
+  "featuresBasic": ["Temel erişim", "Topluluk desteği"],
+  "featuresMedium": ["Tümü Ücretsiz", "Öncelikli destek", "Temel analitik"],
+  "featuresPremium": ["Tümü Medium", "Gönderi istatistikleri ve tepki dağılımı", "VIP oda erişimi", "Önerilen arkadaşlar"],
+  "featuresPro": ["Tümü Premium", "Tepki verenler listesi", "Veri dışa aktarma", "Taç rozeti", "Özel destek"],
+  "priceFree": "$0",
+  "priceBasic": "$9.99/ay",
+  "priceMedium": "$19.99/ay",
+  "pricePremium": "$49.99/ay"
+}

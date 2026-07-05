@@ -1,0 +1,19 @@
+{
+  "heading": "Premium Dashboard",
+  "signInToView": "Sign in to view premium",
+  "upgradeMessage": "Upgrade to view premium features and stats.",
+  "viewPlans": "View plans",
+  "loadStats": "Load premium stats",
+  "loadGrowthStats": "Load growth stats",
+  "loading": "Loading...",
+  "totalUsers": "Total Users",
+  "activeUsers": "Active Users",
+  "revenue": "Revenue",
+  "newUsers7d": "New Users (7d)",
+  "totalPosts": "Total Posts",
+  "totalFriendships": "Total Friendships",
+  "exportCsv": "Export CSV",
+  "networkError": "Network error",
+  "loadStatsFirst": "Load stats first",
+  "errorStatus": "Error {status}"
+}

@@ -1,0 +1,16 @@
+{
+  "heading": "Pricing",
+  "subtitle": "Choose the plan that fits your needs.",
+  "currentPlan": "Current plan",
+  "included": "Included",
+  "upgrade": "Upgrade",
+  "featuresFree": "Free",
+  "featuresBasic": ["Basic access", "Community support"],
+  "featuresMedium": ["Everything in Free", "Priority support", "Basic analytics"],
+  "featuresPremium": ["Everything in Medium", "Post stats & reaction breakdown", "VIP room access", "Suggested friends"],
+  "featuresPro": ["Everything in Premium", "Who-reacted list", "Export data", "Crown badge", "Dedicated support"],
+  "priceFree": "$0",
+  "priceBasic": "$9.99/mo",
+  "priceMedium": "$19.99/mo",
+  "pricePremium": "$49.99/mo"
+}

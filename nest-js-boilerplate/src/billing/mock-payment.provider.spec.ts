@@ -1,3 +1,4 @@
+import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
 import { MockPaymentProvider } from './mock-payment.provider';
 
 describe('MockPaymentProvider', () => {
@@ -10,7 +11,7 @@ describe('MockPaymentProvider', () => {
   it('approves 4242 (test card)', async () => {
     const result = await provider.charge({
       userId: 'u1',
-      tier: 'PREMIUM' as any,
+      tier: SubscriptionTier.PREMIUM,
       last4: '4242',
       expMonth: 12,
       expYear: 2030,
@@ -22,7 +23,7 @@ describe('MockPaymentProvider', () => {
   it('declines 0002 with generic_decline', async () => {
     const result = await provider.charge({
       userId: 'u1',
-      tier: 'PREMIUM' as any,
+      tier: SubscriptionTier.PREMIUM,
       last4: '0002',
       expMonth: 12,
       expYear: 2030,
@@ -34,7 +35,7 @@ describe('MockPaymentProvider', () => {
   it('declines 9995 with insufficient_funds', async () => {
     const result = await provider.charge({
       userId: 'u1',
-      tier: 'PREMIUM' as any,
+      tier: SubscriptionTier.PREMIUM,
       last4: '9995',
       expMonth: 12,
       expYear: 2030,
@@ -47,7 +48,7 @@ describe('MockPaymentProvider', () => {
     // 42421230 is Luhn-valid (4242 + 1230)
     const result = await provider.charge({
       userId: 'u1',
-      tier: 'BASIC' as any,
+      tier: SubscriptionTier.BASIC,
       last4: '1230',
       expMonth: 12,
       expYear: 2030,
@@ -59,7 +60,7 @@ describe('MockPaymentProvider', () => {
     // 42420001 is NOT Luhn-valid
     const result = await provider.charge({
       userId: 'u1',
-      tier: 'BASIC' as any,
+      tier: SubscriptionTier.BASIC,
       last4: '0001',
       expMonth: 12,
       expYear: 2030,
@@ -71,14 +72,14 @@ describe('MockPaymentProvider', () => {
   it('returns a unique providerRef per call', async () => {
     const r1 = await provider.charge({
       userId: 'u1',
-      tier: 'FREE' as any,
+      tier: SubscriptionTier.FREE,
       last4: '4242',
       expMonth: 1,
       expYear: 2030,
     });
     const r2 = await provider.charge({
       userId: 'u1',
-      tier: 'FREE' as any,
+      tier: SubscriptionTier.FREE,
       last4: '4242',
       expMonth: 1,
       expYear: 2030,

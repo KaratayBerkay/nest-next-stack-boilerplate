@@ -75,6 +75,7 @@ export class BillingService {
             currency: 'USD',
             idempotencyKey,
             reference: `subscription:${targetTier}`,
+            fromWalletId: wallet.id,
             metadata: {
               tier: targetTier,
               provider: 'mock',
@@ -97,6 +98,7 @@ export class BillingService {
           currency: 'USD',
           idempotencyKey,
           reference: `subscription:${targetTier}`,
+          fromWalletId: wallet.id,
           metadata: {
             tier: targetTier,
             provider: 'mock',
@@ -128,6 +130,7 @@ export class BillingService {
         currency: 'USD',
         idempotencyKey,
         reference: `subscription:${targetTier}`,
+        fromWalletId: wallet.id,
         metadata: {
           tier: targetTier,
           provider: 'mock',

@@ -166,6 +166,43 @@ export type I18nMessages = {
       "failedToLoad": string;
     }
 
+  "premium": {
+      "heading": string;
+      "signInToView": string;
+      "upgradeMessage": string;
+      "viewPlans": string;
+      "loadStats": string;
+      "loadGrowthStats": string;
+      "loading": string;
+      "totalUsers": string;
+      "activeUsers": string;
+      "revenue": string;
+      "newUsers7d": string;
+      "totalPosts": string;
+      "totalFriendships": string;
+      "exportCsv": string;
+      "networkError": string;
+      "loadStatsFirst": string;
+      "errorStatus": string;
+    }
+
+  "pricing": {
+      "heading": string;
+      "subtitle": string;
+      "currentPlan": string;
+      "included": string;
+      "upgrade": string;
+      "featuresFree": string;
+      "featuresBasic": string[];
+      "featuresMedium": string[];
+      "featuresPremium": string[];
+      "featuresPro": string[];
+      "priceFree": string;
+      "priceBasic": string;
+      "priceMedium": string;
+      "pricePremium": string;
+    }
+
   "shared/locale-switcher": {
       "switchLabel": string;
     }

@@ -23,6 +23,14 @@ import { CreatePostInput } from './dto/create-post.input';
 import { UpdatePostInput } from './dto/update-post.input';
 import { PostService } from './post.service';
 
+type PostWithReactions = Post & {
+  reactions?: {
+    type: string;
+    userId: string;
+    user?: { name: string | null } | null;
+  }[];
+};
+
 @ObjectType()
 export class PostStats {
   @Field(() => Int)
@@ -77,7 +85,7 @@ export class PostResolver {
   @MinTier(SubscriptionTier.MEDIUM)
   @ResolveField(() => [ReactionCount])
   reactionBreakdown(@Parent() post: Post): ReactionCount[] {
-    const reactions = (post as any).reactions ?? [];
+    const reactions = (post as PostWithReactions).reactions ?? [];
     const counts = new Map<string, number>();
     for (const r of reactions) {
       counts.set(r.type, (counts.get(r.type) ?? 0) + 1);
@@ -92,8 +100,8 @@ export class PostResolver {
   @MinTier(SubscriptionTier.PREMIUM)
   @ResolveField(() => [Reactor])
   whoReacted(@Parent() post: Post): Reactor[] {
-    const reactions = (post as any).reactions ?? [];
-    return reactions.map((r: any) => ({
+    const reactions = (post as PostWithReactions).reactions ?? [];
+    return reactions.map((r) => ({
       userId: r.userId,
       name: r.user?.name ?? null,
       type: r.type,

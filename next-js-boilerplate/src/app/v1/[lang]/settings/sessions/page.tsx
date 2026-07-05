@@ -22,7 +22,5 @@ export default function SessionsPage() {
   if (loading) return <LoadingAuth />;
   if (!user) return <UnauthenticatedMessage message="Sign in to manage sessions" />;
 
-  const PageView = getTierView(user.tier, VIEWS);
-
-  return <PageView />;
+  return getTierView(user.tier, VIEWS);
 }

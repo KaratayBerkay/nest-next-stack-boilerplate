@@ -1,0 +1,19 @@
+{
+  "heading": "Premium Panel",
+  "signInToView": "Premium içerikleri görüntülemek için giriş yapın",
+  "upgradeMessage": "Premium özellikleri ve istatistikleri görüntülemek için yükseltin.",
+  "viewPlans": "Planları görüntüle",
+  "loadStats": "Premium istatistikleri yükle",
+  "loadGrowthStats": "Büyüme istatistiklerini yükle",
+  "loading": "Yükleniyor...",
+  "totalUsers": "Toplam Kullanıcı",
+  "activeUsers": "Aktif Kullanıcı",
+  "revenue": "Gelir",
+  "newUsers7d": "Yeni Kullanıcı (7g)",
+  "totalPosts": "Toplam Gönderi",
+  "totalFriendships": "Toplam Arkadaşlık",
+  "exportCsv": "CSV Dışa Aktar",
+  "networkError": "Ağ hatası",
+  "loadStatsFirst": "Önce istatistikleri yükleyin",
+  "errorStatus": "Hata {status}"
+}

@@ -3,13 +3,23 @@ import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
 import { BillingService } from './billing.service';
 import type { PaymentProvider } from './payment-provider.interface';
 
+type MockPrisma = {
+  user: { findUniqueOrThrow: jest.Mock; update: jest.Mock };
+  wallet: { findUnique: jest.Mock; create: jest.Mock };
+  walletTransaction: { create: jest.Mock; findMany: jest.Mock };
+};
+
+type MockTokenStore = { rewriteFieldsForUser: jest.Mock };
+type MockNotification = { create: jest.Mock };
+type MockRealtime = { updateUserTier: jest.Mock };
+
 describe('BillingService', () => {
   let service: BillingService;
   let mockProvider: jest.Mocked<PaymentProvider>;
-  let mockPrisma: any;
-  let mockTokenStore: any;
-  let mockNotification: any;
-  let mockRealtime: any;
+  let mockPrisma: MockPrisma;
+  let mockTokenStore: MockTokenStore;
+  let mockNotification: MockNotification;
+  let mockRealtime: MockRealtime;
 
   beforeEach(() => {
     mockProvider = {
@@ -42,10 +52,10 @@ describe('BillingService', () => {
     };
 
     service = new BillingService(
-      mockPrisma,
-      mockTokenStore,
-      mockNotification,
-      mockRealtime,
+      mockPrisma as never,
+      mockTokenStore as never,
+      mockNotification as never,
+      mockRealtime as never,
       mockProvider,
     );
   });
@@ -87,6 +97,7 @@ describe('BillingService', () => {
           data: expect.objectContaining({
             type: 'FEE',
             status: 'COMPLETED',
+            fromWalletId: 'w1',
           }),
         }),
       );
@@ -122,6 +133,7 @@ describe('BillingService', () => {
           data: expect.objectContaining({
             type: 'FEE',
             status: 'FAILED',
+            fromWalletId: 'w1',
           }),
         }),
       );
@@ -150,6 +162,7 @@ describe('BillingService', () => {
           data: expect.objectContaining({
             type: 'ADJUSTMENT',
             status: 'COMPLETED',
+            fromWalletId: 'w1',
           }),
         }),
       );
@@ -190,7 +203,16 @@ describe('BillingService', () => {
 
       const result = await service.getBillingHistory('u1');
       expect(result).toHaveLength(1);
-      expect(mockPrisma.walletTransaction.findMany).toHaveBeenCalled();
+      expect(mockPrisma.walletTransaction.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: [
+              { fromWallet: { userId: 'u1' } },
+              { toWallet: { userId: 'u1' } },
+            ],
+          }),
+        }),
+      );
     });
   });
 });

@@ -2,33 +2,9 @@
 
 import { useAuth } from "@/hooks/useAuth";
 import { TIERS, tierLabel, tierAtLeast, type Tier } from "@/lib/tier";
-import { checkoutPath } from "@/constants/routes";
+import { checkoutPath, LOGIN_PATH } from "@/constants/routes";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
 import Link from "next/link";
-
-const FEATURES: Record<Tier, string[]> = {
-  FREE: ["Basic access", "Community support"],
-  BASIC: ["Everything in Free", "Priority support", "Basic analytics"],
-  MEDIUM: [
-    "Everything in Basic",
-    "Post stats & reaction breakdown",
-    "VIP room access",
-    "Suggested friends",
-  ],
-  PREMIUM: [
-    "Everything in Medium",
-    "Who-reacted list",
-    "Export data",
-    "Crown badge",
-    "Dedicated support",
-  ],
-};
-
-const PRICES: Record<Tier, string> = {
-  FREE: "$0",
-  BASIC: "$9.99/mo",
-  MEDIUM: "$19.99/mo",
-  PREMIUM: "$49.99/mo",
-};
 
 function TierCard({
   tier,
@@ -37,6 +13,7 @@ function TierCard({
   current,
   ctaLabel,
   ctaHref,
+  currentLabel,
 }: {
   tier: Tier;
   price: string;
@@ -44,6 +21,7 @@ function TierCard({
   current?: boolean;
   ctaLabel: string;
   ctaHref?: string;
+  currentLabel: string;
 }) {
   return (
     <div
@@ -63,7 +41,7 @@ function TierCard({
       <div className="mt-6">
         {current ? (
           <span className="block rounded-lg bg-surface px-4 py-2 text-center text-sm font-medium text-muted">
-            Current plan
+            {currentLabel}
           </span>
         ) : ctaHref ? (
           <Link
@@ -84,6 +62,21 @@ function TierCard({
 
 export default function PricingPage() {
   const { user } = useAuth();
+  const t = useMessages("pricing");
+
+  const FEATURES: Record<Tier, string[]> = {
+    FREE: t.featuresBasic,
+    BASIC: t.featuresBasic,
+    MEDIUM: t.featuresMedium,
+    PREMIUM: t.featuresPro,
+  };
+
+  const PRICES: Record<Tier, string> = {
+    FREE: t.priceFree,
+    BASIC: t.priceBasic,
+    MEDIUM: t.priceMedium,
+    PREMIUM: t.pricePremium,
+  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -92,10 +85,10 @@ export default function PricingPage() {
           data-testid="page-heading"
           className="text-2xl font-semibold tracking-tight"
         >
-          Pricing
+          {t.heading}
         </h1>
         <p className="text-sm text-muted">
-          Choose the plan that fits your needs.
+          {t.subtitle}
         </p>
       </div>
 
@@ -113,15 +106,20 @@ export default function PricingPage() {
               price={PRICES[tier]}
               features={FEATURES[tier]}
               current={isCurrent}
+              currentLabel={t.currentPlan}
               ctaLabel={
                 isCurrent
-                  ? "Current plan"
+                  ? t.currentPlan
                   : hasAccess
-                    ? "Included"
-                    : "Upgrade"
+                    ? t.included
+                    : t.upgrade
               }
               ctaHref={
-                isUpgrade && user ? checkoutPath(tier) : undefined
+                isUpgrade && user
+                  ? checkoutPath(tier)
+                  : !user
+                    ? LOGIN_PATH
+                    : undefined
               }
             />
           );

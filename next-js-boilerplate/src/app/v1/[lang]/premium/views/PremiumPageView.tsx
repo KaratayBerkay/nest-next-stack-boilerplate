@@ -4,9 +4,11 @@ import { apiFetch } from "@/lib/api-client";
 import { useState } from "react";
 import { useToast } from "@/components/ui/Toast";
 import { exceptionHandler } from "@/lib/exception-handler";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
 
 export function PremiumPageView() {
   const { toast } = useToast();
+  const t = useMessages("premium");
   const [stats, setStats] = useState<{
     totalUsers: number;
     activeUsers: number;
@@ -32,11 +34,11 @@ export function PremiumPageView() {
         const data = await res.json();
         const description = data.exc
           ? exceptionHandler(data)
-          : data.error ?? `Error ${res.status}`;
+          : data.error ?? t.errorStatus.replace("{status}", String(res.status));
         toast({ description, variant: "destructive" });
       }
     } catch {
-      toast({ description: "Network error", variant: "destructive" });
+      toast({ description: t.networkError, variant: "destructive" });
     } finally {
       setLoadingStats(false);
     }
@@ -59,11 +61,11 @@ export function PremiumPageView() {
         const data = await res.json();
         const description = data.exc
           ? exceptionHandler(data)
-          : data.error ?? `Error ${res.status}`;
+          : data.error ?? t.errorStatus.replace("{status}", String(res.status));
         toast({ description, variant: "destructive" });
       }
     } catch {
-      toast({ description: "Network error", variant: "destructive" });
+      toast({ description: t.networkError, variant: "destructive" });
     } finally {
       setLoadingGrowth(false);
     }
@@ -71,17 +73,17 @@ export function PremiumPageView() {
 
   const handleExportCSV = () => {
     if (!stats || !growthStats) {
-      toast({ description: "Load stats first", variant: "destructive" });
+      toast({ description: t.loadStatsFirst, variant: "destructive" });
       return;
     }
     const csv = [
       "Metric,Value",
-      `Total Users,${stats.totalUsers}`,
-      `Active Users,${stats.activeUsers}`,
-      `Revenue,${stats.revenue}`,
-      `New Users (7d),${growthStats.newUsersLast7Days}`,
-      `Total Posts,${growthStats.totalPosts}`,
-      `Total Friendships,${growthStats.totalFriendships}`,
+      `${t.totalUsers},${stats.totalUsers}`,
+      `${t.activeUsers},${stats.activeUsers}`,
+      `${t.revenue},${stats.revenue}`,
+      `${t.newUsers7d},${growthStats.newUsersLast7Days}`,
+      `${t.totalPosts},${growthStats.totalPosts}`,
+      `${t.totalFriendships},${growthStats.totalFriendships}`,
     ].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -94,7 +96,7 @@ export function PremiumPageView() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h2 className="text-sm font-semibold text-brand">Premium Dashboard</h2>
+      <h2 className="text-sm font-semibold text-brand">{t.heading}</h2>
 
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2">
@@ -103,14 +105,14 @@ export function PremiumPageView() {
             disabled={loadingStats}
             className="self-start rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
           >
-            {loadingStats ? "Loading..." : "Load premium stats"}
+            {loadingStats ? t.loading : t.loadStats}
           </button>
           {stats && growthStats && (
             <button
               onClick={handleExportCSV}
               className="self-start rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted transition-colors hover:bg-surface-hover"
             >
-              Export CSV
+              {t.exportCsv}
             </button>
           )}
         </div>
@@ -119,19 +121,19 @@ export function PremiumPageView() {
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="rounded-xl border border-border p-4">
               <p className="text-xs font-medium uppercase tracking-wide text-muted">
-                Total Users
+                {t.totalUsers}
               </p>
               <p className="mt-1 text-2xl font-bold">{stats.totalUsers}</p>
             </div>
             <div className="rounded-xl border border-border p-4">
               <p className="text-xs font-medium uppercase tracking-wide text-muted">
-                Active Users
+                {t.activeUsers}
               </p>
               <p className="mt-1 text-2xl font-bold">{stats.activeUsers}</p>
             </div>
             <div className="rounded-xl border border-border p-4">
               <p className="text-xs font-medium uppercase tracking-wide text-muted">
-                Revenue
+                {t.revenue}
               </p>
               <p className="mt-1 text-2xl font-bold">
                 ${stats.revenue.toLocaleString()}
@@ -147,14 +149,14 @@ export function PremiumPageView() {
           disabled={loadingGrowth}
           className="self-start rounded-lg bg-brand/10 px-4 py-2 text-sm font-medium text-brand transition-opacity hover:bg-brand/20 disabled:opacity-50"
         >
-          {loadingGrowth ? "Loading..." : "Load growth stats"}
+          {loadingGrowth ? t.loading : t.loadGrowthStats}
         </button>
 
         {growthStats && (
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-xl border border-border p-4">
               <p className="text-xs font-medium uppercase tracking-wide text-muted">
-                New Users (7d)
+                {t.newUsers7d}
               </p>
               <p className="mt-1 text-2xl font-bold">
                 {growthStats.newUsersLast7Days}
@@ -162,7 +164,7 @@ export function PremiumPageView() {
             </div>
             <div className="rounded-xl border border-border p-4">
               <p className="text-xs font-medium uppercase tracking-wide text-muted">
-                Total Posts
+                {t.totalPosts}
               </p>
               <p className="mt-1 text-2xl font-bold">
                 {growthStats.totalPosts}
@@ -170,7 +172,7 @@ export function PremiumPageView() {
             </div>
             <div className="rounded-xl border border-border p-4">
               <p className="text-xs font-medium uppercase tracking-wide text-muted">
-                Total Friendships
+                {t.totalFriendships}
               </p>
               <p className="mt-1 text-2xl font-bold">
                 {growthStats.totalFriendships}
@@ -178,7 +180,7 @@ export function PremiumPageView() {
             </div>
             <div className="rounded-xl border border-border p-4">
               <p className="text-xs font-medium uppercase tracking-wide text-muted">
-                Total Users
+                {t.totalUsers}
               </p>
               <p className="mt-1 text-2xl font-bold">
                 {growthStats.totalUsers}
