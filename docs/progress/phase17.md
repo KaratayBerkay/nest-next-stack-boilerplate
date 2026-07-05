@@ -2,14 +2,15 @@
 
 > Execution tracker for the seventeenth phase of the [stack roadmap](../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
-> Created 2026-07-05 · Status: **NOT gate-clean (re-verified five times:
+> Created 2026-07-05 · Status: **NOT gate-clean (re-verified six times:
 > 2026-07-05 across four passes — `aacb05a` → `d75be4b` → lint residual
 > closed → pricing regression test added; 2026-07-06 a full Stage B/D/E code
 > audit; again 2026-07-06 after `6b1411b` landed fixes for two of the
 > three gaps that second pass found; a fourth pass 2026-07-06 that closed
-> most of the remaining i18n residuals; and a fifth pass 2026-07-06 that
-> closed the last two i18n residuals ("Post not found" in posts views,
-> "Payment failed" fallback in MockCardForm)**.
+> most of the remaining i18n residuals; a fifth pass 2026-07-06 that closed
+> the last two i18n residuals ("Post not found" in posts views, "Payment
+> failed" fallback in MockCardForm); and a sixth pass 2026-07-06 that found
+> a new guard-coverage e2e test can't actually run in this environment)**.
 > Stages A–G's code landed in `e2c0558`/`a7cd6a0` (tracker left at "planning
 > only" the whole time — 6th "commit lands, tracker untouched" occurrence
 > after phases 2/12/13/15/16). A punch list of 6 gaps was found; `aacb05a`
@@ -51,8 +52,26 @@
 > pass (2026-07-06)" below for the exact fix (both are one key + one-line
 > swaps, `useMessages("posts")` is already in scope in the `posts/[uuid]`
 > files).
+>
+> **2026-07-06, fourth re-check: `4a3c35b` fixed the two remaining i18n
+> residuals correctly (confirmed by grep — gap #2 is genuinely closed now),
+> and `cce88be` added `test/tier-guard.e2e-spec.ts` (8 tests,
+> `premiumStats`/`growthStats`) with an honest "not yet executed" caveat.**
+> Since this environment has a live docker stack (postgres/redis healthy), I
+> tried running it instead of taking the caveat at face value: **it fails to
+> boot at all** — `Nest cannot create the FriendsModule instance`. Confirmed
+> this is a pre-existing, suite-wide problem and not something `cce88be`
+> introduced, by running the unrelated `auth.e2e-spec.ts`, which fails
+> identically. This is the concrete reason `test:e2e` has stayed unrun across
+> so many of this project's past phases. Separately, even if it could run,
+> the new test only covers `AdminResolver`'s 2 fields — `post.resolver.ts`'s
+> 3 fields (T7) and `friends.resolver.ts`'s `suggestedFriends` (the other
+> half of T8) still have no guard-level test at all. See "Sixth
+> re-verification pass (2026-07-06)" below.
 > **Remaining open items:** T28 (live control run, still not run), the
-> guard-403 test gap, and `admin.resolver.ts` test coverage.
+> e2e-suite boot failure (pre-existing, blocks validating the new guard
+> test), guard-403 coverage for T7/half of T8, and the frontend surface
+> (Stage E views, checkout page) still untested.
 
 ## Punch-list fix verification (2026-07-05, commits `aacb05a` → `d75be4b`)
 
@@ -326,6 +345,51 @@ closed — no remaining hardcoded UI strings found by grep across all touched
 view files.**
 
 **Still open:** gap #3 (guard-403 test coverage) and T28 (live control run).
+
+## Sixth re-verification pass (2026-07-06)
+
+Two things to check: (1) is the i18n "fully closed" claim above actually
+true this time, and (2) `cce88be` added `test/tier-guard.e2e-spec.ts` (8
+tests, `premiumStats`/`growthStats`) with an honest "requires Docker, not yet
+executed" caveat — this environment already has a running docker stack
+(postgres/redis both healthy), so rather than take the caveat at face value,
+I tried to actually run it.
+
+1. **i18n claim — ✅ confirmed correct this time.** `grep` for
+   `t.postNotFound`/`t.paymentFailedGeneric` usage hits in all 4 target
+   files; `grep` for the old literal strings returns nothing anywhere in the
+   touched view files. The fifth pass's fix is genuinely complete.
+2. **`tier-guard.e2e-spec.ts` — well-designed, but currently cannot run in
+   this environment, and it's not a Docker-connectivity problem.** Ran
+   `pnpm test:e2e -- tier-guard` against the already-running stack: it fails
+   before any test body executes —
+   `Nest cannot create the FriendsModule instance. The module at index [0]
+   of the FriendsModule "imports" array is undefined.` To rule out this
+   being something the new file introduced, I ran an unrelated pre-existing
+   suite (`auth.e2e-spec.ts`) — **it fails with the exact same error.** This
+   is a pre-existing, suite-wide e2e-boot failure that predates this phase
+   entirely, not a regression from `cce88be`. (Root cause not chased down
+   here — likely a circular-import resolution quirk under `ts-jest`'s
+   per-file transform, since `FriendsModule` only imports `AuthModule`,
+   which looks correct in the source; worth its own investigation, but
+   that's a different bug from "is phase 17 done.") This is the concrete,
+   first-hand reason `test:e2e` has stayed unrun across so many of this
+   project's past phases — it isn't merely "hasn't been run," in this
+   environment it currently **can't** be, independent of anything in
+   phase 17.
+3. **Even set aside the boot failure, the new test doesn't close T7's half
+   of gap #3.** `tier-guard.e2e-spec.ts` only covers `AdminResolver`'s
+   `premiumStats`/`growthStats`. It does not touch `post.resolver.ts`'s
+   `reactionBreakdown`/`whoReacted`/`myPostStats` (T7) or
+   `friends.resolver.ts`'s `suggestedFriends` (the other half of T8). Those
+   three fields still have zero guard-level verification of any kind.
+
+**Net effect:** gap #2 (i18n) is now genuinely closed. Gap #3 (guard-403
+coverage) has a real, well-written test for 2 of 5 gated fields, but it's
+unverified (can't execute here) and doesn't cover the other 3 fields. T28
+remains the only way today to actually prove any of this end-to-end, and — new
+information — even a narrower "just run test:e2e" step is currently blocked
+by an unrelated, pre-existing module-resolution failure.
 
 ## Punch list to close this phase (priority order, historical)
 
@@ -895,7 +959,12 @@ as their own namespaces are added, or as one sweep after. Stage G is last.
   `@MinTier` guard's 403 behavior, since constructing `PostResolver` directly
   never runs Nest's guard pipeline. Left unchecked — the below-tier rejection
   this task's verify step actually asks for is still unproven, unit or live.
-  See "Third re-verification pass (2026-07-06)".
+  See "Third re-verification pass (2026-07-06)". **Sixth pass note:**
+  `tier-guard.e2e-spec.ts` (`cce88be`) does not cover any of these three
+  fields (only `AdminResolver`'s `premiumStats`/`growthStats`) — T7's guard
+  behavior remains completely untested by anything, and the e2e suite
+  currently can't even boot in this environment to test it live (see Sixth
+  re-verification pass).
 - [ ] **T8 (S) — `suggestedFriends`/`growthStats` resolver fields (find-friends +
   premium bonuses).** `suggestedFriends` (`@MinTier(MEDIUM)`, simple
   friends-of-friends-not-already-connected query bounded to e.g. 10 rows) on the
@@ -909,7 +978,13 @@ as their own namespaces are added, or as one sweep after. Stage G is last.
   it doesn't exercise the guard itself. `admin.resolver.ts`'s `growthStats`
   still has **no spec file at all**. Left unchecked — tier-gate enforcement
   remains unverified for both fields. See "Third re-verification pass
-  (2026-07-06)".
+  (2026-07-06)". **Sixth pass note:** `tier-guard.e2e-spec.ts` (`cce88be`)
+  does cover `growthStats` (4 sub-cases: FREE/BASIC rejected,
+  MEDIUM/PREMIUM allowed) at the real guard level — a genuine, well-written
+  test — but it cannot currently execute here (the whole e2e suite fails to
+  boot, pre-existing issue, not caused by this test). `suggestedFriends`
+  still has no guard-level test of any kind. See "Sixth re-verification
+  pass (2026-07-06)".
 
 ### Stage C — WS tier gate: VIP chat rooms
 
@@ -1157,6 +1232,14 @@ noted explicitly below where that applies.
   8 tests covering `premiumStats` (FREE rejected, BASIC allowed, MEDIUM allowed)
   and `growthStats` (FREE rejected, BASIC rejected, MEDIUM allowed, PREMIUM
   allowed). Requires Docker (Prisma + Redis) to run — not yet executed.
+  **Sixth pass (2026-07-06): attempted to run it** (this environment already
+  has postgres/redis up) — **the whole e2e suite fails to boot**, with
+  `Nest cannot create the FriendsModule instance`. Confirmed pre-existing,
+  not caused by this test, by reproducing the identical failure on
+  `auth.e2e-spec.ts`. This is the actual reason `test:e2e` has stayed unrun
+  for so many past phases, not just this one. `post.resolver.ts`'s 3 fields
+  and `friends.resolver.ts`'s `suggestedFriends` still have zero guard-level
+  test coverage regardless. See "Sixth re-verification pass (2026-07-06)".
 - [ ] **T28 (L) — Live control run against rebuilt containers** (same recipe as
   Phase 3/16: `docker compose --profile all up -d --build`, real HTTP/GraphQL/WS
   traffic, not just mocks). Script: register/login a fresh FREE user → attempt
@@ -1186,7 +1269,14 @@ noted explicitly below where that applies.
   (2026-07-06):** `tier-guard.e2e-spec.ts` added — 8 tests covering
   `premiumStats` (@MinTier(BASIC)) and `growthStats` (@MinTier(MEDIUM)) with
   FREE/BASIC/MEDIUM/PREMIUM callers. Requires Docker to run — not yet executed.
-  Left unchecked until the e2e suite actually runs (pending T28).
+  **Sixth pass (2026-07-06):** tried running it against this environment's
+  already-live docker stack — the whole e2e suite fails to boot
+  (`FriendsModule` module-resolution error), reproduced identically on an
+  unrelated pre-existing suite, so this isn't specific to the new test. Even
+  once that's fixed, only 2 of the 5 gated fields this phase added
+  (`premiumStats`, `growthStats`) would be covered — `reactionBreakdown`,
+  `whoReacted`, `myPostStats`, and `suggestedFriends` would still need their
+  own guard-level tests. Left unchecked.
 - [ ] **The one new WS gate (`vip-` rooms) rejects live**, proven with a real socket
   client forging the join, not a mock.
 - [ ] **Zero regressions**: FREE-tier behavior on every touched page is byte-for-byte
