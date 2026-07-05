@@ -13,6 +13,7 @@ import { AppService } from './app.service';
 import { AlsModule } from './als/als.module';
 import { AuthModule } from './auth/auth.module';
 import { AuthorizationModule } from './authorization/authorization.module';
+import { BillingModule } from './billing/billing.module';
 import { ComplexityModule } from './complexity/complexity.module';
 import { ComplexityPlugin } from './complexity/complexity.plugin';
 import { CompressionModule } from './compression/compression.module';
@@ -137,6 +138,7 @@ import { WsModule } from './ws/ws.module';
     UsersModule,
     AuthModule,
     AuthorizationModule,
+    BillingModule,
     ProjectTasksModule,
     PostModule,
     CommentModule,

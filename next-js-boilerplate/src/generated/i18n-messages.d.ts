@@ -83,6 +83,22 @@ export type I18nMessages = {
       "loadEarlier": string;
     }
 
+  "checkout": {
+      "signInToUpgrade": string;
+      "upgrade": string;
+      "changePlan": string;
+      "checkout": string;
+      "enterCardDetails": string;
+      "changedImmediately": string;
+      "alreadyOnPlan": string;
+      "upgradeSuccess": string;
+      "planChanged": string;
+      "redirecting": string;
+      "confirmDowngrade": string;
+      "viewPlans": string;
+      "upgradeToView": string;
+    }
+
   "error": {
       "notFound": string;
       "pageNotFound": string;

@@ -4,3 +4,5 @@ export const RESET_PASSWORD_PATH = "/auth/reset-password" as const;
 export const VERIFY_EMAIL_PATH = "/auth/verify-email" as const;
 export const FIND_FRIENDS_PATH = "/find-friends" as const;
 export const PRICING_PATH = "/pricing" as const;
+export const checkoutPath = (tier: string, lang = "en") =>
+  `/v1/${lang}/checkout/${tier}` as const;

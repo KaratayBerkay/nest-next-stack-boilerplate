@@ -16,6 +16,7 @@ import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { TokenStoreService } from '../auth/token-store.service';
+import { CsrfGuard } from '../csrf/csrf.guard';
 import { PrismaService } from '../prisma/prisma.service';
 import { MinTier } from './min-tier.decorator';
 import { Roles } from './roles.decorator';
@@ -44,6 +45,21 @@ export class PremiumStatsPayload {
   revenue!: number;
 }
 
+@ObjectType()
+export class GrowthStatsPayload {
+  @Field(() => Int)
+  totalUsers!: number;
+
+  @Field(() => Int)
+  newUsersLast7Days!: number;
+
+  @Field(() => Int)
+  totalPosts!: number;
+
+  @Field(() => Int)
+  totalFriendships!: number;
+}
+
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Resolver()
 export class AdminResolver {
@@ -64,6 +80,7 @@ export class AdminResolver {
   }
 
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  @UseGuards(CsrfGuard)
   @Mutation(() => Boolean)
   async setUserTier(
     @Args('userId') userId: string,
@@ -89,5 +106,22 @@ export class AdminResolver {
       this.prisma.user.count({ where: { status: 'ACTIVE' } }),
     ]);
     return { totalUsers, activeUsers, revenue: totalUsers * 9.99 };
+  }
+
+  @UseGuards(SessionAuthGuard, TierGuard)
+  @MinTier(SubscriptionTier.MEDIUM)
+  @Query(() => GrowthStatsPayload, { name: 'growthStats' })
+  async growthStats(): Promise<GrowthStatsPayload> {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const [totalUsers, newUsersLast7Days, totalPosts, totalFriendships] =
+      await Promise.all([
+        this.prisma.user.count(),
+        this.prisma.user.count({
+          where: { createdAt: { gte: sevenDaysAgo } },
+        }),
+        this.prisma.post.count({ where: { deletedAt: null } }),
+        this.prisma.friendship.count({ where: { status: 'ACCEPTED' } }),
+      ]);
+    return { totalUsers, newUsersLast7Days, totalPosts, totalFriendships };
   }
 }

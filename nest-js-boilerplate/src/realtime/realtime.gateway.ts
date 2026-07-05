@@ -24,6 +24,7 @@ type AuthWs = WebSocket & {
   userId?: string;
   sessionId?: string;
   userName?: string;
+  tier?: string;
   socketId?: string;
   room?: string;
   authenticated: boolean;
@@ -362,6 +363,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     ws.userId = hash.userId;
     ws.sessionId = hash.sessionId;
     ws.userName = displayName(hash);
+    ws.tier = hash.tier || 'FREE';
     ws.deviceTokenHash = crypto
       .createHash('sha256')
       .update(tokens.deviceToken)

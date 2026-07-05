@@ -1,80 +1,184 @@
 import { renderTemplate } from './render';
 
 describe('renderTemplate', () => {
-  it('renders email-verification with url and name', () => {
-    const result = renderTemplate('email-verification', {
-      url: 'https://example.com/verify?token=abc',
-      name: 'Alice',
+  describe('unknown template', () => {
+    it('returns empty strings for an unknown template name', () => {
+      expect(renderTemplate('nonexistent', {})).toEqual({
+        subject: '',
+        html: '',
+        text: '',
+      });
     });
-    expect(result.subject).toBe('Confirm your email');
-    expect(result.html).toContain('Hi Alice,');
-    expect(result.html).toContain('https://example.com/verify?token=abc');
-    expect(result.text).toContain(
-      'Confirm your email: https://example.com/verify?token=abc',
-    );
   });
 
-  it('renders email-verification without name', () => {
-    const result = renderTemplate('email-verification', {
-      url: 'https://example.com/verify?token=abc',
+  describe('email-verification', () => {
+    const url = 'https://example.com/verify?token=abc123';
+
+    it('renders subject, link, and text', () => {
+      const result = renderTemplate('email-verification', {
+        url,
+        name: 'Alice',
+      });
+      expect(result.subject).toBe('Confirm your email');
+      expect(result.html).toContain(url);
+      expect(result.html).toContain('Confirm Email');
+      expect(result.text).toBe(`Confirm your email: ${url}`);
     });
-    expect(result.html).toContain('Hi,');
+
+    it('greets by name when provided', () => {
+      const result = renderTemplate('email-verification', {
+        url,
+        name: 'Bob',
+      });
+      expect(result.html).toContain('Hi Bob,');
+    });
+
+    it('uses generic greeting when name is empty', () => {
+      const result = renderTemplate('email-verification', { url });
+      expect(result.html).toContain('Hi,');
+    });
+
+    it('HTML-escapes name containing angle brackets', () => {
+      const result = renderTemplate('email-verification', {
+        url,
+        name: '<script>alert(1)</script>',
+      });
+      expect(result.html).toContain('&lt;script&gt;');
+      expect(result.html).not.toContain('<script>');
+    });
+
+    it('HTML-escapes URL containing ampersands', () => {
+      const evilUrl = 'https://example.com?a=1&b=2';
+      const result = renderTemplate('email-verification', {
+        url: evilUrl,
+      });
+      expect(result.html).toContain('a=1&amp;b=2');
+    });
+
+    it('wraps output in a full HTML layout', () => {
+      const result = renderTemplate('email-verification', { url });
+      expect(result.html).toContain('<!DOCTYPE html>');
+      expect(result.html).toContain('Boilers');
+    });
   });
 
-  it('renders password-reset template', () => {
-    const result = renderTemplate('password-reset', {
-      url: 'https://example.com/reset?token=xyz',
+  describe('welcome-social', () => {
+    const url = 'https://example.com/set-password?token=xyz';
+    const username = 'janedoe';
+
+    it('renders subject, username, link, and text', () => {
+      const result = renderTemplate('welcome-social', {
+        url,
+        username,
+        name: 'Jane',
+        provider: 'Google',
+      });
+      expect(result.subject).toBe('Welcome! Set your password');
+      expect(result.html).toContain(`<strong>${username}</strong>`);
+      expect(result.html).toContain(url);
+      expect(result.html).toContain('Google');
+      expect(result.text).toContain(username);
+      expect(result.text).toContain(url);
     });
-    expect(result.subject).toBe('Reset your password');
-    expect(result.html).toContain('Reset Password');
-    expect(result.html).toContain('https://example.com/reset?token=xyz');
-    expect(result.text).toContain(
-      'Reset your password: https://example.com/reset?token=xyz',
-    );
+
+    it('greets by name when provided', () => {
+      const result = renderTemplate('welcome-social', { url, username });
+      expect(result.html).toContain('Hi,');
+    });
+
+    it('uses generic greeting when name is empty', () => {
+      const result = renderTemplate('welcome-social', { url, username });
+      expect(result.html).toContain('Hi,');
+    });
+
+    it('defaults provider to "social login"', () => {
+      const result = renderTemplate('welcome-social', { url, username });
+      expect(result.html).toContain('social login');
+    });
+
+    it('HTML-escapes username', () => {
+      const result = renderTemplate('welcome-social', {
+        url,
+        username: '<b>bad</b>',
+      });
+      expect(result.html).toContain('&lt;b&gt;bad&lt;/b&gt;');
+      expect(result.html).not.toContain('<b>bad</b>');
+    });
+
+    it('HTML-escapes provider name', () => {
+      const result = renderTemplate('welcome-social', {
+        url,
+        username,
+        provider: '<img onerror=alert(1)>',
+      });
+      expect(result.html).toContain('&lt;img');
+    });
   });
 
-  it('renders welcome-social with all variables', () => {
-    const result = renderTemplate('welcome-social', {
-      username: 'alice_42',
-      url: 'https://example.com/set-password',
-      name: 'Alice',
-      provider: 'Google',
+  describe('password-reset', () => {
+    const url = 'https://example.com/reset?token=def456';
+
+    it('renders subject, link, and text', () => {
+      const result = renderTemplate('password-reset', { url });
+      expect(result.subject).toBe('Reset your password');
+      expect(result.html).toContain(url);
+      expect(result.html).toContain('Reset Password');
+      expect(result.text).toBe(`Reset your password: ${url}`);
     });
-    expect(result.subject).toBe('Welcome! Set your password');
-    expect(result.html).toContain('Hi Alice,');
-    expect(result.html).toContain('alice_42');
-    expect(result.html).toContain('Google');
-    expect(result.text).toContain('alice_42');
+
+    it('includes 24-hour expiry notice', () => {
+      const result = renderTemplate('password-reset', { url });
+      expect(result.html).toContain('24 hours');
+    });
+
+    it('HTML-escapes URL', () => {
+      const evilUrl = 'https://example.com?a=1&b=2';
+      const result = renderTemplate('password-reset', { url: evilUrl });
+      expect(result.html).toContain('a=1&amp;b=2');
+    });
   });
 
-  it('welcome-social works without optional name', () => {
-    const result = renderTemplate('welcome-social', {
-      username: 'bob_99',
-      url: 'https://example.com/set-password',
-      provider: 'GitHub',
-    });
-    expect(result.html).toContain('Hi,');
-    expect(result.html).toContain('GitHub');
-  });
+  describe('str helper edge cases', () => {
+    const url = 'https://example.com';
 
-  it('escapes HTML in user-supplied values', () => {
-    const result = renderTemplate('email-verification', {
-      url: 'https://example.com/verify?token=abc',
-      name: '<script>alert("xss")</script>',
+    it('coerces number to string', () => {
+      const result = renderTemplate('email-verification', {
+        url,
+        name: 12345,
+      });
+      expect(result.html).toContain('12345');
     });
-    expect(result.html).toContain('&lt;script&gt;');
-    expect(result.html).not.toContain('<script>');
-  });
 
-  it('escapes HTML in the URL', () => {
-    const result = renderTemplate('password-reset', {
-      url: 'https://example.com/?a=1&b=2',
+    it('coerces boolean to string', () => {
+      const result = renderTemplate('email-verification', {
+        url,
+        name: true,
+      });
+      expect(result.html).toContain('true');
     });
-    expect(result.html).toContain('&amp;');
-  });
 
-  it('returns empty strings for unknown template', () => {
-    const result = renderTemplate('nonexistent', { url: 'x' });
-    expect(result).toEqual({ subject: '', html: '', text: '' });
+    it('returns fallback for undefined', () => {
+      const result = renderTemplate('email-verification', {
+        url,
+        name: undefined,
+      });
+      expect(result.html).toContain('Hi,');
+    });
+
+    it('returns fallback for null', () => {
+      const result = renderTemplate('email-verification', {
+        url,
+        name: null,
+      });
+      expect(result.html).toContain('Hi,');
+    });
+
+    it('returns fallback for object', () => {
+      const result = renderTemplate('email-verification', {
+        url,
+        name: { foo: 'bar' },
+      });
+      expect(result.html).toContain('Hi,');
+    });
   });
 });

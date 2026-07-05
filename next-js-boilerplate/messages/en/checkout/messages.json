@@ -1,0 +1,15 @@
+{
+  "signInToUpgrade": "Sign in to upgrade your plan",
+  "upgrade": "Upgrade",
+  "changePlan": "Change plan",
+  "checkout": "Checkout",
+  "enterCardDetails": "Enter your card details to upgrade.",
+  "changedImmediately": "Your plan will be changed immediately.",
+  "alreadyOnPlan": "You are already on this plan.",
+  "upgradeSuccess": "Upgrade successful!",
+  "planChanged": "Plan changed!",
+  "redirecting": "Redirecting to pricing...",
+  "confirmDowngrade": "Confirm downgrade to {tier}",
+  "viewPlans": "View plans",
+  "upgradeToView": "Upgrade to view premium features and stats."
+}

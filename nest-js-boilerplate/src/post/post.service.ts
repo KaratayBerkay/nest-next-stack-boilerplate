@@ -186,4 +186,21 @@ export class PostService {
       },
     });
   }
+
+  async getMyPostStats(userId: string) {
+    const posts = await this.prisma.post.findMany({
+      where: { authorId: userId, deletedAt: null, status: 'PUBLISHED' },
+      select: { _count: { select: { reactions: true } } },
+    });
+    const totalPosts = posts.length;
+    const totalReactions = posts.reduce(
+      (sum, p) => sum + p._count.reactions,
+      0,
+    );
+    return {
+      totalPosts,
+      totalReactions,
+      avgReactionsPerPost: totalPosts > 0 ? totalReactions / totalPosts : 0,
+    };
+  }
 }

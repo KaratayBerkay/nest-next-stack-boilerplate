@@ -1,0 +1,15 @@
+{
+  "signInToUpgrade": "Plan yükseltmek için giriş yapın",
+  "upgrade": "Yükselt",
+  "changePlan": "Planı değiştir",
+  "checkout": "Ödeme",
+  "enterCardDetails": "Yükseltme için kart bilgilerinizi girin.",
+  "changedImmediately": "Planınız hemen değiştirilecek.",
+  "alreadyOnPlan": "Bu plandasınız zaten.",
+  "upgradeSuccess": "Yükseltme başarılı!",
+  "planChanged": "Plan değiştirildi!",
+  "redirecting": "Fiyat sayfasına yönlendiriliyor...",
+  "confirmDowngrade": "{tier} planına düşmeyi onaylayın",
+  "viewPlans": "Planları görüntüle",
+  "upgradeToView": "Premium özellikleri ve istatistikleri görüntülemek için yükseltin."
+}

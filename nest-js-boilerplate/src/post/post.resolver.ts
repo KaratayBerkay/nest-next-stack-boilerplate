@@ -1,21 +1,60 @@
 import { UseGuards } from '@nestjs/common';
 import {
   Args,
+  Field,
+  Float,
   ID,
   Int,
   Mutation,
+  ObjectType,
   Parent,
   Query,
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
 import { Post } from '../@generated/post/post.model';
+import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
 import type { JwtUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
+import { MinTier } from '../authorization/min-tier.decorator';
+import { TierGuard } from '../authorization/tier.guard';
 import { CreatePostInput } from './dto/create-post.input';
 import { UpdatePostInput } from './dto/update-post.input';
 import { PostService } from './post.service';
+
+@ObjectType()
+export class PostStats {
+  @Field(() => Int)
+  totalPosts!: number;
+
+  @Field(() => Int)
+  totalReactions!: number;
+
+  @Field(() => Float)
+  avgReactionsPerPost!: number;
+}
+
+@ObjectType()
+export class ReactionCount {
+  @Field()
+  type!: string;
+
+  @Field(() => Int)
+  count!: number;
+}
+
+@ObjectType()
+export class Reactor {
+  @Field()
+  userId!: string;
+
+  @Field({ nullable: true })
+  name?: string;
+
+  @Field()
+  type!: string;
+}
 
 @UseGuards(SessionAuthGuard)
 @Resolver(() => Post)
@@ -32,6 +71,40 @@ export class PostResolver {
   @ResolveField(() => String, { nullable: true })
   imageUrl(@Parent() post: Post): string | null {
     return post.imageUrl ?? null;
+  }
+
+  @UseGuards(TierGuard)
+  @MinTier(SubscriptionTier.MEDIUM)
+  @ResolveField(() => [ReactionCount])
+  reactionBreakdown(@Parent() post: Post): ReactionCount[] {
+    const reactions = (post as any).reactions ?? [];
+    const counts = new Map<string, number>();
+    for (const r of reactions) {
+      counts.set(r.type, (counts.get(r.type) ?? 0) + 1);
+    }
+    return Array.from(counts.entries()).map(([type, count]) => ({
+      type,
+      count,
+    }));
+  }
+
+  @UseGuards(TierGuard)
+  @MinTier(SubscriptionTier.PREMIUM)
+  @ResolveField(() => [Reactor])
+  whoReacted(@Parent() post: Post): Reactor[] {
+    const reactions = (post as any).reactions ?? [];
+    return reactions.map((r: any) => ({
+      userId: r.userId,
+      name: r.user?.name ?? null,
+      type: r.type,
+    }));
+  }
+
+  @UseGuards(TierGuard)
+  @MinTier(SubscriptionTier.MEDIUM)
+  @Query(() => PostStats, { name: 'myPostStats' })
+  async myPostStats(@CurrentUser() user: JwtUser): Promise<PostStats> {
+    return this.postService.getMyPostStats(user.userId);
   }
 
   @Query(() => [Post])

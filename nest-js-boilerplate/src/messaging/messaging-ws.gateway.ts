@@ -6,9 +6,19 @@ import { PushNotificationService } from '../push-notification/push-notification.
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { displayName } from '../common/utils/display-name';
 
+const VIP_ROOM_PREFIX = 'vip-';
+const TIER_RANK: Record<string, number> = {
+  FREE: 0,
+  BASIC: 1,
+  MEDIUM: 2,
+  PREMIUM: 3,
+};
+const MIN_TIER_FOR_VIP = 2; // MEDIUM
+
 type AuthWs = WebSocket & {
   userId?: string;
   userName?: string;
+  tier?: string;
   socketId?: string;
   room?: string;
   authenticated: boolean;
@@ -170,6 +180,18 @@ export class MessagingWsGateway implements OnModuleInit {
 
   private handleJoinRoom(ws: AuthWs, data: { room: string }) {
     if (!ws.userId || !ws.socketId) return;
+    if (
+      data.room.startsWith(VIP_ROOM_PREFIX) &&
+      (TIER_RANK[ws.tier ?? 'FREE'] ?? 0) < MIN_TIER_FOR_VIP
+    ) {
+      ws.send(
+        JSON.stringify({
+          type: 'error',
+          message: 'VIP rooms require MEDIUM tier or above',
+        }),
+      );
+      return;
+    }
     if (ws.room && ws.room !== data.room) {
       const oldMembers = this.ms.leaveRoom(ws.room, ws.socketId);
       this.realtime.broadcastToRoom(ws.room, {
@@ -257,6 +279,18 @@ export class MessagingWsGateway implements OnModuleInit {
     if (!ws.userId || !ws.socketId || !params.room) return;
     if (!isValidRoom(params.room)) {
       ws.send(JSON.stringify({ type: 'error', message: 'Invalid room' }));
+      return;
+    }
+    if (
+      params.room.startsWith(VIP_ROOM_PREFIX) &&
+      (TIER_RANK[ws.tier ?? 'FREE'] ?? 0) < MIN_TIER_FOR_VIP
+    ) {
+      ws.send(
+        JSON.stringify({
+          type: 'error',
+          message: 'VIP rooms require MEDIUM tier or above',
+        }),
+      );
       return;
     }
     const room = params.room;
