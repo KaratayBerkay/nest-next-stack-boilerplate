@@ -22,8 +22,8 @@
 | - | --- | --- |
 | 1 | Wallet linkage | ✅ Fixed correctly (`aacb05a`) — `fromWalletId: wallet.id` added to all 3 `walletTransaction.create()` calls; spec updated with real assertions (not just re-passing old ones) |
 | 2 | Render-time component bug | ✅ Fixed correctly (`aacb05a`) — `tier-view.tsx` returns `ReactNode` directly, all 8 pages updated, `tier-view.spec.tsx` rewritten with `render()`/`screen`; `pnpm lint` frontend 0 errors, `tsc --noEmit` clean |
-| 3 | Backend lint (81 errors) | ⚠️ Reduced to 5 (`aacb05a`), unchanged by `d75be4b` (frontend-only commit) — all 5 remaining are in `billing.service.spec.ts` (`no-unsafe-assignment` + one `unbound-method` false-positive, all on `expect.objectContaining(...)` call sites). Test-only, non-functional, still not the "0" originally targeted |
-| 4 | Missing pricing/premium i18n | ✅ Fully fixed — `aacb05a` created the namespaces and fixed the logged-out CTA, `d75be4b` fixed the feature-list mapping bug `aacb05a` introduced (confirmed below). **Gap:** still no test covers `/pricing`'s rendered output, so this exact class of bug isn't guarded against going forward |
+| 3 | Backend lint (81 errors) | ⚠️ Reduced to 5 (`aacb05a`), unchanged by `d75be4b` (frontend-only commit) — all 5 remaining are in `billing.service.spec.ts` (`no-unsafe-assignment` + one `unbound-method` false-positive, all on `expect.objectContaining(...)` call sites). Test-only, non-functional. **Root cause + exact 5-line fix now documented in Fix 3's step 7 below** (matches this repo's existing `eslint-disable-next-line` convention from `auth.service.spec.ts`/`device.service.spec.ts`) |
+| 4 | Missing pricing/premium i18n | ✅ Fully fixed — `aacb05a` created the namespaces and fixed the logged-out CTA, `d75be4b` fixed the feature-list mapping bug `aacb05a` introduced (confirmed below). **Gap:** still no test covers `/pricing`'s rendered output. **A ready-to-add test is now written out in Fix 4's follow-up below** |
 | 5 | users/detail split | ✅ Fixed correctly (`aacb05a`) — mirrors `users/list`'s exact shape (`FreePageView` holds real content, `Basic/Medium/PremiumPageView` re-export it, `page.tsx` renders `FreePageView` directly) |
 | 6 | T28 live control run | ❌ Still not run (expected — out of scope for code-only commits) |
 
@@ -269,14 +269,42 @@ since it can't prove the reference is stable across renders.
 7. Re-run `pnpm lint` in `nest-js-boilerplate` — should drop from 81 to 0 (the
    1 pre-existing `versioning.e2e-spec.ts` error predates this phase and is out
    of scope). **Result: dropped to 5**, not 0 — steps 1, 3 (partially), 4, 5,
-   6 all landed clean; the 5 residual errors are in `billing.service.spec.ts`
-   on `expect.objectContaining(...)` call sites (`no-unsafe-assignment` +
-   one `unbound-method` false positive) — the typed-mock approach in step 3
-   doesn't fully satisfy eslint once the mock's return value flows through
-   jest's `expect` matchers. Remaining fix: type the `jest.Mock` fields with
-   explicit generics (e.g. `jest.Mock<Promise<{id:string;userId:string;currency:string}>>`
-   for `wallet.findUnique`) instead of the bare `jest.Mock`, so the value
-   passed into `expect.objectContaining` is never widened to `any`.
+   6 all landed clean; the 5 residual errors are all in `billing.service.spec.ts`.
+
+   **Root cause confirmed (2026-07-05, re-checked against the current file),
+   correcting the earlier guess about typed-mock generics:** it isn't a
+   typing gap in `MockPrisma` — `expect.objectContaining(...)` itself resolves
+   to `any` in this project's `@types/jest@^30`, so *any* object literal that
+   embeds it (`data: expect.objectContaining({...})`, `where: expect.objectContaining({...})`)
+   trips `no-unsafe-assignment`, regardless of how precisely the surrounding
+   mocks are typed. This is a known, accepted friction point between
+   `@typescript-eslint` and Jest's asymmetric matchers — this project already
+   has the exact same pattern (and exact same fix) in two other spec files:
+   `src/auth/auth.service.spec.ts:203,209,211` and
+   `src/devices/device.service.spec.ts:144`, both using a scoped
+   `// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment`
+   directly above the line, rather than fighting the type system.
+
+   **Exact fix — add a comment on the line *above* each flagged line:**
+   - Line 96 (above line 97 `data: expect.objectContaining({`, in "upgrades
+     tier on approved card"): `// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment`
+   - Line 132 (above line 133, same pattern, in "rejects declined card"):
+     same comment
+   - Line 161 (above line 162, same pattern, in "downgrades without calling
+     the payment provider"): same comment
+   - Line 207 (above line 208 `where: expect.objectContaining({`, in
+     "getBillingHistory › returns transactions for the user"): same comment
+   - Line 151 (`expect(mockProvider.charge).not.toHaveBeenCalled();`,
+     `@typescript-eslint/unbound-method`) is a different rule but the same
+     kind of false positive — `mockProvider.charge` is a `jest.fn()` property,
+     not a real class method whose `this` binding matters. No prior instance
+     of disabling this specific rule exists in the repo yet (checked), so add
+     `// eslint-disable-next-line @typescript-eslint/unbound-method` on line
+     150, directly above it — same style as the other four, just a different
+     rule name.
+   - Re-run `pnpm lint` — should now be a clean 0 (matching the original
+     target), with no change to test behavior (these are lint-only comments,
+     the assertions themselves are already correct and passing).
 
 ### Fix 4 — Missing `pricing`/`premium` i18n — ✅ done (with a follow-up fix, see below)
 
@@ -319,6 +347,60 @@ key from both locale JSON files — confirmed via `git show d75be4b`, and
 one thing this follow-up did *not* do: add a regression test for `/pricing`'s
 rendered feature lists, so this exact mismatch class has no test guard going
 forward.
+
+**Still missing — regression test for `/pricing` (not yet applied, exact steps):**
+`(marketing)/pricing/page.tsx` has zero test coverage today (confirmed: no
+`*.spec.*`/`*.test.*` file references `pricing/page` or `PricingPage`
+anywhere in `next-js-boilerplate/src`). Create
+`next-js-boilerplate/src/app/(marketing)/pricing/page.spec.tsx`:
+```tsx
+import { describe, it, expect, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { MessagesProvider } from "@/lib/i18n/MessagesProvider";
+import PricingPage from "./page";
+
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({ user: null, loading: false }),
+}));
+
+const messages = {
+  pricing: {
+    heading: "Pricing",
+    subtitle: "Choose the plan that fits your needs.",
+    currentPlan: "Current plan",
+    included: "Included",
+    upgrade: "Upgrade",
+    featuresBasic: ["Basic access", "Community support"],
+    featuresMedium: ["Everything in Free", "Priority support", "Basic analytics"],
+    featuresPremium: ["Everything in Medium", "Post stats & reaction breakdown", "VIP room access", "Suggested friends"],
+    featuresPro: ["Everything in Premium", "Who-reacted list", "Export data", "Crown badge", "Dedicated support"],
+    priceFree: "$0", priceBasic: "$9.99/mo", priceMedium: "$19.99/mo", pricePremium: "$49.99/mo",
+  },
+} as never; // narrow cast — only the "pricing" key is populated for this test
+
+describe("PricingPage", () => {
+  it("gives every tier its own distinct, non-duplicated feature list", () => {
+    render(
+      <MessagesProvider messages={messages}>
+        <PricingPage />
+      </MessagesProvider>,
+    );
+    const free = messages.pricing.featuresBasic[0];
+    const basic = messages.pricing.featuresMedium[0];
+    const medium = messages.pricing.featuresPremium[0];
+    // FREE and BASIC must not render identical text (the exact bug that shipped)
+    expect(screen.getAllByText(free)).toHaveLength(1);
+    expect(screen.getByText(basic)).toBeDefined();
+    expect(screen.getByText(medium)).toBeDefined();
+    expect(screen.getByText("VIP room access")).toBeDefined(); // MEDIUM's real perk
+  });
+});
+```
+The key assertion is `getAllByText(free)` having length 1 — if `BASIC` ever
+regresses back to duplicating `FREE`'s list, that text would appear twice and
+this test fails immediately, which is exactly the guard that was missing when
+`aacb05a` shipped the original mismatch. Run `pnpm test` after adding it to
+confirm it passes against the current (fixed) `page.tsx`.
 
 ### Fix 5 — `users/detail/[uuid]` tier-view split — ✅ done
 
