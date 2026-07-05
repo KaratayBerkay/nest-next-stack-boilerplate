@@ -1,20 +1,15 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
+import { TIER_RANK } from '../authorization/tier-rank';
 import { PrismaService } from '../prisma/prisma.service';
 import { TokenStoreService } from '../auth/token-store.service';
 import { NotificationService } from '../notification/notification.service';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 import {
   PAYMENT_PROVIDER,
   type PaymentProvider,
 } from './payment-provider.interface';
 import { Inject } from '@nestjs/common';
-
-const TIER_RANK: Record<SubscriptionTier, number> = {
-  [SubscriptionTier.FREE]: 0,
-  [SubscriptionTier.BASIC]: 1,
-  [SubscriptionTier.MEDIUM]: 2,
-  [SubscriptionTier.PREMIUM]: 3,
-};
 
 export interface CardInfo {
   last4: string;
@@ -30,6 +25,7 @@ export class BillingService {
     private readonly prisma: PrismaService,
     private readonly tokenStore: TokenStoreService,
     private readonly notification: NotificationService,
+    private readonly realtime: RealtimeGateway,
     @Inject(PAYMENT_PROVIDER) private readonly provider: PaymentProvider,
   ) {}
 
@@ -120,9 +116,9 @@ export class BillingService {
     }
 
     // Downgrade — no payment needed
-    await this.flipTier(userId, targetTier);
-
     const idempotencyKey = this.generateIdempotencyKey(userId, targetTier);
+
+    await this.flipTier(userId, targetTier);
 
     await this.prisma.walletTransaction.create({
       data: {
@@ -165,6 +161,7 @@ export class BillingService {
       data: { subscriptionTier: tier },
     });
     await this.tokenStore.rewriteFieldsForUser(userId, { tier });
+    this.realtime.updateUserTier(userId, tier);
   }
 
   private async ensureWallet(userId: string) {

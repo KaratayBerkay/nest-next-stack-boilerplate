@@ -1,4 +1,4 @@
-import { UseGuards } from '@nestjs/common';
+import { BadRequestException, UseGuards } from '@nestjs/common';
 import {
   Args,
   Field,
@@ -63,8 +63,20 @@ export class BillingResolver {
     @Args('expMonth', { nullable: true }) expMonth?: number,
     @Args('expYear', { nullable: true }) expYear?: number,
   ): Promise<SubscribeResult> {
-    const card: CardInfo | undefined =
-      last4 && expMonth && expYear ? { last4, expMonth, expYear } : undefined;
+    let card: CardInfo | undefined;
+
+    if (last4 || expMonth || expYear) {
+      if (!last4 || !/^\d{4}$/.test(last4)) {
+        throw new BadRequestException('last4 must be exactly 4 digits');
+      }
+      if (expMonth === undefined || expMonth < 1 || expMonth > 12) {
+        throw new BadRequestException('expMonth must be 1-12');
+      }
+      if (expYear === undefined || expYear < new Date().getFullYear()) {
+        throw new BadRequestException('expYear must not be in the past');
+      }
+      card = { last4, expMonth, expYear };
+    }
 
     return this.billing.subscribeToPlan(user.userId, tier, card);
   }

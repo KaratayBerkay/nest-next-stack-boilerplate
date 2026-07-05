@@ -19,6 +19,7 @@ import { ConnectionUnstable } from "@/components/ConnectionUnstable";
 import { ScrollToBottomButton } from "@/components/ui/ScrollToBottomButton";
 import { SkeletonChatMessage } from "@/components/ui/skeleton-shapes";
 import { useSearchParams, useRouter } from "next/navigation";
+import { CHAT_ROOMS } from "@/constants/chat";
 
 const VIP_ROOMS = ["vip-lounge"];
 

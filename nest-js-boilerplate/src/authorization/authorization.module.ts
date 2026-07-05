@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
+import { RealtimeModule } from '../realtime/realtime.module';
 import { AdminResolver } from './admin.resolver';
 import { RolesGuard } from './roles.guard';
 import { TierGuard } from './tier.guard';
@@ -11,7 +12,7 @@ import { TierGuard } from './tier.guard';
  * `AuthModule` is imported because demo resolvers chain `@UseGuards(JwtAuthGuard, RolesGuard)`.
  */
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, RealtimeModule],
   providers: [RolesGuard, TierGuard, AdminResolver],
   exports: [RolesGuard, TierGuard],
 })

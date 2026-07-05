@@ -5,15 +5,9 @@ import { MessagingService, RoomMember, isValidRoom } from './messaging.service';
 import { PushNotificationService } from '../push-notification/push-notification.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { displayName } from '../common/utils/display-name';
+import { tierRank, MIN_TIER_FOR_VIP } from '../authorization/tier-rank';
 
 const VIP_ROOM_PREFIX = 'vip-';
-const TIER_RANK: Record<string, number> = {
-  FREE: 0,
-  BASIC: 1,
-  MEDIUM: 2,
-  PREMIUM: 3,
-};
-const MIN_TIER_FOR_VIP = 2; // MEDIUM
 
 type AuthWs = WebSocket & {
   userId?: string;
@@ -182,7 +176,7 @@ export class MessagingWsGateway implements OnModuleInit {
     if (!ws.userId || !ws.socketId) return;
     if (
       data.room.startsWith(VIP_ROOM_PREFIX) &&
-      (TIER_RANK[ws.tier ?? 'FREE'] ?? 0) < MIN_TIER_FOR_VIP
+      tierRank(ws.tier ?? 'FREE') < MIN_TIER_FOR_VIP
     ) {
       ws.send(
         JSON.stringify({
@@ -283,7 +277,7 @@ export class MessagingWsGateway implements OnModuleInit {
     }
     if (
       params.room.startsWith(VIP_ROOM_PREFIX) &&
-      (TIER_RANK[ws.tier ?? 'FREE'] ?? 0) < MIN_TIER_FOR_VIP
+      tierRank(ws.tier ?? 'FREE') < MIN_TIER_FOR_VIP
     ) {
       ws.send(
         JSON.stringify({

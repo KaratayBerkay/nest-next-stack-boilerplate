@@ -9,6 +9,7 @@ describe('BillingService', () => {
   let mockPrisma: any;
   let mockTokenStore: any;
   let mockNotification: any;
+  let mockRealtime: any;
 
   beforeEach(() => {
     mockProvider = {
@@ -36,11 +37,15 @@ describe('BillingService', () => {
     mockNotification = {
       create: jest.fn(),
     };
+    mockRealtime = {
+      updateUserTier: jest.fn(),
+    };
 
     service = new BillingService(
       mockPrisma,
       mockTokenStore,
       mockNotification,
+      mockRealtime,
       mockProvider,
     );
   });
@@ -73,6 +78,10 @@ describe('BillingService', () => {
       expect(mockTokenStore.rewriteFieldsForUser).toHaveBeenCalledWith('u1', {
         tier: SubscriptionTier.PREMIUM,
       });
+      expect(mockRealtime.updateUserTier).toHaveBeenCalledWith(
+        'u1',
+        SubscriptionTier.PREMIUM,
+      );
       expect(mockPrisma.walletTransaction.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
@@ -132,6 +141,10 @@ describe('BillingService', () => {
         where: { id: 'u1' },
         data: { subscriptionTier: SubscriptionTier.FREE },
       });
+      expect(mockRealtime.updateUserTier).toHaveBeenCalledWith(
+        'u1',
+        SubscriptionTier.FREE,
+      );
       expect(mockPrisma.walletTransaction.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({

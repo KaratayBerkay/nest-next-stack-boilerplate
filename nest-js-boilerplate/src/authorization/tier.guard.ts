@@ -10,13 +10,7 @@ import type { Request } from 'express';
 import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
 import type { JwtUser } from '../auth/auth.types';
 import { MIN_TIER_KEY } from './min-tier.decorator';
-
-const TIER_ORDER: Record<SubscriptionTier, number> = {
-  [SubscriptionTier.FREE]: 0,
-  [SubscriptionTier.BASIC]: 1,
-  [SubscriptionTier.MEDIUM]: 2,
-  [SubscriptionTier.PREMIUM]: 3,
-};
+import { TIER_RANK } from './tier-rank';
 
 /**
  * Tier-based access guard. Reads the required minimum tier from `@MinTier()` on the handler
@@ -43,8 +37,8 @@ export class TierGuard implements CanActivate {
     }
 
     const userTier = user.tier as SubscriptionTier;
-    const userRank = TIER_ORDER[userTier] ?? -1;
-    const requiredRank = TIER_ORDER[requiredTier] ?? Infinity;
+    const userRank = TIER_RANK[userTier] ?? -1;
+    const requiredRank = TIER_RANK[requiredTier] ?? Infinity;
 
     if (userRank < requiredRank) {
       throw new ForbiddenException(

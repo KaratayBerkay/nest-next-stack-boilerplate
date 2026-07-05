@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TokenStoreService } from '../auth/token-store.service';
 import { PushNotificationService } from '../push-notification/push-notification.service';
@@ -31,6 +31,8 @@ interface NotificationEmitDto {
 
 @Injectable()
 export class NotificationService {
+  private readonly logger = new Logger(NotificationService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly realtime: RealtimeGateway,
@@ -97,8 +99,8 @@ export class NotificationService {
           undefined,
           params.payload,
         )
-        .catch(() => {
-          /* push failure */
+        .catch((err: Error) => {
+          this.logger.warn(`Push notification failed: ${err.message}`);
         });
     }
 

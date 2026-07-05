@@ -877,4 +877,15 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
   getOnlineUserIds(): string[] {
     return Array.from(this.onlineCount.keys());
   }
+
+  /** Push a tier change to every live socket belonging to `userId`. */
+  updateUserTier(userId: string, tier: string): void {
+    const sockets = this.userSockets.get(userId);
+    if (!sockets) return;
+    const frame = JSON.stringify({ type: 'tier-changed', tier });
+    for (const ws of sockets) {
+      ws.tier = tier;
+      if (ws.readyState === WebSocket.OPEN) ws.send(frame);
+    }
+  }
 }

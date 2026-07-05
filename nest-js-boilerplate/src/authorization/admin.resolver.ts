@@ -18,6 +18,7 @@ import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { TokenStoreService } from '../auth/token-store.service';
 import { CsrfGuard } from '../csrf/csrf.guard';
 import { PrismaService } from '../prisma/prisma.service';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { MinTier } from './min-tier.decorator';
 import { Roles } from './roles.decorator';
 import { RolesGuard } from './roles.guard';
@@ -66,6 +67,7 @@ export class AdminResolver {
   constructor(
     private readonly prisma: PrismaService,
     private readonly tokenStore: TokenStoreService,
+    private readonly realtime: RealtimeGateway,
   ) {}
 
   @Query(() => String, { name: 'whoAmI' })
@@ -93,6 +95,8 @@ export class AdminResolver {
     });
     // Rewrite live Redis sessions via the reverse index.
     await this.tokenStore.rewriteFieldsForUser(userId, { tier });
+    // Push tier change to all live WS connections for this user.
+    this.realtime.updateUserTier(userId, tier);
     return true;
   }
 

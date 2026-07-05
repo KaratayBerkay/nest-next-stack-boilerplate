@@ -44,30 +44,22 @@ export class FriendsResolver {
     const friendIds = await this.friends.getFriendIds(user.userId);
     const excludeIds = new Set([user.userId, ...friendIds]);
 
-    const friendOfFriendIds = new Set<string>();
-    for (const fid of friendIds) {
-      const fofIds = await this.friends.getFriendIds(fid);
-      for (const id of fofIds) {
-        if (!excludeIds.has(id)) friendOfFriendIds.add(id);
-      }
-    }
+    const mutualCounts = await this.friends.getMutualCounts(
+      friendIds,
+      excludeIds,
+    );
 
-    if (friendOfFriendIds.size === 0) return [];
+    if (mutualCounts.size === 0) return [];
+
+    const topCandidateIds = Array.from(mutualCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([id]) => id);
 
     const candidates = await this.prisma.user.findMany({
-      where: { id: { in: Array.from(friendOfFriendIds).slice(0, 30) } },
+      where: { id: { in: topCandidateIds } },
       select: { id: true, name: true, email: true, avatarUrl: true },
     });
-
-    const mutualCounts = new Map<string, number>();
-    for (const fid of friendIds) {
-      const fofIds = await this.friends.getFriendIds(fid);
-      for (const id of fofIds) {
-        if (!excludeIds.has(id)) {
-          mutualCounts.set(id, (mutualCounts.get(id) ?? 0) + 1);
-        }
-      }
-    }
 
     return candidates
       .map((c) => ({
@@ -77,7 +69,6 @@ export class FriendsResolver {
         avatarUrl: c.avatarUrl ?? undefined,
         mutualFriends: mutualCounts.get(c.id) ?? 0,
       }))
-      .sort((a, b) => b.mutualFriends - a.mutualFriends)
-      .slice(0, 10);
+      .sort((a, b) => b.mutualFriends - a.mutualFriends);
   }
 }
