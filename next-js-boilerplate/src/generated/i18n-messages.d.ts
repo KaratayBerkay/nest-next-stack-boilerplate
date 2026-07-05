@@ -57,6 +57,7 @@ export type I18nMessages = {
         "loginFailed": string;
         "registerFailed": string;
         "emailTaken": string;
+        "passwordsMustMatch": string;
         "resetPasswordTokenMissing": string;
         "resetPasswordFailed": string;
         "verifyEmailTokenMissing": string;

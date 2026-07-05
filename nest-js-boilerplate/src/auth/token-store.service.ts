@@ -163,6 +163,14 @@ export class TokenStoreService {
     await pipe.exec();
   }
 
+  async listSessionsForUser(userId: string): Promise<SessionUser[]> {
+    const reverseKey = this.reverseIndexKey(userId);
+    const keys = await this.redis.smembers(reverseKey);
+    if (keys.length === 0) return [];
+    const results = await Promise.all(keys.map((k) => this.read(k)));
+    return results.filter((s): s is SessionUser => s !== null);
+  }
+
   async revokeAllForUser(userId: string): Promise<number> {
     const reverseKey = this.reverseIndexKey(userId);
     const keys = await this.redis.smembers(reverseKey);

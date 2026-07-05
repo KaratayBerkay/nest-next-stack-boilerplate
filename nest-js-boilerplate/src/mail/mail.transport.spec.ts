@@ -1,5 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import { MailTransport } from './mail.transport';
 
 // Mock the Resend SDK with a factory so the real module is never loaded and no network call is
@@ -10,6 +11,17 @@ jest.mock('resend', () => ({
 }));
 
 const ResendMock = Resend as unknown as jest.Mock;
+
+// Mock nodemailer so SMTP tests never connect to a real server.
+const mockSendMail = jest.fn();
+jest.mock('nodemailer', () => {
+  const mockCreateTransportFn = jest.fn(() => ({
+    sendMail: mockSendMail,
+  }));
+  return { createTransport: mockCreateTransportFn };
+});
+
+const nodemailerCreateTransport = nodemailer.createTransport as jest.Mock;
 
 /** Minimal ConfigService stub honoring the (key, default) signature MailTransport uses. */
 const makeConfig = (
@@ -23,6 +35,8 @@ describe('MailTransport', () => {
   beforeEach(() => {
     ResendMock.mockClear();
     mockSend.mockReset();
+    mockSendMail.mockReset();
+    nodemailerCreateTransport.mockClear();
   });
 
   it('falls back to the dev transport (no Resend client) when no API key is set', async () => {
@@ -93,5 +107,119 @@ describe('MailTransport', () => {
     await expect(
       transport.send({ to: 'a@b.com', subject: 'Hi' }),
     ).rejects.toThrow(/rate limited/);
+  });
+
+  describe('SMTP transport', () => {
+    it('sends via nodemailer when SMTP_HOST is configured', async () => {
+      mockSendMail.mockResolvedValue({ messageId: 'smtp_msg_1' });
+
+      const transport = new MailTransport(
+        makeConfig({ SMTP_HOST: 'mailpit', MAIL_FROM: 'noreply@app.dev' }),
+      );
+      const result = await transport.send({
+        to: 'b@c.com',
+        subject: 'SMTP test',
+      });
+
+      expect(nodemailerCreateTransport).toHaveBeenCalled();
+      expect(mockSendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          from: 'noreply@app.dev',
+          to: 'b@c.com',
+          subject: 'SMTP test',
+        }),
+      );
+      expect(result).toEqual({ provider: 'smtp', messageId: 'smtp_msg_1' });
+      expect(mockSend).not.toHaveBeenCalled();
+    });
+
+    it('forwards MAIL_REPLY_TO as replyTo via SMTP', async () => {
+      mockSendMail.mockResolvedValue({ messageId: 'smtp_msg_2' });
+
+      const transport = new MailTransport(
+        makeConfig({
+          SMTP_HOST: 'mailpit',
+          MAIL_REPLY_TO: 'support@app.dev',
+        }),
+      );
+      await transport.send({ to: 'b@c.com', subject: 'Test' });
+
+      expect(mockSendMail).toHaveBeenCalledWith(
+        expect.objectContaining({ replyTo: 'support@app.dev' }),
+      );
+    });
+
+    it('omits replyTo via SMTP when MAIL_REPLY_TO is not set', async () => {
+      mockSendMail.mockResolvedValue({ messageId: 'smtp_msg_3' });
+
+      const transport = new MailTransport(makeConfig({ SMTP_HOST: 'mailpit' }));
+      await transport.send({ to: 'b@c.com', subject: 'Test' });
+
+      expect(mockSendMail).toHaveBeenCalledWith(
+        expect.not.objectContaining({ replyTo: expect.anything() as unknown }),
+      );
+    });
+
+    it('passes smtpSecure=false and defaults port 587 when not specified', async () => {
+      mockSendMail.mockResolvedValue({ messageId: 'smtp_msg_4' });
+
+      const transport = new MailTransport(makeConfig({ SMTP_HOST: 'mailpit' }));
+      await transport.send({ to: 'b@c.com', subject: 'Test' });
+
+      expect(nodemailerCreateTransport).toHaveBeenCalledWith(
+        expect.objectContaining({
+          host: 'mailpit',
+          port: 587,
+          secure: false,
+        }),
+      );
+    });
+
+    it('passes smtpSecure=true and custom port when configured', async () => {
+      mockSendMail.mockResolvedValue({ messageId: 'smtp_msg_5' });
+
+      const transport = new MailTransport(
+        makeConfig({
+          SMTP_HOST: 'smtp.sendgrid.net',
+          SMTP_PORT: '465',
+          SMTP_SECURE: 'true',
+          SMTP_USER: 'apikey',
+          SMTP_PASS: 'SG_secret',
+        }),
+      );
+      await transport.send({ to: 'b@c.com', subject: 'Test' });
+
+      expect(nodemailerCreateTransport).toHaveBeenCalledWith(
+        expect.objectContaining({
+          host: 'smtp.sendgrid.net',
+          port: '465',
+          secure: true,
+          auth: { user: 'apikey', pass: 'SG_secret' },
+        }),
+      );
+    });
+
+    it('throws when SMTP sendMail fails', async () => {
+      mockSendMail.mockRejectedValue(new Error('connection refused'));
+
+      const transport = new MailTransport(makeConfig({ SMTP_HOST: 'mailpit' }));
+
+      await expect(
+        transport.send({ to: 'b@c.com', subject: 'Fail' }),
+      ).rejects.toThrow(/SMTP send failed: connection refused/);
+    });
+
+    it('falls back to dev transport when neither SMTP_HOST nor RESEND_API_KEY is set', async () => {
+      const transport = new MailTransport(makeConfig({}));
+
+      const result = await transport.send({
+        to: 'a@b.com',
+        subject: 'Fallback',
+      });
+
+      expect(result).toEqual({ provider: 'dev' });
+      expect(nodemailerCreateTransport).not.toHaveBeenCalled();
+      expect(ResendMock).not.toHaveBeenCalled();
+    });
   });
 });

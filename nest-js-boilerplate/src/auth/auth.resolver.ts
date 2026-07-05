@@ -54,7 +54,7 @@ export class AuthResolver {
   }
 
   @Mutation(() => Boolean)
-  resetPassword(@Args('input') input: ResetPasswordInput): Promise<void> {
+  resetPassword(@Args('input') input: ResetPasswordInput): Promise<boolean> {
     return this.auth.resetPassword(input.token, input.newPassword);
   }
 

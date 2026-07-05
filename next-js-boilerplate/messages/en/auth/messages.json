@@ -53,6 +53,7 @@
     "loginFailed": "Email or password is incorrect",
     "registerFailed": "Registration failed",
     "emailTaken": "This email is already registered",
+    "passwordsMustMatch": "Passwords must match",
     "resetPasswordTokenMissing": "Reset password token is missing",
     "resetPasswordFailed": "Password reset failed",
     "verifyEmailTokenMissing": "Verification token is missing",

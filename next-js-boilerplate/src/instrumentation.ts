@@ -45,12 +45,10 @@ export function onRequestError(
     route: context.routePath,
   });
 
-  console.error(
-    JSON.stringify({
-      category: "exception",
-      exceptionType: "CLIENT_REQUEST_ERROR",
-      route: context.routePath,
-      message: error instanceof Error ? error.message : String(error),
-    }),
-  );
+  console.error({
+    category: "exception",
+    exceptionType: "CLIENT_REQUEST_ERROR",
+    route: context.routePath,
+    message: error instanceof Error ? error.message : String(error),
+  });
 }

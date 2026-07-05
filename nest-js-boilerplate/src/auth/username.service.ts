@@ -29,7 +29,7 @@ export class UsernameService {
         attempt === 0
           ? ''
           : '_' + Math.floor(Math.random() * 1000000).toString(36);
-      const candidate = (base + suffix).slice(0, MAX_LENGTH);
+      const candidate = base.slice(0, MAX_LENGTH - suffix.length) + suffix;
 
       const existing = await tx.user.findUnique({
         where: { username: candidate },
@@ -38,11 +38,8 @@ export class UsernameService {
       if (!existing) return candidate;
     }
 
-    const fallback =
-      base +
-      '_' +
-      Date.now().toString(36) +
-      Math.random().toString(36).slice(2, 6);
-    return fallback.slice(0, MAX_LENGTH);
+    const suffix =
+      '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    return base.slice(0, MAX_LENGTH - suffix.length) + suffix;
   }
 }

@@ -111,7 +111,7 @@ export class AuthService {
     });
 
     // Off the request path: the email goes onto the broker, not sent inline.
-    const verifyUrl = `${this.config.get('FRONTEND_URL', 'http://localhost:3000')}/verify-email?token=${rawToken}`;
+    const verifyUrl = `${this.config.get('FRONTEND_URL', 'http://localhost:3000')}/auth/verify-email?token=${rawToken}`;
     await this.mail.enqueue({
       to: email,
       userId: user.id,
@@ -273,7 +273,7 @@ export class AuthService {
   }
 
   /** Consume a password-reset token and set a new password. */
-  async resetPassword(rawToken: string, newPassword: string): Promise<void> {
+  async resetPassword(rawToken: string, newPassword: string): Promise<boolean> {
     const tokenHash = this.crypto.sha256(rawToken);
     const token = await this.prisma.verificationToken.findUnique({
       where: { tokenHash },
@@ -315,6 +315,7 @@ export class AuthService {
         );
       }
     });
+    return true;
   }
 
   /** Social login: upsert the provider Account, find-or-create the User, issue tokens. */

@@ -23,7 +23,7 @@ export function ResetPasswordForm() {
     passwordRequired: t.errors.passwordRequired,
     passwordMin: t.errors.passwordMin,
     passwordMax: t.errors.passwordMax,
-    passwordsMustMatch: "",
+    passwordsMustMatch: t.errors.passwordsMustMatch,
   });
 
   if (!token) {
@@ -77,6 +77,7 @@ export function ResetPasswordForm() {
         return;
       }
       setSuccess(true);
+      setTimeout(() => router.push(LOGIN_PATH), 2000);
     } catch {
       setFieldErrors({ form: t.errors.resetPasswordFailed });
     } finally {
