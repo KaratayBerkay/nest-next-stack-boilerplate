@@ -14,5 +14,12 @@
   "decline": "Decline",
   "awaiting": "Awaiting response",
   "sentByYou": "(sent by you)",
-  "usersFound": "{count} users found"
+  "usersFound": "{count} users found",
+  "suggestedFriends": "Suggested Friends",
+  "suggestedFriendsDesc": "People you may know",
+  "loadSuggestions": "Load suggestions",
+  "loadingSuggestions": "Loading...",
+  "noSuggestions": "No suggestions yet",
+  "mutualFriends": "{count} mutual friends",
+  "failedToLoadSuggestions": "Failed to load suggestions"
 }

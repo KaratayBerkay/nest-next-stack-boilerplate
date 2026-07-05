@@ -11,5 +11,20 @@
   "redirecting": "Fiyat sayfasına yönlendiriliyor...",
   "confirmDowngrade": "{tier} planına düşmeyi onaylayın",
   "viewPlans": "Planları görüntüle",
-  "upgradeToView": "Premium özellikleri ve istatistikleri görüntülemek için yükseltin."
+  "upgradeToView": "Premium özellikleri ve istatistikleri görüntülemek için yükseltin.",
+  "cardNumberRequired": "Kart numarası gerekli",
+  "invalidCardNumber": "Geçersiz kart numarası",
+  "expiryRequired": "Son kullanma tarihi gerekli",
+  "invalidExpiry": "Geçersiz son kullanma tarihi",
+  "cardExpired": "Kartın süresi dolmuş",
+  "cvcRequired": "CVC gerekli",
+  "invalidCvc": "Geçersiz CVC",
+  "nameRequired": "Kart sahibi adı gerekli",
+  "processing": "İşleniyor...",
+  "subscribeTo": "{tier} planına abone ol",
+  "cardNumber": "Kart numarası",
+  "mm": "AA",
+  "yy": "YY",
+  "cvc": "CVC",
+  "cardholderName": "Kart sahibi adı"
 }

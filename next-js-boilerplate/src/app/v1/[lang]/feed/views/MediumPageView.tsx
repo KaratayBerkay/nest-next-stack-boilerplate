@@ -11,6 +11,7 @@ import { apiFetch } from "@/lib/api-client";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { SkeletonFeedList } from "@/components/ui/skeleton-shapes";
 import { IconSearch } from "@tabler/icons-react";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
 
 interface Post {
   id: string;
@@ -25,6 +26,7 @@ interface Post {
 const PAGE_SIZE = 5;
 
 function FeedList({ search }: { search: string }) {
+  const t = useMessages("feed");
   const queryClient = useQueryClient();
   const realtime = useRealtime();
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
@@ -177,18 +179,18 @@ function FeedList({ search }: { search: string }) {
           onClick={handleLoadNewPosts}
           className="mx-auto rounded-full bg-brand/10 px-4 py-1.5 text-xs font-medium text-brand transition-colors hover:bg-brand/20"
         >
-          New posts available — tap to load
+          {t.newPostsAvailable}
         </button>
       )}
 
       {posts.length === 0 && (
         <div className="flex flex-col items-center justify-center gap-3 py-12">
-          <p className="text-sm text-muted">No posts yet.</p>
+          <p className="text-sm text-muted">{t.noPostsYet}</p>
           <Link
             href="/v1/en/share"
             className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white"
           >
-            Be the first to share
+            {t.beFirstToShare}
           </Link>
         </div>
       )}
@@ -207,18 +209,19 @@ function FeedList({ search }: { search: string }) {
 
       {loadingMore && (
         <div className="flex items-center justify-center py-4">
-          <p className="text-[10px] text-muted">Loading more...</p>
+          <p className="text-[10px] text-muted">{t.loadingMore}</p>
         </div>
       )}
 
       {!hasMore && posts.length > 0 && (
-        <p className="py-4 text-center text-[10px] text-muted">All caught up</p>
+        <p className="py-4 text-center text-[10px] text-muted">{t.allCaughtUp}</p>
       )}
     </div>
   );
 }
 
 function PostStatsSidebar() {
+  const t = useMessages("feed");
   const { toast } = useToast();
   const [stats, setStats] = useState<{
     totalPosts: number;
@@ -243,12 +246,12 @@ function PostStatsSidebar() {
       } else {
         const data = await res.json();
         toast({
-          description: data.error ?? "Failed to load stats",
+          description: data.error ?? t.failedToLoadStats,
           variant: "destructive",
         });
       }
     } catch {
-      toast({ description: "Network error", variant: "destructive" });
+      toast({ description: t.networkError, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -257,7 +260,7 @@ function PostStatsSidebar() {
   return (
     <div className="rounded-xl border border-border p-4">
       <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
-        Your Post Stats
+        {t.yourPostStats}
       </h3>
       {!stats && (
         <button
@@ -265,21 +268,21 @@ function PostStatsSidebar() {
           disabled={loading}
           className="w-full rounded-lg bg-brand/10 px-3 py-2 text-xs font-medium text-brand transition-colors hover:bg-brand/20 disabled:opacity-50"
         >
-          {loading ? "Loading..." : "Load stats"}
+          {loading ? t.loading : t.loadStats}
         </button>
       )}
       {stats && (
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted">Posts</span>
+            <span className="text-xs text-muted">{t.posts}</span>
             <span className="text-sm font-bold">{stats.totalPosts}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted">Reactions</span>
+            <span className="text-xs text-muted">{t.reactions}</span>
             <span className="text-sm font-bold">{stats.totalReactions}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted">Avg/Post</span>
+            <span className="text-xs text-muted">{t.avgPerPost}</span>
             <span className="text-sm font-bold">
               {stats.avgReactionsPerPost.toFixed(1)}
             </span>
@@ -293,6 +296,7 @@ function PostStatsSidebar() {
 import { useToast } from "@/components/ui/Toast";
 
 export function MediumPageView() {
+  const t = useMessages("feed");
   const params = useParams<{ lang: string }>();
   const lang = params?.lang ?? "en";
   const [search, setSearch] = useState("");
@@ -300,12 +304,12 @@ export function MediumPageView() {
   return (
     <div className="flex h-full flex-col gap-4 overflow-hidden">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-brand">Feed</h2>
+        <h2 className="text-sm font-semibold text-brand">{t.feed}</h2>
         <Link
           href={`/v1/${lang}/share`}
           className="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
         >
-          Share
+          {t.share}
         </Link>
       </div>
 
@@ -321,7 +325,7 @@ export function MediumPageView() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search posts..."
+              placeholder={t.searchPlaceholder}
               className="w-full rounded-lg border border-border bg-surface py-1.5 pl-7 pr-3 text-xs text-fg"
             />
           </div>

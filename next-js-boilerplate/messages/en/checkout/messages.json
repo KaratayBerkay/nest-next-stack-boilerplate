@@ -11,5 +11,20 @@
   "redirecting": "Redirecting to pricing...",
   "confirmDowngrade": "Confirm downgrade to {tier}",
   "viewPlans": "View plans",
-  "upgradeToView": "Upgrade to view premium features and stats."
+  "upgradeToView": "Upgrade to view premium features and stats.",
+  "cardNumberRequired": "Card number is required",
+  "invalidCardNumber": "Invalid card number",
+  "expiryRequired": "Expiry is required",
+  "invalidExpiry": "Invalid expiry",
+  "cardExpired": "Card has expired",
+  "cvcRequired": "CVC is required",
+  "invalidCvc": "Invalid CVC",
+  "nameRequired": "Cardholder name is required",
+  "processing": "Processing...",
+  "subscribeTo": "Subscribe to {tier}",
+  "cardNumber": "Card number",
+  "mm": "MM",
+  "yy": "YY",
+  "cvc": "CVC",
+  "cardholderName": "Cardholder name"
 }

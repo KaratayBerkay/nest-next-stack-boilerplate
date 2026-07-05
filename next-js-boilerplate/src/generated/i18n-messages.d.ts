@@ -97,6 +97,21 @@ export type I18nMessages = {
       "confirmDowngrade": string;
       "viewPlans": string;
       "upgradeToView": string;
+      "cardNumberRequired": string;
+      "invalidCardNumber": string;
+      "expiryRequired": string;
+      "invalidExpiry": string;
+      "cardExpired": string;
+      "cvcRequired": string;
+      "invalidCvc": string;
+      "nameRequired": string;
+      "processing": string;
+      "subscribeTo": string;
+      "cardNumber": string;
+      "mm": string;
+      "yy": string;
+      "cvc": string;
+      "cardholderName": string;
     }
 
   "error": {
@@ -111,6 +126,25 @@ export type I18nMessages = {
       "tryAgain": string;
       "failedToLoad": string;
       "loadingMessages": string;
+    }
+
+  "feed": {
+      "feed": string;
+      "share": string;
+      "searchPlaceholder": string;
+      "noPostsYet": string;
+      "beFirstToShare": string;
+      "newPostsAvailable": string;
+      "loadingMore": string;
+      "allCaughtUp": string;
+      "yourPostStats": string;
+      "loadStats": string;
+      "loading": string;
+      "posts": string;
+      "reactions": string;
+      "avgPerPost": string;
+      "failedToLoadStats": string;
+      "networkError": string;
     }
 
   "find-friends": {
@@ -130,6 +164,13 @@ export type I18nMessages = {
       "awaiting": string;
       "sentByYou": string;
       "usersFound": string;
+      "suggestedFriends": string;
+      "suggestedFriendsDesc": string;
+      "loadSuggestions": string;
+      "loadingSuggestions": string;
+      "noSuggestions": string;
+      "mutualFriends": string;
+      "failedToLoadSuggestions": string;
     }
 
   "home": {
@@ -164,6 +205,18 @@ export type I18nMessages = {
       "send": string;
       "loading": string;
       "failedToLoad": string;
+    }
+
+  "posts": {
+      "back": string;
+      "deletePost": string;
+      "deletePostConfirm": string;
+      "save": string;
+      "cancel": string;
+      "comments": string;
+      "reactionBreakdown": string;
+      "whoReacted": string;
+      "unknown": string;
     }
 
   "premium": {

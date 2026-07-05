@@ -1,0 +1,18 @@
+{
+  "feed": "Beslenme Akışı",
+  "share": "Paylaş",
+  "searchPlaceholder": "Gönderi ara...",
+  "noPostsYet": "Henüz gönderi yok.",
+  "beFirstToShare": "İlk paylaşan sen ol",
+  "newPostsAvailable": "Yeni gönderiler mevcut — dokunarak yükle",
+  "loadingMore": "Daha fazla yükleniyor...",
+  "allCaughtUp": "Tümü göründü",
+  "yourPostStats": "Gönderi İstatistikleriniz",
+  "loadStats": "İstatistikleri yükle",
+  "loading": "Yükleniyor...",
+  "posts": "Gönderiler",
+  "reactions": "Tepkiler",
+  "avgPerPost": "Ort/Gönderi",
+  "failedToLoadStats": "İstatistikler yüklenemedi",
+  "networkError": "Ağ hatası"
+}

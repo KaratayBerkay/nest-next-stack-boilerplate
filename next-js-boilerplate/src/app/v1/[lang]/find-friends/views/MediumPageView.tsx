@@ -108,6 +108,7 @@ function PaginationBar({
 }
 
 function SuggestedFriendsPanel() {
+  const t = useMessages("find-friends");
   const { toast } = useToast();
   const [suggested, setSuggested] = useState<
     Array<{ id: string; name?: string; email: string; mutualFriends: number }>
@@ -130,7 +131,7 @@ function SuggestedFriendsPanel() {
       } else {
         const data = await res.json();
         toast({
-          description: data.error ?? "Failed to load suggestions",
+          description: data.error ?? t.failedToLoadSuggestions,
           variant: "destructive",
         });
       }
@@ -144,7 +145,7 @@ function SuggestedFriendsPanel() {
   return (
     <div className="rounded-xl border border-border p-4">
       <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
-        Suggested Friends
+        {t.suggestedFriends}
       </h3>
       {!suggested.length && (
         <button
@@ -152,7 +153,7 @@ function SuggestedFriendsPanel() {
           disabled={loading}
           className="w-full rounded-lg bg-brand/10 px-3 py-2 text-xs font-medium text-brand transition-colors hover:bg-brand/20 disabled:opacity-50"
         >
-          {loading ? "Loading..." : "Load suggestions"}
+          {loading ? t.loadingSuggestions : t.loadSuggestions}
         </button>
       )}
       {suggested.length > 0 && (
@@ -165,7 +166,7 @@ function SuggestedFriendsPanel() {
               />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{s.name ?? s.email}</p>
-                <p className="text-[10px] text-muted">{s.mutualFriends} mutual</p>
+                <p className="text-[10px] text-muted">{t.mutualFriends.replace("{count}", String(s.mutualFriends))}</p>
               </div>
             </div>
           ))}

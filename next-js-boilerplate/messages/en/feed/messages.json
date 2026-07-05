@@ -1,0 +1,18 @@
+{
+  "feed": "Feed",
+  "share": "Share",
+  "searchPlaceholder": "Search posts...",
+  "noPostsYet": "No posts yet.",
+  "beFirstToShare": "Be the first to share",
+  "newPostsAvailable": "New posts available — tap to load",
+  "loadingMore": "Loading more...",
+  "allCaughtUp": "All caught up",
+  "yourPostStats": "Your Post Stats",
+  "loadStats": "Load stats",
+  "loading": "Loading...",
+  "posts": "Posts",
+  "reactions": "Reactions",
+  "avgPerPost": "Avg/Post",
+  "failedToLoadStats": "Failed to load stats",
+  "networkError": "Network error"
+}

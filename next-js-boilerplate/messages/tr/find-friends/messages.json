@@ -14,5 +14,12 @@
   "decline": "Reddet",
   "awaiting": "Yanıt bekleniyor",
   "sentByYou": "(sizin gönderdiğiniz)",
-  "usersFound": "{count} kullanıcı bulundu"
+  "usersFound": "{count} kullanıcı bulundu",
+  "suggestedFriends": "Önerilen Arkadaşlar",
+  "suggestedFriendsDesc": "Tanıyabileceğiniz kişiler",
+  "loadSuggestions": "Önerileri yükle",
+  "loadingSuggestions": "Yükleniyor...",
+  "noSuggestions": "Henüz öneri yok",
+  "mutualFriends": "{count} ortak arkadaş",
+  "failedToLoadSuggestions": "Öneriler yüklenemedi"
 }

@@ -7,6 +7,7 @@ import {
   getLast4,
 } from "@/lib/validation/billing";
 import { apiFetchJson } from "@/lib/api-client";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
 
 interface MockCardFormProps {
   tier: string;
@@ -21,6 +22,7 @@ const TEST_CARDS = [
 ];
 
 export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
+  const t = useMessages("checkout");
   const [cardNumber, setCardNumber] = useState("");
   const [expMonth, setExpMonth] = useState("");
   const [expYear, setExpYear] = useState("");
@@ -30,14 +32,14 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
   const [submitting, setSubmitting] = useState(false);
 
   const errors = {
-    cardNumberRequired: "Card number is required",
-    cardNumberInvalid: "Invalid card number",
-    expiryRequired: "Expiry is required",
-    expiryInvalid: "Invalid expiry",
-    expiryPast: "Card has expired",
-    cvcRequired: "CVC is required",
-    cvcInvalid: "Invalid CVC",
-    nameRequired: "Cardholder name is required",
+    cardNumberRequired: t.cardNumberRequired,
+    cardNumberInvalid: t.invalidCardNumber,
+    expiryRequired: t.expiryRequired,
+    expiryInvalid: t.invalidExpiry,
+    expiryPast: t.cardExpired,
+    cvcRequired: t.cvcRequired,
+    cvcInvalid: t.invalidCvc,
+    nameRequired: t.nameRequired,
   };
 
   const schema = mockCardFormSchema(errors);
@@ -115,7 +117,7 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
 
       <div>
         <label htmlFor="cardNumber" className="block text-sm font-medium">
-          Card number
+          {t.cardNumber}
         </label>
         <input
           id="cardNumber"
@@ -143,7 +145,7 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
             data-testid="exp-month"
             type="text"
             inputMode="numeric"
-            placeholder="MM"
+            placeholder={t.mm}
             maxLength={2}
             value={expMonth}
             onChange={(e) => setExpMonth(e.target.value.replace(/\D/g, "").slice(0, 2))}
@@ -159,7 +161,7 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
             data-testid="exp-year"
             type="text"
             inputMode="numeric"
-            placeholder="YY"
+            placeholder={t.yy}
             maxLength={2}
             value={expYear}
             onChange={(e) => setExpYear(e.target.value.replace(/\D/g, "").slice(0, 2))}
@@ -191,7 +193,7 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
 
       <div>
         <label htmlFor="cardholderName" className="block text-sm font-medium">
-          Cardholder name
+          {t.cardholderName}
         </label>
         <input
           id="cardholderName"
@@ -219,7 +221,7 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
         data-testid="submit-payment"
         className="w-full rounded bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand/90 disabled:opacity-50"
       >
-        {submitting ? "Processing..." : "Pay now"}
+        {submitting ? t.processing : t.subscribeTo.replace("{tier}", tier)}
       </button>
     </form>
   );

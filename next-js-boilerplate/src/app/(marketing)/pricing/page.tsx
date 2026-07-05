@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { TIERS, tierLabel, tierAtLeast, type Tier } from "@/lib/tier";
 import { checkoutPath, LOGIN_PATH } from "@/constants/routes";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { LANG_COOKIE, LANGS, DEFAULT_LANG } from "@/constants/i18n";
 import Link from "next/link";
 
 function TierCard({
@@ -60,9 +61,17 @@ function TierCard({
   );
 }
 
+function getCookieLang(): string {
+  if (typeof document === "undefined") return DEFAULT_LANG;
+  const match = document.cookie.match(new RegExp(`${LANG_COOKIE}=([^;]+)`));
+  const val = match?.[1];
+  return val && (LANGS as readonly string[]).includes(val) ? val : DEFAULT_LANG;
+}
+
 export default function PricingPage() {
   const { user } = useAuth();
   const t = useMessages("pricing");
+  const lang = getCookieLang();
 
   const FEATURES: Record<Tier, string[]> = {
     FREE: t.featuresBasic,
@@ -116,7 +125,7 @@ export default function PricingPage() {
               }
               ctaHref={
                 isUpgrade && user
-                  ? checkoutPath(tier)
+                  ? checkoutPath(tier, lang)
                   : !user
                     ? LOGIN_PATH
                     : undefined

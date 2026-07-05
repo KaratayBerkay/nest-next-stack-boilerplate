@@ -1,0 +1,11 @@
+{
+  "back": "Back",
+  "deletePost": "Delete post",
+  "deletePostConfirm": "Are you sure you want to delete this post?",
+  "save": "Save",
+  "cancel": "Cancel",
+  "comments": "{count} comments",
+  "reactionBreakdown": "Reaction Breakdown",
+  "whoReacted": "Who Reacted",
+  "unknown": "Unknown"
+}

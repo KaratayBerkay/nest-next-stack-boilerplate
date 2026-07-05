@@ -17,6 +17,7 @@ import { ReactionInline } from "@/components/feed/ReactionButtons";
 import { CommentSection } from "@/components/feed/CommentSection";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
 
 interface Post {
   id: string;
@@ -40,6 +41,7 @@ interface Post {
 }
 
 function PostDetailContent() {
+  const t = useMessages("posts");
   const params = useParams<{ lang: string; uuid: string }>();
   const uuid = params?.uuid ?? "";
   const router = useRouter();
@@ -76,7 +78,7 @@ function PostDetailContent() {
         className="flex items-center gap-1 text-xs text-muted transition-colors hover:text-fg"
       >
         <IconArrowLeft size={16} stroke={1.5} />
-        Back
+        {t.back}
       </button>
 
       <div className="surface flex flex-col gap-3 rounded-xl border border-border p-4">
@@ -116,8 +118,8 @@ function PostDetailContent() {
                   <IconPencil size={14} stroke={1.5} />
                 </button>
                 <ConfirmDialog
-                  title="Delete post"
-                  description="Are you sure you want to delete this post?"
+                  title={t.deletePost}
+                  description={t.deletePostConfirm}
                   onConfirm={async () => {
                     const res = await apiFetch(`/api/posts/${post.id}`, {
                       method: "DELETE",
@@ -173,13 +175,13 @@ function PostDetailContent() {
                 }}
                 className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white"
               >
-                Save
+                {t.save}
               </button>
               <button
                 onClick={() => setEditing(false)}
                 className="text-sm text-muted underline"
               >
-                Cancel
+                {t.cancel}
               </button>
             </div>
           </>
@@ -202,7 +204,7 @@ function PostDetailContent() {
 
         <div className="flex items-center gap-1 text-xs text-muted">
           <IconMessageCircle size={14} stroke={1.5} />
-          {post._count?.comments ?? post.comments?.length ?? 0} comments
+          {t.comments.replace("{count}", String(post._count?.comments ?? post.comments?.length ?? 0))}
         </div>
       </div>
 

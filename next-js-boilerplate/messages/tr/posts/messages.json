@@ -1,0 +1,11 @@
+{
+  "back": "Geri",
+  "deletePost": "Gönderiyi sil",
+  "deletePostConfirm": "Bu gönderiyi silmek istediğinizden emin misiniz?",
+  "save": "Kaydet",
+  "cancel": "İptal",
+  "comments": "{count} yorum",
+  "reactionBreakdown": "Tepki Dağılımı",
+  "whoReacted": "Kim Tepki Verdi",
+  "unknown": "Bilinmeyen"
+}
