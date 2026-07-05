@@ -1153,6 +1153,10 @@ noted explicitly below where that applies.
   checkout page still have zero tests, and none of the new backend specs
   actually exercise the `@MinTier` guard's 403 path (see "Third
   re-verification pass (2026-07-06)"). `test:e2e` still hasn't run.
+  **2026-07-06, fifth pass:** `tier-guard.e2e-spec.ts` added to `test/` —
+  8 tests covering `premiumStats` (FREE rejected, BASIC allowed, MEDIUM allowed)
+  and `growthStats` (FREE rejected, BASIC rejected, MEDIUM allowed, PREMIUM
+  allowed). Requires Docker (Prisma + Redis) to run — not yet executed.
 - [ ] **T28 (L) — Live control run against rebuilt containers** (same recipe as
   Phase 3/16: `docker compose --profile all up -d --build`, real HTTP/GraphQL/WS
   traffic, not just mocks). Script: register/login a fresh FREE user → attempt
@@ -1177,11 +1181,12 @@ noted explicitly below where that applies.
   2026-07-06: the decorators are all present and correctly targeted (T7/T8
   confirmed statically). `6b1411b` added `post.resolver.spec.ts`/
   `friends.resolver.spec.ts`, but those unit-test the resolvers' own logic by
-  constructing them directly, which never runs Nest's guard pipeline — **the
-  actual 403 rejection is still unproven by anything**, unit or live. This
-  line cannot be checked until a guard-level test (e.g. an e2e call, or a test
-  that boots the module with guards attached) or T28's live run actually
-  exercises it.
+  constructing them directly, which never runs Nest's guard pipeline — the
+  actual 403 rejection was unproven by anything, unit or live. **Fifth pass
+  (2026-07-06):** `tier-guard.e2e-spec.ts` added — 8 tests covering
+  `premiumStats` (@MinTier(BASIC)) and `growthStats` (@MinTier(MEDIUM)) with
+  FREE/BASIC/MEDIUM/PREMIUM callers. Requires Docker to run — not yet executed.
+  Left unchecked until the e2e suite actually runs (pending T28).
 - [ ] **The one new WS gate (`vip-` rooms) rejects live**, proven with a real socket
   client forging the join, not a mock.
 - [ ] **Zero regressions**: FREE-tier behavior on every touched page is byte-for-byte
