@@ -2,8 +2,260 @@
 
 > Execution tracker for the seventeenth phase of the [stack roadmap](../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
-> Created 2026-07-05 · Status: **planning only — no code written for this tracker yet**,
-> per the project's "plan phase N = write only phaseN.md" convention.
+> Created 2026-07-05 · Status: **NOT gate-clean (re-verified 2026-07-05)**. Stages
+> A–G's code actually landed in `e2c0558`/`a7cd6a0` (this tracker was left at
+> "planning only" the whole time — the recurring "commit lands, tracker untouched"
+> pattern, 6th occurrence after phases 2/12/13/15/16), but re-verification against
+> the live tree (not just the commit message) found 6 real gaps — see punch list
+> below. `pnpm test` is green in both packages (207 backend / 67 frontend) but that
+> alone didn't catch any of them — same lesson phases 2/12/15/16 already taught.
+
+## Punch list to close this phase (priority order)
+
+1. **`BillingService`/`getBillingHistory` never link `WalletTransaction` rows to
+   the user's `Wallet`, so `myBillingHistory` always returns empty.**
+   `ensureWallet()` (`billing.service.ts:52,167-174`) is called and its return
+   value discarded; every `walletTransaction.create()` in `subscribeToPlan`
+   (`:70-85`, `:92-107`, `:123-136`) omits `fromWalletId`/`toWalletId`. Since
+   `getBillingHistory`'s own-wallet filter (`:147-156`,
+   `OR:[{fromWallet:{userId}},{toWallet:{userId}}]`) matches on those fields, it
+   returns zero rows for every real charge/downgrade. Not caught by
+   `billing.service.spec.ts` because it mocks `walletTransaction.findMany`
+   directly instead of exercising the real relation. Breaks T5's own verify step.
+2. **Every Stage E dispatcher page computes its view component inline during
+   render**, tripping `react-hooks/static-components` (`pnpm lint`, 8 hard
+   errors): chat-room, feed, find-friends, messages, notification, posts/[uuid],
+   premium, settings/sessions all do `const PageView = getTierView(...); return
+   <PageView />` in the render body — React treats this as a new component type
+   every render, resetting any local state inside the rendered view.
+3. **Backend `pnpm lint` fails with 81 errors, 80 inside phase17's own files:**
+   `billing.service.spec.ts` (30), `messaging-ws.gateway.spec.ts` (27),
+   `post.resolver.ts` (15, unsafe-`any` from Prisma group-by results),
+   `mock-payment.provider.spec.ts` (7), one dead `async charge()` with no
+   `await` in `mock-payment.provider.ts`, and the unused `wallet` var in
+   `billing.service.ts` (same variable as punch-item 1). The 81st error
+   (`versioning.e2e-spec.ts`) predates this phase, not a regression.
+4. **T26 — `pricing` and `premium` never got i18n namespaces**, only `checkout`
+   did (`messages/{en,tr}/checkout/`). `(marketing)/pricing/page.tsx` and
+   `/premium`'s page/views still have zero `useMessages()` calls — hardcoded
+   English, unchanged from the pre-phase17 survey. Pricing's logged-out CTA also
+   renders a disabled span instead of linking to login — one of T15's 4 planned
+   CTA states never landed.
+5. **T24 — `users/detail/[uuid]` never got the tier-view split.** Only
+   `users/list` did, and even that one hardcodes a `FreePageView` render rather
+   than routing through `getTierView` like every other page.
+6. **T28 — the live control run against rebuilt containers was never run.** No
+   docker rebuild, WS/HTTP probe script, or log spot-check exists anywhere.
+   Punch-items 1 and 2 were both invisible to the 207+67 passing unit tests —
+   exactly the gap this project's own established lesson (phases 2/12/15/16)
+   warns about.
+7. **Nested tracker-drift, not fixed here:** `phase16.md`'s header claims
+   "gate-clean — closed 2026-07-05" (set by this phase's own Stage A/T2), but
+   its `T23`, `T32`, and 3 verify-loop items are still unchecked in that same
+   file — outside the 10-item punch list Stage A was scoped to re-verify, but
+   the "closed" framing overstates it. Flagging so it isn't mistaken for fully
+   resolved.
+
+## Fix plan (step-by-step, one per punch-list item)
+
+### Fix 1 — Wallet linkage (`billing.service.ts`)
+
+1. In `subscribeToPlan`, the wallet is already fetched at line 52 (`const wallet
+   = await this.ensureWallet(userId);`) — its `.id` is just never used. Add
+   `fromWalletId: wallet.id,` to the `data` object of all three
+   `this.prisma.walletTransaction.create({...})` calls: the decline branch
+   (`:70-85`), the approved branch (`:92-107`), and the downgrade branch
+   (`:123-136`). Leave `toWalletId` unset — the money's destination is the
+   external mock processor, not another `Wallet` row.
+2. No change needed to `getBillingHistory` (`:147-156`) — its
+   `OR:[{fromWallet:{userId}},{toWallet:{userId}}]` filter already matches once
+   `fromWalletId` is populated.
+3. Update `billing.service.spec.ts`'s three `walletTransaction.create`
+   assertions (around lines 85-92, 120-127, 148-155) to also assert
+   `fromWalletId: 'w1'` is present in `data` (matching the mocked wallet
+   fixture at line 26) — otherwise this exact regression can silently ship
+   again.
+4. Add one assertion to the `getBillingHistory` test (line ~191) that
+   `mockPrisma.walletTransaction.findMany` was called with a `where` containing
+   the `OR` wallet filter, e.g.
+   `expect.objectContaining({ where: expect.objectContaining({ OR: [{ fromWallet: { userId: 'u1' } }, { toWallet: { userId: 'u1' } }] }) })`.
+5. Re-run `pnpm test` in `nest-js-boilerplate` — all billing tests should stay
+   green with the new assertions passing.
+
+### Fix 2 — Render-time component creation (8 dispatcher pages)
+
+Root cause: each page does `const PageView = getTierView(user.tier, VIEWS);
+return <PageView />;` — assigning a PascalCase variable from a runtime call and
+then JSX-tagging it is exactly what `react-hooks/static-components` flags,
+since it can't prove the reference is stable across renders.
+
+1. Convert `next-js-boilerplate/src/lib/tier-view.ts` → `tier-view.tsx` (it now
+   needs to emit JSX) and change `getTierView` to return the *rendered node*
+   instead of the component reference:
+   ```tsx
+   import type { ReactNode } from 'react';
+
+   export function getTierView<T extends TierViews>(
+     tier: string | null | undefined,
+     views: T,
+   ): ReactNode {
+     const View =
+       tier && tier in views && tier in TIER_ORDER
+         ? views[tier as Tier]
+         : views[FALLBACK_TIER];
+     return <View />;
+   }
+   ```
+   Callers now embed the call directly (`{getTierView(user.tier, VIEWS)}`)
+   instead of storing it in a PascalCase variable first — no intermediate
+   component-typed binding exists at the call site, which is what the rule
+   actually keys off.
+2. Update all 8 call sites (`chat-room/page.tsx`, `feed/page.tsx`,
+   `find-friends/page.tsx`, `messages/page.tsx`, `notification/page.tsx`,
+   `posts/[uuid]/page.tsx`, `premium/page.tsx`, `settings/sessions/page.tsx`):
+   replace
+   ```tsx
+   const PageView = getTierView(user.tier, VIEWS);
+   return <PageView />;
+   ```
+   with
+   ```tsx
+   return getTierView(user.tier, VIEWS);
+   ```
+   (for `premium/page.tsx`, which wraps it in a `<div>`, replace just the
+   `<PageView />` line with `{getTierView(user.tier, VIEWS)}`).
+3. Rewrite `next-js-boilerplate/src/lib/tier-view.spec.ts` — it currently
+   asserts reference identity (`expect(getTierView('FREE', views)).toBe(FreeView)`),
+   which no longer typechecks once the return value is a `ReactNode`. Switch
+   each view fixture to render distinguishable output (e.g. a
+   `data-testid`/text unique per tier) and assert via
+   `@testing-library/react`'s `render()`/`screen` which one appears, instead of
+   comparing references.
+4. Re-run `pnpm lint` — the 8 `react-hooks/static-components` errors should
+   clear. If the rule still fires *inside* `getTierView` itself, fall back to
+   inlining a `switch` per page (loses the shared-helper DRY win from T11 but
+   is guaranteed lint-clean, since literal `<BasicPageView />`-style JSX tags
+   are never flagged).
+
+### Fix 3 — Backend lint (81 errors)
+
+1. `mock-payment.provider.ts:26` — `async charge()` has no `await`. Drop
+   `async` and return `Promise.resolve({...})` from each branch instead, so the
+   interface (`Promise<ChargeResult>`) is still satisfied without a fake
+   `await`.
+2. `billing.service.ts:52` unused `wallet` — resolved automatically by Fix 1
+   once `wallet.id` is referenced.
+3. `billing.service.spec.ts` (30 errors) — caused by `mockPrisma: any`,
+   `mockTokenStore: any`, `mockNotification: any`, `mockRealtime: any` (lines
+   9-12), which cascade into `no-unsafe-*` everywhere they're used. Replace
+   each with a minimal structural type covering only the methods actually
+   called (e.g. `type MockPrisma = { user: { findUniqueOrThrow: jest.Mock;
+   update: jest.Mock }; wallet: { findUnique: jest.Mock; create: jest.Mock };
+   walletTransaction: { create: jest.Mock; findMany: jest.Mock } };`), and cast
+   once at the `new BillingService(...)` call site
+   (`mockPrisma as unknown as PrismaService`) instead of leaking `any`
+   throughout.
+4. `messaging-ws.gateway.spec.ts` (27 errors) — same shape of problem:
+   `createMockWs(): any` (line 9) and `mockRealtime`/`mockMs: any` (lines
+   26-27). Give `createMockWs` a concrete return type matching the fields it
+   sets (`userId`, `tier`, `send`, etc.) and cast `(gateway as any)` (lines
+   like 56) to a narrow structural type instead, e.g.
+   `(gateway as unknown as { handleJoinRoom: (ws: MockWs, data: { room: string }) => void; handleClaimJoinRoom: (ws: MockWs, params: { room: string }) => void })`.
+5. `mock-payment.provider.spec.ts` (7 errors) — every test does
+   `tier: 'PREMIUM' as any` (and BASIC/FREE). Import `SubscriptionTier` from
+   `../@generated/prisma/subscription-tier.enum` and use
+   `SubscriptionTier.PREMIUM`/`.BASIC`/`.FREE` instead of the string+`as any`
+   cast.
+6. `post.resolver.ts` (15 errors, lines 80-99) — `(post as any).reactions` and
+   `(r: any)`. Define one local type above the resolver:
+   ```ts
+   type PostWithReactions = Post & {
+     reactions?: { type: string; userId: string; user?: { name: string | null } | null }[];
+   };
+   ```
+   then use `(post as PostWithReactions).reactions ?? []` in both
+   `reactionBreakdown` and `whoReacted`, and type the `.map` callback parameter
+   with the same element type instead of `any`.
+7. Re-run `pnpm lint` in `nest-js-boilerplate` — should drop from 81 to 0 (the
+   1 pre-existing `versioning.e2e-spec.ts` error predates this phase and is out
+   of scope).
+
+### Fix 4 — Missing `pricing`/`premium` i18n
+
+`getAllMessages()` (`src/lib/i18n/get-all-messages.ts`) auto-discovers every
+`messages/{locale}/*/messages.json` folder recursively — no manual namespace
+registration needed in either `layout.tsx`, just add the files:
+
+1. Create `messages/en/pricing/messages.json` and `messages/tr/pricing/messages.json`
+   with keys for the heading/subtitle and the CTA labels currently hardcoded in
+   `(marketing)/pricing/page.tsx` (`"Pricing"`, `"Choose the plan that fits your
+   needs."`, `"Current plan"`, `"Included"`, `"Upgrade"`).
+2. Update `pricing/page.tsx`: `import { useMessages } from
+   "@/lib/i18n/MessagesProvider"`, `const t = useMessages("pricing")`, replace
+   each hardcoded string with `t.<key>`.
+3. Same page: fix the logged-out CTA gap. Currently `ctaHref` is only set when
+   `isUpgrade && user` (line ~123-125), so a logged-out visitor gets the
+   disabled span. Change so a logged-out visitor gets
+   `ctaHref={LOGIN_PATH}` (from `@/constants/routes`) with `ctaLabel: t.upgrade`
+   — completing T15's 4th CTA state.
+4. Create `messages/en/premium/messages.json` /
+   `messages/tr/premium/messages.json` covering the strings hardcoded across
+   `premium/page.tsx` and its 4 view files ("Premium Dashboard", "Sign in to
+   view premium", "Load premium stats", "Total Users"/"Active Users"/"Revenue",
+   the growth-trend copy in `MediumPageView.tsx`, the CSV-export copy in
+   `PremiumPageView.tsx`, the locked-state copy in `FreePageView.tsx`).
+5. Update `premium/page.tsx` and each of its 4 view files to call
+   `useMessages("premium")` and replace their hardcoded strings.
+6. Run `pnpm generate-i18n-types` in `next-js-boilerplate` so
+   `src/generated/i18n-messages.d.ts` picks up the two new namespaces.
+7. Manually load `/pricing` and `/v1/tr/premium` in a dev server and confirm no
+   missing-key fallback in either locale (per the phase's own verify loop).
+
+### Fix 5 — `users/detail/[uuid]` tier-view split
+
+Mirror `users/list`'s already-established shape exactly (that page also has no
+real tier differentiation per D6, and already hardcodes `FreePageView` rather
+than routing through `getTierView` — same pattern, just apply it to the sibling
+page):
+
+1. Create `users/detail/[uuid]/views/FreePageView.tsx` containing the existing
+   `UserDetailContent` function body verbatim (the `USERS` mock record, the
+   `getMessages(lang, "users")` call, and its JSX), exported as `FreePageView`
+   the same way `users/list/views/FreePageView.tsx` does.
+2. Create `BasicPageView.tsx`, `MediumPageView.tsx`, `PremiumPageView.tsx` in
+   the same `views/` folder, each a one-line re-export matching
+   `users/list/views/BasicPageView.tsx`'s exact shape:
+   `import { FreePageView } from "./FreePageView"; export const BasicPageView = FreePageView;`
+3. Update `users/detail/[uuid]/page.tsx` to import `FreePageView` from
+   `./views/FreePageView` and render it inside the existing `Suspense` wrapper,
+   in place of the current inline `UserDetailContent`.
+
+### Fix 6 — T28 live control run
+
+1. `docker compose --profile all up -d --build` (full rebuild — both images
+   changed).
+2. Script against the real stack: register/login a fresh FREE user → attempt
+   joining WS room `vip-lounge` (expect the rejection frame) → call
+   `whoReacted` on a post (expect 403) → `checkout/PREMIUM` with `4242...`
+   (expect approval, tier flips) → re-attempt the VIP join (now succeeds) →
+   re-call `whoReacted` (now 200) → **call `myBillingHistory` and confirm the
+   just-completed charge actually appears — this is the real end-to-end proof
+   Fix 1 worked**, not just the updated unit assertions → second fresh user,
+   checkout with `0002...` (expect decline, tier unchanged) → downgrade first
+   user back to FREE (no card, immediate, tier flips right away).
+3. Confirm zero full-PAN bytes appear in backend logs or Postgres (`docker
+   compose logs backend | grep <PAN>`; spot-check `WalletTransaction.metadata`
+   only ever contains `last4`).
+
+Once Fixes 1–5 land, re-run `pnpm test`/`lint`/`typecheck` in both packages,
+then do Fix 6 (T28), before flipping the remaining task boxes below.
+
+Confirmed correct on re-verification (do not re-litigate): the mock test-card
+table (D3) and upgrade-only provider gating (D5), `CsrfGuard` added to
+`setUserTier` (T6), the WS `vip-` room gate in both `handleJoinRoom` and
+`handleClaimJoinRoom` (T9/T10), BFF real-status passthrough (T13), the `/premium`
+tier ladder (T17), the D6 re-export pattern on feed/messages/notification/
+settings-sessions/find-friends, and that no full PAN ever crosses the wire (D4).
 
 Re-scope note (2026-07-05): phase 17 was queued as the cross-stack e2e suite
 ([phase16.md](phase16.md) queue). Berkay re-prioritized to **subscriptions & pricing**:
@@ -145,19 +397,20 @@ as their own namespaces are added, or as one sweep after. Stage G is last.
 
 ### Stage A — Phase 16 close-out (blocking prerequisite)
 
-- [ ] **T1 (S) — Re-verify Phase 16's 10 punch-list items against `957a4e9`/
+- [x] **T1 (S) — Re-verify Phase 16's 10 punch-list items against `957a4e9`/
   `9d3448c`.** For each of T22/T15/T1-T7/T3/T31/T27/T26/T11/T17/T18/T20/T21: read the
   actual current file state (not just the commit message) and confirm the fix matches
   what `phase16.md`'s "Fix:" note asked for. Run `pnpm test`, `pnpm test:e2e`,
   `pnpm lint`, `tsc --noEmit` in both packages.
   *Verify:* every item confirmed fixed in the live tree, or a fresh finding is
-  recorded if one isn't.
-- [ ] **T2 (S) — Flip `phase16.md`'s checkboxes and Status line to match T1's
+  recorded if one isn't. **Done** — all 10 confirmed. Caveat: see punch-item 7
+  above, `phase16.md`'s own `T23`/`T32` (outside the 10-item list) are still open.
+- [x] **T2 (S) — Flip `phase16.md`'s checkboxes and Status line to match T1's
   findings.** Update the header Status string, check every task box that's
   confirmed, and append a short "Closed 2026-07-XX" note referencing `957a4e9`/
   `9d3448c` rather than leaving the stale "NOT gate-clean" framing in place.
   *Verify:* `phase16.md` accurately reflects reality; no box is checked that T1
-  didn't confirm.
+  didn't confirm. **Done** — header now reads "gate-clean — closed 2026-07-05".
 
 ### Stage B — Backend billing foundation
 
@@ -192,13 +445,14 @@ as their own namespaces are added, or as one sweep after. Stage G is last.
   ...})` → tier flips, next request's silent-refresh picks it up (same mechanism
   `setUserTier` already proves); forged `userId`/another user's wallet never appears
   in `myBillingHistory`.
-- [ ] **T6 (S) — Add `CsrfGuard` to `AdminResolver.setUserTier`.** Same
+- [x] **T6 (S) — Add `CsrfGuard` to `AdminResolver.setUserTier`.** Same
   state-mutating-without-CSRF gap `logoutOtherSessions` already fixed elsewhere,
   found while building the new self-serve mutation right next to it — fix alongside
   rather than leave untracked (same reasoning Phase 16's D8 used for the
   `RESEND_*`/`SMTP_*` env fix).
   *Verify:* an admin request missing the CSRF header/token now gets rejected;
   existing e2e coverage for `setUserTier` still passes with the header included.
+  **Done** — confirmed `@UseGuards(CsrfGuard)` present at `admin.resolver.ts:85`.
 - [ ] **T7 (S) — `myPostStats`/`reactionBreakdown`/`whoReacted` resolver fields
   (feed + post-detail bonuses).** `myPostStats` (own posts' view/reaction counts,
   `@MinTier(MEDIUM)`) on the feed resolver; `reactionBreakdown(postId)`
@@ -228,10 +482,14 @@ as their own namespaces are added, or as one sweep after. Stage G is last.
   session gets the error frame and never appears in `getRoomCounts()`/broadcasts; a
   MEDIUM+ session joins normally. Live-probed, not just unit-tested (per this
   project's convention that WS behavior needs a real socket, not just a mock).
-- [ ] **T10 (S) — Unit test for the gate.** Cover FREE/BASIC (rejected),
+  Static re-check 2026-07-05: the rank check exists correctly in both handlers
+  (`messaging-ws.gateway.ts:175-188,272-289`) — left unchecked because the
+  live-socket probe this verify step requires hasn't run (pending T28).
+- [x] **T10 (S) — Unit test for the gate.** Cover FREE/BASIC (rejected),
   MEDIUM/PREMIUM (allowed), and non-`vip-` rooms (unaffected, all tiers) in
   `messaging-ws.gateway.spec.ts`.
-  *Verify:* all four cases green.
+  *Verify:* all four cases green. **Done** — passes under `pnpm test`, though the
+  spec file itself has 27 lint errors, see punch-item 3.
 
 ### Stage D — Frontend: mock checkout + pricing rebuild + shared dispatcher
 
@@ -252,7 +510,7 @@ as their own namespaces are added, or as one sweep after. Stage G is last.
   *Verify:* component test — invalid Luhn/expired date blocked client-side with no
   fetch call; valid input calls the route with only the masked fields, never the
   full PAN.
-- [ ] **T13 (S) — BFF routes: `api/billing/subscribe/route.ts` (POST),
+- [x] **T13 (S) — BFF routes: `api/billing/subscribe/route.ts` (POST),
   `api/billing/history/route.ts` (GET).** Same `graphqlFetch` +
   `sessionTokenHeaders()` + CSRF-echo pattern as `api/admin/set-tier/route.ts`/
   `api/auth/logout/route.ts`; real HTTP status passthrough (`{status:
@@ -260,7 +518,8 @@ as their own namespaces are added, or as one sweep after. Stage G is last.
   routes, don't repeat it here).
   *Verify:* declined-card response reaches the browser as a real non-200 with the
   structured `{statusCode,exc,msg,key}` body `exceptionHandler` already knows how to
-  render.
+  render. **Done** — confirmed `{status: body.statusCode}` passthrough matches
+  `api/admin/set-tier/route.ts`'s pattern in both new routes.
 - [ ] **T14 (M) — `v1/[lang]/checkout/[tier]/page.tsx`.** Authenticated-only
   (existing `LoadingAuth`/`UnauthenticatedMessage` pattern); shows the target plan's
   price/features, `MockCardForm` for upgrades, a one-click confirm (no card) for
@@ -298,6 +557,9 @@ noted explicitly below where that applies.
   new endpoint).
   *Verify:* live click-through as FREE (locked), BASIC (stats only), MEDIUM
   (stats+trend), PREMIUM (stats+trend+export) — matches this exact tier ladder.
+  Static re-check 2026-07-05: file contents match this ladder exactly — left
+  unchecked because the live click-through itself hasn't run (pending T28), and
+  this page also has punch-items 2 (render bug) and 4 (no i18n) open.
 - [ ] **T18 (M) — `/feed`.** `FreePageView`: today's feed, unchanged.
   `BasicPageView`: re-exports `FreePageView` (D6 — no delta yet).
   `MediumPageView`: adds T7's `myPostStats` sidebar (own posts' view/reaction
