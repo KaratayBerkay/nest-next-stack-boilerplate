@@ -214,7 +214,7 @@ function ChatRoomContent() {
         {connectionState === "unstable" ? (
           <ConnectionUnstable title={t.disconnected} description={t.connecting} />
         ) : (
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border">
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border">
           <div className="flex items-center gap-2 border-b px-4 py-3">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -237,7 +237,7 @@ function ChatRoomContent() {
 
           <div
             ref={messagesRef}
-            className="relative flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3 select-none"
+            className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3 select-none"
           >
             {msgsError && (
               <div className="flex flex-1 items-center justify-center">
@@ -288,11 +288,12 @@ function ChatRoomContent() {
                 </div>
               );
             })}
-            <div ref={bottomRef} />
-            {!isAtBottom && messages.length > 0 && (
-              <ScrollToBottomButton onClick={scrollToBottom} />
-            )}
+            <div ref={bottomRef} className="h-px" />
           </div>
+
+          {!isAtBottom && messages.length > 0 && (
+            <ScrollToBottomButton onClick={scrollToBottom} />
+          )}
 
           <div className="flex gap-2 border-t p-2">
             <div className="flex flex-1 flex-col">

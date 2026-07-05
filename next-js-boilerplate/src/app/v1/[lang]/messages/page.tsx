@@ -549,7 +549,7 @@ function MessagesPageContent() {
             <div className="border-border bg-surface h-64 w-full max-w-md animate-pulse rounded-xl border" />
           </div>
         ) : (
-        <div className="border-border bg-bg flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border">
+        <div className="border-border bg-bg relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border">
           {/* Mobile: hamburger when no conversation; Desktop: always visible */}
           <div className="flex items-center gap-3 border-b px-4 py-3">
             {selectedUser ? (
@@ -587,7 +587,7 @@ function MessagesPageContent() {
             <>
               <div
                 ref={messagesRef}
-                className="relative flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4 select-none"
+                className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4 select-none"
               >
                 {msgsError && (
                   <div className="flex flex-1 items-center justify-center">
@@ -641,11 +641,11 @@ function MessagesPageContent() {
                     </div>
                   );
                 })}
-                <div ref={bottomRef} />
-                {!isAtBottom && selectedUser && conversationMessages.length > 0 && (
-                  <ScrollToBottomButton onClick={scrollToBottom} />
-                )}
+                <div ref={bottomRef} className="h-px" />
               </div>
+              {!isAtBottom && conversationMessages.length > 0 && (
+                <ScrollToBottomButton onClick={scrollToBottom} />
+              )}
               <div className="flex gap-3 border-t px-4 py-3">
                 <div className="flex flex-1 flex-col">
                   <input
