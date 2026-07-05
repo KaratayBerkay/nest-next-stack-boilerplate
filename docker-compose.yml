@@ -320,7 +320,10 @@ services:
       - "${KIBANA_PORT:-5601}:5601"
 
   fluent-bit:
-    image: fluent/fluent-bit:3.1
+    # -debug variant: the plain 3.1 tag is fully distroless (no /bin/sh, no pidof, nothing
+    # but the fluent-bit binary itself), so the healthcheck below can never run at all —
+    # not a crash, just "exec: /bin/sh: no such file or directory" on every attempt forever.
+    image: fluent/fluent-bit:3.1-debug
     restart: unless-stopped
     depends_on:
       elasticsearch:
