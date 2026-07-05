@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Prisma } from '@prisma/client';
 import type { Request } from 'express';
 import { CryptoService } from '../common/crypto/crypto.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -95,16 +96,32 @@ export class DeviceService {
       });
     } else if (presentedToken && !existing) {
       // Landing token — create Device row with the presented token.
-      device = await this.prisma.device.create({
-        data: {
-          userId,
-          type: 'WEB',
-          token: presentedToken,
-          fingerprint,
-          ip,
-          lastSeenAt: new Date(),
-        },
-      });
+      // Two concurrent requests with the same landing token could race here;
+      // catch the unique violation and fall back to the winner's row.
+      try {
+        device = await this.prisma.device.create({
+          data: {
+            userId,
+            type: 'WEB',
+            token: presentedToken,
+            fingerprint,
+            ip,
+            lastSeenAt: new Date(),
+          },
+        });
+      } catch (err) {
+        if (
+          err instanceof Prisma.PrismaClientKnownRequestError &&
+          err.code === 'P2002'
+        ) {
+          const existingDevice = await this.prisma.device.findUniqueOrThrow({
+            where: { token: presentedToken },
+          });
+          device = existingDevice;
+        } else {
+          throw err;
+        }
+      }
     } else if (existing && existing.userId !== userId) {
       // Foreign token — claim it by creating a new Device row.
       const token = this.crypto.randomToken();

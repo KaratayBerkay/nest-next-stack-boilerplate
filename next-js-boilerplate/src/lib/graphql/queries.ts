@@ -13,6 +13,7 @@ export const ME_QUERY = `
       avatarUrl
       locale
       timezone
+      sessionId
     }
   }
 `;

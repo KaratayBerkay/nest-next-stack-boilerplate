@@ -6,21 +6,6 @@ import {
   type PaymentProvider,
 } from './payment-provider.interface';
 
-function luhnCheck(num: string): boolean {
-  let sum = 0;
-  let alternate = false;
-  for (let i = num.length - 1; i >= 0; i--) {
-    let n = parseInt(num[i], 10);
-    if (alternate) {
-      n *= 2;
-      if (n > 9) n -= 9;
-    }
-    sum += n;
-    alternate = !alternate;
-  }
-  return sum % 10 === 0;
-}
-
 @Injectable()
 export class MockPaymentProvider implements PaymentProvider {
   charge(input: ChargeInput): Promise<ChargeResult> {
@@ -46,14 +31,8 @@ export class MockPaymentProvider implements PaymentProvider {
       });
     }
 
-    if (!luhnCheck('4242' + input.last4)) {
-      return Promise.resolve({
-        approved: false,
-        reason: 'invalid_card',
-        providerRef,
-      });
-    }
-
+    // Any last4 not in the documented decline list approves — the mock doesn't
+    // use Luhn because you can't validate a 4-digit suffix in isolation.
     return Promise.resolve({ approved: true, providerRef });
   }
 }

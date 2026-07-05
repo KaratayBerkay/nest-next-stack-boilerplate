@@ -46,7 +46,7 @@ export function mockCardFormSchema(errors: {
         const year = parseInt(v.expYear, 10);
         if (isNaN(month) || isNaN(year) || month < 1 || month > 12) return false;
         const now = new Date();
-        const expiry = new Date(year, month);
+        const expiry = new Date(2000 + year, month - 1);
         return expiry > now;
       },
       { message: errors.expiryPast },

@@ -26,6 +26,7 @@ export type User = {
   status?: string;
   role: string;
   tier?: string;
+  sessionId?: string;
 };
 
 type AuthResponse = {

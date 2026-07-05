@@ -160,6 +160,17 @@ export function SelectContent({
   }, [open, sideOffset, triggerRef, isDesktop]);
 
   useEffect(() => {
+    if (!open || !isDesktop || !contentRef.current) return;
+    const items = contentRef.current.querySelectorAll('[role="option"]');
+    if (items.length > 0) {
+      const selected = contentRef.current.querySelector(
+        '[aria-selected="true"]',
+      );
+      ((selected ?? items[0]) as HTMLElement).focus();
+    }
+  }, [open, isDesktop, contentRef]);
+
+  useEffect(() => {
     if (!open || !isDesktop) return;
 
     const handleMouseDown = (e: MouseEvent) => {

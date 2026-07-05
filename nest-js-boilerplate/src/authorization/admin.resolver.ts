@@ -13,10 +13,8 @@ import { UserRole } from '../@generated/prisma/user-role.enum';
 import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
 import type { JwtUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { TokenStoreService } from '../auth/token-store.service';
-import { CsrfGuard } from '../csrf/csrf.guard';
 import { PrismaService } from '../prisma/prisma.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { MinTier } from './min-tier.decorator';
@@ -25,7 +23,7 @@ import { RolesGuard } from './roles.guard';
 import { TierGuard } from './tier.guard';
 
 /**
- * Demonstrates the RBAC pipeline: `JwtAuthGuard` authenticates and attaches the user, then
+ * Demonstrates the RBAC pipeline: `SessionAuthGuard` authenticates and attaches the user, then
  * `RolesGuard` enforces `@Roles()`. `whoAmI` carries no `@Roles()` (any authenticated user is
  * allowed — the "no required roles" path), while `adminStats` is restricted to elevated roles.
  *
@@ -61,7 +59,7 @@ export class GrowthStatsPayload {
   totalFriendships!: number;
 }
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(SessionAuthGuard, RolesGuard)
 @Resolver()
 export class AdminResolver {
   constructor(
@@ -82,7 +80,6 @@ export class AdminResolver {
   }
 
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
-  @UseGuards(CsrfGuard)
   @Mutation(() => Boolean)
   async setUserTier(
     @Args('userId') userId: string,

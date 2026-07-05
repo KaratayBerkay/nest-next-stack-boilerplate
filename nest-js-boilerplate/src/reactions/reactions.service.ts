@@ -1,8 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationService } from '../notification/notification.service';
 import { CreateReactionInput } from './dto/create-reaction.input';
+
+export type ReactionWithTarget = {
+  id: string;
+  userId: string;
+  type: string;
+  createdAt: Date;
+  postId: string | null;
+  commentId: string | null;
+  post?: { authorId: string; title: string } | null;
+  comment?: { authorId: string } | null;
+};
 
 @Injectable()
 export class ReactionsService {
@@ -66,18 +78,31 @@ export class ReactionsService {
       return updated;
     }
 
-    const reaction = await this.prisma.reaction.create({
-      data: {
-        type: data.type,
-        user: { connect: { id: userId } },
-        ...(data.postId && { post: { connect: { id: data.postId } } }),
-        ...(data.commentId && { comment: { connect: { id: data.commentId } } }),
-      },
-      include: {
-        post: { select: { authorId: true, title: true } },
-        comment: { select: { authorId: true } },
-      },
-    });
+    let reaction: ReactionWithTarget;
+    try {
+      reaction = await this.prisma.reaction.create({
+        data: {
+          type: data.type,
+          user: { connect: { id: userId } },
+          ...(data.postId && { post: { connect: { id: data.postId } } }),
+          ...(data.commentId && {
+            comment: { connect: { id: data.commentId } },
+          }),
+        },
+        include: {
+          post: { select: { authorId: true, title: true } },
+          comment: { select: { authorId: true } },
+        },
+      });
+    } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+      ) {
+        throw new ConflictException('Reaction already exists');
+      }
+      throw err;
+    }
 
     if (data.postId) {
       this.realtime.emitToTopic('feed', {

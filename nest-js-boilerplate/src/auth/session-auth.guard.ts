@@ -1,6 +1,7 @@
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -19,6 +20,7 @@ import { TokenDerivationService } from './token-derivation.service';
 import { TokenStoreService } from './token-store.service';
 import { deviceCookieName } from '../devices/device-cookie';
 import { parseDeviceType } from '../common/utils/device-type';
+import { validateRequest } from '../csrf/csrf.middleware';
 
 interface AuthedRequest extends Request {
   user?: JwtUser;
@@ -166,7 +168,23 @@ export class SessionAuthGuard implements CanActivate {
     // Step 9: Slide Redis TTL so active sessions survive JWT lifetime.
     await this.tokenStore.extendTTL(compoundKey);
 
+    // Step 10: CSRF check for mutations — cookie-based auth is vulnerable to
+    // cross-site request forgery because the browser auto-attaches httpOnly cookies.
+    // Queries are read-only and don't need protection; only state-changing mutations do.
+    if (this.isGraphQLMutation(context) && !validateRequest(req)) {
+      throw new ForbiddenException('Invalid or missing CSRF token');
+    }
+
     return true;
+  }
+
+  private isGraphQLMutation(context: ExecutionContext): boolean {
+    if (context.getType<'graphql'>() !== 'graphql') return false;
+    const gqlCtx = GqlExecutionContext.create(context);
+    const info = gqlCtx.getInfo<{
+      parentType?: { name: string };
+    }>();
+    return info.parentType?.name === 'Mutation';
   }
 
   private extractAccessToken(req: AuthedRequest): string | null {

@@ -171,6 +171,36 @@ export class TokenStoreService {
     return results.filter((s): s is SessionUser => s !== null);
   }
 
+  async listSessionsWithKeys(
+    userId: string,
+  ): Promise<{ session: SessionUser; key: string }[]> {
+    const reverseKey = this.reverseIndexKey(userId);
+    const keys = await this.redis.smembers(reverseKey);
+    if (keys.length === 0) return [];
+    const results = await Promise.all(
+      keys.map((k) => this.read(k).then((session) => ({ session, key: k }))),
+    );
+    return results.filter(
+      (r): r is { session: SessionUser; key: string } => r.session !== null,
+    );
+  }
+
+  async revokeSessionBySessionId(
+    userId: string,
+    sessionId: string,
+  ): Promise<boolean> {
+    const reverseKey = this.reverseIndexKey(userId);
+    const keys = await this.redis.smembers(reverseKey);
+    for (const key of keys) {
+      const session = await this.read(key);
+      if (session?.sessionId === sessionId) {
+        await this.revoke(key);
+        return true;
+      }
+    }
+    return false;
+  }
+
   async revokeAllForUser(userId: string): Promise<number> {
     const reverseKey = this.reverseIndexKey(userId);
     const keys = await this.redis.smembers(reverseKey);

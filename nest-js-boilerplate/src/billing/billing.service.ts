@@ -56,6 +56,24 @@ export class BillingService {
         throw new BadRequestException('Card information required for upgrades');
       }
 
+      const idempotencyKey = this.generateIdempotencyKey(userId, targetTier);
+
+      // Check idempotency BEFORE calling the payment provider to prevent
+      // double-charging on concurrent identical requests.
+      const existing = await this.prisma.walletTransaction.findFirst({
+        where: { idempotencyKey },
+      });
+      if (existing) {
+        const meta = existing.metadata as Record<string, unknown> | null;
+        return existing.status === 'COMPLETED'
+          ? { success: true }
+          : {
+              success: false,
+              reason:
+                typeof meta?.reason === 'string' ? meta.reason : 'declined',
+            };
+      }
+
       const chargeResult = await this.provider.charge({
         userId,
         tier: targetTier,
@@ -63,8 +81,6 @@ export class BillingService {
         expMonth: card.expMonth,
         expYear: card.expYear,
       });
-
-      const idempotencyKey = this.generateIdempotencyKey(userId, targetTier);
 
       if (!chargeResult.approved) {
         await this.prisma.walletTransaction.create({
@@ -88,11 +104,60 @@ export class BillingService {
         return { success: false, reason: chargeResult.reason };
       }
 
-      await this.flipTier(userId, targetTier);
+      // Atomically flip tier and write the ledger entry so a partial failure
+      // never leaves the tier upgraded without a billing record.
+      await this.prisma.$transaction([
+        this.prisma.user.update({
+          where: { id: userId },
+          data: { subscriptionTier: targetTier },
+        }),
+        this.prisma.walletTransaction.create({
+          data: {
+            type: 'FEE',
+            status: 'COMPLETED',
+            amount: 0,
+            currency: 'USD',
+            idempotencyKey,
+            reference: `subscription:${targetTier}`,
+            fromWalletId: wallet.id,
+            metadata: {
+              tier: targetTier,
+              provider: 'mock',
+              last4: card.last4,
+              providerRef: chargeResult.providerRef,
+            },
+          },
+        }),
+      ]);
 
-      await this.prisma.walletTransaction.create({
+      // Redis / realtime updates outside the transaction (idempotent).
+      await this.tokenStore.rewriteFieldsForUser(userId, { tier: targetTier });
+      this.realtime.updateUserTier(userId, targetTier);
+
+      await this.sendBillingNotification(
+        userId,
+        `Upgraded to ${targetTier}`,
+        `Your subscription has been upgraded to ${targetTier}.`,
+      ).catch((err: Error) =>
+        this.logger.warn(
+          `Billing notification failed after successful upgrade: ${err.message}`,
+        ),
+      );
+
+      return { success: true };
+    }
+
+    // Downgrade — no payment needed
+    const idempotencyKey = this.generateIdempotencyKey(userId, targetTier);
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: { subscriptionTier: targetTier },
+      }),
+      this.prisma.walletTransaction.create({
         data: {
-          type: 'FEE',
+          type: 'ADJUSTMENT',
           status: 'COMPLETED',
           amount: 0,
           currency: 'USD',
@@ -102,47 +167,23 @@ export class BillingService {
           metadata: {
             tier: targetTier,
             provider: 'mock',
-            last4: card.last4,
-            providerRef: chargeResult.providerRef,
           },
         },
-      });
+      }),
+    ]);
+
+    await this.tokenStore.rewriteFieldsForUser(userId, { tier: targetTier });
+    this.realtime.updateUserTier(userId, targetTier);
 
       await this.sendBillingNotification(
         userId,
-        `Upgraded to ${targetTier}`,
-        `Your subscription has been upgraded to ${targetTier}.`,
+        `Downgraded to ${targetTier}`,
+        `Your subscription has been changed to ${targetTier}.`,
+      ).catch((err: Error) =>
+        this.logger.warn(
+          `Billing notification failed after successful downgrade: ${err.message}`,
+        ),
       );
-
-      return { success: true };
-    }
-
-    // Downgrade — no payment needed
-    const idempotencyKey = this.generateIdempotencyKey(userId, targetTier);
-
-    await this.flipTier(userId, targetTier);
-
-    await this.prisma.walletTransaction.create({
-      data: {
-        type: 'ADJUSTMENT',
-        status: 'COMPLETED',
-        amount: 0,
-        currency: 'USD',
-        idempotencyKey,
-        reference: `subscription:${targetTier}`,
-        fromWalletId: wallet.id,
-        metadata: {
-          tier: targetTier,
-          provider: 'mock',
-        },
-      },
-    });
-
-    await this.sendBillingNotification(
-      userId,
-      `Downgraded to ${targetTier}`,
-      `Your subscription has been changed to ${targetTier}.`,
-    );
 
     return { success: true };
   }
@@ -156,15 +197,6 @@ export class BillingService {
       orderBy: { createdAt: 'desc' },
       take: 50,
     });
-  }
-
-  private async flipTier(userId: string, tier: SubscriptionTier) {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { subscriptionTier: tier },
-    });
-    await this.tokenStore.rewriteFieldsForUser(userId, { tier });
-    this.realtime.updateUserTier(userId, tier);
   }
 
   private async ensureWallet(userId: string) {

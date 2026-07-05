@@ -127,12 +127,19 @@ export class AuthService {
     return this.issueTokens(user, ctx, device);
   }
 
+  // Dummy hash for timing side-channel defense — pre-computed argon2 hash of
+  // a random string. Used when the email doesn't exist so both paths take
+  // comparable time.
+  private readonly dummyHash =
+    '$argon2id$v=19$m=19456,t=2,p=1$jR9YxgR+3qJxJkOdVAgY8w$fP2MrFNLm5x3nDN1sFq2ATSB7P4tYpQeF3WrTYG0XEQ';
+
   /** Verify credentials with lockout + failed-attempt tracking; emit LOGIN / LOGIN_FAILED. */
   async login(input: LoginInput, ctx?: RequestContext): Promise<AuthPayload> {
     const email = input.email.toLowerCase();
     const user = await this.prisma.user.findUnique({ where: { email } });
 
     if (!user || !user.passwordHash) {
+      await verify(this.dummyHash, input.password);
       throw new UnauthorizedException({
         exc: 'EX_AUTH_INVALID_CREDENTIALS',
         msg: 'Invalid credentials',
@@ -195,7 +202,11 @@ export class AuthService {
       token.expiresAt < new Date() ||
       !token.userId
     ) {
-      throw new UnauthorizedException('Invalid or expired token');
+      throw new UnauthorizedException({
+        exc: 'EX_AUTH_INVALID_TOKEN',
+        msg: 'Invalid or expired token',
+        key: 'auth.errors.invalidToken',
+      });
     }
 
     const userId = token.userId;
@@ -275,30 +286,41 @@ export class AuthService {
   /** Consume a password-reset token and set a new password. */
   async resetPassword(rawToken: string, newPassword: string): Promise<boolean> {
     const tokenHash = this.crypto.sha256(rawToken);
-    const token = await this.prisma.verificationToken.findUnique({
-      where: { tokenHash },
-    });
-
-    if (
-      !token ||
-      token.type !== 'PASSWORD_RESET' ||
-      token.consumedAt ||
-      token.expiresAt < new Date() ||
-      !token.userId
-    ) {
-      throw new UnauthorizedException('Invalid or expired token');
-    }
-
     const passwordHash = await hash(newPassword);
-    const userId = token.userId;
-    await this.prisma.$transaction(async (tx) => {
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      const token = await tx.verificationToken.findUnique({
+        where: { tokenHash },
+      });
+
+      if (
+        !token ||
+        token.type !== 'PASSWORD_RESET' ||
+        token.consumedAt ||
+        token.expiresAt < new Date() ||
+        !token.userId
+      ) {
+        throw new UnauthorizedException({
+          exc: 'EX_AUTH_INVALID_TOKEN',
+          msg: 'Invalid or expired token',
+          key: 'auth.errors.invalidToken',
+        });
+      }
+
+      const userId = token.userId;
+
       await tx.verificationToken.update({
         where: { id: token.id },
         data: { consumedAt: new Date() },
       });
       await tx.user.update({
         where: { id: userId },
-        data: { passwordHash, passwordSetAt: new Date() },
+        data: {
+          passwordHash,
+          passwordSetAt: new Date(),
+          failedLoginCount: 0,
+          lockedUntil: null,
+        },
       });
       const user = await tx.user.findUnique({ where: { id: userId } });
       if (user) {
@@ -314,7 +336,11 @@ export class AuthService {
           tx,
         );
       }
+      return userId;
     });
+
+    // Revoke all existing sessions — password reset should evict the attacker too.
+    await this.tokenStore.revokeAllForUser(result);
     return true;
   }
 

@@ -695,7 +695,7 @@ model Reaction {
   type      ReactionType
   createdAt DateTime     @default(now()) @db.Timestamptz(6)
 
-  @@unique([userId, postId, commentId, type])
+  @@unique([userId, postId, commentId])
   @@index([postId])
   @@index([commentId])
 }

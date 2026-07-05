@@ -111,7 +111,9 @@ describe('@MinTier guard enforcement (e2e)', () => {
     );
 
     if (!body.data) {
-      throw new Error(`upgradeTier login failed: ${JSON.stringify(body.errors)}`);
+      throw new Error(
+        `upgradeTier login failed: ${JSON.stringify(body.errors)}`,
+      );
     }
 
     return {
@@ -240,7 +242,12 @@ describe('@MinTier guard enforcement (e2e)', () => {
         user.password,
       );
       const res = await gqlWithAuth<{
-        growthStats?: { totalUsers: number; newUsersLast7Days: number; totalPosts: number; totalFriendships: number };
+        growthStats?: {
+          totalUsers: number;
+          newUsersLast7Days: number;
+          totalPosts: number;
+          totalFriendships: number;
+        };
       }>(
         `{ growthStats { totalUsers newUsersLast7Days totalPosts totalFriendships } }`,
         upgraded.accessToken,

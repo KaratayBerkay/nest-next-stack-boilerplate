@@ -1,14 +1,32 @@
 import { Field, InputType } from '@nestjs/graphql';
-import { IsEnum, IsOptional, IsUUID } from 'class-validator';
+import {
+  IsEnum,
+  IsOptional,
+  IsUUID,
+  Validate,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+  type ValidationArguments,
+} from 'class-validator';
 import { ReactionType } from '../../@generated/prisma/reaction-type.enum';
 
-// Slim input: the target (post/comment) is a flat, validated scalar id, and the reacting user
-// comes from the JWT. Reaction has no schema `/// @Validator` rules, so this spec proves
-// GraphQL + FK depth (Reaction -> Post -> User) + the JWT guard rather than generated validators.
+@ValidatorConstraint({ name: 'exactlyOneOfPostOrComment', async: false })
+class ExactlyOneOfPostOrComment implements ValidatorConstraintInterface {
+  validate(_value: unknown, args?: ValidationArguments): boolean {
+    const obj = args?.object as CreateReactionInput;
+    return (obj.postId !== undefined) !== (obj.commentId !== undefined);
+  }
+
+  defaultMessage(): string {
+    return 'Exactly one of postId or commentId must be provided';
+  }
+}
+
 @InputType()
 export class CreateReactionInput {
   @Field(() => ReactionType)
   @IsEnum(ReactionType)
+  @Validate(ExactlyOneOfPostOrComment)
   type!: `${ReactionType}`;
 
   @Field({ nullable: true })

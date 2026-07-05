@@ -174,6 +174,10 @@ export class MessagingWsGateway implements OnModuleInit {
 
   private handleJoinRoom(ws: AuthWs, data: { room: string }) {
     if (!ws.userId || !ws.socketId) return;
+    if (!isValidRoom(data.room)) {
+      ws.send(JSON.stringify({ type: 'error', message: 'Invalid room' }));
+      return;
+    }
     if (
       data.room.startsWith(VIP_ROOM_PREFIX) &&
       tierRank(ws.tier ?? 'FREE') < MIN_TIER_FOR_VIP

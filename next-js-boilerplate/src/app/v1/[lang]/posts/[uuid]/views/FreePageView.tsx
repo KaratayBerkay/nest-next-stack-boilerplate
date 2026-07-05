@@ -114,6 +114,7 @@ function PostDetailContent() {
                     setEditing(true);
                   }}
                   className="p-1 text-muted hover:text-fg"
+                  aria-label="Edit post"
                 >
                   <IconPencil size={14} stroke={1.5} />
                 </button>
@@ -132,6 +133,7 @@ function PostDetailContent() {
                     <button
                       onClick={open}
                       className="p-1 text-muted hover:text-red-500"
+                      aria-label="Delete post"
                     >
                       <IconTrash size={14} stroke={1.5} />
                     </button>

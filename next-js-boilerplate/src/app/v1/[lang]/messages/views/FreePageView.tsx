@@ -338,6 +338,7 @@ function MessagesPageContent() {
             <button
               onClick={() => setSidebarOpen(false)}
               className="rounded p-1 hover:bg-surface-hover"
+              aria-label="Close sidebar"
             >
               <IconX size={18} className="text-muted" />
             </button>
@@ -561,6 +562,7 @@ function MessagesPageContent() {
                   setSidebarOpen(true);
                 }}
                 className="mr-1 rounded-lg p-1.5 hover:bg-surface-hover md:hidden"
+                aria-label="Back to conversations"
               >
                 <IconChevronLeft size={18} className="text-muted" />
               </button>

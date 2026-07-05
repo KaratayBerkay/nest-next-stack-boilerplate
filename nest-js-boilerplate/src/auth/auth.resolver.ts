@@ -1,5 +1,6 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Context, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { User } from '../@generated/user/user.model';
 import { CsrfGuard } from '../csrf/csrf.guard';
@@ -19,6 +20,7 @@ import type { OAuthProfile } from './auth.service';
 export class AuthResolver {
   constructor(private readonly auth: AuthService) {}
 
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Mutation(() => AuthPayload)
   register(
     @Args('input') input: RegisterInput,
@@ -27,6 +29,7 @@ export class AuthResolver {
     return this.auth.register(input, { req: ctx.req });
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Mutation(() => AuthPayload)
   login(
     @Args('input') input: LoginInput,
@@ -46,6 +49,7 @@ export class AuthResolver {
     return this.auth.logout({ req: ctx.req });
   }
 
+  @Throttle({ default: { limit: 5, ttl: 300000 } })
   @Mutation(() => Boolean)
   requestPasswordReset(
     @Args('input') input: RequestPasswordResetInput,
@@ -53,12 +57,13 @@ export class AuthResolver {
     return this.auth.requestPasswordReset(input.email);
   }
 
+  @Throttle({ default: { limit: 5, ttl: 300000 } })
   @Mutation(() => Boolean)
   resetPassword(@Args('input') input: ResetPasswordInput): Promise<boolean> {
     return this.auth.resetPassword(input.token, input.newPassword);
   }
 
-  /** Social login: upsert OAuth-linked account and issue tokens. */
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Mutation(() => AuthPayload)
   loginWithOAuth(
     @Args('profile') profile: OAuthProfileInput,
