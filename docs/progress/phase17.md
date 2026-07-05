@@ -2,13 +2,72 @@
 
 > Execution tracker for the seventeenth phase of the [stack roadmap](../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
-> Created 2026-07-05 · Status: **NOT gate-clean (re-verified 2026-07-05)**. Stages
-> A–G's code actually landed in `e2c0558`/`a7cd6a0` (this tracker was left at
-> "planning only" the whole time — the recurring "commit lands, tracker untouched"
-> pattern, 6th occurrence after phases 2/12/13/15/16), but re-verification against
-> the live tree (not just the commit message) found 6 real gaps — see punch list
-> below. `pnpm test` is green in both packages (207 backend / 67 frontend) but that
-> alone didn't catch any of them — same lesson phases 2/12/15/16 already taught.
+> Created 2026-07-05 · Status: **NOT gate-clean (re-verified 2026-07-05, fixes
+> applied in `aacb05a`, re-verified again same day)**. Stages A–G's code landed
+> in `e2c0558`/`a7cd6a0` (tracker left at "planning only" the whole time — 6th
+> "commit lands, tracker untouched" occurrence after phases 2/12/13/15/16). A
+> punch list of 6 gaps was found; `aacb05a` fixed 5 of the 6 (T28 excluded,
+> needs live infra) — but re-verifying *that* commit against the live tree
+> (not its message) found the i18n fix introduced a **new** bug: `/pricing`'s
+> feature lists are now shifted by one tier. See "Punch-list fix verification"
+> below. `pnpm test` is still green in both packages (207 backend / 67
+> frontend) and **still didn't catch this** — the same lesson, a third time in
+> this file alone.
+
+## Punch-list fix verification (2026-07-05, commit `aacb05a`)
+
+| # | Punch item | Result |
+| - | --- | --- |
+| 1 | Wallet linkage | ✅ Fixed correctly — `fromWalletId: wallet.id` added to all 3 `walletTransaction.create()` calls; spec updated with real assertions (not just re-passing old ones) |
+| 2 | Render-time component bug | ✅ Fixed correctly — `tier-view.tsx` returns `ReactNode` directly, all 8 pages updated, `tier-view.spec.tsx` rewritten with `render()`/`screen`; `pnpm lint` frontend now 0 errors (was 8), `tsc --noEmit` clean |
+| 3 | Backend lint (81 errors) | ⚠️ Reduced to 5 (not 0) — all 5 remaining are in `billing.service.spec.ts` (`no-unsafe-assignment` + one `unbound-method` false-positive, all on `expect.objectContaining(...)` call sites). Test-only, non-functional, low priority but not what "fixed" claimed |
+| 4 | Missing pricing/premium i18n | ⚠️ Namespaces created and wired correctly, logged-out CTA now links to `LOGIN_PATH` — **but introduced a new bug**, see below | 
+| 5 | users/detail split | ✅ Fixed correctly — mirrors `users/list`'s exact shape (`FreePageView` holds real content, `Basic/Medium/PremiumPageView` re-export it, `page.tsx` renders `FreePageView` directly) |
+| 6 | T28 live control run | ❌ Still not run (expected — out of scope for a code-only commit) |
+
+### New bug found in Fix 4 — `/pricing`'s feature lists are off by one tier
+
+`(marketing)/pricing/page.tsx:67-72` maps `FEATURES.BASIC` and `FEATURES.MEDIUM`
+to the wrong i18n keys:
+```tsx
+const FEATURES: Record<Tier, string[]> = {
+  FREE: t.featuresBasic,     // correct — featuresBasic holds FREE's real content
+  BASIC: t.featuresBasic,    // BUG: duplicates FREE's list verbatim
+  MEDIUM: t.featuresMedium,  // BUG: this is actually BASIC's old content
+  PREMIUM: t.featuresPro,    // correct
+};
+```
+Confirmed by diffing against the pre-fix hardcoded arrays (`git show
+e2c0558:.../pricing/page.tsx`): `messages/{en,tr}/pricing/messages.json`'s
+`featuresMedium` key actually holds the old **BASIC** copy ("Everything in
+Free, Priority support, Basic analytics"), and `featuresPremium` holds the old
+**MEDIUM** copy ("Everything in Basic, Post stats & reaction breakdown, VIP
+room access, Suggested friends") — but `featuresPremium` is never referenced
+anywhere in `page.tsx`. Net effect on the live page: the BASIC tier card
+shows an identical feature list to FREE (no differentiation), and the MEDIUM
+card shows BASIC's old perks instead of its own (VIP room access, suggested
+friends, post stats). There's also a dead `featuresFree` key (a lone string,
+wrong type, never referenced — leftover from the same authoring mistake).
+
+**Fix:** in `pricing/page.tsx`, change the mapping to:
+```tsx
+const FEATURES: Record<Tier, string[]> = {
+  FREE: t.featuresBasic,
+  BASIC: t.featuresMedium,
+  MEDIUM: t.featuresPremium,
+  PREMIUM: t.featuresPro,
+};
+```
+No JSON changes required — the correct content already exists under those
+keys, just unmapped. Optionally delete the unused `featuresFree` key from
+both `messages/en/pricing/messages.json` and `messages/tr/pricing/messages.json`
+as cleanup, and re-run `pnpm generate-i18n-types`. Add a test asserting each
+tier card renders its own distinct feature text (none of the 67 frontend
+tests would have caught this — there's no test covering `/pricing`'s
+rendered content at all).
+
+Once this follow-up lands, re-run `pnpm test` (both packages) and do a live
+click-through of `/pricing` in both locales before considering Fix 4 done.
 
 ## Punch list to close this phase (priority order)
 
@@ -414,15 +473,18 @@ as their own namespaces are added, or as one sweep after. Stage G is last.
 
 ### Stage B — Backend billing foundation
 
-- [ ] **T3 (M) — `nest-js-boilerplate/src/billing/` module: `PaymentProvider`
+- [x] **T3 (M) — `nest-js-boilerplate/src/billing/` module: `PaymentProvider`
   interface + `MockPaymentProvider`.** `charge({ userId, tier, last4, expMonth,
   expYear }): Promise<{ approved: boolean; reason?: string; providerRef: string }>`.
   Decision table per D3 (`4242`→approved, `0002`→`generic_decline`,
   `9995`→`insufficient_funds`, else Luhn-valid→approved, Luhn-invalid→approved:false
   reason `invalid_card`). Bound behind an injection token (`PAYMENT_PROVIDER`) so a
   real provider is a second class later, not a rewrite.
-  *Verify:* unit tests for all 4 table rows + the Luhn-fallback branch.
-- [ ] **T4 (M) — `BillingService.subscribeToPlan(userId, targetTier, card?)`.**
+  *Verify:* unit tests for all 4 table rows + the Luhn-fallback branch. **Done** —
+  tests pass, and post-`aacb05a` `mock-payment.provider.ts`/`.spec.ts` are also
+  fully lint-clean (dropped the dead `async`, uses `SubscriptionTier` enum
+  instead of `as any`).
+- [x] **T4 (M) — `BillingService.subscribeToPlan(userId, targetTier, card?)`.**
   Upgrade path (`targetTier` rank > current): requires `card`, calls
   `provider.charge()`; on approval, updates `User.subscriptionTier`, calls the
   existing `TokenStoreService.rewriteFieldsForUser`, writes a `WalletTransaction`
@@ -435,7 +497,9 @@ as their own namespaces are added, or as one sweep after. Stage G is last.
   primary USD `Wallet` if none exists yet.
   *Verify:* unit tests — upgrade+approved card flips tier and writes `COMPLETED`;
   upgrade+declined card leaves tier untouched and writes `FAILED`; downgrade never
-  calls the provider mock (spy assertion) and still flips tier.
+  calls the provider mock (spy assertion) and still flips tier. **Done** — plus
+  `aacb05a` fixed the wallet-linkage bug (punch-item 1) and the spec now asserts
+  `fromWalletId` on all three branches.
 - [ ] **T5 (S) — `BillingResolver`: `subscribeToPlan` mutation + `myBillingHistory`
   query.** `@UseGuards(SessionAuthGuard, CsrfGuard)`, self-serve (any authenticated
   user acting on their own account, no `@Roles` needed). `myBillingHistory` returns
@@ -444,7 +508,10 @@ as their own namespaces are added, or as one sweep after. Stage G is last.
   *Verify:* e2e — authenticated user calls `subscribeToPlan(PREMIUM, {last4:"4242",
   ...})` → tier flips, next request's silent-refresh picks it up (same mechanism
   `setUserTier` already proves); forged `userId`/another user's wallet never appears
-  in `myBillingHistory`.
+  in `myBillingHistory`. Static re-check 2026-07-05: the root-cause wallet-linkage
+  bug that made `myBillingHistory` always return empty is now fixed (punch-item 1)
+  and unit-asserted — left unchecked because this task's own verify step
+  specifically demands a live e2e run, which hasn't happened yet (pending T28).
 - [x] **T6 (S) — Add `CsrfGuard` to `AdminResolver.setUserTier`.** Same
   state-mutating-without-CSRF gap `logoutOtherSessions` already fixed elsewhere,
   found while building the new self-serve mutation right next to it — fix alongside
@@ -493,14 +560,17 @@ as their own namespaces are added, or as one sweep after. Stage G is last.
 
 ### Stage D — Frontend: mock checkout + pricing rebuild + shared dispatcher
 
-- [ ] **T11 (S) — `src/lib/tier-view.ts`: shared per-page dispatcher helper.** One
+- [x] **T11 (S) — `src/lib/tier-view.ts`: shared per-page dispatcher helper.** One
   small function/component (`getTierView(tier, views)` or `<TierView tier={...}
   views={{FREE, BASIC, MEDIUM, PREMIUM}} />`) so all 9 pages in Stage E share one
   lookup instead of nine copy-pasted switches; falls back to `FREE` for a
   null/unknown tier (logged-out/loading states stay each page's own existing
   `loading`/`!user` early-return, unchanged).
   *Verify:* unit test — each of the 4 tiers resolves to its own view; unknown/undefined
-  falls back to `FREE`.
+  falls back to `FREE`. **Done** — `aacb05a` converted it to `tier-view.tsx`
+  returning `ReactNode` directly (fixing punch-item 2's render-time-component
+  bug), `tier-view.spec.tsx` rewritten with `render()`/`screen` and passes all
+  7 cases; `pnpm lint` frontend is now 0 errors (was 8).
 - [ ] **T12 (M) — `MockCardForm` component** (`src/components/billing/
   MockCardForm.tsx`): card number, expiry (MM/YY), CVC, cardholder name inputs;
   client-side Luhn check + expiry-not-in-past validation before any network call;
@@ -533,7 +603,11 @@ as their own namespaces are added, or as one sweep after. Stage G is last.
   logged-in + already at/above the tier → "Included" (disabled); logged-in + below →
   "Upgrade" linking to `checkout/[tier]`.
   *Verify:* all 4 CTA states exercised live (logged-out, current-tier, above,
-  below); page renders in both `en`/`tr`.
+  below); page renders in both `en`/`tr`. `aacb05a` added the `pricing`
+  namespace and fixed the logged-out→login CTA — but introduced a new bug
+  (feature lists shifted by one tier, see "Punch-list fix verification" near
+  the top of this file) — left unchecked until that follow-up fix lands and
+  the 4 CTA states are actually exercised live.
 - [ ] **T16 (S) — `PRICING_PATH`/new `CHECKOUT_PATH` route constants + nav
   entries.** `PRICING_PATH` already exists (`constants/routes.ts`) — add
   `CHECKOUT_PATH` builder (`(tier: Tier) => \`/v1/${lang}/checkout/${tier}\`` shape,
@@ -593,9 +667,12 @@ noted explicitly below where that applies.
   (Premium re-exports Medium — D6, no further delta identified for this page).
   *Verify:* FREE/BASIC unchanged; MEDIUM/PREMIUM show suggestions; below-MEDIUM
   forced API call 403s.
-- [ ] **T24 (S) — `/users/list` + `/users/detail`.** No tier differentiation
+- [x] **T24 (S) — `/users/list` + `/users/detail`.** No tier differentiation
   planned (browsing users is core) — re-export shape, same as T20/T22.
-  *Verify:* unchanged behavior for all 4 tiers.
+  *Verify:* unchanged behavior for all 4 tiers. **Done** — `aacb05a` gave
+  `users/detail/[uuid]` the same split `users/list` already had (`FreePageView`
+  holds the real content, `Basic/Medium/PremiumPageView` re-export it,
+  `page.tsx` renders `FreePageView` directly inside the existing `Suspense`).
 - [ ] **T25 (S) — `/settings` (+ `/settings/sessions`).** No tier differentiation
   planned (account settings are the same for everyone) — re-export shape.
   *Verify:* unchanged behavior for all 4 tiers.
@@ -610,14 +687,22 @@ noted explicitly below where that applies.
   `messages/{en,tr}/messages/messages.json` as the structural template per
   `useMessages()`'s existing convention). Run `pnpm generate-i18n-types` after.
   *Verify:* `en` and `tr` both render with no fallback/missing-key warnings; the
-  generated `I18nMessages` type includes every new namespace.
+  generated `I18nMessages` type includes every new namespace. `aacb05a` added
+  the `pricing` and `premium` namespaces (both `en`/`tr`) and wired
+  `useMessages()` into both pages — but `pricing`'s content has the feature-list
+  mismatch documented near the top of this file; left unchecked until that's
+  fixed and both locales are actually eyeballed live.
 
 ### Stage G — Tests + verify loop
 
 - [ ] **T27 (M) — Backend + frontend unit/e2e suites green.** `pnpm test`/
   `test:e2e` (backend), frontend unit tests for `MockCardForm`/`tier-view` helper/
   every new resolver field; no regression in Stage A's re-confirmed Phase 16
-  surface.
+  surface. Re-checked 2026-07-05 post-`aacb05a`: `pnpm test` green in both
+  packages (207 backend / 67 frontend), `pnpm lint` clean on frontend (was 8
+  errors) and down to 5 on backend (was 81, all 5 residual and test-only, see
+  "Punch-list fix verification"). Left unchecked — `test:e2e` still hasn't been
+  run this session, and the 5 backend lint errors mean it isn't fully clean yet.
 - [ ] **T28 (L) — Live control run against rebuilt containers** (same recipe as
   Phase 3/16: `docker compose --profile all up -d --build`, real HTTP/GraphQL/WS
   traffic, not just mocks). Script: register/login a fresh FREE user → attempt
