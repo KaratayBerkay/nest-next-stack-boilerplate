@@ -167,7 +167,7 @@ services:
       redis:
         condition: service_healthy
       fluent-bit:
-        condition: service_started
+        condition: service_healthy
     ports:
       - "${APP_PORT:-3000}:3000"
       - "${GRPC_PORT:-5050}:5050"
@@ -258,7 +258,7 @@ services:
       app:
         condition: service_started
       fluent-bit:
-        condition: service_started
+        condition: service_healthy
     ports:
       - "${FRONTEND_PORT:-3100}:3100"
     environment:
@@ -325,6 +325,11 @@ services:
     depends_on:
       elasticsearch:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pidof fluent-bit || exit 1"]
+      interval: 5s
+      retries: 6
+      start_period: 10s
     ports:
       - "${FLUENT_FORWARD_PORT:-24224}:24224"
     volumes:
