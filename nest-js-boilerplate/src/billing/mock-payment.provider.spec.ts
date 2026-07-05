@@ -44,8 +44,10 @@ describe('MockPaymentProvider', () => {
     expect(result.reason).toBe('insufficient_funds');
   });
 
-  it('approves other Luhn-valid last4', async () => {
-    // 42421230 is Luhn-valid (4242 + 1230)
+  it('approves any last4 not in the documented decline list', async () => {
+    // enhancements1 #9: there's no Luhn check on a 4-digit suffix (you can't
+    // validate a partial PAN in isolation) — anything other than the 3 documented
+    // decline numbers approves, so the mock isn't limited to one magic number.
     const result = await provider.charge({
       userId: 'u1',
       tier: SubscriptionTier.BASIC,
@@ -56,8 +58,10 @@ describe('MockPaymentProvider', () => {
     expect(result.approved).toBe(true);
   });
 
-  it('declines Luhn-invalid last4 with invalid_card', async () => {
-    // 42420001 is NOT Luhn-valid
+  it('approves an arbitrary last4 that would have failed the old fake Luhn check', async () => {
+    // '0001' used to be rejected by the removed `luhnCheck('4242' + last4)` branch
+    // (enhancements1 #9's bug) — confirms that logic is gone and this now approves
+    // like any other undocumented last4.
     const result = await provider.charge({
       userId: 'u1',
       tier: SubscriptionTier.BASIC,
@@ -65,8 +69,7 @@ describe('MockPaymentProvider', () => {
       expMonth: 12,
       expYear: 2030,
     });
-    expect(result.approved).toBe(false);
-    expect(result.reason).toBe('invalid_card');
+    expect(result.approved).toBe(true);
   });
 
   it('returns a unique providerRef per call', async () => {

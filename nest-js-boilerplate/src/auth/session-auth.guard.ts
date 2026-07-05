@@ -184,7 +184,7 @@ export class SessionAuthGuard implements CanActivate {
     const info = gqlCtx.getInfo<{
       parentType?: { name: string };
     }>();
-    return info.parentType?.name === 'Mutation';
+    return info?.parentType?.name === 'Mutation';
   }
 
   private extractAccessToken(req: AuthedRequest): string | null {

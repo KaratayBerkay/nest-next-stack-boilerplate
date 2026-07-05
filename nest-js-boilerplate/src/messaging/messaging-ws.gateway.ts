@@ -1,13 +1,16 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { WebSocket } from 'ws';
 import { PrismaService } from '../prisma/prisma.service';
-import { MessagingService, RoomMember, isValidRoom } from './messaging.service';
+import {
+  MessagingService,
+  RoomMember,
+  isValidRoom,
+  VIP_ROOM_PREFIX,
+} from './messaging.service';
 import { PushNotificationService } from '../push-notification/push-notification.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { displayName } from '../common/utils/display-name';
 import { tierRank, MIN_TIER_FOR_VIP } from '../authorization/tier-rank';
-
-const VIP_ROOM_PREFIX = 'vip-';
 
 type AuthWs = WebSocket & {
   userId?: string;

@@ -19,30 +19,51 @@
 > engineering guidance — since this project *is* a stack boilerplate, its
 > `components/ui/` primitives are the product, held to a higher bar than a one-off app
 > screen. See findings #30-32.
+>
+> **Verification pass (2026-07-06, commit `0b6ade5`):** Berkay implemented most findings
+> in one large commit. Re-verified every claim against the live code (not the commit
+> message) and by running `pnpm test`. Most fixes are genuinely correct — see the ✅/⚠️/❌
+> markers added throughout below — but the pass surfaced **two real regressions** the
+> commit introduced, plus a broken test suite (15 of 220 backend tests now fail, mostly
+> stale mocks rather than bad code — detail in "Verification results" below).
+>
+> **Regressions fixed (2026-07-06, same day):** both real regressions (VIP rooms fully
+> broken, session-revoke fully broken), the `isGraphQLMutation` null-safety bug, and all
+> 15 failing tests are now closed — `pnpm test` is 220/220 again in
+> `nest-js-boilerplate` and 77/77 in `next-js-boilerplate`. See "Regressions fixed"
+> below for exactly what changed and why. This phase's backend/security findings are now
+> gate-clean; the remaining open items are the ones already marked ❌/⚠️ for reasons
+> unrelated to these regressions (Select's mobile-viewport gap, the partial aria-label
+> sweep, D5-blocked Privacy scope, and the low-priority items never claimed as fixed).
 
 ## At a glance
 
-| # | Severity | Area | Finding |
-| - | --- | --- | --- |
-| 0a | 🔴 Critical | Infra (cross-cutting) | Almost every mutation is CSRF-exposed — wide-open CORS+credentials, CSRF guard applied to only 3 of ~15 mutation resolvers |
-| 0b | 🔴 Critical | Infra (cross-cutting) | Global rate limiter silently skips all GraphQL traffic — login/register/password-reset are fully unthrottled |
-| 28 | 🔴 Critical | Frontend billing | Checkout form's expiry check always fails (2-digit-year `Date` bug) — mock checkout is unusable client-side |
-| 1 | 🟠 High | Backend auth | `setUserTier` uses a revocation-blind guard (`JwtAuthGuard`), unlike its sibling tier-gated queries |
-| 2 | 🟠 High | Backend auth | Password reset never revokes existing sessions (`revokeAllForUser` exists, is never called) |
-| 9 | 🟠 High | Backend billing | Mock payment's "Luhn fallback" Luhn-checks a fabricated string — meaningless, unpredictable accept/decline |
-| 10 | 🟠 High | Backend billing | Idempotency key is checked too late — a race can double-charge before the DB constraint ever fires |
-| 14 | 🟠 High | Backend social | `Reaction`'s DB unique constraint doesn't match the app's own toggle invariant — a race can create duplicate reactions |
-| 30 | 🟠 High | Frontend design system | `Select`'s keyboard arrow-navigation can never fire — nothing moves focus into the listbox on open |
-| 31 | 🟠 High | Frontend design system | Toast notifications have no `aria-live`/`role="status"` — invisible to screen readers |
-| 3 | 🟡 Medium | Backend auth | Login has a timing side-channel that undermines its own anti-enumeration design |
-| 4 | 🟡 Medium | Backend/Frontend | Session management is half-built — backend primitives exist, unwired; `/settings/sessions` is a static stub |
-| 5 | 🟡 Medium | Backend auth | Password reset doesn't clear account lockout despite proving identity |
-| 11 | 🟡 Medium | Backend billing | Tier-flip + ledger write aren't atomic — a partial failure silently breaks billing history |
-| 15 | 🟡 Medium | Backend social | Reaction input allows both `postId` and `commentId` set simultaneously — no mutual-exclusivity validation |
-| 17 | 🟡 Medium | Backend social | One-reply-per-comment-thread rule is unusual — confirm intentional |
-| 22 | 🟡 Medium | Backend realtime | `handleJoinRoom` is missing the room-allowlist check its sibling handlers both have |
-| 26 | 🟡 Medium | Frontend UX | Icon-only buttons are missing `aria-label` fairly systemically |
-| 6,7,8,12,13,16,18,19,20,21,23,24,25,27,29,32 | 🟢 Low | Various | See detail below — mostly robustness, consistency, and forward-looking notes |
+Status column added 2026-07-06 after verifying commit `0b6ade5` line-by-line (not just
+reading its commit message) and running the backend test suite. ✅ = verified genuinely
+fixed. ⚠️ = fixed but incompletely, or the fix itself introduced a new problem. ❌ = not
+addressed. 🆕 = a new regression the fix commit introduced, not present before it.
+
+| # | Severity | Area | Finding | Status |
+| - | --- | --- | --- | --- |
+| 0a | 🔴 Critical | Infra (cross-cutting) | Almost every mutation is CSRF-exposed — wide-open CORS+credentials, CSRF guard applied to only 3 of ~15 mutation resolvers | ✅ Fixed (the null-safety bug + BFF regression it shipped with are now also fixed — see "Regressions fixed") |
+| 0b | 🔴 Critical | Infra (cross-cutting) | Global rate limiter silently skips all GraphQL traffic — login/register/password-reset are fully unthrottled | ✅ Fixed |
+| 28 | 🔴 Critical | Frontend billing | Checkout form's expiry check always fails (2-digit-year `Date` bug) — mock checkout is unusable client-side | ✅ Fixed (also fixed a second latent month-indexing bug in the same line) |
+| 1 | 🟠 High | Backend auth | `setUserTier` uses a revocation-blind guard (`JwtAuthGuard`), unlike its sibling tier-gated queries | ✅ Fixed |
+| 2 | 🟠 High | Backend auth | Password reset never revokes existing sessions (`revokeAllForUser` exists, is never called) | ✅ Fixed |
+| 9 | 🟠 High | Backend billing | Mock payment's "Luhn fallback" Luhn-checks a fabricated string — meaningless, unpredictable accept/decline | ✅ Fixed |
+| 10 | 🟠 High | Backend billing | Idempotency key is checked too late — a race can double-charge before the DB constraint ever fires | ✅ Fixed |
+| 14 | 🟠 High | Backend social | `Reaction`'s DB unique constraint doesn't match the app's own toggle invariant — a race can create duplicate reactions | ✅ Fixed |
+| 30 | 🟠 High | Frontend design system | `Select`'s keyboard arrow-navigation can never fire — nothing moves focus into the listbox on open | ⚠️ Fixed for desktop only — mobile/narrow-viewport variant still unreachable |
+| 31 | 🟠 High | Frontend design system | Toast notifications have no `aria-live`/`role="status"` — invisible to screen readers | ✅ Fixed |
+| 3 | 🟡 Medium | Backend auth | Login has a timing side-channel that undermines its own anti-enumeration design | ✅ Fixed |
+| 4 | 🟡 Medium | Backend/Frontend | Session management is half-built — backend primitives exist, unwired; `/settings/sessions` is a static stub | ⚠️ Fixed, but its own new BFF routes are broken by 0a — see below |
+| 5 | 🟡 Medium | Backend auth | Password reset doesn't clear account lockout despite proving identity | ✅ Fixed |
+| 11 | 🟡 Medium | Backend billing | Tier-flip + ledger write aren't atomic — a partial failure silently breaks billing history | ✅ Fixed |
+| 15 | 🟡 Medium | Backend social | Reaction input allows both `postId` and `commentId` set simultaneously — no mutual-exclusivity validation | ✅ Fixed |
+| 17 | 🟡 Medium | Backend social | One-reply-per-comment-thread rule is unusual — confirm intentional | ❌ Not addressed |
+| 22 | 🟡 Medium | Backend realtime | `handleJoinRoom` is missing the room-allowlist check its sibling handlers both have | ✅ Fixed (the VIP-room regression it shipped with, and the identical pre-existing bug in `handleClaimJoinRoom`, are now also fixed — see "Regressions fixed") |
+| 26 | 🟡 Medium | Frontend UX | Icon-only buttons are missing `aria-label` fairly systemically | ⚠️ Partial — the 5 buttons named in the original finding are fixed; the broader systemic gap (e.g. `find-friends`, `feed`) is not |
+| 6,7,8,12,13,16,18,19,20,21,23,24,25,27,29,32 | 🟢 Low | Various | See detail below | 6,7,8,12,16 ✅ fixed; 13,18,19,20,21,23,24,25,27,29,32 ❌ not addressed (all reasonable to defer) |
 
 ## Backend infra (cross-cutting)
 
@@ -588,7 +609,185 @@ itself.
 - `TierGate` is correctly implemented as render-only UI sugar, never pretending to be
   real enforcement (which always lives server-side in `TierGuard`).
 
+## Verification pass (2026-07-06) — commit `0b6ade5`
+
+`pnpm test` in `nest-js-boilerplate` went from 220/220 passing to **205 passing, 15
+failing across 5 suites**. Root-caused every failure rather than assuming they're all
+the same kind of problem — they aren't:
+
+**Stale tests, correct code (no action needed beyond updating the tests) — 11 of the 15
+failures:**
+- `auth.service.spec.ts` (6 failures, all `resetPassword`): the fix for #7 correctly
+  moved the token lookup inside the `$transaction` callback
+  (`tx.verificationToken.findUnique`, `auth.service.ts:292`), but the test's mocked `tx`
+  object only stubs `verificationToken.update`, not `.findUnique` — `TypeError:
+  tx.verificationToken.findUnique is not a function`. The production code is right; the
+  mock wasn't updated.
+- `billing.service.spec.ts` (3 failures, all `subscribeToPlan`): the fixes for #10/#11
+  correctly call `prisma.walletTransaction.findFirst` (idempotency pre-check) and
+  `prisma.$transaction([...])` (atomic array form) — neither method exists on the test's
+  `mockPrisma` fixture at all. Same story: correct code, unupdated mock.
+- `mock-payment.provider.spec.ts` (1 failure, "declines Luhn-invalid last4"): this test
+  asserts the *old*, intentionally-removed Luhn-fallback behavior from finding #9. The
+  fix is correct; this specific test should have been deleted as part of the fix and
+  wasn't.
+
+**Real regressions the fix commit introduced — 4 of the 15 failures, two distinct root
+causes:**
+
+1. **🆕 `handleJoinRoom`'s new `isValidRoom()` check breaks the VIP room feature
+   entirely**, for every tier, not just the ones it's supposed to gate.
+   `CHAT_ROOMS` (`messaging.service.ts:17-23`) is a fixed list —
+   `['general', 'random', 'tech', 'design', 'music']` — that has **never** included
+   `vip-`-prefixed rooms, because VIP rooms are dynamically named (any `vip-*` string),
+   not pre-registered. `isValidRoom('vip-lounge')` returns `false` unconditionally, so
+   the newly-added check at the top of `handleJoinRoom` rejects `vip-lounge` as
+   `"Invalid room"` for *every* caller — including MEDIUM/PREMIUM users who are supposed
+   to be let in. This is worse than the original finding #22 (arbitrary unbounded room
+   names could be joined) because it now blocks the *legitimate, documented* feature
+   entirely. Confirmed by the 4 newly-failing `messaging-ws.gateway.spec.ts` VIP-tier
+   tests (reject-FREE and reject-BASIC now fail because the app sends `"Invalid room"`
+   instead of the expected `"VIP rooms require MEDIUM tier"` message; allow-MEDIUM and
+   allow-PREMIUM fail because they're rejected at all).
+
+   **Important correction to my own original finding:** #22 asked for `handleJoinRoom`
+   to become consistent with `handleRoomMessage`/`handleClaimJoinRoom`, on the assumption
+   those two already handled VIP rooms correctly since they already had the
+   `isValidRoom` check. That assumption was never verified — and it's wrong.
+   `handleClaimJoinRoom` (`messaging-ws.gateway.ts:274`, unchanged by this commit) has
+   the *identical* `isValidRoom` check *before* its own VIP-prefix check, so **joining a
+   VIP room via the page-claim path has likely been broken since Phase 17 shipped it**,
+   pre-dating this whole enhancements round. This wasn't caught by either phase17's
+   own verification or my initial review.
+
+   **Fix:** `isValidRoom` needs to accept `vip-`-prefixed rooms as valid independent of
+   the fixed `CHAT_ROOMS` list (e.g. `CHAT_ROOMS.includes(room) ||
+   room.startsWith(VIP_ROOM_PREFIX)`), in all three handlers — `handleClaimJoinRoom`
+   included, since it has the same latent bug.
+
+2. **🆕 `SessionAuthGuard`'s new CSRF check has a null-safety bug, and breaks its own
+   new sessions feature.** Two related problems in one change:
+   - `isGraphQLMutation` (`session-auth.guard.ts:180-187`) does
+     `const info = gqlCtx.getInfo<...>(); return info.parentType?.name === 'Mutation';`
+     — the optional-chain protects `.parentType`, not `info` itself. When `getInfo()`
+     returns `null`/`undefined` (confirmed reachable — it's exactly what happens in
+     `session-auth.guard.spec.ts`'s "authenticates a valid session" test), this throws
+     `TypeError: Cannot read properties of null (reading 'parentType')` instead of
+     safely resolving to `false`. Since this now runs on *every* `SessionAuthGuard`
+     check, a null `getInfo()` in any real execution-context shape this wasn't tested
+     against would 500 the whole request rather than just skip the CSRF check. Cheap
+     fix: `info?.parentType?.name === 'Mutation'`.
+   - **More importantly:** the new `sessions/revoke` and `sessions/revoke-others` BFF
+     routes (`next-js-boilerplate/src/app/api/sessions/revoke/route.ts`,
+     `revoke-others/route.ts`) call `graphqlFetch(MUTATION, vars, accessToken)` with
+     **no CSRF token** — unlike `api/auth/logout`, `api/billing/subscribe`, and
+     `api/admin/set-tier`, which all correctly call `csrfEchoHeaders()` first and pass
+     the result as a 4th argument. `revokeSession`/`revokeAllOtherSessions` are
+     mutations on a `SessionAuthGuard`-guarded resolver, so they're now subject to 0a's
+     blanket CSRF requirement — meaning **the brand-new session-management feature
+     (finding #4) cannot actually revoke a session; every attempt will fail with
+     "Invalid or missing CSRF token."** This is the two halves of the same commit
+     breaking each other: 0a's fix and #4's fix shipped together, but nobody re-checked
+     #4's new routes against 0a's new requirement. It's also a preview of a structural
+     risk in how 0a was implemented: folding CSRF into the guard makes the requirement
+     invisible in the backend resolver code (no `@UseGuards(CsrfGuard)` marker to
+     remind a BFF-route author it's needed) — easy to miss again next time a new
+     mutation is added. **Fix:** add `csrfEchoHeaders()` to both new sessions routes,
+     matching the existing pattern.
+
+**Net effect:** roughly 26 of the ~29 addressed findings are genuinely, correctly fixed
+— a strong pass overall — but this phase is **not done**. Two concrete regressions
+(VIP rooms fully broken, session-revoke fully broken) need fixing, the null-safety bug
+in `isGraphQLMutation` should be closed while touching that file anyway, and the test
+suite needs its mocks updated before `pnpm test` is green again.
+
+## Regressions fixed (2026-07-06, same day)
+
+All four items from "Verification pass" above are now closed. `pnpm test` is back to
+220/220 in `nest-js-boilerplate` and remains 77/77 in `next-js-boilerplate`; `pnpm lint`/
+`tsc --noEmit` show no *new* errors from any of these changes (the errors/warnings still
+present — `test/tier-guard.e2e-spec.ts`, `token-store.service.spec.ts`,
+`tier.guard.spec.ts`, `post.resolver.spec.ts`, `test/microservices.e2e-spec.ts` — are
+pre-existing debt in files none of these fixes touched, confirmed via `git status`
+before making any change).
+
+1. **VIP rooms — fixed at the root, in both broken handlers.**
+   `messaging/messaging.service.ts:17-23` — `isValidRoom` accepted only a fixed
+   `CHAT_ROOMS` list, which never included `vip-`-prefixed rooms (they're dynamically
+   named, not pre-registered). Moved `VIP_ROOM_PREFIX` from `messaging-ws.gateway.ts`
+   (where it was a private, gateway-local constant) into `messaging.service.ts`
+   alongside `CHAT_ROOMS`/`isValidRoom`, exported it, and changed the check to
+   `CHAT_ROOMS.includes(room) || room.startsWith(VIP_ROOM_PREFIX)`. `messaging-ws.gateway.ts`
+   now imports the shared constant instead of defining its own copy (was silently
+   duplicated before — a second latent bug: if the two copies ever drifted, the
+   VIP-prefix check and the room-validity check could disagree on what counts as a VIP
+   room). Confirmed this also silently fixes `handleClaimJoinRoom`'s **identical
+   pre-existing bug** noted in the verification pass (it had the same `isValidRoom`
+   check before its own VIP-tier check, unchanged since Phase 17 — never caught until
+   this investigation because `handleJoinRoom`'s tests are the only ones that exercise
+   `isValidRoom` against a `vip-` room name). `isValidRoom`'s return type changed from a
+   `room is ChatRoom` type predicate to plain `boolean`, since a VIP room isn't a
+   `ChatRoom` literal — confirmed nothing else in the codebase relied on the narrowed
+   type (grepped for `ChatRoom` usage; only `isValidRoom`'s own signature referenced it).
+   All 4 previously-failing `messaging-ws.gateway.spec.ts` VIP-tier tests pass again
+   with zero test changes — the tests were correct all along; only the implementation
+   was wrong.
+
+2. **Session-revoke — fixed by adding the missing CSRF echo.**
+   `next-js-boilerplate/src/app/api/sessions/revoke/route.ts` and
+   `revoke-others/route.ts` now call `csrfEchoHeaders()` before `graphqlFetch(...)`,
+   passing `extraHeaders ?? undefined` as the 4th argument — the exact pattern already
+   used by `api/auth/logout`, `api/billing/subscribe`, and `api/admin/set-tier`. No
+   defensive `if (!extraHeaders)` branch was added — checked the established
+   convention first (`billing/subscribe/route.ts`) and it doesn't pre-check either; a
+   missing/unreachable CSRF token surfaces as a GraphQL error from the backend's own
+   `SessionAuthGuard`, translated by the existing `graphqlErrorBody` path, same as
+   every other mutation route. Matching the convention exactly rather than inventing a
+   parallel one.
+
+3. **`isGraphQLMutation` null-safety — one-character fix.**
+   `nest-js-boilerplate/src/auth/session-auth.guard.ts:187`:
+   `info.parentType?.name === 'Mutation'` → `info?.parentType?.name === 'Mutation'`.
+   `gqlCtx.getInfo()` can return `null`/`undefined` (confirmed — it's exactly what the
+   existing `session-auth.guard.spec.ts` test constructs), and the old code only
+   guarded `.parentType`, not `info` itself, so it threw instead of safely resolving to
+   `false` (skip the CSRF check). This was surfacing as the "authenticates a valid
+   session" test failure; fixed with no test changes needed.
+
+4. **Test suite — stale mocks updated to match the (correct) new code shapes,** plus one
+   test rewritten because the behavior it asserted was intentionally removed:
+   - `auth/auth.service.spec.ts`: `resetPassword`'s token lookup moved inside
+     `$transaction` (enhancements1 #7's fix) — added a `beforeEach` that makes the
+     mocked `$transaction` invoke its callback with `mockPrisma` itself as `tx`, so
+     every existing per-test `mockPrisma.verificationToken.findUnique.mockResolvedValue(...)`
+     still applies without each test needing its own transaction mock. Also updated the
+     success-path assertions: `user.update`'s expected `data` now includes
+     `failedLoginCount: 0, lockedUntil: null` (enhancements1 #5), and added an
+     assertion that `tokenStore.revokeAllForUser` is called (enhancements1 #2) — neither
+     was previously asserted at all, so the fixes for #2 and #5 had *zero* regression
+     coverage until now.
+   - `billing/billing.service.spec.ts`: added `walletTransaction.findFirst` (mocked to
+     resolve `null` — no prior transaction for the idempotency key, enhancements1 #10)
+     and `$transaction` (mocked as `(ops) => Promise.resolve(ops)`, matching Prisma's
+     real array-form semantics, enhancements1 #11) to the `MockPrisma` fixture. No
+     assertions needed to change — the existing `user.update`/`walletTransaction.create`
+     mocks are still what the tests check against; they're just now invoked from inside
+     the array passed to `$transaction` instead of directly.
+   - `billing/mock-payment.provider.spec.ts`: the "declines Luhn-invalid last4 with
+     invalid_card" test asserted the exact broken behavior enhancements1 #9 removed.
+     Replaced it with a test that confirms the *specific* input that used to fail under
+     the old fake-Luhn check (`last4: '0001'`) now approves, so this exact regression
+     class has a regression test guarding it going forward — the same "add the test
+     that would have caught it" discipline this project has used since Phase 17's
+     pricing bug.
+
 ## Suggested fix order
+
+**Status: done as of 2026-07-06** (items 1-5 below, plus the regressions those fixes
+introduced — see "Regressions fixed" above). Kept for traceability, not as a live to-do
+list. Item 6 ("everything else") remains open — see `enhancements2.md` for what's being
+built next, and the ❌-marked rows in "At a glance" for what's still genuinely
+unaddressed from this review.
 
 1. **0a (CSRF)** and **0b (throttling)** first — both are one architectural change each
    (fold CSRF into `SessionAuthGuard` for mutations; add a GraphQL-aware throttler) that

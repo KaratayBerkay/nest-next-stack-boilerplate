@@ -175,15 +175,15 @@ export class BillingService {
     await this.tokenStore.rewriteFieldsForUser(userId, { tier: targetTier });
     this.realtime.updateUserTier(userId, targetTier);
 
-      await this.sendBillingNotification(
-        userId,
-        `Downgraded to ${targetTier}`,
-        `Your subscription has been changed to ${targetTier}.`,
-      ).catch((err: Error) =>
-        this.logger.warn(
-          `Billing notification failed after successful downgrade: ${err.message}`,
-        ),
-      );
+    await this.sendBillingNotification(
+      userId,
+      `Downgraded to ${targetTier}`,
+      `Your subscription has been changed to ${targetTier}.`,
+    ).catch((err: Error) =>
+      this.logger.warn(
+        `Billing notification failed after successful downgrade: ${err.message}`,
+      ),
+    );
 
     return { success: true };
   }

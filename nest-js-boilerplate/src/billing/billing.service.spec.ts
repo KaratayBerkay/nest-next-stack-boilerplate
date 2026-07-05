@@ -6,7 +6,12 @@ import type { PaymentProvider } from './payment-provider.interface';
 type MockPrisma = {
   user: { findUniqueOrThrow: jest.Mock; update: jest.Mock };
   wallet: { findUnique: jest.Mock; create: jest.Mock };
-  walletTransaction: { create: jest.Mock; findMany: jest.Mock };
+  walletTransaction: {
+    create: jest.Mock;
+    findMany: jest.Mock;
+    findFirst: jest.Mock;
+  };
+  $transaction: jest.Mock;
 };
 
 type MockTokenStore = { rewriteFieldsForUser: jest.Mock };
@@ -39,7 +44,14 @@ describe('BillingService', () => {
       walletTransaction: {
         create: jest.fn(),
         findMany: jest.fn(),
+        // No prior transaction for this idempotency key by default — enhancements1
+        // #10 checks this before calling the payment provider.
+        findFirst: jest.fn().mockResolvedValue(null),
       },
+      // Real Prisma's array form just runs each operation and resolves; the mock
+      // mirrors that (the individual create/update mocks below are what tests assert
+      // against — they've already been invoked by the time the array is built).
+      $transaction: jest.fn((ops: unknown[]) => Promise.resolve(ops)),
     };
     mockTokenStore = {
       rewriteFieldsForUser: jest.fn(),

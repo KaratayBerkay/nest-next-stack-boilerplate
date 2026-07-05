@@ -24,8 +24,15 @@ export const CHAT_ROOMS = [
 
 export type ChatRoom = (typeof CHAT_ROOMS)[number];
 
-export function isValidRoom(room: string): room is ChatRoom {
-  return CHAT_ROOMS.includes(room as ChatRoom);
+// VIP rooms are dynamically named (any `vip-<slug>` string), not pre-registered like
+// the fixed CHAT_ROOMS list — the tier gate (see messaging-ws.gateway.ts) is what
+// restricts who can join one, not membership in a fixed room list.
+export const VIP_ROOM_PREFIX = 'vip-';
+
+export function isValidRoom(room: string): boolean {
+  return (
+    CHAT_ROOMS.includes(room as ChatRoom) || room.startsWith(VIP_ROOM_PREFIX)
+  );
 }
 
 export interface RoomMember {

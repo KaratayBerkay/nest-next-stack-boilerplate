@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
-import { graphqlErrorBody, graphqlFetch } from "@/lib/backend";
+import { csrfEchoHeaders, graphqlErrorBody, graphqlFetch } from "@/lib/backend";
 
 const REVOKE_SESSION_MUTATION = `
   mutation RevokeSession($sessionId: ID!) {
@@ -26,10 +26,15 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // revokeSession is a mutation, so SessionAuthGuard requires a CSRF echo — same
+  // pattern as api/auth/logout and api/billing/subscribe.
+  const extraHeaders = await csrfEchoHeaders();
+
   const { errors } = await graphqlFetch(
     REVOKE_SESSION_MUTATION,
     { sessionId },
     accessToken,
+    extraHeaders ?? undefined,
   );
 
   if (errors) {

@@ -77,6 +77,13 @@ describe('AuthService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // resetPassword now does its lookup inside $transaction (closes the TOCTOU race —
+    // enhancements1 #7), so the mocked `tx` needs the same methods as `mockPrisma`
+    // itself. Reusing the same jest.fn()s means each test's
+    // `mockPrisma.verificationToken.findUnique.mockResolvedValue(...)` still applies.
+    mockPrisma.$transaction.mockImplementation(
+      (cb: (tx: typeof mockPrisma) => unknown) => cb(mockPrisma),
+    );
   });
 
   describe('resetPassword', () => {
@@ -161,30 +168,6 @@ describe('AuthService', () => {
       };
       mockPrisma.verificationToken.findUnique.mockResolvedValue(token);
 
-      interface MockTx {
-        verificationToken: {
-          update: typeof mockPrisma.verificationToken.update;
-        };
-        user: {
-          update: typeof mockPrisma.user.update;
-          findUnique: typeof mockPrisma.user.findUnique;
-        };
-      }
-      mockPrisma.$transaction.mockImplementation(
-        (cb: (tx: MockTx) => unknown) => {
-          const tx: MockTx = {
-            verificationToken: {
-              update: mockPrisma.verificationToken.update,
-            },
-            user: {
-              update: mockPrisma.user.update,
-              findUnique: mockPrisma.user.findUnique,
-            },
-          };
-          return cb(tx);
-        },
-      );
-
       mockPrisma.verificationToken.update.mockResolvedValue({
         ...token,
         consumedAt: new Date(),
@@ -210,6 +193,10 @@ describe('AuthService', () => {
           passwordHash: expect.any(String),
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           passwordSetAt: expect.any(Date),
+          // Clears any account lockout — enhancements1 #5: a password reset is a
+          // strong enough proof of ownership that a lockout shouldn't survive it.
+          failedLoginCount: 0,
+          lockedUntil: null,
         },
       });
       expect(mockOutbox.emit).toHaveBeenCalledWith(
@@ -220,6 +207,9 @@ describe('AuthService', () => {
         }),
         expect.anything(),
       );
+      // enhancements1 #2: a successful reset must revoke every other existing
+      // session, not just leave old (possibly attacker-held) tokens valid.
+      expect(mockTokenStore.revokeAllForUser).toHaveBeenCalledWith('u1');
     });
   });
 });
