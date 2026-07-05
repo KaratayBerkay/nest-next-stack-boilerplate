@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef, useCallback, useLayoutEffect } from "react";
+import { useRef, useCallback, useLayoutEffect, useState } from "react";
 
 const IGNORE_SELECTOR = "button, a, input, textarea, [contenteditable]";
 
 export function useYSwipeGesture<T extends HTMLElement>(enabled = true) {
   const elRef = useRef<T | null>(null);
+  const [tick, setTick] = useState(0);
   const dragging = useRef(false);
   const startY = useRef(0);
   const scrollStart = useRef(0);
@@ -29,33 +30,29 @@ export function useYSwipeGesture<T extends HTMLElement>(enabled = true) {
     };
 
     const onDown = (e: MouseEvent | TouchEvent) => {
-      const target = elRef.current;
-      if (!target || isIgnored(e.target)) return;
+      if (!el || isIgnored(e.target)) return;
 
       dragging.current = true;
       const y = "touches" in e ? (e.touches[0]?.clientY ?? 0) : e.clientY;
       startY.current = y;
-      scrollStart.current = target.scrollTop;
-      target.style.cursor = "grabbing";
-      target.style.userSelect = "none";
+      scrollStart.current = el.scrollTop;
+      el.style.cursor = "grabbing";
+      el.style.userSelect = "none";
     };
 
     const onMove = (e: MouseEvent | TouchEvent) => {
-      if (!dragging.current) return;
-      const target = elRef.current;
-      if (!target) return;
+      if (!dragging.current || !el) return;
       e.preventDefault();
       const y = "touches" in e ? (e.touches[0]?.clientY ?? 0) : e.clientY;
-      target.scrollTop = scrollStart.current + (startY.current - y);
+      el.scrollTop = scrollStart.current + (startY.current - y);
     };
 
     const onUp = () => {
       if (!dragging.current) return;
       dragging.current = false;
-      const target = elRef.current;
-      if (!target) return;
-      target.style.cursor = "";
-      target.style.userSelect = "";
+      if (!el) return;
+      el.style.cursor = "";
+      el.style.userSelect = "";
     };
 
     el.addEventListener("mousedown", onDown);
@@ -73,10 +70,11 @@ export function useYSwipeGesture<T extends HTMLElement>(enabled = true) {
       window.removeEventListener("touchmove", onMove);
       window.removeEventListener("touchend", onUp);
     };
-  }, [enabled]);
+  }, [enabled, tick]);
 
   const setRef = useCallback((el: T | null) => {
     elRef.current = el;
+    setTick((n) => n + 1);
   }, []);
 
   return setRef;

@@ -21,7 +21,7 @@ export function useAutoScroll<T extends { id: string }>(
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [enabled]);
 
   useLayoutEffect(() => {
     if (!enabled || items.length === 0) return;
