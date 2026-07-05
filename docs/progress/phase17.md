@@ -2,12 +2,14 @@
 
 > Execution tracker for the seventeenth phase of the [stack roadmap](../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
-> Created 2026-07-05 · Status: **NOT gate-clean (re-verified four times:
+> Created 2026-07-05 · Status: **NOT gate-clean (re-verified five times:
 > 2026-07-05 across four passes — `aacb05a` → `d75be4b` → lint residual
 > closed → pricing regression test added; 2026-07-06 a full Stage B/D/E code
 > audit; again 2026-07-06 after `6b1411b` landed fixes for two of the
-> three gaps that second pass found; and a fourth pass 2026-07-06 that closed
-> the remaining i18n residuals)**.
+> three gaps that second pass found; a fourth pass 2026-07-06 that closed
+> most of the remaining i18n residuals; and a fifth pass 2026-07-06 that
+> found the fourth pass's "fully closed" i18n claim was itself slightly
+> overstated)**.
 > Stages A–G's code landed in `e2c0558`/`a7cd6a0` (tracker left at "planning
 > only" the whole time — 6th "commit lands, tracker untouched" occurrence
 > after phases 2/12/13/15/16). A punch list of 6 gaps was found; `aacb05a`
@@ -35,8 +37,23 @@
 > Stage E view file, and the checkout page still have zero tests. Frontend
 > count is unchanged at 77. See "Second re-verification pass (2026-07-06)"
 > and "Third re-verification pass (2026-07-06)" below for the full detail.
+>
+> **2026-07-06, third re-check: Berkay landed `d03d1a1` directly, and this
+> time did update this file's own tracker (fourth pass, below) — a genuine
+> improvement over the prior 8 "commit lands, tracker untouched" instances.**
+> Its three targeted fixes (feed's error fallback, `MockCardForm`'s
+> testCards/month/year labels, chat-room's connection tooltips) are all
+> confirmed correct. But its claim that i18n is now "fully closed" with "no
+> remaining hardcoded strings" doesn't hold up under a broader grep: two more
+> hardcoded strings survive in files this phase touches — `posts/[uuid]`'s
+> `"Post not found"` (all 3 tiers) and `MockCardForm`'s generic
+> `"Payment failed. Please try again."` fallback. See "Fourth re-verification
+> pass (2026-07-06)" below for the exact fix (both are one key + one-line
+> swaps, `useMessages("posts")` is already in scope in the `posts/[uuid]`
+> files).
 > **Remaining open items:** T28 (live control run, still not run), the
-> guard-403 test gap, and `admin.resolver.ts` test coverage.
+> guard-403 test gap, `admin.resolver.ts` test coverage, and the two i18n
+> residuals above.
 
 ## Punch-list fix verification (2026-07-05, commits `aacb05a` → `d75be4b`)
 
@@ -252,8 +269,9 @@ not done — the guard-enforcement behavior and most of the frontend surface
 remain untested. T28 (live control run) is still the only way to actually
 prove the 403s work end-to-end today.
 
-**Update (2026-07-06):** gap #2 (missing i18n) is now **fully closed** — see
-"Fourth re-verification pass" below for the residual strings that were fixed.
+**Update (2026-07-06):** gap #2 (missing i18n) is now **mostly closed** — see
+"Fourth re-verification pass" below for the residual strings that were fixed,
+and the fifth pass's correction for the two that weren't.
 
 ## Fourth re-verification pass (2026-07-06)
 
@@ -273,12 +291,39 @@ Closed the remaining i18n residuals identified in the third pass:
    `disconnected` keys. Replaced with `t.connected`/`t.connecting`/`t.disconnected` in
    all three files.
 
-**Verification:** `pnpm tsc --noEmit` clean, `pnpm test` 77/77 pass,
-`pnpm generate-i18n-types` re-run and committed. No remaining hardcoded UI
-strings found by grep across the touched view files. The i18n gap (second pass
-gap #2) is now **fully closed**.
+**Verification:** `pnpm tsc --noEmit` clean, `pnpm test` 77/77 pass (still 220
+backend/77 frontend as of this pass, confirmed by re-running both suites),
+`pnpm generate-i18n-types` re-run and committed. All three targeted strings
+above are genuinely fixed — confirmed directly (`grep` for each old literal
+now returns nothing, `grep` for the new `t.*` usage returns hits in all the
+named files).
 
-**Still open:** gap #3 (guard-403 test coverage) and T28 (live control run).
+**Correction (2026-07-06, fifth re-check): the "fully closed" / "no remaining
+hardcoded UI strings" claim above is not quite true.** A broader grep across
+every Stage E view file (not just the three named above) turned up two
+strings this pass missed, both in files this phase itself touches:
+
+1. `posts/[uuid]/views/{Free,Medium,Premium}PageView.tsx:66-72` (all three
+   tiers) — `throw new Error("Post not found")` in the post-detail fetch,
+   twice per file. This is user-facing (caught by the file's own
+   `ErrorBoundary`), and the fix is a one-line addition per occurrence: the
+   file already calls `const t = useMessages("posts")` (line 44) and already
+   uses `t.back` two lines below — it just needs a `postNotFound` key added
+   to `messages/{en,tr}/posts/messages.json` and `t.postNotFound` swapped in
+   for the two literal strings, in all three view files.
+2. `src/features/billing/ui/mock-card-form.tsx:87` — the generic catch-all
+   `"Payment failed. Please try again."` fallback (shown when the BFF error
+   response has no structured `msg`) is still hardcoded, despite the rest of
+   this file now being fully wired to the `checkout` namespace. Needs one
+   more key (e.g. `paymentFailedGeneric`) added alongside `testCards`/`month`/
+   `year`.
+
+Both are minor relative to the original gap (the bulk of both files' content
+is genuinely i18n'd now), but the record should say "two known residuals
+remain" rather than "fully closed" until these are addressed.
+
+**Still open:** the two residuals above, gap #3 (guard-403 test coverage),
+and T28 (live control run).
 
 ## Punch list to close this phase (priority order, historical)
 
@@ -915,9 +960,13 @@ as their own namespaces are added, or as one sweep after. Stage G is last.
   `mock-card-form.test.tsx` (5 tests, all passing) has existed since `e2c0558`
   — the earlier check only grepped for `*spec*` filenames and missed this
    project's `.test.` naming. **Fourth re-verification pass (2026-07-06):**
-   `MockCardForm` is now fully i18n'd — the remaining `"Test cards:"`,
-   `"Month"`, `"Year"` labels were replaced with `t.testCards`/`t.month`/
-   `t.year` from the `checkout` namespace.
+   the `"Test cards:"`, `"Month"`, `"Year"` labels were replaced with
+   `t.testCards`/`t.month`/`t.year` from the `checkout` namespace — confirmed.
+   **Fifth pass correction:** not *fully* i18n'd though — line 87's generic
+   `"Payment failed. Please try again."` catch-all fallback is still
+   hardcoded English. Small, one-key fix; doesn't affect this box staying
+   checked (T12's own verify step is about validation/masking behavior, which
+   is unaffected), but noted so it isn't lost.
 - [x] **T13 (S) — BFF routes: `api/billing/subscribe/route.ts` (POST),
   `api/billing/history/route.ts` (GET).** Same `graphqlFetch` +
   `sessionTokenHeaders()` + CSRF-echo pattern as `api/admin/set-tier/route.ts`/
@@ -1009,8 +1058,12 @@ noted explicitly below where that applies.
   Static re-check 2026-07-06: the ladder is implemented correctly in
   `posts/[uuid]/views/{Free,Basic,Medium,Premium}PageView.tsx`. **`6b1411b`
   added the `posts` i18n namespace and wired `useMessages()` into all 4
-  views** — this page's i18n gap is now fully closed, unlike `/feed`'s small
-  residual. Left unchecked — no live click-through, and still no backend test
+  views.** **Fifth-pass correction:** not fully closed — `FreePageView`,
+  `MediumPageView`, and `PremiumPageView` each still throw a hardcoded
+  `"Post not found"` (lines ~66-72) in their fetch handler, even though
+  `t = useMessages("posts")` is already in scope two lines below. One
+  `postNotFound` key + a 3-file swap closes it. Left unchecked — no live
+  click-through, and still no backend test
   for the 403 (same gap as T7).
 - [ ] **T20 (S) — `/messages`.** No tier differentiation planned (1:1 DMs are core,
   not a monetization axis) — all four views re-export the same existing content
@@ -1136,10 +1189,14 @@ noted explicitly below where that applies.
   missing-key fallback. 2026-07-06: **not true at first check** — `feed` and
   `posts/[uuid]`'s Medium/Premium panels had zero i18n coverage. **`6b1411b`
   fixed most of this** — both pages now have `en`/`tr` namespaces wired via
-  `useMessages()`. **Fourth re-verification pass (2026-07-06):** remaining
-  residuals (hardcoded error fallback in feed, MockCardForm labels, chat-room
-  connection tooltips) are now all wired. **i18n is fully closed.** Left
-  unchecked until both locales are actually loaded in a browser (pending T28).
+  `useMessages()`. **Fourth pass (`d03d1a1`):** feed's error fallback,
+  MockCardForm's testCards/month/year labels, and chat-room's connection
+  tooltips are all now wired — confirmed. **Fifth pass (2026-07-06)
+  correction:** two more hardcoded strings survive a broader grep —
+  `posts/[uuid]`'s `"Post not found"` (all 3 tiers) and MockCardForm's
+  generic `"Payment failed. Please try again."` fallback. Left unchecked —
+  both are small, known, one-line fixes, plus both locales still need an
+  actual browser load (pending T28).
 - [ ] **Live control run (T28) passes** before this phase is marked complete —
   static/unit-only verification is not sufficient per this project's established
   lesson (phases 2/12/15/16 all shipped real bugs that only a live rebuilt-container
