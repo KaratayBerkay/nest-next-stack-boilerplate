@@ -94,6 +94,7 @@ describe('BillingService', () => {
       );
       expect(mockPrisma.walletTransaction.create).toHaveBeenCalledWith(
         expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           data: expect.objectContaining({
             type: 'FEE',
             status: 'COMPLETED',
@@ -130,6 +131,7 @@ describe('BillingService', () => {
       expect(mockTokenStore.rewriteFieldsForUser).not.toHaveBeenCalled();
       expect(mockPrisma.walletTransaction.create).toHaveBeenCalledWith(
         expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           data: expect.objectContaining({
             type: 'FEE',
             status: 'FAILED',
@@ -148,6 +150,7 @@ describe('BillingService', () => {
       const result = await service.subscribeToPlan('u1', SubscriptionTier.FREE);
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(mockProvider.charge).not.toHaveBeenCalled();
       expect(mockPrisma.user.update).toHaveBeenCalledWith({
         where: { id: 'u1' },
@@ -159,6 +162,7 @@ describe('BillingService', () => {
       );
       expect(mockPrisma.walletTransaction.create).toHaveBeenCalledWith(
         expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           data: expect.objectContaining({
             type: 'ADJUSTMENT',
             status: 'COMPLETED',
@@ -205,6 +209,7 @@ describe('BillingService', () => {
       expect(result).toHaveLength(1);
       expect(mockPrisma.walletTransaction.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           where: expect.objectContaining({
             OR: [
               { fromWallet: { userId: 'u1' } },

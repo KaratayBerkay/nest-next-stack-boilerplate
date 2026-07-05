@@ -103,7 +103,7 @@ export class PostResolver {
     const reactions = (post as PostWithReactions).reactions ?? [];
     return reactions.map((r) => ({
       userId: r.userId,
-      name: r.user?.name ?? null,
+      name: r.user?.name ?? undefined,
       type: r.type,
     }));
   }

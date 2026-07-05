@@ -3,18 +3,17 @@
 > Execution tracker for the seventeenth phase of the [stack roadmap](../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
 > Created 2026-07-05 · Status: **NOT gate-clean (re-verified 2026-07-05
-> across three passes: `aacb05a` → found a new bug → `d75be4b` fixed it)**.
+> across four passes: `aacb05a` → `d75be4b` → lint residual closed →
+> pricing regression test added)**.
 > Stages A–G's code landed in `e2c0558`/`a7cd6a0` (tracker left at "planning
 > only" the whole time — 6th "commit lands, tracker untouched" occurrence
 > after phases 2/12/13/15/16). A punch list of 6 gaps was found; `aacb05a`
 > fixed 5 of 6 (T28 excluded, needs live infra) but introduced a new bug in
 > the process (`/pricing`'s feature lists shifted one tier); `d75be4b` fixed
 > that too, confirmed correct against the live tree. Remaining open items:
-> Fix 3's 5 residual backend lint errors (test-only, non-functional) and T28
-> (live control run, still not run). `pnpm test` is still green in both
-> packages (207 backend / 67 frontend) throughout all three passes — it never
-> caught either the wallet-linkage bug or the pricing feature-list bug,
-> because there's still no test exercising `/pricing`'s rendered content.
+> T28 (live control run, still not run). `pnpm test` is still green in both
+> packages (207 backend / 77 frontend) — the new pricing regression test
+> now guards the exact mismatch class that shipped in `aacb05a`.
 
 ## Punch-list fix verification (2026-07-05, commits `aacb05a` → `d75be4b`)
 
@@ -22,8 +21,8 @@
 | - | --- | --- |
 | 1 | Wallet linkage | ✅ Fixed correctly (`aacb05a`) — `fromWalletId: wallet.id` added to all 3 `walletTransaction.create()` calls; spec updated with real assertions (not just re-passing old ones) |
 | 2 | Render-time component bug | ✅ Fixed correctly (`aacb05a`) — `tier-view.tsx` returns `ReactNode` directly, all 8 pages updated, `tier-view.spec.tsx` rewritten with `render()`/`screen`; `pnpm lint` frontend 0 errors, `tsc --noEmit` clean |
-| 3 | Backend lint (81 errors) | ⚠️ Reduced to 5 (`aacb05a`), unchanged by `d75be4b` (frontend-only commit) — all 5 remaining are in `billing.service.spec.ts` (`no-unsafe-assignment` + one `unbound-method` false-positive, all on `expect.objectContaining(...)` call sites). Test-only, non-functional. **Root cause + exact 5-line fix now documented in Fix 3's step 7 below** (matches this repo's existing `eslint-disable-next-line` convention from `auth.service.spec.ts`/`device.service.spec.ts`) |
-| 4 | Missing pricing/premium i18n | ✅ Fully fixed — `aacb05a` created the namespaces and fixed the logged-out CTA, `d75be4b` fixed the feature-list mapping bug `aacb05a` introduced (confirmed below). **Gap:** still no test covers `/pricing`'s rendered output. **A ready-to-add test is now written out in Fix 4's follow-up below** |
+| 3 | Backend lint (81 errors) | ✅ Fixed — all 5 residual lint errors in `billing.service.spec.ts` resolved with `eslint-disable-next-line` comments matching the existing convention in `auth.service.spec.ts`/`device.service.spec.ts` |
+| 4 | Missing pricing/premium i18n | ✅ Fully fixed — `aacb05a` created the namespaces and fixed the logged-out CTA, `d75be4b` fixed the feature-list mapping bug. **Regression test added:** `pricing/page.spec.tsx` with 10 tests covering all 4 tier feature mappings, logged-out CTA → `/auth/login`, current-plan badge, upgrade → checkout, included label |
 | 5 | users/detail split | ✅ Fixed correctly (`aacb05a`) — mirrors `users/list`'s exact shape (`FreePageView` holds real content, `Basic/Medium/PremiumPageView` re-export it, `page.tsx` renders `FreePageView` directly) |
 | 6 | T28 live control run | ❌ Still not run (expected — out of scope for code-only commits) |
 
@@ -109,19 +108,14 @@ for the original reasoning/file:line evidence, not as a live status source.
    (8 hard errors). Fixed by converting `tier-view.ts` → `.tsx` to return a
    `ReactNode` directly instead of a component reference; `pnpm lint` frontend
    is now 0 errors.
-3. ⚠️ **PARTIALLY RESOLVED in `aacb05a`.** Backend `pnpm lint` failed with 81
-   errors, 80 inside phase17's own files (`billing.service.spec.ts`,
-   `messaging-ws.gateway.spec.ts`, `post.resolver.ts`, `mock-payment.provider.spec.ts`,
-   plus a dead `async` and the unused `wallet` var from item 1). Reduced to 5 —
-   all remaining are in `billing.service.spec.ts` (`no-unsafe-assignment` +
-   one `unbound-method` false-positive on `expect.objectContaining(...)` call
-   sites), test-only and non-functional but not fully clean as claimed.
-4. ✅ **RESOLVED across `aacb05a` + `d75be4b`.** `pricing` and `premium`
-   never got i18n namespaces; pricing's logged-out CTA rendered a disabled
-   span instead of linking to login. `aacb05a` created the namespaces and
-   fixed the CTA, but shifted the feature-list mapping by one tier;
-   `d75be4b` fixed that follow-up bug with the exact 2-line remap prescribed
-   above. Still no regression test for `/pricing`'s rendered content.
+3. ✅ **RESOLVED.** All 5 residual lint errors in `billing.service.spec.ts`
+   fixed with `eslint-disable-next-line` comments matching the existing
+   convention in `auth.service.spec.ts`/`device.service.spec.ts`. `pnpm lint`
+   now clean in both packages.
+4. ✅ **RESOLVED across `aacb05a` + `d75be4b` + new test.** `pricing` and `premium`
+   i18n namespaces created, feature-list mapping fixed, and a 10-test regression
+   test (`pricing/page.spec.tsx`) now guards the exact mismatch class that
+   shipped in `aacb05a`. All 77 frontend tests pass.
 5. ✅ **RESOLVED in `aacb05a`.** `users/detail/[uuid]` never got the
    tier-view split; only `users/list` did. Fixed — mirrors `users/list`'s
    exact shape.
@@ -140,13 +134,9 @@ for the original reasoning/file:line evidence, not as a live status source.
 
 ## Fix plan (step-by-step, one per punch-list item)
 
-Kept as the original instructions for traceability. Fixes 1, 2, and 5 are
-✅ **done** (applied in `aacb05a`, re-verified above) — steps below are now
-historical for those three. Fix 3 is ⚠️ **mostly done** (81→5 errors, see the
-step-7 note added below). Fix 4 is ⚠️ **partially done** — its own steps 1-3,
-5-7 landed, but introduced the new bug documented above; a **Fix 4 follow-up**
-has been added at the end of that section with the exact remaining change.
-Fix 6 (T28) is ❌ **not started**.
+Kept as the original instructions for traceability. Fixes 1, 2, 3, 4, and 5 are
+✅ **done** (applied in `aacb05a`/`d75be4b` + lint fix + regression test). Fix 6
+(T28) is ❌ **not started**.
 
 ### Fix 1 — Wallet linkage (`billing.service.ts`) — ✅ done
 
@@ -268,8 +258,9 @@ since it can't prove the reference is stable across renders.
    with the same element type instead of `any`.
 7. Re-run `pnpm lint` in `nest-js-boilerplate` — should drop from 81 to 0 (the
    1 pre-existing `versioning.e2e-spec.ts` error predates this phase and is out
-   of scope). **Result: dropped to 5**, not 0 — steps 1, 3 (partially), 4, 5,
-   6 all landed clean; the 5 residual errors are all in `billing.service.spec.ts`.
+   of scope). **Result: ✅ fully resolved** — all 5 residual errors fixed with
+   `eslint-disable-next-line` comments in `billing.service.spec.ts`. `pnpm lint`
+   now clean in both packages.
 
    **Root cause confirmed (2026-07-05, re-checked against the current file),
    correcting the earlier guess about typed-mock generics:** it isn't a
@@ -343,16 +334,13 @@ keys by one tier relative to how `page.tsx` consumes them. `d75be4b` applied
 exactly the prescribed 2-line remap (`FEATURES.BASIC`/`FEATURES.MEDIUM` →
 `t.featuresMedium`/`t.featuresPremium`) and removed the dead `featuresFree`
 key from both locale JSON files — confirmed via `git show d75be4b`, and
-`pnpm test`/`lint`/`typecheck` all still pass in `next-js-boilerplate`. The
-one thing this follow-up did *not* do: add a regression test for `/pricing`'s
-rendered feature lists, so this exact mismatch class has no test guard going
-forward.
+`pnpm test`/`lint`/`typecheck` all still pass in `next-js-boilerplate`.
 
-**Still missing — regression test for `/pricing` (not yet applied, exact steps):**
-`(marketing)/pricing/page.tsx` has zero test coverage today (confirmed: no
-`*.spec.*`/`*.test.*` file references `pricing/page` or `PricingPage`
-anywhere in `next-js-boilerplate/src`). Create
-`next-js-boilerplate/src/app/(marketing)/pricing/page.spec.tsx`:
+**Regression test — ✅ added (2026-07-05):**
+`next-js-boilerplate/src/app/(marketing)/pricing/page.spec.tsx` with 10 tests
+covering: all 4 tier feature list mappings (verifying no tier-shift regression),
+logged-out CTA links to `/auth/login`, current-plan badge, upgrade CTA →
+`/checkout/`, included label for lower tiers. All 77 frontend tests pass.
 ```tsx
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -834,11 +822,9 @@ noted explicitly below where that applies.
 - [ ] **T27 (M) — Backend + frontend unit/e2e suites green.** `pnpm test`/
   `test:e2e` (backend), frontend unit tests for `MockCardForm`/`tier-view` helper/
   every new resolver field; no regression in Stage A's re-confirmed Phase 16
-  surface. Re-checked 2026-07-05 post-`aacb05a`: `pnpm test` green in both
-  packages (207 backend / 67 frontend), `pnpm lint` clean on frontend (was 8
-  errors) and down to 5 on backend (was 81, all 5 residual and test-only, see
-  "Punch-list fix verification"). Left unchecked — `test:e2e` still hasn't been
-  run this session, and the 5 backend lint errors mean it isn't fully clean yet.
+  surface. Re-checked 2026-07-05 post-lint-fix: `pnpm test` green in both
+  packages (207 backend / 77 frontend), `pnpm lint` clean on frontend and backend.
+  Left unchecked — `test:e2e` still hasn't been run this session.
 - [ ] **T28 (L) — Live control run against rebuilt containers** (same recipe as
   Phase 3/16: `docker compose --profile all up -d --build`, real HTTP/GraphQL/WS
   traffic, not just mocks). Script: register/login a fresh FREE user → attempt
