@@ -2,9 +2,124 @@
 
 > Execution tracker for the fourteenth phase of the [stack roadmap](../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
-> Created 2026-07-04 · Status: **not started**. Planning only — no code written
-> for this tracker yet, per the project's "plan phase N = write only phaseN.md"
-> convention.
+> Created 2026-07-04 · Status: **not gate-clean**. All 8 stages landed as real commits
+> and most tasks verified PASS live against a freshly-rebuilt stack on 2026-07-05 — but
+> this tracker sat with every box unchecked and the original "not started" banner despite
+> that, the same tracker/reality drift this phase's own Stage A was created to close out.
+> See "Live verification (2026-07-05)" immediately below for the full pass/fail
+> breakdown; **T3, T11, T13, T14, T15, T19, T20 are confirmed real gaps**, not just
+> bookkeeping.
+
+## Live verification (2026-07-05)
+
+Full live audit against a freshly-rebuilt stack (containers rebuilt from current HEAD,
+recreated, and exercised — not a static code read). Two infra bugs were found and fixed
+along the way (not originally scoped tasks, but blocking prerequisites for anything
+else to be verifiable):
+
+- **`docker-compose.yml`'s `fluentd-address: fluent-bit:24224` never worked.** The
+  `fluentd` Docker logging driver is resolved by the *Docker daemon* on the host, not
+  from inside the container network, so the compose service name `fluent-bit` doesn't
+  resolve there. Fixed to `localhost:24224` (fluent-bit's port is already published to
+  the host) for both `app` and `nextjs`. Without this fix, T5's pipe never carried data
+  despite looking correctly wired on paper.
+- **`route_category.lua` (T17's original implementation) could never have worked.**
+  Fluent Bit's generic `lua` filter plugin callback contract is strictly
+  `(code, timestamp, record)` — it has no tag-rewriting capability, and the file was
+  also never added to the `fluent-bit` service's volume mounts (a second, independent
+  failure). Replaced with two `[FILTER] Name rewrite_tag` blocks (the plugin actually
+  built for this) in `fluent-bit.conf`; deleted the dead `.lua` file and its doc
+  reference. Also discovered and fixed a **third**, pre-existing (pre-Phase-14) gap
+  while chasing this: Docker's `fluentd` driver wraps stdout as a raw JSON *string*
+  under a `log` key rather than parsing it, so every Pino field (`category`, `level`,
+  everything) was always trapped inside that string — invisible to any filter/rule
+  that reads a top-level key. A `pino_json` parser already existed in `parsers.conf`
+  but nothing ever applied it. Added the missing `[FILTER] Name parser` block; this is
+  also why `level_name` had silently been stuck on `"unknown"` since before this phase.
+- **`next-js-boilerplate/src/app/layout.tsx`'s `<EventLoggerInit />` broke the Next.js
+  production build** (T14's prerender: `useSearchParams()` inside `useEventLogger`
+  needs a `<Suspense>` boundary, same as the adjacent `<SessionScript />`). Wrapped it
+  the same way. Without this the `nextjs` image never actually built on current HEAD —
+  the container running at audit start predated all of Phase 14's commits by 2+ hours.
+
+With those fixed, here's what's actually verified, live, right now:
+
+**Confirmed PASS:**
+- T1, T2, T4 (Stage A): verified by code read against commit `4c0ad50` — all 3 correct.
+- T5: `app-logs`/`frontend-logs` doc counts go from 0 to >0 within seconds of real
+  traffic, confirmed via `curl localhost:9200/..._count`.
+- T7, T8, T9: registered a user, confirmed `me { sessionId }` resolves over GraphQL;
+  confirmed a `session.start` doc lands in `session-logs` with full `token`/`ip`/
+  `deviceId`/`deviceType` on register; confirmed `session.end` with a real
+  `sessionDurationMs` lands on logout (had to route via the `accessToken` returned in
+  `AuthPayload` + a `/csrf/token` round-trip — both correct by design, not bugs).
+- T10, T12: `GlobalHttpExceptionFilter` and the WS exception filter both emit
+  `category:"exception"` correctly. Device-type parsing is a hand-rolled regex util
+  (not `ua-parser-js` itself, but the spec explicitly allows "or equivalent") and
+  correctly distinguishes desktop/mobile/tablet/bot.
+- T16: `api/events/route.ts` stamps server-derived `ip`/`deviceType`/`token` onto every
+  event, overwriting anything client-supplied — correct per spec.
+- T17, T18: `rewrite_tag` correctly routes `category:"session"` (and the code paths for
+  `exception`/`page`) into dedicated indices; the ES index template maps `token`/
+  `userId`/`deviceType`/`ip`/etc. as `keyword`, confirmed via live `_mapping` read.
+  Note: implementation consistently uses index name `page-logs`, not the spec's
+  `page-info-logs` — a real deviation from the written task text, but harmless (every
+  file — Fluent Bit config, ES template, Kibana data view — agrees with itself).
+
+**Confirmed FAIL — real, live-reproduced gaps:**
+- **T3 — never done.** No live control run of Phase 12/13's UX regressions (count
+  renewal, display-name reload, scroll-to-bottom) ever happened. `phase13.md`'s own
+  2 remaining unchecked boxes are exactly this, explicitly deferred here.
+- **T11 — the new IP-change logic is dead code for real traffic.**
+  `SessionAuthGuard`'s step 7 (`session-auth.guard.ts:120-138`) correctly logs
+  `session.ip_change` and only hard-fails if `AUTH_IP_STRICT=true` — matching D6's
+  "log then continue" intent, in isolation. But `DeviceIpMiddleware`
+  (`devices/device-ip-middleware.ts`, pre-existing, registered as global `app.use()`
+  in `main.ts:41-42`, i.e. *before* any guard runs) independently hard-401s on the
+  exact same IP mismatch for any request carrying a `device_token` cookie — which is
+  virtually all authenticated traffic. The middleware always wins, so
+  `SessionAuthGuard` never even sees the request. Separately, even if it did:
+  `session.ip_change` never overwrites the stored session hash after logging (no code
+  path calls anything like `tokenStore.updateIp`), so per D6 it would re-fire on
+  every request from the new IP forever, not once per actual change. Two independent
+  bugs stacked on one feature.
+- **T13 — WS close handler still ignores the close code.**
+  `realtime.gateway.ts:152`, `ws.on('close', () => {...})` takes no arguments, so the
+  native `(code, reason)` the `ws` library provides is discarded. Every disconnect —
+  clean or not — logs the same `ws.disconnect`; `connection-loss` is never emitted.
+- **T14, T15 — frontend page/exception events never reach the new indices, at all.**
+  `useEventLogger.ts` was extended (`page.exit` + `durationMs`, exception capture) but
+  still emits the *old*, pre-Phase-14 wire shape (`eventType`, nested
+  `metadata: {durationMs}`) via the unchanged Kafka pipe (`event-logger.ts` →
+  `api/events/route.ts` → topic `frontend-events` → `FrontendEventConsumer` → single
+  flat `frontend-events` index) — never a `category`/`event`/`exceptionType`/top-level
+  `durationMs` field, and never through Fluent Bit. `docs/progress/phase14.md`'s own
+  D1 explicitly decided the 3 mandated categories should bypass Kafka entirely; T14/15
+  never actually implemented that. Confirmed live: `curl localhost:9200/page-logs/_search`
+  returns `index_not_found_exception` — the index doesn't exist because nothing has
+  ever written to it via this path. This directly breaks the phase gate's explicit
+  "one backend-triggered and one frontend-triggered exception both land in
+  `exception-logs`" requirement.
+- **T19 — Kibana saved objects are wrong-type, incomplete, and fail to import outright.**
+  `kibana-saved-objects.ndjson` defines 2 `dashboard` objects (session, exception —
+  no page) with empty `panelsJSON: "[]"`, not the spec'd "one saved search per
+  category" (type `search`, 3 of them). Importing them fails with
+  `strict_dynamic_mapping_exception: dynamic introduction of [panels]` — the file has
+  a stray extra `"panels":"[]"` key alongside the correct `"panelsJSON":"[]"`, which
+  Kibana 8.15's saved-object mapping rejects. Only the 5 index-pattern objects import
+  successfully.
+- **T20 — `docs/logging.md` documents the aspirational architecture, not the real
+  one, and its own verify step (all 6 sample queries return real results live) fails.**
+  The doc's "page-logs (frontend)" section (line 55) describes `page.view`/`page.exit`
+  landing in `page-logs`, then two lines later correctly says they actually publish to
+  the Kafka `frontend-events` topic instead — self-contradictory. Its own sample query
+  (`GET page-logs/_search ... event: page.exit`) was never actually run against the
+  live stack: it returns `index_not_found_exception`, not "expected documents."
+
+**Net effect on the phase gate (`## Verify loop` below):** "Pipe carries data" and
+"Session" both genuinely pass live. "Page Info," "Exceptions," "Search, live, via
+Kibana," "No regressions" (Phase 9/10/12/13 loops, per T3), and "Live control run" do
+not — see per-item notes below.
 
 ## Relationship to Phase 13
 
@@ -223,12 +338,12 @@ D/E/F emitting the `category` field. H is last.
 
 ### Stage A — Phase 13 close-out (blocking prerequisite)
 
-- [ ] **T1 (S) — Fix the BFF status-code gap.** Add `{status: body.statusCode}` to
+- [x] **T1 (S) — Fix the BFF status-code gap.** Add `{status: body.statusCode}` to
   the `NextResponse.json(graphqlErrorBody(...))` calls in `posts/[id]`,
   `comments/[id]`, `reactions`, `users/search`, `admin/set-tier` route handlers.
   *Verify:* triggering a real error on each of the 5 routes returns the matching
   non-200 HTTP status, not 200 with an error body.
-- [ ] **T2 (S) — Fix the `displayName()` sweep-miss.** Replace
+- [x] **T2 (S) — Fix the `displayName()` sweep-miss.** Replace
   `messaging-ws.gateway.ts:122`'s `sender?.name || sender?.email || 'Someone'` with
   `displayName(sender ?? {})`.
   *Verify:* a push notification from a null-`name` sender shows the email-derived
@@ -242,7 +357,7 @@ D/E/F emitting the `category` field. H is last.
   original 8 lettered findings' verify steps.
   *Verify:* every item above passes against the rebuilt stack, not just static
   reads.
-- [ ] **T4 (S) — Tracker bookkeeping.** Flip `phase12.md`'s Findings A–H and
+- [x] **T4 (S) — Tracker bookkeeping.** Flip `phase12.md`'s Findings A–H and
   per-stage checkboxes to reflect the now-verified fixes; update its Status line to
   "complete". Flip `phase13.md`'s Status and T1–T11 checkboxes based on T3's live
   results (T10 stays annotated per T2's fix above).
@@ -251,7 +366,7 @@ D/E/F emitting the `category` field. H is last.
 
 ### Stage B — Foundational pipe fix (logging infra prerequisite)
 
-- [ ] **T5 (M) — Wire real log delivery into Fluent Bit.** Switch the `app` and
+- [x] **T5 (M) — Wire real log delivery into Fluent Bit.** Switch the `app` and
   `nextjs` services in root `docker-compose.yml` from `driver: json-file` to
   `driver: fluentd` (address `fluent-bit:24224`, a distinct `tag` per service so
   the existing `app*`/`frontend*` match rules keep working), keeping the `tee`'d
@@ -262,7 +377,7 @@ D/E/F emitting the `category` field. H is last.
   causes `curl localhost:9200/app-logs*/_count` / `frontend-logs*/_count` to go
   above 0 within a minute — the concrete, currently-failing check from this phase's
   Survey section.
-- [ ] **T6 (S) — Document the Kafka pipeline's continued scope.** No code change;
+- [x] **T6 (S) — Document the Kafka pipeline's continued scope.** No code change;
   add a short note (folded into Stage H's `docs/logging.md`) that
   `frontend-events`/Kafka remains the path for free-form custom events
   (`action.click` etc.), while `session`/`page`/`exception` flow through Fluent Bit
@@ -270,7 +385,7 @@ D/E/F emitting the `category` field. H is last.
 
 ### Stage C — Session token as the correlation key (backend)
 
-- [ ] **T7 (S) — Surface `sessionId` server-side-only.** Add a `sessionId` field to
+- [x] **T7 (S) — Surface `sessionId` server-side-only.** Add a `sessionId` field to
   the GraphQL `me` query's response (backed by the already-populated
   `req.user.sessionId`, `session-auth.guard.ts:136`); add
   `ws.sessionId = hash.sessionId` in `realtime.gateway.ts`'s `handleAuth` (next to
@@ -278,7 +393,7 @@ D/E/F emitting the `category` field. H is last.
   *Verify:* an authenticated `me` query response includes `sessionId`; a connected
   WS socket's in-memory state has `ws.sessionId` set post-auth (add a debug log or
   test assertion, not a client-visible field).
-- [ ] **T8 (S) — BFF-side resolution.** Extend `api/events/route.ts`'s
+- [x] **T8 (S) — BFF-side resolution.** Extend `api/events/route.ts`'s
   `resolveUserId()` pattern (or add a sibling `resolveSessionId()`) to also read
   `sessionId` from the same `me` call, cached per-request the same way
   `request-context.ts` already caches `correlationId`; use it to stamp every
@@ -289,7 +404,7 @@ D/E/F emitting the `category` field. H is last.
 
 ### Stage D — Structured log emission: Session category (backend)
 
-- [ ] **T9 (M) — Session start/end/loss logging.** In `issueTokens()`
+- [x] **T9 (M) — Session start/end/loss logging.** In `issueTokens()`
   (`auth.service.ts:391-409`), right after `tokenStore.write()`, emit
   `{category:"session", event:"session.start", token, userId, ip, deviceId,
   deviceType, userAgent, issuedAt}`. In `logout()`/`revokeAllForUser()`, emit
@@ -304,7 +419,7 @@ D/E/F emitting the `category` field. H is last.
 
 ### Stage E — Structured log emission: Exception category (backend)
 
-- [ ] **T10 (M) — Log real exceptions.** Add actual logging to
+- [x] **T10 (M) — Log real exceptions.** Add actual logging to
   `GlobalHttpExceptionFilter` (currently zero — confirmed) and both WS exception
   filters: `{category:"exception", event:"exception", exceptionType:<exc>, token,
   userId, ip, deviceType, message}`.
@@ -320,7 +435,7 @@ D/E/F emitting the `category` field. H is last.
   authenticated requests, same token, different `X-Forwarded-For`/`User-Agent`) →
   exactly one `ip-change`/`device-change` doc appears, not one per subsequent
   request.
-- [ ] **T12 (S) — Device-type parsing utility.** Add `ua-parser-js` (or
+- [x] **T12 (S) — Device-type parsing utility.** Add `ua-parser-js` (or
   equivalent), one shared backend util producing a normalized
   `"desktop"|"mobile"|"tablet"|"bot"|"unknown"`; call it wherever ip/UA are already
   read (HTTP guard/interceptor, WS `handleAuth`).
@@ -353,7 +468,7 @@ D/E/F emitting the `category` field. H is last.
   (don't rip out the `/observability` demo's data source in this phase — additive).
   *Verify:* an uncaught client exception produces a matching `exception-logs`
   document with `exceptionType:"CLIENT_UNHANDLED_ERROR"` and the caller's `token`.
-- [ ] **T16 (S) — Server-side enrichment in the BFF.** In `api/events/route.ts`
+- [x] **T16 (S) — Server-side enrichment in the BFF.** In `api/events/route.ts`
   (and any sibling event-ingest route), stamp `ip` (already read for rate-limiting,
   `:54-57` — just also attach it) and `deviceType` (parse `user-agent` server-side)
   onto every enriched event, alongside T8's `token`/`userId` — never trust a
@@ -363,7 +478,7 @@ D/E/F emitting the `category` field. H is last.
 
 ### Stage G — Fluent Bit / Elasticsearch / Kibana wiring
 
-- [ ] **T17 (M) — `rewrite_tag` + 3 new outputs.** Add a Fluent Bit
+- [x] **T17 (M) — `rewrite_tag` + 3 new outputs.** Add a Fluent Bit
   `[FILTER] Name rewrite_tag` rule keyed on the `category` field
   (`session`/`page`/`exception` → e.g. `<service>.session`/`.page`/`.exception`),
   plus 3 new `[OUTPUT]` blocks routing to `session-logs`/`page-info-logs`/
@@ -371,7 +486,7 @@ D/E/F emitting the `category` field. H is last.
   untouched for everything else.
   *Verify:* a `category:"session"` log line from either app lands in
   `session-logs`, not `app-logs`/`frontend-logs`.
-- [ ] **T18 (S) — Explicit ES index mappings.** Index templates for the 3 new
+- [x] **T18 (S) — Explicit ES index mappings.** Index templates for the 3 new
   indices with `token`/`userId`/`exceptionType`/`deviceType`/`ip`/`page` mapped as
   `keyword` (exact-match/aggregatable), not dynamically-mapped `text`.
   *Verify:* a Kibana filter on `deviceType: "mobile"` (exact term) returns correct
@@ -397,27 +512,38 @@ D/E/F emitting the `category` field. H is last.
 ## Verify loop (phase gate)
 
 - [ ] **Phase 13 close-out:** Stage A fully passes (see T1–T4) before anything below
-  is considered part of a clean phase start.
-- [ ] **Pipe carries data:** `app-logs*`/`frontend-logs*` document counts are >0
+  is considered part of a clean phase start. T1/T2/T4 pass; **T3 (live control run)
+  never ran, so Phase 13 is still not gate-clean.**
+- [x] **Pipe carries data:** `app-logs*`/`frontend-logs*` document counts are >0
   after T5, confirmed live (not the pre-phase 0-count state recorded in the Survey).
-- [ ] **Session:** login → `session.start` doc (token, ip, deviceType, deviceId all
-  populated); logout → `session.end` doc with a plausible `sessionDurationMs`.
+- [x] **Session:** login → `session.start` doc (token, ip, deviceType, deviceId all
+  populated); logout → `session.end` doc with a plausible `sessionDurationMs`. Both
+  confirmed live 2026-07-05.
 - [ ] **Page Info:** multi-page navigation produces `page.view` docs with real
-  `durationMs`, all sharing one `token`.
+  `durationMs`, all sharing one `token`. **FAILS** — `page-logs` index doesn't exist;
+  frontend events never left the old Kafka/`eventType` pipe (T14).
 - [ ] **Exceptions:** one backend-triggered and one frontend-triggered exception
   both land in `exception-logs` with correct `exceptionType`; a simulated mid-session
   IP/device change produces exactly one `ip-change`/`device-change` doc; an unclean
-  WS disconnect produces a `connection-loss` doc.
+  WS disconnect produces a `connection-loss` doc. **FAILS on all 3 clauses** —
+  frontend exceptions never reach `exception-logs` (T15), IP-change logging is
+  preempted by `DeviceIpMiddleware` for real traffic (T11), `connection-loss` is
+  never emitted (T13).
 - [ ] **Search, live, via Kibana (not just `curl`):** all 6 required dimensions —
   token, user id, page name, exception type, device type, ip address — each answer
-  a real query against the live stack with correct results.
-- [ ] **No regressions:** pre-existing `app-logs`/`frontend-logs`/`messaging-logs`/
-  `frontend-events` streams keep working; Phase 9/10/12/13 realtime loops still
-  behave after Stage C/D/E's changes to shared gateway/guard files.
+  a real query against the live stack with correct results. **FAILS** — the "page
+  name" dimension has no live data to search (T14), and the Kibana saved objects
+  meant to demonstrate this fail to import (T19).
+- [ ] **No regressions:** pre-existing `app-logs`/`frontend-logs`/`messaging-logs`
+  streams confirmed still working live. `frontend-events` code path is untouched but
+  was never exercised (Kafka profile is off by default). Phase 9/10/12/13 realtime
+  loops were **not** re-verified live — that's T3, still outstanding.
 - [ ] **Live control run** against freshly rebuilt containers before marking this
   phase complete, per this project's established convention — Stage B through G are
   infra- and timing-sensitive (log delivery, WS disconnects, mid-session token
-  changes) in a way no static read can substitute for.
+  changes) in a way no static read can substitute for. Done for Phase 14's own new
+  logging surface (see "Live verification (2026-07-05)" above); **not done** for the
+  Phase 12/13 UX regressions T3 was supposed to cover.
 
 ## Phase queue (updated 2026-07-04)
 
@@ -432,12 +558,13 @@ D/E/F emitting the `category` field. H is last.
 | 10 (mostly landed) | Realtime UX round 2: DM unread everywhere, live feed renew, chat-room presence + stability, transport-state UX — T11 broken, T4/T15 carried to 11 | [phase10.md](phase10.md) |
 | 11 (parked — plan only, tasks open) | Phase 10 remediation: post-detail live-renew fix (allowlist + context churn), close-out bookkeeping, verification gate, residual UX — deferred in favor of Phase 12, resume after | [phase11.md](phase11.md) |
 | 12 (implemented, not gate-clean until Phase 14/T4) | Exception handling: unified backend error contract, frontend `exceptionHandler` + i18n resolver, dedicated connection-unstable + access-denied pages, loading skeletons, real auth forms | [phase12.md](phase12.md) |
-| 13 (implemented, not gate-clean until Phase 14/T3-T4) | Phase 12 remediation + notification/DM unread count renewal hardening + sender display-name consistency + chat scroll-to-bottom button | [phase13.md](phase13.md) |
-| **14 (this file)** | Phase 13 close-out (2 residual bugs + live control run + tracker bookkeeping) + comprehensive Kibana activity logging: session/page/exception categories keyed by session token, searchable by token/user id/page name/exception type/device type/ip address | this file |
-| 15 (was 14) | Cross-stack e2e: `STACK=1` Playwright — incl. phase 6+7+9+10 realtime loops | [todo/01](../todo/01-stack-integration.md) |
-| 16 (was 15) | Root CI: path-filtered app checks + compose smoke + stack e2e | [todo/01](../todo/01-stack-integration.md) |
-| 17 (was 16) | Backend warts + compose hardening + k8s | [todo/02](../todo/02-backend.md), [todo/04](../todo/04-devops.md) |
-| 18 (was 17) | Backlog: OTel/metrics, remaining push polish, social auth, seed, publishing, backups | [todo/02](../todo/02-backend.md)–[05](../todo/05-docs-maintenance.md) |
+| 13 (implemented, not gate-clean until Phase 15/T15) | Phase 12 remediation + notification/DM unread count renewal hardening + sender display-name consistency + chat scroll-to-bottom button | [phase13.md](phase13.md) |
+| **14 (this file — implemented, not gate-clean until Phase 15)** | Phase 13 close-out (2 residual bugs + live control run + tracker bookkeeping) + comprehensive Kibana activity logging: session/page/exception categories keyed by session token, searchable by token/user id/page name/exception type/device type/ip address — 7 of 20 tasks (T3, T11, T13, T14, T15, T19, T20) confirmed broken live 2026-07-05, remediated in Phase 15 | this file |
+| 15 (was 14) | Phase 14 remediation: unify IP-change detection, WS close codes, frontend event pipe onto Fluent Bit, Kibana saved searches, docs accuracy, Phase 12/13 live control run, plus test debt | [phase15.md](phase15.md) |
+| 16 (was 15) | Cross-stack e2e: `STACK=1` Playwright — incl. phase 6+7+9+10 realtime loops | [todo/01](../todo/01-stack-integration.md) |
+| 17 (was 16) | Root CI: path-filtered app checks + compose smoke + stack e2e | [todo/01](../todo/01-stack-integration.md) |
+| 18 (was 17) | Backend warts + compose hardening + k8s | [todo/02](../todo/02-backend.md), [todo/04](../todo/04-devops.md) |
+| 19 (was 18) | Backlog: OTel/metrics, remaining push polish, social auth, seed, publishing, backups | [todo/02](../todo/02-backend.md)–[05](../todo/05-docs-maintenance.md) |
 
-<!-- Downstream phases 14-17 were renumbered +1 (now 15-18) to insert this
-Phase 13 close-out + logging phase, same pattern Phase 12 used. -->
+<!-- Downstream phases 15-18 were renumbered +1 (now 16-19) to insert Phase 15
+(Phase 14 remediation), same pattern this phase itself used for Phase 13. -->

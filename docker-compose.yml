@@ -222,7 +222,12 @@ services:
     logging:
       driver: fluentd
       options:
-        fluentd-address: fluent-bit:24224
+        # The fluentd log driver is resolved by the Docker daemon on the host,
+        # not from inside the container network — the compose service name
+        # `fluent-bit` only resolves via the container-side embedded DNS, so
+        # it must be the host-published address instead (port is published
+        # via fluent-bit's `ports:`).
+        fluentd-address: localhost:24224
         tag: app
         # fluentd driver stops `docker logs <container>` from showing output,
         # but the tee'd bind-mount (./logs/back) preserves host-side tailing.
@@ -262,7 +267,9 @@ services:
     logging:
       driver: fluentd
       options:
-        fluentd-address: fluent-bit:24224
+        # See the `app` service's identical comment: this must be the
+        # host-published address, not the compose service name.
+        fluentd-address: localhost:24224
         tag: frontend
         # fluentd driver stops `docker logs <container>` from showing output,
         # but the tee'd bind-mount (./logs/front) preserves host-side tailing.

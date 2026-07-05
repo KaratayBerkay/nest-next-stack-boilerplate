@@ -143,7 +143,11 @@ curl -X PUT "localhost:9200/_index_template/structured-logs" \
 
 ## Fluent Bit Routing
 
-`docker/fluent-bit/route_category.lua` is a Lua filter that inspects each record's `category`
-field and rewrites the tag. The corresponding `[OUTPUT]` blocks in `fluent-bit.conf` send
-rewritten records to the correct index. Records without a `category` field keep their
-original tag (e.g. `app.*`, `frontend.*`, `messaging-ws.*`) and route to the general indices.
+Two `[FILTER] Name rewrite_tag` blocks in `fluent-bit.conf` (one matching the raw `app` tag,
+one matching `frontend`) inspect each record's `category` field and rewrite the tag to
+`session`/`exception`/`page` when it matches, via the `$category ^(session|exception|page)$ $1`
+rule. The corresponding `[OUTPUT]` blocks then send rewritten records to the correct index.
+Records without a `category` field keep their original tag (`app`, `frontend`,
+`messaging-ws`) and route to the general indices. (Fluent Bit's generic `lua` filter plugin
+cannot rewrite tags — its callback contract is strictly `(code, timestamp, record)` — so tag
+rewriting must go through the dedicated `rewrite_tag` filter, not a Lua script.)

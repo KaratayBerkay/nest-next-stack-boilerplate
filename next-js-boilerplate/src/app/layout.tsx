@@ -64,7 +64,9 @@ export default function RootLayout({
       </head>
       <body className="flex min-h-full flex-col">
         <DeviceTypeInit />
-        <EventLoggerInit />
+        <Suspense fallback={null}>
+          <EventLoggerInit />
+        </Suspense>
         <PushNotificationInit />
         <ThemeProvider>
           <Suspense fallback={null}>
