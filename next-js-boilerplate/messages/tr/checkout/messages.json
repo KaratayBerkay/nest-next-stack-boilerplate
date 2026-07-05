@@ -26,5 +26,8 @@
   "mm": "AA",
   "yy": "YY",
   "cvc": "CVC",
-  "cardholderName": "Kart sahibi adı"
+  "cardholderName": "Kart sahibi adı",
+  "testCards": "Test kartları:",
+  "month": "Ay",
+  "year": "Yıl"
 }

@@ -14,5 +14,6 @@
   "reactions": "Reactions",
   "avgPerPost": "Avg/Post",
   "failedToLoadStats": "Failed to load stats",
+  "failedToLoadPosts": "Failed to load posts",
   "networkError": "Network error"
 }

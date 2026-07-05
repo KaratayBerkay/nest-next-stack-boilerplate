@@ -59,7 +59,7 @@ function FeedList({ search }: { search: string }) {
       const res = await apiFetch(`/api/posts?${p}`);
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Failed to load posts");
+        throw new Error(body.error ?? t.failedToLoadPosts);
       }
       return res.json();
     },

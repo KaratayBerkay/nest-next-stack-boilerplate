@@ -2,11 +2,12 @@
 
 > Execution tracker for the seventeenth phase of the [stack roadmap](../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
-> Created 2026-07-05 · Status: **NOT gate-clean (re-verified three times:
+> Created 2026-07-05 · Status: **NOT gate-clean (re-verified four times:
 > 2026-07-05 across four passes — `aacb05a` → `d75be4b` → lint residual
 > closed → pricing regression test added; 2026-07-06 a full Stage B/D/E code
-> audit; and again 2026-07-06 after `6b1411b` landed fixes for two of the
-> three gaps that second pass found)**.
+> audit; again 2026-07-06 after `6b1411b` landed fixes for two of the
+> three gaps that second pass found; and a fourth pass 2026-07-06 that closed
+> the remaining i18n residuals)**.
 > Stages A–G's code landed in `e2c0558`/`a7cd6a0` (tracker left at "planning
 > only" the whole time — 6th "commit lands, tracker untouched" occurrence
 > after phases 2/12/13/15/16). A punch list of 6 gaps was found; `aacb05a`
@@ -35,8 +36,7 @@
 > count is unchanged at 77. See "Second re-verification pass (2026-07-06)"
 > and "Third re-verification pass (2026-07-06)" below for the full detail.
 > **Remaining open items:** T28 (live control run, still not run), the
-> guard-403 test gap, a handful of residual hardcoded strings, and
-> `admin.resolver.ts` test coverage.
+> guard-403 test gap, and `admin.resolver.ts` test coverage.
 
 ## Punch-list fix verification (2026-07-05, commits `aacb05a` → `d75be4b`)
 
@@ -251,6 +251,34 @@ closed or substantially closed (#1 fully, #2 mostly); #3 is real progress but
 not done — the guard-enforcement behavior and most of the frontend surface
 remain untested. T28 (live control run) is still the only way to actually
 prove the 403s work end-to-end today.
+
+**Update (2026-07-06):** gap #2 (missing i18n) is now **fully closed** — see
+"Fourth re-verification pass" below for the residual strings that were fixed.
+
+## Fourth re-verification pass (2026-07-06)
+
+Closed the remaining i18n residuals identified in the third pass:
+
+1. **Feed error fallback — ✅ fixed.** `feed/views/{Free,Medium,Premium}PageView.tsx`
+   each had a hardcoded `"Failed to load posts"` fallback string. Added
+   `failedToLoadPosts` key to `messages/{en,tr}/feed/messages.json` and wired
+   `t.failedToLoadPosts` into all three files.
+2. **MockCardForm labels — ✅ fixed.** `"Test cards:"`, `"Month"`, `"Year"` were
+   still hardcoded English. Added `testCards`/`month`/`year` keys to
+   `messages/{en,tr}/checkout/messages.json` and wired them via `t.testCards`,
+   `t.month`, `t.year`. `MockCardForm` is now fully i18n'd.
+3. **Chat-room connection state tooltips — ✅ fixed.** `chat-room/views/{Free,Medium,
+   Premium}PageView.tsx` each had `"Connected"`/`"Connecting…"`/`"Disconnected"` in
+   `title` attributes, despite the `chat-room` namespace having `connected`/`connecting`/
+   `disconnected` keys. Replaced with `t.connected`/`t.connecting`/`t.disconnected` in
+   all three files.
+
+**Verification:** `pnpm tsc --noEmit` clean, `pnpm test` 77/77 pass,
+`pnpm generate-i18n-types` re-run and committed. No remaining hardcoded UI
+strings found by grep across the touched view files. The i18n gap (second pass
+gap #2) is now **fully closed**.
+
+**Still open:** gap #3 (guard-403 test coverage) and T28 (live control run).
 
 ## Punch list to close this phase (priority order, historical)
 
@@ -886,9 +914,10 @@ as their own namespaces are added, or as one sweep after. Stage G is last.
   note: it previously said no component test existed, but
   `mock-card-form.test.tsx` (5 tests, all passing) has existed since `e2c0558`
   — the earlier check only grepped for `*spec*` filenames and missed this
-  project's `.test.` naming. Residual, non-blocking: a handful of labels
-  ("Test cards:", "Month", "Year", "CVC") are still hardcoded English rather
-  than pulled from the `checkout` i18n namespace.
+   project's `.test.` naming. **Fourth re-verification pass (2026-07-06):**
+   `MockCardForm` is now fully i18n'd — the remaining `"Test cards:"`,
+   `"Month"`, `"Year"` labels were replaced with `t.testCards`/`t.month`/
+   `t.year` from the `checkout` namespace.
 - [x] **T13 (S) — BFF routes: `api/billing/subscribe/route.ts` (POST),
   `api/billing/history/route.ts` (GET).** Same `graphqlFetch` +
   `sessionTokenHeaders()` + CSRF-echo pattern as `api/admin/set-tier/route.ts`/
@@ -965,12 +994,13 @@ noted explicitly below where that applies.
   badge next to the user's own posts.
   *Verify:* FREE/BASIC see identical markup (same component); MEDIUM sees the new
   sidebar and a FREE-tier forced API call to `myPostStats` gets a real 403. Static
-  re-check 2026-07-06: the ladder is implemented correctly in
-  `feed/views/{Free,Basic,Medium,Premium}PageView.tsx`. **`6b1411b` added the
-  `feed` i18n namespace and wired `useMessages()` into Medium/PremiumPageView** —
-  one hardcoded fallback string remains each (`"Failed to load posts"`), residual
-  not blocking. Left unchecked — no live click-through has run, and `myPostStats`
-  still has no test proving the below-tier 403 (see T7).
+   re-check 2026-07-06: the ladder is implemented correctly in
+   `feed/views/{Free,Basic,Medium,Premium}PageView.tsx`. **`6b1411b` added the
+   `feed` i18n namespace and wired `useMessages()` into Medium/PremiumPageView**.
+   **Fourth re-verification pass (2026-07-06):** the remaining hardcoded
+   `"Failed to load posts"` fallback was replaced with `t.failedToLoadPosts` —
+   `/feed` is now fully i18n'd. Left unchecked — no live click-through has run,
+   and `myPostStats` still has no test proving the below-tier 403 (see T7).
 - [ ] **T19 (M) — `/posts/[uuid]` (post detail).** `FreePageView`/`BasicPageView`:
   today's page (reaction **count** only, unchanged). `MediumPageView`: adds T7's
   `reactionBreakdown` chart. `PremiumPageView`: adds T7's `whoReacted` list on top
@@ -1106,10 +1136,10 @@ noted explicitly below where that applies.
   missing-key fallback. 2026-07-06: **not true at first check** — `feed` and
   `posts/[uuid]`'s Medium/Premium panels had zero i18n coverage. **`6b1411b`
   fixed most of this** — both pages now have `en`/`tr` namespaces wired via
-  `useMessages()`. Residual, non-blocking: one hardcoded fallback string each
-  in `feed`'s Medium/PremiumPageView, plus a few hardcoded labels in
-  `MockCardForm` (see T12/T18). Left unchecked until those residuals close and
-  both locales are actually loaded in a browser (pending T28).
+  `useMessages()`. **Fourth re-verification pass (2026-07-06):** remaining
+  residuals (hardcoded error fallback in feed, MockCardForm labels, chat-room
+  connection tooltips) are now all wired. **i18n is fully closed.** Left
+  unchecked until both locales are actually loaded in a browser (pending T28).
 - [ ] **Live control run (T28) passes** before this phase is marked complete —
   static/unit-only verification is not sufficient per this project's established
   lesson (phases 2/12/15/16 all shipped real bugs that only a live rebuilt-container

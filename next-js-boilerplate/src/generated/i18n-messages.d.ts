@@ -112,6 +112,9 @@ export type I18nMessages = {
       "yy": string;
       "cvc": string;
       "cardholderName": string;
+      "testCards": string;
+      "month": string;
+      "year": string;
     }
 
   "error": {
@@ -144,6 +147,7 @@ export type I18nMessages = {
       "reactions": string;
       "avgPerPost": string;
       "failedToLoadStats": string;
+      "failedToLoadPosts": string;
       "networkError": string;
     }
 

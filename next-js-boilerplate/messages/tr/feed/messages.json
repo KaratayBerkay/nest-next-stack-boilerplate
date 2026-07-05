@@ -14,5 +14,6 @@
   "reactions": "Tepkiler",
   "avgPerPost": "Ort/Gönderi",
   "failedToLoadStats": "İstatistikler yüklenemedi",
+  "failedToLoadPosts": "Gönderiler yüklenemedi",
   "networkError": "Ağ hatası"
 }

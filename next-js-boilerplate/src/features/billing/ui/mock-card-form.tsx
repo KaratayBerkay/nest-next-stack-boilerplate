@@ -99,7 +99,7 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4" data-testid="mock-card-form">
       <div className="rounded-lg border border-border bg-surface p-4">
-        <p className="mb-3 text-sm text-muted">Test cards:</p>
+        <p className="mb-3 text-sm text-muted">{t.testCards}</p>
         <div className="flex flex-wrap gap-2">
           {TEST_CARDS.map((tc) => (
             <button
@@ -138,7 +138,7 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
       <div className="grid grid-cols-3 gap-3">
         <div>
           <label htmlFor="expMonth" className="block text-sm font-medium">
-            Month
+            {t.month}
           </label>
           <input
             id="expMonth"
@@ -154,7 +154,7 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
         </div>
         <div>
           <label htmlFor="expYear" className="block text-sm font-medium">
-            Year
+            {t.year}
           </label>
           <input
             id="expYear"

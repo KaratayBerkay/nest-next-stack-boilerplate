@@ -26,5 +26,8 @@
   "mm": "MM",
   "yy": "YY",
   "cvc": "CVC",
-  "cardholderName": "Cardholder name"
+  "cardholderName": "Cardholder name",
+  "testCards": "Test cards:",
+  "month": "Month",
+  "year": "Year"
 }

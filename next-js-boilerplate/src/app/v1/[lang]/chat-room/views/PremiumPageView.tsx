@@ -117,9 +117,9 @@ function ChatRoomContent() {
                   : "bg-red-400 text-white ring-red-400"
             }`}
             title={
-              connectionState === "online" ? "Connected"
-              : connectionState === "connecting" ? "Connecting…"
-              : "Disconnected"
+              connectionState === "online" ? t.connected
+              : connectionState === "connecting" ? t.connecting
+              : t.disconnected
             }
           />
           <h2 className="text-sm font-semibold text-brand">{t.title}</h2>
