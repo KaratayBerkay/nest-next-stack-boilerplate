@@ -27,10 +27,16 @@ ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
     NEXT_PUBLIC_MINIO_PUBLIC_URL=$NEXT_PUBLIC_MINIO_PUBLIC_URL \
     NEXT_PUBLIC_VAPID_PUBLIC_KEY=$NEXT_PUBLIC_VAPID_PUBLIC_KEY
 
+# `pnpm build`'s `prebuild` hook also runs `fallow-check` (a git-diff-based lint
+# gate), which needs a real git history/remote to detect its comparison base —
+# absent in this build context. Run the actual prerequisite (i18n types) and
+# `next build` directly instead, same reasoning as the backend Dockerfile's
+# `pnpm exec nest build`.
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     --mount=type=cache,id=next-cache,target=/app/.next/cache \
     pnpm config set store-dir /pnpm/store && \
-    pnpm build
+    pnpm generate-i18n-types && \
+    pnpm exec next build
 
 # ---- runner ----
 FROM node:22-alpine AS runner
