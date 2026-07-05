@@ -14,11 +14,11 @@ const CORRELATION_ID_HEADER = "x-correlation-id";
 
 const storage = new AsyncLocalStorage<RequestContext>();
 
-export function getCorrelationId(): string | undefined {
+function getCorrelationId(): string | undefined {
   return storage.getStore()?.correlationId;
 }
 
-export function getLogger(context?: Partial<RequestContext>): Logger {
+function getLogger(context?: Partial<RequestContext>): Logger {
   const store = storage.getStore();
   const bindings: Record<string, unknown> = {};
 

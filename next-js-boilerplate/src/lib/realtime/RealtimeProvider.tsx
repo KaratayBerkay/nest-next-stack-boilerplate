@@ -20,7 +20,7 @@ import {
   type RealtimeStatus,
 } from "./realtime-client";
 
-export type FrameHandler = (data: Record<string, unknown>) => void;
+type FrameHandler = (data: Record<string, unknown>) => void;
 
 type RealtimeContextValue = {
   status: RealtimeStatus;

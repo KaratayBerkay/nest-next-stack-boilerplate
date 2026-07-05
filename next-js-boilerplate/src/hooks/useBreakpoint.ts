@@ -9,7 +9,7 @@ export function useBreakpoint(breakpoint: Breakpoint): boolean {
   return useMediaQuery(breakpoints[breakpoint]);
 }
 
-export function useBreakpointValue<T>(values: Record<Breakpoint, T>): T {
+function useBreakpointValue<T>(values: Record<Breakpoint, T>): T {
   const md = useBreakpoint("md");
   const lg = useBreakpoint("lg");
   const xl = useBreakpoint("xl");

@@ -8,4 +8,4 @@ export const sendMessageSchema = z.object({
     .trim(),
 });
 
-export type SendMessageInput = z.infer<typeof sendMessageSchema>;
+type SendMessageInput = z.infer<typeof sendMessageSchema>;

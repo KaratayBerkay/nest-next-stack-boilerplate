@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack -p 3001",
-    "prebuild": "pnpm generate-i18n-types",
+    "prebuild": "pnpm generate-i18n-types && pnpm fallow-check",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -16,6 +16,8 @@
     "format:check": "prettier --check .",
     "generate-i18n-types": "tsx scripts/generate-i18n-types.ts",
     "check-duplicate-messages": "tsx scripts/check-duplicate-messages.ts",
+    "fallow-check": "fallow audit --ci --fail-on-issues",
+    "fallow-fix": "fallow fix --yes",
     "prepare": "husky"
   },
   "dependencies": {
@@ -51,6 +53,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-compiler": "19.1.0-rc.2",
     "eslint-plugin-react-hooks": "7.1.1",
+    "fallow": "^3.0.0",
     "husky": "^9.1.7",
     "jsdom": "^29.1.1",
     "lint-staged": "^17.0.8",

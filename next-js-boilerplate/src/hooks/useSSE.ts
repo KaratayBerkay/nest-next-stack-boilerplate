@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-export interface SSEEvent {
+interface SSEEvent {
   time: number;
   value: number;
 }

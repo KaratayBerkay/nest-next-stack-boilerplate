@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export function generateAuthLoginSchema(errors: {
+function generateAuthLoginSchema(errors: {
   emailRequired: string;
   emailInvalid: string;
   passwordRequired: string;
@@ -20,7 +20,7 @@ export function generateAuthLoginSchema(errors: {
   });
 }
 
-export function generateAuthRegisterSchema(errors: {
+function generateAuthRegisterSchema(errors: {
   emailRequired: string;
   emailInvalid: string;
   passwordRequired: string;

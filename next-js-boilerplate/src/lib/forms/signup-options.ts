@@ -1,6 +1,6 @@
 import { formOptions } from "@tanstack/react-form";
 
-export interface SignupFormData {
+interface SignupFormData {
   name: string;
   email: string;
   age: number;

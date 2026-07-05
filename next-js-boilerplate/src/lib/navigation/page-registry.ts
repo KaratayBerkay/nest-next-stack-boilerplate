@@ -8,7 +8,7 @@ export type PageNode = {
   enableSwipe?: boolean;
 };
 
-export const PAGE_REGISTRY: PageNode[] = [
+const PAGE_REGISTRY: PageNode[] = [
   {
     id: "home",
     title: "Home",
@@ -54,7 +54,7 @@ export function matchPage(pathname: string): PageNode | null {
   return null;
 }
 
-export function resolvePath(
+function resolvePath(
   pattern: string,
   params: Record<string, string>,
 ): string {

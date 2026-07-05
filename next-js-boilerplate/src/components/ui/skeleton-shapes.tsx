@@ -15,7 +15,7 @@ export function SkeletonLine({
   );
 }
 
-export function SkeletonCard({ className }: { className?: string }) {
+function SkeletonCard({ className }: { className?: string }) {
   return (
     <div
       className={cn(

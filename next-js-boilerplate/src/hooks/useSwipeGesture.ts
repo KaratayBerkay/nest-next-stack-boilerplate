@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SWIPE_THRESHOLD } from "@/constants/ui";
 
-export type SwipeDirection = "left" | "right" | null;
+type SwipeDirection = "left" | "right" | null;
 
-export type SwipeState = {
+type SwipeState = {
   direction: SwipeDirection;
   progress: number;
   isSwiping: boolean;

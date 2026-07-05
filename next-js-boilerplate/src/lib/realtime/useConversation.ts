@@ -1,7 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 
-export interface Message {
+interface Message {
   id: string;
   senderId: string;
   recipientId: string;

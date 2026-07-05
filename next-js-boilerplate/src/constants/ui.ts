@@ -1,8 +1,5 @@
 export const SWIPE_THRESHOLD = 50;
 
-export const DEFAULT_WINDOW_MS = 5000;
-export const DEFAULT_MAX_HITS = 10;
-
 export const breakpoints = {
   sm: "(min-width: 640px)",
   md: "(min-width: 768px)",

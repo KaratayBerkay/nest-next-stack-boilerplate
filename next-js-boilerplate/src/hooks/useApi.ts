@@ -1,7 +1,7 @@
 import { apiFetch } from "@/lib/api-client";
 import { useQuery } from "@tanstack/react-query";
 
-export interface EchoResponse {
+interface EchoResponse {
   method: string;
   hello: string;
 }

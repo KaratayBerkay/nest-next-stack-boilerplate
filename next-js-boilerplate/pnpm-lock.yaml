@@ -99,6 +99,9 @@ importers:
       eslint-plugin-react-hooks:
         specifier: 7.1.1
         version: 7.1.1(eslint@9.39.4(jiti@2.7.0))
+      fallow:
+        specifier: ^3.0.0
+        version: 3.0.0
       husky:
         specifier: ^9.1.7
         version: 9.1.7
@@ -599,6 +602,46 @@ packages:
     peerDependenciesMeta:
       '@noble/hashes':
         optional: true
+
+  '@fallow-cli/darwin-arm64@3.0.0':
+    resolution: {integrity: sha512-TTHcDnN6ipqwml5FgOt0axHXiTeoTOarWRcbmykyHzDaSSF9tEg//dL2aoOxJUearK+aUSpmY2U4ar4rOmOnHg==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@fallow-cli/darwin-x64@3.0.0':
+    resolution: {integrity: sha512-u4KEs4Mchhwuei5IASx5yS80LjjDNT/Xll7CwvZbMD0JOPV1BlWDdCccLGjW+Dr0MyusKvpwhQJosgKrKCXeOg==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@fallow-cli/linux-arm64-gnu@3.0.0':
+    resolution: {integrity: sha512-QH7RMbXesaPjXInfaZvIquMgFFU3sBex8a7NRCQKgdtXVsaDNCViLAMjT8jgI3ueiVmwUwHk2hiuktdgMd7o/w==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@fallow-cli/linux-arm64-musl@3.0.0':
+    resolution: {integrity: sha512-gwoM0kcBPyEBajsap8DqmQ/C4OsnprPnvM6JMQ1etH+cdJiF94zkomnf/+i8nHVzL093rvqzTvVZnipNSYBmEQ==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@fallow-cli/linux-x64-gnu@3.0.0':
+    resolution: {integrity: sha512-lRgS1GbC9jCNr7j7aXv0bFhuy0wundUzaa9tCyPlSS7pga2uLIkOnes0pugv4SuLkIYy7moTapEdLebivDzFKg==}
+    cpu: [x64]
+    os: [linux]
+
+  '@fallow-cli/linux-x64-musl@3.0.0':
+    resolution: {integrity: sha512-CsDTKLE/TJwZBZnU5/4GBkWrw9XaSVetrxiFRlnhHLJ2KpOrrBF7nxeTREvl/GdJTxlu5fY1JlAm5HVAKmyw0A==}
+    cpu: [x64]
+    os: [linux]
+
+  '@fallow-cli/win32-arm64-msvc@3.0.0':
+    resolution: {integrity: sha512-6/nUg47m+VO9dRTRlbzPHaxce7mpR/ltB0W9iSjdj+fxB3JlLRpz91mQ1LJRRUGmIXgcbsxswnKwnOTld+2RbA==}
+    cpu: [arm64]
+    os: [win32]
+
+  '@fallow-cli/win32-x64-msvc@3.0.0':
+    resolution: {integrity: sha512-IQE8RBjFGonbJ6Vz7hcQTZ6serIA4atFd0CIv+69EsN0pNzU5k57dUTHV6zx5Bnn/wgrjE6saSZrsYwSESoCwA==}
+    cpu: [x64]
+    os: [win32]
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -2027,6 +2070,11 @@ packages:
   expect-type@1.4.0:
     resolution: {integrity: sha512-KfYbmpRm0VbLjEvVa9yGwCi9GI34xvi7A/HXYWQO65CSD2u3MczUJSuwXKFIxlGsgBQizV9q5J9NHj4VG0n+pA==}
     engines: {node: '>=12.0.0'}
+
+  fallow@3.0.0:
+    resolution: {integrity: sha512-GX9ujIhUxSXvxA1GpZUlD1gz9SUSDSJ+nOSRKBN4F1lN85AFeUBmYw5HhdbumE9IJAR+9jAnTfcUMfyqQ2b5xA==}
+    engines: {node: '>=16'}
+    hasBin: true
 
   fast-deep-equal@3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
@@ -3905,6 +3953,30 @@ snapshots:
 
   '@exodus/bytes@1.15.1': {}
 
+  '@fallow-cli/darwin-arm64@3.0.0':
+    optional: true
+
+  '@fallow-cli/darwin-x64@3.0.0':
+    optional: true
+
+  '@fallow-cli/linux-arm64-gnu@3.0.0':
+    optional: true
+
+  '@fallow-cli/linux-arm64-musl@3.0.0':
+    optional: true
+
+  '@fallow-cli/linux-x64-gnu@3.0.0':
+    optional: true
+
+  '@fallow-cli/linux-x64-musl@3.0.0':
+    optional: true
+
+  '@fallow-cli/win32-arm64-msvc@3.0.0':
+    optional: true
+
+  '@fallow-cli/win32-x64-msvc@3.0.0':
+    optional: true
+
   '@humanfs/core@0.19.2':
     dependencies:
       '@humanfs/types': 0.15.0
@@ -5349,6 +5421,19 @@ snapshots:
   eventemitter3@5.0.4: {}
 
   expect-type@1.4.0: {}
+
+  fallow@3.0.0:
+    dependencies:
+      detect-libc: 2.1.2
+    optionalDependencies:
+      '@fallow-cli/darwin-arm64': 3.0.0
+      '@fallow-cli/darwin-x64': 3.0.0
+      '@fallow-cli/linux-arm64-gnu': 3.0.0
+      '@fallow-cli/linux-arm64-musl': 3.0.0
+      '@fallow-cli/linux-x64-gnu': 3.0.0
+      '@fallow-cli/linux-x64-musl': 3.0.0
+      '@fallow-cli/win32-arm64-msvc': 3.0.0
+      '@fallow-cli/win32-x64-msvc': 3.0.0
 
   fast-deep-equal@3.1.3: {}
 

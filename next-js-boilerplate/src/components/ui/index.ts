@@ -1,8 +1,4 @@
-export { Alert, AlertTitle, AlertDescription } from "./Alert";
-export { Avatar } from "./Avatar";
-export { Badge } from "./Badge";
-export { Button } from "./Button";
-export { Counter } from "./Counter";
+// fallow-ignore-file unused-export
 export {
   Card,
   CardHeader,
@@ -11,7 +7,6 @@ export {
   CardContent,
   CardFooter,
 } from "./Card";
-export { Checkbox } from "./Checkbox";
 export {
   Command,
   CommandInput,
@@ -38,9 +33,6 @@ export {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "./DropdownMenu";
-export { Input } from "./Input";
-export { Label } from "./Label";
-export { Popover, PopoverTrigger, PopoverContent } from "./Popover";
 export {
   Select,
   SelectTrigger,
@@ -48,11 +40,7 @@ export {
   SelectContent,
   SelectItem,
 } from "./Select";
-export { Separator } from "./Separator";
-export { Skeleton } from "./Skeleton";
-export { Switch } from "./Switch";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./Tabs";
-export { Textarea } from "./Textarea";
 export {
   ToastProvider,
   ToastViewport,
@@ -62,4 +50,3 @@ export {
   ToastClose,
   useToast,
 } from "./Toast";
-export { Tooltip, TooltipTrigger, TooltipContent } from "./Tooltip";

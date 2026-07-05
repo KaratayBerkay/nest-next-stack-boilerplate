@@ -15,7 +15,7 @@ import {
   THEME_COOKIE_NAME,
   type ThemeName,
 } from "@/constants/theme";
-export { THEMES, DARK_THEMES, THEME_COOKIE_NAME };
+export { THEMES };
 export type { ThemeName };
 
 type ThemeContextValue = {

@@ -26,7 +26,7 @@ function extractUserId(request: NextRequest): string | undefined {
   return (payload?.sub as string) ?? (payload?.userId as string) ?? undefined;
 }
 
-export function buildContext(request: NextRequest): RequestContext {
+function buildContext(request: NextRequest): RequestContext {
   return {
     correlationId: extractRequestId(request),
     userId: extractUserId(request),

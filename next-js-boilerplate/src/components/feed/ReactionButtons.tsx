@@ -101,7 +101,7 @@ export function ReactionInline({
   );
 }
 
-export function ReactionRow({
+function ReactionRow({
   commentId,
   reactions,
   currentUserId,

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const frontendEventSchema = z.object({
+const frontendEventSchema = z.object({
   eventType: z.string().min(1).max(128),
   clientSessionId: z.string().min(1).max(64),
   timestamp: z.string(),
@@ -16,4 +16,3 @@ export const eventsBatchSchema = z.object({
   events: z.array(frontendEventSchema).min(1).max(50),
 });
 
-export type EventsBatch = z.infer<typeof eventsBatchSchema>;

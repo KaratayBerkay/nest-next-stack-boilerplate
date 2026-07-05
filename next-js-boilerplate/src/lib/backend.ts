@@ -71,7 +71,7 @@ interface GraphQlError {
   extensions?: { code?: string };
 }
 
-export interface GraphQlResponse<T> {
+interface GraphQlResponse<T> {
   data?: T;
   errors?: GraphQlError[];
 }

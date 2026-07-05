@@ -17,7 +17,7 @@ import {
   type PageNode,
 } from "@/lib/navigation/page-registry";
 
-export type SuggestDirection = "back" | "forward" | null;
+type SuggestDirection = "back" | "forward" | null;
 
 type Suggestion = {
   direction: SuggestDirection;
