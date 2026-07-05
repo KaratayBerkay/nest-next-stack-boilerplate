@@ -84,7 +84,7 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
       onSuccess?.();
     } catch (err) {
       const msg =
-        (err as { msg?: string }).msg ?? "Payment failed. Please try again.";
+        (err as { msg?: string }).msg ?? t.paymentFailedGeneric;
       if ((err as { field?: string }).field) {
         setFieldErrors({ [(err as { field: string }).field]: msg });
       } else {

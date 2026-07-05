@@ -29,5 +29,6 @@
   "cardholderName": "Cardholder name",
   "testCards": "Test cards:",
   "month": "Month",
-  "year": "Year"
+  "year": "Year",
+  "paymentFailedGeneric": "Payment failed. Please try again."
 }

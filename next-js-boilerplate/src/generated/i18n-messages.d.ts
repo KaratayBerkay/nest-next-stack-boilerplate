@@ -115,6 +115,7 @@ export type I18nMessages = {
       "testCards": string;
       "month": string;
       "year": string;
+      "paymentFailedGeneric": string;
     }
 
   "error": {
@@ -221,6 +222,7 @@ export type I18nMessages = {
       "reactionBreakdown": string;
       "whoReacted": string;
       "unknown": string;
+      "postNotFound": string;
     }
 
   "premium": {

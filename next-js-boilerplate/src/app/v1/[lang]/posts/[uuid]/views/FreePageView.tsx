@@ -63,9 +63,9 @@ function PostDetailContent() {
     queryKey: ["posts", uuid],
     queryFn: async () => {
       const res = await apiFetch(`/api/posts/${uuid}`);
-      if (!res.ok) throw new Error("Post not found");
+      if (!res.ok) throw new Error(t.postNotFound);
       const data = await res.json();
-      if (!data.post) throw new Error("Post not found");
+      if (!data.post) throw new Error(t.postNotFound);
       return data.post;
     },
     staleTime: 30_000,

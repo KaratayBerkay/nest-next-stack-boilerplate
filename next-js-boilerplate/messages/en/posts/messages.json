@@ -7,5 +7,6 @@
   "comments": "{count} comments",
   "reactionBreakdown": "Reaction Breakdown",
   "whoReacted": "Who Reacted",
-  "unknown": "Unknown"
+  "unknown": "Unknown",
+  "postNotFound": "Post not found"
 }

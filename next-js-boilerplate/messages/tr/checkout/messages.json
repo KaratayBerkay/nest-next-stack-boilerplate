@@ -29,5 +29,6 @@
   "cardholderName": "Kart sahibi adı",
   "testCards": "Test kartları:",
   "month": "Ay",
-  "year": "Yıl"
+  "year": "Yıl",
+  "paymentFailedGeneric": "Ödeme başarısız oldu. Lütfen tekrar deneyin."
 }
