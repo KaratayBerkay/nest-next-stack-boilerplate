@@ -2,28 +2,46 @@
 
 > Execution tracker for the seventeenth phase of the [stack roadmap](../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
-> Created 2026-07-05 · Status: **NOT gate-clean (re-verified 2026-07-05, fixes
-> applied in `aacb05a`, re-verified again same day)**. Stages A–G's code landed
-> in `e2c0558`/`a7cd6a0` (tracker left at "planning only" the whole time — 6th
-> "commit lands, tracker untouched" occurrence after phases 2/12/13/15/16). A
-> punch list of 6 gaps was found; `aacb05a` fixed 5 of the 6 (T28 excluded,
-> needs live infra) — but re-verifying *that* commit against the live tree
-> (not its message) found the i18n fix introduced a **new** bug: `/pricing`'s
-> feature lists are now shifted by one tier. See "Punch-list fix verification"
-> below. `pnpm test` is still green in both packages (207 backend / 67
-> frontend) and **still didn't catch this** — the same lesson, a third time in
-> this file alone.
+> Created 2026-07-05 · Status: **NOT gate-clean (re-verified 2026-07-05
+> across three passes: `aacb05a` → found a new bug → `d75be4b` fixed it)**.
+> Stages A–G's code landed in `e2c0558`/`a7cd6a0` (tracker left at "planning
+> only" the whole time — 6th "commit lands, tracker untouched" occurrence
+> after phases 2/12/13/15/16). A punch list of 6 gaps was found; `aacb05a`
+> fixed 5 of 6 (T28 excluded, needs live infra) but introduced a new bug in
+> the process (`/pricing`'s feature lists shifted one tier); `d75be4b` fixed
+> that too, confirmed correct against the live tree. Remaining open items:
+> Fix 3's 5 residual backend lint errors (test-only, non-functional) and T28
+> (live control run, still not run). `pnpm test` is still green in both
+> packages (207 backend / 67 frontend) throughout all three passes — it never
+> caught either the wallet-linkage bug or the pricing feature-list bug,
+> because there's still no test exercising `/pricing`'s rendered content.
 
-## Punch-list fix verification (2026-07-05, commit `aacb05a`)
+## Punch-list fix verification (2026-07-05, commits `aacb05a` → `d75be4b`)
 
 | # | Punch item | Result |
 | - | --- | --- |
-| 1 | Wallet linkage | ✅ Fixed correctly — `fromWalletId: wallet.id` added to all 3 `walletTransaction.create()` calls; spec updated with real assertions (not just re-passing old ones) |
-| 2 | Render-time component bug | ✅ Fixed correctly — `tier-view.tsx` returns `ReactNode` directly, all 8 pages updated, `tier-view.spec.tsx` rewritten with `render()`/`screen`; `pnpm lint` frontend now 0 errors (was 8), `tsc --noEmit` clean |
-| 3 | Backend lint (81 errors) | ⚠️ Reduced to 5 (not 0) — all 5 remaining are in `billing.service.spec.ts` (`no-unsafe-assignment` + one `unbound-method` false-positive, all on `expect.objectContaining(...)` call sites). Test-only, non-functional, low priority but not what "fixed" claimed |
-| 4 | Missing pricing/premium i18n | ⚠️ Namespaces created and wired correctly, logged-out CTA now links to `LOGIN_PATH` — **but introduced a new bug**, see below | 
-| 5 | users/detail split | ✅ Fixed correctly — mirrors `users/list`'s exact shape (`FreePageView` holds real content, `Basic/Medium/PremiumPageView` re-export it, `page.tsx` renders `FreePageView` directly) |
-| 6 | T28 live control run | ❌ Still not run (expected — out of scope for a code-only commit) |
+| 1 | Wallet linkage | ✅ Fixed correctly (`aacb05a`) — `fromWalletId: wallet.id` added to all 3 `walletTransaction.create()` calls; spec updated with real assertions (not just re-passing old ones) |
+| 2 | Render-time component bug | ✅ Fixed correctly (`aacb05a`) — `tier-view.tsx` returns `ReactNode` directly, all 8 pages updated, `tier-view.spec.tsx` rewritten with `render()`/`screen`; `pnpm lint` frontend 0 errors, `tsc --noEmit` clean |
+| 3 | Backend lint (81 errors) | ⚠️ Reduced to 5 (`aacb05a`), unchanged by `d75be4b` (frontend-only commit) — all 5 remaining are in `billing.service.spec.ts` (`no-unsafe-assignment` + one `unbound-method` false-positive, all on `expect.objectContaining(...)` call sites). Test-only, non-functional, still not the "0" originally targeted |
+| 4 | Missing pricing/premium i18n | ✅ Fully fixed — `aacb05a` created the namespaces and fixed the logged-out CTA, `d75be4b` fixed the feature-list mapping bug `aacb05a` introduced (confirmed below). **Gap:** still no test covers `/pricing`'s rendered output, so this exact class of bug isn't guarded against going forward |
+| 5 | users/detail split | ✅ Fixed correctly (`aacb05a`) — mirrors `users/list`'s exact shape (`FreePageView` holds real content, `Basic/Medium/PremiumPageView` re-export it, `page.tsx` renders `FreePageView` directly) |
+| 6 | T28 live control run | ❌ Still not run (expected — out of scope for code-only commits) |
+
+### Fix 4's new bug — RESOLVED in `d75be4b` (2026-07-05)
+
+`d75be4b` applies exactly the 2-line remap this file prescribed: `FEATURES.BASIC`
+now reads `t.featuresMedium` and `FEATURES.MEDIUM` now reads `t.featuresPremium`
+(`pricing/page.tsx:68-69`), and the dead `featuresFree` key was removed from
+both `messages/{en,tr}/pricing/messages.json` plus the regenerated
+`i18n-messages.d.ts`. Confirmed via `git show d75be4b` — no other file touched.
+`pnpm test` (67/67), `pnpm lint` (0 errors), and `tsc --noEmit` (clean) all
+still pass in `next-js-boilerplate` post-fix. **Not done:** no regression test
+was added asserting each tier card renders its own distinct feature list — the
+original fix plan's step suggesting this wasn't applied, so a future edit
+here could silently reintroduce the same mismatch undetected.
+
+<details>
+<summary>Original bug diagnosis (2026-07-05, now fixed — kept for reference)</summary>
 
 ### New bug found in Fix 4 — `/pricing`'s feature lists are off by one tier
 
@@ -69,6 +87,8 @@ rendered content at all).
 Once this follow-up lands, re-run `pnpm test` (both packages) and do a live
 click-through of `/pricing` in both locales before considering Fix 4 done.
 
+</details>
+
 ## Punch list to close this phase (priority order, historical)
 
 Original findings from the first re-verification pass. Status prefixes reflect
@@ -96,12 +116,12 @@ for the original reasoning/file:line evidence, not as a live status source.
    all remaining are in `billing.service.spec.ts` (`no-unsafe-assignment` +
    one `unbound-method` false-positive on `expect.objectContaining(...)` call
    sites), test-only and non-functional but not fully clean as claimed.
-4. ⚠️ **PARTIALLY RESOLVED in `aacb05a` — introduced a new bug.** `pricing`
-   and `premium` never got i18n namespaces; pricing's logged-out CTA rendered
-   a disabled span instead of linking to login. Namespaces were created and
-   wired correctly, and the CTA now links to `LOGIN_PATH` — but the feature-list
-   mapping in `pricing/page.tsx` is now shifted by one tier (see "New bug found
-   in Fix 4" above). Not yet re-fixed.
+4. ✅ **RESOLVED across `aacb05a` + `d75be4b`.** `pricing` and `premium`
+   never got i18n namespaces; pricing's logged-out CTA rendered a disabled
+   span instead of linking to login. `aacb05a` created the namespaces and
+   fixed the CTA, but shifted the feature-list mapping by one tier;
+   `d75be4b` fixed that follow-up bug with the exact 2-line remap prescribed
+   above. Still no regression test for `/pricing`'s rendered content.
 5. ✅ **RESOLVED in `aacb05a`.** `users/detail/[uuid]` never got the
    tier-view split; only `users/list` did. Fixed — mirrors `users/list`'s
    exact shape.
@@ -258,7 +278,7 @@ since it can't prove the reference is stable across renders.
    for `wallet.findUnique`) instead of the bare `jest.Mock`, so the value
    passed into `expect.objectContaining` is never widened to `any`.
 
-### Fix 4 — Missing `pricing`/`premium` i18n — ⚠️ partially done, see follow-up below
+### Fix 4 — Missing `pricing`/`premium` i18n — ✅ done (with a follow-up fix, see below)
 
 `getAllMessages()` (`src/lib/i18n/get-all-messages.ts`) auto-discovers every
 `messages/{locale}/*/messages.json` folder recursively — no manual namespace
@@ -289,12 +309,16 @@ registration needed in either `layout.tsx`, just add the files:
 7. Manually load `/pricing` and `/v1/tr/premium` in a dev server and confirm no
    missing-key fallback in either locale (per the phase's own verify loop).
 
-**Fix 4 follow-up (found 2026-07-05, not yet applied):** steps 1-3 and 5-7
+**Fix 4 follow-up — ✅ applied in `d75be4b` (2026-07-05):** steps 1-3 and 5-7
 above landed correctly, but step 1's JSON authoring shifted the feature-list
-keys by one tier relative to how `page.tsx` consumes them — see "New bug
-found in Fix 4" near the top of this file for the full diagnosis and the
-exact 2-line fix (remap `FEATURES.BASIC`/`FEATURES.MEDIUM` to
-`t.featuresMedium`/`t.featuresPremium`, no JSON changes needed).
+keys by one tier relative to how `page.tsx` consumes them. `d75be4b` applied
+exactly the prescribed 2-line remap (`FEATURES.BASIC`/`FEATURES.MEDIUM` →
+`t.featuresMedium`/`t.featuresPremium`) and removed the dead `featuresFree`
+key from both locale JSON files — confirmed via `git show d75be4b`, and
+`pnpm test`/`lint`/`typecheck` all still pass in `next-js-boilerplate`. The
+one thing this follow-up did *not* do: add a regression test for `/pricing`'s
+rendered feature lists, so this exact mismatch class has no test guard going
+forward.
 
 ### Fix 5 — `users/detail/[uuid]` tier-view split — ✅ done
 
@@ -332,10 +356,10 @@ page):
    compose logs backend | grep <PAN>`; spot-check `WalletTransaction.metadata`
    only ever contains `last4`).
 
-Fixes 1, 2, 5 are done; Fix 3 has a small residual (5 lint errors); Fix 4 needs
-its follow-up applied. Once Fix 4's follow-up lands and Fix 3's residual is
+Fixes 1, 2, 4, 5 are all done (`d75be4b` closed out Fix 4's follow-up). Fix 3
+has a small residual (5 lint errors, test-only). Once that residual is
 cleared, re-run `pnpm test`/`lint`/`typecheck` in both packages, then do Fix 6
-(T28), before flipping the remaining task boxes below.
+(T28) — the live control run — before flipping the remaining task boxes below.
 
 Confirmed correct on re-verification (do not re-litigate): the mock test-card
 table (D3) and upgrade-only provider gating (D5), `CsrfGuard` added to
@@ -632,10 +656,11 @@ as their own namespaces are added, or as one sweep after. Stage G is last.
   "Upgrade" linking to `checkout/[tier]`.
   *Verify:* all 4 CTA states exercised live (logged-out, current-tier, above,
   below); page renders in both `en`/`tr`. `aacb05a` added the `pricing`
-  namespace and fixed the logged-out→login CTA — but introduced a new bug
-  (feature lists shifted by one tier, see "Punch-list fix verification" near
-  the top of this file) — left unchecked until that follow-up fix lands and
-  the 4 CTA states are actually exercised live.
+  namespace and fixed the logged-out→login CTA (introduced a feature-list
+  bug in the process, fixed by `d75be4b` — see "Punch-list fix verification").
+  Content is now static-confirmed correct for all 4 tiers — left unchecked
+  only because the 4 CTA states haven't actually been exercised live yet
+  (pending T28).
 - [ ] **T16 (S) — `PRICING_PATH`/new `CHECKOUT_PATH` route constants + nav
   entries.** `PRICING_PATH` already exists (`constants/routes.ts`) — add
   `CHECKOUT_PATH` builder (`(tier: Tier) => \`/v1/${lang}/checkout/${tier}\`` shape,
@@ -717,9 +742,10 @@ noted explicitly below where that applies.
   *Verify:* `en` and `tr` both render with no fallback/missing-key warnings; the
   generated `I18nMessages` type includes every new namespace. `aacb05a` added
   the `pricing` and `premium` namespaces (both `en`/`tr`) and wired
-  `useMessages()` into both pages — but `pricing`'s content has the feature-list
-  mismatch documented near the top of this file; left unchecked until that's
-  fixed and both locales are actually eyeballed live.
+  `useMessages()` into both pages; `d75be4b` fixed the feature-list mismatch
+  `aacb05a` introduced (regenerated `i18n-messages.d.ts` too). Content is now
+  correct — left unchecked only because no one has actually loaded both
+  locales in a browser this session (pending T28).
 
 ### Stage G — Tests + verify loop
 
