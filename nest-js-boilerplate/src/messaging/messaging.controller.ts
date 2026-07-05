@@ -63,7 +63,13 @@ export class MessagingController {
     @CurrentUser() user: JwtUser,
     @Query('q') q?: string,
   ): Promise<
-    { id: string; email: string; name: string | null; avatar: string; online: boolean }[]
+    {
+      id: string;
+      email: string;
+      name: string | null;
+      avatar: string;
+      online: boolean;
+    }[]
   > {
     const result = await this.ms.getFriends(user.userId, q);
     const onlineUserIds = new Set(this.realtime.getOnlineUserIds());
