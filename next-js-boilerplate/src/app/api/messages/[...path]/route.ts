@@ -18,7 +18,7 @@ export async function GET(
 ) {
   const { path } = await params;
   const qs = request.nextUrl.searchParams.toString();
-  const url = `${BACKEND}/api/messages/${path.join("/")}${qs ? "?" + qs : ""}`;
+  const url = `${BACKEND}/api/${path.join("/")}${qs ? "?" + qs : ""}`;
   const headers = await getAuthHeaders();
   const res = await fetch(url, { headers });
   const text = await res.text();
@@ -38,7 +38,7 @@ export async function POST(
 ) {
   const { path } = await params;
   const body = await request.text();
-  const url = `${BACKEND}/api/messages/${path.join("/")}`;
+  const url = `${BACKEND}/api/${path.join("/")}`;
   const headers = await getAuthHeaders();
   const res = await fetch(url, {
     method: "POST",
