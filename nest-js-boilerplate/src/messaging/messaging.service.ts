@@ -370,6 +370,22 @@ export class MessagingService {
     return this.friends.getFriendIds(userId);
   }
 
+  /** Lookup user display data for realtime conversation pushes. */
+  async getUserDisplay(
+    userId: string,
+  ): Promise<{ id: string; email: string; name: string; avatar: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, name: true },
+    });
+    return {
+      id: userId,
+      email: user?.email ?? 'unknown',
+      name: displayName(user ?? { name: null, email: null }),
+      avatar: this.initials(displayName(user ?? { name: null, email: null })),
+    };
+  }
+
   /** Get accepted friend profiles */
   async getFriends(
     userId: string,
@@ -581,6 +597,11 @@ export class MessagingService {
     // Rewrite friends list in Redis for both users.
     this.refreshFriendIds(requesterId);
     this.refreshFriendIds(userId);
+    // Invalidate cached friend profiles and conversation lists for both users.
+    this.cache.del(`friends:${requesterId}:`);
+    this.cache.del(`friends:${userId}:`);
+    this.cache.del(`conversations:${requesterId}`);
+    this.cache.del(`conversations:${userId}`);
     this.notifyFriendEvent(
       requesterId,
       userId,

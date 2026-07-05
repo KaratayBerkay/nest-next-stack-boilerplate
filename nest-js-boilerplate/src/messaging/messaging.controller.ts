@@ -198,6 +198,7 @@ export class MessagingController {
       conversation: {
         user: {
           id: user.userId,
+          email: user.email,
           name: displayName(user),
           avatar: sender?.avatar ?? '',
         },
@@ -267,11 +268,12 @@ export class MessagingController {
       peerId: user.userId,
     });
     // Chrome: Conversation renew to reader's MESSAGE sockets
+    const peer = await this.ms.getUserDisplay(body.userId);
     this.realtime.emitToService(user.userId, 'MESSAGE', {
       renew: 'Messages',
       type: 'Conversation',
       conversation: {
-        user: { id: body.userId },
+        user: peer,
         unread: 0,
       },
     });
