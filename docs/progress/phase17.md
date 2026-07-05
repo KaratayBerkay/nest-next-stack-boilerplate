@@ -69,55 +69,66 @@ rendered content at all).
 Once this follow-up lands, re-run `pnpm test` (both packages) and do a live
 click-through of `/pricing` in both locales before considering Fix 4 done.
 
-## Punch list to close this phase (priority order)
+## Punch list to close this phase (priority order, historical)
 
-1. **`BillingService`/`getBillingHistory` never link `WalletTransaction` rows to
-   the user's `Wallet`, so `myBillingHistory` always returns empty.**
-   `ensureWallet()` (`billing.service.ts:52,167-174`) is called and its return
-   value discarded; every `walletTransaction.create()` in `subscribeToPlan`
-   (`:70-85`, `:92-107`, `:123-136`) omits `fromWalletId`/`toWalletId`. Since
-   `getBillingHistory`'s own-wallet filter (`:147-156`,
-   `OR:[{fromWallet:{userId}},{toWallet:{userId}}]`) matches on those fields, it
-   returns zero rows for every real charge/downgrade. Not caught by
-   `billing.service.spec.ts` because it mocks `walletTransaction.findMany`
-   directly instead of exercising the real relation. Breaks T5's own verify step.
-2. **Every Stage E dispatcher page computes its view component inline during
-   render**, tripping `react-hooks/static-components` (`pnpm lint`, 8 hard
-   errors): chat-room, feed, find-friends, messages, notification, posts/[uuid],
-   premium, settings/sessions all do `const PageView = getTierView(...); return
-   <PageView />` in the render body — React treats this as a new component type
-   every render, resetting any local state inside the rendered view.
-3. **Backend `pnpm lint` fails with 81 errors, 80 inside phase17's own files:**
-   `billing.service.spec.ts` (30), `messaging-ws.gateway.spec.ts` (27),
-   `post.resolver.ts` (15, unsafe-`any` from Prisma group-by results),
-   `mock-payment.provider.spec.ts` (7), one dead `async charge()` with no
-   `await` in `mock-payment.provider.ts`, and the unused `wallet` var in
-   `billing.service.ts` (same variable as punch-item 1). The 81st error
-   (`versioning.e2e-spec.ts`) predates this phase, not a regression.
-4. **T26 — `pricing` and `premium` never got i18n namespaces**, only `checkout`
-   did (`messages/{en,tr}/checkout/`). `(marketing)/pricing/page.tsx` and
-   `/premium`'s page/views still have zero `useMessages()` calls — hardcoded
-   English, unchanged from the pre-phase17 survey. Pricing's logged-out CTA also
-   renders a disabled span instead of linking to login — one of T15's 4 planned
-   CTA states never landed.
-5. **T24 — `users/detail/[uuid]` never got the tier-view split.** Only
-   `users/list` did, and even that one hardcodes a `FreePageView` render rather
-   than routing through `getTierView` like every other page.
-6. **T28 — the live control run against rebuilt containers was never run.** No
-   docker rebuild, WS/HTTP probe script, or log spot-check exists anywhere.
-   Punch-items 1 and 2 were both invisible to the 207+67 passing unit tests —
-   exactly the gap this project's own established lesson (phases 2/12/15/16)
-   warns about.
-7. **Nested tracker-drift, not fixed here:** `phase16.md`'s header claims
-   "gate-clean — closed 2026-07-05" (set by this phase's own Stage A/T2), but
-   its `T23`, `T32`, and 3 verify-loop items are still unchecked in that same
-   file — outside the 10-item punch list Stage A was scoped to re-verify, but
-   the "closed" framing overstates it. Flagging so it isn't mistaken for fully
-   resolved.
+Original findings from the first re-verification pass. Status prefixes reflect
+`aacb05a`'s fixes and the second re-verification pass — see "Punch-list fix
+verification" above for the authoritative current detail; this list is kept
+for the original reasoning/file:line evidence, not as a live status source.
+
+1. ✅ **RESOLVED in `aacb05a`.** `BillingService`/`getBillingHistory` never
+   linked `WalletTransaction` rows to the user's `Wallet`, so
+   `myBillingHistory` always returned empty. `ensureWallet()`
+   (`billing.service.ts:52,167-174`) was called and its return value
+   discarded; every `walletTransaction.create()` in `subscribeToPlan`
+   (`:70-85`, `:92-107`, `:123-136`) omitted `fromWalletId`/`toWalletId`. Fixed
+   by adding `fromWalletId: wallet.id` to all three, with new spec assertions
+   verifying it.
+2. ✅ **RESOLVED in `aacb05a`.** Every Stage E dispatcher page computed its
+   view component inline during render, tripping `react-hooks/static-components`
+   (8 hard errors). Fixed by converting `tier-view.ts` → `.tsx` to return a
+   `ReactNode` directly instead of a component reference; `pnpm lint` frontend
+   is now 0 errors.
+3. ⚠️ **PARTIALLY RESOLVED in `aacb05a`.** Backend `pnpm lint` failed with 81
+   errors, 80 inside phase17's own files (`billing.service.spec.ts`,
+   `messaging-ws.gateway.spec.ts`, `post.resolver.ts`, `mock-payment.provider.spec.ts`,
+   plus a dead `async` and the unused `wallet` var from item 1). Reduced to 5 —
+   all remaining are in `billing.service.spec.ts` (`no-unsafe-assignment` +
+   one `unbound-method` false-positive on `expect.objectContaining(...)` call
+   sites), test-only and non-functional but not fully clean as claimed.
+4. ⚠️ **PARTIALLY RESOLVED in `aacb05a` — introduced a new bug.** `pricing`
+   and `premium` never got i18n namespaces; pricing's logged-out CTA rendered
+   a disabled span instead of linking to login. Namespaces were created and
+   wired correctly, and the CTA now links to `LOGIN_PATH` — but the feature-list
+   mapping in `pricing/page.tsx` is now shifted by one tier (see "New bug found
+   in Fix 4" above). Not yet re-fixed.
+5. ✅ **RESOLVED in `aacb05a`.** `users/detail/[uuid]` never got the
+   tier-view split; only `users/list` did. Fixed — mirrors `users/list`'s
+   exact shape.
+6. ❌ **STILL OPEN.** The live control run (T28) against rebuilt containers
+   was never run. No docker rebuild, WS/HTTP probe script, or log spot-check
+   exists anywhere. Punch-items 1, 2, and the new pricing bug were all
+   invisible to the 207+67 passing unit tests — exactly the gap this
+   project's own established lesson (phases 2/12/15/16) warns about, now
+   demonstrated a third time within this file alone.
+7. **Nested tracker-drift, not fixed here (unchanged):** `phase16.md`'s
+   header claims "gate-clean — closed 2026-07-05" (set by this phase's own
+   Stage A/T2), but its `T23`, `T32`, and 3 verify-loop items are still
+   unchecked in that same file — outside the 10-item punch list Stage A was
+   scoped to re-verify, but the "closed" framing overstates it. Flagging so
+   it isn't mistaken for fully resolved.
 
 ## Fix plan (step-by-step, one per punch-list item)
 
-### Fix 1 — Wallet linkage (`billing.service.ts`)
+Kept as the original instructions for traceability. Fixes 1, 2, and 5 are
+✅ **done** (applied in `aacb05a`, re-verified above) — steps below are now
+historical for those three. Fix 3 is ⚠️ **mostly done** (81→5 errors, see the
+step-7 note added below). Fix 4 is ⚠️ **partially done** — its own steps 1-3,
+5-7 landed, but introduced the new bug documented above; a **Fix 4 follow-up**
+has been added at the end of that section with the exact remaining change.
+Fix 6 (T28) is ❌ **not started**.
+
+### Fix 1 — Wallet linkage (`billing.service.ts`) — ✅ done
 
 1. In `subscribeToPlan`, the wallet is already fetched at line 52 (`const wallet
    = await this.ensureWallet(userId);`) — its `.id` is just never used. Add
@@ -141,7 +152,7 @@ click-through of `/pricing` in both locales before considering Fix 4 done.
 5. Re-run `pnpm test` in `nest-js-boilerplate` — all billing tests should stay
    green with the new assertions passing.
 
-### Fix 2 — Render-time component creation (8 dispatcher pages)
+### Fix 2 — Render-time component creation (8 dispatcher pages) — ✅ done
 
 Root cause: each page does `const PageView = getTierView(user.tier, VIEWS);
 return <PageView />;` — assigning a PascalCase variable from a runtime call and
@@ -196,7 +207,7 @@ since it can't prove the reference is stable across renders.
    is guaranteed lint-clean, since literal `<BasicPageView />`-style JSX tags
    are never flagged).
 
-### Fix 3 — Backend lint (81 errors)
+### Fix 3 — Backend lint (81 errors) — ⚠️ mostly done (81→5)
 
 1. `mock-payment.provider.ts:26` — `async charge()` has no `await`. Drop
    `async` and return `Promise.resolve({...})` from each branch instead, so the
@@ -237,9 +248,17 @@ since it can't prove the reference is stable across renders.
    with the same element type instead of `any`.
 7. Re-run `pnpm lint` in `nest-js-boilerplate` — should drop from 81 to 0 (the
    1 pre-existing `versioning.e2e-spec.ts` error predates this phase and is out
-   of scope).
+   of scope). **Result: dropped to 5**, not 0 — steps 1, 3 (partially), 4, 5,
+   6 all landed clean; the 5 residual errors are in `billing.service.spec.ts`
+   on `expect.objectContaining(...)` call sites (`no-unsafe-assignment` +
+   one `unbound-method` false positive) — the typed-mock approach in step 3
+   doesn't fully satisfy eslint once the mock's return value flows through
+   jest's `expect` matchers. Remaining fix: type the `jest.Mock` fields with
+   explicit generics (e.g. `jest.Mock<Promise<{id:string;userId:string;currency:string}>>`
+   for `wallet.findUnique`) instead of the bare `jest.Mock`, so the value
+   passed into `expect.objectContaining` is never widened to `any`.
 
-### Fix 4 — Missing `pricing`/`premium` i18n
+### Fix 4 — Missing `pricing`/`premium` i18n — ⚠️ partially done, see follow-up below
 
 `getAllMessages()` (`src/lib/i18n/get-all-messages.ts`) auto-discovers every
 `messages/{locale}/*/messages.json` folder recursively — no manual namespace
@@ -270,7 +289,14 @@ registration needed in either `layout.tsx`, just add the files:
 7. Manually load `/pricing` and `/v1/tr/premium` in a dev server and confirm no
    missing-key fallback in either locale (per the phase's own verify loop).
 
-### Fix 5 — `users/detail/[uuid]` tier-view split
+**Fix 4 follow-up (found 2026-07-05, not yet applied):** steps 1-3 and 5-7
+above landed correctly, but step 1's JSON authoring shifted the feature-list
+keys by one tier relative to how `page.tsx` consumes them — see "New bug
+found in Fix 4" near the top of this file for the full diagnosis and the
+exact 2-line fix (remap `FEATURES.BASIC`/`FEATURES.MEDIUM` to
+`t.featuresMedium`/`t.featuresPremium`, no JSON changes needed).
+
+### Fix 5 — `users/detail/[uuid]` tier-view split — ✅ done
 
 Mirror `users/list`'s already-established shape exactly (that page also has no
 real tier differentiation per D6, and already hardcodes `FreePageView` rather
@@ -289,7 +315,7 @@ page):
    `./views/FreePageView` and render it inside the existing `Suspense` wrapper,
    in place of the current inline `UserDetailContent`.
 
-### Fix 6 — T28 live control run
+### Fix 6 — T28 live control run — ❌ not started
 
 1. `docker compose --profile all up -d --build` (full rebuild — both images
    changed).
@@ -306,8 +332,10 @@ page):
    compose logs backend | grep <PAN>`; spot-check `WalletTransaction.metadata`
    only ever contains `last4`).
 
-Once Fixes 1–5 land, re-run `pnpm test`/`lint`/`typecheck` in both packages,
-then do Fix 6 (T28), before flipping the remaining task boxes below.
+Fixes 1, 2, 5 are done; Fix 3 has a small residual (5 lint errors); Fix 4 needs
+its follow-up applied. Once Fix 4's follow-up lands and Fix 3's residual is
+cleared, re-run `pnpm test`/`lint`/`typecheck` in both packages, then do Fix 6
+(T28), before flipping the remaining task boxes below.
 
 Confirmed correct on re-verification (do not re-litigate): the mock test-card
 table (D3) and upgrade-only provider gating (D5), `CsrfGuard` added to
