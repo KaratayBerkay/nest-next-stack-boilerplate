@@ -166,6 +166,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      fluent-bit:
+        condition: service_started
     ports:
       - "${APP_PORT:-3000}:3000"
       - "${GRPC_PORT:-5050}:5050"
@@ -247,6 +249,8 @@ services:
     init: true
     depends_on:
       app:
+        condition: service_started
+      fluent-bit:
         condition: service_started
     ports:
       - "${FRONTEND_PORT:-3100}:3100"
