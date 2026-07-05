@@ -1,6 +1,6 @@
 # Phase 11 — Phase 10 remediation: post-detail live renew fix, close-out bookkeeping, verification gate
 
-> Execution tracker for the eleventh phase of the [stack roadmap](../todo/README.md).
+> Execution tracker for the eleventh phase of the [stack roadmap](../../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
 > Created 2026-07-04 · Status: **not started**
 
@@ -260,9 +260,9 @@ test users for the E2E walks.
 | 9 (done, 14/15 code tasks) | Realtime UX close-out: transport deadlock, claim keying, thread order, receipts, header routing, chat-room switching, push completion | [phase9.md](phase9.md) |
 | 10 (mostly landed) | Realtime UX round 2: DM unread everywhere, live feed renew, chat-room presence + stability, transport-state UX — **T11 broken, T4/T15 carried to 11** | [phase10.md](phase10.md) |
 | **11 (this file)** | Phase 10 remediation: post-detail live-renew fix (allowlist + context churn), close-out bookkeeping, verification gate, residual UX | this file |
-| 12 (was 11) | Cross-stack e2e: `STACK=1` Playwright — incl. phase 6+7+9+10 realtime loops | [todo/01](../todo/01-stack-integration.md) |
-| 13 (was 12) | Root CI: path-filtered app checks + compose smoke + stack e2e | [todo/01](../todo/01-stack-integration.md) |
-| 14 (was 13) | Backend warts + compose hardening + k8s | [todo/02](../todo/02-backend.md), [todo/04](../todo/04-devops.md) |
-| 15 (was 14) | Backlog: OTel/metrics, remaining push polish, social auth, seed, publishing, backups | [todo/02](../todo/02-backend.md)–[05](../todo/05-docs-maintenance.md) |
+| 12 (was 11) | Cross-stack e2e: `STACK=1` Playwright — incl. phase 6+7+9+10 realtime loops | [todo/01](../../todo/01-stack-integration.md) |
+| 13 (was 12) | Root CI: path-filtered app checks + compose smoke + stack e2e | [todo/01](../../todo/01-stack-integration.md) |
+| 14 (was 13) | Backend warts + compose hardening + k8s | [todo/02](../../todo/02-backend.md), [todo/04](../../todo/04-devops.md) |
+| 15 (was 14) | Backlog: OTel/metrics, remaining push polish, social auth, seed, publishing, backups | [todo/02](../../todo/02-backend.md)–[05](../../todo/05-docs-maintenance.md) |
 
 <!-- Downstream phases 12–15 were renumbered +1 to insert this remediation phase. -->

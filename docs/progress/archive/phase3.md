@@ -1,6 +1,6 @@
 # Phase 3 — Redis session runtime snapshot (4-token key + value enrichment)
 
-> Execution tracker for the third phase of the [stack roadmap](../todo/README.md).
+> Execution tracker for the third phase of the [stack roadmap](../../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
 > Created 2026-07-03 · Status: **complete — verified 2026-07-03**. The first control
 > run found blocking findings A–I (see [Control run](#control-run--2026-07-03)); all
@@ -15,7 +15,7 @@ WS-connect profile reads) should be served from the compound-key value instead. 
 compound key also grows a 4th segment and the rbac/user tokens become **date-derived**
 with a hard midnight cutoff. The e2e suite moves down the queue again and gains
 coverage for these flows. Builds directly on the phase 2 store
-([docs/backend/AUTH.md](../backend/AUTH.md)).
+([docs/backend/AUTH.md](../../backend/AUTH.md)).
 
 ## Design
 
@@ -304,7 +304,7 @@ All 28 backend unit suites pass (134 tests). Pre-existing spec-file TS errors
 --build` → live verification per the DoD checklist above.
 
 - [x] **8. Docs**
-  - [x] Rewrite [docs/backend/AUTH.md](../backend/AUTH.md): token quadruple table,
+  - [x] Rewrite [docs/backend/AUTH.md](../../backend/AUTH.md): token quadruple table,
     derivation formulas, 4-segment key, v2 value schema, UTC-midnight semantics,
     tier-change-via-refresh, handshake flow, the surface→fields matrix, deploy
     migration note, remaining known gaps (NotificationGateway JWT-only, SSE demos,
@@ -426,9 +426,9 @@ Test residue (this run): users `phase3alice-1783045878@test.dev` and
 | --- | --- | --- |
 | 1 (done) | Foundations: README, .env.example, messaging-ws, delete ws-server, doc links | [phase1.md](phase1.md) |
 | 2 (done, verified) | Redis auth: compound-key token store, instant revocation, subscription-tier RBAC | [phase2.md](phase2.md) |
-| **3 (this, done, verified)** | Redis session runtime snapshot: 4-token derived key, midnight cutoff, value v2 (friends/profile/unread/memberships), device handshake, messaging-ws Redis wiring, minimal refresh recovery | [todo/02](../todo/02-backend.md) |
-| 4 | Cross-stack e2e: `STACK=1` Playwright (auth round-trip, refresh, revocation, tier gates, SSR/CSR cookies, WS, messaging) — now also covers the 4-token/midnight/messaging-ws flows | [todo/01](../todo/01-stack-integration.md) |
-| 5 | Root CI: path-filtered app checks + compose smoke job + stack e2e | [todo/01](../todo/01-stack-integration.md) |
-| 6 | Backend warts: negative-timer warning, duplicate `CreateCatDto`, Kafka first-boot race | [todo/02](../todo/02-backend.md) |
-| 7 | Compose hardening (healthchecks, pins, log rotation) + frontend k8s manifests | [todo/04](../todo/04-devops.md) |
-| 8 | Backlog: backend OTel/metrics, Web Push e2e, social auth, seed, publishing, backups | [todo/02](../todo/02-backend.md)–[05](../todo/05-docs-maintenance.md) |
+| **3 (this, done, verified)** | Redis session runtime snapshot: 4-token derived key, midnight cutoff, value v2 (friends/profile/unread/memberships), device handshake, messaging-ws Redis wiring, minimal refresh recovery | [todo/02](../../todo/02-backend.md) |
+| 4 | Cross-stack e2e: `STACK=1` Playwright (auth round-trip, refresh, revocation, tier gates, SSR/CSR cookies, WS, messaging) — now also covers the 4-token/midnight/messaging-ws flows | [todo/01](../../todo/01-stack-integration.md) |
+| 5 | Root CI: path-filtered app checks + compose smoke job + stack e2e | [todo/01](../../todo/01-stack-integration.md) |
+| 6 | Backend warts: negative-timer warning, duplicate `CreateCatDto`, Kafka first-boot race | [todo/02](../../todo/02-backend.md) |
+| 7 | Compose hardening (healthchecks, pins, log rotation) + frontend k8s manifests | [todo/04](../../todo/04-devops.md) |
+| 8 | Backlog: backend OTel/metrics, Web Push e2e, social auth, seed, publishing, backups | [todo/02](../../todo/02-backend.md)–[05](../../todo/05-docs-maintenance.md) |

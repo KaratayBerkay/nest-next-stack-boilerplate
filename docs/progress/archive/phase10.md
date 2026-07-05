@@ -1,6 +1,6 @@
 # Phase 10 — Realtime UX round 2: DM unread everywhere, live feed renew, chat-room presence, transport state UX
 
-> Execution tracker for the tenth phase of the [stack roadmap](../todo/README.md).
+> Execution tracker for the tenth phase of the [stack roadmap](../../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
 > Created 2026-07-04 · Status: **not started**
 
@@ -343,7 +343,7 @@ the two WS test users for the E2E walks.
 | 8 (done) | Realtime close-out: bounded conversations SQL, notification index, find-friends cache | [phase8.md](phase8.md) |
 | 9 (done, 14/15 code tasks) | Realtime UX close-out: transport deadlock, claim keying, thread order, receipts, header routing, chat-room switching, push completion | [phase9.md](phase9.md) |
 | **10 (this file)** | Realtime UX round 2: DM unread everywhere, live feed renew, chat-room presence + stability, transport-state UX, + Phase 9 carry-over | this file |
-| 11 | Cross-stack e2e: `STACK=1` Playwright — incl. phase 6+7+9+10 realtime loops | [todo/01](../todo/01-stack-integration.md) |
-| 12 | Root CI: path-filtered app checks + compose smoke + stack e2e | [todo/01](../todo/01-stack-integration.md) |
-| 13 | Backend warts + compose hardening + k8s | [todo/02](../todo/02-backend.md), [todo/04](../todo/04-devops.md) |
-| 14 | Backlog: OTel/metrics, remaining push polish, social auth, seed, publishing, backups | [todo/02](../todo/02-backend.md)–[05](../todo/05-docs-maintenance.md) |
+| 11 | Cross-stack e2e: `STACK=1` Playwright — incl. phase 6+7+9+10 realtime loops | [todo/01](../../todo/01-stack-integration.md) |
+| 12 | Root CI: path-filtered app checks + compose smoke + stack e2e | [todo/01](../../todo/01-stack-integration.md) |
+| 13 | Backend warts + compose hardening + k8s | [todo/02](../../todo/02-backend.md), [todo/04](../../todo/04-devops.md) |
+| 14 | Backlog: OTel/metrics, remaining push polish, social auth, seed, publishing, backups | [todo/02](../../todo/02-backend.md)–[05](../../todo/05-docs-maintenance.md) |

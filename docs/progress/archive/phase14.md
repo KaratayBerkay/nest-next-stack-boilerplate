@@ -1,6 +1,6 @@
 # Phase 14 — Phase 13 close-out + comprehensive Kibana activity logging (session/page/exception)
 
-> Execution tracker for the fourteenth phase of the [stack roadmap](../todo/README.md).
+> Execution tracker for the fourteenth phase of the [stack roadmap](../../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
 > Created 2026-07-04 · Status: **not gate-clean**. All 8 stages landed as real commits
 > and most tasks verified PASS live against a freshly-rebuilt stack on 2026-07-05 — but
@@ -561,10 +561,10 @@ D/E/F emitting the `category` field. H is last.
 | 13 (implemented, not gate-clean until Phase 15/T15) | Phase 12 remediation + notification/DM unread count renewal hardening + sender display-name consistency + chat scroll-to-bottom button | [phase13.md](phase13.md) |
 | **14 (this file — implemented, not gate-clean until Phase 15)** | Phase 13 close-out (2 residual bugs + live control run + tracker bookkeeping) + comprehensive Kibana activity logging: session/page/exception categories keyed by session token, searchable by token/user id/page name/exception type/device type/ip address — 7 of 20 tasks (T3, T11, T13, T14, T15, T19, T20) confirmed broken live 2026-07-05, remediated in Phase 15 | this file |
 | 15 (was 14) | Phase 14 remediation: unify IP-change detection, WS close codes, frontend event pipe onto Fluent Bit, Kibana saved searches, docs accuracy, Phase 12/13 live control run, plus test debt | [phase15.md](phase15.md) |
-| 16 (was 15) | Cross-stack e2e: `STACK=1` Playwright — incl. phase 6+7+9+10 realtime loops | [todo/01](../todo/01-stack-integration.md) |
-| 17 (was 16) | Root CI: path-filtered app checks + compose smoke + stack e2e | [todo/01](../todo/01-stack-integration.md) |
-| 18 (was 17) | Backend warts + compose hardening + k8s | [todo/02](../todo/02-backend.md), [todo/04](../todo/04-devops.md) |
-| 19 (was 18) | Backlog: OTel/metrics, remaining push polish, social auth, seed, publishing, backups | [todo/02](../todo/02-backend.md)–[05](../todo/05-docs-maintenance.md) |
+| 16 (was 15) | Cross-stack e2e: `STACK=1` Playwright — incl. phase 6+7+9+10 realtime loops | [todo/01](../../todo/01-stack-integration.md) |
+| 17 (was 16) | Root CI: path-filtered app checks + compose smoke + stack e2e | [todo/01](../../todo/01-stack-integration.md) |
+| 18 (was 17) | Backend warts + compose hardening + k8s | [todo/02](../../todo/02-backend.md), [todo/04](../../todo/04-devops.md) |
+| 19 (was 18) | Backlog: OTel/metrics, remaining push polish, social auth, seed, publishing, backups | [todo/02](../../todo/02-backend.md)–[05](../../todo/05-docs-maintenance.md) |
 
 <!-- Downstream phases 15-18 were renumbered +1 (now 16-19) to insert Phase 15
 (Phase 14 remediation), same pattern this phase itself used for Phase 13. -->

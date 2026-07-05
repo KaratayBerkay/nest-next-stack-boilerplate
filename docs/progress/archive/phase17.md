@@ -1,6 +1,6 @@
 # Phase 17 — Subscriptions & pricing: mock checkout, per-tier page views, WS tier gate
 
-> Execution tracker for the seventeenth phase of the [stack roadmap](../todo/README.md).
+> Execution tracker for the seventeenth phase of the [stack roadmap](../../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
 > Created 2026-07-05 · Status: **NOT gate-clean (re-verified six times:
 > 2026-07-05 across four passes — `aacb05a` → `d75be4b` → lint residual
@@ -1314,10 +1314,10 @@ noted explicitly below where that applies.
 | 15 (Stage G/T15 done, Stages A–F not started) | Phase 14 remediation: IP-change unification, WS close codes, frontend event pipe, Kibana saved searches, docs accuracy, Phase 12/13 live control run, test debt — Stages A–F carried whole into Phase 16's Stage A | [phase15.md](phase15.md) |
 | 16 (implemented 2026-07-05, pending Stage A re-verify above) | Phase 15 close-out + welcome-email & password-reset for social signups: username generation, SMTP (mxroute) transport, real mail templates, generic password-reset flow, frontend set-password/verify-email pages, env/compose/docs cleanup | [phase16.md](phase16.md) |
 | **17 (this file)** | Subscriptions & pricing: mock payment provider (Wallet/WalletTransaction ledger), self-serve tier checkout, `{Tier}PageView` split across 9 main pages, one WS-level tier gate (VIP rooms), real i18n'd pricing page | this file |
-| 18 (was 17) | Cross-stack e2e: `STACK=1` Playwright — incl. phase 6+7+9+10 realtime loops, plus this phase's checkout/tier-gate flows | [todo/01](../todo/01-stack-integration.md) |
-| 19 (was 18) | Root CI: path-filtered app checks + compose smoke + stack e2e | [todo/01](../todo/01-stack-integration.md) |
-| 20 (was 19) | Backend warts + compose hardening + k8s | [todo/02](../todo/02-backend.md), [todo/04](../todo/04-devops.md) |
-| 21 (was 20) | Backlog: OTel/metrics, remaining push polish, seed, publishing, backups; **real payment provider swap (Stripe/iyzico, undecided) once Berkay picks one** — added here per this phase's own D2 | [todo/02](../todo/02-backend.md)–[05](../todo/05-docs-maintenance.md) |
+| 18 (was 17) | Cross-stack e2e: `STACK=1` Playwright — incl. phase 6+7+9+10 realtime loops, plus this phase's checkout/tier-gate flows | [todo/01](../../todo/01-stack-integration.md) |
+| 19 (was 18) | Root CI: path-filtered app checks + compose smoke + stack e2e | [todo/01](../../todo/01-stack-integration.md) |
+| 20 (was 19) | Backend warts + compose hardening + k8s | [todo/02](../../todo/02-backend.md), [todo/04](../../todo/04-devops.md) |
+| 21 (was 20) | Backlog: OTel/metrics, remaining push polish, seed, publishing, backups; **real payment provider swap (Stripe/iyzico, undecided) once Berkay picks one** — added here per this phase's own D2 | [todo/02](../../todo/02-backend.md)–[05](../../todo/05-docs-maintenance.md) |
 
 <!-- Downstream phases 17-20 (from phase16.md's own queue table) were renumbered +1
 (now 18-21) to insert this subscriptions/pricing phase, same pattern Phase 14/15/16

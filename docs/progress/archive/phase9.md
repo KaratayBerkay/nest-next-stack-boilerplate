@@ -1,6 +1,6 @@
 # Phase 9 — Realtime UX close-out: make messaging, chat-rooms, and push actually work
 
-> Execution tracker for the ninth phase of the [stack roadmap](../todo/README.md).
+> Execution tracker for the ninth phase of the [stack roadmap](../../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
 > Created 2026-07-04 · Status: **not started**
 
@@ -540,10 +540,10 @@ uncommitted on the server; use the two WS test users for the E2E walks.
 | 7 (done) | Page-claim realtime: presence in Redis, page-scoped push, transport fixes, hardening | [phase7.md](phase7.md) |
 | 8 (done) | Realtime close-out: bounded conversations SQL, notification index, find-friends cache, deletions | [phase8.md](phase8.md) |
 | **9 (this file)** | Realtime UX close-out: transport deadlock, claim keying, thread order, receipts, header routing, chat-room switching, push completion | this file |
-| 10 | Cross-stack e2e: `STACK=1` Playwright — incl. phase 6+7+9 realtime loops | [todo/01](../todo/01-stack-integration.md) |
-| 11 | Root CI: path-filtered app checks + compose smoke + stack e2e | [todo/01](../todo/01-stack-integration.md) |
-| 12 | Backend warts + compose hardening + k8s | [todo/02](../todo/02-backend.md), [todo/04](../todo/04-devops.md) |
-| 13 | Backlog: OTel/metrics, remaining push polish, social auth, seed, publishing, backups | [todo/02](../todo/02-backend.md)–[05](../todo/05-docs-maintenance.md) |
+| 10 | Cross-stack e2e: `STACK=1` Playwright — incl. phase 6+7+9 realtime loops | [todo/01](../../todo/01-stack-integration.md) |
+| 11 | Root CI: path-filtered app checks + compose smoke + stack e2e | [todo/01](../../todo/01-stack-integration.md) |
+| 12 | Backend warts + compose hardening + k8s | [todo/02](../../todo/02-backend.md), [todo/04](../../todo/04-devops.md) |
+| 13 | Backlog: OTel/metrics, remaining push polish, social auth, seed, publishing, backups | [todo/02](../../todo/02-backend.md)–[05](../../todo/05-docs-maintenance.md) |
 
 ## Sources (React hooks / memory, stage G)
 

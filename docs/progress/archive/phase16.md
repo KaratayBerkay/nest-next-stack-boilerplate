@@ -1,6 +1,6 @@
 # Phase 16 — Phase 15 close-out (test debt, IP-change, WS close codes, frontend event pipe, Kibana, docs) + Welcome-email & password-reset for social signups
 
-> Execution tracker for the sixteenth phase of the [stack roadmap](../todo/README.md).
+> Execution tracker for the sixteenth phase of the [stack roadmap](../../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
 > Created 2026-07-05 · Status: **gate-clean — closed 2026-07-05**. All 10
 > punch-list items verified against live tree (commits `957a4e9`/`9d3448c`); the
@@ -804,10 +804,10 @@ mutations end-to-end against the rebuilt stack) plus `curl` against ES/Mailpit.
 | 14 (implemented, not gate-clean until Phase 15) | Phase 13 close-out + comprehensive Kibana activity logging: session/page/exception categories — 7 of 20 tasks confirmed broken live, remediated in Phase 15 | [phase14.md](phase14.md) |
 | 15 (Stage G/T15 done, Stages A–F not started) | Phase 14 remediation: IP-change unification, WS close codes, frontend event pipe, Kibana saved searches, docs accuracy, Phase 12/13 live control run, test debt — Stages A–F carried whole into Phase 16's Stage A | [phase15.md](phase15.md) |
 | **16 (this file)** | Phase 15 close-out (Stage A, carried) + welcome-email & password-reset for social signups: username generation, SMTP (mxroute) transport, real mail templates, generic password-reset flow, frontend set-password/verify-email pages, env/compose/docs cleanup | this file |
-| 17 (was 16) | Cross-stack e2e: `STACK=1` Playwright — incl. phase 6+7+9+10 realtime loops | [todo/01](../todo/01-stack-integration.md) |
-| 18 (was 17) | Root CI: path-filtered app checks + compose smoke + stack e2e | [todo/01](../todo/01-stack-integration.md) |
-| 19 (was 18) | Backend warts + compose hardening + k8s | [todo/02](../todo/02-backend.md), [todo/04](../todo/04-devops.md) |
-| 20 (was 19) | Backlog: OTel/metrics, remaining push polish, seed, publishing, backups (social auth item removed — implemented, see Phase 16) | [todo/02](../todo/02-backend.md)–[05](../todo/05-docs-maintenance.md) |
+| 17 (was 16) | Cross-stack e2e: `STACK=1` Playwright — incl. phase 6+7+9+10 realtime loops | [todo/01](../../todo/01-stack-integration.md) |
+| 18 (was 17) | Root CI: path-filtered app checks + compose smoke + stack e2e | [todo/01](../../todo/01-stack-integration.md) |
+| 19 (was 18) | Backend warts + compose hardening + k8s | [todo/02](../../todo/02-backend.md), [todo/04](../../todo/04-devops.md) |
+| 20 (was 19) | Backlog: OTel/metrics, remaining push polish, seed, publishing, backups (social auth item removed — implemented, see Phase 16) | [todo/02](../../todo/02-backend.md)–[05](../../todo/05-docs-maintenance.md) |
 
 <!-- Downstream phases 16-19 (from phase15.md's own queue table) were renumbered +1
 (now 17-20) to insert this Phase 15-close-out + welcome-email phase, same pattern

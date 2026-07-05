@@ -1,6 +1,6 @@
 # Phase 4 — Frontend feature parity (surface the phase 1–3 backend in the Next.js app)
 
-> Execution tracker for the fourth phase of the [stack roadmap](../todo/README.md).
+> Execution tracker for the fourth phase of the [stack roadmap](../../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
 > Created 2026-07-03 · Status: **done** (all 7 tasks implemented; verify steps pending browser loop)
 
@@ -11,7 +11,7 @@ RBAC, instant revocation, derived tokens + midnight cutoff, device handshake,
 messaging-ws) exists as API surface but is invisible or half-wired in the Next.js app.
 This phase makes the frontend actually *consume* it. The e2e suite moves down the
 queue once more and will then cover these UI flows too. Builds on
-[docs/backend/AUTH.md](../backend/AUTH.md) and the phase 3 BFF plumbing.
+[docs/backend/AUTH.md](../../backend/AUTH.md) and the phase 3 BFF plumbing.
 
 ## Current state (survey 2026-07-03)
 
@@ -174,7 +174,7 @@ What is missing — the gaps this phase closes:
   - [ ] `docs/frontend/STATUS.md` + `TODO.md`: record the new surfaces (tier UX,
     sessions page, admin panel, silent refresh); check the two §16 boxes only if the
     verify steps here actually proved them, otherwise leave for the e2e phase
-  - [ ] [docs/backend/AUTH.md](../backend/AUTH.md): add the frontend-consumption
+  - [ ] [docs/backend/AUTH.md](../../backend/AUTH.md): add the frontend-consumption
     section (silent-refresh contract, sessions surface, `mySessions`/
     `logoutOtherSessions`); root README feature table row
   - [ ] Verify: links resolve; `.env.example` ↔ `docker-compose.yml` parity untouched
@@ -188,7 +188,7 @@ Stretch (not blocking DoD):
 - Locale/timezone actually driving the app: `locale` → default `[lang]` segment,
   `timezone` → date formatting in feed/messages.
 - Rate-limit-aware BFF (`429`/`Retry-After` surfaced in `apiFetch`) — carried from
-  [todo/03](../todo/03-frontend.md) P2.
+  [todo/03](../../todo/03-frontend.md) P2.
 
 ## Definition of done / verify
 
@@ -218,9 +218,9 @@ Stretch (not blocking DoD):
 | 1 (done) | Foundations: README, .env.example, messaging-ws, delete ws-server, doc links | [phase1.md](phase1.md) |
 | 2 (done, verified) | Redis auth: compound-key token store, instant revocation, subscription-tier RBAC | [phase2.md](phase2.md) |
 | 3 (done, verified) | Redis session runtime snapshot: 4-token derived key, midnight cutoff, value v2, device handshake, messaging-ws wiring, refresh recovery | [phase3.md](phase3.md) |
-| **4 (this)** | Frontend parity: snapshot-driven identity UI, tier UX + admin panel, silent refresh everywhere, sessions/devices page, SSR seed | [todo/03](../todo/03-frontend.md) |
-| 5 | Cross-stack e2e: `STACK=1` Playwright (auth round-trip, refresh, revocation, tier gates, SSR/CSR cookies, WS, messaging — now incl. the phase 4 UI flows) | [todo/01](../todo/01-stack-integration.md) |
-| 6 | Root CI: path-filtered app checks + compose smoke job + stack e2e | [todo/01](../todo/01-stack-integration.md) |
-| 7 | Backend warts: negative-timer warning, duplicate `CreateCatDto`, Kafka first-boot race | [todo/02](../todo/02-backend.md) |
-| 8 | Compose hardening (healthchecks, pins, log rotation) + frontend k8s manifests | [todo/04](../todo/04-devops.md) |
-| 9 | Backlog: backend OTel/metrics, Web Push e2e, social auth, seed, publishing, backups | [todo/02](../todo/02-backend.md)–[05](../todo/05-docs-maintenance.md) |
+| **4 (this)** | Frontend parity: snapshot-driven identity UI, tier UX + admin panel, silent refresh everywhere, sessions/devices page, SSR seed | [todo/03](../../todo/03-frontend.md) |
+| 5 | Cross-stack e2e: `STACK=1` Playwright (auth round-trip, refresh, revocation, tier gates, SSR/CSR cookies, WS, messaging — now incl. the phase 4 UI flows) | [todo/01](../../todo/01-stack-integration.md) |
+| 6 | Root CI: path-filtered app checks + compose smoke job + stack e2e | [todo/01](../../todo/01-stack-integration.md) |
+| 7 | Backend warts: negative-timer warning, duplicate `CreateCatDto`, Kafka first-boot race | [todo/02](../../todo/02-backend.md) |
+| 8 | Compose hardening (healthchecks, pins, log rotation) + frontend k8s manifests | [todo/04](../../todo/04-devops.md) |
+| 9 | Backlog: backend OTel/metrics, Web Push e2e, social auth, seed, publishing, backups | [todo/02](../../todo/02-backend.md)–[05](../../todo/05-docs-maintenance.md) |

@@ -1,6 +1,6 @@
 # Phase 6 — Realtime consolidation: one socket, renew protocol, solid read semantics
 
-> Execution tracker for the sixth phase of the [stack roadmap](../todo/README.md).
+> Execution tracker for the sixth phase of the [stack roadmap](../../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
 > Created 2026-07-03 · Status: **closed 2026-07-03 — Stage A (T1–T5) + provider (T6) shipped & verified; T7–T14 re-scoped into [phase7.md](phase7.md)**
 
@@ -613,7 +613,7 @@ Sizes: S ≈ ≤half day, M ≈ a day, L ≈ multi-day.
 | 5 (skipped-renumbered) | — reserved; e2e moved below — | — |
 | **6 (this, closed)** | Realtime consolidation: one socket, renew protocol, emit points — Stage A + T6 shipped | this file |
 | 7 | Page-level data push (re-scoped T7–T14: page consumers, read semantics, stage-C leftovers) | [phase7.md](phase7.md) |
-| 8 | Cross-stack e2e: `STACK=1` Playwright — now incl. the phase 6+7 realtime loops | [todo/01](../todo/01-stack-integration.md) |
-| 9 | Root CI: path-filtered app checks + compose smoke + stack e2e | [todo/01](../todo/01-stack-integration.md) |
-| 10 | Backend warts + compose hardening + k8s | [todo/02](../todo/02-backend.md), [todo/04](../todo/04-devops.md) |
-| 11 | Backlog: OTel/metrics, Web Push e2e, social auth, seed, publishing, backups | [todo/02](../todo/02-backend.md)–[05](../todo/05-docs-maintenance.md) |
+| 8 | Cross-stack e2e: `STACK=1` Playwright — now incl. the phase 6+7 realtime loops | [todo/01](../../todo/01-stack-integration.md) |
+| 9 | Root CI: path-filtered app checks + compose smoke + stack e2e | [todo/01](../../todo/01-stack-integration.md) |
+| 10 | Backend warts + compose hardening + k8s | [todo/02](../../todo/02-backend.md), [todo/04](../../todo/04-devops.md) |
+| 11 | Backlog: OTel/metrics, Web Push e2e, social auth, seed, publishing, backups | [todo/02](../../todo/02-backend.md)–[05](../../todo/05-docs-maintenance.md) |

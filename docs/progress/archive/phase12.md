@@ -1,6 +1,6 @@
 # Phase 12 — Exception handling: unified error contract, frontend resolver, dedicated error/status pages, loading skeletons
 
-> Execution tracker for the twelfth phase of the [stack roadmap](../todo/README.md).
+> Execution tracker for the twelfth phase of the [stack roadmap](../../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
 > Created 2026-07-04 · Status: **complete** (Phase 13 commits `5342030` +
 > `6def6ff` remediated all 8 findings A–H). Phase 13's own live control run
@@ -924,10 +924,10 @@ to Phase 14/T3.
 | 11 (parked — plan only, tasks open) | Phase 10 remediation: post-detail live-renew fix (allowlist + context churn), close-out bookkeeping, verification gate, residual UX — deferred in favor of Phase 12, resume after | [phase11.md](phase11.md) |
 | **12 (implemented, not gate-clean)** | Exception handling: unified backend error contract, frontend `exceptionHandler` + i18n resolver, dedicated connection-unstable + access-denied pages, loading skeletons for every HTTP/WS-awaited page, `generateZodSchema(tr)` + nested `form`/`errors` i18n for real auth forms — see "Follow-up (2026-07-04 verification)" for what's left | this file |
 | 13 (planned) | Phase 12 remediation (8 lettered findings) + notification/DM unread count renewal hardening + sender display-name consistency + chat scroll-to-bottom button | [phase13.md](phase13.md) |
-| 14 (was 12, now 13) | Cross-stack e2e: `STACK=1` Playwright — incl. phase 6+7+9+10 realtime loops | [todo/01](../todo/01-stack-integration.md) |
-| 15 (was 13, now 14) | Root CI: path-filtered app checks + compose smoke + stack e2e | [todo/01](../todo/01-stack-integration.md) |
-| 16 (was 14, now 15) | Backend warts + compose hardening + k8s | [todo/02](../todo/02-backend.md), [todo/04](../todo/04-devops.md) |
-| 17 (was 15, now 16) | Backlog: OTel/metrics, remaining push polish, social auth, seed, publishing, backups | [todo/02](../todo/02-backend.md)–[05](../todo/05-docs-maintenance.md) |
+| 14 (was 12, now 13) | Cross-stack e2e: `STACK=1` Playwright — incl. phase 6+7+9+10 realtime loops | [todo/01](../../todo/01-stack-integration.md) |
+| 15 (was 13, now 14) | Root CI: path-filtered app checks + compose smoke + stack e2e | [todo/01](../../todo/01-stack-integration.md) |
+| 16 (was 14, now 15) | Backend warts + compose hardening + k8s | [todo/02](../../todo/02-backend.md), [todo/04](../../todo/04-devops.md) |
+| 17 (was 15, now 16) | Backlog: OTel/metrics, remaining push polish, social auth, seed, publishing, backups | [todo/02](../../todo/02-backend.md)–[05](../../todo/05-docs-maintenance.md) |
 
 <!-- Downstream phases were renumbered +1 (now 14-17) to insert Phase 13
 (this phase's remediation + realtime UX fixes); Phase 11 keeps its number

@@ -1,7 +1,7 @@
 # Realtime — Normative Reference
 
 Single source of truth for the WebSocket system (phases 6–7).  
-Related: [AUTH.md](AUTH.md) (token handshake), `docs/progress/phase7.md` (design + tracker).
+Related: [AUTH.md](AUTH.md) (token handshake), `docs/progress/archive/phase7.md` (design + tracker).
 
 ## 1 — Transport
 

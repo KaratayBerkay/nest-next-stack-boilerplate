@@ -1,11 +1,11 @@
 # Phase 1 — Foundations (P0 quick wins)
 
-> Execution tracker for the first phase of the [stack roadmap](../todo/README.md).
+> Execution tracker for the first phase of the [stack roadmap](../../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
 > Created 2026-07-02 · Completed 2026-07-02 · Status: **done** (verified against the running stack)
 
-Scope: the P0 items from [todo/01-stack-integration.md](../todo/01-stack-integration.md)
-and the P0 slice of [todo/05-docs-maintenance.md](../todo/05-docs-maintenance.md) —
+Scope: the P0 items from [todo/01-stack-integration.md](../../todo/01-stack-integration.md)
+and the P0 slice of [todo/05-docs-maintenance.md](../../todo/05-docs-maintenance.md) —
 no test infra, no CI, no backend code changes (those are Phases 2–4).
 
 ## Tasks
@@ -27,7 +27,7 @@ no test infra, no CI, no backend code changes (those are Phases 2–4).
 - [x] **4. Delete `ws-server.mjs`** (superseded by the NestJS WS gateway — decided 2026-07-02)
   - [x] First verify what `NEXT_PUBLIC_WS_URL` (currently `ws://localhost:3200`) actually targets — must keep pointing at the NestJS gateway path, not :3002
   - [x] Remove `nest-js-boilerplate/ws-server.mjs` + any `WS_PORT` / `:3002` references (scripts, docs, demos)
-- [x] **5. Docs link repair** (P0 slice of [todo/05](../todo/05-docs-maintenance.md))
+- [x] **5. Docs link repair** (P0 slice of [todo/05](../../todo/05-docs-maintenance.md))
   - [x] Sweep `docs/` for pre-monorepo paths: `../../nest-js` → `../../nest-js-boilerplate`, `../../next-js` → `../../next-js-boilerplate`
   - [x] Trim `docs/backend/README.md` to files that exist (drop or restore: `STATUS.md`, `TODO.md`, `progress/README.md`, `research/claude-code-ecosystem-2026.md`, `research/nestjs-stack-2026-gotchas.md`)
   - [x] Fix `docs/frontend/STATUS.md` contradiction ("✅ Completed & verified (0) — Nothing yet" vs dashboard 58/~60)
@@ -49,10 +49,10 @@ down one. The live queue is maintained in [phase2.md](phase2.md).
 
 | Phase | Scope | Detail |
 | --- | --- | --- |
-| **1 (this)** | Foundations: README, .env.example, messaging-ws, delete ws-server, doc links | [todo/01](../todo/01-stack-integration.md), [todo/05](../todo/05-docs-maintenance.md) |
+| **1 (this)** | Foundations: README, .env.example, messaging-ws, delete ws-server, doc links | [todo/01](../../todo/01-stack-integration.md), [todo/05](../../todo/05-docs-maintenance.md) |
 | 2 | Redis auth: compound-key token store, instant revocation, subscription-tier RBAC | [phase2.md](phase2.md) |
-| 3 | Cross-stack e2e: `STACK=1` Playwright project against the compose stack (auth round-trip, refresh, revocation, tier gates, SSR/CSR cookies, WS, messaging) | [todo/01](../todo/01-stack-integration.md) |
-| 4 | Root CI: path-filtered app checks + compose smoke job + stack e2e | [todo/01](../todo/01-stack-integration.md) |
-| 5 | Backend warts: negative-timer warning, duplicate `CreateCatDto`, Kafka first-boot race | [todo/02](../todo/02-backend.md) |
-| 6 | Compose hardening (healthchecks, pins, log rotation) + frontend k8s manifests | [todo/04](../todo/04-devops.md) |
-| 7 | Backlog: backend OTel/metrics, Web Push e2e, social auth, seed, publishing, backups | [todo/02](../todo/02-backend.md)–[05](../todo/05-docs-maintenance.md) |
+| 3 | Cross-stack e2e: `STACK=1` Playwright project against the compose stack (auth round-trip, refresh, revocation, tier gates, SSR/CSR cookies, WS, messaging) | [todo/01](../../todo/01-stack-integration.md) |
+| 4 | Root CI: path-filtered app checks + compose smoke job + stack e2e | [todo/01](../../todo/01-stack-integration.md) |
+| 5 | Backend warts: negative-timer warning, duplicate `CreateCatDto`, Kafka first-boot race | [todo/02](../../todo/02-backend.md) |
+| 6 | Compose hardening (healthchecks, pins, log rotation) + frontend k8s manifests | [todo/04](../../todo/04-devops.md) |
+| 7 | Backlog: backend OTel/metrics, Web Push e2e, social auth, seed, publishing, backups | [todo/02](../../todo/02-backend.md)–[05](../../todo/05-docs-maintenance.md) |

@@ -1,6 +1,6 @@
 # Phase 2 — Redis auth management (layered tokens + RBAC)
 
-> Execution tracker for the second phase of the [stack roadmap](../todo/README.md).
+> Execution tracker for the second phase of the [stack roadmap](../../todo/README.md).
 > Mark boxes as tasks land; a task is done only when its verify step passes.
 > Created 2026-07-02 · Status: **implemented & stack-verified 2026-07-02** (three fixes
 > applied during verification — see [Verification notes](#verification-notes-2026-07-02);
@@ -10,7 +10,7 @@ Re-scope note (2026-07-02): phase 2 was queued as the cross-stack e2e suite; Ber
 re-prioritized to Redis-backed auth so session/token management adds **zero Postgres
 load** on the request hot path. The e2e suite moves to phase 3 and gains coverage for
 the flows built here. This phase implements the "Layered tokens + RBAC in Redis" item
-from [todo/02-backend.md](../todo/02-backend.md).
+from [todo/02-backend.md](../../todo/02-backend.md).
 
 ## Design
 
@@ -122,13 +122,13 @@ caller's identity + authorization snapshot, and any session is revocable instant
     key + Session row survived — proven live 2026-07-03) and was fixed
     2026-07-03 together with the presented-key revoke on refresh (access token
     now passed as Bearer). Documented in
-    [docs/backend/AUTH.md](../backend/AUTH.md#bff-cookie-bridge).
+    [docs/backend/AUTH.md](../../backend/AUTH.md#bff-cookie-bridge).
 - [x] **8. Docs + env**
   - [x] `.env.example` + root README: `AUTH_IP_STRICT` (and note `JWT_ACCESS_TTL`
     drives the Redis TTL)
   - [x] Check the "Layered tokens + RBAC in Redis" box in
-    [todo/02-backend.md](../todo/02-backend.md) pointing here
-  - [x] Auth flow doc: [docs/backend/AUTH.md](../backend/AUTH.md) — token triple,
+    [todo/02-backend.md](../../todo/02-backend.md) pointing here
+  - [x] Auth flow doc: [docs/backend/AUTH.md](../../backend/AUTH.md) — token triple,
     compound key layout, revocation + tier-change semantics (new file; linked from the
     root README and docs/backend/README.md)
 
@@ -186,9 +186,9 @@ bugs, fixed during verification:
 | Phase | Scope | Detail |
 | --- | --- | --- |
 | 1 (done) | Foundations: README, .env.example, messaging-ws, delete ws-server, doc links | [phase1.md](phase1.md) |
-| **2 (this, verified)** | Redis auth: compound-key token store, instant revocation, subscription-tier RBAC | [todo/02](../todo/02-backend.md) |
-| 3 | Cross-stack e2e: `STACK=1` Playwright project (auth round-trip, refresh, revocation, tier gates, SSR/CSR cookies, WS, messaging) — now also owns the BFF refresh/CSRF gap from this phase | [todo/01](../todo/01-stack-integration.md) |
-| 4 | Root CI: path-filtered app checks + compose smoke job + stack e2e | [todo/01](../todo/01-stack-integration.md) |
-| 5 | Backend warts: negative-timer warning, duplicate `CreateCatDto`, Kafka first-boot race | [todo/02](../todo/02-backend.md) |
-| 6 | Compose hardening (healthchecks, pins, log rotation) + frontend k8s manifests | [todo/04](../todo/04-devops.md) |
-| 7 | Backlog: backend OTel/metrics, Web Push e2e, social auth, seed, publishing, backups | [todo/02](../todo/02-backend.md)–[05](../todo/05-docs-maintenance.md) |
+| **2 (this, verified)** | Redis auth: compound-key token store, instant revocation, subscription-tier RBAC | [todo/02](../../todo/02-backend.md) |
+| 3 | Cross-stack e2e: `STACK=1` Playwright project (auth round-trip, refresh, revocation, tier gates, SSR/CSR cookies, WS, messaging) — now also owns the BFF refresh/CSRF gap from this phase | [todo/01](../../todo/01-stack-integration.md) |
+| 4 | Root CI: path-filtered app checks + compose smoke job + stack e2e | [todo/01](../../todo/01-stack-integration.md) |
+| 5 | Backend warts: negative-timer warning, duplicate `CreateCatDto`, Kafka first-boot race | [todo/02](../../todo/02-backend.md) |
+| 6 | Compose hardening (healthchecks, pins, log rotation) + frontend k8s manifests | [todo/04](../../todo/04-devops.md) |
+| 7 | Backlog: backend OTel/metrics, Web Push e2e, social auth, seed, publishing, backups | [todo/02](../../todo/02-backend.md)–[05](../../todo/05-docs-maintenance.md) |
