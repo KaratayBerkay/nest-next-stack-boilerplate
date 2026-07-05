@@ -161,18 +161,29 @@ describe('AuthService', () => {
       };
       mockPrisma.verificationToken.findUnique.mockResolvedValue(token);
 
-      mockPrisma.$transaction.mockImplementation(async (cb: Function) => {
-        const tx = {
-          verificationToken: {
-            update: mockPrisma.verificationToken.update,
-          },
-          user: {
-            update: mockPrisma.user.update,
-            findUnique: mockPrisma.user.findUnique,
-          },
+      interface MockTx {
+        verificationToken: {
+          update: typeof mockPrisma.verificationToken.update;
         };
-        return cb(tx);
-      });
+        user: {
+          update: typeof mockPrisma.user.update;
+          findUnique: typeof mockPrisma.user.findUnique;
+        };
+      }
+      mockPrisma.$transaction.mockImplementation(
+        (cb: (tx: MockTx) => unknown) => {
+          const tx: MockTx = {
+            verificationToken: {
+              update: mockPrisma.verificationToken.update,
+            },
+            user: {
+              update: mockPrisma.user.update,
+              findUnique: mockPrisma.user.findUnique,
+            },
+          };
+          return cb(tx);
+        },
+      );
 
       mockPrisma.verificationToken.update.mockResolvedValue({
         ...token,
@@ -189,12 +200,15 @@ describe('AuthService', () => {
       expect(result).toBe(true);
       expect(mockPrisma.verificationToken.update).toHaveBeenCalledWith({
         where: { id: token.id },
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         data: { consumedAt: expect.any(Date) },
       });
       expect(mockPrisma.user.update).toHaveBeenCalledWith({
         where: { id: 'u1' },
         data: {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           passwordHash: expect.any(String),
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           passwordSetAt: expect.any(Date),
         },
       });

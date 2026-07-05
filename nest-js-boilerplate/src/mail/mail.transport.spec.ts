@@ -160,29 +160,17 @@ describe('MailTransport', () => {
       );
     });
 
-    it('passes smtpSecure=false and defaults port 587 when not specified', async () => {
+    it('always connects on port 465 with implicit TLS, regardless of SMTP_PORT/SMTP_SECURE', async () => {
       mockSendMail.mockResolvedValue({ messageId: 'smtp_msg_4' });
 
-      const transport = new MailTransport(makeConfig({ SMTP_HOST: 'mailpit' }));
-      await transport.send({ to: 'b@c.com', subject: 'Test' });
-
-      expect(nodemailerCreateTransport).toHaveBeenCalledWith(
-        expect.objectContaining({
-          host: 'mailpit',
-          port: 587,
-          secure: false,
-        }),
-      );
-    });
-
-    it('passes smtpSecure=true and custom port when configured', async () => {
-      mockSendMail.mockResolvedValue({ messageId: 'smtp_msg_5' });
-
+      // SMTP_PORT/SMTP_SECURE are deliberately wrong here (the 587+STARTTLS pairing) to
+      // prove they're ignored: 465/implicit-TLS avoids the STARTTLS-stripping window
+      // that 587 has, so it's hardcoded rather than left operator-configurable.
       const transport = new MailTransport(
         makeConfig({
           SMTP_HOST: 'smtp.sendgrid.net',
-          SMTP_PORT: '465',
-          SMTP_SECURE: 'true',
+          SMTP_PORT: '587',
+          SMTP_SECURE: 'false',
           SMTP_USER: 'apikey',
           SMTP_PASS: 'SG_secret',
         }),
@@ -192,7 +180,7 @@ describe('MailTransport', () => {
       expect(nodemailerCreateTransport).toHaveBeenCalledWith(
         expect.objectContaining({
           host: 'smtp.sendgrid.net',
-          port: '465',
+          port: 465,
           secure: true,
           auth: { user: 'apikey', pass: 'SG_secret' },
         }),

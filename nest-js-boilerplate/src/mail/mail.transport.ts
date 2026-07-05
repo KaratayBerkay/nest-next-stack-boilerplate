@@ -26,15 +26,17 @@ export class MailTransport {
   constructor(config: ConfigService) {
     const smtpHost = config.get<string>('SMTP_HOST');
     if (smtpHost) {
-      const smtpPort = config.get<number>('SMTP_PORT', 587);
-      const smtpSecure = config.get<string>('SMTP_SECURE', 'false') === 'true';
       const smtpUser = config.get<string>('SMTP_USER');
       const smtpPass = config.get<string>('SMTP_PASS');
 
+      // Always implicit TLS on 465, never STARTTLS on 587: 465 encrypts from the
+      // first byte, so there's no plaintext window for a STARTTLS-stripping MITM
+      // to exploit. Not configurable — SMTP_PORT/SMTP_SECURE are intentionally
+      // ignored here.
       this.smtpTransport = nodemailer.createTransport({
         host: smtpHost,
-        port: smtpPort,
-        secure: smtpSecure,
+        port: 465,
+        secure: true,
         auth:
           smtpUser && smtpPass ? { user: smtpUser, pass: smtpPass } : undefined,
       } as nodemailer.TransportOptions) as nodemailer.Transporter;
