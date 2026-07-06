@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { graphqlErrorBody, graphqlFetch } from "@/lib/backend";
+import { csrfEchoHeaders, graphqlErrorBody, graphqlFetch } from "@/lib/backend";
 import { getAccessToken } from "@/store/ssr-cookies";
 import {
   POST_QUERY,
@@ -30,12 +30,23 @@ export async function GET(
   return NextResponse.json({ post: data.post });
 }
 
+async function mutationHeaders() {
+  const extraHeaders = await csrfEchoHeaders();
+  if (!extraHeaders) {
+    return { error: NextResponse.json({ statusCode: 403, exc: "EX_FORBIDDEN", msg: "Invalid or missing CSRF token", key: "errors.csrf" }, { status: 403 }) };
+  }
+  return { extraHeaders };
+}
+
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   const token = await getAccessToken();
+
+  const mh = await mutationHeaders();
+  if ("error" in mh) return mh.error;
 
   let body: {
     title?: string;
@@ -55,7 +66,7 @@ export async function PUT(
 
   const { data, errors } = await graphqlFetch<{
     updatePost: { id: string; title: string; content: string };
-  }>(UPDATE_POST_MUTATION, { id, data: body }, token);
+  }>(UPDATE_POST_MUTATION, { id, data: body }, token, mh.extraHeaders);
 
   if (errors) {
     const body = graphqlErrorBody(errors, "GraphQL error");
@@ -72,9 +83,12 @@ export async function DELETE(
   const { id } = await params;
   const token = await getAccessToken();
 
+  const mh = await mutationHeaders();
+  if ("error" in mh) return mh.error;
+
   const { data, errors } = await graphqlFetch<{
     deletePost: { id: string };
-  }>(DELETE_POST_MUTATION, { id }, token);
+  }>(DELETE_POST_MUTATION, { id }, token, mh.extraHeaders);
 
   if (errors) {
     const body = graphqlErrorBody(errors, "GraphQL error");

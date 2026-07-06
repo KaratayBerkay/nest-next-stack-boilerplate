@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
-import { graphqlFetch, graphqlErrorBody } from "@/lib/backend";
+import { csrfEchoHeaders, graphqlFetch, graphqlErrorBody } from "@/lib/backend";
 
 const REVOKE_API_KEY_MUTATION = `
   mutation RevokeApiKey($id: String!) {
@@ -26,8 +26,13 @@ export async function DELETE(
     return NextResponse.json({ statusCode: 401 }, { status: 401 });
   }
 
+  const extraHeaders = await csrfEchoHeaders();
+  if (!extraHeaders) {
+    return NextResponse.json({ statusCode: 403, exc: "EX_FORBIDDEN", msg: "Invalid or missing CSRF token", key: "errors.csrf" }, { status: 403 });
+  }
+
   const { id } = await params;
-  const { data, errors } = await graphqlFetch(REVOKE_API_KEY_MUTATION, { id }, accessToken);
+  const { data, errors } = await graphqlFetch(REVOKE_API_KEY_MUTATION, { id }, accessToken, extraHeaders);
   if (errors) {
     const body = graphqlErrorBody(errors, "Failed to revoke API key");
     return NextResponse.json(body, { status: body.statusCode });
@@ -45,10 +50,15 @@ export async function PATCH(
     return NextResponse.json({ statusCode: 401 }, { status: 401 });
   }
 
+  const extraHeaders = await csrfEchoHeaders();
+  if (!extraHeaders) {
+    return NextResponse.json({ statusCode: 403, exc: "EX_FORBIDDEN", msg: "Invalid or missing CSRF token", key: "errors.csrf" }, { status: 403 });
+  }
+
   const { id } = await params;
   const json = await req.json();
   const { data, errors } = await graphqlFetch<{ updateApiKey: unknown }>(
-    UPDATE_API_KEY_MUTATION, { id, ...json }, accessToken,
+    UPDATE_API_KEY_MUTATION, { id, ...json }, accessToken, extraHeaders,
   );
   if (errors) {
     const errBody = graphqlErrorBody(errors, "Failed to update API key");

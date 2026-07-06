@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { graphqlErrorStatus, graphqlFetch } from "@/lib/backend";
+import { csrfEchoHeaders, graphqlErrorStatus, graphqlFetch } from "@/lib/backend";
 import { getAccessToken } from "@/store/ssr-cookies";
 import {
   MARK_NOTIFICATION_READ_MUTATION,
@@ -16,11 +16,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
+  const extraHeaders = await csrfEchoHeaders();
+  if (!extraHeaders) {
+    return NextResponse.json({ error: "Invalid or missing CSRF token" }, { status: 403 });
+  }
+
   if (body.all) {
     const { errors } = await graphqlFetch(
       MARK_ALL_NOTIFICATIONS_READ_MUTATION,
       undefined,
       token,
+      extraHeaders,
     );
     if (errors) {
       return NextResponse.json({ error: errors[0]?.message ?? "GraphQL error" }, { status: graphqlErrorStatus(errors) });
@@ -37,7 +43,7 @@ export async function POST(request: Request) {
 
   const { data, errors } = await graphqlFetch<{
     markNotificationRead: boolean;
-  }>(MARK_NOTIFICATION_READ_MUTATION, { id: body.id }, token);
+  }>(MARK_NOTIFICATION_READ_MUTATION, { id: body.id }, token, extraHeaders);
 
   if (errors) {
     return NextResponse.json({ error: errors[0]?.message ?? "GraphQL error" }, { status: graphqlErrorStatus(errors) });

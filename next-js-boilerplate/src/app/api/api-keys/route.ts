@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
-import { graphqlFetch, graphqlErrorBody } from "@/lib/backend";
+import { csrfEchoHeaders, graphqlFetch, graphqlErrorBody } from "@/lib/backend";
 
 const MY_API_KEYS_QUERY = `
   query MyApiKeys {
@@ -41,6 +41,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ statusCode: 401 }, { status: 401 });
   }
 
+  const extraHeaders = await csrfEchoHeaders();
+  if (!extraHeaders) {
+    return NextResponse.json({ statusCode: 403, exc: "EX_FORBIDDEN", msg: "Invalid or missing CSRF token", key: "errors.csrf" }, { status: 403 });
+  }
+
   const { name, expiresInDays } = await req.json();
   if (!name || typeof name !== "string" || name.trim().length === 0) {
     return NextResponse.json({ statusCode: 400, msg: "Name is required" }, { status: 400 });
@@ -50,6 +55,7 @@ export async function POST(req: Request) {
     CREATE_API_KEY_MUTATION,
     { name: name.trim(), expiresInDays: expiresInDays ?? null },
     accessToken,
+    extraHeaders,
   );
 
   if (errors) {
