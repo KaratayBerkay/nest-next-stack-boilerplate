@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { DevicesModule } from '../devices/devices.module';
@@ -19,7 +19,9 @@ import { UsernameService } from './username.service';
   imports: [
     MailModule,
     DevicesModule,
-    FriendsModule,
+    // FriendsModule imports AuthModule (FriendsResolver needs SessionAuthGuard); forwardRef()
+    // on both sides breaks the otherwise-unresolvable cycle.
+    forwardRef(() => FriendsModule),
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({

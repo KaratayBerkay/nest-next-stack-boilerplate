@@ -94,6 +94,16 @@ import { WsModule } from './ws/ws.module';
           ? true
           : join(process.cwd(), 'src/schema.gql'),
       sortSchema: true,
+      // Without this, the GraphQL context only carries `req` — `res` is
+      // undefined, which crashes HttpThrottlerGuard (and anything else that
+      // needs to write response headers/cookies from a resolver) with
+      // "Cannot read properties of undefined (reading 'header')" on every
+      // @Throttle()-decorated query/mutation (register, login, resetPassword,
+      // loginWithOAuth, ...).
+      context: ({ req, res }: { req: unknown; res: unknown }) => ({
+        req,
+        res,
+      }),
       // Enable real-time subscriptions over the modern graphql-ws protocol (served on
       // the same /graphql path as queries/mutations). See SubscriptionsModule.
       subscriptions: {

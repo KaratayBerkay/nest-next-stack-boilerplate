@@ -5,7 +5,7 @@ import type { JwtUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { PrismaService } from '../prisma/prisma.service';
-import type { UpdateProfileInput } from './dto/update-profile.input';
+import { UpdateProfileInput } from './dto/update-profile.input';
 import { ProfileService } from './profile.service';
 
 @UseGuards(SessionAuthGuard)
