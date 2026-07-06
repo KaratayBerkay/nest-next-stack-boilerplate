@@ -1,9 +1,11 @@
 # Enhancements 2 — Settings pages (General / Account / Privacy / Billing)
 
-> Planning tracker, written 2026-07-06. Status: **planning only — no code written yet**,
-> following this project's established convention (see `enhancements1.md` and the
-> archived `docs/progress/archive/phaseN.md` trackers): draft the design + task list
-> first, implement only once Berkay kicks it off explicitly.
+> Planning tracker, written 2026-07-06. Status: **implemented (commit `f2130b9`),
+> verified 2026-07-06 — mostly correct, 5 concrete issues found, not yet fixed** (see
+> "Verification pass" below). Originally drafted as planning-only, following this
+> project's established convention (see `enhancements1.md` and the archived
+> `docs/progress/archive/phaseN.md` trackers): draft the design + task list first,
+> implement only once Berkay kicks it off explicitly.
 >
 > Scope, from Berkay's request: build a real Settings section — General, Account,
 > Privacy, Billing (reference: a left-aligned settings sub-nav with gear/user/shield/
@@ -113,7 +115,9 @@ patterns (checked against the actual codebase, not generic boilerplate).
 
 ### Stage A — Backend: profile mutation + i18n scaffolding
 
-- [ ] **T1 (M) — `updateProfile` mutation + `myProfile`/`isUsernameAvailable` queries**
+- [x] **T1 (M) — `updateProfile` mutation + `myProfile`/`isUsernameAvailable` queries**
+  **Done, matches the plan closely — one gap: no unit tests were added (see
+  "Verification pass" → Issue 5 for the exact test file to write).**
   on a new `ProfileResolver` (`src/profile/`, sibling to `billing/`/`friends/` — not the
   leftover `UsersResolver`).
 
@@ -261,7 +265,10 @@ patterns (checked against the actual codebase, not generic boilerplate).
   check: change name via the mutation directly (or once T4 lands), confirm `me` reflects
   it without re-login.
 
-- [ ] **T2 (S) — `settings` i18n namespace.**
+- [x] **T2 (S) — `settings` i18n namespace.** **Done** — both `en`/`tr` created,
+  `pnpm generate-i18n-types` run (confirmed in the generated `.d.ts`). A handful of
+  strings introduced by T3/T4/T6 never got added to this namespace and stayed
+  hardcoded — see "Verification pass" → Issue 4.
   `next-js-boilerplate/messages/en/settings/messages.json` (and `tr` equivalent):
   ```json
   {
@@ -299,7 +306,9 @@ patterns (checked against the actual codebase, not generic boilerplate).
 
 ### Stage B — Frontend: settings shell + General/Account tabs
 
-- [ ] **T3 (M) — `/settings` shell.**
+- [x] **T3 (M) — `/settings` shell.** **Done** — `layout.tsx`, `page.tsx` redirect, and
+  `SettingsNav.tsx` all match the plan. One hardcoded string in the nav heading (see
+  Issue 4) — traces back to this task's own code sketch, not an independent mistake.
 
   **How:**
   1. `next-js-boilerplate/src/app/v1/[lang]/settings/page.tsx` — redirect only:
@@ -385,7 +394,10 @@ patterns (checked against the actual codebase, not generic boilerplate).
      `{Tier}PageView` split — the split belongs to each *tab's own* `page.tsx`
      underneath it (D1), not to the shell wrapping all of them.
 
-- [ ] **T4 (M) — Account tab** (`app/v1/[lang]/settings/account/`). No tier
+- [x] **T4 (M) — Account tab** (`app/v1/[lang]/settings/account/`). **Done, but with
+  3 real issues** — Save doesn't block a known-taken username, backend error messages
+  get discarded, and bio can never be cleared once set. See "Verification pass" →
+  Issues 1-3 for exact fixes. No tier
   differentiation (D6-style reasoning: everyone gets the same profile form regardless
   of subscription) — so `page.tsx` renders `FreePageView` directly and
   `Basic/Medium/PremiumPageView` re-export it, matching `messages`/`notification`'s
@@ -471,16 +483,23 @@ patterns (checked against the actual codebase, not generic boilerplate).
   avatar → new image visible immediately and after a hard refresh (proves it persisted
   to MinIO + `User.avatarUrl`, not just local state).
 
-- [ ] **T5 (S) — General tab** (`app/v1/[lang]/settings/general/`, same re-export
-  shape as T4). Locale + timezone selects (`components/ui/Select.tsx` — note the
-  enhancements1 fix for its focus-on-open bug should be in place before building a new
-  form on top of it) bound to the same `updateProfile` mutation as T4 (`locale`/
+- [x] **T5 (S) — General tab** (`app/v1/[lang]/settings/general/`, same re-export
+  shape as T4). **Done, shares Issue 2's swallowed-error bug with T4** (same
+  `catch { toast("Failed to save") }` pattern, same fix). Minor plan deviation, not a
+  bug: uses plain native `<select>` elements instead of `components/ui/Select.tsx` as
+  this task suggested — functionally fine, just doesn't match the rest of the app's
+  design-system component for dropdowns; worth reconciling later, not urgent. Locale +
+  timezone selects bound to the same `updateProfile` mutation as T4 (`locale`/
   `timezone` fields). Theme: reuse `components/layout/ThemeToggle.tsx` as-is, just
   rendered here too, so users can find it from Settings as well as the header.
 
 ### Stage C — Billing + Privacy tabs
 
-- [ ] **T6 (S) — Billing tab** (`app/v1/[lang]/settings/billing/`, re-export shape).
+- [x] **T6 (S) — Billing tab** (`app/v1/[lang]/settings/billing/`, re-export shape).
+  **Done** — correctly reuses the existing `api/billing/history` route and the shared
+  `TIER_PRICES`/`tierLabel` from `lib/tier.ts` (properly de-duplicated from
+  `checkout-content.tsx`, confirmed no local copy left behind). One hardcoded
+  `"Loading..."` string (Issue 4).
   Fetch `myBillingHistory` via a small `app/api/billing/history` **query** already
   built in Phase 17 (`api/billing/history/route.ts` — confirm it still exists and
   reuse it rather than adding a second route for the same data) and render as a list
@@ -490,16 +509,17 @@ patterns (checked against the actual codebase, not generic boilerplate).
   shared `lib/tier.ts` constant instead of duplicating the price table a third time.
   "Upgrade" button links to `PRICING_PATH`.
 
-- [ ] **T7 (S) — Privacy tab** (`app/v1/[lang]/settings/privacy/`, re-export shape),
-  scoped per D5: a short explanatory paragraph + a `Link` to the Sessions tab
-  ("Manage where you're signed in from the Sessions tab"). **Do not start this task
-  until D5 is resolved** — if Berkay wants real blocking/visibility controls instead,
-  this task's scope (and size estimate) changes completely and needs its own schema
-  design pass first.
+- [x] **T7 (S) — Privacy tab** (`app/v1/[lang]/settings/privacy/`, re-export shape),
+  scoped per D5. **Done, and correctly stayed minimal** — just the explanatory
+  paragraph + cross-link to Sessions, exactly as scoped. Good discipline: no
+  blocking/visibility schema work was added without D5 actually being resolved first.
+  **D5 itself is still open** if Berkay wants the fuller version later.
 
 ### Stage D — Navigation wiring
 
-- [ ] **T8 (S) — Header `ProfileDropdown`** (`V1Shell.tsx`). Add a "Settings" link
+- [x] **T8 (S) — Header `ProfileDropdown`** (`V1Shell.tsx`). **Done**, matches the plan
+  exactly — `lang` correctly threaded through as a new prop, link added in both the
+  desktop and mobile variants via the shared `content`. Add a "Settings" link
   (`IconSettings` or `IconAdjustments`, `t.settingsLink` from the new namespace) between
   the name/email/tier block and the "Sign out" button, in both the desktop dropdown
   `content` JSX and the mobile full-screen portal variant (same `content` variable is
@@ -517,11 +537,15 @@ patterns (checked against the actual codebase, not generic boilerplate).
   (`ProfileDropdown` doesn't currently receive `lang` as a prop — thread it through
   from `V1Shell`'s existing `lang` variable, same as `MessageDropdown` already does.)
 
-- [ ] **T9 (S) — Sidebar `ProfileSection`** (`V1Shell.tsx`). Same link added to the
+- [x] **T9 (S) — Sidebar `ProfileSection`** (`V1Shell.tsx`). **Done**, matches the plan.
+  Same link added to the
   expanded bottom-of-sidebar panel (the `{open && (...)}` block), above the existing
   "Sign out" button.
 
-- [ ] **T10 (S) — `V1Nav.tsx`.** Replace the existing single settings entry:
+- [x] **T10 (S) — `V1Nav.tsx`.** **Done**, matches the plan exactly, including moving
+  `AUTH_REQUIRED_HREFS`'s entry from `/settings/sessions` to `/settings/general`, and
+  `t.navSettings`/`t.settingsLink` were correctly added to both `en`/`tr`'s `v1-shell`
+  namespace. Replace the existing single settings entry:
   ```diff
   - {
   -   href: "/settings/sessions",
@@ -540,15 +564,210 @@ patterns (checked against the actual codebase, not generic boilerplate).
   in its place (line 30) — the auth-required check keys off the exact href in the nav
   list.
 
+## Verification pass (2026-07-06) — commit `f2130b9`
+
+Berkay implemented the whole plan (41 files, T1-T10 all present). Verified against the
+live code rather than trusting the file list — read every new resolver/service/route
+and the 4 tab components, then ran both test suites and both lint/typecheck passes.
+**No regressions, no security holes, no lint/tsc errors** — `pnpm test` stayed at
+220/220 backend, 77/77 frontend throughout. This section documents 5 real, contained
+issues found on top of that, each with an exact fix. **Code has not been changed** —
+this is a fix guide, not a changelog of applied fixes.
+
+Confirmed correct first, for the record: the one new mutation-calling BFF route
+(`api/profile/update/route.ts`) correctly calls `csrfEchoHeaders()` — the exact thing
+enhancements1's session-revoke regression got wrong; `ProfileService.updateProfile`
+correctly calls `tokenStore.rewriteFieldsForUser` with matching field names, so name/
+avatar/locale/timezone changes should genuinely propagate to the header/sidebar without
+re-login; D5 (Privacy) was correctly kept minimal, not overreached into schema work
+without sign-off; the `TIER_PRICES` duplication between `checkout-content.tsx` and the
+new Billing tab was properly cleaned up into one shared `lib/tier.ts` export. (Not yet
+confirmed: an actual live click-through in a browser — everything above is a static/
+test-level check, which this environment can do without a running dev server + Docker
+stack; that's still worth doing before calling this phase closed.)
+
+### Issue 1 — Save button doesn't actually block a taken username
+
+`settings/account/views/FreePageView.tsx:102`:
+```tsx
+const canSave = !saving && availability !== "checking";
+```
+Never checks `availability === "taken"` — a user who sees the red "Already taken"
+warning can still click Save, which then round-trips to a preventable server-side
+`EX_PROFILE_USERNAME_TAKEN` rejection instead of being blocked client-side (this task's
+own verify step in the Tasks section above asked for exactly this: "Save disabled while
+taken").
+
+**Fix:** change the condition to also exclude the taken state:
+```tsx
+const canSave = !saving && availability !== "checking" && availability !== "taken";
+```
+
+### Issue 2 — Specific backend errors get swallowed by a generic toast
+
+Every save handler in the new tabs (`settings/account/views/FreePageView.tsx:92-93`,
+`settings/general/views/FreePageView.tsx:59-60`) does:
+```tsx
+} catch {
+  toast({ title: "Failed to save", variant: "destructive" });
+}
+```
+This discards the actual error — `apiFetchJson` (per `lib/api-client.ts`) attaches a
+structured `exception: {exc, msg, key}` object to the thrown `Error` whenever the BFF
+route returns one (exactly what `api/profile/update/route.ts` sends back via
+`graphqlErrorBody` on a backend rejection, e.g. `"Username is already taken"`). Ignoring
+it means a genuine race — someone else grabs the username between the debounce check
+and the Save click — surfaces as an unhelpful generic message instead of the real one.
+
+**Fix:** catch the typed error and prefer its message, same pattern
+`features/auth/hooks/useAuth.tsx`'s `login`/`register` already use for surfacing
+`exception`:
+```tsx
+} catch (err) {
+  const exception = (err as Error & { exception?: { msg?: string } }).exception;
+  toast({ title: exception?.msg ?? "Failed to save", variant: "destructive" });
+}
+```
+
+### Issue 3 — Bio can never be cleared once set
+
+`settings/account/views/FreePageView.tsx:83-88`:
+```tsx
+body: JSON.stringify({
+  name: name || undefined,
+  username: username || undefined,
+  bio: bio || undefined,
+  avatarUrl: avatarUrl || undefined,
+}),
+```
+`bio || undefined` turns an intentionally-emptied bio field into `undefined` — and the
+backend's partial-update semantics (`profile.service.ts`: `if (input.bio !== undefined)
+data.bio = input.bio;`) treat `undefined` as "don't touch this field." A user who clears
+their bio to remove it can never actually persist that — the save silently no-ops on
+that field and the old bio stays in the database.
+
+**Fix:** only the *username* field has a real reason to omit-when-empty (an empty
+username shouldn't attempt to overwrite a real one with `""` given the `@MinLength(3)`
+validator would reject it anyway) — `name`/`bio`/`avatarUrl` should send their actual
+current value, including empty string, so clearing them is possible:
+```tsx
+body: JSON.stringify({
+  name,
+  username: username || undefined,
+  bio,
+  avatarUrl: avatarUrl || undefined,
+}),
+```
+(`UpdateProfileInput.name` has `@MinLength(1)`, so also either relax that to allow an
+empty name, or keep `name || undefined` if clearing the display name specifically isn't
+meant to be supported — worth a quick product call, not just a mechanical fix.)
+
+### Issue 4 — A few hardcoded, untranslated strings
+
+None of these are pulled from the `settings` i18n namespace despite it already
+existing, so they won't be translated in the `tr` locale:
+- `components/settings/SettingsNav.tsx:29-31` — the `<p>Settings</p>` section heading.
+  (This one traces back to a rough edge in this plan's own T3 code sketch — the sketch
+  used a throwaway `{t.navGeneral && "Settings"}` placeholder instead of a real key;
+  the implementation just kept the hardcoded fallback rather than adding one.)
+- `settings/account/views/FreePageView.tsx:179` — `"Saving..."` button label.
+- `settings/account/views/FreePageView.tsx:93`, `settings/general/views/FreePageView.tsx:60`
+  — the `"Failed to save"` fallback (also see Issue 2 — fixing that changes this line
+  anyway).
+- `settings/account/views/FreePageView.tsx:73` — `"Upload failed"`.
+- `settings/billing/views/FreePageView.tsx:74` — `"Loading..."` history-loading state.
+
+**Fix:** add the missing keys to both
+`messages/{en,tr}/settings/messages.json` (e.g. `settingsSectionLabel`, `saving`,
+`saveFailed`, `uploadFailed`, `loading`) and swap each hardcoded string for `t.<key>`,
+then `pnpm generate-i18n-types`.
+
+### Issue 5 — Zero test coverage added
+
+This plan's own T1 verify step asked for `ProfileService` unit tests (partial update
+only touches provided fields; username conflict throws the structured exception, not a
+raw `P2002`; `isUsernameAvailable` returns `true` for the caller's own current
+username). None exist — `find src/profile -type f` shows only the resolver/service/
+module/DTO, no `.spec.ts`. No frontend component tests were added for any of the 4 new
+tabs either. Backend/frontend test counts are unchanged (220/77) from before this
+implementation, confirming nothing was added anywhere.
+
+**Fix — `nest-js-boilerplate/src/profile/profile.service.spec.ts`**, mirroring the
+existing `billing.service.spec.ts`'s mock-Prisma shape:
+```ts
+describe('ProfileService', () => {
+  let service: ProfileService;
+  let mockPrisma: { user: { findUnique: jest.Mock; update: jest.Mock } };
+  let mockTokenStore: { rewriteFieldsForUser: jest.Mock };
+
+  beforeEach(() => {
+    mockPrisma = { user: { findUnique: jest.fn(), update: jest.fn() } };
+    mockTokenStore = { rewriteFieldsForUser: jest.fn() };
+    service = new ProfileService(mockPrisma as never, mockTokenStore as never);
+  });
+
+  describe('updateProfile', () => {
+    it('only touches provided fields', async () => {
+      mockPrisma.user.update.mockResolvedValue({ id: 'u1', username: 'alice' });
+      await service.updateProfile('u1', { name: 'Alice' });
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        data: { name: 'Alice' },
+      });
+    });
+
+    it('throws a structured exception when the username is taken by someone else', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'other-user', username: 'bob' });
+      await expect(
+        service.updateProfile('u1', { username: 'bob' }),
+      ).rejects.toMatchObject({ response: { exc: 'EX_PROFILE_USERNAME_TAKEN' } });
+    });
+
+    it('allows resubmitting the caller\'s own current username', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', username: 'alice' });
+      mockPrisma.user.update.mockResolvedValue({ id: 'u1', username: 'alice' });
+      await expect(
+        service.updateProfile('u1', { username: 'alice' }),
+      ).resolves.toBeDefined();
+    });
+  });
+
+  describe('isUsernameAvailable', () => {
+    it('returns true for the caller\'s own current username', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', username: 'alice' });
+      await expect(service.isUsernameAvailable('alice', 'u1')).resolves.toBe(true);
+    });
+
+    it('returns false when another user already has it', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'other', username: 'alice' });
+      await expect(service.isUsernameAvailable('alice', 'u1')).resolves.toBe(false);
+    });
+  });
+});
+```
+Frontend: at minimum one render test per new tab confirming the loading/unauthenticated
+guard states, matching how `pricing/page.spec.tsx` already tests this project's other
+pages — lower priority than the backend spec above, since the backend is where the real
+validation/security logic lives.
+
 ## Verify loop (phase gate)
 
-- [ ] Every new mutation is reachable only for the caller's own account — no `userId`
-  argument a client could forge to edit someone else's profile.
-- [ ] Every new BFF route that calls a mutation echoes a CSRF token (D7) — grep for
-  `csrfEchoHeaders` in each new route file before considering this phase done, exactly
-  the check that was missing last round.
+- [x] Every new mutation is reachable only for the caller's own account — no `userId`
+  argument a client could forge to edit someone else's profile. Confirmed:
+  `updateProfile`/`revokeSession`-style mutations all derive the user from
+  `@CurrentUser()`, never from a client-supplied argument.
+- [x] Every new BFF route that calls a mutation echoes a CSRF token (D7) — confirmed
+  `api/profile/update/route.ts` calls `csrfEchoHeaders()`; it's the only new route that
+  calls a mutation (`api/profile/route.ts` and `api/profile/username-available/route.ts`
+  only call queries, which don't need it).
 - [ ] Changing name/username/avatar is reflected live in the header and sidebar without
-  a re-login (proves the Redis-snapshot rewrite in T1 actually works, not just the DB
-  write).
-- [ ] `pnpm test`/`pnpm lint`/`tsc --noEmit` green in both packages.
-- [ ] Live click-through of all 5 settings tabs in both `en`/`tr`.
+  a re-login — code-level check passed (Redis rewrite uses matching field names), but
+  **not yet confirmed with an actual live click-through** in a browser.
+- [x] `pnpm test`/`pnpm lint`/`tsc --noEmit` green in both packages — confirmed, no
+  regressions from this implementation.
+- [ ] Live click-through of all 5 settings tabs in both `en`/`tr` — not done this pass
+  (no running dev server / Docker stack in this environment); still needed before
+  closing this phase, especially given issues 1-4 above are exactly the kind of thing
+  only a live click-through reliably surfaces.
+- [ ] The 5 issues above (Save-button gating, swallowed errors, uncleaerable bio,
+  hardcoded strings, missing tests) are fixed.
