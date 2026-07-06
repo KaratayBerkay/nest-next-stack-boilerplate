@@ -22,12 +22,6 @@ export default function MarketingLayout({
             >
               Pricing
             </Link>
-            <Link
-              href="/about"
-              className="text-muted hover:text-fg text-sm transition-colors"
-            >
-              About
-            </Link>
           </nav>
         </div>
         <ThemeToggle />

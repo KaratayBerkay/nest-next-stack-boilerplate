@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import {
   mockCardFormSchema,
-  formatCardNumber,
   getLast4,
 } from "@/lib/validation/billing";
 import { apiFetchJson } from "@/lib/api-client";
@@ -23,7 +22,6 @@ const TEST_CARDS = [
 
 export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
   const t = useMessages("checkout");
-  const [cardNumber, setCardNumber] = useState("");
   const [expMonth, setExpMonth] = useState("");
   const [expYear, setExpYear] = useState("");
   const [cvc, setCvc] = useState("");
@@ -42,14 +40,45 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
     nameRequired: t.nameRequired,
   };
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [blocks, setBlocks] = useState(["", "", "", ""]);
+
+  const getFullCardNumber = useCallback(() => blocks.join(""), [blocks]);
+
+  const handleBlockChange = useCallback((index: number, value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 4);
+    setBlocks((prev) => {
+      const next = [...prev];
+      next[index] = digits;
+      return next;
+    });
+    if (digits.length === 4 && index < 3 && containerRef.current) {
+      const inputs = containerRef.current.querySelectorAll<HTMLInputElement>("input");
+      inputs[index + 1]?.focus();
+    }
+  }, []);
+
+  const handleBlockKeyDown = useCallback((index: number, e: React.KeyboardEvent) => {
+    if (e.key === "Backspace" && !blocks[index] && index > 0 && containerRef.current) {
+      const inputs = containerRef.current.querySelectorAll<HTMLInputElement>("input");
+      inputs[index - 1]?.focus();
+    }
+  }, [blocks]);
+
+  const fillTestCard = useCallback((last4: string) => {
+    const full = last4.padStart(16, "0");
+    setBlocks([full.slice(0, 4), full.slice(4, 8), full.slice(8, 12), full.slice(12, 16)]);
+  }, []);
+
   const schema = mockCardFormSchema(errors);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFieldErrors({});
 
+    const fullCardNumber = getFullCardNumber();
     const result = schema.safeParse({
-      cardNumber: cardNumber.replace(/\s/g, ""),
+      cardNumber: fullCardNumber,
       expMonth,
       expYear,
       cvc,
@@ -76,7 +105,7 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tier,
-          last4: getLast4(cardNumber),
+          last4: getLast4(getFullCardNumber()),
           expMonth: parseInt(expMonth, 10),
           expYear: parseInt(expYear, 10),
         }),
@@ -106,7 +135,7 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
               key={tc.last4}
               type="button"
               className="rounded border border-border px-2 py-1 text-xs hover:bg-accent"
-              onClick={() => setCardNumber(tc.last4.padStart(16, "0"))}
+              onClick={() => fillTestCard(tc.last4)}
               data-testid={`test-card-${tc.last4}`}
             >
               {tc.label}
@@ -119,17 +148,24 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
         <label htmlFor="cardNumber" className="block text-sm font-medium">
           {t.cardNumber}
         </label>
-        <input
-          id="cardNumber"
-          data-testid="card-number"
-          type="text"
-          inputMode="numeric"
-          autoComplete="cc-number"
-          placeholder="4242 4242 4242 4242"
-          value={cardNumber}
-          onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-          className="mt-1 block w-full rounded border border-border bg-bg px-3 py-2 text-sm"
-        />
+        <div ref={containerRef} className="mt-1 flex gap-2">
+          {blocks.map((block, i) => (
+            <input
+              key={i}
+              id={i === 0 ? "cardNumber" : undefined}
+              data-testid={i === 0 ? "card-number" : undefined}
+              type="text"
+              inputMode="numeric"
+              autoComplete={i === 0 ? "cc-number" : "off"}
+              placeholder="****"
+              maxLength={4}
+              value={block}
+              onChange={(e) => handleBlockChange(i, e.target.value)}
+              onKeyDown={(e) => handleBlockKeyDown(i, e)}
+              className="block w-full rounded border border-border bg-bg px-3 py-2 text-sm text-center font-mono"
+            />
+          ))}
+        </div>
         {fieldErrors.cardNumber && (
           <p className="mt-0.5 text-xs text-red-600">{fieldErrors.cardNumber}</p>
         )}

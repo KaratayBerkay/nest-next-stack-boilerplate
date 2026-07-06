@@ -17,7 +17,7 @@ export function notificationTarget(
     payload.kind === "friend-request" ||
     payload.kind === "friend-accepted"
   ) {
-    return `/v1/${lang}/find-friends`;
+    return `/v1/${lang}/find-friends/requests`;
   }
   if (payload.postId) {
     return `/v1/${lang}/feed#post-${payload.postId}`;

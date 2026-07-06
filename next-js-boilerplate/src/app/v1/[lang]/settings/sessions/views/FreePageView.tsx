@@ -5,6 +5,7 @@ import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
 import { apiFetch, apiFetchJson } from "@/lib/api-client";
 import { useCallback, useEffect, useState } from "react";
+import { IconDeviceDesktop, IconDeviceMobile, IconWorld } from "@tabler/icons-react";
 
 interface SessionInfo {
   sessionId: string;
@@ -86,46 +87,75 @@ export function FreePageView() {
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {sessions.map((session) => (
-            <div
-              key={session.sessionId}
-              className="border-border bg-bg flex items-start justify-between gap-4 rounded-lg border p-4"
-            >
-              <div className="flex flex-col gap-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium truncate">
-                    {session.userAgent
-                      ? session.userAgent.split(" ").slice(0, 3).join(" ") ||
-                        session.userAgent.slice(0, 40)
-                      : "Unknown device"}
-                  </span>
-                  {session.sessionId === currentSessionId && (
-                    <span className="bg-brand/10 text-brand rounded-full px-2 py-0.5 text-[10px] font-medium">
-                      Current
-                    </span>
-                  )}
+          {sessions.map((session) => {
+            const isCurrent = session.sessionId === currentSessionId;
+            const isMobile = session.userAgent?.toLowerCase().includes("mobile") || session.userAgent?.toLowerCase().includes("android") || session.userAgent?.toLowerCase().includes("iphone");
+
+            return (
+              <div
+                key={session.sessionId}
+                className={`border-border bg-bg flex items-start justify-between gap-4 rounded-lg border p-4 ${
+                  isCurrent ? "border-brand/30 ring-brand/10 ring-1" : ""
+                }`}
+              >
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${
+                    isCurrent ? "bg-brand/10 text-brand" : "bg-surface text-muted"
+                  }`}>
+                    {isMobile ? <IconDeviceMobile size={20} stroke={1.5} /> : <IconDeviceDesktop size={20} stroke={1.5} />}
+                  </div>
+                  <div className="flex flex-col gap-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium truncate">
+                        {session.userAgent
+                          ? session.userAgent.split(" ").slice(0, 3).join(" ") ||
+                            session.userAgent.slice(0, 40)
+                          : "Unknown device"}
+                      </span>
+                      {isCurrent && (
+                        <span className="bg-brand/10 text-brand rounded-full px-2 py-0.5 text-[10px] font-medium whitespace-nowrap">
+                          Current
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
+                      {session.ip && (
+                        <span className="flex items-center gap-1">
+                          <IconWorld size={12} stroke={1.5} />
+                          IP: {session.ip}
+                        </span>
+                      )}
+                      {session.issuedAt && (
+                        <span>
+                          Started: {new Date(session.issuedAt).toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                    {session.deviceId && (
+                      <details className="group mt-1">
+                        <summary className="text-[10px] text-muted/60 hover:text-muted cursor-pointer list-none">
+                          More Device Info
+                        </summary>
+                        <div className="mt-1 flex flex-col gap-0.5 text-[10px] text-muted/50">
+                          <span>Device ID: {session.deviceId}</span>
+                          <span className="break-all">User-Agent: {session.userAgent ?? "N/A"}</span>
+                        </div>
+                      </details>
+                    )}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
-                  {session.ip && <span>IP: {session.ip}</span>}
-                  {session.issuedAt && (
-                    <span>
-                      Started:{" "}
-                      {new Date(session.issuedAt).toLocaleString()}
-                    </span>
-                  )}
-                </div>
+                {!isCurrent && (
+                  <button
+                    onClick={() => revokeSession(session.sessionId)}
+                    className="text-xs text-red-600 hover:text-red-700 whitespace-nowrap transition-colors shrink-0"
+                    aria-label={`Revoke session from ${session.ip ?? "unknown device"}`}
+                  >
+                    Revoke
+                  </button>
+                )}
               </div>
-              {session.sessionId !== currentSessionId && (
-                <button
-                  onClick={() => revokeSession(session.sessionId)}
-                  className="text-xs text-red-600 hover:text-red-700 whitespace-nowrap transition-colors"
-                  aria-label={`Revoke session from ${session.ip ?? "unknown device"}`}
-                >
-                  Revoke
-                </button>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

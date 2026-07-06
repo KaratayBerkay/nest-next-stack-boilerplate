@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useReducer, useRef, useCallback, Suspense } from "react";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
+import { usePathname } from "next/navigation";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingAuth } from "@/components/LoadingAuth";
@@ -110,6 +111,7 @@ function PaginationBar({
 function FindFriendsContent({ user: _user }: { user: { id: string } }) {
   const t = useMessages("find-friends");
   const queryClient = useQueryClient();
+  const pathname = usePathname();
   const { data: friends = [] } = useSuspenseQuery<User[]>({
     queryKey: ["friends", "list"],
     queryFn: () => apiFetch("/api/messages/friends").then((r) => r.json()),
@@ -225,7 +227,7 @@ function FindFriendsContent({ user: _user }: { user: { id: string } }) {
     <div className="flex flex-col gap-6">
       <h2 className="text-sm font-semibold text-brand">{t.title}</h2>
 
-      <Tabs defaultValue="add" className="flex flex-col">
+      <Tabs defaultValue={pathname?.endsWith('/requests') ? 'pending' : 'add'} className="flex flex-col">
         <TabsList className="w-full">
           <TabsTrigger value="add" className="flex-1">
             {t.addFriends}

@@ -39,7 +39,7 @@ function TierCard({
           </li>
         ))}
       </ul>
-      <div className="mt-6">
+      <div className="mt-auto pt-6">
         {current ? (
           <span className="block rounded-lg bg-surface px-4 py-2 text-center text-sm font-medium text-muted">
             {currentLabel}

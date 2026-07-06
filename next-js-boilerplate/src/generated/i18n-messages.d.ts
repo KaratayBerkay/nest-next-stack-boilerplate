@@ -289,6 +289,13 @@ export type I18nMessages = {
       "billingHistoryEmpty": string;
       "privacyHeading": string;
       "privacySessionsNote": string;
+      "privacyHideProfilePicture": string;
+      "privacyHideProfilePictureDesc": string;
+      "privacyNickname": string;
+      "privacyNicknameDesc": string;
+      "privacyNicknamePlaceholder": string;
+      "privacyTwoFactor": string;
+      "privacyTwoFactorDesc": string;
       "settingsLink": string;
       "navSettings": string;
       "settingsSectionLabel": string;

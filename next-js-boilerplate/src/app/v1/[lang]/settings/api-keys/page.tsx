@@ -138,18 +138,29 @@ export default function ApiKeysPage() {
             disabled={creating}
             autoFocus
           />
-          <select
-            className="surface-hover rounded border px-3 py-2 text-sm"
-            value={newExpiry}
-            onChange={(e) => setNewExpiry(e.target.value)}
-            disabled={creating}
-          >
-            <option value="">No expiry</option>
-            <option value="7">7 days</option>
-            <option value="30">30 days</option>
-            <option value="90">90 days</option>
-            <option value="365">1 year</option>
-          </select>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { value: "", label: "No expiry" },
+              { value: "7", label: "7 days" },
+              { value: "30", label: "30 days" },
+              { value: "90", label: "90 days" },
+              { value: "365", label: "1 year" },
+            ].map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                disabled={creating}
+                onClick={() => setNewExpiry(opt.value)}
+                className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                  newExpiry === opt.value
+                    ? "border-brand bg-brand/10 text-brand"
+                    : "border-border text-muted hover:border-fg hover:text-fg"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
           <div className="flex gap-2">
             <Button onClick={handleCreate} disabled={creating || !newName.trim()} size="sm">
               {creating ? "Creating..." : "Create"}
