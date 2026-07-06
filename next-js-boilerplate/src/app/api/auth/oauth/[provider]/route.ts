@@ -21,15 +21,20 @@ export async function GET(
   const callbackUrl = `${env.NEXT_PUBLIC_APP_URL}/api/auth/oauth/${providerName}/callback`;
   const nestOAuthUrl = `${env.APP_URL}/auth/oauth/${providerName}?state=${encodeURIComponent(state)}&redirect_uri=${encodeURIComponent(callbackUrl)}`;
 
-  // APP_URL is a server-side (often container-internal) origin — the browser
-  // must never be redirected there. Resolve the provider auth URL here and
-  // send the browser straight to the provider.
   let providerUrl: string | null = null;
   try {
     const res = await fetch(nestOAuthUrl, { redirect: "manual" });
     providerUrl = res.headers.get("location");
-  } catch {
-    /* backend unreachable */
+    if (!providerUrl) {
+      const body = await res.text().catch(() => "(could not read body)");
+      console.error(
+        `[oauth] ${providerName}: backend returned ${res.status} with no Location header. Body: ${body.slice(0, 500)}`,
+      );
+    }
+  } catch (err) {
+    console.error(
+      `[oauth] ${providerName}: fetch to ${nestOAuthUrl} failed: ${err instanceof Error ? err.message : err}`,
+    );
   }
   if (!providerUrl) {
     return NextResponse.redirect(
