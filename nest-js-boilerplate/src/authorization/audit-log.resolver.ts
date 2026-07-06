@@ -18,7 +18,7 @@ export class AuditLogResolver {
   @Query(() => [AuditLog], { name: 'auditLogs' })
   async auditLogs(
     @Args('where', { nullable: true }) where?: AuditLogWhereInput,
-    @Args('orderBy', { nullable: true })
+    @Args('orderBy', { nullable: true, type: () => [AuditLogOrderByWithRelationInput] })
     orderBy?: AuditLogOrderByWithRelationInput[],
     @Args('take', { nullable: true }) take?: number,
     @Args('skip', { nullable: true }) skip?: number,
