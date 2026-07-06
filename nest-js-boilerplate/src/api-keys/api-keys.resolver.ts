@@ -1,4 +1,4 @@
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
@@ -21,7 +21,8 @@ export class ApiKeysResolver {
   async createApiKey(
     @CurrentUser() user: JwtUser,
     @Args('name') name: string,
-    @Args('expiresInDays', { nullable: true }) expiresInDays?: number,
+    @Args('expiresInDays', { nullable: true, type: () => Int })
+    expiresInDays?: number,
   ) {
     return this.apiKeys.generate(user.userId, name, {
       role: user.role,
