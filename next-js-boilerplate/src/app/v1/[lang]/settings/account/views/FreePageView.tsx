@@ -69,10 +69,11 @@ export function FreePageView() {
         body: form,
       });
       setAvatarUrl(uploadRes.urls.full);
-    } catch {
-      toast({ title: "Upload failed", variant: "destructive" });
+    } catch (err) {
+      const exception = (err as Error & { exception?: { msg?: string } }).exception;
+      toast({ title: exception?.msg ?? t.uploadFailed, variant: "destructive" });
     }
-  }, [toast]);
+  }, [toast, t.uploadFailed]);
 
   const saveProfile = useCallback(async () => {
     setSaving(true);
@@ -81,25 +82,26 @@ export function FreePageView() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: name || undefined,
+          name,
           username: username || undefined,
-          bio: bio || undefined,
+          bio,
           avatarUrl: avatarUrl || undefined,
         }),
       });
       toast({ title: t.saveSuccess, variant: "success" });
       await refreshUser();
-    } catch {
-      toast({ title: "Failed to save", variant: "destructive" });
+    } catch (err) {
+      const exception = (err as Error & { exception?: { msg?: string } }).exception;
+      toast({ title: exception?.msg ?? t.saveFailed, variant: "destructive" });
     } finally {
       setSaving(false);
     }
-  }, [name, username, bio, avatarUrl, toast, t.saveSuccess, refreshUser]);
+  }, [name, username, bio, avatarUrl, toast, t.saveSuccess, t.saveFailed, refreshUser]);
 
   if (loading) return <LoadingAuth />;
   if (!user) return <UnauthenticatedMessage message="Sign in to manage your account" />;
 
-  const canSave = !saving && availability !== "checking";
+  const canSave = !saving && availability !== "checking" && availability !== "taken";
 
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-6">
@@ -176,7 +178,7 @@ export function FreePageView() {
         disabled={!canSave}
         className="bg-brand self-start rounded-lg px-6 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
       >
-        {saving ? "Saving..." : t.save}
+        {saving ? t.saving : t.save}
       </button>
     </div>
   );

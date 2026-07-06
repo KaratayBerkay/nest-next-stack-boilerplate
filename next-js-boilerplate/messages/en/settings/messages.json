@@ -26,5 +26,10 @@
   "privacyHeading": "Privacy",
   "privacySessionsNote": "Manage where you're signed in from the Sessions tab.",
   "settingsLink": "Settings",
-  "navSettings": "Settings"
+  "navSettings": "Settings",
+  "settingsSectionLabel": "Settings",
+  "saving": "Saving…",
+  "saveFailed": "Failed to save",
+  "uploadFailed": "Upload failed",
+  "loading": "Loading…"
 }

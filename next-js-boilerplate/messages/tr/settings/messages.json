@@ -26,5 +26,10 @@
   "privacyHeading": "Gizlilik",
   "privacySessionsNote": "Oturumlar sekmesinden giriş yaptığınız yerleri yönetin.",
   "settingsLink": "Ayarlar",
-  "navSettings": "Ayarlar"
+  "navSettings": "Ayarlar",
+  "settingsSectionLabel": "Ayarlar",
+  "saving": "Kaydediliyor…",
+  "saveFailed": "Kaydedilemedi",
+  "uploadFailed": "Yükleme başarısız",
+  "loading": "Yükleniyor…"
 }

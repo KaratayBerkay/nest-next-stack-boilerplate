@@ -71,7 +71,7 @@ export function FreePageView() {
       <div className="flex flex-col gap-3">
         <h3 className="text-sm font-medium">{t.billingHistory}</h3>
         {loadingHistory ? (
-          <p className="text-sm text-muted">Loading...</p>
+          <p className="text-sm text-muted">{t.loading}</p>
         ) : transactions.length === 0 ? (
           <p className="text-sm text-muted">{t.billingHistoryEmpty}</p>
         ) : (

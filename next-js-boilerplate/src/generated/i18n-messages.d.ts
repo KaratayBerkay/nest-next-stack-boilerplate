@@ -290,6 +290,11 @@ export type I18nMessages = {
       "privacySessionsNote": string;
       "settingsLink": string;
       "navSettings": string;
+      "settingsSectionLabel": string;
+      "saving": string;
+      "saveFailed": string;
+      "uploadFailed": string;
+      "loading": string;
     }
 
   "shared/locale-switcher": {

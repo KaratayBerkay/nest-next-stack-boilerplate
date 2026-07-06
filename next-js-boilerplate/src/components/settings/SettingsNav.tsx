@@ -27,7 +27,7 @@ export function SettingsNav() {
   return (
     <nav className="flex w-48 shrink-0 flex-col gap-0.5" aria-label="Settings">
       <p className="text-muted px-3 pb-2 text-xs font-semibold tracking-wider uppercase">
-        Settings
+        {t.settingsSectionLabel}
       </p>
       {TABS.map(({ href, labelKey, Icon }) => {
         const full = `${base}/${href}`;
