@@ -27,7 +27,7 @@ const AUTH_REQUIRED_HREFS = [
   "/messages",
   FIND_FRIENDS_PATH,
   "/premium",
-  "/settings/sessions",
+  "/settings/general",
   "/admin",
 ];
 
@@ -49,8 +49,8 @@ export function V1Nav({ onNav }: { onNav?: () => void }) {
     { href: FIND_FRIENDS_PATH, label: t.navFindFriends, Icon: IconUserPlus },
     { href: "/premium", label: "Premium", Icon: IconShield, auth: true },
     {
-      href: "/settings/sessions",
-      label: "Sessions",
+      href: "/settings/general",
+      label: t.navSettings,
       Icon: IconSettings,
       auth: true,
     },

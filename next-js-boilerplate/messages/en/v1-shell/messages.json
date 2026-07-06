@@ -17,5 +17,7 @@
   "account": "Account",
   "close": "Close",
   "authLoading": "Auth...",
-  "toggleSidebar": "Toggle sidebar"
+  "toggleSidebar": "Toggle sidebar",
+  "settingsLink": "Settings",
+  "navSettings": "Settings"
 }

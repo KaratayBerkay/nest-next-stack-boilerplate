@@ -21,6 +21,7 @@ import { LangSwitcher } from "@/components/layout/LangSwitcher";
 import {
   IconMail,
   IconLogout,
+  IconSettings,
   IconChevronRight,
   IconChevronDown,
   IconMenu2,
@@ -166,6 +167,7 @@ function MessageDropdown({
 function ProfileDropdown({
   user,
   logout,
+  lang,
   align = "right",
   children,
 }: {
@@ -176,6 +178,7 @@ function ProfileDropdown({
     tier?: string;
   };
   logout: () => void;
+  lang: string;
   align?: "left" | "right";
   children?: React.ReactNode;
 }) {
@@ -200,12 +203,20 @@ function ProfileDropdown({
           </div>
         )}
       </div>
+      <Link
+        href={`/v1/${lang}/settings/general`}
+        onClick={() => setOpen(false)}
+        className="hover:bg-surface-hover flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm"
+      >
+        <IconSettings size={16} stroke={1.5} />
+        {t.settingsLink}
+      </Link>
       <button
         onClick={() => {
           setOpen(false);
           logout();
         }}
-        className="hover:bg-surface-hover flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-red-600"
+        className="hover:bg-surface-hover mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-red-600"
       >
         <IconLogout size={16} stroke={1.5} />
         {t.signOut}
@@ -272,6 +283,7 @@ function ProfileDropdown({
 function ProfileSection({
   user,
   logout,
+  lang,
 }: {
   user: {
     name?: string;
@@ -280,6 +292,7 @@ function ProfileSection({
     tier?: string;
   };
   logout: () => void;
+  lang: string;
 }) {
   const t = useMessages("v1-shell");
   const [open, setOpen] = useState(false);
@@ -320,12 +333,20 @@ function ProfileSection({
 
       {open && (
         <div className="border-border bg-surface mt-1 rounded-lg border p-2">
+          <Link
+            href={`/v1/${lang}/settings/general`}
+            onClick={() => setOpen(false)}
+            className="hover:bg-surface-hover flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm"
+          >
+            <IconSettings size={16} stroke={1.5} />
+            {t.settingsLink}
+          </Link>
           <button
             onClick={() => {
               setOpen(false);
               logout();
             }}
-            className="hover:bg-surface-hover flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-red-600 transition-colors"
+            className="hover:bg-surface-hover mt-1 flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-red-600 transition-colors"
           >
             <IconLogout size={16} stroke={1.5} />
             {t.signOut}
@@ -466,7 +487,7 @@ export function V1Shell({ children }: { children: React.ReactNode }) {
               <>
                 <MessageDropdown conversations={conversations} lang={lang} />
                 <NotificationDropdown lang={lang} />
-                <ProfileDropdown user={user} logout={logout} align="right">
+                <ProfileDropdown user={user} logout={logout} lang={lang} align="right">
                   <Avatar
                     src={user.avatarUrl}
                     fallback={initials(user.name || user.email)}
@@ -524,7 +545,7 @@ export function V1Shell({ children }: { children: React.ReactNode }) {
 
           {user ? (
             <div className="border-border border-t px-2 py-2">
-              <ProfileSection user={user} logout={logout} />
+              <ProfileSection user={user} logout={logout} lang={lang} />
             </div>
           ) : (
             <div className="border-border border-t px-4 py-3">

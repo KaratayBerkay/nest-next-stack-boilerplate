@@ -12,11 +12,7 @@ import { PRICING_PATH } from "@/constants/routes";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useState } from "react";
 
-const TIER_PRICES: Record<string, string> = {
-  BASIC: "$9.99/mo",
-  MEDIUM: "$19.99/mo",
-  PREMIUM: "$49.99/mo",
-};
+import { TIER_PRICES } from "@/lib/tier";
 
 const TIER_FEATURES: Record<string, string[]> = {
   BASIC: ["Access to basic features", "Standard support"],

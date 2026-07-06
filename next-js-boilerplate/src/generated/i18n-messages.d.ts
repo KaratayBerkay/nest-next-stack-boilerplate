@@ -261,6 +261,37 @@ export type I18nMessages = {
       "pricePremium": string;
     }
 
+  "settings": {
+      "navGeneral": string;
+      "navAccount": string;
+      "navPrivacy": string;
+      "navBilling": string;
+      "navSessions": string;
+      "accountHeading": string;
+      "name": string;
+      "username": string;
+      "usernameChecking": string;
+      "usernameAvailable": string;
+      "usernameTaken": string;
+      "bio": string;
+      "avatarChange": string;
+      "save": string;
+      "saveSuccess": string;
+      "generalHeading": string;
+      "language": string;
+      "timezone": string;
+      "theme": string;
+      "billingHeading": string;
+      "currentPlan": string;
+      "upgradePlan": string;
+      "billingHistory": string;
+      "billingHistoryEmpty": string;
+      "privacyHeading": string;
+      "privacySessionsNote": string;
+      "settingsLink": string;
+      "navSettings": string;
+    }
+
   "shared/locale-switcher": {
       "switchLabel": string;
     }
@@ -301,5 +332,7 @@ export type I18nMessages = {
       "close": string;
       "authLoading": string;
       "toggleSidebar": string;
+      "settingsLink": string;
+      "navSettings": string;
     }
 };

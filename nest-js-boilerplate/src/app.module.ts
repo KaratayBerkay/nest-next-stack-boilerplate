@@ -59,6 +59,7 @@ import { ScalarsModule } from './scalars/scalars.module';
 import { SerializationModule } from './serialization/serialization.module';
 import { StaticAssetsModule } from './serve-static/serve-static.module';
 import { SharingModelsModule } from './sharing-models/sharing-models.module';
+import { ProfileModule } from './profile/profile.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { SseModule } from './sse/sse.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
@@ -175,6 +176,7 @@ import { WsModule } from './ws/ws.module';
     ThrottleModule,
     HealthModule,
     RedisModule,
+    ProfileModule,
     SessionsModule,
     ExceptionFiltersModule,
     InterceptorsModule,

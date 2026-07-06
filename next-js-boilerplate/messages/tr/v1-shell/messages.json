@@ -17,5 +17,7 @@
   "account": "Hesap",
   "close": "Kapat",
   "authLoading": "Kimlik doğrulama...",
-  "toggleSidebar": "Kenar çubuğunu aç/kapat"
+  "toggleSidebar": "Kenar çubuğunu aç/kapat",
+  "settingsLink": "Ayarlar",
+  "navSettings": "Ayarlar"
 }
