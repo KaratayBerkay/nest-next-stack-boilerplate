@@ -4,7 +4,6 @@ import {
   deviceTokenCookieOptions,
   clearDeviceCookieOptions,
 } from "@/lib/cookie";
-import { cookies } from "next/headers";
 
 export async function POST() {
   const backend = await backendFetch<{ deviceToken: string }>("/devices/handshake", {
@@ -12,12 +11,13 @@ export async function POST() {
   });
 
   if (!backend.ok) {
-    // On failure, clear the stale device cookie and return an empty token.
-    (await cookies()).set(clearDeviceCookieOptions());
-    return NextResponse.json({ deviceToken: null }, { status: 200 });
+    const response = NextResponse.json({ deviceToken: null }, { status: 200 });
+    response.cookies.set(clearDeviceCookieOptions());
+    return response;
   }
 
   const { deviceToken } = backend.data;
-  (await cookies()).set(deviceTokenCookieOptions(deviceToken));
-  return NextResponse.json({ deviceToken });
+  const response = NextResponse.json({ deviceToken });
+  response.cookies.set(deviceTokenCookieOptions(deviceToken));
+  return response;
 }
