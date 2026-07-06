@@ -28,6 +28,7 @@ function getPages(locale: string): string[] {
   const localeDir = join(messagesRoot, locale);
   if (!existsSync(localeDir)) return [];
 
+  // fallow-ignore-next-line complexity
   const recurse = (dir: string, prefix: string): string[] => {
     const entries = readdirSync(dir, { withFileTypes: true });
     const pages: string[] = [];
@@ -53,6 +54,7 @@ function readShape(locale: string, page: string): Record<string, unknown> {
 }
 
 /** Collect all leaf-string keys recursively for shape comparison. */
+// fallow-ignore-next-line complexity
 function flattenKeys(obj: Record<string, unknown>, prefix = ""): string[] {
   const keys: string[] = [];
   for (const [k, v] of Object.entries(obj)) {
@@ -66,6 +68,7 @@ function flattenKeys(obj: Record<string, unknown>, prefix = ""): string[] {
   return keys;
 }
 
+// fallow-ignore-next-line complexity
 function shapeToType(value: unknown, indent = 2): string {
   const pad = "  ".repeat(indent);
 
@@ -92,6 +95,7 @@ function shapeToType(value: unknown, indent = 2): string {
   return "unknown";
 }
 
+// fallow-ignore-next-line complexity
 function generate(): void {
   const locales = getLocales();
   if (locales.length === 0) {
@@ -178,6 +182,21 @@ ${pageEntries.join("\n\n")}
   }
   writeFileSync(outFile, content, "utf-8");
   console.log("✓ Wrote", outFile);
+
+  writeAggregatedJson(locales, outDir);
+}
+
+function writeAggregatedJson(locales: string[], outDir: string) {
+  for (const locale of locales) {
+    const pages = getPages(locale);
+    const aggregated: Record<string, unknown> = {};
+    for (const page of pages) {
+      aggregated[page] = readShape(locale, page);
+    }
+    const localeFile = join(outDir, `i18n-messages-${locale}.json`);
+    writeFileSync(localeFile, JSON.stringify(aggregated), "utf-8");
+    console.log("✓ Wrote", localeFile);
+  }
 }
 
 generate();

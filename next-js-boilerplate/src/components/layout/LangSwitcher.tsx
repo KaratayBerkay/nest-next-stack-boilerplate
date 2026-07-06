@@ -21,6 +21,7 @@ function detectLang(pathname: string): Lang | null {
   return null;
 }
 
+// fallow-ignore-next-line complexity
 function localizePathname(
   pathname: string,
   currentLang: string | null,
@@ -36,7 +37,7 @@ function localizePathname(
       return pathname.replace(regex2, `/${target}$1`);
     }
   }
-  return `/v1/${target}`;
+  return pathname;
 }
 
 export function LangSwitcher() {

@@ -13,10 +13,10 @@ import {
   ToastProvider,
   ToastViewport,
 } from "@/components/ui/Toast";
-import { MessagesProvider } from "@/lib/i18n/MessagesProvider";
 import { getAllMessages } from "@/lib/i18n/get-all-messages";
 import { DEFAULT_LANG } from "@/constants/i18n";
 import type { I18nMessages } from "@/generated/i18n-messages";
+import { ClientLocaleProvider } from "@/components/ClientLocaleProvider";
 import { ThemeInitScript } from "./ThemeInitScript";
 import "./globals.css";
 
@@ -75,9 +75,9 @@ export default function RootLayout({
           <AuthProvider>
             <QueryProvider>
               <ToastProvider>
-                <MessagesProvider messages={messages}>
+                <ClientLocaleProvider defaultMessages={messages}>
                   {children}
-                </MessagesProvider>
+                </ClientLocaleProvider>
                 <ToastViewport />
               </ToastProvider>
             </QueryProvider>
