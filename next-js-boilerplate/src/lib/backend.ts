@@ -14,7 +14,7 @@ function backendBaseUrl(): string {
   return serverEnv().APP_URL;
 }
 
-async function forwardedForHeader(): Promise<Record<string, string>> {
+export async function forwardedForHeader(): Promise<Record<string, string>> {
   // Forward the client IP from the incoming request so the backend sees the real
   // browser IP (not the Next.js server's). Used by DeviceIpMiddleware for IP binding.
   const reqHeaders = await nextHeaders();

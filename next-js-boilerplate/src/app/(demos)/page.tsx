@@ -44,7 +44,7 @@ export default function DemosIndex() {
         <Link className="text-brand underline" href="/ws">
           WebSocket
         </Link>
-        <Link className="text-brand underline" href="/find-friends">
+        <Link className="text-brand underline" href="/v1/en/find-friends">
           Find Friends
         </Link>
         <Link className="text-brand underline" href="/ssr-cookies">
