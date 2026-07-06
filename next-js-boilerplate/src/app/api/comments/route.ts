@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { graphqlErrorStatus, graphqlFetch } from "@/lib/backend";
+import { csrfEchoHeaders, graphqlErrorStatus, graphqlFetch } from "@/lib/backend";
 import { getAccessToken } from "@/store/ssr-cookies";
 import { CREATE_COMMENT_MUTATION } from "@/lib/graphql/queries";
 
@@ -20,6 +20,11 @@ export async function POST(request: Request) {
     );
   }
 
+  const extraHeaders = await csrfEchoHeaders();
+  if (!extraHeaders) {
+    return NextResponse.json({ error: "Invalid or missing CSRF token" }, { status: 403 });
+  }
+
   const { data, errors } = await graphqlFetch<{
     createComment: {
       id: string;
@@ -37,6 +42,7 @@ export async function POST(request: Request) {
       },
     },
     token,
+    extraHeaders,
   );
 
   if (errors) {

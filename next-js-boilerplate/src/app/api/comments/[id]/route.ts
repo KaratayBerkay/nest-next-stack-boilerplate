@@ -1,10 +1,18 @@
 import { NextResponse } from "next/server";
-import { graphqlErrorBody, graphqlFetch } from "@/lib/backend";
+import { csrfEchoHeaders, graphqlErrorBody, graphqlFetch } from "@/lib/backend";
 import { getAccessToken } from "@/store/ssr-cookies";
 import {
   UPDATE_COMMENT_MUTATION,
   DELETE_COMMENT_MUTATION,
 } from "@/lib/graphql/queries";
+
+async function withCsrf(token: string | undefined) {
+  const extraHeaders = await csrfEchoHeaders();
+  if (!extraHeaders) {
+    return { error: NextResponse.json({ statusCode: 403, exc: "EX_FORBIDDEN", msg: "Invalid or missing CSRF token", key: "errors.csrf" }, { status: 403 }) };
+  }
+  return { extraHeaders };
+}
 
 export async function PUT(
   request: Request,
@@ -12,6 +20,9 @@ export async function PUT(
 ) {
   const { id } = await params;
   const token = await getAccessToken();
+
+  const csrf = await withCsrf(token);
+  if ("error" in csrf) return csrf.error;
 
   let body: { body?: string };
   try {
@@ -26,7 +37,7 @@ export async function PUT(
 
   const { data, errors } = await graphqlFetch<{
     updateComment: { id: string; body: string };
-  }>(UPDATE_COMMENT_MUTATION, { id, data: { body: body.body } }, token);
+  }>(UPDATE_COMMENT_MUTATION, { id, data: { body: body.body } }, token, csrf.extraHeaders);
 
   if (errors) {
     const body = graphqlErrorBody(errors, "GraphQL error");
@@ -43,9 +54,12 @@ export async function DELETE(
   const { id } = await params;
   const token = await getAccessToken();
 
+  const csrf = await withCsrf(token);
+  if ("error" in csrf) return csrf.error;
+
   const { data, errors } = await graphqlFetch<{
     deleteComment: { id: string };
-  }>(DELETE_COMMENT_MUTATION, { id }, token);
+  }>(DELETE_COMMENT_MUTATION, { id }, token, csrf.extraHeaders);
 
   if (errors) {
     const body = graphqlErrorBody(errors, "GraphQL error");

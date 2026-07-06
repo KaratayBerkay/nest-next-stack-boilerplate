@@ -20,7 +20,7 @@ export function notificationTarget(
     return `/v1/${lang}/find-friends/requests`;
   }
   if (payload.postId) {
-    return `/v1/${lang}/feed#post-${payload.postId}`;
+    return `/v1/${lang}/posts/${payload.postId}`;
   }
   return null;
 }
