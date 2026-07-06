@@ -13,6 +13,7 @@ export type I18nMessages = {
           "submitting": string;
           "noAccount": string;
           "registerLink": string;
+          "forgotPassword": string;
         };
         "register": {
           "title": string;

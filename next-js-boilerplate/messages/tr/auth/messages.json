@@ -8,7 +8,8 @@
       "submit": "Giriş Yap",
       "submitting": "Giriş yapılıyor...",
       "noAccount": "Hesabınız yok mu?",
-      "registerLink": "Kayıt Ol"
+      "registerLink": "Kayıt Ol",
+      "forgotPassword": "Şifremi unuttum"
     },
     "register": {
       "title": "Kayıt Ol",

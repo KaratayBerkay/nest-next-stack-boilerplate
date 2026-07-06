@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { randomUUID } from "node:crypto";
 import { ACCESS_TOKEN_COOKIE, DEVICE_TOKEN_COOKIE, RBAC_TOKEN_COOKIE } from "@/lib/cookie";
 import { defaultLocale, isLocale, resolveLocale } from "@/lib/i18n/config";
 import { defaultVersion, isVersion, isVersionLike } from "@/lib/version/config";
@@ -54,7 +53,7 @@ export function proxy(request: NextRequest) {
   const requestId =
     request.headers.get(REQUEST_ID_HEADER) ??
     request.headers.get(CORRELATION_ID_HEADER) ??
-    randomUUID();
+    crypto.randomUUID();
 
   // Legacy redirect: /old-about → /about
   if (pathname === "/old-about") {
@@ -144,7 +143,7 @@ export function proxy(request: NextRequest) {
   // that opt into dynamic rendering (they read the nonce via `headers()`), keeping the
   // rest of the app statically optimized. See docs/frontend/progress for the logged gotcha.
   if (pathname.startsWith("/security")) {
-    const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+    const nonce = btoa(crypto.randomUUID());
     const csp = buildCsp(nonce);
 
     const requestHeaders = new Headers(request.headers);

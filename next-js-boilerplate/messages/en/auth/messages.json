@@ -8,7 +8,8 @@
       "submit": "Sign In",
       "submitting": "Signing in...",
       "noAccount": "No account?",
-      "registerLink": "Register"
+      "registerLink": "Register",
+      "forgotPassword": "Forgot password?"
     },
     "register": {
       "title": "Register",

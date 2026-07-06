@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
@@ -23,7 +22,6 @@ interface Transaction {
 
 export function FreePageView() {
   const { user, loading } = useAuth();
-  const params = useParams<{ lang: string }>();
   const t = useMessages("settings");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
@@ -53,14 +51,14 @@ export function FreePageView() {
         </div>
         {tier === "FREE" ? (
           <Link
-            href={`/v1/${params?.lang ?? ""}${PRICING_PATH}`}
+            href={PRICING_PATH}
             className="bg-brand rounded-lg px-4 py-2 text-sm font-medium text-white hover:opacity-90"
           >
             {t.upgradePlan}
           </Link>
         ) : (
           <Link
-            href={`/v1/${params?.lang ?? ""}${PRICING_PATH}`}
+            href={PRICING_PATH}
             className="border-border rounded-lg border px-4 py-2 text-sm font-medium hover:bg-surface-hover"
           >
             {t.upgradePlan}

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { REGISTER_PATH } from "@/constants/routes";
+import { REGISTER_PATH, RESET_PASSWORD_PATH } from "@/constants/routes";
+import { LANG_COOKIE, LANGS, DEFAULT_LANG } from "@/constants/i18n";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
@@ -55,7 +56,14 @@ export function LoginForm() {
     setSubmitting(true);
     try {
       await login(email, password);
-      router.push("/");
+      const match = document.cookie.match(
+        new RegExp(`${LANG_COOKIE}=([^;]+)`),
+      );
+      const lang =
+        match && (LANGS as readonly string[]).includes(match[1])
+          ? match[1]
+          : DEFAULT_LANG;
+      router.push(`/v1/${lang}/feed`);
     } catch (err) {
       const exc = (err as { exc?: string; field?: string; msg?: string }).exc;
       const field = (err as { field?: string }).field;
@@ -111,6 +119,13 @@ export function LoginForm() {
             <p className="mt-0.5 text-xs text-red-600">{fieldErrors.password}</p>
           )}
         </div>
+
+        <Link
+          href={RESET_PASSWORD_PATH}
+          className="text-muted -mt-1 text-xs underline hover:text-brand"
+        >
+          {t.form.login.forgotPassword}
+        </Link>
 
         {fieldErrors.form && (
           <p className="text-sm text-red-600" data-testid="login-error">
