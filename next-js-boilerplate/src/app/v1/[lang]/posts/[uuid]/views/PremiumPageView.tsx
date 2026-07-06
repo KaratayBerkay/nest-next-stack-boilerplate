@@ -76,7 +76,7 @@ function PostDetailContent() {
   });
 
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-4 px-4 py-6">
+    <div className="flex flex-col gap-4 py-6">
       <button
         onClick={() => router.back()}
         className="flex items-center gap-1 text-xs text-muted transition-colors hover:text-fg"
@@ -270,7 +270,7 @@ function PostDetailContent() {
 
 function PostDetailSkeleton() {
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-4 px-4 py-6">
+    <div className="flex flex-col gap-4 py-6">
       <div className="h-4 w-12 animate-pulse rounded bg-surface-hover" />
       <div className="surface flex flex-col gap-3 rounded-xl border border-border p-4">
         <div className="flex items-center gap-3">
