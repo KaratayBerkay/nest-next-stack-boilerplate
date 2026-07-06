@@ -1,6 +1,6 @@
 export default function PostDetailLoading() {
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-4 px-4 py-6">
+    <div className="mx-auto flex max-w-4xl flex-col gap-4 px-4 py-6">
       <div className="bg-surface-hover h-4 w-12 animate-pulse rounded" />
       <div className="border-border surface flex flex-col gap-3 rounded-xl border p-4">
         <div className="flex items-center gap-3">
