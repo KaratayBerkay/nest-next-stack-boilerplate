@@ -1,7 +1,12 @@
+# Build context is the repo root (see docker-compose.yml's nextjs service) —
+# not next-js-boilerplate/ — specifically so this Dockerfile can reach
+# prod/nextjs.env, which lives outside next-js-boilerplate/. See the root
+# .dockerignore for what's actually sent to the daemon.
+
 # ---- deps ----
 FROM node:22-alpine AS deps
 WORKDIR /app
-COPY pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY next-js-boilerplate/pnpm-lock.yaml next-js-boilerplate/pnpm-workspace.yaml ./
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     corepack enable && \
     pnpm config set store-dir /pnpm/store && \
@@ -12,20 +17,20 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 RUN corepack enable
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+COPY next-js-boilerplate/ .
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# NEXT_PUBLIC_* is inlined into the client bundle at build time — pass the
-# public origins as build args (see docker-compose.yml build.args). Defaults
-# keep local no-args builds working.
-ARG NEXT_PUBLIC_APP_URL=http://localhost:3100
-ARG NEXT_PUBLIC_REALTIME_WS_URL=ws://localhost:3000/ws
-ARG NEXT_PUBLIC_MINIO_PUBLIC_URL=http://localhost:9000
-ARG NEXT_PUBLIC_VAPID_PUBLIC_KEY=""
-ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
-    NEXT_PUBLIC_REALTIME_WS_URL=$NEXT_PUBLIC_REALTIME_WS_URL \
-    NEXT_PUBLIC_MINIO_PUBLIC_URL=$NEXT_PUBLIC_MINIO_PUBLIC_URL \
-    NEXT_PUBLIC_VAPID_PUBLIC_KEY=$NEXT_PUBLIC_VAPID_PUBLIC_KEY
+# NEXT_PUBLIC_* is inlined into the client bundle at build time. Rather than
+# pass these as --build-arg (which needs Compose to interpolate ${VAR} before
+# any container exists, and previously required a special --env-file flag on
+# every build), copy the real file in directly and let Next.js's own env
+# loading (@next/env) read it natively during `next build` — NODE_ENV is
+# "production" during a build, so .env.production is exactly the file Next
+# looks for. No ARG/ENV plumbing, no Compose-level requirement.
+COPY prod/nextjs.env ./.env.production
+RUN grep -qE '^NEXT_PUBLIC_APP_URL=.+' .env.production || { echo "ERROR: NEXT_PUBLIC_APP_URL is not set in prod/nextjs.env (run: make setup, then fill in real values)" >&2; exit 1; }
+RUN grep -qE '^NEXT_PUBLIC_REALTIME_WS_URL=.+' .env.production || { echo "ERROR: NEXT_PUBLIC_REALTIME_WS_URL is not set in prod/nextjs.env (run: make setup, then fill in real values)" >&2; exit 1; }
+RUN grep -qE '^NEXT_PUBLIC_MINIO_PUBLIC_URL=.+' .env.production || { echo "ERROR: NEXT_PUBLIC_MINIO_PUBLIC_URL is not set in prod/nextjs.env (run: make setup, then fill in real values)" >&2; exit 1; }
 
 # `pnpm build`'s `prebuild` hook also runs `fallow-check` (a git-diff-based lint
 # gate), which needs a real git history/remote to detect its comparison base —

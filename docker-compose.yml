@@ -1,10 +1,20 @@
 # Root docker-compose for the boilers monorepo — everything runs with one command.
 #
-# Usage:
-#   Start everything:  docker compose up -d
-#   + Kafka:           docker compose --profile kafka up -d
-#   + Brokers:         docker compose --profile brokers up -d
-#   + Mongo:           docker compose --profile mongo up -d
+# Usage: docker compose up -d --build   (or use the Makefile: make up / make
+# build / make rebuild / make down / make logs / make ps — same commands,
+# plus PROFILE= and SERVICE= shortcuts)
+#
+# Every service reads its own env file via `env_file:` below: infra services
+# from prod/services/<name>.env, the backend/frontend apps from root
+# prod/app.env / prod/nextjs.env. See the matching *.env.example next to each
+# for the full reference of what a service needs; the real files are
+# gitignored — run `make setup` to create them on first run.
+#
+# No --env-file flag is ever needed, for any command, including builds: the
+# frontend's NEXT_PUBLIC_* values used to require Compose to interpolate
+# ${VAR} into --build-arg, which meant every build needed an explicit
+# --env-file. Now the Dockerfile COPYs prod/nextjs.env directly and Next.js's
+# own env loading reads it natively — see prod/docker/frontend/Dockerfile.
 name: boilers
 
 services:
@@ -14,16 +24,15 @@ services:
   postgres:
     image: postgres:17-alpine
     restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-nest}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nest}
-      POSTGRES_DB: ${POSTGRES_DB:-nest}
+    env_file: prod/services/postgres.env
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nest} -d ${POSTGRES_DB:-nest}"]
+      # $$ (escaped from Compose interpolation) so POSTGRES_USER/DB are read
+      # from the container's own env at runtime, populated by env_file above.
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -32,8 +41,9 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
+    env_file: prod/services/redis.env
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "6379:6379"
     volumes:
       - redisdata:/data
     healthcheck:
@@ -49,10 +59,9 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-    environment:
-      - REDIS_HOSTS=local:redis:6379
+    env_file: prod/services/redis-commander.env
     ports:
-      - "${REDIS_COMMANDER_PORT:-8081}:8081"
+      - "8081:8081"
 
   # ──────────────────────────────────────────────────────
   # Message / task brokers (profile: brokers)
@@ -61,12 +70,10 @@ services:
     image: rabbitmq:4-management
     profiles: ["brokers", "all"]
     restart: unless-stopped
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-nest}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-nest}
+    env_file: prod/services/rabbitmq.env
     ports:
-      - "${RABBITMQ_PORT:-5672}:5672"
-      - "${RABBITMQ_MGMT_PORT:-15672}:15672"
+      - "5672:5672"
+      - "15672:15672"
     volumes:
       - rabbitmqdata:/var/lib/rabbitmq
     healthcheck:
@@ -80,16 +87,18 @@ services:
     profiles: ["brokers", "all"]
     restart: unless-stopped
     command: ["--jetstream", "--http_port", "8222"]
+    env_file: prod/services/nats.env
     ports:
-      - "${NATS_PORT:-4222}:4222"
-      - "${NATS_MONITOR_PORT:-8222}:8222"
+      - "4222:4222"
+      - "8222:8222"
 
   mqtt:
     image: eclipse-mosquitto:2
     profiles: ["brokers", "all"]
     restart: unless-stopped
+    env_file: prod/services/mqtt.env
     ports:
-      - "${MQTT_PORT:-1883}:1883"
+      - "1883:1883"
     volumes:
       - mqttdata:/mosquitto/data
 
@@ -102,22 +111,8 @@ services:
     restart: unless-stopped
     # In-network clients (the app) use kafka:9092; host clients use localhost:29092.
     ports:
-      - "${KAFKA_PORT:-29092}:29092"
-    environment:
-      CLUSTER_ID: 5L6g3nShT-eMCtK--X86sw
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:29092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:${KAFKA_PORT:-29092}
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      - "29092:29092"
+    env_file: prod/services/kafka.env
     volumes:
       - kafkadata:/var/lib/kafka/data
 
@@ -128,11 +123,9 @@ services:
     image: mongo:7
     profiles: ["mongo", "all"]
     restart: unless-stopped
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-nest}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-nest}
+    env_file: prod/services/mongo.env
     ports:
-      - "${MONGO_PORT:-27017}:27017"
+      - "27017:27017"
     volumes:
       - mongodata:/data/db
 
@@ -150,8 +143,10 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-nest}:${POSTGRES_PASSWORD:-nest}@postgres:5432/${POSTGRES_DB:-nest}?schema=public
+    # Reuses prod/app.env for DATABASE_URL — this one-shot container also sees the
+    # rest of app's secrets, which is an acceptable tradeoff to avoid a
+    # separate near-duplicate file for a single shared variable.
+    env_file: prod/app.env
 
   app:
     build:
@@ -169,62 +164,9 @@ services:
       fluent-bit:
         condition: service_healthy
     ports:
-      - "${APP_PORT:-3000}:3000"
-      - "${GRPC_PORT:-5050}:5050"
-    environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-nest}:${POSTGRES_PASSWORD:-nest}@postgres:5432/${POSTGRES_DB:-nest}?schema=public
-      # The app reads REDIS_HOST/REDIS_PORT (not REDIS_URL) — defaults are localhost,
-      # which is wrong inside a container.
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_URL=redis://redis:6379
-      # Required at boot (getOrThrow). Dev-grade defaults; override via .env in real deploys.
-      - JWT_SECRET=${JWT_SECRET:-dev-only-jwt-secret-change-me}
-      - TOKEN_DERIVATION_SECRET=${TOKEN_DERIVATION_SECRET:-dev-only-jwt-secret-change-me}
-      # 64 hex chars — AES-256-GCM key for MFA TOTP secrets.
-      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-0000000000000000000000000000000000000000000000000000000000000000}
-      - LOG_LEVEL=${LOG_LEVEL:-info}
-      - ELASTICSEARCH_URL=http://elasticsearch:9200
-      - KAFKA_BROKER=${KAFKA_BROKER:-kafka:9092}
-      - FRONTEND_EVENTS_CONSUMER_ENABLED=${FRONTEND_EVENTS_CONSUMER_ENABLED:-false}
-      - APP_URL=${BACKEND_PUBLIC_URL:-http://localhost:3000}
-      # Browser-reachable frontend origin — OAuth redirects the user back here.
-      - FRONTEND_URL=${FRONTEND_PUBLIC_URL:-http://localhost:${FRONTEND_PORT:-3100}}
-      - NEXT_PUBLIC_APP_URL=${FRONTEND_PUBLIC_URL:-http://localhost:${FRONTEND_PORT:-3100}}
-      - COOKIE_DOMAIN=${COOKIE_DOMAIN:-}
-      - COOKIE_SAMESITE=${COOKIE_SAMESITE:-lax}
-      - COOKIE_SECRET=${COOKIE_SECRET:-change-me-dev-only-cookie-secret}
-      - CSRF_SECRET=${CSRF_SECRET:-change-me-dev-only-csrf-secret}
-      - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY:-}
-      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY:-}
-      - VAPID_SUBJECT=${VAPID_SUBJECT:-mailto:admin@example.com}
-      # OAuth social login — a provider is enabled only when its client id is set.
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
-      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
-      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
-      - LINKEDIN_CLIENT_ID=${LINKEDIN_CLIENT_ID:-}
-      - LINKEDIN_CLIENT_SECRET=${LINKEDIN_CLIENT_SECRET:-}
-      - TWITCH_CLIENT_ID=${TWITCH_CLIENT_ID:-}
-      - TWITCH_CLIENT_SECRET=${TWITCH_CLIENT_SECRET:-}
-      - X_CLIENT_ID=${X_CLIENT_ID:-}
-      - X_CLIENT_SECRET=${X_CLIENT_SECRET:-}
-      - HUGGING_FACE_CLIENT_ID=${HUGGING_FACE_CLIENT_ID:-}
-      - HUGGING_FACE_CLIENT_SECRET=${HUGGING_FACE_CLIENT_SECRET:-}
-      # Email (Resend fallback + SMTP transport)
-      - RESEND_API_KEY=${RESEND_API_KEY:-}
-      - MAIL_FROM=${MAIL_FROM:-onboarding@resend.dev}
-      - MAIL_REPLY_TO=${MAIL_REPLY_TO:-}
-      - SMTP_HOST=${SMTP_HOST:-mailpit}
-      - SMTP_USER=${SMTP_USER:-}
-      - SMTP_PASS=${SMTP_PASS:-}
-      - MINIO_ENDPOINT=minio
-      - MINIO_PORT=9000
-      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
-      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin}
-      - MINIO_BUCKET=${MINIO_BUCKET:-uploads}
+      - "3000:3000"
+      - "5050:5050"
+    env_file: prod/app.env
     volumes:
       - ./logs/back:/app/logs
     command: ["sh", "-c", "mkdir -p /app/logs && node dist/src/main.js 2>&1 | tee /app/logs/app.log"]
@@ -243,15 +185,14 @@ services:
 
   nextjs:
     build:
-      context: ./next-js-boilerplate
-      dockerfile: ../prod/docker/frontend/Dockerfile
-      # NEXT_PUBLIC_* values are inlined into the client bundle at `next build`
-      # time — runtime env alone is NOT enough for browser-side code.
-      args:
-        - NEXT_PUBLIC_APP_URL=${FRONTEND_PUBLIC_URL:-http://localhost:${FRONTEND_PORT:-3100}}
-        - NEXT_PUBLIC_REALTIME_WS_URL=${REALTIME_WS_URL:-ws://localhost:${APP_PORT:-3000}/ws}
-        - NEXT_PUBLIC_MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL:-http://localhost:${MINIO_PORT:-9000}}
-        - NEXT_PUBLIC_VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY:-}
+      # Context is the repo root, not next-js-boilerplate/ — the Dockerfile
+      # needs to reach prod/nextjs.env, which lives outside that directory,
+      # and copies it in directly rather than taking NEXT_PUBLIC_* as
+      # --build-arg. That means this build has NO ${VAR} interpolation
+      # dependency at all: no --env-file flag, ever, for any docker compose
+      # command, build included. See the Dockerfile and root .dockerignore.
+      context: .
+      dockerfile: prod/docker/frontend/Dockerfile
     restart: unless-stopped
     init: true
     depends_on:
@@ -260,18 +201,8 @@ services:
       fluent-bit:
         condition: service_healthy
     ports:
-      - "${FRONTEND_PORT:-3100}:3100"
-    environment:
-      - NODE_ENV=production
-      - LOG_LEVEL=info
-      - PORT=3100
-      - HOSTNAME=0.0.0.0
-      - APP_URL=http://app:3000
-      - NEXT_PUBLIC_MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL:-http://localhost:${MINIO_PORT:-9000}}
-      - NEXT_PUBLIC_VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY:-}
-      - COOKIE_DOMAIN=${COOKIE_DOMAIN:-}
-      - KAFKA_BROKER=${KAFKA_BROKER:-kafka:9092}
-      - MINIO_URL=http://minio:9000
+      - "3100:3100"
+    env_file: prod/nextjs.env
     volumes:
       - ./logs/front:/app/logs
     command: ["sh", "-c", "mkdir -p /app/logs && node server.js 2>&1 | tee /app/logs/app.log"]
@@ -291,15 +222,11 @@ services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
     restart: unless-stopped
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
-      - bootstrap.memory_lock=true
+    env_file: prod/services/elasticsearch.env
     ulimits:
       memlock: { soft: -1, hard: -1 }
     ports:
-      - "${ELASTICSEARCH_PORT:-9200}:9200"
+      - "9200:9200"
     volumes:
       - esdata:/usr/share/elasticsearch/data
     healthcheck:
@@ -314,10 +241,9 @@ services:
     depends_on:
       elasticsearch:
         condition: service_healthy
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    env_file: prod/services/kibana.env
     ports:
-      - "${KIBANA_PORT:-5601}:5601"
+      - "5601:5601"
 
   fluent-bit:
     # -debug variant: the plain 3.1 tag is fully distroless (no /bin/sh, no pidof, nothing
@@ -328,13 +254,14 @@ services:
     depends_on:
       elasticsearch:
         condition: service_healthy
+    env_file: prod/services/fluent-bit.env
     healthcheck:
       test: ["CMD-SHELL", "pidof fluent-bit || exit 1"]
       interval: 5s
       retries: 6
       start_period: 10s
     ports:
-      - "${FLUENT_FORWARD_PORT:-24224}:24224"
+      - "24224:24224"
     volumes:
       - ./nest-js-boilerplate/docker/fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
       - ./nest-js-boilerplate/docker/fluent-bit/parsers.conf:/fluent-bit/etc/parsers.conf:ro
@@ -348,9 +275,10 @@ services:
     image: axllent/mailpit:latest
     profiles: ["mail", "all"]
     restart: unless-stopped
+    env_file: prod/services/mailpit.env
     ports:
-      - "${MAILPIT_SMTP_PORT:-1025}:1025"
-      - "${MAILPIT_UI_PORT:-8025}:8025"
+      - "1025:1025"
+      - "8025:8025"
 
   # ──────────────────────────────────────────────────────
   # Object storage
@@ -359,12 +287,10 @@ services:
     image: minio/minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    env_file: prod/services/minio.env
     ports:
-      - "${MINIO_PORT:-9000}:9000"
-      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+      - "9000:9000"
+      - "9001:9001"
     volumes:
       - minio_data:/data
     healthcheck:
@@ -376,15 +302,16 @@ services:
 
   minio-setup:
     image: minio/mc
-    restart: no
+    restart: "no"
     depends_on:
       minio:
         condition: service_healthy
+    env_file: prod/services/minio.env
     entrypoint: >
       /bin/sh -c "
-      mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin} &&
-      mc mb --ignore-existing local/${MINIO_BUCKET:-uploads} &&
-      mc anonymous set download local/${MINIO_BUCKET:-uploads} &&
+      mc alias set local http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD &&
+      mc mb --ignore-existing local/$$MINIO_BUCKET &&
+      mc anonymous set download local/$$MINIO_BUCKET &&
       echo 'MinIO bucket ready'"
 
 volumes:

@@ -6,14 +6,46 @@ RabbitMQ, NATS, MQTT, Mongo, MinIO, ELK) — all orchestrated via Docker Compose
 
 ## Quickstart
 
+Every service reads its own env file via Compose's `env_file:` — none are
+committed (they hold credentials), so create them from their `.example`
+counterparts first:
+
 ```bash
-docker compose --profile all up -d --build
+make setup
+docker compose up -d --build --profile all
 ```
+
+No `--env-file` flag is ever needed, for any command — including builds.
+`Makefile` is just an optional convenience wrapper (`make setup` for the copy
+step above, `PROFILE=`/`SERVICE=` shortcuts); everything also works with
+plain `docker compose`.
 
 First-run notes:
 - `nest-js-boilerplate/logs/` must be writable by uid 1000 (`chmod 777 nest-js-boilerplate/logs` or `chown 1000`).
 - The `migrate` and `minio-setup` services run once and exit — check their logs if the app won't start.
-- Default credentials are **dev-only** (user `nest` / password `nest`; MinIO `minioadmin`/`minioadmin`). Override via `.env` for production.
+- Default credentials are **dev-only** (user `nest` / password `nest`; MinIO `minioadmin`/`minioadmin`). Override in the copied `.env` files for production — see `requirements.md` for what each variable does and how to generate the secrets.
+
+## How the frontend build gets its public env vars
+
+`NEXT_PUBLIC_*` values are inlined into the browser bundle at `next build`
+time. Rather than pass these as `--build-arg` (which would need Compose to
+interpolate `${VAR}` before any container exists, requiring an explicit
+`--env-file` on every build), the `nextjs` service's build `context:` is the
+repo root, and `prod/docker/frontend/Dockerfile` `COPY`s `prod/nextjs.env` in
+directly — Next.js's own env loading (`@next/env`) reads it natively during
+the build, the same way it would read a local `.env.production`. Zero
+Compose-level interpolation, so zero `--env-file` requirement anywhere.
+
+If `prod/nextjs.env` doesn't exist or is missing a required value, the build
+fails fast with a clear error from the Dockerfile itself (a `COPY` failure or
+a custom `grep` check) — not a Compose error, and not a buried Zod validation
+error deep inside `next build`.
+
+`Makefile` targets (`make up` / `make build` / `make rebuild` / `make down` /
+`make logs` / `make ps`) are plain `docker compose` underneath, plus
+`PROFILE=all` (or `tools`/`brokers`/`kafka`/`mongo`/`mail`) and
+`SERVICE=<name>` shortcuts, e.g. `make rebuild SERVICE=nextjs`. Use them or
+call `docker compose` directly — both work identically now.
 
 ## Service / port table
 
@@ -59,12 +91,18 @@ First-run notes:
 
 ```
 ├── docker-compose.yml          # Root orchestration (all services)
+├── Makefile                    # Optional convenience wrapper (PROFILE=/SERVICE=, make setup)
+├── .dockerignore                     # Scopes the nextjs build's repo-root context
 ├── nest-js-boilerplate/        # NestJS backend
 ├── next-js-boilerplate/        # Next.js frontend
-├── prod/                       # Production Dockerfiles + env templates
+├── prod/
+│   ├── app.env(.example)              # Backend (NestJS) env — env_file: for `app`/`migrate`
+│   ├── nextjs.env(.example)           # Frontend (Next.js) env — env_file: (runtime) + COPY'd into the build
 │   ├── docker/
 │   │   ├── backend/Dockerfile.prod
-│   │   └── frontend/Dockerfile
-│   └── backend/.env.production.example
+│   │   └── frontend/Dockerfile               # Build context is the repo root — see its comments
+│   └── services/                     # One env file per infra service (postgres, redis, kafka, ...)
+│       ├── postgres.env(.example)    # gitignored real file + tracked example
+│       └── redis.env, kafka.env, ...  # no secrets — tracked directly
 └── docs/                       # Documentation
 ```

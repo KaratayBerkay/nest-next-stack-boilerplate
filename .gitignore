@@ -26,6 +26,17 @@ yarn-error.log*
 !.env.example
 !.env.*.example
 
+# per-service env files (secrets) — <name>.env is the real file,
+# <name>.env.example is the tracked reference. Infra services with no
+# secrets (prod/services/redis.env, kafka.env, etc.) are tracked directly and
+# NOT listed here — see prod/services/*.env.example for the full set.
+prod/services/postgres.env
+prod/services/rabbitmq.env
+prod/services/mongo.env
+prod/services/minio.env
+prod/app.env
+prod/nextjs.env
+
 # testing
 coverage/
 .nyc_output
