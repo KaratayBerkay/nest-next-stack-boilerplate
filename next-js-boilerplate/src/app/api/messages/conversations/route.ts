@@ -12,7 +12,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const url = `${BACKEND}/api/messages/conversations`;
+  const url = `${BACKEND}/api/conversations`;
   const res = await fetch(url, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
