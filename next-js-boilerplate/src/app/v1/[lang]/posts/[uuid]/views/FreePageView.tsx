@@ -10,6 +10,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 import { imageUrl } from "@/lib/image";
@@ -51,6 +52,7 @@ function PostDetailContent() {
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
+  const swipeRef = useYSwipeGesture<HTMLDivElement>();
 
   useEffect(() => {
     if (!uuid) return;
@@ -72,7 +74,7 @@ function PostDetailContent() {
   });
 
   return (
-    <div className="flex flex-col gap-4 py-6">
+    <div ref={swipeRef} className="flex flex-col gap-4 py-6">
       <button
         onClick={() => router.back()}
         className="flex items-center gap-1 text-xs text-muted transition-colors hover:text-fg"
@@ -225,8 +227,9 @@ function PostDetailContent() {
 }
 
 function PostDetailSkeleton() {
+  const skeletonSwipeRef = useYSwipeGesture<HTMLDivElement>();
   return (
-    <div className="flex flex-col gap-4 py-6">
+    <div ref={skeletonSwipeRef} className="flex flex-col gap-4 py-6">
       <div className="h-4 w-12 animate-pulse rounded bg-surface-hover" />
       <div className="surface flex flex-col gap-3 rounded-xl border border-border p-4">
         <div className="flex items-center gap-3">
