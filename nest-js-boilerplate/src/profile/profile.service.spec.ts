@@ -1,4 +1,3 @@
-import { ConflictException } from '@nestjs/common';
 import { ProfileService } from './profile.service';
 
 describe('ProfileService', () => {
@@ -23,14 +22,22 @@ describe('ProfileService', () => {
     });
 
     it('throws a structured exception when the username is taken by someone else', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'other-user', username: 'bob' });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'other-user',
+        username: 'bob',
+      });
       await expect(
         service.updateProfile('u1', { username: 'bob' }),
-      ).rejects.toMatchObject({ response: { exc: 'EX_PROFILE_USERNAME_TAKEN' } });
+      ).rejects.toMatchObject({
+        response: { exc: 'EX_PROFILE_USERNAME_TAKEN' },
+      });
     });
 
-    it('allows resubmitting the caller\'s own current username', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', username: 'alice' });
+    it("allows resubmitting the caller's own current username", async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        username: 'alice',
+      });
       mockPrisma.user.update.mockResolvedValue({ id: 'u1', username: 'alice' });
       await expect(
         service.updateProfile('u1', { username: 'alice' }),
@@ -40,7 +47,9 @@ describe('ProfileService', () => {
     it('syncs name to Redis via rewriteFieldsForUser', async () => {
       mockPrisma.user.update.mockResolvedValue({ id: 'u1', username: 'alice' });
       await service.updateProfile('u1', { name: 'Alice' });
-      expect(mockTokenStore.rewriteFieldsForUser).toHaveBeenCalledWith('u1', { name: 'Alice' });
+      expect(mockTokenStore.rewriteFieldsForUser).toHaveBeenCalledWith('u1', {
+        name: 'Alice',
+      });
     });
 
     it('does not call rewriteFieldsForUser when no snapshot fields change', async () => {
@@ -51,23 +60,37 @@ describe('ProfileService', () => {
   });
 
   describe('isUsernameAvailable', () => {
-    it('returns true for the caller\'s own current username', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', username: 'alice' });
-      await expect(service.isUsernameAvailable('alice', 'u1')).resolves.toBe(true);
+    it("returns true for the caller's own current username", async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        username: 'alice',
+      });
+      await expect(service.isUsernameAvailable('alice', 'u1')).resolves.toBe(
+        true,
+      );
     });
 
     it('returns false when another user already has it', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'other', username: 'alice' });
-      await expect(service.isUsernameAvailable('alice', 'u1')).resolves.toBe(false);
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'other',
+        username: 'alice',
+      });
+      await expect(service.isUsernameAvailable('alice', 'u1')).resolves.toBe(
+        false,
+      );
     });
 
     it('returns false for too-short usernames without querying the DB', async () => {
-      await expect(service.isUsernameAvailable('ab', 'u1')).resolves.toBe(false);
+      await expect(service.isUsernameAvailable('ab', 'u1')).resolves.toBe(
+        false,
+      );
       expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
     });
 
     it('returns false for usernames with invalid characters', async () => {
-      await expect(service.isUsernameAvailable('alice!', 'u1')).resolves.toBe(false);
+      await expect(service.isUsernameAvailable('alice!', 'u1')).resolves.toBe(
+        false,
+      );
       expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
     });
   });

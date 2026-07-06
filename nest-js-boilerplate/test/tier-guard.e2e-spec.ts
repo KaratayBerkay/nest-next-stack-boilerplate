@@ -1,22 +1,16 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
-import { App } from 'supertest/types';
+import supertest from 'supertest';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from './../src/prisma/prisma.service';
 import { TokenStoreService } from './../src/auth/token-store.service';
-import { TokenDerivationService } from './../src/auth/token-derivation.service';
 import { SubscriptionTier } from './../src/@generated/prisma/subscription-tier.enum';
-import type { JwtPayload } from './../src/auth/auth.types';
 import { gql } from './utils/auth';
 
 describe('@MinTier guard enforcement (e2e)', () => {
-  let app: INestApplication<App>;
+  let app: INestApplication;
   let prisma: PrismaService;
   let tokenStore: TokenStoreService;
-  let derivation: TokenDerivationService;
-  let jwt: JwtService;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -31,9 +25,6 @@ describe('@MinTier guard enforcement (e2e)', () => {
 
     prisma = app.get(PrismaService);
     tokenStore = app.get(TokenStoreService);
-    derivation = app.get(TokenDerivationService);
-    const secret = app.get(ConfigService).getOrThrow<string>('JWT_SECRET');
-    jwt = new JwtService({ secret });
   }, 30_000);
 
   afterAll(async () => {
@@ -139,11 +130,11 @@ describe('@MinTier guard enforcement (e2e)', () => {
     rbacToken: string,
     userToken: string,
   ): Promise<{ data?: T; errors?: { message: string }[] }> => {
-    const req = require('supertest')(app.getHttpServer())
+    const res = await supertest(app.getHttpServer())
       .post('/graphql')
       .send({ query })
-      .set(authHeaders(accessToken, rbacToken, userToken));
-    const res = await req.expect(200);
+      .set(authHeaders(accessToken, rbacToken, userToken))
+      .expect(200);
     return res.body as { data?: T; errors?: { message: string }[] };
   };
 

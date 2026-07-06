@@ -18,6 +18,7 @@ import {
   IconShare,
   IconSettings,
   IconShield,
+  IconEye,
 } from "@tabler/icons-react";
 
 const AUTH_REQUIRED_HREFS = [
@@ -66,6 +67,12 @@ export function V1Nav({ onNav }: { onNav?: () => void }) {
       href: "/admin",
       label: "Admin",
       Icon: IconShield,
+      auth: true,
+    });
+    links.push({
+      href: "/admin/audit-logs",
+      label: "Audit Log",
+      Icon: IconEye,
       auth: true,
     });
   }

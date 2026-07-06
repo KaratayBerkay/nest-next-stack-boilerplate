@@ -8,6 +8,7 @@ import {
   IconShieldLock,
   IconCreditCard,
   IconDevices,
+  IconKey,
 } from "@tabler/icons-react";
 
 const TABS = [
@@ -15,6 +16,7 @@ const TABS = [
   { href: "account", labelKey: "navAccount", Icon: IconUser },
   { href: "privacy", labelKey: "navPrivacy", Icon: IconShieldLock },
   { href: "billing", labelKey: "navBilling", Icon: IconCreditCard },
+  { href: "api-keys", labelKey: "navApiKeys", Icon: IconKey },
   { href: "sessions", labelKey: "navSessions", Icon: IconDevices },
 ] as const;
 

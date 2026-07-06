@@ -296,6 +296,28 @@ export type I18nMessages = {
       "saveFailed": string;
       "uploadFailed": string;
       "loading": string;
+      "navApiKeys": string;
+      "apiKeysHeading": string;
+      "apiKeysDescription": string;
+      "apiKeysEmpty": string;
+      "apiKeysCreate": string;
+      "apiKeysCreateHeading": string;
+      "apiKeysNameLabel": string;
+      "apiKeysNamePlaceholder": string;
+      "apiKeysExpiryLabel": string;
+      "apiKeysNoExpiry": string;
+      "apiKeysCreated": string;
+      "apiKeysCopied": string;
+      "apiKeysRevokeConfirm": string;
+      "apiKeysRevoked": string;
+      "apiKeysActive": string;
+      "apiKeysDisabled": string;
+      "apiKeysCreatedDate": string;
+      "apiKeysLastUsed": string;
+      "apiKeysExpires": string;
+      "apiKeysLoadFailed": string;
+      "apiKeysCreateFailed": string;
+      "apiKeysRevokeFailed": string;
     }
 
   "shared/locale-switcher": {

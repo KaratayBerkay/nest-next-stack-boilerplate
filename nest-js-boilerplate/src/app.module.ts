@@ -61,6 +61,7 @@ import { StaticAssetsModule } from './serve-static/serve-static.module';
 import { SharingModelsModule } from './sharing-models/sharing-models.module';
 import { ProfileModule } from './profile/profile.module';
 import { SessionsModule } from './sessions/sessions.module';
+import { ApiKeysModule } from './api-keys/api-keys.module';
 import { SseModule } from './sse/sse.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { TasksModule } from './tasks/tasks.module';
@@ -188,6 +189,7 @@ import { WsModule } from './ws/ws.module';
     RedisModule,
     ProfileModule,
     SessionsModule,
+    ApiKeysModule,
     ExceptionFiltersModule,
     InterceptorsModule,
     PipesModule,

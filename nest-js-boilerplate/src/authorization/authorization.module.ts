@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { RealtimeModule } from '../realtime/realtime.module';
 import { AdminResolver } from './admin.resolver';
+import { AuditLogResolver } from './audit-log.resolver';
 import { RolesGuard } from './roles.guard';
 import { TierGuard } from './tier.guard';
 
@@ -13,7 +14,7 @@ import { TierGuard } from './tier.guard';
  */
 @Module({
   imports: [AuthModule, RealtimeModule],
-  providers: [RolesGuard, TierGuard, AdminResolver],
+  providers: [RolesGuard, TierGuard, AdminResolver, AuditLogResolver],
   exports: [RolesGuard, TierGuard],
 })
 export class AuthorizationModule {}

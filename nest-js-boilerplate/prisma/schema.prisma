@@ -221,6 +221,8 @@ enum AuditAction {
   PERMISSION_REVOKED
   EXPORT
   IMPORT
+  API_KEY_CREATED
+  API_KEY_REVOKED
 }
 
 enum OutboxStatus {
@@ -326,6 +328,9 @@ model User {
 
   // money
   wallets Wallet[]
+
+  // API keys
+  apiKeys ApiKey[]
 
   // observability
   auditLogs AuditLog[] @relation("AuditActor")
@@ -814,6 +819,29 @@ model WalletTransaction {
   @@index([fromWalletId])
   @@index([toWalletId])
   @@index([status])
+}
+
+// ---------------------------------------------------------------------------
+// API Keys — programmatic access to the API
+// ---------------------------------------------------------------------------
+model ApiKey {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  lastUsedAt  DateTime? @db.Timestamptz(6)
+  expiresAt   DateTime? @db.Timestamptz(6)
+  name        String   @db.VarChar(80)
+  keyPrefix   String   @db.VarChar(16)
+  keyHash     String   @unique @db.VarChar(128)
+  userId      String   @db.Uuid
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        UserRole @default(USER)
+  tier        SubscriptionTier @default(FREE)
+  scopes      Json?    @db.JsonB
+  enabled     Boolean  @default(true)
+  deletedAt   DateTime? @db.Timestamptz(6)
+
+  @@index([userId])
+  @@index([keyPrefix])
 }
 
 // ---------------------------------------------------------------------------

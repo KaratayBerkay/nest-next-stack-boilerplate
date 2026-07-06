@@ -11,11 +11,16 @@ export class ProfileService {
     private readonly tokenStore: TokenStoreService,
   ) {}
 
-  async isUsernameAvailable(username: string, currentUserId: string): Promise<boolean> {
+  async isUsernameAvailable(
+    username: string,
+    currentUserId: string,
+  ): Promise<boolean> {
     const normalized = username.toLowerCase();
     if (normalized.length < 3 || normalized.length > 30) return false;
     if (!/^[a-z0-9_]+$/.test(normalized)) return false;
-    const existing = await this.prisma.user.findUnique({ where: { username: normalized } });
+    const existing = await this.prisma.user.findUnique({
+      where: { username: normalized },
+    });
     return !existing || existing.id === currentUserId;
   }
 
@@ -29,7 +34,9 @@ export class ProfileService {
 
     if (input.username !== undefined) {
       const username = input.username.toLowerCase();
-      const existing = await this.prisma.user.findUnique({ where: { username } });
+      const existing = await this.prisma.user.findUnique({
+        where: { username },
+      });
       if (existing && existing.id !== userId) {
         throw new ConflictException({
           exc: 'EX_PROFILE_USERNAME_TAKEN',
@@ -45,7 +52,8 @@ export class ProfileService {
 
     const redisFields: Record<string, string> = {};
     if (input.name !== undefined) redisFields.name = input.name;
-    if (input.username !== undefined) redisFields.username = user.username ?? '';
+    if (input.username !== undefined)
+      redisFields.username = user.username ?? '';
     if (input.avatarUrl !== undefined) redisFields.avatarUrl = input.avatarUrl;
     if (input.locale !== undefined) redisFields.locale = input.locale;
     if (input.timezone !== undefined) redisFields.timezone = input.timezone;
