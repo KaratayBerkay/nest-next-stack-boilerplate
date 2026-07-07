@@ -161,29 +161,25 @@ function FeedList({ search, currentUserId }: { search: string; currentUserId?: s
     staleTime: Infinity,
   }).data;
 
-  const showNewPill = !!newFlag && posts.length > 0;
-
-  const handleLoadNewPosts = () => {
+  const handleRefresh = useCallback(() => {
     queryClient.setQueryData(["feed", "new-flag"], false);
     setExtraPosts([]);
     setExtraHasMore(true);
-    cursorRef.current = data?.nextCursor ?? null;
     queryClient.invalidateQueries({ queryKey: ["feed", "list", search] });
-  };
+  }, [queryClient, search]);
+
+  useEffect(() => {
+    if (newFlag && posts.length > 0) {
+      const id = setTimeout(() => handleRefresh(), 0);
+      return () => clearTimeout(id);
+    }
+  }, [newFlag, posts.length, handleRefresh]);
 
   return (
     <div
       ref={scrollRef}
       className="flex max-h-[calc(100dvh-8rem)] flex-col gap-3 overflow-y-auto px-1 pb-4"
     >
-      {showNewPill && (
-        <button
-          onClick={handleLoadNewPosts}
-          className="mx-auto rounded-full bg-brand/10 px-4 py-1.5 text-xs font-medium text-brand transition-colors hover:bg-brand/20"
-        >
-          {t.newPostsAvailable}
-        </button>
-      )}
 
       {posts.length === 0 && (
         <div className="flex flex-col items-center justify-center gap-3 py-12">
