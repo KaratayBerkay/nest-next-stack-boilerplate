@@ -18,22 +18,20 @@ const ME_QUERY = `
 const SUBSCRIBE_MUTATION = `
   mutation SubscribeToPlan(
     $tier: SubscriptionTier!
-    $last4: String
-    $expMonth: Float
-    $expYear: Float
+    $paymentMethodId: String
   ) {
     subscribeToPlan(
       tier: $tier
-      last4: $last4
-      expMonth: $expMonth
-      expYear: $expYear
+      paymentMethodId: $paymentMethodId
     ) {
       success
       reason
+      periodEnd
     }
   }
 `;
 
+// fallow-ignore-next-line complexity
 export async function POST(request: NextRequest) {
   const accessToken = (await cookies()).get(ACCESS_TOKEN_COOKIE)?.value;
   if (!accessToken) {
@@ -43,7 +41,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let body: { tier: string; last4?: string; expMonth?: number; expYear?: number };
+  let body: { tier: string; paymentMethodId?: string };
   try {
     body = await request.json();
   } catch {
@@ -60,24 +58,22 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const isUpgrade = ["BASIC", "MEDIUM", "PREMIUM"].indexOf(body.tier) > 0;
-  if (isUpgrade && (!body.last4 || !body.expMonth || !body.expYear)) {
+  const isUpgrade = ["BASIC", "MEDIUM", "PREMIUM"].includes(body.tier);
+  if (isUpgrade && !body.paymentMethodId) {
     return NextResponse.json(
-      { statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Card details required for upgrades", key: "billing.errors.cardRequired" },
+      { statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Payment method required for upgrades", key: "billing.errors.cardRequired" },
       { status: 400 },
     );
   }
 
   const extraHeaders = await csrfEchoHeaders();
   const { data, errors } = await graphqlFetch<{
-    subscribeToPlan: { success: boolean; reason?: string };
+    subscribeToPlan: { success: boolean; reason?: string; periodEnd?: string };
   }>(
     SUBSCRIBE_MUTATION,
     {
       tier: body.tier,
-      last4: body.last4,
-      expMonth: body.expMonth,
-      expYear: body.expYear,
+      paymentMethodId: body.paymentMethodId ?? null,
     },
     accessToken,
     extraHeaders ?? undefined,
@@ -113,5 +109,5 @@ export async function POST(request: NextRequest) {
     event: "subscription.upgraded",
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, periodEnd: result.periodEnd ?? null });
 }

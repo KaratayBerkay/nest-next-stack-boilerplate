@@ -14,7 +14,7 @@ import { PerformanceInterceptor } from './interceptors/performance.interceptor';
 async function bootstrap() {
   // bufferLogs: hold boot logs until the Pino logger is installed below, so the very first
   // lines are structured JSON too (no built-in-console output leaking out at startup).
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create(AppModule, { bufferLogs: true, rawBody: true });
   app.useLogger(app.get(Logger));
 
   // First in the chain: mint/propagate the per-request correlation id (x-request-id) and put
@@ -30,6 +30,9 @@ async function bootstrap() {
   app.use(cookieParser(process.env.COOKIE_SECRET));
   app.use(compression());
   app.enableCors({ origin: true, credentials: true });
+
+  // Stripe webhook needs the raw body buffer for signature verification.
+  // rawBody: true in NestFactory options exposes req.rawBody as a Buffer.
 
   // Trust the first proxy so req.ip reflects the real client IP from X-Forwarded-For.
   // Required when running behind Nginx, Cloudflare, or any reverse proxy.

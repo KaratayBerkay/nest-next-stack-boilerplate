@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
-import { MockCardForm } from "@/features/billing/ui/mock-card-form";
-import { apiFetchJson } from "@/lib/api-client";
+import { StripeCardForm } from "@/features/billing/ui/StripeCardForm";
 import { TIER_ORDER, tierLabel, TIER_PRICES_CENTS, type Tier } from "@/lib/tier";
 import { formatPrice } from "@/lib/currency";
 import { useCurrencyCookie } from "@/hooks/useCurrencyCookie";
@@ -55,18 +54,21 @@ export default function CheckoutPage({
   const isDowngrade = targetRank < currentRank;
   const isCurrent = targetRank === currentRank;
 
+  // fallow-ignore-next-line complexity
   const handleDowngrade = async () => {
     setError(null);
     try {
-      await apiFetchJson("/api/billing/subscribe", {
+      const res = await fetch("/api/billing/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tier: targetTier }),
       });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.msg ?? "Failed to change plan");
       setSuccess(true);
       setTimeout(() => router.push(PRICING_PATH), 2000);
     } catch (err) {
-      setError((err as { msg?: string }).msg ?? "Failed to change plan");
+      setError((err as Error).message ?? "Failed to change plan");
     }
   };
 
@@ -116,7 +118,7 @@ export default function CheckoutPage({
       )}
 
       {isUpgrade && (
-        <MockCardForm
+        <StripeCardForm
           tier={targetTier}
           onSuccess={() => {
             setSuccess(true);
@@ -141,6 +143,12 @@ export default function CheckoutPage({
             {t.confirmDowngrade.replace("{tier}", tierLabel(targetTier))}
           </button>
         </div>
+      )}
+
+      {isUpgrade && error && (
+        <p className="text-sm text-red-600" data-testid="checkout-error">
+          {error}
+        </p>
       )}
     </div>
   );

@@ -1,21 +1,26 @@
 import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
 
-export interface ChargeInput {
+export interface CreateSubscriptionInput {
   userId: string;
   tier: SubscriptionTier;
-  last4: string;
-  expMonth: number;
-  expYear: number;
+  paymentMethodId: string;
+  stripeCustomerId: string;
 }
 
-export interface ChargeResult {
-  approved: boolean;
+export interface CreateSubscriptionResult {
+  success: boolean;
   reason?: string;
-  providerRef: string;
+  stripeSubscriptionId?: string;
+  periodStart?: Date;
+  periodEnd?: Date;
+  latestInvoiceId?: string;
 }
 
 export const PAYMENT_PROVIDER = 'PAYMENT_PROVIDER';
 
 export interface PaymentProvider {
-  charge(input: ChargeInput): Promise<ChargeResult>;
+  createSubscription(
+    input: CreateSubscriptionInput,
+  ): Promise<CreateSubscriptionResult>;
+  cancelSubscription(stripeSubscriptionId: string): Promise<void>;
 }

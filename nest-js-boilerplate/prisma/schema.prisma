@@ -260,6 +260,12 @@ model User {
   role             UserRole         @default(USER)
   subscriptionTier SubscriptionTier @default(FREE)
 
+  stripeCustomerId       String?   @unique
+  stripeSubscriptionId   String?
+  subscriptionPeriodStart DateTime? @db.Timestamptz(6)
+  subscriptionPeriodEnd   DateTime? @db.Timestamptz(6)
+  cancelAtPeriodEnd      Boolean   @default(false)
+
   avatarUrl       String?
   bio             String?   @db.Text
   birthDate       DateTime? @db.Date
@@ -810,10 +816,12 @@ model WalletTransaction {
   amount         Decimal         @db.Decimal(18, 4)
   currency       String          @default("USD")
   feeAmount      Decimal         @default(0) @db.Decimal(18, 4)
-  idempotencyKey String          @unique
-  reference      String?
-  metadata       Json?           @db.JsonB
-  postedAt       DateTime?       @db.Timestamptz(6)
+  idempotencyKey        String    @unique
+  reference             String?
+  stripePaymentIntentId String?
+  stripeInvoiceUrl      String?
+  metadata              Json?     @db.JsonB
+  postedAt              DateTime? @db.Timestamptz(6)
   createdAt      DateTime        @default(now()) @db.Timestamptz(6)
 
   @@index([fromWalletId])

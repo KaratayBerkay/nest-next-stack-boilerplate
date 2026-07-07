@@ -3,16 +3,6 @@ import { cookies } from "next/headers";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
 import { graphqlErrorBody, graphqlFetch } from "@/lib/backend";
 
-
-const ME_QUERY = `
-  query Me {
-    me {
-      id
-      tier
-    }
-  }
-`;
-
 const BILLING_HISTORY_QUERY = `
   query MyBillingHistory {
     myBillingHistory {
@@ -22,12 +12,14 @@ const BILLING_HISTORY_QUERY = `
       amount
       currency
       reference
+      stripeInvoiceUrl
       metadata
       createdAt
     }
   }
 `;
 
+// fallow-ignore-next-line complexity
 export async function GET() {
   const accessToken = (await cookies()).get(ACCESS_TOKEN_COOKIE)?.value;
   if (!accessToken) {
@@ -45,7 +37,8 @@ export async function GET() {
       amount: number;
       currency: string;
       reference: string;
-      metadata: string;
+      stripeInvoiceUrl?: string;
+      metadata?: string;
       createdAt: string;
     }>;
   }>(BILLING_HISTORY_QUERY, {}, accessToken);
@@ -55,30 +48,5 @@ export async function GET() {
     return NextResponse.json(body, { status: body.statusCode });
   }
 
-  let transactions = data?.myBillingHistory ?? [];
-
-  if (transactions.length === 0) {
-    const meData = await graphqlFetch<{ me: { id: string; tier: string } }>(
-      ME_QUERY,
-      {},
-      accessToken,
-    );
-    const userTier = meData?.data?.me?.tier;
-    if (userTier && userTier !== "FREE") {
-      transactions = [
-        {
-          id: "mock-txn-001",
-          type: "SUBSCRIPTION",
-          status: "COMPLETED",
-          amount: 0,
-          currency: "USD",
-          reference: `subscription:${userTier}`,
-          metadata: "",
-          createdAt: new Date().toISOString(),
-        },
-      ];
-    }
-  }
-
-  return NextResponse.json({ transactions });
+  return NextResponse.json({ transactions: data?.myBillingHistory ?? [] });
 }

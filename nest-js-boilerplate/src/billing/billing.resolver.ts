@@ -12,7 +12,7 @@ import type { JwtUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { CsrfGuard } from '../csrf/csrf.guard';
-import { BillingService, type CardInfo } from './billing.service';
+import { BillingService } from './billing.service';
 
 @ObjectType()
 export class SubscribeResult {
@@ -21,6 +21,9 @@ export class SubscribeResult {
 
   @Field(() => String, { nullable: true })
   reason?: string;
+
+  @Field(() => Date, { nullable: true })
+  periodEnd?: Date;
 }
 
 @ObjectType()
@@ -44,10 +47,40 @@ export class BillingTransaction {
   reference!: string;
 
   @Field({ nullable: true })
+  stripeInvoiceUrl?: string;
+
+  @Field({ nullable: true })
   metadata?: string;
 
   @Field()
   createdAt!: Date;
+}
+
+@ObjectType()
+export class SubscriptionInfo {
+  @Field(() => SubscriptionTier)
+  tier!: SubscriptionTier;
+
+  @Field()
+  priceCents!: number;
+
+  @Field()
+  currency!: string;
+
+  @Field(() => Date, { nullable: true })
+  periodStart?: Date;
+
+  @Field(() => Date, { nullable: true })
+  periodEnd?: Date;
+
+  @Field()
+  cancelAtPeriodEnd!: boolean;
+}
+
+@ObjectType()
+export class SetupIntentResult {
+  @Field()
+  clientSecret!: string;
 }
 
 @UseGuards(SessionAuthGuard, CsrfGuard)
@@ -59,26 +92,18 @@ export class BillingResolver {
   async subscribeToPlan(
     @CurrentUser() user: JwtUser,
     @Args('tier', { type: () => SubscriptionTier }) tier: SubscriptionTier,
-    @Args('last4', { nullable: true }) last4?: string,
-    @Args('expMonth', { nullable: true }) expMonth?: number,
-    @Args('expYear', { nullable: true }) expYear?: number,
+    @Args('paymentMethodId', { nullable: true }) paymentMethodId?: string,
   ): Promise<SubscribeResult> {
-    let card: CardInfo | undefined;
-
-    if (last4 || expMonth || expYear) {
-      if (!last4 || !/^\d{4}$/.test(last4)) {
-        throw new BadRequestException('last4 must be exactly 4 digits');
-      }
-      if (expMonth === undefined || expMonth < 1 || expMonth > 12) {
-        throw new BadRequestException('expMonth must be 1-12');
-      }
-      if (expYear === undefined || expYear < new Date().getFullYear()) {
-        throw new BadRequestException('expYear must not be in the past');
-      }
-      card = { last4, expMonth, expYear };
-    }
-
-    return this.billing.subscribeToPlan(user.userId, tier, card);
+    const result = await this.billing.subscribeToPlan(
+      user.userId,
+      tier,
+      paymentMethodId,
+    );
+    return {
+      success: result.success,
+      reason: result.reason,
+      periodEnd: result.periodEnd,
+    };
   }
 
   @Query(() => [BillingTransaction])
@@ -93,8 +118,23 @@ export class BillingResolver {
       amount: Number(t.amount),
       currency: t.currency,
       reference: t.reference ?? '',
+      stripeInvoiceUrl: t.stripeInvoiceUrl ?? undefined,
       metadata: t.metadata ? JSON.stringify(t.metadata) : undefined,
       createdAt: t.createdAt,
     }));
+  }
+
+  @Query(() => SubscriptionInfo, { nullable: true })
+  async mySubscription(
+    @CurrentUser() user: JwtUser,
+  ): Promise<SubscriptionInfo | null> {
+    return this.billing.getSubscription(user.userId);
+  }
+
+  @Mutation(() => SetupIntentResult)
+  async createBillingSetupIntent(
+    @CurrentUser() user: JwtUser,
+  ): Promise<SetupIntentResult> {
+    return this.billing.createSetupIntent(user.userId);
   }
 }
