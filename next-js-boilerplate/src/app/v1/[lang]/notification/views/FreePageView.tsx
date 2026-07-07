@@ -10,6 +10,7 @@ import {
 } from "@tabler/icons-react";
 import { apiFetch } from "@/lib/api-client";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { useDeviceType } from "@/hooks/useDeviceType";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
@@ -66,6 +67,8 @@ function NotificationPageContent() {
     },
     [queryClient],
   );
+
+  const notifSwipeRef = useYSwipeGesture<HTMLDivElement>();
 
   const {
     supported,
@@ -143,6 +146,7 @@ function NotificationPageContent() {
       </div>
 
       <div
+        ref={notifSwipeRef}
         className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-1 pb-4 transition-none"
         style={{
           transform: `translateX(${translateX})`,
