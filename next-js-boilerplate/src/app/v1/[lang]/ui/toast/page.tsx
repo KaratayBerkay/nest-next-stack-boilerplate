@@ -1,8 +1,19 @@
 "use client";
 
-import { ToastProvider, ToastViewport, useToast } from "@/components/ui/Toast";
+import { useState, Suspense } from "react";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/Tabs";
+import {
+  ToastProvider,
+  ToastViewport,
+  useToast,
+} from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
-import { Suspense } from "react";
+import { Input } from "@/components/ui/Input";
 
 function DemoControls() {
   const { toast } = useToast();
@@ -51,6 +62,44 @@ function DemoControls() {
   );
 }
 
+function ExampleControls() {
+  const { toast } = useToast();
+  const [email, setEmail] = useState("");
+
+  const handleSubscribe = () => {
+    if (!email.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter your email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+    toast({
+      title: "Subscribed!",
+      description: "You have been added to our newsletter.",
+      variant: "success",
+    });
+    setEmail("");
+  };
+
+  return (
+    <div className="surface max-w-sm space-y-3 p-4">
+      <p className="text-sm font-medium">Newsletter Signup</p>
+      <div className="flex gap-2">
+        <Input
+          placeholder="your@email.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <Button variant="primary" onClick={handleSubscribe}>
+          Subscribe
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function Content() {
   return (
     <div className="flex flex-col gap-4" data-testid="toast-demo">
@@ -61,10 +110,26 @@ function Content() {
         </p>
       </div>
 
-      <ToastProvider>
-        <DemoControls />
-        <ToastViewport />
-      </ToastProvider>
+      <Tabs defaultValue="components">
+        <TabsList>
+          <TabsTrigger value="components">Components</TabsTrigger>
+          <TabsTrigger value="examples">Examples</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="components">
+          <ToastProvider>
+            <DemoControls />
+            <ToastViewport />
+          </ToastProvider>
+        </TabsContent>
+
+        <TabsContent value="examples">
+          <ToastProvider>
+            <ExampleControls />
+            <ToastViewport />
+          </ToastProvider>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

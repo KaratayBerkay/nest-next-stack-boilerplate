@@ -198,7 +198,7 @@ export function NotificationDropdown({ lang = "en" }: { lang?: string }) {
       </button>
 
       {open && isDesktop && (
-        <div className="border-border bg-bg absolute top-full right-0 mt-3 w-80 rounded-xl border p-1 shadow-lg">
+        <div className="border-border bg-bg absolute top-full right-0 z-50 mt-3 w-80 rounded-xl border p-1 shadow-lg">
           {content}
         </div>
       )}

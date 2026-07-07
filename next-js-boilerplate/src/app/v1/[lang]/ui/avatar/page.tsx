@@ -1,111 +1,144 @@
-import { Suspense } from "react";
+"use client";
+
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/Tabs";
 import { Avatar, AvatarGroup } from "@/components/ui/Avatar";
 
-async function Content() {
+export default function AvatarPage() {
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-xl font-bold">Avatar</h2>
-      <p className="text-muted text-sm">
-        An image element with a fallback for representing the user.
-      </p>
+      <div className="space-y-1">
+        <h2 className="text-xl font-bold">Avatar</h2>
+        <p className="text-muted text-sm">
+          An image element with a fallback for representing the user.
+        </p>
+      </div>
 
-      <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Sizes</h3>
-        <div className="flex items-center gap-4">
-          <Avatar
-            src="https://i.pravatar.cc/80?img=1"
-            alt="User"
-            fallback="JD"
-            size="sm"
-            data-testid="avatar-sm"
-          />
-          <Avatar
-            src="https://i.pravatar.cc/80?img=1"
-            alt="User"
-            fallback="JD"
-            size="md"
-            data-testid="avatar-md"
-          />
-          <Avatar
-            src="https://i.pravatar.cc/80?img=1"
-            alt="User"
-            fallback="JD"
-            size="lg"
-            data-testid="avatar-lg"
-          />
-          <Avatar
-            src="https://i.pravatar.cc/80?img=1"
-            alt="User"
-            fallback="JD"
-            size="xl"
-            data-testid="avatar-xl"
-          />
-        </div>
-      </section>
+      <Tabs defaultValue="components">
+        <TabsList>
+          <TabsTrigger value="components">Components</TabsTrigger>
+          <TabsTrigger value="examples">Examples</TabsTrigger>
+        </TabsList>
 
-      <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">With Image</h3>
-        <div className="flex items-center gap-4">
-          <Avatar
-            src="https://i.pravatar.cc/80?img=2"
-            alt="User"
-            fallback="AB"
-            size="md"
-            data-testid="avatar-with-image"
-          />
-        </div>
-      </section>
+        <TabsContent value="components">
+          <div className="flex flex-col gap-4">
+            <section className="flex flex-col gap-3">
+              <h3 className="text-lg font-semibold">Sizes</h3>
+              <div className="flex items-center gap-4">
+                <Avatar
+                  src="https://i.pravatar.cc/80?img=1"
+                  alt="User"
+                  fallback="JD"
+                  size="sm"
+                  data-testid="avatar-sm"
+                />
+                <Avatar
+                  src="https://i.pravatar.cc/80?img=1"
+                  alt="User"
+                  fallback="JD"
+                  size="md"
+                  data-testid="avatar-md"
+                />
+                <Avatar
+                  src="https://i.pravatar.cc/80?img=1"
+                  alt="User"
+                  fallback="JD"
+                  size="lg"
+                  data-testid="avatar-lg"
+                />
+                <Avatar
+                  src="https://i.pravatar.cc/80?img=1"
+                  alt="User"
+                  fallback="JD"
+                  size="xl"
+                  data-testid="avatar-xl"
+                />
+              </div>
+            </section>
 
-      <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Fallback Only</h3>
-        <div className="flex items-center gap-4">
-          <Avatar fallback="CN" size="md" data-testid="avatar-fallback" />
-        </div>
-      </section>
+            <section className="flex flex-col gap-3">
+              <h3 className="text-lg font-semibold">With Image</h3>
+              <div className="flex items-center gap-4">
+                <Avatar
+                  src="https://i.pravatar.cc/80?img=2"
+                  alt="User"
+                  fallback="AB"
+                  size="md"
+                  data-testid="avatar-with-image"
+                />
+              </div>
+            </section>
 
-      <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Avatar Group</h3>
-        <AvatarGroup data-testid="avatar-group">
-          <Avatar
-            src="https://i.pravatar.cc/80?img=3"
-            alt="User"
-            fallback="AL"
-            size="md"
-          />
-          <Avatar
-            src="https://i.pravatar.cc/80?img=4"
-            alt="User"
-            fallback="BM"
-            size="md"
-          />
-          <Avatar
-            src="https://i.pravatar.cc/80?img=5"
-            alt="User"
-            fallback="CK"
-            size="md"
-          />
-          <Avatar
-            src="https://i.pravatar.cc/80?img=6"
-            alt="User"
-            fallback="DJ"
-            size="md"
-          />
-          <Avatar
-            src="https://i.pravatar.cc/80?img=7"
-            alt="User"
-            fallback="ER"
-            size="md"
-          />
-        </AvatarGroup>
-      </section>
+            <section className="flex flex-col gap-3">
+              <h3 className="text-lg font-semibold">Fallback Only</h3>
+              <div className="flex items-center gap-4">
+                <Avatar fallback="CN" size="md" data-testid="avatar-fallback" />
+              </div>
+            </section>
+
+            <section className="flex flex-col gap-3">
+              <h3 className="text-lg font-semibold">Avatar Group</h3>
+              <AvatarGroup data-testid="avatar-group">
+                <Avatar
+                  src="https://i.pravatar.cc/80?img=3"
+                  alt="User"
+                  fallback="AL"
+                  size="md"
+                />
+                <Avatar
+                  src="https://i.pravatar.cc/80?img=4"
+                  alt="User"
+                  fallback="BM"
+                  size="md"
+                />
+                <Avatar
+                  src="https://i.pravatar.cc/80?img=5"
+                  alt="User"
+                  fallback="CK"
+                  size="md"
+                />
+                <Avatar
+                  src="https://i.pravatar.cc/80?img=6"
+                  alt="User"
+                  fallback="DJ"
+                  size="md"
+                />
+                <Avatar
+                  src="https://i.pravatar.cc/80?img=7"
+                  alt="User"
+                  fallback="ER"
+                  size="md"
+                />
+              </AvatarGroup>
+            </section>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="examples">
+          <section className="flex flex-col gap-3">
+            <h3 className="text-lg font-semibold">Team Members</h3>
+            <div className="flex flex-col gap-3">
+              {[
+                { name: "Alice Johnson", role: "Designer", img: "https://i.pravatar.cc/80?img=9" },
+                { name: "Bob Martinez", role: "Developer", img: "https://i.pravatar.cc/80?img=10" },
+                { name: "Carol Smith", role: "Product Manager", img: "https://i.pravatar.cc/80?img=11" },
+              ].map((member) => (
+                <div key={member.name} className="surface flex items-center gap-3 px-3 py-2">
+                  <Avatar src={member.img} alt={member.name} fallback={member.name.split(" ").map((n) => n[0]).join("")} size="md" />
+                  <div>
+                    <p className="text-sm font-medium">{member.name}</p>
+                    <p className="text-muted text-xs">{member.role}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </TabsContent>
+      </Tabs>
     </div>
-  );
-}
-
-export default function Page() {
-  return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading...</p>}>
-      <Content />
-    </Suspense>
   );
 }
