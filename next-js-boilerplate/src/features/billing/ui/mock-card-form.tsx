@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useMemo } from "react";
+import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import {
   mockCardFormSchema,
   getLast4,
@@ -58,7 +58,17 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
   };
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const [blocks, setBlocks] = useState(["", "", "", ""]);
+  const [blocks, setBlocks] = useState(["4242", "4242", "4242", "4242"]);
+  const filled = useRef(false);
+
+  useEffect(() => {
+    if (filled.current) return;
+    filled.current = true;
+    setExpMonth("12");
+    setExpYear(String(((getToday("year") as number) + 3) % 100).padStart(2, "0"));
+    setCvc("123");
+    setCardholderName("John Doe");
+  }, []);
 
   const getFullCardNumber = useCallback(() => blocks.join(""), [blocks]);
 
