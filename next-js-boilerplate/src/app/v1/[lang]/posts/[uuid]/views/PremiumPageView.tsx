@@ -262,8 +262,7 @@ function PostDetailContent() {
         onCommentAdded={() =>
           queryClient.invalidateQueries({ queryKey: ["posts", uuid] })
         }
-        maxTopLevel={10}
-        pageable
+
       />
     </div>
   );

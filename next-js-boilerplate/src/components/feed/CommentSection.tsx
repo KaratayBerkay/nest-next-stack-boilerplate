@@ -1,7 +1,7 @@
 "use client";
 
 import { apiFetch } from "@/lib/api-client";
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState } from "react";
 import { useToast } from "@/components/ui/Toast";
 import { ReactionInline } from "./ReactionButtons";
 import { IconPencil, IconTrash } from "@tabler/icons-react";
@@ -22,8 +22,6 @@ interface CommentSectionProps {
   comments: Comment[];
   currentUserId?: string | null;
   onCommentAdded?: () => void;
-  maxTopLevel?: number;
-  pageable?: boolean;
 }
 
 export function CommentSection({
@@ -31,8 +29,6 @@ export function CommentSection({
   comments,
   currentUserId,
   onCommentAdded,
-  maxTopLevel = 5,
-  pageable = false,
 }: CommentSectionProps) {
   const [body, setBody] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
@@ -44,8 +40,6 @@ export function CommentSection({
   const tempIdCounter = useRef(0);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingBody, setEditingBody] = useState("");
-  const [visibleCount, setVisibleCount] = useState(maxTopLevel);
-  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const allComments = [
     ...comments
@@ -55,27 +49,8 @@ export function CommentSection({
   ];
 
   const topLevel = allComments.filter((c) => !c.parentId);
-  const visibleTopLevel = topLevel.slice(0, visibleCount);
-  const hasMore = topLevel.length > visibleCount;
   const replies = (parentId: string) =>
     allComments.filter((c) => c.parentId === parentId);
-
-  const loadMore = useCallback(() => {
-    setVisibleCount((prev) => prev + maxTopLevel);
-  }, [maxTopLevel]);
-
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel || !hasMore) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) loadMore();
-      },
-      { rootMargin: "200px" },
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [hasMore, loadMore]);
 
   const handleEdit = async (commentId: string) => {
     if (!editingBody.trim()) return;
@@ -221,10 +196,10 @@ export function CommentSection({
       </form>
 
       <div className="flex flex-col gap-1.5">
-        {visibleTopLevel.length === 0 && (
+        {topLevel.length === 0 && (
           <p className="text-muted px-1 text-xs">No comments yet.</p>
         )}
-        {visibleTopLevel.map((comment) => (
+        {topLevel.map((comment) => (
           <div key={comment.id} className="flex flex-col gap-1">
             <div className="border-border rounded-xl border bg-surface px-3 py-2 transition-colors hover:bg-surface-hover">
               <div className="flex items-center justify-between gap-2">
@@ -397,7 +372,6 @@ export function CommentSection({
         ))}
       </div>
 
-      {hasMore && <div ref={sentinelRef} className="h-1" />}
     </div>
   );
 }
