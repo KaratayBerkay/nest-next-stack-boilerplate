@@ -8,6 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/DropdownMenu";
+import { Button } from "@/components/ui/Button";
 
 export function DropdownMenuDemo() {
   return (
@@ -22,7 +23,7 @@ export function DropdownMenuDemo() {
         <DropdownMenu>
           <DropdownMenuTrigger
             data-testid="dropdown-trigger"
-            className="inline-flex items-center justify-center gap-2 rounded bg-zinc-800 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-100 dark:text-black dark:hover:bg-zinc-200"
+            className="inline-flex items-center justify-center rounded bg-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90"
           >
             Open Menu
           </DropdownMenuTrigger>

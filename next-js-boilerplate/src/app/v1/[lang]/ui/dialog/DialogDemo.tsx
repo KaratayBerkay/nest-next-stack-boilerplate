@@ -10,6 +10,7 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/Dialog";
+import { Button } from "@/components/ui/Button";
 
 export function DialogDemo() {
   return (
@@ -24,7 +25,7 @@ export function DialogDemo() {
         <Dialog>
           <DialogTrigger
             data-testid="dialog-trigger"
-            className="inline-flex items-center justify-center gap-2 rounded bg-zinc-800 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-100 dark:text-black dark:hover:bg-zinc-200"
+            className="inline-flex items-center justify-center rounded bg-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90"
           >
             Open Dialog
           </DialogTrigger>
@@ -39,17 +40,16 @@ export function DialogDemo() {
             <DialogFooter>
               <DialogClose
                 data-testid="dialog-cancel"
-                className="border-border inline-flex items-center justify-center gap-2 rounded bg-transparent px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                className="inline-flex items-center justify-center rounded border border-border bg-transparent px-4 py-2 text-sm font-medium hover:bg-surface-hover"
               >
                 Cancel
               </DialogClose>
-              <button
-                type="button"
+              <Button
+                variant="destructive"
                 data-testid="dialog-confirm"
-                className="inline-flex items-center justify-center gap-2 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-500 dark:bg-red-700 dark:hover:bg-red-600"
               >
                 Delete
-              </button>
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

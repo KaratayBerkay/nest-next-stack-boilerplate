@@ -1,6 +1,7 @@
 "use client";
 
 import { ToastProvider, ToastViewport, useToast } from "@/components/ui/Toast";
+import { Button } from "@/components/ui/Button";
 import { Suspense } from "react";
 
 function DemoControls() {
@@ -8,9 +9,8 @@ function DemoControls() {
 
   return (
     <div className="flex flex-wrap gap-2">
-      <button
-        type="button"
-        className="rounded bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+      <Button
+        variant="outline"
         data-testid="toast-default-btn"
         onClick={() =>
           toast({
@@ -20,10 +20,9 @@ function DemoControls() {
         }
       >
         Show Default Toast
-      </button>
-      <button
-        type="button"
-        className="rounded bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-500"
+      </Button>
+      <Button
+        variant="destructive"
         data-testid="toast-destructive-btn"
         onClick={() =>
           toast({
@@ -34,10 +33,9 @@ function DemoControls() {
         }
       >
         Show Destructive Toast
-      </button>
-      <button
-        type="button"
-        className="rounded bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-500"
+      </Button>
+      <Button
+        variant="primary"
         data-testid="toast-success-btn"
         onClick={() =>
           toast({
@@ -48,7 +46,7 @@ function DemoControls() {
         }
       >
         Show Success Toast
-      </button>
+      </Button>
     </div>
   );
 }

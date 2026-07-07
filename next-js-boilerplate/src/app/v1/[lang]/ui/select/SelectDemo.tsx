@@ -15,15 +15,13 @@ export function SelectDemo() {
 
   return (
     <div className="flex flex-col gap-4" data-testid="select-demo">
-      <div>
-        <h2 className="text-sm font-semibold">Select</h2>
-        <p className="text-muted text-xs">
-          A custom select component with dropdown items.
-        </p>
-      </div>
+      <h2 className="text-xl font-bold">Select</h2>
+      <p className="text-muted text-sm">
+        A custom select component with dropdown items.
+      </p>
 
-      <div>
-        <h3 className="text-muted text-xs font-medium">With Default Value</h3>
+      <section className="flex flex-col gap-3">
+        <h3 className="text-lg font-semibold">With Default Value</h3>
         <p className="text-muted mb-2 text-xs">Selected: {fruit}</p>
         <Select value={fruit} onValueChange={setFruit}>
           <SelectTrigger className="w-48" data-testid="select-trigger-default">
@@ -36,10 +34,10 @@ export function SelectDemo() {
             <SelectItem value="dragonfruit">Dragonfruit</SelectItem>
           </SelectContent>
         </Select>
-      </div>
+      </section>
 
-      <div>
-        <h3 className="text-muted text-xs font-medium">With Placeholder</h3>
+      <section className="flex flex-col gap-3">
+        <h3 className="text-lg font-semibold">With Placeholder</h3>
         <p className="text-muted mb-2 text-xs">Selected: {color ?? "none"}</p>
         <Select value={color} onValueChange={setColor}>
           <SelectTrigger
@@ -54,7 +52,7 @@ export function SelectDemo() {
             <SelectItem value="blue">Blue</SelectItem>
           </SelectContent>
         </Select>
-      </div>
+      </section>
     </div>
   );
 }

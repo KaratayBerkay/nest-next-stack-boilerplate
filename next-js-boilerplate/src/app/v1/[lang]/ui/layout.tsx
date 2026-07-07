@@ -3,14 +3,19 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 
 export default function UILayout({ children }: { children: React.ReactNode }) {
   const params = useParams();
   const lang = (params?.lang as string) ?? "en";
+  const scrollRef = useYSwipeGesture<HTMLDivElement>();
 
   return (
-    <>
-      <div className="border-border bg-bg/80 sticky top-0 z-50 -mx-4 mb-4 flex items-center justify-between border-b px-4 py-3 backdrop-blur-sm">
+    <div
+      ref={scrollRef}
+      className="mx-auto flex w-full max-w-4xl min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden"
+    >
+      <div className="border-border bg-bg/80 sticky top-0 z-50 -mx-4 mb-4 flex items-center justify-between border-b px-4 py-3 backdrop-blur-sm @sm:-mx-5">
         <div className="flex items-center gap-3">
           <Link
             href={`/v1/${lang}/ui`}
@@ -38,7 +43,7 @@ export default function UILayout({ children }: { children: React.ReactNode }) {
         </div>
         <ThemeToggle />
       </div>
-      {children}
-    </>
+      <div className="flex flex-col gap-4 pb-6">{children}</div>
+    </div>
   );
 }

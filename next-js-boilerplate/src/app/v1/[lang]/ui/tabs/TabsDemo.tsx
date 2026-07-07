@@ -5,15 +5,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 export function TabsDemo() {
   return (
     <div className="flex flex-col gap-4" data-testid="tabs-demo">
-      <div>
-        <h2 className="text-sm font-semibold">Tabs</h2>
-        <p className="text-muted text-xs">
-          A set of layered content panels shown one at a time.
-        </p>
-      </div>
+      <h2 className="text-xl font-bold">Tabs</h2>
+      <p className="text-muted text-sm">
+        A set of layered content panels shown one at a time.
+      </p>
 
-      <div>
-        <h3 className="text-muted text-xs font-medium">Default</h3>
+      <section className="flex flex-col gap-3">
+        <h3 className="text-lg font-semibold">Default</h3>
         <Tabs defaultValue="account" data-testid="tabs-root">
           <TabsList>
             <TabsTrigger value="account" data-testid="tab-account">
@@ -42,7 +40,7 @@ export function TabsDemo() {
             </p>
           </TabsContent>
         </Tabs>
-      </div>
+      </section>
     </div>
   );
 }
