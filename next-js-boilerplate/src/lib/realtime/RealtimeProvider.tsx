@@ -2,7 +2,6 @@
 
 import {
   createContext,
-  Suspense,
   useCallback,
   useContext,
   useEffect,
@@ -10,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { clientEnv } from "@/lib/env";
@@ -362,11 +361,19 @@ function resyncAfterConnect(
 
 // ── Provider (inner — must be inside <Suspense> for useSearchParams) ──
 
+function useClientSearchParams(): URLSearchParams | null {
+  const [sp, setSp] = useState<URLSearchParams | null>(null);
+  useEffect(() => {
+    setSp(new URLSearchParams(window.location.search));
+  }, []);
+  return sp;
+}
+
 function RealtimeProviderInner({ children }: { children: ReactNode }) {
   const { token, user } = useAuth();
   const queryClient = useQueryClient();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const searchParams = useClientSearchParams();
   const [status, setStatus] = useState<RealtimeStatus>("idle");
   const subsRef = useRef<Map<string, Set<FrameHandler>>>(new Map());
   const clientRef = useRef<RealtimeClient | null>(null);
@@ -724,14 +731,10 @@ function RealtimeProviderInner({ children }: { children: ReactNode }) {
   );
 }
 
-// ── Provider (outer — wraps inner in Suspense for useSearchParams) ──
+// ── Provider ──
 
 export function RealtimeProvider({ children }: { children: ReactNode }) {
-  return (
-    <Suspense>
-      <RealtimeProviderInner>{children}</RealtimeProviderInner>
-    </Suspense>
-  );
+  return <RealtimeProviderInner>{children}</RealtimeProviderInner>;
 }
 
 export function useRealtime(): RealtimeContextValue | null {
