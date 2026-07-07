@@ -109,22 +109,25 @@ function ChatRoomContent() {
     <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
       <div className="flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-3">
-          <Avatar
-            fallback={initials(user?.name ?? user?.email ?? "?")}
-            className={`h-8 w-8 text-[10px] ring-2 ${
-              connectionState === "online"
-                ? "bg-green-500 text-white ring-green-500"
-                : connectionState === "connecting"
-                  ? "bg-green-300 text-white ring-green-300 animate-pulse"
-                  : "bg-red-400 text-white ring-red-400"
-            }`}
-            title={
-              connectionState === "online" ? t.connected
-              : connectionState === "connecting" ? t.connecting
-              : t.disconnected
-            }
-          />
-          <h2 className="text-sm font-semibold text-brand">{t.title}</h2>
+          <div className="relative shrink-0">
+            <Avatar
+              fallback={initials(user?.name ?? user?.email ?? "?")}
+              className="h-8 w-8 text-[10px]"
+              title={
+                connectionState === "online" ? t.connected
+                : connectionState === "connecting" ? t.connecting
+                : t.disconnected
+              }
+            />
+            {connectionState === "online" ? (
+              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-bg bg-green-500" />
+            ) : connectionState === "connecting" ? (
+              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-bg bg-green-300 animate-pulse" />
+            ) : (
+              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-bg bg-red-400" />
+            )}
+          </div>
+          <h2 className="text-lg font-bold text-brand">{t.title}</h2>
         </div>
         <span className="text-xs text-muted">
           {t.countOnline.replace("{count}", String(roomCounts[room] ?? 0))}
