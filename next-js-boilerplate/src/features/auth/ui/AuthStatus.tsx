@@ -3,6 +3,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { LOGIN_PATH } from "@/constants/routes";
 import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 
 export function AuthStatus() {
   const { user, loading, logout } = useAuth();
@@ -25,13 +26,15 @@ export function AuthStatus() {
   return (
     <div className="flex items-center gap-2">
       <span className="text-muted text-xs">{user.email}</span>
-      <button
+      <Button
+        variant="link"
+        size="xs"
         onClick={logout}
-        className="text-xs text-red-500 underline hover:no-underline"
+        className="text-red-500"
         data-testid="logout-btn"
       >
         Sign Out
-      </button>
+      </Button>
     </div>
   );
 }

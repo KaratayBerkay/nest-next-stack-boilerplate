@@ -3,18 +3,22 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { greetAction } from "./actions";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
+import { Button } from "@/components/ui/Button";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <button
+    <Button
       type="submit"
       disabled={pending}
-      className="bg-brand rounded px-3 py-1 text-xs text-white disabled:opacity-50"
+      variant="primary"
+      size="sm"
       data-testid="submit-btn"
     >
       {pending ? "Sending..." : "Greet me"}
-    </button>
+    </Button>
   );
 }
 
@@ -25,14 +29,11 @@ export default function GreetingForm() {
     <div className="flex flex-col gap-3">
       <form action={formAction} className="flex items-end gap-2">
         <div className="flex flex-col gap-1">
-          <label htmlFor="name" className="text-xs text-zinc-500">
-            Your name
-          </label>
-          <input
+          <Label htmlFor="name">Your name</Label>
+          <Input
             id="name"
             name="name"
             required
-            className="rounded border px-2 py-1 text-sm"
             data-testid="name-input"
           />
         </div>

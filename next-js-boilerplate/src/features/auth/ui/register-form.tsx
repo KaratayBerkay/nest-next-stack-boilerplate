@@ -6,6 +6,9 @@ import { LOGIN_PATH } from "@/constants/routes";
 import Link from "next/link";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { registerFormSchema } from "@/lib/validation/auth";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
+import { Button } from "@/components/ui/Button";
 
 export function RegisterForm() {
   const t = useMessages("auth");
@@ -70,36 +73,35 @@ export function RegisterForm() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 text-center">
       <h2 className="text-brand text-sm font-semibold">{t.form.register.title}</h2>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="reg-name-input" className="text-muted text-xs font-medium">
+        <div className="flex flex-col gap-1 text-left">
+          <Label htmlFor="reg-name-input">
             {t.form.register.nameLabel}
-          </label>
-          <input
+          </Label>
+          <Input
             id="reg-name-input"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t.form.register.namePlaceholder}
-            className="border-border bg-surface rounded border px-3 py-2 text-sm"
             data-testid="reg-name"
           />
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="reg-email-input" className="text-muted text-xs font-medium">
+        <div className="flex flex-col gap-1 text-left">
+          <Label htmlFor="reg-email-input" required>
             {t.form.register.emailLabel}
-          </label>
-          <input
+          </Label>
+          <Input
             id="reg-email-input"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="border-border bg-surface rounded border px-3 py-2 text-sm"
+            error={fieldErrors.email}
             data-testid="reg-email"
           />
           {fieldErrors.email && (
@@ -107,21 +109,18 @@ export function RegisterForm() {
           )}
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label
-            htmlFor="reg-password-input"
-            className="text-muted text-xs font-medium"
-          >
+        <div className="flex flex-col gap-1 text-left">
+          <Label htmlFor="reg-password-input" required>
             {t.form.register.passwordLabel}
-          </label>
-          <input
+          </Label>
+          <Input
             id="reg-password-input"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={8}
-            className="border-border bg-surface rounded border px-3 py-2 text-sm"
+            error={fieldErrors.password}
             data-testid="reg-password"
           />
           {fieldErrors.password && (
@@ -135,14 +134,14 @@ export function RegisterForm() {
           </p>
         )}
 
-        <button
+        <Button
           type="submit"
           disabled={submitting}
-          className="bg-fg text-bg self-start rounded px-4 py-2 text-sm disabled:opacity-40"
+          className="w-full"
           data-testid="reg-submit"
         >
           {submitting ? t.form.register.submitting : t.form.register.submit}
-        </button>
+        </Button>
       </form>
 
       <p className="text-muted text-xs">

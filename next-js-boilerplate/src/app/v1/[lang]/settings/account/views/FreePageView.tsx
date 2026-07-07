@@ -9,6 +9,10 @@ import { Avatar } from "@/components/ui/Avatar";
 import { initials } from "@/lib/initials";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
+import { Textarea } from "@/components/ui/Textarea";
+import { Button } from "@/components/ui/Button";
 
 export function FreePageView() {
   const { user, loading, refreshUser } = useAuth();
@@ -42,7 +46,6 @@ export function FreePageView() {
     })();
   }, [user]);
 
-  /* debounced username check — idle for unchanged / too-short, checking otherwise */
   const checkTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const prevUsername = useRef(username);
 
@@ -115,12 +118,13 @@ export function FreePageView() {
           className="bg-brand text-white"
         />
         <div className="flex flex-col gap-2">
-          <button
+          <Button
+            variant="link"
+            size="sm"
             onClick={() => fileInputRef.current?.click()}
-            className="text-sm font-medium text-brand hover:underline"
           >
             {t.avatarChange}
-          </button>
+          </Button>
           <input
             ref={fileInputRef}
             type="file"
@@ -136,20 +140,15 @@ export function FreePageView() {
 
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium">{t.name}</label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="border-border bg-bg rounded-lg border px-3 py-2 text-sm"
-          />
+          <Label>{t.name}</Label>
+          <Input value={name} onChange={(e) => setName(e.target.value)} />
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium">{t.username}</label>
-          <input
+          <Label>{t.username}</Label>
+          <Input
             value={username}
             onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
-            className="border-border bg-bg rounded-lg border px-3 py-2 text-sm"
           />
           {availability === "checking" && (
             <span className="text-xs text-muted">{t.usernameChecking}</span>
@@ -163,23 +162,19 @@ export function FreePageView() {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium">{t.bio}</label>
-          <textarea
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            rows={3}
-            className="border-border bg-bg rounded-lg border px-3 py-2 text-sm resize-none"
-          />
+          <Label>{t.bio}</Label>
+          <Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} />
         </div>
       </div>
 
-      <button
+      <Button
         onClick={saveProfile}
         disabled={!canSave}
-        className="bg-brand self-start rounded-lg px-6 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+        variant="primary"
+        className="self-start"
       >
         {saving ? t.saving : t.save}
-      </button>
+      </Button>
     </div>
   );
 }

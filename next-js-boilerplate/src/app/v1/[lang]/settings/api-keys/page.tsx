@@ -8,6 +8,7 @@ import { apiFetchJson } from "@/lib/api-client";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 
 interface ApiKey {
   id: string;
@@ -130,8 +131,7 @@ export default function ApiKeysPage() {
       {showCreate ? (
         <div className="surface flex flex-col gap-3 rounded-lg p-4">
           <h3 className="font-semibold">Create new API key</h3>
-          <input
-            className="surface-hover rounded border px-3 py-2 text-sm"
+          <Input
             placeholder="Key name (e.g. 'CI/CD', 'Development')"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
@@ -146,19 +146,16 @@ export default function ApiKeysPage() {
               { value: "90", label: "90 days" },
               { value: "365", label: "1 year" },
             ].map((opt) => (
-              <button
+              <Button
                 key={opt.value}
                 type="button"
                 disabled={creating}
+                variant={newExpiry === opt.value ? "primary" : "outline"}
+                size="xs"
                 onClick={() => setNewExpiry(opt.value)}
-                className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
-                  newExpiry === opt.value
-                    ? "border-brand bg-brand/10 text-brand"
-                    : "border-border text-muted hover:border-fg hover:text-fg"
-                }`}
               >
                 {opt.label}
-              </button>
+              </Button>
             ))}
           </div>
           <div className="flex gap-2">

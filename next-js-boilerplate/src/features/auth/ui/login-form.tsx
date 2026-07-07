@@ -8,7 +8,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { loginFormSchema } from "@/lib/validation/auth";
-import type { ExceptionResponse } from "@/lib/api-client";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
+import { Button } from "@/components/ui/Button";
 
 export function LoginForm() {
   const t = useMessages("auth");
@@ -65,7 +67,6 @@ export function LoginForm() {
           : DEFAULT_LANG;
       router.push(`/v1/${lang}/feed`);
     } catch (err) {
-      const exc = (err as { exc?: string; field?: string; msg?: string }).exc;
       const field = (err as { field?: string }).field;
       const msg = (err as { msg?: string }).msg;
       if (field) {
@@ -83,18 +84,18 @@ export function LoginForm() {
       <h2 className="text-brand text-sm font-semibold">{t.form.login.title}</h2>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="login-email-input" className="text-muted text-xs font-medium">
+        <div className="flex flex-col gap-1 text-left">
+          <Label htmlFor="login-email-input" required>
             {t.form.login.emailLabel}
-          </label>
-          <input
+          </Label>
+          <Input
             id="login-email-input"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder={t.form.login.emailPlaceholder}
             required
-            className="border-border bg-surface rounded border px-3 py-2 text-sm"
+            error={fieldErrors.email}
             data-testid="login-email"
           />
           {fieldErrors.email && (
@@ -102,17 +103,17 @@ export function LoginForm() {
           )}
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="login-password-input" className="text-muted text-xs font-medium">
+        <div className="flex flex-col gap-1 text-left">
+          <Label htmlFor="login-password-input" required>
             {t.form.login.passwordLabel}
-          </label>
-          <input
+          </Label>
+          <Input
             id="login-password-input"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="border-border bg-surface rounded border px-3 py-2 text-sm"
+            error={fieldErrors.password}
             data-testid="login-password"
           />
           {fieldErrors.password && (
@@ -133,14 +134,14 @@ export function LoginForm() {
           </p>
         )}
 
-        <button
+        <Button
           type="submit"
           disabled={submitting}
-          className="bg-fg text-bg w-full rounded px-4 py-2 text-sm disabled:opacity-40"
+          className="w-full"
           data-testid="login-submit"
         >
           {submitting ? t.form.login.submitting : t.form.login.submit}
-        </button>
+        </Button>
       </form>
 
       <p className="text-muted text-xs">

@@ -31,6 +31,8 @@ import { useAutoScroll } from "@/hooks/useAutoScroll";
 import { useDeviceType } from "@/hooks/useDeviceType";
 import { Avatar } from "@/components/ui/Avatar";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
 import { LoadEarlierButton } from "@/components/LoadEarlierButton";
@@ -339,36 +341,43 @@ function MessagesPageContent() {
         >
           <div className="flex items-center justify-between pb-3 md:hidden">
             <span className="text-sm font-semibold">{t.title}</span>
-            <button
+            <Button
+              variant="ghost"
+              size="icon-sm"
               onClick={() => setSidebarOpen(false)}
-              className="rounded p-1 hover:bg-surface-hover"
               aria-label="Close sidebar"
             >
-              <IconX size={18} className="text-muted" />
-            </button>
+              <IconX size={18} />
+            </Button>
           </div>
 
           <div className="flex shrink-0 gap-1 rounded-lg bg-surface p-1.5">
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setTab("conversations")}
-              className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+              className={cn(
+                "flex-1 rounded-md px-4 py-2",
                 tab === "conversations"
                   ? "bg-bg text-fg shadow-sm"
-                  : "text-muted hover:text-fg"
-              }`}
+                  : "text-muted",
+              )}
             >
               {t.chats}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setTab("friends")}
-              className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+              className={cn(
+                "flex-1 rounded-md px-4 py-2",
                 tab === "friends"
                   ? "bg-bg text-fg shadow-sm"
-                  : "text-muted hover:text-fg"
-              }`}
+                  : "text-muted",
+              )}
             >
               {t.friends}
-            </button>
+            </Button>
             <Link
               href={`/v1/${params?.lang}${FIND_FRIENDS_PATH}`}
               className="flex items-center rounded-md px-2 text-muted transition-colors hover:bg-surface-hover hover:text-fg"
@@ -380,7 +389,7 @@ function MessagesPageContent() {
 
           {tab === "conversations" && (
             <div className="shrink-0">
-              <input
+              <Input
                 value={findInput}
                 onChange={(e) => {
                   const val = e.target.value;
@@ -388,7 +397,7 @@ function MessagesPageContent() {
                   debouncedSearch(val);
                 }}
                 placeholder={t.searchUsers}
-                className="mt-2 w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm text-fg placeholder:text-muted transition-colors outline-none focus:border-fg"
+                className="mt-2 rounded-lg bg-surface px-4 py-2.5 text-fg focus:border-fg"
               />
               {findResults.length > 0 && (
                 <div className="mt-3 flex flex-col gap-1">
@@ -412,7 +421,9 @@ function MessagesPageContent() {
                         <span className="min-w-0 flex-1 truncate text-sm">
                           {u.name || u.email}
                         </span>
-                        <button
+                        <Button
+                          variant="primary"
+                          size="sm"
                           onClick={async () => {
                             setSentRequestIds((prev) =>
                               new Set(prev).add(u.id),
@@ -422,10 +433,10 @@ function MessagesPageContent() {
                               prev.filter((r) => r.id !== u.id),
                             );
                           }}
-                          className="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
+                          className="rounded-lg text-xs"
                         >
                           {t.add}
-                        </button>
+                        </Button>
                       </div>
                     ))}
                 </div>
@@ -434,11 +445,11 @@ function MessagesPageContent() {
           )}
 
           {tab === "friends" && (
-            <input
+            <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t.searchFriends}
-              className="mt-2 w-full shrink-0 rounded-lg border border-border bg-surface px-4 py-2.5 text-sm transition-colors outline-none focus:border-border focus:bg-surface"
+              className="mt-2 shrink-0 rounded-lg bg-surface px-4 py-2.5 focus:border-border focus:bg-surface"
             />
           )}
 
@@ -469,12 +480,15 @@ function MessagesPageContent() {
             {tab === "conversations" && (
               <div className="flex flex-col gap-0.5">
                 {[...conversations].map((c, i) => (
-                  <button
+                  <Button
                     key={c.user.id}
+                    variant="ghost"
+                    size="sm"
                     onClick={() => openConversation(c.user)}
-                    className={`animate-fade-in-up flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-surface-hover ${
-                      selectedUser?.id === c.user.id ? "bg-brand/10" : ""
-                    }`}
+                    className={cn(
+                      "animate-fade-in-up w-full justify-start gap-3 rounded-lg px-3 py-2.5 text-left",
+                      selectedUser?.id === c.user.id ? "bg-brand/10" : "",
+                    )}
                     style={{ animationDelay: `${i * 20}ms` }}
                   >
                     <div className="relative shrink-0">
@@ -501,7 +515,7 @@ function MessagesPageContent() {
                         {c.lastMessage}
                       </p>
                     </div>
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}
@@ -518,10 +532,12 @@ function MessagesPageContent() {
               ) : (
                 <div className="flex flex-col gap-0.5">
                   {filtered.map((u, i) => (
-                    <button
+                    <Button
                       key={u.id}
+                      variant="ghost"
+                      size="sm"
                       onClick={() => openConversation(u)}
-                      className="animate-fade-in-up flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-surface-hover"
+                      className="animate-fade-in-up w-full justify-start gap-3 rounded-lg px-3 py-2.5 text-left"
                       style={{ animationDelay: `${i * 15}ms` }}
                     >
                       <div className="relative shrink-0">
@@ -538,7 +554,7 @@ function MessagesPageContent() {
                           {u.name || u.email}
                         </span>
                       </div>
-                    </button>
+                    </Button>
                   ))}
               </div>
             );
@@ -560,16 +576,18 @@ function MessagesPageContent() {
           ) : (
           <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-bg">
             <div className="flex items-center gap-3 border-b px-4 py-3">
-              <button
+              <Button
+                variant="ghost"
+                size="icon-sm"
                 onClick={() => {
                   setSelectedUser(null);
                   setSidebarOpen(true);
                 }}
-                className="mr-1 rounded-lg p-1.5 hover:bg-surface-hover md:hidden"
+                className="mr-1 rounded-lg md:hidden"
                 aria-label="Back to conversations"
               >
-                <IconChevronLeft size={18} className="text-muted" />
-              </button>
+                <IconChevronLeft size={18} />
+              </Button>
               <div className="relative shrink-0">
                 <Avatar
                   fallback={initials(selectedUser.name ?? selectedUser.email ?? "?")}
@@ -646,7 +664,7 @@ function MessagesPageContent() {
             )}
             <div className="flex gap-3 border-t px-4 py-3">
               <div className="flex flex-1 flex-col">
-                <input
+                <Input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -659,7 +677,7 @@ function MessagesPageContent() {
                     connectionState === "online" ? t.inputPlaceholder : t.connecting
                   }
                   disabled={connectionState !== "online"}
-                  className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-fg placeholder:text-muted transition-colors outline-none focus:border-fg disabled:opacity-50"
+                  className="rounded-xl bg-surface px-4 py-2.5 text-fg focus:border-fg"
                 />
                 {messageError && (
                   <p className="mt-1.5 text-xs text-red-500">
@@ -667,13 +685,15 @@ function MessagesPageContent() {
                   </p>
                 )}
               </div>
-              <button
+              <Button
+                variant="primary"
+                size="md"
                 onClick={handleSend}
                 disabled={connectionState !== "online" || !input.trim()}
-                className="self-end rounded-xl bg-brand px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="self-end rounded-xl px-5 py-2.5"
               >
                 Send
-              </button>
+              </Button>
             </div>
           </div>
           )

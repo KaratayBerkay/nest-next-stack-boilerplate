@@ -6,6 +6,8 @@ import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
 import { apiFetchJson } from "@/lib/api-client";
 import { IconEye, IconSearch } from "@tabler/icons-react";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 
 interface AuditActor {
   id: string;
@@ -152,14 +154,14 @@ export default function AuditLogsPage() {
           <IconSearch
             size={14}
             stroke={1.5}
-            className="text-muted pointer-events-none absolute top-1/2 left-2 -translate-y-1/2"
+            className="text-muted pointer-events-none absolute top-1/2 left-2 z-10 -translate-y-1/2"
           />
-          <input
+          <Input
             type="text"
             value={entityFilter}
             onChange={(e) => { setEntityFilter(e.target.value); setPage(0); }}
             placeholder="Entity type..."
-            className="border-border bg-surface text-fg w-40 rounded-lg border py-1.5 pr-3 pl-7 text-xs"
+            className="w-40 pl-7 text-xs"
           />
         </div>
       </div>
@@ -230,16 +232,17 @@ export default function AuditLogsPage() {
                     </td>
                     <td className="py-2 pr-2">
                       {Boolean(entry.before || entry.after) && (
-                        <button
+                        <Button
+                          variant="link"
+                          size="xs"
                           onClick={() =>
                             setExpandedId(
                               expandedId === entry.id ? null : entry.id,
                             )
                           }
-                          className="text-brand hover:underline text-[10px]"
                         >
                           {expandedId === entry.id ? "Hide" : "Diff"}
-                        </button>
+                        </Button>
                       )}
                     </td>
                   </tr>
@@ -254,23 +257,25 @@ export default function AuditLogsPage() {
               {total} total entries
             </p>
             <div className="flex items-center gap-2">
-              <button
+              <Button
+                variant="outline"
+                size="xs"
                 disabled={page === 0}
                 onClick={() => setPage((p) => Math.max(0, p - 1))}
-                className="border-border bg-surface text-fg disabled:text-muted rounded-lg border px-2 py-1 text-xs disabled:opacity-50"
               >
                 Prev
-              </button>
+              </Button>
               <span className="text-muted text-[10px]">
                 Page {page + 1} of {totalPages || 1}
               </span>
-              <button
+              <Button
+                variant="outline"
+                size="xs"
                 disabled={page >= totalPages - 1}
                 onClick={() => setPage((p) => p + 1)}
-                className="border-border bg-surface text-fg disabled:text-muted rounded-lg border px-2 py-1 text-xs disabled:opacity-50"
               >
                 Next
-              </button>
+              </Button>
             </div>
           </div>
         </>

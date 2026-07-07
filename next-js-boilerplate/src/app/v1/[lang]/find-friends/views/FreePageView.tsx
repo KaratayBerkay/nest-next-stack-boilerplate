@@ -8,6 +8,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
 import { Avatar } from "@/components/ui/Avatar";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 import { initials } from "@/lib/initials";
 import { apiFetch } from "@/lib/api-client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui";
@@ -243,11 +245,10 @@ function FindFriendsContent({ user: _user }: { user: { id: string } }) {
         </TabsList>
 
         <TabsContent value="add" className="mt-4 flex flex-col gap-4">
-          <input
+          <Input
             value={query}
             onChange={onQueryChange}
             placeholder={t.searchHint}
-            className="w-full rounded border px-3 py-2 text-sm"
           />
 
           <div className="flex flex-col gap-2">

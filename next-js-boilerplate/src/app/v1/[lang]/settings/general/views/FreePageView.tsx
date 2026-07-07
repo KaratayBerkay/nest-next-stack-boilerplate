@@ -8,6 +8,8 @@ import { apiFetchJson } from "@/lib/api-client";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { Label } from "@/components/ui/Label";
+import { Button } from "@/components/ui/Button";
 
 const LOCALES = [
   { value: "en", label: "English" },
@@ -73,7 +75,7 @@ export function FreePageView() {
 
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium">{t.language}</label>
+          <Label>{t.language}</Label>
           <select
             value={locale}
             onChange={(e) => setLocale(e.target.value)}
@@ -86,7 +88,7 @@ export function FreePageView() {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium">{t.timezone}</label>
+          <Label>{t.timezone}</Label>
           <select
             value={timezone}
             onChange={(e) => setTimezone(e.target.value)}
@@ -99,18 +101,19 @@ export function FreePageView() {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium">{t.theme}</label>
+          <Label>{t.theme}</Label>
           <ThemeToggle />
         </div>
       </div>
 
-      <button
+      <Button
         onClick={save}
         disabled={saving}
-        className="bg-brand self-start rounded-lg px-6 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+        variant="primary"
+        className="self-start"
       >
         {saving ? t.saving : t.save}
-      </button>
+      </Button>
     </div>
   );
 }

@@ -7,6 +7,9 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { resetPasswordFormSchema } from "@/lib/validation/auth";
 import { LOGIN_PATH } from "@/constants/routes";
 import { useClientSearchParams } from "@/hooks/useClientSearchParams";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
+import { Button } from "@/components/ui/Button";
 
 export function ResetPasswordForm() {
   const t = useMessages("auth");
@@ -29,7 +32,7 @@ export function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 text-center">
         <h2 className="text-brand text-sm font-semibold">{t.form.resetPassword.title}</h2>
         <p className="text-sm text-red-600">{t.errors.resetPasswordTokenMissing}</p>
       </div>
@@ -38,7 +41,7 @@ export function ResetPasswordForm() {
 
   if (success) {
     return (
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 text-center">
         <h2 className="text-brand text-sm font-semibold">{t.form.resetPassword.title}</h2>
         <p className="text-sm text-green-600">{t.form.resetPassword.success}</p>
         <Link href={LOGIN_PATH} className="text-brand underline text-sm">
@@ -87,22 +90,22 @@ export function ResetPasswordForm() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 text-center">
       <h2 className="text-brand text-sm font-semibold">{t.form.resetPassword.title}</h2>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="reset-password-input" className="text-muted text-xs font-medium">
+        <div className="flex flex-col gap-1 text-left">
+          <Label htmlFor="reset-password-input" required>
             {t.form.resetPassword.passwordLabel}
-          </label>
-          <input
+          </Label>
+          <Input
             id="reset-password-input"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={8}
-            className="border-border bg-surface rounded border px-3 py-2 text-sm"
+            error={fieldErrors.password}
             data-testid="reset-password"
           />
           {fieldErrors.password && (
@@ -110,17 +113,17 @@ export function ResetPasswordForm() {
           )}
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="reset-confirm-password-input" className="text-muted text-xs font-medium">
+        <div className="flex flex-col gap-1 text-left">
+          <Label htmlFor="reset-confirm-password-input" required>
             {t.form.resetPassword.confirmPasswordLabel}
-          </label>
-          <input
+          </Label>
+          <Input
             id="reset-confirm-password-input"
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
-            className="border-border bg-surface rounded border px-3 py-2 text-sm"
+            error={fieldErrors.confirmPassword}
             data-testid="reset-confirm-password"
           />
           {fieldErrors.confirmPassword && (
@@ -134,14 +137,14 @@ export function ResetPasswordForm() {
           </p>
         )}
 
-        <button
+        <Button
           type="submit"
           disabled={submitting}
-          className="bg-fg text-bg self-start rounded px-4 py-2 text-sm disabled:opacity-40"
+          className="w-full"
           data-testid="reset-submit"
         >
           {submitting ? t.form.resetPassword.submitting : t.form.resetPassword.submit}
-        </button>
+        </Button>
       </form>
     </div>
   );

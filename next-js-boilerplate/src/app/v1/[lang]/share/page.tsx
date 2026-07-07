@@ -3,6 +3,10 @@
 import { apiFetch } from "@/lib/api-client";
 import { useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
+import { Textarea } from "@/components/ui/Textarea";
+import { Button } from "@/components/ui/Button";
 
 export default function SharePage() {
   const params = useParams<{ lang: string }>();
@@ -82,10 +86,8 @@ export default function SharePage() {
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <label htmlFor="title" className="text-muted text-xs font-medium">
-            Title
-          </label>
-          <input
+          <Label htmlFor="title">Title</Label>
+          <Input
             id="title"
             type="text"
             value={title}
@@ -94,29 +96,23 @@ export default function SharePage() {
             minLength={3}
             maxLength={200}
             placeholder="What's on your mind?"
-            className="border-border bg-surface rounded-lg border px-3 py-2 text-sm"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="content" className="text-muted text-xs font-medium">
-            Content
-          </label>
-          <textarea
+          <Label htmlFor="content">Content</Label>
+          <Textarea
             id="content"
             value={content}
             onChange={(e) => setContent(e.target.value)}
             required
             rows={6}
             placeholder="Write something..."
-            className="border-border bg-surface min-h-[120px] rounded-lg border px-3 py-2 text-sm"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-muted text-xs font-medium">
-            Image (optional)
-          </label>
+          <Label>Image (optional)</Label>
           <input
             ref={fileRef}
             type="file"
@@ -155,8 +151,10 @@ export default function SharePage() {
               {uploadError && (
                 <div className="mt-2 flex items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-xs text-red-600">
                   <span>Image couldn&apos;t be uploaded.</span>
-                  <button
+                  <Button
                     type="button"
+                    variant="link"
+                    size="xs"
                     onClick={() => {
                       setFile(null);
                       setPreview(null);
@@ -164,20 +162,20 @@ export default function SharePage() {
                       coverImageRef.current = undefined;
                       if (fileRef.current) fileRef.current.value = "";
                     }}
-                    className="ml-auto rounded px-2 py-0.5 font-medium underline hover:no-underline"
                   >
                     Remove
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="link"
+                    size="xs"
                     onClick={async () => {
                       setUploadError(false);
                       coverImageRef.current = undefined;
                     }}
-                    className="rounded px-2 py-0.5 font-medium underline hover:no-underline"
                   >
                     Retry
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
@@ -190,15 +188,16 @@ export default function SharePage() {
           </p>
         )}
 
-        <button
+        <Button
           type="submit"
+          variant="primary"
           disabled={
             !title.trim() || !content.trim() || submitting || uploadError
           }
-          className="bg-brand self-start rounded-lg px-6 py-2 text-sm font-medium text-white disabled:opacity-40"
+          className="self-start"
         >
           {submitting ? "Sharing..." : "Share"}
-        </button>
+        </Button>
       </form>
     </div>
   );

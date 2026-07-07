@@ -7,6 +7,9 @@ import {
 } from "@/lib/validation/billing";
 import { apiFetchJson } from "@/lib/api-client";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
+import { Button } from "@/components/ui/Button";
 
 interface MockCardFormProps {
   tier: string;
@@ -131,23 +134,22 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
         <p className="mb-3 text-sm text-muted">{t.testCards}</p>
         <div className="flex flex-wrap gap-2">
           {TEST_CARDS.map((tc) => (
-            <button
+            <Button
               key={tc.last4}
               type="button"
-              className="rounded border border-border px-2 py-1 text-xs hover:bg-accent"
+              variant="outline"
+              size="xs"
               onClick={() => fillTestCard(tc.last4)}
               data-testid={`test-card-${tc.last4}`}
             >
               {tc.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
 
       <div>
-        <label htmlFor="cardNumber" className="block text-sm font-medium">
-          {t.cardNumber}
-        </label>
+        <Label htmlFor="cardNumber">{t.cardNumber}</Label>
         <div ref={containerRef} className="mt-1 flex gap-2">
           {blocks.map((block, i) => (
             <input
@@ -173,10 +175,8 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
 
       <div className="grid grid-cols-3 gap-3">
         <div>
-          <label htmlFor="expMonth" className="block text-sm font-medium">
-            {t.month}
-          </label>
-          <input
+          <Label htmlFor="expMonth">{t.month}</Label>
+          <Input
             id="expMonth"
             data-testid="exp-month"
             type="text"
@@ -185,14 +185,12 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
             maxLength={2}
             value={expMonth}
             onChange={(e) => setExpMonth(e.target.value.replace(/\D/g, "").slice(0, 2))}
-            className="mt-1 block w-full rounded border border-border bg-bg px-3 py-2 text-sm"
+            className="mt-1"
           />
         </div>
         <div>
-          <label htmlFor="expYear" className="block text-sm font-medium">
-            {t.year}
-          </label>
-          <input
+          <Label htmlFor="expYear">{t.year}</Label>
+          <Input
             id="expYear"
             data-testid="exp-year"
             type="text"
@@ -201,14 +199,12 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
             maxLength={2}
             value={expYear}
             onChange={(e) => setExpYear(e.target.value.replace(/\D/g, "").slice(0, 2))}
-            className="mt-1 block w-full rounded border border-border bg-bg px-3 py-2 text-sm"
+            className="mt-1"
           />
         </div>
         <div>
-          <label htmlFor="cvc" className="block text-sm font-medium">
-            CVC
-          </label>
-          <input
+          <Label htmlFor="cvc">CVC</Label>
+          <Input
             id="cvc"
             data-testid="cvc"
             type="text"
@@ -217,7 +213,7 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
             maxLength={4}
             value={cvc}
             onChange={(e) => setCvc(e.target.value.replace(/\D/g, "").slice(0, 4))}
-            className="mt-1 block w-full rounded border border-border bg-bg px-3 py-2 text-sm"
+            className="mt-1"
           />
         </div>
       </div>
@@ -228,17 +224,15 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
       )}
 
       <div>
-        <label htmlFor="cardholderName" className="block text-sm font-medium">
-          {t.cardholderName}
-        </label>
-        <input
+        <Label htmlFor="cardholderName">{t.cardholderName}</Label>
+        <Input
           id="cardholderName"
           data-testid="cardholder-name"
           type="text"
           autoComplete="cc-name"
           value={cardholderName}
           onChange={(e) => setCardholderName(e.target.value)}
-          className="mt-1 block w-full rounded border border-border bg-bg px-3 py-2 text-sm"
+          className="mt-1"
         />
         {fieldErrors.cardholderName && (
           <p className="mt-0.5 text-xs text-red-600">{fieldErrors.cardholderName}</p>
@@ -251,14 +245,15 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
         </p>
       )}
 
-      <button
+      <Button
         type="submit"
         disabled={submitting}
+        variant="primary"
+        className="w-full"
         data-testid="submit-payment"
-        className="w-full rounded bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand/90 disabled:opacity-50"
       >
         {submitting ? t.processing : t.subscribeTo.replace("{tier}", tier)}
-      </button>
+      </Button>
     </form>
   );
 }

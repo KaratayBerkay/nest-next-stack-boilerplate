@@ -6,6 +6,8 @@ import { useParams } from "next/navigation";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
 import { Switch } from "@/components/ui/Switch";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 
 export function FreePageView() {
   const params = useParams<{ lang: string }>();
@@ -43,11 +45,11 @@ export function FreePageView() {
             <Switch checked={useNickname} onChange={(e) => setUseNickname(e.target.checked)} />
           </div>
           {useNickname && (
-            <input
+            <Input
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               placeholder={t.privacyNicknamePlaceholder}
-              className="mt-3 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-fg"
+              className="mt-3"
             />
           )}
         </div>
@@ -61,12 +63,13 @@ export function FreePageView() {
         </div>
       </div>
 
-      <button
+      <Button
         onClick={handleSave}
-        className="self-start rounded-lg bg-brand px-6 py-2 text-sm font-medium text-white hover:opacity-90"
+        variant="primary"
+        className="self-start"
       >
         {t.save}
-      </button>
+      </Button>
 
       <p className="text-xs text-muted">
         {t.privacySessionsNote}

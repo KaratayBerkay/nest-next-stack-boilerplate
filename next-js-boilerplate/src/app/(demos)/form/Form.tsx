@@ -12,6 +12,9 @@ import type { AnyFieldApi } from "@tanstack/react-form";
 import { z } from "zod";
 import { signupFormOpts } from "@/lib/forms/signup-options";
 import { signupAction } from "@/features/auth/actions/signup";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
+import { Button } from "@/components/ui/Button";
 
 // Per-field schemas. Using field-level validators (rather than a single
 // form-level schema) keeps each field's errors independent: blurring one field
@@ -90,20 +93,14 @@ export function SignupForm() {
       >
         {(field) => (
           <div className="flex flex-col gap-1">
-            <label
-              htmlFor={field.name}
-              className="text-muted text-xs font-semibold"
-            >
-              Name
-            </label>
-            <input
+            <Label htmlFor={field.name}>Name</Label>
+            <Input
               id={field.name}
               name={field.name}
               type="text"
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              className="border-border bg-surface rounded px-3 py-2 text-sm"
               data-testid="field-name"
             />
             <FieldInfo field={field} />
@@ -120,20 +117,14 @@ export function SignupForm() {
       >
         {(field) => (
           <div className="flex flex-col gap-1">
-            <label
-              htmlFor={field.name}
-              className="text-muted text-xs font-semibold"
-            >
-              Email
-            </label>
-            <input
+            <Label htmlFor={field.name}>Email</Label>
+            <Input
               id={field.name}
               name={field.name}
               type="email"
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              className="border-border bg-surface rounded px-3 py-2 text-sm"
               data-testid="field-email"
             />
             <FieldInfo field={field} />
@@ -147,20 +138,14 @@ export function SignupForm() {
       >
         {(field) => (
           <div className="flex flex-col gap-1">
-            <label
-              htmlFor={field.name}
-              className="text-muted text-xs font-semibold"
-            >
-              Age
-            </label>
-            <input
+            <Label htmlFor={field.name}>Age</Label>
+            <Input
               id={field.name}
               name={field.name}
               type="number"
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(Number(e.target.value))}
-              className="border-border bg-surface rounded px-3 py-2 text-sm"
               data-testid="field-age"
             />
             <FieldInfo field={field} />
@@ -170,14 +155,14 @@ export function SignupForm() {
 
       <form.Subscribe selector={(s) => [s.canSubmit, s.isSubmitting]}>
         {([canSubmit, isSubmitting]) => (
-          <button
+          <Button
             type="submit"
             disabled={!canSubmit}
-            className="bg-fg text-bg self-start rounded px-4 py-2 text-sm disabled:opacity-40"
+            className="self-start"
             data-testid="form-submit"
           >
             {isSubmitting ? "Submitting..." : "Submit"}
-          </button>
+          </Button>
         )}
       </form.Subscribe>
     </form>

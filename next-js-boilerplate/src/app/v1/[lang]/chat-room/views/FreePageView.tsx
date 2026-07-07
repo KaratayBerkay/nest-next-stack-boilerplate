@@ -18,6 +18,8 @@ import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 import { useConnectionState } from "@/hooks/useConnectionState";
 import { ConnectionUnstable } from "@/components/ConnectionUnstable";
 import { ScrollToBottomButton } from "@/components/ui/ScrollToBottomButton";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 import { SkeletonChatMessage } from "@/components/ui/skeleton-shapes";
 import { useRouter } from "next/navigation";
 import { useClientSearchParams } from "@/hooks/useClientSearchParams";
@@ -147,13 +149,14 @@ function ChatRoomContent() {
         >
           <div className="flex items-center justify-between pb-3 md:hidden">
             <p className="text-xs font-semibold uppercase text-muted">Rooms</p>
-            <button
+            <Button
+              variant="ghost"
+              size="icon-sm"
               onClick={() => setSidebarOpen(false)}
-              className="rounded p-1 hover:bg-surface-hover"
               aria-label="Close rooms sidebar"
             >
-              <IconX size={18} className="text-muted" />
-            </button>
+              <IconX size={18} />
+            </Button>
           </div>
 
           <Tabs defaultValue="rooms" className="flex flex-1 flex-col">
@@ -173,20 +176,23 @@ function ChatRoomContent() {
               {CHAT_ROOMS.map((r) => {
                 const count = roomCounts[r] ?? 0;
                 return (
-                  <button
+                  <Button
                     key={r}
+                    variant="ghost"
+                    size="sm"
                     onClick={() => selectRoom(r)}
-                    className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                    className={cn(
+                      "w-full justify-between gap-2 rounded-lg px-3 py-2",
                       room === r
-                        ? "bg-brand text-white"
-                        : "text-muted hover:bg-surface-hover"
-                    }`}
+                        ? "bg-brand text-white hover:bg-brand/90"
+                        : "text-muted",
+                    )}
                   >
                     <span># {r}</span>
                     {count > 0 && (
                       <span className="text-[10px] opacity-60">{count}</span>
                     )}
-                  </button>
+                  </Button>
                 );
               })}
             </TabsContent>
@@ -223,9 +229,11 @@ function ChatRoomContent() {
         ) : (
         <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border">
           <div className="flex items-center gap-2 border-b px-4 py-3">
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setSidebarOpen(true)}
-              className="flex w-full items-center gap-2 md:hidden hover:bg-surface-hover"
+              className="w-full justify-start gap-2 md:hidden"
               aria-label={t.openRooms}
             >
               <IconMenu2 size={18} className="shrink-0 text-muted" />
@@ -233,7 +241,7 @@ function ChatRoomContent() {
               <span className="text-xs text-muted">
                 {t.countOnline.replace("{count}", String(roomCounts[room] ?? 0))}
               </span>
-            </button>
+            </Button>
             <div className="hidden items-center gap-2 md:flex">
               <span className="text-sm font-semibold"># {room}</span>
               <span className="text-xs text-muted">
@@ -309,7 +317,7 @@ function ChatRoomContent() {
 
           <div className="flex gap-2 border-t p-2">
             <div className="flex flex-1 flex-col">
-              <input
+              <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -326,16 +334,17 @@ function ChatRoomContent() {
                       : t.disconnected
                 }
                 disabled={connectionState !== "online"}
-                className="rounded border px-3 py-2 text-sm disabled:opacity-50"
               />
             </div>
-            <button
+            <Button
+              variant="primary"
+              size="sm"
               onClick={handleSend}
               disabled={connectionState !== "online" || !input.trim()}
-              className="rounded-lg bg-brand px-4 py-2 text-sm text-white disabled:opacity-50"
+              className="rounded-lg px-4 py-2"
             >
               {t.send}
-            </button>
+            </Button>
           </div>
         </div>
         )}
