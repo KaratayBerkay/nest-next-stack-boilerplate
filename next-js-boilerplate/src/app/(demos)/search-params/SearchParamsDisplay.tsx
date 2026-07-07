@@ -1,9 +1,9 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useClientSearchParams } from "@/hooks/useClientSearchParams";
 
 export function SearchParamsDisplay() {
-  const params = useSearchParams();
+  const params = useClientSearchParams();
   const name = params?.get("name") ?? "unknown";
   const category = params?.get("category") ?? "none";
 

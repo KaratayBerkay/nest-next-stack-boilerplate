@@ -13,7 +13,8 @@ import {
 import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useAuth } from "@/hooks/useAuth";
-import { useSearchParams, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useClientSearchParams } from "@/hooks/useClientSearchParams";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { FIND_FRIENDS_PATH } from "@/constants/routes";
@@ -104,7 +105,7 @@ function MessagesPageContent() {
   const t = useMessages("messages");
   const { user, loading } = useAuth();
   const realtime = useRealtime();
-  const searchParams = useSearchParams();
+  const searchParams = useClientSearchParams();
   const params = useParams<{ lang: string }>();
   const [selectedUser, setSelectedUser] = useState<UserInfo | null>(null);
   const { data: friends = [] } = useQuery<UserInfo[]>({

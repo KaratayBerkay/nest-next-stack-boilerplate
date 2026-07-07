@@ -1,15 +1,5 @@
 import { Suspense } from "react";
-import { cookies } from "next/headers";
-
-async function DynamicGreeting() {
-  const cookieStore = await cookies();
-  const name = cookieStore.get("name")?.value ?? "Guest";
-  return (
-    <p className="text-muted text-sm" data-testid="ppr-greeting">
-      Hello, {name}!
-    </p>
-  );
-}
+import { DynamicGreeting } from "./DynamicGreeting";
 
 export default function PprPage() {
   return (

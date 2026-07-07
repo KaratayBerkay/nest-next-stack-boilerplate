@@ -18,7 +18,8 @@ import { useConnectionState } from "@/hooks/useConnectionState";
 import { ConnectionUnstable } from "@/components/ConnectionUnstable";
 import { ScrollToBottomButton } from "@/components/ui/ScrollToBottomButton";
 import { SkeletonChatMessage } from "@/components/ui/skeleton-shapes";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useClientSearchParams } from "@/hooks/useClientSearchParams";
 import { CHAT_ROOMS } from "@/constants/chat";
 
 const VIP_ROOMS = ["vip-lounge"];
@@ -27,7 +28,7 @@ function ChatRoomContent() {
   const t = useMessages("chat-room");
   const { user, loading } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useClientSearchParams();
   const initialRoom = searchParams?.get("room") || "general";
   const [room, setRoom] = useState<string>(initialRoom);
   const [sidebarOpen, setSidebarOpen] = useState(false);

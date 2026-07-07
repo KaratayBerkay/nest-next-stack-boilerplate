@@ -1,21 +1,11 @@
-import { connection } from "next/server";
 import { Suspense } from "react";
+import { Timestamp } from "./Timestamp";
 
 function getServerData() {
   return {
     message:
       "This data was rendered on the server. It appears in the initial HTML.",
   };
-}
-
-async function Timestamp() {
-  await connection();
-  const renderedAt = new Date().toISOString();
-  return (
-    <span className="font-mono" data-testid="ssr-timestamp">
-      {renderedAt}
-    </span>
-  );
 }
 
 export default function SsrPage() {

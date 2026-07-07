@@ -1,16 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { resetPasswordFormSchema } from "@/lib/validation/auth";
 import { LOGIN_PATH } from "@/constants/routes";
+import { useClientSearchParams } from "@/hooks/useClientSearchParams";
 
 export function ResetPasswordForm() {
   const t = useMessages("auth");
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useClientSearchParams();
   const token = searchParams?.get("token") ?? "";
 
   const [password, setPassword] = useState("");

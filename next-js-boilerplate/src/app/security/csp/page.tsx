@@ -1,27 +1,6 @@
-import { headers } from "next/headers";
 import { Suspense } from "react";
 import { containerClass } from "@/constants/site";
-
-// Reading `headers()` opts this segment into dynamic rendering, which is what a
-// per-request nonce requires. Kept inside <Suspense> so the rest can stream.
-async function NoncePanel() {
-  const nonce = (await headers()).get("x-nonce");
-
-  return (
-    <div
-      className="flex flex-col gap-1 rounded border p-3 text-sm"
-      data-testid="csp-nonce-panel"
-    >
-      <span className="text-muted">
-        Per-request nonce (from the <code className="text-brand">x-nonce</code>{" "}
-        request header set by <code className="text-brand">proxy.ts</code>):
-      </span>
-      <span className="font-mono break-all" data-testid="csp-nonce">
-        {nonce ?? "(none)"}
-      </span>
-    </div>
-  );
-}
+import { NoncePanel } from "./NoncePanel";
 
 export default function CspPage() {
   return (

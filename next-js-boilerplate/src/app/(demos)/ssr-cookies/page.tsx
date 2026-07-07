@@ -1,26 +1,6 @@
-import { cookies } from "next/headers";
 import { Suspense } from "react";
 import { AuthStatus } from "@/features/auth/ui/AuthStatus";
-
-async function CookieStatus() {
-  const cookieStore = await cookies();
-  const accessToken = cookieStore.get("access_token");
-
-  return (
-    <div
-      className="flex flex-col gap-1 rounded border p-3 text-sm"
-      data-testid="ssr-cookie-status"
-    >
-      {accessToken ? (
-        <span className="text-green-600">
-          Authenticated (access token present)
-        </span>
-      ) : (
-        <span className="text-zinc-500">Not authenticated</span>
-      )}
-    </div>
-  );
-}
+import { CookieStatus } from "./CookieStatus";
 
 export default function SsrCookiesPage() {
   return (

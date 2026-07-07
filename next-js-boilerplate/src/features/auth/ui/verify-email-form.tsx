@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { LOGIN_PATH } from "@/constants/routes";
+import { useClientSearchParams } from "@/hooks/useClientSearchParams";
 
 export function VerifyEmailForm() {
   const t = useMessages("auth");
-  const searchParams = useSearchParams();
+  const searchParams = useClientSearchParams();
   const token = searchParams?.get("token") ?? "";
 
   const [status, setStatus] = useState<"verifying" | "success" | "error">(

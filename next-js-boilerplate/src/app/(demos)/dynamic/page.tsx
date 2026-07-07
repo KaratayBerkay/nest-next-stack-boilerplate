@@ -1,14 +1,5 @@
-import { connection } from "next/server";
 import { Suspense } from "react";
-
-async function Timestamp() {
-  await connection();
-  return (
-    <span className="font-mono" data-testid="dynamic-timestamp">
-      {new Date().toISOString()}
-    </span>
-  );
-}
+import { Timestamp } from "./Timestamp";
 
 export default function DynamicPage() {
   return (
