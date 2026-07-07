@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, Suspense } from "react";
+import { useState, useCallback, useEffect, Suspense, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
 import { CHAT_ROOMS } from "@/constants/chat";
@@ -92,6 +92,7 @@ function ChatRoomContent() {
   }, [input, scrollToBottom, realtime, room]);
 
   const connectionState = useConnectionState();
+  const onlineUserIds = useMemo(() => new Set(roomMembers.map(m => m.id)), [roomMembers]);
 
   const selectRoom = useCallback((r: string) => {
     setRoom(r);
@@ -202,7 +203,13 @@ function ChatRoomContent() {
                     key={m.id}
                     className="flex items-center gap-2 rounded-lg px-3 py-2"
                   >
-                    <span className="h-2 w-2 rounded-full bg-green-500" />
+                    <div className="relative shrink-0">
+                      <Avatar
+                        fallback={initials(m.name)}
+                        className="h-7 w-7 bg-brand text-[9px] text-white"
+                      />
+                      <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full border-2 border-bg bg-green-500" />
+                    </div>
                     <span className="text-sm text-fg">{m.name}</span>
                   </div>
                 ))
@@ -266,10 +273,15 @@ function ChatRoomContent() {
                   style={{ animationDelay: `${i * 15}ms` }}
                 >
                   {!isMe && (
-                    <Avatar
-                      fallback={initials(msg.senderName)}
-                      className="mt-0.5 h-6 w-6 shrink-0 bg-brand text-[9px] text-white"
-                    />
+                    <div className="relative shrink-0">
+                      <Avatar
+                        fallback={initials(msg.senderName)}
+                        className="mt-0.5 h-6 w-6 bg-brand text-[9px] text-white"
+                      />
+                      {onlineUserIds.has(msg.senderId) && (
+                        <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full border-2 border-bg bg-green-500" />
+                      )}
+                    </div>
                   )}
                   <div className={`max-w-[70%] ${isMe ? "items-end" : ""}`}>
                     {!isMe && (
