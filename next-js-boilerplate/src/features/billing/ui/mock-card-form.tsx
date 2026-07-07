@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useMemo } from "react";
 import {
   mockCardFormSchema,
   getLast4,
 } from "@/lib/validation/billing";
 import { apiFetchJson } from "@/lib/api-client";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { getToday } from "@/lib/date-time";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
@@ -23,6 +24,17 @@ const TEST_CARDS = [
   { last4: "9995", label: "9995 — Insufficient funds" },
 ];
 
+const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) =>
+  String(i + 1).padStart(2, "0"),
+);
+
+function getYearOptions(): string[] {
+  const current = (getToday("year") as number) % 100;
+  return Array.from({ length: 12 }, (_, i) =>
+    String((current + i) % 100).padStart(2, "0"),
+  );
+}
+
 export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
   const t = useMessages("checkout");
   const [expMonth, setExpMonth] = useState("");
@@ -31,6 +43,8 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
   const [cardholderName, setCardholderName] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+
+  const yearOptions = useMemo(() => getYearOptions(), []);
 
   const errors = {
     cardNumberRequired: t.cardNumberRequired,
@@ -72,6 +86,14 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
     const full = last4.padStart(16, "0");
     setBlocks([full.slice(0, 4), full.slice(4, 8), full.slice(8, 12), full.slice(12, 16)]);
   }, []);
+
+  const fillMockData = useCallback(() => {
+    fillTestCard("4242");
+    setExpMonth("12");
+    setExpYear(String(((getToday("year") as number) + 3) % 100).padStart(2, "0"));
+    setCvc("123");
+    setCardholderName("John Doe");
+  }, [fillTestCard]);
 
   const schema = mockCardFormSchema(errors);
 
@@ -145,6 +167,15 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
               {tc.label}
             </Button>
           ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="xs"
+            onClick={fillMockData}
+            data-testid="fill-mock-data"
+          >
+            Fill mock data
+          </Button>
         </div>
       </div>
 
@@ -174,33 +205,51 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <div>
+        <div className="relative">
           <Label htmlFor="expMonth">{t.month}</Label>
-          <Input
+          <input
             id="expMonth"
             data-testid="exp-month"
             type="text"
             inputMode="numeric"
             placeholder={t.mm}
             maxLength={2}
+            list="expiry-months"
             value={expMonth}
             onChange={(e) => setExpMonth(e.target.value.replace(/\D/g, "").slice(0, 2))}
-            className="mt-1"
+            className="border-border bg-bg focus-visible:ring-brand mt-1 flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-sm focus-visible:ring-2 focus-visible:outline-none"
           />
+          <datalist id="expiry-months">
+            {MONTH_OPTIONS.map((m) => (
+              <option key={m} value={m} />
+            ))}
+          </datalist>
+          {fieldErrors.expMonth && (
+            <p className="mt-0.5 text-xs text-red-600">{fieldErrors.expMonth}</p>
+          )}
         </div>
-        <div>
+        <div className="relative">
           <Label htmlFor="expYear">{t.year}</Label>
-          <Input
+          <input
             id="expYear"
             data-testid="exp-year"
             type="text"
             inputMode="numeric"
             placeholder={t.yy}
             maxLength={2}
+            list="expiry-years"
             value={expYear}
             onChange={(e) => setExpYear(e.target.value.replace(/\D/g, "").slice(0, 2))}
-            className="mt-1"
+            className="border-border bg-bg focus-visible:ring-brand mt-1 flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-sm focus-visible:ring-2 focus-visible:outline-none"
           />
+          <datalist id="expiry-years">
+            {yearOptions.map((y) => (
+              <option key={y} value={y} />
+            ))}
+          </datalist>
+          {fieldErrors.expYear && (
+            <p className="mt-0.5 text-xs text-red-600">{fieldErrors.expYear}</p>
+          )}
         </div>
         <div>
           <Label htmlFor="cvc">CVC</Label>
@@ -215,12 +264,13 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
             onChange={(e) => setCvc(e.target.value.replace(/\D/g, "").slice(0, 4))}
             className="mt-1"
           />
+          {fieldErrors.cvc && (
+            <p className="mt-0.5 text-xs text-red-600">{fieldErrors.cvc}</p>
+          )}
         </div>
       </div>
-      {(fieldErrors.expiry || fieldErrors.form) && (
-        <p className="text-xs text-red-600">
-          {fieldErrors.expiry ?? fieldErrors.form}
-        </p>
+      {fieldErrors.expiry && !fieldErrors.expMonth && !fieldErrors.expYear && (
+        <p className="text-xs text-red-600">{fieldErrors.expiry}</p>
       )}
 
       <div>
@@ -239,7 +289,7 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
         )}
       </div>
 
-      {fieldErrors.form && !fieldErrors.expiry && (
+      {fieldErrors.form && (
         <p className="text-sm text-red-600" data-testid="form-error">
           {fieldErrors.form}
         </p>
