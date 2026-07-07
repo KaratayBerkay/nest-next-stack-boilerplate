@@ -25,7 +25,7 @@ export function StripeCardForm({
     })
       .then((data) => setClientSecret(data.clientSecret))
       .catch((err) => {
-        onError((err as { msg?: string }).msg ?? "Failed to initialize payment");
+        onError((err as Error).message ?? "Failed to initialize payment");
         setLoading(false);
       });
   }, [tier, onError]);
@@ -107,7 +107,7 @@ function StripeCardFormInner({
       });
       onSuccess();
     } catch (err) {
-      onError((err as { msg?: string }).msg ?? "Subscription failed");
+      onError((err as Error).message ?? "Subscription failed");
     } finally {
       setSubmitting(false);
     }
