@@ -1,0 +1,58 @@
+"use client";
+
+import { createContext, useContext, useRef, useState } from "react";
+
+interface SelectContextValue {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  value: string | undefined;
+  onValueChange: (value: string) => void;
+  labelMap: React.MutableRefObject<Map<string, string>>;
+  triggerRef: React.RefObject<HTMLButtonElement | null>;
+  contentRef: React.RefObject<HTMLDivElement | null>;
+}
+
+const SelectContext = createContext<SelectContextValue | null>(null);
+
+export function useSelect() {
+  const context = useContext(SelectContext);
+  if (!context) {
+    throw new Error("Select components must be used within a Select");
+  }
+  return context;
+}
+
+interface SelectProps {
+  children: React.ReactNode;
+  value?: string;
+  onValueChange: (value: string) => void;
+  defaultOpen?: boolean;
+}
+
+export function Select({
+  children,
+  value,
+  onValueChange,
+  defaultOpen = false,
+}: SelectProps) {
+  const [open, setOpen] = useState(defaultOpen);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const labelMap = useRef(new Map<string, string>());
+
+  return (
+    <SelectContext.Provider
+      value={{
+        open,
+        setOpen,
+        value,
+        onValueChange,
+        labelMap,
+        triggerRef,
+        contentRef,
+      }}
+    >
+      {children}
+    </SelectContext.Provider>
+  );
+}

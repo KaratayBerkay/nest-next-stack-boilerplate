@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { Counter } from "@/components/ui/Counter";
+import { Counter } from "./counter";
 
 describe("Counter", () => {
   it("increments its click count", () => {

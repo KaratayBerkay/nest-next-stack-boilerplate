@@ -1,0 +1,46 @@
+"use client";
+
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+
+interface PopoverContextValue {
+  open: boolean;
+  toggle: () => void;
+  close: () => void;
+  triggerRef: React.RefObject<HTMLButtonElement | null>;
+}
+
+const PopoverContext = createContext<PopoverContextValue | null>(null);
+
+export function usePopover() {
+  const context = useContext(PopoverContext);
+  if (!context) {
+    throw new Error("Popover components must be used within a Popover");
+  }
+  return context;
+}
+
+interface PopoverProps {
+  children: ReactNode;
+  defaultOpen?: boolean;
+}
+
+export function Popover({ children, defaultOpen = false }: PopoverProps) {
+  const [open, setOpen] = useState(defaultOpen);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  const toggle = useCallback(() => setOpen((prev) => !prev), []);
+  const close = useCallback(() => setOpen(false), []);
+
+  return (
+    <PopoverContext.Provider value={{ open, toggle, close, triggerRef }}>
+      {children}
+    </PopoverContext.Provider>
+  );
+}

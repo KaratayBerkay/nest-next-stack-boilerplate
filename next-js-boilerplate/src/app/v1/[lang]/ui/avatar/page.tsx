@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Avatar } from "@/components/ui/Avatar";
+import { Avatar, AvatarGroup } from "@/components/ui/Avatar";
 
 async function Content() {
   return (
@@ -61,6 +61,42 @@ async function Content() {
         <div className="flex items-center gap-4">
           <Avatar fallback="CN" size="md" data-testid="avatar-fallback" />
         </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h3 className="text-lg font-semibold">Avatar Group</h3>
+        <AvatarGroup data-testid="avatar-group">
+          <Avatar
+            src="https://i.pravatar.cc/80?img=3"
+            alt="User"
+            fallback="AL"
+            size="md"
+          />
+          <Avatar
+            src="https://i.pravatar.cc/80?img=4"
+            alt="User"
+            fallback="BM"
+            size="md"
+          />
+          <Avatar
+            src="https://i.pravatar.cc/80?img=5"
+            alt="User"
+            fallback="CK"
+            size="md"
+          />
+          <Avatar
+            src="https://i.pravatar.cc/80?img=6"
+            alt="User"
+            fallback="DJ"
+            size="md"
+          />
+          <Avatar
+            src="https://i.pravatar.cc/80?img=7"
+            alt="User"
+            fallback="ER"
+            size="md"
+          />
+        </AvatarGroup>
       </section>
     </div>
   );

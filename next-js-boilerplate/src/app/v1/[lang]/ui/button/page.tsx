@@ -1,7 +1,11 @@
-import { Suspense } from "react";
-import { Button } from "@/components/ui/Button";
+"use client";
 
-async function Content() {
+import { useState } from "react";
+import { Button, IconButton, ButtonGroup, ButtonGroupItem } from "@/components/ui/Button";
+
+export default function ButtonPage() {
+  const [groupValue, setGroupValue] = useState("list");
+
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-xl font-bold">Button</h2>
@@ -104,6 +108,94 @@ async function Content() {
       </section>
 
       <section className="flex flex-col gap-3">
+        <h3 className="text-lg font-semibold">Icon Buttons</h3>
+        <div className="flex flex-wrap items-center gap-3">
+          <IconButton
+            icon={
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+            }
+            label="Search"
+            variant="ghost"
+            size="icon"
+            data-testid="icon-button-search"
+          />
+          <IconButton
+            icon={
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 12a9 9 0 1 0 18 0 9 9 0 1 0-18 0" />
+                <path d="M9 12h6" />
+              </svg>
+            }
+            label="Minus"
+            variant="outline"
+            size="icon-sm"
+            data-testid="icon-button-minus"
+          />
+          <IconButton
+            icon={
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+            }
+            label="Close"
+            variant="destructive"
+            size="icon-xs"
+            data-testid="icon-button-close"
+          />
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h3 className="text-lg font-semibold">Button Group</h3>
+        <ButtonGroup data-testid="button-group">
+          <ButtonGroupItem
+            active={groupValue === "list"}
+            onClick={() => setGroupValue("list")}
+            data-testid="button-group-list"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-1">
+              <line x1="8" x2="21" y1="6" y2="6" />
+              <line x1="8" x2="21" y1="12" y2="12" />
+              <line x1="8" x2="21" y1="18" y2="18" />
+              <line x1="3" x2="3.01" y1="6" y2="6" />
+              <line x1="3" x2="3.01" y1="12" y2="12" />
+              <line x1="3" x2="3.01" y1="18" y2="18" />
+            </svg>
+            List
+          </ButtonGroupItem>
+          <ButtonGroupItem
+            active={groupValue === "grid"}
+            onClick={() => setGroupValue("grid")}
+            data-testid="button-group-grid"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-1">
+              <rect x="3" y="3" width="7" height="7" />
+              <rect x="14" y="3" width="7" height="7" />
+              <rect x="3" y="14" width="7" height="7" />
+              <rect x="14" y="14" width="7" height="7" />
+            </svg>
+            Grid
+          </ButtonGroupItem>
+          <ButtonGroupItem
+            active={groupValue === "card"}
+            onClick={() => setGroupValue("card")}
+            data-testid="button-group-card"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-1">
+              <rect x="2" y="3" width="20" height="14" rx="2" />
+              <line x1="2" x2="22" y1="9" y2="9" />
+            </svg>
+            Card
+          </ButtonGroupItem>
+        </ButtonGroup>
+        <p className="text-muted text-xs">Selected view: {groupValue}</p>
+      </section>
+
+      <section className="flex flex-col gap-3">
         <h3 className="text-lg font-semibold">Disabled</h3>
         <div className="flex flex-wrap items-center gap-3">
           <Button disabled data-testid="button-disabled-default">
@@ -133,13 +225,5 @@ async function Content() {
         </div>
       </section>
     </div>
-  );
-}
-
-export default function Page() {
-  return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading...</p>}>
-      <Content />
-    </Suspense>
   );
 }

@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Badge } from "@/components/ui/Badge";
+import { Badge, BadgeButton } from "@/components/ui/Badge";
 
 async function Content() {
   return (
@@ -27,6 +27,27 @@ async function Content() {
           <Badge variant="success" data-testid="badge-success">
             Success
           </Badge>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h3 className="text-lg font-semibold">Button Badges</h3>
+        <div className="flex flex-wrap items-center gap-3">
+          <BadgeButton variant="default" data-testid="badge-button-default">
+            Clickable
+          </BadgeButton>
+          <BadgeButton variant="secondary" data-testid="badge-button-secondary">
+            Dismiss
+          </BadgeButton>
+          <BadgeButton variant="outline" data-testid="badge-button-outline">
+            Add tag
+          </BadgeButton>
+          <BadgeButton variant="destructive" data-testid="badge-button-destructive">
+            Remove
+          </BadgeButton>
+          <BadgeButton variant="success" data-testid="badge-button-success">
+            Approve
+          </BadgeButton>
         </div>
       </section>
     </div>

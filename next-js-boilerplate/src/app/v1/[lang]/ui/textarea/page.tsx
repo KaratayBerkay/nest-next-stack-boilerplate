@@ -1,7 +1,8 @@
-import { Suspense } from "react";
-import { Textarea } from "@/components/ui/Textarea";
+"use client";
 
-async function Content() {
+import { Textarea, AutoResizeTextarea } from "@/components/ui/Textarea";
+
+export default function TextareaPage() {
   return (
     <div className="flex flex-col gap-4" data-testid="textarea-demo">
       <div className="space-y-1">
@@ -35,14 +36,14 @@ async function Content() {
         <h3 className="text-lg font-semibold">With Error</h3>
         <Textarea error="This field is required" data-testid="textarea-error" />
       </section>
-    </div>
-  );
-}
 
-export default function Page() {
-  return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading...</p>}>
-      <Content />
-    </Suspense>
+      <section className="flex flex-col gap-3">
+        <h3 className="text-lg font-semibold">Auto-Resize</h3>
+        <AutoResizeTextarea
+          placeholder="Type here and it will grow..."
+          data-testid="textarea-auto-resize"
+        />
+      </section>
+    </div>
   );
 }
