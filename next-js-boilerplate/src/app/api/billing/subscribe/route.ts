@@ -2,6 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
 import { csrfEchoHeaders, graphqlErrorBody, graphqlFetch } from "@/lib/backend";
+import { publishEvent } from "@/lib/kafka";
+import { tierLabel } from "@/lib/tier";
+
+const ME_QUERY = `
+  query Me {
+    me {
+      id
+      email
+      name
+    }
+  }
+`;
 
 const SUBSCRIBE_MUTATION = `
   mutation SubscribeToPlan(
@@ -83,6 +95,23 @@ export async function POST(request: NextRequest) {
       { status: 402 },
     );
   }
+
+  const meData = await graphqlFetch<{ me: { id: string; email: string; name?: string } }>(
+    ME_QUERY,
+    {},
+    accessToken,
+  );
+  const user = meData?.data?.me;
+
+  await publishEvent("billing.subscription.upgraded", {
+    userId: user?.id ?? "unknown",
+    email: user?.email ?? "unknown",
+    name: user?.name ?? "User",
+    tier: body.tier,
+    label: tierLabel(body.tier),
+    timestamp: new Date().toISOString(),
+    event: "subscription.upgraded",
+  });
 
   return NextResponse.json({ ok: true });
 }
