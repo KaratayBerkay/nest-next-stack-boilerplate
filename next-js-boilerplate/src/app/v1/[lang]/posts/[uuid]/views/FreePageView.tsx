@@ -19,6 +19,7 @@ import { CommentSection } from "@/components/feed/CommentSection";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { useMarkPostNotificationsRead } from "@/lib/notifications/useMarkPostNotificationsRead";
 
 interface Post {
   id: string;
@@ -60,6 +61,8 @@ function PostDetailContent() {
     realtime?.watch(topic);
     return () => realtime?.unwatch(topic);
   }, [realtime, uuid]);
+
+  useMarkPostNotificationsRead(uuid);
 
   const { data: post } = useSuspenseQuery<Post>({
     queryKey: ["posts", uuid],

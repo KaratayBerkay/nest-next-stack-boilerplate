@@ -21,6 +21,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Avatar } from "@/components/ui/Avatar";
 import { initials } from "@/lib/initials";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { useMarkPostNotificationsRead } from "@/lib/notifications/useMarkPostNotificationsRead";
 
 interface Post {
   id: string;
@@ -64,6 +65,8 @@ function PostDetailContent() {
     realtime?.watch(topic);
     return () => realtime?.unwatch(topic);
   }, [realtime, uuid]);
+
+  useMarkPostNotificationsRead(uuid);
 
   const { data: post } = useSuspenseQuery<Post>({
     queryKey: ["posts", uuid],
