@@ -31,7 +31,7 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
     const isServerError = statusCode >= 500;
 
     this.logger.log({
-      category: 'exception',
+      category: 'http-exception',
       event: isServerError ? 'exception.unhandled' : 'exception.handled',
       httpStatus: statusCode,
       path: httpAdapter.getRequestUrl(request) as string,

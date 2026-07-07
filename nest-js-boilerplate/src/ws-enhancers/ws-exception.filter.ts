@@ -21,7 +21,7 @@ export class CustomWsExceptionFilter implements WsExceptionFilter {
     const userAgent = client.handshake?.headers?.['user-agent'];
 
     this.logger.log({
-      category: 'exception',
+      category: 'websocket-exception',
       event: 'exception.ws_handled',
       socketId: client.id,
       ip: client.handshake?.address,

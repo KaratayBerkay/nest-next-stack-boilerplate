@@ -127,9 +127,6 @@ function ChatRoomContent() {
           </div>
           <h2 className="text-lg font-bold text-brand">{t.title}</h2>
         </div>
-        <span className="text-xs text-muted">
-          {t.countOnline.replace("{count}", String(roomCounts[room] ?? 0))}
-        </span>
       </div>
 
       <div className="relative flex min-h-0 flex-1 gap-4">

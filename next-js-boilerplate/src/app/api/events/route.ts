@@ -62,7 +62,7 @@ async function resolveMe(): Promise<{ userId?: string; sessionId?: string }> {
   }
 }
 
-const CATEGORY_EVENTS = new Set(["session", "page", "exception"]);
+const CATEGORY_EVENTS = new Set(["session", "page", "http-exception", "application-exception"]);
 
 export const POST = withLogging(async (request, log) => {
   const ip =

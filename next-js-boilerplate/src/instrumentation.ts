@@ -46,7 +46,7 @@ export function onRequestError(
   });
 
   console.error({
-    category: "exception",
+    category: "http-exception",
     exceptionType: "CLIENT_REQUEST_ERROR",
     route: context.routePath,
     message: error instanceof Error ? error.message : String(error),

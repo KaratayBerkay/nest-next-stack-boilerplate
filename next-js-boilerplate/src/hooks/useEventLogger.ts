@@ -53,7 +53,7 @@ export function useEventLogger(): void {
       eventLogger.emit({
         eventType: "exception",
         url: window.location.pathname,
-        category: "exception",
+        category: "application-exception",
         event: "exception",
         exceptionType: "CLIENT_ERROR",
         metadata: {
@@ -70,7 +70,7 @@ export function useEventLogger(): void {
       eventLogger.emit({
         eventType: "exception",
         url: window.location.pathname,
-        category: "exception",
+        category: "application-exception",
         event: "exception",
         exceptionType: "CLIENT_REJECTION",
         metadata: {

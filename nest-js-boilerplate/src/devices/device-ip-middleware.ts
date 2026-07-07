@@ -54,7 +54,7 @@ export class DeviceIpMiddleware implements NestMiddleware {
 
       if (device.ip !== requestIp) {
         this.logger.log({
-          category: 'exception',
+          category: 'http-exception',
           event: 'device-change',
           deviceId: device.id,
           previousIp: device.ip,

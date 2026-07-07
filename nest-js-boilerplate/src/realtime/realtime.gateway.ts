@@ -155,7 +155,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
 
         if (code !== undefined && code !== 1000 && code !== 1001) {
           this.logger.log({
-            category: 'exception',
+            category: 'websocket-exception',
             event: 'connection-loss',
             token: authWs.sessionId,
             userId: uid,
