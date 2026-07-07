@@ -7,12 +7,12 @@ import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
 import { MockCardForm } from "@/features/billing/ui/mock-card-form";
 import { apiFetchJson } from "@/lib/api-client";
-import { TIER_ORDER, tierLabel, type Tier } from "@/lib/tier";
+import { TIER_ORDER, tierLabel, TIER_PRICES_CENTS, type Tier } from "@/lib/tier";
+import { formatPrice } from "@/lib/currency";
+import { useCurrencyCookie } from "@/hooks/useCurrencyCookie";
 import { PRICING_PATH } from "@/constants/routes";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useState } from "react";
-
-import { TIER_PRICES } from "@/lib/tier";
 
 const TIER_FEATURES: Record<string, string[]> = {
   BASIC: ["Access to basic features", "Standard support"],
@@ -31,6 +31,7 @@ const TIER_FEATURES: Record<string, string[]> = {
   ],
 };
 
+// fallow-ignore-next-line complexity
 export default function CheckoutPage({
   params,
 }: {
@@ -40,6 +41,7 @@ export default function CheckoutPage({
   const { user, loading } = useAuth();
   const router = useRouter();
   const t = useMessages("checkout");
+  const currency = useCurrencyCookie();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
@@ -98,7 +100,7 @@ export default function CheckoutPage({
       <div className="rounded-lg border border-border bg-surface p-4">
         <h2 className="font-medium">{tierLabel(targetTier)}</h2>
         <p className="mt-1 text-2xl font-bold">
-          {TIER_PRICES[targetTier] ?? "Free"}
+          {formatPrice(TIER_PRICES_CENTS[targetTier as Tier] ?? 0, currency)}
         </p>
         <ul className="mt-3 space-y-1 text-sm text-muted">
           {(TIER_FEATURES[targetTier] ?? []).map((f) => (

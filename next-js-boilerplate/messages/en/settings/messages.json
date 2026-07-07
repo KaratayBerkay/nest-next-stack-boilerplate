@@ -17,6 +17,7 @@
   "generalHeading": "General",
   "language": "Language",
   "timezone": "Timezone",
+  "currency": "Currency",
   "theme": "Theme",
   "billingHeading": "Billing",
   "currentPlan": "Current plan",

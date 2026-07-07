@@ -18,6 +18,7 @@ import { DEFAULT_LANG } from "@/constants/i18n";
 import type { I18nMessages } from "@/generated/i18n-messages";
 import { ClientLocaleProvider } from "@/components/ClientLocaleProvider";
 import { TimezoneProvider } from "@/components/TimezoneProvider";
+import { CurrencyProvider } from "@/components/CurrencyProvider";
 import { ThemeInitScript } from "./ThemeInitScript";
 import "./globals.css";
 
@@ -78,7 +79,9 @@ export default function RootLayout({
               <ToastProvider>
                 <ClientLocaleProvider defaultMessages={messages}>
                   <TimezoneProvider>
-                    {children}
+                    <CurrencyProvider>
+                      {children}
+                    </CurrencyProvider>
                   </TimezoneProvider>
                 </ClientLocaleProvider>
                 <ToastViewport />

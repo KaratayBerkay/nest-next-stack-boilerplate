@@ -6,3 +6,4 @@ export const FIND_FRIENDS_PATH = "/find-friends" as const;
 export const PRICING_PATH = "/pricing" as const;
 export const checkoutPath = (tier: string, lang = "en") =>
   `/v1/${lang}/checkout/${tier}` as const;
+export const plansPath = (lang = "en") => `/v1/${lang}/plans` as const;

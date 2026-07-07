@@ -281,6 +281,7 @@ export type I18nMessages = {
       "generalHeading": string;
       "language": string;
       "timezone": string;
+      "currency": string;
       "theme": string;
       "billingHeading": string;
       "currentPlan": string;

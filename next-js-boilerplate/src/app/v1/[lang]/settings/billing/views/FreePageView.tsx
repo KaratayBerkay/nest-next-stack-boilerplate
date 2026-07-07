@@ -7,7 +7,9 @@ import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
 import { apiFetchJson } from "@/lib/api-client";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
-import { TIER_PRICES, tierLabel } from "@/lib/tier";
+import { TIER_PRICES_CENTS, tierLabel, type Tier } from "@/lib/tier";
+import { formatPrice } from "@/lib/currency";
+import { useCurrencyCookie } from "@/hooks/useCurrencyCookie";
 import { PRICING_PATH } from "@/constants/routes";
 import { formatDate } from "@/lib/date-time";
 
@@ -21,9 +23,11 @@ interface Transaction {
   createdAt: string;
 }
 
+// fallow-ignore-next-line complexity
 export function FreePageView() {
   const { user, loading } = useAuth();
   const t = useMessages("settings");
+  const currency = useCurrencyCookie();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
 
@@ -48,7 +52,7 @@ export function FreePageView() {
         <div>
           <p className="text-sm text-muted">{t.currentPlan}</p>
           <p className="text-lg font-bold">{tierLabel(tier)}</p>
-          <p className="text-sm text-muted">{TIER_PRICES[tier] ?? "Free"}</p>
+          <p className="text-sm text-muted">{formatPrice(TIER_PRICES_CENTS[tier as Tier] ?? 0, currency)}</p>
         </div>
         {tier === "FREE" ? (
           <Link

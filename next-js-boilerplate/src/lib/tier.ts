@@ -28,9 +28,9 @@ export function tierLabel(tier: string): string {
   return tier.charAt(0) + tier.slice(1).toLowerCase();
 }
 
-export const TIER_PRICES: Record<string, string> = {
-  FREE: "$0",
-  BASIC: "$9.99/mo",
-  MEDIUM: "$19.99/mo",
-  PREMIUM: "$49.99/mo",
+export const TIER_PRICES_CENTS: Record<Tier, number> = {
+  FREE: 0,
+  BASIC: 999,
+  MEDIUM: 1999,
+  PREMIUM: 4999,
 };
