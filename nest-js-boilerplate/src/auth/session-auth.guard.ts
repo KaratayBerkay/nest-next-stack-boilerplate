@@ -170,8 +170,11 @@ export class SessionAuthGuard implements CanActivate {
 
     // Step 10: CSRF check for mutations — cookie-based auth is vulnerable to
     // cross-site request forgery because the browser auto-attaches httpOnly cookies.
+    // Bearer token auth (Authorization header) is immune since the browser never
+    // auto-attaches it, so skip the check when a bearer token was used.
     // Queries are read-only and don't need protection; only state-changing mutations do.
-    if (this.isGraphQLMutation(context) && !validateRequest(req)) {
+    const usesBearerAuth = req.headers.authorization?.startsWith('Bearer ');
+    if (this.isGraphQLMutation(context) && !usesBearerAuth && !validateRequest(req)) {
       throw new ForbiddenException('Invalid or missing CSRF token');
     }
 
