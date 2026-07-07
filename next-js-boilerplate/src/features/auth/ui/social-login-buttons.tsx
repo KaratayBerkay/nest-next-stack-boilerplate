@@ -22,7 +22,7 @@ export function SocialLoginButtons() {
         <span className="bg-border h-px flex-1" />
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-col gap-2">
         {allProviders.map((p) => (
           <SocialLoginButton key={p.name} provider={p.name} label={p.label} />
         ))}

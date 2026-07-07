@@ -100,7 +100,7 @@ export function SocialLoginButton({ provider, label }: SocialLoginButtonProps) {
       onClick={() => {
         window.location.href = `/api/auth/oauth/${provider}`;
       }}
-      className={`border-border flex items-center justify-center gap-2 rounded border px-4 py-2 text-sm font-medium transition-colors ${style.bg} ${style.hover} ${style.text}`}
+      className={`border-border flex w-full items-center justify-center gap-2 rounded border px-4 py-2 text-sm font-medium transition-colors ${style.bg} ${style.hover} ${style.text}`}
     >
       <ProviderIcon provider={provider} />
       <span>{label}</span>
