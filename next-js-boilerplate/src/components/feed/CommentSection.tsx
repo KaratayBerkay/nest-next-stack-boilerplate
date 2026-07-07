@@ -216,6 +216,7 @@ export function CommentSection({
                     commentId={comment.id}
                     reactions={comment.reactions ?? []}
                     currentUserId={currentUserId}
+                    onReactionChange={onCommentAdded}
                   />
                   {!isOwn(comment) && (
                     <button
@@ -304,6 +305,7 @@ export function CommentSection({
                         commentId={reply.id}
                         reactions={reply.reactions ?? []}
                         currentUserId={currentUserId}
+                        onReactionChange={onCommentAdded}
                       />
                       {isOwn(reply) && editingId !== reply.id && (
                         <>
