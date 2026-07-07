@@ -79,7 +79,7 @@ export function LoginForm() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 text-center">
       <h2 className="text-brand text-sm font-semibold">{t.form.login.title}</h2>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
