@@ -5,9 +5,14 @@ import { useCommandContext } from "./command";
 
 export function CommandInput({
   className,
+  value: externalValue,
+  onChange: externalOnChange,
   ...props
 }: React.ComponentPropsWithoutRef<"input">) {
   const { search, setSearch } = useCommandContext();
+
+  const currentValue = externalValue ?? search;
+  const handleChange = externalOnChange ?? ((e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value));
 
   return (
     <div className="border-border flex items-center border-b px-3">
@@ -29,8 +34,8 @@ export function CommandInput({
           "placeholder:text-muted flex h-11 w-full bg-transparent py-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50",
           className,
         )}
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
+        value={currentValue}
+        onChange={handleChange}
         autoComplete="off"
         autoCorrect="off"
         spellCheck={false}
