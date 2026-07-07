@@ -18,7 +18,14 @@ export class StripePaymentProvider implements PaymentProvider {
     const customerId = input.stripeCustomerId;
     const priceId = this.stripeService.getPriceIdForTier(input.tier);
     if (!priceId) {
-      this.logger.error(`No Stripe price ID configured for tier ${input.tier}`);
+      this.logger.error(
+        {
+          category: 'payment',
+          event: 'payment.missing_price',
+          tier: input.tier,
+        },
+        `No Stripe price ID configured for tier ${input.tier}`,
+      );
       return { success: false, reason: 'configuration_error' };
     }
 
@@ -45,7 +52,14 @@ export class StripePaymentProvider implements PaymentProvider {
       };
     } catch (err) {
       const msg = (err as Error).message ?? 'subscription_failed';
-      this.logger.error(`Stripe subscription failed: ${msg}`);
+      this.logger.error(
+        {
+          category: 'payment',
+          event: 'payment.subscription_failed',
+          error: msg,
+        },
+        `Stripe subscription failed: ${msg}`,
+      );
       return {
         success: false,
         reason: msg.includes('insufficient_funds')

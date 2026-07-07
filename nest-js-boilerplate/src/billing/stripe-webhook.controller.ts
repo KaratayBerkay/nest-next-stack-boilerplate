@@ -33,6 +33,12 @@ export class StripeWebhookController {
       return res.status(400).json({ error: 'Invalid signature' });
     }
 
+    this.logger.log({
+      category: 'payment',
+      event: 'webhook.received',
+      type: event.type,
+    });
+
     try {
       switch (event.type) {
         case 'invoice.paid': {
@@ -61,7 +67,14 @@ export class StripeWebhookController {
         }
       }
     } catch (err) {
-      this.logger.error(`Webhook handler error: ${(err as Error).message}`);
+      this.logger.error(
+        {
+          category: 'payment',
+          event: 'webhook.error',
+          error: (err as Error).message,
+        },
+        `Webhook handler error: ${(err as Error).message}`,
+      );
     }
 
     res.json({ received: true });
@@ -80,7 +93,14 @@ export class StripeWebhookController {
       where: { stripeCustomerId: customerId },
     });
     if (!user) {
-      this.logger.warn(`No user found for Stripe customer ${customerId}`);
+      this.logger.warn(
+        {
+          category: 'payment',
+          event: 'payment.customer_not_found',
+          customerId,
+        },
+        `No user found for Stripe customer ${customerId}`,
+      );
       return;
     }
 
@@ -127,6 +147,14 @@ export class StripeWebhookController {
     }
 
     this.logger.log(
+      {
+        category: 'payment',
+        event: 'payment.invoice_paid',
+        userId: user.id,
+        invoiceId,
+        amountPaid,
+        currency,
+      },
       `Recorded invoice ${invoiceId} for user ${user.id}: $${amountPaid} ${currency}`,
     );
   }
@@ -138,6 +166,12 @@ export class StripeWebhookController {
     });
     if (user) {
       this.logger.warn(
+        {
+          category: 'payment',
+          event: 'payment.invoice_failed',
+          userId: user.id,
+          invoiceId: invoice['id'],
+        },
         `Payment failed for user ${user.id} on invoice ${String(invoice['id'])}`,
       );
     }
@@ -167,6 +201,11 @@ export class StripeWebhookController {
       tier: 'FREE',
     });
     this.logger.log(
+      {
+        category: 'billing',
+        event: 'billing.subscription_deleted',
+        userId: user.id,
+      },
       `Downgraded user ${user.id} to FREE (subscription deleted)`,
     );
   }

@@ -136,7 +136,14 @@ export class BillingService {
         `Upgraded to ${targetTier}`,
         `Your subscription has been upgraded to ${targetTier}.`,
       ).catch((err: Error) =>
-        this.logger.warn(`Billing notification failed: ${err.message}`),
+        this.logger.warn(
+          {
+            category: 'billing',
+            event: 'billing.notification_failed',
+            error: err.message,
+          },
+          `Billing notification failed: ${err.message}`,
+        ),
       );
 
       return {
@@ -160,6 +167,11 @@ export class BillingService {
           .cancelSubscription(sub.stripeSubscriptionId)
           .catch((err: Error) =>
             this.logger.warn(
+              {
+                category: 'billing',
+                event: 'billing.cancel_failed',
+                error: err.message,
+              },
               `Failed to cancel Stripe subscription: ${err.message}`,
             ),
           );
@@ -199,7 +211,14 @@ export class BillingService {
       `Downgraded to ${targetTier}`,
       `Your subscription has been changed to ${targetTier}.`,
     ).catch((err: Error) =>
-      this.logger.warn(`Billing notification failed: ${err.message}`),
+      this.logger.warn(
+        {
+          category: 'billing',
+          event: 'billing.notification_failed',
+          error: err.message,
+        },
+        `Billing notification failed: ${err.message}`,
+      ),
     );
 
     return { success: true };
