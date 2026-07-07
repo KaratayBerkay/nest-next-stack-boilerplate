@@ -29,10 +29,8 @@ const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) =>
 );
 
 function getYearOptions(): string[] {
-  const current = (getToday("year") as number) % 100;
-  return Array.from({ length: 12 }, (_, i) =>
-    String((current + i) % 100).padStart(2, "0"),
-  );
+  const current = getToday("year") as number;
+  return Array.from({ length: 12 }, (_, i) => String(current + i));
 }
 
 export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
@@ -65,7 +63,7 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
     if (filled.current) return;
     filled.current = true;
     setExpMonth("12");
-    setExpYear(String(((getToday("year") as number) + 3) % 100).padStart(2, "0"));
+    setExpYear(String((getToday("year") as number) + 3));
     setCvc("123");
     setCardholderName("John Doe");
   }, []);
@@ -100,7 +98,7 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
   const fillMockData = useCallback(() => {
     fillTestCard("4242");
     setExpMonth("12");
-    setExpYear(String(((getToday("year") as number) + 3) % 100).padStart(2, "0"));
+    setExpYear(String((getToday("year") as number) + 3));
     setCvc("123");
     setCardholderName("John Doe");
   }, [fillTestCard]);
@@ -245,11 +243,11 @@ export function MockCardForm({ tier, onSuccess, onError }: MockCardFormProps) {
             data-testid="exp-year"
             type="text"
             inputMode="numeric"
-            placeholder={t.yy}
-            maxLength={2}
+            placeholder="YYYY"
+            maxLength={4}
             list="expiry-years"
             value={expYear}
-            onChange={(e) => setExpYear(e.target.value.replace(/\D/g, "").slice(0, 2))}
+            onChange={(e) => setExpYear(e.target.value.replace(/\D/g, "").slice(0, 4))}
             className="border-border bg-bg focus-visible:ring-brand mt-1 flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-sm focus-visible:ring-2 focus-visible:outline-none"
           />
           <datalist id="expiry-years">

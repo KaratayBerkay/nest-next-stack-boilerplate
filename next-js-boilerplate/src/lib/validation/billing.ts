@@ -40,7 +40,7 @@ export function mockCardFormSchema(errors: {
       expYear: z
         .string()
         .min(1, errors.expiryRequired)
-        .refine((v) => /^\d{2}$/.test(v), errors.expiryInvalid),
+        .refine((v) => /^\d{4}$/.test(v), errors.expiryInvalid),
       cvc: z
         .string()
         .min(1, errors.cvcRequired)
@@ -52,7 +52,7 @@ export function mockCardFormSchema(errors: {
         const month = parseInt(v.expMonth, 10);
         const year = parseInt(v.expYear, 10);
         if (isNaN(month) || isNaN(year)) return false;
-        const currentYear = (getToday("year") as number) % 100;
+        const currentYear = getToday("year") as number;
         const currentMonth = getToday("month") as number;
         if (year < currentYear) return false;
         if (year === currentYear && month < currentMonth) return false;
