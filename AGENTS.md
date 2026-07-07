@@ -16,6 +16,7 @@ When asked to read/show websocket logs or any application logs, query the last l
 | Page logs | `page-logs` | `curl -s http://10.10.2.51:9200/page-logs/_search?size=20` |
 | Network logs | `network-logs` | `curl -s http://10.10.2.51:9200/network-logs/_search?size=20` |
 | Database logs | `database-logs` | `curl -s http://10.10.2.51:9200/database-logs/_search?size=20` |
+| Performance logs | `performance-logs` | `curl -s http://10.10.2.51:9200/performance-logs/_search?size=20` |
 | App logs (all backend) | `app-logs` | `curl -s http://10.10.2.51:9200/app-logs/_search?size=20` |
 | Frontend logs (all) | `frontend-logs` | `curl -s http://10.10.2.51:9200/frontend-logs/_search?size=20` |
 

@@ -1,6 +1,6 @@
 # Structured Event Logging (Phase 14 / Phase 16)
 
-Five Kibana log categories — `session`, `exception`, `page`, `network`, `database` — each routed to a dedicated
+Six Kibana log categories — `session`, `exception`, `page`, `network`, `database`, `performance` — each routed to a dedicated
 Elasticsearch index via Fluent Bit `rewrite_tag`. Events flow Pino → stdout → Fluent Bit → ES
 from both the backend (NestJS) and frontend (Next.js). Kafka/`frontend-events` remains only
 for events with no `category`.
@@ -14,11 +14,11 @@ Backend (NestJS):
   Pino → stdout → Docker fluentd driver → Fluent Bit port 24224
                                               ↓
                                   rewrite_tag by $category
-                               ╱   ╱    │    ╲    ╲    ╲
-                         session  page exception  network  database
-                            │      │       │        │        │
-                            ▼      ▼       ▼        ▼        ▼
-                     session-logs  page-logs  exception-logs  network-logs  database-logs
+                            ╱   ╱    │    ╲    ╲    ╲    ╲
+                      session  page exception network  database  performance
+                         │      │       │       │        │          │
+                         ▼      ▼       ▼       ▼        ▼          ▼
+                  session-logs  page-logs  exception-logs  network-logs  database-logs  performance-logs
 
 Frontend (Next.js):
   useEventLogger → POST /api/events
@@ -51,6 +51,18 @@ Frontend (Next.js):
 |---|---|---|
 | `db.query_slow` | `PrismaService` — Prisma `$on('query')` | `query`, `durationMs`, `params` |
 | `db.query_error` | `PrismaService` — Prisma `$on('error')` | `errorMessage` |
+
+### `performance` — performance-logs
+
+| event | source | fields |
+|---|---|---|
+| `perf.slow_request` | `PerformanceInterceptor` (NestJS) | `method`, `path`, `durationMs`, `statusCode`, `ip`, `userAgent`, `deviceType` |
+| `perf.page_lcp` | `usePerformanceLogger` (frontend — `useReportWebVitals`) | `url`, `value`, `rating` |
+| `perf.page_fid` | `usePerformanceLogger` (frontend) | `url`, `value`, `rating` |
+| `perf.page_cls` | `usePerformanceLogger` (frontend) | `url`, `value`, `rating` |
+| `perf.page_ttfb` | `usePerformanceLogger` (frontend) | `url`, `value`, `rating` |
+| `perf.page_fcp` | `usePerformanceLogger` (frontend) | `url`, `value`, `rating` |
+| `perf.page_inp` | `usePerformanceLogger` (frontend) | `url`, `value`, `rating` |
 
 ### `network` — network-logs
 
@@ -185,11 +197,37 @@ GET database-logs/_search
 {
   "query": { "term": { "event": "db.query_error" } }
 }
+
+// Slow backend requests (>1s) in the last hour
+GET performance-logs/_search
+{
+  "query": {
+    "bool": {
+      "filter": [
+        { "term": { "event": "perf.slow_request" } },
+        { "range": { "@timestamp": { "gte": "now-1h" } } }
+      ]
+    }
+  }
+}
+
+// Poor Core Web Vitals (LCP > 2500ms or CLS > 0.1)
+GET performance-logs/_search
+{
+  "query": {
+    "bool": {
+      "filter": [
+        { "terms": { "event": ["perf.page_lcp", "perf.page_cls"] } },
+        { "range": { "@timestamp": { "gte": "now-24h" } } }
+      ]
+    }
+  }
+}
 ```
 
-Kibana saved searches: `session-logs-search`, `exception-logs-search`, `page-logs-search`, `network-logs-search`, `database-logs-search`
+Kibana saved searches: `session-logs-search`, `exception-logs-search`, `page-logs-search`, `network-logs-search`, `database-logs-search`, `performance-logs-search`
 (imported via `kibana-saved-objects.ndjson`). Data views: `session-logs*`, `exception-logs*`,
-`page-logs*`, `app-logs*`, `frontend-logs*`.
+`page-logs*`, `network-logs*`, `database-logs*`, `performance-logs*`, `app-logs*`, `frontend-logs*`.
 
 ## Kafka / Frontend-Events Pipeline
 
@@ -206,7 +244,7 @@ as a dependency for observability data and keeps the critical path simple.
 ## ES Index Template
 
 The file `docker/elasticsearch/index-template-structured-logs.json` defines the mapping for
-`session-logs*`, `exception-logs*`, `page-logs*`, `network-logs*`, `database-logs*` indices. Key decisions:
+`session-logs*`, `exception-logs*`, `page-logs*`, `network-logs*`, `database-logs*`, `performance-logs*` indices. Key decisions:
 - All string fields (`token`, `userId`, `deviceType`, etc.) are mapped as `keyword` (not
   `text`) so they are aggregatable and sortable in Kibana.
 - `errorMessage`, `stack`, `detail` are `text` for full-text search.
@@ -225,7 +263,7 @@ curl -X PUT "localhost:9200/_index_template/structured-logs" \
 
 Two `[FILTER] Name rewrite_tag` blocks in `fluent-bit.conf` (one matching the raw `app` tag,
 one matching `frontend`) inspect each record's `category` field and rewrite the tag to
-`session`/`exception`/`page`/`network`/`database` when it matches, via the
-`$category ^(session|exception|page|network|database)$ $1` rule. The corresponding `[OUTPUT]` blocks then
+`session`/`exception`/`page`/`network`/`database`/`performance` when it matches, via the
+`$category ^(session|exception|page|network|database|performance)$ $1` rule. The corresponding `[OUTPUT]` blocks then
 send rewritten records to the correct index. Records without a `category` field keep their original
 tag (`app`, `frontend`, `messaging-ws`) and route to the general indices.

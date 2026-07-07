@@ -1,5 +1,5 @@
 {
-  "index_patterns": ["session-logs*", "exception-logs*", "page-logs*", "http-exception-logs*", "websocket-exception-logs*", "application-exception-logs*", "network-logs*", "database-logs*"],
+  "index_patterns": ["session-logs*", "exception-logs*", "page-logs*", "http-exception-logs*", "websocket-exception-logs*", "application-exception-logs*", "network-logs*", "database-logs*", "performance-logs*"],
   "template": {
     "settings": {
       "number_of_shards": 1,

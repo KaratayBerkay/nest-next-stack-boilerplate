@@ -14,7 +14,7 @@ const frontendEventSchema = z.object({
   url: z.string().max(2048).optional(),
   userAgent: z.string().max(512).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
-  category: z.enum(['session', 'page', 'http-exception', 'application-exception', 'network', 'database']).optional(),
+  category: z.enum(['session', 'page', 'http-exception', 'application-exception', 'network', 'database', 'performance']).optional(),
   event: z.string().optional(),
   exceptionType: exceptionTypeEnum.optional(),
   page: z.string().optional(),

@@ -9,6 +9,7 @@ import { AppModule } from './app.module';
 import { internalGrpcOptions } from './grpc/grpc.module';
 import { requestContextMiddleware } from './logging/request-context';
 import { DeviceIpMiddleware } from './devices/device-ip-middleware';
+import { PerformanceInterceptor } from './interceptors/performance.interceptor';
 
 async function bootstrap() {
   // bufferLogs: hold boot logs until the Pino logger is installed below, so the very first
@@ -45,6 +46,7 @@ async function bootstrap() {
   // — essential for clean container shutdown.
   app.enableShutdownHooks();
 
+  app.useGlobalInterceptors(new PerformanceInterceptor());
   app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
 
   // OpenAPI / Swagger — assembled at bootstrap so the document reflects all registered routes.
