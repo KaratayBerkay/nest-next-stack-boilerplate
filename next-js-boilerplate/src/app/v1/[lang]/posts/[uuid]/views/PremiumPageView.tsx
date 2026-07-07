@@ -78,7 +78,7 @@ function PostDetailContent() {
   });
 
   return (
-    <div ref={swipeRef} className="flex flex-col gap-4 py-6">
+    <div ref={swipeRef} className="mx-auto flex w-full max-w-2xl min-h-0 max-h-full flex-col gap-4 overflow-y-auto py-6 max-md:px-1">
       <button
         onClick={() => router.back()}
         className="flex items-center gap-1 text-xs text-muted transition-colors hover:text-fg"
@@ -87,22 +87,22 @@ function PostDetailContent() {
         {t.back}
       </button>
 
-      <div className="surface flex flex-col gap-3 rounded-xl border border-border p-4">
+      <div className="surface flex flex-col gap-4 p-5">
         <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-[11px] font-bold text-white">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand text-xs font-bold text-white shadow-sm">
               {(post.author.name || post.author.email).charAt(0).toUpperCase()}
             </div>
             <div>
-              <p className="text-sm font-medium text-fg">
+              <p className="text-sm font-semibold text-fg">
                 {post.author.name || post.author.email}
               </p>
-              <p className="text-[10px] text-muted">
+              <p className="text-[11px] text-muted">
                 {new Date(post.createdAt).toLocaleDateString()}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <ReactionInline
               postId={post.id}
               reactions={post.reactions ?? []}
@@ -119,7 +119,7 @@ function PostDetailContent() {
                     setEditContent(post.content);
                     setEditing(true);
                   }}
-                  className="p-1 text-muted hover:text-fg"
+                  className="rounded-lg p-1.5 text-muted transition-colors hover:bg-surface-hover hover:text-fg"
                 >
                   <IconPencil size={14} stroke={1.5} />
                 </button>
@@ -137,7 +137,7 @@ function PostDetailContent() {
                   {(open) => (
                     <button
                       onClick={open}
-                      className="p-1 text-muted hover:text-red-500"
+                      className="rounded-lg p-1.5 text-muted transition-colors hover:bg-surface-hover hover:text-red-500"
                     >
                       <IconTrash size={14} stroke={1.5} />
                     </button>
@@ -149,17 +149,17 @@ function PostDetailContent() {
         </div>
 
         {editing ? (
-          <>
+          <div className="flex flex-col gap-3">
             <input
               type="text"
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
-              className="w-full rounded border border-border bg-surface px-3 py-2 text-lg font-bold text-fg"
+              className="w-full rounded-lg border border-border bg-bg px-3 py-2 text-lg font-bold text-fg focus:outline-none focus:ring-2 focus:ring-brand/30"
             />
             <textarea
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
-              className="w-full rounded border border-border bg-surface px-3 py-2 text-sm text-fg"
+              className="w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-fg focus:outline-none focus:ring-2 focus:ring-brand/30"
               rows={5}
             />
             <div className="flex items-center gap-2">
@@ -179,39 +179,38 @@ function PostDetailContent() {
                     queryClient.invalidateQueries({ queryKey: ["posts", uuid] });
                   }
                 }}
-                className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white"
+                className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
               >
                 {t.save}
               </button>
               <button
                 onClick={() => setEditing(false)}
-                className="text-sm text-muted underline"
+                className="text-sm text-muted underline transition-colors hover:text-fg"
               >
                 {t.cancel}
               </button>
             </div>
-          </>
+          </div>
         ) : (
-          <>
+          <div className="flex flex-col gap-3">
             {post.imageUrl && (
               <img
                 src={imageUrl(post.imageUrl, "full")}
                 alt=""
-                className="max-h-80 w-full rounded-lg object-cover"
+                className="max-h-96 w-full rounded-xl object-cover shadow-sm"
                 loading="lazy"
               />
             )}
-            <h1 className="text-lg font-bold text-fg">{post.title}</h1>
+            <h1 className="text-xl font-bold leading-tight text-fg">{post.title}</h1>
             <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-muted">
               {post.content}
             </p>
-          </>
+            <div className="flex items-center gap-1.5 border-t border-border pt-3 text-xs text-muted">
+              <IconMessageCircle size={14} stroke={1.5} />
+              {t.comments.replace("{count}", String(post._count?.comments ?? post.comments?.length ?? 0))}
+            </div>
+          </div>
         )}
-
-        <div className="flex items-center gap-1 text-xs text-muted">
-          <IconMessageCircle size={14} stroke={1.5} />
-          {t.comments.replace("{count}", String(post._count?.comments ?? post.comments?.length ?? 0))}
-        </div>
       </div>
 
       {post.reactionBreakdown && post.reactionBreakdown.length > 0 && (
@@ -273,7 +272,7 @@ function PostDetailContent() {
 function PostDetailSkeleton() {
   const skeletonSwipeRef = useYSwipeGesture<HTMLDivElement>();
   return (
-    <div ref={skeletonSwipeRef} className="flex flex-col gap-4 py-6">
+    <div ref={skeletonSwipeRef} className="mx-auto flex w-full max-w-2xl min-h-0 max-h-full flex-col gap-4 overflow-y-auto py-6 max-md:px-1">
       <div className="h-4 w-12 animate-pulse rounded bg-surface-hover" />
       <div className="surface flex flex-col gap-3 rounded-xl border border-border p-4">
         <div className="flex items-center gap-3">

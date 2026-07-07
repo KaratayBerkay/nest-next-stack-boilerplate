@@ -179,19 +179,19 @@ export function CommentSection({
   };
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <form onSubmit={handleSubmit} className="flex gap-1">
+    <div className="flex flex-col gap-2">
+      <form onSubmit={handleSubmit} className="flex gap-2">
         <input
           type="text"
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          placeholder={replyTo ? "Reply..." : "Comment..."}
-          className="border-border bg-surface flex-1 rounded-lg border px-1.5 py-0.5 text-[11px]"
+          placeholder={replyTo ? "Reply..." : "Write a comment..."}
+          className="border-border bg-surface flex-1 rounded-lg border px-3 py-2 text-sm text-fg placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/30"
         />
         <button
           type="submit"
           disabled={!body.trim() || submitting}
-          className="bg-brand rounded-lg px-1.5 py-0.5 text-[9px] font-medium text-white disabled:opacity-40"
+          className="bg-brand rounded-lg px-4 py-2 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40"
         >
           {replyTo ? "Reply" : "Send"}
         </button>
@@ -199,26 +199,26 @@ export function CommentSection({
           <button
             type="button"
             onClick={() => setReplyTo(null)}
-            className="text-muted text-[9px] underline"
+            className="text-muted hover:text-fg text-xs underline transition-colors"
           >
             Cancel
           </button>
         )}
       </form>
 
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1.5">
         {visibleTopLevel.length === 0 && (
-          <p className="text-muted text-[9px]">No comments yet.</p>
+          <p className="text-muted px-1 text-xs">No comments yet.</p>
         )}
         {visibleTopLevel.map((comment) => (
-          <div key={comment.id} className="flex flex-col gap-0.5">
-            <div className="border-border rounded-lg border px-2 py-1">
-              <div className="flex items-center justify-between gap-1">
-                <div className="flex min-w-0 items-center gap-1">
-                  <span className="text-fg shrink-0 text-[10px] leading-none font-medium">
+          <div key={comment.id} className="flex flex-col gap-1">
+            <div className="border-border rounded-xl border bg-surface px-3 py-2 transition-colors hover:bg-surface-hover">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <span className="text-fg truncate text-xs leading-none font-medium">
                     {comment.author.name || comment.author.email}
                   </span>
-                  <span className="text-muted shrink-0 text-[8px] leading-none">
+                  <span className="text-muted shrink-0 text-[10px] leading-none">
                     {new Date(comment.createdAt).toLocaleDateString()}
                   </span>
                 </div>
@@ -231,7 +231,7 @@ export function CommentSection({
                   {!isOwn(comment) && (
                     <button
                       onClick={() => setReplyTo(comment.id)}
-                      className="text-muted hover:text-fg text-[8px] transition-colors"
+                      className="text-muted hover:text-fg px-1 text-[10px] font-medium transition-colors"
                     >
                       Reply
                     </button>
@@ -243,9 +243,9 @@ export function CommentSection({
                           setEditingId(comment.id);
                           setEditingBody(comment.body);
                         }}
-                        className="text-muted hover:text-fg p-0.5"
+                        className="text-muted hover:text-fg rounded p-1"
                       >
-                        <IconPencil size={10} stroke={1.5} />
+                        <IconPencil size={12} stroke={1.5} />
                       </button>
                       <ConfirmDialog
                         title="Delete comment"
@@ -255,9 +255,9 @@ export function CommentSection({
                         {(open) => (
                           <button
                             onClick={open}
-                            className="text-muted p-0.5 hover:text-red-500"
+                            className="text-muted hover:text-red-500 rounded p-1"
                           >
-                            <IconTrash size={10} stroke={1.5} />
+                            <IconTrash size={12} stroke={1.5} />
                           </button>
                         )}
                       </ConfirmDialog>
@@ -266,12 +266,12 @@ export function CommentSection({
                 </div>
               </div>
               {editingId === comment.id ? (
-                <div className="mt-1 flex gap-1">
+                <div className="mt-2 flex gap-2">
                   <input
                     type="text"
                     value={editingBody}
                     onChange={(e) => setEditingBody(e.target.value)}
-                    className="border-border bg-surface text-fg flex-1 rounded border px-1.5 py-0.5 text-[11px]"
+                    className="border-border bg-bg text-fg flex-1 rounded-lg border px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30"
                     autoFocus
                     onKeyDown={(e) => {
                       if (e.key === "Enter") handleEdit(comment.id);
@@ -280,33 +280,33 @@ export function CommentSection({
                   />
                   <button
                     onClick={() => handleEdit(comment.id)}
-                    className="bg-brand rounded px-1.5 py-0.5 text-[9px] font-medium text-white"
+                    className="bg-brand rounded-lg px-3 py-1.5 text-xs font-medium text-white"
                   >
                     Save
                   </button>
                   <button
                     onClick={() => setEditingId(null)}
-                    className="text-muted text-[9px] underline"
+                    className="text-muted hover:text-fg text-xs underline transition-colors"
                   >
                     Cancel
                   </button>
                 </div>
               ) : (
-                <p className="text-muted mt-0.5 text-[11px] leading-snug">
+                <p className="text-muted mt-1 text-sm leading-relaxed">
                   {comment.body}
                 </p>
               )}
             </div>
 
             {replies(comment.id).map((reply) => (
-              <div key={reply.id} className="ml-2 flex flex-col gap-0.5">
-                <div className="border-border rounded-lg border px-2 py-1">
-                  <div className="flex items-center justify-between gap-1">
-                    <div className="flex min-w-0 items-center gap-1">
-                      <span className="text-fg shrink-0 text-[10px] leading-none font-medium">
+              <div key={reply.id} className="ml-4 flex flex-col gap-1">
+                <div className="border-border rounded-xl border bg-surface/50 px-3 py-2 transition-colors hover:bg-surface-hover">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      <span className="text-fg truncate text-xs leading-none font-medium">
                         {reply.author.name || reply.author.email}
                       </span>
-                      <span className="text-muted shrink-0 text-[8px] leading-none">
+                      <span className="text-muted shrink-0 text-[10px] leading-none">
                         {new Date(reply.createdAt).toLocaleDateString()}
                       </span>
                     </div>
@@ -323,9 +323,9 @@ export function CommentSection({
                               setEditingId(reply.id);
                               setEditingBody(reply.body);
                             }}
-                            className="text-muted hover:text-fg p-0.5"
+                            className="text-muted hover:text-fg rounded p-1"
                           >
-                            <IconPencil size={10} stroke={1.5} />
+                            <IconPencil size={12} stroke={1.5} />
                           </button>
                           <ConfirmDialog
                             title="Delete reply"
@@ -335,9 +335,9 @@ export function CommentSection({
                             {(open) => (
                               <button
                                 onClick={open}
-                                className="text-muted p-0.5 hover:text-red-500"
+                                className="text-muted hover:text-red-500 rounded p-1"
                               >
-                                <IconTrash size={10} stroke={1.5} />
+                                <IconTrash size={12} stroke={1.5} />
                               </button>
                             )}
                           </ConfirmDialog>
@@ -346,12 +346,12 @@ export function CommentSection({
                     </div>
                   </div>
                   {editingId === reply.id ? (
-                    <div className="mt-1 flex gap-1">
+                    <div className="mt-2 flex gap-2">
                       <input
                         type="text"
                         value={editingBody}
                         onChange={(e) => setEditingBody(e.target.value)}
-                        className="border-border bg-surface text-fg flex-1 rounded border px-1.5 py-0.5 text-[11px]"
+                        className="border-border bg-bg text-fg flex-1 rounded-lg border px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30"
                         autoFocus
                         onKeyDown={(e) => {
                           if (e.key === "Enter") handleEdit(reply.id);
@@ -360,19 +360,19 @@ export function CommentSection({
                       />
                       <button
                         onClick={() => handleEdit(reply.id)}
-                        className="bg-brand rounded px-1.5 py-0.5 text-[9px] font-medium text-white"
+                        className="bg-brand rounded-lg px-3 py-1.5 text-xs font-medium text-white"
                       >
                         Save
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="text-muted text-[9px] underline"
+                        className="text-muted hover:text-fg text-xs underline transition-colors"
                       >
                         Cancel
                       </button>
                     </div>
                   ) : (
-                    <p className="text-muted mt-0.5 text-[11px] leading-snug">
+                    <p className="text-muted mt-1 text-sm leading-relaxed">
                       {reply.body}
                     </p>
                   )}
@@ -387,17 +387,17 @@ export function CommentSection({
         (pageable ? (
           <button
             onClick={() => setVisibleCount((prev) => prev + maxTopLevel)}
-            className="text-muted hover:text-fg mt-1 w-fit text-[10px] font-medium transition-colors"
+            className="text-muted hover:text-fg w-fit text-xs font-medium transition-colors"
           >
             Load more ({topLevel.length - visibleCount} remaining)
           </button>
         ) : (
           <Link
             href={`/v1/${lang}/posts/${postId}`}
-            className="text-muted hover:text-fg mt-1 flex items-center gap-0.5 text-[10px] font-medium transition-colors"
+            className="text-muted hover:text-fg flex items-center gap-0.5 text-xs font-medium transition-colors"
           >
             See more
-            <IconChevronRight size={12} stroke={1.5} />
+            <IconChevronRight size={14} stroke={1.5} />
           </Link>
         ))}
     </div>
