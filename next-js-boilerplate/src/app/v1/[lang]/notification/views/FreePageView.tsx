@@ -103,7 +103,7 @@ function NotificationPageContent() {
   const opacity = isSwiping && direction === "left" ? 1 - progress * 0.3 : 1;
 
   return (
-    <div className="flex h-full flex-col gap-4 overflow-hidden">
+    <div className="mx-auto flex h-full w-full max-w-4xl flex-col gap-4 overflow-hidden">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <button

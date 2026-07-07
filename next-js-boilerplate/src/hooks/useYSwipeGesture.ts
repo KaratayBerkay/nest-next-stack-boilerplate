@@ -31,6 +31,7 @@ export function useYSwipeGesture<T extends HTMLElement>(enabled = true) {
 
     const onDown = (e: MouseEvent | TouchEvent) => {
       if (!el || isIgnored(e.target)) return;
+      if ("touches" in e) e.preventDefault();
 
       dragging.current = true;
       const y = "touches" in e ? (e.touches[0]?.clientY ?? 0) : e.clientY;
@@ -58,7 +59,7 @@ export function useYSwipeGesture<T extends HTMLElement>(enabled = true) {
     el.addEventListener("mousedown", onDown);
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
-    el.addEventListener("touchstart", onDown, { passive: true });
+    el.addEventListener("touchstart", onDown, { passive: false });
     window.addEventListener("touchmove", onMove, { passive: false });
     window.addEventListener("touchend", onUp);
 

@@ -298,7 +298,7 @@ export function MediumPageView() {
   const [search, setSearch] = useState("");
 
   return (
-    <div className="flex h-full flex-col gap-4 overflow-hidden">
+    <div className="mx-auto flex h-full w-full max-w-4xl flex-col gap-4 overflow-hidden">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-brand">{t.feed}</h2>
         <Link

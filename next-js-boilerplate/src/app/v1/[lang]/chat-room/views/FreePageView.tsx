@@ -104,7 +104,7 @@ function ChatRoomContent() {
   if (loading) return <LoadingAuth />;
   if (!user) return <UnauthenticatedMessage message={t.signInRequired} />;
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
+    <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-4 overflow-hidden">
       <div className="flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="relative shrink-0">
