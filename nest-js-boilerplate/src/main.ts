@@ -14,7 +14,10 @@ import { PerformanceInterceptor } from './interceptors/performance.interceptor';
 async function bootstrap() {
   // bufferLogs: hold boot logs until the Pino logger is installed below, so the very first
   // lines are structured JSON too (no built-in-console output leaking out at startup).
-  const app = await NestFactory.create(AppModule, { bufferLogs: true, rawBody: true });
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+    rawBody: true,
+  });
   app.useLogger(app.get(Logger));
 
   // First in the chain: mint/propagate the per-request correlation id (x-request-id) and put

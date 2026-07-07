@@ -17,16 +17,11 @@ export class StripeService {
     });
   }
 
-  async createCustomer(
-    email: string,
-    name?: string,
-  ): Promise<Stripe.Customer> {
+  async createCustomer(email: string, name?: string): Promise<Stripe.Customer> {
     return this.stripe.customers.create({ email, name });
   }
 
-  async createSetupIntent(
-    customerId: string,
-  ): Promise<Stripe.SetupIntent> {
+  async createSetupIntent(customerId: string): Promise<Stripe.SetupIntent> {
     return this.stripe.setupIntents.create({
       customer: customerId,
       payment_method_types: ['card'],
@@ -61,10 +56,7 @@ export class StripeService {
     return this.stripe.invoices.retrieve(invoiceId);
   }
 
-  constructWebhookEvent(
-    payload: Buffer,
-    signature: string,
-  ): Stripe.Event {
+  constructWebhookEvent(payload: Buffer, signature: string): Stripe.Event {
     const secret = this.config.get<string>('STRIPE_WEBHOOK_SECRET') ?? '';
     return this.stripe.webhooks.constructEvent(payload, signature, secret);
   }
@@ -75,7 +67,7 @@ export class StripeService {
     return this.stripe.paymentIntents.retrieve(paymentIntentId);
   }
 
-  async getPriceIdForTier(tier: string): Promise<string | null> {
+  getPriceIdForTier(tier: string): string | null {
     const key = `STRIPE_PRICE_${tier}`;
     return this.config.get<string>(key) ?? null;
   }

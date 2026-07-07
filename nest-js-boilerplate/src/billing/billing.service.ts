@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
 import { TIER_RANK } from '../authorization/tier-rank';
 import { PrismaService } from '../prisma/prisma.service';
@@ -55,9 +51,7 @@ export class BillingService {
 
     if (isUpgrade) {
       if (!paymentMethodId) {
-        throw new BadRequestException(
-          'paymentMethodId required for upgrades',
-        );
+        throw new BadRequestException('paymentMethodId required for upgrades');
       }
 
       let stripeCustomerId = user.stripeCustomerId;
@@ -84,9 +78,7 @@ export class BillingService {
           : {
               success: false,
               reason:
-                typeof meta?.reason === 'string'
-                  ? meta.reason
-                  : 'declined',
+                typeof meta?.reason === 'string' ? meta.reason : 'declined',
             };
       }
 
@@ -144,9 +136,7 @@ export class BillingService {
         `Upgraded to ${targetTier}`,
         `Your subscription has been upgraded to ${targetTier}.`,
       ).catch((err: Error) =>
-        this.logger.warn(
-          `Billing notification failed: ${err.message}`,
-        ),
+        this.logger.warn(`Billing notification failed: ${err.message}`),
       );
 
       return {
@@ -209,9 +199,7 @@ export class BillingService {
       `Downgraded to ${targetTier}`,
       `Your subscription has been changed to ${targetTier}.`,
     ).catch((err: Error) =>
-      this.logger.warn(
-        `Billing notification failed: ${err.message}`,
-      ),
+      this.logger.warn(`Billing notification failed: ${err.message}`),
     );
 
     return { success: true };
@@ -242,12 +230,12 @@ export class BillingService {
     if (!user) return null;
 
     const priceCents =
-      ({
+      {
         FREE: 0,
         BASIC: 999,
         MEDIUM: 1999,
         PREMIUM: 4999,
-      })[user.subscriptionTier] ?? 0;
+      }[user.subscriptionTier] ?? 0;
 
     return {
       tier: user.subscriptionTier as SubscriptionTier,
@@ -278,9 +266,8 @@ export class BillingService {
       });
     }
 
-    const setupIntent = await this.stripeService.createSetupIntent(
-      stripeCustomerId,
-    );
+    const setupIntent =
+      await this.stripeService.createSetupIntent(stripeCustomerId);
     return { clientSecret: setupIntent.client_secret };
   }
 

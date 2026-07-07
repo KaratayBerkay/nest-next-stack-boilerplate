@@ -162,7 +162,7 @@ describe('BillingService', () => {
       const result = await service.subscribeToPlan('u1', SubscriptionTier.FREE);
 
       expect(result.success).toBe(true);
-      // eslint-disable-next-line @typescript-eslint/unbound-method
+
       expect(mockProvider.charge).not.toHaveBeenCalled();
       expect(mockPrisma.user.update).toHaveBeenCalledWith({
         where: { id: 'u1' },

@@ -36,19 +36,27 @@ export class StripeWebhookController {
     try {
       switch (event.type) {
         case 'invoice.paid': {
-          await this.handleInvoicePaid(event.data.object as unknown as Record<string, unknown>);
+          await this.handleInvoicePaid(
+            event.data.object as unknown as Record<string, unknown>,
+          );
           break;
         }
         case 'invoice.payment_failed': {
-          await this.handleInvoiceFailed(event.data.object as unknown as Record<string, unknown>);
+          await this.handleInvoiceFailed(
+            event.data.object as unknown as Record<string, unknown>,
+          );
           break;
         }
         case 'customer.subscription.deleted': {
-          await this.handleSubscriptionDeleted(event.data.object as unknown as Record<string, unknown>);
+          await this.handleSubscriptionDeleted(
+            event.data.object as unknown as Record<string, unknown>,
+          );
           break;
         }
         case 'customer.subscription.updated': {
-          await this.handleSubscriptionUpdated(event.data.object as unknown as Record<string, unknown>);
+          await this.handleSubscriptionUpdated(
+            event.data.object as unknown as Record<string, unknown>,
+          );
           break;
         }
       }
@@ -66,8 +74,7 @@ export class StripeWebhookController {
     const invoiceUrl = (invoice['hosted_invoice_url'] as string) ?? null;
     const amountPaid = Math.round((invoice['amount_paid'] as number) / 100);
     const currency = (invoice['currency'] as string) ?? 'usd';
-    const paymentIntentId =
-      (invoice['payment_intent'] as string) ?? null;
+    const paymentIntentId = (invoice['payment_intent'] as string) ?? null;
 
     const user = await this.prisma.user.findUnique({
       where: { stripeCustomerId: customerId },
@@ -77,7 +84,7 @@ export class StripeWebhookController {
       return;
     }
 
-    const periodEnd = invoice['period_end'] as number
+    const periodEnd = (invoice['period_end'] as number)
       ? new Date((invoice['period_end'] as number) * 1000)
       : null;
 
@@ -131,7 +138,7 @@ export class StripeWebhookController {
     });
     if (user) {
       this.logger.warn(
-        `Payment failed for user ${user.id} on invoice ${invoice['id']}`,
+        `Payment failed for user ${user.id} on invoice ${String(invoice['id'])}`,
       );
     }
   }
@@ -157,17 +164,20 @@ export class StripeWebhookController {
     });
 
     await this.tokenStore.rewriteFieldsForUser(user.id, {
-      tier: 'FREE' as never,
+      tier: 'FREE',
     });
-    this.logger.log(`Downgraded user ${user.id} to FREE (subscription deleted)`);
+    this.logger.log(
+      `Downgraded user ${user.id} to FREE (subscription deleted)`,
+    );
   }
 
   private async handleSubscriptionUpdated(
     subscription: Record<string, unknown>,
   ) {
     const customerId = subscription['customer'] as string;
-    const cancelAtPeriodEnd = (subscription['cancel_at_period_end'] as boolean) ?? false;
-    const periodEnd = subscription['current_period_end'] as number
+    const cancelAtPeriodEnd =
+      (subscription['cancel_at_period_end'] as boolean) ?? false;
+    const periodEnd = (subscription['current_period_end'] as number)
       ? new Date((subscription['current_period_end'] as number) * 1000)
       : null;
 

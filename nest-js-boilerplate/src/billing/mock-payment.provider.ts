@@ -7,6 +7,7 @@ import type {
 
 @Injectable()
 export class MockPaymentProvider implements PaymentProvider {
+  /* eslint-disable-next-line @typescript-eslint/require-await */
   async createSubscription(
     _input: CreateSubscriptionInput,
   ): Promise<CreateSubscriptionResult> {
