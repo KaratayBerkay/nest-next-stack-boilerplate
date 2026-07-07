@@ -62,7 +62,7 @@ async function resolveMe(): Promise<{ userId?: string; sessionId?: string }> {
   }
 }
 
-const CATEGORY_EVENTS = new Set(["session", "page", "http-exception", "application-exception"]);
+const CATEGORY_EVENTS = new Set(["session", "page", "http-exception", "application-exception", "network", "database"]);
 
 export const POST = withLogging(async (request, log) => {
   const ip =
@@ -70,7 +70,7 @@ export const POST = withLogging(async (request, log) => {
     request.headers.get("x-real-ip") ??
     "unknown";
   if (!checkRateLimit(ip)) {
-    log.warn({ ip }, "rate limit exceeded");
+    log.warn({ ip, category: "network", event: "network.rate_limited" }, "rate limit exceeded");
     return NextResponse.json({ error: "rate limit exceeded" }, { status: 429 });
   }
 

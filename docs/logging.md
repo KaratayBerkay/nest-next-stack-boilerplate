@@ -1,6 +1,6 @@
 # Structured Event Logging (Phase 14 / Phase 16)
 
-Three Kibana log categories — `session`, `exception`, `page` — each routed to a dedicated
+Five Kibana log categories — `session`, `exception`, `page`, `network`, `database` — each routed to a dedicated
 Elasticsearch index via Fluent Bit `rewrite_tag`. Events flow Pino → stdout → Fluent Bit → ES
 from both the backend (NestJS) and frontend (Next.js). Kafka/`frontend-events` remains only
 for events with no `category`.
@@ -14,11 +14,11 @@ Backend (NestJS):
   Pino → stdout → Docker fluentd driver → Fluent Bit port 24224
                                               ↓
                                   rewrite_tag by $category
-                                    ╱    │    ╲
-                              session exception page
-                                │       │       │
-                                ▼       ▼       ▼
-                        session-logs  exception-logs  page-logs
+                               ╱   ╱    │    ╲    ╲    ╲
+                         session  page exception  network  database
+                            │      │       │        │        │
+                            ▼      ▼       ▼        ▼        ▼
+                     session-logs  page-logs  exception-logs  network-logs  database-logs
 
 Frontend (Next.js):
   useEventLogger → POST /api/events
@@ -44,6 +44,22 @@ Frontend (Next.js):
 | `ws.auth_fail` | `realtime.gateway.ts` — `handleAuth()` | `reason`, `userId` (if known) |
 | `ws.disconnect` | `realtime.gateway.ts` — `close` | `token`, `userId`, `socketId` |
 | `ws.heartbeat_timeout` | `realtime.gateway.ts` — heartbeat interval | `token`, `userId`, `socketId` |
+
+### `database` — database-logs
+
+| event | source | fields |
+|---|---|---|
+| `db.query_slow` | `PrismaService` — Prisma `$on('query')` | `query`, `durationMs`, `params` |
+| `db.query_error` | `PrismaService` — Prisma `$on('error')` | `errorMessage` |
+
+### `network` — network-logs
+
+| event | source | fields |
+|---|---|---|
+| `network.rate_limited` | `HttpThrottlerGuard` (NestJS), events Route Handler (Next.js) | `ip`, `path`, `method`, `userAgent`, `deviceType` |
+| `network.csrf_fail` | `CsrfGuard` (NestJS) | `ip`, `path`, `method`, `userAgent`, `deviceType` |
+| `network.offline` | `useNetworkLogger` (frontend) | `url` |
+| `network.online` | `useNetworkLogger` (frontend) | `url` |
 
 ### `exception` — exception-logs
 
@@ -118,9 +134,60 @@ GET exception-logs/_search
 {
   "query": { "term": { "event": "device-change" } }
 }
+
+// Rate-limited requests (debugging 429s)
+GET network-logs/_search
+{
+  "query": {
+    "bool": {
+      "filter": [
+        { "range": { "@timestamp": { "gte": "now-24h" } } },
+        { "term": { "event": "network.rate_limited" } }
+      ]
+    }
+  }
+}
+
+// CSRF failures (potential CSRF attacks or misconfigured clients)
+GET network-logs/_search
+{
+  "query": { "term": { "event": "network.csrf_fail" } }
+}
+
+// Connectivity issues experienced by users
+GET network-logs/_search
+{
+  "query": {
+    "bool": {
+      "filter": [
+        { "term": { "event": "network.offline" } },
+        { "range": { "@timestamp": { "gte": "now-1h" } } }
+      ]
+    }
+  }
+}
+
+// Slow database queries (>500ms) in the last hour
+GET database-logs/_search
+{
+  "query": {
+    "bool": {
+      "filter": [
+        { "term": { "event": "db.query_slow" } },
+        { "range": { "@timestamp": { "gte": "now-1h" } } }
+      ]
+    }
+  }
+}
+
+// Database query errors
+GET database-logs/_search
+{
+  "query": { "term": { "event": "db.query_error" } }
+}
 ```
 
-Kibana saved searches: `session-logs-search`, `exception-logs-search`, `page-logs-search`
+Kibana saved searches: `session-logs-search`, `exception-logs-search`, `page-logs-search`, `network-logs-search`, `database-logs-search`
 (imported via `kibana-saved-objects.ndjson`). Data views: `session-logs*`, `exception-logs*`,
 `page-logs*`, `app-logs*`, `frontend-logs*`.
 
@@ -139,7 +206,7 @@ as a dependency for observability data and keeps the critical path simple.
 ## ES Index Template
 
 The file `docker/elasticsearch/index-template-structured-logs.json` defines the mapping for
-`session-logs*`, `exception-logs*`, `page-logs*` indices. Key decisions:
+`session-logs*`, `exception-logs*`, `page-logs*`, `network-logs*`, `database-logs*` indices. Key decisions:
 - All string fields (`token`, `userId`, `deviceType`, etc.) are mapped as `keyword` (not
   `text`) so they are aggregatable and sortable in Kibana.
 - `errorMessage`, `stack`, `detail` are `text` for full-text search.
@@ -158,7 +225,7 @@ curl -X PUT "localhost:9200/_index_template/structured-logs" \
 
 Two `[FILTER] Name rewrite_tag` blocks in `fluent-bit.conf` (one matching the raw `app` tag,
 one matching `frontend`) inspect each record's `category` field and rewrite the tag to
-`session`/`exception`/`page` when it matches, via the `$category ^(session|exception|page)$ $1`
-rule. The corresponding `[OUTPUT]` blocks then send rewritten records to the correct index.
-Records without a `category` field keep their original tag (`app`, `frontend`,
-`messaging-ws`) and route to the general indices.
+`session`/`exception`/`page`/`network`/`database` when it matches, via the
+`$category ^(session|exception|page|network|database)$ $1` rule. The corresponding `[OUTPUT]` blocks then
+send rewritten records to the correct index. Records without a `category` field keep their original
+tag (`app`, `frontend`, `messaging-ws`) and route to the general indices.
