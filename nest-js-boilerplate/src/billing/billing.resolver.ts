@@ -11,7 +11,6 @@ import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
 import type { JwtUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
-import { CsrfGuard } from '../csrf/csrf.guard';
 import { BillingService } from './billing.service';
 
 @ObjectType()
@@ -83,7 +82,7 @@ export class SetupIntentResult {
   clientSecret!: string;
 }
 
-@UseGuards(SessionAuthGuard, CsrfGuard)
+@UseGuards(SessionAuthGuard)
 @Resolver()
 export class BillingResolver {
   constructor(private readonly billing: BillingService) {}
