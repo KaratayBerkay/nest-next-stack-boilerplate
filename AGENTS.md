@@ -1,6 +1,6 @@
 ## Log Query Hooks
 
-When asked to read/show websocket logs or any application logs, query the last logs from Elasticsearch.
+When asked to read/show websocket logs, payment logs, billing logs, or any application logs, query the last logs from Elasticsearch.
 
 - **ES endpoint:** `http://10.10.2.51:9200`
 - **Kibana:** `http://10.10.2.51:5601`
