@@ -6,10 +6,10 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 const allProviders = [
   { name: "google", label: "Google" },
   { name: "github", label: "GitHub" },
-  { name: "x", label: "X" },
   { name: "linkedin", label: "LinkedIn" },
   { name: "huggingface", label: "Hugging Face" },
   { name: "twitch", label: "Twitch" },
+  { name: "x", label: "X" },
 ] as const;
 
 export function SocialLoginButtons() {
