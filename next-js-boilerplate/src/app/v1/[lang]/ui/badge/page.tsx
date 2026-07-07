@@ -1,7 +1,11 @@
-import { Suspense } from "react";
+"use client";
+
+import { useState } from "react";
 import { Badge, BadgeButton } from "@/components/ui/Badge";
 
-async function Content() {
+export default function BadgePage() {
+  const [notifCount, setNotifCount] = useState(3);
+
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-xl font-bold">Badge</h2>
@@ -50,14 +54,31 @@ async function Content() {
           </BadgeButton>
         </div>
       </section>
-    </div>
-  );
-}
 
-export default function Page() {
-  return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading...</p>}>
-      <Content />
-    </Suspense>
+      <section className="flex flex-col gap-3">
+        <h3 className="text-lg font-semibold">Usage Example</h3>
+        <div className="flex items-center gap-6">
+          <button
+            type="button"
+            className="relative inline-flex"
+            onClick={() => setNotifCount((c) => (c < 9 ? c + 1 : 0))}
+            aria-label="Notifications"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+              <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+            </svg>
+            {notifCount > 0 && (
+              <span className="absolute -top-2 -right-2">
+                <Badge variant="destructive" className="px-1.5 py-0 text-[10px]">
+                  {notifCount}
+                </Badge>
+              </span>
+            )}
+          </button>
+          <span className="text-muted text-xs">Click bell to increment ({notifCount})</span>
+        </div>
+      </section>
+    </div>
   );
 }

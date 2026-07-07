@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useParams } from "next/navigation";
 
 const components = [
   { name: "Alert", slug: "alert" },
@@ -24,6 +27,9 @@ const components = [
 ] as const;
 
 export default function UIPage() {
+  const params = useParams();
+  const lang = (params?.lang as string) ?? "en";
+
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -36,7 +42,7 @@ export default function UIPage() {
         {components.map((c) => (
           <Link
             key={c.slug}
-            href={`/v1/en/ui/${c.slug}`}
+            href={`/v1/${lang}/ui/${c.slug}`}
             className="surface flex items-center justify-center p-4 text-center text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-900"
           >
             {c.name}

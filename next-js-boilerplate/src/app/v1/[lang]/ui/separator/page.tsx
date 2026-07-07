@@ -1,7 +1,9 @@
-import { Suspense } from "react";
-import { Separator } from "@/components/ui/Separator";
+"use client";
 
-async function Content() {
+import { Separator } from "@/components/ui/Separator";
+import { Switch } from "@/components/ui/Switch";
+
+export default function SeparatorPage() {
   return (
     <div className="flex flex-col gap-4" data-testid="separator-demo">
       <div className="space-y-1">
@@ -30,14 +32,26 @@ async function Content() {
           <span className="text-muted text-sm">Right</span>
         </div>
       </section>
-    </div>
-  );
-}
 
-export default function Page() {
-  return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading...</p>}>
-      <Content />
-    </Suspense>
+      <section className="flex flex-col gap-3">
+        <h3 className="text-lg font-semibold">Usage Example</h3>
+        <div className="surface max-w-sm divide-border divide-y overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3">
+            <span className="text-sm font-medium">Notifications</span>
+            <Switch defaultChecked />
+          </div>
+          <Separator />
+          <div className="flex items-center justify-between px-4 py-3">
+            <span className="text-sm font-medium">Sound</span>
+            <Switch defaultChecked />
+          </div>
+          <Separator />
+          <div className="flex items-center justify-between px-4 py-3">
+            <span className="text-sm font-medium">Dark Mode</span>
+            <Switch />
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }

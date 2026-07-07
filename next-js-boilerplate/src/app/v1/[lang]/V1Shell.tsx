@@ -561,7 +561,7 @@ export function V1Shell({ children }: { children: React.ReactNode }) {
 
         {/* Main content — fills remaining width, no scroll at page level */}
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 md:p-6">
-          <section className="surface flex min-h-0 flex-1 flex-col gap-2 p-4 @sm:p-5">
+          <section className="surface flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-4 @sm:p-5">
             {children}
           </section>
         </div>

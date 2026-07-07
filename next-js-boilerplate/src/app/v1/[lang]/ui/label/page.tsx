@@ -1,7 +1,9 @@
-import { Suspense } from "react";
-import { Label } from "@/components/ui/Label";
+"use client";
 
-async function Content() {
+import { Label } from "@/components/ui/Label";
+import { Input } from "@/components/ui/Input";
+
+export default function LabelPage() {
   return (
     <div className="flex flex-col gap-4" data-testid="label-demo">
       <div className="space-y-1">
@@ -22,14 +24,28 @@ async function Content() {
           Full Name
         </Label>
       </section>
-    </div>
-  );
-}
 
-export default function Page() {
-  return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading...</p>}>
-      <Content />
-    </Suspense>
+      <section className="flex flex-col gap-3">
+        <h3 className="text-lg font-semibold">Usage Example</h3>
+        <div className="flex max-w-sm flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="example-email" required>
+              Email
+            </Label>
+            <Input id="example-email" type="email" placeholder="you@example.com" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="example-password" required>
+              Password
+            </Label>
+            <Input id="example-password" type="password" placeholder="••••••••" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="example-bio">Bio</Label>
+            <Input id="example-bio" placeholder="Tell us about yourself..." />
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
