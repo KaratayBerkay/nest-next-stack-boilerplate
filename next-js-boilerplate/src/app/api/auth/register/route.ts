@@ -35,12 +35,14 @@ export async function POST(request: Request) {
   let email: string;
   let password: string;
   let name: string | undefined;
+  let timezone: string | undefined;
 
   try {
     const body = await request.json();
     email = body.email;
     password = body.password;
     name = body.name;
+    timezone = body.timezone;
     if (!email || !password) {
       return NextResponse.json(
         { statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Email and password are required", key: "auth.errors.emailRequired" },
@@ -60,7 +62,9 @@ export async function POST(request: Request) {
       userToken?: string;
       user: unknown;
     };
-  }>(REGISTER_QUERY, { input: { email, password, ...(name ? { name } : {}) } });
+  }>(REGISTER_QUERY, {
+    input: { email, password, ...(name ? { name } : {}), ...(timezone ? { timezone } : {}) },
+  });
 
   if (errors || !data?.register) {
     const body = graphqlErrorBody(errors, "Registration failed");

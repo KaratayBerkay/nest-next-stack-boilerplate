@@ -47,11 +47,13 @@ const LOGIN_QUERY = `
 export const POST = withLogging(async (request, log) => {
   let email: string;
   let password: string;
+  let timezone: string | undefined;
 
   try {
     const body = await request.json();
     email = body.email;
     password = body.password;
+    timezone = body.timezone;
     if (!email || !password) {
       return NextResponse.json(
         { statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Email and password are required", key: "auth.errors.emailRequired" },
@@ -71,7 +73,9 @@ export const POST = withLogging(async (request, log) => {
       userToken?: string;
       user: unknown;
     };
-  }>(LOGIN_QUERY, { input: { email, password } });
+  }>(LOGIN_QUERY, {
+    input: { email, password, ...(timezone ? { timezone } : {}) },
+  });
 
   if (errors || !data?.login) {
     const body = graphqlErrorBody(errors, "Login failed");

@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { apiFetch, apiFetchJson } from "@/lib/api-client";
+import { TIMEZONE_COOKIE } from "@/constants/i18n";
 
 // Session snapshot fields arrive via /api/auth/me (Redis, zero-PG).
 // Login/register return a subset from AuthPayload; the snapshot is the
@@ -122,12 +123,19 @@ export function AuthProvider({
     };
   }, []);
 
+  function readTimezone(): string | undefined {
+    const match = document.cookie.match(
+      new RegExp(`${TIMEZONE_COOKIE}=([^;]+)`),
+    );
+    return match?.[1];
+  }
+
   const login = useCallback(async (email: string, password: string) => {
     try {
       const data = await apiFetchJson<AuthResponse>("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, timezone: readTimezone() }),
       });
       setUser(data.user);
       if (data.accessToken) setToken(data.accessToken);
@@ -144,7 +152,7 @@ export function AuthProvider({
         const data = await apiFetchJson<AuthResponse>("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password, name }),
+          body: JSON.stringify({ email, password, name, timezone: readTimezone() }),
         });
         setUser(data.user);
         if (data.accessToken) setToken(data.accessToken);
