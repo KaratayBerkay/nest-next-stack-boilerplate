@@ -128,13 +128,20 @@ export class BillingResolver {
   async mySubscription(
     @CurrentUser() user: JwtUser,
   ): Promise<SubscriptionInfo | null> {
-    return this.billing.getSubscription(user.userId);
+    const sub = await this.billing.getSubscription(user.userId);
+    if (!sub) return null;
+    return {
+      ...sub,
+      periodStart: sub.periodStart ?? undefined,
+      periodEnd: sub.periodEnd ?? undefined,
+    };
   }
 
   @Mutation(() => SetupIntentResult)
   async createBillingSetupIntent(
     @CurrentUser() user: JwtUser,
   ): Promise<SetupIntentResult> {
-    return this.billing.createSetupIntent(user.userId);
+    const result = await this.billing.createSetupIntent(user.userId);
+    return { clientSecret: result.clientSecret! };
   }
 }

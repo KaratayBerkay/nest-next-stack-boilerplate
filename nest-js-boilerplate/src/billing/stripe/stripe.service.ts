@@ -13,7 +13,7 @@ export class StripeService {
       this.logger.warn('STRIPE_SECRET_KEY not set — Stripe calls will fail');
     }
     this.stripe = new Stripe(key ?? 'sk_test_dummy', {
-      apiVersion: '2025-04-30',
+      apiVersion: '2026-06-24.dahlia',
     });
   }
 

@@ -250,13 +250,12 @@ export class BillingService {
       })[user.subscriptionTier] ?? 0;
 
     return {
-      tier: user.subscriptionTier,
+      tier: user.subscriptionTier as SubscriptionTier,
       priceCents,
       currency: 'USD',
       periodStart: user.subscriptionPeriodStart,
       periodEnd: user.subscriptionPeriodEnd,
       cancelAtPeriodEnd: user.cancelAtPeriodEnd,
-      stripeSubscriptionId: user.stripeSubscriptionId,
     };
   }
 

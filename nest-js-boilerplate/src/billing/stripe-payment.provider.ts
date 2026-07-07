@@ -40,8 +40,8 @@ export class StripePaymentProvider implements PaymentProvider {
       return {
         success: true,
         stripeSubscriptionId: subscription.id,
-        periodStart: new Date(subscription.current_period_start * 1000),
-        periodEnd: new Date(subscription.current_period_end * 1000),
+        periodStart: new Date(subscription.items.data[0]?.current_period_start! * 1000),
+        periodEnd: new Date(subscription.items.data[0]?.current_period_end! * 1000),
         latestInvoiceId:
           typeof subscription.latest_invoice === 'string'
             ? subscription.latest_invoice

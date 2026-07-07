@@ -1,5 +1,5 @@
 import { Controller, Post, Req, Res, Logger } from '@nestjs/common';
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { StripeService } from './stripe/stripe.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { TokenStoreService } from '../auth/token-store.service';
@@ -36,19 +36,19 @@ export class StripeWebhookController {
     try {
       switch (event.type) {
         case 'invoice.paid': {
-          await this.handleInvoicePaid(event.data.object as Record<string, unknown>);
+          await this.handleInvoicePaid(event.data.object as unknown as Record<string, unknown>);
           break;
         }
         case 'invoice.payment_failed': {
-          await this.handleInvoiceFailed(event.data.object as Record<string, unknown>);
+          await this.handleInvoiceFailed(event.data.object as unknown as Record<string, unknown>);
           break;
         }
         case 'customer.subscription.deleted': {
-          await this.handleSubscriptionDeleted(event.data.object as Record<string, unknown>);
+          await this.handleSubscriptionDeleted(event.data.object as unknown as Record<string, unknown>);
           break;
         }
         case 'customer.subscription.updated': {
-          await this.handleSubscriptionUpdated(event.data.object as Record<string, unknown>);
+          await this.handleSubscriptionUpdated(event.data.object as unknown as Record<string, unknown>);
           break;
         }
       }
