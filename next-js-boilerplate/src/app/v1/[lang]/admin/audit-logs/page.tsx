@@ -8,6 +8,7 @@ import { apiFetchJson } from "@/lib/api-client";
 import { IconEye, IconSearch } from "@tabler/icons-react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { formatDateTime } from "@/lib/date-time";
 
 interface AuditActor {
   id: string;
@@ -197,7 +198,7 @@ export default function AuditLogsPage() {
                     className="border-border hover:bg-surface/50 border-b transition-colors"
                   >
                     <td className="text-muted whitespace-nowrap py-2 pr-2">
-                      {new Date(entry.createdAt).toLocaleString()}
+                      {formatDateTime(entry.createdAt)}
                     </td>
                     <td className="whitespace-nowrap py-2 pr-2 font-medium">
                       {entry.action.replace(/_/g, " ")}

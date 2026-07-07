@@ -18,6 +18,7 @@ import { SkeletonMessage } from "@/components/ui/skeleton-shapes";
 import {
   useNotifications,
 } from "@/lib/realtime/useNotifications";
+import { formatDate } from "@/lib/date-time";
 import { useQueryClient } from "@tanstack/react-query";
 import { notificationTarget } from "@/lib/notifications/target";
 
@@ -202,7 +203,7 @@ function NotificationPageContent() {
                   </p>
                 )}
                 <p className="mt-1 text-[10px] text-muted">
-                  {new Date(n.createdAt).toLocaleDateString()}
+                  {formatDate(n.createdAt)}
                 </p>
               </div>
               {!n.readAt && (

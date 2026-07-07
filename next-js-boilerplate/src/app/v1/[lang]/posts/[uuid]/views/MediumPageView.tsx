@@ -18,6 +18,7 @@ import { ReactionInline } from "@/components/feed/ReactionButtons";
 import { CommentSection } from "@/components/feed/CommentSection";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { formatDate } from "@/lib/date-time";
 import { useToast } from "@/components/ui/Toast";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useMarkPostNotificationsRead } from "@/lib/notifications/useMarkPostNotificationsRead";
@@ -100,7 +101,7 @@ function PostDetailContent() {
                 {post.author.name || post.author.email}
               </p>
               <p className="text-[11px] text-muted">
-                {new Date(post.createdAt).toLocaleDateString()}
+                {formatDate(post.createdAt)}
               </p>
             </div>
           </div>

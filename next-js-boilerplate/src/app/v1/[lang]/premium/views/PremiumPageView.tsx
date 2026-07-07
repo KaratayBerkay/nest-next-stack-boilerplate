@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useToast } from "@/components/ui/Toast";
 import { exceptionHandler } from "@/lib/exception-handler";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { getToday } from "@/lib/date-time";
 
 export function PremiumPageView() {
   const { toast } = useToast();
@@ -89,7 +90,7 @@ export function PremiumPageView() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `premium-stats-${new Date().toISOString().split("T")[0]}.csv`;
+    a.download = `premium-stats-${getToday("only_date")}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };

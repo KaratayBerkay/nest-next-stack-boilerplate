@@ -9,6 +9,7 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { formatDate } from "@/lib/date-time";
 
 interface ApiKey {
   id: string;
@@ -196,9 +197,9 @@ export default function ApiKeysPage() {
                 </div>
                 <code className="text-muted text-xs font-mono">{key.keyPrefix}...</code>
                 <div className="text-muted flex gap-4 text-xs">
-                  <span>Created {new Date(key.createdAt).toLocaleDateString()}</span>
-                  {key.lastUsedAt && <span>Last used {new Date(key.lastUsedAt).toLocaleDateString()}</span>}
-                  {key.expiresAt && <span>Expires {new Date(key.expiresAt).toLocaleDateString()}</span>}
+                  <span>Created {formatDate(key.createdAt)}</span>
+                  {key.lastUsedAt && <span>Last used {formatDate(key.lastUsedAt)}</span>}
+                  {key.expiresAt && <span>Expires {formatDate(key.expiresAt)}</span>}
                   {!key.expiresAt && <span>No expiry</span>}
                 </div>
               </div>

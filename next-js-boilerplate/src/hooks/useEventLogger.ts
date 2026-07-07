@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { eventLogger } from "@/lib/event-logger";
+import { nowMs } from "@/lib/date-time";
 
 function getStack(err: unknown): string | undefined {
   if (err instanceof Error) return err.stack;
@@ -15,13 +16,13 @@ export function useEventLogger(): void {
   const enterTime = useRef<number>(0);
 
   useEffect(() => {
-    if (enterTime.current === 0) enterTime.current = Date.now();
+    if (enterTime.current === 0) enterTime.current = nowMs();
 
     const currentPath = pathname;
     const prev = prevPath.current;
 
     if (prev !== null && currentPath !== prev) {
-      const durationMs = Date.now() - enterTime.current;
+      const durationMs = nowMs() - enterTime.current;
       eventLogger.emit({
         eventType: "page.exit",
         url: prev ?? undefined,
@@ -36,7 +37,7 @@ export function useEventLogger(): void {
 
     if (currentPath !== prev) {
       prevPath.current = currentPath;
-      enterTime.current = Date.now();
+      enterTime.current = nowMs();
       eventLogger.emit({
         eventType: "page.view",
         url: currentPath ?? undefined,

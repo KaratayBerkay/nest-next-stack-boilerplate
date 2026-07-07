@@ -8,6 +8,7 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
 import { Avatar } from "@/components/ui/Avatar";
+import { nowMs } from "@/lib/date-time";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { initials } from "@/lib/initials";
@@ -82,7 +83,7 @@ function ChatRoomContent() {
 
   const handleSend = useCallback(() => {
     if (!input.trim() || !realtime) return;
-    const tempId = `temp-${Date.now()}`;
+    const tempId = `temp-${nowMs()}`;
     realtime.send({
       type: "room-message",
       room,

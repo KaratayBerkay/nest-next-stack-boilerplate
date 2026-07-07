@@ -6,6 +6,7 @@ import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
 import { apiFetch, apiFetchJson } from "@/lib/api-client";
 import { useCallback, useEffect, useState } from "react";
 import { IconDeviceDesktop, IconDeviceMobile, IconWorld } from "@tabler/icons-react";
+import { formatDateTime } from "@/lib/date-time";
 
 interface SessionInfo {
   sessionId: string;
@@ -127,7 +128,7 @@ export function FreePageView() {
                       )}
                       {session.issuedAt && (
                         <span>
-                          Started: {new Date(session.issuedAt).toLocaleString()}
+                          Started: {formatDateTime(session.issuedAt)}
                         </span>
                       )}
                     </div>

@@ -16,6 +16,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useToast } from "@/components/ui/Toast";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { formatDate } from "@/lib/date-time";
 
 interface Post {
   id: string;
@@ -137,7 +138,7 @@ export function PostCard({
               {postData.author.name || postData.author.email}
             </span>
             <span className="text-muted text-[10px] leading-none">
-              {new Date(postData.createdAt).toLocaleDateString()}
+              {formatDate(postData.createdAt)}
             </span>
           </div>
         </div>

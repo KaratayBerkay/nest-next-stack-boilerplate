@@ -8,6 +8,7 @@ import { apiFetch } from "@/lib/api-client";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import { useBreakpoint } from "@/hooks";
 import { IconBell, IconChevronRight } from "@tabler/icons-react";
+import { formatDate } from "@/lib/date-time";
 import {
   useNotifications,
   useUnreadNotificationCount,
@@ -102,7 +103,7 @@ function NotificationList({
                   </p>
                 )}
                 <p className="text-muted mt-0.5 text-[10px]">
-                  {new Date(n.createdAt).toLocaleDateString()}
+                  {formatDate(n.createdAt)}
                 </p>
               </div>
               {!n.readAt && (

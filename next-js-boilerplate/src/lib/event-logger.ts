@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/api-client";
 import { FrontendEvent } from "./events.schema";
+import { nowMs, toISOString } from "@/lib/date-time";
 
 type Listener = (event: FrontendEvent) => void;
 
@@ -10,7 +11,7 @@ function getSessionId(): string {
     sessionId =
       typeof crypto !== "undefined" && crypto.randomUUID
         ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        : `${nowMs()}-${Math.random().toString(36).slice(2)}`;
     // Persist across page reloads
     try {
       const stored = sessionStorage.getItem("fe:sessionId");
@@ -72,7 +73,7 @@ export const eventLogger = {
     enqueue({
       ...event,
       clientSessionId: getSessionId(),
-      timestamp: new Date().toISOString(),
+      timestamp: toISOString(),
     });
   },
 

@@ -4,6 +4,7 @@ import { apiFetch } from "@/lib/api-client";
 import { useRef, useState } from "react";
 import { useToast } from "@/components/ui/Toast";
 import { ReactionInline } from "./ReactionButtons";
+import { toISOString, formatDate } from "@/lib/date-time";
 import { IconPencil, IconTrash } from "@tabler/icons-react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
@@ -129,7 +130,7 @@ export function CommentSection({
     const temp: Comment = {
       id: `opt-${tempIdCounter.current}`,
       body: trimmedBody,
-      createdAt: new Date().toISOString(),
+      createdAt: toISOString(),
       author: { id: currentUserId ?? "", name: "You", email: "" },
       parentId: replyTo,
     };
@@ -208,7 +209,7 @@ export function CommentSection({
                     {comment.author.name || comment.author.email}
                   </span>
                   <span className="text-muted shrink-0 text-[10px] leading-none">
-                    {new Date(comment.createdAt).toLocaleDateString()}
+                    {formatDate(comment.createdAt)}
                   </span>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
@@ -297,7 +298,7 @@ export function CommentSection({
                         {reply.author.name || reply.author.email}
                       </span>
                       <span className="text-muted shrink-0 text-[10px] leading-none">
-                        {new Date(reply.createdAt).toLocaleDateString()}
+                        {formatDate(reply.createdAt)}
                       </span>
                     </div>
                     <div className="flex shrink-0 items-center gap-1">

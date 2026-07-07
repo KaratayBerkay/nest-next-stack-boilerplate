@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo } from "react";
 import { cn } from "@/lib/cn";
 import { inputBaseClasses, inputErrorClasses } from "@/components/ui/input-styles";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { MONTHS, DAYS_SHORT, getDaysInMonth, getFirstWeekdayOfMonth, isSameDay, formatHoursMinutes } from "@/lib/date-time";
 
 interface DateTimeInputProps {
   value?: Date;
@@ -14,12 +15,7 @@ interface DateTimeInputProps {
   disabled?: boolean;
 }
 
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-
-const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const DAYS = DAYS_SHORT;
 
 export function DateTimeInput({
   value,
@@ -38,8 +34,8 @@ export function DateTimeInput({
   const month = safeViewDate.getMonth();
 
   const daysInMonth = useMemo(() => {
-    const firstDay = new Date(year, month, 1).getDay();
-    const totalDays = new Date(year, month + 1, 0).getDate();
+    const firstDay = getFirstWeekdayOfMonth(year, month + 1);
+    const totalDays = getDaysInMonth(year, month + 1);
     return { firstDay, totalDays };
   }, [year, month]);
 
@@ -79,37 +75,20 @@ export function DateTimeInput({
   );
 
   const isToday = useCallback(
-    (day: number) => {
-      const now = new Date();
-      return (
-        now.getFullYear() === year &&
-        now.getMonth() === month &&
-        now.getDate() === day
-      );
-    },
+    (day: number) => isSameDay(new Date(year, month, day), new Date()),
     [year, month],
   );
 
   const isSelected = useCallback(
     (day: number) => {
       if (!value) return false;
-      return (
-        value.getFullYear() === year &&
-        value.getMonth() === month &&
-        value.getDate() === day
-      );
+      return isSameDay(value, new Date(year, month, day));
     },
     [value, year, month],
   );
 
-  const formatTime = (h: number, m: number) => {
-    const ampm = h >= 12 ? "PM" : "AM";
-    const h12 = h % 12 || 12;
-    return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
-  };
-
   const displayValue = value
-    ? `${MONTHS[value.getMonth()]} ${value.getDate()}, ${value.getFullYear()} ${formatTime(value.getHours(), value.getMinutes())}`
+    ? `${MONTHS[value.getMonth()]} ${value.getDate()}, ${value.getFullYear()} ${formatHoursMinutes(value.getHours(), value.getMinutes())}`
     : "";
 
   return (

@@ -9,6 +9,7 @@ import { apiFetchJson } from "@/lib/api-client";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { TIER_PRICES, tierLabel } from "@/lib/tier";
 import { PRICING_PATH } from "@/constants/routes";
+import { formatDate } from "@/lib/date-time";
 
 interface Transaction {
   id: string;
@@ -81,7 +82,7 @@ export function FreePageView() {
               >
                 <div>
                   <p className="text-xs text-muted">
-                    {new Date(tx.createdAt).toLocaleDateString()}
+                    {formatDate(tx.createdAt)}
                   </p>
                   <p className="text-sm font-medium">{tx.reference.replace("subscription:", "")}</p>
                 </div>

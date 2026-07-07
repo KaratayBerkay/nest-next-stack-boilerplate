@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo } from "react";
 import { cn } from "@/lib/cn";
 import { inputBaseClasses, inputErrorClasses } from "@/components/ui/input-styles";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { MONTHS, DAYS_SHORT, getDaysInMonth, getFirstWeekdayOfMonth, isSameDay } from "@/lib/date-time";
 
 interface DateInputProps {
   value?: Date;
@@ -14,12 +15,7 @@ interface DateInputProps {
   disabled?: boolean;
 }
 
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-
-const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const DAYS = DAYS_SHORT;
 
 export function DateInput({
   value,
@@ -36,8 +32,8 @@ export function DateInput({
   const month = safeViewDate.getMonth();
 
   const daysInMonth = useMemo(() => {
-    const firstDay = new Date(year, month, 1).getDay();
-    const totalDays = new Date(year, month + 1, 0).getDate();
+    const firstDay = getFirstWeekdayOfMonth(year, month + 1);
+    const totalDays = getDaysInMonth(year, month + 1);
     return { firstDay, totalDays };
   }, [year, month]);
 
@@ -64,25 +60,14 @@ export function DateInput({
   );
 
   const isToday = useCallback(
-    (day: number) => {
-      const now = new Date();
-      return (
-        now.getFullYear() === year &&
-        now.getMonth() === month &&
-        now.getDate() === day
-      );
-    },
+    (day: number) => isSameDay(new Date(year, month, day), new Date()),
     [year, month],
   );
 
   const isSelected = useCallback(
     (day: number) => {
       if (!value) return false;
-      return (
-        value.getFullYear() === year &&
-        value.getMonth() === month &&
-        value.getDate() === day
-      );
+      return isSameDay(value, new Date(year, month, day));
     },
     [value, year, month],
   );
