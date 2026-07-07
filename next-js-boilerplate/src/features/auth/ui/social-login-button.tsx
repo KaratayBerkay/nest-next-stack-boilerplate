@@ -52,23 +52,27 @@ function ProviderIcon({ provider }: { provider: string }) {
   }
 }
 
+const providerStyles: Record<string, { bg: string; hover: string; text: string }> = {
+  google: { bg: "bg-white", hover: "hover:bg-zinc-100", text: "text-zinc-800" },
+  github: { bg: "bg-zinc-900", hover: "hover:bg-black", text: "text-white" },
+  linkedin: { bg: "bg-[#0A66C2]", hover: "hover:bg-[#004182]", text: "text-white" },
+  huggingface: { bg: "bg-[#FFD21E]", hover: "hover:bg-[#E5BC00]", text: "text-zinc-900" },
+  twitch: { bg: "bg-[#9146FF]", hover: "hover:bg-[#772CE8]", text: "text-white" },
+  x: { bg: "bg-black", hover: "hover:bg-zinc-900", text: "text-white" },
+};
+
 export function SocialLoginButton({ provider, label }: SocialLoginButtonProps) {
+  const style = providerStyles[provider] ?? { bg: "bg-zinc-800", hover: "hover:bg-zinc-700", text: "text-white" };
+
   return (
     <button
       onClick={() => { window.location.href = `/api/auth/oauth/${provider}`; }}
-      className="bg-bg hover:bg-surface border-border hover:border-fg/20 flex w-full items-center justify-center gap-3 rounded-xl border px-4 py-2.5 text-sm font-medium shadow-sm transition-all hover:shadow-md"
+      className={`border-border flex w-full items-center gap-3 rounded-xl border px-4 py-2.5 text-sm font-medium shadow-sm transition-all hover:shadow-md ${style.bg} ${style.hover} ${style.text}`}
     >
-      <span className={
-        provider === "google" ? "" :
-        provider === "github" ? "text-[#181717]" :
-        provider === "linkedin" ? "text-[#0A66C2]" :
-        provider === "huggingface" ? "text-[#FFD21E]" :
-        provider === "twitch" ? "text-[#9146FF]" :
-        "text-fg"
-      }>
+      <span className={provider === "google" ? "" : "text-inherit"}>
         <ProviderIcon provider={provider} />
       </span>
-      <span className="text-fg">{label}</span>
+      <span>{label}</span>
     </button>
   );
 }

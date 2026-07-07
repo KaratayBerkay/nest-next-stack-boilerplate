@@ -136,7 +136,7 @@ export function LoginForm() {
         <button
           type="submit"
           disabled={submitting}
-          className="bg-fg text-bg self-start rounded px-4 py-2 text-sm disabled:opacity-40"
+          className="bg-fg text-bg w-full rounded px-4 py-2 text-sm disabled:opacity-40"
           data-testid="login-submit"
         >
           {submitting ? t.form.login.submitting : t.form.login.submit}
