@@ -1,12 +1,10 @@
 "use client";
 
 import { apiFetch } from "@/lib/api-client";
-import { useRef, useState } from "react";
-import { useParams } from "next/navigation";
-import Link from "next/link";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { useToast } from "@/components/ui/Toast";
 import { ReactionInline } from "./ReactionButtons";
-import { IconChevronRight, IconPencil, IconTrash } from "@tabler/icons-react";
+import { IconPencil, IconTrash } from "@tabler/icons-react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 interface Comment {
@@ -36,8 +34,6 @@ export function CommentSection({
   maxTopLevel = 5,
   pageable = false,
 }: CommentSectionProps) {
-  const params = useParams<{ lang: string }>();
-  const lang = params?.lang ?? "en";
   const [body, setBody] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -49,6 +45,7 @@ export function CommentSection({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingBody, setEditingBody] = useState("");
   const [visibleCount, setVisibleCount] = useState(maxTopLevel);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const allComments = [
     ...comments
@@ -62,6 +59,23 @@ export function CommentSection({
   const hasMore = topLevel.length > visibleCount;
   const replies = (parentId: string) =>
     allComments.filter((c) => c.parentId === parentId);
+
+  const loadMore = useCallback(() => {
+    setVisibleCount((prev) => prev + maxTopLevel);
+  }, [maxTopLevel]);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) loadMore();
+      },
+      { rootMargin: "200px" },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loadMore]);
 
   const handleEdit = async (commentId: string) => {
     if (!editingBody.trim()) return;
@@ -383,23 +397,7 @@ export function CommentSection({
         ))}
       </div>
 
-      {hasMore &&
-        (pageable ? (
-          <button
-            onClick={() => setVisibleCount((prev) => prev + maxTopLevel)}
-            className="text-muted hover:text-fg w-fit text-xs font-medium transition-colors"
-          >
-            Load more ({topLevel.length - visibleCount} remaining)
-          </button>
-        ) : (
-          <Link
-            href={`/v1/${lang}/posts/${postId}`}
-            className="text-muted hover:text-fg flex items-center gap-0.5 text-xs font-medium transition-colors"
-          >
-            See more
-            <IconChevronRight size={14} stroke={1.5} />
-          </Link>
-        ))}
+      {hasMore && <div ref={sentinelRef} className="h-1" />}
     </div>
   );
 }

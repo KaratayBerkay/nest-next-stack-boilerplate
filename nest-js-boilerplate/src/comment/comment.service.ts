@@ -153,10 +153,10 @@ export class CommentService {
         replies: {
           where: { deletedAt: null },
           include: { author: true, reactions: true },
-          orderBy: { createdAt: 'asc' },
+          orderBy: { createdAt: 'desc' },
         },
       },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: 'desc' },
     });
   }
 }

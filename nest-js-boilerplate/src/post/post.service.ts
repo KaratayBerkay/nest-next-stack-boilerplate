@@ -177,7 +177,7 @@ export class PostService {
             reactions: true,
             _count: { select: { replies: true } },
           },
-          orderBy: { createdAt: 'asc' },
+          orderBy: { createdAt: 'desc' },
         },
         reactions: {
           include: { user: true },
