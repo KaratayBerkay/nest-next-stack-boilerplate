@@ -20,7 +20,7 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm exec nest build
 
-FROM base AS pruner
+FROM builder AS pruner
 RUN pnpm prune --prod --ignore-scripts
 
 FROM base AS runtime
