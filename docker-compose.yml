@@ -137,6 +137,18 @@ services:
   # ──────────────────────────────────────────────────────
   # Applications
   # ──────────────────────────────────────────────────────
+  migrate:
+    build:
+      context: ./nest-js-boilerplate
+      target: migrate
+    restart: "no"
+    depends_on:
+      vault-init:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    env_file: ./.vault-envs/backend.env
+
   app:
     build:
       context: ./nest-js-boilerplate
@@ -144,6 +156,8 @@ services:
     init: true
     depends_on:
       vault-init:
+        condition: service_completed_successfully
+      migrate:
         condition: service_completed_successfully
       postgres:
         condition: service_healthy

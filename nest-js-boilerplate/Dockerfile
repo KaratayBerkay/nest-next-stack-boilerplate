@@ -24,6 +24,15 @@ RUN pnpm exec nest build
 FROM builder AS pruner
 RUN pnpm prune --prod --ignore-scripts
 
+FROM base AS migrate
+ENV NODE_ENV=production
+COPY --from=builder --chown=node:node /app/node_modules ./node_modules
+COPY --from=builder --chown=node:node /app/package.json ./package.json
+COPY --from=builder --chown=node:node /app/prisma ./prisma
+COPY --from=builder --chown=node:node /app/prisma.config.ts ./prisma.config.ts
+USER node
+CMD ["node_modules/.bin/prisma", "migrate", "deploy"]
+
 FROM base AS runtime
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=384"
