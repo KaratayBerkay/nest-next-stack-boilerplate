@@ -17,17 +17,25 @@ SERVICES="
 "
 
 for svc in $SERVICES; do
+  outfile="/secrets/$svc.env"
   echo "vault-init: fetching $svc secrets..."
 
-  outfile="/secrets/$svc.env"
+  http_code=$(curl -s -o /tmp/vault_response.json -w "%{http_code}" \
+    -H "X-Vault-Token: $VAULT_TOKEN" \
+    "$VAULT_ADDR/v1/secret/data/production/$svc")
 
-  curl -sf -H "X-Vault-Token: $VAULT_TOKEN" \
-    "$VAULT_ADDR/v1/secret/data/production/$svc" \
-    | jq -r '.data.data | to_entries | .[] | "\(.key)=\(.value)"' \
-    > "$outfile"
+  if [ "$http_code" != "200" ]; then
+    echo "vault-init: $svc returned HTTP $http_code — skipping"
+    rm -f /tmp/vault_response.json
+    continue
+  fi
+
+  jq -r '.data.data | to_entries | .[] | "\(.key)=\(.value)"' \
+    /tmp/vault_response.json > "$outfile"
 
   count=$(wc -l < "$outfile")
   echo "vault-init: wrote $outfile ($count vars)"
+  rm -f /tmp/vault_response.json
 done
 
-echo "vault-init: all secrets fetched"
+echo "vault-init: done"
