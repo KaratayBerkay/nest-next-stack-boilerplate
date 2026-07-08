@@ -25,7 +25,8 @@ for svc in $SERVICES; do
     "$VAULT_ADDR/v1/secret/data/production/$svc")
 
   if [ "$http_code" != "200" ]; then
-    echo "vault-init: $svc returned HTTP $http_code — skipping"
+    echo "vault-init: $svc returned HTTP $http_code — writing empty file"
+    : > "$outfile"
     rm -f /tmp/vault_response.json
     continue
   fi
