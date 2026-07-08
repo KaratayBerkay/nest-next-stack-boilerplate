@@ -1,24 +1,46 @@
-# Infra services for local dev — all secrets come from Vault at app startup.
-# Apps (NestJS, Next.js) run locally with VAULT_ADDR + VAULT_TOKEN in .env.
+# Infra services for local dev — secrets fetched from Vault by vault-init.
 name: boilers
 
 services:
+  # ──────────────────────────────────────────────────────
+  # Vault init — fetches secrets for every infra service
+  # ──────────────────────────────────────────────────────
+  vault-init:
+    image: alpine:3.20
+    environment:
+      VAULT_ADDR: https://vault.eys.gen.tr
+      VAULT_TOKEN: ${VAULT_TOKEN:?set VAULT_TOKEN in .env or shell}
+    volumes:
+      - vault-envs:/secrets
+    command: >
+      sh -c '
+        apk add --no-cache curl jq >/dev/null 2>&1 &&
+        for svc in postgres rabbitmq mongo minio; do
+          echo "vault-init: fetching $svc secrets..." &&
+          curl -sf -H "X-Vault-Token: $VAULT_TOKEN" \
+            "$VAULT_ADDR/v1/secret/data/production/$svc" \
+            | jq -r ".data.data | to_entries | .[] | \"\(.key)=\(.value)\"" \
+            > "/secrets/$svc.env" &&
+          echo "vault-init: wrote /secrets/$svc.env ($(wc -l < /secrets/$svc.env) vars)"
+        done
+      '
+
   # ──────────────────────────────────────────────────────
   # Core (always on)
   # ──────────────────────────────────────────────────────
   postgres:
     image: postgres:17-alpine
     restart: unless-stopped
-    environment:
-      POSTGRES_USER: nest
-      POSTGRES_PASSWORD: nest
-      POSTGRES_DB: nest
+    depends_on:
+      vault-init:
+        condition: service_completed_successfully
+    env_file: /secrets/postgres.env
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U nest -d nest"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -54,9 +76,10 @@ services:
     image: rabbitmq:4-management
     profiles: ["brokers", "all"]
     restart: unless-stopped
-    environment:
-      RABBITMQ_DEFAULT_USER: nest
-      RABBITMQ_DEFAULT_PASS: nest
+    depends_on:
+      vault-init:
+        condition: service_completed_successfully
+    env_file: /secrets/rabbitmq.env
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -105,9 +128,10 @@ services:
     image: mongo:7
     profiles: ["mongo", "all"]
     restart: unless-stopped
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: nest
-      MONGO_INITDB_ROOT_PASSWORD: nest
+    depends_on:
+      vault-init:
+        condition: service_completed_successfully
+    env_file: /secrets/mongo.env
     ports:
       - "27017:27017"
     volumes:
@@ -183,9 +207,10 @@ services:
     image: minio/minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+    depends_on:
+      vault-init:
+        condition: service_completed_successfully
+    env_file: /secrets/minio.env
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -215,6 +240,7 @@ services:
       echo 'MinIO bucket ready'"
 
 volumes:
+  vault-envs:
   pgdata:
   redisdata:
   rabbitmqdata:
