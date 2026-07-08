@@ -22,7 +22,7 @@ for svc in $SERVICES; do
 
   http_code=$(curl -s -o /tmp/vault_response.json -w "%{http_code}" \
     -H "X-Vault-Token: $VAULT_TOKEN" \
-    "$VAULT_ADDR/v1/secret/data/production/$svc")
+    "$VAULT_ADDR/v1/secret/data/secret/production/$svc")
 
   if [ "$http_code" != "200" ]; then
     echo "vault-init: $svc returned HTTP $http_code — writing empty file"
