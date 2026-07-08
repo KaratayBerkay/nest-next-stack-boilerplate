@@ -10,8 +10,13 @@ import { internalGrpcOptions } from './grpc/grpc.module';
 import { requestContextMiddleware } from './logging/request-context';
 import { DeviceIpMiddleware } from './devices/device-ip-middleware';
 import { PerformanceInterceptor } from './interceptors/performance.interceptor';
+import { loadVaultSecrets } from './vault/vault-loader';
 
 async function bootstrap() {
+  // Load secrets from Vault before the app starts, so ConfigModule and every
+  // other module sees the vault values in process.env from the very beginning.
+  await loadVaultSecrets();
+
   // bufferLogs: hold boot logs until the Pino logger is installed below, so the very first
   // lines are structured JSON too (no built-in-console output leaking out at startup).
   const app = await NestFactory.create(AppModule, {

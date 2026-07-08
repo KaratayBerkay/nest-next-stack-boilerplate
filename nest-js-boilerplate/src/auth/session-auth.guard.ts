@@ -174,7 +174,11 @@ export class SessionAuthGuard implements CanActivate {
     // auto-attaches it, so skip the check when a bearer token was used.
     // Queries are read-only and don't need protection; only state-changing mutations do.
     const usesBearerAuth = req.headers.authorization?.startsWith('Bearer ');
-    if (this.isGraphQLMutation(context) && !usesBearerAuth && !validateRequest(req)) {
+    if (
+      this.isGraphQLMutation(context) &&
+      !usesBearerAuth &&
+      !validateRequest(req)
+    ) {
       throw new ForbiddenException('Invalid or missing CSRF token');
     }
 

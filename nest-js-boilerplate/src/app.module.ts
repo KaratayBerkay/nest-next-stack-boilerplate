@@ -12,6 +12,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AlsModule } from './als/als.module';
 import { AuthModule } from './auth/auth.module';
+import { VaultModule } from './vault/vault.module';
 import { AuthorizationModule } from './authorization/authorization.module';
 import { BillingModule } from './billing/billing.module';
 import { StripeModule } from './billing/stripe/stripe.module';
@@ -187,6 +188,7 @@ import { WsModule } from './ws/ws.module';
     UploadModule,
     TasksModule,
     ThrottleModule,
+    VaultModule,
     HealthModule,
     RedisModule,
     ProfileModule,

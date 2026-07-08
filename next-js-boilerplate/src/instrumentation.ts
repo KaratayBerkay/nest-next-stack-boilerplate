@@ -6,6 +6,13 @@ export async function register(): Promise<void> {
   const runtime = process.env.NEXT_RUNTIME ?? "nodejs";
   markStartup(runtime);
 
+  // Load secrets from Vault before the app initializes so process.env is
+  // populated for all server-side code.
+  if (runtime === "nodejs") {
+    const { loadVaultIntoEnv } = await import("@/lib/vault");
+    await loadVaultIntoEnv();
+  }
+
   if (runtime === "nodejs") {
     const { logger } = await import("@/lib/logger");
     console.error = (...args) => logger.error(...args);
