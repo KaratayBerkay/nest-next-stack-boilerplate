@@ -23,8 +23,12 @@ ENV NEXT_PUBLIC_MINIO_PUBLIC_URL=$NEXT_PUBLIC_MINIO_PUBLIC_URL
 ENV NEXT_PUBLIC_STRIPE_KEY=$NEXT_PUBLIC_STRIPE_KEY
 ENV NEXT_PUBLIC_VAPID_PUBLIC_KEY=$NEXT_PUBLIC_VAPID_PUBLIC_KEY
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV CI=true
 
-RUN pnpm generate-i18n-types && \
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    --mount=type=cache,id=next-cache,target=/app/.next/cache \
+    pnpm config set store-dir /pnpm/store && \
+    pnpm generate-i18n-types && \
     pnpm exec next build
 
 FROM node:22-alpine AS runner

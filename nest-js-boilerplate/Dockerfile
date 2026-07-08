@@ -16,6 +16,7 @@ COPY prisma ./prisma
 COPY prisma.config.ts ./
 RUN mkdir -p src
 ARG DATABASE_URL=postgresql://build:build@localhost:5432/build?schema=public
+ENV CI=true
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm exec nest build
