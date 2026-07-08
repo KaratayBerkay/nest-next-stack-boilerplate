@@ -1,20 +1,5 @@
-# Root docker-compose for the boilers monorepo — everything runs with one command.
-#
-# Usage: docker compose up -d --build   (or use the Makefile: make up / make
-# build / make rebuild / make down / make logs / make ps — same commands,
-# plus PROFILE= and SERVICE= shortcuts)
-#
-# Every service reads its own env file via `env_file:` below: infra services
-# from prod/services/<name>.env, the backend/frontend apps from root
-# prod/app.env / prod/nextjs.env. See the matching *.env.example next to each
-# for the full reference of what a service needs; the real files are
-# gitignored — run `make setup` to create them on first run.
-#
-# No --env-file flag is ever needed, for any command, including builds: the
-# frontend's NEXT_PUBLIC_* values used to require Compose to interpolate
-# ${VAR} into --build-arg, which meant every build needed an explicit
-# --env-file. Now the Dockerfile COPYs prod/nextjs.env directly and Next.js's
-# own env loading reads it natively — see prod/docker/frontend/Dockerfile.
+# Infra services for local dev — all secrets come from Vault at app startup.
+# Apps (NestJS, Next.js) run locally with VAULT_ADDR + VAULT_TOKEN in .env.
 name: boilers
 
 services:
@@ -24,15 +9,16 @@ services:
   postgres:
     image: postgres:17-alpine
     restart: unless-stopped
-    env_file: prod/services/postgres.env
+    environment:
+      POSTGRES_USER: nest
+      POSTGRES_PASSWORD: nest
+      POSTGRES_DB: nest
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      # $$ (escaped from Compose interpolation) so POSTGRES_USER/DB are read
-      # from the container's own env at runtime, populated by env_file above.
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      test: ["CMD-SHELL", "pg_isready -U nest -d nest"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -41,7 +27,6 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
-    env_file: prod/services/redis.env
     ports:
       - "6379:6379"
     volumes:
@@ -59,7 +44,6 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-    env_file: prod/services/redis-commander.env
     ports:
       - "8081:8081"
 
@@ -70,7 +54,9 @@ services:
     image: rabbitmq:4-management
     profiles: ["brokers", "all"]
     restart: unless-stopped
-    env_file: prod/services/rabbitmq.env
+    environment:
+      RABBITMQ_DEFAULT_USER: nest
+      RABBITMQ_DEFAULT_PASS: nest
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -87,7 +73,6 @@ services:
     profiles: ["brokers", "all"]
     restart: unless-stopped
     command: ["--jetstream", "--http_port", "8222"]
-    env_file: prod/services/nats.env
     ports:
       - "4222:4222"
       - "8222:8222"
@@ -96,7 +81,6 @@ services:
     image: eclipse-mosquitto:2
     profiles: ["brokers", "all"]
     restart: unless-stopped
-    env_file: prod/services/mqtt.env
     ports:
       - "1883:1883"
     volumes:
@@ -109,10 +93,8 @@ services:
     image: apache/kafka:3.9.0
     profiles: ["kafka", "all"]
     restart: unless-stopped
-    # In-network clients (the app) use kafka:9092; host clients use localhost:29092.
     ports:
       - "29092:29092"
-    env_file: prod/services/kafka.env
     volumes:
       - kafkadata:/var/lib/kafka/data
 
@@ -123,98 +105,13 @@ services:
     image: mongo:7
     profiles: ["mongo", "all"]
     restart: unless-stopped
-    env_file: prod/services/mongo.env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: nest
+      MONGO_INITDB_ROOT_PASSWORD: nest
     ports:
       - "27017:27017"
     volumes:
       - mongodata:/data/db
-
-  # ──────────────────────────────────────────────────────
-  # Applications
-  # ──────────────────────────────────────────────────────
-  # One-shot: applies Prisma migrations before the app starts (the runtime image
-  # ships without the prisma CLI by design — see Dockerfile.prod's migrate target).
-  migrate:
-    build:
-      context: ./nest-js-boilerplate
-      dockerfile: ../prod/docker/backend/Dockerfile.prod
-      target: migrate
-    restart: "no"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    # Reuses prod/app.env for DATABASE_URL — this one-shot container also sees the
-    # rest of app's secrets, which is an acceptable tradeoff to avoid a
-    # separate near-duplicate file for a single shared variable.
-    env_file: prod/app.env
-
-  app:
-    build:
-      context: ./nest-js-boilerplate
-      dockerfile: ../prod/docker/backend/Dockerfile.prod
-    restart: unless-stopped
-    init: true
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      fluent-bit:
-        condition: service_healthy
-    ports:
-      - "3000:3000"
-      - "5050:5050"
-    env_file: prod/app.env
-    volumes:
-      - ./logs/back:/app/logs
-    command: ["sh", "-c", "mkdir -p /app/logs && node dist/src/main.js 2>&1 | tee /app/logs/app.log"]
-    logging:
-      driver: fluentd
-      options:
-        # The fluentd log driver is resolved by the Docker daemon on the host,
-        # not from inside the container network — the compose service name
-        # `fluent-bit` only resolves via the container-side embedded DNS, so
-        # it must be the host-published address instead (port is published
-        # via fluent-bit's `ports:`).
-        fluentd-address: localhost:24224
-        tag: app
-        # fluentd driver stops `docker logs <container>` from showing output,
-        # but the tee'd bind-mount (./logs/back) preserves host-side tailing.
-
-  nextjs:
-    build:
-      # Context is the repo root, not next-js-boilerplate/ — the Dockerfile
-      # needs to reach prod/nextjs.env, which lives outside that directory,
-      # and copies it in directly rather than taking NEXT_PUBLIC_* as
-      # --build-arg. That means this build has NO ${VAR} interpolation
-      # dependency at all: no --env-file flag, ever, for any docker compose
-      # command, build included. See the Dockerfile and root .dockerignore.
-      context: .
-      dockerfile: prod/docker/frontend/Dockerfile
-    restart: unless-stopped
-    init: true
-    depends_on:
-      app:
-        condition: service_started
-      fluent-bit:
-        condition: service_healthy
-    ports:
-      - "3100:3100"
-    env_file: prod/nextjs.env
-    volumes:
-      - ./logs/front:/app/logs
-    command: ["sh", "-c", "mkdir -p /app/logs && node server.js 2>&1 | tee /app/logs/app.log"]
-    logging:
-      driver: fluentd
-      options:
-        # See the `app` service's identical comment: this must be the
-        # host-published address, not the compose service name.
-        fluentd-address: localhost:24224
-        tag: frontend
-        # fluentd driver stops `docker logs <container>` from showing output,
-        # but the tee'd bind-mount (./logs/front) preserves host-side tailing.
 
   # ──────────────────────────────────────────────────────
   # ELK logging stack
@@ -222,7 +119,10 @@ services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
     restart: unless-stopped
-    env_file: prod/services/elasticsearch.env
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
     ulimits:
       memlock: { soft: -1, hard: -1 }
     ports:
@@ -241,20 +141,17 @@ services:
     depends_on:
       elasticsearch:
         condition: service_healthy
-    env_file: prod/services/kibana.env
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
     ports:
       - "5601:5601"
 
   fluent-bit:
-    # -debug variant: the plain 3.1 tag is fully distroless (no /bin/sh, no pidof, nothing
-    # but the fluent-bit binary itself), so the healthcheck below can never run at all —
-    # not a crash, just "exec: /bin/sh: no such file or directory" on every attempt forever.
     image: fluent/fluent-bit:3.1-debug
     restart: unless-stopped
     depends_on:
       elasticsearch:
         condition: service_healthy
-    env_file: prod/services/fluent-bit.env
     healthcheck:
       test: ["CMD-SHELL", "pidof fluent-bit || exit 1"]
       interval: 5s
@@ -275,7 +172,6 @@ services:
     image: axllent/mailpit:latest
     profiles: ["mail", "all"]
     restart: unless-stopped
-    env_file: prod/services/mailpit.env
     ports:
       - "1025:1025"
       - "8025:8025"
@@ -287,7 +183,9 @@ services:
     image: minio/minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
-    env_file: prod/services/minio.env
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -306,12 +204,14 @@ services:
     depends_on:
       minio:
         condition: service_healthy
-    env_file: prod/services/minio.env
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
     entrypoint: >
       /bin/sh -c "
       mc alias set local http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD &&
-      mc mb --ignore-existing local/$$MINIO_BUCKET &&
-      mc anonymous set download local/$$MINIO_BUCKET &&
+      mc mb --ignore-existing local/uploads &&
+      mc anonymous set download local/uploads &&
       echo 'MinIO bucket ready'"
 
 volumes:

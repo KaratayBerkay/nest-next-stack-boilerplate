@@ -1,4 +1,4 @@
-const VAULT_SECRET_PATH = 'production/data/backend';
+const VAULT_SECRET_PATH = 'secret/data/production/backend';
 
 export async function loadVaultSecrets(): Promise<void> {
   const addr = (process.env.VAULT_ADDR ?? '').replace(/\/+$/, '');

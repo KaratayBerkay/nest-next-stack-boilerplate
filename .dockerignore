@@ -1,21 +1,7 @@
-# Build-context excludes for the `nextjs` service specifically — its build
-# context is the repo root (not next-js-boilerplate/) so the Dockerfile can
-# COPY prod/nextjs.env, which lives outside next-js-boilerplate/. Everything
-# else in the monorepo is irrelevant to that build, so ignore it all by
-# default and allow back in only what's needed.
-#
-# This keeps the context transfer small — it is NOT the security boundary:
-# the Dockerfile only ever COPYs next-js-boilerplate/ and prod/nextjs.env
-# explicitly, so even if something here were mis-scoped, backend secrets
-# (prod/app.env, prod/services/*.env) still could not end up in an image
-# layer without an explicit COPY naming them.
 *
 !next-js-boilerplate
 !next-js-boilerplate/**
-!prod
-!prod/nextjs.env
 
-# Re-exclude heavy/irrelevant subpaths the blanket allow above pulled back in.
 next-js-boilerplate/node_modules
 next-js-boilerplate/.next
 next-js-boilerplate/coverage

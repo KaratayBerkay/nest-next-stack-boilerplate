@@ -1,6 +1,6 @@
 export type VaultSecrets = Record<string, string>;
 
-const VAULT_SECRET_PATH = 'production/data/frontend';
+const VAULT_SECRET_PATH = 'secret/data/production/frontend';
 
 function vaultConfig(): { addr: string; token: string } | null {
   const addr = (process.env.VAULT_ADDR ?? '').replace(/\/+$/, '');
