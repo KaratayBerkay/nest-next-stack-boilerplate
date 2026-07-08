@@ -11,7 +11,7 @@ services:
       VAULT_ADDR: https://vault.eys.gen.tr
       VAULT_TOKEN: ${VAULT_TOKEN:?set VAULT_TOKEN in .env or shell}
     volumes:
-      - vault-envs:/secrets
+      - ./.vault-envs:/secrets
       - ./docker/vault-init/entrypoint.sh:/entrypoint.sh:ro
     command: /entrypoint.sh
 
@@ -24,9 +24,8 @@ services:
     depends_on:
       vault-init:
         condition: service_completed_successfully
-    env_file: /secrets/postgres.env
+    env_file: ./.vault-envs/postgres.env
     volumes:
-      - vault-envs:/secrets:ro
       - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
@@ -59,9 +58,7 @@ services:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
-    env_file: /secrets/redis-commander.env
-    volumes:
-      - vault-envs:/secrets:ro
+    env_file: ./.vault-envs/redis-commander.env
     ports:
       - "8081:8081"
 
@@ -75,9 +72,8 @@ services:
     depends_on:
       vault-init:
         condition: service_completed_successfully
-    env_file: /secrets/rabbitmq.env
+    env_file: ./.vault-envs/rabbitmq.env
     volumes:
-      - vault-envs:/secrets:ro
       - rabbitmqdata:/var/lib/rabbitmq
     ports:
       - "5672:5672"
@@ -116,9 +112,8 @@ services:
     depends_on:
       vault-init:
         condition: service_completed_successfully
-    env_file: /secrets/kafka.env
+    env_file: ./.vault-envs/kafka.env
     volumes:
-      - vault-envs:/secrets:ro
       - kafkadata:/var/lib/kafka/data
     ports:
       - "29092:29092"
@@ -133,9 +128,8 @@ services:
     depends_on:
       vault-init:
         condition: service_completed_successfully
-    env_file: /secrets/mongo.env
+    env_file: ./.vault-envs/mongo.env
     volumes:
-      - vault-envs:/secrets:ro
       - mongodata:/data/db
     ports:
       - "27017:27017"
@@ -149,9 +143,8 @@ services:
     depends_on:
       vault-init:
         condition: service_completed_successfully
-    env_file: /secrets/elasticsearch.env
+    env_file: ./.vault-envs/elasticsearch.env
     volumes:
-      - vault-envs:/secrets:ro
       - esdata:/usr/share/elasticsearch/data
     ulimits:
       memlock: { soft: -1, hard: -1 }
@@ -171,9 +164,7 @@ services:
         condition: service_completed_successfully
       elasticsearch:
         condition: service_healthy
-    env_file: /secrets/kibana.env
-    volumes:
-      - vault-envs:/secrets:ro
+    env_file: ./.vault-envs/kibana.env
     ports:
       - "5601:5601"
 
@@ -217,9 +208,8 @@ services:
     depends_on:
       vault-init:
         condition: service_completed_successfully
-    env_file: /secrets/minio.env
+    env_file: ./.vault-envs/minio.env
     volumes:
-      - vault-envs:/secrets:ro
       - minio_data:/data
     ports:
       - "9000:9000"
@@ -237,9 +227,7 @@ services:
     depends_on:
       minio:
         condition: service_healthy
-    env_file: /secrets/minio.env
-    volumes:
-      - vault-envs:/secrets:ro
+    env_file: ./.vault-envs/minio.env
     entrypoint: >
       /bin/sh -c "
       mc alias set local http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD &&
@@ -248,7 +236,6 @@ services:
       echo 'MinIO bucket ready'"
 
 volumes:
-  vault-envs:
   pgdata:
   redisdata:
   rabbitmqdata:
