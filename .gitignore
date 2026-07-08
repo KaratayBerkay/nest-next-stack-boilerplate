@@ -77,4 +77,3 @@ src/schema.gql
 *.pem
 .next/
 next-env.d.ts
-.vault-envs
