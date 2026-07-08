@@ -12,18 +12,8 @@ services:
       VAULT_TOKEN: ${VAULT_TOKEN:?set VAULT_TOKEN in .env or shell}
     volumes:
       - vault-envs:/secrets
-    command: >
-      sh -c '
-        apk add --no-cache curl jq >/dev/null 2>&1 &&
-        for svc in backend elasticsearch frontend kafka kibana minio mongo postgres rabbitmq redis-commander; do
-          echo "vault-init: fetching $svc secrets..." &&
-          curl -sf -H "X-Vault-Token: $VAULT_TOKEN" \
-            "$VAULT_ADDR/v1/secret/data/production/$svc" \
-            | jq -r ".data.data | to_entries | .[] | \"\(.key)=\(.value)\"" \
-            > "/secrets/$svc.env" &&
-          echo "vault-init: wrote /secrets/$svc.env ($(wc -l < /secrets/$svc.env) vars)"
-        done
-      '
+      - ./docker/vault-init/entrypoint.sh:/entrypoint.sh:ro
+    command: /entrypoint.sh
 
   # ──────────────────────────────────────────────────────
   # Core (always on)
