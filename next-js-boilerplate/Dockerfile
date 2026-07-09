@@ -1,13 +1,14 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
+RUN corepack enable && pnpm --version
 COPY pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    corepack enable && \
     pnpm config set store-dir /pnpm/store && \
     pnpm fetch --frozen-lockfile
 
 FROM node:22-alpine AS builder
 WORKDIR /app
+COPY --from=deps /root/.cache/node/corepack /root/.cache/node/corepack
 RUN corepack enable
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
