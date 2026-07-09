@@ -1,6 +1,4 @@
-type JsonLdProps = {
-  data: Record<string, unknown>;
-};
+import type { JsonLdProps } from "@/types/lib/JsonLd-types";
 
 export function JsonLd({ data }: JsonLdProps) {
   return (

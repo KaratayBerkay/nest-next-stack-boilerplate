@@ -1,8 +1,7 @@
 "use client";
 
 import { useDialog } from "./dialog";
-
-type DialogCloseProps = React.ComponentPropsWithoutRef<"button">;
+import type { DialogCloseProps } from "@/types/ui/Dialog-types";
 
 export function DialogClose({ className, ...props }: DialogCloseProps) {
   const { onOpenChange } = useDialog();

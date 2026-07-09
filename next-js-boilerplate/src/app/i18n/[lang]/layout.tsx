@@ -1,13 +1,12 @@
 import { containerClass } from "@/constants/site";
+import type { I18nLayoutProps } from "@/types/i18n/I18nLayout-types";
 
 // The i18n demo lives under its own top-level `/i18n` segment (like `/security`)
 // rather than prefixing the whole app with `[lang]` — that keeps the locale
 // concern scoped and leaves every other route's tests untouched.
 export default function I18nLayout({
   children,
-}: {
-  children: React.ReactNode;
-}) {
+}: I18nLayoutProps) {
   return (
     <main className={`${containerClass} flex flex-1 flex-col gap-6 py-16`}>
       <header className="flex flex-col gap-1">

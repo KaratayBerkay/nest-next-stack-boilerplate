@@ -1,12 +1,6 @@
 import { cn } from "@/lib/cn";
-import { variants, sizes, type Variant, type Size } from "@/components/ui/button-styles";
-
-interface IconButtonProps extends Omit<React.ComponentPropsWithoutRef<"button">, "children"> {
-  icon: React.ReactNode;
-  label: string;
-  variant?: Variant;
-  size?: Extract<Size, "icon" | "icon-sm" | "icon-xs">;
-}
+import { variants, sizes } from "@/components/ui/button-styles";
+import type { IconButtonProps } from "@/types/ui/IconButton-types";
 
 export function IconButton({
   icon,

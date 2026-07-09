@@ -2,13 +2,7 @@
 
 import { useId } from "react";
 import { cn } from "@/lib/cn";
-
-interface SwitchProps extends Omit<
-  React.ComponentPropsWithoutRef<"input">,
-  "type" | "children"
-> {
-  label?: string;
-}
+import type { SwitchProps } from "@/types/ui/Switch-types";
 
 export function Switch({ className, id, label, ...props }: SwitchProps) {
   const autoId = useId();

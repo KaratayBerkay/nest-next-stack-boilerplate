@@ -3,12 +3,7 @@
 import { cn } from "@/lib/cn";
 import { useEffect } from "react";
 import { useCommandContext } from "./command";
-
-interface CommandItemProps extends React.ComponentPropsWithoutRef<"div"> {
-  value: string;
-  onSelect?: () => void;
-  disabled?: boolean;
-}
+import type { CommandItemProps } from "@/types/ui/CommandItem-types";
 
 export function CommandItem({
   value,

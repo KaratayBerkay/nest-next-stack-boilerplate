@@ -1,10 +1,11 @@
-import { Suspense } from "react";
-import { DropdownMenuDemo } from "./DropdownMenuDemo";
+import type { Metadata } from "next";
+import PageContent from "@/views/ui/dropdown-menu/PageContent";
 
-export default function Page() {
-  return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading...</p>}>
-      <DropdownMenuDemo />
-    </Suspense>
-  );
+export const metadata: Metadata = {
+  title: "Dropdown Menu",
+  description: "Dropdown Menu component demo",
+};
+
+export default function DropdownMenuPage() {
+  return <PageContent />;
 }

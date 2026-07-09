@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { V1NavProps } from "@/types/v1/V1Nav-types";
 import { useParams, usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
@@ -32,7 +33,7 @@ const AUTH_REQUIRED_HREFS = [
   "/admin",
 ];
 
-export function V1Nav({ onNav }: { onNav?: () => void }) {
+export function V1Nav({ onNav }: V1NavProps) {
   const params = useParams<{ lang: string }>();
   const lang = params?.lang ?? "";
   const pathname = usePathname();

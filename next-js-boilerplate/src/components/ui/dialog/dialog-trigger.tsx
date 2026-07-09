@@ -1,8 +1,7 @@
 "use client";
 
 import { useDialog } from "./dialog";
-
-type DialogTriggerProps = React.ComponentPropsWithoutRef<"button">;
+import type { DialogTriggerProps } from "@/types/ui/Dialog-types";
 
 export function DialogTrigger({ className, ...props }: DialogTriggerProps) {
   const { onOpenChange } = useDialog();

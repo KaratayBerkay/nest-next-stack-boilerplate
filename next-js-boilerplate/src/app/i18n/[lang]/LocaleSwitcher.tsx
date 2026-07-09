@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { locales } from "@/lib/i18n/config";
 import type { Lang } from "@/constants/i18n";
+import type { LocaleSwitcherProps } from "@/types/i18n/LocaleSwitcher-types";
 
 // Plain server component: the active locale is already known from the route's
 // `[lang]` param, so active state is computed on the server and each option is a
@@ -8,10 +9,7 @@ import type { Lang } from "@/constants/i18n";
 export function LocaleSwitcher({
   current,
   label,
-}: {
-  current: Lang;
-  label: string;
-}) {
+}: LocaleSwitcherProps) {
   return (
     <div className="flex flex-col gap-2">
       <span className="text-muted text-xs font-semibold">{label}</span>

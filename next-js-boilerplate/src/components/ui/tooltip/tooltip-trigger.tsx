@@ -1,13 +1,9 @@
 "use client";
 
 import { cn } from "@/lib/cn";
-import { useCallback, useRef, type ReactNode } from "react";
+import { useCallback, useRef } from "react";
 import { useTooltip } from "./tooltip";
-
-interface TooltipTriggerProps extends React.ComponentPropsWithoutRef<"span"> {
-  asChild?: boolean;
-  children: ReactNode;
-}
+import type { TooltipTriggerProps } from "@/types/ui/TooltipTrigger-types";
 
 export function TooltipTrigger({
   asChild,

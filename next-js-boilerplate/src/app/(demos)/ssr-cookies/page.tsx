@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AuthStatus } from "@/features/auth/ui/AuthStatus";
 import { CookieStatus } from "./CookieStatus";
+
+export const metadata: Metadata = {
+  title: "SSR Cookies",
+  description: "Server-side rendering with cookies",
+};
 
 export default function SsrCookiesPage() {
   return (

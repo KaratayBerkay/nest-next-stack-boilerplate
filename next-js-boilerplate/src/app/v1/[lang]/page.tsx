@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { isLocale } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/get-messages";
+import type { V1ContentProps } from "@/types/v1/V1Content-types";
 
 export async function generateMetadata({
   params,
@@ -15,7 +16,7 @@ export async function generateMetadata({
 
 // Reads the `[lang]` param (runtime data) inside <Suspense> so the page builds
 // cleanly under `cacheComponents` — same pattern as i18n/[lang] and items/[id].
-async function V1Content({ params }: { params: Promise<{ lang: string }> }) {
+async function V1Content({ params }: V1ContentProps) {
   const { lang } = await params;
   // proxy.ts guarantees a supported locale reaches this page; the messages
   // give us a localized greeting to prove version + lang are wired together.
@@ -56,9 +57,7 @@ async function V1Content({ params }: { params: Promise<{ lang: string }> }) {
 
 export default function V1Home({
   params,
-}: {
-  params: Promise<{ lang: string }>;
-}) {
+}: V1ContentProps) {
   return (
     <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>
       <V1Content params={params} />

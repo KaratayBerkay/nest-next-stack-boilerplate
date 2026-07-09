@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { TIMEZONE_COOKIE } from "@/constants/i18n";
+import type { TimezoneProviderProps } from "@/types/components/TimezoneProvider-types";
 
 function getBrowserTimezone(): string {
   try {
@@ -11,7 +12,7 @@ function getBrowserTimezone(): string {
   }
 }
 
-export function TimezoneProvider({ children }: { children: React.ReactNode }) {
+export function TimezoneProvider({ children }: TimezoneProviderProps) {
   useEffect(() => {
     const match = document.cookie.match(
       new RegExp(`${TIMEZONE_COOKIE}=([^;]+)`),

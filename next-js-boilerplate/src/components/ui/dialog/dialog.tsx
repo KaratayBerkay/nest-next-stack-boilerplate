@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import type { DialogProps } from "@/types/ui/Dialog-types";
 
 interface DialogContextType {
   open: boolean;
@@ -19,12 +20,6 @@ export function useDialog() {
   const ctx = useContext(DialogContext);
   if (!ctx) throw new Error("Dialog components must be used within <Dialog>");
   return ctx;
-}
-
-interface DialogProps {
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  children: ReactNode;
 }
 
 export function Dialog({

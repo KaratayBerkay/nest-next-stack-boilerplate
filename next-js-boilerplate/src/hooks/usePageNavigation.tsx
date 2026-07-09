@@ -16,6 +16,7 @@ import {
   getPageNode,
   type PageNode,
 } from "@/lib/navigation/page-registry";
+import type { PageNavigationProviderProps } from "@/types/hooks/PageNavigationProvider-types";
 
 type SuggestDirection = "back" | "forward" | null;
 
@@ -39,7 +40,7 @@ const PageNavigationContext = createContext<PageNavigationContextValue | null>(
   null,
 );
 
-export function PageNavigationProvider({ children }: { children: ReactNode }) {
+export function PageNavigationProvider({ children }: PageNavigationProviderProps) {
   const pathname = usePathname() ?? "";
   const router = useRouter();
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);

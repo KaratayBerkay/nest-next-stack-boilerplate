@@ -1,70 +1,11 @@
-"use client";
+import type { Metadata } from "next";
+import PageContent from "@/views/ui/label/PageContent";
 
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/Tabs";
-import { Label } from "@/components/ui/Label";
-import { Input } from "@/components/ui/Input";
+export const metadata: Metadata = {
+  title: "Label",
+  description: "Label component demo",
+};
 
 export default function LabelPage() {
-  return (
-    <div className="flex flex-col gap-4" data-testid="label-demo">
-      <div className="space-y-1">
-        <h2 className="text-xl font-bold">Label</h2>
-        <p className="text-muted text-sm">
-          A form label with optional required indicator.
-        </p>
-      </div>
-
-      <Tabs defaultValue="components">
-        <TabsList>
-          <TabsTrigger value="components">Components</TabsTrigger>
-          <TabsTrigger value="examples">Examples</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="components">
-          <div className="flex flex-col gap-4">
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Default</h3>
-              <Label data-testid="label-default">Email</Label>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">With Required Indicator</h3>
-              <Label required data-testid="label-required">
-                Full Name
-              </Label>
-            </section>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="examples">
-          <section className="flex flex-col gap-3">
-            <h3 className="text-lg font-semibold">Signup Form</h3>
-            <div className="flex max-w-sm flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="example-email" required>
-                  Email
-                </Label>
-                <Input id="example-email" type="email" placeholder="you@example.com" />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="example-password" required>
-                  Password
-                </Label>
-                <Input id="example-password" type="password" placeholder="••••••••" />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="example-bio">Bio</Label>
-                <Input id="example-bio" placeholder="Tell us about yourself..." />
-              </div>
-            </div>
-          </section>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
+  return <PageContent />;
 }

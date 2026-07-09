@@ -46,7 +46,9 @@ export function useToastContext() {
   return ctx;
 }
 
-export function ToastProvider({ children }: { children: ReactNode }) {
+import type { ToastProviderProps } from "@/types/ui/ToastProvider-types";
+
+export function ToastProvider({ children }: ToastProviderProps) {
   const [state, dispatch] = useReducer(reducer, []);
 
   return (

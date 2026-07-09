@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { DataTable } from "./DataTable";
+
+export const metadata: Metadata = {
+  title: "Data Fetching",
+  description: "Data fetching patterns",
+};
 
 export default function DataFetchingPage() {
   return (

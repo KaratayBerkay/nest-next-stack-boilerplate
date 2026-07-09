@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Items",
+  description: "Items list",
+};
 
 const SAMPLE_IDS = ["42", "alpha", "7"];
 

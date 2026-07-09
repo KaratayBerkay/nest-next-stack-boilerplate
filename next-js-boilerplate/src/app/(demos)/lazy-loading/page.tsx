@@ -1,5 +1,11 @@
 import dynamic from "next/dynamic";
+import type { Metadata } from "next";
 import { Suspense } from "react";
+
+export const metadata: Metadata = {
+  title: "Lazy Loading",
+  description: "Lazy loading demo",
+};
 
 const HeavyComponent = dynamic(() => import("./HeavyComponent"), {
   loading: () => (

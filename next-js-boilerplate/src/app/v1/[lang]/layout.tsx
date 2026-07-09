@@ -1,26 +1,26 @@
 import { Suspense } from "react";
-import { locales } from "@/lib/i18n/config";
+import { redirect } from "next/navigation";
 import { getAllMessages } from "@/lib/i18n/get-all-messages";
 import { MessagesProvider } from "@/lib/i18n/MessagesProvider";
 import type { I18nMessages } from "@/generated/i18n-messages";
 import { V1Shell } from "./V1Shell";
 import { PageNavWrapper } from "./PageNavWrapper";
-
-export function generateStaticParams() {
-  return locales.map((lang) => ({ lang }));
-}
+import type { V1LayoutProps } from "@/types/v1/V1Layout-types";
+import { getSessionUser } from "@/lib/auth-ssr";
+import { AuthProvider } from "@/hooks/useAuth";
+import { LOGIN_PATH } from "@/constants/routes";
 
 export default async function V1Layout({
   children,
   params,
-}: {
-  children: React.ReactNode;
-  params: Promise<{ lang: string }>;
-}) {
+}: V1LayoutProps) {
   const { lang } = await params;
+  const user = await getSessionUser();
+  if (!user) redirect(LOGIN_PATH);
   const messages = getAllMessages<I18nMessages>(lang);
 
   return (
+    <AuthProvider initialUser={user}>
     <MessagesProvider messages={messages}>
       <main className="flex w-full flex-1 flex-col">
         <Suspense
@@ -52,5 +52,6 @@ export default async function V1Layout({
         </Suspense>
       </main>
     </MessagesProvider>
+    </AuthProvider>
   );
 }

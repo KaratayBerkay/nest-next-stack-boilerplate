@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Static",
+  description: "Static generation demo",
+};
+
 async function BuildTimestamp() {
-  "use cache";
   return new Date().toISOString();
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import type { FieldInfoProps } from "@/types/demos/FieldInfo-types";
 import {
   initialFormState,
   mergeForm,
@@ -26,7 +27,7 @@ const fieldSchemas = {
   age: z.number().min(18, "Must be 18 or older"),
 };
 
-function FieldInfo({ field }: { field: AnyFieldApi }) {
+function FieldInfo({ field }: FieldInfoProps) {
   return (
     <>
       {field.state.meta.errors.length > 0 && (

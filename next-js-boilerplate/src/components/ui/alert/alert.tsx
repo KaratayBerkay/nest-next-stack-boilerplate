@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/cn";
+import type { AlertProps } from "@/types/ui/Alert-types";
 
 const variants = {
   default: "border-border bg-surface text-fg",
@@ -11,12 +12,6 @@ const variants = {
   warning:
     "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300",
 } as const;
-
-type Variant = keyof typeof variants;
-
-interface AlertProps extends React.ComponentPropsWithoutRef<"div"> {
-  variant?: Variant;
-}
 
 export function Alert({
   variant = "default",

@@ -1,27 +1,14 @@
 "use client";
 
-import { Geist, Geist_Mono } from "next/font/google";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import type { GlobalErrorProps } from "@/types/app/GlobalError-types";
 
 export default function GlobalError({
   error,
   reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
+}: GlobalErrorProps) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
+    <html lang="en">
+      <body className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
         <h1 className="text-2xl font-bold text-red-600">
           Something went wrong
         </h1>

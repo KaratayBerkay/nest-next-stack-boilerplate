@@ -1,4 +1,10 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Demos",
+  description: "Next.js feature demos and examples",
+};
 
 export default function DemosIndex() {
   return (

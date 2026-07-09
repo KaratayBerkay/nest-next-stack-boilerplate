@@ -1,13 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/cn";
-import { variants, type Variant } from "@/components/ui/button-styles";
-
-interface ButtonGroupProps {
-  children: React.ReactNode;
-  variant?: Extract<Variant, "default" | "outline" | "secondary">;
-  className?: string;
-}
+import { variants } from "@/components/ui/button-styles";
+import type { ButtonGroupProps, ButtonGroupItemProps } from "@/types/ui/ButtonGroup-types";
 
 export function ButtonGroup({
   children,
@@ -25,10 +20,6 @@ export function ButtonGroup({
       {children}
     </div>
   );
-}
-
-interface ButtonGroupItemProps extends React.ComponentPropsWithoutRef<"button"> {
-  active?: boolean;
 }
 
 export function ButtonGroupItem({

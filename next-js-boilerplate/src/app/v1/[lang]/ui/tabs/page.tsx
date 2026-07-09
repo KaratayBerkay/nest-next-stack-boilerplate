@@ -1,10 +1,11 @@
-import { Suspense } from "react";
-import { TabsDemo } from "./TabsDemo";
+import type { Metadata } from "next";
+import PageContent from "@/views/ui/tabs/PageContent";
 
-export default function Page() {
-  return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading...</p>}>
-      <TabsDemo />
-    </Suspense>
-  );
+export const metadata: Metadata = {
+  title: "Tabs",
+  description: "Tabs component demo",
+};
+
+export default function TabsPage() {
+  return <PageContent />;
 }

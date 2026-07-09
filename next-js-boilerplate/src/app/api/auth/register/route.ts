@@ -3,6 +3,7 @@ import {
   accessTokenCookieOptions,
   deviceTokenCookieOptions,
   rbacTokenCookieOptions,
+  sessionUserCookieOptions,
   userTokenCookieOptions,
 } from "@/lib/cookie";
 import { graphqlFetch, graphqlErrorBody } from "@/lib/backend";
@@ -82,6 +83,11 @@ export async function POST(request: Request) {
   if (rbacToken) response.cookies.set(rbacTokenCookieOptions(rbacToken));
   if (deviceToken) response.cookies.set(deviceTokenCookieOptions(deviceToken));
   if (userToken) response.cookies.set(userTokenCookieOptions(userToken));
+  response.cookies.set(
+    sessionUserCookieOptions(
+      Buffer.from(JSON.stringify(user)).toString("base64url"),
+    ),
+  );
 
   return response;
 }

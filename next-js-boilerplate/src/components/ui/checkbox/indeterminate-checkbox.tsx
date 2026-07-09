@@ -2,14 +2,7 @@
 
 import { useId, useRef, useEffect } from "react";
 import { cn } from "@/lib/cn";
-
-interface IndeterminateCheckboxProps extends Omit<
-  React.ComponentPropsWithoutRef<"input">,
-  "type" | "children"
-> {
-  indeterminate?: boolean;
-  label?: string;
-}
+import type { IndeterminateCheckboxProps } from "@/types/ui/IndeterminateCheckbox-types";
 
 export function IndeterminateCheckbox({
   className,

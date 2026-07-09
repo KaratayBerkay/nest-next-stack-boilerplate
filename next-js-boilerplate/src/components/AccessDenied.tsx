@@ -1,12 +1,6 @@
 import Link from "next/link";
 import { PRICING_PATH } from "@/constants/routes";
-
-interface AccessDeniedProps {
-  title?: string;
-  message?: string;
-  ctaLabel?: string;
-  ctaHref?: string;
-}
+import type { AccessDeniedProps } from "@/types/components/AccessDenied-types";
 
 export function AccessDenied({
   title = "Access Denied",

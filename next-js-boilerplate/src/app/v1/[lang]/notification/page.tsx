@@ -1,13 +1,15 @@
-"use client";
-
-import { useAuth } from "@/hooks/useAuth";
-import { LoadingAuth } from "@/components/LoadingAuth";
-import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
+import type { Metadata } from "next";
 import { getTierView } from "@/lib/tier-view";
-import { FreePageView } from "./views/FreePageView";
-import { BasicPageView } from "./views/BasicPageView";
-import { MediumPageView } from "./views/MediumPageView";
-import { PremiumPageView } from "./views/PremiumPageView";
+import { getSessionUser } from "@/lib/auth-ssr";
+import { FreePageView } from "@/views/notification/FreePageView";
+import { BasicPageView } from "@/views/notification/BasicPageView";
+import { MediumPageView } from "@/views/notification/MediumPageView";
+import { PremiumPageView } from "@/views/notification/PremiumPageView";
+
+export const metadata: Metadata = {
+  title: "Notifications",
+  description: "Your notifications",
+};
 
 const VIEWS = {
   FREE: FreePageView,
@@ -16,11 +18,8 @@ const VIEWS = {
   PREMIUM: PremiumPageView,
 };
 
-export default function NotificationPage() {
-  const { user, loading } = useAuth();
+export default async function NotificationPage() {
+  const user = await getSessionUser();
 
-  if (loading) return <LoadingAuth />;
-  if (!user) return <UnauthenticatedMessage message="Sign in to view notifications" />;
-
-  return getTierView(user.tier, VIEWS);
+  return getTierView(user!.tier, VIEWS);
 }

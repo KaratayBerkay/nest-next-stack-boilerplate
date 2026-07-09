@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { LoginForm } from "@/features/auth/ui/login-form";
 import { SocialLoginButtons } from "@/features/auth/ui/social-login-buttons";
+
+export const metadata: Metadata = {
+  title: "Login",
+  description: "Sign in to your account",
+};
 
 export default function LoginPage() {
   return (

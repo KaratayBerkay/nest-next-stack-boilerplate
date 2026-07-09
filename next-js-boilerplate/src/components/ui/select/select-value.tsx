@@ -2,11 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { useSelect } from "./select";
-
-interface SelectValueProps {
-  placeholder?: string;
-  className?: string;
-}
+import type { SelectValueProps } from "@/types/ui/SelectValue-types";
 
 export function SelectValue({ placeholder, className }: SelectValueProps) {
   const { value, labelMap } = useSelect();

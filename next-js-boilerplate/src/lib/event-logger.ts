@@ -1,6 +1,9 @@
 import { apiFetch } from "@/lib/api-client";
 import { FrontendEvent } from "./events.schema";
 import { nowMs, toISOString } from "@/lib/date-time";
+import { EVENTS_URL } from "@/constants/api/urls";
+import { POST } from "@/constants/api/methods";
+import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 
 type Listener = (event: FrontendEvent) => void;
 
@@ -35,9 +38,9 @@ async function flush(): Promise<void> {
   if (batch.length === 0) return;
   const events = batch.splice(0);
   try {
-    await apiFetch("/api/events", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    await apiFetch(EVENTS_URL, {
+      method: POST,
+      headers: JSON_CONTENT_TYPE_HEADER,
       body: JSON.stringify({ events }),
     });
   } catch {
@@ -99,7 +102,7 @@ export const eventLogger = {
 if (typeof window !== "undefined") {
   window.addEventListener("beforeunload", () => {
     if (batch.length > 0) {
-      navigator.sendBeacon("/api/events", JSON.stringify({ events: batch }));
+      navigator.sendBeacon(EVENTS_URL, JSON.stringify({ events: batch }));
     }
   });
 }

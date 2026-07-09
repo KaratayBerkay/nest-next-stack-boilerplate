@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { LOGIN_PATH } from "@/constants/routes";
 import { useClientSearchParams } from "@/hooks/useClientSearchParams";
+import { AUTH_VERIFY_EMAIL_URL } from "@/constants/api/urls";
+import { POST } from "@/constants/api/methods";
+import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 
 export function VerifyEmailForm() {
   const t = useMessages("auth");
@@ -21,9 +24,9 @@ export function VerifyEmailForm() {
   useEffect(() => {
     if (!token) return;
 
-    fetch("/api/auth/verify-email", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    fetch(AUTH_VERIFY_EMAIL_URL, {
+      method: POST,
+      headers: JSON_CONTENT_TYPE_HEADER,
       body: JSON.stringify({ token }),
     })
       .then((res) => {

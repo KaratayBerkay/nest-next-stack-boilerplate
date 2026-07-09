@@ -3,6 +3,7 @@ import { containerClass } from "@/constants/site";
 import { Counter } from "@/components/ui/Counter";
 import { NavLink } from "@/components/layout/NavLink";
 import { RouterNav } from "./_components/RouterNav";
+import type { RoutingLayoutProps } from "@/types/routing/RoutingLayout-types";
 
 // Nested layout for the Stage-1 routing demos.
 //
@@ -16,9 +17,7 @@ import { RouterNav } from "./_components/RouterNav";
 // `<Link>` and `useRouter` (see e2e/routing-nav.spec.ts).
 export default function RoutingLayout({
   children,
-}: {
-  children: React.ReactNode;
-}) {
+}: RoutingLayoutProps) {
   return (
     <main className={`${containerClass} flex flex-1 flex-col gap-6 py-16`}>
       <header className="flex flex-col gap-2">

@@ -2,13 +2,7 @@
 
 import { useId } from "react";
 import { cn } from "@/lib/cn";
-
-interface CheckboxProps extends Omit<
-  React.ComponentPropsWithoutRef<"input">,
-  "type" | "children"
-> {
-  label?: string;
-}
+import type { CheckboxProps } from "@/types/ui/Checkbox-types";
 
 export function Checkbox({ className, id, label, ...props }: CheckboxProps) {
   const autoId = useId();

@@ -1,13 +1,15 @@
-"use client";
-
-import { useAuth } from "@/hooks/useAuth";
-import { LoadingAuth } from "@/components/LoadingAuth";
-import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
+import type { Metadata } from "next";
 import { getTierView } from "@/lib/tier-view";
-import { FreePageView } from "./views/FreePageView";
-import { BasicPageView } from "./views/BasicPageView";
-import { MediumPageView } from "./views/MediumPageView";
-import { PremiumPageView } from "./views/PremiumPageView";
+import { getSessionUser } from "@/lib/auth-ssr";
+import { FreePageView } from "@/views/chat-room/FreePageView";
+import { BasicPageView } from "@/views/chat-room/BasicPageView";
+import { MediumPageView } from "@/views/chat-room/MediumPageView";
+import { PremiumPageView } from "@/views/chat-room/PremiumPageView";
+
+export const metadata: Metadata = {
+  title: "Chat Room",
+  description: "Real-time chat room",
+};
 
 const VIEWS = {
   FREE: FreePageView,
@@ -16,11 +18,8 @@ const VIEWS = {
   PREMIUM: PremiumPageView,
 };
 
-export default function ChatRoomPage() {
-  const { user, loading } = useAuth();
+export default async function ChatRoomPage() {
+  const user = await getSessionUser();
 
-  if (loading) return <LoadingAuth />;
-  if (!user) return <UnauthenticatedMessage message="Sign in to join the chat room" />;
-
-  return getTierView(user.tier, VIEWS);
+  return getTierView(user!.tier, VIEWS);
 }

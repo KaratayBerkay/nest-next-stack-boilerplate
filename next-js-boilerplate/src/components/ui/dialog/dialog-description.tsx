@@ -1,6 +1,5 @@
 import { cn } from "@/lib/cn";
-
-type DialogDescriptionProps = React.ComponentPropsWithoutRef<"p">;
+import type { DialogDescriptionProps } from "@/types/ui/Dialog-types";
 
 export function DialogDescription({
   className,

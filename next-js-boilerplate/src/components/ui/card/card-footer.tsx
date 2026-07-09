@@ -1,6 +1,5 @@
 import { cn } from "@/lib/cn";
-
-type CardFooterProps = React.ComponentPropsWithoutRef<"div">;
+import type { CardFooterProps } from "@/types/ui/Card-types";
 
 export function CardFooter({ className, ...props }: CardFooterProps) {
   return (

@@ -1,10 +1,6 @@
 import { cn } from "@/lib/cn";
-import { variants, sizes, type Variant, type Size } from "@/components/ui/button-styles";
-
-interface ButtonProps extends React.ComponentPropsWithoutRef<"button"> {
-  variant?: Variant;
-  size?: Size;
-}
+import { variants, sizes } from "@/components/ui/button-styles";
+import type { ButtonProps } from "@/types/ui/Button-types";
 
 export function Button({
   variant = "default",

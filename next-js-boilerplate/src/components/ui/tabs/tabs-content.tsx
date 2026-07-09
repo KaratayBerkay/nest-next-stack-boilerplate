@@ -2,13 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { useTabsContext } from "./tabs";
-
-interface TabsContentProps extends Omit<
-  React.ComponentPropsWithoutRef<"div">,
-  "value"
-> {
-  value: string;
-}
+import type { TabsContentProps } from "@/types/ui/TabsContent-types";
 
 export function TabsContent({
   value,

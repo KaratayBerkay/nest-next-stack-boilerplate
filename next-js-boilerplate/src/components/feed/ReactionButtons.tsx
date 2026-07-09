@@ -4,6 +4,11 @@ import { apiFetch } from "@/lib/api-client";
 import { useRef, useState } from "react";
 import { useToast } from "@/components/ui/Toast";
 import { IconMoodSmile } from "@tabler/icons-react";
+import { REACTIONS_URL } from "@/constants/api/urls";
+import { POST } from "@/constants/api/methods";
+import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
+import type { Dispatch, SetStateAction } from "react";
+import type { ReactionButtonProps } from "@/types/feed/ReactionButton-types";
 
 const REACTION_TYPES = ["LIKE", "LOVE", "LAUGH", "WOW"] as const;
 
@@ -14,18 +19,33 @@ const EMOJIS: Record<string, string> = {
   WOW: "😮",
 };
 
-interface Reaction {
-  id: string;
-  type: string;
-  userId: string;
-}
-
-interface ReactionButtonProps {
-  postId?: string;
-  commentId?: string;
-  reactions: Reaction[];
-  currentUserId?: string | null;
-  onReactionChange?: () => void;
+async function handleReactionInline(
+  type: string,
+  submitting: boolean,
+  setSubmitting: Dispatch<SetStateAction<boolean>>,
+  postId: string | undefined,
+  commentId: string | undefined,
+  onReactionChange: (() => void) | undefined,
+  toast: ReturnType<typeof useToast>["toast"],
+) {
+  if (submitting) return;
+  setSubmitting(true);
+  try {
+    await apiFetch(REACTIONS_URL, {
+      method: POST,
+      headers: JSON_CONTENT_TYPE_HEADER,
+      body: JSON.stringify({
+        type,
+        ...(postId ? { postId } : {}),
+        ...(commentId ? { commentId } : {}),
+      }),
+    });
+    onReactionChange?.();
+  } catch {
+    toast({ title: "Failed to react", variant: "destructive" });
+  } finally {
+    setSubmitting(false);
+  }
 }
 
 export function ReactionInline({
@@ -40,27 +60,6 @@ export function ReactionInline({
 
   const total = reactions.length;
   const userReacted = reactions.some((r) => r.userId === currentUserId);
-
-  const handleReact = async (type: string) => {
-    if (submitting) return;
-    setSubmitting(true);
-    try {
-      await apiFetch("/api/reactions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type,
-          ...(postId ? { postId } : {}),
-          ...(commentId ? { commentId } : {}),
-        }),
-      });
-      onReactionChange?.();
-    } catch {
-      toast({ title: "Failed to react", variant: "destructive" });
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   return (
     <div className="group relative">
@@ -83,7 +82,7 @@ export function ReactionInline({
           return (
             <button
               key={type}
-              onClick={() => handleReact(type)}
+              onClick={() => handleReactionInline(type, submitting, setSubmitting, postId, commentId, onReactionChange, toast)}
               disabled={submitting}
               className={`flex items-center gap-0.5 rounded-md px-1.5 py-1 text-[11px] transition-colors ${
                 active
@@ -101,6 +100,35 @@ export function ReactionInline({
   );
 }
 
+async function handleReactionRow(
+  type: string,
+  submitting: boolean,
+  setSubmitting: Dispatch<SetStateAction<boolean>>,
+  commentId: string | undefined,
+  onReactionChange: (() => void) | undefined,
+  toast: ReturnType<typeof useToast>["toast"],
+) {
+  if (submitting) return;
+  setSubmitting(true);
+  try {
+    const res = await apiFetch(REACTIONS_URL, {
+      method: POST,
+      headers: JSON_CONTENT_TYPE_HEADER,
+      body: JSON.stringify({ type, ...(commentId ? { commentId } : {}) }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      toast({ title: data.error ?? `Failed (${res.status})`, variant: "destructive" });
+      return;
+    }
+    onReactionChange?.();
+  } catch {
+    toast({ title: "Network error", variant: "destructive" });
+  } finally {
+    setSubmitting(false);
+  }
+}
+
 function ReactionRow({
   commentId,
   reactions,
@@ -109,28 +137,6 @@ function ReactionRow({
 }: ReactionButtonProps) {
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
-
-  const handleReact = async (type: string) => {
-    if (submitting) return;
-    setSubmitting(true);
-    try {
-      const res = await apiFetch("/api/reactions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type, ...(commentId ? { commentId } : {}) }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        toast({ title: data.error ?? `Failed (${res.status})`, variant: "destructive" });
-        return;
-      }
-      onReactionChange?.();
-    } catch {
-      toast({ title: "Network error", variant: "destructive" });
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   return (
     <div className="flex items-center gap-1">
@@ -142,7 +148,7 @@ function ReactionRow({
         return (
           <button
             key={type}
-            onClick={() => handleReact(type)}
+            onClick={() => handleReactionRow(type, submitting, setSubmitting, commentId, onReactionChange, toast)}
             disabled={submitting}
             className={`flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] transition-colors ${
               active

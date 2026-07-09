@@ -1,19 +1,29 @@
 import "server-only";
+import { cache } from "react";
+import { cookies } from "next/headers";
+import { SESSION_USER_COOKIE } from "@/lib/cookie";
 import { graphqlFetch, sessionTokenHeaders } from "@/lib/backend";
 import { ME_QUERY } from "@/lib/graphql/queries";
 import { getAccessToken } from "@/store/ssr-cookies";
 import type { User } from "@/features/auth/hooks/useAuth";
 
-/**
- * Server-side session user resolver. Returns the full `SessionUserPayload` for
- * the current request by reading the `access_token` cookie and calling the
- * backend `me` query — zero Postgres on the backend side (Redis-served).
- *
- * Returns `null` when no session exists (guest) or the token is expired.
- * Intended for the root layout's `initialUser` prop on `AuthProvider` to
- * eliminate the logged-out flash on hard reloads.
- */
-export async function getSessionUser(): Promise<User | null> {
+function decodeBase64(value: string): string {
+  return Buffer.from(value, "base64url").toString("utf-8");
+}
+
+export const getSessionUser = cache(async (): Promise<User | null> => {
+  // Fast path: read session_user cookie set at login/register time.
+  try {
+    const cookieStore = await cookies();
+    const encoded = cookieStore.get(SESSION_USER_COOKIE)?.value;
+    if (encoded) {
+      return JSON.parse(decodeBase64(encoded)) as User;
+    }
+  } catch {
+    // Malformed cookie — fall through to GraphQL.
+  }
+
+  // Fallback: no session cookie, query backend me query (old sessions).
   const accessToken = await getAccessToken();
   if (!accessToken) return null;
 
@@ -27,4 +37,4 @@ export async function getSessionUser(): Promise<User | null> {
   if (errors || !data?.me) return null;
 
   return data.me;
-}
+});

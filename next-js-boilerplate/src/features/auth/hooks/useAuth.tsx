@@ -12,6 +12,17 @@ import {
 } from "react";
 import { apiFetch, apiFetchJson } from "@/lib/api-client";
 import { TIMEZONE_COOKIE } from "@/constants/i18n";
+import type { AuthProviderProps } from "@/types/auth/AuthProvider-types";
+import {
+  AUTH_TOKEN_URL,
+  AUTH_DEVICE_HANDSHAKE_URL,
+  AUTH_ME_URL,
+  AUTH_LOGIN_URL,
+  AUTH_REGISTER_URL,
+  AUTH_LOGOUT_URL,
+} from "@/constants/api/urls";
+import { POST } from "@/constants/api/methods";
+import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 
 // Session snapshot fields arrive via /api/auth/me (Redis, zero-PG).
 // Login/register return a subset from AuthPayload; the snapshot is the
@@ -50,28 +61,30 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({
   children,
   initialUser,
-}: {
-  children: ReactNode;
-  initialUser?: User | null;
-}) {
-  const ssrUser =
-    typeof window !== "undefined"
-      ? (window as { __INITIAL_USER__?: User }).__INITIAL_USER__
-      : undefined;
-
-  const [user, setUser] = useState<User | null>(
-    ssrUser ?? initialUser ?? null,
-  );
+}: AuthProviderProps) {
+  const [user, setUser] = useState<User | null>(initialUser ?? null);
   const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(!ssrUser && !initialUser);
+  const [loading, setLoading] = useState(!initialUser);
   const logoutEventRef = useRef(false);
 
   useEffect(() => {
-    if (ssrUser || initialUser) {
-      // SSR-seeded: identity is already known, but in-page consumers (the
-      // messaging WS gate, for one) still need the access token. Fetch the
-      // cookie-derived quadruple — zero-PG on the backend.
-      apiFetch("/api/auth/token")
+    const ssrUser =
+      (window as { __INITIAL_USER__?: User }).__INITIAL_USER__;
+
+    if (ssrUser) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setUser(ssrUser);
+      apiFetch(AUTH_TOKEN_URL)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((t: { accessToken?: string } | null) => {
+          if (t?.accessToken) setToken(t.accessToken);
+        })
+        .catch(() => {});
+      return;
+    }
+
+    if (initialUser) {
+      apiFetch(AUTH_TOKEN_URL)
         .then((res) => (res.ok ? res.json() : null))
         .then((t: { accessToken?: string } | null) => {
           if (t?.accessToken) setToken(t.accessToken);
@@ -81,12 +94,12 @@ export function AuthProvider({
     }
 
     async function load() {
-      await fetch("/api/auth/device-handshake", { method: "POST" }).catch(
+      await fetch(AUTH_DEVICE_HANDSHAKE_URL, { method: POST }).catch(
         () => {},
       );
 
       try {
-        const res = await apiFetch("/api/auth/me");
+        const res = await apiFetch(AUTH_ME_URL);
         if (res.ok) {
           const data = (await res.json()) as {
             user: User | null;
@@ -102,7 +115,7 @@ export function AuthProvider({
     }
 
     load();
-  }, [ssrUser, initialUser]);
+  }, [initialUser]);
 
   // Listen for auth:logout events dispatched by apiFetch on 401.
   useEffect(() => {
@@ -132,9 +145,9 @@ export function AuthProvider({
 
   const login = useCallback(async (email: string, password: string) => {
     try {
-      const data = await apiFetchJson<AuthResponse>("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const data = await apiFetchJson<AuthResponse>(AUTH_LOGIN_URL, {
+        method: POST,
+        headers: JSON_CONTENT_TYPE_HEADER,
         body: JSON.stringify({ email, password, timezone: readTimezone() }),
       });
       setUser(data.user);
@@ -149,9 +162,9 @@ export function AuthProvider({
   const register = useCallback(
     async (email: string, password: string, name?: string) => {
       try {
-        const data = await apiFetchJson<AuthResponse>("/api/auth/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const data = await apiFetchJson<AuthResponse>(AUTH_REGISTER_URL, {
+          method: POST,
+          headers: JSON_CONTENT_TYPE_HEADER,
           body: JSON.stringify({ email, password, name, timezone: readTimezone() }),
         });
         setUser(data.user);
@@ -166,14 +179,14 @@ export function AuthProvider({
   );
 
   const logout = useCallback(async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
+    await fetch(AUTH_LOGOUT_URL, { method: POST });
     setUser(null);
     setToken(null);
   }, []);
 
   const refreshUser = useCallback(async () => {
     try {
-      const res = await apiFetch("/api/auth/me");
+      const res = await apiFetch(AUTH_ME_URL);
       if (res.ok) {
         const data = (await res.json()) as {
           user: User | null;

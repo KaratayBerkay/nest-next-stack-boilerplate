@@ -1,12 +1,17 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { SearchParamsDisplay } from "./SearchParamsDisplay";
+import type { SearchParamsPageProps, ServerParamsProps } from "@/types/demos/SearchParamsPage-types";
+
+export const metadata: Metadata = {
+  title: "Search Params",
+  description: "Search parameters demo",
+};
 
 export default function SearchParamsPage({
   searchParams,
-}: {
-  searchParams: Promise<{ name?: string; category?: string }>;
-}) {
+}: SearchParamsPageProps) {
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-brand text-sm font-semibold">Search Params</h2>
@@ -51,9 +56,7 @@ export default function SearchParamsPage({
 
 async function ServerParams({
   searchParams,
-}: {
-  searchParams: Promise<{ name?: string; category?: string }>;
-}) {
+}: ServerParamsProps) {
   const { name, category } = await searchParams;
 
   return (

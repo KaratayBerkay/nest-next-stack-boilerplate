@@ -1,76 +1,68 @@
 "use client";
 
 import { use, Suspense } from "react";
+import type { CheckoutPageProps } from "@/types/checkout/CheckoutPage-types";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-import { LoadingAuth } from "@/components/LoadingAuth";
-import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
 import { StripeCardForm } from "@/features/billing/ui/StripeCardForm";
 import { TIER_ORDER, tierLabel, TIER_PRICES_CENTS, type Tier } from "@/lib/tier";
 import { formatPrice } from "@/lib/currency";
 import { useCurrencyCookie } from "@/hooks/useCurrencyCookie";
 import { PRICING_PATH } from "@/constants/routes";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
-import { useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
+import { STRIPE_SUBSCRIBE_URL } from "@/constants/api/urls";
+import { POST } from "@/constants/api/methods";
+import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 
-const TIER_FEATURES: Record<string, string[]> = {
-  BASIC: ["Access to basic features", "Standard support"],
-  MEDIUM: [
-    "Everything in Basic",
-    "Post stats & reaction breakdown",
-    "VIP room access",
-    "Suggested friends",
-  ],
-  PREMIUM: [
-    "Everything in Medium",
-    "Who-reacted list",
-    "Export data",
-    "Crown badge",
-    "Priority support",
-  ],
-};
+import { TIER_FEATURES } from "@/lib/checkout/tier-features";
 
-// fallow-ignore-next-line complexity
+async function handleDowngrade(
+  targetTier: string,
+  setError: Dispatch<SetStateAction<string | null>>,
+  setSuccess: Dispatch<SetStateAction<boolean>>,
+  router: ReturnType<typeof useRouter>,
+) {
+  setError(null);
+  try {
+    const res = await fetch(STRIPE_SUBSCRIBE_URL, {
+      method: POST,
+      headers: JSON_CONTENT_TYPE_HEADER,
+      body: JSON.stringify({ tier: targetTier }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.msg ?? "Failed to change plan");
+    setSuccess(true);
+    setTimeout(() => router.push(PRICING_PATH), 2000);
+  } catch (err) {
+    setError((err as Error).message ?? "Failed to change plan");
+  }
+}
+
+function onUpgradeSuccess(
+  setSuccess: Dispatch<SetStateAction<boolean>>,
+  router: ReturnType<typeof useRouter>,
+) {
+  setSuccess(true);
+  setTimeout(() => router.push(PRICING_PATH), 2000);
+}
+
 export default function CheckoutPage({
   params,
-}: {
-  params: Promise<{ lang: string; tier: string }>;
-}) {
+}: CheckoutPageProps) {
   const { lang, tier: targetTier } = use(params);
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const t = useMessages("checkout");
   const currency = useCurrencyCookie();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  if (loading) return <LoadingAuth />;
-  if (!user)
-    return <UnauthenticatedMessage message={t.signInToUpgrade} />;
-
-  const currentRank = TIER_ORDER[user.tier as Tier] ?? 0;
+  const currentRank = TIER_ORDER[user!.tier as Tier] ?? 0;
   const targetRank = TIER_ORDER[targetTier as Tier] ?? 0;
   const isUpgrade = targetRank > currentRank;
   const isDowngrade = targetRank < currentRank;
   const isCurrent = targetRank === currentRank;
-
-  // fallow-ignore-next-line complexity
-  const handleDowngrade = async () => {
-    setError(null);
-    try {
-      const res = await fetch("/api/billing/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier: targetTier }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.msg ?? "Failed to change plan");
-      setSuccess(true);
-      setTimeout(() => router.push(PRICING_PATH), 2000);
-    } catch (err) {
-      setError((err as Error).message ?? "Failed to change plan");
-    }
-  };
 
   if (success) {
     return (
@@ -84,7 +76,7 @@ export default function CheckoutPage({
   }
 
   return (
-    <div className="mx-auto max-w-md space-y-6 py-8">
+    <div className="w-full space-y-6 py-8">
       <div>
         <h1 className="text-xl font-bold">
           {isUpgrade ? t.upgrade : isDowngrade ? t.changePlan : t.checkout} to{" "}
@@ -120,10 +112,7 @@ export default function CheckoutPage({
       {isUpgrade && (
         <StripeCardForm
           tier={targetTier}
-          onSuccess={() => {
-            setSuccess(true);
-            setTimeout(() => router.push(PRICING_PATH), 2000);
-          }}
+          onSuccess={() => onUpgradeSuccess(setSuccess, router)}
           onError={setError}
         />
       )}
@@ -136,7 +125,7 @@ export default function CheckoutPage({
             </p>
           )}
           <button
-            onClick={handleDowngrade}
+            onClick={() => handleDowngrade(targetTier, setError, setSuccess, router)}
             data-testid="confirm-downgrade"
             className="w-full rounded bg-muted px-4 py-2 text-sm font-medium hover:bg-muted/80"
           >

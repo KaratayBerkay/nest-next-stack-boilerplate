@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import type { V1ErrorProps } from "@/types/v1/V1Error-types";
 
 // Custom error boundary for the `/v1/[lang]` segment. Must be a Client Component.
 // It catches errors thrown while rendering any page under this version+locale and
@@ -11,10 +12,7 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 export default function V1Error({
   error,
   reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
+}: V1ErrorProps) {
   const t = useMessages("error");
   useEffect(() => {
     // Report to your observability pipeline here (see /observability, F33).

@@ -3,8 +3,9 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { JsonLd } from "@/lib/seo/JsonLd";
 import { QueryProvider } from "@/integrations/tanstack-query/QueryProvider";
-import { ThemeProvider } from "@/hooks/useTheme";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ThemeProvider } from "@/hooks/useTheme";
+
 import { DeviceTypeInit } from "@/components/DeviceTypeInit";
 import { EventLoggerInit } from "@/components/EventLoggerInit";
 import { PushNotificationInit } from "@/components/PushNotificationInit";
@@ -75,18 +76,18 @@ export default function RootLayout({
             <SessionScript />
           </Suspense>
           <AuthProvider>
-            <QueryProvider>
+          <QueryProvider>
               <ToastProvider>
                 <ClientLocaleProvider defaultMessages={messages}>
                   <TimezoneProvider>
                     <CurrencyProvider>
                       {children}
-                    </CurrencyProvider>
-                  </TimezoneProvider>
-                </ClientLocaleProvider>
-                <ToastViewport />
-              </ToastProvider>
-            </QueryProvider>
+                  </CurrencyProvider>
+                </TimezoneProvider>
+              </ClientLocaleProvider>
+              <ToastViewport />
+            </ToastProvider>
+          </QueryProvider>
           </AuthProvider>
         </ThemeProvider>
         <JsonLd

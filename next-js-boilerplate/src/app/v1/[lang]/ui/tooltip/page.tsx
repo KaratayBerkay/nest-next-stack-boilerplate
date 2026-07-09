@@ -1,10 +1,11 @@
-import { Suspense } from "react";
-import { TooltipDemo } from "./TooltipDemo";
+import type { Metadata } from "next";
+import PageContent from "@/views/ui/tooltip/PageContent";
 
-export default function Page() {
-  return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading...</p>}>
-      <TooltipDemo />
-    </Suspense>
-  );
+export const metadata: Metadata = {
+  title: "Tooltip",
+  description: "Tooltip component demo",
+};
+
+export default function TooltipPage() {
+  return <PageContent />;
 }

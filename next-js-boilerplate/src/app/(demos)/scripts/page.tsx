@@ -1,4 +1,10 @@
 import Script from "next/script";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Scripts",
+  description: "Script loading demo",
+};
 
 export default function ScriptsPage() {
   return (

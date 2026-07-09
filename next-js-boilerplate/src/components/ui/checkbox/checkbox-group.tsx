@@ -2,22 +2,7 @@
 
 import { useId } from "react";
 import { cn } from "@/lib/cn";
-
-interface CheckboxGroupItem {
-  value: string;
-  label: string;
-  disabled?: boolean;
-}
-
-interface CheckboxGroupProps {
-  values: string[];
-  onValueChange: (values: string[]) => void;
-  items: CheckboxGroupItem[];
-  label?: string;
-  showSelectAll?: boolean;
-  className?: string;
-  direction?: "vertical" | "horizontal";
-}
+import type { CheckboxGroupProps } from "@/types/ui/CheckboxGroup-types";
 
 export function CheckboxGroup({
   values,

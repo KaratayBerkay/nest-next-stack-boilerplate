@@ -7,6 +7,7 @@ import type { I18nMessages } from "@/generated/i18n-messages";
 import enMessages from "@/generated/i18n-messages-en.json";
 import trMessages from "@/generated/i18n-messages-tr.json";
 import { readLangCookie } from "@/lib/read-lang-cookie";
+import type { ClientLocaleProviderProps } from "@/types/i18n/ClientLocaleProvider-types";
 
 const LOCALE_MAP: Record<string, I18nMessages> = {
   en: enMessages as I18nMessages,
@@ -16,10 +17,7 @@ const LOCALE_MAP: Record<string, I18nMessages> = {
 export function ClientLocaleProvider({
   defaultMessages,
   children,
-}: {
-  defaultMessages: I18nMessages;
-  children: React.ReactNode;
-}) {
+}: ClientLocaleProviderProps) {
   const [messages, setMessages] = useState(defaultMessages);
 
   useEffect(() => {

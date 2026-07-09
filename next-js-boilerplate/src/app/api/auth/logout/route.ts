@@ -5,6 +5,7 @@ import {
   clearAccessTokenCookieOptions,
   clearDeviceCookieOptions,
   clearRbacTokenCookieOptions,
+  clearSessionUserCookieOptions,
   clearUserTokenCookieOptions,
 } from "@/lib/cookie";
 import { csrfEchoHeaders, graphqlFetch } from "@/lib/backend";
@@ -41,5 +42,6 @@ export async function POST() {
   response.cookies.set(clearRbacTokenCookieOptions());
   response.cookies.set(clearDeviceCookieOptions());
   response.cookies.set(clearUserTokenCookieOptions());
+  response.cookies.set(clearSessionUserCookieOptions());
   return response;
 }

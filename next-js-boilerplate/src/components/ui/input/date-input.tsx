@@ -5,15 +5,7 @@ import { cn } from "@/lib/cn";
 import { inputBaseClasses, inputErrorClasses } from "@/components/ui/input-styles";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { MONTHS, DAYS_SHORT, getDaysInMonth, getFirstWeekdayOfMonth, isSameDay } from "@/lib/date-time";
-
-interface DateInputProps {
-  value?: Date;
-  onChange?: (date: Date | undefined) => void;
-  error?: string;
-  placeholder?: string;
-  className?: string;
-  disabled?: boolean;
-}
+import type { DateInputProps } from "@/types/ui/DateInput-types";
 
 const DAYS = DAYS_SHORT;
 

@@ -1,13 +1,15 @@
-"use client";
-
-import { useAuth } from "@/hooks/useAuth";
-import { LoadingAuth } from "@/components/LoadingAuth";
-import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
+import type { Metadata } from "next";
 import { getTierView } from "@/lib/tier-view";
-import { FreePageView } from "./views/FreePageView";
-import { BasicPageView } from "./views/BasicPageView";
-import { MediumPageView } from "./views/MediumPageView";
-import { PremiumPageView } from "./views/PremiumPageView";
+import { getSessionUser } from "@/lib/auth-ssr";
+import { FreePageView } from "@/views/find-friends/FreePageView";
+import { BasicPageView } from "@/views/find-friends/BasicPageView";
+import { MediumPageView } from "@/views/find-friends/MediumPageView";
+import { PremiumPageView } from "@/views/find-friends/PremiumPageView";
+
+export const metadata: Metadata = {
+  title: "Find Friends",
+  description: "Find and connect with friends",
+};
 
 const VIEWS = {
   FREE: FreePageView,
@@ -16,11 +18,8 @@ const VIEWS = {
   PREMIUM: PremiumPageView,
 };
 
-export default function FindFriendsPage() {
-  const { user, loading } = useAuth();
+export default async function FindFriendsPage() {
+  const user = await getSessionUser();
 
-  if (loading) return <LoadingAuth />;
-  if (!user) return <UnauthenticatedMessage message="Sign in to find friends" />;
-
-  return getTierView(user.tier, VIEWS);
+  return getTierView(user!.tier, VIEWS);
 }

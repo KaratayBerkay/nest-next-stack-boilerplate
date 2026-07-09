@@ -3,6 +3,7 @@
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { useMemo } from "react";
+import type { StripeElementsProps } from "@/types/billing/StripeElements-types";
 
 const stripeKey = process.env.NEXT_PUBLIC_STRIPE_KEY;
 
@@ -13,10 +14,7 @@ const stripePromise = stripeKey
 export function StripeElements({
   clientSecret,
   children,
-}: {
-  clientSecret?: string;
-  children: React.ReactNode;
-}) {
+}: StripeElementsProps) {
   const options = useMemo(
     () => (clientSecret ? { clientSecret } : undefined),
     [clientSecret],

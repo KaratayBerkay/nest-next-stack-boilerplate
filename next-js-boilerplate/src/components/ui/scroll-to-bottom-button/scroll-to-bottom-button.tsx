@@ -1,12 +1,11 @@
 "use client";
 
 import { IconChevronDown } from "@tabler/icons-react";
+import type { ScrollToBottomButtonProps } from "@/types/ui/ScrollToBottomButton-types";
 
 export function ScrollToBottomButton({
   onClick,
-}: {
-  onClick: () => void;
-}) {
+}: ScrollToBottomButtonProps) {
   return (
     <button
       onClick={onClick}

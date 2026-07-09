@@ -2,12 +2,7 @@
 
 import React from "react";
 import { cn } from "@/lib/cn";
-
-interface AvatarGroupProps {
-  children: React.ReactNode;
-  max?: number;
-  className?: string;
-}
+import type { AvatarGroupProps } from "@/types/ui/AvatarGroup-types";
 
 export function AvatarGroup({
   children,

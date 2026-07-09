@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { containerClass } from "@/constants/site";
 import { NoncePanel } from "./NoncePanel";
+
+export const metadata: Metadata = {
+  title: "CSP",
+  description: "Content Security Policy demo",
+};
 
 export default function CspPage() {
   return (

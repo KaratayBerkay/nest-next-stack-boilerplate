@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import type { BadgeProps } from "@/types/ui/Badge-types";
 
 const variants = {
   default: "bg-fg text-bg",
@@ -8,12 +9,6 @@ const variants = {
   success:
     "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
 } as const;
-
-type Variant = keyof typeof variants;
-
-interface BadgeProps extends React.ComponentPropsWithoutRef<"span"> {
-  variant?: Variant;
-}
 
 export function Badge({
   variant = "default",

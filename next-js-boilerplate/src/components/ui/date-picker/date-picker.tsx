@@ -3,8 +3,7 @@ import { useState } from "react";
 import { Calendar } from "@/components/ui/Calendar";
 import { cn } from "@/lib/cn";
 import { formatDateLong } from "@/lib/date-time";
-
-interface DatePickerProps { value?: Date; onChange?: (date: Date | undefined) => void; placeholder?: string; className?: string; }
+import type { DatePickerProps } from "@/types/ui/DatePicker-types";
 
 export function DatePicker({ value, onChange, placeholder = "Pick a date", className }: DatePickerProps) {
   const [open, setOpen] = useState(false);

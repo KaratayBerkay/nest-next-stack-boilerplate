@@ -5,10 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useBreakpoint } from "@/hooks";
 import { useSelect } from "./select";
-
-interface SelectContentProps extends React.ComponentPropsWithoutRef<"div"> {
-  sideOffset?: number;
-}
+import type { SelectContentProps } from "@/types/ui/SelectContent-types";
 
 export function SelectContent({
   className,
@@ -89,38 +86,6 @@ export function SelectContent({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open, setOpen, triggerRef]);
 
-  const handleContentKeyDown = (e: React.KeyboardEvent) => {
-    const items = contentRef.current?.querySelectorAll('[role="option"]');
-    if (!items || items.length === 0) return;
-
-    const currentIndex = Array.from(items).findIndex(
-      (item) => item === document.activeElement,
-    );
-
-    switch (e.key) {
-      case "ArrowDown": {
-        e.preventDefault();
-        const next = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
-        (items[next] as HTMLButtonElement).focus();
-        break;
-      }
-      case "ArrowUp": {
-        e.preventDefault();
-        const prev = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
-        (items[prev] as HTMLButtonElement).focus();
-        break;
-      }
-      case "Enter":
-      case " ": {
-        e.preventDefault();
-        if (currentIndex >= 0) {
-          (items[currentIndex] as HTMLButtonElement).click();
-        }
-        break;
-      }
-    }
-  };
-
   if (!open) return null;
 
   return createPortal(
@@ -150,7 +115,6 @@ export function SelectContent({
             : "bg-bg animate-fade-in fixed inset-0 z-50 flex flex-col p-4",
           className,
         )}
-        onKeyDown={handleContentKeyDown}
         {...props}
       >
         {!isDesktop && (

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib";
+import type { NavLinkProps } from "@/types/layout/NavLink-types";
 
 /**
  * A `<Link>` that knows whether it points at the current route.
@@ -15,10 +16,7 @@ import { cn } from "@/lib";
 export function NavLink({
   href,
   children,
-}: {
-  href: string;
-  children: React.ReactNode;
-}) {
+}: NavLinkProps) {
   const pathname = usePathname();
   const active = pathname === href;
   return (

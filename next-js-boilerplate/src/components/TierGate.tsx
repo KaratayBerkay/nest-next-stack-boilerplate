@@ -1,15 +1,9 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { tierAtLeast, type Tier } from "@/lib/tier";
+import { tierAtLeast } from "@/lib/tier";
 import { AccessDenied } from "./AccessDenied";
-
-interface TierGateProps {
-  min: Tier;
-  fallback?: ReactNode;
-  children: ReactNode;
-}
+import type { TierGateProps } from "@/types/components/TierGate-types";
 
 export function TierGate({ min, fallback, children }: TierGateProps) {
   const { user } = useAuth();

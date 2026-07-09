@@ -148,6 +148,7 @@ services:
       postgres:
         condition: service_healthy
     env_file: ./.vault-envs/backend.env
+    command: ["node_modules/.bin/prisma", "db", "push", "--accept-data-loss"]
 
   app:
     build:

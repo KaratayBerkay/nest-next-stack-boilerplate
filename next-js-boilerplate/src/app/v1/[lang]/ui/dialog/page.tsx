@@ -1,10 +1,11 @@
-import { Suspense } from "react";
-import { DialogDemo } from "./DialogDemo";
+import type { Metadata } from "next";
+import PageContent from "@/views/ui/dialog/PageContent";
 
-export default function Page() {
-  return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading...</p>}>
-      <DialogDemo />
-    </Suspense>
-  );
+export const metadata: Metadata = {
+  title: "Dialog",
+  description: "Dialog component demo",
+};
+
+export default function DialogPage() {
+  return <PageContent />;
 }

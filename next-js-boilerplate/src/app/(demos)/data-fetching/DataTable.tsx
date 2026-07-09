@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { DATA_URL } from "@/constants/api/urls";
 
 interface ApiData {
   id: number;
@@ -12,7 +13,7 @@ export function DataTable() {
   const [data, setData] = useState<ApiData | null>(null);
 
   useEffect(() => {
-    fetch("/api/data")
+    fetch(DATA_URL)
       .then((res) => res.json())
       .then(setData)
       .catch(() => setData(null));

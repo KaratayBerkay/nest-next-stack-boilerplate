@@ -1,8 +1,7 @@
 "use client";
 import { DayPicker } from "react-day-picker";
 import { cn } from "@/lib/cn";
-
-export type CalendarProps = React.ComponentProps<typeof DayPicker>;
+import type { CalendarProps } from "@/types/ui/Calendar-types";
 
 export function Calendar({ className, classNames, showOutsideDays = true, ...props }: CalendarProps) {
   return (

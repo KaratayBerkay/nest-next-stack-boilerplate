@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { isLocale, locales } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/get-messages";
 import { LocaleSwitcher } from "./LocaleSwitcher";
+import type { LocaleContentProps, I18nPageProps, GenerateMetadataProps } from "@/types/i18n/LocaleContent-types";
 
 // Prerender one static page per supported locale at build time. Unsupported
 // locales (e.g. /i18n/fr) are rejected upstream in `proxy.ts` with a deterministic
@@ -15,9 +16,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<{ lang: string }>;
-}): Promise<Metadata> {
+}: GenerateMetadataProps): Promise<Metadata> {
   const { lang } = await params;
   if (!isLocale(lang)) return {};
   const t = await getMessages(lang, "i18n");
@@ -28,9 +27,7 @@ export async function generateMetadata({
 // cleanly under `cacheComponents` — same pattern as routing/items/[id].
 async function LocaleContent({
   params,
-}: {
-  params: Promise<{ lang: string }>;
-}) {
+}: LocaleContentProps) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
   const t = await getMessages(lang, "i18n");
@@ -57,9 +54,7 @@ async function LocaleContent({
 
 export default function I18nPage({
   params,
-}: {
-  params: Promise<{ lang: string }>;
-}) {
+}: I18nPageProps) {
   return (
     <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>
       <LocaleContent params={params} />

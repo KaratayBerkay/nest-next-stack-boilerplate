@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
+import { MESSAGES_CONVERSATIONS_URL } from "@/constants/api/urls";
 
 export interface Conversation {
   user: {
@@ -15,7 +16,7 @@ export interface Conversation {
 }
 
 async function fetchConversations(): Promise<Conversation[]> {
-  const res = await apiFetch("/api/messages/conversations");
+  const res = await apiFetch(MESSAGES_CONVERSATIONS_URL);
   if (!res.ok) throw new Error("Failed to fetch conversations");
   return res.json();
 }

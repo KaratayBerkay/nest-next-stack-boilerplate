@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { RegisterForm } from "@/features/auth/ui/register-form";
 import { SocialLoginButtons } from "@/features/auth/ui/social-login-buttons";
+
+export const metadata: Metadata = {
+  title: "Register",
+  description: "Create a new account",
+};
 
 export default function RegisterPage() {
   return (

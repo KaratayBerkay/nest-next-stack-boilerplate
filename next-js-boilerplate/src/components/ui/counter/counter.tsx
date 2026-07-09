@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { CounterProps } from "@/types/ui/Counter-types";
 
 /**
  * A button whose click count lives in React state.
@@ -11,7 +12,7 @@ import { useState } from "react";
  * The count starts at 0 on both server and client, so there's no hydration
  * concern.
  */
-export function Counter({ label }: { label: string }) {
+export function Counter({ label }: CounterProps) {
   const [count, setCount] = useState(0);
   return (
     <button

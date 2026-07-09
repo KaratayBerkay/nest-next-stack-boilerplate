@@ -1,7 +1,11 @@
-"use client";
+import type { Metadata } from "next";
+import PageContent from "@/views/settings/billing/PageContent";
 
-import { FreePageView } from "./views/FreePageView";
+export const metadata: Metadata = {
+  title: "Billing",
+  description: "Manage your billing and subscription",
+};
 
 export default function BillingPage() {
-  return <FreePageView />;
+  return <PageContent />;
 }

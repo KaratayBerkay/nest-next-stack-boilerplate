@@ -1,3 +1,10 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Fonts",
+  description: "Font loading demo",
+};
+
 export default function FontsPage() {
   return (
     <div className="flex flex-col gap-6">

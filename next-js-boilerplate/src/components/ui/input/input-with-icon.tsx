@@ -1,11 +1,6 @@
 import { cn } from "@/lib/cn";
 import { inputBaseClasses, inputErrorClasses } from "@/components/ui/input-styles";
-
-interface InputWithIconProps extends React.ComponentPropsWithoutRef<"input"> {
-  icon: React.ReactNode;
-  side?: "left" | "right";
-  error?: string;
-}
+import type { InputWithIconProps } from "@/types/ui/InputWithIcon-types";
 
 export function InputWithIcon({
   icon,

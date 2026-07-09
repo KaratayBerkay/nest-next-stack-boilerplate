@@ -1,10 +1,11 @@
-import { Suspense } from "react";
-import { PopoverDemo } from "./PopoverDemo";
+import type { Metadata } from "next";
+import PageContent from "@/views/ui/popover/PageContent";
 
-export default function Page() {
-  return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading...</p>}>
-      <PopoverDemo />
-    </Suspense>
-  );
+export const metadata: Metadata = {
+  title: "Popover",
+  description: "Popover component demo",
+};
+
+export default function PopoverPage() {
+  return <PageContent />;
 }

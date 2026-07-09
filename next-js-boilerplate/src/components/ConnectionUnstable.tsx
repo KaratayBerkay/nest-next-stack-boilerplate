@@ -1,11 +1,7 @@
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/Alert";
-
-interface ConnectionUnstableProps {
-  title?: string;
-  description?: string;
-}
+import type { ConnectionUnstableProps } from "@/types/components/ConnectionUnstable-types";
 
 export function ConnectionUnstable({
   title = "Connection lost",

@@ -1,12 +1,11 @@
 "use client";
 
+import type { MessagesErrorProps } from "@/types/messages/MessagesError-types";
+
 export default function MessagesError({
   error,
   reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
+}: MessagesErrorProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-20">
       <p className="text-sm text-red-500">Failed to load messages</p>

@@ -3,10 +3,26 @@
 import { useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { inputBaseClasses, inputErrorClasses } from "@/components/ui/input-styles";
+import type { FileInputProps } from "@/types/ui/FileInput-types";
 
-interface FileInputProps extends Omit<React.ComponentPropsWithoutRef<"input">, "type" | "value"> {
-  error?: string;
-  buttonLabel?: string;
+function handleChange(
+  e: React.ChangeEvent<HTMLInputElement>,
+  setFileName: (name: string | null) => void,
+  onChange: React.ChangeEventHandler<HTMLInputElement> | undefined,
+) {
+  const file = e.target.files?.[0];
+  setFileName(file?.name ?? null);
+  onChange?.(e);
+}
+
+function handleClear(
+  ref: React.RefObject<HTMLInputElement | null>,
+  setFileName: (name: string | null) => void,
+) {
+  if (ref.current) {
+    ref.current.value = "";
+  }
+  setFileName(null);
 }
 
 export function FileInput({
@@ -19,26 +35,13 @@ export function FileInput({
   const ref = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    setFileName(file?.name ?? null);
-    onChange?.(e);
-  };
-
-  const handleClear = () => {
-    if (ref.current) {
-      ref.current.value = "";
-    }
-    setFileName(null);
-  };
-
   return (
     <div className="flex items-center gap-2">
       <input
         ref={ref}
         type="file"
         className="hidden"
-        onChange={handleChange}
+        onChange={(e) => handleChange(e, setFileName, onChange)}
         {...props}
       />
       <button
@@ -73,7 +76,7 @@ export function FileInput({
           <span className="truncate">{fileName}</span>
           <button
             type="button"
-            onClick={handleClear}
+            onClick={() => handleClear(ref, setFileName)}
             className="text-muted hover:text-fg shrink-0"
             aria-label="Remove file"
           >

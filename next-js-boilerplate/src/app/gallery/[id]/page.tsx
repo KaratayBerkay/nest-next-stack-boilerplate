@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
+import type { PhotoContentProps, PhotoPageProps } from "@/types/gallery/PhotoContent-types";
 
-async function PhotoContent({ params }: { params: Promise<{ id: string }> }) {
+export const metadata: Metadata = {
+  title: "Gallery Item",
+  description: "View gallery item",
+};
+
+async function PhotoContent({ params }: PhotoContentProps) {
   const { id } = await params;
   return (
     <>
@@ -15,9 +22,7 @@ async function PhotoContent({ params }: { params: Promise<{ id: string }> }) {
 
 export default function PhotoPage({
   params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+}: PhotoPageProps) {
   return (
     <div data-testid="photo-page" className="flex flex-col gap-2">
       <Suspense

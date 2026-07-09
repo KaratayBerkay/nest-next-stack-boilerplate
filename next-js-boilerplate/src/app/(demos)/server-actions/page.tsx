@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import GreetingForm from "./GreetingForm";
+
+export const metadata: Metadata = {
+  title: "Server Actions",
+  description: "Server actions demo",
+};
 
 export default function ServerActionsPage() {
   return (

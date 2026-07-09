@@ -1,5 +1,6 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
+import { MESSAGES_CONVERSATION_MESSAGES_PREFIX } from "@/constants/api/urls";
 
 interface Message {
   id: string;
@@ -24,7 +25,7 @@ export function useConversation(peerId: string | null) {
       if (pageParam) params.set("before", pageParam as string);
       params.set("take", "30");
       const res = await apiFetch(
-        `/api/messages/conversations/${peerId}/messages?${params.toString()}`,
+        `${MESSAGES_CONVERSATION_MESSAGES_PREFIX}${peerId}/messages?${params.toString()}`,
       );
       if (!res.ok) throw new Error("Failed to fetch messages");
       return res.json();

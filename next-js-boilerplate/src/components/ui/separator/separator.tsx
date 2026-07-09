@@ -1,8 +1,5 @@
 import { cn } from "@/lib/cn";
-
-interface SeparatorProps extends React.ComponentPropsWithoutRef<"div"> {
-  orientation?: "horizontal" | "vertical";
-}
+import type { SeparatorProps } from "@/types/ui/Separator-types";
 
 export function Separator({
   orientation = "horizontal",

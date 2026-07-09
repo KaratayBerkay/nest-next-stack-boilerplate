@@ -1,6 +1,5 @@
 import { cn } from "@/lib/cn";
-
-type DialogTitleProps = React.ComponentPropsWithoutRef<"h2">;
+import type { DialogTitleProps } from "@/types/ui/Dialog-types";
 
 export function DialogTitle({ className, ...props }: DialogTitleProps) {
   return (

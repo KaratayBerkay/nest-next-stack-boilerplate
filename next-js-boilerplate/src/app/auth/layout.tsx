@@ -2,17 +2,16 @@ import { Suspense } from "react";
 import { containerClass, SITE } from "@/constants/site";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { LangSwitcher } from "@/components/layout/LangSwitcher";
+import type { AuthLayoutProps } from "@/types/auth/AuthLayout-types";
 
 export default function AuthLayout({
   children,
-}: {
-  children: React.ReactNode;
-}) {
+}: AuthLayoutProps) {
   return (
     <main
       className={`${containerClass} flex min-h-screen flex-col items-center justify-center py-16`}
     >
-      <div className="flex w-full max-w-sm flex-col gap-6">
+      <div className="flex w-full max-w-md flex-col gap-6">
         <div className="flex items-center justify-between">
           <p className="text-brand text-xs font-semibold tracking-wide uppercase">
             {SITE.name}

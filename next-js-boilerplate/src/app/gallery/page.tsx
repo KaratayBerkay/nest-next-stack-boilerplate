@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Gallery",
+  description: "Browse the gallery",
+};
 
 const PHOTOS = ["1", "2", "3"];
 

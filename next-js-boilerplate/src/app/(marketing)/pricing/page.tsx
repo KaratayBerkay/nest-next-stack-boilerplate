@@ -1,17 +1,11 @@
-"use client";
+import type { Metadata } from "next";
+import PricingPageContent from "@/views/pricing/PageContent";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { plansPath } from "@/constants/routes";
-import { readLangCookie } from "@/lib/read-lang-cookie";
+export const metadata: Metadata = {
+  title: "Pricing",
+  description: "View our pricing plans",
+};
 
 export default function PricingPage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    const lang = readLangCookie();
-    router.replace(plansPath(lang));
-  }, [router]);
-
-  return null;
+  return <PricingPageContent />;
 }

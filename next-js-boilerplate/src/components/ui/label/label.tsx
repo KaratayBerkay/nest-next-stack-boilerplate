@@ -1,8 +1,5 @@
 import { cn } from "@/lib/cn";
-
-interface LabelProps extends React.ComponentPropsWithoutRef<"label"> {
-  required?: boolean;
-}
+import type { LabelProps } from "@/types/ui/Label-types";
 
 export function Label({ className, children, required, ...props }: LabelProps) {
   return (

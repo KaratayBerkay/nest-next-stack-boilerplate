@@ -3,6 +3,9 @@
 import { apiFetch } from "@/lib/api-client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { clientEnv } from "@/lib/env";
+import { PUSH_SUBSCRIBE_URL, PUSH_UNSUBSCRIBE_URL } from "@/constants/api/urls";
+import { POST } from "@/constants/api/methods";
+import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 
 function urlBase64ToUint8Array(base64: string): Uint8Array {
   const padding = "=".repeat((4 - (base64.length % 4)) % 4);
@@ -60,9 +63,9 @@ export function usePushNotifications() {
         });
         setSubscription(sub);
 
-        await apiFetch("/api/push/subscribe", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        await apiFetch(PUSH_SUBSCRIBE_URL, {
+          method: POST,
+          headers: JSON_CONTENT_TYPE_HEADER,
           body: JSON.stringify(sub.toJSON()),
         });
       }
@@ -77,9 +80,9 @@ export function usePushNotifications() {
       await subscription.unsubscribe();
       setSubscription(null);
 
-      await apiFetch("/api/push/unsubscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      await apiFetch(PUSH_UNSUBSCRIBE_URL, {
+        method: POST,
+        headers: JSON_CONTENT_TYPE_HEADER,
         body: JSON.stringify({ endpoint: subscription.endpoint }),
       });
     } catch {

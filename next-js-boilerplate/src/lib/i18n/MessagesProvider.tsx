@@ -2,16 +2,14 @@
 
 import { createContext, useContext } from "react";
 import type { I18nMessages } from "@/generated/i18n-messages";
+import type { MessagesProviderProps } from "@/types/lib/MessagesProvider-types";
 
 const MessagesContext = createContext<I18nMessages | null>(null);
 
 export function MessagesProvider({
   messages,
   children,
-}: {
-  messages: I18nMessages;
-  children: React.ReactNode;
-}) {
+}: MessagesProviderProps) {
   return (
     <MessagesContext.Provider value={messages}>
       {children}

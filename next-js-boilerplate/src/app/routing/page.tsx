@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Routing",
+  description: "Routing examples",
+};
 
 export default function RoutingIndex() {
   return (

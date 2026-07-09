@@ -2,10 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { useDropdownMenuContext } from "./dropdown-menu";
-
-interface DropdownMenuItemProps extends React.ComponentPropsWithoutRef<"div"> {
-  disabled?: boolean;
-}
+import type { DropdownMenuItemProps } from "@/types/ui/DropdownMenuItem-types";
 
 export function DropdownMenuItem({
   disabled,

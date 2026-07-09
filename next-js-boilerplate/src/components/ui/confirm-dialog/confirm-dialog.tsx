@@ -9,14 +9,14 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import type { ConfirmDialogProps } from "@/types/ui/ConfirmDialog-types";
 
-interface ConfirmDialogProps {
-  title: string;
-  description: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  onConfirm: () => void | Promise<void>;
-  children: (open: () => void) => React.ReactNode;
+async function handleConfirm(
+  onConfirm: () => void | Promise<void>,
+  setOpen: (open: boolean) => void,
+) {
+  await onConfirm();
+  setOpen(false);
 }
 
 export function ConfirmDialog({
@@ -28,11 +28,6 @@ export function ConfirmDialog({
   children,
 }: ConfirmDialogProps) {
   const [open, setOpen] = useState(false);
-
-  const handleConfirm = async () => {
-    await onConfirm();
-    setOpen(false);
-  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -50,7 +45,7 @@ export function ConfirmDialog({
             {cancelLabel}
           </button>
           <button
-            onClick={handleConfirm}
+            onClick={() => handleConfirm(onConfirm, setOpen)}
             className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700"
           >
             {confirmLabel}

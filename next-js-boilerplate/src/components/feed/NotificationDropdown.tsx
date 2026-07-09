@@ -1,133 +1,70 @@
 "use client";
 
-import { useRef, useCallback, useState, useMemo } from "react";
+import { useRef, useState, type Dispatch, type SetStateAction } from "react";
+import type { NotificationDropdownProps } from "@/types/feed/NotificationDropdown-types";
+import type { NotificationItem } from "@/lib/realtime/useNotifications";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { apiFetch } from "@/lib/api-client";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import { useBreakpoint } from "@/hooks";
-import { IconBell, IconChevronRight } from "@tabler/icons-react";
-import { formatDate } from "@/lib/date-time";
+import { IconBell } from "@tabler/icons-react";
+import { NOTIFICATIONS_READ_URL } from "@/constants/api/urls";
+import { POST } from "@/constants/api/methods";
 import {
   useNotifications,
   useUnreadNotificationCount,
   useDmUnreadCount,
 } from "@/lib/realtime/useNotifications";
-import type { NotificationItem } from "@/lib/realtime/useNotifications";
 import { notificationTarget } from "@/lib/notifications/target";
 import { useQueryClient } from "@tanstack/react-query";
+import { Badge } from "@/components/feed/Badge";
+import { NotificationList } from "@/components/feed/NotificationList";
 
-function Badge({ count }: { count: number }) {
-  if (count <= 0) return null;
-  return (
-    <span className="ring-bg absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2">
-      {count > 99 ? "99+" : count}
-    </span>
-  );
+async function markRead(
+  id: string,
+  queryClient: ReturnType<typeof useQueryClient>,
+) {
+  try {
+    await apiFetch(NOTIFICATIONS_READ_URL, {
+      method: POST,
+      body: JSON.stringify({ id }),
+    });
+    queryClient.invalidateQueries({ queryKey: ["notifications"] });
+  } catch {}
 }
 
-function NotificationList({
-  notifications,
-  onMarkRead,
-  onMarkAllRead,
-  onNavigate,
-  lang = "en",
-}: {
-  notifications: NotificationItem[];
-  onMarkRead: (id: string) => void;
-  onMarkAllRead: () => void;
-  onNavigate: (n: NotificationItem) => void;
-  lang?: string;
-}) {
-  const unread = notifications.filter((n) => !n.readAt);
-
-  const sorted = useMemo(
-    () =>
-      [...notifications].sort((a, b) => {
-        const aUnread = a.readAt ? 0 : 1;
-        const bUnread = b.readAt ? 0 : 1;
-        if (aUnread !== bUnread) return bUnread - aUnread;
-        return (
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-      }),
-    [notifications],
-  );
-
-  return (
-    <div className="flex flex-col gap-0.5">
-      <div className="flex items-center justify-between px-3 py-2">
-        <p className="text-muted text-xs font-semibold tracking-wider uppercase">
-          Notifications
-        </p>
-        {unread.length > 0 && (
-          <button
-            onClick={() => {
-              onMarkAllRead();
-            }}
-            className="text-brand text-[10px] font-medium hover:underline"
-          >
-            Mark all read
-          </button>
-        )}
-      </div>
-
-      {sorted.length === 0 ? (
-        <p className="text-muted px-3 py-4 text-center text-xs">
-          No notifications yet
-        </p>
-      ) : (
-        <div className="flex max-h-80 flex-col gap-0.5 overflow-y-auto">
-          {sorted.slice(0, 20).map((n) => (
-            <button
-              key={n.id}
-              onClick={() => {
-                onMarkRead(n.id);
-                onNavigate(n);
-              }}
-              className={`hover:bg-surface-hover flex items-start gap-2 rounded-lg px-2 py-2 text-left ${
-                !n.readAt ? "bg-brand/5" : ""
-              }`}
-            >
-              <div className="bg-brand flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white">
-                {n.actor?.name?.charAt(0).toUpperCase() ?? "?"}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-fg truncate text-xs font-medium">
-                  {n.title}
-                </p>
-                {n.body && (
-                  <p className="text-muted line-clamp-2 text-[11px]">
-                    {n.body}
-                  </p>
-                )}
-                <p className="text-muted mt-0.5 text-[10px]">
-                  {formatDate(n.createdAt)}
-                </p>
-              </div>
-              {!n.readAt && (
-                <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-blue-500" />
-              )}
-            </button>
-          ))}
-        </div>
-      )}
-
-      <div className="border-border border-t">
-        <Link
-          href={`/v1/${lang}/notification`}
-          className="text-muted hover:bg-surface-hover flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium"
-        >
-          See more
-          <IconChevronRight size={14} stroke={1.5} />
-        </Link>
-      </div>
-    </div>
-  );
+async function markAllRead(queryClient: ReturnType<typeof useQueryClient>) {
+  try {
+    await apiFetch(NOTIFICATIONS_READ_URL, {
+      method: POST,
+      body: JSON.stringify({ all: true }),
+    });
+    queryClient.invalidateQueries({ queryKey: ["notifications"] });
+  } catch {}
 }
 
-export function NotificationDropdown({ lang = "en" }: { lang?: string }) {
+function handleToggle(setOpen: Dispatch<SetStateAction<boolean>>) {
+  setOpen((prev) => !prev);
+}
+
+function handleNavigate(
+  n: NotificationItem,
+  lang: string,
+  setOpen: Dispatch<SetStateAction<boolean>>,
+  router: ReturnType<typeof useRouter>,
+) {
+  const target = notificationTarget(
+    n.payload as Record<string, unknown> | undefined,
+    lang,
+  );
+  if (target) {
+    router.push(target);
+    setOpen(false);
+  }
+}
+
+export function NotificationDropdown({ lang = "en" }: NotificationDropdownProps) {
   const { data: notifData } = useNotifications();
   const { data: unreadCount = 0 } = useUnreadNotificationCount();
   const { data: dmCount = 0 } = useDmUnreadCount();
@@ -143,47 +80,12 @@ export function NotificationDropdown({ lang = "en" }: { lang?: string }) {
 
   const queryClient = useQueryClient();
 
-  const markRead = useCallback(async (id: string) => {
-    try {
-      await apiFetch("/api/notifications/read", {
-        method: "POST",
-        body: JSON.stringify({ id }),
-      });
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    } catch {}
-  }, [queryClient]);
-
-  const markAllRead = useCallback(async () => {
-    try {
-      await apiFetch("/api/notifications/read", {
-        method: "POST",
-        body: JSON.stringify({ all: true }),
-      });
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    } catch {}
-  }, [queryClient]);
-
-  const handleToggle = () => {
-    setOpen((prev) => !prev);
-  };
-
-  const handleNavigate = (n: NotificationItem) => {
-    const target = notificationTarget(
-      n.payload as Record<string, unknown> | undefined,
-      lang,
-    );
-    if (target) {
-      router.push(target);
-      setOpen(false);
-    }
-  };
-
   const content = (
     <NotificationList
       notifications={notifications}
-      onMarkRead={markRead}
-      onMarkAllRead={markAllRead}
-      onNavigate={handleNavigate}
+      onMarkRead={(id) => markRead(id, queryClient)}
+      onMarkAllRead={() => markAllRead(queryClient)}
+      onNavigate={(n) => handleNavigate(n, lang, setOpen, router)}
       lang={lang}
     />
   );
@@ -191,7 +93,7 @@ export function NotificationDropdown({ lang = "en" }: { lang?: string }) {
   return (
     <div ref={ref} className="relative">
       <button
-        onClick={handleToggle}
+        onClick={() => handleToggle(setOpen)}
         className="text-muted hover:bg-surface-hover relative rounded-lg p-1.5"
       >
         <IconBell size={20} stroke={1.5} />

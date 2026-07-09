@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { DynamicGreeting } from "./DynamicGreeting";
+
+export const metadata: Metadata = {
+  title: "PPR",
+  description: "Partial Pre-Rendering demo",
+};
 
 export default function PprPage() {
   return (

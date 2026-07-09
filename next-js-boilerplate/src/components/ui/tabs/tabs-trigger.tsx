@@ -2,13 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { useTabsContext } from "./tabs";
-
-interface TabsTriggerProps extends Omit<
-  React.ComponentPropsWithoutRef<"button">,
-  "value"
-> {
-  value: string;
-}
+import type { TabsTriggerProps } from "@/types/ui/TabsTrigger-types";
 
 export function TabsTrigger({
   value,

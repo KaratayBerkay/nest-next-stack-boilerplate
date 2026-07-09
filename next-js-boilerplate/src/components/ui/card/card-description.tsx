@@ -1,6 +1,5 @@
 import { cn } from "@/lib/cn";
-
-type CardDescriptionProps = React.ComponentPropsWithoutRef<"p">;
+import type { CardDescriptionProps } from "@/types/ui/Card-types";
 
 export function CardDescription({ className, ...props }: CardDescriptionProps) {
   return <p className={cn("text-muted text-sm", className)} {...props} />;

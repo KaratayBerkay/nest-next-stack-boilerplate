@@ -1,12 +1,7 @@
 "use client";
 import { forwardRef, useId } from "react";
 import { cn } from "@/lib/cn";
-
-interface InputOTPProps extends Omit<React.ComponentPropsWithoutRef<"input">, "value" | "onChange"> {
-  value: string;
-  onChange: (value: string) => void;
-  maxLength: number;
-}
+import type { InputOTPProps } from "@/types/ui/InputOTP-types";
 
 export const InputOTP = forwardRef<HTMLInputElement, InputOTPProps>(({ className, value, onChange, maxLength, ...props }, ref) => {
   const id = useId();

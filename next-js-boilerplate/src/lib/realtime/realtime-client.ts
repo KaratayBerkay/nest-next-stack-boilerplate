@@ -6,6 +6,9 @@ export type RealtimeStatus =
   | "backoff"
   | "down";
 
+import { AUTH_TOKEN_URL } from "@/constants/api/urls";
+import { GET } from "@/constants/api/methods";
+
 const TOPIC_ALLOWLIST = /^(feed|post:[a-z0-9]+)$/;
 
 export class RealtimeClient {
@@ -177,7 +180,7 @@ export class RealtimeClient {
   private async refreshAndFetchTokens(): Promise<Record<string, string> | null> {
     this.onBustTokenCache?.();
     try {
-      const res = await fetch("/api/auth/token", { method: "GET" });
+      const res = await fetch(AUTH_TOKEN_URL, { method: GET });
       if (!res.ok) return null;
     } catch {
       return null;

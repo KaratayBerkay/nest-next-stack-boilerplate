@@ -1,13 +1,16 @@
 import { cn } from "@/lib/cn";
 import { Skeleton } from "./skeleton";
+import type { SkeletonLineProps } from "@/types/ui/SkeletonLine-types";
+import type { SkeletonCardProps } from "@/types/ui/SkeletonCard-types";
+import type { SkeletonMessageProps } from "@/types/ui/SkeletonMessage-types";
+import type { SkeletonChatMessageProps } from "@/types/ui/SkeletonChatMessage-types";
+import type { SkeletonConversationSidebarProps } from "@/types/ui/SkeletonConversationSidebar-types";
+import type { SkeletonFeedListProps } from "@/types/ui/SkeletonFeedList-types";
 
 export function SkeletonLine({
   className,
   width,
-}: {
-  className?: string;
-  width?: string;
-}) {
+}: SkeletonLineProps) {
   return (
     <div
       className={cn("bg-surface-hover h-3 animate-pulse rounded", className)}
@@ -16,7 +19,7 @@ export function SkeletonLine({
   );
 }
 
-function SkeletonCard({ className }: { className?: string }) {
+function SkeletonCard({ className }: SkeletonCardProps) {
   return (
     <div
       className={cn(
@@ -35,7 +38,7 @@ function SkeletonCard({ className }: { className?: string }) {
   );
 }
 
-export function SkeletonMessage({ className }: { className?: string }) {
+export function SkeletonMessage({ className }: SkeletonMessageProps) {
   return (
     <div className={cn("flex items-center gap-3 px-3 py-2.5", className)}>
       <div className="bg-surface-hover h-10 w-10 animate-pulse rounded-full" />
@@ -47,7 +50,7 @@ export function SkeletonMessage({ className }: { className?: string }) {
   );
 }
 
-export function SkeletonChatMessage({ isMe }: { isMe?: boolean }) {
+export function SkeletonChatMessage({ isMe }: SkeletonChatMessageProps) {
   return (
     <div
       className={cn(
@@ -70,9 +73,7 @@ export function SkeletonChatMessage({ isMe }: { isMe?: boolean }) {
 
 export function SkeletonConversationSidebar({
   className,
-}: {
-  className?: string;
-}) {
+}: SkeletonConversationSidebarProps) {
   return (
     <div
       className={cn(
@@ -94,7 +95,7 @@ export function SkeletonConversationSidebar({
   );
 }
 
-export function SkeletonFeedList({ className }: { className?: string }) {
+export function SkeletonFeedList({ className }: SkeletonFeedListProps) {
   return (
     <div className={cn("flex flex-col gap-3", className)}>
       {Array.from({ length: 3 }).map((_, i) => (

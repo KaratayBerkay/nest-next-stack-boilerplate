@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SECURITY_NONCE_URL } from "@/constants/api/urls";
 
 export function NoncePanel() {
   const [nonce, setNonce] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/security/nonce")
+    fetch(SECURITY_NONCE_URL)
       .then((res) => res.json())
       .then((data) => setNonce(data.nonce ?? null))
       .catch(() => setNonce(null));

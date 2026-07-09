@@ -1,10 +1,17 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
+import type { ItemContentProps, ItemPageProps } from "@/types/routing/ItemContent-types";
+
+export const metadata: Metadata = {
+  title: "Item Detail",
+  description: "View item details",
+};
 
 // Dynamic route segment: `[id]` matches any single path segment. The resolved id
 // is rendered into the initial HTML — it is server-rendered, not filled in on
 // the client. The `params` Promise (runtime data) is read inside `<Suspense>` so
 // the page shell can be prerendered statically.
-async function ItemContent({ params }: { params: Promise<{ id: string }> }) {
+async function ItemContent({ params }: ItemContentProps) {
   const { id } = await params;
   return (
     <>
@@ -19,9 +26,7 @@ async function ItemContent({ params }: { params: Promise<{ id: string }> }) {
 
 export default function ItemPage({
   params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+}: ItemPageProps) {
   return (
     <div className="flex flex-col gap-2">
       <Suspense fallback={<p className="text-sm text-zinc-500">Loading...</p>}>

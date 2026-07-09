@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useRef, useState } from "react";
+import type { SelectProps } from "@/types/ui/Select-types";
 
 interface SelectContextValue {
   open: boolean;
@@ -20,13 +21,6 @@ export function useSelect() {
     throw new Error("Select components must be used within a Select");
   }
   return context;
-}
-
-interface SelectProps {
-  children: React.ReactNode;
-  value?: string;
-  onValueChange: (value: string) => void;
-  defaultOpen?: boolean;
 }
 
 export function Select({

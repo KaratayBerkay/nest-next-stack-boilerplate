@@ -1,4 +1,5 @@
 import { containerClass } from "@/constants/site";
+import type { DashboardLayoutProps } from "@/types/dashboard/DashboardLayout-types";
 
 // Parallel routes.
 //
@@ -10,11 +11,7 @@ export default function DashboardLayout({
   children,
   team,
   analytics,
-}: {
-  children: React.ReactNode;
-  team: React.ReactNode;
-  analytics: React.ReactNode;
-}) {
+}: DashboardLayoutProps) {
   return (
     <main className={`${containerClass} flex flex-1 flex-col gap-6 py-16`}>
       <header className="flex flex-col gap-1">

@@ -1,6 +1,8 @@
 "use client";
 
-export default function HeavyComponent({ message }: { message: string }) {
+import type { HeavyComponentProps } from "@/types/demos/HeavyComponent-types";
+
+export default function HeavyComponent({ message }: HeavyComponentProps) {
   // Simulate a heavy component that is code-split.
   return (
     <div

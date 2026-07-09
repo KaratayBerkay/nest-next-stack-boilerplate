@@ -10,6 +10,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { useTooltip } from "./tooltip";
+import type { TooltipContentProps } from "@/types/ui/TooltipContent-types";
 
 const GAP = 8;
 
@@ -26,11 +27,6 @@ function getPosition(rect: DOMRect, side: string) {
     default:
       return { left: rect.left + rect.width / 2, top: rect.top - GAP };
   }
-}
-
-interface TooltipContentProps {
-  children: ReactNode;
-  className?: string;
 }
 
 export function TooltipContent({ children, className }: TooltipContentProps) {

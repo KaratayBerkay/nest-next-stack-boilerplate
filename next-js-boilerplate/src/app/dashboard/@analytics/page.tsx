@@ -1,3 +1,10 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Analytics",
+  description: "View your analytics",
+};
+
 export default function AnalyticsSlot() {
   return (
     <section

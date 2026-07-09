@@ -1,10 +1,6 @@
 import { LOGIN_PATH } from "@/constants/routes";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
-
-interface UnauthenticatedMessageProps {
-  message: string;
-  label?: string;
-}
+import type { UnauthenticatedMessageProps } from "@/types/components/UnauthenticatedMessage-types";
 
 export function UnauthenticatedMessage({
   message,

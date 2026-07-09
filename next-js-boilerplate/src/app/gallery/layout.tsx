@@ -1,4 +1,5 @@
 import { containerClass } from "@/constants/site";
+import type { GalleryLayoutProps } from "@/types/gallery/GalleryLayout-types";
 
 // Intercepting routes pair with a parallel `@modal` slot.
 //
@@ -10,10 +11,7 @@ import { containerClass } from "@/constants/site";
 export default function GalleryLayout({
   children,
   modal,
-}: {
-  children: React.ReactNode;
-  modal: React.ReactNode;
-}) {
+}: GalleryLayoutProps) {
   return (
     <main className={`${containerClass} flex flex-1 flex-col gap-6 py-16`}>
       {children}

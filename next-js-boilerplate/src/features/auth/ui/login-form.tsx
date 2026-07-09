@@ -1,16 +1,66 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { REGISTER_PATH, RESET_PASSWORD_PATH } from "@/constants/routes";
 import { LANG_COOKIE, LANGS, DEFAULT_LANG } from "@/constants/i18n";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import type { I18nMessages } from "@/generated/i18n-messages";
 import { loginFormSchema } from "@/lib/validation/auth";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
+
+async function handleLoginSubmit(
+  e: React.SyntheticEvent,
+  schema: ReturnType<typeof loginFormSchema>,
+  email: string,
+  password: string,
+  setFieldErrors: Dispatch<SetStateAction<Record<string, string>>>,
+  setSubmitting: Dispatch<SetStateAction<boolean>>,
+  login: (email: string, password: string) => Promise<void>,
+  router: ReturnType<typeof useRouter>,
+  t: I18nMessages["auth"],
+) {
+  e.preventDefault();
+  setFieldErrors({});
+
+  const result = schema.safeParse({ email, password });
+  if (!result.success) {
+    const flat = result.error.flatten().fieldErrors;
+    const errors: Record<string, string> = {};
+    for (const [field, msgs] of Object.entries(flat)) {
+      if (msgs && msgs.length > 0) errors[field] = msgs[0];
+    }
+    setFieldErrors(errors);
+    return;
+  }
+
+  setSubmitting(true);
+  try {
+    await login(email, password);
+    const match = document.cookie.match(
+      new RegExp(`${LANG_COOKIE}=([^;]+)`),
+    );
+    const lang =
+      match && (LANGS as readonly string[]).includes(match[1])
+        ? match[1]
+        : DEFAULT_LANG;
+    router.push(`/v1/${lang}/feed`);
+  } catch (err) {
+    const field = (err as { field?: string }).field;
+    const msg = (err as { msg?: string }).msg;
+    if (field) {
+      setFieldErrors({ [field]: msg ?? t.errors.loginFailed });
+    } else {
+      setFieldErrors({ form: t.errors.loginFailed });
+    }
+  } finally {
+    setSubmitting(false);
+  }
+}
 
 export function LoginForm() {
   const t = useMessages("auth");
@@ -40,50 +90,11 @@ export function LoginForm() {
     );
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFieldErrors({});
-
-    const result = schema.safeParse({ email, password });
-    if (!result.success) {
-      const flat = result.error.flatten().fieldErrors;
-      const errors: Record<string, string> = {};
-      for (const [field, msgs] of Object.entries(flat)) {
-        if (msgs && msgs.length > 0) errors[field] = msgs[0];
-      }
-      setFieldErrors(errors);
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      await login(email, password);
-      const match = document.cookie.match(
-        new RegExp(`${LANG_COOKIE}=([^;]+)`),
-      );
-      const lang =
-        match && (LANGS as readonly string[]).includes(match[1])
-          ? match[1]
-          : DEFAULT_LANG;
-      router.push(`/v1/${lang}/feed`);
-    } catch (err) {
-      const field = (err as { field?: string }).field;
-      const msg = (err as { msg?: string }).msg;
-      if (field) {
-        setFieldErrors({ [field]: msg ?? t.errors.loginFailed });
-      } else {
-        setFieldErrors({ form: t.errors.loginFailed });
-      }
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   return (
     <div className="flex flex-col gap-4 text-center">
       <h2 className="text-brand text-sm font-semibold">{t.form.login.title}</h2>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+      <form onSubmit={(e) => handleLoginSubmit(e, schema, email, password, setFieldErrors, setSubmitting, login, router, t)} className="flex flex-col gap-3">
         <div className="flex flex-col gap-1 text-left">
           <Label htmlFor="login-email-input" required>
             {t.form.login.emailLabel}

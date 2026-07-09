@@ -1,6 +1,5 @@
 import { cn } from "@/lib/cn";
-
-type CardHeaderProps = React.ComponentPropsWithoutRef<"div">;
+import type { CardHeaderProps } from "@/types/ui/Card-types";
 
 export function CardHeader({ className, ...props }: CardHeaderProps) {
   return (

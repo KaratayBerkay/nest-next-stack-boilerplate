@@ -1,28 +1,56 @@
 "use client";
 
 import { apiFetch } from "@/lib/api-client";
-import { useRef, useState } from "react";
+import { useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { useToast } from "@/components/ui/Toast";
 import { ReactionInline } from "./ReactionButtons";
 import { toISOString, formatDate } from "@/lib/date-time";
 import { IconPencil, IconTrash } from "@tabler/icons-react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { COMMENTS_URL, COMMENTS_PREFIX } from "@/constants/api/urls";
+import { PUT, DELETE, POST } from "@/constants/api/methods";
+import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
+import type { CommentSectionProps, Comment } from "@/types/feed/CommentSection-types";
 
-interface Comment {
-  id: string;
-  body: string;
-  createdAt: string;
-  author: { id: string; name: string; email: string };
-  parentId?: string | null;
-  reactions?: Array<{ id: string; type: string; userId: string }>;
-  _count?: { replies: number };
-}
-
-interface CommentSectionProps {
-  postId: string;
-  comments: Comment[];
-  currentUserId?: string | null;
-  onCommentAdded?: () => void;
+async function handleEditComment(
+  commentId: string,
+  editingBody: string,
+  setEditingId: Dispatch<SetStateAction<string | null>>,
+  setEditingBody: Dispatch<SetStateAction<string>>,
+  setLocalEdits: Dispatch<SetStateAction<Record<string, string>>>,
+  onCommentAdded: (() => void) | undefined,
+) {
+  if (!editingBody.trim()) return;
+  setLocalEdits((prev) => ({ ...prev, [commentId]: editingBody.trim() }));
+  try {
+    const res = await apiFetch(COMMENTS_PREFIX + commentId, {
+      method: PUT,
+      headers: JSON_CONTENT_TYPE_HEADER,
+      body: JSON.stringify({ body: editingBody.trim() }),
+    });
+    if (!res.ok) {
+      setLocalEdits((prev) => {
+        const next = { ...prev };
+        delete next[commentId];
+        return next;
+      });
+      return;
+    }
+    setEditingId(null);
+    setEditingBody("");
+    setLocalEdits((prev) => {
+      const next = { ...prev };
+      delete next[commentId];
+      return next;
+    });
+    onCommentAdded?.();
+  } catch {
+    setLocalEdits((prev) => {
+      const next = { ...prev };
+      delete next[commentId];
+      return next;
+    });
+  }
 }
 
 export function CommentSection({
@@ -53,124 +81,107 @@ export function CommentSection({
   const replies = (parentId: string) =>
     allComments.filter((c) => c.parentId === parentId);
 
-  const handleEdit = async (commentId: string) => {
-    if (!editingBody.trim()) return;
-    const oldBody = comments.find((c) => c.id === commentId)?.body;
-    setLocalEdits((prev) => ({ ...prev, [commentId]: editingBody.trim() }));
-    try {
-      const res = await apiFetch(`/api/comments/${commentId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body: editingBody.trim() }),
-      });
-      if (!res.ok) {
-        setLocalEdits((prev) => {
-          const next = { ...prev };
-          delete next[commentId];
-          return next;
-        });
-        return;
-      }
-      setEditingId(null);
-      setEditingBody("");
-      setLocalEdits((prev) => {
-        const next = { ...prev };
-        delete next[commentId];
+async function handleDeleteComment(
+  commentId: string,
+  setLocalDeletes: Dispatch<SetStateAction<Set<string>>>,
+  onCommentAdded: (() => void) | undefined,
+) {
+  setLocalDeletes((prev) => new Set(prev).add(commentId));
+  try {
+    const res = await apiFetch(COMMENTS_PREFIX + commentId, {
+      method: DELETE,
+    });
+    if (!res.ok) {
+      setLocalDeletes((prev) => {
+        const next = new Set(prev);
+        next.delete(commentId);
         return next;
       });
-      onCommentAdded?.();
-    } catch {
-      setLocalEdits((prev) => {
-        const next = { ...prev };
-        delete next[commentId];
-        return next;
-      });
+      return;
     }
-  };
+    setLocalDeletes((prev) => {
+      const next = new Set(prev);
+      next.delete(commentId);
+      return next;
+    });
+    onCommentAdded?.();
+  } catch {
+    setLocalDeletes((prev) => {
+      const next = new Set(prev);
+      next.delete(commentId);
+      return next;
+    });
+  }
+}
 
-  const handleDelete = async (commentId: string) => {
-    setLocalDeletes((prev) => new Set(prev).add(commentId));
-    try {
-      const res = await apiFetch(`/api/comments/${commentId}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) {
-        setLocalDeletes((prev) => {
-          const next = new Set(prev);
-          next.delete(commentId);
-          return next;
-        });
-        return;
-      }
-      setLocalDeletes((prev) => {
-        const next = new Set(prev);
-        next.delete(commentId);
-        return next;
-      });
-      onCommentAdded?.();
-    } catch {
-      setLocalDeletes((prev) => {
-        const next = new Set(prev);
-        next.delete(commentId);
-        return next;
-      });
-    }
+async function handleSubmitComment(
+  e: React.SyntheticEvent,
+  body: string,
+  setBody: Dispatch<SetStateAction<string>>,
+  submitting: boolean,
+  setSubmitting: Dispatch<SetStateAction<boolean>>,
+  tempIdCounter: React.MutableRefObject<number>,
+  setPendingComments: Dispatch<SetStateAction<Comment[]>>,
+  replyTo: string | null,
+  setReplyTo: Dispatch<SetStateAction<string | null>>,
+  postId: string,
+  currentUserId: string | null | undefined,
+  onCommentAdded: (() => void) | undefined,
+  toast: ReturnType<typeof useToast>["toast"],
+) {
+  e.preventDefault();
+  if (!body.trim() || submitting) return;
+  const trimmedBody = body.trim();
+  setSubmitting(true);
+  tempIdCounter.current++;
+
+  const temp: Comment = {
+    id: `opt-${tempIdCounter.current}`,
+    body: trimmedBody,
+    createdAt: toISOString(),
+    author: { id: currentUserId ?? "", name: "You", email: "" },
+    parentId: replyTo,
   };
+  setPendingComments((prev) => [...prev, temp]);
+  setBody("");
+  const prevReplyTo = replyTo;
+  setReplyTo(null);
+  try {
+    const res = await apiFetch(COMMENTS_URL, {
+      method: POST,
+      headers: JSON_CONTENT_TYPE_HEADER,
+      body: JSON.stringify({
+        postId,
+        body: trimmedBody,
+        ...(replyTo ? { parentId: replyTo } : {}),
+      }),
+    });
+    if (!res.ok) {
+      setPendingComments((prev) => prev.filter((c) => c.id !== temp.id));
+      const data = await res.json().catch(() => ({}));
+      toast({ title: data.error ?? `Failed (${res.status})`, variant: "destructive" });
+      setBody(trimmedBody);
+      setReplyTo(prevReplyTo);
+      return;
+    }
+    setPendingComments((prev) => prev.filter((c) => c.id !== temp.id));
+    onCommentAdded?.();
+  } catch {
+    setPendingComments((prev) => prev.filter((c) => c.id !== temp.id));
+    toast({ title: "Network error", variant: "destructive" });
+    setBody(trimmedBody);
+    setReplyTo(prevReplyTo);
+  } finally {
+    setSubmitting(false);
+  }
+}
 
   const isOwn = (comment: { author: { id: string } }) =>
     currentUserId && comment.author.id === currentUserId;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!body.trim() || submitting) return;
-    const trimmedBody = body.trim();
-    setSubmitting(true);
-    tempIdCounter.current++;
-
-    const temp: Comment = {
-      id: `opt-${tempIdCounter.current}`,
-      body: trimmedBody,
-      createdAt: toISOString(),
-      author: { id: currentUserId ?? "", name: "You", email: "" },
-      parentId: replyTo,
-    };
-    setPendingComments((prev) => [...prev, temp]);
-    setBody("");
-    const prevReplyTo = replyTo;
-    setReplyTo(null);
-    try {
-      const res = await apiFetch("/api/comments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          postId,
-          body: trimmedBody,
-          ...(replyTo ? { parentId: replyTo } : {}),
-        }),
-      });
-      if (!res.ok) {
-        setPendingComments((prev) => prev.filter((c) => c.id !== temp.id));
-        const data = await res.json().catch(() => ({}));
-        toast({ title: data.error ?? `Failed (${res.status})`, variant: "destructive" });
-        setBody(trimmedBody);
-        setReplyTo(prevReplyTo);
-        return;
-      }
-      setPendingComments((prev) => prev.filter((c) => c.id !== temp.id));
-      onCommentAdded?.();
-    } catch {
-      setPendingComments((prev) => prev.filter((c) => c.id !== temp.id));
-      toast({ title: "Network error", variant: "destructive" });
-      setBody(trimmedBody);
-      setReplyTo(prevReplyTo);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   return (
     <div className="flex flex-col gap-2">
-      <form onSubmit={handleSubmit} className="flex gap-2">
+      <form onSubmit={(e) => handleSubmitComment(e, body, setBody, submitting, setSubmitting, tempIdCounter, setPendingComments, replyTo, setReplyTo, postId, currentUserId, onCommentAdded, toast)} className="flex gap-2">
         <input
           type="text"
           value={body}
@@ -241,7 +252,7 @@ export function CommentSection({
                       <ConfirmDialog
                         title="Delete comment"
                         description="Are you sure you want to delete this comment?"
-                        onConfirm={() => handleDelete(comment.id)}
+                        onConfirm={() => handleDeleteComment(comment.id, setLocalDeletes, onCommentAdded)}
                       >
                         {(open) => (
                           <button
@@ -264,13 +275,13 @@ export function CommentSection({
                     onChange={(e) => setEditingBody(e.target.value)}
                     className="border-border bg-bg text-fg flex-1 rounded-lg border px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30"
                     autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleEdit(comment.id);
+                      onKeyDown={(e) => {
+                      if (e.key === "Enter") handleEditComment(comment.id, editingBody, setEditingId, setEditingBody, setLocalEdits, onCommentAdded);
                       if (e.key === "Escape") setEditingId(null);
                     }}
                   />
                   <button
-                    onClick={() => handleEdit(comment.id)}
+                    onClick={() => handleEditComment(comment.id, editingBody, setEditingId, setEditingBody, setLocalEdits, onCommentAdded)}
                     className="bg-brand rounded-lg px-3 py-1.5 text-xs font-medium text-white"
                   >
                     Save
@@ -322,7 +333,7 @@ export function CommentSection({
                           <ConfirmDialog
                             title="Delete reply"
                             description="Are you sure you want to delete this reply?"
-                            onConfirm={() => handleDelete(reply.id)}
+                            onConfirm={() => handleDeleteComment(reply.id, setLocalDeletes, onCommentAdded)}
                           >
                             {(open) => (
                               <button
@@ -346,12 +357,12 @@ export function CommentSection({
                         className="border-border bg-bg text-fg flex-1 rounded-lg border px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30"
                         autoFocus
                         onKeyDown={(e) => {
-                          if (e.key === "Enter") handleEdit(reply.id);
+                          if (e.key === "Enter") handleEditComment(reply.id, editingBody, setEditingId, setEditingBody, setLocalEdits, onCommentAdded);
                           if (e.key === "Escape") setEditingId(null);
                         }}
                       />
                       <button
-                        onClick={() => handleEdit(reply.id)}
+                        onClick={() => handleEditComment(reply.id, editingBody, setEditingId, setEditingBody, setLocalEdits, onCommentAdded)}
                         className="bg-brand rounded-lg px-3 py-1.5 text-xs font-medium text-white"
                       >
                         Save

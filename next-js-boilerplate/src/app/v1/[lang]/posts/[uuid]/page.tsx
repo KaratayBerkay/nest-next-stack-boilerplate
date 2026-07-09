@@ -1,13 +1,15 @@
-"use client";
-
-import { useAuth } from "@/hooks/useAuth";
-import { LoadingAuth } from "@/components/LoadingAuth";
-import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
+import type { Metadata } from "next";
 import { getTierView } from "@/lib/tier-view";
-import { FreePageView } from "./views/FreePageView";
-import { BasicPageView } from "./views/BasicPageView";
-import { MediumPageView } from "./views/MediumPageView";
-import { PremiumPageView } from "./views/PremiumPageView";
+import { getSessionUser } from "@/lib/auth-ssr";
+import { FreePageView } from "@/views/posts/[uuid]/FreePageView";
+import { BasicPageView } from "@/views/posts/[uuid]/BasicPageView";
+import { MediumPageView } from "@/views/posts/[uuid]/MediumPageView";
+import { PremiumPageView } from "@/views/posts/[uuid]/PremiumPageView";
+
+export const metadata: Metadata = {
+  title: "Post",
+  description: "View post",
+};
 
 const VIEWS = {
   FREE: FreePageView,
@@ -16,11 +18,8 @@ const VIEWS = {
   PREMIUM: PremiumPageView,
 };
 
-export default function PostDetailPage() {
-  const { user, loading } = useAuth();
+export default async function PostPage() {
+  const user = await getSessionUser();
 
-  if (loading) return <LoadingAuth />;
-  if (!user) return <UnauthenticatedMessage message="Sign in to view this post" />;
-
-  return getTierView(user.tier, VIEWS);
+  return getTierView(user!.tier, VIEWS);
 }

@@ -1,11 +1,9 @@
 "use client";
 
-interface SocialLoginButtonProps {
-  provider: string;
-  label: string;
-}
+import type { ProviderIconProps } from "@/types/auth/ProviderIcon-types";
+import type { SocialLoginButtonProps } from "@/types/auth/SocialLoginButton-types";
 
-function ProviderIcon({ provider }: { provider: string }) {
+function ProviderIcon({ provider }: ProviderIconProps) {
   const size = 18;
   switch (provider) {
     case "google":

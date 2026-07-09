@@ -1,10 +1,11 @@
-import { Suspense } from "react";
-import { CommandDemo } from "./CommandDemo";
+import type { Metadata } from "next";
+import PageContent from "@/views/ui/command/PageContent";
 
-export default function Page() {
-  return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading...</p>}>
-      <CommandDemo />
-    </Suspense>
-  );
+export const metadata: Metadata = {
+  title: "Command",
+  description: "Command component demo",
+};
+
+export default function CommandPage() {
+  return <PageContent />;
 }

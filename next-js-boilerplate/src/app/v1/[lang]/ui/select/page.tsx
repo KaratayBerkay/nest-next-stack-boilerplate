@@ -1,10 +1,11 @@
-import { Suspense } from "react";
-import { SelectDemo } from "./SelectDemo";
+import type { Metadata } from "next";
+import PageContent from "@/views/ui/select/PageContent";
 
-export default function Page() {
-  return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading...</p>}>
-      <SelectDemo />
-    </Suspense>
-  );
+export const metadata: Metadata = {
+  title: "Select",
+  description: "Select component demo",
+};
+
+export default function SelectPage() {
+  return <PageContent />;
 }

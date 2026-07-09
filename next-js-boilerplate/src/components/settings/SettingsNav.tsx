@@ -27,10 +27,7 @@ export function SettingsNav() {
   const base = `/v1/${params?.lang ?? ""}/settings`;
 
   return (
-    <nav className="flex w-48 shrink-0 flex-col gap-0.5" aria-label="Settings">
-      <p className="text-muted px-3 pb-2 text-xs font-semibold tracking-wider uppercase">
-        {t.settingsSectionLabel}
-      </p>
+    <nav className="grid grid-cols-3 gap-2 md:block md:w-48 md:shrink-0 md:gap-0.5" aria-label="Settings">
       {TABS.map(({ href, labelKey, Icon }) => {
         const full = `${base}/${href}`;
         const active = pathname === full;
@@ -38,7 +35,7 @@ export function SettingsNav() {
           <Link
             key={href}
             href={full}
-            className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
+            className={`flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3 py-2.5 text-sm transition-colors md:justify-start ${
               active ? "bg-brand/10 text-brand font-medium" : "text-muted hover:bg-surface-hover"
             }`}
           >

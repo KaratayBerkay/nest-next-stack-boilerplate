@@ -1,14 +1,11 @@
-"use client";
+import type { Metadata } from "next";
+import PageContent from "@/views/ui/input/PageContent";
 
-import dynamic from "next/dynamic";
-import { Suspense } from "react";
+export const metadata: Metadata = {
+  title: "Input",
+  description: "Input component demo",
+};
 
-const InputDemo = dynamic(() => import("./InputDemo"), { ssr: false });
-
-export default function Page() {
-  return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading...</p>}>
-      <InputDemo />
-    </Suspense>
-  );
+export default function InputPage() {
+  return <PageContent />;
 }

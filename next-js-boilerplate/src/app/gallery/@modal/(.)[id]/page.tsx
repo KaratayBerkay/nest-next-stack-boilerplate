@@ -1,10 +1,11 @@
 import { Suspense } from "react";
+import type { ModalContentProps, PhotoModalProps } from "@/types/gallery/ModalContent-types";
 
 // Intercepting route: `(.)` matches a segment at the same level as `@modal`'s
 // parent (`gallery`), so this intercepts `gallery/[id]` — but only on a soft
 // navigation. It renders the photo as a modal in the `@modal` slot, overlaying
 // the gallery list that remains in the `children` slot.
-async function ModalContent({ params }: { params: Promise<{ id: string }> }) {
+async function ModalContent({ params }: ModalContentProps) {
   const { id } = await params;
   return (
     <>
@@ -19,9 +20,7 @@ async function ModalContent({ params }: { params: Promise<{ id: string }> }) {
 
 export default function PhotoModal({
   params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+}: PhotoModalProps) {
   return (
     <div
       data-testid="photo-modal"

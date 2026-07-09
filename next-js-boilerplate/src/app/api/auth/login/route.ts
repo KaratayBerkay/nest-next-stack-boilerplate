@@ -3,6 +3,7 @@ import {
   accessTokenCookieOptions,
   deviceTokenCookieOptions,
   rbacTokenCookieOptions,
+  sessionUserCookieOptions,
   userTokenCookieOptions,
 } from "@/lib/cookie";
 import { graphqlFetch, graphqlErrorBody, graphqlErrorStatus } from "@/lib/backend";
@@ -91,6 +92,11 @@ export const POST = withLogging(async (request, log) => {
   if (rbacToken) response.cookies.set(rbacTokenCookieOptions(rbacToken));
   if (deviceToken) response.cookies.set(deviceTokenCookieOptions(deviceToken));
   if (userToken) response.cookies.set(userTokenCookieOptions(userToken));
+  response.cookies.set(
+    sessionUserCookieOptions(
+      Buffer.from(JSON.stringify(user)).toString("base64url"),
+    ),
+  );
 
   log.info({ userId: (user as { id?: string })?.id }, "login succeeded");
   return response;

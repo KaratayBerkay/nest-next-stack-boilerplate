@@ -1,19 +1,15 @@
 "use client";
 
-import { Component, type ReactNode } from "react";
-
-interface Props {
-  children: ReactNode;
-  fallback?: ReactNode;
-}
+import { Component } from "react";
+import type { ErrorBoundaryProps } from "@/types/ui/ErrorBoundary-types";
 
 interface State {
   hasError: boolean;
   error: Error | null;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
+export class ErrorBoundary extends Component<ErrorBoundaryProps, State> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
   }

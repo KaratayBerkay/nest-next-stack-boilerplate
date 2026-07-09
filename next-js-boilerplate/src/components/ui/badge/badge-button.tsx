@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/cn";
+import type { BadgeButtonProps } from "@/types/ui/BadgeButton-types";
 
 const variants = {
   default: "bg-fg text-bg",
@@ -10,12 +11,6 @@ const variants = {
   success:
     "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
 } as const;
-
-type Variant = keyof typeof variants;
-
-interface BadgeButtonProps extends React.ComponentPropsWithoutRef<"button"> {
-  variant?: Variant;
-}
 
 export function BadgeButton({
   variant = "default",

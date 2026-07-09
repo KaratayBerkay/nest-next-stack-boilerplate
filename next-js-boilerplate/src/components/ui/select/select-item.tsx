@@ -3,10 +3,7 @@
 import { cn } from "@/lib/cn";
 import { useEffect, useRef } from "react";
 import { useSelect } from "./select";
-
-interface SelectItemProps extends React.ComponentPropsWithoutRef<"button"> {
-  value: string;
-}
+import type { SelectItemProps } from "@/types/ui/SelectItem-types";
 
 export function SelectItem({
   className,

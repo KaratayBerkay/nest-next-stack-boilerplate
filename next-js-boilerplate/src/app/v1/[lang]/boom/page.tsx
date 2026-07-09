@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import { Boom } from "./Boom";
+
+export const metadata: Metadata = {
+  title: "Error Handling",
+  description: "Error handling demo",
+};
 
 export default function V1BoomPage() {
   return (

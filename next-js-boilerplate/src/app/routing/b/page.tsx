@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import { Counter } from "@/components/ui/Counter";
+
+export const metadata: Metadata = {
+  title: "Route B",
+  description: "Demo route B",
+};
 
 export default function RoutingPageB() {
   return (

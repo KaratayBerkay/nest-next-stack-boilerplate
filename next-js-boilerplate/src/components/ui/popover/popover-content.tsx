@@ -5,11 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useBreakpoint } from "@/hooks";
 import { usePopover } from "./popover";
-
-interface PopoverContentProps extends React.ComponentPropsWithoutRef<"div"> {
-  align?: "start" | "end";
-  sideOffset?: number;
-}
+import type { PopoverContentProps } from "@/types/ui/PopoverContent-types";
 
 export function PopoverContent({
   className,

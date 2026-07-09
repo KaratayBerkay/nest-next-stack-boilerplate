@@ -2,11 +2,7 @@
 
 import { useRef, useEffect, useState } from "react";
 import { cn } from "@/lib/cn";
-
-interface AutoResizeTextareaProps extends React.ComponentPropsWithoutRef<"textarea"> {
-  error?: string;
-  maxHeight?: number;
-}
+import type { AutoResizeTextareaProps } from "@/types/ui/AutoResizeTextarea-types";
 
 export function AutoResizeTextarea({
   className,

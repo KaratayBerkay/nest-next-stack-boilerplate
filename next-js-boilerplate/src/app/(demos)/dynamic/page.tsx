@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Timestamp } from "./Timestamp";
+
+export const metadata: Metadata = {
+  title: "Dynamic",
+  description: "Dynamic rendering demo",
+};
 
 export default function DynamicPage() {
   return (

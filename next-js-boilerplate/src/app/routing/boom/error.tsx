@@ -1,15 +1,14 @@
 "use client";
 
+import type { BoomErrorProps } from "@/types/routing/BoomError-types";
+
 // Segment error boundary. Must be a Client Component. It catches errors thrown
 // while rendering this segment's page and renders a fallback; `reset()` retries
 // rendering the segment from scratch.
 export default function BoomError({
   error,
   reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
+}: BoomErrorProps) {
   return (
     <div
       data-testid="error-boundary"

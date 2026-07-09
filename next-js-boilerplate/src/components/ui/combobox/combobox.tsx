@@ -2,8 +2,7 @@
 import { useState } from "react";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/Command";
 import { cn } from "@/lib/cn";
-
-interface ComboboxProps { options: { value: string; label: string }[]; value?: string; onValueChange?: (value: string) => void; placeholder?: string; className?: string; }
+import type { ComboboxProps } from "@/types/ui/Combobox-types";
 
 export function Combobox({ options, value, onValueChange, placeholder = "Search...", className }: ComboboxProps) {
   const [open, setOpen] = useState(false);

@@ -1,14 +1,59 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { LOGIN_PATH } from "@/constants/routes";
 import Link from "next/link";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import type { I18nMessages } from "@/generated/i18n-messages";
 import { registerFormSchema } from "@/lib/validation/auth";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
+
+async function handleRegisterSubmit(
+  e: React.SyntheticEvent,
+  schema: ReturnType<typeof registerFormSchema>,
+  email: string,
+  password: string,
+  name: string,
+  setFieldErrors: Dispatch<SetStateAction<Record<string, string>>>,
+  setSubmitting: Dispatch<SetStateAction<boolean>>,
+  register: (email: string, password: string, name?: string) => Promise<void>,
+  t: I18nMessages["auth"],
+) {
+  e.preventDefault();
+  setFieldErrors({});
+
+  const result = schema.safeParse({ email, password, name: name || undefined });
+  if (!result.success) {
+    const flat = result.error.flatten().fieldErrors;
+    const errors: Record<string, string> = {};
+    for (const [field, msgs] of Object.entries(flat)) {
+      if (msgs && msgs.length > 0) errors[field] = msgs[0];
+    }
+    setFieldErrors(errors);
+    return;
+  }
+
+  setSubmitting(true);
+  try {
+    await register(email, password, name || undefined);
+  } catch (err) {
+    const exc = (err as { exc?: string; field?: string; msg?: string }).exc;
+    const field = (err as { field?: string }).field;
+    const msg = (err as { msg?: string }).msg;
+    if (exc === "EX_AUTH_EMAIL_TAKEN" || field === "email") {
+      setFieldErrors({ email: msg ?? t.errors.emailTaken });
+    } else if (field) {
+      setFieldErrors({ [field]: msg ?? t.errors.registerFailed });
+    } else {
+      setFieldErrors({ form: t.errors.registerFailed });
+    }
+  } finally {
+    setSubmitting(false);
+  }
+}
 
 export function RegisterForm() {
   const t = useMessages("auth");
@@ -38,45 +83,11 @@ export function RegisterForm() {
     );
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFieldErrors({});
-
-    const result = schema.safeParse({ email, password, name: name || undefined });
-    if (!result.success) {
-      const flat = result.error.flatten().fieldErrors;
-      const errors: Record<string, string> = {};
-      for (const [field, msgs] of Object.entries(flat)) {
-        if (msgs && msgs.length > 0) errors[field] = msgs[0];
-      }
-      setFieldErrors(errors);
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      await register(email, password, name || undefined);
-    } catch (err) {
-      const exc = (err as { exc?: string; field?: string; msg?: string }).exc;
-      const field = (err as { field?: string }).field;
-      const msg = (err as { msg?: string }).msg;
-      if (exc === "EX_AUTH_EMAIL_TAKEN" || field === "email") {
-        setFieldErrors({ email: msg ?? t.errors.emailTaken });
-      } else if (field) {
-        setFieldErrors({ [field]: msg ?? t.errors.registerFailed });
-      } else {
-        setFieldErrors({ form: t.errors.registerFailed });
-      }
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   return (
     <div className="flex flex-col gap-4 text-center">
       <h2 className="text-brand text-sm font-semibold">{t.form.register.title}</h2>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+      <form onSubmit={(e) => handleRegisterSubmit(e, schema, email, password, name, setFieldErrors, setSubmitting, register, t)} className="flex flex-col gap-3">
         <div className="flex flex-col gap-1 text-left">
           <Label htmlFor="reg-name-input">
             {t.form.register.nameLabel}

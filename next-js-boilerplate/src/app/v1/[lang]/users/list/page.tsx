@@ -1,11 +1,18 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
-import { FreePageView } from "./views/FreePageView";
+import { getMessages } from "@/lib/i18n/get-messages";
+import { FreePageView } from "@/views/users/list/FreePageView";
+import type { UsersListPageProps, UsersListContentProps } from "@/types/users/UsersListPage-types";
+import type { Lang } from "@/constants/i18n";
+
+export const metadata: Metadata = {
+  title: "Users",
+  description: "Browse users",
+};
 
 export default function UsersListPage({
   params,
-}: {
-  params: Promise<{ lang: string }>;
-}) {
+}: UsersListPageProps) {
   return (
     <Suspense
       fallback={
@@ -19,10 +26,8 @@ export default function UsersListPage({
 
 async function UsersListContent({
   params,
-}: {
-  params: Promise<{ lang: string }>;
-}) {
+}: UsersListContentProps) {
   const { lang } = await params;
-
-  return <FreePageView lang={lang} />;
+  const t = getMessages(lang as Lang, "users");
+  return <FreePageView t={t} lang={lang} />;
 }

@@ -6,8 +6,8 @@ import {
   useContext,
   useRef,
   useState,
-  type ReactNode,
 } from "react";
+import type { PopoverProps } from "@/types/ui/Popover-types";
 
 interface PopoverContextValue {
   open: boolean;
@@ -24,11 +24,6 @@ export function usePopover() {
     throw new Error("Popover components must be used within a Popover");
   }
   return context;
-}
-
-interface PopoverProps {
-  children: ReactNode;
-  defaultOpen?: boolean;
 }
 
 export function Popover({ children, defaultOpen = false }: PopoverProps) {

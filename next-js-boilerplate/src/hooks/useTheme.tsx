@@ -15,6 +15,7 @@ import {
   THEME_COOKIE_NAME,
   type ThemeName,
 } from "@/constants/theme";
+import type { ThemeProviderProps } from "@/types/hooks/ThemeProvider-types";
 export { THEMES };
 export type { ThemeName };
 
@@ -69,7 +70,7 @@ function applyTheme(theme: ThemeName) {
   root.classList.toggle("dark", DARK_THEMES.includes(theme));
 }
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
+export function ThemeProvider({ children }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<ThemeName>("light");
 
   // Intentional hydration guard: set theme once on mount from localStorage/cookie.

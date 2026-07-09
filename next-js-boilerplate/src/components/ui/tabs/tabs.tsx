@@ -7,6 +7,7 @@ import {
   useContext,
   useState,
 } from "react";
+import type { TabsProps } from "@/types/ui/Tabs-types";
 
 interface TabsContextValue {
   activeValue: string;
@@ -19,10 +20,6 @@ export function useTabsContext() {
   const ctx = useContext(TabsContext);
   if (!ctx) throw new Error("Tabs components must be used within <Tabs>");
   return ctx;
-}
-
-interface TabsProps extends React.ComponentPropsWithoutRef<"div"> {
-  defaultValue: string;
 }
 
 export function Tabs({ defaultValue, className, ...props }: TabsProps) {

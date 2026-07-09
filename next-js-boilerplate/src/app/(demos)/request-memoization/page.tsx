@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { fetchUncached, fetchCached } from "@/lib/dedup";
+
+export const metadata: Metadata = {
+  title: "Request Memoization",
+  description: "Request memoization demo",
+};
 
 async function UncachedResults() {
   const [a, b] = await Promise.all([

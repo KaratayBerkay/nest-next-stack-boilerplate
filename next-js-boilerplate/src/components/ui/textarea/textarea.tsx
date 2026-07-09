@@ -1,8 +1,5 @@
 import { cn } from "@/lib/cn";
-
-interface TextareaProps extends React.ComponentPropsWithoutRef<"textarea"> {
-  error?: string;
-}
+import type { TextareaProps } from "@/types/ui/Textarea-types";
 
 export function Textarea({ className, error, ...props }: TextareaProps) {
   return (

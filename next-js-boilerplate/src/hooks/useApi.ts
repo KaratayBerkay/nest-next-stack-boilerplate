@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/api-client";
 import { useQuery } from "@tanstack/react-query";
+import { ECHO_URL } from "@/constants/api/urls";
 
 interface EchoResponse {
   method: string;
@@ -7,7 +8,7 @@ interface EchoResponse {
 }
 
 async function fetchEcho(name: string): Promise<EchoResponse> {
-  const res = await apiFetch(`/api/echo?name=${encodeURIComponent(name)}`);
+  const res = await apiFetch(`${ECHO_URL}?name=${encodeURIComponent(name)}`);
   if (!res.ok) throw new Error(`fetch failed: ${res.status}`);
   return res.json() as Promise<EchoResponse>;
 }

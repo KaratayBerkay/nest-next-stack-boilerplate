@@ -1,11 +1,14 @@
-import { cacheLife, cacheTag, revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { CACHE_TAG } from "@/constants/demo";
 
+export const metadata: Metadata = {
+  title: "Caching",
+  description: "Caching strategies demo",
+};
+
 async function getCachedTimestamp() {
-  "use cache";
-  cacheLife({ stale: 60, revalidate: 120 });
-  cacheTag(CACHE_TAG);
   return Date.now();
 }
 

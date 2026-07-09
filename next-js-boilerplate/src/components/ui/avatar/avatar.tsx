@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/cn";
+import type { AvatarProps } from "@/types/ui/Avatar-types";
 
 const sizes = {
   sm: "size-8 text-xs",
@@ -10,15 +11,6 @@ const sizes = {
   lg: "size-12 text-base",
   xl: "size-16 text-lg",
 } as const;
-
-type Size = keyof typeof sizes;
-
-interface AvatarProps extends React.ComponentPropsWithoutRef<"div"> {
-  src?: string;
-  alt?: string;
-  fallback: string;
-  size?: Size;
-}
 
 export function Avatar({
   src,

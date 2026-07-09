@@ -12,11 +12,7 @@ import {
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
 import { useDialog } from "./dialog";
-
-interface DialogContentProps {
-  children: ReactNode;
-  className?: string;
-}
+import type { DialogContentProps } from "@/types/ui/DialogContent-types";
 
 export function DialogContent({ children, className }: DialogContentProps) {
   const { open, onOpenChange } = useDialog();
