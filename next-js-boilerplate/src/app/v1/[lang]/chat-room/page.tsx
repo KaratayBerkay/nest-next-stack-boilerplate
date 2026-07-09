@@ -5,6 +5,7 @@ import { FreePageView } from "@/views/chat-room/FreePageView";
 import { BasicPageView } from "@/views/chat-room/BasicPageView";
 import { MediumPageView } from "@/views/chat-room/MediumPageView";
 import { PremiumPageView } from "@/views/chat-room/PremiumPageView";
+import type { ChatRoomPageProps } from "@/types/chat-room/ChatRoomPage-types";
 
 export const metadata: Metadata = {
   title: "Chat Room",
@@ -18,8 +19,9 @@ const VIEWS = {
   PREMIUM: PremiumPageView,
 };
 
-export default async function ChatRoomPage() {
-  const user = await getSessionUser();
+export default async function ChatRoomPage({ searchParams }: ChatRoomPageProps) {
+  const [user, sp] = await Promise.all([getSessionUser(), searchParams]);
+  const room = (sp.room as string) || "general";
 
-  return getTierView(user!.tier, VIEWS);
+  return getTierView(user!.tier, VIEWS, { initialRoom: room });
 }

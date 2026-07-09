@@ -59,6 +59,37 @@ export default function PlansPage() {
 export default function PlansPage() { ... }
 ```
 
+### SSR search params → pass to client components
+
+Never read `window.location.search` or use `useClientSearchParams()` for data that drives business logic (room selection, tab state, filters, pagination). Instead, collect search params on the server and pass them as props.
+
+**Why:** `window.location.search` is only available on the client. A client hook that reads it once on mount is stale — it won't update when `router.replace` changes only the search params (same pathname). This breaks page claims, analytics, and any logic that reacts to URL changes.
+
+```tsx
+// ✅ Good — page.tsx is a server component that reads searchParams and passes them down
+import { ChatRoomContent } from "@/views/chat-room/PageContent";
+
+interface PageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+export default async function ChatRoomPage({ searchParams }: PageProps) {
+  const sp = await searchParams;
+  const room = (sp.room as string) || "general";
+  return <ChatRoomContent initialRoom={room} />;
+}
+```
+
+```tsx
+// ❌ Bad — client component reads window.location.search (stale on router.replace)
+"use client";
+export default function ChatRoomPage() {
+  const sp = useClientSearchParams();
+  const room = sp?.get("room") || "general";
+  // ...
+}
+```
+
 ### Extract nested handlers to module-level functions
 
 Never define event handlers or async logic inside the component body. Instead:

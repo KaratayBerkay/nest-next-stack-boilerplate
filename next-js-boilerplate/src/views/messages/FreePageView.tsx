@@ -22,7 +22,6 @@ import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useParams } from "next/navigation";
-import { useClientSearchParams } from "@/hooks/useClientSearchParams";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { FIND_FRIENDS_PATH } from "@/constants/routes";
@@ -54,6 +53,7 @@ import {
   IconChevronLeft,
   IconPlus,
 } from "@tabler/icons-react";
+import type { MessagesViewProps } from "@/types/messages/MessagesView-types";
 
 type UserInfo = { id: string; name: string; email: string; avatar: string };
 type Message = {
@@ -67,7 +67,7 @@ type Message = {
 };
 
 
-export function FreePageView() {
+export function FreePageView({ initialUser }: MessagesViewProps) {
   const t = useMessages("messages");
   return (
     <Suspense
@@ -105,17 +105,16 @@ export function FreePageView() {
       }
     >
       <ErrorBoundary>
-        <MessagesPageContent />
+        <MessagesPageContent initialUser={initialUser} />
       </ErrorBoundary>
     </Suspense>
   );
 }
 
-function MessagesPageContent() {
+function MessagesPageContent({ initialUser }: MessagesViewProps) {
   const t = useMessages("messages");
   const { user, loading } = useAuth();
   const realtime = useRealtime();
-  const searchParams = useClientSearchParams();
   const params = useParams<{ lang: string }>();
   const [selectedUser, setSelectedUser] = useState<UserInfo | null>(null);
   const { data: friends = [] } = useQuery<UserInfo[]>({
@@ -229,7 +228,7 @@ function MessagesPageContent() {
 
   const lastParamRef = useRef<string | null>(null);
   useEffect(() => {
-    const userId = searchParams?.get("user");
+    const userId = initialUser;
     if (!userId || conversations.length === 0) return;
     if (lastParamRef.current === userId) return;
     lastParamRef.current = userId;
@@ -240,7 +239,7 @@ function MessagesPageContent() {
       });
       markMessagesRead(match.user.id);
     }
-  }, [searchParams, conversations, markMessagesRead]);
+  }, [initialUser, conversations, markMessagesRead]);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 

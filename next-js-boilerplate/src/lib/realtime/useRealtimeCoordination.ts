@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { clientEnv } from "@/lib/env";
 import { apiFetch } from "@/lib/api-client";
@@ -16,20 +16,11 @@ import { resyncAfterConnect } from "./resync";
 
 type FrameHandler = (data: Record<string, unknown>) => void;
 
-function useClientSearchParams(): URLSearchParams | null {
-  const [sp, setSp] = useState<URLSearchParams | null>(null);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSp(new URLSearchParams(window.location.search));
-  }, []);
-  return sp;
-}
-
 export function useRealtimeCoordination() {
   const { token, user } = useAuth();
   const queryClient = useQueryClient();
   const pathname = usePathname();
-  const searchParams = useClientSearchParams();
+  const searchParams = useSearchParams();
   const [status, setStatus] = useState<RealtimeStatus>("idle");
   const subsRef = useRef<Map<string, Set<FrameHandler>>>(new Map());
   const clientRef = useRef<RealtimeClient | null>(null);

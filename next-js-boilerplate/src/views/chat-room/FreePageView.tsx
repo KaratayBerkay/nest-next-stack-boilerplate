@@ -23,14 +23,12 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { SkeletonChatMessage } from "@/components/ui/skeleton-shapes";
 import { useRouter } from "next/navigation";
-import { useClientSearchParams } from "@/hooks/useClientSearchParams";
+import type { ChatRoomViewProps } from "@/types/chat-room/ChatRoomView-types";
 
-function ChatRoomContent() {
+function ChatRoomContent({ initialRoom = "general" }: ChatRoomViewProps) {
   const t = useMessages("chat-room");
   const { user, loading } = useAuth();
   const router = useRouter();
-  const searchParams = useClientSearchParams();
-  const initialRoom = searchParams?.get("room") || "general";
   const [room, setRoom] = useState<string>(initialRoom);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [input, setInput] = useState("");

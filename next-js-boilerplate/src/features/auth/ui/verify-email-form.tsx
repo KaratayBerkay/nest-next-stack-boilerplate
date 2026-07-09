@@ -4,15 +4,13 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { LOGIN_PATH } from "@/constants/routes";
-import { useClientSearchParams } from "@/hooks/useClientSearchParams";
 import { AUTH_VERIFY_EMAIL_URL } from "@/constants/api/urls";
 import { POST } from "@/constants/api/methods";
 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
+import type { VerifyEmailFormProps } from "@/types/auth/VerifyEmailForm-types";
 
-export function VerifyEmailForm() {
+export function VerifyEmailForm({ token }: VerifyEmailFormProps) {
   const t = useMessages("auth");
-  const searchParams = useClientSearchParams();
-  const token = searchParams?.get("token") ?? "";
 
   const [status, setStatus] = useState<"verifying" | "success" | "error">(
     token ? "verifying" : "error",

@@ -7,13 +7,13 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { I18nMessages } from "@/generated/i18n-messages";
 import { resetPasswordFormSchema } from "@/lib/validation/auth";
 import { LOGIN_PATH } from "@/constants/routes";
-import { useClientSearchParams } from "@/hooks/useClientSearchParams";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
 import { AUTH_RESET_PASSWORD_URL } from "@/constants/api/urls";
 import { POST } from "@/constants/api/methods";
 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
+import type { ResetPasswordFormProps } from "@/types/auth/ResetPasswordForm-types";
 
 async function handleResetPasswordSubmit(
   e: React.SyntheticEvent,
@@ -64,11 +64,9 @@ async function handleResetPasswordSubmit(
   }
 }
 
-export function ResetPasswordForm() {
+export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   const t = useMessages("auth");
   const router = useRouter();
-  const searchParams = useClientSearchParams();
-  const token = searchParams?.get("token") ?? "";
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

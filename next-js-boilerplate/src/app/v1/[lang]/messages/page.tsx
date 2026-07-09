@@ -5,6 +5,7 @@ import { FreePageView } from "@/views/messages/FreePageView";
 import { BasicPageView } from "@/views/messages/BasicPageView";
 import { MediumPageView } from "@/views/messages/MediumPageView";
 import { PremiumPageView } from "@/views/messages/PremiumPageView";
+import type { MessagesPageProps } from "@/types/messages/MessagesPage-types";
 
 export const metadata: Metadata = {
   title: "Messages",
@@ -18,8 +19,9 @@ const VIEWS = {
   PREMIUM: PremiumPageView,
 };
 
-export default async function MessagesPage() {
-  const user = await getSessionUser();
+export default async function MessagesPage({ searchParams }: MessagesPageProps) {
+  const [user, sp] = await Promise.all([getSessionUser(), searchParams]);
+  const initialUser = (sp.user as string) || null;
 
-  return getTierView(user!.tier, VIEWS);
+  return getTierView(user!.tier, VIEWS, { initialUser });
 }
