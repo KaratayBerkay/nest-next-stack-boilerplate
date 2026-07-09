@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/cn";
 import { createPortal } from "react-dom";
 import { useToastContext } from "./toast-provider";
@@ -10,7 +11,13 @@ export function ToastViewport({
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
   const { state } = useToastContext();
-  if (typeof document === "undefined") return null;
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true); // eslint-disable-line react-hooks/set-state-in-effect
+  }, []);
+
+  if (!mounted) return null;
 
   return createPortal(
     <div
