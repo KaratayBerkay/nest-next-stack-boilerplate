@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { SearchParamsDisplay } from "./SearchParamsDisplay";
+import { SearchParamsServerFallback, SearchParamsClientFallback } from "@/fallbacks";
 import type { SearchParamsPageProps, ServerParamsProps } from "@/types/demos/SearchParamsPage-types";
 
 export const metadata: Metadata = {
@@ -16,23 +17,11 @@ export default function SearchParamsPage({
     <div className="flex flex-col gap-4">
       <h2 className="text-brand text-sm font-semibold">Search Params</h2>
 
-      <Suspense
-        fallback={
-          <div className="text-muted animate-pulse text-sm">
-            Loading server params...
-          </div>
-        }
-      >
+      <Suspense fallback={<SearchParamsServerFallback />}>
         <ServerParams searchParams={searchParams} />
       </Suspense>
 
-      <Suspense
-        fallback={
-          <div className="text-muted animate-pulse text-sm">
-            Loading client params...
-          </div>
-        }
-      >
+      <Suspense fallback={<SearchParamsClientFallback />}>
         <SearchParamsDisplay />
       </Suspense>
 

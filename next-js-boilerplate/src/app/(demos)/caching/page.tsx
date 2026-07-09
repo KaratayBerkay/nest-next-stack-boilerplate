@@ -2,6 +2,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { CACHE_TAG } from "@/constants/demo";
+import { MonoEllipsisFallback } from "@/fallbacks";
 
 export const metadata: Metadata = {
   title: "Caching",
@@ -62,9 +63,7 @@ export default function CachingPage() {
       </p>
       <p className="text-xs text-zinc-500">
         Cached timestamp:{" "}
-        <Suspense
-          fallback={<span className="font-mono text-zinc-400">...</span>}
-        >
+        <Suspense fallback={<MonoEllipsisFallback />}>
           <CachedTimestamp />
         </Suspense>
       </p>

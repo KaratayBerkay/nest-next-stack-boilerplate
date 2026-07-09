@@ -13,6 +13,8 @@ import { useCurrencyCookie } from "@/hooks/useCurrencyCookie";
 import { plansPath } from "@/constants/routes";
 import { formatDate } from "@/lib/date-time";
 import { BILLING_SUBSCRIPTION_URL, BILLING_HISTORY_URL } from "@/constants/api/urls";
+import { PageInfoButton } from "@/components/ui/page-info";
+import { settingsBillingPageInfo } from "@/constants/page-info";
 
 interface Transaction {
   id: string;
@@ -61,7 +63,7 @@ export function FreePageView() {
   }, [user]);
 
   if (loading) return <LoadingAuth />;
-  if (!user) return <UnauthenticatedMessage message="Sign in to manage billing" />;
+  if (!user) return <UnauthenticatedMessage message={t.signInToManageBilling} />;
 
   const tier = (subscription?.tier as Tier) ?? (user.tier as Tier) ?? "FREE";
   const periodEnd = subscription?.periodEnd;
@@ -69,7 +71,10 @@ export function FreePageView() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h2 className="text-lg font-semibold">{t.billingHeading}</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">{t.billingHeading}</h2>
+        <PageInfoButton content={settingsBillingPageInfo} />
+      </div>
 
       <div className="border-border bg-surface flex items-center justify-between rounded-lg border p-4">
         <div>

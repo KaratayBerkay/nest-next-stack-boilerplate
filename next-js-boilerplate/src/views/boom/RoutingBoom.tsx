@@ -3,12 +3,12 @@
 import { useState } from "react";
 
 // Throws during render once the button is clicked, so the nearest error.tsx
-// boundary (v1/[lang]/error.tsx) catches it. A render-time throw — not an
-// event-handler throw — is what React error boundaries actually catch.
-export function Boom() {
+// boundary catches it. A render-time throw (not an event-handler throw) is what
+// React error boundaries actually catch.
+export function RoutingBoom() {
   const [explode, setExplode] = useState(false);
   if (explode) {
-    throw new Error("Boom! A v1 component error was thrown.");
+    throw new Error("Boom! A component error was thrown.");
   }
   return (
     <button

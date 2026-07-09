@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AuthStatus } from "@/features/auth/ui/AuthStatus";
 import { CookieStatus } from "./CookieStatus";
+import { CookieStatusFallback } from "@/fallbacks";
 
 export const metadata: Metadata = {
   title: "SSR Cookies",
@@ -17,13 +18,7 @@ export default function SsrCookiesPage() {
         cookie on the <strong>server</strong> using{" "}
         <code className="text-brand">cookies()</code>.
       </p>
-      <Suspense
-        fallback={
-          <div className="rounded border p-3 text-sm text-zinc-400">
-            Checking cookie...
-          </div>
-        }
-      >
+      <Suspense fallback={<CookieStatusFallback />}>
         <CookieStatus />
       </Suspense>
       <div className="mt-2">

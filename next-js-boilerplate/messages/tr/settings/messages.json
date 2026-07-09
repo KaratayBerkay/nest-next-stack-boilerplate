@@ -61,5 +61,19 @@
   "apiKeysExpires": "Son kullanma {date}",
   "apiKeysLoadFailed": "API anahtarları yüklenemedi",
   "apiKeysCreateFailed": "API anahtarı oluşturulamadı",
-  "apiKeysRevokeFailed": "API anahtarı iptal edilemedi"
+  "apiKeysRevokeFailed": "API anahtarı iptal edilemedi",
+  "signInToManageSettings": "Ayarları yönetmek için giriş yapın",
+  "signInToManageBilling": "Faturayı yönetmek için giriş yapın",
+  "signInToManageAccount": "Hesabınızı yönetmek için giriş yapın",
+  "signInToManageSessions": "Oturumları yönetmek için giriş yapın",
+  "sessionsHeading": "Oturumlar ve Cihazlar",
+  "logOutAllOtherSessions": "Diğer tüm oturumları kapat",
+  "loadingSessions": "Oturumlar yükleniyor...",
+  "noSessions": "Aktif oturum bulunamadı.",
+  "currentSession": "Mevcut",
+  "unknownDevice": "Bilinmeyen cihaz",
+  "moreDeviceInfo": "Daha Fazla Cihaz Bilgisi",
+  "deviceId": "Cihaz ID:",
+  "userAgent": "User-Agent:",
+  "revoke": "İptal Et"
 }

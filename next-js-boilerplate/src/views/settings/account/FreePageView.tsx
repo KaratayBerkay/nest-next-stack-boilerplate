@@ -16,6 +16,8 @@ import { Button } from "@/components/ui/Button";
 import { PROFILE_URL, UPLOAD_URL, PROFILE_UPDATE_URL, PROFILE_USERNAME_AVAILABLE_PREFIX } from "@/constants/api/urls";
 import { POST } from "@/constants/api/methods";
 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
+import { PageInfoButton } from "@/components/ui/page-info";
+import { settingsAccountPageInfo } from "@/constants/page-info";
 
 export function FreePageView() {
   const { user, loading, refreshUser } = useAuth();
@@ -105,13 +107,16 @@ export function FreePageView() {
   }, [name, username, bio, avatarUrl, toast, t.saveSuccess, t.saveFailed, refreshUser]);
 
   if (loading) return <LoadingAuth />;
-  if (!user) return <UnauthenticatedMessage message="Sign in to manage your account" />;
+  if (!user) return <UnauthenticatedMessage message={t.signInToManageAccount} />;
 
   const canSave = !saving && availability !== "checking" && availability !== "taken";
 
   return (
     <div className="flex flex-col gap-6">
-      <h2 className="text-lg font-semibold">{t.accountHeading}</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">{t.accountHeading}</h2>
+        <PageInfoButton content={settingsAccountPageInfo} />
+      </div>
 
       <div className="flex items-center gap-4">
         <Avatar

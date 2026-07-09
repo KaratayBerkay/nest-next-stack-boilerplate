@@ -59,6 +59,18 @@ export default function PlansPage() {
 export default function PlansPage() { ... }
 ```
 
+**Rule 3 — Co-located client components:** Never place `"use client"` components in `app/` route folders (except Next.js convention files like `error.tsx`, `not-found.tsx`, `global-error.tsx`). Move them to `src/views/<route>/`.
+
+```tsx
+// ❌ Bad — NoncePanel.tsx is a "use client" component co-located in app/security/csp/
+import { NoncePanel } from "./NoncePanel";
+```
+
+```tsx
+// ✅ Good — moved to src/views/security/csp/NoncePanel.tsx
+import { NoncePanel } from "@/views/security/csp/NoncePanel";
+```
+
 ### SSR search params → pass to client components
 
 Never read `window.location.search` or use `useClientSearchParams()` for data that drives business logic (room selection, tab state, filters, pagination). Instead, collect search params on the server and pass them as props.
@@ -115,6 +127,116 @@ export default function MyPage() {
   ...
 }
 ```
+
+### Fallback components to `src/fallbacks/`
+
+Never define inline Suspense fallback JSX in component files. Instead:
+
+1. Create a file at `src/fallbacks/<directory-mirror>/<Name>Fallback.tsx`
+2. Define and export the fallback component (e.g. `ChatRoomFallback`)
+3. Import it in the source file with `import { ChatRoomFallback } from "@/fallbacks"`
+
+**Directory structure mirrors source:**
+- `src/views/chat-room/FreePageView.tsx` → `src/fallbacks/views/chat-room/ChatRoomFallback.tsx`
+- `src/app/v1/[lang]/messages/loading.tsx` → `src/fallbacks/app/v1/[lang]/messages/MessagesLoadingFallback.tsx`
+- `src/app/auth/layout.tsx` → `src/fallbacks/app/auth/AuthFallback.tsx`
+
+```tsx
+// ✅ Good — fallback extracted to src/fallbacks/
+import { ChatRoomFallback } from "@/fallbacks";
+
+export function FreePageView() {
+  return (
+    <Suspense fallback={<ChatRoomFallback />}>
+      <ChatRoomContent />
+    </Suspense>
+  );
+}
+```
+
+```tsx
+// ❌ Bad — inline fallback JSX
+export function FreePageView() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col gap-4 p-4">
+        <div className="h-8 w-8 animate-pulse rounded-full bg-surface-hover" />
+        {/* ... 20+ lines of skeleton JSX */}
+      </div>
+    }>
+      <ChatRoomContent />
+    </Suspense>
+  );
+}
+```
+
+### Static edge-case pages to `src/features/statics/`
+
+Pages that appear only in specific situations (error states, 404, access denied, loading, unauthenticated) must be extracted to `src/features/statics/`. Never hardcode English strings in these pages — use i18n where `MessagesProvider` is available.
+
+**When to create a static page:**
+- Error boundary (`error.tsx`) — shows when a segment throws
+- Not-found (`not-found.tsx`) — shows when a route doesn't exist
+- Access denied — shows when user lacks required role/tier
+- Unauthorized — shows when user is not authenticated
+- Loading state with text — shows during async loading
+
+**Directory structure:**
+```
+src/features/statics/
+├── error/ErrorPage.tsx          # Generic error page (for messages, routing, etc.)
+├── not-found/NotFoundPage.tsx   # Non-i18n 404 page
+├── not-found/I18nNotFoundPage.tsx  # i18n-aware 404 page
+├── access-denied/AccessDeniedPage.tsx  # Role/tier denial
+├── unauthorized/UnauthorizedPage.tsx   # Unauthenticated prompt
+├── loading/LoadingPage.tsx      # Generic loading text
+└── index.ts                     # Barrel re-export
+```
+
+**Types go in `src/types/features/statics/`:**
+```
+src/types/features/statics/
+├── ErrorPage-types.ts
+├── NotFoundPage-types.ts
+├── AccessDeniedPage-types.ts
+├── UnauthorizedPage-types.ts
+└── LoadingPage-types.ts
+```
+
+**Route files stay thin — import from statics:**
+```tsx
+// ✅ Good — error.tsx is a thin wrapper
+"use client";
+import { ErrorPage } from "@/features/statics";
+import type { BoomErrorProps } from "@/types/routing/BoomError-types";
+
+export default function BoomError({ error, reset }: BoomErrorProps) {
+  return (
+    <div className="surface flex flex-col gap-2 p-5">
+      <ErrorPage error={error} reset={reset} />
+    </div>
+  );
+}
+```
+
+```tsx
+// ❌ Bad — hardcoded English in error.tsx
+"use client";
+export default function BoomError({ error, reset }) {
+  return (
+    <div>
+      <h2>Something went wrong</h2>
+      <button onClick={() => reset()}>Try again</button>
+    </div>
+  );
+}
+```
+
+**i18n rules for static pages:**
+- If the route is under `v1/[lang]/`, use `useMessages("error")` or the relevant namespace
+- If the route is outside `MessagesProvider` scope (e.g. `global-error.tsx`), keep strings as-is or use client-side language detection
+- After adding new i18n keys, run `pnpm generate-i18n-types` to update generated types
+- Always create both `en` and `tr` message files for new namespaces
 
 ## Log Query Hooks
 

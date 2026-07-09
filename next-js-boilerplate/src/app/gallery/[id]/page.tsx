@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import type { PhotoContentProps, PhotoPageProps } from "@/types/gallery/PhotoContent-types";
+import { LoadingImageFallback } from "@/fallbacks";
 
 export const metadata: Metadata = {
   title: "Gallery Item",
@@ -25,11 +26,7 @@ export default function PhotoPage({
 }: PhotoPageProps) {
   return (
     <div data-testid="photo-page" className="flex flex-col gap-2">
-      <Suspense
-        fallback={
-          <p className="text-muted animate-pulse text-sm">Loading...</p>
-        }
-      >
+      <Suspense fallback={<LoadingImageFallback />}>
         <PhotoContent params={params} />
       </Suspense>
     </div>

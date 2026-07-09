@@ -10,17 +10,14 @@ import { formatDateTime } from "@/lib/date-time";
 import { SESSIONS_LIST_URL, SESSIONS_REVOKE_URL, SESSIONS_REVOKE_OTHERS_URL } from "@/constants/api/urls";
 import { POST } from "@/constants/api/methods";
 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
-
-interface SessionInfo {
-  sessionId: string;
-  deviceId: string;
-  ip?: string;
-  userAgent?: string;
-  issuedAt?: string;
-}
+import { PageInfoButton } from "@/components/ui/page-info";
+import { settingsSessionsPageInfo } from "@/constants/page-info";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
+import type { SessionInfo } from "@/types/settings/SessionInfo-types";
 
 export function FreePageView() {
   const { user, loading } = useAuth();
+  const t = useMessages("settings");
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [loadingSessions, setLoadingSessions] = useState(true);
 
@@ -63,7 +60,7 @@ export function FreePageView() {
 
   if (loading) return <LoadingAuth />;
   if (!user)
-    return <UnauthenticatedMessage message="Sign in to manage sessions" />;
+    return <UnauthenticatedMessage message={t.signInToManageSessions} />;
 
   const currentSessionId = user.sessionId;
 
@@ -71,14 +68,17 @@ export function FreePageView() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-brand">Sessions & Devices</h2>
-        {sessions.length > 1 && (
-          <button
-            onClick={revokeAllOtherSessions}
-            className="text-xs text-red-600 hover:text-red-700 transition-colors"
-          >
-            Log out all other sessions
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {sessions.length > 1 && (
+            <button
+              onClick={revokeAllOtherSessions}
+              className="text-xs text-red-600 hover:text-red-700 transition-colors"
+            >
+              Log out all other sessions
+            </button>
+          )}
+          <PageInfoButton content={settingsSessionsPageInfo} />
+        </div>
       </div>
 
       {loadingSessions ? (

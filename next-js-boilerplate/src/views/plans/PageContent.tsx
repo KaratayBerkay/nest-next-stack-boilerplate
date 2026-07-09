@@ -10,6 +10,8 @@ import { checkoutPath } from "@/constants/routes";
 import { LOGIN_PATH } from "@/constants/routes";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useCurrencyCookie } from "@/hooks/useCurrencyCookie";
+import { PageInfoButton } from "@/components/ui/page-info";
+import { plansPageInfo } from "@/constants/page-info";
 import Link from "next/link";
 
 function TierCard({
@@ -107,9 +109,12 @@ export default function PageContent({
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">{t.heading}</h1>
-        <p className="text-sm text-muted">{t.subtitle}</p>
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight">{t.heading}</h1>
+          <p className="text-sm text-muted">{t.subtitle}</p>
+        </div>
+        <PageInfoButton content={plansPageInfo} />
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">

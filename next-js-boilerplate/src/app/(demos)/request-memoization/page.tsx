@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { fetchUncached, fetchCached } from "@/lib/dedup";
+import { RequestMemoizationFallback } from "@/fallbacks";
 
 export const metadata: Metadata = {
   title: "Request Memoization",
@@ -70,11 +71,7 @@ export default function RequestMemoizationPage() {
         so that calls with the same arguments share a single promise within one
         render pass.
       </p>
-      <Suspense
-        fallback={
-          <div className="text-sm text-zinc-400">Loading results...</div>
-        }
-      >
+      <Suspense fallback={<RequestMemoizationFallback />}>
         <div className="mt-1 flex flex-col gap-3">
           <UncachedResults />
           <CachedResults />

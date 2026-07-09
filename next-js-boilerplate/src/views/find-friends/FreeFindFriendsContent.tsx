@@ -10,6 +10,9 @@ import { Input } from "@/components/ui/Input";
 import { initials } from "@/lib/initials";
 import { apiFetch } from "@/lib/api-client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui";
+import { PageInfoButton } from "@/components/ui/page-info";
+import { findFriendsPageInfo } from "@/constants/page-info";
+import { FindFriendsFallback } from "@/fallbacks";
 import {
   MESSAGES_FRIENDS_URL,
   MESSAGES_FRIENDS_REQUESTS_URL,
@@ -41,7 +44,10 @@ export function FreeFindFriendsContent({ user: _user }: FindFriendsContentProps)
 
   return (
     <div className="flex flex-col gap-6">
-      <h2 className="text-sm font-semibold text-brand">{t.title}</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-brand">{t.title}</h2>
+        <PageInfoButton content={findFriendsPageInfo} />
+      </div>
       <Tabs defaultValue={pathname?.endsWith('/requests') ? 'pending' : 'add'} className="flex flex-col">
         <TabsList className="w-full">
           <TabsTrigger value="add" className="flex-1">{t.addFriends}</TabsTrigger>

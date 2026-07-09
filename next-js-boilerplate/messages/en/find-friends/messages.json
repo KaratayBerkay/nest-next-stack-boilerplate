@@ -21,5 +21,6 @@
   "loadingSuggestions": "Loading...",
   "noSuggestions": "No suggestions yet",
   "mutualFriends": "{count} mutual friends",
-  "failedToLoadSuggestions": "Failed to load suggestions"
+  "failedToLoadSuggestions": "Failed to load suggestions",
+  "signInRequired": "Sign in to find friends"
 }

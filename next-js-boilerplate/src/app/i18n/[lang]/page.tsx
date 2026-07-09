@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { isLocale, locales } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/get-messages";
 import { LocaleSwitcher } from "./LocaleSwitcher";
+import { I18nPageFallback } from "@/fallbacks";
 import type { LocaleContentProps, I18nPageProps, GenerateMetadataProps } from "@/types/i18n/LocaleContent-types";
 
 // Prerender one static page per supported locale at build time. Unsupported
@@ -56,7 +57,7 @@ export default function I18nPage({
   params,
 }: I18nPageProps) {
   return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>
+    <Suspense fallback={<I18nPageFallback />}>
       <LocaleContent params={params} />
     </Suspense>
   );

@@ -15,6 +15,8 @@ import type { CurrencyCode } from "@/constants/currency";
 import { PROFILE_UPDATE_URL } from "@/constants/api/urls";
 import { POST } from "@/constants/api/methods";
 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
+import { PageInfoButton } from "@/components/ui/page-info";
+import { settingsGeneralPageInfo } from "@/constants/page-info";
 
 function readCurrencyCookie(): CurrencyCode {
   if (typeof document === "undefined") return DEFAULT_CURRENCY;
@@ -99,11 +101,14 @@ export function FreePageView() {
   }, [user]);
 
   if (loading) return <LoadingAuth />;
-  if (!user) return <UnauthenticatedMessage message="Sign in to manage settings" />;
+  if (!user) return <UnauthenticatedMessage message={t.signInToManageSettings} />;
 
   return (
     <div className="flex flex-col gap-6">
-      <h2 className="text-lg font-semibold">{t.generalHeading}</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">{t.generalHeading}</h2>
+        <PageInfoButton content={settingsGeneralPageInfo} />
+      </div>
 
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">

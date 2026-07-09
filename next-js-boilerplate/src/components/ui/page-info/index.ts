@@ -1,0 +1,1 @@
+export { PageInfoButton } from "./PageInfoButton";

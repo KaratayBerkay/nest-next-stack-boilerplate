@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { isLocale } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/get-messages";
+import { V1PageFallback } from "@/fallbacks";
 import type { V1ContentProps } from "@/types/v1/V1Content-types";
 
 export async function generateMetadata({
@@ -59,7 +60,7 @@ export default function V1Home({
   params,
 }: V1ContentProps) {
   return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>
+    <Suspense fallback={<V1PageFallback />}>
       <V1Content params={params} />
     </Suspense>
   );

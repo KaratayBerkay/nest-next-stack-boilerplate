@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { IconSearch } from "@tabler/icons-react";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
+import { PageInfoButton } from "@/components/ui/page-info";
+import { feedPageInfo } from "@/constants/page-info";
 import { SkeletonFeedList } from "@/components/ui/skeleton-shapes";
 import { FeedList } from "@/views/feed/FreeFeedList";
 
@@ -19,12 +21,15 @@ export function FreePageView() {
     <div className="flex h-full w-full flex-col gap-4 overflow-hidden">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-brand">{t.feed}</h2>
-        <Link
-          href={`/v1/${lang}/share`}
-          className="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
-        >
-          {t.share}
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/v1/${lang}/share`}
+            className="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
+          >
+            {t.share}
+          </Link>
+          <PageInfoButton content={feedPageInfo} />
+        </div>
       </div>
 
       <div className="relative">

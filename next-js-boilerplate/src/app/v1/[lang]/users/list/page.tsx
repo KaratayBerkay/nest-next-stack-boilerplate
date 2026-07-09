@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getMessages } from "@/lib/i18n/get-messages";
 import { FreePageView } from "@/views/users/list/FreePageView";
+import { UsersListFallback } from "@/fallbacks";
 import type { UsersListPageProps, UsersListContentProps } from "@/types/users/UsersListPage-types";
 import type { Lang } from "@/constants/i18n";
 
@@ -14,11 +15,7 @@ export default function UsersListPage({
   params,
 }: UsersListPageProps) {
   return (
-    <Suspense
-      fallback={
-        <p className="animate-pulse text-sm text-muted">Loading users...</p>
-      }
-    >
+    <Suspense fallback={<UsersListFallback />}>
       <UsersListContent params={params} />
     </Suspense>
   );

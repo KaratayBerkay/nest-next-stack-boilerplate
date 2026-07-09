@@ -15,5 +15,6 @@
   "connecting": "Connecting...",
   "send": "Send",
   "loading": "Loading...",
-  "failedToLoad": "Failed to load messages"
+  "failedToLoad": "Failed to load messages",
+  "signInRequired": "Sign in to start messaging"
 }

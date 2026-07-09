@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getMessages } from "@/lib/i18n/get-messages";
 import { FreePageView } from "@/views/users/detail/[uuid]/FreePageView";
+import { UserDetailFallback } from "@/fallbacks";
 import type { UserDetailPageProps } from "@/types/users/UserDetailPage-types";
 import type { Lang } from "@/constants/i18n";
 
@@ -16,11 +17,7 @@ export default async function UserDetailPage({
   const { lang } = await params;
   const t = getMessages(lang as Lang, "users");
   return (
-    <Suspense
-      fallback={
-        <p className="text-muted animate-pulse text-sm">Loading user...</p>
-      }
-    >
+    <Suspense fallback={<UserDetailFallback />}>
       <FreePageView t={t} params={params} />
     </Suspense>
   );

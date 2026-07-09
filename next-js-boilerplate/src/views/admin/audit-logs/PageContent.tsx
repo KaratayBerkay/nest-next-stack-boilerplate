@@ -7,36 +7,12 @@ import { IconEye, IconSearch } from "@tabler/icons-react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { formatDateTime } from "@/lib/date-time";
-
-interface AuditActor {
-  id: string;
-  name: string;
-  email: string;
-}
-
-interface AuditLogEntry {
-  id: string;
-  action: string;
-  level: string;
-  entityType: string;
-  entityId: string | null;
-  summary: string | null;
-  ip: string | null;
-  userAgent: string | null;
-  requestId: string | null;
-  correlationId: string | null;
-  createdAt: string;
-  before: unknown | null;
-  after: unknown | null;
-  actor: AuditActor | null;
-}
-
-interface AuditLogResponse {
-  items: AuditLogEntry[];
-  total: number;
-  take: number;
-  skip: number;
-}
+import { PageInfoButton } from "@/components/ui/page-info";
+import { adminAuditLogsPageInfo } from "@/constants/page-info";
+import { AccessDeniedPage } from "@/features/statics";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { ADMIN_AUDIT_LOGS_URL } from "@/constants/api/urls";
+import type { AuditLogEntry, AuditLogResponse } from "@/types/admin/AuditLog-types";
 
 const LEVEL_COLORS: Record<string, string> = {
   ERROR: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
@@ -49,6 +25,7 @@ const LEVEL_COLORS: Record<string, string> = {
 
 export default function PageContent() {
   const { user } = useAuth();
+  const t = useMessages("error");
   const [entries, setEntries] = useState<AuditLogEntry[]>([]);
   const [total, setTotal] = useState(0);
   const [loadingLogs, setLoadingLogs] = useState(true);
@@ -72,7 +49,7 @@ export default function PageContent() {
       if (entityFilter) params.set("entityType", entityFilter);
 
       const data = await apiFetchJson<AuditLogResponse>(
-        `/api/admin/audit-logs?${params.toString()}`,
+        `${ADMIN_AUDIT_LOGS_URL}?${params.toString()}`,
       );
       setEntries(data.items);
       setTotal(data.total);
@@ -94,16 +71,19 @@ export default function PageContent() {
     return (
       <div className="flex flex-col gap-4">
         <h2 className="text-brand text-sm font-semibold">Audit Log</h2>
-        <p className="text-muted text-sm">Access denied. Admins only.</p>
+        <AccessDeniedPage message={t.accessDenied} />
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-3">
-        <IconEye size={18} className="text-brand" />
-        <h2 className="text-brand text-sm font-semibold">Audit Log</h2>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <IconEye size={18} className="text-brand" />
+          <h2 className="text-brand text-sm font-semibold">Audit Log</h2>
+        </div>
+        <PageInfoButton content={adminAuditLogsPageInfo} />
       </div>
 
       <div className="flex flex-wrap gap-3">

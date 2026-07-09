@@ -54,6 +54,7 @@ export const SESSIONS_REVOKE_URL = "/api/sessions/revoke" as const;
 export const SESSIONS_REVOKE_OTHERS_URL = "/api/sessions/revoke-others" as const;
 
 export const ADMIN_SET_TIER_URL = "/api/admin/set-tier" as const;
+export const ADMIN_AUDIT_LOGS_URL = "/api/admin/audit-logs" as const;
 
 export const MESSAGES_FRIENDS_URL = "/api/messages/friends" as const;
 export const MESSAGES_FRIENDS_REQUESTS_URL = "/api/messages/friends/requests" as const;

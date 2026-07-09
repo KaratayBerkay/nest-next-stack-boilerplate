@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ResetPasswordForm } from "@/features/auth/ui/reset-password-form";
+import { PulseBlockFallback } from "@/fallbacks";
 import type { ResetPasswordPageProps } from "@/types/auth/ResetPasswordPage-types";
 
 export const metadata: Metadata = {
@@ -13,11 +14,7 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
   const token = (sp.token as string) ?? "";
 
   return (
-    <Suspense
-      fallback={
-        <div className="bg-surface-hover h-48 w-full animate-pulse rounded" />
-      }
-    >
+    <Suspense fallback={<PulseBlockFallback />}>
       <ResetPasswordForm token={token} />
     </Suspense>
   );

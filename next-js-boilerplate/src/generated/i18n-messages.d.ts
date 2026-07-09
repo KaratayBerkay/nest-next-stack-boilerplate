@@ -123,6 +123,7 @@ export type I18nMessages = {
       "notFound": string;
       "pageNotFound": string;
       "v1NotFound": string;
+      "routingNotFound": string;
       "backHome": string;
       "backToV1": string;
       "somethingWentWrong": string;
@@ -131,6 +132,8 @@ export type I18nMessages = {
       "tryAgain": string;
       "failedToLoad": string;
       "loadingMessages": string;
+      "accessDenied": string;
+      "loadingTheSlowRoute": string;
     }
 
   "feed": {
@@ -177,6 +180,7 @@ export type I18nMessages = {
       "noSuggestions": string;
       "mutualFriends": string;
       "failedToLoadSuggestions": string;
+      "signInRequired": string;
     }
 
   "home": {
@@ -211,6 +215,16 @@ export type I18nMessages = {
       "send": string;
       "loading": string;
       "failedToLoad": string;
+      "signInRequired": string;
+    }
+
+  "notification": {
+      "title": string;
+      "markAllRead": string;
+      "noNotifications": string;
+      "enablePush": string;
+      "disablePush": string;
+      "back": string;
     }
 
   "posts": {
@@ -326,6 +340,20 @@ export type I18nMessages = {
       "apiKeysLoadFailed": string;
       "apiKeysCreateFailed": string;
       "apiKeysRevokeFailed": string;
+      "signInToManageSettings": string;
+      "signInToManageBilling": string;
+      "signInToManageAccount": string;
+      "signInToManageSessions": string;
+      "sessionsHeading": string;
+      "logOutAllOtherSessions": string;
+      "loadingSessions": string;
+      "noSessions": string;
+      "currentSession": string;
+      "unknownDevice": string;
+      "moreDeviceInfo": string;
+      "deviceId": string;
+      "userAgent": string;
+      "revoke": string;
     }
 
   "shared/locale-switcher": {

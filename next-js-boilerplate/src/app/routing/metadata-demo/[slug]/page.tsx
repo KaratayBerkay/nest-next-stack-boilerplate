@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { MetadataDemoFallback } from "@/fallbacks";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -31,7 +32,7 @@ async function SlugContent({ params }: Props) {
 export default function SlugPage({ params }: Props) {
   return (
     <div className="flex flex-col gap-2">
-      <Suspense fallback={<p className="text-sm text-zinc-500">Loading...</p>}>
+      <Suspense fallback={<MetadataDemoFallback />}>
         <SlugContent params={params} />
       </Suspense>
     </div>

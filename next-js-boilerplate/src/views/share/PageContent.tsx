@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/Button";
 import { UPLOAD_URL, POSTS_URL } from "@/constants/api/urls";
 import { POST } from "@/constants/api/methods";
 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
+import { PageInfoButton } from "@/components/ui/page-info";
+import { sharePageInfo } from "@/constants/page-info";
 
 function handleFileChange(
   e: React.ChangeEvent<HTMLInputElement>,
@@ -103,7 +105,10 @@ export default function PageContent() {
 
   return (
     <div className="flex w-full flex-col gap-4">
-      <h2 className="text-brand text-sm font-semibold">Share something</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-brand text-sm font-semibold">Share something</h2>
+        <PageInfoButton content={sharePageInfo} />
+      </div>
 
       <form onSubmit={(e) => handleShareSubmit(e, title, content, submitting, setSubmitting, setUploadError, setError, file, uploadError, coverImageRef, router, lang)} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">

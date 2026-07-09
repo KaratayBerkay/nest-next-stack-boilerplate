@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Timestamp } from "./Timestamp";
+import { DynamicLoadingFallback } from "@/fallbacks";
 
 export const metadata: Metadata = {
   title: "Dynamic",
@@ -20,9 +21,7 @@ export default function DynamicPage() {
       </p>
       <p className="text-xs text-zinc-500">
         Rendered at:{" "}
-        <Suspense
-          fallback={<span className="font-mono text-zinc-400">loading...</span>}
-        >
+        <Suspense fallback={<DynamicLoadingFallback />}>
           <Timestamp />
         </Suspense>
       </p>

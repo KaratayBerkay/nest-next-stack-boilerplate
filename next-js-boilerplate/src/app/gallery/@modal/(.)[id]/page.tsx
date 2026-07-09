@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { ModalContentProps, PhotoModalProps } from "@/types/gallery/ModalContent-types";
+import { LoadingPhotoFallback } from "@/fallbacks";
 
 // Intercepting route: `(.)` matches a segment at the same level as `@modal`'s
 // parent (`gallery`), so this intercepts `gallery/[id]` — but only on a soft
@@ -28,11 +29,7 @@ export default function PhotoModal({
       aria-modal="true"
       className="surface flex flex-col gap-2 p-5"
     >
-      <Suspense
-        fallback={
-          <p className="text-muted animate-pulse text-sm">Loading photo...</p>
-        }
-      >
+      <Suspense fallback={<LoadingPhotoFallback />}>
         <ModalContent params={params} />
       </Suspense>
     </div>

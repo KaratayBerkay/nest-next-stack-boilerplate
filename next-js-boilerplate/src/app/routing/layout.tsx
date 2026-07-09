@@ -2,7 +2,8 @@ import { Suspense } from "react";
 import { containerClass } from "@/constants/site";
 import { Counter } from "@/components/ui/Counter";
 import { NavLink } from "@/components/layout/NavLink";
-import { RouterNav } from "./_components/RouterNav";
+import { RouterNav } from "@/views/routing/RouterNav";
+import { RoutingNavFallback } from "@/fallbacks";
 import type { RoutingLayoutProps } from "@/types/routing/RoutingLayout-types";
 
 // Nested layout for the Stage-1 routing demos.
@@ -31,7 +32,7 @@ export default function RoutingLayout({
         </p>
       </header>
 
-      <Suspense fallback={<nav className="flex gap-4 text-sm" />}>
+      <Suspense fallback={<RoutingNavFallback />}>
         <nav className="flex gap-4 text-sm" aria-label="Routing demos">
           <NavLink href="/routing/a">Page A</NavLink>
           <NavLink href="/routing/b">Page B</NavLink>

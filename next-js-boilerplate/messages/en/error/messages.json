@@ -2,6 +2,7 @@
   "notFound": "Not found",
   "pageNotFound": "This page could not be found.",
   "v1NotFound": "This v1 resource does not exist.",
+  "routingNotFound": "This routing resource does not exist.",
   "backHome": "Go home",
   "backToV1": "Back to v1 home",
   "somethingWentWrong": "Something went wrong",
@@ -9,5 +10,7 @@
   "reference": "Reference:",
   "tryAgain": "Try again",
   "failedToLoad": "Failed to load messages",
-  "loadingMessages": "Loading messages..."
+  "loadingMessages": "Loading messages...",
+  "accessDenied": "Access denied. Admins only.",
+  "loadingTheSlowRoute": "Loading the slow route…"
 }

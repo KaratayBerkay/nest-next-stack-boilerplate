@@ -12,6 +12,8 @@ import { useCurrencyCookie } from "@/hooks/useCurrencyCookie";
 import { plansPath } from "@/constants/routes";
 import { formatDate } from "@/lib/date-time";
 import { BILLING_SUBSCRIPTION_URL } from "@/constants/api/urls";
+import { PageInfoButton } from "@/components/ui/page-info";
+import { settingsPageInfo } from "@/constants/page-info";
 
 interface SubscriptionInfo {
   tier: string;
@@ -53,7 +55,10 @@ export default function PageContent({
 
   return (
     <div className="flex flex-col gap-6">
-      <h2 className="text-lg font-semibold">{t.currentPlan}</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">{t.currentPlan}</h2>
+        <PageInfoButton content={settingsPageInfo} />
+      </div>
 
       <div className="flex flex-col gap-4">
         <div className="border-border bg-surface flex items-center justify-between rounded-lg border p-4">

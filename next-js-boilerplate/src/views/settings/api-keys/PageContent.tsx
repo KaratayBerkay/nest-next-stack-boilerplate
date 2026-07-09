@@ -11,6 +11,8 @@ import { formatDate } from "@/lib/date-time";
 import { API_KEYS_URL, API_KEYS_PREFIX } from "@/constants/api/urls";
 import { POST, DELETE } from "@/constants/api/methods";
 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
+import { PageInfoButton } from "@/components/ui/page-info";
+import { settingsApiKeysPageInfo } from "@/constants/page-info";
 import type { Dispatch, SetStateAction } from "react";
 
 interface ApiKey {
@@ -113,10 +115,15 @@ export default function PageContent() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h2 className="text-2xl font-bold">API Keys</h2>
-      <p className="text-muted text-sm">
-        API keys allow programmatic access to your account. Treat them like passwords.
-      </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">API Keys</h2>
+          <p className="text-muted text-sm">
+            API keys allow programmatic access to your account. Treat them like passwords.
+          </p>
+        </div>
+        <PageInfoButton content={settingsApiKeysPageInfo} />
+      </div>
 
       {newKeyResult && (
         <div className="surface border-brand/30 rounded-lg border p-4">

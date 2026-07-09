@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { DataTable } from "./DataTable";
+import { LoadingTextFallback } from "@/fallbacks";
 
 export const metadata: Metadata = {
   title: "Data Fetching",
@@ -15,13 +16,7 @@ export default function DataFetchingPage() {
         This data was fetched from a Route Handler inside a React Server
         Component using <code className="text-brand">fetch</code>.
       </p>
-      <Suspense
-        fallback={
-          <div className="rounded border p-3 text-sm text-zinc-400">
-            Loading data...
-          </div>
-        }
-      >
+      <Suspense fallback={<LoadingTextFallback text="Loading data..." />}>
         <DataTable />
       </Suspense>
     </div>

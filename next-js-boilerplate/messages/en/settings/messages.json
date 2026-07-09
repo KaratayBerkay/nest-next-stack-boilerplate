@@ -61,5 +61,19 @@
   "apiKeysExpires": "Expires {date}",
   "apiKeysLoadFailed": "Failed to load API keys",
   "apiKeysCreateFailed": "Failed to create API key",
-  "apiKeysRevokeFailed": "Failed to revoke API key"
+  "apiKeysRevokeFailed": "Failed to revoke API key",
+  "signInToManageSettings": "Sign in to manage settings",
+  "signInToManageBilling": "Sign in to manage billing",
+  "signInToManageAccount": "Sign in to manage your account",
+  "signInToManageSessions": "Sign in to manage sessions",
+  "sessionsHeading": "Sessions & Devices",
+  "logOutAllOtherSessions": "Log out all other sessions",
+  "loadingSessions": "Loading sessions...",
+  "noSessions": "No active sessions found.",
+  "currentSession": "Current",
+  "unknownDevice": "Unknown device",
+  "moreDeviceInfo": "More Device Info",
+  "deviceId": "Device ID:",
+  "userAgent": "User-Agent:",
+  "revoke": "Revoke"
 }

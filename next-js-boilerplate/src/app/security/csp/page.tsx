@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { containerClass } from "@/constants/site";
-import { NoncePanel } from "./NoncePanel";
+import { NoncePanel } from "@/views/security/csp/NoncePanel";
+import { ReadingNonceFallback } from "@/fallbacks";
 
 export const metadata: Metadata = {
   title: "CSP",
@@ -25,13 +26,7 @@ export default function CspPage() {
         </p>
       </header>
       <section className="surface flex flex-col gap-3 p-5">
-        <Suspense
-          fallback={
-            <div className="rounded border p-3 text-sm text-zinc-400">
-              Reading nonce...
-            </div>
-          }
-        >
+        <Suspense fallback={<ReadingNonceFallback />}>
           <NoncePanel />
         </Suspense>
         <p className="text-muted text-xs">

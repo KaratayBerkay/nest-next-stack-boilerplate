@@ -21,5 +21,6 @@
   "loadingSuggestions": "Yükleniyor...",
   "noSuggestions": "Henüz öneri yok",
   "mutualFriends": "{count} ortak arkadaş",
-  "failedToLoadSuggestions": "Öneriler yüklenemedi"
+  "failedToLoadSuggestions": "Öneriler yüklenemedi",
+  "signInRequired": "Arkadaş bulmak için giriş yapın"
 }

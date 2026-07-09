@@ -8,6 +8,8 @@ import { useToast } from "@/components/ui/Toast";
 import { Switch } from "@/components/ui/Switch";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { PageInfoButton } from "@/components/ui/page-info";
+import { settingsPrivacyPageInfo } from "@/constants/page-info";
 
 async function handleSave(toast: ReturnType<typeof useToast>["toast"]) {
   toast({ title: "Preferences saved", variant: "success" });
@@ -25,7 +27,10 @@ export function FreePageView() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h2 className="text-lg font-semibold">{t.privacyHeading}</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">{t.privacyHeading}</h2>
+        <PageInfoButton content={settingsPrivacyPageInfo} />
+      </div>
 
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between rounded-lg border border-border p-4">

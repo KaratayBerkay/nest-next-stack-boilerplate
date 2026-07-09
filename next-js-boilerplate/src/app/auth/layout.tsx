@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { containerClass, SITE } from "@/constants/site";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { LangSwitcher } from "@/components/layout/LangSwitcher";
+import { AuthFallback } from "@/fallbacks";
 import type { AuthLayoutProps } from "@/types/auth/AuthLayout-types";
 
 export default function AuthLayout({
@@ -21,15 +22,7 @@ export default function AuthLayout({
             <ThemeToggle />
           </div>
         </div>
-        <Suspense
-          fallback={
-            <section className="surface flex flex-col gap-4 p-6">
-              <div className="bg-surface-hover h-6 w-32 animate-pulse rounded" />
-              <div className="bg-surface-hover h-8 w-full animate-pulse rounded" />
-              <div className="bg-surface-hover h-8 w-full animate-pulse rounded" />
-            </section>
-          }
-        >
+        <Suspense fallback={<AuthFallback />}>
           <section className="surface flex flex-col gap-4 p-6">
             {children}
           </section>

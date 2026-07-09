@@ -17,18 +17,23 @@ import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { SkeletonMessage } from "@/components/ui/skeleton-shapes";
 import { NOTIFICATIONS_READ_URL } from "@/constants/api/urls";
 import { POST } from "@/constants/api/methods";
+import { PageInfoButton } from "@/components/ui/page-info";
+import { notificationPageInfo } from "@/constants/page-info";
+import { NotificationFallback } from "@/fallbacks";
 import {
   useNotifications,
 } from "@/lib/realtime/useNotifications";
 import { formatDate } from "@/lib/date-time";
 import { useQueryClient } from "@tanstack/react-query";
 import { notificationTarget } from "@/lib/notifications/target";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
 
 function NotificationPageContent() {
   const params = useParams<{ lang: string }>();
   const lang = params?.lang ?? "en";
   const router = useRouter();
   const queryClient = useQueryClient();
+  const t = useMessages("notification");
   const { data: notifData, isLoading } = useNotifications();
   const notifications = useMemo(
     () => notifData?.items ?? [],
@@ -116,14 +121,14 @@ function NotificationPageContent() {
           >
             <IconArrowLeft size={20} stroke={1.5} />
           </button>
-          <h2 className="text-sm font-semibold text-fg">Notifications</h2>
+          <h2 className="text-sm font-semibold text-fg">{t.title}</h2>
         </div>
         <div className="flex items-center gap-2">
           {supported && permission !== "granted" && (
             <button
               onClick={requestPermission}
               className="p-1 text-muted hover:text-fg"
-              aria-label="Enable push notifications"
+              aria-label={t.enablePush}
             >
               <IconBellOff size={16} stroke={1.5} />
             </button>
@@ -132,7 +137,7 @@ function NotificationPageContent() {
             <button
               onClick={unsubscribe}
               className="p-1 text-brand hover:text-fg"
-              aria-label="Disable push notifications"
+              aria-label={t.disablePush}
             >
               <IconBell size={16} stroke={1.5} />
             </button>
@@ -142,9 +147,10 @@ function NotificationPageContent() {
               onClick={markAllReadOnce}
               className="text-xs font-medium text-brand hover:underline"
             >
-              Mark all read
+              {t.markAllRead}
             </button>
           )}
+          <PageInfoButton content={notificationPageInfo} />
         </div>
       </div>
 
@@ -176,7 +182,7 @@ function NotificationPageContent() {
         ) : sorted.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-16">
             <IconBell size={32} stroke={1} className="text-muted" />
-            <p className="text-xs text-muted">No notifications yet</p>
+            <p className="text-xs text-muted">{t.noNotifications}</p>
           </div>
         ) : (
           sorted.map((n) => (
@@ -221,18 +227,7 @@ function NotificationPageContent() {
 
 export function FreePageView() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex flex-col gap-3 p-4">
-          <div className="h-4 w-24 animate-pulse rounded bg-surface-hover" />
-          <div className="flex flex-col gap-1">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <SkeletonMessage key={i} />
-            ))}
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<NotificationFallback />}>
       <ErrorBoundary>
         <NotificationPageContent />
       </ErrorBoundary>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { DynamicGreeting } from "./DynamicGreeting";
+import { PprFallback } from "@/fallbacks";
 
 export const metadata: Metadata = {
   title: "PPR",
@@ -17,11 +18,7 @@ export default function PprPage() {
         This static shell is served immediately from the cache. The personalized
         greeting below is streamed at request time.
       </p>
-      <Suspense
-        fallback={
-          <p className="text-sm text-zinc-500">Loading personalization...</p>
-        }
-      >
+      <Suspense fallback={<PprFallback />}>
         <DynamicGreeting />
       </Suspense>
     </div>

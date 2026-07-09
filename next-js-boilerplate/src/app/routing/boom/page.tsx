@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Boom } from "./Boom";
+import { RoutingBoom } from "@/views/boom/RoutingBoom";
 
 export const metadata: Metadata = {
   title: "Error Handling",
@@ -14,7 +14,7 @@ export default function BoomPage() {
         Trigger a render error; the segment&apos;s <code>error.tsx</code>{" "}
         catches it and offers a reset.
       </p>
-      <Boom />
+      <RoutingBoom />
     </div>
   );
 }

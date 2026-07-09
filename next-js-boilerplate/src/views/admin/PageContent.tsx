@@ -5,9 +5,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { IconSearch } from "@tabler/icons-react";
 import { UserTierRow } from "./UserTierRow";
 import { doSearch, onQueryChange, setTier, type UserResult } from "@/lib/admin/admin-utils";
+import { PageInfoButton } from "@/components/ui/page-info";
+import { adminPageInfo } from "@/constants/page-info";
+import { AccessDeniedPage } from "@/features/statics";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
 
 export default function PageContent() {
   const { user } = useAuth();
+  const t = useMessages("error");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<UserResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -23,14 +28,17 @@ export default function PageContent() {
     return (
       <div className="flex flex-col gap-4">
         <h2 className="text-brand text-sm font-semibold">Admin</h2>
-        <p className="text-muted text-sm">Access denied. Admins only.</p>
+        <AccessDeniedPage message={t.accessDenied} />
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-6">
-      <h2 className="text-brand text-sm font-semibold">Admin</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-brand text-sm font-semibold">Admin</h2>
+        <PageInfoButton content={adminPageInfo} />
+      </div>
 
       <div className="relative">
         <IconSearch

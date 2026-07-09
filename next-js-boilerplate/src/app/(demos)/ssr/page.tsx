@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Timestamp } from "./Timestamp";
+import { MonoEllipsisFallback } from "@/fallbacks";
 
 export const metadata: Metadata = {
   title: "SSR",
@@ -26,9 +27,7 @@ export default function SsrPage() {
       </p>
       <p className="text-xs text-zinc-500">
         Rendered at:{" "}
-        <Suspense
-          fallback={<span className="font-mono text-zinc-400">...</span>}
-        >
+        <Suspense fallback={<MonoEllipsisFallback />}>
           <Timestamp />
         </Suspense>
       </p>

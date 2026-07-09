@@ -15,5 +15,6 @@
   "connecting": "Bağlanıyor...",
   "send": "Gönder",
   "loading": "Yükleniyor...",
-  "failedToLoad": "Mesajlar yüklenemedi"
+  "failedToLoad": "Mesajlar yüklenemedi",
+  "signInRequired": "Mesajlaşmaya başlamak için giriş yapın"
 }

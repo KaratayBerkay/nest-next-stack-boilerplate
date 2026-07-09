@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { StreamingDataFallback } from "@/fallbacks";
 
 export const metadata: Metadata = {
   title: "Slow Page",
@@ -35,16 +36,7 @@ export default async function SlowPage() {
         The shell rendered after the route-level <code>loading.tsx</code>; the
         text below streams in later behind a <code>&lt;Suspense&gt;</code>.
       </p>
-      <Suspense
-        fallback={
-          <p
-            data-testid="suspense-fallback"
-            className="text-muted animate-pulse text-sm"
-          >
-            Streaming data…
-          </p>
-        }
-      >
+      <Suspense fallback={<StreamingDataFallback />}>
         <SlowData />
       </Suspense>
     </div>

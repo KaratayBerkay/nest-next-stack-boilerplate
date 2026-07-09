@@ -2,6 +2,7 @@
   "notFound": "Bulunamadı",
   "pageNotFound": "Bu sayfa bulunamadı.",
   "v1NotFound": "Bu v1 kaynağı mevcut değil.",
+  "routingNotFound": "Bu yönlendirme kaynağı mevcut değil.",
   "backHome": "Ana Sayfaya Dön",
   "backToV1": "v1 ana sayfasına dön",
   "somethingWentWrong": "Bir şeyler yanlış gitti",
@@ -9,5 +10,7 @@
   "reference": "Referans:",
   "tryAgain": "Tekrar Dene",
   "failedToLoad": "Mesajlar yüklenemedi",
-  "loadingMessages": "Mesajlar yükleniyor..."
+  "loadingMessages": "Mesajlar yükleniyor...",
+  "accessDenied": "Erişim reddedildi. Yalnızca yöneticiler.",
+  "loadingTheSlowRoute": "Yavaş rota yükleniyor…"
 }
