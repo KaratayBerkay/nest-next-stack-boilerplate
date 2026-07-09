@@ -172,6 +172,7 @@ services:
   nextjs:
     build:
       context: ./next-js-boilerplate
+      network: host
       args:
         NEXT_PUBLIC_APP_URL: https://app.eys.gen.tr
         NEXT_PUBLIC_REALTIME_WS_URL: wss://api.eys.gen.tr/ws

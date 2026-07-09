@@ -1,19 +1,19 @@
 FROM node:24.18.0-alpine3.24 AS base
 RUN apk update && apk upgrade --no-cache && apk add --no-cache tini
+RUN corepack enable && pnpm --version
 
 FROM base AS deps
 WORKDIR /app
 COPY pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN corepack enable && pnpm --version
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm config set store-dir /pnpm/store && \
     pnpm fetch --frozen-lockfile
 
 FROM base AS builder
 WORKDIR /app
-COPY --from=deps /root/.cache/node/corepack /root/.cache/node/corepack
-RUN corepack enable
-COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/pnpm-lock.yaml ./
+COPY --from=deps /app/pnpm-workspace.yaml ./
+COPY package.json ./
 COPY . .
 
 ARG NEXT_PUBLIC_APP_URL
@@ -32,6 +32,7 @@ ENV CI=true
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     --mount=type=cache,id=next-cache,target=/app/.next/cache \
     pnpm config set store-dir /pnpm/store && \
+    pnpm install --frozen-lockfile --prefer-offline && \
     pnpm generate-i18n-types && \
     pnpm exec next build
 
