@@ -1,12 +1,15 @@
-FROM node:22-alpine AS deps
+FROM node:24.18.0-alpine3.24 AS base
+RUN apk update && apk upgrade --no-cache && apk add --no-cache tini
+
+FROM base AS deps
 WORKDIR /app
-RUN corepack enable && pnpm --version
 COPY pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN corepack enable && pnpm --version
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm config set store-dir /pnpm/store && \
     pnpm fetch --frozen-lockfile
 
-FROM node:22-alpine AS builder
+FROM base AS builder
 WORKDIR /app
 COPY --from=deps /root/.cache/node/corepack /root/.cache/node/corepack
 RUN corepack enable
@@ -32,7 +35,7 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm generate-i18n-types && \
     pnpm exec next build
 
-FROM node:22-alpine AS runner
+FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -40,11 +43,12 @@ ENV PORT=3100
 ENV HOSTNAME="0.0.0.0"
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
-COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 USER nextjs
 EXPOSE 3100
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD wget -qO- http://127.0.0.1:${PORT:-3100}/ || exit 1
+ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "server.js"]
