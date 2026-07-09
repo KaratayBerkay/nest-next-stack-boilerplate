@@ -34,6 +34,7 @@ async function handleShareSubmit(
   content: string,
   submitting: boolean,
   setSubmitting: Dispatch<SetStateAction<boolean>>,
+  setUploading: Dispatch<SetStateAction<boolean>>,
   setUploadError: Dispatch<SetStateAction<boolean>>,
   setError: Dispatch<SetStateAction<string | null>>,
   file: File | null,
@@ -50,6 +51,7 @@ async function handleShareSubmit(
 
   try {
     if (file && !uploadError) {
+      setUploading(true);
       const formData = new FormData();
       formData.set("file", file);
       const uploadRes = await apiFetch(UPLOAD_URL, {
@@ -62,8 +64,10 @@ async function handleShareSubmit(
       } else {
         setUploadError(true);
         setSubmitting(false);
+        setUploading(false);
         return;
       }
+      setUploading(false);
     }
 
     const res = await apiFetch(POSTS_URL, {
@@ -86,6 +90,7 @@ async function handleShareSubmit(
     setError("Failed to create post");
   } finally {
     setSubmitting(false);
+    setUploading(false);
   }
 }
 
@@ -98,10 +103,13 @@ export default function PageContent() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState(false);
   const coverImageRef = useRef<string | undefined>(undefined);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const isDisabled = !title.trim() || !content.trim() || submitting || uploadError;
 
   return (
     <div className="flex w-full flex-col gap-4">
@@ -110,7 +118,7 @@ export default function PageContent() {
         <PageInfoButton content={sharePageInfo} />
       </div>
 
-      <form onSubmit={(e) => handleShareSubmit(e, title, content, submitting, setSubmitting, setUploadError, setError, file, uploadError, coverImageRef, router, lang)} className="flex flex-col gap-4">
+      <form onSubmit={(e) => handleShareSubmit(e, title, content, submitting, setSubmitting, setUploading, setUploadError, setError, file, uploadError, coverImageRef, router, lang)} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <Label htmlFor="title">Title</Label>
           <Input
@@ -122,6 +130,7 @@ export default function PageContent() {
             minLength={3}
             maxLength={200}
             placeholder="What's on your mind?"
+            disabled={submitting}
           />
         </div>
 
@@ -134,6 +143,7 @@ export default function PageContent() {
             required
             rows={6}
             placeholder="Write something..."
+            disabled={submitting}
           />
         </div>
 
@@ -144,36 +154,50 @@ export default function PageContent() {
             type="file"
             accept="image/*"
             onChange={(e) => handleFileChange(e, setFile, setUploadError, setPreview)}
-            className="border-border bg-surface rounded-lg border px-3 py-2 text-sm file:mr-2 file:rounded file:border-0 file:bg-zinc-100 file:px-2 file:py-0.5 file:text-xs"
+            disabled={submitting}
+            className="border-border bg-surface rounded-lg border px-3 py-2 text-sm file:mr-2 file:rounded file:border-0 file:bg-zinc-100 file:px-2 file:py-0.5 file:text-xs disabled:opacity-50"
           />
           {preview && (
             <div className="relative mt-2">
               <img
                 src={preview}
                 alt="Preview"
-                className="max-h-48 rounded-lg object-cover"
+                className={`max-h-48 rounded-lg object-cover ${uploading ? "opacity-50" : ""}`}
               />
-              <button
-                type="button"
-                onClick={() => {
-                  setFile(null);
-                  setPreview(null);
-                  setUploadError(false);
-                  if (fileRef.current) fileRef.current.value = "";
-                }}
-                className="absolute top-1 right-1 rounded-full bg-black/50 p-1 text-white"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
+              {uploading && (
+                <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/30">
+                  <div className="flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 text-xs text-white">
+                    <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Uploading...
+                  </div>
+                </div>
+              )}
+              {!uploading && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFile(null);
+                    setPreview(null);
+                    setUploadError(false);
+                    if (fileRef.current) fileRef.current.value = "";
+                  }}
+                  className="absolute top-1 right-1 rounded-full bg-black/50 p-1 text-white"
                 >
-                  <path d="M18 6 6 18M6 6l12 12" />
-                </svg>
-              </button>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M18 6 6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
               {uploadError && (
                 <div className="mt-2 flex items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-xs text-red-600">
                   <span>Image couldn&apos;t be uploaded.</span>
@@ -217,12 +241,10 @@ export default function PageContent() {
         <Button
           type="submit"
           variant="primary"
-          disabled={
-            !title.trim() || !content.trim() || submitting || uploadError
-          }
+          disabled={isDisabled}
           className="self-start"
         >
-          {submitting ? "Sharing..." : "Share"}
+          {uploading ? "Uploading..." : submitting ? "Sharing..." : "Share"}
         </Button>
       </form>
     </div>
