@@ -253,6 +253,7 @@ model User {
   name String?
 
   // credentials auth (null for social-only users)
+  /// @HideField()
   passwordHash  String?
   passwordSetAt DateTime? @db.Timestamptz(6)
 
@@ -260,7 +261,9 @@ model User {
   role             UserRole         @default(USER)
   subscriptionTier SubscriptionTier @default(FREE)
 
+  /// @HideField()
   stripeCustomerId       String?   @unique
+  /// @HideField()
   stripeSubscriptionId   String?
   subscriptionPeriodStart DateTime? @db.Timestamptz(6)
   subscriptionPeriodEnd   DateTime? @db.Timestamptz(6)
@@ -282,6 +285,7 @@ model User {
   mfaEnabled Boolean @default(false)
 
   lastLoginAt      DateTime? @db.Timestamptz(6)
+  /// @HideField()
   lastLoginIp      String?   @db.Inet
   failedLoginCount Int       @default(0)
   lockedUntil      DateTime? @db.Timestamptz(6)

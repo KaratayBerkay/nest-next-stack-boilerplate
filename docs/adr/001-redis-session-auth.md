@@ -20,10 +20,10 @@ approach: short-lived JWTs for stateless verification + Redis for session state.
 Use a **four-token compound key** stored in Redis:
 
 - `accessToken` — JWT (HS256, 15min TTL) for stateless verification
-- `refreshToken` — opaque, Postgres-backed (30d TTL) for session renewal
+- `refreshToken` — opaque (30d TTL) for session renewal
 - `rbacToken` — opaque (15min, mirrors access) for tier authorization
 - `deviceToken` — opaque (1y) for device binding and rotation detection
-- `userToken` — opaque (15min, non-httpOnly) for WebSocket auth
+- `userToken` — opaque (15min, httpOnly) for WebSocket auth
 
 All four are combined into a single Redis HASH key:
 ```

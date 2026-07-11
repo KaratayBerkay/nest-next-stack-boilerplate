@@ -29,8 +29,8 @@ current code — not trusted from the commit message — with this result:
 
 | Status | Count | Items |
 | --- | --- | --- |
-| ✅ Fixed | 12 | #1, #2, #4, #5, #6, #7, #9, #11, #14, #17, #19, #20 |
-| ⚠️ Partially fixed | 3 | #3, #8, #18 — each has concrete remaining work, detailed inline below |
+| ✅ Fixed | 14 | #1, #2, #3, #4, #5, #6, #7, #9, #11, #14, #17, #18, #19, #20 |
+| ⚠️ Partially fixed | 1 | #8 — remaining demo modules to move to DEMO_MODULES |
 | ❌ Not started | 5 | #10, #12, #13, #15, #16 — larger-effort items, out of scope for this pass |
 
 The broader per-app enhancement lists further down (everything after
@@ -61,23 +61,19 @@ report) before being added here.
    `User` type, so an authenticated client can query their own `passwordHash`
    from the login/register response.
 
-   **Status (verified 2026-07-11): ✅ Fixed.** `UsersModule` was moved into a
-   new `DEMO_MODULES` array in `app.module.ts`, gated by
+   **Status (verified 2026-07-11): ✅ Fixed (fully).** `UsersModule` was moved
+   into a new `DEMO_MODULES` array in `app.module.ts`, gated by
    `LOAD_DEMO_MODULES === 'true' || NODE_ENV === 'development'`. The Dockerfile
    hardcodes `NODE_ENV=production` in both the `migrate` and `runtime` stages
    and no compose/vault env file sets `LOAD_DEMO_MODULES`, so the query is
    unreachable in the real deployment. Confirmed via repo-wide grep that
    nothing else imports `UsersModule`/`UsersService`, so disabling it broke
-   nothing. **Residual, lower-severity, not yet fixed:** `AuthPayload.user`
-   (`src/auth/auth.types.ts:118-119`) is still typed as the raw `User` GraphQL
-   object, which still exposes `passwordHash` as a queryable field (no
-   `@HideField()` was added to `prisma/schema.prisma`) — an authenticated user
-   can still query their own `passwordHash` off the login/register response.
-   **How to close this out:** add `/// @HideField()` (or the
-   `prisma-nestjs-graphql` equivalent) above `passwordHash` in
-   `prisma/schema.prisma:256`, regenerate `src/@generated`, and confirm
-   `AuthPayload.user` and any other resolver returning `User` no longer expose
-   it — this is a S-effort follow-up.
+   nothing. The `AuthPayload.user` residual was closed by adding
+   `/// @HideField()` above `passwordHash`, `stripeCustomerId`,
+   `stripeSubscriptionId`, and `lastLoginIp` in `prisma/schema.prisma` and
+   updating the generated `src/@generated/user/user.model.ts` to use
+   `@HideField()` decorators — these fields are no longer exposed through
+   the GraphQL schema.
 
 2. **[Backend] Real security-sensitive resolvers use the weaker of two auth
    guards.** Confirmed: `src/mfa/mfa.resolver.ts:10`,
@@ -117,48 +113,14 @@ report) before being added here.
    `COOKIE_SECRET`, `TOKEN_DERIVATION_SECRET`, `ENCRYPTION_KEY`, Stripe/VAPID
    keys — today it only validates `NODE_ENV`/`PORT`.
 
-   **Status (verified 2026-07-11): ⚠️ Partially fixed.** `validationSchema`
+   **Status (verified 2026-07-11): ✅ Fixed (fully).** `validationSchema`
    now requires `DATABASE_URL`, `JWT_SECRET`, `CSRF_SECRET` (min 16 chars) and
    is correctly wired into `ConfigModule.forRoot({ validationSchema,
-   validationOptions })` in `app.module.ts:80`. Two things remain open:
-
-   - **`COOKIE_SECRET` is still `Joi.string().min(16).allow('').optional()`**
-     in `src/config/env.validation.ts` — it can be empty or absent and
-     validation still passes, so `main.ts:58`'s
-     `cookieParser(process.env.COOKIE_SECRET)` can still silently run with
-     signing disabled. **Resolution:** change it to `.required()` (or
-     `Joi.when('NODE_ENV', { is: 'production', then: Joi.required() })` if
-     local dev without a cookie secret needs to keep working) so a production
-     boot without it fails fast instead of degrading silently.
-   - **`src/csrf/csrf.middleware.ts:6` still has the hardcoded fallback**:
-     `const CSRF_SECRET = process.env.CSRF_SECRET ?? 'dev-csrf-secret-change-me';`.
-     It's unreachable in the *documented* deploy path (docker-compose's
-     `vault-init` service writes real secrets to `.vault-envs/backend.env`,
-     which is passed via `env_file:` — so the container's real OS env already
-     has `CSRF_SECRET` before Node even starts, well before this module-level
-     constant evaluates). But it's a live footgun for any other deploy path
-     that leans on the in-app `loadVaultSecrets()` fetch in `main.ts`
-     (`bootstrap()`'s first line) instead: that fetch runs *after* every
-     top-level import in the module graph — including this constant — has
-     already executed, so a Vault-only secret would arrive too late to be
-     seen here, and the middleware would silently keep using the insecure
-     default for the life of the process even though Joi validation (which
-     re-reads `process.env` later, inside `NestFactory.create`) would report
-     everything as fine. **Resolution:** stop capturing `CSRF_SECRET` as a
-     module-level constant — read it lazily inside `getSecret: () => {...}`
-     instead, and throw if it's missing at call time:
-     ```ts
-     const csrf = doubleCsrf({
-       getSecret: () => {
-         const secret = process.env.CSRF_SECRET;
-         if (!secret) throw new Error('CSRF_SECRET is not set');
-         return secret;
-       },
-       ...
-     });
-     ```
-     This closes the timing gap for good regardless of which secret-delivery
-     mechanism a given deployment uses. Effort: S for both sub-items.
+   validationOptions })` in `app.module.ts:80`. `COOKIE_SECRET` now uses
+   `Joi.when('NODE_ENV', { is: 'production', then: Joi.required() })` so a
+   production deploy without it fails fast. `src/csrf/csrf.middleware.ts` now
+   reads `process.env.CSRF_SECRET` lazily inside `getSecret: () => {...}` and
+   throws if missing at call time, closing the timing gap.
 
 4. **[Frontend] No site-wide security headers.** Confirmed: `src/proxy.ts:145-159`
    only applies a nonce-based CSP to routes under `/security/*`, and this is
@@ -504,25 +466,13 @@ report) before being added here.
     method names. **Fix (S):** update both docs to match the current
     implementation.
 
-    **Status (verified 2026-07-11): ⚠️ Partially fixed.**
-    `docs/backend/AUTH.md` was thoroughly corrected: the token table now says
-    "opaque (Redis session compound key)" instead of "opaque (Postgres
-    `Session.sessionToken`)"; the `refresh`/`logout` bullets, the deploy-order
-    note, and the whole "Sessions surface" section were rewritten to describe
-    the real `sessions.resolver.ts` (`mySessions`/`revokeSession`/
-    `revokeAllOtherSessions`, Redis-backed) instead of the dropped Postgres
-    `Session` table and the old `auth.resolver.ts` method names. **But
-    `docs/adr/001-redis-session-auth.md` was not touched** and still has the
-    same stale claim at line 23: `` `refreshToken` — opaque, Postgres-backed
-    (30d TTL) for session renewal ``. (Lines 14-16 of the ADR, which mention
-    "Traditional session stores (Postgres `sessions` table)", are fine as-is —
-    that's describing the *rejected alternative* the ADR argues against, not
-    the current implementation.) **Resolution:** change ADR line 23 to match
-    the corrected `AUTH.md` table — `` `refreshToken` — opaque (Redis session
-    compound key), 30d TTL, for session renewal `` — and skim the rest of the
-    ADR's "Consequences" section for any other now-inaccurate Postgres
-    references before closing this out. Effort: S (single-line fix plus a
-    read-through).
+    **Status (verified 2026-07-11): ✅ Fixed (fully).**
+    `docs/backend/AUTH.md` was thoroughly corrected in the first pass. The
+    remaining `docs/adr/001-redis-session-auth.md` stale reference has now been
+    fixed: line 23 now reads `` `refreshToken` — opaque (30d TTL) for session
+    renewal `` (matching the actual Redis-backed implementation), and line 26
+    now reads `` `userToken` — opaque (15min, httpOnly) for WebSocket auth ``
+    (reflecting the httpOnly cookie change from #19). Both docs are now accurate.
 
 19. **[Frontend] `CHANGELOG.md:16-17` claims the `access_token` cookie is
     "non-httpOnly for client access"** — **verified false against the current
@@ -699,18 +649,9 @@ a raw-API demo but worth revisiting if SSE is ever promoted beyond a demo page.
 drift #17–#20~~ — superseded by the verification pass above: 12 of 20
 headline items are confirmed fixed. What's actually left, in order:
 
-1. **Close out the 3 partial fixes first — all S effort, all already scoped
-   above:**
-   - **#3** — make `COOKIE_SECRET` required in `env.validation.ts`; stop
-     capturing `CSRF_SECRET` as a module-level constant in
-     `csrf.middleware.ts` (read it lazily in `getSecret()` instead).
-   - **#18** — fix the one stale line in `docs/adr/001-redis-session-auth.md`
-     (`refreshToken` is Redis-backed, not Postgres-backed) to match the
-     already-corrected `AUTH.md`.
-   - **#8** — continue migrating the ~55 remaining demo modules from
-     `CORE_MODULES` into `DEMO_MODULES` in the batches described above; not
-     urgent (the security-critical instance is already closed) but cheap to
-     chip away at incrementally.
+1. **#8 — continue migrating demo modules** — the remaining ~55 demo modules
+   from `CORE_MODULES` into `DEMO_MODULES`; not urgent (the security-critical
+   instance is already closed) but cheap to chip away at incrementally.
 2. **Testing gaps #12, #13, #15, #16** — start with `mfa/`, `outbox/`, and
    `api-keys/` (per #12's detailed plan above) since those are exactly the
    modules where the now-fixed bugs (#1, #2, #3, #7) lived — untested code is

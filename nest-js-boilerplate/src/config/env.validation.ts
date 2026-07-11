@@ -21,7 +21,11 @@ export const validationSchema = Joi.object({
   // ── Auth / Security secrets — missing values silently degrade without validation ──
   JWT_SECRET: Joi.string().min(16).required(),
   CSRF_SECRET: Joi.string().min(16).required(),
-  COOKIE_SECRET: Joi.string().min(16).allow('').optional(),
+  COOKIE_SECRET: Joi.string().min(16).when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+    otherwise: Joi.optional(),
+  }),
   TOKEN_DERIVATION_SECRET: Joi.string().min(16).optional(),
   ENCRYPTION_KEY: Joi.string().min(16).optional(),
 
