@@ -74,7 +74,6 @@ import { HttpThrottlerGuard } from './throttle/http-throttler.guard';
 import { UploadModule } from './upload/upload.module';
 import { UsersModule } from './users/users.module';
 import { WsModule } from './ws/ws.module';
-import { TelemetryModule } from './telemetry/telemetry.module';
 import { validationSchema, validationOptions } from './config/env.validation';
 
 // ── Core modules — always loaded in production ──────────────────────────────
@@ -192,7 +191,6 @@ const DEMO_MODULES = [
   MiddlewareModule,
   PassportAuthModule,
   AlsModule,
-  TelemetryModule,
 ];
 
 const isDemoEnabled =
