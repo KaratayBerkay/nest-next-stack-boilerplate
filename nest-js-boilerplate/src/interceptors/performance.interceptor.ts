@@ -23,18 +23,19 @@ export class PerformanceInterceptor implements NestInterceptor {
     let ip: string | undefined;
     let userAgent: string | undefined;
 
-    const type = context.getType() as string;
+    const type = context.getType();
 
     if (type === 'graphql') {
-      const args = context.getArgs() as Array<{ req?: Request } | undefined>;
+      const args = context.getArgs();
       const gqlCtx = args[0];
       const info = args[3] as
         | { fieldName?: string; parentType?: { name?: string } }
         | undefined;
       method = 'GRAPHQL';
-      path = info?.parentType?.name && info?.fieldName
-        ? `${info.parentType.name}.${info.fieldName}`
-        : 'graphql';
+      path =
+        info?.parentType?.name && info?.fieldName
+          ? `${info.parentType.name}.${info.fieldName}`
+          : 'graphql';
       ip = gqlCtx?.req?.ip;
       userAgent = gqlCtx?.req?.headers?.['user-agent'];
     } else if (type === 'http') {
@@ -53,7 +54,9 @@ export class PerformanceInterceptor implements NestInterceptor {
         if (durationMs > SLOW_REQUEST_THRESHOLD_MS) {
           let statusCode: number | undefined;
           if (type === 'http') {
-            statusCode = context.switchToHttp().getResponse<Response>().statusCode;
+            statusCode = context
+              .switchToHttp()
+              .getResponse<Response>().statusCode;
           }
           this.logger.log({
             category: 'performance',

@@ -31,10 +31,7 @@ const ROLE_HIERARCHY: Record<UserRole, number> = {
   [UserRole.SUPERADMIN]: 3,
 };
 
-function isTargetRoleGteActor(
-  targetRole: string,
-  actorRole: string,
-): boolean {
+function isTargetRoleGteActor(targetRole: string, actorRole: string): boolean {
   const actorLevel = ROLE_HIERARCHY[actorRole as UserRole] ?? 0;
   const targetLevel = ROLE_HIERARCHY[targetRole as UserRole] ?? 0;
   return targetLevel >= actorLevel;

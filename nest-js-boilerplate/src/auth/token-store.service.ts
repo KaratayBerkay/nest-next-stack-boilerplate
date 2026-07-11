@@ -273,23 +273,26 @@ export class TokenStoreService {
     data: { userId: string; email: string; role: string; tier: string },
   ): Promise<void> {
     const key = `${MFA_CHALLENGE_PREFIX}${tokenHash}`;
-    await this.redis.set(
-      key,
-      JSON.stringify(data),
-      'EX',
-      MFA_CHALLENGE_TTL,
-    );
+    await this.redis.set(key, JSON.stringify(data), 'EX', MFA_CHALLENGE_TTL);
   }
 
   /** Read and consume (delete) an MFA challenge. Returns null if expired or missing. */
-  async consumeMfaChallenge(
-    tokenHash: string,
-  ): Promise<{ userId: string; email: string; role: string; tier: string } | null> {
+  async consumeMfaChallenge(tokenHash: string): Promise<{
+    userId: string;
+    email: string;
+    role: string;
+    tier: string;
+  } | null> {
     const key = `${MFA_CHALLENGE_PREFIX}${tokenHash}`;
     const raw = await this.redis.getdel(key);
     if (!raw) return null;
     try {
-      return JSON.parse(raw) as { userId: string; email: string; role: string; tier: string };
+      return JSON.parse(raw) as {
+        userId: string;
+        email: string;
+        role: string;
+        tier: string;
+      };
     } catch {
       return null;
     }

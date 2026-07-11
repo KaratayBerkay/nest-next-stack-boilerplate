@@ -70,7 +70,10 @@ describe('AuthService', () => {
         { provide: DeviceService, useValue: { resolveForLogin: jest.fn() } },
         { provide: TokenStoreService, useValue: mockTokenStore },
         { provide: SessionHydrationService, useValue: { hydrate: jest.fn() } },
-        { provide: TokenDerivationService, useValue: { deriveRbacToken: jest.fn(), deriveUserToken: jest.fn() } },
+        {
+          provide: TokenDerivationService,
+          useValue: { deriveRbacToken: jest.fn(), deriveUserToken: jest.fn() },
+        },
         { provide: UsernameService, useValue: { generate: jest.fn() } },
       ],
     }).compile();

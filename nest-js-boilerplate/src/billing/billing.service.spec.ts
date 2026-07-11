@@ -74,7 +74,9 @@ describe('BillingService', () => {
     };
     mockStripe = {
       createCustomer: jest.fn().mockResolvedValue({ id: 'cus_new123' }),
-      createSetupIntent: jest.fn().mockResolvedValue({ client_secret: 'si_secret' }),
+      createSetupIntent: jest
+        .fn()
+        .mockResolvedValue({ client_secret: 'si_secret' }),
     };
 
     service = new BillingService(
@@ -141,7 +143,10 @@ describe('BillingService', () => {
 
       await service.subscribeToPlan('u1', SubscriptionTier.BASIC, 'pm_card');
 
-      expect(mockStripe.createCustomer).toHaveBeenCalledWith('user@example.com', 'Test');
+      expect(mockStripe.createCustomer).toHaveBeenCalledWith(
+        'user@example.com',
+        'Test',
+      );
       expect(mockPrisma.user.update).toHaveBeenCalledWith({
         where: { id: 'u1' },
         data: { stripeCustomerId: 'cus_new123' },

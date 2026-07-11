@@ -33,10 +33,9 @@ describe('RealtimeGateway — public methods', () => {
       const ws1 = makeWs({ send: jest.fn() });
       const ws2 = makeWs({ send: jest.fn() });
       // Access private userSockets via bracket notation
-      (gateway as unknown as { userSockets: Map<string, Set<unknown>> }).userSockets.set(
-        'u1',
-        new Set([ws1, ws2]),
-      );
+      (
+        gateway as unknown as { userSockets: Map<string, Set<unknown>> }
+      ).userSockets.set('u1', new Set([ws1, ws2]));
 
       const sent = gateway.emitToUser('u1', { type: 'test' });
 
@@ -52,10 +51,9 @@ describe('RealtimeGateway — public methods', () => {
     it('skips closed sockets', () => {
       const wsClosed = makeWs({ readyState: 3, send: jest.fn() }); // CLOSED
       const wsOpen = makeWs({ send: jest.fn() });
-      (gateway as unknown as { userSockets: Map<string, Set<unknown>> }).userSockets.set(
-        'u1',
-        new Set([wsClosed, wsOpen]),
-      );
+      (
+        gateway as unknown as { userSockets: Map<string, Set<unknown>> }
+      ).userSockets.set('u1', new Set([wsClosed, wsOpen]));
 
       const sent = gateway.emitToUser('u1', { type: 'test' });
 
@@ -129,10 +127,9 @@ describe('RealtimeGateway — public methods', () => {
         readyState: 1,
         close: jest.fn(),
       });
-      (gateway as unknown as { userSockets: Map<string, Set<unknown>> }).userSockets.set(
-        'u1',
-        new Set([wsMatch, wsOther]),
-      );
+      (
+        gateway as unknown as { userSockets: Map<string, Set<unknown>> }
+      ).userSockets.set('u1', new Set([wsMatch, wsOther]));
 
       const closed = gateway.closeSocketsForSession('u1', 'sess-target');
 
@@ -150,14 +147,16 @@ describe('RealtimeGateway — public methods', () => {
     it('updates tier on all user sockets and sends tier-changed frame', () => {
       const ws1 = makeWs({ tier: 'FREE', send: jest.fn() });
       const ws2 = makeWs({ tier: 'FREE', send: jest.fn() });
-      (gateway as unknown as { userSockets: Map<string, Set<unknown>> }).userSockets.set(
-        'u1',
-        new Set([ws1, ws2]),
-      );
+      (
+        gateway as unknown as { userSockets: Map<string, Set<unknown>> }
+      ).userSockets.set('u1', new Set([ws1, ws2]));
 
       gateway.updateUserTier('u1', 'PREMIUM');
 
-      const expectedFrame = JSON.stringify({ type: 'tier-changed', tier: 'PREMIUM' });
+      const expectedFrame = JSON.stringify({
+        type: 'tier-changed',
+        tier: 'PREMIUM',
+      });
       expect(ws1.send).toHaveBeenCalledWith(expectedFrame);
       expect(ws2.send).toHaveBeenCalledWith(expectedFrame);
     });

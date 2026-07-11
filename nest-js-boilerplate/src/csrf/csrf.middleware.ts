@@ -25,7 +25,13 @@ const csrf = doubleCsrf({
     const bearer = authHeader?.startsWith('Bearer ')
       ? authHeader.slice(7)
       : undefined;
-    return cookies?.['access_token'] ?? cookies?.['__Host-access_token'] ?? bearer ?? req.ip ?? 'anonymous';
+    return (
+      cookies?.['access_token'] ??
+      cookies?.['__Host-access_token'] ??
+      bearer ??
+      req.ip ??
+      'anonymous'
+    );
   },
   // `__Host-` requires Secure+path=/ (HTTPS only) — use a plain name off production.
   cookieName: isProd ? '__Host-csrf' : 'csrf-token',

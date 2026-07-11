@@ -96,9 +96,7 @@ export class OutboxService implements OnModuleInit, OnModuleDestroy {
         AND "updatedAt" < now() - interval '5 minutes'
     `;
     if (reclaimed > 0) {
-      this.logger.warn(
-        `Reclaimed ${reclaimed} stale PUBLISHING outbox row(s)`,
-      );
+      this.logger.warn(`Reclaimed ${reclaimed} stale PUBLISHING outbox row(s)`);
     }
 
     const claimed = await this.prisma.$queryRaw<ClaimedRow[]>(Prisma.sql`
