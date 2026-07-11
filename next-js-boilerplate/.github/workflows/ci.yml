@@ -45,5 +45,11 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium firefox webkit
 
+      # TODO: this job has no backend to talk to — no Postgres/Redis services and no
+      # compiled nest-js-boilerplate process, unlike nest-js-boilerplate/.github/workflows/ci.yml's
+      # `test` job. The BFF routes this suite drives (login/register/dev-activate) all proxy to
+      # APP_URL, which points at nothing here, so this step cannot pass against a real backend as
+      # currently configured. Needs: Postgres+Redis services, build+migrate+boot the backend with
+      # ALLOW_DEV_ACTIVATE=true, a health-check wait, then run Playwright against it.
       - name: E2E tests
         run: pnpm test:e2e
