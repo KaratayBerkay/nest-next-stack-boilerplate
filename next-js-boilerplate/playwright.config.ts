@@ -1,9 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// End-to-end tests. Boots the Next dev server on a dedicated port (3100) so the
-// suite never collides with another app on the default 3000, then runs /e2e specs.
 const PORT = 3100;
 const baseURL = `http://localhost:${PORT}`;
+const AUTH_STATE = "playwright/.auth/user.json";
 
 export default defineConfig({
   testDir: "./e2e",
@@ -15,12 +14,34 @@ export default defineConfig({
   use: {
     baseURL,
     trace: "on-first-retry",
+    storageState: AUTH_STATE,
   },
   projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
-    { name: "firefox", use: { ...devices["Desktop Firefox"] } },
-    { name: "webkit", use: { ...devices["Desktop Safari"] } },
-    { name: "mobile-chrome", use: { ...devices["Pixel 7"] } },
+    {
+      name: "setup",
+      testMatch: /setup\.spec\.ts$/,
+      use: { storageState: { cookies: [], origins: [] } },
+    },
+    {
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
+      dependencies: ["setup"],
+    },
+    {
+      name: "firefox",
+      use: { ...devices["Desktop Firefox"] },
+      dependencies: ["setup"],
+    },
+    {
+      name: "webkit",
+      use: { ...devices["Desktop Safari"] },
+      dependencies: ["setup"],
+    },
+    {
+      name: "mobile-chrome",
+      use: { ...devices["Pixel 7"] },
+      dependencies: ["setup"],
+    },
   ],
   webServer: {
     command: `pnpm exec next dev --port ${PORT}`,

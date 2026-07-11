@@ -53,6 +53,10 @@ test.describe("Cookie-based session management", () => {
     const data = await res.json();
     expect(data.user).toBeNull();
   });
+});
+
+test.describe("unauthenticated cookie checks", () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
 
   test("SSR page shows not authenticated for anonymous users", async ({
     page,

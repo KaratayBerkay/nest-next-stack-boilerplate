@@ -94,6 +94,10 @@ test.describe("BFF auth endpoints", () => {
     });
     expect(res.status()).toBe(401);
   });
+});
+
+test.describe("unauthenticated page checks", () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
 
   test("SSR page shows not authenticated for anonymous users", async ({
     page,

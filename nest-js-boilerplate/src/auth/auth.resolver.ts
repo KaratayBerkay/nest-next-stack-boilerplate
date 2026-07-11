@@ -87,6 +87,16 @@ export class AuthResolver {
   }
 
   /**
+   * Dev-only: activate a user by email so e2e tests can skip the email
+   * verification flow.  Gated to non-production environments.
+   */
+  @Mutation(() => Boolean)
+  async devActivateUser(@Args('email') email: string): Promise<boolean> {
+    if (process.env.NODE_ENV === 'production') return false;
+    return this.auth.devActivateUser(email);
+  }
+
+  /**
    * Returns the current user from the Redis session — zero Prisma queries on the hot path.
    * The `SessionAuthGuard` resolves the full user snapshot from the compound Redis key.
    */

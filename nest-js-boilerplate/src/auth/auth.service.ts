@@ -332,6 +332,23 @@ export class AuthService {
     return user;
   }
 
+  /**
+   * Dev-only: set a user to ACTIVE so e2e tests can skip email verification.
+   * Gated to non-production by the resolver.
+   */
+  async devActivateUser(email: string): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+    if (!user) return false;
+    if (user.status === 'ACTIVE') return true;
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { status: 'ACTIVE', emailVerifiedAt: new Date() },
+    });
+    return true;
+  }
+
   /** Issue a PASSWORD_RESET token inside an existing transaction (shared helper for forgot-password and welcome flow). */
   private async issuePasswordResetToken(
     userId: string,

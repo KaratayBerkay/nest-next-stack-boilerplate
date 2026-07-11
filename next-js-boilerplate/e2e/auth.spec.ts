@@ -25,15 +25,6 @@ test.describe("Auth UI", () => {
     expect(data.user).toBeNull();
   });
 
-  test("Sign In / Sign Out link is visible in demos header", async ({
-    page,
-  }) => {
-    await page.goto("/theme");
-    const link = page.getByRole("link", { name: /sign in/i });
-    await expect(link).toBeVisible();
-    await expect(link).toHaveAttribute("href", "/auth/login");
-  });
-
   test("login page links to register page and vice versa", async ({ page }) => {
     await page.goto("/auth/login");
     const registerLink = page
@@ -49,5 +40,18 @@ test.describe("Auth UI", () => {
       .getByRole("link");
     await signInLink.click();
     await expect(page).toHaveURL("/auth/login");
+  });
+});
+
+test.describe("unauthenticated UI checks", () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test("Sign In / Sign Out link is visible in demos header", async ({
+    page,
+  }) => {
+    await page.goto("/theme");
+    const link = page.getByRole("link", { name: /sign in/i });
+    await expect(link).toBeVisible();
+    await expect(link).toHaveAttribute("href", "/auth/login");
   });
 });
