@@ -13,6 +13,11 @@
 > this done · `P1` = high-value next · `P2` = nice to have. Effort: S (< ½
 > day) · M (1–2 days) · L (multi-day). File:line citations point at current
 > HEAD, verified directly, not copied from the audit doc.
+>
+> **Update 2026-07-11 (commit `39ecaae`):** P0 #1, #2, and #3 all resolved.
+> P0 #2 (e2e login fixture) implemented via Playwright setup project +
+> `devActivateUser` mutation + BFF route. P0 #1 (MFA login) fixed in prior
+> commit. P0 #3 (admin ban/suspend) fixed in prior commit.
 
 ---
 
