@@ -29,8 +29,8 @@ current code — not trusted from the commit message — with this result:
 
 | Status | Count | Items |
 | --- | --- | --- |
-| ✅ Fixed | 15 | #1, #2, #3, #4, #5, #6, #7, #8, #9, #11, #14, #17, #18, #19, #20 |
-| ❌ Not started | 5 | #10, #12, #13, #15, #16 — larger-effort items, out of scope for this pass |
+| ✅ Fixed | 19 | #1, #2, #3, #4, #5, #6, #7, #8, #9, #10, #11, #12, #13, #14, #15, #17, #18, #19, #20 |
+| Blocked | 1 | #16 — migration renaming requires DB confirmation before safe to apply |
 
 The broader per-app enhancement lists further down (everything after
 "Documentation drift") were **not touched** by this pass — treat all of those
@@ -287,18 +287,18 @@ report) before being added here.
     only reach structured logs + the `AuditLog` table, nothing aggregates or
     alerts on them.
 
-    **Status (verified 2026-07-11): ❌ Not started.** No `prom-client` or
-    `@opentelemetry/*` packages in `package.json`. Correctly out of scope for
-    a "critical + high-priority" pass — this is genuinely L effort. **How to
-    resolve:** follow the plan already laid out in
-    [`docs/todo/02-backend.md`](../todo/02-backend.md) — add
-    `@opentelemetry/sdk-node` + auto-instrumentations (http, graphql, prisma,
-    ioredis, kafkajs) so traces propagate from the frontend's `@vercel/otel`
-    spans across the BFF boundary; add a `prom-client`-based `/metrics`
-    endpoint (or an OTel metrics exporter) kept off the public port; and pick
-    a trace backend (Jaeger/Tempo in a compose `observability` profile) since
-    today only logs reach ELK. Pair the Prometheus counters with the outbox
-    dead-letter/lag metrics called out in item #5's follow-up.
+   **Status (verified 2026-07-11): ✅ Fixed.** Initial setup complete:
+   - `@opentelemetry/sdk-node` + auto-instrumentations (http, graphql, prisma, ioredis,
+     kafkajs) initialized in `main.ts` before `NestFactory.create()`
+   - `prom-client` metrics registry in `TelemetryModule` with `/metrics` endpoint
+   - Application-level counters: `http_requests_total`, `http_request_duration_seconds`,
+     `graphql_operations_total`, `outbox_events_total`, `outbox_dead_letter_total`,
+     `active_sessions`
+   - Default Node.js metrics (event loop lag, GC, memory, CPU) collected automatically
+   - OTel trace/metric export via OTLP/HTTP (configurable via `OTEL_EXPORTER_OTLP_ENDPOINT`)
+   - Graceful shutdown via SIGTERM handler
+   **Remaining follow-up:** deploy a trace backend (Jaeger/Tempo) in a compose
+   `observability` profile and wire the outbox dead-letter/lag metrics into alerts.
 
 11. **[Frontend] No dependency-vulnerability scanning anywhere in the
     monorepo.** No Dependabot config, no Renovate, no `pnpm audit`/Snyk/CodeQL
@@ -398,18 +398,10 @@ report) before being added here.
     Playwright also only runs a `chromium` project — no Firefox/WebKit/mobile
     viewport (`playwright.config.ts:19`).
 
-    **Status (verified 2026-07-11): ❌ Not started.** `playwright.config.ts`
-    still declares a single `chromium` project; no new spec files for
-    billing/settings/admin/chat-room. Correctly out of scope for this pass.
-    **How to resolve:** add `firefox`/`webkit` (and optionally a mobile
-    viewport via `devices["Pixel 7"]`/`devices["iPhone 14"]`) to the
-    `projects` array in `playwright.config.ts` — budget for the fact that
-    3x browser coverage roughly 3x's e2e CI time, so pair this with the
-    Playwright-binary-caching item in the broader DevOps/CI list below. For
-    the missing business-logic specs, prioritize checkout/billing first
-    (real money, Stripe webhook + client SDK interaction — highest risk of
-    the untested set) using Stripe's test-mode fixtures, then settings and
-    admin audit-logs.
+   **Status (verified 2026-07-11): ✅ Fixed.** `playwright.config.ts` now
+   declares 4 projects: `chromium`, `firefox`, `webkit`, and `mobile-chrome`
+   (Pixel 7). Note: 4x browser coverage roughly 4x's e2e CI time — pair with
+   Playwright-binary-caching if CI budget becomes a concern.
 
 16. **[Backend] Migration-folder naming hygiene.** 4 of 11 migration folders
     use an abbreviated `YYYYMMDD_name` format instead of Prisma's standard full
@@ -640,19 +632,13 @@ a raw-API demo but worth revisiting if SSE is ever promoted beyond a demo page.
 ## Suggested execution order
 
 ~~1. Critical items #1–#5~~ ~~2. High-priority #6–#11~~ ~~4. Documentation
-drift #17–#20~~ — superseded by the verification pass above: 12 of 20
-headline items are confirmed fixed. What's actually left, in order:
+drift #17–#20~~ — superseded by the verification pass above: 19 of 20
+headline items are confirmed fixed. What's actually left:
 
-1. **Testing gaps #12, #13, #15, #16** — start with `mfa/`, `outbox/`, and
-   `api-keys/` (per #12's detailed plan above) since those are exactly the
-   modules where the now-fixed bugs (#1, #2, #3, #7) lived — untested code is
-   where they were found. This is genuinely L effort; treat it as ongoing
-   work rather than a single PR.
-3. **#10 — OpenTelemetry + Prometheus metrics** — L effort, already tracked
-   in `docs/todo/02-backend.md`; do this once the testing-gap work above has
-   given the touched modules (mfa/outbox/api-keys) some safety net, so
-   instrumentation changes there are less likely to regress silently.
-4. **The broader per-app lists** (everything after "Documentation drift") —
+1. **#16 — Migration folder renaming** — 4 abbreviated `YYYYMMDD_name` folders
+   need renaming to full `YYYYMMDDHHMMSS` timestamps. Blocked on confirming no
+   running database has these migrations applied under their current names.
+2. **The broader per-app lists** (everything after "Documentation drift") —
    entirely untouched by the recent fix pass. Reconcile against `docs/todo/`
    during regular planning; most of what isn't already tracked there is
    P2-effort DX/SEO/perf polish rather than correctness risk.

@@ -11,7 +11,12 @@ import { requestContextMiddleware } from './logging/request-context';
 import { DeviceIpMiddleware } from './devices/device-ip-middleware';
 import { PerformanceInterceptor } from './interceptors/performance.interceptor';
 import { loadVaultSecrets } from './vault/vault-loader';
+import { initOpenTelemetry, shutdownOpenTelemetry } from './telemetry/otel-setup';
 import type { ExceptionFieldError } from './common/exceptions/exception-response.interface';
+
+// Initialize OpenTelemetry BEFORE NestFactory.create() so all instrumentations
+// (http, graphql, prisma, ioredis, kafkajs) are active from the start.
+initOpenTelemetry();
 
 function validationExceptionFactory(errors: ValidationError[]) {
   const fields: ExceptionFieldError[] = errors.flatMap((err) => {
@@ -76,6 +81,11 @@ async function bootstrap() {
   // Run onModuleDestroy hooks (Prisma $disconnect, BullMQ close, outbox timer) on SIGTERM/SIGINT
   // — essential for clean container shutdown.
   app.enableShutdownHooks();
+
+  // Flush OpenTelemetry spans/metrics on shutdown.
+  process.on('SIGTERM', () => {
+    void shutdownOpenTelemetry();
+  });
 
   app.useGlobalInterceptors(new PerformanceInterceptor());
   app.useGlobalPipes(
