@@ -152,6 +152,7 @@ function ChatRoomContent({ initialRoom = "general" }: ChatRoomViewProps) {
             <button
               onClick={() => setSidebarOpen(false)}
               className="rounded p-1 hover:bg-surface-hover"
+              aria-label="Close rooms sidebar"
             >
               <IconX size={18} className="text-muted" />
             </button>

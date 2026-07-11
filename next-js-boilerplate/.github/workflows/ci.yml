@@ -34,10 +34,10 @@ jobs:
         run: pnpm test
 
       - name: Fallow dead-code
-        run: npx fallow dead-code --ci --format json --quiet 2>/dev/null || true
+        run: npx fallow dead-code --ci --format json --quiet >> $GITHUB_STEP_SUMMARY || true
 
       - name: Fallow duplication
-        run: npx fallow dupes --ci --format json --quiet 2>/dev/null || true
+        run: npx fallow dupes --ci --format json --quiet >> $GITHUB_STEP_SUMMARY || true
 
       - name: Build
         run: pnpm build

@@ -5,6 +5,7 @@ export const AUTH_TOKEN_URL = "/api/auth/token" as const;
 export const AUTH_DEVICE_HANDSHAKE_URL = "/api/auth/device-handshake" as const;
 export const AUTH_ME_URL = "/api/auth/me" as const;
 export const AUTH_LOGIN_URL = "/api/auth/login" as const;
+export const AUTH_LOGIN_MFA_URL = "/api/auth/login/mfa" as const;
 export const AUTH_REGISTER_URL = "/api/auth/register" as const;
 export const AUTH_LOGOUT_URL = "/api/auth/logout" as const;
 export const AUTH_VERIFY_EMAIL_URL = "/api/auth/verify-email" as const;

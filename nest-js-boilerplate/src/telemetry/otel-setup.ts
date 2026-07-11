@@ -23,6 +23,10 @@ let sdk: NodeSDK | null = null;
  * Set OTEL_EXPORTER_OTLP_ENDPOINT to override.
  */
 export function initOpenTelemetry(): void {
+  // Enable OTel diagnostic logging so export failures and internal warnings
+  // are visible instead of silently swallowed.
+  diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
+
   const serviceName =
     process.env.OTEL_SERVICE_NAME ?? 'nest-next-stack-backend';
   const serviceVersion = process.env.npm_package_version ?? '0.0.0';
@@ -69,11 +73,7 @@ export function initOpenTelemetry(): void {
  */
 export async function shutdownOpenTelemetry(): Promise<void> {
   if (sdk) {
-  // Enable OTel diagnostic logging so export failures and internal warnings
-  // are visible instead of silently swallowed.
-  diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
-
-  try {
+    try {
       await sdk.shutdown();
       logger.log('OpenTelemetry shut down');
     } catch (err) {

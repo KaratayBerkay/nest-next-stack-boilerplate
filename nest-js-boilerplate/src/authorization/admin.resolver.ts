@@ -10,7 +10,9 @@ import {
   Resolver,
 } from '@nestjs/graphql';
 import { UserRole } from '../@generated/prisma/user-role.enum';
+import { UserStatus } from '../@generated/prisma/user-status.enum';
 import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
+import { AuditAction } from '../@generated/prisma/audit-action.enum';
 import type { JwtUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
@@ -94,6 +96,38 @@ export class AdminResolver {
     await this.tokenStore.rewriteFieldsForUser(userId, { tier });
     // Push tier change to all live WS connections for this user.
     this.realtime.updateUserTier(userId, tier);
+    return true;
+  }
+
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  @Mutation(() => Boolean)
+  async setUserStatus(
+    @Args('userId') userId: string,
+    @Args('status', { type: () => UserStatus }) status: UserStatus,
+    @Args('reason', { nullable: true }) reason?: string,
+  ): Promise<boolean> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { status },
+    });
+
+    // Revoke all active sessions so the user is logged out immediately.
+    await this.tokenStore.revokeAllForUser(userId);
+
+    // Close any live WebSocket connections for this user.
+    this.realtime.closeAllSocketsForUser(userId);
+
+    // Audit log the action.
+    await this.prisma.auditLog.create({
+      data: {
+        actorId: (await this.prisma.user.findUnique({ where: { id: userId } }))?.id ?? userId,
+        action: AuditAction.UPDATE,
+        entityType: 'User',
+        entityId: userId,
+        summary: `User status changed to ${status}${reason ? `: ${reason}` : ''}`,
+      },
+    });
+
     return true;
   }
 

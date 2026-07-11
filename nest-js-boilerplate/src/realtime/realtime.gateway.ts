@@ -902,4 +902,19 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     }
     return closed;
   }
+
+  /** Close all live WebSocket connections for a user (e.g. on ban/suspend). */
+  closeAllSocketsForUser(userId: string): number {
+    const sockets = this.userSockets.get(userId);
+    if (!sockets) return 0;
+    let closed = 0;
+    for (const ws of sockets) {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close(1000, 'Account suspended');
+        closed++;
+      }
+    }
+    this.userSockets.delete(userId);
+    return closed;
+  }
 }

@@ -19,6 +19,10 @@ import { withLogging } from "@/lib/request-logger";
  * Instead, the backend returns the values in the GraphQL body, and the BFF sets
  * all 4 cookies directly. This also ensures every cookie carries the correct
  * Domain, SameSite, and Secure options from our central cookie helpers.
+ *
+ * When the user has MFA enabled, the backend returns mfaRequired:true instead of
+ * tokens. The BFF returns 202 with { mfaRequired: true, mfaToken } so the
+ * frontend can show the TOTP challenge form.
  */
 
 const LOGIN_QUERY = `
@@ -29,6 +33,8 @@ const LOGIN_QUERY = `
       deviceId
       deviceToken
       userToken
+      mfaRequired
+      mfaToken
       user {
         id
         email
@@ -67,11 +73,13 @@ export const POST = withLogging(async (request, log) => {
 
   const { data, errors } = await graphqlFetch<{
     login: {
-      accessToken: string;
+      accessToken?: string;
       rbacToken?: string;
       deviceId?: string;
       deviceToken?: string;
       userToken?: string;
+      mfaRequired?: boolean;
+      mfaToken?: string;
       user: unknown;
     };
   }>(LOGIN_QUERY, {
@@ -84,11 +92,22 @@ export const POST = withLogging(async (request, log) => {
     return NextResponse.json(body, { status: body.statusCode });
   }
 
-  const { accessToken, rbacToken, deviceToken, userToken, user } = data.login;
+  const loginData = data.login;
+
+  // MFA challenge: return 202 so the frontend shows the TOTP form.
+  if (loginData.mfaRequired) {
+    log.info({ email }, "login requires MFA challenge");
+    return NextResponse.json(
+      { mfaRequired: true, mfaToken: loginData.mfaToken, user: loginData.user },
+      { status: 202 },
+    );
+  }
+
+  const { accessToken, rbacToken, deviceToken, userToken, user } = loginData;
 
   const response = NextResponse.json({ user, accessToken }, { status: 200 });
 
-  response.cookies.set(accessTokenCookieOptions(accessToken));
+  if (accessToken) response.cookies.set(accessTokenCookieOptions(accessToken));
   if (rbacToken) response.cookies.set(rbacTokenCookieOptions(rbacToken));
   if (deviceToken) response.cookies.set(deviceTokenCookieOptions(deviceToken));
   if (userToken) response.cookies.set(userTokenCookieOptions(userToken));

@@ -18,6 +18,7 @@ import {
   AUTH_DEVICE_HANDSHAKE_URL,
   AUTH_ME_URL,
   AUTH_LOGIN_URL,
+  AUTH_LOGIN_MFA_URL,
   AUTH_REGISTER_URL,
   AUTH_LOGOUT_URL,
 } from "@/constants/api/urls";
@@ -44,6 +45,8 @@ export type User = {
 type AuthResponse = {
   user: User;
   accessToken?: string;
+  mfaRequired?: boolean;
+  mfaToken?: string;
 };
 
 type AuthContextValue = {
@@ -51,6 +54,7 @@ type AuthContextValue = {
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  verifyMfa: (mfaToken: string, code: string) => Promise<void>;
   register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -145,14 +149,27 @@ export function AuthProvider({
 
   const login = useCallback(async (email: string, password: string) => {
     try {
-      const data = await apiFetchJson<AuthResponse>(AUTH_LOGIN_URL, {
+      const res = await fetch(AUTH_LOGIN_URL, {
         method: POST,
         headers: JSON_CONTENT_TYPE_HEADER,
         body: JSON.stringify({ email, password, timezone: readTimezone() }),
       });
+
+      const data = await res.json() as AuthResponse & { mfaRequired?: boolean; mfaToken?: string };
+
+      // MFA challenge: 202 means the user needs to enter a TOTP code.
+      if (res.status === 202 && data.mfaRequired) {
+        const err = new Error("MFA required") as Error & { mfaRequired: boolean; mfaToken: string; user: User };
+        err.mfaRequired = true;
+        err.mfaToken = data.mfaToken!;
+        err.user = data.user;
+        throw err;
+      }
+
       setUser(data.user);
       if (data.accessToken) setToken(data.accessToken);
     } catch (err) {
+      if ((err as Error & { mfaRequired?: boolean }).mfaRequired) throw err;
       const exception = (err as Error & { exception?: unknown }).exception;
       if (exception) throw exception;
       throw err;
@@ -178,6 +195,22 @@ export function AuthProvider({
     [],
   );
 
+  const verifyMfa = useCallback(async (mfaToken: string, code: string) => {
+    try {
+      const data = await apiFetchJson<AuthResponse>(AUTH_LOGIN_MFA_URL, {
+        method: POST,
+        headers: JSON_CONTENT_TYPE_HEADER,
+        body: JSON.stringify({ mfaToken, code }),
+      });
+      setUser(data.user);
+      if (data.accessToken) setToken(data.accessToken);
+    } catch (err) {
+      const exception = (err as Error & { exception?: unknown }).exception;
+      if (exception) throw exception;
+      throw err;
+    }
+  }, []);
+
   const logout = useCallback(async () => {
     await fetch(AUTH_LOGOUT_URL, { method: POST });
     setUser(null);
@@ -200,8 +233,8 @@ export function AuthProvider({
   }, []);
 
   const value = useMemo(
-    () => ({ user, token, loading, login, register, logout, refreshUser }),
-    [user, token, loading, login, register, logout, refreshUser],
+    () => ({ user, token, loading, login, verifyMfa, register, logout, refreshUser }),
+    [user, token, loading, login, verifyMfa, register, logout, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

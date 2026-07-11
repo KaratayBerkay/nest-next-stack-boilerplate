@@ -168,4 +168,28 @@ describe('OutboxService', () => {
       expect(customQueue.add).not.toHaveBeenCalled();
     });
   });
+
+  describe('relayPendingEvents — stale PUBLISHING reclaim', () => {
+    it('reclaims stale PUBLISHING rows before claiming new PENDING events', async () => {
+      prisma.$executeRaw.mockResolvedValue(2);
+      prisma.$queryRaw.mockResolvedValue([claimedRow({ attempts: 1 })]);
+      queue.add.mockResolvedValue({});
+
+      const published = await service.relayPendingEvents();
+
+      expect(prisma.$executeRaw).toHaveBeenCalled();
+      expect(published).toBe(1);
+      expect(queue.add).toHaveBeenCalled();
+    });
+
+    it('proceeds normally when no stale rows exist', async () => {
+      prisma.$executeRaw.mockResolvedValue(0);
+      prisma.$queryRaw.mockResolvedValue([]);
+
+      const published = await service.relayPendingEvents();
+
+      expect(prisma.$executeRaw).toHaveBeenCalled();
+      expect(published).toBe(0);
+    });
+  });
 });

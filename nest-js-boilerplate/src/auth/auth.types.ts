@@ -97,8 +97,9 @@ export class SessionUserPayload {
 
 @ObjectType()
 export class AuthPayload {
-  @Field()
-  accessToken!: string;
+  /** Session access token — null when mfaRequired is true (challenge flow). */
+  @Field(() => String, { nullable: true })
+  accessToken?: string;
 
   /** Opaque RBAC token delivered as httpOnly cookie; the auth-snapshot handle. */
   @Field(() => String, { nullable: true })
