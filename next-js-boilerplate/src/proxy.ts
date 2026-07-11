@@ -5,6 +5,7 @@ import { defaultLocale, isLocale, resolveLocale } from "@/lib/i18n/config";
 import { defaultVersion, isVersion, isVersionLike } from "@/lib/version/config";
 import { LANG_COOKIE } from "@/constants/i18n";
 import type { Lang } from "@/constants/i18n";
+import { LOGIN_PATH } from "@/constants/routes";
 
 const LANG_COOKIE_OPTS = {
   path: "/",
@@ -134,7 +135,16 @@ export function proxy(request: NextRequest) {
       return withRequestId(redirect, requestId);
     }
 
-    // Valid version + locale → fall through and render.
+    // Valid version + locale → require a session before rendering. The
+    // `/v1/[lang]` layout also redirects on a null session, but it renders
+    // concurrently with its child page — pages that do `getSessionUser()!.tier`
+    // can throw before the layout's redirect wins. Gating here means an
+    // unauthenticated request never reaches a page component at all.
+    if (!request.cookies.get(ACCESS_TOKEN_COOKIE)?.value) {
+      const url = request.nextUrl.clone();
+      url.pathname = LOGIN_PATH;
+      return withRequestId(NextResponse.redirect(url, 302), requestId);
+    }
   }
 
   // Strict nonce-based CSP, scoped to /security/*. A fresh nonce per request forces

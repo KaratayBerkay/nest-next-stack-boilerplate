@@ -102,6 +102,7 @@ export class AdminResolver {
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   @Mutation(() => Boolean)
   async setUserStatus(
+    @CurrentUser() admin: JwtUser,
     @Args('userId') userId: string,
     @Args('status', { type: () => UserStatus }) status: UserStatus,
     @Args('reason', { nullable: true }) reason?: string,
@@ -120,7 +121,7 @@ export class AdminResolver {
     // Audit log the action.
     await this.prisma.auditLog.create({
       data: {
-        actorId: (await this.prisma.user.findUnique({ where: { id: userId } }))?.id ?? userId,
+        actorId: admin.userId,
         action: AuditAction.UPDATE,
         entityType: 'User',
         entityId: userId,
