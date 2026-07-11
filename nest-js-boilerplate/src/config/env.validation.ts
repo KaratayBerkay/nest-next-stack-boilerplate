@@ -10,6 +10,29 @@ export const validationSchema = Joi.object({
     .valid('development', 'production', 'test', 'provision')
     .default('development'),
   PORT: Joi.number().port().default(3000),
+
+  // ── Database ──────────────────────────────────────────────────────────────
+  DATABASE_URL: Joi.string().uri().required(),
+
+  // ── Redis ─────────────────────────────────────────────────────────────────
+  REDIS_HOST: Joi.string().default('localhost'),
+  REDIS_PORT: Joi.number().port().default(6379),
+
+  // ── Auth / Security secrets — missing values silently degrade without validation ──
+  JWT_SECRET: Joi.string().min(16).required(),
+  CSRF_SECRET: Joi.string().min(16).required(),
+  COOKIE_SECRET: Joi.string().min(16).allow('').optional(),
+  TOKEN_DERIVATION_SECRET: Joi.string().min(16).optional(),
+  ENCRYPTION_KEY: Joi.string().min(16).optional(),
+
+  // ── Stripe ────────────────────────────────────────────────────────────────
+  STRIPE_SECRET_KEY: Joi.string().optional(),
+  STRIPE_WEBHOOK_SECRET: Joi.string().optional(),
+
+  // ── VAPID (Web Push) ─────────────────────────────────────────────────────
+  VAPID_PUBLIC_KEY: Joi.string().optional(),
+  VAPID_PRIVATE_KEY: Joi.string().optional(),
+  VAPID_EMAIL: Joi.string().email().optional(),
 });
 
 // The matching `validationOptions`: tolerate the many unrelated env vars this app uses

@@ -1,5 +1,7 @@
 import { test, expect } from "@playwright/test";
 
+const isCI = !!process.env.CI;
+
 test.describe("Server-side rate limiting", () => {
   test("rapid repeated login attempts are eventually blocked", async ({
     request,
@@ -24,7 +26,7 @@ test.describe("Server-side rate limiting", () => {
     }
 
     if (!blocked) {
-      test.skip();
+      test.skip(!isCI, "Rate limiting not triggered — skipping locally only");
     }
   });
 
@@ -50,7 +52,7 @@ test.describe("Server-side rate limiting", () => {
     }
 
     if (!blocked) {
-      test.skip();
+      test.skip(!isCI, "Rate limiting not triggered — skipping locally only");
     }
   });
 
@@ -77,6 +79,6 @@ test.describe("Server-side rate limiting", () => {
       }
     }
 
-    test.skip();
+    test.skip(!isCI, "Rate limiting not triggered — skipping locally only");
   });
 });

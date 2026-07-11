@@ -12,6 +12,7 @@ import { POST } from "@/constants/api/methods";
 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { sharePageInfo } from "@/constants/page-info";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
 
 function handleFileChange(
   e: React.ChangeEvent<HTMLInputElement>,
@@ -42,6 +43,7 @@ async function handleShareSubmit(
   coverImageRef: React.MutableRefObject<string | undefined>,
   router: ReturnType<typeof useRouter>,
   lang: string,
+  failedToCreatePost: string,
 ) {
   e.preventDefault();
   if (!title.trim() || !content.trim() || submitting) return;
@@ -84,10 +86,10 @@ async function handleShareSubmit(
       router.push(`/v1/${lang}/feed`);
     } else {
       const data = await res.json();
-      setError(data.error || "Failed to create post");
+      setError(data.error || failedToCreatePost);
     }
   } catch {
-    setError("Failed to create post");
+    setError(failedToCreatePost);
   } finally {
     setSubmitting(false);
     setUploading(false);
@@ -98,6 +100,7 @@ export default function PageContent() {
   const params = useParams<{ lang: string }>();
   const lang = params?.lang ?? "en";
   const router = useRouter();
+  const t = useMessages("share");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -114,13 +117,13 @@ export default function PageContent() {
   return (
     <div className="flex w-full flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-brand text-sm font-semibold">Share something</h2>
+        <h2 className="text-brand text-sm font-semibold">{t.shareSomething}</h2>
         <PageInfoButton content={sharePageInfo} />
       </div>
 
-      <form onSubmit={(e) => handleShareSubmit(e, title, content, submitting, setSubmitting, setUploading, setUploadError, setError, file, uploadError, coverImageRef, router, lang)} className="flex flex-col gap-4">
+      <form onSubmit={(e) => handleShareSubmit(e, title, content, submitting, setSubmitting, setUploading, setUploadError, setError, file, uploadError, coverImageRef, router, lang, t.failedToCreatePost)} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <Label htmlFor="title">Title</Label>
+          <Label htmlFor="title">{t.title}</Label>
           <Input
             id="title"
             type="text"
@@ -129,26 +132,26 @@ export default function PageContent() {
             required
             minLength={3}
             maxLength={200}
-            placeholder="What's on your mind?"
+            placeholder={t.titlePlaceholder}
             disabled={submitting}
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <Label htmlFor="content">Content</Label>
+          <Label htmlFor="content">{t.content}</Label>
           <Textarea
             id="content"
             value={content}
             onChange={(e) => setContent(e.target.value)}
             required
             rows={6}
-            placeholder="Write something..."
+            placeholder={t.contentPlaceholder}
             disabled={submitting}
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <Label>Image (optional)</Label>
+          <Label>{t.imageOptional}</Label>
           <input
             ref={fileRef}
             type="file"
@@ -161,7 +164,7 @@ export default function PageContent() {
             <div className="relative mt-2">
               <img
                 src={preview}
-                alt="Preview"
+                alt={t.preview}
                 className={`max-h-48 rounded-lg object-cover ${uploading ? "opacity-50" : ""}`}
               />
               {uploading && (
@@ -171,7 +174,7 @@ export default function PageContent() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
-                    Uploading...
+                    {t.uploading}
                   </div>
                 </div>
               )}
@@ -200,7 +203,7 @@ export default function PageContent() {
               )}
               {uploadError && (
                 <div className="mt-2 flex items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-xs text-red-600">
-                  <span>Image couldn&apos;t be uploaded.</span>
+                  <span>{t.imageUploadFailed}</span>
                   <Button
                     type="button"
                     variant="link"
@@ -213,7 +216,7 @@ export default function PageContent() {
                       if (fileRef.current) fileRef.current.value = "";
                     }}
                   >
-                    Remove
+                    {t.remove}
                   </Button>
                   <Button
                     type="button"
@@ -224,7 +227,7 @@ export default function PageContent() {
                       coverImageRef.current = undefined;
                     }}
                   >
-                    Retry
+                    {t.retry}
                   </Button>
                 </div>
               )}
@@ -244,7 +247,7 @@ export default function PageContent() {
           disabled={isDisabled}
           className="self-start"
         >
-          {uploading ? "Uploading..." : submitting ? "Sharing..." : "Share"}
+          {uploading ? t.uploading : submitting ? t.sharing : t.share}
         </Button>
       </form>
     </div>

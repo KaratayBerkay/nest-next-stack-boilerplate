@@ -74,148 +74,137 @@ import { HttpThrottlerGuard } from './throttle/http-throttler.guard';
 import { UploadModule } from './upload/upload.module';
 import { UsersModule } from './users/users.module';
 import { WsModule } from './ws/ws.module';
+import { validationSchema, validationOptions } from './config/env.validation';
+
+// ── Core modules — always loaded in production ──────────────────────────────
+const CORE_MODULES = [
+  ConfigModule.forRoot({ isGlobal: true, validationSchema, validationOptions }),
+  BullModule.forRootAsync({
+    inject: [ConfigService],
+    useFactory: (config: ConfigService) => ({
+      connection: {
+        host: config.get<string>('REDIS_HOST', 'localhost'),
+        port: Number(config.get('REDIS_PORT') ?? 6379),
+      },
+    }),
+  }),
+  GraphQLModule.forRoot<ApolloDriverConfig>({
+    driver: ApolloDriver,
+    autoSchemaFile:
+      process.env.NODE_ENV === 'production'
+        ? true
+        : join(process.cwd(), 'src/schema.gql'),
+    sortSchema: true,
+    context: ({ req, res }: { req: unknown; res: unknown }) => ({
+      req,
+      res,
+    }),
+    subscriptions: {
+      'graphql-ws': true,
+    },
+    transformSchema: (schema) => upperDirectiveTransformer(schema, 'upper'),
+    buildSchemaOptions: {
+      directives: [
+        new GraphQLDirective({
+          name: 'upper',
+          locations: [DirectiveLocation.FIELD_DEFINITION],
+        }),
+      ],
+    },
+    fieldResolverEnhancers: ['interceptors'],
+    formatError: (formattedError, error: unknown) => {
+      const gqlErr = error as { originalError?: unknown };
+      const original = gqlErr.originalError ?? error;
+      const unified = toExceptionResponse(original);
+      return {
+        ...formattedError,
+        extensions: {
+          ...formattedError.extensions,
+          ...unified,
+        },
+      };
+    },
+  }),
+  ThrottlerModule.forRoot({ throttlers: [{ ttl: 60000, limit: 120 }] }),
+  ScheduleModule.forRoot(),
+  LoggingModule,
+  PrismaModule,
+  CryptoModule,
+  OutboxModule,
+  MailModule,
+  AuthModule,
+  AuthorizationModule,
+  StripeModule,
+  BillingModule,
+  ProjectTasksModule,
+  PostModule,
+  CommentModule,
+  NotificationModule,
+  PushNotificationModule,
+  ReactionsModule,
+  TeamMembersModule,
+  MfaModule,
+  MessagingModule,
+  RealtimeModule,
+  ComplexityModule,
+  DirectivesModule,
+  ExtensionsModule,
+  FieldMiddlewareModule,
+  GraphqlOtherModule,
+  InterfacesModule,
+  PluginsModule,
+  ScalarsModule,
+  SharingModelsModule,
+  SseModule,
+  SubscriptionsModule,
+  UnionsEnumsModule,
+  WsModule,
+  CookiesModule,
+  CookiesSsrModule,
+  CompressionModule,
+  CorsModule,
+  CsrfModule,
+  OpenapiModule,
+  UploadModule,
+  ThrottleModule,
+  VaultModule,
+  HealthModule,
+  RedisModule,
+  ProfileModule,
+  SessionsModule,
+  ApiKeysModule,
+  ExceptionFiltersModule,
+  InterceptorsModule,
+  PipesModule,
+  SerializationModule,
+  MiddlewareModule,
+  PassportAuthModule,
+  AlsModule,
+  StaticAssetsModule,
+];
+
+// ── Demo modules — NestJS docs examples, gated behind LOAD_DEMO_MODULES ────
+// These are standalone demos (gRPC, SSE, CORS, CQRS, etc.) that should not be
+// part of a production build. Set LOAD_DEMO_MODULES=true to include them.
+const DEMO_MODULES = [
+  UsersModule, // demo CRUD module — leaks passwordHash; must not run in production
+  GrpcModule,
+  CqrsExampleModule,
+  RouterDemoModule,
+  TasksModule,
+];
+
+const isDemoEnabled =
+  process.env.LOAD_DEMO_MODULES === 'true' ||
+  process.env.NODE_ENV === 'development';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    BullModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        connection: {
-          host: config.get<string>('REDIS_HOST', 'localhost'),
-          port: Number(config.get('REDIS_PORT') ?? 6379),
-        },
-      }),
-    }),
-    GraphQLModule.forRoot<ApolloDriverConfig>({
-      driver: ApolloDriver,
-      // In production (k8s pods run with a read-only root filesystem) generate the SDL
-      // in-memory so nothing is written to disk; in dev write it to src/schema.gql so it can
-      // be committed / fed to frontend codegen. `true` => keep the schema in memory only.
-      autoSchemaFile:
-        process.env.NODE_ENV === 'production'
-          ? true
-          : join(process.cwd(), 'src/schema.gql'),
-      sortSchema: true,
-      // Without this, the GraphQL context only carries `req` — `res` is
-      // undefined, which crashes HttpThrottlerGuard (and anything else that
-      // needs to write response headers/cookies from a resolver) with
-      // "Cannot read properties of undefined (reading 'header')" on every
-      // @Throttle()-decorated query/mutation (register, login, resetPassword,
-      // loginWithOAuth, ...).
-      context: ({ req, res }: { req: unknown; res: unknown }) => ({
-        req,
-        res,
-      }),
-      // Enable real-time subscriptions over the modern graphql-ws protocol (served on
-      // the same /graphql path as queries/mutations). See SubscriptionsModule.
-      subscriptions: {
-        'graphql-ws': true,
-      },
-      // Apply the custom @upper schema directive. The transformer only touches fields that
-      // carry the directive, so it is a no-op for the rest of the schema. See DirectivesModule.
-      transformSchema: (schema) => upperDirectiveTransformer(schema, 'upper'),
-      buildSchemaOptions: {
-        directives: [
-          new GraphQLDirective({
-            name: 'upper',
-            locations: [DirectiveLocation.FIELD_DEFINITION],
-          }),
-        ],
-      },
-      // Run interceptors (not just guards/filters) on @ResolveField methods too, not only on
-      // top-level @Query/@Mutation. Opt-in per resolver via @UseInterceptors. See GraphqlOtherModule.
-      fieldResolverEnhancers: ['interceptors'],
-      formatError: (formattedError, error: unknown) => {
-        const gqlErr = error as { originalError?: unknown };
-        const original = gqlErr.originalError ?? error;
-        const unified = toExceptionResponse(original);
-        return {
-          ...formattedError,
-          extensions: {
-            ...formattedError.extensions,
-            ...unified,
-          },
-        };
-      },
-    }),
-    // Rate limiting: generous global default (per-IP, per-route); tight per-route overrides
-    // live on individual handlers via @Throttle. Bound via HttpThrottlerGuard below.
-    ThrottlerModule.forRoot({ throttlers: [{ ttl: 60000, limit: 120 }] }),
-    // Cron/interval/timeout scheduling — registered once at the root.
-    ScheduleModule.forRoot(),
-    // Structured Pino logging (replaces the built-in console Logger app-wide).
-    LoggingModule,
-    PrismaModule,
-    CryptoModule,
-    OutboxModule,
-    MailModule,
-    UsersModule,
-    AuthModule,
-    AuthorizationModule,
-    StripeModule,
-    BillingModule,
-    ProjectTasksModule,
-    PostModule,
-    CommentModule,
-    NotificationModule,
-    PushNotificationModule,
-    ReactionsModule,
-    TeamMembersModule,
-    MfaModule,
-    MessagingModule,
-    RealtimeModule,
-    ComplexityModule,
-    DirectivesModule,
-    ExtensionsModule,
-    FieldMiddlewareModule,
-    GraphqlOtherModule,
-    InterfacesModule,
-    PluginsModule,
-    ScalarsModule,
-    SharingModelsModule,
-    SseModule,
-    SubscriptionsModule,
-    UnionsEnumsModule,
-    WsModule,
-    GrpcModule,
-    CookiesModule,
-    CookiesSsrModule,
-    CompressionModule,
-    CorsModule,
-    CsrfModule,
-    OpenapiModule,
-    UploadModule,
-    TasksModule,
-    ThrottleModule,
-    VaultModule,
-    HealthModule,
-    RedisModule,
-    ProfileModule,
-    SessionsModule,
-    ApiKeysModule,
-    ExceptionFiltersModule,
-    InterceptorsModule,
-    PipesModule,
-    SerializationModule,
-    MiddlewareModule,
-    PassportAuthModule,
-    CqrsExampleModule,
-    AlsModule,
-    StaticAssetsModule,
-    RouterDemoModule,
-  ],
+  imports: [...CORE_MODULES, ...(isDemoEnabled ? DEMO_MODULES : [])],
   controllers: [AppController],
   providers: [
     AppService,
-    // Global rate-limiting guard (skips non-HTTP transports — see HttpThrottlerGuard).
     { provide: APP_GUARD, useClass: HttpThrottlerGuard },
-    // Global HTTP exception filter — produces the unified {statusCode,exc,msg,key} shape.
-    // Non-HTTP contexts (WS, gRPC) are passed through; the old route-scoped filters in
-    // ExceptionFiltersModule stay for the demo controller.
     { provide: APP_FILTER, useClass: GlobalHttpExceptionFilter },
-    // GraphQL query-complexity guard. Registered here (not in ComplexityModule) because it
-    // injects GraphQLModule's exported GraphQLSchemaHost, only visible in this scope.
     ComplexityPlugin,
   ],
 })

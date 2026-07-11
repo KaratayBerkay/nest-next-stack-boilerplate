@@ -2,16 +2,18 @@
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/Alert";
 import type { ConnectionUnstableProps } from "@/types/components/ConnectionUnstable-types";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
 
 export function ConnectionUnstable({
-  title = "Connection lost",
-  description = "Trying to reconnect. Some features may be unavailable.",
+  title,
+  description,
 }: ConnectionUnstableProps) {
+  const t = useMessages("error");
   return (
     <div className="flex items-center justify-center p-8">
       <Alert variant="destructive" className="max-w-md">
-        <AlertTitle>{title}</AlertTitle>
-        <AlertDescription>{description}</AlertDescription>
+        <AlertTitle>{title ?? t.connectionLost}</AlertTitle>
+        <AlertDescription>{description ?? t.tryingToReconnect}</AlertDescription>
       </Alert>
     </div>
   );

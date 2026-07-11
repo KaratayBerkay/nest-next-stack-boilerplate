@@ -3,10 +3,10 @@ import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { PushSubscription } from '../@generated/push-subscription/push-subscription.model';
 import type { JwtUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { PushSubscriptionService } from './push-subscription.service';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(SessionAuthGuard)
 @Resolver(() => PushSubscription)
 export class PushSubscriptionResolver {
   constructor(private readonly pushSubscriptions: PushSubscriptionService) {}

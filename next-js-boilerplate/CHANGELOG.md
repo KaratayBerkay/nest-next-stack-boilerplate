@@ -13,8 +13,8 @@ history; see [`../docs/frontend/git-workflow.md`](../docs/frontend/git-workflow.
 
 - **Real auth (NestJS GraphQL)** — replaces mock cookie auth with real
   login/register/logout/refresh/me backed by NestJS GraphQL mutations and query.
-  BFF Route Handlers proxy each call, manage `access_token` (non-httpOnly for
-  client access) and `refresh_token` (httpOnly from NestJS). Auth forms at
+  BFF Route Handlers proxy each call, manage `access_token` (httpOnly) and
+  `refresh_token` (httpOnly from NestJS). Auth forms at
   `/auth/login` and `/auth/register`. `useAuth` hook + `AuthProvider` context.
   `AuthStatus` component in demos header. (5 BFF routes + 2 pages + 1 context +
   1 component + 10 e2e tests.)
@@ -66,7 +66,7 @@ Tailwind CSS v4 · pnpm. Talks to a separate NestJS backend through a BFF proxy.
   `next/font` (F50); script optimization with `next/script` (F51); lazy loading with
   `next/dynamic` (F52).
 - **Internationalization** — locale routing under `/i18n/[lang]` with server-side
-  dictionaries (en/tr/de) and `Accept-Language` negotiation (F18).
+  dictionaries (en/tr) and `Accept-Language` negotiation (F18).
 - **Observability** — instrumentation `register()` hook + OpenTelemetry (`@vercel/otel`)
   with an in-memory span processor, `onRequestError` capture, and a production-hardening
   pass (F33).

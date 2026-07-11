@@ -1,0 +1,12 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/nest-js-boilerplate"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+  - package-ecosystem: "npm"
+    directory: "/next-js-boilerplate"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10

@@ -24,6 +24,8 @@ import { validateRequest } from '../csrf/csrf.middleware';
 
 interface AuthedRequest extends Request {
   user?: JwtUser;
+  /** Set by ApiKeyGuard when the request authenticates via API key. */
+  _authenticatedByApiKey?: boolean;
 }
 
 /**
@@ -54,6 +56,11 @@ export class SessionAuthGuard implements CanActivate {
     const req = GqlExecutionContext.create(context).getContext<{
       req: AuthedRequest;
     }>().req;
+
+    // If ApiKeyGuard already authenticated this request, skip session validation.
+    if (req._authenticatedByApiKey) {
+      return true;
+    }
 
     const accessToken = this.extractAccessToken(req);
     if (!accessToken) {

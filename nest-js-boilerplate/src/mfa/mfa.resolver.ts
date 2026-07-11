@@ -1,13 +1,13 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Mutation, Resolver } from '@nestjs/graphql';
 import { CurrentUser } from '../auth/current-user.decorator';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { SessionAuthGuard } from '../auth/session-auth.guard';
 import type { JwtUser } from '../auth/auth.types';
 import { MfaService } from './mfa.service';
 import { MfaEnrollPayload, MfaVerifyPayload } from './mfa.types';
 
 @Resolver()
-@UseGuards(JwtAuthGuard)
+@UseGuards(SessionAuthGuard)
 export class MfaResolver {
   constructor(private readonly mfa: MfaService) {}
 

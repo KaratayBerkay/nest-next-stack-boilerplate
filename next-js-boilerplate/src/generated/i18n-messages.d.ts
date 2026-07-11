@@ -134,6 +134,8 @@ export type I18nMessages = {
       "loadingMessages": string;
       "accessDenied": string;
       "loadingTheSlowRoute": string;
+      "connectionLost": string;
+      "tryingToReconnect": string;
     }
 
   "feed": {
@@ -317,6 +319,8 @@ export type I18nMessages = {
       "saving": string;
       "saveFailed": string;
       "uploadFailed": string;
+      "invalidFileType": string;
+      "fileTooLarge": string;
       "loading": string;
       "navApiKeys": string;
       "apiKeysHeading": string;
@@ -354,6 +358,23 @@ export type I18nMessages = {
       "deviceId": string;
       "userAgent": string;
       "revoke": string;
+    }
+
+  "share": {
+      "shareSomething": string;
+      "title": string;
+      "titlePlaceholder": string;
+      "content": string;
+      "contentPlaceholder": string;
+      "imageOptional": string;
+      "preview": string;
+      "uploading": string;
+      "imageUploadFailed": string;
+      "remove": string;
+      "retry": string;
+      "sharing": string;
+      "share": string;
+      "failedToCreatePost": string;
     }
 
   "shared/locale-switcher": {

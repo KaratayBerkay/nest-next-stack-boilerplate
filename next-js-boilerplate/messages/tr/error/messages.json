@@ -12,5 +12,7 @@
   "failedToLoad": "Mesajlar yüklenemedi",
   "loadingMessages": "Mesajlar yükleniyor...",
   "accessDenied": "Erişim reddedildi. Yalnızca yöneticiler.",
-  "loadingTheSlowRoute": "Yavaş rota yükleniyor…"
+  "loadingTheSlowRoute": "Yavaş rota yükleniyor…",
+  "connectionLost": "Bağlantı kesildi",
+  "tryingToReconnect": "Yeniden bağlanılıyor. Bazı özellikler kullanılamayabilir."
 }

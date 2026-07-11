@@ -7,7 +7,7 @@ import { ApiKeysService, type ApiKeyData } from './api-keys.service';
 import { ApiKeyGuard } from './api-keys.guard';
 import { ApiKeyType, ApiKeyCreateResult } from './api-keys.types';
 
-@UseGuards(SessionAuthGuard, ApiKeyGuard)
+@UseGuards(ApiKeyGuard, SessionAuthGuard)
 @Resolver()
 export class ApiKeysResolver {
   constructor(private readonly apiKeys: ApiKeysService) {}

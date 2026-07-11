@@ -11,7 +11,7 @@ Every login/register issues four tokens:
 | Token | Kind | Lifetime | Delivery | JS-accessible |
 |---|---|---|---|---|
 | `accessToken` | JWT (HS256) | 15m (`JWT_ACCESS_TTL`) | `Authorization: Bearer` or `access_token` / `__Secure-access_token` cookie | No (httpOnly) |
-| `refreshToken` | opaque (Postgres `Session.sessionToken`) | 30d | httpOnly cookie `refresh_token` / `__Secure-refresh_token`, or `x-refresh-token` header | No |
+| `refreshToken` | opaque (Redis session compound key) | 30d | httpOnly cookie `refresh_token` / `__Secure-refresh_token`, or `x-refresh-token` header | No |
 | `rbacToken` | opaque random | 15m (mirrors access) | httpOnly cookie `rbac_token` / `__Secure-rbac_token`, or `x-rbac-token` header | No (httpOnly) |
 | `deviceToken` | opaque random (≥90 chars) | 1y | httpOnly cookie `device_token` / `__Secure-device_token`, or `x-device-token` header | No (httpOnly) |
 | `userToken` | opaque random | 15m (mirrors access) | **non-httpOnly** cookie `user_token` / `__Secure-user_token` | **Yes** |
@@ -118,10 +118,8 @@ The `me` query is served entirely from this snapshot (zero Prisma queries).
 - **Tamper any one token** → different compound key → miss → 401.
 - **`redis-cli DEL <key>`** (or `TokenStoreService.revoke`) → next request 401s
   immediately; the client recovers via `refresh`.
-- **`refresh`** revokes the presented compound key, then re-issues all 4 tokens
-  (Postgres `Session` row rotates as before — it stays the 30d durable anchor).
-- **`logout`** revokes the compound key + reverse-index entry alongside the Session
-  delete.
+- **`refresh`** revokes the presented compound key, then re-issues all 4 tokens.
+- **`logout`** revokes the compound key + reverse-index entry.
 - **Redis unreachable** → fail closed: guarded routes return 503, `/health/ready`
   degrades. Sessions survive a Redis restart (AOF persistence).
 - **IP mismatch** vs the stored `ip` is tolerated by default (mobile/NAT churn);
@@ -202,8 +200,8 @@ session.
   3-segment to 4-segment, the Redis schema changes to v2 (new fields, JSON arrays),
   and the WS auth protocol changes to first-message tokens. All old sessions are
   invalid after deploy; users must re-login.
-- Run the DB migration (`prisma migrate deploy`) before the app starts — sessions
-  table is unchanged, but new code expects the new compound key format.
+- Run the DB migration (`prisma migrate deploy`) before the app starts — the new
+  code expects the 4-segment compound key format.
 - Set `TOKEN_DERIVATION_SECRET` in `.env` and `docker-compose.yml` before first run.
   It must be stable across restarts — rotation invalidates all live sessions.
 - Redis data is ephemeral for sessions; on a fresh Redis the app works (cold start).
@@ -266,11 +264,11 @@ before reconnecting, capped at 3 retries.
 ### Sessions surface
 
 `mySessions` query (`@UseGuards(SessionAuthGuard)`) returns the caller's live
-Postgres `Session` rows — `id`, `ip`, `userAgent`, `createdAt`, `expiresAt`,
-`current` (identified by `sessionId` from the Redis hash, attached to
-`req.user` by the guard). `logoutOtherSessions` mutation (CSRF-guarded) revokes
-all Redis entries via `revokeAllForUser` then deletes Postgres rows except the
-current one.
+Redis sessions — `sessionId`, `ip`, `userAgent`, `issuedAt` — with `current`
+identified by `sessionId` from the Redis hash, attached to `req.user` by the
+guard. `revokeSession` mutation revokes a specific session by `sessionId`.
+`revokeAllOtherSessions` mutation (CSRF-guarded) revokes all Redis entries via
+the reverse index except the current session.
 
 ### Tier UI gating
 
@@ -291,11 +289,12 @@ from the `access_token` cookie using the widened `ME_QUERY` — zero Postgres on
 the backend. The root layout passes `initialUser` to `AuthProvider`, eliminating
 the logged-out flash on hard reloads.
 
-### mySessions / logoutOtherSessions resolver
+### mySessions / revokeSession / revokeAllOtherSessions resolvers
 
-Added to `auth.resolver.ts`:
+Defined in `src/sessions/sessions.resolver.ts`:
 
-- `mySessions` query — `@UseGuards(SessionAuthGuard)`, returns `[Session]` ordered by `createdAt desc`. `current` field computed from `req.user.sessionId`.
-- `logoutOtherSessions` mutation — `@UseGuards(CsrfGuard, SessionAuthGuard)`, calls `revokeAllForUser` on all Redis keys, then `deleteMany` on Postgres rows except current.
+- `mySessions` query — `@UseGuards(SessionAuthGuard)`, returns `[SessionInfo]` (sessionId, deviceId, ip, userAgent, issuedAt) from Redis via `listSessionsWithKeys`. `current` field computed from `req.user.sessionId`.
+- `revokeSession` mutation — `@UseGuards(SessionAuthGuard)`, calls `revokeSessionBySessionId` to remove a specific session's Redis entry.
+- `revokeAllOtherSessions` mutation — `@UseGuards(SessionAuthGuard)`, calls `revoke` on all Redis keys except the current session.
 
 `sessionId` was added to `JwtUser` interface and attached by `SessionAuthGuard` in step 8.

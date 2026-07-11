@@ -1,4 +1,4 @@
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, type ValidationError } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import compression from 'compression';
@@ -11,6 +11,26 @@ import { requestContextMiddleware } from './logging/request-context';
 import { DeviceIpMiddleware } from './devices/device-ip-middleware';
 import { PerformanceInterceptor } from './interceptors/performance.interceptor';
 import { loadVaultSecrets } from './vault/vault-loader';
+import type { ExceptionFieldError } from './common/exceptions/exception-response.interface';
+
+function validationExceptionFactory(errors: ValidationError[]) {
+  const fields: ExceptionFieldError[] = errors.flatMap((err) => {
+    const constraints = Object.values(err.constraints ?? {});
+    return constraints.map((msg) => ({
+      field: err.property,
+      msg,
+      key: `error.validation.${err.property}`,
+    }));
+  });
+
+  return {
+    statusCode: 400,
+    exc: 'EX_VALIDATION_FORM' as const,
+    msg: 'Validation failed',
+    key: 'error.validation',
+    fields,
+  };
+}
 
 async function bootstrap() {
   // Load secrets from Vault before the app starts, so ConfigModule and every
@@ -58,7 +78,14 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   app.useGlobalInterceptors(new PerformanceInterceptor());
-  app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      exceptionFactory: validationExceptionFactory,
+    }),
+  );
 
   // OpenAPI / Swagger — assembled at bootstrap so the document reflects all registered routes.
   // Serves: GET /api (Swagger UI), GET /api-json, GET /api-yaml.

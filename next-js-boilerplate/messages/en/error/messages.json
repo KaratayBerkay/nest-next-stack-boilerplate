@@ -12,5 +12,7 @@
   "failedToLoad": "Failed to load messages",
   "loadingMessages": "Loading messages...",
   "accessDenied": "Access denied. Admins only.",
-  "loadingTheSlowRoute": "Loading the slow route…"
+  "loadingTheSlowRoute": "Loading the slow route…",
+  "connectionLost": "Connection lost",
+  "tryingToReconnect": "Trying to reconnect. Some features may be unavailable."
 }

@@ -1,0 +1,16 @@
+{
+  "shareSomething": "Share something",
+  "title": "Title",
+  "titlePlaceholder": "What's on your mind?",
+  "content": "Content",
+  "contentPlaceholder": "Write something...",
+  "imageOptional": "Image (optional)",
+  "preview": "Preview",
+  "uploading": "Uploading...",
+  "imageUploadFailed": "Image couldn't be uploaded.",
+  "remove": "Remove",
+  "retry": "Retry",
+  "sharing": "Sharing...",
+  "share": "Share",
+  "failedToCreatePost": "Failed to create post"
+}

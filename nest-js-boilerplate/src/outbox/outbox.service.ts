@@ -16,6 +16,7 @@ interface ClaimedRow {
   id: string;
   eventType: string;
   payload: DomainEvent;
+  attempts: number;
 }
 
 /**
@@ -34,12 +35,15 @@ interface ClaimedRow {
 export class OutboxService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(OutboxService.name);
   private timer?: NodeJS.Timeout;
+  private readonly maxAttempts: number;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     @InjectQueue(/* OUTBOX_QUEUE */ 'outbox') private readonly queue: Queue,
-  ) {}
+  ) {
+    this.maxAttempts = Number(this.config.get('OUTBOX_MAX_ATTEMPTS') ?? 5);
+  }
 
   onModuleInit(): void {
     const intervalMs = Number(this.config.get('OUTBOX_POLL_MS') ?? 2000);
@@ -91,11 +95,23 @@ export class OutboxService implements OnModuleInit, OnModuleDestroy {
         LIMIT ${batchSize}
         FOR UPDATE SKIP LOCKED
       )
-      RETURNING id, "eventType", payload;
+      RETURNING id, "eventType", payload, attempts;
     `);
 
     let published = 0;
     for (const row of claimed) {
+      // Dead-letter cutoff: stop retrying events that have exceeded maxAttempts.
+      if (row.attempts >= this.maxAttempts) {
+        await this.prisma.outboxEvent.update({
+          where: { id: row.id },
+          data: { status: 'DEAD_LETTER' },
+        });
+        this.logger.warn(
+          `Outbox event ${row.id} (${row.eventType}) moved to DEAD_LETTER after ${row.attempts} attempts`,
+        );
+        continue;
+      }
+
       try {
         await this.queue.add(
           row.eventType,
@@ -113,15 +129,29 @@ export class OutboxService implements OnModuleInit, OnModuleDestroy {
         });
         published++;
       } catch (err) {
-        // Couldn't reach the broker — release back to PENDING for the next relay tick.
-        await this.prisma.outboxEvent.update({
-          where: { id: row.id },
-          data: {
-            status: 'PENDING',
-            attempts: { increment: 1 },
-            lastError: err instanceof Error ? err.message : String(err),
-          },
-        });
+        const newAttempts = row.attempts + 1;
+        if (newAttempts >= this.maxAttempts) {
+          await this.prisma.outboxEvent.update({
+            where: { id: row.id },
+            data: {
+              status: 'DEAD_LETTER',
+              lastError: err instanceof Error ? err.message : String(err),
+            },
+          });
+          this.logger.warn(
+            `Outbox event ${row.id} (${row.eventType}) moved to DEAD_LETTER after ${newAttempts} attempts`,
+          );
+        } else {
+          // Couldn't reach the broker — release back to PENDING for the next relay tick.
+          await this.prisma.outboxEvent.update({
+            where: { id: row.id },
+            data: {
+              status: 'PENDING',
+              attempts: { increment: 1 },
+              lastError: err instanceof Error ? err.message : String(err),
+            },
+          });
+        }
       }
     }
     return published;
