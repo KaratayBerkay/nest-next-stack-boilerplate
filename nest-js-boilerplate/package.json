@@ -176,7 +176,7 @@
     "@types/web-push": "^3.6.4",
     "@types/ws": "^8.18.1",
     "dotenv": "^17.4.2",
-    "eslint": "^9.18.0",
+    "eslint": "^10.7.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
     "fallow": "^3.0.0",
