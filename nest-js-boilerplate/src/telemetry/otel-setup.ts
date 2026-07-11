@@ -1,8 +1,8 @@
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
-import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-node';
-import { Resource } from '@opentelemetry/resources';
+import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
+import { resourceFromAttributes } from '@opentelemetry/resources';
 import {
   ATTR_SERVICE_NAME,
   ATTR_SERVICE_VERSION,
@@ -26,7 +26,7 @@ export function initOpenTelemetry(): void {
     process.env.OTEL_SERVICE_NAME ?? 'nest-next-stack-backend';
   const serviceVersion = process.env.npm_package_version ?? '0.0.0';
 
-  const resource = new Resource({
+  const resource = resourceFromAttributes({
     [ATTR_SERVICE_NAME]: serviceName,
     [ATTR_SERVICE_VERSION]: serviceVersion,
   });
