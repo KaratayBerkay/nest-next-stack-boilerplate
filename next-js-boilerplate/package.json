@@ -38,7 +38,7 @@
     "@radix-ui/react-scroll-area": "^1.2.13",
     "@radix-ui/react-slider": "^1.4.2",
     "@radix-ui/react-toggle": "^1.1.13",
-    "@radix-ui/react-toggle-group": "^1.1.14",
+    "@radix-ui/react-toggle-group": "^1.1.15",
     "@stripe/react-stripe-js": "^6.7.0",
     "@stripe/stripe-js": "^9.9.0",
     "@tabler/icons-react": "^3.44.0",
