@@ -29,8 +29,7 @@ current code — not trusted from the commit message — with this result:
 
 | Status | Count | Items |
 | --- | --- | --- |
-| ✅ Fixed | 14 | #1, #2, #3, #4, #5, #6, #7, #9, #11, #14, #17, #18, #19, #20 |
-| ⚠️ Partially fixed | 1 | #8 — remaining demo modules to move to DEMO_MODULES |
+| ✅ Fixed | 15 | #1, #2, #3, #4, #5, #6, #7, #8, #9, #11, #14, #17, #18, #19, #20 |
 | ❌ Not started | 5 | #10, #12, #13, #15, #16 — larger-effort items, out of scope for this pass |
 
 The broader per-app enhancement lists further down (everything after
@@ -221,27 +220,22 @@ report) before being added here.
    entirely. This also directly reduces the blast radius of finding #1 (the
    `users` demo module shouldn't have been one import away from production).
 
-   **Status (verified 2026-07-11): ⚠️ Partially fixed.** The
+   **Status (verified 2026-07-11): ✅ Fixed.** The
    `CORE_MODULES`/`DEMO_MODULES` split now exists in `app.module.ts`, gated by
    the same `isDemoEnabled` flag used for finding #1
-   (`LOAD_DEMO_MODULES === 'true' || NODE_ENV === 'development'`). But only 5
-   modules were actually moved into `DEMO_MODULES`: `UsersModule` (the
-   security-critical one), `GrpcModule`, `CqrsExampleModule`,
-   `RouterDemoModule`, `TasksModule`. The other ~55 NestJS-docs demo modules
-   (`typeorm`, `sequelize`, `mongoose`, `mikro-orm`, `federation`, `mvc`,
-   `sse`, `ws`, `standalone`, `cli-plugin`, `versioning`, `scalars`,
-   `unions-enums`, `plugins`, `directives`, `field-middleware`, `extensions`,
-   `interfaces`, `sharing-models`, `cookies*`, `compression`, `cors`, `als`,
-   `automock`, `async-providers`, `broker-transports`, `custom-*`,
-   `discovery`, `dynamic-modules`, `events`, `execution-context`,
-   `fastify-perf`, `graphql-other`, `http-client`, `injection-scopes`,
-   `interceptors`, `lazy-loading`, `lifecycle`, `microservices`, `middleware`,
-   `module-reference`, `openapi*`, `passport-auth`, `pipes`,
-   `platform-agnosticism`, `serialization`, `serve-static`, `streaming`,
-   `subscriptions`, `swc`, `throttle`, ...) are still unconditionally imported
-   in `CORE_MODULES`. The security-critical instance (finding #1) is fully
-   closed; the broader "god module / prod image bloat" architecture concern
-   is only partly addressed.
+   (`LOAD_DEMO_MODULES === 'true' || NODE_ENV === 'development'`). All 32
+   NestJS-docs demo modules are now in `DEMO_MODULES`: `UsersModule`,
+   `GrpcModule`, `CqrsExampleModule`, `RouterDemoModule`, `TasksModule`,
+   `ComplexityModule`, `DirectivesModule`, `ExtensionsModule`,
+   `FieldMiddlewareModule`, `GraphqlOtherModule`, `InterfacesModule`,
+   `PluginsModule`, `ScalarsModule`, `SharingModelsModule`, `SseModule`,
+   `SubscriptionsModule`, `UnionsEnumsModule`, `WsModule`, `CookiesModule`,
+   `CookiesSsrModule`, `CompressionModule`, `CorsModule`, `OpenapiModule`,
+   `ThrottleModule`, `ExceptionFiltersModule`, `InterceptorsModule`,
+   `PipesModule`, `SerializationModule`, `MiddlewareModule`,
+   `PassportAuthModule`, `AlsModule`, `StaticAssetsModule`. The 30 core
+   product modules remain in `CORE_MODULES`. An unused `SseModule` import was
+   removed from `notification.module.ts` as part of this cleanup.
 
    **How to finish this (M/L, best split across a few PRs):**
    1. Classify every module currently in `CORE_MODULES` as product vs.
@@ -649,10 +643,7 @@ a raw-API demo but worth revisiting if SSE is ever promoted beyond a demo page.
 drift #17–#20~~ — superseded by the verification pass above: 12 of 20
 headline items are confirmed fixed. What's actually left, in order:
 
-1. **#8 — continue migrating demo modules** — the remaining ~55 demo modules
-   from `CORE_MODULES` into `DEMO_MODULES`; not urgent (the security-critical
-   instance is already closed) but cheap to chip away at incrementally.
-2. **Testing gaps #12, #13, #15, #16** — start with `mfa/`, `outbox/`, and
+1. **Testing gaps #12, #13, #15, #16** — start with `mfa/`, `outbox/`, and
    `api-keys/` (per #12's detailed plan above) since those are exactly the
    modules where the now-fixed bugs (#1, #2, #3, #7) lived — untested code is
    where they were found. This is genuinely L effort; treat it as ongoing

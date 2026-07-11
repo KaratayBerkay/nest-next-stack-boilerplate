@@ -146,6 +146,25 @@ const CORE_MODULES = [
   MfaModule,
   MessagingModule,
   RealtimeModule,
+  ProfileModule,
+  SessionsModule,
+  ApiKeysModule,
+  UploadModule,
+  VaultModule,
+  HealthModule,
+  RedisModule,
+  CsrfModule,
+];
+
+// ── Demo modules — NestJS docs examples, gated behind LOAD_DEMO_MODULES ────
+// These are standalone demos (gRPC, SSE, CORS, CQRS, etc.) that should not be
+// part of a production build. Set LOAD_DEMO_MODULES=true to include them.
+const DEMO_MODULES = [
+  UsersModule, // demo CRUD module — leaks passwordHash; must not run in production
+  GrpcModule,
+  CqrsExampleModule,
+  RouterDemoModule,
+  TasksModule,
   ComplexityModule,
   DirectivesModule,
   ExtensionsModule,
@@ -163,16 +182,8 @@ const CORE_MODULES = [
   CookiesSsrModule,
   CompressionModule,
   CorsModule,
-  CsrfModule,
   OpenapiModule,
-  UploadModule,
   ThrottleModule,
-  VaultModule,
-  HealthModule,
-  RedisModule,
-  ProfileModule,
-  SessionsModule,
-  ApiKeysModule,
   ExceptionFiltersModule,
   InterceptorsModule,
   PipesModule,
@@ -181,17 +192,6 @@ const CORE_MODULES = [
   PassportAuthModule,
   AlsModule,
   StaticAssetsModule,
-];
-
-// ── Demo modules — NestJS docs examples, gated behind LOAD_DEMO_MODULES ────
-// These are standalone demos (gRPC, SSE, CORS, CQRS, etc.) that should not be
-// part of a production build. Set LOAD_DEMO_MODULES=true to include them.
-const DEMO_MODULES = [
-  UsersModule, // demo CRUD module — leaks passwordHash; must not run in production
-  GrpcModule,
-  CqrsExampleModule,
-  RouterDemoModule,
-  TasksModule,
 ];
 
 const isDemoEnabled =
