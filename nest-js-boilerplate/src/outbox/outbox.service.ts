@@ -91,7 +91,7 @@ export class OutboxService implements OnModuleInit, OnModuleDestroy {
     const reclaimed = await this.prisma.$executeRaw`
       UPDATE "OutboxEvent"
       SET status = 'PENDING', attempts = attempts + 1,
-          lastError = 'reclaimed from PUBLISHING (stale > 5m)'
+          "lastError" = 'reclaimed from PUBLISHING (stale > 5m)'
       WHERE status = 'PUBLISHING'
         AND "updatedAt" < now() - interval '5 minutes'
     `;

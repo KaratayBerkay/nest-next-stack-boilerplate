@@ -26,6 +26,16 @@
 > "102 passed, 13 skipped, 0 failed" the last commit message claimed. Both
 > are cheap, mechanical fixes (S effort each) — the damage here is entirely
 > about trust in "verified passing" claims going forward, not difficulty.
+>
+> **Update 2026-07-11 (live Docker verification):** a real `docker compose up`
+> independently reproduced Critical #1 exactly as documented —
+> `boilers-app-1` crash-looped on `UnknownDependenciesException` for
+> `SessionsResolver`/`RealtimeGateway`. The fix in #1 (add `RealtimeModule` to
+> `SessionsModule`, `AuthModule` to `UploadModule`) and the fix in #2 (quote
+> `"lastError"`) were applied and verified live: the app now boots healthy
+> and the outbox stops erroring. **Not yet committed.** That same live run
+> surfaced one more issue invisible to static review — see new finding #11
+> below.
 
 **Priorities:** `P0` = fix before calling this production-ready · `P1` =
 high-value next · `P2` = nice to have. **Effort:** S (< ½ day) · M (1–2 days)
@@ -254,6 +264,33 @@ high-value next · `P2` = nice to have. **Effort:** S (< ½ day) · M (1–2 day
     `Map<string, {token, cookie, ts}>`, evicted on logout/TTL, instead of a
     single process-global slot.
 
+11. **[Backend] Elasticsearch client/server version mismatch — every
+    audit-log write to Elasticsearch has been silently failing.** This one
+    is invisible to static review; it only surfaced once the app was
+    actually booted end-to-end in Docker (see the update note above).
+    `package.json:50` pins `"@elastic/elasticsearch": "^9.4.2"`, but
+    `docker-compose.yml:196` runs
+    `docker.elastic.co/elasticsearch/elasticsearch:8.15.3` — the v9 client
+    defaults to sending `Accept`/`Content-Type` headers advertising
+    `compatible-with=9`, which ES 8.x rejects outright. Confirmed live:
+    every single `ElasticsearchService.index()` call
+    (`src/outbox/elasticsearch.service.ts:22-29`, used by
+    `src/outbox/audit-log.processor.ts` to index the `audit-logs` index)
+    throws `ResponseError: media_type_header_exception: Accept version must
+    be either version 8 or 7, but found 9`, caught and merely
+    `logger.error`'d — the app never crashes, so nothing surfaces this
+    short of reading logs or checking Kibana. The Postgres `AuditLog` table
+    (written directly by resolvers like `setUserStatus`) is unaffected and
+    remains the source of truth, but the ES-backed searchable/Kibana copy
+    of audit logs has never actually received a single document.
+    **Fix (S):** either downgrade `@elastic/elasticsearch` to a `^8.x`
+    release matching the compose image, or bump the compose image to a 9.x
+    Elasticsearch, or explicitly set the client to emit 8-compatible headers
+    (`new Client({ node, headers: { accept: 'application/vnd.elasticsearch+json; compatible-with=8', 'content-type': 'application/vnd.elasticsearch+json; compatible-with=8' } })` — check the client's supported config surface for a documented compatibility flag first). Add a startup or CI check that
+    actually indexes a throwaway document against the compose ES version, so
+    a version-mismatch regression like this fails fast instead of silently
+    dropping every write.
+
 ## Corrections to prior docs
 
 - **`fixes-1.md` #2 ("e2e login fixture", closed by `39ecaae`)** — the
@@ -372,6 +409,8 @@ present and correct in current code.
    environment.
 3. **#6–#7** — close the remaining account-security gaps (privilege
    escalation via missing role hierarchy, MFA lockout with no recovery).
-4. **#8–#10** — independent, cheap-to-medium fixes; batch together.
+4. **#8–#11** — independent, cheap-to-medium fixes; batch together. #11 is
+   worth prioritizing slightly within this group since it's a live, silent
+   data-loss-to-Kibana bug with a one-line candidate fix.
 5. **P2 lists** — routine hardening, no correctness risk; fold into regular
    maintenance.
