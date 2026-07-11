@@ -20,6 +20,23 @@ next · `P2` = nice to have. **Effort:** S (< ½ day) · M (1–2 days) · L (mu
 
 ---
 
+## Verification pass — 2026-07-11
+
+Commit `06e74e0` ("fix: address upgrade audit critical + high-priority items")
+landed after this doc was written, claiming to address the findings below. Each
+of the 20 headline items (#1–#20) was independently re-verified against the
+current code — not trusted from the commit message — with this result:
+
+| Status | Count | Items |
+| --- | --- | --- |
+| ✅ Fixed | 12 | #1, #2, #4, #5, #6, #7, #9, #11, #14, #17, #19, #20 |
+| ⚠️ Partially fixed | 3 | #3, #8, #18 — each has concrete remaining work, detailed inline below |
+| ❌ Not started | 5 | #10, #12, #13, #15, #16 — larger-effort items, out of scope for this pass |
+
+The broader per-app enhancement lists further down (everything after
+"Documentation drift") were **not touched** by this pass — treat all of those
+as still fully open.
+
 ## Critical — fix first (verified)
 
 These were spot-checked directly against the code (not just the sub-audit's
@@ -44,6 +61,24 @@ report) before being added here.
    `User` type, so an authenticated client can query their own `passwordHash`
    from the login/register response.
 
+   **Status (verified 2026-07-11): ✅ Fixed.** `UsersModule` was moved into a
+   new `DEMO_MODULES` array in `app.module.ts`, gated by
+   `LOAD_DEMO_MODULES === 'true' || NODE_ENV === 'development'`. The Dockerfile
+   hardcodes `NODE_ENV=production` in both the `migrate` and `runtime` stages
+   and no compose/vault env file sets `LOAD_DEMO_MODULES`, so the query is
+   unreachable in the real deployment. Confirmed via repo-wide grep that
+   nothing else imports `UsersModule`/`UsersService`, so disabling it broke
+   nothing. **Residual, lower-severity, not yet fixed:** `AuthPayload.user`
+   (`src/auth/auth.types.ts:118-119`) is still typed as the raw `User` GraphQL
+   object, which still exposes `passwordHash` as a queryable field (no
+   `@HideField()` was added to `prisma/schema.prisma`) — an authenticated user
+   can still query their own `passwordHash` off the login/register response.
+   **How to close this out:** add `/// @HideField()` (or the
+   `prisma-nestjs-graphql` equivalent) above `passwordHash` in
+   `prisma/schema.prisma:256`, regenerate `src/@generated`, and confirm
+   `AuthPayload.user` and any other resolver returning `User` no longer expose
+   it — this is a S-effort follow-up.
+
 2. **[Backend] Real security-sensitive resolvers use the weaker of two auth
    guards.** Confirmed: `src/mfa/mfa.resolver.ts:10`,
    `src/project-tasks/project-tasks.resolver.ts:15`, and
@@ -61,6 +96,11 @@ report) before being added here.
    **Fix (S):** swap these three resolvers to `SessionAuthGuard`, or document
    explicitly why they're exempt.
 
+   **Status (verified 2026-07-11): ✅ Fixed.** All three resolvers
+   (`mfa.resolver.ts:10`, `project-tasks.resolver.ts:15`,
+   `push-subscription.resolver.ts:9`) now use `@UseGuards(SessionAuthGuard)`.
+   Nothing further needed.
+
 3. **[Backend] No startup env validation — missing secrets silently degrade
    instead of failing fast.** `src/config/env.validation.ts` defines a Joi
    validation schema and is unit-tested, but confirmed via grep that
@@ -77,6 +117,49 @@ report) before being added here.
    `COOKIE_SECRET`, `TOKEN_DERIVATION_SECRET`, `ENCRYPTION_KEY`, Stripe/VAPID
    keys — today it only validates `NODE_ENV`/`PORT`.
 
+   **Status (verified 2026-07-11): ⚠️ Partially fixed.** `validationSchema`
+   now requires `DATABASE_URL`, `JWT_SECRET`, `CSRF_SECRET` (min 16 chars) and
+   is correctly wired into `ConfigModule.forRoot({ validationSchema,
+   validationOptions })` in `app.module.ts:80`. Two things remain open:
+
+   - **`COOKIE_SECRET` is still `Joi.string().min(16).allow('').optional()`**
+     in `src/config/env.validation.ts` — it can be empty or absent and
+     validation still passes, so `main.ts:58`'s
+     `cookieParser(process.env.COOKIE_SECRET)` can still silently run with
+     signing disabled. **Resolution:** change it to `.required()` (or
+     `Joi.when('NODE_ENV', { is: 'production', then: Joi.required() })` if
+     local dev without a cookie secret needs to keep working) so a production
+     boot without it fails fast instead of degrading silently.
+   - **`src/csrf/csrf.middleware.ts:6` still has the hardcoded fallback**:
+     `const CSRF_SECRET = process.env.CSRF_SECRET ?? 'dev-csrf-secret-change-me';`.
+     It's unreachable in the *documented* deploy path (docker-compose's
+     `vault-init` service writes real secrets to `.vault-envs/backend.env`,
+     which is passed via `env_file:` — so the container's real OS env already
+     has `CSRF_SECRET` before Node even starts, well before this module-level
+     constant evaluates). But it's a live footgun for any other deploy path
+     that leans on the in-app `loadVaultSecrets()` fetch in `main.ts`
+     (`bootstrap()`'s first line) instead: that fetch runs *after* every
+     top-level import in the module graph — including this constant — has
+     already executed, so a Vault-only secret would arrive too late to be
+     seen here, and the middleware would silently keep using the insecure
+     default for the life of the process even though Joi validation (which
+     re-reads `process.env` later, inside `NestFactory.create`) would report
+     everything as fine. **Resolution:** stop capturing `CSRF_SECRET` as a
+     module-level constant — read it lazily inside `getSecret: () => {...}`
+     instead, and throw if it's missing at call time:
+     ```ts
+     const csrf = doubleCsrf({
+       getSecret: () => {
+         const secret = process.env.CSRF_SECRET;
+         if (!secret) throw new Error('CSRF_SECRET is not set');
+         return secret;
+       },
+       ...
+     });
+     ```
+     This closes the timing gap for good regardless of which secret-delivery
+     mechanism a given deployment uses. Effort: S for both sub-items.
+
 4. **[Frontend] No site-wide security headers.** Confirmed: `src/proxy.ts:145-159`
    only applies a nonce-based CSP to routes under `/security/*`, and this is
    proven by the tests themselves (`e2e/security-csp.spec.ts:43-50`,
@@ -92,6 +175,12 @@ report) before being added here.
    **Fix (S):** add a global `headers()` entry in `next.config.ts` for the
    static header set; keep the nonce CSP scoped to routes that need it.
 
+   **Status (verified 2026-07-11): ✅ Fixed.** `next.config.ts` now has a
+   global `headers()` block (`source: "/(.*)"`) shipping HSTS,
+   `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`,
+   `Referrer-Policy`, and `Permissions-Policy` on every route. The nonce-based
+   CSP was correctly left scoped to `/security/*` only. Nothing further needed.
+
 5. **[Backend] Outbox events retry forever — no dead-letter cutoff.**
    `OutboxStatus.DEAD_LETTER` exists in `prisma/schema.prisma:233` and the
    generated enum but is never referenced in application code (confirmed via
@@ -104,6 +193,16 @@ report) before being added here.
    **Fix (M):** add a `MAX_ATTEMPTS` check that flips status to `DEAD_LETTER`;
    pairs with the outbox-metrics item already tracked in
    [`docs/todo/02-backend.md`](../todo/02-backend.md).
+
+   **Status (verified 2026-07-11): ✅ Fixed.** `OutboxService` now reads
+   `OUTBOX_MAX_ATTEMPTS` (default 5) and checks it in two places: before
+   re-publishing a claimed row (`row.attempts >= this.maxAttempts` →
+   `DEAD_LETTER` immediately, no wasted publish attempt) and in the failure
+   catch-block (`newAttempts >= this.maxAttempts` → `DEAD_LETTER` with
+   `lastError` recorded, otherwise back to `PENDING` with `attempts`
+   incremented). Nothing further needed for the dead-letter cutoff itself;
+   the still-open outbox-lag/failure **metrics** work is covered by item #10
+   below and `docs/todo/02-backend.md`.
 
 ## High priority
 
@@ -120,6 +219,14 @@ report) before being added here.
    Also consider `forbidNonWhitelisted: true` alongside this (unknown properties
    currently strip silently rather than reject).
 
+   **Status (verified 2026-07-11): ✅ Fixed.** `main.ts` now defines
+   `validationExceptionFactory(errors: ValidationError[])`, which flattens
+   each error's `constraints` into `{ field, msg, key }` entries and returns
+   `{ statusCode: 400, exc: 'EX_VALIDATION_FORM', msg, key, fields }` — wired
+   via `exceptionFactory: validationExceptionFactory` on the global
+   `ValidationPipe`, which also now sets `forbidNonWhitelisted: true` as
+   suggested. Nothing further needed.
+
 7. **[Backend] API-key auth appears non-functional end-to-end.**
    `ApiKeyGuard` (`src/api-keys/api-keys.guard.ts`) is meant to let
    `Authorization: Bearer bp_...` requests skip session auth, but its only
@@ -130,6 +237,16 @@ report) before being added here.
    Generate-a-key-then-use-it doesn't appear to work anywhere.
    **Fix (M):** wire `ApiKeyGuard` as an *alternative* to session auth on the
    resolvers it's meant to protect, or scope down what the feature claims to do.
+
+   **Status (verified 2026-07-11): ✅ Fixed.** Guard order on
+   `ApiKeysResolver` is now `@UseGuards(ApiKeyGuard, SessionAuthGuard)`.
+   `ApiKeyGuard` inspects the header itself: if it isn't `Bearer bp_...` it
+   returns `true` (pass-through, defers to `SessionAuthGuard`); if it is, it
+   validates the key, attaches `req.user`, and sets a new
+   `req._authenticatedByApiKey = true` flag. `SessionAuthGuard.canActivate()`
+   now checks that flag first and short-circuits to `true` if set, so a valid
+   API key request no longer gets rejected by `SessionAuthGuard`'s
+   JWT-only logic. Clean, correct fix — nothing further needed.
 
 8. **[Backend] `AppModule` is a 60+ import god module with no core/demo
    split.** `src/app.module.ts:78-207` imports the entire real product and
@@ -142,6 +259,50 @@ report) before being added here.
    entirely. This also directly reduces the blast radius of finding #1 (the
    `users` demo module shouldn't have been one import away from production).
 
+   **Status (verified 2026-07-11): ⚠️ Partially fixed.** The
+   `CORE_MODULES`/`DEMO_MODULES` split now exists in `app.module.ts`, gated by
+   the same `isDemoEnabled` flag used for finding #1
+   (`LOAD_DEMO_MODULES === 'true' || NODE_ENV === 'development'`). But only 5
+   modules were actually moved into `DEMO_MODULES`: `UsersModule` (the
+   security-critical one), `GrpcModule`, `CqrsExampleModule`,
+   `RouterDemoModule`, `TasksModule`. The other ~55 NestJS-docs demo modules
+   (`typeorm`, `sequelize`, `mongoose`, `mikro-orm`, `federation`, `mvc`,
+   `sse`, `ws`, `standalone`, `cli-plugin`, `versioning`, `scalars`,
+   `unions-enums`, `plugins`, `directives`, `field-middleware`, `extensions`,
+   `interfaces`, `sharing-models`, `cookies*`, `compression`, `cors`, `als`,
+   `automock`, `async-providers`, `broker-transports`, `custom-*`,
+   `discovery`, `dynamic-modules`, `events`, `execution-context`,
+   `fastify-perf`, `graphql-other`, `http-client`, `injection-scopes`,
+   `interceptors`, `lazy-loading`, `lifecycle`, `microservices`, `middleware`,
+   `module-reference`, `openapi*`, `passport-auth`, `pipes`,
+   `platform-agnosticism`, `serialization`, `serve-static`, `streaming`,
+   `subscriptions`, `swc`, `throttle`, ...) are still unconditionally imported
+   in `CORE_MODULES`. The security-critical instance (finding #1) is fully
+   closed; the broader "god module / prod image bloat" architecture concern
+   is only partly addressed.
+
+   **How to finish this (M/L, best split across a few PRs):**
+   1. Classify every module currently in `CORE_MODULES` as product vs.
+      NestJS-docs demo (this doc's "Project structure & stack" research and
+      `docs/backend/progress/nestjs-feature-checklist.md` already have this
+      classification worked out).
+   2. Move demo-only modules into `DEMO_MODULES` in batches by family — e.g.
+      one PR for alternate ORMs (`typeorm`/`sequelize`/`mongoose`/`mikro-orm`),
+      one for broker/transport demos (`microservices`, `broker-transports`,
+      `mvc`, `grpc` already done), one for GraphQL-adjacent demos
+      (`directives`, `field-middleware`, `scalars`, `unions-enums`,
+      `sharing-models`, `graphql-other`, `federation`), one for the
+      miscellaneous primitives demos (`pipes`, `interceptors`, `middleware`,
+      `serialization`, `discovery`, `dynamic-modules`, `injection-scopes`,
+      `lifecycle`, `execution-context`, `async-providers`, `module-reference`,
+      `custom-*`, `als`, `automock`, `swc`, `lazy-loading`, `events`).
+   3. After each batch, run the non-demo Jest configs
+      (`pnpm test`, `pnpm test:e2e`) to confirm nothing in the real product
+      secretly depended on a provider only exported by a module you just
+      gated off.
+   4. Once done, record the before/after module count and (if easy to
+      measure) production image size / cold-boot time as the concrete payoff.
+
 9. **[Frontend] `share` page has no i18n wiring at all.**
    `src/views/share/PageContent.tsx` hardcodes every user-facing string
    ("Share something", "What's on your mind?", "Image couldn't be uploaded.",
@@ -153,6 +314,14 @@ report) before being added here.
    **Fix (S):** add the `share` message namespace (en + tr) and localize both
    components.
 
+   **Status (verified 2026-07-11): ✅ Fixed.** `messages/en/share/messages.json`
+   and `messages/tr/share/messages.json` were added with all 14 strings the
+   page needs (translated, not just copied); `PageContent.tsx` now calls
+   `useMessages("share")` and every hardcoded string was replaced with a `t.*`
+   reference. `ConnectionUnstable.tsx` now calls `useMessages("error")`, and
+   `connectionLost`/`tryingToReconnect` keys were added to both
+   `messages/{en,tr}/error/messages.json`. Nothing further needed.
+
 10. **[Backend] No metrics, no tracing.** No `prom-client`, no `/metrics`
     endpoint, no `@opentelemetry/*` packages anywhere in `package.json`
     (confirmed via grep) — while the frontend already ships OTel
@@ -162,6 +331,19 @@ report) before being added here.
     only reach structured logs + the `AuditLog` table, nothing aggregates or
     alerts on them.
 
+    **Status (verified 2026-07-11): ❌ Not started.** No `prom-client` or
+    `@opentelemetry/*` packages in `package.json`. Correctly out of scope for
+    a "critical + high-priority" pass — this is genuinely L effort. **How to
+    resolve:** follow the plan already laid out in
+    [`docs/todo/02-backend.md`](../todo/02-backend.md) — add
+    `@opentelemetry/sdk-node` + auto-instrumentations (http, graphql, prisma,
+    ioredis, kafkajs) so traces propagate from the frontend's `@vercel/otel`
+    spans across the BFF boundary; add a `prom-client`-based `/metrics`
+    endpoint (or an OTel metrics exporter) kept off the public port; and pick
+    a trace backend (Jaeger/Tempo in a compose `observability` profile) since
+    today only logs reach ELK. Pair the Prometheus counters with the outbox
+    dead-letter/lag metrics called out in item #5's follow-up.
+
 11. **[Frontend] No dependency-vulnerability scanning anywhere in the
     monorepo.** No Dependabot config, no Renovate, no `pnpm audit`/Snyk/CodeQL
     step in either app's CI. The project's own `fallow` static-analysis tool
@@ -169,6 +351,17 @@ report) before being added here.
     real, acknowledged gap, not something already covered.
     **Fix (S):** add a Dependabot config (or `pnpm audit --prod` gate) at the
     repo root covering both `package.json`s.
+
+    **Status (verified 2026-07-11): ✅ Fixed.** `.github/dependabot.yml` added,
+    covering both `/nest-js-boilerplate` and `/next-js-boilerplate` npm
+    ecosystems on a weekly schedule (`open-pull-requests-limit: 10` each).
+    Confirmed working end-to-end: it has already opened 20 real PRs on GitHub
+    (10 per ecosystem, hitting the configured cap) — mostly routine
+    patch/minor bumps, but one is a major version jump worth a deliberate
+    look before merging: `typescript` 5.9.3 → 7.0.2 (PR #8, skips the 6.x
+    line entirely — this is the native/Go-based compiler). Nothing further
+    needed for the scanning setup itself; triaging/merging the resulting PRs
+    is now routine maintenance, not a roadmap item.
 
 ## Testing gaps
 
@@ -185,6 +378,23 @@ report) before being added here.
     (`session-auth.guard.ts` already has good spec coverage — use it as the
     template).
 
+    **Status (verified 2026-07-11): ❌ Not started.** No new `*.spec.ts` or
+    `*.e2e-spec.ts` files were added for any of these modules. Correctly out
+    of scope for this pass (genuinely L effort). **How to resolve:** given
+    items #1, #2, #3, and #7 above all lived in exactly this untested
+    surface, prioritize in this order: (1) `mfa/` — TOTP enroll/verify/backup
+    codes, now on `SessionAuthGuard` per #2, needs a spec proving revocation
+    actually takes effect; (2) `outbox/` — unit-test the new
+    `MAX_ATTEMPTS`/`DEAD_LETTER` branch added for #5 (claim-time cutoff and
+    failure-path cutoff are two separate code paths, both need coverage);
+    (3) `api-keys/` — an e2e proving the new guard order from #7 actually lets
+    a `bp_...` bearer request through end-to-end, since that flow was
+    previously unreachable; (4) `sessions/`, `notification/`,
+    `push-notification/`, `comment/`, `realtime/`, `redis/` after that. Use
+    `session-auth.guard.spec.ts` as the mocking template (it already has good
+    coverage) and `@suites/*` (already a dependency) for automock-based unit
+    tests.
+
 13. **[Frontend] Unit/component test coverage is very thin: 12 test files
     against ~971 non-test `.ts`/`.tsx` files.** Concentrated almost entirely in
     `src/lib/`; none of the ~50 `components/ui/*` primitives, the realtime
@@ -197,6 +407,21 @@ report) before being added here.
     machine (reconnect/backoff/auth-failure recovery) — it's complex enough
     that regressions would be easy to miss by inspection alone.
 
+    **Status (verified 2026-07-11): ❌ Not started.** No test files were
+    added; frontend unit coverage is unchanged from the original audit.
+    Correctly out of scope for this pass. **How to resolve:** start exactly
+    where the audit pointed — `realtime-client.ts`'s state machine — using a
+    fake `WebSocket` (e.g. `mock-socket` or a hand-rolled stub implementing
+    `send`/`close`/event handlers) to drive it through
+    `idle → connecting → authenticating → open → backoff → down` and assert
+    on: auth-frame handling, subscription/claim replay after reconnect,
+    proactive token refresh on an `auth`-flavored error frame, exponential
+    backoff timing (fake timers), and the degraded-retry mode's `online`
+    event race. Once that template exists, extend to `components/ui/*`
+    primitives and the auth hooks; add `test.coverage` to `vitest.config.ts`
+    (v8 or istanbul provider) so future regressions in coverage are visible
+    even before a hard threshold is enforced in CI.
+
 14. **[Frontend] Rate-limit e2e tests soft-skip instead of failing.**
     `e2e/security-rate-limit.spec.ts:26-28,52-54,80` calls `test.skip()` if a
     429 is never observed within N attempts — meaning a regressed or disabled
@@ -204,12 +429,31 @@ report) before being added here.
     **Fix (S):** fail loudly in CI; only allow the soft-skip locally (e.g. gate
     on `process.env.CI`).
 
+    **Status (verified 2026-07-11): ✅ Fixed.** All three call sites now do
+    `test.skip(!isCI, "Rate limiting not triggered — skipping locally only")`
+    with `const isCI = !!process.env.CI` — so a regressed/disabled rate
+    limiter now fails the suite in CI instead of silently skipping. Nothing
+    further needed.
+
 15. **[Frontend] E2E coverage is comprehensive for demos/auth/security but
     thin for the deepest business logic**: no dedicated specs for
     checkout/billing (Stripe), settings sub-pages, admin audit-logs, or
     chat-room beyond incidental coverage in `v1.spec.ts`/`feed.spec.ts`.
     Playwright also only runs a `chromium` project — no Firefox/WebKit/mobile
     viewport (`playwright.config.ts:19`).
+
+    **Status (verified 2026-07-11): ❌ Not started.** `playwright.config.ts`
+    still declares a single `chromium` project; no new spec files for
+    billing/settings/admin/chat-room. Correctly out of scope for this pass.
+    **How to resolve:** add `firefox`/`webkit` (and optionally a mobile
+    viewport via `devices["Pixel 7"]`/`devices["iPhone 14"]`) to the
+    `projects` array in `playwright.config.ts` — budget for the fact that
+    3x browser coverage roughly 3x's e2e CI time, so pair this with the
+    Playwright-binary-caching item in the broader DevOps/CI list below. For
+    the missing business-logic specs, prioritize checkout/billing first
+    (real money, Stripe webhook + client SDK interaction — highest risk of
+    the untested set) using Stripe's test-mode fixtures, then settings and
+    admin audit-logs.
 
 16. **[Backend] Migration-folder naming hygiene.** 4 of 11 migration folders
     use an abbreviated `YYYYMMDD_name` format instead of Prisma's standard full
@@ -219,6 +463,25 @@ report) before being added here.
     order. **Fix (S):** rename to full timestamps; enforce `prisma migrate dev`
     for all future migrations going forward.
 
+    **Status (verified 2026-07-11): ❌ Not started** — folder names in
+    `prisma/migrations/` are unchanged, and the new `stripe_fields` migration
+    added alongside this fix pass correctly used the full-timestamp format
+    (`20260707190624_add_stripe_fields`), so the hygiene issue isn't getting
+    worse, just not yet cleaned up retroactively. **How to resolve:** renaming
+    a migration folder that has already been applied to any running database
+    is riskier than it looks — Prisma tracks applied migrations by folder
+    name in the `_prisma_migrations` table, so renaming one that's already
+    deployed anywhere (including your own dev/staging DBs) will make Prisma
+    think it's a new, unapplied migration on next deploy. If you want this
+    cleaned up: (1) confirm no environment has these 4 migrations applied
+    yet under their current names — if any does, this needs a manual
+    `_prisma_migrations` table update alongside the folder rename, not just a
+    `mv`; (2) if it's safe, rename the 4 folders to full
+    `YYYYMMDDHHMMSS_name` timestamps preserving their relative same-day
+    order; (3) going forward, always create migrations via
+    `prisma migrate dev` rather than hand-authoring the folder, which is what
+    produced the inconsistency in the first place.
+
 ## Documentation drift (found while verifying the above)
 
 17. **[Backend] `docs/backend/DESIGN_GUIDE.md` is a byte-for-byte duplicate of
@@ -226,6 +489,10 @@ report) before being added here.
     lines of frontend Tailwind/theming content, linked from
     `docs/backend/README.md:5` as if it documented backend architecture).
     **Fix (S):** delete the backend copy, fix the link.
+
+    **Status (verified 2026-07-11): ✅ Fixed.** `docs/backend/DESIGN_GUIDE.md`
+    was deleted and the link removed from `docs/backend/README.md`. Nothing
+    further needed.
 
 18. **[Backend] `docs/backend/AUTH.md` and `docs/adr/001-redis-session-auth.md`
     describe a Postgres-backed `Session` table and a `mySessions`/
@@ -237,6 +504,26 @@ report) before being added here.
     method names. **Fix (S):** update both docs to match the current
     implementation.
 
+    **Status (verified 2026-07-11): ⚠️ Partially fixed.**
+    `docs/backend/AUTH.md` was thoroughly corrected: the token table now says
+    "opaque (Redis session compound key)" instead of "opaque (Postgres
+    `Session.sessionToken`)"; the `refresh`/`logout` bullets, the deploy-order
+    note, and the whole "Sessions surface" section were rewritten to describe
+    the real `sessions.resolver.ts` (`mySessions`/`revokeSession`/
+    `revokeAllOtherSessions`, Redis-backed) instead of the dropped Postgres
+    `Session` table and the old `auth.resolver.ts` method names. **But
+    `docs/adr/001-redis-session-auth.md` was not touched** and still has the
+    same stale claim at line 23: `` `refreshToken` — opaque, Postgres-backed
+    (30d TTL) for session renewal ``. (Lines 14-16 of the ADR, which mention
+    "Traditional session stores (Postgres `sessions` table)", are fine as-is —
+    that's describing the *rejected alternative* the ADR argues against, not
+    the current implementation.) **Resolution:** change ADR line 23 to match
+    the corrected `AUTH.md` table — `` `refreshToken` — opaque (Redis session
+    compound key), 30d TTL, for session renewal `` — and skim the rest of the
+    ADR's "Consequences" section for any other now-inaccurate Postgres
+    references before closing this out. Effort: S (single-line fix plus a
+    read-through).
+
 19. **[Frontend] `CHANGELOG.md:16-17` claims the `access_token` cookie is
     "non-httpOnly for client access"** — **verified false against the current
     code**: `src/lib/cookie.ts`'s `baseOptions()` (line 47) sets
@@ -246,10 +533,18 @@ report) before being added here.
     should be corrected so nobody reads it as license to relax the cookie
     later. **Fix (S):** fix the changelog wording.
 
+    **Status (verified 2026-07-11): ✅ Fixed.** `CHANGELOG.md:16` now reads
+    "manage `access_token` (httpOnly) and `refresh_token` (httpOnly from
+    NestJS)" — matches the code. Nothing further needed.
+
 20. **[Frontend] `messages/de` (German) is referenced in
     `CHANGELOG.md:41` ("en/tr/de" for v1.0.0) but only `en`/`tr` ship** —
     confirm whether `de` was intentionally dropped and update the changelog,
     or restore it.
+
+    **Status (verified 2026-07-11): ✅ Fixed.** `CHANGELOG.md:41` now reads
+    "server-side dictionaries (en/tr)" — matches the two locales that
+    actually ship. Nothing further needed.
 
 ---
 
@@ -400,17 +695,32 @@ a raw-API demo but worth revisiting if SSE is ever promoted beyond a demo page.
 
 ## Suggested execution order
 
-1. Critical items **#1–#5** (all verified, all security/correctness bugs on the
-   real product, all S/M effort) — these should land before anything else,
-   ideally in one focused pass since #1 and #8 are related (demo module wired
-   into prod).
-2. High-priority **#6–#11** — mostly S/M effort, meaningfully closes the gap
-   between "boilerplate" and "production-ready."
-3. Testing gaps **#12–#16** — start with the modules implicated by the
-   Critical section (`mfa/`, `outbox/`, `api-keys/`, guards) since that's where
-   the bugs actually were.
-4. Documentation drift **#17–#20** — cheap, do in a single pass alongside
-   whichever code changes touch those areas.
-5. The broader per-app lists — reconcile against `docs/todo/` during regular
-   planning; most of what isn't already tracked there is P2-effort DX/SEO/perf
-   polish rather than correctness risk.
+~~1. Critical items #1–#5~~ ~~2. High-priority #6–#11~~ ~~4. Documentation
+drift #17–#20~~ — superseded by the verification pass above: 12 of 20
+headline items are confirmed fixed. What's actually left, in order:
+
+1. **Close out the 3 partial fixes first — all S effort, all already scoped
+   above:**
+   - **#3** — make `COOKIE_SECRET` required in `env.validation.ts`; stop
+     capturing `CSRF_SECRET` as a module-level constant in
+     `csrf.middleware.ts` (read it lazily in `getSecret()` instead).
+   - **#18** — fix the one stale line in `docs/adr/001-redis-session-auth.md`
+     (`refreshToken` is Redis-backed, not Postgres-backed) to match the
+     already-corrected `AUTH.md`.
+   - **#8** — continue migrating the ~55 remaining demo modules from
+     `CORE_MODULES` into `DEMO_MODULES` in the batches described above; not
+     urgent (the security-critical instance is already closed) but cheap to
+     chip away at incrementally.
+2. **Testing gaps #12, #13, #15, #16** — start with `mfa/`, `outbox/`, and
+   `api-keys/` (per #12's detailed plan above) since those are exactly the
+   modules where the now-fixed bugs (#1, #2, #3, #7) lived — untested code is
+   where they were found. This is genuinely L effort; treat it as ongoing
+   work rather than a single PR.
+3. **#10 — OpenTelemetry + Prometheus metrics** — L effort, already tracked
+   in `docs/todo/02-backend.md`; do this once the testing-gap work above has
+   given the touched modules (mfa/outbox/api-keys) some safety net, so
+   instrumentation changes there are less likely to regress silently.
+4. **The broader per-app lists** (everything after "Documentation drift") —
+   entirely untouched by the recent fix pass. Reconcile against `docs/todo/`
+   during regular planning; most of what isn't already tracked there is
+   P2-effort DX/SEO/perf polish rather than correctness risk.
