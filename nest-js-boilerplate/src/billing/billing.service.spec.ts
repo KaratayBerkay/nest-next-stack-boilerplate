@@ -1,10 +1,18 @@
 import { BadRequestException } from '@nestjs/common';
 import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
 import { BillingService } from './billing.service';
-import type { PaymentProvider } from './payment-provider.interface';
+import type {
+  PaymentProvider,
+  CreateSubscriptionInput,
+  CreateSubscriptionResult,
+} from './payment-provider.interface';
 
 type MockPrisma = {
-  user: { findUniqueOrThrow: jest.Mock; update: jest.Mock };
+  user: {
+    findUniqueOrThrow: jest.Mock;
+    findUnique: jest.Mock;
+    update: jest.Mock;
+  };
   wallet: { findUnique: jest.Mock; create: jest.Mock };
   walletTransaction: {
     create: jest.Mock;
@@ -17,6 +25,10 @@ type MockPrisma = {
 type MockTokenStore = { rewriteFieldsForUser: jest.Mock };
 type MockNotification = { create: jest.Mock };
 type MockRealtime = { updateUserTier: jest.Mock };
+type MockStripeService = {
+  createCustomer: jest.Mock;
+  createSetupIntent: jest.Mock;
+};
 
 describe('BillingService', () => {
   let service: BillingService;
@@ -25,14 +37,17 @@ describe('BillingService', () => {
   let mockTokenStore: MockTokenStore;
   let mockNotification: MockNotification;
   let mockRealtime: MockRealtime;
+  let mockStripe: MockStripeService;
 
   beforeEach(() => {
     mockProvider = {
-      charge: jest.fn(),
+      createSubscription: jest.fn(),
+      cancelSubscription: jest.fn().mockResolvedValue(undefined),
     };
     mockPrisma = {
       user: {
         findUniqueOrThrow: jest.fn(),
+        findUnique: jest.fn(),
         update: jest.fn(),
       },
       wallet: {
@@ -44,13 +59,8 @@ describe('BillingService', () => {
       walletTransaction: {
         create: jest.fn(),
         findMany: jest.fn(),
-        // No prior transaction for this idempotency key by default — enhancements1
-        // #10 checks this before calling the payment provider.
         findFirst: jest.fn().mockResolvedValue(null),
       },
-      // Real Prisma's array form just runs each operation and resolves; the mock
-      // mirrors that (the individual create/update mocks below are what tests assert
-      // against — they've already been invoked by the time the array is built).
       $transaction: jest.fn((ops: unknown[]) => Promise.resolve(ops)),
     };
     mockTokenStore = {
@@ -62,40 +72,49 @@ describe('BillingService', () => {
     mockRealtime = {
       updateUserTier: jest.fn(),
     };
+    mockStripe = {
+      createCustomer: jest.fn().mockResolvedValue({ id: 'cus_new123' }),
+      createSetupIntent: jest.fn().mockResolvedValue({ client_secret: 'si_secret' }),
+    };
 
     service = new BillingService(
       mockPrisma as never,
       mockTokenStore as never,
       mockNotification as never,
       mockRealtime as never,
+      mockStripe as never,
       mockProvider,
     );
   });
 
   describe('subscribeToPlan', () => {
-    it('upgrades tier on approved card', async () => {
+    it('upgrades tier on approved subscription', async () => {
       mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
         subscriptionTier: SubscriptionTier.FREE,
+        stripeCustomerId: 'cus_existing',
+        email: 'user@example.com',
+        name: 'Test',
       });
-      mockProvider.charge.mockResolvedValue({
-        approved: true,
-        providerRef: 'mock_abc',
+      mockProvider.createSubscription.mockResolvedValue({
+        success: true,
+        stripeSubscriptionId: 'sub_abc',
+        periodStart: new Date('2026-01-01'),
+        periodEnd: new Date('2026-02-01'),
+        latestInvoiceId: 'inv_1',
       });
 
       const result = await service.subscribeToPlan(
         'u1',
         SubscriptionTier.PREMIUM,
-        {
-          last4: '4242',
-          expMonth: 12,
-          expYear: 2030,
-        },
+        'pm_card123',
       );
 
       expect(result.success).toBe(true);
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
-        where: { id: 'u1' },
-        data: { subscriptionTier: SubscriptionTier.PREMIUM },
+      expect(mockProvider.createSubscription).toHaveBeenCalledWith({
+        userId: 'u1',
+        tier: SubscriptionTier.PREMIUM,
+        paymentMethodId: 'pm_card123',
+        stripeCustomerId: 'cus_existing',
       });
       expect(mockTokenStore.rewriteFieldsForUser).toHaveBeenCalledWith('u1', {
         tier: SubscriptionTier.PREMIUM,
@@ -104,90 +123,94 @@ describe('BillingService', () => {
         'u1',
         SubscriptionTier.PREMIUM,
       );
-      expect(mockPrisma.walletTransaction.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          data: expect.objectContaining({
-            type: 'FEE',
-            status: 'COMPLETED',
-            fromWalletId: 'w1',
-          }),
-        }),
-      );
-      expect(mockNotification.create).toHaveBeenCalled();
     });
 
-    it('rejects declined card without changing tier', async () => {
+    it('creates Stripe customer if user has none', async () => {
       mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
         subscriptionTier: SubscriptionTier.FREE,
+        stripeCustomerId: null,
+        email: 'user@example.com',
+        name: 'Test',
       });
-      mockProvider.charge.mockResolvedValue({
-        approved: false,
+      mockProvider.createSubscription.mockResolvedValue({
+        success: true,
+        stripeSubscriptionId: 'sub_new',
+        periodStart: new Date('2026-01-01'),
+        periodEnd: new Date('2026-02-01'),
+      });
+
+      await service.subscribeToPlan('u1', SubscriptionTier.BASIC, 'pm_card');
+
+      expect(mockStripe.createCustomer).toHaveBeenCalledWith('user@example.com', 'Test');
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        data: { stripeCustomerId: 'cus_new123' },
+      });
+      expect(mockProvider.createSubscription).toHaveBeenCalledWith(
+        expect.objectContaining({ stripeCustomerId: 'cus_new123' }),
+      );
+    });
+
+    it('returns declined without changing tier', async () => {
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+        subscriptionTier: SubscriptionTier.FREE,
+        stripeCustomerId: 'cus_existing',
+        email: 'user@example.com',
+        name: 'Test',
+      });
+      mockProvider.createSubscription.mockResolvedValue({
+        success: false,
         reason: 'generic_decline',
-        providerRef: 'mock_xyz',
       });
 
       const result = await service.subscribeToPlan(
         'u1',
         SubscriptionTier.BASIC,
-        {
-          last4: '0002',
-          expMonth: 12,
-          expYear: 2030,
-        },
+        'pm_card',
       );
 
       expect(result.success).toBe(false);
       expect(result.reason).toBe('generic_decline');
       expect(mockPrisma.user.update).not.toHaveBeenCalled();
       expect(mockTokenStore.rewriteFieldsForUser).not.toHaveBeenCalled();
-      expect(mockPrisma.walletTransaction.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          data: expect.objectContaining({
-            type: 'FEE',
-            status: 'FAILED',
-            fromWalletId: 'w1',
-          }),
-        }),
-      );
-      expect(mockNotification.create).not.toHaveBeenCalled();
     });
 
     it('downgrades without calling the payment provider', async () => {
       mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
         subscriptionTier: SubscriptionTier.PREMIUM,
+        stripeCustomerId: 'cus_existing',
+        email: 'user@example.com',
+        name: 'Test',
+      });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        stripeSubscriptionId: 'sub_prem',
       });
 
       const result = await service.subscribeToPlan('u1', SubscriptionTier.FREE);
 
       expect(result.success).toBe(true);
-
-      expect(mockProvider.charge).not.toHaveBeenCalled();
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
-        where: { id: 'u1' },
-        data: { subscriptionTier: SubscriptionTier.FREE },
-      });
-      expect(mockRealtime.updateUserTier).toHaveBeenCalledWith(
-        'u1',
-        SubscriptionTier.FREE,
-      );
-      expect(mockPrisma.walletTransaction.create).toHaveBeenCalledWith(
+      expect(mockProvider.createSubscription).not.toHaveBeenCalled();
+      expect(mockProvider.cancelSubscription).toHaveBeenCalledWith('sub_prem');
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          where: { id: 'u1' },
           data: expect.objectContaining({
-            type: 'ADJUSTMENT',
-            status: 'COMPLETED',
-            fromWalletId: 'w1',
+            subscriptionTier: SubscriptionTier.FREE,
+            cancelAtPeriodEnd: true,
           }),
         }),
       );
-      expect(mockNotification.create).toHaveBeenCalled();
+      expect(mockTokenStore.rewriteFieldsForUser).toHaveBeenCalledWith('u1', {
+        tier: SubscriptionTier.FREE,
+      });
     });
 
     it('throws if already on the target tier', async () => {
       mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
         subscriptionTier: SubscriptionTier.BASIC,
+        stripeCustomerId: 'cus_existing',
+        email: 'user@example.com',
+        name: 'Test',
       });
 
       await expect(
@@ -195,14 +218,17 @@ describe('BillingService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('throws if upgrade requested without card', async () => {
+    it('throws if upgrade requested without paymentMethodId', async () => {
       mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
         subscriptionTier: SubscriptionTier.FREE,
+        stripeCustomerId: 'cus_existing',
+        email: 'user@example.com',
+        name: 'Test',
       });
 
       await expect(
         service.subscribeToPlan('u1', SubscriptionTier.PREMIUM),
-      ).rejects.toThrow('Card information required for upgrades');
+      ).rejects.toThrow('paymentMethodId required for upgrades');
     });
   });
 
@@ -221,7 +247,6 @@ describe('BillingService', () => {
       expect(result).toHaveLength(1);
       expect(mockPrisma.walletTransaction.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           where: expect.objectContaining({
             OR: [
               { fromWallet: { userId: 'u1' } },

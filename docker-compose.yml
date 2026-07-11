@@ -176,7 +176,6 @@ services:
       args:
         NEXT_PUBLIC_APP_URL: https://app.eys.gen.tr
         NEXT_PUBLIC_REALTIME_WS_URL: wss://api.eys.gen.tr/ws
-        NEXT_PUBLIC_MINIO_PUBLIC_URL: https://app.eys.gen.tr/api
         NEXT_PUBLIC_STRIPE_KEY: pk_test_51TqecDEHhe9HsOpGZsMuC2nADQyBcL4RGqRPiXUi4QgEVO7lwObggH3O4qI59iaTS3whWLomamuhn3f0ABqDjPap00lLAx2q7w
         NEXT_PUBLIC_VAPID_PUBLIC_KEY: BOTFPkWWrBfVO7-bQELkRKrqdKzBQHs7Q7cnf64ZhMqyIz1_49-OWusGQKW8jKMZ-RU6EPJZ3jhn3QmaVo8Qv2c
     restart: unless-stopped

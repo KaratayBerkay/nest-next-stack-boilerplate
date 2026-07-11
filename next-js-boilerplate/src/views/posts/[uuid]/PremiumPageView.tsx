@@ -128,6 +128,7 @@ function PostDetailContent() {
                     setEditing(true);
                   }}
                   className="rounded-lg p-1.5 text-muted transition-colors hover:bg-surface-hover hover:text-fg"
+                  aria-label="Edit post"
                 >
                   <IconPencil size={14} stroke={1.5} />
                 </button>
@@ -146,6 +147,7 @@ function PostDetailContent() {
                     <button
                       onClick={open}
                       className="rounded-lg p-1.5 text-muted transition-colors hover:bg-surface-hover hover:text-red-500"
+                      aria-label="Delete post"
                     >
                       <IconTrash size={14} stroke={1.5} />
                     </button>

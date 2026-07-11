@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swipe Left to Go Back</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+    overflow: hidden;
+  }
+
+  .phone-frame {
+    width: 380px;
+    max-width: 100%;
+    height: 720px;
+    max-height: 90vh;
+    background: #1a1a2e;
+    border-radius: 40px;
+    padding: 12px;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4),
+                0 0 0 2px rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .screen {
+    width: 100%;
+    height: 100%;
+    border-radius: 30px;
+    overflow: hidden;
+    position: relative;
+    background: #0f0f1e;
+  }
+
+  .pages-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  .page {
+    position: absolute;
+    inset: 0;
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+  }
+
+  /* Main Page (background) */
+  .main-page {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    padding: 24px;
+    color: white;
+    z-index: 1;
+  }
+
+  .main-page h1 {
+    font-size: 28px;
+    margin-bottom: 8px;
+    background: linear-gradient(90deg, #60a5fa, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .main-page .subtitle {
+    color: #94a3b8;
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  .card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    backdrop-filter: blur(10px);
+  }
+
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .card-desc {
+    font-size: 13px;
+    color: #94a3b8;
+  }
+
+  /* Detail Page (foreground) */
+  .detail-page {
+    background: linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%);
+    padding: 24px;
+    color: white;
+    z-index: 2;
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.3);
+  }
+
+  .detail-page.swiped {
+    transform: translateX(-100%);
+  }
+
+  .detail-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-top: 8px;
+  }
+
+  .back-arrow {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .back-arrow:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .back-arrow svg {
+    width: 18px;
+    height: 18px;
+    fill: white;
+  }
+
+  .detail-title {
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  .detail-content {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #cbd5e1;
+  }
+
+  .detail-content p {
+    margin-bottom: 16px;
+  }
+
+  /* Swipe Hint Overlay */
+  .swipe-hint {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(8px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+
+  .swipe-hint.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .swipe-hint.hidden {
+    opacity: 0;
+  }
+
+  .gesture-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .hand-animation {
+    position: relative;
+    width: 160px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hand-icon {
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    animation: swipeLeft 2s ease-in-out infinite;
+    filter: drop-shadow(0 4px 12px rgba(96, 165, 250, 0.5));
+  }
+
+  @keyframes swipeLeft {
+    0% {
+      transform: translateX(40px);
+      opacity: 0;
+    }
+    20% {
+      opacity: 1;
+    }
+    50% {
+      transform: translateX(-40px);
+      opacity: 1;
+    }
+    70% {
+      opacity: 0;
+    }
+    100% {
+      transform: translateX(-40px);
+      opacity: 0;
+    }
+  }
+
+  .swipe-trail {
+    position: absolute;
+    width: 120px;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, #60a5fa, transparent);
+    border-radius: 2px;
+    animation: trail 2s ease-in-out infinite;
+  }
+
+  @keyframes trail {
+    0%, 100% {
+      opacity: 0;
+      transform: scaleX(0.3) translateX(30px);
+    }
+    30%, 60% {
+      opacity: 1;
+      transform: scaleX(1) translateX(0);
+    }
+  }
+
+  .hint-text {
+    text-align: center;
+    color: white;
+  }
+
+  .hint-text h2 {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    background: linear-gradient(90deg, #60a5fa, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hint-text p {
+    font-size: 14px;
+    color: #94a3b8;
+    max-width: 260px;
+  }
+
+  .dismiss-btn {
+    margin-top: 16px;
+    padding: 10px 24px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    color: white;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .dismiss-btn:hover {
+    background: rgba(255, 255, 255, 0.18);
+    transform: translateY(-1px);
+  }
+
+  /* Edge indicator */
+  .edge-indicator {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, #60a5fa, #a78bfa);
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .detail-page.dragging .edge-indicator {
+    opacity: 1;
+  }
+
+  /* Reset button */
+  .reset-btn {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    color: white;
+    font-size: 12px;
+    cursor: pointer;
+    z-index: 20;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  .reset-btn.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .reset-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #60a5fa, #a78bfa);
+    width: 0%;
+    z-index: 15;
+    transition: width 0.1s linear;
+    pointer-events: none;
+  }
+
+  .detail-page.dragging .progress-bar {
+    transition: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+  <div class="screen">
+    <div class="pages-container">
+      <!-- Main Page (destination) -->
+      <div class="page main-page">
+        <h1>Welcome Home</h1>
+        <p class="subtitle">You made it back! 🎉</p>
+        <div class="card">
+          <div class="card-title">📱 Dashboard</div>
+          <div class="card-desc">View your recent activity and stats</div>
+        </div>
+        <div class="card">
+          <div class="card-title">💬 Messages</div>
+          <div class="card-desc">3 new messages waiting for you</div>
+        </div>
+        <div class="card">
+          <div class="card-title">⚙️ Settings</div>
+          <div class="card-desc">Customize your preferences</div>
+        </div>
+        <div class="card">
+          <div class="card-title">👤 Profile</div>
+          <div class="card-desc">Manage your account details</div>
+        </div>
+      </div>
+
+      <!-- Detail Page (current) -->
+      <div class="page detail-page" id="detailPage">
+        <div class="edge-indicator"></div>
+        <div class="progress-bar" id="progressBar"></div>
+        <div class="detail-header">
+          <div class="back-arrow" id="backBtn">
+            <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+          </div>
+          <div class="detail-title">Article Details</div>
+        </div>
+        <div class="detail-content">
+          <p>This is a detail page. Try swiping left to navigate back to the main page, just like you would on a mobile app.</p>
+          <p>You can also tap the back arrow in the top left corner, or drag anywhere on this page to the left.</p>
+          <p>The swipe gesture is a common pattern in modern mobile interfaces, providing an intuitive way to navigate back through your history.</p>
+          <p>Notice the smooth animation and visual feedback as you drag. The page follows your finger naturally!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Swipe Hint Overlay -->
+    <div class="swipe-hint visible" id="swipeHint">
+      <div class="gesture-container">
+        <div class="hand-animation">
+          <div class="swipe-trail"></div>
+          <svg class="hand-icon" viewBox="0 0 24 24" fill="white">
+            <path d="M9.5,3A1.5,1.5 0 0,1 11,4.5A1.5,1.5 0 0,1 9.5,6A1.5,1.5 0 0,1 8,4.5A1.5,1.5 0 0,1 9.5,3M13,14H16L18.82,9.45C19.22,8.82 19.07,8 18.47,7.62C17.85,7.23 17,7.38 16.58,8L14,12H13V4.5A1.5,1.5 0 0,0 11.5,3A1.5,1.5 0 0,0 10,4.5V14H13M7,4.5A1.5,1.5 0 0,1 8.5,6A1.5,1.5 0 0,1 7,7.5A1.5,1.5 0 0,1 5.5,6A1.5,1.5 0 0,1 7,4.5M4.5,6A1.5,1.5 0 0,1 6,7.5A1.5,1.5 0 0,1 4.5,9A1.5,1.5 0 0,1 3,7.5A1.5,1.5 0 0,1 4.5,6M20,13.5V19A2,2 0 0,1 18,21H7A2,2 0 0,1 5,19V9.59C5.42,9.84 5.9,10 6.42,10C7.55,10 8.53,9.38 9,8.56C9.47,9.38 10.45,10 11.5,10H13L16.58,4.45C16.79,4.13 17.08,3.89 17.41,3.75C18.05,3.46 18.82,3.69 19.2,4.29L20,5.57V13.5Z"/>
+          </svg>
+        </div>
+        <div class="hint-text">
+          <h2>Swipe Left to Go Back</h2>
+          <p>Drag this page to the left to return to the main page</p>
+        </div>
+        <button class="dismiss-btn" id="dismissBtn">Got it</button>
+      </div>
+    </div>
+
+    <button class="reset-btn" id="resetBtn">↺ Show hint again</button>
+  </div>
+</div>
+
+<script>
+  const detailPage = document.getElementById('detailPage');
+  const swipeHint = document.getElementById('swipeHint');
+  const dismissBtn = document.getElementById('dismissBtn');
+  const backBtn = document.getElementById('backBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const progressBar = document.getElementById('progressBar');
+
+  let startX = 0;
+  let currentX = 0;
+  let isDragging = false;
+  let isSwiped = false;
+  const screen = document.querySelector('.screen');
+  const screenWidth = screen.offsetWidth;
+  const threshold = screenWidth * 0.3;
+
+  function startDrag(x) {
+    if (isSwiped) return;
+    isDragging = true;
+    startX = x;
+    detailPage.classList.add('dragging');
+    detailPage.style.transition = 'none';
+  }
+
+  function drag(x) {
+    if (!isDragging || isSwiped) return;
+    currentX = x - startX;
+    if (currentX > 0) currentX = 0; // prevent swiping right
+    const progress = Math.min(Math.abs(currentX) / threshold * 100, 100);
+    progressBar.style.width = progress + '%';
+    detailPage.style.transform = `translateX(${currentX}px)`;
+  }
+
+  function endDrag() {
+    if (!isDragging || isSwiped) return;
+    isDragging = false;
+    detailPage.classList.remove('dragging');
+    detailPage.style.transition = '';
+
+    if (Math.abs(currentX) > threshold) {
+      completeSwipe();
+    } else {
+      detailPage.style.transform = '';
+      progressBar.style.width = '0%';
+    }
+    currentX = 0;
+  }
+
+  function completeSwipe() {
+    isSwiped = true;
+    detailPage.style.transform = 'translateX(-100%)';
+    progressBar.style.width = '100%';
+    setTimeout(() => {
+      resetBtn.classList.add('visible');
+    }, 500);
+  }
+
+  // Mouse events
+  screen.addEventListener('mousedown', (e) => startDrag(e.clientX));
+  screen.addEventListener('mousemove', (e) => drag(e.clientX));
+  screen.addEventListener('mouseup', endDrag);
+  screen.addEventListener('mouseleave', endDrag);
+
+  // Touch events
+  screen.addEventListener('touchstart', (e) => startDrag(e.touches[0].clientX), { passive: true });
+  screen.addEventListener('touchmove', (e) => drag(e.touches[0].clientX), { passive: true });
+  screen.addEventListener('touchend', endDrag);
+
+  // Dismiss hint
+  dismissBtn.addEventListener('click', () => {
+    swipeHint.classList.remove('visible');
+    swipeHint.classList.add('hidden');
+  });
+
+  // Back button
+  backBtn.addEventListener('click', completeSwipe);
+
+  // Reset
+  resetBtn.addEventListener('click', () => {
+    isSwiped = false;
+    detailPage.style.transform = '';
+    progressBar.style.width = '0%';
+    resetBtn.classList.remove('visible');
+    swipeHint.classList.remove('hidden');
+    swipeHint.classList.add('visible');
+  });
+
+  // Auto-dismiss hint after 5 seconds
+  setTimeout(() => {
+    if (swipeHint.classList.contains('visible')) {
+      swipeHint.classList.remove('visible');
+      swipeHint.classList.add('hidden');
+    }
+  }, 6000);
+</script>
+
+</body>
+</html>
+

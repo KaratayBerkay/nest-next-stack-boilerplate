@@ -69,6 +69,15 @@ export function FreePageView() {
   }, [username, user?.username]);
 
   const handleAvatarFile = useCallback(async (file: File) => {
+    const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowed.includes(file.type)) {
+      toast({ title: t.invalidFileType, variant: "destructive" });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: t.fileTooLarge, variant: "destructive" });
+      return;
+    }
     const form = new FormData();
     form.append("file", file);
     try {
@@ -81,7 +90,7 @@ export function FreePageView() {
       const exception = (err as Error & { exception?: { msg?: string } }).exception;
       toast({ title: exception?.msg ?? t.uploadFailed, variant: "destructive" });
     }
-  }, [toast, t.uploadFailed]);
+  }, [toast, t.uploadFailed, t.invalidFileType, t.fileTooLarge]);
 
   const saveProfile = useCallback(async () => {
     setSaving(true);

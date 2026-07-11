@@ -24,8 +24,21 @@ export class ReactionsService {
     private readonly realtime: RealtimeGateway,
   ) {}
 
-  findAll() {
-    return this.prisma.reaction.findMany({ orderBy: { createdAt: 'asc' } });
+  /** Scoped query — requires at least one of postId/commentId to prevent full-table scans. */
+  findByTarget(postId?: string, commentId?: string) {
+    if (!postId && !commentId) {
+      throw new ConflictException(
+        'At least one of postId or commentId is required',
+      );
+    }
+    return this.prisma.reaction.findMany({
+      where: {
+        ...(postId ? { postId } : {}),
+        ...(commentId ? { commentId } : {}),
+      },
+      orderBy: { createdAt: 'asc' },
+      take: 200,
+    });
   }
 
   async create(userId: string, data: CreateReactionInput) {

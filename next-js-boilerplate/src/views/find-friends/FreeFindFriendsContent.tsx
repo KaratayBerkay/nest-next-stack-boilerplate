@@ -9,7 +9,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Input } from "@/components/ui/Input";
 import { initials } from "@/lib/initials";
 import { apiFetch } from "@/lib/api-client";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { findFriendsPageInfo } from "@/constants/page-info";
 import { FindFriendsFallback } from "@/fallbacks";

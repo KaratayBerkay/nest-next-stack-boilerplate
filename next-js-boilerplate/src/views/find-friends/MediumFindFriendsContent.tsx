@@ -8,7 +8,7 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { Avatar } from "@/components/ui/Avatar";
 import { initials } from "@/lib/initials";
 import { apiFetch } from "@/lib/api-client";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   GQL_URL,
   MESSAGES_FRIENDS_URL,

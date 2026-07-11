@@ -23,7 +23,7 @@ function buildCsp(nonce: string): string {
     default-src 'self';
     script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""};
     style-src 'self' ${isDev ? "'unsafe-inline'" : `'nonce-${nonce}'`};
-    img-src 'self' blob: data:;
+    img-src 'self' blob: data: https://minio.eys.gen.tr;
     font-src 'self';
     object-src 'none';
     base-uri 'self';
@@ -174,18 +174,20 @@ export function proxy(request: NextRequest) {
 
   res.headers.set("x-proxy", "active");
 
-  // SSR cookie debug header
-  const accessToken = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
-  const rbacToken = request.cookies.get(RBAC_TOKEN_COOKIE)?.value;
-  const deviceToken = request.cookies.get(DEVICE_TOKEN_COOKIE)?.value;
-  res.headers.set(
-    "x-cookies-present",
-    JSON.stringify({
-      access_token: !!accessToken,
-      rbac_token: !!rbacToken,
-      device_token: !!deviceToken,
-    }),
-  );
+  // SSR cookie debug header — gated to dev only to avoid leaking auth-state in production.
+  if (process.env.NODE_ENV !== "production") {
+    const accessToken = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
+    const rbacToken = request.cookies.get(RBAC_TOKEN_COOKIE)?.value;
+    const deviceToken = request.cookies.get(DEVICE_TOKEN_COOKIE)?.value;
+    res.headers.set(
+      "x-cookies-present",
+      JSON.stringify({
+        access_token: !!accessToken,
+        rbac_token: !!rbacToken,
+        device_token: !!deviceToken,
+      }),
+    );
+  }
 
   // Ensure lang cookie is present
   const langCookie = request.cookies.get(LANG_COOKIE)?.value;

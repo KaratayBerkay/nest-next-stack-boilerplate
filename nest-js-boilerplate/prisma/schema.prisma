@@ -898,7 +898,9 @@ model OutboxEvent {
   availableAt   DateTime     @default(now()) @db.Timestamptz(6)
   publishedAt   DateTime?    @db.Timestamptz(6)
   createdAt     DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime     @updatedAt @db.Timestamptz(6)
 
   @@index([status, availableAt])
   @@index([aggregateType, aggregateId])
+  @@index([status, updatedAt])
 }

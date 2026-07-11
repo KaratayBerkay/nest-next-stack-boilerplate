@@ -33,11 +33,17 @@ jobs:
       - name: Unit tests
         run: pnpm test
 
+      - name: Fallow dead-code
+        run: npx fallow dead-code --ci --format json --quiet 2>/dev/null || true
+
+      - name: Fallow duplication
+        run: npx fallow dupes --ci --format json --quiet 2>/dev/null || true
+
       - name: Build
         run: pnpm build
 
-      - name: Install Playwright browser
-        run: pnpm exec playwright install --with-deps chromium
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
 
       - name: E2E tests
         run: pnpm test:e2e

@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { UnauthorizedException } from '@nestjs/common';
+import { hash } from '@node-rs/argon2';
 import { CryptoService } from '../common/crypto/crypto.service';
 import { DeviceService } from '../devices/device.service';
 import { MailService } from '../mail/mail.service';
@@ -46,6 +47,8 @@ const mockTokenStore = {
   extendTTL: jest.fn(),
   updateFields: jest.fn(),
   revokeAllForUser: jest.fn(),
+  writeMfaChallenge: jest.fn(),
+  consumeMfaChallenge: jest.fn(),
 };
 
 describe('AuthService', () => {
@@ -67,7 +70,7 @@ describe('AuthService', () => {
         { provide: DeviceService, useValue: { resolveForLogin: jest.fn() } },
         { provide: TokenStoreService, useValue: mockTokenStore },
         { provide: SessionHydrationService, useValue: { hydrate: jest.fn() } },
-        { provide: TokenDerivationService, useValue: { derive: jest.fn() } },
+        { provide: TokenDerivationService, useValue: { deriveRbacToken: jest.fn(), deriveUserToken: jest.fn() } },
         { provide: UsernameService, useValue: { generate: jest.fn() } },
       ],
     }).compile();
@@ -210,6 +213,77 @@ describe('AuthService', () => {
       // enhancements1 #2: a successful reset must revoke every other existing
       // session, not just leave old (possibly attacker-held) tokens valid.
       expect(mockTokenStore.revokeAllForUser).toHaveBeenCalledWith('u1');
+    });
+  });
+
+  describe('login', () => {
+    it('blocks login when user status is PENDING_VERIFICATION', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u2',
+        email: 'bob@example.com',
+        passwordHash: '$argon2id$fakehash',
+        status: 'PENDING_VERIFICATION',
+        mfaEnabled: false,
+        lockedUntil: null,
+        failedLoginCount: 0,
+        role: 'USER',
+        subscriptionTier: 'FREE',
+      });
+
+      await expect(
+        service.login({ email: 'bob@example.com', password: 'pass123' }),
+      ).rejects.toThrow(UnauthorizedException);
+      // Verify it was the status check, not the password check that rejected
+      expect(mockPrisma.user.findUnique).toHaveBeenCalled();
+    });
+
+    it('blocks login when user status is BANNED', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u3',
+        email: 'banned@example.com',
+        passwordHash: '$argon2id$fakehash',
+        status: 'BANNED',
+        mfaEnabled: false,
+        lockedUntil: null,
+        failedLoginCount: 0,
+        role: 'USER',
+        subscriptionTier: 'FREE',
+      });
+
+      await expect(
+        service.login({ email: 'banned@example.com', password: 'pass123' }),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('returns mfaRequired when user has MFA enabled', async () => {
+      // login() calls verify(user.passwordHash, input.password) which requires argon2.
+      // Use a real argon2 hash so the password check passes before MFA gate.
+      const realHash = await hash('pass123');
+
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u4',
+        email: 'mfa@example.com',
+        passwordHash: realHash,
+        status: 'ACTIVE',
+        mfaEnabled: true,
+        lockedUntil: null,
+        failedLoginCount: 0,
+        role: 'USER',
+        subscriptionTier: 'FREE',
+      });
+
+      mockTokenStore.writeMfaChallenge.mockResolvedValue(undefined);
+
+      const result = await service.login({
+        email: 'mfa@example.com',
+        password: 'pass123',
+      });
+
+      expect(result.mfaRequired).toBe(true);
+      expect(result.mfaToken).toBeDefined();
+      expect(mockTokenStore.writeMfaChallenge).toHaveBeenCalled();
+      // Should NOT issue full session tokens
+      expect(mockTokenStore.write).not.toHaveBeenCalled();
     });
   });
 });

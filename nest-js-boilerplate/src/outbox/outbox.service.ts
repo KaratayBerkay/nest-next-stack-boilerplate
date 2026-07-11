@@ -86,6 +86,21 @@ export class OutboxService implements OnModuleInit, OnModuleDestroy {
 
   /** Claim a batch of PENDING events and publish them to the broker. Returns how many were published. */
   async relayPendingEvents(batchSize = 100): Promise<number> {
+    // First, reclaim any rows stuck in PUBLISHING (process killed mid-relay).
+    // Rows older than 5 minutes are presumed abandoned.
+    const reclaimed = await this.prisma.$executeRaw`
+      UPDATE "OutboxEvent"
+      SET status = 'PENDING', attempts = attempts + 1,
+          lastError = 'reclaimed from PUBLISHING (stale > 5m)'
+      WHERE status = 'PUBLISHING'
+        AND "updatedAt" < now() - interval '5 minutes'
+    `;
+    if (reclaimed > 0) {
+      this.logger.warn(
+        `Reclaimed ${reclaimed} stale PUBLISHING outbox row(s)`,
+      );
+    }
+
     const claimed = await this.prisma.$queryRaw<ClaimedRow[]>(Prisma.sql`
       UPDATE "OutboxEvent" SET status = 'PUBLISHING'
       WHERE id IN (

@@ -102,16 +102,19 @@ async function bootstrap() {
 
   // OpenAPI / Swagger — assembled at bootstrap so the document reflects all registered routes.
   // Serves: GET /api (Swagger UI), GET /api-json, GET /api-yaml.
-  const config = new DocumentBuilder()
-    .setTitle('NestJS Boilerplate API')
-    .setDescription(
-      'Comprehensive NestJS 11 backend demo — REST, GraphQL, gRPC, WebSocket, CQRS, Prisma, BullMQ, and more.',
-    )
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  // Disabled in production to prevent exposing real production endpoint/DTO shapes.
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('NestJS Boilerplate API')
+      .setDescription(
+        'Comprehensive NestJS 11 backend demo — REST, GraphQL, gRPC, WebSocket, CQRS, Prisma, BullMQ, and more.',
+      )
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api', app, document);
+  }
 
   // Hybrid app: HTTP (GraphQL/REST/WS) + a gRPC microservice for internal service-to-service
   // calls. Handlers live in GrpcModule's controllers and share this app's DI container.

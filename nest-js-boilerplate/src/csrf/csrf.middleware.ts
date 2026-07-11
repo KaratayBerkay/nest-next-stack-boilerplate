@@ -13,9 +13,20 @@ const csrf = doubleCsrf({
     if (!secret) throw new Error('CSRF_SECRET is not set');
     return secret;
   },
-  // The token is HMAC-bound to this id. In a real app return the authenticated session id;
-  // here we fall back to the client IP so issue + verify line up within a session.
-  getSessionIdentifier: (req) => req.ip ?? 'anonymous',
+  // Bind the HMAC to the authenticated session's access_token cookie rather than the
+  // client IP. This avoids shared-NAT collisions and mobile IP-change breakage.
+  getSessionIdentifier: (req) => {
+    const cookies = (req as unknown as Record<string, unknown>).cookies as
+      | Record<string, string>
+      | undefined;
+    // cookie name is set by the app (access_token or __Host-access_token).
+    // Fall back to the raw header for non-cookie clients.
+    const authHeader = req.headers?.authorization;
+    const bearer = authHeader?.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : undefined;
+    return cookies?.['access_token'] ?? cookies?.['__Host-access_token'] ?? bearer ?? req.ip ?? 'anonymous';
+  },
   // `__Host-` requires Secure+path=/ (HTTPS only) — use a plain name off production.
   cookieName: isProd ? '__Host-csrf' : 'csrf-token',
   cookieOptions: { sameSite: 'lax', path: '/', secure: isProd },

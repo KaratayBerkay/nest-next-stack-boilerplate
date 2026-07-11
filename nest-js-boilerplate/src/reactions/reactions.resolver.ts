@@ -1,5 +1,5 @@
 import { UseGuards } from '@nestjs/common';
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Reaction } from '../@generated/reaction/reaction.model';
 import type { JwtUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -14,8 +14,11 @@ export class ReactionsResolver {
   constructor(private readonly reactions: ReactionsService) {}
 
   @Query(() => [Reaction], { name: 'reactions' })
-  findAll() {
-    return this.reactions.findAll();
+  findByTarget(
+    @Args('postId', { type: () => ID, nullable: true }) postId?: string,
+    @Args('commentId', { type: () => ID, nullable: true }) commentId?: string,
+  ) {
+    return this.reactions.findByTarget(postId, commentId);
   }
 
   @Mutation(() => Reaction)

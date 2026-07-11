@@ -55,4 +55,5 @@ export { ToastProvider, ToastViewport, Toast, ToastTitle, ToastDescription, Toas
 export { Toggle } from "./toggle";
 export { ToggleGroup, ToggleGroupItem } from "./toggle-group";
 export { Tooltip, TooltipTrigger, TooltipContent } from "./tooltip";
+export { Typography } from "./Typography";
 export { H1, H2, H3, H4, Lead, Large, Small, Muted, Code, Quote } from "./typography";

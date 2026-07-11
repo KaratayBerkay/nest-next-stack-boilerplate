@@ -1,6 +1,8 @@
 import type React from "react";
 
-export type CardProps = React.ComponentPropsWithoutRef<"div">;
+export type CardProps = React.ComponentPropsWithoutRef<"div"> & {
+  variant?: "default" | "elevated" | "interactive" | "outline" | "surface";
+};
 
 export type CardContentProps = React.ComponentPropsWithoutRef<"div">;
 

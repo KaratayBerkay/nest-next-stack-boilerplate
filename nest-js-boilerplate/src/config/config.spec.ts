@@ -18,6 +18,8 @@ describe('Configuration (namespaces + validation)', () => {
     it('exposes a namespace through both typed injection and ConfigService', async () => {
       process.env.DATABASE_HOST = 'db.example.com';
       process.env.DATABASE_PORT = '6543';
+      process.env.JWT_SECRET = 'test-jwt-secret-1234';
+      process.env.CSRF_SECRET = 'test-csrf-secret-1234';
 
       const moduleRef = await Test.createTestingModule({
         imports: [

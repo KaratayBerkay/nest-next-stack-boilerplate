@@ -1,0 +1,20 @@
+{
+  "timestamp": "2026-07-10T14:28:54.090Z",
+  "vuCount": 20,
+  "room": "general",
+  "messagesPerVU": 10,
+  "results": {
+    "authenticated": 1819,
+    "joined": 1819,
+    "messagesSent": 18190,
+    "echoes": 0,
+    "errors": 0,
+    "successRate": 1
+  },
+  "latency": {
+    "authP95": 5,
+    "authP99": 0,
+    "msgP95": 18,
+    "msgP99": 0
+  }
+}

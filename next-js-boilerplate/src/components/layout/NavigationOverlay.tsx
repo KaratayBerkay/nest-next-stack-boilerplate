@@ -43,7 +43,6 @@ export function NavigationOverlay() {
     onSwipeCancel: useCallback(() => {
       cancelSuggestion();
     }, [cancelSuggestion]),
-    enabled: !!currentPage?.enableSwipe,
   });
 
   useEffect(() => {

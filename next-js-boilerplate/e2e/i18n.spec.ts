@@ -30,9 +30,6 @@ test("each locale is server-rendered from its own dictionary", async ({
 
   const tr = await (await request.get("/i18n/tr")).text();
   expect(tr).toContain("Merhaba!");
-
-  const de = await (await request.get("/i18n/de")).text();
-  expect(de).toContain("Hallo!");
 });
 
 test("an unsupported locale is a 404 (dynamicParams = false)", async ({

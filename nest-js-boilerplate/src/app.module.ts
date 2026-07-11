@@ -191,6 +191,7 @@ const DEMO_MODULES = [
   MiddlewareModule,
   PassportAuthModule,
   AlsModule,
+  StaticAssetsModule,
 ];
 
 const isDemoEnabled =

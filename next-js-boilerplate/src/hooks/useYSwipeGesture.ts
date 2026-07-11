@@ -4,7 +4,7 @@ import { useRef, useCallback, useLayoutEffect, useState } from "react";
 
 const IGNORE_SELECTOR = "button, a, input, textarea, [contenteditable]";
 
-export function useYSwipeGesture<T extends HTMLElement>(enabled = true) {
+export function useYSwipeGesture<T extends HTMLElement>() {
   const elRef = useRef<T | null>(null);
   const [tick, setTick] = useState(0);
   const dragging = useRef(false);
@@ -13,7 +13,7 @@ export function useYSwipeGesture<T extends HTMLElement>(enabled = true) {
 
   useLayoutEffect(() => {
     const el = elRef.current;
-    if (!el || !enabled) return;
+    if (!el) return;
 
     const isIgnored = (target: EventTarget | null): boolean => {
       const node = target as HTMLElement | null;
@@ -71,7 +71,7 @@ export function useYSwipeGesture<T extends HTMLElement>(enabled = true) {
       window.removeEventListener("touchmove", onMove);
       window.removeEventListener("touchend", onUp);
     };
-  }, [enabled, tick]);
+  }, [tick]);
 
   const setRef = useCallback((el: T | null) => {
     elRef.current = el;

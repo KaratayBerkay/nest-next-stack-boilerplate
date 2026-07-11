@@ -93,14 +93,22 @@ export class ApiKeysService {
     for (const candidate of candidates) {
       const valid = await verify(candidate.keyHash, key);
       if (valid) {
+        // Always read the live user's current role/tier so downgrades/bans
+        // propagate immediately instead of using frozen snapshot columns.
+        const user = await this.prisma.user.findUnique({
+          where: { id: candidate.userId },
+          select: { role: true, subscriptionTier: true },
+        });
+        if (!user) return null;
+
         await this.prisma.apiKey.update({
           where: { id: candidate.id },
           data: { lastUsedAt: new Date() },
         });
         return {
           userId: candidate.userId,
-          role: candidate.role,
-          tier: candidate.tier,
+          role: user.role,
+          tier: user.subscriptionTier ?? 'FREE',
         };
       }
     }

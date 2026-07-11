@@ -118,4 +118,12 @@ export class AuthPayload {
 
   @Field(() => User)
   user!: User;
+
+  /** When true, the client must call verifyLoginMfa with a TOTP code to complete auth. */
+  @Field(() => Boolean, { nullable: true })
+  mfaRequired?: boolean;
+
+  /** Opaque one-time token the client passes back to verifyLoginMfa. Only set when mfaRequired is true. */
+  @Field(() => String, { nullable: true })
+  mfaToken?: string;
 }

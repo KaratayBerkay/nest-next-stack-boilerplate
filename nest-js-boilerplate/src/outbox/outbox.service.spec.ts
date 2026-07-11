@@ -7,6 +7,7 @@ import type { Queue } from 'bullmq';
 function mockPrisma() {
   return {
     $queryRaw: jest.fn(),
+    $executeRaw: jest.fn().mockResolvedValue(0),
     outboxEvent: {
       create: jest.fn(),
       update: jest.fn(),

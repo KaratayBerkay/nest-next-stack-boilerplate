@@ -2,12 +2,17 @@ import { cn } from "@/lib/cn";
 import type { BadgeProps } from "@/types/ui/Badge-types";
 
 const variants = {
-  default: "bg-fg text-bg",
+  default: "bg-surface text-fg border border-border",
   secondary: "bg-surface text-fg",
   outline: "border border-border text-muted",
-  destructive: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  success:
-    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  destructive: "bg-error text-error-fg",
+  success: "bg-success text-success-fg",
+  warning: "bg-warning text-warning-fg",
+  error: "bg-error text-error-fg",
+  info: "bg-info text-info-fg",
+  soft: "bg-brand/15 text-brand border border-brand/30",
+  dot: "size-2 rounded-full border border-border",
+  pill: "rounded-full px-4",
 } as const;
 
 export function Badge({
@@ -18,7 +23,8 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+        "inline-flex items-center justify-center",
+        variant === "dot" ? "p-0" : "rounded-full px-2.5 py-0.5 text-xs font-medium",
         variants[variant],
         className,
       )}

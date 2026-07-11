@@ -256,7 +256,6 @@ function MessagesPageContent({ initialUser }: MessagesViewProps) {
     threshold: 60,
     onSwipeLeft: useCallback(() => setTab("friends"), []),
     onSwipeRight: useCallback(() => setTab("conversations"), []),
-    enabled: isTouch && !!user,
   });
 
   const connectionState = useConnectionState();

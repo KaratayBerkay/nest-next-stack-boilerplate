@@ -10,7 +10,7 @@ import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
 import { nowMs } from "@/lib/date-time";
 import { Avatar } from "@/components/ui/Avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/cn";
 import { initials } from "@/lib/initials";
 import { IconX, IconMenu2 } from "@tabler/icons-react";

@@ -96,16 +96,36 @@ function parseSetCookieValue(setCookie: string, cookieName: string): string | nu
  * `cookie` entry REPLACES the forwarded Cookie header in graphqlFetch, so the
  * session tokens must travel via the Authorization / x-*-token fallbacks.
  * Returns null when the backend won't issue a token (e.g. unreachable).
+ *
+ * Cached per-process for 4 minutes (the CSRF cookie lives 5 minutes) so
+ * repeated mutations share one backend round-trip instead of re-fetching.
  */
+let cachedCsrf: { token: string; cookie: string; ts: number } | null = null;
+const CSRF_CACHE_TTL_MS = 4 * 60 * 1000;
+
 export async function csrfEchoHeaders(): Promise<Record<string, string> | null> {
+  if (cachedCsrf && Date.now() - cachedCsrf.ts < CSRF_CACHE_TTL_MS) {
+    return {
+      "x-csrf-token": cachedCsrf.token,
+      cookie: cachedCsrf.cookie,
+    };
+  }
+
   const csrfRes = await backendFetch<{ token: string }>("/csrf/token");
   const csrfToken = csrfRes.data?.token;
-  if (!csrfToken) return null;
+  if (!csrfToken) {
+    cachedCsrf = null;
+    return null;
+  }
 
   const setCookieHeader = csrfRes.headers.get("set-cookie");
   const csrfCookieValue = setCookieHeader
     ? parseSetCookieValue(setCookieHeader, csrfCookieName())
     : null;
+
+  if (csrfCookieValue) {
+    cachedCsrf = { token: csrfToken, cookie: csrfCookieValue, ts: Date.now() };
+  }
 
   return {
     "x-csrf-token": csrfToken,

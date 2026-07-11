@@ -7,6 +7,8 @@ import type { SessionUser, SessionUserInput } from './auth.types';
 
 const SESS_PREFIX = 'sess:';
 const USER_SESS_PREFIX = 'user:';
+const MFA_CHALLENGE_PREFIX = 'mfa:challenge:';
+const MFA_CHALLENGE_TTL = 300; // 5 minutes
 
 function parseJsonField(raw: string | undefined): string[] {
   if (!raw) return [];
@@ -263,5 +265,33 @@ export class TokenStoreService {
       pipe.hincrby(key, 'unread', delta);
     }
     await pipe.exec();
+  }
+
+  /** Store a short-lived MFA challenge keyed by the hashed mfaToken. */
+  async writeMfaChallenge(
+    tokenHash: string,
+    data: { userId: string; email: string; role: string; tier: string },
+  ): Promise<void> {
+    const key = `${MFA_CHALLENGE_PREFIX}${tokenHash}`;
+    await this.redis.set(
+      key,
+      JSON.stringify(data),
+      'EX',
+      MFA_CHALLENGE_TTL,
+    );
+  }
+
+  /** Read and consume (delete) an MFA challenge. Returns null if expired or missing. */
+  async consumeMfaChallenge(
+    tokenHash: string,
+  ): Promise<{ userId: string; email: string; role: string; tier: string } | null> {
+    const key = `${MFA_CHALLENGE_PREFIX}${tokenHash}`;
+    const raw = await this.redis.getdel(key);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as { userId: string; email: string; role: string; tier: string };
+    } catch {
+      return null;
+    }
   }
 }

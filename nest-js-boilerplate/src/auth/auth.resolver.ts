@@ -14,6 +14,7 @@ import { RegisterInput } from './dto/register.input';
 import { OAuthProfileInput } from './dto/oauth-profile.input';
 import { RequestPasswordResetInput } from './dto/request-password-reset.input';
 import { ResetPasswordInput } from './dto/reset-password.input';
+import { VerifyLoginMfaInput } from './dto/verify-login-mfa.input';
 import type { OAuthProfile } from './auth.service';
 
 @Resolver()
@@ -70,6 +71,17 @@ export class AuthResolver {
     @Context() ctx: { req: Request },
   ): Promise<AuthPayload> {
     return this.auth.loginWithOAuth(profile as unknown as OAuthProfile, {
+      req: ctx.req,
+    });
+  }
+
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Mutation(() => AuthPayload)
+  verifyLoginMfa(
+    @Args('input') input: VerifyLoginMfaInput,
+    @Context() ctx: { req: Request },
+  ): Promise<AuthPayload> {
+    return this.auth.verifyLoginMfa(input.mfaToken, input.code, {
       req: ctx.req,
     });
   }

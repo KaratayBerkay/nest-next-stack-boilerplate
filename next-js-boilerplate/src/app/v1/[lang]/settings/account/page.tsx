@@ -1,11 +1,25 @@
 import type { Metadata } from "next";
-import PageContent from "@/views/settings/account/PageContent";
+import { getTierView } from "@/lib/tier-view";
+import { getSessionUser } from "@/lib/auth-ssr";
+import { FreePageView } from "@/views/settings/account/FreePageView";
+import BasicPageView from "@/views/settings/account/BasicPageView";
+import MediumPageView from "@/views/settings/account/MediumPageView";
+import PremiumPageView from "@/views/settings/account/PremiumPageView";
 
 export const metadata: Metadata = {
   title: "Account Settings",
   description: "Manage your account",
 };
 
-export default function AccountPage() {
-  return <PageContent />;
+const VIEWS = {
+  FREE: FreePageView,
+  BASIC: BasicPageView,
+  MEDIUM: MediumPageView,
+  PREMIUM: PremiumPageView,
+};
+
+export default async function AccountPage() {
+  const user = await getSessionUser();
+
+  return getTierView(user!.tier, VIEWS);
 }

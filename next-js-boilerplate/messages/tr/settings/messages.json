@@ -39,6 +39,8 @@
   "saving": "Kaydediliyor…",
   "saveFailed": "Kaydedilemedi",
   "uploadFailed": "Yükleme başarısız",
+  "invalidFileType": "Yalnızca JPEG, PNG, WebP ve GIF görüntüleri kabul edilir",
+  "fileTooLarge": "Dosya 5 MB'dan küçük olmalıdır",
   "loading": "Yükleniyor…",
   "navApiKeys": "API Anahtarları",
   "apiKeysHeading": "API Anahtarları",

@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone",
   reactCompiler: true,
+  poweredByHeader: false,
 
   experimental: {
     hideLogsAfterAbort: true,

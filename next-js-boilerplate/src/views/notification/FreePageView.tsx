@@ -95,7 +95,6 @@ function NotificationPageContent() {
   const { progress, direction, isSwiping } = useSwipeGesture({
     threshold: 60,
     onSwipeLeft: goToFeed,
-    enabled: isTouch,
   });
 
   const unread = notifications.filter((n) => !n.readAt);

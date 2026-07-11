@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swipe Left Hint</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  :root {
+    --primary: #0ea5e9;
+    --primary-dark: #0284c7;
+    --accent: #f59e0b;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #fef3c7 0%, #dbeafe 50%, #e0e7ff 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow: hidden;
+  }
+
+  .device {
+    width: 400px;
+    max-width: 100%;
+    height: 760px;
+    max-height: 92vh;
+    background: var(--card);
+    border-radius: 44px;
+    padding: 14px;
+    box-shadow:
+      0 20px 60px rgba(15, 23, 42, 0.15),
+      0 0 0 1px rgba(255, 255, 255, 0.8) inset,
+      0 0 0 1px rgba(15, 23, 42, 0.05);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .screen {
+    width: 100%;
+    height: 100%;
+    border-radius: 32px;
+    overflow: hidden;
+    position: relative;
+    background: var(--bg);
+  }
+
+  /* Main page behind */
+  .main-page {
+    position: absolute;
+    inset: 0;
+    background: var(--bg);
+    padding: 32px 24px;
+    z-index: 1;
+  }
+
+  .main-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .main-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+
+  .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .hero-card {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    border-radius: 20px;
+    padding: 24px;
+    color: white;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -30%;
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+  }
+
+  .hero-card h2 {
+    font-size: 18px;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+
+  .hero-card p {
+    font-size: 13px;
+    opacity: 0.85;
+  }
+
+  .list-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .list-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .list-icon.blue { background: #dbeafe; }
+  .list-icon.amber { background: #fef3c7; }
+  .list-icon.rose { background: #ffe4e6; }
+  .list-icon.emerald { background: #d1fae5; }
+
+  .list-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .list-text h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .list-text p {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* Detail page (foreground) */
+  .detail-page {
+    position: absolute;
+    inset: 0;
+    background: var(--card);
+    z-index: 5;
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+                opacity 0.3s ease;
+    will-change: transform;
+  }
+
+  .detail-page.swiped {
+    transform: translateX(-100%);
+    opacity: 0.6;
+  }
+
+  .detail-header {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+  }
+
+  .back-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .back-btn:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+  }
+
+  .back-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .detail-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .detail-body {
+    padding: 24px 20px;
+    overflow-y: auto;
+    height: calc(100% - 73px);
+  }
+
+  .detail-cover {
+    width: 100%;
+    height: 140px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 60px;
+  }
+
+  .detail-cover::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.3), transparent 50%);
+  }
+
+  .detail-body h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+    letter-spacing: -0.3px;
+  }
+
+  .meta {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+
+  .meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .detail-body p {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #475569;
+    margin-bottom: 14px;
+  }
+
+  /* Right edge glow (visual cue) */
+  .edge-glow {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 60px;
+    height: 100%;
+    background: linear-gradient(to left, rgba(14, 165, 233, 0.15), transparent);
+    pointer-events: none;
+    z-index: 4;
+    opacity: 0;
+    animation: edgePulse 3s ease-in-out infinite;
+  }
+
+  @keyframes edgePulse {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 1; }
+  }
+
+  /* Swipe Hint Toast */
+  .hint-toast {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(120%);
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(20px);
+    color: white;
+    padding: 14px 20px;
+    border-radius: 100px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 10px 40px rgba(15, 23, 42, 0.3);
+    z-index: 20;
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-width: calc(100% - 40px);
+  }
+
+  .hint-toast.visible {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .hint-gesture {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .hint-gesture svg.finger {
+    width: 22px;
+    height: 22px;
+    fill: white;
+    animation: fingerSwipe 2s ease-in-out infinite;
+    position: absolute;
+  }
+
+  @keyframes fingerSwipe {
+    0% { transform: translateX(10px); opacity: 0; }
+    25% { opacity: 1; }
+    50% { transform: translateX(-10px); opacity: 1; }
+    75% { opacity: 0; }
+    100% { transform: translateX(-10px); opacity: 0; }
+  }
+
+  .hint-gesture::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 2px;
+    background: white;
+    border-radius: 1px;
+    animation: arrowFade 2s ease-in-out infinite;
+  }
+
+  .hint-gesture::after {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%) rotate(-45deg);
+    width: 6px;
+    height: 2px;
+    background: white;
+    border-radius: 1px;
+    transform-origin: left center;
+    animation: arrowFade 2s ease-in-out infinite;
+  }
+
+  @keyframes arrowFade {
+    0%, 20%, 80%, 100% { opacity: 0; }
+    40%, 60% { opacity: 1; }
+  }
+
+  .hint-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .hint-text strong {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .hint-text span {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.6);
+    white-space: nowrap;
+  }
+
+  .hint-close {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+
+  .hint-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  /* Progress indicator */
+  .progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    width: 0%;
+    z-index: 15;
+    pointer-events: none;
+    transition: width 0.1s linear;
+  }
+
+  .detail-page.dragging .progress {
+    transition: none;
+  }
+
+  /* Floating arrows on edge */
+  .swipe-arrows {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 6;
+    opacity: 0;
+    animation: arrowsFade 3s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes arrowsFade {
+    0%, 100% { opacity: 0; transform: translateY(-50%) translateX(0); }
+    50% { opacity: 0.5; transform: translateY(-50%) translateX(-8px); }
+  }
+
+  .swipe-arrows svg {
+    width: 16px;
+    height: 16px;
+    fill: var(--primary);
+    filter: drop-shadow(0 2px 4px rgba(14, 165, 233, 0.3));
+  }
+
+  /* Reset button */
+  .reset-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 8px 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    z-index: 30;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .reset-btn.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .reset-btn:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+</style>
+</head>
+<body>
+
+<div class="device">
+  <div class="screen">
+    <!-- Main page (destination) -->
+    <div class="main-page">
+      <div class="main-header">
+        <div class="main-title">Home</div>
+        <div class="avatar">JD</div>
+      </div>
+      <div class="hero-card">
+        <h2>Welcome back 👋</h2>
+        <p>You swiped back successfully!</p>
+      </div>
+      <div class="list-item">
+        <div class="list-icon blue">📊</div>
+        <div class="list-text">
+          <h4>Analytics</h4>
+          <p>View your weekly stats</p>
+        </div>
+      </div>
+      <div class="list-item">
+        <div class="list-icon amber">⭐</div>
+        <div class="list-text">
+          <h4>Favorites</h4>
+          <p>12 saved items</p>
+        </div>
+      </div>
+      <div class="list-item">
+        <div class="list-icon rose">💬</div>
+        <div class="list-text">
+          <h4>Messages</h4>
+          <p>3 new conversations</p>
+        </div>
+      </div>
+      <div class="list-item">
+        <div class="list-icon emerald">⚙️</div>
+        <div class="list-text">
+          <h4>Settings</h4>
+          <p>Account preferences</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detail page (foreground) -->
+    <div class="detail-page" id="detailPage">
+      <div class="progress" id="progress"></div>
+      <div class="detail-header">
+        <button class="back-btn" id="backBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+        </button>
+        <div class="detail-title">Article</div>
+      </div>
+      <div class="detail-body">
+        <div class="detail-cover">📖</div>
+        <h1>The Art of Gesture Navigation</h1>
+        <div class="meta">
+          <span>📅 Jul 10, 2026</span>
+          <span>⏱ 5 min read</span>
+        </div>
+        <p>Modern mobile interfaces have embraced gesture-based navigation as a primary way to move through apps. The swipe-left-to-go-back pattern has become a universal language across iOS and Android.</p>
+        <p>Unlike traditional buttons, gestures feel natural and intuitive. They reduce visual clutter while maintaining discoverability through subtle hints and animations.</p>
+        <p>Try dragging this page to the left, or tap the back button in the top left corner to see it in action.</p>
+      </div>
+
+      <!-- Edge visual cue -->
+      <div class="edge-glow"></div>
+      <div class="swipe-arrows">
+        <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+      </div>
+    </div>
+
+    <!-- Swipe Hint Toast -->
+    <div class="hint-toast" id="hintToast">
+      <div class="hint-gesture">
+        <svg class="finger" viewBox="0 0 24 24">
+          <path d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/>
+        </svg>
+      </div>
+      <div class="hint-text">
+        <strong>Swipe left to go back</strong>
+        <span>Drag the page to the left edge</span>
+      </div>
+      <button class="hint-close" id="hintClose">✕</button>
+    </div>
+
+    <button class="reset-btn" id="resetBtn">↺ Replay</button>
+  </div>
+</div>
+
+<script>
+  const detailPage = document.getElementById('detailPage');
+  const hintToast = document.getElementById('hintToast');
+  const hintClose = document.getElementById('hintClose');
+  const backBtn = document.getElementById('backBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const progress = document.getElementById('progress');
+  const screen = document.querySelector('.screen');
+
+  let startX = 0;
+  let currentX = 0;
+  let isDragging = false;
+  let isSwiped = false;
+  const screenWidth = screen.offsetWidth;
+  const threshold = screenWidth * 0.35;
+
+  // Show toast after brief delay
+  setTimeout(() => {
+    hintToast.classList.add('visible');
+  }, 800);
+
+  function startDrag(x) {
+    if (isSwiped) return;
+    isDragging = true;
+    startX = x;
+    detailPage.classList.add('dragging');
+  }
+
+  function drag(x) {
+    if (!isDragging || isSwiped) return;
+    currentX = x - startX;
+    if (currentX > 0) currentX = 0;
+    const pct = Math.min(Math.abs(currentX) / threshold * 100, 100);
+    progress.style.width = pct + '%';
+    detailPage.style.transform = `translateX(${currentX}px)`;
+  }
+
+  function endDrag() {
+    if (!isDragging || isSwiped) return;
+    isDragging = false;
+    detailPage.classList.remove('dragging');
+
+    if (Math.abs(currentX) > threshold) {
+      completeSwipe();
+    } else {
+      detailPage.style.transform = '';
+      progress.style.width = '0%';
+    }
+    currentX = 0;
+  }
+
+  function completeSwipe() {
+    isSwiped = true;
+    detailPage.style.transform = 'translateX(-100%)';
+    progress.style.width = '100%';
+    hintToast.classList.remove('visible');
+    setTimeout(() => resetBtn.classList.add('visible'), 600);
+  }
+
+  // Mouse
+  screen.addEventListener('mousedown', (e) => {
+    if (e.target.closest('.hint-toast') || e.target.closest('.reset-btn')) return;
+    startDrag(e.clientX);
+  });
+  window.addEventListener('mousemove', (e) => drag(e.clientX));
+  window.addEventListener('mouseup', endDrag);
+
+  // Touch
+  screen.addEventListener('touchstart', (e) => {
+    if (e.target.closest('.hint-toast') || e.target.closest('.reset-btn')) return;
+    startDrag(e.touches[0].clientX);
+  }, { passive: true });
+  screen.addEventListener('touchmove', (e) => drag(e.touches[0].clientX), { passive: true });
+  screen.addEventListener('touchend', endDrag);
+
+  hintClose.addEventListener('click', () => {
+    hintToast.classList.remove('visible');
+  });
+
+  backBtn.addEventListener('click', completeSwipe);
+
+  resetBtn.addEventListener('click', () => {
+    isSwiped = false;
+    detailPage.style.transform = '';
+    progress.style.width = '0%';
+    resetBtn.classList.remove('visible');
+    setTimeout(() => hintToast.classList.add('visible'), 300);
+  });
+
+  // Auto-hide toast after 7s
+  setTimeout(() => {
+    if (hintToast.classList.contains('visible')) {
+      hintToast.classList.remove('visible');
+    }
+  }, 7000);
+</script>
+
+</body>
+</html>
+

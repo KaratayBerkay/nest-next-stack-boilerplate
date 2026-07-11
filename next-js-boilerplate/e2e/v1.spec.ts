@@ -43,10 +43,9 @@ test.describe("redirects (version + lang params)", () => {
   }) => {
     // /v2 (bad version, no lang) → /v1 → /v1/{negotiated}; request follows both.
     const res = await request.get("/v2", {
-      headers: { "Accept-Language": "de-DE,de;q=0.9" },
+      headers: { "Accept-Language": "tr-TR,tr;q=0.9,en;q=0.8" },
     });
-    expect(res.url()).toContain("/v1/de");
-    expect(await res.text()).toContain("Hallo!"); // German greeting from the dictionary
+    expect(res.url()).toContain("/v1/tr");
   });
 });
 

@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Next.js Boilerplate — Frontend
+
+A battle-tested Next.js 16 frontend with a companion NestJS backend.
+
+## Stack
+
+- **Next.js 16** (App Router, Turbopack, PPR)
+- **NestJS 11** backend (separate app in `../nest-js-boilerplate`)
+- **Tailwind CSS v4**, **TanStack Query**, **Prisma**, **Redis**, **BullMQ**
+- **GraphQL** (Apollo) + REST BFF routes
+- **WebSocket** realtime (ws, Redis-backed presence)
+- **Stripe** billing (test mode)
+- **Playwright** e2e + **Vitest** unit tests
+
+## Prerequisites
+
+- Node.js 22+
+- pnpm 9+
+- Running NestJS backend at `http://localhost:3001` (or set `APP_URL`)
+- Redis at `localhost:6379`
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+cp .env.example .env.local
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3001](http://localhost:3001).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+See `.env.example` for all variables with defaults.
 
-## Learn More
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `APP_URL` | Backend NestJS URL | `http://localhost:3001` |
+| `NEXT_PUBLIC_APP_URL` | Public frontend URL | `http://localhost:3000` |
+| `NEXT_PUBLIC_REALTIME_WS_URL` | WebSocket endpoint | `ws://localhost:3000/ws` |
+| `COOKIE_DOMAIN` | Cookie domain (set for custom domains) | — |
+| `KAFKA_BROKER` | Kafka broker for event streaming | `localhost:9092` |
 
-To learn more about Next.js, take a look at the following resources:
+## Scripts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Start dev server (Turbopack, port 3001) |
+| `pnpm build` | Production build |
+| `pnpm test` | Run Vitest unit tests |
+| `pnpm test:coverage` | Run tests with V8 coverage |
+| `pnpm test:e2e` | Run Playwright e2e (chromium/firefox/webkit) |
+| `pnpm lint` | ESLint |
+| `pnpm typecheck` | TypeScript type checking |
+| `pnpm format:check` | Prettier format check |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Architecture
 
-## Deploy on Vercel
+```
+src/
+├── app/                    # Next.js App Router routes
+│   ├── v1/[lang]/          # Versioned + localized app surface
+│   ├── api/                # BFF (Backend-for-Frontend) route handlers
+│   └── auth/               # Auth pages (login, register, etc.)
+├── views/                  # Client components for each route tier
+├── components/             # Shared UI components
+├── lib/                    # Utilities (auth, API client, i18n, etc.)
+├── hooks/                  # Custom React hooks
+├── fallbacks/              # Suspense/loading fallbacks
+├── constants/              # API constants, routes, i18n
+└── types/                  # Extracted prop types
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Tier-based views
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Routes with multiple subscription tiers (Free, Basic, Medium, Premium) use the `getTierView()` pattern:
+
+- `page.tsx` (server) calls `getTierView(user.tier, VIEWS)`
+- Each tier renders its own `FreePageView`/`BasicPageView`/`MediumPageView`/`PremiumPageView`
+
+## Testing
+
+- **Unit**: `pnpm test` (Vitest + jsdom)
+- **E2E**: `pnpm test:e2e` (Playwright, starts Next dev server on port 3100)
+- **Coverage**: `pnpm test:coverage` (V8 provider)
+
+## Deployment
+
+Set `output: "standalone"` in `next.config.ts` (already configured). Build with `pnpm build`, then run `node .next/standalone/server.js`.

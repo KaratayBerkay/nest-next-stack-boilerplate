@@ -18,7 +18,6 @@ type UseSwipeOptions = {
   onSwipeLeft?: () => void;
   onSwipeRight?: () => void;
   onSwipeCancel?: () => void;
-  enabled?: boolean;
 };
 
 export function useSwipeGesture(options: UseSwipeOptions = {}) {
@@ -27,7 +26,6 @@ export function useSwipeGesture(options: UseSwipeOptions = {}) {
     onSwipeLeft,
     onSwipeRight,
     onSwipeCancel,
-    enabled = true,
   } = options;
 
   const [state, setState] = useState<SwipeState>({
@@ -53,7 +51,6 @@ export function useSwipeGesture(options: UseSwipeOptions = {}) {
 
   const handleStart = useCallback(
     (clientX: number) => {
-      if (!enabled) return;
       gestureEndedRef.current = false;
       setState((prev) => ({
         ...prev,
@@ -64,7 +61,7 @@ export function useSwipeGesture(options: UseSwipeOptions = {}) {
         progress: 0,
       }));
     },
-    [enabled],
+    [],
   );
 
   const handleMove = useCallback(
@@ -134,8 +131,6 @@ export function useSwipeGesture(options: UseSwipeOptions = {}) {
   }, []);
 
   useEffect(() => {
-    if (!enabled) return;
-
     const isKeyboardMode = () => keysRef.current.ctrl && keysRef.current.shift;
 
     const onKeyDown = (e: KeyboardEvent) => {
@@ -275,7 +270,7 @@ export function useSwipeGesture(options: UseSwipeOptions = {}) {
       document.removeEventListener("mouseup", onMouseUp);
       document.body.style.cursor = ctrlCursorRef.current ?? "";
     };
-  }, [enabled, handleStart, handleMove, handleEnd, threshold]);
+  }, [handleStart, handleMove, handleEnd, threshold]);
 
   return { ...state, cancelGesture };
 }

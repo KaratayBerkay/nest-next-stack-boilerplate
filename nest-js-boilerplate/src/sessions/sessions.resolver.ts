@@ -12,6 +12,7 @@ import type { JwtUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { TokenStoreService } from '../auth/token-store.service';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 
 @ObjectType()
 class SessionInfo {
@@ -34,7 +35,10 @@ class SessionInfo {
 @UseGuards(SessionAuthGuard)
 @Resolver()
 export class SessionsResolver {
-  constructor(private readonly tokenStore: TokenStoreService) {}
+  constructor(
+    private readonly tokenStore: TokenStoreService,
+    private readonly gateway: RealtimeGateway,
+  ) {}
 
   @Query(() => [SessionInfo])
   async mySessions(@CurrentUser() user: JwtUser) {
@@ -53,7 +57,15 @@ export class SessionsResolver {
     @CurrentUser() user: JwtUser,
     @Args('sessionId', { type: () => ID }) sessionId: string,
   ) {
-    return this.tokenStore.revokeSessionBySessionId(user.userId, sessionId);
+    const revoked = await this.tokenStore.revokeSessionBySessionId(
+      user.userId,
+      sessionId,
+    );
+    if (revoked) {
+      // Also close any live WebSocket connections belonging to this session
+      this.gateway.closeSocketsForSession(user.userId, sessionId);
+    }
+    return revoked;
   }
 
   @Mutation(() => Boolean)
@@ -64,6 +76,10 @@ export class SessionsResolver {
     );
     if (toRevoke.length === 0) return false;
     await Promise.all(toRevoke.map((e) => this.tokenStore.revoke(e.key)));
+    // Close WebSocket connections for all revoked sessions
+    for (const { session } of toRevoke) {
+      this.gateway.closeSocketsForSession(user.userId, session.sessionId);
+    }
     return true;
   }
 }

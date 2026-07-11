@@ -888,4 +888,18 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       if (ws.readyState === WebSocket.OPEN) ws.send(frame);
     }
   }
+
+  /** Close all live WebSocket connections belonging to a specific session. */
+  closeSocketsForSession(userId: string, sessionId: string): number {
+    const sockets = this.userSockets.get(userId);
+    if (!sockets) return 0;
+    let closed = 0;
+    for (const ws of sockets) {
+      if (ws.sessionId === sessionId && ws.readyState === WebSocket.OPEN) {
+        ws.close(1000, 'Session revoked');
+        closed++;
+      }
+    }
+    return closed;
+  }
 }

@@ -9,7 +9,7 @@ import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
 import { Avatar } from "@/components/ui/Avatar";
 import { nowMs } from "@/lib/date-time";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/cn";
 import { initials } from "@/lib/initials";
 import { IconX, IconMenu2, IconCrown } from "@tabler/icons-react";

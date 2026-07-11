@@ -164,6 +164,40 @@ export class AuthService {
       });
     }
 
+    // Account status gate: only ACTIVE accounts may log in.
+    if (user.status !== 'ACTIVE') {
+      throw new UnauthorizedException({
+        exc: 'EX_AUTH_ACCOUNT_INACTIVE',
+        msg:
+          user.status === 'PENDING_VERIFICATION'
+            ? 'Please verify your email first'
+            : 'Account is not active',
+        key:
+          user.status === 'PENDING_VERIFICATION'
+            ? 'auth.errors.emailNotVerified'
+            : 'auth.errors.accountInactive',
+      });
+    }
+
+    // MFA gate: if the user has enrolled TOTP, return a challenge instead of
+    // issuing full session tokens. The client must call verifyLoginMfa to
+    // complete authentication.
+    if (user.mfaEnabled) {
+      const mfaToken = this.crypto.randomToken();
+      const mfaTokenHash = this.crypto.sha256(mfaToken);
+      await this.tokenStore.writeMfaChallenge(mfaTokenHash, {
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+        tier: user.subscriptionTier ?? 'FREE',
+      });
+      return {
+        mfaRequired: true,
+        mfaToken,
+        user,
+      } as AuthPayload;
+    }
+
     await this.prisma.user.update({
       where: { id: user.id },
       data: { failedLoginCount: 0, lockedUntil: null, lastLoginAt: new Date() },
@@ -186,6 +220,68 @@ export class AuthService {
     if (device?.changed) await this.emitNewDevice(user.id, device);
 
     return this.issueTokens(user, ctx, device);
+  }
+
+  /** Complete MFA challenge: verify TOTP code against the challenge issued by login(). */
+  async verifyLoginMfa(
+    mfaToken: string,
+    code: string,
+    ctx?: RequestContext,
+  ): Promise<AuthPayload> {
+    const tokenHash = this.crypto.sha256(mfaToken);
+    const challenge = await this.tokenStore.consumeMfaChallenge(tokenHash);
+    if (!challenge) {
+      throw new UnauthorizedException({
+        exc: 'EX_AUTH_MFA_EXPIRED',
+        msg: 'MFA challenge expired or already used',
+        key: 'auth.errors.mfaChallengeExpired',
+      });
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: challenge.userId },
+    });
+    if (!user || !user.mfaEnabled) {
+      throw new UnauthorizedException({
+        exc: 'EX_AUTH_MFA_NOT_ENABLED',
+        msg: 'MFA is not enabled for this account',
+        key: 'auth.errors.mfaNotEnabled',
+      });
+    }
+
+    // Find the verified TOTP factor
+    const factor = await this.prisma.mfaFactor.findFirst({
+      where: { userId: user.id, method: 'TOTP', verifiedAt: { not: null } },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!factor?.secret) {
+      throw new UnauthorizedException({
+        exc: 'EX_AUTH_MFA_NO_FACTOR',
+        msg: 'No verified TOTP factor found',
+        key: 'auth.errors.mfaNoFactor',
+      });
+    }
+
+    const secret = this.crypto.decrypt(Buffer.from(factor.secret));
+    const result = await import('otplib').then((m) =>
+      m.verify({ secret, token: code }),
+    );
+    if (!result.valid) {
+      throw new UnauthorizedException({
+        exc: 'EX_AUTH_MFA_INVALID_CODE',
+        msg: 'Invalid MFA code',
+        key: 'auth.errors.mfaInvalidCode',
+      });
+    }
+
+    // Update last used timestamp
+    await this.prisma.mfaFactor.update({
+      where: { id: factor.id },
+      data: { lastUsedAt: new Date() },
+    });
+
+    // MFA verified — issue full session tokens
+    return this.issueTokens(user, ctx);
   }
 
   /** Consume an email-verification token: marks it used and activates the account. */

@@ -9,7 +9,6 @@ export const serverEnvSchema = z.object({
   COOKIE_DOMAIN: z.string().optional(),
   COOKIE_SAMESITE: z.enum(["lax", "strict", "none"]).default("lax"),
   KAFKA_BROKER: z.string().default("localhost:9092"),
-  MINIO_URL: z.string().url().default("http://localhost:9000"),
 });
 
 export const clientEnvSchema = z.object({
@@ -19,7 +18,6 @@ export const clientEnvSchema = z.object({
     .regex(/^wss?:\/\//, "expected a ws:// or wss:// URL")
     .default("ws://localhost:3000/ws"),
   NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().default(""),
-  NEXT_PUBLIC_MINIO_PUBLIC_URL: z.string().default("http://localhost:9000"),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
@@ -29,7 +27,6 @@ export const clientEnv: ClientEnv = clientEnvSchema.parse({
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   NEXT_PUBLIC_REALTIME_WS_URL: process.env.NEXT_PUBLIC_REALTIME_WS_URL,
   NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-  NEXT_PUBLIC_MINIO_PUBLIC_URL: process.env.NEXT_PUBLIC_MINIO_PUBLIC_URL,
 });
 
 let cachedServerEnv: ServerEnv | undefined;
@@ -45,7 +42,6 @@ export function serverEnv(): ServerEnv {
     COOKIE_DOMAIN: process.env.COOKIE_DOMAIN,
     COOKIE_SAMESITE: process.env.COOKIE_SAMESITE,
     KAFKA_BROKER: process.env.KAFKA_BROKER,
-    MINIO_URL: process.env.MINIO_URL,
   });
   return cachedServerEnv;
 }

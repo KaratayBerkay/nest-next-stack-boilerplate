@@ -1,4 +1,4 @@
-// fallow-ignore-file unused-exports
+// fallow-ignore-file unused-export
 export { ToastProvider } from "./toast-provider";
 export { ToastViewport } from "./toast-viewport";
 export { Toast } from "./toast";

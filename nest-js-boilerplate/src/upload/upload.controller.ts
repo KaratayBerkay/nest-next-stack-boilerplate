@@ -6,10 +6,12 @@ import {
   Post,
   UploadedFile,
   UploadedFiles,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { randomUUID } from 'node:crypto';
+import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { ImageService, IMAGE_SIZES } from './image.service';
 import { MinioService } from './minio.service';
 
@@ -19,6 +21,11 @@ interface ImageUrls {
   full: string;
 }
 
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+const ALLOWED_IMAGE_TYPES = /^image\/(jpeg|png|webp|gif|avif)$/;
+const MAX_FILES = 10;
+
+@UseGuards(SessionAuthGuard)
 @Controller('upload')
 export class UploadController {
   constructor(
@@ -28,7 +35,20 @@ export class UploadController {
 
   @Post('single')
   @UseInterceptors(FileInterceptor('file'))
-  async single(@UploadedFile() file: Express.Multer.File): Promise<{
+  async single(
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: MAX_FILE_SIZE_BYTES }),
+          new FileTypeValidator({
+            fileType: ALLOWED_IMAGE_TYPES,
+            skipMagicNumbersValidation: true,
+          }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ): Promise<{
     urls: ImageUrls;
     originalname: string;
     mimetype: string;
@@ -44,38 +64,26 @@ export class UploadController {
   }
 
   @Post('multiple')
-  @UseInterceptors(FilesInterceptor('files'))
-  async multiple(@UploadedFiles() files: Express.Multer.File[]): Promise<{
-    count: number;
-    images: ImageUrls[];
-  }> {
-    const results = await Promise.all(files.map((f) => this.processImage(f)));
-    return { count: files.length, images: results };
-  }
-
-  @Post('validated')
-  @UseInterceptors(FileInterceptor('file'))
-  async validated(
-    @UploadedFile(
+  @UseInterceptors(FilesInterceptor('files', MAX_FILES))
+  async multiple(
+    @UploadedFiles(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 1024 }),
+          new MaxFileSizeValidator({ maxSize: MAX_FILE_SIZE_BYTES }),
           new FileTypeValidator({
-            fileType: 'text/plain',
+            fileType: ALLOWED_IMAGE_TYPES,
             skipMagicNumbersValidation: true,
           }),
         ],
       }),
     )
-    file: Express.Multer.File,
-  ) {
-    const urls = await this.processImage(file);
-    return {
-      urls,
-      originalname: file.originalname,
-      mimetype: file.mimetype,
-      size: file.size,
-    };
+    files: Express.Multer.File[],
+  ): Promise<{
+    count: number;
+    images: ImageUrls[];
+  }> {
+    const results = await Promise.all(files.map((f) => this.processImage(f)));
+    return { count: files.length, images: results };
   }
 
   private async processImage(file: Express.Multer.File): Promise<ImageUrls> {

@@ -7,6 +7,7 @@ import {
   ATTR_SERVICE_NAME,
   ATTR_SERVICE_VERSION,
 } from '@opentelemetry/semantic-conventions';
+import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 import { Logger } from '@nestjs/common';
 
 const logger = new Logger('OpenTelemetry');
@@ -68,7 +69,11 @@ export function initOpenTelemetry(): void {
  */
 export async function shutdownOpenTelemetry(): Promise<void> {
   if (sdk) {
-    try {
+  // Enable OTel diagnostic logging so export failures and internal warnings
+  // are visible instead of silently swallowed.
+  diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
+
+  try {
       await sdk.shutdown();
       logger.log('OpenTelemetry shut down');
     } catch (err) {
