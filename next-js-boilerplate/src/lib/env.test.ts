@@ -4,7 +4,7 @@ import { clientEnvSchema, serverEnvSchema } from "@/lib";
 describe("env schemas", () => {
   it("applies defaults when vars are absent", () => {
     const parsed = clientEnvSchema.parse({});
-    expect(parsed.NEXT_PUBLIC_APP_URL).toBe("http://localhost:3000");
+    expect(parsed.NEXT_PUBLIC_APP_URL).toBe("http://localhost:3001");
     expect(parsed.NEXT_PUBLIC_REALTIME_WS_URL).toBe("ws://localhost:3000/ws");
   });
 

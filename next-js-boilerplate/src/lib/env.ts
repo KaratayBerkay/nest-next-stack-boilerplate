@@ -4,15 +4,15 @@ export const serverEnvSchema = z.object({
   NODE_ENV: z
     .enum(["development", "test", "production"])
     .default("development"),
-  APP_URL: z.string().url().default("http://localhost:3001"),
-  NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
+  APP_URL: z.string().url().default("http://localhost:3000"),
+  NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3001"),
   COOKIE_DOMAIN: z.string().optional(),
   COOKIE_SAMESITE: z.enum(["lax", "strict", "none"]).default("lax"),
   KAFKA_BROKER: z.string().default("localhost:9092"),
 });
 
 export const clientEnvSchema = z.object({
-  NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
+  NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3001"),
   NEXT_PUBLIC_REALTIME_WS_URL: z
     .string()
     .regex(/^wss?:\/\//, "expected a ws:// or wss:// URL")

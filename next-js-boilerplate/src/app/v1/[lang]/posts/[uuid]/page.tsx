@@ -20,12 +20,19 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { uuid } = await params;
   try {
-    const res = await fetch(
-      `${process.env.APP_URL ?? "http://localhost:3000"}/api/posts/${uuid}`,
-      { cache: "no-store" },
-    );
+    const backendUrl = process.env.APP_URL ?? "http://localhost:3000";
+    const gqlQuery = JSON.stringify({
+      query: `query Post($id: ID!) { post(id: $id) { title content } }`,
+      variables: { id: uuid },
+    });
+    const res = await fetch(`${backendUrl}/graphql`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: gqlQuery,
+      cache: "no-store",
+    });
     const data = await res.json();
-    const post = data?.post;
+    const post = data?.data?.post;
     if (!post) return { title: "Post" };
     return {
       title: post.title ?? "Post",

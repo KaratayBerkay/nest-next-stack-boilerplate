@@ -38,7 +38,7 @@ setup("login and save storageState", async ({ request }) => {
 
   const cookies = setCookieHeaders
     .map((h) => parseSetCookie(h.value))
-    .map((c) => ({ ...c, url: "http://localhost:3100" }));
+    .map(({ path: _path, ...c }) => ({ ...c, url: "http://localhost:3100" }));
 
   await fs.mkdir("playwright/.auth", { recursive: true });
   await fs.writeFile(

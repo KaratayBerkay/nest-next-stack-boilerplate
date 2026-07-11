@@ -195,7 +195,7 @@ export class AuthService {
         mfaRequired: true,
         mfaToken,
         user,
-      } as AuthPayload;
+      };
     }
 
     await this.prisma.user.update({
@@ -333,15 +333,17 @@ export class AuthService {
   }
 
   /**
-   * Dev-only: set a user to ACTIVE so e2e tests can skip email verification.
-   * Gated to non-production by the resolver.
+   * Dev-only: activate a PENDING_VERIFICATION user so e2e tests can skip
+   * the email verification flow.  Only activates accounts that are still
+   * awaiting verification — never overrides BANNED/SUSPENDED/ACTIVE.
+   * Gated to ALLOW_DEV_ACTIVATE=true by the resolver.
    */
   async devActivateUser(email: string): Promise<boolean> {
     const user = await this.prisma.user.findUnique({
       where: { email: email.toLowerCase() },
     });
     if (!user) return false;
-    if (user.status === 'ACTIVE') return true;
+    if (user.status !== 'PENDING_VERIFICATION') return false;
     await this.prisma.user.update({
       where: { id: user.id },
       data: { status: 'ACTIVE', emailVerifiedAt: new Date() },

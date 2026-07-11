@@ -88,11 +88,13 @@ export class AuthResolver {
 
   /**
    * Dev-only: activate a user by email so e2e tests can skip the email
-   * verification flow.  Gated to non-production environments.
+   * verification flow.  Gated by ALLOW_DEV_ACTIVATE=true (matching the
+   * LOAD_DEMO_MODULES convention) and only activates PENDING_VERIFICATION
+   * accounts.
    */
   @Mutation(() => Boolean)
   async devActivateUser(@Args('email') email: string): Promise<boolean> {
-    if (process.env.NODE_ENV === 'production') return false;
+    if (process.env.ALLOW_DEV_ACTIVATE !== 'true') return false;
     return this.auth.devActivateUser(email);
   }
 

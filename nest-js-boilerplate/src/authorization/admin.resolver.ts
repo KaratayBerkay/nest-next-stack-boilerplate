@@ -24,6 +24,22 @@ import { Roles } from './roles.decorator';
 import { RolesGuard } from './roles.guard';
 import { TierGuard } from './tier.guard';
 
+const ROLE_HIERARCHY: Record<UserRole, number> = {
+  [UserRole.USER]: 0,
+  [UserRole.MODERATOR]: 1,
+  [UserRole.ADMIN]: 2,
+  [UserRole.SUPERADMIN]: 3,
+};
+
+function isTargetRoleGteActor(
+  targetRole: string,
+  actorRole: string,
+): boolean {
+  const actorLevel = ROLE_HIERARCHY[actorRole as UserRole] ?? 0;
+  const targetLevel = ROLE_HIERARCHY[targetRole as UserRole] ?? 0;
+  return targetLevel >= actorLevel;
+}
+
 /**
  * Demonstrates the RBAC pipeline: `SessionAuthGuard` authenticates and attaches the user, then
  * `RolesGuard` enforces `@Roles()`. `whoAmI` carries no `@Roles()` (any authenticated user is
@@ -84,9 +100,16 @@ export class AdminResolver {
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   @Mutation(() => Boolean)
   async setUserTier(
+    @CurrentUser() admin: JwtUser,
     @Args('userId') userId: string,
     @Args('tier', { type: () => SubscriptionTier }) tier: SubscriptionTier,
   ): Promise<boolean> {
+    const target = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+    if (!target || isTargetRoleGteActor(target.role, admin.role)) return false;
+
     // Update Postgres.
     await this.prisma.user.update({
       where: { id: userId },
@@ -107,6 +130,12 @@ export class AdminResolver {
     @Args('status', { type: () => UserStatus }) status: UserStatus,
     @Args('reason', { nullable: true }) reason?: string,
   ): Promise<boolean> {
+    const target = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+    if (!target || isTargetRoleGteActor(target.role, admin.role)) return false;
+
     await this.prisma.user.update({
       where: { id: userId },
       data: { status },

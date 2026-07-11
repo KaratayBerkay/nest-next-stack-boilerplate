@@ -74,7 +74,7 @@ export class OAuthService {
     appRedirectUri: string,
   ): string {
     const { provider, clientId } = this.getProviderOrThrow(providerName);
-    const nestCallbackUrl = `${this.config.get<string>('APP_URL', 'http://localhost:3001')}/auth/oauth/${providerName}/callback`;
+    const nestCallbackUrl = `${this.config.get<string>('APP_URL', 'http://localhost:3000')}/auth/oauth/${providerName}/callback`;
 
     let codeVerifier: string | undefined;
     if (provider.pkce) {
@@ -112,7 +112,7 @@ export class OAuthService {
 
     const { provider, clientId } = this.getProviderOrThrow(pending.provider);
     const clientSecret = this.config.get<string>(provider.clientSecretEnv);
-    const nestCallbackUrl = `${this.config.get<string>('APP_URL', 'http://localhost:3001')}/auth/oauth/${pending.provider}/callback`;
+    const nestCallbackUrl = `${this.config.get<string>('APP_URL', 'http://localhost:3000')}/auth/oauth/${pending.provider}/callback`;
 
     // Exchange code for access token
     const tokenBody = new URLSearchParams({
