@@ -3,7 +3,10 @@ import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentation
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-node';
 import { Resource } from '@opentelemetry/resources';
-import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
+import {
+  ATTR_SERVICE_NAME,
+  ATTR_SERVICE_VERSION,
+} from '@opentelemetry/semantic-conventions';
 import { Logger } from '@nestjs/common';
 
 const logger = new Logger('OpenTelemetry');
@@ -19,7 +22,8 @@ let sdk: NodeSDK | null = null;
  * Set OTEL_EXPORTER_OTLP_ENDPOINT to override.
  */
 export function initOpenTelemetry(): void {
-  const serviceName = process.env.OTEL_SERVICE_NAME ?? 'nest-next-stack-backend';
+  const serviceName =
+    process.env.OTEL_SERVICE_NAME ?? 'nest-next-stack-backend';
   const serviceVersion = process.env.npm_package_version ?? '0.0.0';
 
   const resource = new Resource({
@@ -30,7 +34,9 @@ export function initOpenTelemetry(): void {
   const metricExporter = new OTLPMetricExporter();
   const metricReader = new PeriodicExportingMetricReader({
     exporter: metricExporter,
-    exportIntervalMillis: Number(process.env.OTEL_METRIC_EXPORT_INTERVAL_MS ?? 30_000),
+    exportIntervalMillis: Number(
+      process.env.OTEL_METRIC_EXPORT_INTERVAL_MS ?? 30_000,
+    ),
   });
 
   sdk = new NodeSDK({
@@ -50,7 +56,10 @@ export function initOpenTelemetry(): void {
     sdk.start();
     logger.log('OpenTelemetry initialized');
   } catch (err) {
-    logger.warn('OpenTelemetry failed to start — continuing without tracing', err as Error);
+    logger.warn(
+      'OpenTelemetry failed to start — continuing without tracing',
+      err as Error,
+    );
   }
 }
 

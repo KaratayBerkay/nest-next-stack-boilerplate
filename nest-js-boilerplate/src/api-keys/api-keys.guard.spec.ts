@@ -107,9 +107,9 @@ describe('ApiKeyGuard', () => {
   });
 
   it('throws 401 when API key validation throws', async () => {
-    const validate = jest.fn().mockRejectedValue(
-      new Error('DB connection lost'),
-    );
+    const validate = jest
+      .fn()
+      .mockRejectedValue(new Error('DB connection lost'));
     const service = mockApiKeysService({ validate });
     const guard = new ApiKeyGuard(service);
     const req = createRequest('Bearer bp_abc123');
