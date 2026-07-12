@@ -42,7 +42,7 @@ export class UploadController {
           new MaxFileSizeValidator({ maxSize: MAX_FILE_SIZE_BYTES }),
           new FileTypeValidator({
             fileType: ALLOWED_IMAGE_TYPES,
-            skipMagicNumbersValidation: true,
+            skipMagicNumbersValidation: false,
           }),
         ],
       }),
@@ -72,7 +72,7 @@ export class UploadController {
           new MaxFileSizeValidator({ maxSize: MAX_FILE_SIZE_BYTES }),
           new FileTypeValidator({
             fileType: ALLOWED_IMAGE_TYPES,
-            skipMagicNumbersValidation: true,
+            skipMagicNumbersValidation: false,
           }),
         ],
       }),

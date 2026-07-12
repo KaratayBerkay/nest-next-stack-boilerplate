@@ -42,7 +42,6 @@ export class PrismaService
           event: 'db.query_slow',
           query: e.query,
           durationMs: e.duration,
-          params: e.params,
         });
       }
     });

@@ -44,12 +44,7 @@ export class MessagingResolver {
     @CurrentUser() user: JwtUser,
     @Args('input') input: SendMessageInput,
   ) {
-    return this.ms.sendMessage(
-      user.userId,
-      input.recipientId,
-      input.text,
-      user.friends,
-    );
+    return this.ms.sendMessage(user.userId, input.recipientId, input.text);
   }
 
   @Mutation(() => Boolean)

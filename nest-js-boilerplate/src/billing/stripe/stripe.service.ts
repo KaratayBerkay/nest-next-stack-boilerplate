@@ -8,11 +8,8 @@ export class StripeService {
   readonly stripe: Stripe;
 
   constructor(private readonly config: ConfigService) {
-    const key = this.config.get<string>('STRIPE_SECRET_KEY');
-    if (!key) {
-      this.logger.warn('STRIPE_SECRET_KEY not set — Stripe calls will fail');
-    }
-    this.stripe = new Stripe(key ?? 'sk_test_dummy', {
+    const key = this.config.getOrThrow<string>('STRIPE_SECRET_KEY');
+    this.stripe = new Stripe(key, {
       apiVersion: '2026-06-24.dahlia',
     });
   }

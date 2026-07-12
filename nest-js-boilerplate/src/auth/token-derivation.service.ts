@@ -10,9 +10,7 @@ export class TokenDerivationService {
     private readonly crypto: CryptoService,
     private readonly config: ConfigService,
   ) {
-    this.secret =
-      this.config.get<string>('TOKEN_DERIVATION_SECRET') ??
-      this.config.getOrThrow<string>('JWT_SECRET');
+    this.secret = this.config.getOrThrow<string>('TOKEN_DERIVATION_SECRET');
   }
 
   dateOnly(d: Date = new Date()): string {

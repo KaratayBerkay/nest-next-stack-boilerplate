@@ -1,31 +1,30 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash, randomBytes } from 'node:crypto';
+import Redis from 'ioredis';
+import { REDIS_CLIENT } from '../../redis/redis.module';
 import { oauthProviders, type OAuthProfileResult } from './oauth-providers';
 
-interface PendingState {
+const OAUTH_STATE_PREFIX = 'oauth:state:';
+const OAUTH_PROFILE_PREFIX = 'oauth:profile:';
+const OAUTH_TTL_SEC = 600; // 10 minutes
+
+type PendingState = {
   provider: string;
   redirectUri: string;
-  expiresAt: number;
   codeVerifier?: string;
-}
-
-interface PendingProfile {
-  profile: OAuthProfileResult;
-  expiresAt: number;
-}
+};
 
 /**
- * In-memory store for OAuth state and profile lookups.
- * Cleaned up on retrieval; expired entries are purged lazily.
+ * Redis-backed store for OAuth state and profile lookups.
+ * Survives multi-replica deployments.
  */
 @Injectable()
 export class OAuthService {
-  private readonly pendingStates = new Map<string, PendingState>();
-  private readonly pendingProfiles = new Map<string, PendingProfile>();
-  private readonly ttlMs = 10 * 60 * 1000; // 10 minutes
-
-  constructor(private readonly config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    @Inject(REDIS_CLIENT) private readonly redis: Redis,
+  ) {}
 
   private get providerNames(): string {
     return Object.values(oauthProviders)
@@ -68,11 +67,11 @@ export class OAuthService {
       .replace(/=/g, '');
   }
 
-  buildAuthUrl(
+  async buildAuthUrl(
     providerName: string,
     state: string,
     appRedirectUri: string,
-  ): string {
+  ): Promise<string> {
     const { provider, clientId } = this.getProviderOrThrow(providerName);
     const nestCallbackUrl = `${this.config.get<string>('APP_URL', 'http://localhost:3000')}/auth/oauth/${providerName}/callback`;
 
@@ -81,12 +80,15 @@ export class OAuthService {
       codeVerifier = this.generateCodeVerifier();
     }
 
-    this.pendingStates.set(state, {
-      provider: providerName,
-      redirectUri: appRedirectUri,
-      expiresAt: Date.now() + this.ttlMs,
-      codeVerifier,
-    });
+    await this.redis.setex(
+      `${OAUTH_STATE_PREFIX}${state}`,
+      OAUTH_TTL_SEC,
+      JSON.stringify({
+        provider: providerName,
+        redirectUri: appRedirectUri,
+        codeVerifier,
+      }),
+    );
 
     const params = new URLSearchParams({
       client_id: clientId,
@@ -105,10 +107,11 @@ export class OAuthService {
   }
 
   async handleCallback(code: string, state: string): Promise<string> {
-    const pending = this.pendingStates.get(state);
-    if (!pending || pending.expiresAt < Date.now()) {
+    const raw = await this.redis.get(`${OAUTH_STATE_PREFIX}${state}`);
+    if (!raw) {
       throw new UnauthorizedException('Invalid or expired OAuth state');
     }
+    const pending = JSON.parse(raw) as PendingState;
 
     const { provider, clientId } = this.getProviderOrThrow(pending.provider);
     const clientSecret = this.config.get<string>(provider.clientSecretEnv);
@@ -164,28 +167,31 @@ export class OAuthService {
     );
 
     // Store profile for pickup by Next.js BFF
-    this.pendingProfiles.set(state, {
-      profile,
-      expiresAt: Date.now() + this.ttlMs,
-    });
+    await this.redis.setex(
+      `${OAUTH_PROFILE_PREFIX}${state}`,
+      OAUTH_TTL_SEC,
+      JSON.stringify(profile),
+    );
 
-    this.pendingStates.delete(state);
+    await this.redis.del(`${OAUTH_STATE_PREFIX}${state}`);
     return pending.redirectUri;
   }
 
-  getRedirectUri(state: string): string | null {
-    const pending = this.pendingStates.get(state);
-    if (!pending || pending.expiresAt < Date.now()) return null;
+  async getRedirectUri(state: string): Promise<string | null> {
+    const raw = await this.redis.get(`${OAUTH_STATE_PREFIX}${state}`);
+    if (!raw) return null;
+    const pending = JSON.parse(raw) as PendingState;
     return pending.redirectUri;
   }
 
-  retrieveProfile(state: string): OAuthProfileResult {
-    const pending = this.pendingProfiles.get(state);
-    if (!pending || pending.expiresAt < Date.now()) {
+  async retrieveProfile(state: string): Promise<OAuthProfileResult> {
+    const raw = await this.redis.get(`${OAUTH_PROFILE_PREFIX}${state}`);
+    if (!raw) {
       throw new UnauthorizedException('OAuth profile expired or not found');
     }
-    this.pendingProfiles.delete(state);
-    return pending.profile;
+    const profile = JSON.parse(raw) as OAuthProfileResult;
+    await this.redis.del(`${OAUTH_PROFILE_PREFIX}${state}`);
+    return profile;
   }
 
   private async fetchProfile(

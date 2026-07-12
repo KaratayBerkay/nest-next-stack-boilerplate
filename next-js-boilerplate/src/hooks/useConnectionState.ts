@@ -20,14 +20,16 @@ export function useConnectionState(): ConnectionState {
       }
       setState("online");        // eslint-disable-line react-hooks/set-state-in-effect
     } else if (status === "backoff") {
-      if (state !== "online") {
-        setState("unstable");        // eslint-disable-line react-hooks/set-state-in-effect
-      } else if (!graceRef.current) {
-        graceRef.current = setTimeout(() => {
-          setState("unstable");
-          graceRef.current = null;
-        }, GRACE_WINDOW_MS);
-      }
+      setState((prev) => {
+        if (prev !== "online") return "unstable";
+        if (!graceRef.current) {
+          graceRef.current = setTimeout(() => {
+            setState("unstable");
+            graceRef.current = null;
+          }, GRACE_WINDOW_MS);
+        }
+        return prev;
+      });
     } else if (status === "down") {
       if (graceRef.current) {
         clearTimeout(graceRef.current);
@@ -48,7 +50,7 @@ export function useConnectionState(): ConnectionState {
         graceRef.current = null;
       }
     };
-  }, [status, state]);
+  }, [status]);
 
   return state;
 }

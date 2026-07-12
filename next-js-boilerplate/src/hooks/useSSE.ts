@@ -16,8 +16,12 @@ export function useSSE(url: string) {
 
     es.onopen = () => setConnected(true);
     es.onmessage = (e) => {
-      const data = JSON.parse(e.data) as SSEEvent;
-      setEvents((prev) => [...prev.slice(-49), data]);
+      try {
+        const data = JSON.parse(e.data) as SSEEvent;
+        setEvents((prev) => [...prev.slice(-49), data]);
+      } catch {
+        // skip malformed frame
+      }
     };
     es.onerror = () => {
       setConnected(false);

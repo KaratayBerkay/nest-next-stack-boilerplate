@@ -65,7 +65,9 @@ async function bootstrap() {
   );
   app.use(cookieParser(process.env.COOKIE_SECRET));
   app.use(compression());
-  app.enableCors({ origin: true, credentials: true });
+  const corsOrigin =
+    process.env.CORS_ORIGIN?.split(',').map((o) => o.trim()) ?? false;
+  app.enableCors({ origin: corsOrigin, credentials: true });
 
   // Stripe webhook needs the raw body buffer for signature verification.
   // rawBody: true in NestFactory options exposes req.rawBody as a Buffer.

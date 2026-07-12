@@ -22,8 +22,12 @@ export class DeviceIpMiddleware implements NestMiddleware {
     const cookieName = deviceCookieName(this.config);
     const carrier = req as unknown as {
       cookies?: Record<string, string | undefined>;
+      signedCookies?: Record<string, string | undefined>;
     };
-    const token = carrier.cookies?.[cookieName] ?? null;
+    const token =
+      carrier.signedCookies?.[cookieName] ??
+      carrier.cookies?.[cookieName] ??
+      null;
 
     if (!token) {
       next();

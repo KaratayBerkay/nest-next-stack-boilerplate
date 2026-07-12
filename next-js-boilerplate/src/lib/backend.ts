@@ -117,10 +117,13 @@ function evictStale(): void {
 /**
  * Clear the cached CSRF entry for the current session (call on logout).
  */
-export function clearCsrfCache(): void {
-  cookies()
-    .then((cs) => csrfCache.delete(sessionCacheKey(cs)))
-    .catch(() => {});
+export async function clearCsrfCache(): Promise<void> {
+  try {
+    const cs = await cookies();
+    csrfCache.delete(sessionCacheKey(cs));
+  } catch {
+    // cookies() may throw during build/static generation
+  }
 }
 
 /** Parse the name=value portion from a Set-Cookie header string. */

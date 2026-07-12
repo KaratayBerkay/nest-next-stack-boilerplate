@@ -83,7 +83,7 @@ export class MessagingService {
     const existing = await this.prisma.friendship.findMany({
       where: {
         OR: [{ requesterId: currentUserId }, { addresseeId: currentUserId }],
-        status: { in: ['PENDING', 'ACCEPTED'] },
+        status: { in: ['PENDING', 'ACCEPTED', 'BLOCKED'] },
       },
       select: { requesterId: true, addresseeId: true },
     });
@@ -369,7 +369,11 @@ export class MessagingService {
     const ids = await this.friends.getFriendIds(userId);
     this.tokenStore
       .rewriteFieldsForUser(userId, { friends: JSON.stringify(ids) })
-      .catch(() => {});
+      .catch((err: Error) =>
+        this.logger.warn(
+          `Failed to refresh friend IDs for ${userId}: ${err.message}`,
+        ),
+      );
   }
 
   /** Get IDs of all accepted friends */

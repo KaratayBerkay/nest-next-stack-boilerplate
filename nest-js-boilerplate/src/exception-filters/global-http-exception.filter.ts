@@ -19,6 +19,17 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     if (host.getType() !== 'http') {
       if (exception instanceof HttpException) throw exception;
+      this.logger.error(
+        {
+          category: 'application-exception',
+          event: 'exception.in_non_http_context',
+          type: host.getType(),
+          errorMessage:
+            exception instanceof Error ? exception.message : String(exception),
+          stack: exception instanceof Error ? exception.stack : undefined,
+        },
+        'Unhandled exception in non-HTTP context',
+      );
       return;
     }
 

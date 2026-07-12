@@ -3,6 +3,12 @@ import { cookies } from "next/headers";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
 import { csrfEchoHeaders, graphqlErrorBody, graphqlFetch } from "@/lib/backend";
 
+const ME_QUERY = `
+  query Me {
+    me { role }
+  }
+`;
+
 const SET_USER_TIER_MUTATION = `
   mutation SetUserTier($userId: String!, $tier: SubscriptionTier!) {
     setUserTier(userId: $userId, tier: $tier)
@@ -13,6 +19,11 @@ export async function POST(request: NextRequest) {
   const accessToken = (await cookies()).get(ACCESS_TOKEN_COOKIE)?.value;
   if (!accessToken) {
     return NextResponse.json({ statusCode: 401, exc: "EX_AUTH_INVALID_CREDENTIALS", msg: "Unauthorized", key: "auth.errors.unauthorized" }, { status: 401 });
+  }
+
+  const meRes = await graphqlFetch<{ me: { role: string } }>(ME_QUERY, undefined, accessToken);
+  if (meRes.data?.me?.role !== "ADMIN" && meRes.data?.me?.role !== "SUPERADMIN") {
+    return NextResponse.json({ statusCode: 403, exc: "EX_FORBIDDEN", msg: "Forbidden", key: "auth.errors.forbidden" }, { status: 403 });
   }
 
   let body: { userId: string; tier: string };

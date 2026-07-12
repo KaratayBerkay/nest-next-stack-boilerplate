@@ -5,6 +5,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { TokenStoreService } from '../auth/token-store.service';
 import { ConfigService } from '@nestjs/config';
 
+const MAX_WEBHOOK_BODY_BYTES = 1024 * 1024; // 1 MB
+
 @Controller('stripe')
 export class StripeWebhookController {
   private readonly logger = new Logger(StripeWebhookController.name);
@@ -18,6 +20,11 @@ export class StripeWebhookController {
 
   @Post('webhook')
   async handleWebhook(@Req() req: Request, @Res() res: Response) {
+    const rawBody = (req as unknown as { rawBody: Buffer }).rawBody;
+    if (rawBody?.length > MAX_WEBHOOK_BODY_BYTES) {
+      return res.status(413).json({ error: 'Request body too large' });
+    }
+
     const signature = req.headers['stripe-signature'] as string;
     if (!signature) {
       return res.status(400).json({ error: 'Missing stripe-signature header' });
@@ -25,10 +32,7 @@ export class StripeWebhookController {
 
     let event: ReturnType<typeof this.stripeService.constructWebhookEvent>;
     try {
-      event = this.stripeService.constructWebhookEvent(
-        (req as unknown as { rawBody: Buffer }).rawBody,
-        signature,
-      );
+      event = this.stripeService.constructWebhookEvent(rawBody, signature);
     } catch {
       return res.status(400).json({ error: 'Invalid signature' });
     }
@@ -75,6 +79,7 @@ export class StripeWebhookController {
         },
         `Webhook handler error: ${(err as Error).message}`,
       );
+      return res.status(500).json({ error: 'Internal server error' });
     }
 
     res.json({ received: true });

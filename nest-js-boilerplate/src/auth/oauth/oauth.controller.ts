@@ -9,10 +9,14 @@ import {
   Query,
   Redirect,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Response } from 'express';
 import { AuthService } from '../auth.service';
+import { SessionAuthGuard } from '../session-auth.guard';
+import { CurrentUser } from '../current-user.decorator';
+import type { JwtUser } from '../auth.types';
 import { OAuthService } from './oauth.service';
 
 @Controller('auth/oauth')
@@ -40,7 +44,7 @@ export class OAuthController {
    */
   @Get(':provider')
   @Redirect()
-  initiate(
+  async initiate(
     @Param('provider') provider: string,
     @Query('state') state: string,
     @Query('redirect_uri') redirectUri: string,
@@ -52,7 +56,7 @@ export class OAuthController {
         key: 'error.missingOAuthParams',
       });
     }
-    const url = this.oauth.buildAuthUrl(provider, state, redirectUri);
+    const url = await this.oauth.buildAuthUrl(provider, state, redirectUri);
     return { url, statusCode: HttpStatus.FOUND };
   }
 
@@ -73,9 +77,12 @@ export class OAuthController {
     const frontendOrigin = this.config
       .get<string>('FRONTEND_URL', 'http://localhost:3000')
       .replace(/\/+$/, '');
+    const redirectUriForState = state
+      ? await this.oauth.getRedirectUri(state)
+      : null;
     const loginErrorUrl = (err: string) => {
-      const origin = state
-        ? new URL(this.oauth.getRedirectUri(state) ?? frontendOrigin).origin
+      const origin = redirectUriForState
+        ? new URL(redirectUriForState).origin
         : frontendOrigin;
       return `${origin}/auth/login?error=${encodeURIComponent(err)}`;
     };
@@ -103,11 +110,16 @@ export class OAuthController {
 
   /**
    * GET /auth/oauth/:provider/profile — retrieve the OAuth profile
-   * that was stored during the callback, using the state as key.
+   * that was stored during the callback. Requires an authenticated
+   * session so the state token cannot be used by unauthorized parties.
    */
+  @UseGuards(SessionAuthGuard)
   @Get(':provider/profile')
   @HttpCode(HttpStatus.OK)
-  getProfile(@Query('state') state: string) {
+  async getProfile(
+    @Query('state') state: string,
+    @CurrentUser() _user: JwtUser,
+  ) {
     return this.oauth.retrieveProfile(state);
   }
 }

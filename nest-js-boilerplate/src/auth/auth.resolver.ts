@@ -4,6 +4,9 @@ import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { User } from '../@generated/user/user.model';
 import { CsrfGuard } from '../csrf/csrf.guard';
+import { RolesGuard } from '../authorization/roles.guard';
+import { Roles } from '../authorization/roles.decorator';
+import { UserRole } from '../@generated/prisma/user-role.enum';
 import { AuthService } from './auth.service';
 import { AuthPayload, SessionUserPayload } from './auth.types';
 import type { JwtUser } from './auth.types';
@@ -90,8 +93,10 @@ export class AuthResolver {
    * Dev-only: activate a user by email so e2e tests can skip the email
    * verification flow.  Gated by ALLOW_DEV_ACTIVATE=true (matching the
    * LOAD_DEMO_MODULES convention) and only activates PENDING_VERIFICATION
-   * accounts.
+   * accounts. Requires SUPERADMIN role to prevent abuse.
    */
+  @UseGuards(SessionAuthGuard, RolesGuard)
+  @Roles(UserRole.SUPERADMIN)
   @Mutation(() => Boolean)
   async devActivateUser(@Args('email') email: string): Promise<boolean> {
     if (process.env.ALLOW_DEV_ACTIVATE !== 'true') return false;

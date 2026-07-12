@@ -23,6 +23,15 @@ const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 10;
 const rateBuckets = new Map<string, number[]>();
 
+function evictStaleRateBuckets(): void {
+  const cutoff = Date.now() - RATE_LIMIT_WINDOW_MS * 2;
+  for (const [key, timestamps] of rateBuckets) {
+    const recent = timestamps.filter((t) => t > cutoff);
+    if (recent.length === 0) rateBuckets.delete(key);
+    else rateBuckets.set(key, recent);
+  }
+}
+
 function checkRateLimit(key: string): boolean {
   const now = Date.now();
   const windowStart = now - RATE_LIMIT_WINDOW_MS;
@@ -34,6 +43,8 @@ function checkRateLimit(key: string): boolean {
   const recent = timestamps.filter((t) => t > windowStart);
   recent.push(now);
   rateBuckets.set(key, recent);
+  // Evict stale entries every 100th call to prevent unbounded growth
+  if (Math.random() < 0.01) evictStaleRateBuckets();
   return recent.length <= RATE_LIMIT_MAX;
 }
 
