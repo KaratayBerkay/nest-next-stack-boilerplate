@@ -18,6 +18,23 @@
 > read: query shapes, render strategy, caching, bundling — the parts of a 2s
 > budget that are visible without running traffic.
 
+> **Control run (2026-07-13):** commit `b999fc6` claims "implement all 18
+> items". Re-verified every item against current code (not the commit
+> message) via two parallel static-review passes, one per app. **Not
+> gate-clean — 8/18 fully pass, 7/18 are real-but-incomplete, 3/18 don't hold
+> up.** Status marker + evidence added inline to each item below. Nothing has
+> been fixed as part of this control run — findings only.
+>
+> Backend: 5 pass (B2, B4, B7, B8, B10), 3 partial (B1, B3, B5), 2 fail
+> (B6, B9). Frontend: 3 pass (F5, F6, F7), 4 partial (F1, F2, F3, F4), 1 fail
+> (F8). Two findings are worth flagging above the rest: **B1 introduced a
+> regression** (`whoReacted` GraphQL field now returns `undefined` names for
+> every reactor, because the trimmed `reactions.select` dropped the `user`
+> relation it depends on), and **B9's load-test script targets a REST
+> endpoint (`/api/posts`) that doesn't exist** — this backend is GraphQL-only,
+> so the script 404s on every request and the audit's core "unverified 2s
+> claim" gap is still open.
+
 **Priorities:** `P0` = most likely to blow the 2s budget today · `P1` =
 high-value, real but smaller/likelier-under-load risk · `P2` = nice to have,
 marginal at current scale. **Effort:** S (< ½ day) · M (1–2 days) · L (multi-day).
@@ -26,7 +43,7 @@ marginal at current scale. **Effort:** S (< ½ day) · M (1–2 days) · L (mult
 
 ## Backend (`nest-js-boilerplate/`)
 
-1. **P0 (M) — Unbounded, over-fetching `include`s on the two hottest reads.**
+1. ⚠️ **Partial.** **P0 (M) — Unbounded, over-fetching `include`s on the two hottest reads.**
    `src/post/post.service.ts:144-166` (`findAll`, the feed query) includes the
    full `author` row and **all** `reactions` on every post in addition to
    `_count`, redundant and unbounded. `findOne:168-193` (post detail) includes
@@ -38,7 +55,18 @@ marginal at current scale. **Effort:** S (< ½ day) · M (1–2 days) · L (mult
    fields each caller needs, paginate comments (`take`+cursor), drop the
    duplicate `reactions: true` where `_count` already answers the question.
 
-2. **P1 (S/M) — No full-text/trigram index behind post search.** `findAll`'s
+   **Verified 2026-07-13:** `post.service.ts` findAll/findOne now `select`
+   a trimmed `author` and paginate comments with a fixed `take: 20` (no
+   cursor arg actually exposed, so it's page-1-only pagination, not real
+   cursor pagination). Two problems remain: (a) `reactions` is still fetched
+   as a list (`take: 50`/`take: 100`) *alongside* `_count.reactions` — the
+   duplicate the finding asked to drop is still there; (b) **regression**:
+   the trimmed `reactions.select` never selects `user.name`, but
+   `post.resolver.ts` `whoReacted` (a real PREMIUM-gated GraphQL field)
+   reads `r.user?.name` — every reactor name now resolves to `undefined`.
+   Not caught by `post.resolver.spec.ts` since its mock hand-supplies `user`.
+
+2. ✅ **Fixed** (was already true, re-confirmed). **P1 (S/M) — No full-text/trigram index behind post search.** `findAll`'s
    `title`/`content` search (`post.service.ts:150-153`) uses
    `contains`/`insensitive`, i.e. `ILIKE '%term%'`. `schema.prisma`'s `Post`
    model (`:647-676`) only indexes `authorId`, `status+publishedAt`, and
@@ -46,14 +74,30 @@ marginal at current scale. **Effort:** S (< ½ day) · M (1–2 days) · L (mult
    the table and gets linearly slower as posts grow. Fix: `pg_trgm` GIN index
    or a dedicated FTS column.
 
-3. **P1 (M) — No cache-aside layer for hot reads.** Redis
+   **Verified 2026-07-13:** `prisma/migrations/20260711000000_add_outbox_
+   updatedat_and_pgtrgm/migration.sql` has `CREATE EXTENSION IF NOT EXISTS
+   pg_trgm` + a GIN index on `title`; `.../20260711000001_add_post_content_
+   gin_index/migration.sql` adds the GIN index on `content`. Real, applied
+   migrations, not just a schema comment.
+
+3. ⚠️ **Partial.** **P1 (M) — No cache-aside layer for hot reads.** Redis
    (`token-store.service.ts`, `caching/`) covers session/permission/unread/
    presence only. Feed queries, post detail, profile lookups, and
    `subscriptionTier` (checked by `TierGuard` on every gated request) all hit
    Postgres on every request with no TTL cache in front. Mirror the
    token-store pattern for these.
 
-4. **P1 (M) — `realtime.gateway.ts` has no cross-instance fan-out.** Broadcasts
+   **Verified 2026-07-13:** `src/caching/cache-aside.service.ts` is a real
+   get/set/invalidate/`getOrFetch` implementation, correctly wired into
+   `post.service.ts` findAll/findOne (30s/60s TTL) with invalidation on post
+   create/update. Two gaps: (a) profile lookups and `subscriptionTier` are
+   never cached — `CacheAsideService` is imported nowhere outside
+   `post.service.ts`; (b) `comment.service.ts` and `reactions.service.ts`
+   never invalidate the post cache, so a new comment or reaction doesn't
+   bust `cache:post:{id}` — post detail can serve stale comment/reaction
+   data for up to 60s after a write.
+
+4. ✅ **Fixed** (one gap). **P1 (M) — `realtime.gateway.ts` has no cross-instance fan-out.** Broadcasts
    go through in-memory `Map`s only (e.g. `wss.clients.forEach` around
    `:200`/`:860`) — confirmed no `@socket.io/redis-adapter` or equivalent in
    `package.json` or the gateway. Single-instance today this is fine and fast;
@@ -63,7 +107,14 @@ marginal at current scale. **Effort:** S (< ½ day) · M (1–2 days) · L (mult
    realtime under budget" are the same piece of work. Bump to **P0** before
    any multi-replica deploy.
 
-5. **P1 (M) — Synchronous per-friend notification fan-out blocks the mutation
+   **Verified 2026-07-13:** `realtime.gateway.ts` has genuine bidirectional
+   Redis pub/sub — a subscriber on `WS_CHANNEL` re-broadcasts locally with a
+   re-entrancy guard, and `broadcastAll`/`broadcastToRoom`/`emitToTopic`/
+   `emitToService`/`emitToPage` all publish. Gap: `emitToUser` never
+   publishes — used by `messaging.resolver.ts` for `message-read` events,
+   which still won't cross instances.
+
+5. ⚠️ **Partial.** **P1 (M) — Synchronous per-friend notification fan-out blocks the mutation
    response.** `post.service.ts:50-65` (post creation) `Promise.all`s an
    insert + COUNT + 2 socket emits **per friend**, all before returning to the
    caller — response time scales linearly with friend count instead of being
@@ -74,25 +125,52 @@ marginal at current scale. **Effort:** S (< ½ day) · M (1–2 days) · L (mult
    `mail.processor.ts`) — move the notification fan-out onto the same queue
    rather than doing it inline in the request path.
 
-6. **P2 (S) — GraphQL has no DataLoader anywhere in `src/`.** Not biting today
+   **Verified 2026-07-13:** the friend-post fan-out genuinely moved off the
+   request path — `post.service.ts` post-creation now calls
+   `notificationQueue.enqueueFriendPostNotification(...)` (fire-and-forget
+   `.catch()`), processed by a real BullMQ `notification.processor.ts`
+   mirroring mail's pattern. But the finding's second half — the
+   `unreadCount()` query sandwiched between two realtime emits in
+   `notification.service.ts:~85`, also hit from comment/reaction creation —
+   is untouched, still synchronous, still in the request path.
+
+6. ❌ **Not fixed — dead module.** **P2 (S) — GraphQL has no DataLoader anywhere in `src/`.** Not biting today
    only because #1's eager `include`s trade N+1 for guaranteed over-fetch —
    fixing #1 by switching to field-level `select` without adding DataLoader
    would reintroduce classic per-parent N+1 on nested resolvers. Do these two
    together, not #1 alone.
 
-7. **P2 (S) — Prisma connection pool left at driver default.**
+   **Verified 2026-07-13:** `src/common/dataloader/dataloader.service.ts`
+   has real `getUserLoader`/`getPostLoader`, and `DataloaderModule` is
+   registered globally in `app.module.ts`. But no resolver anywhere calls
+   `.load()` — a repo-wide grep for `DataloaderService`/`getUserLoader`/
+   `getPostLoader` outside the dataloader files themselves returns nothing.
+   The N+1 risk this item exists to close (once #1's `select` change is live)
+   is unmitigated. Bonus latent bug if this ever does get wired in: loaders
+   are cached on a singleton service (no `Scope.REQUEST`), so DataLoader's
+   per-key cache would never expire except on app restart — permanent stale
+   user/post data across all requests, not just per-request memoization.
+
+7. ✅ **Fixed.** **P2 (S) — Prisma connection pool left at driver default.**
    `prisma.service.ts:23-26` passes `PrismaPg` only a `connectionString`, no
    `max`; node-postgres defaults to `max: 10`. `k8s/secret.example.yaml:14-16`
    already documents a `connection_limit` knob that nothing sets. Fine at dev
    scale, a likely bottleneck under concurrent load once #1's queries get
    cheaper and throughput goes up.
 
-8. **P2 (S) — `messaging-ws.gateway.ts:83-108`'s two count queries are
+   **Verified 2026-07-13:** `prisma.service.ts` now passes
+   `max: config.get<number>('DATABASE_POOL_MAX', 20)` into the real
+   `PrismaPg`/`pg.Pool` constructor.
+
+8. ✅ **Fixed.** **P2 (S) — `messaging-ws.gateway.ts:83-108`'s two count queries are
    sequential when they're independent.** `getUnreadCount` then
    `getTotalUnreadCount`, both awaited in series before the ack — trivial
    `Promise.all` fix, shaves one round trip off every DM send.
 
-9. **P1 (M) — No load-testing baseline exists.** `docs/todo/02-backend.md:33-34`
+   **Verified 2026-07-13:** `messaging-ws.gateway.ts` now wraps both counts
+   in `Promise.all([...])`.
+
+9. ❌ **Not fixed — script is broken and unwired.** **P1 (M) — No load-testing baseline exists.** `docs/todo/02-backend.md:33-34`
    already flags this as open; confirmed still true (no k6/autocannon config
    anywhere in the repo — the only load-test artifact is a bespoke WS script,
    `test/load-test/ws-chat-load.mjs`, with no HTTP/GraphQL equivalent or CI
@@ -101,15 +179,29 @@ marginal at current scale. **Effort:** S (< ½ day) · M (1–2 days) · L (mult
    p95s. Should be the first thing built once #1/#3 land, so there's a before/
    after number.
 
-10. **P2 (S) — Compression is gzip-only, no brotli.** `main.ts:71` uses
+   **Verified 2026-07-13:** `load-test/baseline.js` exists at repo root and
+   does hit HTTP, not just WS — but it targets `/api/posts`/`/api/posts/:id`
+   as REST endpoints, and **no such REST controller exists**: Post is
+   GraphQL-only (`post.resolver.ts`). This script 404s on every request
+   against the real backend. It's also not referenced by any `package.json`
+   script or `.github/workflows/*.yml` — nobody runs it. No GraphQL load
+   test exists at all, so the audit's headline "no measured p95s" gap is
+   still fully open.
+
+10. ✅ **Fixed.** **P2 (S) — Compression is gzip-only, no brotli.** `main.ts:71` uses
     Express's `compression()` middleware (default gzip, gets no benefit from
     brotli's better ratio on JSON-heavy GraphQL responses). Small win, cheap
     to add (`compression` supports brotli via `zlib` in newer Node, or swap
     to a brotli-aware middleware).
 
+    **Verified 2026-07-13:** `main.ts` now configures
+    `compression({ brotli: { params: { [zlib.constants.BROTLI_PARAM_QUALITY]:
+    5 } } })`; `compression@1.8.1` genuinely supports brotli natively, so
+    this isn't a no-op.
+
 ## Frontend (`next-js-boilerplate/`)
 
-1. **P0 (L) — Client-fetch-after-mount is the dominant pattern on all 9 core
+1. ⚠️ **Partial — 2 of 4 named pages.** **P0 (L) — Client-fetch-after-mount is the dominant pattern on all 9 core
    pages.** Each page's `page.tsx` is a Server Component only for auth/tier
    routing (`getSessionUser()`); actual content loads client-side after
    hydration via `useSuspenseQuery` → `apiFetch(...)`:
@@ -124,7 +216,18 @@ marginal at current scale. **Effort:** S (< ½ day) · M (1–2 days) · L (mult
    (TanStack Query supports this), or stream server-fetched `Suspense`
    boundaries instead of client-fetched ones.
 
-2. **P0 (S/M) — `next/image` is essentially unused; a real `<img>` is likely
+   **Verified 2026-07-13:** `app/v1/[lang]/feed/page.tsx` and
+   `app/v1/[lang]/posts/[uuid]/page.tsx` now do real server-side
+   `graphqlFetch` and pass `initialFeedData`/`initialPostData` down; the
+   Free/Medium/Premium list and detail views wire that into
+   `useSuspenseQuery`'s `initialData` with `staleTime: 30_000`, so the
+   client genuinely doesn't refetch on mount for these two. But `views/
+   messages/FreePageView.tsx` and `views/find-friends/
+   FreeFindFriendsContent.tsx` — 2 of the 4 pages named in this finding —
+   were not touched by the fix commit and are still fully client-fetch-
+   after-mount, unchanged.
+
+2. ⚠️ **Partial — worst offender fixed, 2 named files untouched.** **P0 (S/M) — `next/image` is essentially unused; a real `<img>` is likely
    the LCP element.** Only 2 files in the whole app use `next/image`
    (`(demos)/images/page.tsx`, `NavigationOverlay.tsx`) — everything else uses
    raw `<img>`: `components/feed/PostContent.tsx:17-22`,
@@ -135,14 +238,25 @@ marginal at current scale. **Effort:** S (< ½ day) · M (1–2 days) · L (mult
    with `priority` on above-the-fold hero/avatar images, `sizes` set,
    `loading="lazy"` reserved for genuinely below-the-fold images.
 
-3. **P1 (S) — No bundle analyzer or size budget.** Confirmed absent (`next.config.
+   **Verified 2026-07-13:** `PostDetailBaseView.tsx`'s hero image now uses
+   `next/image` with `priority` and no `loading="lazy"`; `PostContent.tsx`
+   also converted. But `components/ui/avatar/avatar.tsx:48` and `views/
+   share/PageContent.tsx:188` — both explicitly named in this finding — are
+   confirmed still raw `<img>`, untouched by the fix commit.
+
+3. ⚠️ **Partial — analyzer wired, no CI budget.** **P1 (S) — No bundle analyzer or size budget.** Confirmed absent (`next.config.
    ts`, `package.json` scripts) — matches the two still-open P1 items in
    `docs/todo/03-frontend.md:40-42`. `next/dynamic` is used in only 3 files,
    none of the 9 core pages. Add `@next/bundle-analyzer`, capture a baseline,
    wire a size-budget assertion into `frontend-ci.yml` (already exists per
    `upgrade-4.md` #3) so bundle growth is visible before it costs LCP.
 
-4. **P1 (M) — Zero HTTP caching / ISR anywhere in the app.**
+   **Verified 2026-07-13:** `next.config.ts` now conditionally wraps the
+   config with `@next/bundle-analyzer` behind `ANALYZE=true`. But no
+   size-budget assertion was added to `frontend-ci.yml` — this finding
+   explicitly asked for both, only the analyzer half landed.
+
+4. ⚠️ **Partial — narrower than the finding.** **P1 (M) — Zero HTTP caching / ISR anywhere in the app.**
    `src/lib/backend.ts`'s `graphqlFetch` (`:241-264`) and `backendFetch`
    (`:49-76`) never set `cache`/`next.revalidate` — Next defaults to
    fully dynamic/uncached. No page exports `revalidate`; the only
@@ -152,7 +266,16 @@ marginal at current scale. **Effort:** S (< ½ day) · M (1–2 days) · L (mult
    (public feed, post detail before personalization) so repeat navigations
    don't pay full backend latency.
 
-5. **P1 (S/M) — `AuthProvider` does a client round trip even when SSR already
+   **Verified 2026-07-13:** `src/app/api/posts/route.ts` and `.../posts/
+   [id]/route.ts` now set `Cache-Control: public, max-age=30…/60…`, and
+   `staleTime: 30_000` is on the feed/post queries. But `src/lib/
+   backend.ts`'s `graphqlFetch`/`backendFetch` — the actual target of this
+   finding — were not touched at all, no `cache`/`next.revalidate` anywhere
+   in that file. The SSR `page.tsx` calls added by #1 still hit the backend
+   fully uncached; only the client-facing BFF route responses got headers,
+   which is narrower than what this finding asked for.
+
+5. ✅ **Fixed.** **P1 (S/M) — `AuthProvider` does a client round trip even when SSR already
    has the user.** `features/auth/hooks/useAuth.tsx:56-84`: `initialUser` is
    used to seed state, but the `useEffect` **still** fires
    `apiFetch(AUTH_TOKEN_URL)` on mount in both the `ssrUser` branch (`:67`)
@@ -165,25 +288,55 @@ marginal at current scale. **Effort:** S (< ½ day) · M (1–2 days) · L (mult
    down the access token alongside `initialUser` (or a short-lived cookie the
    client can read synchronously) instead of re-fetching it.
 
-6. **P2 (S) — Stripe SDK statically imported, not code-split off checkout.**
+   **Verified 2026-07-13:** `components/SessionScript.tsx` now also emits
+   `window.__INITIAL_TOKEN__` via a synchronous cookie read (no network
+   hop), rendered in root `layout.tsx`. `useAuth.tsx`'s `ssrUser` and
+   `initialUser` branches both check this SSR token and return early,
+   only falling back to `apiFetch(AUTH_TOKEN_URL)` if no SSR token exists.
+   Real elimination of the round trip, not a reorder.
+
+6. ✅ **Fixed.** **P2 (S) — Stripe SDK statically imported, not code-split off checkout.**
    `components/StripeProvider.tsx:3-4` and `features/billing/ui/
    StripeCardForm.tsx` import `@stripe/react-stripe-js`/`@stripe/stripe-js` at
    module scope, shipping Stripe's bundle to every page that pulls in the
    provider tree, not just the checkout page. Fix: `next/dynamic` with
    `ssr: false` around the Stripe-dependent component.
 
-7. **P2 (S) — Ad hoc `useEffect`+`fetch` bypasses the shared query cache in
+   **Verified 2026-07-13:** `views/checkout/CheckoutContent.tsx` now loads
+   `StripeCardForm` via `next/dynamic(..., { ssr: false })`.
+   `StripeProvider.tsx` (which statically imports `@stripe/stripe-js`/
+   `@stripe/react-stripe-js`) is imported only by `StripeCardForm.tsx` —
+   confirmed via repo-wide grep, no other importer — so the whole Stripe
+   chain rides inside the dynamic boundary, not the root provider tree.
+
+7. ✅ **Fixed.** **P2 (S) — Ad hoc `useEffect`+`fetch` bypasses the shared query cache in
    places.** `integrations/tanstack-query/QueryProvider.tsx:8-20` gives a
    proper shared `QueryClient` (good, in use on the 4 pages above), but e.g.
    `views/settings/PageContent.tsx` still fetches ad hoc — inconsistent
    caching/dedup discipline page to page. Route remaining ad hoc fetches
    through the same `useSuspenseQuery`/`useQuery` layer.
 
-8. **P1 (M) — No Lighthouse CI / Core Web Vitals baseline.** Same gap as
+   **Verified 2026-07-13:** `views/settings/PageContent.tsx` now uses
+   `useSuspenseQuery` for `BILLING_SUBSCRIPTION_URL`, no ad hoc
+   `useEffect`+`fetch`; the route has a `loading.tsx` giving it Next's
+   automatic Suspense boundary.
+
+8. ❌ **Not fixed — config targets URLs that don't exist.** **P1 (M) — No Lighthouse CI / Core Web Vitals baseline.** Same gap as
    backend #9: `docs/todo/03-frontend.md:40-41` already flags this as open,
    confirmed still true. Without it, "under 2s LCP" for the 9 core pages is
    this doc's inference from code shape, not a measured number. Should land
    together with #1 and #2 above so there's a before/after.
+
+   **Verified 2026-07-13:** `lighthouserc.json` has real assertions (LCP,
+   CLS, TBT, etc.) and `lighthouse:*` scripts exist in `package.json`. But
+   its 4 target URLs are all wrong: `http://localhost:4000/en/feed`,
+   `/en/posts/example-post`, `/en/messages`, `/en/friends` all omit the
+   required `/v1` prefix every real route lives under
+   (`app/v1/[lang]/...`), `/en/friends` isn't a real route at all (it's
+   `/v1/en/find-friends`), and `example-post` isn't a real post id anywhere
+   in the repo. No rewrites bridge these. As configured, every collected
+   URL would 404 — this "baseline" can't produce a number. Also not wired
+   into `frontend-ci.yml`.
 
 ---
 
