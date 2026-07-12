@@ -137,6 +137,7 @@ Never define inline Suspense fallback JSX in component files. Instead:
 3. Import it in the source file with `import { ChatRoomFallback } from "@/fallbacks"`
 
 **Directory structure mirrors source:**
+
 - `src/views/chat-room/FreePageView.tsx` → `src/fallbacks/views/chat-room/ChatRoomFallback.tsx`
 - `src/app/v1/[lang]/messages/loading.tsx` → `src/fallbacks/app/v1/[lang]/messages/MessagesLoadingFallback.tsx`
 - `src/app/auth/layout.tsx` → `src/fallbacks/app/auth/AuthFallback.tsx`
@@ -158,12 +159,14 @@ export function FreePageView() {
 // ❌ Bad — inline fallback JSX
 export function FreePageView() {
   return (
-    <Suspense fallback={
-      <div className="flex flex-col gap-4 p-4">
-        <div className="h-8 w-8 animate-pulse rounded-full bg-surface-hover" />
-        {/* ... 20+ lines of skeleton JSX */}
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex flex-col gap-4 p-4">
+          <div className="bg-surface-hover h-8 w-8 animate-pulse rounded-full" />
+          {/* ... 20+ lines of skeleton JSX */}
+        </div>
+      }
+    >
       <ChatRoomContent />
     </Suspense>
   );
@@ -175,6 +178,7 @@ export function FreePageView() {
 Pages that appear only in specific situations (error states, 404, access denied, loading, unauthenticated) must be extracted to `src/features/statics/`. Never hardcode English strings in these pages — use i18n where `MessagesProvider` is available.
 
 **When to create a static page:**
+
 - Error boundary (`error.tsx`) — shows when a segment throws
 - Not-found (`not-found.tsx`) — shows when a route doesn't exist
 - Access denied — shows when user lacks required role/tier
@@ -182,6 +186,7 @@ Pages that appear only in specific situations (error states, 404, access denied,
 - Loading state with text — shows during async loading
 
 **Directory structure:**
+
 ```
 src/features/statics/
 ├── error/ErrorPage.tsx          # Generic error page (for messages, routing, etc.)
@@ -194,6 +199,7 @@ src/features/statics/
 ```
 
 **Types go in `src/types/features/statics/`:**
+
 ```
 src/types/features/statics/
 ├── ErrorPage-types.ts
@@ -204,6 +210,7 @@ src/types/features/statics/
 ```
 
 **Route files stay thin — import from statics:**
+
 ```tsx
 // ✅ Good — error.tsx is a thin wrapper
 "use client";
@@ -233,6 +240,7 @@ export default function BoomError({ error, reset }) {
 ```
 
 **i18n rules for static pages:**
+
 - If the route is under `v1/[lang]/`, use `useMessages("error")` or the relevant namespace
 - If the route is outside `MessagesProvider` scope (e.g. `global-error.tsx`), keep strings as-is or use client-side language detection
 - After adding new i18n keys, run `pnpm generate-i18n-types` to update generated types

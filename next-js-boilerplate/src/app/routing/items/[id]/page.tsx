@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import type { ItemContentProps, ItemPageProps } from "@/types/routing/ItemContent-types";
+import type {
+  ItemContentProps,
+  ItemPageProps,
+} from "@/types/routing/ItemContent-types";
 import { RoutingItemFallback } from "@/fallbacks";
 
 export const metadata: Metadata = {
@@ -25,9 +28,7 @@ async function ItemContent({ params }: ItemContentProps) {
   );
 }
 
-export default function ItemPage({
-  params,
-}: ItemPageProps) {
+export default function ItemPage({ params }: ItemPageProps) {
   return (
     <div className="flex flex-col gap-2">
       <Suspense fallback={<RoutingItemFallback />}>

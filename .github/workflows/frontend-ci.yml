@@ -1,0 +1,101 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'next-js-boilerplate/**'
+      - '.github/workflows/frontend-ci.yml'
+  pull_request:
+    paths:
+      - 'next-js-boilerplate/**'
+      - '.github/workflows/frontend-ci.yml'
+
+defaults:
+  run:
+    working-directory: next-js-boilerplate
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: next-js-boilerplate/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Dependency graph (circular deps, import-direction rules)
+        run: pnpm depcruise
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Fallow dead-code
+        run: npx fallow dead-code --ci --format json --quiet >> "$GITHUB_STEP_SUMMARY" || true
+
+      - name: Fallow duplication
+        run: npx fallow dupes --ci --format json --quiet >> "$GITHUB_STEP_SUMMARY" || true
+
+      - name: Build
+        run: pnpm build
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
+
+      # TODO: this job has no backend to talk to — no Postgres/Redis services and no
+      # compiled nest-js-boilerplate process, unlike backend-ci.yml's `test` job. The BFF
+      # routes this suite drives (login/register/dev-activate) all proxy to APP_URL, which
+      # points at nothing here, so this step cannot pass against a real backend as currently
+      # configured. Needs: Postgres+Redis services, build+migrate+boot the backend with
+      # ALLOW_DEV_ACTIVATE=true, a health-check wait, then run Playwright against it.
+      - name: E2E tests
+        run: pnpm test:e2e
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Builds/smoke-tests the standalone Docker image as its own CI step, independent of
+      # e2e/standalone.spec.ts's execSync("docker build ...") — that Playwright test fails
+      # immediately in any sandbox without a Docker daemon, so this step gives Dockerfile
+      # build failures their own signal regardless of whether the Playwright job's runner
+      # has Docker (GitHub-hosted ubuntu-latest runners do) or whether the e2e job's
+      # backend-less setup can even reach the "verify" job's later steps.
+      - name: Build frontend Docker image
+        working-directory: next-js-boilerplate
+        run: docker build -t nextjs-frontend-ci .
+
+      - name: Smoke-test the image serves traffic
+        working-directory: next-js-boilerplate
+        run: |
+          docker run -d --rm --name nextjs-frontend-ci -p 3200:3100 nextjs-frontend-ci
+          for attempt in $(seq 1 30); do
+            if curl -sf http://localhost:3200 -o /tmp/smoke.html; then
+              grep -q "Next.js" /tmp/smoke.html
+              docker stop nextjs-frontend-ci
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Container never became healthy" >&2
+          docker logs nextjs-frontend-ci
+          docker stop nextjs-frontend-ci
+          exit 1

@@ -2,8 +2,7 @@ import type { PageInfoContent } from "@/types/ui/PageInfo-types";
 
 export const plansPageInfo: PageInfoContent = {
   title: "Plans",
-  description:
-    "Compare and choose the plan that works best for you.",
+  description: "Compare and choose the plan that works best for you.",
   sections: [
     {
       title: "Plan Tiers",

@@ -24,7 +24,12 @@ export async function GET() {
   const accessToken = (await cookies()).get(ACCESS_TOKEN_COOKIE)?.value;
   if (!accessToken) {
     return NextResponse.json(
-      { statusCode: 401, exc: "EX_AUTH_INVALID_CREDENTIALS", msg: "Unauthorized", key: "auth.errors.unauthorized" },
+      {
+        statusCode: 401,
+        exc: "EX_AUTH_INVALID_CREDENTIALS",
+        msg: "Unauthorized",
+        key: "auth.errors.unauthorized",
+      },
       { status: 401 },
     );
   }

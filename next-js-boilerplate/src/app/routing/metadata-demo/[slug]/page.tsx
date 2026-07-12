@@ -3,7 +3,9 @@ import type { Metadata } from "next";
 import { MetadataDemoFallback } from "@/fallbacks";
 import type { SlugPageProps } from "@/types/routing/SlugPage-types";
 
-export async function generateMetadata({ params }: SlugPageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: SlugPageProps): Promise<Metadata> {
   const { slug } = await params;
   return {
     title: `${slug} — dynamic`,

@@ -9,10 +9,7 @@ import type { V1ErrorProps } from "@/types/v1/V1Error-types";
 // renders a fallback instead of crashing the route; `reset()` retries rendering
 // the segment. `digest` is a server-side hash React attaches to production errors
 // so you can correlate the message with your logs.
-export default function V1Error({
-  error,
-  reset,
-}: V1ErrorProps) {
+export default function V1Error({ error, reset }: V1ErrorProps) {
   const t = useMessages("error");
   useEffect(() => {
     // Report to your observability pipeline here (see /observability, F33).

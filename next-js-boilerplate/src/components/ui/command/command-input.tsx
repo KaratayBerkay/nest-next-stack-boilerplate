@@ -12,7 +12,9 @@ export function CommandInput({
   const { search, setSearch } = useCommandContext();
 
   const currentValue = externalValue ?? search;
-  const handleChange = externalOnChange ?? ((e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value));
+  const handleChange =
+    externalOnChange ??
+    ((e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value));
 
   return (
     <div className="border-border flex items-center border-b px-3">

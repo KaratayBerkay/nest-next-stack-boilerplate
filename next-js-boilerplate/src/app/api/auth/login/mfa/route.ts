@@ -50,12 +50,25 @@ export const POST = withLogging(async (request, log) => {
     code = body.code;
     if (!mfaToken || !code) {
       return NextResponse.json(
-        { statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "MFA token and code are required", key: "auth.errors.mfaRequired" },
+        {
+          statusCode: 400,
+          exc: "EX_VALIDATION_FORM",
+          msg: "MFA token and code are required",
+          key: "auth.errors.mfaRequired",
+        },
         { status: 400 },
       );
     }
   } catch {
-    return NextResponse.json({ statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Invalid JSON body", key: "auth.errors.invalidJson" }, { status: 400 });
+    return NextResponse.json(
+      {
+        statusCode: 400,
+        exc: "EX_VALIDATION_FORM",
+        msg: "Invalid JSON body",
+        key: "auth.errors.invalidJson",
+      },
+      { status: 400 },
+    );
   }
 
   const { data, errors } = await graphqlFetch<{
@@ -77,7 +90,8 @@ export const POST = withLogging(async (request, log) => {
     return NextResponse.json(body, { status: body.statusCode });
   }
 
-  const { accessToken, rbacToken, deviceToken, userToken, user } = data.verifyLoginMfa;
+  const { accessToken, rbacToken, deviceToken, userToken, user } =
+    data.verifyLoginMfa;
 
   const response = NextResponse.json({ user, accessToken }, { status: 200 });
 

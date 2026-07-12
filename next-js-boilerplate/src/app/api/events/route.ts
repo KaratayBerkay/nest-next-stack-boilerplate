@@ -12,8 +12,12 @@ function parseDeviceType(ua?: string | null): DeviceType {
   if (!ua) return "unknown";
   const u = ua.toLowerCase();
   if (/bot|crawler|spider|googlebot|headless/i.test(u)) return "bot";
-  if (/ipad|tablet|playbook|kindle|(android(?!.*mobile))/i.test(u)) return "tablet";
-  if (/mobile|iphone|ipod|blackberry|opera mini|android.*mobile|iemobile/i.test(u)) return "mobile";
+  if (/ipad|tablet|playbook|kindle|(android(?!.*mobile))/i.test(u))
+    return "tablet";
+  if (
+    /mobile|iphone|ipod|blackberry|opera mini|android.*mobile|iemobile/i.test(u)
+  )
+    return "mobile";
   return "desktop";
 }
 
@@ -73,7 +77,15 @@ async function resolveMe(): Promise<{ userId?: string; sessionId?: string }> {
   }
 }
 
-const CATEGORY_EVENTS = new Set(["session", "page", "http-exception", "application-exception", "network", "database", "performance"]);
+const CATEGORY_EVENTS = new Set([
+  "session",
+  "page",
+  "http-exception",
+  "application-exception",
+  "network",
+  "database",
+  "performance",
+]);
 
 export const POST = withLogging(async (request, log) => {
   const ip =
@@ -81,7 +93,10 @@ export const POST = withLogging(async (request, log) => {
     request.headers.get("x-real-ip") ??
     "unknown";
   if (!checkRateLimit(ip)) {
-    log.warn({ ip, category: "network", event: "network.rate_limited" }, "rate limit exceeded");
+    log.warn(
+      { ip, category: "network", event: "network.rate_limited" },
+      "rate limit exceeded",
+    );
     return NextResponse.json({ error: "rate limit exceeded" }, { status: 429 });
   }
 

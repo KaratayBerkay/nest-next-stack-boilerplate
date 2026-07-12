@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Tabs, TabsContent, TabsList, TabsTrigger,
-} from "@/components/ui/Tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { InputOTP, InputOTPGroup } from "@/components/ui/InputOTP";
 
 function InputOTPWrapper() {
@@ -32,8 +30,7 @@ export default function InputOtpPage() {
           </div>
         </TabsContent>
         <TabsContent value="examples">
-          <div className="flex flex-col gap-4">
-          </div>
+          <div className="flex flex-col gap-4"></div>
         </TabsContent>
       </Tabs>
     </div>

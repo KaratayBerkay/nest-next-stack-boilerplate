@@ -8,10 +8,7 @@ import type { GalleryLayoutProps } from "@/types/gallery/GalleryLayout-types";
 // stays on the gallery). On a *hard* navigation/refresh the interceptor is
 // bypassed: `@modal` falls back to its `default.tsx` (null) and `children`
 // renders the full `gallery/[id]/page.tsx` instead.
-export default function GalleryLayout({
-  children,
-  modal,
-}: GalleryLayoutProps) {
+export default function GalleryLayout({ children, modal }: GalleryLayoutProps) {
   return (
     <main className={`${containerClass} flex flex-1 flex-col gap-6 py-16`}>
       {children}

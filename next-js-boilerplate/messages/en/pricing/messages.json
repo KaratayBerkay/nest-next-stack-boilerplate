@@ -5,9 +5,24 @@
   "included": "Included",
   "upgrade": "Upgrade",
   "featuresBasic": ["Basic access", "Community support"],
-  "featuresMedium": ["Everything in Free", "Priority support", "Basic analytics"],
-  "featuresPremium": ["Everything in Medium", "Post stats & reaction breakdown", "VIP room access", "Suggested friends"],
-  "featuresPro": ["Everything in Premium", "Who-reacted list", "Export data", "Crown badge", "Dedicated support"],
+  "featuresMedium": [
+    "Everything in Free",
+    "Priority support",
+    "Basic analytics"
+  ],
+  "featuresPremium": [
+    "Everything in Medium",
+    "Post stats & reaction breakdown",
+    "VIP room access",
+    "Suggested friends"
+  ],
+  "featuresPro": [
+    "Everything in Premium",
+    "Who-reacted list",
+    "Export data",
+    "Crown badge",
+    "Dedicated support"
+  ],
   "priceFree": "$0",
   "priceBasic": "$9.99/mo",
   "priceMedium": "$19.99/mo",

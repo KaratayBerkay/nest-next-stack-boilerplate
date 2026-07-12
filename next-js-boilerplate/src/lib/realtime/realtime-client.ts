@@ -17,7 +17,10 @@ export class RealtimeClient {
   private sendQueue: Record<string, unknown>[] = [];
   private topicWatches = new Set<string>();
   private registeredServices: string[] = [];
-  private currentClaim: { page: string | null; params?: Record<string, string> } | null = null;
+  private currentClaim: {
+    page: string | null;
+    params?: Record<string, string>;
+  } | null = null;
   private authFailRetries = 0;
   private pendingAuthFail = false;
   private static readonly MAX_AUTH_FAIL_RETRIES = 3;
@@ -177,7 +180,10 @@ export class RealtimeClient {
     }
   }
 
-  private async refreshAndFetchTokens(): Promise<Record<string, string> | null> {
+  private async refreshAndFetchTokens(): Promise<Record<
+    string,
+    string
+  > | null> {
     this.onBustTokenCache?.();
     try {
       const res = await fetch(AUTH_TOKEN_URL, { method: GET });

@@ -2,9 +2,22 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { cn } from "@/lib/cn";
-import { inputBaseClasses, inputErrorClasses } from "@/components/ui/input-styles";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { MONTHS, DAYS_SHORT, getDaysInMonth, getFirstWeekdayOfMonth, isSameDay } from "@/lib/date-time";
+import {
+  inputBaseClasses,
+  inputErrorClasses,
+} from "@/components/ui/input-styles";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import {
+  MONTHS,
+  DAYS_SHORT,
+  getDaysInMonth,
+  getFirstWeekdayOfMonth,
+  isSameDay,
+} from "@/lib/date-time";
 import type { DateInputProps } from "@/types/ui/DateInput-types";
 
 const DAYS = DAYS_SHORT;
@@ -84,14 +97,21 @@ export function DateInput({
         {displayValue || placeholder}
       </PopoverTrigger>
       <PopoverContent className="w-auto p-3">
-        <div className="flex items-center justify-between mb-3">
+        <div className="mb-3 flex items-center justify-between">
           <button
             type="button"
             onClick={handlePrev}
             className="text-muted hover:text-fg p-1"
             aria-label="Previous month"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="m15 18-6-6 6-6" />
             </svg>
           </button>
@@ -104,14 +124,24 @@ export function DateInput({
             className="text-muted hover:text-fg p-1"
             aria-label="Next month"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="m9 18 6-6-6-6" />
             </svg>
           </button>
         </div>
         <div className="grid grid-cols-7 gap-1">
           {DAYS.map((d) => (
-            <div key={d} className="text-muted flex h-7 w-7 items-center justify-center text-xs">
+            <div
+              key={d}
+              className="text-muted flex h-7 w-7 items-center justify-center text-xs"
+            >
               {d}
             </div>
           ))}
@@ -129,7 +159,9 @@ export function DateInput({
                   "flex h-7 w-7 items-center justify-center rounded text-sm transition-colors",
                   isSelected(day) && "bg-fg text-bg",
                   !isSelected(day) && isToday(day) && "border-border border",
-                  !isSelected(day) && !isToday(day) && "hover:bg-surface-hover text-muted hover:text-fg",
+                  !isSelected(day) &&
+                    !isToday(day) &&
+                    "hover:bg-surface-hover text-muted hover:text-fg",
                 )}
               >
                 {day}

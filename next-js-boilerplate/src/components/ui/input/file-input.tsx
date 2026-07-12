@@ -2,7 +2,10 @@
 
 import { useRef, useState } from "react";
 import { cn } from "@/lib/cn";
-import { inputBaseClasses, inputErrorClasses } from "@/components/ui/input-styles";
+import {
+  inputBaseClasses,
+  inputErrorClasses,
+} from "@/components/ui/input-styles";
 import type { FileInputProps } from "@/types/ui/FileInput-types";
 
 function handleChange(
@@ -42,8 +45,11 @@ export function FileInput({
         type="file"
         className="hidden"
         onChange={(e) => handleChange(e, setFileName, onChange)}
+        aria-invalid={!!error}
         {...props}
       />
+      {/* role="button" (implicit on <button>) doesn't support aria-invalid — the actual form
+          control carrying the invalid state is the file input above. */}
       <button
         type="button"
         onClick={() => ref.current?.click()}
@@ -53,7 +59,6 @@ export function FileInput({
           error && inputErrorClasses,
           className,
         )}
-        aria-invalid={!!error}
       >
         <svg
           width="16"
@@ -80,7 +85,14 @@ export function FileInput({
             className="text-muted hover:text-fg shrink-0"
             aria-label="Remove file"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M18 6 6 18M6 6l12 12" />
             </svg>
           </button>

@@ -93,31 +93,38 @@ function MessagesPageContent({ initialUser }: MessagesViewProps) {
     }, 300);
   }, []);
 
-  const { data: conversationsData, refetch: refetchConversations, isError: convsError } =
-    useConversations();
-  const conversations = useMemo(() => conversationsData ?? [], [conversationsData]);
+  const {
+    data: conversationsData,
+    refetch: refetchConversations,
+    isError: convsError,
+  } = useConversations();
+  const conversations = useMemo(
+    () => conversationsData ?? [],
+    [conversationsData],
+  );
 
   const [tab, setTab] = useState<"conversations" | "friends">(
     () =>
       (typeof window !== "undefined"
-        ? (sessionStorage.getItem("msg_tab") as
-            | "conversations"
-            | "friends")
+        ? (sessionStorage.getItem("msg_tab") as "conversations" | "friends")
         : null) || "conversations",
   );
   useEffect(() => {
     sessionStorage.setItem("msg_tab", tab);
   }, [tab]);
 
-  const markMessagesRead = useCallback(async (userId: string) => {
-    try {
-      await apiFetch(MESSAGES_READ_URL, {
-        method: "POST",
-        body: JSON.stringify({ userId }),
-      });
-      refetchConversations();
-    } catch {}
-  }, [refetchConversations]);
+  const markMessagesRead = useCallback(
+    async (userId: string) => {
+      try {
+        await apiFetch(MESSAGES_READ_URL, {
+          method: "POST",
+          body: JSON.stringify({ userId }),
+        });
+        refetchConversations();
+      } catch {}
+    },
+    [refetchConversations],
+  );
 
   const lastParamRef = useRef<string | null>(null);
   useEffect(() => {
@@ -161,8 +168,7 @@ function MessagesPageContent({ initialUser }: MessagesViewProps) {
   const onlineUsers = usePresence();
 
   if (loading) return <LoadingAuth />;
-  if (!user)
-    return <UnauthenticatedMessage message={t.signInRequired} />;
+  if (!user) return <UnauthenticatedMessage message={t.signInRequired} />;
 
   const messagesUser: UserInfo = {
     id: user.id,
@@ -188,23 +194,26 @@ function MessagesPageContent({ initialUser }: MessagesViewProps) {
               }
             />
             {connectionState === "online" ? (
-              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-bg bg-green-500" />
+              <span className="border-bg absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 bg-green-500" />
             ) : connectionState === "connecting" ? (
-              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-bg bg-green-300 animate-pulse" />
+              <span className="border-bg absolute -right-0.5 -bottom-0.5 h-3 w-3 animate-pulse rounded-full border-2 bg-green-300" />
             ) : (
-              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-bg bg-red-400" />
+              <span className="border-bg absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 bg-red-400" />
             )}
           </div>
-          <h2 className="text-lg font-bold text-brand">{t.title}</h2>
+          <h2 className="text-brand text-lg font-bold">{t.title}</h2>
         </div>
         <PageInfoButton content={messagesPageInfo} />
       </div>
 
       <div className="relative flex min-h-0 flex-1 gap-4">
         {sidebarOpen && (
+          // Decorative dismiss backdrop, not a control — the sidebar itself and its own
+          // controls remain keyboard-reachable; this scrim only needs a click target.
           <div
             className="fixed inset-0 z-40 bg-black/30 md:hidden"
             onClick={() => setSidebarOpen(false)}
+            aria-hidden="true"
           />
         )}
 
@@ -244,10 +253,10 @@ function MessagesPageContent({ initialUser }: MessagesViewProps) {
             connectionState={connectionState}
           />
         ) : (
-          <div className="flex min-h-0 flex-1 items-center justify-center rounded-xl border border-border bg-bg max-md:hidden">
+          <div className="border-border bg-bg flex min-h-0 flex-1 items-center justify-center rounded-xl border max-md:hidden">
             <div className="flex flex-col items-center gap-2">
               <IconMenu2 size={32} className="text-muted" />
-              <p className="text-sm text-muted">{t.selectConversation}</p>
+              <p className="text-muted text-sm">{t.selectConversation}</p>
             </div>
           </div>
         )}

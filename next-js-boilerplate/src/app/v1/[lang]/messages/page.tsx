@@ -19,7 +19,9 @@ const VIEWS = {
   PREMIUM: PremiumPageView,
 };
 
-export default async function MessagesPage({ searchParams }: MessagesPageProps) {
+export default async function MessagesPage({
+  searchParams,
+}: MessagesPageProps) {
   const [user, sp] = await Promise.all([getSessionUser(), searchParams]);
   const initialUser = (sp.user as string) || null;
 

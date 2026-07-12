@@ -21,7 +21,10 @@ async function refreshPostData(
     const res = await apiFetch(POSTS_PREFIX + postId);
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      toast({ title: body.error ?? `Failed to load post (${res.status})`, variant: "destructive" });
+      toast({
+        title: body.error ?? `Failed to load post (${res.status})`,
+        variant: "destructive",
+      });
       return;
     }
     const data = await res.json();
@@ -134,7 +137,15 @@ export function PostCard({
       {editing && (
         <div className="flex items-center gap-2">
           <button
-            onClick={() => handleEditPost(postData.id, editTitle, editContent, setPostData, setEditing)}
+            onClick={() =>
+              handleEditPost(
+                postData.id,
+                editTitle,
+                editContent,
+                setPostData,
+                setEditing,
+              )
+            }
             className="bg-brand rounded-lg px-3 py-1 text-xs font-medium text-white"
           >
             Save
@@ -151,7 +162,9 @@ export function PostCard({
       <PostActions
         isExpanded={isExpanded}
         postData={postData}
-        onToggle={() => handleToggle(isExpanded, onToggle, postData.id, toast, setPostData)}
+        onToggle={() =>
+          handleToggle(isExpanded, onToggle, postData.id, toast, setPostData)
+        }
         currentUserId={user?.id}
         onCommentAdded={() => refreshPostData(postData.id, toast, setPostData)}
       />

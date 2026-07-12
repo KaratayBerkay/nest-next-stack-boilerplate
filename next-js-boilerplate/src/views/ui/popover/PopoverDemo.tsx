@@ -1,12 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/Tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import {
   Popover,
   PopoverContent,
@@ -41,12 +36,12 @@ export function PopoverDemo() {
             <Popover>
               <PopoverTrigger
                 data-testid="popover-trigger"
-                className="rounded border border-border bg-transparent px-4 py-2 text-sm hover:bg-surface-hover"
+                className="border-border hover:bg-surface-hover rounded border bg-transparent px-4 py-2 text-sm"
               >
                 Click to see details
               </PopoverTrigger>
               <PopoverContent data-testid="popover-content">
-                <p className="text-sm text-muted">
+                <p className="text-muted text-sm">
                   This is the popover content. You can put any React nodes here.
                 </p>
               </PopoverContent>
@@ -58,8 +53,19 @@ export function PopoverDemo() {
           <section className="flex flex-col gap-3">
             <h3 className="text-lg font-semibold">Sort Filter</h3>
             <Popover>
-              <PopoverTrigger className="inline-flex items-center gap-2 rounded-lg border border-border bg-transparent px-3 py-2 text-sm hover:bg-surface-hover">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 18h3" /><path d="M3 6h18" /><path d="M7 12h10" /></svg>
+              <PopoverTrigger className="border-border hover:bg-surface-hover inline-flex items-center gap-2 rounded-lg border bg-transparent px-3 py-2 text-sm">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M11 18h3" />
+                  <path d="M3 6h18" />
+                  <path d="M7 12h10" />
+                </svg>
                 Sort: {sortBy.charAt(0).toUpperCase() + sortBy.slice(1)}
               </PopoverTrigger>
               <PopoverContent>

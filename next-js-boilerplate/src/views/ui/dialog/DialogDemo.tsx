@@ -1,12 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/Tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import {
   Dialog,
   DialogTrigger,
@@ -43,7 +38,7 @@ export function DialogDemo() {
             <Dialog>
               <DialogTrigger
                 data-testid="dialog-trigger"
-                className="inline-flex items-center justify-center rounded bg-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+                className="bg-brand inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium text-white hover:opacity-90"
               >
                 Open Dialog
               </DialogTrigger>
@@ -51,14 +46,14 @@ export function DialogDemo() {
                 <DialogHeader>
                   <DialogTitle>Are you sure?</DialogTitle>
                   <DialogDescription>
-                    This action cannot be undone. This will permanently delete your
-                    account and remove your data from our servers.
+                    This action cannot be undone. This will permanently delete
+                    your account and remove your data from our servers.
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
                   <DialogClose
                     data-testid="dialog-cancel"
-                    className="inline-flex items-center justify-center rounded border border-border bg-transparent px-4 py-2 text-sm font-medium hover:bg-surface-hover"
+                    className="border-border hover:bg-surface-hover inline-flex items-center justify-center rounded border bg-transparent px-4 py-2 text-sm font-medium"
                   >
                     Cancel
                   </DialogClose>
@@ -74,13 +69,11 @@ export function DialogDemo() {
         <TabsContent value="examples">
           <section className="flex flex-col gap-3">
             <h3 className="text-lg font-semibold">Delete Confirmation</h3>
-            <p className="text-muted text-xs mb-2">
+            <p className="text-muted mb-2 text-xs">
               Click the button to open a confirmation dialog.
             </p>
             <Dialog>
-              <DialogTrigger
-                className="inline-flex items-center justify-center rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:opacity-90"
-              >
+              <DialogTrigger className="inline-flex items-center justify-center rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:opacity-90">
                 {deleting ? "Deleting..." : "Delete Project"}
               </DialogTrigger>
               <DialogContent>
@@ -92,7 +85,7 @@ export function DialogDemo() {
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
-                  <DialogClose className="inline-flex items-center justify-center rounded border border-border bg-transparent px-4 py-2 text-sm font-medium hover:bg-surface-hover">
+                  <DialogClose className="border-border hover:bg-surface-hover inline-flex items-center justify-center rounded border bg-transparent px-4 py-2 text-sm font-medium">
                     Cancel
                   </DialogClose>
                   <Button

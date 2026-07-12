@@ -1,6 +1,12 @@
 export type DateInput = string | number | Date;
 
-export type TodayFormat = "ISO" | "only_date" | "year" | "month" | "day" | "weekday";
+export type TodayFormat =
+  | "ISO"
+  | "only_date"
+  | "year"
+  | "month"
+  | "day"
+  | "weekday";
 
 export type DateField<T> = (item: T) => DateInput;
 
@@ -91,7 +97,10 @@ export function getTimezone(): string {
 }
 
 export function getTime(timezone?: string): string {
-  return new Date().toLocaleString("en-US", timezone ? { timeZone: timezone } : undefined);
+  return new Date().toLocaleString(
+    "en-US",
+    timezone ? { timeZone: timezone } : undefined,
+  );
 }
 
 export function convertTextToDate(
@@ -175,8 +184,18 @@ export function formatHoursMinutes(hours: number, minutes: number): string {
 }
 
 export const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ] as const;
 
 export const DAYS_SHORT = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] as const;

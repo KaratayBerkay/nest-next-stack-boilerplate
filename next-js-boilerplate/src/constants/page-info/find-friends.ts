@@ -2,8 +2,7 @@ import type { PageInfoContent } from "@/types/ui/PageInfo-types";
 
 export const findFriendsPageInfo: PageInfoContent = {
   title: "Find Friends",
-  description:
-    "Discover and connect with other users on the platform.",
+  description: "Discover and connect with other users on the platform.",
   sections: [
     {
       title: "Search Users",

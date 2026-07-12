@@ -19,7 +19,11 @@ import type { ExceptionFieldError } from './common/exceptions/exception-response
 
 // Initialize OpenTelemetry BEFORE NestFactory.create() so all instrumentations
 // (http, graphql, prisma, ioredis, kafkajs) are active from the start.
-initOpenTelemetry();
+// Gated behind OTEL_ENABLED (default off) — with no collector deployed, an
+// unconditional start just spams failed OTLP exports every export interval.
+if (process.env.OTEL_ENABLED === 'true') {
+  initOpenTelemetry();
+}
 
 function validationExceptionFactory(errors: ValidationError[]) {
   const fields: ExceptionFieldError[] = errors.flatMap((err) => {

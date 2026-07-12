@@ -10,10 +10,7 @@ import { DeviceTypeInit } from "@/components/DeviceTypeInit";
 import { EventLoggerInit } from "@/components/EventLoggerInit";
 import { PushNotificationInit } from "@/components/PushNotificationInit";
 import { SessionScript } from "@/components/SessionScript";
-import {
-  ToastProvider,
-  ToastViewport,
-} from "@/components/ui/Toast";
+import { ToastProvider, ToastViewport } from "@/components/ui/Toast";
 import { getAllMessages } from "@/lib/i18n/get-all-messages";
 import { DEFAULT_LANG } from "@/constants/i18n";
 import type { I18nMessages } from "@/generated/i18n-messages";
@@ -78,18 +75,16 @@ export default function RootLayout({
             <SessionScript />
           </Suspense>
           <AuthProvider>
-          <QueryProvider>
+            <QueryProvider>
               <ToastProvider>
                 <ClientLocaleProvider defaultMessages={messages}>
                   <TimezoneProvider>
-                    <CurrencyProvider>
-                      {children}
-                  </CurrencyProvider>
-                </TimezoneProvider>
-              </ClientLocaleProvider>
-              <ToastViewport />
-            </ToastProvider>
-          </QueryProvider>
+                    <CurrencyProvider>{children}</CurrencyProvider>
+                  </TimezoneProvider>
+                </ClientLocaleProvider>
+                <ToastViewport />
+              </ToastProvider>
+            </QueryProvider>
           </AuthProvider>
         </ThemeProvider>
         <JsonLd

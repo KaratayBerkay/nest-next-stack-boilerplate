@@ -33,7 +33,15 @@ const AUDIT_LOG_COUNT_QUERY = `
 export async function GET(request: NextRequest) {
   const accessToken = (await cookies()).get(ACCESS_TOKEN_COOKIE)?.value;
   if (!accessToken) {
-    return NextResponse.json({ statusCode: 401, exc: "EX_AUTH_INVALID_CREDENTIALS", msg: "Unauthorized", key: "auth.errors.unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      {
+        statusCode: 401,
+        exc: "EX_AUTH_INVALID_CREDENTIALS",
+        msg: "Unauthorized",
+        key: "auth.errors.unauthorized",
+      },
+      { status: 401 },
+    );
   }
 
   const { searchParams } = new URL(request.url);
@@ -50,7 +58,10 @@ export async function GET(request: NextRequest) {
   if (entityType) where.entityType = { contains: entityType };
   if (actorId) where.actorId = { equals: actorId };
 
-  const { data, errors } = await graphqlFetch<{ auditLogs: unknown[]; auditLogCount: number }>(
+  const { data, errors } = await graphqlFetch<{
+    auditLogs: unknown[];
+    auditLogCount: number;
+  }>(
     `${AUDIT_LOGS_QUERY}\n${AUDIT_LOG_COUNT_QUERY}`,
     { where: Object.keys(where).length ? where : undefined, take, skip },
     accessToken,

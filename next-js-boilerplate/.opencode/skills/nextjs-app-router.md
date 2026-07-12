@@ -7,17 +7,19 @@
 **`params` is always a `Promise`** — must be `await`ed (server) or read via `use()` (client).
 
 **Server Component:**
+
 ```tsx
 export default async function Page({
   params,
 }: {
-  params: Promise<{ slug: string }>
+  params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params
+  const { slug } = await params;
 }
 ```
 
 **Client Component** (use `useParams()` hook, NOT the `params` prop):
+
 ```tsx
 "use client";
 import { useParams } from "next/navigation";
@@ -29,6 +31,7 @@ export default function Page() {
 ```
 
 **Client Component receiving `params` as prop** (use React `use()` to unwrap):
+
 ```tsx
 "use client";
 import { use } from "react";
@@ -36,7 +39,7 @@ import { use } from "react";
 export default function Page({
   params,
 }: {
-  params: Promise<{ slug: string }>
+  params: Promise<{ slug: string }>;
 }) {
   const { slug } = use(params);
 }
@@ -50,13 +53,14 @@ export default function Page({
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const { page = '1', sort = 'asc' } = await searchParams
+  const { page = "1", sort = "asc" } = await searchParams;
 }
 ```
 
 Client Component:
+
 ```tsx
 "use client";
 import { use } from "react";
@@ -64,7 +68,7 @@ import { use } from "react";
 export default function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { query } = use(searchParams);
 }
@@ -73,9 +77,10 @@ export default function Page({
 ### `PageProps` helper
 
 Globally available (no import needed):
+
 ```tsx
-export default async function Page(props: PageProps<'/blog/[slug]'>) {
-  const { slug } = await props.params
+export default async function Page(props: PageProps<"/blog/[slug]">) {
+  const { slug } = await props.params;
 }
 ```
 
@@ -85,16 +90,17 @@ Must return an array matching the dynamic segments:
 
 ```tsx
 export async function generateStaticParams() {
-  return [{ slug: 'post-1' }, { slug: 'post-2' }]
+  return [{ slug: "post-1" }, { slug: "post-2" }];
 }
 ```
 
 Child segments receive parent params:
+
 ```tsx
 export async function generateStaticParams({
   params: { category },
 }: {
-  params: { category: string }
+  params: { category: string };
 }) {
   // params here is synchronous (already resolved by parent)
 }
@@ -124,7 +130,7 @@ export default async function Layout({
 ```tsx
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
 }

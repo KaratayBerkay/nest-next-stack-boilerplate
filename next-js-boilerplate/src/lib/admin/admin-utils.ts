@@ -45,13 +45,18 @@ export function onQueryChange(
   const q = e.target.value;
   setQuery(q);
   if (searchTimer.current) clearTimeout(searchTimer.current);
-  searchTimer.current = setTimeout(() => doSearch(q, setResults, setSearching), 300);
+  searchTimer.current = setTimeout(
+    () => doSearch(q, setResults, setSearching),
+    300,
+  );
 }
 
 export async function setTier(
   userId: string,
   tier: string,
-  setStatusMsg: Dispatch<SetStateAction<{ type: "success" | "error"; text: string } | null>>,
+  setStatusMsg: Dispatch<
+    SetStateAction<{ type: "success" | "error"; text: string } | null>
+  >,
 ) {
   setStatusMsg(null);
   try {

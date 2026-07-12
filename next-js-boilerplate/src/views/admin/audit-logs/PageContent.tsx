@@ -12,7 +12,10 @@ import { adminAuditLogsPageInfo } from "@/constants/page-info";
 import { AccessDeniedPage } from "@/features/statics";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { ADMIN_AUDIT_LOGS_URL } from "@/constants/api/urls";
-import type { AuditLogEntry, AuditLogResponse } from "@/types/admin/AuditLog-types";
+import type {
+  AuditLogEntry,
+  AuditLogResponse,
+} from "@/types/admin/AuditLog-types";
 
 const LEVEL_COLORS: Record<string, string> = {
   ERROR: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
@@ -89,7 +92,10 @@ export default function PageContent() {
       <div className="flex flex-wrap gap-3">
         <select
           value={actionFilter}
-          onChange={(e) => { setActionFilter(e.target.value); setPage(0); }}
+          onChange={(e) => {
+            setActionFilter(e.target.value);
+            setPage(0);
+          }}
           className="border-border bg-surface text-fg rounded-lg border px-2 py-1.5 text-xs"
         >
           <option value="">All actions</option>
@@ -115,7 +121,10 @@ export default function PageContent() {
 
         <select
           value={levelFilter}
-          onChange={(e) => { setLevelFilter(e.target.value); setPage(0); }}
+          onChange={(e) => {
+            setLevelFilter(e.target.value);
+            setPage(0);
+          }}
           className="border-border bg-surface text-fg rounded-lg border px-2 py-1.5 text-xs"
         >
           <option value="">All levels</option>
@@ -136,7 +145,10 @@ export default function PageContent() {
           <Input
             type="text"
             value={entityFilter}
-            onChange={(e) => { setEntityFilter(e.target.value); setPage(0); }}
+            onChange={(e) => {
+              setEntityFilter(e.target.value);
+              setPage(0);
+            }}
             placeholder="Entity type..."
             className="w-40 pl-7 text-xs"
           />
@@ -148,7 +160,9 @@ export default function PageContent() {
       )}
 
       {!loadingLogs && entries.length === 0 && (
-        <p className="text-muted text-center text-xs">No audit log entries found.</p>
+        <p className="text-muted text-center text-xs">
+          No audit log entries found.
+        </p>
       )}
 
       {!loadingLogs && entries.length > 0 && (
@@ -173,10 +187,10 @@ export default function PageContent() {
                     key={entry.id}
                     className="border-border hover:bg-surface/50 border-b transition-colors"
                   >
-                    <td className="text-muted whitespace-nowrap py-2 pr-2">
+                    <td className="text-muted py-2 pr-2 whitespace-nowrap">
                       {formatDateTime(entry.createdAt)}
                     </td>
-                    <td className="whitespace-nowrap py-2 pr-2 font-medium">
+                    <td className="py-2 pr-2 font-medium whitespace-nowrap">
                       {entry.action.replace(/_/g, " ")}
                     </td>
                     <td className="py-2 pr-2">
@@ -188,12 +202,12 @@ export default function PageContent() {
                         {entry.level}
                       </span>
                     </td>
-                    <td className="whitespace-nowrap py-2 pr-2">
+                    <td className="py-2 pr-2 whitespace-nowrap">
                       {entry.actor?.name ?? (
                         <span className="text-muted">system</span>
                       )}
                     </td>
-                    <td className="whitespace-nowrap py-2 pr-2">
+                    <td className="py-2 pr-2 whitespace-nowrap">
                       {entry.entityType}
                       {entry.entityId && (
                         <span className="text-muted">
@@ -204,7 +218,7 @@ export default function PageContent() {
                     <td className="max-w-[200px] truncate py-2 pr-2">
                       {entry.summary ?? "-"}
                     </td>
-                    <td className="text-muted whitespace-nowrap py-2 pr-2 font-mono">
+                    <td className="text-muted py-2 pr-2 font-mono whitespace-nowrap">
                       {entry.ip ?? "-"}
                     </td>
                     <td className="py-2 pr-2">
@@ -230,9 +244,7 @@ export default function PageContent() {
 
           {/* Pagination */}
           <div className="flex items-center justify-between">
-            <p className="text-muted text-[10px]">
-              {total} total entries
-            </p>
+            <p className="text-muted text-[10px]">{total} total entries</p>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -259,33 +271,40 @@ export default function PageContent() {
       )}
 
       {/* Expanded diff view */}
-      {expandedId && (() => {
-        const entry = entries.find((e) => e.id === expandedId);
-        if (!entry) return null;
-        return (
-          <div className="border-border mt-2 rounded-lg border p-4">
-            <h4 className="text-fg mb-2 text-xs font-semibold">Change Details</h4>
-            <div className="flex flex-col gap-4 sm:flex-row">
-              {entry.before !== null && entry.before !== undefined && (
-                <div className="flex-1">
-                  <p className="text-muted mb-1 text-[10px] font-medium">Before</p>
-                  <pre className="bg-surface border-border max-h-48 overflow-auto rounded border p-2 text-[10px]">
-                    {JSON.stringify(entry.before, null, 2)}
-                  </pre>
-                </div>
-              )}
-              {entry.after !== null && entry.after !== undefined && (
-                <div className="flex-1">
-                  <p className="text-muted mb-1 text-[10px] font-medium">After</p>
-                  <pre className="bg-surface border-border max-h-48 overflow-auto rounded border p-2 text-[10px]">
-                    {JSON.stringify(entry.after, null, 2)}
-                  </pre>
-                </div>
-              )}
+      {expandedId &&
+        (() => {
+          const entry = entries.find((e) => e.id === expandedId);
+          if (!entry) return null;
+          return (
+            <div className="border-border mt-2 rounded-lg border p-4">
+              <h4 className="text-fg mb-2 text-xs font-semibold">
+                Change Details
+              </h4>
+              <div className="flex flex-col gap-4 sm:flex-row">
+                {entry.before !== null && entry.before !== undefined && (
+                  <div className="flex-1">
+                    <p className="text-muted mb-1 text-[10px] font-medium">
+                      Before
+                    </p>
+                    <pre className="bg-surface border-border max-h-48 overflow-auto rounded border p-2 text-[10px]">
+                      {JSON.stringify(entry.before, null, 2)}
+                    </pre>
+                  </div>
+                )}
+                {entry.after !== null && entry.after !== undefined && (
+                  <div className="flex-1">
+                    <p className="text-muted mb-1 text-[10px] font-medium">
+                      After
+                    </p>
+                    <pre className="bg-surface border-border max-h-48 overflow-auto rounded border p-2 text-[10px]">
+                      {JSON.stringify(entry.after, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        );
-      })()}
+          );
+        })()}
     </div>
   );
 }

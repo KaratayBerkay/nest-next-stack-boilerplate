@@ -54,10 +54,7 @@ export function matchPage(pathname: string): PageNode | null {
   return null;
 }
 
-function resolvePath(
-  pattern: string,
-  params: Record<string, string>,
-): string {
+function resolvePath(pattern: string, params: Record<string, string>): string {
   return pattern.replace(/:([a-z]+)/g, (_, key) => params[key] ?? "");
 }
 

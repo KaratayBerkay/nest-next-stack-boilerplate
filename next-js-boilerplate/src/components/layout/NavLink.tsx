@@ -13,10 +13,7 @@ import type { NavLinkProps } from "@/types/layout/NavLink-types";
  * block of an app nav and demonstrates `<Link>` client-side navigation paired
  * with the `usePathname` hook.
  */
-export function NavLink({
-  href,
-  children,
-}: NavLinkProps) {
+export function NavLink({ href, children }: NavLinkProps) {
   const pathname = usePathname();
   const active = pathname === href;
   return (

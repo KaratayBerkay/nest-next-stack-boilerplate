@@ -32,36 +32,33 @@ export function dispatchRenew(
     }
     case "Messages": {
       if (frame.type === "Conversation") {
-        qc.setQueryData(
-          ["conversations"],
-          (old: unknown[] | undefined) => {
-            const list = (old ?? []) as Record<string, unknown>[];
-            const conv = frame.conversation as Record<string, unknown> & {
-              user: { id: string };
+        qc.setQueryData(["conversations"], (old: unknown[] | undefined) => {
+          const list = (old ?? []) as Record<string, unknown>[];
+          const conv = frame.conversation as Record<string, unknown> & {
+            user: { id: string };
+          };
+          const idx = list.findIndex(
+            (c) => (c.user as Record<string, unknown>)?.id === conv.user.id,
+          );
+          if (idx >= 0) {
+            const updated = [...list];
+            const merged: Record<string, unknown> = {
+              ...(updated[idx] as Record<string, unknown>),
             };
-            const idx = list.findIndex(
-              (c) => (c.user as Record<string, unknown>)?.id === conv.user.id,
-            );
-            if (idx >= 0) {
-              const updated = [...list];
-              const merged: Record<string, unknown> = {
-                ...(updated[idx] as Record<string, unknown>),
-              };
-              for (const [k, v] of Object.entries(conv)) {
-                if (v !== undefined && v !== null && v !== "") {
-                  merged[k] = v;
-                }
+            for (const [k, v] of Object.entries(conv)) {
+              if (v !== undefined && v !== null && v !== "") {
+                merged[k] = v;
               }
-              updated[idx] = merged;
-              return updated.sort(
-                (a, b) =>
-                  (new Date((b.lastTime as string) ?? "").getTime() || 0) -
-                  (new Date((a.lastTime as string) ?? "").getTime() || 0),
-              );
             }
-            return [conv, ...list];
-          },
-        );
+            updated[idx] = merged;
+            return updated.sort(
+              (a, b) =>
+                (new Date((b.lastTime as string) ?? "").getTime() || 0) -
+                (new Date((a.lastTime as string) ?? "").getTime() || 0),
+            );
+          }
+          return [conv, ...list];
+        });
       }
       break;
     }

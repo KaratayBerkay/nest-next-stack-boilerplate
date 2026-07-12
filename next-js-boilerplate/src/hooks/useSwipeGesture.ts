@@ -49,20 +49,17 @@ export function useSwipeGesture(options: UseSwipeOptions = {}) {
   const touchOriginRef = useRef({ x: 0, y: 0 });
   const touchAxisLockedRef = useRef(false);
 
-  const handleStart = useCallback(
-    (clientX: number) => {
-      gestureEndedRef.current = false;
-      setState((prev) => ({
-        ...prev,
-        isSwiping: true,
-        startX: clientX,
-        currentX: clientX,
-        direction: null,
-        progress: 0,
-      }));
-    },
-    [],
-  );
+  const handleStart = useCallback((clientX: number) => {
+    gestureEndedRef.current = false;
+    setState((prev) => ({
+      ...prev,
+      isSwiping: true,
+      startX: clientX,
+      currentX: clientX,
+      direction: null,
+      progress: 0,
+    }));
+  }, []);
 
   const handleMove = useCallback(
     (clientX: number) => {

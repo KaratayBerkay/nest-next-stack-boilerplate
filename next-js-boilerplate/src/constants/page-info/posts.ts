@@ -2,8 +2,7 @@ import type { PageInfoContent } from "@/types/ui/PageInfo-types";
 
 export const postsPageInfo: PageInfoContent = {
   title: "Post",
-  description:
-    "View a single post and its details.",
+  description: "View a single post and its details.",
   sections: [
     {
       title: "Post Content",

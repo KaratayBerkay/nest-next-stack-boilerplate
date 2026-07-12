@@ -2,8 +2,7 @@ import type { PageInfoContent } from "@/types/ui/PageInfo-types";
 
 export const findFriendsRequestsPageInfo: PageInfoContent = {
   title: "Friend Requests",
-  description:
-    "Manage incoming friend requests from other users.",
+  description: "Manage incoming friend requests from other users.",
   sections: [
     {
       title: "Incoming Requests",
@@ -16,7 +15,5 @@ export const findFriendsRequestsPageInfo: PageInfoContent = {
         "Tap Accept to add the person as a friend, or Decline to reject the request. You can always send a request later.",
     },
   ],
-  tips: [
-    "Accepted friends appear in your Messages and Friends list",
-  ],
+  tips: ["Accepted friends appear in your Messages and Friends list"],
 };

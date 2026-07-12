@@ -2,8 +2,7 @@ import type { PageInfoContent } from "@/types/ui/PageInfo-types";
 
 export const messagesPageInfo: PageInfoContent = {
   title: "Messages",
-  description:
-    "Private direct messages with your friends and connections.",
+  description: "Private direct messages with your friends and connections.",
   sections: [
     {
       title: "Conversations",

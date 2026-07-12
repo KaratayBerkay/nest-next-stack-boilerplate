@@ -17,12 +17,25 @@ export async function POST(request: Request) {
     newPassword = body.newPassword;
     if (!token || !newPassword) {
       return NextResponse.json(
-        { statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Token and new password are required", key: "auth.errors.passwordRequired" },
+        {
+          statusCode: 400,
+          exc: "EX_VALIDATION_FORM",
+          msg: "Token and new password are required",
+          key: "auth.errors.passwordRequired",
+        },
         { status: 400 },
       );
     }
   } catch {
-    return NextResponse.json({ statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Invalid JSON body", key: "auth.errors.invalidJson" }, { status: 400 });
+    return NextResponse.json(
+      {
+        statusCode: 400,
+        exc: "EX_VALIDATION_FORM",
+        msg: "Invalid JSON body",
+        key: "auth.errors.invalidJson",
+      },
+      { status: 400 },
+    );
   }
 
   const { data, errors } = await graphqlFetch<{

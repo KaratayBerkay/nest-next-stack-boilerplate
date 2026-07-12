@@ -9,9 +9,23 @@ import { POST } from "@/constants/api/methods";
 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 
 async function loadStats(
-  setStats: Dispatch<SetStateAction<{ totalPosts: number; totalReactions: number; avgReactionsPerPost: number } | null>>,
+  setStats: Dispatch<
+    SetStateAction<{
+      totalPosts: number;
+      totalReactions: number;
+      avgReactionsPerPost: number;
+    } | null>
+  >,
   setLoading: Dispatch<SetStateAction<boolean>>,
-  toast: ({ title, description, variant }: { title?: React.ReactNode; description?: React.ReactNode; variant?: "default" | "destructive" | "success" }) => string,
+  toast: ({
+    title,
+    description,
+    variant,
+  }: {
+    title?: React.ReactNode;
+    description?: React.ReactNode;
+    variant?: "default" | "destructive" | "success";
+  }) => string,
   t: Record<string, string>,
 ) {
   setLoading(true);
@@ -51,15 +65,15 @@ export function PostStatsSidebar() {
   const [loading, setLoading] = useState(false);
 
   return (
-    <div className="rounded-xl border border-border p-4">
-      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
+    <div className="border-border rounded-xl border p-4">
+      <h3 className="text-muted mb-3 text-xs font-semibold tracking-wide uppercase">
         {t.yourPostStats}
       </h3>
       {!stats && (
         <button
           onClick={() => loadStats(setStats, setLoading, toast, t)}
           disabled={loading}
-          className="w-full rounded-lg bg-brand/10 px-3 py-2 text-xs font-medium text-brand transition-colors hover:bg-brand/20 disabled:opacity-50"
+          className="bg-brand/10 text-brand hover:bg-brand/20 w-full rounded-lg px-3 py-2 text-xs font-medium transition-colors disabled:opacity-50"
         >
           {loading ? t.loading : t.loadStats}
         </button>
@@ -67,15 +81,15 @@ export function PostStatsSidebar() {
       {stats && (
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted">{t.posts}</span>
+            <span className="text-muted text-xs">{t.posts}</span>
             <span className="text-sm font-bold">{stats.totalPosts}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted">{t.reactions}</span>
+            <span className="text-muted text-xs">{t.reactions}</span>
             <span className="text-sm font-bold">{stats.totalReactions}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted">{t.avgPerPost}</span>
+            <span className="text-muted text-xs">{t.avgPerPost}</span>
             <span className="text-sm font-bold">
               {stats.avgReactionsPerPost.toFixed(1)}
             </span>

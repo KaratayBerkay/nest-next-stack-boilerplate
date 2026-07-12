@@ -6,8 +6,19 @@
   "upgrade": "Yükselt",
   "featuresBasic": ["Temel erişim", "Topluluk desteği"],
   "featuresMedium": ["Tümü Ücretsiz", "Öncelikli destek", "Temel analitik"],
-  "featuresPremium": ["Tümü Medium", "Gönderi istatistikleri ve tepki dağılımı", "VIP oda erişimi", "Önerilen arkadaşlar"],
-  "featuresPro": ["Tümü Premium", "Tepki verenler listesi", "Veri dışa aktarma", "Taç rozeti", "Özel destek"],
+  "featuresPremium": [
+    "Tümü Medium",
+    "Gönderi istatistikleri ve tepki dağılımı",
+    "VIP oda erişimi",
+    "Önerilen arkadaşlar"
+  ],
+  "featuresPro": [
+    "Tümü Premium",
+    "Tepki verenler listesi",
+    "Veri dışa aktarma",
+    "Taç rozeti",
+    "Özel destek"
+  ],
   "priceFree": "$0",
   "priceBasic": "$9.99/ay",
   "priceMedium": "$19.99/ay",

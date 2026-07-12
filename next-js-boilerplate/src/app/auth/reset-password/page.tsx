@@ -9,7 +9,9 @@ export const metadata: Metadata = {
   description: "Reset your password",
 };
 
-export default async function ResetPasswordPage({ searchParams }: ResetPasswordPageProps) {
+export default async function ResetPasswordPage({
+  searchParams,
+}: ResetPasswordPageProps) {
   const sp = await searchParams;
   const token = (sp.token as string) ?? "";
 

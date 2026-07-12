@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useCallback, useContext, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useRef,
+  useState,
+} from "react";
 
 interface DropdownMenuContextValue {
   open: boolean;
@@ -8,7 +14,9 @@ interface DropdownMenuContextValue {
   triggerRef: React.RefObject<HTMLButtonElement | null>;
 }
 
-const DropdownMenuContext = createContext<DropdownMenuContextValue | null>(null);
+const DropdownMenuContext = createContext<DropdownMenuContextValue | null>(
+  null,
+);
 
 export function useDropdownMenuContext() {
   const ctx = useContext(DropdownMenuContext);

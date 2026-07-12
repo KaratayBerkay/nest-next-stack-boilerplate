@@ -74,8 +74,25 @@ export function TooltipTrigger({
     [updateRect, toggle, onClick, isDesktop],
   );
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLSpanElement>) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        if (!isDesktop) {
+          updateRect();
+          toggle();
+        }
+      }
+    },
+    [updateRect, toggle, isDesktop],
+  );
+
   if (asChild) {
+    // The child (always a real <button> or <a> at call sites in this repo) supplies its own
+    // native keyboard semantics; this span is a non-interactive positioning wrapper that only
+    // observes the child's bubbled click event, so it doesn't need its own role/keyboard handler.
     return (
+      // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
       <span
         ref={ref}
         className={cn("inline-flex", className)}
@@ -100,6 +117,7 @@ export function TooltipTrigger({
       onFocus={handleFocus}
       onBlur={handleBlur}
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
       tabIndex={0}
       role="button"
       {...props}

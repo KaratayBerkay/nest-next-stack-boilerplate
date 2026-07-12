@@ -19,7 +19,10 @@ export type SearchAction =
   | { type: "page"; page: number }
   | { type: "clear" };
 
-export function searchReducer(state: SearchState, action: SearchAction): SearchState {
+export function searchReducer(
+  state: SearchState,
+  action: SearchAction,
+): SearchState {
   switch (action.type) {
     case "results":
       return { ...state, items: action.items, total: action.total };

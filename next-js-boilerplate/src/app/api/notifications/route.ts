@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   const take = searchParams.get("take");
   const token = await getAccessToken();
 
-  const pageSize = Math.min(Math.max(parseInt(take ?? '20', 10) || 20, 1), 100);
+  const pageSize = Math.min(Math.max(parseInt(take ?? "20", 10) || 20, 1), 100);
   const { data, errors } = await graphqlFetch<{
     myNotifications: unknown[];
   }>(
@@ -22,7 +22,10 @@ export async function GET(request: Request) {
   );
 
   if (errors) {
-    return NextResponse.json({ error: errors[0]?.message ?? "GraphQL error" }, { status: graphqlErrorStatus(errors) });
+    return NextResponse.json(
+      { error: errors[0]?.message ?? "GraphQL error" },
+      { status: graphqlErrorStatus(errors) },
+    );
   }
 
   const raw = data?.myNotifications ?? [];

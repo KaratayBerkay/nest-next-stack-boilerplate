@@ -125,7 +125,8 @@ export class MessagingWsGateway implements OnModuleInit {
       !this.realtime.hasServiceConnection(data.recipientId, 'NOTIFICATION')
     ) {
       const sender = message.sender as
-        { name?: string | null; email?: string } | undefined;
+        | { name?: string | null; email?: string }
+        | undefined;
       const senderName = displayName(sender ?? {});
       const body = typeof message.body === 'string' ? message.body : '';
       this.push

@@ -3,10 +3,7 @@
 import { ErrorPage } from "@/features/statics";
 import type { BoomErrorProps } from "@/types/routing/BoomError-types";
 
-export default function BoomError({
-  error,
-  reset,
-}: BoomErrorProps) {
+export default function BoomError({ error, reset }: BoomErrorProps) {
   return (
     <div
       data-testid="error-boundary"

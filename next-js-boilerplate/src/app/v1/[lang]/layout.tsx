@@ -11,10 +11,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { LOGIN_PATH } from "@/constants/routes";
 import { V1ShellFallback } from "@/fallbacks";
 
-export default async function V1Layout({
-  children,
-  params,
-}: V1LayoutProps) {
+export default async function V1Layout({ children, params }: V1LayoutProps) {
   const { lang } = await params;
   const user = await getSessionUser();
   if (!user) redirect(LOGIN_PATH);
@@ -22,23 +19,23 @@ export default async function V1Layout({
 
   return (
     <AuthProvider initialUser={user}>
-    <MessagesProvider messages={messages}>
-      <main className="flex w-full flex-1 flex-col">
-        <Suspense fallback={<V1ShellFallback />}>
-          <V1Shell>
-            <Suspense
-              fallback={
-                <section className="surface flex flex-col gap-2 p-5">
-                  {children}
-                </section>
-              }
-            >
-              <PageNavWrapper>{children}</PageNavWrapper>
-            </Suspense>
-          </V1Shell>
-        </Suspense>
-      </main>
-    </MessagesProvider>
+      <MessagesProvider messages={messages}>
+        <main className="flex w-full flex-1 flex-col">
+          <Suspense fallback={<V1ShellFallback />}>
+            <V1Shell>
+              <Suspense
+                fallback={
+                  <section className="surface flex flex-col gap-2 p-5">
+                    {children}
+                  </section>
+                }
+              >
+                <PageNavWrapper>{children}</PageNavWrapper>
+              </Suspense>
+            </V1Shell>
+          </Suspense>
+        </main>
+      </MessagesProvider>
     </AuthProvider>
   );
 }

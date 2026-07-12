@@ -56,10 +56,10 @@ export function Avatar({
         <span aria-hidden="true">{fallback.slice(0, 2).toUpperCase()}</span>
       )}
       {status === "online" && (
-        <span className="absolute bottom-0 right-0 size-2.5 rounded-full border-2 border-bg bg-success" />
+        <span className="border-bg bg-success absolute right-0 bottom-0 size-2.5 rounded-full border-2" />
       )}
       {status === "away" && (
-        <span className="absolute bottom-0 right-0 size-2.5 rounded-full border-2 border-bg bg-warning" />
+        <span className="border-bg bg-warning absolute right-0 bottom-0 size-2.5 rounded-full border-2" />
       )}
     </div>
   );

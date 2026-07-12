@@ -85,13 +85,28 @@ export function RegisterForm() {
 
   return (
     <div className="flex flex-col gap-4 text-center">
-      <h2 className="text-brand text-sm font-semibold">{t.form.register.title}</h2>
+      <h2 className="text-brand text-sm font-semibold">
+        {t.form.register.title}
+      </h2>
 
-      <form onSubmit={(e) => handleRegisterSubmit(e, schema, email, password, name, setFieldErrors, setSubmitting, register, t)} className="flex flex-col gap-3">
+      <form
+        onSubmit={(e) =>
+          handleRegisterSubmit(
+            e,
+            schema,
+            email,
+            password,
+            name,
+            setFieldErrors,
+            setSubmitting,
+            register,
+            t,
+          )
+        }
+        className="flex flex-col gap-3"
+      >
         <div className="flex flex-col gap-1 text-left">
-          <Label htmlFor="reg-name-input">
-            {t.form.register.nameLabel}
-          </Label>
+          <Label htmlFor="reg-name-input">{t.form.register.nameLabel}</Label>
           <Input
             id="reg-name-input"
             type="text"
@@ -135,7 +150,9 @@ export function RegisterForm() {
             data-testid="reg-password"
           />
           {fieldErrors.password && (
-            <p className="mt-0.5 text-xs text-red-600">{fieldErrors.password}</p>
+            <p className="mt-0.5 text-xs text-red-600">
+              {fieldErrors.password}
+            </p>
           )}
         </div>
 

@@ -20,9 +20,7 @@ import { POST } from "@/constants/api/methods";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { notificationPageInfo } from "@/constants/page-info";
 import { NotificationFallback } from "@/fallbacks";
-import {
-  useNotifications,
-} from "@/lib/realtime/useNotifications";
+import { useNotifications } from "@/lib/realtime/useNotifications";
 import { formatDate } from "@/lib/date-time";
 import { useQueryClient } from "@tanstack/react-query";
 import { notificationTarget } from "@/lib/notifications/target";
@@ -115,18 +113,18 @@ function NotificationPageContent() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => router.back()}
-            className="rounded-lg p-1.5 text-muted hover:bg-surface-hover"
+            className="text-muted hover:bg-surface-hover rounded-lg p-1.5"
             aria-label="Back"
           >
             <IconArrowLeft size={20} stroke={1.5} />
           </button>
-          <h2 className="text-sm font-semibold text-fg">{t.title}</h2>
+          <h2 className="text-fg text-sm font-semibold">{t.title}</h2>
         </div>
         <div className="flex items-center gap-2">
           {supported && permission !== "granted" && (
             <button
               onClick={requestPermission}
-              className="p-1 text-muted hover:text-fg"
+              className="text-muted hover:text-fg p-1"
               aria-label={t.enablePush}
             >
               <IconBellOff size={16} stroke={1.5} />
@@ -135,7 +133,7 @@ function NotificationPageContent() {
           {subscription && (
             <button
               onClick={unsubscribe}
-              className="p-1 text-brand hover:text-fg"
+              className="text-brand hover:text-fg p-1"
               aria-label={t.disablePush}
             >
               <IconBell size={16} stroke={1.5} />
@@ -144,7 +142,7 @@ function NotificationPageContent() {
           {unread.length > 0 && (
             <button
               onClick={markAllReadOnce}
-              className="text-xs font-medium text-brand hover:underline"
+              className="text-brand text-xs font-medium hover:underline"
             >
               {t.markAllRead}
             </button>
@@ -181,7 +179,7 @@ function NotificationPageContent() {
         ) : sorted.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-16">
             <IconBell size={32} stroke={1} className="text-muted" />
-            <p className="text-xs text-muted">{t.noNotifications}</p>
+            <p className="text-muted text-xs">{t.noNotifications}</p>
           </div>
         ) : (
           sorted.map((n) => (
@@ -195,21 +193,21 @@ function NotificationPageContent() {
                 );
                 if (target) router.push(target);
               }}
-              className={`flex items-start gap-2.5 rounded-xl px-3 py-3 text-left hover:bg-surface-hover ${
+              className={`hover:bg-surface-hover flex items-start gap-2.5 rounded-xl px-3 py-3 text-left ${
                 !n.readAt ? "bg-brand/5" : ""
               }`}
             >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">
+              <div className="bg-brand flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white">
                 {n.actor?.name?.charAt(0).toUpperCase() ?? "?"}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-fg">{n.title}</p>
+                <p className="text-fg text-sm font-medium">{n.title}</p>
                 {n.body && (
-                  <p className="mt-0.5 line-clamp-2 text-xs text-muted">
+                  <p className="text-muted mt-0.5 line-clamp-2 text-xs">
                     {n.body}
                   </p>
                 )}
-                <p className="mt-1 text-[10px] text-muted">
+                <p className="text-muted mt-1 text-[10px]">
                   {formatDate(n.createdAt)}
                 </p>
               </div>

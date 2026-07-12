@@ -2,13 +2,13 @@
 
 import type { GlobalErrorProps } from "@/types/app/GlobalError-types";
 
-export default function GlobalError({
-  error,
-  reset,
-}: GlobalErrorProps) {
+export default function GlobalError({ error, reset }: GlobalErrorProps) {
   return (
     <html lang="en">
-      <body className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+      <body
+        className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center"
+        style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
+      >
         <h1 className="text-2xl font-bold text-red-600">
           Something went wrong
         </h1>

@@ -2,8 +2,7 @@ import type { PageInfoContent } from "@/types/ui/PageInfo-types";
 
 export const adminAuditLogsPageInfo: PageInfoContent = {
   title: "Audit Logs",
-  description:
-    "Track and review all administrative actions and system events.",
+  description: "Track and review all administrative actions and system events.",
   sections: [
     {
       title: "Log Entries",

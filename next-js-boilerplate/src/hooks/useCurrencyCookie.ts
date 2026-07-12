@@ -9,9 +9,7 @@ import {
 import type { CurrencyCode } from "@/constants/currency";
 
 function readCurrency(): CurrencyCode {
-  const match = document.cookie.match(
-    new RegExp(`${CURRENCY_COOKIE}=([^;]+)`),
-  );
+  const match = document.cookie.match(new RegExp(`${CURRENCY_COOKIE}=([^;]+)`));
   const val = match?.[1];
   if (val && (CURRENCIES as readonly string[]).includes(val)) {
     return val as CurrencyCode;

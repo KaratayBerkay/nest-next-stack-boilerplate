@@ -6,7 +6,13 @@ import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { apiFetchJson } from "@/lib/api-client";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
-import { TIERS, TIER_PRICES_CENTS, tierLabel, tierAtLeast, type Tier } from "@/lib/tier";
+import {
+  TIERS,
+  TIER_PRICES_CENTS,
+  tierLabel,
+  tierAtLeast,
+  type Tier,
+} from "@/lib/tier";
 import { formatPrice } from "@/lib/currency";
 import { useCurrencyCookie } from "@/hooks/useCurrencyCookie";
 import { plansPath } from "@/constants/routes";
@@ -25,19 +31,21 @@ interface SubscriptionInfo {
 }
 
 // fallow-ignore-next-line complexity
-export default function PageContent({
-  params,
-}: SettingsIndexPageProps) {
+export default function PageContent({ params }: SettingsIndexPageProps) {
   const { lang } = use(params);
   const { user } = useAuth();
   const t = useMessages("settings");
   const p = useMessages("pricing");
   const currency = useCurrencyCookie();
-  const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
+  const [subscription, setSubscription] = useState<SubscriptionInfo | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!user) return;
-    apiFetchJson<{ subscription: SubscriptionInfo | null }>(BILLING_SUBSCRIPTION_URL)
+    apiFetchJson<{ subscription: SubscriptionInfo | null }>(
+      BILLING_SUBSCRIPTION_URL,
+    )
       .then((data) => setSubscription(data.subscription))
       .catch(() => {});
   }, [user]);
@@ -64,9 +72,11 @@ export default function PageContent({
         <div className="border-border bg-surface flex items-center justify-between rounded-lg border p-4">
           <div>
             <p className="text-lg font-bold">{tierLabel(tier)}</p>
-            <p className="text-sm text-muted">{formatPrice(TIER_PRICES_CENTS[tier], currency)}</p>
+            <p className="text-muted text-sm">
+              {formatPrice(TIER_PRICES_CENTS[tier], currency)}
+            </p>
             {tier !== "FREE" && periodEnd && (
-              <p className="mt-1 text-xs text-muted">
+              <p className="text-muted mt-1 text-xs">
                 {cancelAtPeriodEnd
                   ? `Cancels on ${formatDate(periodEnd)}`
                   : `Next payment: ${formatDate(periodEnd)}`}
@@ -75,7 +85,7 @@ export default function PageContent({
           </div>
           <Link
             href={`/v1/${lang}/settings/billing`}
-            className="border-border rounded-lg border px-4 py-2 text-sm font-medium hover:bg-surface-hover"
+            className="border-border hover:bg-surface-hover rounded-lg border px-4 py-2 text-sm font-medium"
           >
             {t.navBilling}
           </Link>
@@ -85,8 +95,11 @@ export default function PageContent({
           <h3 className="text-sm font-medium">Plan Advantages</h3>
           <ul className="flex flex-col gap-2">
             {FEATURES[tier].map((f) => (
-              <li key={f} className="border-border bg-surface flex items-center gap-2 rounded-lg border p-3 text-sm">
-                <span className="text-brand size-5 flex items-center justify-center rounded-full bg-green-100 text-xs font-bold">
+              <li
+                key={f}
+                className="border-border bg-surface flex items-center gap-2 rounded-lg border p-3 text-sm"
+              >
+                <span className="text-brand flex size-5 items-center justify-center rounded-full bg-green-100 text-xs font-bold">
                   ✓
                 </span>
                 {f}
@@ -99,7 +112,7 @@ export default function PageContent({
           <div className="border-border flex justify-center rounded-lg border p-3">
             <Link
               href={`/v1/${lang}/settings/billing`}
-              className="text-sm text-muted hover:text-foreground underline underline-offset-2"
+              className="text-muted hover:text-foreground text-sm underline underline-offset-2"
             >
               {t.navBilling}
             </Link>

@@ -16,8 +16,7 @@ export function useMarkPostNotificationsRead(postId: string) {
 
     const unread = notifData.items.filter(
       (n) =>
-        !n.readAt &&
-        (n.payload as Record<string, unknown>)?.postId === postId,
+        !n.readAt && (n.payload as Record<string, unknown>)?.postId === postId,
     );
 
     if (unread.length === 0) return;

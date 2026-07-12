@@ -11,7 +11,10 @@ export async function GET() {
   }>(UNREAD_COUNT_QUERY, undefined, token);
 
   if (errors) {
-    return NextResponse.json({ error: errors[0]?.message ?? "GraphQL error" }, { status: graphqlErrorStatus(errors) });
+    return NextResponse.json(
+      { error: errors[0]?.message ?? "GraphQL error" },
+      { status: graphqlErrorStatus(errors) },
+    );
   }
 
   return NextResponse.json({ count: data?.unreadNotificationCount ?? 0 });

@@ -32,7 +32,7 @@ export default async function PremiumPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h2 className="text-sm font-semibold text-brand">{t.heading}</h2>
+      <h2 className="text-brand text-sm font-semibold">{t.heading}</h2>
       {getTierView(user!.tier, VIEWS)}
     </div>
   );

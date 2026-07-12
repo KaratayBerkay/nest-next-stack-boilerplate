@@ -51,7 +51,10 @@ describe("apiFetchJson", () => {
   });
 
   it("throws on a non-ok response", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => response(500)));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => response(500)),
+    );
     await expect(apiFetchJson("/api/thing")).rejects.toThrow("500");
   });
 });

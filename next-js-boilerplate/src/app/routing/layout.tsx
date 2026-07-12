@@ -16,9 +16,7 @@ import type { RoutingLayoutProps } from "@/types/routing/RoutingLayout-types";
 //
 // The nav (NavLink) and RouterNav demonstrate client-side navigation via
 // `<Link>` and `useRouter` (see e2e/routing-nav.spec.ts).
-export default function RoutingLayout({
-  children,
-}: RoutingLayoutProps) {
+export default function RoutingLayout({ children }: RoutingLayoutProps) {
   return (
     <main className={`${containerClass} flex flex-1 flex-col gap-6 py-16`}>
       <header className="flex flex-col gap-2">

@@ -4,9 +4,7 @@ import { PRICING_PATH } from "@/constants/routes";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import type { MarketingLayoutProps } from "@/types/marketing/MarketingLayout-types";
 
-export default function MarketingLayout({
-  children,
-}: MarketingLayoutProps) {
+export default function MarketingLayout({ children }: MarketingLayoutProps) {
   return (
     <main className={`${containerClass} flex flex-1 flex-col gap-6 py-16`}>
       <header className="flex items-center justify-between">

@@ -13,10 +13,7 @@ import { cn } from "@/lib/cn";
 import { initials } from "@/lib/initials";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useParams } from "next/navigation";
-import {
-  IconX,
-  IconPlus,
-} from "@tabler/icons-react";
+import { IconX, IconPlus } from "@tabler/icons-react";
 import type { Dispatch, SetStateAction } from "react";
 
 type UserInfo = { id: string; name: string; email: string; avatar: string };
@@ -92,7 +89,7 @@ export function MessagesSidebar({
         sidebarOpen
           ? "fixed inset-y-0 left-0 z-50 w-full md:static md:z-auto md:w-80"
           : "hidden md:flex md:w-80",
-        "flex max-h-full flex-col gap-5 rounded-xl border border-border bg-bg p-4 md:p-5",
+        "border-border bg-bg flex max-h-full flex-col gap-5 rounded-xl border p-4 md:p-5",
       )}
     >
       <div className="flex items-center justify-between pb-3 md:hidden">
@@ -107,16 +104,14 @@ export function MessagesSidebar({
         </Button>
       </div>
 
-      <div className="flex shrink-0 gap-1 rounded-lg bg-surface p-1.5">
+      <div className="bg-surface flex shrink-0 gap-1 rounded-lg p-1.5">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setTab("conversations")}
           className={cn(
             "flex-1 rounded-md px-4 py-2",
-            tab === "conversations"
-              ? "bg-bg text-fg shadow-sm"
-              : "text-muted",
+            tab === "conversations" ? "bg-bg text-fg shadow-sm" : "text-muted",
           )}
         >
           {t.chats}
@@ -127,16 +122,14 @@ export function MessagesSidebar({
           onClick={() => setTab("friends")}
           className={cn(
             "flex-1 rounded-md px-4 py-2",
-            tab === "friends"
-              ? "bg-bg text-fg shadow-sm"
-              : "text-muted",
+            tab === "friends" ? "bg-bg text-fg shadow-sm" : "text-muted",
           )}
         >
           {t.friends}
         </Button>
         <Link
           href={`/v1/${params?.lang}${FIND_FRIENDS_PATH}`}
-          className="flex items-center rounded-md px-2 text-muted transition-colors hover:bg-surface-hover hover:text-fg"
+          className="text-muted hover:bg-surface-hover hover:text-fg flex items-center rounded-md px-2 transition-colors"
           aria-label={t.searchUsers}
         >
           <IconPlus size={18} />
@@ -153,7 +146,7 @@ export function MessagesSidebar({
               debouncedSearch(val);
             }}
             placeholder={t.searchUsers}
-            className="mt-2 rounded-lg bg-surface px-4 py-2.5 text-fg focus:border-fg"
+            className="bg-surface text-fg focus:border-fg mt-2 rounded-lg px-4 py-2.5"
           />
           {findResults.length > 0 && (
             <div className="mt-3 flex flex-col gap-1">
@@ -168,11 +161,11 @@ export function MessagesSidebar({
                 .map((u) => (
                   <div
                     key={u.id}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-surface-hover"
+                    className="hover:bg-surface-hover flex items-center gap-3 rounded-lg px-3 py-2.5"
                   >
                     <Avatar
                       fallback={initials(u.name ?? u.email ?? "?")}
-                      className="h-8 w-8 shrink-0 bg-brand text-[10px] text-white"
+                      className="bg-brand h-8 w-8 shrink-0 text-[10px] text-white"
                     />
                     <span className="min-w-0 flex-1 truncate text-sm">
                       {u.name || u.email}
@@ -181,9 +174,7 @@ export function MessagesSidebar({
                       variant="primary"
                       size="sm"
                       onClick={async () => {
-                        setSentRequestIds((prev) =>
-                          new Set(prev).add(u.id),
-                        );
+                        setSentRequestIds((prev) => new Set(prev).add(u.id));
                         await sendFriendRequest(u.id);
                         setFindResults((prev) =>
                           prev.filter((r) => r.id !== u.id),
@@ -205,14 +196,14 @@ export function MessagesSidebar({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t.searchFriends}
-          className="mt-2 shrink-0 rounded-lg bg-surface px-4 py-2.5 focus:border-border focus:bg-surface"
+          className="bg-surface focus:border-border focus:bg-surface mt-2 shrink-0 rounded-lg px-4 py-2.5"
         />
       )}
 
       {isSwiping && (
-        <div className="h-1 shrink-0 overflow-hidden rounded-full bg-surface-hover">
+        <div className="bg-surface-hover h-1 shrink-0 overflow-hidden rounded-full">
           <div
-            className="h-full rounded-full bg-brand transition-none"
+            className="bg-brand h-full rounded-full transition-none"
             style={{
               width: `${progress * 100}%`,
               marginLeft:
@@ -228,11 +219,13 @@ export function MessagesSidebar({
             {t.failedToLoad}
           </p>
         )}
-        {tab === "conversations" && !convsError && conversations.length === 0 && (
-          <p className="py-16 text-center text-sm text-muted">
-            {t.noConversations}
-          </p>
-        )}
+        {tab === "conversations" &&
+          !convsError &&
+          conversations.length === 0 && (
+            <p className="text-muted py-16 text-center text-sm">
+              {t.noConversations}
+            </p>
+          )}
         {tab === "conversations" && (
           <div className="flex flex-col gap-0.5">
             {[...conversations].map((c, i) => (
@@ -250,10 +243,10 @@ export function MessagesSidebar({
                 <div className="relative shrink-0">
                   <Avatar
                     fallback={initials(c.user.name ?? c.user.email ?? "?")}
-                    className="h-10 w-10 bg-brand text-white"
+                    className="bg-brand h-10 w-10 text-white"
                   />
                   {onlineUsers.has(c.user.id) && (
-                    <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-bg bg-green-500" />
+                    <span className="border-bg absolute right-0 bottom-0 h-3 w-3 rounded-full border-2 bg-green-500" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -267,7 +260,7 @@ export function MessagesSidebar({
                       </span>
                     )}
                   </div>
-                  <p className="mt-0.5 truncate text-sm text-muted">
+                  <p className="text-muted mt-0.5 truncate text-sm">
                     {c.lastMessage}
                   </p>
                 </div>
@@ -275,46 +268,47 @@ export function MessagesSidebar({
             ))}
           </div>
         )}
-        {tab === "friends" && (() => {
-          const filtered = search
-            ? friends.filter((f) =>
-                f.name?.toLowerCase().includes(search.toLowerCase()),
-              )
-            : friends;
-          return filtered.length === 0 ? (
-            <p className="py-16 text-center text-sm text-muted">
-              {t.noFriends}
-            </p>
-          ) : (
-            <div className="flex flex-col gap-0.5">
-              {filtered.map((u, i) => (
-                <Button
-                  key={u.id}
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => openConversation(u)}
-                  className="animate-fade-in-up w-full justify-start gap-3 rounded-lg px-3 py-2.5 text-left"
-                  style={{ animationDelay: `${i * 15}ms` }}
-                >
-                  <div className="relative shrink-0">
-                    <Avatar
-                      fallback={initials(u.name ?? u.email ?? "?")}
-                      className="h-9 w-9 bg-brand text-white"
-                    />
-                    {onlineUsers.has(u.id) && (
-                      <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-bg bg-green-500" />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <span className="truncate text-sm font-medium">
-                      {u.name || u.email}
-                    </span>
-                  </div>
-                </Button>
-              ))}
-            </div>
-          );
-        })()}
+        {tab === "friends" &&
+          (() => {
+            const filtered = search
+              ? friends.filter((f) =>
+                  f.name?.toLowerCase().includes(search.toLowerCase()),
+                )
+              : friends;
+            return filtered.length === 0 ? (
+              <p className="text-muted py-16 text-center text-sm">
+                {t.noFriends}
+              </p>
+            ) : (
+              <div className="flex flex-col gap-0.5">
+                {filtered.map((u, i) => (
+                  <Button
+                    key={u.id}
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openConversation(u)}
+                    className="animate-fade-in-up w-full justify-start gap-3 rounded-lg px-3 py-2.5 text-left"
+                    style={{ animationDelay: `${i * 15}ms` }}
+                  >
+                    <div className="relative shrink-0">
+                      <Avatar
+                        fallback={initials(u.name ?? u.email ?? "?")}
+                        className="bg-brand h-9 w-9 text-white"
+                      />
+                      {onlineUsers.has(u.id) && (
+                        <span className="border-bg absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2 bg-green-500" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <span className="truncate text-sm font-medium">
+                        {u.name || u.email}
+                      </span>
+                    </div>
+                  </Button>
+                ))}
+              </div>
+            );
+          })()}
       </div>
     </div>
   );

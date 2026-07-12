@@ -7,10 +7,7 @@ import type { SkeletonChatMessageProps } from "@/types/ui/SkeletonChatMessage-ty
 import type { SkeletonConversationSidebarProps } from "@/types/ui/SkeletonConversationSidebar-types";
 import type { SkeletonFeedListProps } from "@/types/ui/SkeletonFeedList-types";
 
-export function SkeletonLine({
-  className,
-  width,
-}: SkeletonLineProps) {
+export function SkeletonLine({ className, width }: SkeletonLineProps) {
   return (
     <div
       className={cn("bg-surface-hover h-3 animate-pulse rounded", className)}

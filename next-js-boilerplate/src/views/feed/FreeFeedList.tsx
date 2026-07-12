@@ -1,10 +1,22 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef, useMemo, type Dispatch, type SetStateAction } from "react";
+import {
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+  useMemo,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import type { FeedListProps } from "@/types/feed/FeedList-types";
 import type { Post } from "@/types/feed/PostCard-types";
 import Link from "next/link";
-import { useSuspenseQuery, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useSuspenseQuery,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { PostCard } from "@/components/feed/PostCard";
 import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
@@ -13,11 +25,18 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 
 const PAGE_SIZE = 5;
 
-function handleToggleComments(postId: string, setExpandedPostId: Dispatch<SetStateAction<string | null>>) {
+function handleToggleComments(
+  postId: string,
+  setExpandedPostId: Dispatch<SetStateAction<string | null>>,
+) {
   setExpandedPostId((prev) => (prev === postId ? null : postId));
 }
 
-function handleDeletePost(postId: string, setExtraPosts: Dispatch<SetStateAction<Post[]>>, setExpandedPostId: Dispatch<SetStateAction<string | null>>) {
+function handleDeletePost(
+  postId: string,
+  setExtraPosts: Dispatch<SetStateAction<Post[]>>,
+  setExpandedPostId: Dispatch<SetStateAction<string | null>>,
+) {
   setExtraPosts((prev) => prev.filter((p) => p.id !== postId));
   setExpandedPostId((prev) => (prev === postId ? null : prev));
 }
@@ -66,7 +85,8 @@ export function FeedList({ search }: FeedListProps) {
     () => [...(data?.posts ?? []), ...extraPosts],
     [data?.posts, extraPosts],
   );
-  const hasMore = extraPosts.length > 0 ? extraHasMore : (data?.hasMore ?? false);
+  const hasMore =
+    extraPosts.length > 0 ? extraHasMore : (data?.hasMore ?? false);
 
   const loadMore = useCallback(async () => {
     if (loadingRef.current || !hasMore || !cursorRef.current) return;
@@ -166,13 +186,12 @@ export function FeedList({ search }: FeedListProps) {
       ref={scrollRef}
       className="flex max-h-[calc(100dvh-8rem)] flex-col gap-3 overflow-y-auto px-1 pb-4"
     >
-
       {posts.length === 0 && (
         <div className="flex flex-col items-center justify-center gap-3 py-12">
-          <p className="text-sm text-muted">{t.noPostsYet}</p>
+          <p className="text-muted text-sm">{t.noPostsYet}</p>
           <Link
             href="/v1/en/share"
-            className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white"
+            className="bg-brand rounded-lg px-4 py-2 text-sm font-medium text-white"
           >
             {t.beFirstToShare}
           </Link>
@@ -184,8 +203,10 @@ export function FeedList({ search }: FeedListProps) {
           key={post.id}
           post={post}
           isExpanded={expandedPostId === post.id}
-            onToggle={() => handleToggleComments(post.id, setExpandedPostId)}
-            onDelete={(postId) => handleDeletePost(postId, setExtraPosts, setExpandedPostId)}
+          onToggle={() => handleToggleComments(post.id, setExpandedPostId)}
+          onDelete={(postId) =>
+            handleDeletePost(postId, setExtraPosts, setExpandedPostId)
+          }
         />
       ))}
 
@@ -193,12 +214,14 @@ export function FeedList({ search }: FeedListProps) {
 
       {loadingMore && (
         <div className="flex items-center justify-center py-4">
-          <p className="text-[10px] text-muted">{t.loadingMore}</p>
+          <p className="text-muted text-[10px]">{t.loadingMore}</p>
         </div>
       )}
 
       {!hasMore && posts.length > 0 && (
-        <p className="py-4 text-center text-[10px] text-muted">{t.allCaughtUp}</p>
+        <p className="text-muted py-4 text-center text-[10px]">
+          {t.allCaughtUp}
+        </p>
       )}
     </div>
   );

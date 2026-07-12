@@ -22,28 +22,34 @@ export function useFriendActions() {
     }
   }, []);
 
-  const acceptFriendRequest = useCallback(async (userId: string) => {
-    try {
-      const res = await apiFetch(MESSAGES_FRIENDS_ACCEPT_PREFIX + userId, {
-        method: POST,
-      });
-      if (res.ok) {
-        queryClient.invalidateQueries({ queryKey: ["friends", "requests"] });
-        queryClient.invalidateQueries({ queryKey: ["friends", "list"] });
-      }
-    } catch {}
-  }, [queryClient]);
+  const acceptFriendRequest = useCallback(
+    async (userId: string) => {
+      try {
+        const res = await apiFetch(MESSAGES_FRIENDS_ACCEPT_PREFIX + userId, {
+          method: POST,
+        });
+        if (res.ok) {
+          queryClient.invalidateQueries({ queryKey: ["friends", "requests"] });
+          queryClient.invalidateQueries({ queryKey: ["friends", "list"] });
+        }
+      } catch {}
+    },
+    [queryClient],
+  );
 
-  const declineFriendRequest = useCallback(async (userId: string) => {
-    try {
-      const res = await apiFetch(MESSAGES_FRIENDS_DECLINE_PREFIX + userId, {
-        method: POST,
-      });
-      if (res.ok) {
-        queryClient.invalidateQueries({ queryKey: ["friends", "requests"] });
-      }
-    } catch {}
-  }, [queryClient]);
+  const declineFriendRequest = useCallback(
+    async (userId: string) => {
+      try {
+        const res = await apiFetch(MESSAGES_FRIENDS_DECLINE_PREFIX + userId, {
+          method: POST,
+        });
+        if (res.ok) {
+          queryClient.invalidateQueries({ queryKey: ["friends", "requests"] });
+        }
+      } catch {}
+    },
+    [queryClient],
+  );
 
   return { sendFriendRequest, acceptFriendRequest, declineFriendRequest };
 }

@@ -2,8 +2,7 @@ import type { PageInfoContent } from "@/types/ui/PageInfo-types";
 
 export const settingsPageInfo: PageInfoContent = {
   title: "Settings",
-  description:
-    "Manage your account, billing, and application preferences.",
+  description: "Manage your account, billing, and application preferences.",
   sections: [
     {
       title: "Current Plan",
@@ -21,7 +20,5 @@ export const settingsPageInfo: PageInfoContent = {
         "Use the sidebar to navigate to specific settings sections like Account, Billing, Privacy, and more.",
     },
   ],
-  tips: [
-    "Changes are saved automatically in most sections",
-  ],
+  tips: ["Changes are saved automatically in most sections"],
 };

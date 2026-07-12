@@ -8,28 +8,27 @@ const USERS = [
 ];
 
 export async function FreePageView({ t, lang }: FreePageViewProps) {
-
   return (
     <div className="flex flex-col gap-5">
       <div className="space-y-1">
         <h2 className="text-lg font-bold">{t.title}</h2>
-        <p className="text-sm text-muted">{t.tapToView}</p>
+        <p className="text-muted text-sm">{t.tapToView}</p>
       </div>
       <div
-        className="flex flex-col divide-y divide-border rounded-lg border"
+        className="divide-border flex flex-col divide-y rounded-lg border"
         data-testid="users-list"
       >
         {USERS.map((user) => (
           <Link
             key={user.uuid}
             href={`/v1/${lang}/users/detail/${user.uuid}`}
-            className="flex items-center justify-between px-4 py-3 transition-colors hover:bg-surface-hover"
+            className="hover:bg-surface-hover flex items-center justify-between px-4 py-3 transition-colors"
           >
             <div className="flex flex-col gap-1">
               <span className="text-sm font-medium">{user.name}</span>
-              <span className="text-xs text-muted">{user.email}</span>
+              <span className="text-muted text-xs">{user.email}</span>
             </div>
-            <span className="text-xs text-muted">→</span>
+            <span className="text-muted text-xs">→</span>
           </Link>
         ))}
       </div>

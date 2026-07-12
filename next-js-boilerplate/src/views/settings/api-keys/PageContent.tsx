@@ -60,8 +60,12 @@ async function handleCreateApiKey(
     setNewExpiry("");
     await loadKeys();
   } catch (err) {
-    const exception = (err as Error & { exception?: { msg?: string } }).exception;
-    toast({ title: exception?.msg ?? "Failed to create API key", variant: "destructive" });
+    const exception = (err as Error & { exception?: { msg?: string } })
+      .exception;
+    toast({
+      title: exception?.msg ?? "Failed to create API key",
+      variant: "destructive",
+    });
   } finally {
     setCreating(false);
   }
@@ -79,8 +83,12 @@ async function handleRevokeApiKey(
     toast({ title: `API key "${name}" revoked` });
     await loadKeys();
   } catch (err) {
-    const exception = (err as Error & { exception?: { msg?: string } }).exception;
-    toast({ title: exception?.msg ?? "Failed to revoke API key", variant: "destructive" });
+    const exception = (err as Error & { exception?: { msg?: string } })
+      .exception;
+    toast({
+      title: exception?.msg ?? "Failed to revoke API key",
+      variant: "destructive",
+    });
   }
 }
 
@@ -109,7 +117,8 @@ export default function PageContent() {
   }, [toast]);
 
   useEffect(() => {
-    if (user) loadKeys(); // eslint-disable-line react-hooks/set-state-in-effect
+    if (user)
+      loadKeys(); // eslint-disable-line react-hooks/set-state-in-effect
     else setLoadingKeys(false); // eslint-disable-line react-hooks/set-state-in-effect
   }, [user, loadKeys]);
 
@@ -119,7 +128,8 @@ export default function PageContent() {
         <div>
           <h2 className="text-2xl font-bold">API Keys</h2>
           <p className="text-muted text-sm">
-            API keys allow programmatic access to your account. Treat them like passwords.
+            API keys allow programmatic access to your account. Treat them like
+            passwords.
           </p>
         </div>
         <PageInfoButton content={settingsApiKeysPageInfo} />
@@ -130,7 +140,7 @@ export default function PageContent() {
           <p className="mb-1 text-sm font-semibold text-green-600">
             Key created — copy it now. You won&apos;t see it again.
           </p>
-          <code className="bg-surface-hover block w-full break-all rounded px-3 py-2 text-sm font-mono">
+          <code className="bg-surface-hover block w-full rounded px-3 py-2 font-mono text-sm break-all">
             {newKeyResult}
           </code>
           <Button
@@ -143,7 +153,12 @@ export default function PageContent() {
           >
             Copy
           </Button>
-          <Button className="mt-2 ml-2" size="sm" variant="outline" onClick={() => setNewKeyResult(null)}>
+          <Button
+            className="mt-2 ml-2"
+            size="sm"
+            variant="outline"
+            onClick={() => setNewKeyResult(null)}
+          >
             Dismiss
           </Button>
         </div>
@@ -157,6 +172,8 @@ export default function PageContent() {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             disabled={creating}
+            // Sole field on a freshly-revealed create-key form, not initial page load.
+            // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus
           />
           <div className="flex flex-wrap gap-2">
@@ -180,10 +197,29 @@ export default function PageContent() {
             ))}
           </div>
           <div className="flex gap-2">
-            <Button onClick={() => handleCreateApiKey(newName, setCreating, setNewKeyResult, toast, setNewName, setNewExpiry, loadKeys, newExpiry)} disabled={creating || !newName.trim()} size="sm">
+            <Button
+              onClick={() =>
+                handleCreateApiKey(
+                  newName,
+                  setCreating,
+                  setNewKeyResult,
+                  toast,
+                  setNewName,
+                  setNewExpiry,
+                  loadKeys,
+                  newExpiry,
+                )
+              }
+              disabled={creating || !newName.trim()}
+              size="sm"
+            >
               {creating ? "Creating..." : "Create"}
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setShowCreate(false)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowCreate(false)}
+            >
               Cancel
             </Button>
           </div>
@@ -199,34 +235,49 @@ export default function PageContent() {
       {loadingKeys ? (
         <p className="text-muted text-sm">Loading...</p>
       ) : keys.length === 0 ? (
-        <p className="text-muted text-sm">No API keys yet. Create one to get started.</p>
+        <p className="text-muted text-sm">
+          No API keys yet. Create one to get started.
+        </p>
       ) : (
         <div className="flex flex-col gap-3">
           {keys.map((key) => (
-            <div key={key.id} className="surface flex items-center justify-between rounded-lg p-4">
+            <div
+              key={key.id}
+              className="surface flex items-center justify-between rounded-lg p-4"
+            >
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{key.name}</span>
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      key.enabled ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
+                      key.enabled
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-100 text-gray-500"
                     }`}
                   >
                     {key.enabled ? "Active" : "Disabled"}
                   </span>
                 </div>
-                <code className="text-muted text-xs font-mono">{key.keyPrefix}...</code>
+                <code className="text-muted font-mono text-xs">
+                  {key.keyPrefix}...
+                </code>
                 <div className="text-muted flex gap-4 text-xs">
                   <span>Created {formatDate(key.createdAt)}</span>
-                  {key.lastUsedAt && <span>Last used {formatDate(key.lastUsedAt)}</span>}
-                  {key.expiresAt && <span>Expires {formatDate(key.expiresAt)}</span>}
+                  {key.lastUsedAt && (
+                    <span>Last used {formatDate(key.lastUsedAt)}</span>
+                  )}
+                  {key.expiresAt && (
+                    <span>Expires {formatDate(key.expiresAt)}</span>
+                  )}
                   {!key.expiresAt && <span>No expiry</span>}
                 </div>
               </div>
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={() => handleRevokeApiKey(key.id, key.name, toast, loadKeys)}
+                onClick={() =>
+                  handleRevokeApiKey(key.id, key.name, toast, loadKeys)
+                }
               >
                 Revoke
               </Button>

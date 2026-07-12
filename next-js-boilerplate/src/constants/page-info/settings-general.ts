@@ -2,8 +2,7 @@ import type { PageInfoContent } from "@/types/ui/PageInfo-types";
 
 export const settingsGeneralPageInfo: PageInfoContent = {
   title: "General Settings",
-  description:
-    "Configure general application preferences and display options.",
+  description: "Configure general application preferences and display options.",
   sections: [
     {
       title: "Timezone",

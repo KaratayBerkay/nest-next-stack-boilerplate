@@ -17,8 +17,7 @@ export const adminPageInfo: PageInfoContent = {
     },
     {
       title: "Quick Actions",
-      description:
-        "Access common administrative tasks from the dashboard.",
+      description: "Access common administrative tasks from the dashboard.",
     },
   ],
 };

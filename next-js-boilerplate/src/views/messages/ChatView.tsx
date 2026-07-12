@@ -62,7 +62,8 @@ export function ChatView({
     isError: msgsError,
   } = useConversation(selectedUser?.id ?? null);
   const conversationMessages =
-    [...(conversationData?.pages ?? [])].reverse().flatMap((p) => p.messages) ?? [];
+    [...(conversationData?.pages ?? [])].reverse().flatMap((p) => p.messages) ??
+    [];
 
   const { bottomRef, scrollToBottom, isAtBottom } = useAutoScroll(
     conversationMessages,
@@ -78,18 +79,21 @@ export function ChatView({
       if (res.ok) {
         const msg = await res.json().catch(() => null);
         if (msg?.id) {
-          queryClient.setQueryData(["messages", recipientId], (old: unknown) => {
-            const data = old as
-              | { pages: { messages: Record<string, unknown>[] }[] }
-              | undefined;
-            if (!data?.pages?.length) return old;
-            const pages = [...data.pages];
-            const first = { ...pages[0] };
-            if (first.messages.some((m) => m.id === msg.id)) return old;
-            first.messages = [...first.messages, msg];
-            pages[0] = first;
-            return { ...data, pages };
-          });
+          queryClient.setQueryData(
+            ["messages", recipientId],
+            (old: unknown) => {
+              const data = old as
+                | { pages: { messages: Record<string, unknown>[] }[] }
+                | undefined;
+              if (!data?.pages?.length) return old;
+              const pages = [...data.pages];
+              const first = { ...pages[0] };
+              if (first.messages.some((m) => m.id === msg.id)) return old;
+              first.messages = [...first.messages, msg];
+              pages[0] = first;
+              return { ...data, pages };
+            },
+          );
         }
       }
     },
@@ -115,24 +119,21 @@ export function ChatView({
 
   if (connectionState === "unstable") {
     return (
-      <ConnectionUnstable
-        title={t.disconnected}
-        description={t.connecting}
-      />
+      <ConnectionUnstable title={t.disconnected} description={t.connecting} />
     );
   }
 
   if (connectionState === "connecting") {
     return (
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 overflow-hidden rounded-xl border border-border bg-bg">
-        <div className="h-8 w-48 animate-pulse rounded-lg border border-border bg-surface" />
-        <div className="h-64 w-full max-w-md animate-pulse rounded-xl border border-border bg-surface" />
+      <div className="border-border bg-bg flex min-h-0 flex-1 flex-col items-center justify-center gap-3 overflow-hidden rounded-xl border">
+        <div className="border-border bg-surface h-8 w-48 animate-pulse rounded-lg border" />
+        <div className="border-border bg-surface h-64 w-full max-w-md animate-pulse rounded-xl border" />
       </div>
     );
   }
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-bg">
+    <div className="border-border bg-bg relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border">
       <div className="flex items-center gap-3 border-b px-4 py-3">
         <Button
           variant="ghost"
@@ -149,15 +150,13 @@ export function ChatView({
         <div className="relative shrink-0">
           <Avatar
             fallback={initials(selectedUser.name ?? selectedUser.email ?? "?")}
-            className="h-8 w-8 shrink-0 bg-brand text-xs text-white"
+            className="bg-brand h-8 w-8 shrink-0 text-xs text-white"
           />
           {onlineUsers.has(selectedUser.id) && (
-            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-bg bg-green-500" />
+            <span className="border-bg absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2 bg-green-500" />
           )}
         </div>
-        <span className="text-sm font-semibold">
-          {selectedUser.name}
-        </span>
+        <span className="text-sm font-semibold">{selectedUser.name}</span>
       </div>
       <div
         ref={messagesRef}
@@ -170,14 +169,10 @@ export function ChatView({
         )}
         {!msgsError && conversationMessages.length === 0 && (
           <div className="flex flex-1 items-center justify-center">
-            <p className="text-sm text-muted">{t.noMessages}</p>
+            <p className="text-muted text-sm">{t.noMessages}</p>
           </div>
         )}
-        {hasNextPage && (
-          <LoadEarlierButton
-            onClick={() => fetchNextPage()}
-          />
-        )}
+        {hasNextPage && <LoadEarlierButton onClick={() => fetchNextPage()} />}
         {conversationMessages.map((msg: Message, i) => {
           const isMe = msg.senderId === user.id;
           return (
@@ -189,8 +184,10 @@ export function ChatView({
               <div className="flex max-w-[75%] items-end gap-1.5">
                 {!isMe && (
                   <Avatar
-                    fallback={initials(selectedUser.name ?? selectedUser.email ?? "?")}
-                    className="mb-0.5 h-6 w-6 shrink-0 bg-brand text-[9px] text-white"
+                    fallback={initials(
+                      selectedUser.name ?? selectedUser.email ?? "?",
+                    )}
+                    className="bg-brand mb-0.5 h-6 w-6 shrink-0 text-[9px] text-white"
                   />
                 )}
                 <span
@@ -235,12 +232,10 @@ export function ChatView({
               connectionState === "online" ? t.inputPlaceholder : t.connecting
             }
             disabled={connectionState !== "online"}
-            className="rounded-xl bg-surface px-4 py-2.5 text-fg focus:border-fg"
+            className="bg-surface text-fg focus:border-fg rounded-xl px-4 py-2.5"
           />
           {messageError && (
-            <p className="mt-1.5 text-xs text-red-500">
-              {messageError}
-            </p>
+            <p className="mt-1.5 text-xs text-red-500">{messageError}</p>
           )}
         </div>
         <Button

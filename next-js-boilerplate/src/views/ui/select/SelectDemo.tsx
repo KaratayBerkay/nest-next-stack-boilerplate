@@ -1,12 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/Tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import {
   Select,
   SelectContent,
@@ -41,7 +36,10 @@ export function SelectDemo() {
               <h3 className="text-lg font-semibold">With Default Value</h3>
               <p className="text-muted mb-2 text-xs">Selected: {fruit}</p>
               <Select value={fruit} onValueChange={setFruit}>
-                <SelectTrigger className="w-48" data-testid="select-trigger-default">
+                <SelectTrigger
+                  className="w-48"
+                  data-testid="select-trigger-default"
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent data-testid="select-content-default">
@@ -55,9 +53,14 @@ export function SelectDemo() {
 
             <section className="flex flex-col gap-3">
               <h3 className="text-lg font-semibold">With Placeholder</h3>
-              <p className="text-muted mb-2 text-xs">Selected: {color ?? "none"}</p>
+              <p className="text-muted mb-2 text-xs">
+                Selected: {color ?? "none"}
+              </p>
               <Select value={color} onValueChange={setColor}>
-                <SelectTrigger className="w-48" data-testid="select-trigger-placeholder">
+                <SelectTrigger
+                  className="w-48"
+                  data-testid="select-trigger-placeholder"
+                >
                   <SelectValue placeholder="Pick a color" />
                 </SelectTrigger>
                 <SelectContent data-testid="select-content-placeholder">

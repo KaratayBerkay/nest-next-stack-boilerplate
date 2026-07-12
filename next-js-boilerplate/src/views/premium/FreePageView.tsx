@@ -7,12 +7,10 @@ export function FreePageView() {
 
   return (
     <div className="flex flex-col items-center gap-4 py-20">
-      <p className="text-sm text-muted">
-        {t.upgradeMessage}
-      </p>
+      <p className="text-muted text-sm">{t.upgradeMessage}</p>
       <Link
         href={PRICING_PATH}
-        className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand/90"
+        className="bg-brand hover:bg-brand/90 rounded-lg px-4 py-2 text-sm font-medium text-white"
       >
         {t.viewPlans}
       </Link>

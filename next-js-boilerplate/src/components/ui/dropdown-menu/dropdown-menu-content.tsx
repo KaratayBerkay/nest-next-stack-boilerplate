@@ -94,9 +94,13 @@ export function DropdownMenuContent({
   return createPortal(
     <>
       {!isDesktop && (
+        // Decorative dismiss backdrop, not a control — the menu's own controls remain
+        // keyboard-reachable (Escape closes it above; there's also a visible Close button
+        // below); this scrim only needs a click target.
         <div
           className="fixed inset-0 z-40 bg-black/50"
           onClick={() => setOpen(false)}
+          aria-hidden="true"
         />
       )}
       <div

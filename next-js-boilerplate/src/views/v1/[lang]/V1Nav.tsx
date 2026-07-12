@@ -61,8 +61,7 @@ export function V1Nav({ onNav }: V1NavProps) {
     { href: "/missing", label: t.navNotFound, Icon: IconQuestionMark },
   ];
 
-  const isAdmin =
-    user?.role === "ADMIN" || user?.role === "SUPERADMIN";
+  const isAdmin = user?.role === "ADMIN" || user?.role === "SUPERADMIN";
   if (isAdmin) {
     links.push({
       href: "/admin",

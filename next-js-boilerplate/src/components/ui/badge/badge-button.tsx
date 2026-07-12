@@ -21,7 +21,7 @@ export function BadgeButton({
     <button
       type="button"
       className={cn(
-        "inline-flex cursor-pointer items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors hover:opacity-80 focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none",
+        "focus-visible:ring-brand inline-flex cursor-pointer items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors hover:opacity-80 focus-visible:ring-2 focus-visible:outline-none",
         variants[variant],
         className,
       )}

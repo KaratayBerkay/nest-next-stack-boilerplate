@@ -89,7 +89,14 @@ export function PopoverContent({
   return createPortal(
     <>
       {!isDesktop && (
-        <div className="fixed inset-0 z-40 bg-black/50" onClick={close} />
+        // Decorative dismiss backdrop, not a control — the popover's own controls remain
+        // keyboard-reachable (Escape closes it above; there's also a visible Close button
+        // below); this scrim only needs a click target.
+        <div
+          className="fixed inset-0 z-40 bg-black/50"
+          onClick={close}
+          aria-hidden="true"
+        />
       )}
       <div
         ref={contentRef}

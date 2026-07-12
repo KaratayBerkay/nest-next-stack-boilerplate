@@ -26,7 +26,11 @@ export async function GET() {
     return NextResponse.json({ apiKeys: [] }, { status: 200 });
   }
 
-  const { data, errors } = await graphqlFetch<{ myApiKeys: unknown[] }>(MY_API_KEYS_QUERY, {}, accessToken);
+  const { data, errors } = await graphqlFetch<{ myApiKeys: unknown[] }>(
+    MY_API_KEYS_QUERY,
+    {},
+    accessToken,
+  );
   if (errors) {
     const body = graphqlErrorBody(errors, "Failed to load API keys");
     return NextResponse.json(body, { status: body.statusCode });
@@ -43,15 +47,28 @@ export async function POST(req: Request) {
 
   const extraHeaders = await csrfEchoHeaders();
   if (!extraHeaders) {
-    return NextResponse.json({ statusCode: 403, exc: "EX_FORBIDDEN", msg: "Invalid or missing CSRF token", key: "errors.csrf" }, { status: 403 });
+    return NextResponse.json(
+      {
+        statusCode: 403,
+        exc: "EX_FORBIDDEN",
+        msg: "Invalid or missing CSRF token",
+        key: "errors.csrf",
+      },
+      { status: 403 },
+    );
   }
 
   const { name, expiresInDays } = await req.json();
   if (!name || typeof name !== "string" || name.trim().length === 0) {
-    return NextResponse.json({ statusCode: 400, msg: "Name is required" }, { status: 400 });
+    return NextResponse.json(
+      { statusCode: 400, msg: "Name is required" },
+      { status: 400 },
+    );
   }
 
-  const { data, errors } = await graphqlFetch<{ createApiKey: { fullKey: string; key: unknown } }>(
+  const { data, errors } = await graphqlFetch<{
+    createApiKey: { fullKey: string; key: unknown };
+  }>(
     CREATE_API_KEY_MUTATION,
     { name: name.trim(), expiresInDays: expiresInDays ?? null },
     accessToken,

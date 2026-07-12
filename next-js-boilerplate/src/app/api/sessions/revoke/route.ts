@@ -13,15 +13,25 @@ export async function POST(req: NextRequest) {
   const accessToken = (await cookies()).get(ACCESS_TOKEN_COOKIE)?.value;
   if (!accessToken) {
     return NextResponse.json(
-      { statusCode: 401, exc: "EX_AUTH_INVALID_CREDENTIALS", msg: "Unauthorized", key: "auth.errors.unauthorized" },
+      {
+        statusCode: 401,
+        exc: "EX_AUTH_INVALID_CREDENTIALS",
+        msg: "Unauthorized",
+        key: "auth.errors.unauthorized",
+      },
       { status: 401 },
     );
   }
 
-  const { sessionId } = await req.json() as { sessionId: string };
+  const { sessionId } = (await req.json()) as { sessionId: string };
   if (!sessionId) {
     return NextResponse.json(
-      { statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "sessionId is required", key: "validation.required" },
+      {
+        statusCode: 400,
+        exc: "EX_VALIDATION_FORM",
+        msg: "sessionId is required",
+        key: "validation.required",
+      },
       { status: 400 },
     );
   }

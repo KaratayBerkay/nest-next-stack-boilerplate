@@ -8,9 +8,7 @@ export const metadata: Metadata = {
   description: "Complete your purchase",
 };
 
-export default function CheckoutPage({
-  params,
-}: CheckoutContentPageProps) {
+export default function CheckoutPage({ params }: CheckoutContentPageProps) {
   return (
     <Suspense>
       <CheckoutContent params={params} />

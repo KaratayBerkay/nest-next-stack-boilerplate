@@ -2,13 +2,11 @@ import type { PageInfoContent } from "@/types/ui/PageInfo-types";
 
 export const settingsPrivacyPageInfo: PageInfoContent = {
   title: "Privacy Settings",
-  description:
-    "Control your privacy and data sharing preferences.",
+  description: "Control your privacy and data sharing preferences.",
   sections: [
     {
       title: "Profile Visibility",
-      description:
-        "Choose who can see your profile information and posts.",
+      description: "Choose who can see your profile information and posts.",
     },
     {
       title: "Data Sharing",

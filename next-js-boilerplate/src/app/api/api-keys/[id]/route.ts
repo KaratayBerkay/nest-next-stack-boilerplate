@@ -28,11 +28,24 @@ export async function DELETE(
 
   const extraHeaders = await csrfEchoHeaders();
   if (!extraHeaders) {
-    return NextResponse.json({ statusCode: 403, exc: "EX_FORBIDDEN", msg: "Invalid or missing CSRF token", key: "errors.csrf" }, { status: 403 });
+    return NextResponse.json(
+      {
+        statusCode: 403,
+        exc: "EX_FORBIDDEN",
+        msg: "Invalid or missing CSRF token",
+        key: "errors.csrf",
+      },
+      { status: 403 },
+    );
   }
 
   const { id } = await params;
-  const { data, errors } = await graphqlFetch(REVOKE_API_KEY_MUTATION, { id }, accessToken, extraHeaders);
+  const { data, errors } = await graphqlFetch(
+    REVOKE_API_KEY_MUTATION,
+    { id },
+    accessToken,
+    extraHeaders,
+  );
   if (errors) {
     const body = graphqlErrorBody(errors, "Failed to revoke API key");
     return NextResponse.json(body, { status: body.statusCode });
@@ -52,13 +65,24 @@ export async function PATCH(
 
   const extraHeaders = await csrfEchoHeaders();
   if (!extraHeaders) {
-    return NextResponse.json({ statusCode: 403, exc: "EX_FORBIDDEN", msg: "Invalid or missing CSRF token", key: "errors.csrf" }, { status: 403 });
+    return NextResponse.json(
+      {
+        statusCode: 403,
+        exc: "EX_FORBIDDEN",
+        msg: "Invalid or missing CSRF token",
+        key: "errors.csrf",
+      },
+      { status: 403 },
+    );
   }
 
   const { id } = await params;
   const json = await req.json();
   const { data, errors } = await graphqlFetch<{ updateApiKey: unknown }>(
-    UPDATE_API_KEY_MUTATION, { id, ...json }, accessToken, extraHeaders,
+    UPDATE_API_KEY_MUTATION,
+    { id, ...json },
+    accessToken,
+    extraHeaders,
   );
   if (errors) {
     const errBody = graphqlErrorBody(errors, "Failed to update API key");

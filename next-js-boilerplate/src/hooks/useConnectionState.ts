@@ -18,7 +18,7 @@ export function useConnectionState(): ConnectionState {
         clearTimeout(graceRef.current);
         graceRef.current = null;
       }
-      setState("online");        // eslint-disable-line react-hooks/set-state-in-effect
+      setState("online"); // eslint-disable-line react-hooks/set-state-in-effect
     } else if (status === "backoff") {
       setState((prev) => {
         if (prev !== "online") return "unstable";
@@ -35,13 +35,13 @@ export function useConnectionState(): ConnectionState {
         clearTimeout(graceRef.current);
         graceRef.current = null;
       }
-      setState("unstable");        // eslint-disable-line react-hooks/set-state-in-effect
+      setState("unstable"); // eslint-disable-line react-hooks/set-state-in-effect
     } else {
       if (graceRef.current) {
         clearTimeout(graceRef.current);
         graceRef.current = null;
       }
-      setState("connecting");        // eslint-disable-line react-hooks/set-state-in-effect
+      setState("connecting"); // eslint-disable-line react-hooks/set-state-in-effect
     }
 
     return () => {

@@ -8,9 +8,7 @@ import { clientEnv } from "@/lib/env";
 
 const stripeKey = clientEnv.NEXT_PUBLIC_STRIPE_KEY;
 
-const stripePromise = stripeKey
-  ? loadStripe(stripeKey)
-  : null;
+const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
 export function StripeElements({
   clientSecret,
@@ -23,5 +21,9 @@ export function StripeElements({
 
   if (!stripePromise || !options) return <>{children}</>;
 
-  return <Elements stripe={stripePromise} options={options}>{children}</Elements>;
+  return (
+    <Elements stripe={stripePromise} options={options}>
+      {children}
+    </Elements>
+  );
 }

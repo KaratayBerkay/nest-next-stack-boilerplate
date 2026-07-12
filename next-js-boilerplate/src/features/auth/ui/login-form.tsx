@@ -24,7 +24,9 @@ async function handleLoginSubmit(
   login: (email: string, password: string) => Promise<void>,
   router: ReturnType<typeof useRouter>,
   t: I18nMessages["auth"],
-  setMfaState: Dispatch<SetStateAction<{ mfaToken: string; user: User } | null>>,
+  setMfaState: Dispatch<
+    SetStateAction<{ mfaToken: string; user: User } | null>
+  >,
 ) {
   e.preventDefault();
   setFieldErrors({});
@@ -43,9 +45,7 @@ async function handleLoginSubmit(
   setSubmitting(true);
   try {
     await login(email, password);
-    const match = document.cookie.match(
-      new RegExp(`${LANG_COOKIE}=([^;]+)`),
-    );
+    const match = document.cookie.match(new RegExp(`${LANG_COOKIE}=([^;]+)`));
     const lang =
       match && (LANGS as readonly string[]).includes(match[1])
         ? match[1]
@@ -79,7 +79,10 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
-  const [mfaState, setMfaState] = useState<{ mfaToken: string; user: User } | null>(null);
+  const [mfaState, setMfaState] = useState<{
+    mfaToken: string;
+    user: User;
+  } | null>(null);
   const [mfaCode, setMfaCode] = useState("");
   const [mfaSubmitting, setMfaSubmitting] = useState(false);
   const [mfaError, setMfaError] = useState<string | null>(null);
@@ -134,9 +137,12 @@ export function LoginForm() {
 
     return (
       <div className="flex flex-col gap-4 text-center">
-        <h2 className="text-brand text-sm font-semibold">{t.form.login.mfaTitle}</h2>
+        <h2 className="text-brand text-sm font-semibold">
+          {t.form.login.mfaTitle}
+        </h2>
         <p className="text-muted text-xs">
-          Enter the 6-digit code from your authenticator app for {mfaState.user.email}.
+          Enter the 6-digit code from your authenticator app for{" "}
+          {mfaState.user.email}.
         </p>
 
         <form onSubmit={handleMfaSubmit} className="flex flex-col gap-3">
@@ -154,13 +160,17 @@ export function LoginForm() {
               onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ""))}
               placeholder="000000"
               required
+              // Sole field on a freshly-revealed MFA challenge screen, not initial page load.
+              // eslint-disable-next-line jsx-a11y/no-autofocus
               autoFocus
               data-testid="mfa-code"
             />
           </div>
 
           {mfaError && (
-            <p className="text-sm text-red-600" data-testid="mfa-error">{mfaError}</p>
+            <p className="text-sm text-red-600" data-testid="mfa-error">
+              {mfaError}
+            </p>
           )}
 
           <Button
@@ -175,8 +185,12 @@ export function LoginForm() {
 
         <button
           type="button"
-          className="text-muted text-xs underline hover:text-brand"
-          onClick={() => { setMfaState(null); setMfaCode(""); setMfaError(null); }}
+          className="text-muted hover:text-brand text-xs underline"
+          onClick={() => {
+            setMfaState(null);
+            setMfaCode("");
+            setMfaError(null);
+          }}
         >
           Use a different account
         </button>
@@ -188,7 +202,23 @@ export function LoginForm() {
     <div className="flex flex-col gap-4 text-center">
       <h2 className="text-brand text-sm font-semibold">{t.form.login.title}</h2>
 
-      <form onSubmit={(e) => handleLoginSubmit(e, schema, email, password, setFieldErrors, setSubmitting, login, router, t, setMfaState)} className="flex flex-col gap-3">
+      <form
+        onSubmit={(e) =>
+          handleLoginSubmit(
+            e,
+            schema,
+            email,
+            password,
+            setFieldErrors,
+            setSubmitting,
+            login,
+            router,
+            t,
+            setMfaState,
+          )
+        }
+        className="flex flex-col gap-3"
+      >
         <div className="flex flex-col gap-1 text-left">
           <Label htmlFor="login-email-input" required>
             {t.form.login.emailLabel}
@@ -222,13 +252,15 @@ export function LoginForm() {
             data-testid="login-password"
           />
           {fieldErrors.password && (
-            <p className="mt-0.5 text-xs text-red-600">{fieldErrors.password}</p>
+            <p className="mt-0.5 text-xs text-red-600">
+              {fieldErrors.password}
+            </p>
           )}
         </div>
 
         <Link
           href={RESET_PASSWORD_PATH}
-          className="text-muted -mt-1 text-xs underline hover:text-brand"
+          className="text-muted hover:text-brand -mt-1 text-xs underline"
         >
           {t.form.login.forgotPassword}
         </Link>

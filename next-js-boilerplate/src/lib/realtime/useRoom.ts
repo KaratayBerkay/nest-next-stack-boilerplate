@@ -16,10 +16,12 @@ export function useRoom(room: string | null) {
     queryKey: ["room", room],
     queryFn: async () => {
       if (!room) return [];
-      const res = await apiFetch(`${MESSAGES_ROOM_MESSAGES_PREFIX}${room}/messages`);
+      const res = await apiFetch(
+        `${MESSAGES_ROOM_MESSAGES_PREFIX}${room}/messages`,
+      );
       if (!res.ok) throw new Error("Failed to fetch room messages");
       const data = await res.json();
-      return Array.isArray(data) ? data : data.messages ?? [];
+      return Array.isArray(data) ? data : (data.messages ?? []);
     },
     enabled: !!room,
     refetchOnWindowFocus: false,

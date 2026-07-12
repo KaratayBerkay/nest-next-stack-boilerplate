@@ -52,18 +52,14 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-export function AuthProvider({
-  children,
-  initialUser,
-}: AuthProviderProps) {
+export function AuthProvider({ children, initialUser }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(initialUser ?? null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(!initialUser);
   const logoutEventRef = useRef(false);
 
   useEffect(() => {
-    const ssrUser =
-      (window as { __INITIAL_USER__?: User }).__INITIAL_USER__;
+    const ssrUser = (window as { __INITIAL_USER__?: User }).__INITIAL_USER__;
 
     if (ssrUser) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -88,9 +84,7 @@ export function AuthProvider({
     }
 
     async function load() {
-      await fetch(AUTH_DEVICE_HANDSHAKE_URL, { method: POST }).catch(
-        () => {},
-      );
+      await fetch(AUTH_DEVICE_HANDSHAKE_URL, { method: POST }).catch(() => {});
 
       try {
         const res = await apiFetch(AUTH_ME_URL);
@@ -145,11 +139,18 @@ export function AuthProvider({
         body: JSON.stringify({ email, password, timezone: readTimezone() }),
       });
 
-      const data = await res.json() as AuthResponse & { mfaRequired?: boolean; mfaToken?: string };
+      const data = (await res.json()) as AuthResponse & {
+        mfaRequired?: boolean;
+        mfaToken?: string;
+      };
 
       // MFA challenge: 202 means the user needs to enter a TOTP code.
       if (res.status === 202 && data.mfaRequired) {
-        const err = new Error("MFA required") as Error & { mfaRequired: boolean; mfaToken: string; user: User };
+        const err = new Error("MFA required") as Error & {
+          mfaRequired: boolean;
+          mfaToken: string;
+          user: User;
+        };
         err.mfaRequired = true;
         err.mfaToken = data.mfaToken!;
         err.user = data.user;
@@ -172,7 +173,12 @@ export function AuthProvider({
         const data = await apiFetchJson<AuthResponse>(AUTH_REGISTER_URL, {
           method: POST,
           headers: JSON_CONTENT_TYPE_HEADER,
-          body: JSON.stringify({ email, password, name, timezone: readTimezone() }),
+          body: JSON.stringify({
+            email,
+            password,
+            name,
+            timezone: readTimezone(),
+          }),
         });
         setUser(data.user);
         if (data.accessToken) setToken(data.accessToken);
@@ -223,7 +229,16 @@ export function AuthProvider({
   }, []);
 
   const value = useMemo(
-    () => ({ user, token, loading, login, verifyMfa, register, logout, refreshUser }),
+    () => ({
+      user,
+      token,
+      loading,
+      login,
+      verifyMfa,
+      register,
+      logout,
+      refreshUser,
+    }),
     [user, token, loading, login, verifyMfa, register, logout, refreshUser],
   );
 

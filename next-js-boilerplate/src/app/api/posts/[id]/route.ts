@@ -24,7 +24,15 @@ export async function GET(
   }
 
   if (!data?.post) {
-    return NextResponse.json({ statusCode: 404, exc: "EX_NOT_FOUND", msg: "Post not found", key: "errors.notFound" }, { status: 404 });
+    return NextResponse.json(
+      {
+        statusCode: 404,
+        exc: "EX_NOT_FOUND",
+        msg: "Post not found",
+        key: "errors.notFound",
+      },
+      { status: 404 },
+    );
   }
 
   return NextResponse.json({ post: data.post });
@@ -33,7 +41,17 @@ export async function GET(
 async function mutationHeaders() {
   const extraHeaders = await csrfEchoHeaders();
   if (!extraHeaders) {
-    return { error: NextResponse.json({ statusCode: 403, exc: "EX_FORBIDDEN", msg: "Invalid or missing CSRF token", key: "errors.csrf" }, { status: 403 }) };
+    return {
+      error: NextResponse.json(
+        {
+          statusCode: 403,
+          exc: "EX_FORBIDDEN",
+          msg: "Invalid or missing CSRF token",
+          key: "errors.csrf",
+        },
+        { status: 403 },
+      ),
+    };
   }
   return { extraHeaders };
 }
@@ -57,11 +75,27 @@ export async function PUT(
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Invalid JSON body", key: "errors.invalidJson" }, { status: 400 });
+    return NextResponse.json(
+      {
+        statusCode: 400,
+        exc: "EX_VALIDATION_FORM",
+        msg: "Invalid JSON body",
+        key: "errors.invalidJson",
+      },
+      { status: 400 },
+    );
   }
 
   if (!body.title && !body.content && body.coverImage === undefined) {
-    return NextResponse.json({ statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Nothing to update", key: "errors.nothingToUpdate" }, { status: 400 });
+    return NextResponse.json(
+      {
+        statusCode: 400,
+        exc: "EX_VALIDATION_FORM",
+        msg: "Nothing to update",
+        key: "errors.nothingToUpdate",
+      },
+      { status: 400 },
+    );
   }
 
   const { data, errors } = await graphqlFetch<{

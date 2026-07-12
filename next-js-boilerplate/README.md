@@ -33,26 +33,26 @@ Open [http://localhost:3001](http://localhost:3001).
 
 See `.env.example` for all variables with defaults.
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `APP_URL` | Backend NestJS URL | `http://localhost:3001` |
-| `NEXT_PUBLIC_APP_URL` | Public frontend URL | `http://localhost:3000` |
-| `NEXT_PUBLIC_REALTIME_WS_URL` | WebSocket endpoint | `ws://localhost:3000/ws` |
-| `COOKIE_DOMAIN` | Cookie domain (set for custom domains) | — |
-| `KAFKA_BROKER` | Kafka broker for event streaming | `localhost:9092` |
+| Variable                      | Description                            | Default                  |
+| ----------------------------- | -------------------------------------- | ------------------------ |
+| `APP_URL`                     | Backend NestJS URL                     | `http://localhost:3001`  |
+| `NEXT_PUBLIC_APP_URL`         | Public frontend URL                    | `http://localhost:3000`  |
+| `NEXT_PUBLIC_REALTIME_WS_URL` | WebSocket endpoint                     | `ws://localhost:3000/ws` |
+| `COOKIE_DOMAIN`               | Cookie domain (set for custom domains) | —                        |
+| `KAFKA_BROKER`                | Kafka broker for event streaming       | `localhost:9092`         |
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Start dev server (Turbopack, port 3001) |
-| `pnpm build` | Production build |
-| `pnpm test` | Run Vitest unit tests |
-| `pnpm test:coverage` | Run tests with V8 coverage |
-| `pnpm test:e2e` | Run Playwright e2e (chromium/firefox/webkit) |
-| `pnpm lint` | ESLint |
-| `pnpm typecheck` | TypeScript type checking |
-| `pnpm format:check` | Prettier format check |
+| Command              | Description                                  |
+| -------------------- | -------------------------------------------- |
+| `pnpm dev`           | Start dev server (Turbopack, port 3001)      |
+| `pnpm build`         | Production build                             |
+| `pnpm test`          | Run Vitest unit tests                        |
+| `pnpm test:coverage` | Run tests with V8 coverage                   |
+| `pnpm test:e2e`      | Run Playwright e2e (chromium/firefox/webkit) |
+| `pnpm lint`          | ESLint                                       |
+| `pnpm typecheck`     | TypeScript type checking                     |
+| `pnpm format:check`  | Prettier format check                        |
 
 ## Architecture
 

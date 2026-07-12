@@ -1,9 +1,19 @@
-name: CI
+name: Backend CI
 
 on:
   push:
     branches: [main]
+    paths:
+      - 'nest-js-boilerplate/**'
+      - '.github/workflows/backend-ci.yml'
   pull_request:
+    paths:
+      - 'nest-js-boilerplate/**'
+      - '.github/workflows/backend-ci.yml'
+
+defaults:
+  run:
+    working-directory: nest-js-boilerplate
 
 jobs:
   test:
@@ -54,6 +64,7 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+          cache-dependency-path: nest-js-boilerplate/pnpm-lock.yaml
 
       # postinstall runs `prisma generate` (needs DATABASE_URL, set above).
       - run: pnpm install --frozen-lockfile
@@ -64,4 +75,21 @@ jobs:
       - run: pnpm run build
       - run: pnpm run lint
       - run: pnpm test
+      - run: pnpm test:cov
+
+      - name: Fallow dead-code
+        run: npx fallow dead-code --ci --format json --quiet >> "$GITHUB_STEP_SUMMARY" || true
+
+      - name: Fallow duplication
+        run: npx fallow dupes --ci --format json --quiet >> "$GITHUB_STEP_SUMMARY" || true
+
       - run: pnpm run test:e2e
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build backend Docker image
+        working-directory: nest-js-boilerplate
+        run: docker build -t nest-backend-ci .

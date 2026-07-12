@@ -2,8 +2,14 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { SearchParamsDisplay } from "@/views/(demos)/search-params/SearchParamsDisplay";
-import { SearchParamsServerFallback, SearchParamsClientFallback } from "@/fallbacks";
-import type { SearchParamsPageProps, ServerParamsProps } from "@/types/demos/SearchParamsPage-types";
+import {
+  SearchParamsServerFallback,
+  SearchParamsClientFallback,
+} from "@/fallbacks";
+import type {
+  SearchParamsPageProps,
+  ServerParamsProps,
+} from "@/types/demos/SearchParamsPage-types";
 
 export const metadata: Metadata = {
   title: "Search Params",
@@ -43,9 +49,7 @@ export default function SearchParamsPage({
   );
 }
 
-async function ServerParams({
-  searchParams,
-}: ServerParamsProps) {
+async function ServerParams({ searchParams }: ServerParamsProps) {
   const { name, category } = await searchParams;
 
   return (

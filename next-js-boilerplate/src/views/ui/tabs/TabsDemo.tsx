@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/Tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 
 export function TabsDemo() {
   return (
@@ -71,20 +66,28 @@ export function TabsDemo() {
                   <p className="text-sm font-medium">Profile Settings</p>
                   <div className="space-y-1.5">
                     <p className="text-muted text-xs">Name: Jane Doe</p>
-                    <p className="text-muted text-xs">Email: jane@example.com</p>
+                    <p className="text-muted text-xs">
+                      Email: jane@example.com
+                    </p>
                   </div>
                 </div>
               </TabsContent>
               <TabsContent value="notifications">
                 <div className="surface space-y-3 p-4">
-                  <p className="text-sm font-medium">Notification Preferences</p>
-                  <p className="text-muted text-xs">Manage which notifications you receive.</p>
+                  <p className="text-sm font-medium">
+                    Notification Preferences
+                  </p>
+                  <p className="text-muted text-xs">
+                    Manage which notifications you receive.
+                  </p>
                 </div>
               </TabsContent>
               <TabsContent value="billing">
                 <div className="surface space-y-3 p-4">
                   <p className="text-sm font-medium">Billing & Plan</p>
-                  <p className="text-muted text-xs">Current plan: Free. Upgrade to Pro for more features.</p>
+                  <p className="text-muted text-xs">
+                    Current plan: Free. Upgrade to Pro for more features.
+                  </p>
                 </div>
               </TabsContent>
             </Tabs>

@@ -15,7 +15,11 @@ export async function POST() {
   const accessToken = (await cookies()).get(ACCESS_TOKEN_COOKIE)?.value;
   if (!accessToken) {
     return NextResponse.json(
-      { statusCode: 401, exc: "EX_AUTH_INVALID_CREDENTIALS", msg: "Unauthorized" },
+      {
+        statusCode: 401,
+        exc: "EX_AUTH_INVALID_CREDENTIALS",
+        msg: "Unauthorized",
+      },
       { status: 401 },
     );
   }
@@ -29,5 +33,7 @@ export async function POST() {
     return NextResponse.json(body, { status: body.statusCode });
   }
 
-  return NextResponse.json({ clientSecret: data?.createBillingSetupIntent.clientSecret });
+  return NextResponse.json({
+    clientSecret: data?.createBillingSetupIntent.clientSecret,
+  });
 }

@@ -13,7 +13,12 @@ import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
-import { PROFILE_URL, UPLOAD_URL, PROFILE_UPDATE_URL, PROFILE_USERNAME_AVAILABLE_PREFIX } from "@/constants/api/urls";
+import {
+  PROFILE_URL,
+  UPLOAD_URL,
+  PROFILE_UPDATE_URL,
+  PROFILE_USERNAME_AVAILABLE_PREFIX,
+} from "@/constants/api/urls";
 import { POST } from "@/constants/api/methods";
 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 import { PageInfoButton } from "@/components/ui/page-info";
@@ -31,7 +36,9 @@ export function FreePageView() {
   const [avatarUrl, setAvatarUrl] = useState("");
   const profileLoadedRef = useRef(false);
 
-  const [availability, setAvailability] = useState<"idle" | "checking" | "available" | "taken">("idle");
+  const [availability, setAvailability] = useState<
+    "idle" | "checking" | "available" | "taken"
+  >("idle");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -39,7 +46,14 @@ export function FreePageView() {
     profileLoadedRef.current = true;
     (async () => {
       try {
-        const data = await apiFetchJson<{ user: { name?: string; username?: string; bio?: string; avatarUrl?: string } }>(PROFILE_URL);
+        const data = await apiFetchJson<{
+          user: {
+            name?: string;
+            username?: string;
+            bio?: string;
+            avatarUrl?: string;
+          };
+        }>(PROFILE_URL);
         const p = data.user;
         setName(p.name ?? "");
         setUsername(p.username ?? "");
@@ -57,40 +71,55 @@ export function FreePageView() {
   useEffect(() => {
     if (prevUsername.current === username) return;
     prevUsername.current = username;
-    if (!username || username === (user?.username ?? "") || username.length < 3) return;
+    if (!username || username === (user?.username ?? "") || username.length < 3)
+      return;
     if (checkTimer.current) clearTimeout(checkTimer.current);
     checkTimer.current = setTimeout(() => {
       setAvailability("checking");
-      apiFetchJson<{ available: boolean }>(`${PROFILE_USERNAME_AVAILABLE_PREFIX}?u=${encodeURIComponent(username)}`)
+      apiFetchJson<{ available: boolean }>(
+        `${PROFILE_USERNAME_AVAILABLE_PREFIX}?u=${encodeURIComponent(username)}`,
+      )
         .then((res) => setAvailability(res.available ? "available" : "taken"))
         .catch(() => setAvailability("taken"));
     }, 300);
-    return () => { if (checkTimer.current) clearTimeout(checkTimer.current); };
+    return () => {
+      if (checkTimer.current) clearTimeout(checkTimer.current);
+    };
   }, [username, user?.username]);
 
-  const handleAvatarFile = useCallback(async (file: File) => {
-    const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-    if (!allowed.includes(file.type)) {
-      toast({ title: t.invalidFileType, variant: "destructive" });
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ title: t.fileTooLarge, variant: "destructive" });
-      return;
-    }
-    const form = new FormData();
-    form.append("file", file);
-    try {
-      const uploadRes = await apiFetchJson<{ urls: { full: string } }>(UPLOAD_URL, {
-        method: POST,
-        body: form,
-      });
-      setAvatarUrl(uploadRes.urls.full);
-    } catch (err) {
-      const exception = (err as Error & { exception?: { msg?: string } }).exception;
-      toast({ title: exception?.msg ?? t.uploadFailed, variant: "destructive" });
-    }
-  }, [toast, t.uploadFailed, t.invalidFileType, t.fileTooLarge]);
+  const handleAvatarFile = useCallback(
+    async (file: File) => {
+      const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+      if (!allowed.includes(file.type)) {
+        toast({ title: t.invalidFileType, variant: "destructive" });
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast({ title: t.fileTooLarge, variant: "destructive" });
+        return;
+      }
+      const form = new FormData();
+      form.append("file", file);
+      try {
+        const uploadRes = await apiFetchJson<{ urls: { full: string } }>(
+          UPLOAD_URL,
+          {
+            method: POST,
+            body: form,
+          },
+        );
+        setAvatarUrl(uploadRes.urls.full);
+      } catch (err) {
+        const exception = (err as Error & { exception?: { msg?: string } })
+          .exception;
+        toast({
+          title: exception?.msg ?? t.uploadFailed,
+          variant: "destructive",
+        });
+      }
+    },
+    [toast, t.uploadFailed, t.invalidFileType, t.fileTooLarge],
+  );
 
   const saveProfile = useCallback(async () => {
     setSaving(true);
@@ -108,17 +137,29 @@ export function FreePageView() {
       toast({ title: t.saveSuccess, variant: "success" });
       await refreshUser();
     } catch (err) {
-      const exception = (err as Error & { exception?: { msg?: string } }).exception;
+      const exception = (err as Error & { exception?: { msg?: string } })
+        .exception;
       toast({ title: exception?.msg ?? t.saveFailed, variant: "destructive" });
     } finally {
       setSaving(false);
     }
-  }, [name, username, bio, avatarUrl, toast, t.saveSuccess, t.saveFailed, refreshUser]);
+  }, [
+    name,
+    username,
+    bio,
+    avatarUrl,
+    toast,
+    t.saveSuccess,
+    t.saveFailed,
+    refreshUser,
+  ]);
 
   if (loading) return <LoadingAuth />;
-  if (!user) return <UnauthenticatedMessage message={t.signInToManageAccount} />;
+  if (!user)
+    return <UnauthenticatedMessage message={t.signInToManageAccount} />;
 
-  const canSave = !saving && availability !== "checking" && availability !== "taken";
+  const canSave =
+    !saving && availability !== "checking" && availability !== "taken";
 
   return (
     <div className="flex flex-col gap-6">
@@ -165,13 +206,19 @@ export function FreePageView() {
           <Label>{t.username}</Label>
           <Input
             value={username}
-            onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+            onChange={(e) =>
+              setUsername(
+                e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""),
+              )
+            }
           />
           {availability === "checking" && (
-            <span className="text-xs text-muted">{t.usernameChecking}</span>
+            <span className="text-muted text-xs">{t.usernameChecking}</span>
           )}
           {availability === "available" && (
-            <span className="text-xs text-green-600">{t.usernameAvailable}</span>
+            <span className="text-xs text-green-600">
+              {t.usernameAvailable}
+            </span>
           )}
           {availability === "taken" && (
             <span className="text-xs text-red-600">{t.usernameTaken}</span>
@@ -180,7 +227,11 @@ export function FreePageView() {
 
         <div className="flex flex-col gap-1.5">
           <Label>{t.bio}</Label>
-          <Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} />
+          <Textarea
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            rows={3}
+          />
         </div>
       </div>
 

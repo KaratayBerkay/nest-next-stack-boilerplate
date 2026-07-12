@@ -11,9 +11,7 @@ export const metadata: Metadata = {
   description: "View user profile",
 };
 
-export default async function UserDetailPage({
-  params,
-}: UserDetailPageProps) {
+export default async function UserDetailPage({ params }: UserDetailPageProps) {
   const { lang } = await params;
   const t = getMessages(lang as Lang, "users");
   return (

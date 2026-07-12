@@ -19,10 +19,7 @@ const USERS: Record<string, { name: string; email: string; role: string }> = {
   },
 };
 
-export async function FreePageView({
-  t,
-  params,
-}: FreePageViewDetailProps) {
+export async function FreePageView({ t, params }: FreePageViewDetailProps) {
   const { lang, uuid } = await params;
   const user = USERS[uuid];
 

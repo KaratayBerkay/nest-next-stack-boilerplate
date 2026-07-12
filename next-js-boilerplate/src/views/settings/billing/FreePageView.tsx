@@ -12,7 +12,10 @@ import { formatPrice } from "@/lib/currency";
 import { useCurrencyCookie } from "@/hooks/useCurrencyCookie";
 import { plansPath } from "@/constants/routes";
 import { formatDate } from "@/lib/date-time";
-import { BILLING_SUBSCRIPTION_URL, BILLING_HISTORY_URL } from "@/constants/api/urls";
+import {
+  BILLING_SUBSCRIPTION_URL,
+  BILLING_HISTORY_URL,
+} from "@/constants/api/urls";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsBillingPageInfo } from "@/constants/page-info";
 
@@ -41,14 +44,18 @@ export function FreePageView() {
   const { user, loading } = useAuth();
   const t = useMessages("settings");
   const currency = useCurrencyCookie();
-  const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
+  const [subscription, setSubscription] = useState<SubscriptionInfo | null>(
+    null,
+  );
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loadingSub, setLoadingSub] = useState(true);
   const [loadingHistory, setLoadingHistory] = useState(true);
 
   useEffect(() => {
     if (!user) return;
-    apiFetchJson<{ subscription: SubscriptionInfo | null }>(BILLING_SUBSCRIPTION_URL)
+    apiFetchJson<{ subscription: SubscriptionInfo | null }>(
+      BILLING_SUBSCRIPTION_URL,
+    )
       .then((data) => setSubscription(data.subscription))
       .catch(() => setSubscription(null))
       .finally(() => setLoadingSub(false));
@@ -63,7 +70,8 @@ export function FreePageView() {
   }, [user]);
 
   if (loading) return <LoadingAuth />;
-  if (!user) return <UnauthenticatedMessage message={t.signInToManageBilling} />;
+  if (!user)
+    return <UnauthenticatedMessage message={t.signInToManageBilling} />;
 
   const tier = (subscription?.tier as Tier) ?? (user.tier as Tier) ?? "FREE";
   const periodEnd = subscription?.periodEnd;
@@ -78,11 +86,13 @@ export function FreePageView() {
 
       <div className="border-border bg-surface flex items-center justify-between rounded-lg border p-4">
         <div>
-          <p className="text-sm text-muted">{t.currentPlan}</p>
+          <p className="text-muted text-sm">{t.currentPlan}</p>
           <p className="text-lg font-bold">{tierLabel(tier)}</p>
-          <p className="text-sm text-muted">{formatPrice(TIER_PRICES_CENTS[tier] ?? 0, currency)}</p>
+          <p className="text-muted text-sm">
+            {formatPrice(TIER_PRICES_CENTS[tier] ?? 0, currency)}
+          </p>
           {tier !== "FREE" && periodEnd && (
-            <p className="mt-1 text-xs text-muted">
+            <p className="text-muted mt-1 text-xs">
               {cancelAtPeriodEnd
                 ? `Cancels on ${formatDate(periodEnd)}`
                 : `Next payment: ${formatDate(periodEnd)}`}
@@ -99,7 +109,7 @@ export function FreePageView() {
         ) : (
           <Link
             href={plansPath()}
-            className="border-border rounded-lg border px-4 py-2 text-sm font-medium hover:bg-surface-hover"
+            className="border-border hover:bg-surface-hover rounded-lg border px-4 py-2 text-sm font-medium"
           >
             {t.upgradePlan}
           </Link>
@@ -109,9 +119,9 @@ export function FreePageView() {
       <div className="flex flex-col gap-3">
         <h3 className="text-sm font-medium">{t.billingHistory}</h3>
         {loadingHistory ? (
-          <p className="text-sm text-muted">{t.loading}</p>
+          <p className="text-muted text-sm">{t.loading}</p>
         ) : transactions.length === 0 ? (
-          <p className="text-sm text-muted">{t.billingHistoryEmpty}</p>
+          <p className="text-muted text-sm">{t.billingHistoryEmpty}</p>
         ) : (
           <div className="flex flex-col gap-2">
             {transactions.map((tx) => (
@@ -120,7 +130,9 @@ export function FreePageView() {
                 className="border-border bg-surface flex items-center justify-between rounded-lg border p-3"
               >
                 <div>
-                  <p className="text-xs text-muted">{formatDate(tx.createdAt)}</p>
+                  <p className="text-muted text-xs">
+                    {formatDate(tx.createdAt)}
+                  </p>
                   <p className="text-sm font-medium">
                     {tx.reference.replace("subscription:", "")}
                     {tx.amount > 0 && (
@@ -133,7 +145,9 @@ export function FreePageView() {
                 <div className="flex items-center gap-2">
                   <span
                     className={`text-xs font-medium ${
-                      tx.status === "COMPLETED" ? "text-green-600" : "text-red-600"
+                      tx.status === "COMPLETED"
+                        ? "text-green-600"
+                        : "text-red-600"
                     }`}
                   >
                     {tx.status}

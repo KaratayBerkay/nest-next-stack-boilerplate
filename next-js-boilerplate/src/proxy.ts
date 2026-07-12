@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { ACCESS_TOKEN_COOKIE, DEVICE_TOKEN_COOKIE, RBAC_TOKEN_COOKIE } from "@/lib/cookie";
+import {
+  ACCESS_TOKEN_COOKIE,
+  DEVICE_TOKEN_COOKIE,
+  RBAC_TOKEN_COOKIE,
+} from "@/lib/cookie";
 import { defaultLocale, isLocale, resolveLocale } from "@/lib/i18n/config";
 import { defaultVersion, isVersion, isVersionLike } from "@/lib/version/config";
 import { LANG_COOKIE } from "@/constants/i18n";

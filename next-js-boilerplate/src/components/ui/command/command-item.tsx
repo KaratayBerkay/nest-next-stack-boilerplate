@@ -60,8 +60,18 @@ export function CommandItem({
       data-selected={isSelected}
       data-disabled={disabled}
       data-command-item
+      // No roving-tabindex manager exists yet (focus normally stays on CommandInput while
+      // typing), so make each option independently reachable/activatable via keyboard too.
+      tabIndex={disabled ? -1 : 0}
       onClick={() => {
         if (!disabled) onSelect?.();
+      }}
+      onKeyDown={(e) => {
+        if (disabled) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect?.();
+        }
       }}
       {...props}
     >

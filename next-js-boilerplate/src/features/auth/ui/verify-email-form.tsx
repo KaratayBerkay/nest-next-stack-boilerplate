@@ -50,25 +50,19 @@ export function VerifyEmailForm({ token }: VerifyEmailFormProps) {
       </h2>
 
       {status === "verifying" && (
-        <p className="text-muted text-sm">
-          {t.form.verifyEmail.verifying}
-        </p>
+        <p className="text-muted text-sm">{t.form.verifyEmail.verifying}</p>
       )}
 
       {status === "success" && (
         <>
-          <p className="text-sm text-green-600">
-            {t.form.verifyEmail.success}
-          </p>
-          <Link href={LOGIN_PATH} className="text-brand underline text-sm">
+          <p className="text-sm text-green-600">{t.form.verifyEmail.success}</p>
+          <Link href={LOGIN_PATH} className="text-brand text-sm underline">
             {t.form.verifyEmail.loginLink}
           </Link>
         </>
       )}
 
-      {status === "error" && (
-        <p className="text-sm text-red-600">{errorMsg}</p>
-      )}
+      {status === "error" && <p className="text-sm text-red-600">{errorMsg}</p>}
     </div>
   );
 }

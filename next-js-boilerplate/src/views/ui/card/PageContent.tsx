@@ -1,12 +1,7 @@
 "use client";
 
 import { useState, type Dispatch, type SetStateAction } from "react";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/Tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import {
   Card,
   CardHeader,
@@ -59,8 +54,8 @@ export default function CardPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted text-sm">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam
-                    euismod, nisl eget aliquam ultricies.
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                    Nullam euismod, nisl eget aliquam ultricies.
                   </p>
                 </CardContent>
                 <CardFooter className="flex gap-2">
@@ -81,14 +76,17 @@ export default function CardPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <CardTitle>Tailwind CSS</CardTitle>
-                      <CardDescription>A utility-first CSS framework</CardDescription>
+                      <CardDescription>
+                        A utility-first CSS framework
+                      </CardDescription>
                     </div>
                     <Badge variant="success">Stable</Badge>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted text-sm">
-                    Rapidly build modern websites without ever leaving your HTML.
+                    Rapidly build modern websites without ever leaving your
+                    HTML.
                   </p>
                 </CardContent>
                 <CardFooter className="flex items-center justify-between">

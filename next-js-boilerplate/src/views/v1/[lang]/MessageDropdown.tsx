@@ -13,10 +13,7 @@ import { createPortal } from "react-dom";
 import { IconMail, IconChevronRight } from "@tabler/icons-react";
 import { Badge } from "./Badge";
 
-export function MessageDropdown({
-  conversations,
-  lang,
-}: MessageDropdownProps) {
+export function MessageDropdown({ conversations, lang }: MessageDropdownProps) {
   const t = useMessages("v1-shell");
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -100,9 +97,12 @@ export function MessageDropdown({
         typeof document !== "undefined" &&
         createPortal(
           <>
+            {/* Decorative dismiss backdrop, not a control — the panel's own controls remain
+                keyboard-reachable; this scrim only needs a click target. */}
             <div
               className="fixed inset-0 z-40 bg-black/50"
               onClick={() => setOpen(false)}
+              aria-hidden="true"
             />
             <div className="bg-bg animate-fade-in fixed inset-0 z-50 flex flex-col p-4">
               <div className="flex items-center justify-between pb-3">

@@ -10,13 +10,16 @@ describe("env schemas", () => {
 
   it("accepts a valid WebSocket URL", () => {
     expect(
-      clientEnvSchema.safeParse({ NEXT_PUBLIC_REALTIME_WS_URL: "wss://app.eys.gen.tr/ws" }).success,
+      clientEnvSchema.safeParse({
+        NEXT_PUBLIC_REALTIME_WS_URL: "wss://app.eys.gen.tr/ws",
+      }).success,
     ).toBe(true);
   });
 
   it("rejects a non-ws WebSocket URL", () => {
     expect(
-      clientEnvSchema.safeParse({ NEXT_PUBLIC_REALTIME_WS_URL: "http://nope" }).success,
+      clientEnvSchema.safeParse({ NEXT_PUBLIC_REALTIME_WS_URL: "http://nope" })
+        .success,
     ).toBe(false);
   });
 

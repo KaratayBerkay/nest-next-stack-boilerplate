@@ -82,7 +82,17 @@ export function ReactionInline({
           return (
             <button
               key={type}
-              onClick={() => handleReactionInline(type, submitting, setSubmitting, postId, commentId, onReactionChange, toast)}
+              onClick={() =>
+                handleReactionInline(
+                  type,
+                  submitting,
+                  setSubmitting,
+                  postId,
+                  commentId,
+                  onReactionChange,
+                  toast,
+                )
+              }
               disabled={submitting}
               className={`flex items-center gap-0.5 rounded-md px-1.5 py-1 text-[11px] transition-colors ${
                 active
@@ -118,7 +128,10 @@ async function handleReactionRow(
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      toast({ title: data.error ?? `Failed (${res.status})`, variant: "destructive" });
+      toast({
+        title: data.error ?? `Failed (${res.status})`,
+        variant: "destructive",
+      });
       return;
     }
     onReactionChange?.();
@@ -148,7 +161,16 @@ function ReactionRow({
         return (
           <button
             key={type}
-            onClick={() => handleReactionRow(type, submitting, setSubmitting, commentId, onReactionChange, toast)}
+            onClick={() =>
+              handleReactionRow(
+                type,
+                submitting,
+                setSubmitting,
+                commentId,
+                onReactionChange,
+                toast,
+              )
+            }
             disabled={submitting}
             className={`flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] transition-colors ${
               active

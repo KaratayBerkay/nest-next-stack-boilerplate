@@ -112,7 +112,8 @@ export default function PageContent() {
   const coverImageRef = useRef<string | undefined>(undefined);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const isDisabled = !title.trim() || !content.trim() || submitting || uploadError;
+  const isDisabled =
+    !title.trim() || !content.trim() || submitting || uploadError;
 
   return (
     <div className="flex w-full flex-col gap-4">
@@ -121,7 +122,27 @@ export default function PageContent() {
         <PageInfoButton content={sharePageInfo} />
       </div>
 
-      <form onSubmit={(e) => handleShareSubmit(e, title, content, submitting, setSubmitting, setUploading, setUploadError, setError, file, uploadError, coverImageRef, router, lang, t.failedToCreatePost)} className="flex flex-col gap-4">
+      <form
+        onSubmit={(e) =>
+          handleShareSubmit(
+            e,
+            title,
+            content,
+            submitting,
+            setSubmitting,
+            setUploading,
+            setUploadError,
+            setError,
+            file,
+            uploadError,
+            coverImageRef,
+            router,
+            lang,
+            t.failedToCreatePost,
+          )
+        }
+        className="flex flex-col gap-4"
+      >
         <div className="flex flex-col gap-1">
           <Label htmlFor="title">{t.title}</Label>
           <Input
@@ -156,7 +177,9 @@ export default function PageContent() {
             ref={fileRef}
             type="file"
             accept="image/*"
-            onChange={(e) => handleFileChange(e, setFile, setUploadError, setPreview)}
+            onChange={(e) =>
+              handleFileChange(e, setFile, setUploadError, setPreview)
+            }
             disabled={submitting}
             className="border-border bg-surface rounded-lg border px-3 py-2 text-sm file:mr-2 file:rounded file:border-0 file:bg-zinc-100 file:px-2 file:py-0.5 file:text-xs disabled:opacity-50"
           />
@@ -170,9 +193,24 @@ export default function PageContent() {
               {uploading && (
                 <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/30">
                   <div className="flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 text-xs text-white">
-                    <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    <svg
+                      className="h-3 w-3 animate-spin"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      />
                     </svg>
                     {t.uploading}
                   </div>

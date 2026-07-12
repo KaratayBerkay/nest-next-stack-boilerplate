@@ -40,19 +40,19 @@ export function PageInfoButton({ content, className }: PageInfoButtonProps) {
         <div className="flex flex-col gap-4">
           {content.sections.map((section) => (
             <div key={section.title} className="flex flex-col gap-1">
-              <h3 className="text-sm font-medium text-fg">{section.title}</h3>
-              <p className="text-xs leading-relaxed text-muted">
+              <h3 className="text-fg text-sm font-medium">{section.title}</h3>
+              <p className="text-muted text-xs leading-relaxed">
                 {section.description}
               </p>
             </div>
           ))}
 
           {content.tips && content.tips.length > 0 && (
-            <div className="border-border rounded-lg border bg-surface p-3">
-              <p className="mb-1.5 text-xs font-medium text-fg">Tips</p>
+            <div className="border-border bg-surface rounded-lg border p-3">
+              <p className="text-fg mb-1.5 text-xs font-medium">Tips</p>
               <ul className="flex flex-col gap-1">
                 {content.tips.map((tip) => (
-                  <li key={tip} className="text-xs text-muted">
+                  <li key={tip} className="text-muted text-xs">
                     {tip}
                   </li>
                 ))}

@@ -5,7 +5,12 @@ import type { CheckoutPageProps } from "@/types/checkout/CheckoutPage-types";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { StripeCardForm } from "@/features/billing/ui/StripeCardForm";
-import { TIER_ORDER, tierLabel, TIER_PRICES_CENTS, type Tier } from "@/lib/tier";
+import {
+  TIER_ORDER,
+  tierLabel,
+  TIER_PRICES_CENTS,
+  type Tier,
+} from "@/lib/tier";
 import { formatPrice } from "@/lib/currency";
 import { useCurrencyCookie } from "@/hooks/useCurrencyCookie";
 import { PRICING_PATH } from "@/constants/routes";
@@ -47,9 +52,7 @@ function onUpgradeSuccess(
   setTimeout(() => router.push(PRICING_PATH), 2000);
 }
 
-export default function CheckoutPage({
-  params,
-}: CheckoutPageProps) {
+export default function CheckoutPage({ params }: CheckoutPageProps) {
   const { lang, tier: targetTier } = use(params);
   const { user } = useAuth();
   const router = useRouter();
@@ -70,7 +73,7 @@ export default function CheckoutPage({
         <p className="text-lg font-medium text-green-600">
           {isDowngrade ? t.planChanged : t.upgradeSuccess}
         </p>
-        <p className="text-sm text-muted">{t.redirecting}</p>
+        <p className="text-muted text-sm">{t.redirecting}</p>
       </div>
     );
   }
@@ -82,7 +85,7 @@ export default function CheckoutPage({
           {isUpgrade ? t.upgrade : isDowngrade ? t.changePlan : t.checkout} to{" "}
           {tierLabel(targetTier)}
         </h1>
-        <p className="mt-1 text-sm text-muted">
+        <p className="text-muted mt-1 text-sm">
           {isUpgrade
             ? t.enterCardDetails
             : isDowngrade
@@ -91,23 +94,19 @@ export default function CheckoutPage({
         </p>
       </div>
 
-      <div className="rounded-lg border border-border bg-surface p-4">
+      <div className="border-border bg-surface rounded-lg border p-4">
         <h2 className="font-medium">{tierLabel(targetTier)}</h2>
         <p className="mt-1 text-2xl font-bold">
           {formatPrice(TIER_PRICES_CENTS[targetTier as Tier] ?? 0, currency)}
         </p>
-        <ul className="mt-3 space-y-1 text-sm text-muted">
+        <ul className="text-muted mt-3 space-y-1 text-sm">
           {(TIER_FEATURES[targetTier] ?? []).map((f) => (
             <li key={f}>• {f}</li>
           ))}
         </ul>
       </div>
 
-      {isCurrent && (
-        <p className="text-sm text-muted">
-          {t.alreadyOnPlan}
-        </p>
-      )}
+      {isCurrent && <p className="text-muted text-sm">{t.alreadyOnPlan}</p>}
 
       {isUpgrade && (
         <StripeCardForm
@@ -125,9 +124,11 @@ export default function CheckoutPage({
             </p>
           )}
           <button
-            onClick={() => handleDowngrade(targetTier, setError, setSuccess, router)}
+            onClick={() =>
+              handleDowngrade(targetTier, setError, setSuccess, router)
+            }
             data-testid="confirm-downgrade"
-            className="w-full rounded bg-muted px-4 py-2 text-sm font-medium hover:bg-muted/80"
+            className="bg-muted hover:bg-muted/80 w-full rounded px-4 py-2 text-sm font-medium"
           >
             {t.confirmDowngrade.replace("{tier}", tierLabel(targetTier))}
           </button>

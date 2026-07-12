@@ -31,8 +31,14 @@ export function mockCardFormSchema(errors: {
       cardNumber: z
         .string()
         .min(1, errors.cardNumberRequired)
-        .refine((v) => /^\d{13,19}$/.test(v.replace(/\s/g, "")), errors.cardNumberInvalid)
-        .refine((v) => luhnCheck(v.replace(/\s/g, "")), errors.cardNumberInvalid),
+        .refine(
+          (v) => /^\d{13,19}$/.test(v.replace(/\s/g, "")),
+          errors.cardNumberInvalid,
+        )
+        .refine(
+          (v) => luhnCheck(v.replace(/\s/g, "")),
+          errors.cardNumberInvalid,
+        ),
       expMonth: z
         .string()
         .min(1, errors.expiryRequired)

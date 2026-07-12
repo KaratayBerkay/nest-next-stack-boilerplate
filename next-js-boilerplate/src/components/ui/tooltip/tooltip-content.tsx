@@ -110,9 +110,13 @@ export function TooltipContent({ children, className }: TooltipContentProps) {
 
   const mobileTooltip = (
     <>
+      {/* Decorative dismiss backdrop, not a control: Escape is handled by the document
+          keydown listener above and the visible close button is a real <button>, so this
+          scrim doesn't need its own focus/keyboard target. */}
       <div
         className="animate-fade-in fixed inset-0 z-40 bg-black/50"
         onClick={hide}
+        aria-hidden="true"
       />
       <div className="animate-fade-in fixed inset-0 z-50 flex items-center justify-center p-6">
         <div

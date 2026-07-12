@@ -47,7 +47,9 @@ export default function Home() {
       </div>
 
       <section className="surface flex flex-col gap-2 p-5">
-        <h2 className="text-brand text-sm font-semibold">{t.stylingPipeline}</h2>
+        <h2 className="text-brand text-sm font-semibold">
+          {t.stylingPipeline}
+        </h2>
         <ul className="text-muted list-disc pl-5 text-sm">
           <li>
             Tailwind v4 utilities + CSS-first <code>@theme</code> token (the

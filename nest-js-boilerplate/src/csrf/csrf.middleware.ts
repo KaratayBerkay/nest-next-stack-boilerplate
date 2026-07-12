@@ -17,7 +17,8 @@ const csrf = doubleCsrf({
   // client IP. This avoids shared-NAT collisions and mobile IP-change breakage.
   getSessionIdentifier: (req) => {
     const cookies = (req as unknown as Record<string, unknown>).cookies as
-      Record<string, string> | undefined;
+      | Record<string, string>
+      | undefined;
     // cookie name is set by the app (access_token or __Host-access_token).
     // Fall back to the raw header for non-cookie clients.
     const authHeader = req.headers?.authorization;

@@ -1,6 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
-import { NOTIFICATIONS_URL, NOTIFICATIONS_UNREAD_COUNT_URL, MESSAGES_UNREAD_COUNT_URL } from "@/constants/api/urls";
+import {
+  NOTIFICATIONS_URL,
+  NOTIFICATIONS_UNREAD_COUNT_URL,
+  MESSAGES_UNREAD_COUNT_URL,
+} from "@/constants/api/urls";
 
 export interface NotificationItem {
   id: string;
@@ -46,7 +50,7 @@ export function useUnreadNotificationCount() {
       const res = await apiFetch(NOTIFICATIONS_UNREAD_COUNT_URL);
       if (!res.ok) throw new Error("Failed to fetch unread count");
       const data = await res.json();
-      return typeof data === "number" ? data : data.count ?? 0;
+      return typeof data === "number" ? data : (data.count ?? 0);
     },
     refetchOnWindowFocus: false,
     staleTime: 30_000,

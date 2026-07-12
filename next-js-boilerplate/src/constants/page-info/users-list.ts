@@ -2,8 +2,7 @@ import type { PageInfoContent } from "@/types/ui/PageInfo-types";
 
 export const usersListPageInfo: PageInfoContent = {
   title: "Users",
-  description:
-    "Browse and search all registered users on the platform.",
+  description: "Browse and search all registered users on the platform.",
   sections: [
     {
       title: "User Directory",

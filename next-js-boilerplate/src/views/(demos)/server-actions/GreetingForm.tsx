@@ -30,12 +30,7 @@ export default function GreetingForm() {
       <form action={formAction} className="flex items-end gap-2">
         <div className="flex flex-col gap-1">
           <Label htmlFor="name">Your name</Label>
-          <Input
-            id="name"
-            name="name"
-            required
-            data-testid="name-input"
-          />
+          <Input id="name" name="name" required data-testid="name-input" />
         </div>
         <SubmitButton />
       </form>

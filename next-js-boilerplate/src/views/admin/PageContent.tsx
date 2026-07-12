@@ -4,7 +4,12 @@ import { useState, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { IconSearch } from "@tabler/icons-react";
 import { UserTierRow } from "./UserTierRow";
-import { doSearch, onQueryChange, setTier, type UserResult } from "@/lib/admin/admin-utils";
+import {
+  doSearch,
+  onQueryChange,
+  setTier,
+  type UserResult,
+} from "@/lib/admin/admin-utils";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { adminPageInfo } from "@/constants/page-info";
 import { AccessDeniedPage } from "@/features/statics";
@@ -49,7 +54,9 @@ export default function PageContent() {
         <input
           type="text"
           value={query}
-          onChange={(e) => onQueryChange(e, setQuery, setResults, setSearching, searchTimer)}
+          onChange={(e) =>
+            onQueryChange(e, setQuery, setResults, setSearching, searchTimer)
+          }
           placeholder="Search users by name or email..."
           className="border-border bg-surface text-fg w-full rounded-lg border py-1.5 pr-3 pl-7 text-xs"
         />
@@ -77,7 +84,11 @@ export default function PageContent() {
 
       <div className="flex flex-col gap-2">
         {results.map((u) => (
-          <UserTierRow key={u.id} user={u} onSetTier={(userId, tier) => setTier(userId, tier, setStatusMsg)} />
+          <UserTierRow
+            key={u.id}
+            user={u}
+            onSetTier={(userId, tier) => setTier(userId, tier, setStatusMsg)}
+          />
         ))}
       </div>
     </div>

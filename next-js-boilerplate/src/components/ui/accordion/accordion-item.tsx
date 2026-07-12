@@ -8,6 +8,10 @@ export const AccordionItem = forwardRef<
   React.ElementRef<typeof Item>,
   React.ComponentPropsWithoutRef<typeof Item>
 >(({ className, ...props }, ref) => (
-  <Item ref={ref} className={cn("border-border border-b", className)} {...props} />
+  <Item
+    ref={ref}
+    className={cn("border-border border-b", className)}
+    {...props}
+  />
 ));
 AccordionItem.displayName = "AccordionItem";

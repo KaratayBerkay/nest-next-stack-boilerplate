@@ -84,8 +84,12 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   if (!token) {
     return (
       <div className="flex flex-col gap-4 text-center">
-        <h2 className="text-brand text-sm font-semibold">{t.form.resetPassword.title}</h2>
-        <p className="text-sm text-red-600">{t.errors.resetPasswordTokenMissing}</p>
+        <h2 className="text-brand text-sm font-semibold">
+          {t.form.resetPassword.title}
+        </h2>
+        <p className="text-sm text-red-600">
+          {t.errors.resetPasswordTokenMissing}
+        </p>
       </div>
     );
   }
@@ -93,9 +97,11 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   if (success) {
     return (
       <div className="flex flex-col gap-4 text-center">
-        <h2 className="text-brand text-sm font-semibold">{t.form.resetPassword.title}</h2>
+        <h2 className="text-brand text-sm font-semibold">
+          {t.form.resetPassword.title}
+        </h2>
         <p className="text-sm text-green-600">{t.form.resetPassword.success}</p>
-        <Link href={LOGIN_PATH} className="text-brand underline text-sm">
+        <Link href={LOGIN_PATH} className="text-brand text-sm underline">
           {t.form.resetPassword.loginLink}
         </Link>
       </div>
@@ -104,9 +110,27 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 
   return (
     <div className="flex flex-col gap-4 text-center">
-      <h2 className="text-brand text-sm font-semibold">{t.form.resetPassword.title}</h2>
+      <h2 className="text-brand text-sm font-semibold">
+        {t.form.resetPassword.title}
+      </h2>
 
-      <form onSubmit={(e) => handleResetPasswordSubmit(e, schema, password, confirmPassword, token, setFieldErrors, setSubmitting, setSuccess, router, t)} className="flex flex-col gap-3">
+      <form
+        onSubmit={(e) =>
+          handleResetPasswordSubmit(
+            e,
+            schema,
+            password,
+            confirmPassword,
+            token,
+            setFieldErrors,
+            setSubmitting,
+            setSuccess,
+            router,
+            t,
+          )
+        }
+        className="flex flex-col gap-3"
+      >
         <div className="flex flex-col gap-1 text-left">
           <Label htmlFor="reset-password-input" required>
             {t.form.resetPassword.passwordLabel}
@@ -122,7 +146,9 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
             data-testid="reset-password"
           />
           {fieldErrors.password && (
-            <p className="mt-0.5 text-xs text-red-600">{fieldErrors.password}</p>
+            <p className="mt-0.5 text-xs text-red-600">
+              {fieldErrors.password}
+            </p>
           )}
         </div>
 
@@ -140,7 +166,9 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
             data-testid="reset-confirm-password"
           />
           {fieldErrors.confirmPassword && (
-            <p className="mt-0.5 text-xs text-red-600">{fieldErrors.confirmPassword}</p>
+            <p className="mt-0.5 text-xs text-red-600">
+              {fieldErrors.confirmPassword}
+            </p>
           )}
         </div>
 
@@ -156,7 +184,9 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
           className="w-full"
           data-testid="reset-submit"
         >
-          {submitting ? t.form.resetPassword.submitting : t.form.resetPassword.submit}
+          {submitting
+            ? t.form.resetPassword.submitting
+            : t.form.resetPassword.submit}
         </Button>
       </form>
     </div>

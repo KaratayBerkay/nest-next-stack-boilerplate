@@ -4,8 +4,7 @@ export const variants = {
   secondary: "bg-surface text-fg hover:bg-surface-hover",
   outline: "border border-border bg-transparent hover:bg-surface-hover",
   ghost: "bg-transparent hover:bg-surface-hover",
-  destructive:
-    "bg-error text-error-fg hover:opacity-90 border border-error",
+  destructive: "bg-error text-error-fg hover:opacity-90 border border-error",
   link: "text-brand underline-offset-4 hover:underline",
   soft: "bg-brand/15 text-brand hover:bg-brand/20 border border-brand/30",
   shadow: "bg-fg text-bg hover:opacity-90 shadow-md",

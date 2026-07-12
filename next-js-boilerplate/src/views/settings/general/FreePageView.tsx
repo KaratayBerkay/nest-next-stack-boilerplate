@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef, type Dispatch, type SetStateAction } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
@@ -10,7 +16,11 @@ import { useToast } from "@/components/ui/Toast";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
-import { CURRENCIES, CURRENCY_COOKIE, DEFAULT_CURRENCY } from "@/constants/currency";
+import {
+  CURRENCIES,
+  CURRENCY_COOKIE,
+  DEFAULT_CURRENCY,
+} from "@/constants/currency";
 import type { CurrencyCode } from "@/constants/currency";
 import { PROFILE_UPDATE_URL } from "@/constants/api/urls";
 import { POST } from "@/constants/api/methods";
@@ -75,7 +85,8 @@ async function save(
     toast({ title: saveSuccess, variant: "success" });
     await refreshUser();
   } catch (err) {
-    const exception = (err as Error & { exception?: { msg?: string } }).exception;
+    const exception = (err as Error & { exception?: { msg?: string } })
+      .exception;
     toast({ title: exception?.msg ?? saveFailed, variant: "destructive" });
   } finally {
     setSaving(false);
@@ -89,7 +100,8 @@ export function FreePageView() {
 
   const [locale, setLocale] = useState("en");
   const [timezone, setTimezone] = useState("UTC");
-  const [currency, setCurrencyState] = useState<CurrencyCode>(readCurrencyCookie);
+  const [currency, setCurrencyState] =
+    useState<CurrencyCode>(readCurrencyCookie);
   const [saving, setSaving] = useState(false);
   const loadedRef = useRef(false);
 
@@ -101,7 +113,8 @@ export function FreePageView() {
   }, [user]);
 
   if (loading) return <LoadingAuth />;
-  if (!user) return <UnauthenticatedMessage message={t.signInToManageSettings} />;
+  if (!user)
+    return <UnauthenticatedMessage message={t.signInToManageSettings} />;
 
   return (
     <div className="flex flex-col gap-6">
@@ -119,7 +132,9 @@ export function FreePageView() {
             className="border-border bg-bg rounded-lg border px-3 py-2 text-sm"
           >
             {LOCALES.map((l) => (
-              <option key={l.value} value={l.value}>{l.label}</option>
+              <option key={l.value} value={l.value}>
+                {l.label}
+              </option>
             ))}
           </select>
         </div>
@@ -132,32 +147,46 @@ export function FreePageView() {
             className="border-border bg-bg rounded-lg border px-3 py-2 text-sm"
           >
             {TIMEZONES.map((tz) => (
-              <option key={tz} value={tz}>{tz}</option>
+              <option key={tz} value={tz}>
+                {tz}
+              </option>
             ))}
           </select>
         </div>
 
-          <div className="flex flex-col gap-1.5">
-            <Label>{t.theme}</Label>
-            <ThemeToggle />
-          </div>
+        <div className="flex flex-col gap-1.5">
+          <Label>{t.theme}</Label>
+          <ThemeToggle />
+        </div>
 
-          <div className="flex flex-col gap-1.5">
-            <Label>{t.currency}</Label>
-            <select
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value as CurrencyCode, setCurrencyState)}
-              className="border-border bg-bg rounded-lg border px-3 py-2 text-sm"
-            >
-              <option value="USD">US Dollar ($)</option>
-              <option value="EUR">Euro (€)</option>
-              <option value="TRY">Turkish Lira (₺)</option>
-            </select>
-          </div>
+        <div className="flex flex-col gap-1.5">
+          <Label>{t.currency}</Label>
+          <select
+            value={currency}
+            onChange={(e) =>
+              setCurrency(e.target.value as CurrencyCode, setCurrencyState)
+            }
+            className="border-border bg-bg rounded-lg border px-3 py-2 text-sm"
+          >
+            <option value="USD">US Dollar ($)</option>
+            <option value="EUR">Euro (€)</option>
+            <option value="TRY">Turkish Lira (₺)</option>
+          </select>
+        </div>
       </div>
 
       <Button
-        onClick={() => save(setSaving, locale, timezone, toast, t.saveSuccess, t.saveFailed, refreshUser)}
+        onClick={() =>
+          save(
+            setSaving,
+            locale,
+            timezone,
+            toast,
+            t.saveSuccess,
+            t.saveFailed,
+            refreshUser,
+          )
+        }
         disabled={saving}
         variant="primary"
         className="self-start"

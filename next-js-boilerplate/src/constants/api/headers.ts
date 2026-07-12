@@ -1,4 +1,6 @@
-export const JSON_CONTENT_TYPE_HEADER = { "Content-Type": "application/json" } as const;
+export const JSON_CONTENT_TYPE_HEADER = {
+  "Content-Type": "application/json",
+} as const;
 
 export const CSRF_TOKEN_HEADER = "x-csrf-token" as const;
 export const RBAC_TOKEN_HEADER = "x-rbac-token" as const;

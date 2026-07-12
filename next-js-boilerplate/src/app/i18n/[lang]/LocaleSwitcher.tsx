@@ -6,10 +6,7 @@ import type { LocaleSwitcherProps } from "@/types/i18n/LocaleSwitcher-types";
 // Plain server component: the active locale is already known from the route's
 // `[lang]` param, so active state is computed on the server and each option is a
 // `<Link>` — soft client-side navigation between locales, no extra client JS.
-export function LocaleSwitcher({
-  current,
-  label,
-}: LocaleSwitcherProps) {
+export function LocaleSwitcher({ current, label }: LocaleSwitcherProps) {
   return (
     <div className="flex flex-col gap-2">
       <span className="text-muted text-xs font-semibold">{label}</span>

@@ -9,11 +9,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { initials } from "@/lib/initials";
 import { IconChevronDown, IconLogout, IconSettings } from "@tabler/icons-react";
 
-export function ProfileSection({
-  user,
-  logout,
-  lang,
-}: ProfileSectionProps) {
+export function ProfileSection({ user, logout, lang }: ProfileSectionProps) {
   const t = useMessages("v1-shell");
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -37,7 +33,7 @@ export function ProfileSection({
           <div className="flex items-center gap-1.5">
             <span className="text-muted truncate text-xs">{user.email}</span>
             {user.tier && (
-              <span className="rounded-full border px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider">
+              <span className="rounded-full border px-1.5 py-0.5 text-[9px] font-medium tracking-wider uppercase">
                 {user.tier}
               </span>
             )}

@@ -14,7 +14,7 @@ export default function UILayout({ children }: UILayoutProps) {
   return (
     <div
       ref={scrollRef}
-      className="flex w-full min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden"
+      className="flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto"
     >
       <div className="border-border bg-bg/80 sticky top-0 z-50 -mx-4 mb-4 flex items-center justify-between border-b px-4 py-3 backdrop-blur-sm @sm:-mx-5">
         <div className="flex items-center gap-3">

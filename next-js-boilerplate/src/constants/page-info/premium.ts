@@ -2,8 +2,7 @@ import type { PageInfoContent } from "@/types/ui/PageInfo-types";
 
 export const premiumPageInfo: PageInfoContent = {
   title: "Premium",
-  description:
-    "Access exclusive features available to premium subscribers.",
+  description: "Access exclusive features available to premium subscribers.",
   sections: [
     {
       title: "Premium Features",
@@ -16,7 +15,5 @@ export const premiumPageInfo: PageInfoContent = {
         "Visit the Plans page to compare tiers and upgrade your subscription to access premium features.",
     },
   ],
-  tips: [
-    "Upgrade anytime from the Plans page",
-  ],
+  tips: ["Upgrade anytime from the Plans page"],
 };

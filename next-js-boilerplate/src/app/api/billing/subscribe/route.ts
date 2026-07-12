@@ -36,7 +36,12 @@ export async function POST(request: NextRequest) {
   const accessToken = (await cookies()).get(ACCESS_TOKEN_COOKIE)?.value;
   if (!accessToken) {
     return NextResponse.json(
-      { statusCode: 401, exc: "EX_AUTH_INVALID_CREDENTIALS", msg: "Unauthorized", key: "auth.errors.unauthorized" },
+      {
+        statusCode: 401,
+        exc: "EX_AUTH_INVALID_CREDENTIALS",
+        msg: "Unauthorized",
+        key: "auth.errors.unauthorized",
+      },
       { status: 401 },
     );
   }
@@ -46,14 +51,24 @@ export async function POST(request: NextRequest) {
     body = await request.json();
   } catch {
     return NextResponse.json(
-      { statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Invalid JSON body", key: "errors.invalidJson" },
+      {
+        statusCode: 400,
+        exc: "EX_VALIDATION_FORM",
+        msg: "Invalid JSON body",
+        key: "errors.invalidJson",
+      },
       { status: 400 },
     );
   }
 
   if (!body.tier) {
     return NextResponse.json(
-      { statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "tier is required", key: "errors.fieldsRequired" },
+      {
+        statusCode: 400,
+        exc: "EX_VALIDATION_FORM",
+        msg: "tier is required",
+        key: "errors.fieldsRequired",
+      },
       { status: 400 },
     );
   }
@@ -61,7 +76,12 @@ export async function POST(request: NextRequest) {
   const isUpgrade = ["BASIC", "MEDIUM", "PREMIUM"].includes(body.tier);
   if (isUpgrade && !body.paymentMethodId) {
     return NextResponse.json(
-      { statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Payment method required for upgrades", key: "billing.errors.cardRequired" },
+      {
+        statusCode: 400,
+        exc: "EX_VALIDATION_FORM",
+        msg: "Payment method required for upgrades",
+        key: "billing.errors.cardRequired",
+      },
       { status: 400 },
     );
   }
@@ -87,16 +107,19 @@ export async function POST(request: NextRequest) {
   const result = data?.subscribeToPlan;
   if (!result?.success) {
     return NextResponse.json(
-      { statusCode: 402, exc: "EX_BILLING_DECLINED", msg: result?.reason ?? "Payment declined", key: "billing.errors.declined" },
+      {
+        statusCode: 402,
+        exc: "EX_BILLING_DECLINED",
+        msg: result?.reason ?? "Payment declined",
+        key: "billing.errors.declined",
+      },
       { status: 402 },
     );
   }
 
-  const meData = await graphqlFetch<{ me: { id: string; email: string; name?: string } }>(
-    ME_QUERY,
-    {},
-    accessToken,
-  );
+  const meData = await graphqlFetch<{
+    me: { id: string; email: string; name?: string };
+  }>(ME_QUERY, {}, accessToken);
   const user = meData?.data?.me;
 
   await publishEvent("billing.subscription.upgraded", {

@@ -7,16 +7,19 @@ export const metadata: Metadata = {
   description: "Lazy loading demo",
 };
 
-const HeavyComponent = dynamic(() => import("@/views/(demos)/lazy-loading/HeavyComponent"), {
-  loading: () => (
-    <div
-      className="rounded border border-zinc-300 p-3 text-sm text-zinc-400"
-      data-testid="lazy-loading"
-    >
-      Loading heavy component...
-    </div>
-  ),
-});
+const HeavyComponent = dynamic(
+  () => import("@/views/(demos)/lazy-loading/HeavyComponent"),
+  {
+    loading: () => (
+      <div
+        className="rounded border border-zinc-300 p-3 text-sm text-zinc-400"
+        data-testid="lazy-loading"
+      >
+        Loading heavy component...
+      </div>
+    ),
+  },
+);
 
 export default function LazyLoadingPage() {
   return (

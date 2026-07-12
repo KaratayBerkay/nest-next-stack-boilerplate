@@ -10,26 +10,52 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Invalid JSON body", key: "errors.invalidJson" }, { status: 400 });
+    return NextResponse.json(
+      {
+        statusCode: 400,
+        exc: "EX_VALIDATION_FORM",
+        msg: "Invalid JSON body",
+        key: "errors.invalidJson",
+      },
+      { status: 400 },
+    );
   }
 
   if (!body.type) {
     return NextResponse.json(
-      { statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "type is required (LIKE | LOVE | LAUGH | WOW | SAD | ANGRY)", key: "errors.typeRequired" },
+      {
+        statusCode: 400,
+        exc: "EX_VALIDATION_FORM",
+        msg: "type is required (LIKE | LOVE | LAUGH | WOW | SAD | ANGRY)",
+        key: "errors.typeRequired",
+      },
       { status: 400 },
     );
   }
 
   if (!body.postId && !body.commentId) {
     return NextResponse.json(
-      { statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Either postId or commentId is required", key: "errors.targetRequired" },
+      {
+        statusCode: 400,
+        exc: "EX_VALIDATION_FORM",
+        msg: "Either postId or commentId is required",
+        key: "errors.targetRequired",
+      },
       { status: 400 },
     );
   }
 
   const extraHeaders = await csrfEchoHeaders();
   if (!extraHeaders) {
-    return NextResponse.json({ statusCode: 403, exc: "EX_FORBIDDEN", msg: "Invalid or missing CSRF token", key: "errors.csrf" }, { status: 403 });
+    return NextResponse.json(
+      {
+        statusCode: 403,
+        exc: "EX_FORBIDDEN",
+        msg: "Invalid or missing CSRF token",
+        key: "errors.csrf",
+      },
+      { status: 403 },
+    );
   }
 
   const { data, errors } = await graphqlFetch<{

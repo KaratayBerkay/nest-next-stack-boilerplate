@@ -15,7 +15,9 @@ const VIEWS = {
   PREMIUM: PremiumPageView,
 };
 
-export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PostPageProps): Promise<Metadata> {
   const { uuid } = await params;
   try {
     const backendUrl = serverEnv().APP_URL;

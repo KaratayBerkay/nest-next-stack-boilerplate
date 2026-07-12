@@ -10,5 +10,9 @@ export function Timestamp() {
     setTs(new Date().toISOString());
   }, []);
 
-  return <span className="font-mono" data-testid="ssr-timestamp">{ts}</span>;
+  return (
+    <span className="font-mono" data-testid="ssr-timestamp">
+      {ts}
+    </span>
+  );
 }

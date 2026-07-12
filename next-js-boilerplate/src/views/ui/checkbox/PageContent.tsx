@@ -1,13 +1,17 @@
 "use client";
 
-import { useState, type Dispatch, type SetStateAction, type ChangeEvent } from "react";
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/Tabs";
-import { Checkbox, CheckboxGroup, IndeterminateCheckbox } from "@/components/ui/Checkbox";
+  useState,
+  type Dispatch,
+  type SetStateAction,
+  type ChangeEvent,
+} from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
+import {
+  Checkbox,
+  CheckboxGroup,
+  IndeterminateCheckbox,
+} from "@/components/ui/Checkbox";
 
 type Todo = { id: string; label: string; done: boolean };
 
@@ -72,15 +76,26 @@ export default function CheckboxPage() {
               <h3 className="text-lg font-semibold">Disabled</h3>
               <div className="flex flex-col gap-2">
                 <Checkbox disabled data-testid="checkbox-disabled" />
-                <Checkbox disabled defaultChecked data-testid="checkbox-disabled-checked" />
+                <Checkbox
+                  disabled
+                  defaultChecked
+                  data-testid="checkbox-disabled-checked"
+                />
               </div>
             </section>
 
             <section className="flex flex-col gap-3">
               <h3 className="text-lg font-semibold">With Label</h3>
               <div className="flex flex-col gap-2">
-                <Checkbox label="Accept terms and conditions" data-testid="checkbox-with-label" />
-                <Checkbox label="Disabled option" disabled data-testid="checkbox-disabled-label" />
+                <Checkbox
+                  label="Accept terms and conditions"
+                  data-testid="checkbox-with-label"
+                />
+                <Checkbox
+                  label="Disabled option"
+                  disabled
+                  data-testid="checkbox-disabled-label"
+                />
               </div>
             </section>
 
@@ -105,13 +120,17 @@ export default function CheckboxPage() {
             </section>
 
             <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Indeterminate Checkbox (Tree)</h3>
+              <h3 className="text-lg font-semibold">
+                Indeterminate Checkbox (Tree)
+              </h3>
               <div className="flex flex-col gap-2">
                 <IndeterminateCheckbox
                   checked={allChildren}
                   indeterminate={someChildren && !allChildren}
                   label="Parent Item"
-                  onChange={(e) => handleParentChange(e, setChild1Checked, setChild2Checked)}
+                  onChange={(e) =>
+                    handleParentChange(e, setChild1Checked, setChild2Checked)
+                  }
                   data-testid="indeterminate-parent"
                 />
                 <div className="ml-6 flex flex-col gap-2">
@@ -136,11 +155,11 @@ export default function CheckboxPage() {
         <TabsContent value="examples">
           <section className="flex flex-col gap-3">
             <h3 className="text-lg font-semibold">To-do List</h3>
-            <div className="surface max-w-sm divide-border divide-y overflow-hidden">
+            <div className="surface divide-border max-w-sm divide-y overflow-hidden">
               {todos.map((todo) => (
                 <label
                   key={todo.id}
-                  className="flex items-center gap-3 px-4 py-3 text-sm cursor-pointer"
+                  className="flex cursor-pointer items-center gap-3 px-4 py-3 text-sm"
                 >
                   <Checkbox
                     checked={todo.done}
@@ -151,7 +170,7 @@ export default function CheckboxPage() {
                   </span>
                 </label>
               ))}
-              <div className="px-4 py-2 text-muted text-xs">
+              <div className="text-muted px-4 py-2 text-xs">
                 {todos.filter((t) => t.done).length} of {todos.length} completed
               </div>
             </div>

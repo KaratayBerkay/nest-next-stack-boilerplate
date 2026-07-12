@@ -1,9 +1,9 @@
-import { type Tier, TIER_ORDER } from './tier';
-import type { ComponentType, ReactNode } from 'react';
+import { type Tier, TIER_ORDER } from "./tier";
+import type { ComponentType, ReactNode } from "react";
 
 type TierViews = Record<Tier, ComponentType<Record<string, unknown>>>;
 
-const FALLBACK_TIER: Tier = 'FREE';
+const FALLBACK_TIER: Tier = "FREE";
 
 export function getTierView<T extends TierViews>(
   tier: string | null | undefined,

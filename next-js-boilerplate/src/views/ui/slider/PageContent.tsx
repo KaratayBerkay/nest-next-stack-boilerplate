@@ -1,9 +1,6 @@
 "use client";
-import {
-  Tabs, TabsContent, TabsList, TabsTrigger,
-} from "@/components/ui/Tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { Slider } from "@/components/ui/Slider";
-
 
 export default function SliderPage() {
   return (
@@ -19,12 +16,19 @@ export default function SliderPage() {
         </TabsList>
         <TabsContent value="components">
           <div className="flex flex-col gap-4">
-            <section className="flex flex-col gap-3"><h3 className="text-lg font-semibold">Default</h3><Slider defaultValue={[50]} max={100} step={1} className="max-w-sm" /></section>
+            <section className="flex flex-col gap-3">
+              <h3 className="text-lg font-semibold">Default</h3>
+              <Slider
+                defaultValue={[50]}
+                max={100}
+                step={1}
+                className="max-w-sm"
+              />
+            </section>
           </div>
         </TabsContent>
         <TabsContent value="examples">
-          <div className="flex flex-col gap-4">
-          </div>
+          <div className="flex flex-col gap-4"></div>
         </TabsContent>
       </Tabs>
     </div>

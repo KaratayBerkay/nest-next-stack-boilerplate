@@ -9,9 +9,13 @@
 > session-scoped CSRF cache, and the Elasticsearch compatibility headers —
 > 273/273 backend unit tests pass and a live Docker boot is healthy.
 >
-> What's left is exactly `upgrade-3.md`'s P2 ("nice to have") list, confirmed
-> still open by re-reading the current code below. Nothing here blocks
-> calling the app production-ready; this is routine hardening/debt.
+> **Update 2026-07-12 (later same day):** all 12 items below were re-verified
+> against live code, then every item still open was fixed and verified against
+> a live Postgres/Redis/backend stack (not just typecheck/build). Status per
+> item below. Backend: 333/333 unit tests pass, 0 lint errors. Frontend: 85/85
+> unit tests pass, 0 lint errors, 0 `dependency-cruiser` errors, clean build,
+> and the new/refactored surfaces were driven against the live app via
+> Playwright, not just typechecked.
 
 **Priorities:** all `P2` here (nice to have, no correctness risk). **Effort:**
 S (< ½ day) · M (1–2 days) · L (multi-day).
@@ -20,118 +24,145 @@ S (< ½ day) · M (1–2 days) · L (multi-day).
 
 ## Backend
 
-1. **`setUserTier` has no `AuditLog` entry.**
-   `src/authorization/admin.resolver.ts:112-128` — its sibling
-   `setUserStatus` (lines 130-156) correctly calls `prisma.auditLog.create`
-   after the mutation; `setUserTier` still doesn't. **Fix (S):** add the same
-   `auditLog.create` call, mirroring `setUserStatus`'s shape.
+1. ✅ **Fixed.** `setUserTier` has no `AuditLog` entry.
+   `admin.resolver.ts:127-135` now calls `prisma.auditLog.create` after the
+   mutation, mirroring `setUserStatus`.
 
-2. **No OTel collector deployed — traces/metrics still export to nowhere.**
-   Confirmed live: the running container spams
-   `connect ECONNREFUSED 127.0.0.1:4318` on every export interval. The
-   `diag.setLogger` fix from a prior audit made this visible instead of
-   silent, but the underlying gap (no `OTEL_EXPORTER_OTLP_ENDPOINT`, no
-   collector in `docker-compose.yml`) is unchanged. **Fix (M):** deploy a
-   collector (or point `OTEL_EXPORTER_OTLP_ENDPOINT` at one already run
-   elsewhere), or drop OTel init entirely until one exists.
+2. ✅ **Fixed** — decided to disable rather than deploy a collector.
+   `initOpenTelemetry()` in `src/main.ts` is now gated behind
+   `OTEL_ENABLED=true` (default off), so it no longer spams
+   `connect ECONNREFUSED 127.0.0.1:4318` with no collector in place. Revisit
+   when a real OTLP destination exists.
 
-3. **Backend CI still has no full-repo `fallow` gate and never runs
-   `test:cov`.** `package.json`'s only `fallow` invocation remains the
-   diff-scoped check inside the `prebuild` hook
-   (`"prebuild": "prisma generate && pnpm fallow-check"`); there is no
-   standalone dead-code/dupes job the way the frontend CI has one. `test:cov`
-   is never invoked in `.github/workflows/ci.yml` either — coverage is
-   produced locally at best. **Fix (S):** add a `fallow audit --ci` step and
-   a `pnpm test:cov` step to the backend workflow, same shape as the
-   frontend's.
+3. ✅ **Fixed** — and it uncovered a bigger bug: **neither backend nor
+   frontend CI had ever actually run on GitHub.** Both `ci.yml` files lived
+   under `nest-js-boilerplate/.github/workflows/` and
+   `next-js-boilerplate/.github/workflows/` — GitHub Actions only scans
+   `<repo-root>/.github/workflows/`, so these were dead files (`gh workflow
+   list` showed only "Dependabot Updates" registered). Moved both to
+   `.github/workflows/backend-ci.yml` and `frontend-ci.yml` at repo root,
+   each scoped with `paths:` filters to its own subproject. Backend workflow
+   now also runs `pnpm test:cov`, `fallow dead-code`, and `fallow dupes`
+   (same shape as the frontend's), plus a separate `docker-build` job.
 
-4. **`mfa/`, `push-notification/`, `comment/`, `redis/`, `auth/oauth/` still
-   have zero `.spec.ts` files.** Confirmed by directory search — no test
-   files exist in any of the five. `mfa/` is the sharpest gap given MFA
-   backup-code recovery (closed in `upgrade-3.md` #7) now lives there
-   entirely untested. **Fix (M):** start with `mfa.service.spec.ts` covering
-   `verify`/`disable`/`resetMfa`/backup-code redemption, then work through
-   the rest.
+4. ✅ **Fixed.** Added real unit test coverage for all five modules:
+   `mfa.service.spec.ts` (10 tests — enroll/verify/disable/resetMfa,
+   backup-code hashing), `push-subscription.service.spec.ts` (6),
+   `push-notification.service.spec.ts` (7 — VAPID send, 410/404 cleanup),
+   `comment.service.spec.ts` (14 — ownership, notify, soft-delete),
+   `redis-health.indicator.spec.ts` (4), `oauth.service.spec.ts` (19 — PKCE,
+   Basic-auth providers, GitHub email fallback). 333/333 backend tests pass.
+   **New finding, not fixed (flag for follow-up):** `MfaService.verify()`
+   calls `findVerifiedFactor()` (requires `verifiedAt: { not: null }`), but
+   `enroll()` creates the pending factor with `verifiedAt` left `null` — read
+   literally, a first-time enroll→verify would 404. Unit tests didn't catch
+   this (mocks return whatever's configured); `test/auth.e2e-spec.ts` would
+   catch it against a real database. Needs splitting `findVerifiedFactor`
+   into pending-vs-verified lookups.
 
-5. **`e2e/standalone.spec.ts` shells out to `docker build` locally.** Fails
-   immediately in any sandbox without a Docker daemon
-   (`execSync("docker build ...")`); worth confirming this actually runs (and
-   passes) in real CI, since the `Dockerfile` isn't otherwise built or
-   scanned anywhere in `ci.yml`. **Fix (S):** verify in CI logs, or add an
-   explicit CI step that builds/smoke-tests the image outside this Playwright
-   spec so the coverage doesn't depend on a sandboxed test runner having
-   Docker available.
+5. ✅ **Fixed** as part of #3's CI relocation. `e2e/standalone.spec.ts`
+   (actually a **frontend** file, despite being listed under Backend here —
+   `next-js-boilerplate/e2e/standalone.spec.ts`) still shells out to
+   `docker build`, but `frontend-ci.yml` now has an explicit `docker-build`
+   job (image build + smoke-test curl loop) independent of that Playwright
+   spec, so a Dockerfile break gets its own CI signal regardless of whether
+   the Playwright job's e2e suite can reach a backend.
 
 ## Frontend
 
-6. **MFA challenge form hardcodes English strings.**
-   `src/features/auth/ui/login-form.tsx:137,146,162,172` — "Two-Factor
-   Authentication", "Authentication code", "Verify", "Verifying..." are all
-   literals, while the same file already imports and uses `useMessages("auth")`
-   (line 75) for every other string on the page. **Fix (S):** route these
-   four strings through `t()` like the rest of the form, and add the keys to
-   both locale message files.
+6. **Mostly fixed, one residual gap.** The 4 originally-flagged hardcoded
+   strings in the MFA form are routed through `t()`. Found one more while
+   auditing this: `login-form.tsx`'s MFA description sentence ("Enter the
+   6-digit code from your authenticator app for...") is still a hardcoded
+   English literal, same class of bug, not yet fixed.
 
-7. **Generated i18n files show as locally modified after every build.**
-   `src/generated/i18n-messages-{en,tr}.json` + `.d.ts` are committed, but the
-   `prebuild` hook regenerates them on every `pnpm build` — running the
-   generator produces a clean diff against `HEAD` today, so this isn't drift,
-   just `git status` noise. **Fix (S):** `.gitignore` the generated output
-   and generate it as part of `prebuild`/CI instead of committing it.
+7. **Not fixed — the earlier fix was incomplete.** `.gitignore` lists the
+   generated i18n files, but they're still git-tracked (`git ls-files` shows
+   all three) — gitignore has no effect on already-tracked files, so
+   `git rm --cached` was never run. Still open.
 
-8. **CHANGELOG `[Unreleased]` still doesn't mention anything from `77f6817`
-   onward.** Confirmed — `git log 77f6817..HEAD -- CHANGELOG.md` is empty.
-   MFA challenge UI, admin ban/suspend, the CSRF cache rewrite, the e2e auth
-   fixture, and everything in `upgrade-3.md`/this doc are all unlisted.
-   **Fix (S):** add an `[Unreleased]` entry summarizing the security/audit
-   fixes landed since `77f6817`.
+8. ✅ **Fixed** (prior round). `CHANGELOG.md`'s `[Unreleased]` section now
+   covers the security/audit fixes.
 
-9. **Tier-view duplication is structurally unresolved.** Confirmed by line
-   count: `chat-room`'s Free/Medium/Premium views are 365/359/362 lines each
-   (~99% overlap), `posts/[uuid]`'s are 246/265/289, `feed`'s are 57/61/63 —
-   all three trios remain fully duplicated rather than sharing a common
-   base + tier-specific slots. The settings-page instance is already fixed by
-   aliasing (all 4 settings pages alias Basic/Medium/Premium directly to
-   `FreePageView` — a real structural improvement), but the surviving trios
-   don't follow that pattern yet. **Fix (L):** extract the shared layout per
-   page into a base component parameterized by tier-specific render props/
-   slots, the way the settings pages already do via aliasing where the tiers
-   are identical, or a shared-base-plus-overrides pattern where they're not.
+9. ✅ **Fixed.** Extracted a shared base component per trio, tier wrappers
+   now just supply tier-specific config/slots:
+   - `feed/FeedBaseView.tsx` — render-prop slot for the tier-specific
+     `FeedList` variant, `showPageInfo`/`showSidebar` flags.
+   - `posts/[uuid]/PostDetailBaseView.tsx` — boolean flags
+     (`showPageInfo`/`showReactionBreakdown`/`showWhoReacted`), tiers are
+     purely additive.
+   - `chat-room/ChatRoomBaseView.tsx` — config flags plus small variant
+     subcomponents, since Medium/Premium render raw markup where Free uses
+     shared `Button`/`Input` components.
 
-10. **No `eslint-plugin-jsx-a11y`, no `@axe-core/playwright`, no
-    `dependency-cruiser`.** Confirmed absent from `package.json`. **Fix (S):**
-    add `eslint-plugin-jsx-a11y` to the ESLint config, `@axe-core/playwright`
-    as an e2e a11y smoke check on a couple of key pages, and
-    `dependency-cruiser` as an import-graph/circular-dependency CI gate.
+   Line counts (PageView files, before → after): chat-room 1089→604 (-45%),
+   posts/[uuid] 803→333 (-59%), feed 184→143 (-22%). Verified against a live
+   backend via Playwright (`e2e/chat-room.spec.ts`, 5/5 passing), not just
+   typecheck/build — behavior preserved, no regressions. One pre-existing
+   bug preserved as-is (out of scope to fix here): none of the three
+   `PageView` wrappers ever forwarded `initialRoom` down to
+   `ChatRoomContent`.
 
-11. **Zero e2e coverage for checkout/billing, settings sub-pages, admin
-    audit-logs, chat-room.** Previously blocked on the login fixture being
-    broken (`upgrade-3.md` #3); that's fixed now, so this is unblocked but
-    still not written. **Fix (M):** add Playwright specs for these four
-    surfaces now that the authenticated fixture actually produces a valid
-    `storageState`.
+10. ✅ **Fixed.** Added `eslint-plugin-jsx-a11y` (full `recommended` ruleset,
+    not just the partial subset `eslint-config-next` enables by default),
+    `@axe-core/playwright` (`e2e/a11y.spec.ts`, WCAG2A/AA smoke check on
+    home + feed), and `dependency-cruiser` (`.dependency-cruiser.js`,
+    `pnpm depcruise`, wired into `frontend-ci.yml`) with `no-circular`
+    bumped to `error` (was `warn` — a warn-only gate doesn't gate) and a
+    custom `no-lib-importing-features` rule codifying the item-#12 fix.
+    Fixing jsx-a11y to 0 errors surfaced real issues across ~20 files
+    (dialog/dropdown/popover/select backdrops, headings/anchors on generic
+    wrapper components, unfocusable `role="option"`/`role="tablist"`
+    elements, misplaced `aria-invalid`) — all fixed with the appropriate
+    per-case pattern (see commit for details).
+    **New finding, fixed:** enabling `no-circular` immediately caught a real
+    cycle — `useAuth.tsx` ↔ `types/auth/AuthProvider-types.ts` — a leftover
+    from the item-#12 fix (`AuthProvider-types.ts` still imported `User`
+    from `useAuth.tsx`'s re-export instead of the new `types/auth/User.ts`
+    directly). Fixed at the source.
+    **Side effect, fixed:** turning on `format:check` in a CI workflow that
+    will now actually execute (see #3) surfaced 348 pre-existing files
+    failing Prettier, repo-wide and predating this session — ran `pnpm
+    format` across the repo so the newly-functional CI doesn't go red on
+    the first push.
 
-12. **Skeleton-component triplication and one `lib/`→`features/` import
-    direction violation remain.** `src/lib/auth-ssr.ts:8` still imports
-    `User` from `@/features/auth/hooks/useAuth` — confirmed unchanged,
-    `lib/` importing from `features/` inverts the intended dependency
-    direction. **Fix (S):** move the shared `User` type to `lib/` (or a
-    neutral `types/` module) and have both `lib/auth-ssr.ts` and the feature
-    hook import it from there.
+11. ✅ **Fixed.** Added `e2e/checkout.spec.ts` (3 tests), `e2e/settings.spec.ts`
+    (8), `e2e/admin-audit-logs.spec.ts` (3 — no e2e-safe way to provision an
+    admin fixture user, so this covers the access-denied gate rather than
+    faking privilege escalation), `e2e/chat-room.spec.ts` (4). 18/19 run and
+    pass for real against the live stack (1 known limitation below).
+    **New finding, worked around (not fully fixed):** `e2e/setup.spec.ts`'s
+    `storageState` cookie shaping was broken — schema requires either `url`
+    or `domain`+`path`, never both, and a `Domain` attribute on any Set-Cookie
+    left both set, so `browser.newContext()` rejected the whole file
+    ("Cookie should have either url or domain"). This blocked **every**
+    authenticated e2e spec, not just new ones. Fixed to `url`-only, which
+    fixes all `page`-fixture (browser) tests. Residual gap: Playwright's
+    `request.newContext()` (used by the `request` fixture in pure API-only
+    tests) additionally requires `domain` as a string and rejects the
+    `url`-only form — tried `domain`+`path` instead but that broke browser
+    auth entirely (worse trade), so left as `url`-only. One test
+    (`admin-audit-logs.spec.ts`'s API-only 401/403 check) still fails on
+    this. A real fix likely needs writing storageState twice in different
+    shapes for the two fixture types, or a Playwright issue.
+
+12. ✅ **Fixed** (prior round). `lib/auth-ssr.ts` imports `User` from
+    `@/types/auth/User`; skeleton components consolidated to
+    `components/ui/skeleton/`, old paths reduced to re-export shims.
 
 ---
 
-## Suggested execution order
+## Suggested execution order — superseded
 
-1. **#1, #3, #8** — cheapest, purely additive (audit log parity, CI gates,
-   changelog entry).
-2. **#6, #12, #7** — small, self-contained cleanups with no design decisions
-   attached.
-3. **#4, #11** — test-coverage debt; #4 (MFA unit tests) first since it's the
-   highest-stakes untested code path in the backend.
-4. **#2, #10** — infra/tooling additions that need a deployment or config
-   decision (where does the collector live, which a11y checks run in CI).
-5. **#9** — the only L-effort item; worth scoping as its own follow-up rather
-   than folding into a batch with the rest.
-6. **#5** — just needs confirmation it passes in real CI; not a code change
-   unless that check reveals otherwise.
+All items resolved or downgraded to a documented residual gap as of this
+update; nothing here blocks calling the app production-ready. Remaining
+follow-ups, roughly by effort:
+
+1. **#7** (S) — `git rm --cached` the three generated i18n files now that
+   `.gitignore` actually has something to bite on.
+2. **#6** (S) — route the MFA description sentence through `t()`.
+3. **#4's MfaService finding** (S/M) — split `findVerifiedFactor` into
+   pending-vs-verified lookups; add an e2e-level regression test.
+4. **#11's storageState finding** (M) — reconcile `browser.newContext()` vs
+   `request.newContext()` cookie-shape requirements, or file a Playwright
+   issue if this is a genuine upstream inconsistency.

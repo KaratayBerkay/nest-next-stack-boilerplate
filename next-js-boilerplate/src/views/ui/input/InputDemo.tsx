@@ -1,12 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/Tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import {
   Input,
   DateInput,
@@ -76,7 +71,14 @@ export default function InputDemo() {
               <h3 className="text-lg font-semibold">With Icon</h3>
               <InputWithIcon
                 icon={
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <circle cx="11" cy="11" r="8" />
                     <path d="m21 21-4.3-4.3" />
                   </svg>
@@ -89,8 +91,12 @@ export default function InputDemo() {
 
             <section className="flex flex-col gap-3">
               <h3 className="text-lg font-semibold">Date Input</h3>
-              <div className="flex flex-col gap-2 max-w-sm">
-                <DateInput value={date} onChange={setDate} data-testid="date-input" />
+              <div className="flex max-w-sm flex-col gap-2">
+                <DateInput
+                  value={date}
+                  onChange={setDate}
+                  data-testid="date-input"
+                />
                 {date && (
                   <p className="text-muted text-xs">
                     Selected: {date.toLocaleDateString()}
@@ -101,7 +107,7 @@ export default function InputDemo() {
 
             <section className="flex flex-col gap-3">
               <h3 className="text-lg font-semibold">Date & Time Input</h3>
-              <div className="flex flex-col gap-2 max-w-sm">
+              <div className="flex max-w-sm flex-col gap-2">
                 <DateTimeInput
                   value={dateTime}
                   onChange={setDateTime}
@@ -128,14 +134,22 @@ export default function InputDemo() {
             <div className="surface max-w-sm space-y-4 p-4">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="login-email">Email</Label>
-                <Input id="login-email" type="email" placeholder="you@example.com" />
+                <Input
+                  id="login-email"
+                  type="email"
+                  placeholder="you@example.com"
+                />
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="login-password">Password</Label>
-                <Input id="login-password" type="password" placeholder="••••••••" />
+                <Input
+                  id="login-password"
+                  type="password"
+                  placeholder="••••••••"
+                />
               </div>
               <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 text-xs text-muted">
+                <label className="text-muted flex items-center gap-2 text-xs">
                   <input type="checkbox" className="rounded" /> Remember me
                 </label>
                 <Button size="sm" variant="primary">

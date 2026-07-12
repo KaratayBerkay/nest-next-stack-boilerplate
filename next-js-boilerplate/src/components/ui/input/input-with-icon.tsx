@@ -1,5 +1,8 @@
 import { cn } from "@/lib/cn";
-import { inputBaseClasses, inputErrorClasses } from "@/components/ui/input-styles";
+import {
+  inputBaseClasses,
+  inputErrorClasses,
+} from "@/components/ui/input-styles";
 import type { InputWithIconProps } from "@/types/ui/InputWithIcon-types";
 
 export function InputWithIcon({

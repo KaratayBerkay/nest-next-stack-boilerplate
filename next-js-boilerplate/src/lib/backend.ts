@@ -10,7 +10,11 @@ import {
   X_FORWARDED_FOR_HEADER,
   bearerAuthHeader,
 } from "@/constants";
-import { DEVICE_TOKEN_COOKIE, RBAC_TOKEN_COOKIE, USER_TOKEN_COOKIE } from "./cookie";
+import {
+  DEVICE_TOKEN_COOKIE,
+  RBAC_TOKEN_COOKIE,
+  USER_TOKEN_COOKIE,
+} from "./cookie";
 import { serverEnv } from "./env";
 
 export interface BackendResponse<T = unknown> {
@@ -85,7 +89,9 @@ const CSRF_COOKIE_DEV = "csrf-token";
 const CSRF_COOKIE_PROD = "__Host-csrf";
 
 function csrfCookieName(): string {
-  return process.env.NODE_ENV === "production" ? CSRF_COOKIE_PROD : CSRF_COOKIE_DEV;
+  return process.env.NODE_ENV === "production"
+    ? CSRF_COOKIE_PROD
+    : CSRF_COOKIE_DEV;
 }
 
 interface CsrfCacheEntry {
@@ -97,7 +103,9 @@ interface CsrfCacheEntry {
 const CSRF_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 const csrfCache = new Map<string, CsrfCacheEntry>();
 
-function sessionCacheKey(cookieStore: Awaited<ReturnType<typeof cookies>>): string {
+function sessionCacheKey(
+  cookieStore: Awaited<ReturnType<typeof cookies>>,
+): string {
   const rbac = cookieStore.get(RBAC_TOKEN_COOKIE)?.value ?? "";
   const device = cookieStore.get(DEVICE_TOKEN_COOKIE)?.value ?? "";
   const user = cookieStore.get(USER_TOKEN_COOKIE)?.value ?? "";
@@ -127,7 +135,10 @@ export async function clearCsrfCache(): Promise<void> {
 }
 
 /** Parse the name=value portion from a Set-Cookie header string. */
-function parseSetCookieValue(setCookie: string, cookieName: string): string | null {
+function parseSetCookieValue(
+  setCookie: string,
+  cookieName: string,
+): string | null {
   const re = new RegExp(`(?:^|,\\s*)${cookieName}=([^;]+)`);
   const m = setCookie.match(re);
   return m ? `${cookieName}=${m[1]}` : null;
@@ -144,7 +155,10 @@ function parseSetCookieValue(setCookie: string, cookieName: string): string | nu
  * multiple mutations within the same request batch share one CSRF token without
  * cross-session contamination.
  */
-export async function csrfEchoHeaders(): Promise<Record<string, string> | null> {
+export async function csrfEchoHeaders(): Promise<Record<
+  string,
+  string
+> | null> {
   const cookieStore = await cookies();
   const key = sessionCacheKey(cookieStore);
   evictStale();
@@ -168,7 +182,11 @@ export async function csrfEchoHeaders(): Promise<Record<string, string> | null> 
     ? parseSetCookieValue(setCookieHeader, csrfCookieName())
     : null;
 
-  csrfCache.set(key, { token: csrfToken, cookie: csrfCookieValue ?? "", ts: Date.now() });
+  csrfCache.set(key, {
+    token: csrfToken,
+    cookie: csrfCookieValue ?? "",
+    ts: Date.now(),
+  });
 
   return {
     [CSRF_TOKEN_HEADER]: csrfToken,
@@ -197,7 +215,9 @@ const EXC_TO_STATUS: Record<string, number> = {
  * global APP_FILTER shape.
  */
 export function graphqlErrorBody(
-  errors: { message: string; extensions?: { code?: string; exc?: string } }[] | undefined,
+  errors:
+    | { message: string; extensions?: { code?: string; exc?: string } }[]
+    | undefined,
   defaultMsg?: string,
 ): { statusCode: number; exc: string; msg: string; key: string } {
   const exc = errors?.[0]?.extensions?.exc ?? "EX_INTERNAL";

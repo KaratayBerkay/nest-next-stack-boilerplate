@@ -18,24 +18,60 @@ const SET_USER_TIER_MUTATION = `
 export async function POST(request: NextRequest) {
   const accessToken = (await cookies()).get(ACCESS_TOKEN_COOKIE)?.value;
   if (!accessToken) {
-    return NextResponse.json({ statusCode: 401, exc: "EX_AUTH_INVALID_CREDENTIALS", msg: "Unauthorized", key: "auth.errors.unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      {
+        statusCode: 401,
+        exc: "EX_AUTH_INVALID_CREDENTIALS",
+        msg: "Unauthorized",
+        key: "auth.errors.unauthorized",
+      },
+      { status: 401 },
+    );
   }
 
-  const meRes = await graphqlFetch<{ me: { role: string } }>(ME_QUERY, undefined, accessToken);
-  if (meRes.data?.me?.role !== "ADMIN" && meRes.data?.me?.role !== "SUPERADMIN") {
-    return NextResponse.json({ statusCode: 403, exc: "EX_FORBIDDEN", msg: "Forbidden", key: "auth.errors.forbidden" }, { status: 403 });
+  const meRes = await graphqlFetch<{ me: { role: string } }>(
+    ME_QUERY,
+    undefined,
+    accessToken,
+  );
+  if (
+    meRes.data?.me?.role !== "ADMIN" &&
+    meRes.data?.me?.role !== "SUPERADMIN"
+  ) {
+    return NextResponse.json(
+      {
+        statusCode: 403,
+        exc: "EX_FORBIDDEN",
+        msg: "Forbidden",
+        key: "auth.errors.forbidden",
+      },
+      { status: 403 },
+    );
   }
 
   let body: { userId: string; tier: string };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Invalid JSON body", key: "errors.invalidJson" }, { status: 400 });
+    return NextResponse.json(
+      {
+        statusCode: 400,
+        exc: "EX_VALIDATION_FORM",
+        msg: "Invalid JSON body",
+        key: "errors.invalidJson",
+      },
+      { status: 400 },
+    );
   }
 
   if (!body.userId || !body.tier) {
     return NextResponse.json(
-      { statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "userId and tier are required", key: "errors.fieldsRequired" },
+      {
+        statusCode: 400,
+        exc: "EX_VALIDATION_FORM",
+        msg: "userId and tier are required",
+        key: "errors.fieldsRequired",
+      },
       { status: 400 },
     );
   }

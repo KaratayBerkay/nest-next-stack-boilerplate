@@ -2,8 +2,7 @@ import type { PageInfoContent } from "@/types/ui/PageInfo-types";
 
 export const usersDetailPageInfo: PageInfoContent = {
   title: "User Profile",
-  description:
-    "View details about a specific user.",
+  description: "View details about a specific user.",
   sections: [
     {
       title: "Profile Information",

@@ -21,34 +21,34 @@ This document describes the enhanced CSS and UI system implemented in the Next.j
 The color system now includes semantic color tokens for consistent theming:
 
 ```css
---success: #16a34a;        /* Green */
+--success: #16a34a; /* Green */
 --success-fg: #ffffff;
---warning: #d97706;        /* Amber */
+--warning: #d97706; /* Amber */
 --warning-fg: #ffffff;
---error: #dc2626;          /* Red */
+--error: #dc2626; /* Red */
 --error-fg: #ffffff;
---info: #0ea5e9;           /* Blue */
+--info: #0ea5e9; /* Blue */
 --info-fg: #ffffff;
 ```
 
 ### Brand Colors
 
 ```css
---brand: #4f46e5;          /* Indigo */
+--brand: #4f46e5; /* Indigo */
 --brand-fg: #ffffff;
 ```
 
 ### Surface Colors
 
 ```css
---surface: #fafafa;        /* Light gray */
+--surface: #fafafa; /* Light gray */
 --surface-hover: #f4f4f5;
 ```
 
 ### Muted Colors
 
 ```css
---muted: #71717a;          /* Gray */
+--muted: #71717a; /* Gray */
 --muted-fg: #52525b;
 ```
 
@@ -281,11 +281,13 @@ stagger
 Use for lists to animate items sequentially:
 
 ```tsx
-{items.map((item, i) => (
-  <div key={item.id} className={`animate-stagger-${i * 50}`}>
-    {item.content}
-  </div>
-))}
+{
+  items.map((item, i) => (
+    <div key={item.id} className={`animate-stagger-${i * 50}`}>
+      {item.content}
+    </div>
+  ));
+}
 ```
 
 ---
@@ -420,10 +422,10 @@ All interactive elements are at least 44px:
 ### Before
 
 ```tsx
-<Card className="border border-border bg-bg rounded-xl shadow-sm">
+<Card className="border-border bg-bg rounded-xl border shadow-sm">
   <div className="p-4">
     <h3 className="text-xl font-semibold">Title</h3>
-    <p className="text-sm text-muted">Description</p>
+    <p className="text-muted text-sm">Description</p>
   </div>
 </Card>
 ```
@@ -443,9 +445,7 @@ All interactive elements are at least 44px:
 ### Before
 
 ```tsx
-<Button className="bg-brand text-white px-4 py-2 rounded-lg">
-  Click me
-</Button>
+<Button className="bg-brand rounded-lg px-4 py-2 text-white">Click me</Button>
 ```
 
 ### After
@@ -457,7 +457,7 @@ All interactive elements are at least 44px:
 ### Before
 
 ```tsx
-<span className="bg-green-100 text-green-700 px-2.5 py-0.5 rounded-full text-xs font-medium">
+<span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
   Success
 </span>
 ```
@@ -487,7 +487,18 @@ All interactive elements are at least 44px:
 
 ```ts
 interface TypographyProps extends React.HTMLAttributes<HTMLElement> {
-  variant?: "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "body" | "bodyLarge" | "bodySmall" | "caption" | "overline";
+  variant?:
+    | "h1"
+    | "h2"
+    | "h3"
+    | "h4"
+    | "h5"
+    | "h6"
+    | "body"
+    | "bodyLarge"
+    | "bodySmall"
+    | "caption"
+    | "overline";
   as?: "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "p" | "span";
 }
 ```
@@ -496,7 +507,15 @@ interface TypographyProps extends React.HTMLAttributes<HTMLElement> {
 
 ```ts
 interface ButtonProps extends React.ComponentPropsWithoutRef<"button"> {
-  variant?: "default" | "primary" | "secondary" | "outline" | "ghost" | "destructive" | "soft" | "shadow";
+  variant?:
+    | "default"
+    | "primary"
+    | "secondary"
+    | "outline"
+    | "ghost"
+    | "destructive"
+    | "soft"
+    | "shadow";
   size?: "xs" | "sm" | "md" | "lg" | "icon" | "icon-sm" | "icon-xs";
 }
 ```
@@ -513,7 +532,18 @@ interface CardProps extends React.ComponentPropsWithoutRef<"div"> {
 
 ```ts
 interface BadgeProps extends React.ComponentPropsWithoutRef<"span"> {
-  variant?: "default" | "secondary" | "outline" | "destructive" | "success" | "warning" | "error" | "info" | "soft" | "dot" | "pill";
+  variant?:
+    | "default"
+    | "secondary"
+    | "outline"
+    | "destructive"
+    | "success"
+    | "warning"
+    | "error"
+    | "info"
+    | "soft"
+    | "dot"
+    | "pill";
 }
 ```
 

@@ -744,7 +744,8 @@ body {
   }
 }
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -922,23 +923,43 @@ body {
 
 /* ── Gradient utilities ──────────────────────────────────────────── */
 .bg-gradient-brand {
-  background-image: linear-gradient(135deg, var(--brand) 0%, color-mix(in oklab, var(--brand) 70%, #000) 100%);
+  background-image: linear-gradient(
+    135deg,
+    var(--brand) 0%,
+    color-mix(in oklab, var(--brand) 70%, #000) 100%
+  );
 }
 
 .bg-gradient-success {
-  background-image: linear-gradient(135deg, var(--success) 0%, color-mix(in oklab, var(--success) 70%, #000) 100%);
+  background-image: linear-gradient(
+    135deg,
+    var(--success) 0%,
+    color-mix(in oklab, var(--success) 70%, #000) 100%
+  );
 }
 
 .bg-gradient-warning {
-  background-image: linear-gradient(135deg, var(--warning) 0%, color-mix(in oklab, var(--warning) 70%, #000) 100%);
+  background-image: linear-gradient(
+    135deg,
+    var(--warning) 0%,
+    color-mix(in oklab, var(--warning) 70%, #000) 100%
+  );
 }
 
 .bg-gradient-error {
-  background-image: linear-gradient(135deg, var(--error) 0%, color-mix(in oklab, var(--error) 70%, #000) 100%);
+  background-image: linear-gradient(
+    135deg,
+    var(--error) 0%,
+    color-mix(in oklab, var(--error) 70%, #000) 100%
+  );
 }
 
 .bg-gradient-info {
-  background-image: linear-gradient(135deg, var(--info) 0%, color-mix(in oklab, var(--info) 70%, #000) 100%);
+  background-image: linear-gradient(
+    135deg,
+    var(--info) 0%,
+    color-mix(in oklab, var(--info) 70%, #000) 100%
+  );
 }
 
 /* ── Border style utilities ──────────────────────────────────────── */

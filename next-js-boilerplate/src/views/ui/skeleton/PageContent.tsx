@@ -1,12 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/Tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import {
   Skeleton,
   SkeletonLine,
@@ -44,7 +39,10 @@ export default function SkeletonPage() {
 
             <section className="flex flex-col gap-3">
               <h3 className="text-lg font-semibold">Circle</h3>
-              <Skeleton className="size-10 rounded-full" data-testid="skeleton-circle" />
+              <Skeleton
+                className="size-10 rounded-full"
+                data-testid="skeleton-circle"
+              />
             </section>
 
             <section className="flex flex-col gap-3">
@@ -67,8 +65,13 @@ export default function SkeletonPage() {
             </section>
 
             <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Skeleton Conversation Sidebar</h3>
-              <SkeletonConversationSidebar className="max-w-sm" data-testid="skeleton-sidebar" />
+              <h3 className="text-lg font-semibold">
+                Skeleton Conversation Sidebar
+              </h3>
+              <SkeletonConversationSidebar
+                className="max-w-sm"
+                data-testid="skeleton-sidebar"
+              />
             </section>
           </div>
         </TabsContent>
@@ -76,7 +79,7 @@ export default function SkeletonPage() {
         <TabsContent value="examples">
           <section className="flex flex-col gap-3">
             <h3 className="text-lg font-semibold">Profile Card Loading</h3>
-            <p className="text-muted text-xs mb-2">
+            <p className="text-muted mb-2 text-xs">
               Toggle loading state to see skeletons in a realistic layout.
             </p>
             <Button
@@ -98,7 +101,12 @@ export default function SkeletonPage() {
                 </div>
               ) : (
                 <div className="flex items-center gap-3 p-4">
-                  <Avatar src="https://i.pravatar.cc/80?img=12" alt="User" fallback="JD" size="md" />
+                  <Avatar
+                    src="https://i.pravatar.cc/80?img=12"
+                    alt="User"
+                    fallback="JD"
+                    size="md"
+                  />
                   <div>
                     <p className="text-sm font-medium">Jane Doe</p>
                     <p className="text-muted text-xs">jane@example.com</p>

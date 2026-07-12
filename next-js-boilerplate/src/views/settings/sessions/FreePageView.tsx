@@ -5,9 +5,17 @@ import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
 import { apiFetch, apiFetchJson } from "@/lib/api-client";
 import { useCallback, useEffect, useState } from "react";
-import { IconDeviceDesktop, IconDeviceMobile, IconWorld } from "@tabler/icons-react";
+import {
+  IconDeviceDesktop,
+  IconDeviceMobile,
+  IconWorld,
+} from "@tabler/icons-react";
 import { formatDateTime } from "@/lib/date-time";
-import { SESSIONS_LIST_URL, SESSIONS_REVOKE_URL, SESSIONS_REVOKE_OTHERS_URL } from "@/constants/api/urls";
+import {
+  SESSIONS_LIST_URL,
+  SESSIONS_REVOKE_URL,
+  SESSIONS_REVOKE_OTHERS_URL,
+} from "@/constants/api/urls";
 import { POST } from "@/constants/api/methods";
 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 import { PageInfoButton } from "@/components/ui/page-info";
@@ -29,23 +37,18 @@ export function FreePageView() {
       .finally(() => setLoadingSessions(false));
   }, [user]);
 
-  const revokeSession = useCallback(
-    async (sessionId: string) => {
-      try {
-        await apiFetchJson(SESSIONS_REVOKE_URL, {
-          method: POST,
-          body: JSON.stringify({ sessionId }),
-          headers: JSON_CONTENT_TYPE_HEADER,
-        });
-        setSessions((prev) =>
-          prev.filter((s) => s.sessionId !== sessionId),
-        );
-      } catch {
-        // silently fail
-      }
-    },
-    [],
-  );
+  const revokeSession = useCallback(async (sessionId: string) => {
+    try {
+      await apiFetchJson(SESSIONS_REVOKE_URL, {
+        method: POST,
+        body: JSON.stringify({ sessionId }),
+        headers: JSON_CONTENT_TYPE_HEADER,
+      });
+      setSessions((prev) => prev.filter((s) => s.sessionId !== sessionId));
+    } catch {
+      // silently fail
+    }
+  }, []);
 
   const revokeAllOtherSessions = useCallback(async () => {
     try {
@@ -67,12 +70,12 @@ export function FreePageView() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-brand">Sessions & Devices</h2>
+        <h2 className="text-brand text-sm font-semibold">Sessions & Devices</h2>
         <div className="flex items-center gap-2">
           {sessions.length > 1 && (
             <button
               onClick={revokeAllOtherSessions}
-              className="text-xs text-red-600 hover:text-red-700 transition-colors"
+              className="text-xs text-red-600 transition-colors hover:text-red-700"
             >
               Log out all other sessions
             </button>
@@ -82,18 +85,21 @@ export function FreePageView() {
       </div>
 
       {loadingSessions ? (
-        <div className="flex items-center justify-center py-12 text-sm text-muted">
+        <div className="text-muted flex items-center justify-center py-12 text-sm">
           Loading sessions...
         </div>
       ) : sessions.length === 0 ? (
-        <div className="flex items-center justify-center py-12 text-sm text-muted">
+        <div className="text-muted flex items-center justify-center py-12 text-sm">
           No active sessions found.
         </div>
       ) : (
         <div className="flex flex-col gap-3">
           {sessions.map((session) => {
             const isCurrent = session.sessionId === currentSessionId;
-            const isMobile = session.userAgent?.toLowerCase().includes("mobile") || session.userAgent?.toLowerCase().includes("android") || session.userAgent?.toLowerCase().includes("iphone");
+            const isMobile =
+              session.userAgent?.toLowerCase().includes("mobile") ||
+              session.userAgent?.toLowerCase().includes("android") ||
+              session.userAgent?.toLowerCase().includes("iphone");
 
             return (
               <div
@@ -102,18 +108,28 @@ export function FreePageView() {
                   isCurrent ? "border-brand/30 ring-brand/10 ring-1" : ""
                 }`}
               >
-                <div className="flex items-start gap-3 min-w-0">
-                  <div className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${
-                    isCurrent ? "bg-brand/10 text-brand" : "bg-surface text-muted"
-                  }`}>
-                    {isMobile ? <IconDeviceMobile size={20} stroke={1.5} /> : <IconDeviceDesktop size={20} stroke={1.5} />}
+                <div className="flex min-w-0 items-start gap-3">
+                  <div
+                    className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${
+                      isCurrent
+                        ? "bg-brand/10 text-brand"
+                        : "bg-surface text-muted"
+                    }`}
+                  >
+                    {isMobile ? (
+                      <IconDeviceMobile size={20} stroke={1.5} />
+                    ) : (
+                      <IconDeviceDesktop size={20} stroke={1.5} />
+                    )}
                   </div>
-                  <div className="flex flex-col gap-1 min-w-0">
+                  <div className="flex min-w-0 flex-col gap-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium truncate">
+                      <span className="truncate text-sm font-medium">
                         {session.userAgent
-                          ? session.userAgent.split(" ").slice(0, 3).join(" ") ||
-                            session.userAgent.slice(0, 40)
+                          ? session.userAgent
+                              .split(" ")
+                              .slice(0, 3)
+                              .join(" ") || session.userAgent.slice(0, 40)
                           : "Unknown device"}
                       </span>
                       {isCurrent && (
@@ -122,7 +138,7 @@ export function FreePageView() {
                         </span>
                       )}
                     </div>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
+                    <div className="text-muted flex flex-wrap gap-x-4 gap-y-1 text-xs">
                       {session.ip && (
                         <span className="flex items-center gap-1">
                           <IconWorld size={12} stroke={1.5} />
@@ -130,19 +146,19 @@ export function FreePageView() {
                         </span>
                       )}
                       {session.issuedAt && (
-                        <span>
-                          Started: {formatDateTime(session.issuedAt)}
-                        </span>
+                        <span>Started: {formatDateTime(session.issuedAt)}</span>
                       )}
                     </div>
                     {session.deviceId && (
                       <details className="group mt-1">
-                        <summary className="text-[10px] text-muted/60 hover:text-muted cursor-pointer list-none">
+                        <summary className="text-muted/60 hover:text-muted cursor-pointer list-none text-[10px]">
                           More Device Info
                         </summary>
-                        <div className="mt-1 flex flex-col gap-0.5 text-[10px] text-muted/50">
+                        <div className="text-muted/50 mt-1 flex flex-col gap-0.5 text-[10px]">
                           <span>Device ID: {session.deviceId}</span>
-                          <span className="break-all">User-Agent: {session.userAgent ?? "N/A"}</span>
+                          <span className="break-all">
+                            User-Agent: {session.userAgent ?? "N/A"}
+                          </span>
                         </div>
                       </details>
                     )}
@@ -151,7 +167,7 @@ export function FreePageView() {
                 {!isCurrent && (
                   <button
                     onClick={() => revokeSession(session.sessionId)}
-                    className="text-xs text-red-600 hover:text-red-700 whitespace-nowrap transition-colors shrink-0"
+                    className="shrink-0 text-xs whitespace-nowrap text-red-600 transition-colors hover:text-red-700"
                     aria-label={`Revoke session from ${session.ip ?? "unknown device"}`}
                   >
                     Revoke

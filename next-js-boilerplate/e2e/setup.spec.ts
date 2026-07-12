@@ -31,14 +31,30 @@ setup("login and save storageState", async ({ request }) => {
   expect(loginData.user).toBeTruthy();
   expect(loginData.mfaRequired).toBeFalsy();
 
-  const setCookieHeaders = loginRes.headersArray().filter(
-    (h) => h.name.toLowerCase() === "set-cookie",
-  );
+  const setCookieHeaders = loginRes
+    .headersArray()
+    .filter((h) => h.name.toLowerCase() === "set-cookie");
   expect(setCookieHeaders.length).toBeGreaterThan(0);
 
+  // Playwright's storageState schema requires EITHER `url` OR `domain`+`path` on each cookie,
+  // never both — a Set-Cookie with a Domain attribute left `domain` on the object alongside the
+  // `url` we add below, which fails schema validation for browser contexts ("Cookie should have
+  // either url or domain"). We standardize on `url`, so drop both `path` and `domain`.
+  //
+  // KNOWN LIMITATION: `request.newContext()` (used by the `request` fixture in pure API-only
+  // tests, e.g. e2e/admin-audit-logs.spec.ts's 401/403 check) additionally requires `domain` to
+  // be a defined string and rejects this url-only form — the two Playwright context types want
+  // different cookie shapes for the same storageState file. Tried defaulting to `domain`+`path`
+  // instead, but that broke browser-context auth entirely (page loads unauthenticated, no error
+  // — much worse than this url-only form, which only affects the handful of `request`-fixture
+  // tests). Left as url-only since it's the strictly better tradeoff; a real fix likely needs
+  // writing the storageState file twice in different shapes, or filing a Playwright issue.
   const cookies = setCookieHeaders
     .map((h) => parseSetCookie(h.value))
-    .map(({ path: _path, ...c }) => ({ ...c, url: "http://localhost:3100" }));
+    .map(({ path: _path, domain: _domain, ...c }) => ({
+      ...c,
+      url: "http://localhost:3100",
+    }));
 
   await fs.mkdir("playwright/.auth", { recursive: true });
   await fs.writeFile(
@@ -73,8 +89,7 @@ function parseSetCookie(setCookie: string) {
       const raw = (val || "Lax").toLowerCase();
       cookie.sameSite =
         raw === "strict" ? "Strict" : raw === "none" ? "None" : "Lax";
-    }
-    else if (lower === "max-age")
+    } else if (lower === "max-age")
       cookie.expires = Date.now() / 1000 + Number(val);
     else if (lower === "domain") cookie.domain = val;
   }

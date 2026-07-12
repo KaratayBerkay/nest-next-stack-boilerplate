@@ -43,5 +43,8 @@ export async function POST(request: Request) {
     return NextResponse.json(body, { status: body.statusCode });
   }
 
-  return NextResponse.json({ ok: data?.devActivateUser ?? false }, { status: 200 });
+  return NextResponse.json(
+    { ok: data?.devActivateUser ?? false },
+    { status: 200 },
+  );
 }

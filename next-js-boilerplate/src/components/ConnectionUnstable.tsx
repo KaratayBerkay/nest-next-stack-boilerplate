@@ -13,7 +13,9 @@ export function ConnectionUnstable({
     <div className="flex items-center justify-center p-8">
       <Alert variant="destructive" className="max-w-md">
         <AlertTitle>{title ?? t.connectionLost}</AlertTitle>
-        <AlertDescription>{description ?? t.tryingToReconnect}</AlertDescription>
+        <AlertDescription>
+          {description ?? t.tryingToReconnect}
+        </AlertDescription>
       </Alert>
     </div>
   );

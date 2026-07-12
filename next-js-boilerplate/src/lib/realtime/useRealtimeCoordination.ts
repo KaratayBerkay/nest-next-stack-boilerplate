@@ -25,7 +25,10 @@ export function useRealtimeCoordination() {
   const subsRef = useRef<Map<string, Set<FrameHandler>>>(new Map());
   const clientRef = useRef<RealtimeClient | null>(null);
   const channelRef = useRef<BroadcastChannel | null>(null);
-  const claimRef = useRef<{ page: string | null; params?: Record<string, string> } | null>(null);
+  const claimRef = useRef<{
+    page: string | null;
+    params?: Record<string, string>;
+  } | null>(null);
   const userIdRef = useRef(user?.id);
   const lockResolveRef = useRef<(() => void) | null>(null);
 
@@ -164,8 +167,7 @@ export function useRealtimeCoordination() {
               if (client) {
                 if (m.act === "send")
                   client.send(m.payload as Record<string, unknown>);
-                else if (m.act === "watch")
-                  client.watch(m.payload as string);
+                else if (m.act === "watch") client.watch(m.payload as string);
                 else if (m.act === "unwatch")
                   client.unwatch(m.payload as string);
                 else if (m.act === "register")
@@ -258,7 +260,9 @@ export function useRealtimeCoordination() {
   useEffect(() => {
     if (prevStatusRef.current !== "open" && status === "open") {
       queryClient.invalidateQueries({ queryKey: ["notifications", "count"] });
-      queryClient.invalidateQueries({ queryKey: ["notifications", "dm-count"] });
+      queryClient.invalidateQueries({
+        queryKey: ["notifications", "dm-count"],
+      });
     }
     prevStatusRef.current = status;
   }, [status, queryClient]);
@@ -277,8 +281,7 @@ export function useRealtimeCoordination() {
 
   const subscribe = useCallback(
     (type: string, handler: FrameHandler): (() => void) => {
-      if (!subsRef.current.has(type))
-        subsRef.current.set(type, new Set());
+      if (!subsRef.current.has(type)) subsRef.current.set(type, new Set());
       subsRef.current.get(type)!.add(handler);
       return () => {
         const s = subsRef.current.get(type);

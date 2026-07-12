@@ -15,8 +15,7 @@ export function dispatchEvent(
       recipientId: string;
     };
     if (!msg?.id) return;
-    const peerId =
-      msg.senderId === ownUserId ? msg.recipientId : msg.senderId;
+    const peerId = msg.senderId === ownUserId ? msg.recipientId : msg.senderId;
     if (!qc.getQueryData(["messages", peerId])) return;
     qc.setQueryData(["messages", peerId], (old: unknown) => {
       const data = old as

@@ -15,12 +15,25 @@ export async function POST(request: Request) {
     email = body.email;
     if (!email) {
       return NextResponse.json(
-        { statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Email is required", key: "auth.errors.emailRequired" },
+        {
+          statusCode: 400,
+          exc: "EX_VALIDATION_FORM",
+          msg: "Email is required",
+          key: "auth.errors.emailRequired",
+        },
         { status: 400 },
       );
     }
   } catch {
-    return NextResponse.json({ statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Invalid JSON body", key: "auth.errors.invalidJson" }, { status: 400 });
+    return NextResponse.json(
+      {
+        statusCode: 400,
+        exc: "EX_VALIDATION_FORM",
+        msg: "Invalid JSON body",
+        key: "auth.errors.invalidJson",
+      },
+      { status: 400 },
+    );
   }
 
   const { data, errors } = await graphqlFetch<{

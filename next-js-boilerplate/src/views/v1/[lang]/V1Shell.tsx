@@ -110,40 +110,43 @@ export function V1Shell({ children }: V1ShellProps) {
   return (
     <RealtimeProvider>
       <div className="flex h-dvh flex-col">
-      <V1Header
-        toggle={toggle}
-        open={open}
-        loading={loading}
-        user={user}
-        logout={logout}
-        lang={lang}
-        conversations={conversations}
-      />
-
-      <div className="relative flex min-h-0 flex-1">
-        {sidebarOpen && (
-          <div
-            className="animate-fade-in fixed inset-0 z-30 bg-black/30 md:hidden"
-            onClick={close}
-          />
-        )}
-
-        <V1Sidebar
-          ref={sidebarRef}
-          sidebarOpen={sidebarOpen}
+        <V1Header
+          toggle={toggle}
+          open={open}
+          loading={loading}
           user={user}
           logout={logout}
           lang={lang}
-          onNav={close}
+          conversations={conversations}
         />
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 md:p-6">
-          <section className="surface flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-4 @sm:p-5">
-            {children}
-          </section>
+        <div className="relative flex min-h-0 flex-1">
+          {sidebarOpen && (
+            // Decorative dismiss backdrop, not a control — the sidebar's own controls remain
+            // keyboard-reachable; this scrim only needs a click target.
+            <div
+              className="animate-fade-in fixed inset-0 z-30 bg-black/30 md:hidden"
+              onClick={close}
+              aria-hidden="true"
+            />
+          )}
+
+          <V1Sidebar
+            ref={sidebarRef}
+            sidebarOpen={sidebarOpen}
+            user={user}
+            logout={logout}
+            lang={lang}
+            onNav={close}
+          />
+
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 md:p-6">
+            <section className="surface flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-4 @sm:p-5">
+              {children}
+            </section>
+          </div>
         </div>
       </div>
-    </div>
     </RealtimeProvider>
   );
 }

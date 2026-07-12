@@ -5,9 +5,7 @@ import { LangSwitcher } from "@/components/layout/LangSwitcher";
 import { AuthFallback } from "@/fallbacks";
 import type { AuthLayoutProps } from "@/types/auth/AuthLayout-types";
 
-export default function AuthLayout({
-  children,
-}: AuthLayoutProps) {
+export default function AuthLayout({ children }: AuthLayoutProps) {
   return (
     <main
       className={`${containerClass} flex min-h-screen flex-col items-center justify-center py-16`}

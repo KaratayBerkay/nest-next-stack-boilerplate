@@ -6,9 +6,12 @@ import {
 } from "@/lib/cookie";
 
 export async function POST() {
-  const backend = await backendFetch<{ deviceToken: string }>("/devices/handshake", {
-    method: "POST",
-  });
+  const backend = await backendFetch<{ deviceToken: string }>(
+    "/devices/handshake",
+    {
+      method: "POST",
+    },
+  );
 
   if (!backend.ok) {
     const response = NextResponse.json({ deviceToken: null }, { status: 200 });

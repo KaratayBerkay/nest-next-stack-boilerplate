@@ -1,5 +1,8 @@
 import { Suspense } from "react";
-import type { ModalContentProps, PhotoModalProps } from "@/types/gallery/ModalContent-types";
+import type {
+  ModalContentProps,
+  PhotoModalProps,
+} from "@/types/gallery/ModalContent-types";
 import { LoadingPhotoFallback } from "@/fallbacks";
 
 // Intercepting route: `(.)` matches a segment at the same level as `@modal`'s
@@ -19,9 +22,7 @@ async function ModalContent({ params }: ModalContentProps) {
   );
 }
 
-export default function PhotoModal({
-  params,
-}: PhotoModalProps) {
+export default function PhotoModal({ params }: PhotoModalProps) {
   return (
     <div
       data-testid="photo-modal"

@@ -19,7 +19,9 @@ const VIEWS = {
   PREMIUM: PremiumPageView,
 };
 
-export default async function ChatRoomPage({ searchParams }: ChatRoomPageProps) {
+export default async function ChatRoomPage({
+  searchParams,
+}: ChatRoomPageProps) {
   const [user, sp] = await Promise.all([getSessionUser(), searchParams]);
   const room = (sp.room as string) || "general";
 

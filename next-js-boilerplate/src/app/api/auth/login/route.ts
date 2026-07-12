@@ -6,7 +6,11 @@ import {
   sessionUserCookieOptions,
   userTokenCookieOptions,
 } from "@/lib/cookie";
-import { graphqlFetch, graphqlErrorBody, graphqlErrorStatus } from "@/lib/backend";
+import {
+  graphqlFetch,
+  graphqlErrorBody,
+  graphqlErrorStatus,
+} from "@/lib/backend";
 import { withLogging } from "@/lib/request-logger";
 
 /**
@@ -63,12 +67,25 @@ export const POST = withLogging(async (request, log) => {
     timezone = body.timezone;
     if (!email || !password) {
       return NextResponse.json(
-        { statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Email and password are required", key: "auth.errors.emailRequired" },
+        {
+          statusCode: 400,
+          exc: "EX_VALIDATION_FORM",
+          msg: "Email and password are required",
+          key: "auth.errors.emailRequired",
+        },
         { status: 400 },
       );
     }
   } catch {
-    return NextResponse.json({ statusCode: 400, exc: "EX_VALIDATION_FORM", msg: "Invalid JSON body", key: "auth.errors.invalidJson" }, { status: 400 });
+    return NextResponse.json(
+      {
+        statusCode: 400,
+        exc: "EX_VALIDATION_FORM",
+        msg: "Invalid JSON body",
+        key: "auth.errors.invalidJson",
+      },
+      { status: 400 },
+    );
   }
 
   const { data, errors } = await graphqlFetch<{

@@ -8,10 +8,7 @@ function generateAuthLoginSchema(errors: {
   passwordMax: string;
 }) {
   return z.object({
-    email: z
-      .string()
-      .min(1, errors.emailRequired)
-      .email(errors.emailInvalid),
+    email: z.string().min(1, errors.emailRequired).email(errors.emailInvalid),
     password: z
       .string()
       .min(1, errors.passwordRequired)
@@ -29,10 +26,7 @@ function generateAuthRegisterSchema(errors: {
 }) {
   return z.object({
     name: z.string().optional(),
-    email: z
-      .string()
-      .min(1, errors.emailRequired)
-      .email(errors.emailInvalid),
+    email: z.string().min(1, errors.emailRequired).email(errors.emailInvalid),
     password: z
       .string()
       .min(1, errors.passwordRequired)

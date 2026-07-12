@@ -1,8 +1,6 @@
 import type { MessageTickProps } from "@/types/components/MessageTick-types";
 
-export function MessageTick({
-  status,
-}: MessageTickProps) {
+export function MessageTick({ status }: MessageTickProps) {
   if (status === "read") {
     return (
       <svg

@@ -73,15 +73,13 @@ describe('OutboxService', () => {
       const published = await service.relayPendingEvents();
 
       expect(published).toBe(0);
-      expect(prisma.outboxEvent.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { id: 'evt-1' },
-          data: expect.objectContaining({
-            status: 'PUBLISHED',
-            publishedAt: expect.any(Date) as never,
-          }) as never,
-        }) as never,
-      );
+      // Claim-time dead-lettering (row.attempts >= maxAttempts, before any publish
+      // attempt) only sets status — no publishedAt/lastError, unlike the catch-path
+      // dead-letter below which records lastError.
+      expect(prisma.outboxEvent.update).toHaveBeenCalledWith({
+        where: { id: 'evt-1' },
+        data: { status: 'DEAD_LETTER' },
+      });
       expect(queue.add).not.toHaveBeenCalled();
     });
 

@@ -96,6 +96,10 @@ export function DialogContent({ children, className }: DialogContentProps) {
           animation: backdrop-fade-out 0.15s cubic-bezier(0.4, 0, 1, 1) forwards;
         }
       `}</style>
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions --
+          native <dialog> already closes on Escape via the "cancel" listener above and exposes
+          an explicit visible Close button below; this onClick only fires for clicks on the
+          backdrop area (e.target === dialogRef.current), never on interactive content inside. */}
       <dialog
         ref={dialogRef}
         className={cn(

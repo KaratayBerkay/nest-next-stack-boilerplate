@@ -56,9 +56,7 @@ async function V1Content({ params }: V1ContentProps) {
   );
 }
 
-export default function V1Home({
-  params,
-}: V1ContentProps) {
+export default function V1Home({ params }: V1ContentProps) {
   return (
     <Suspense fallback={<V1PageFallback />}>
       <V1Content params={params} />

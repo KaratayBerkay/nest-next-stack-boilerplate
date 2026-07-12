@@ -40,7 +40,9 @@ const PageNavigationContext = createContext<PageNavigationContextValue | null>(
   null,
 );
 
-export function PageNavigationProvider({ children }: PageNavigationProviderProps) {
+export function PageNavigationProvider({
+  children,
+}: PageNavigationProviderProps) {
   const pathname = usePathname() ?? "";
   const router = useRouter();
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
@@ -55,9 +57,7 @@ export function PageNavigationProvider({ children }: PageNavigationProviderProps
     ? (getPageNode(currentPage.forwardId) ?? null)
     : null;
 
-  const navigateToRef = useRef<(targetPage: PageNode) => void>(
-    () => {},
-  );
+  const navigateToRef = useRef<(targetPage: PageNode) => void>(() => {});
 
   useEffect(() => {
     navigateToRef.current = (targetPage: PageNode) => {

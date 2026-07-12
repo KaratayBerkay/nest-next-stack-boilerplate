@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
-import { graphqlErrorStatus, graphqlFetch, sessionTokenHeaders } from "@/lib/backend";
+import {
+  graphqlErrorStatus,
+  graphqlFetch,
+  sessionTokenHeaders,
+} from "@/lib/backend";
 
 const PREMIUM_STATS_QUERY = `
   query PremiumStats {

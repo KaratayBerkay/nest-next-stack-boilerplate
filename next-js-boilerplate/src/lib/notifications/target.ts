@@ -13,10 +13,7 @@ export function notificationTarget(
   if (payload.kind === "direct-message" && payload.senderId) {
     return `/v1/${lang}/messages?user=${payload.senderId}`;
   }
-  if (
-    payload.kind === "friend-request" ||
-    payload.kind === "friend-accepted"
-  ) {
+  if (payload.kind === "friend-request" || payload.kind === "friend-accepted") {
     return `/v1/${lang}/find-friends/requests`;
   }
   if (payload.postId) {

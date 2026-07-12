@@ -83,7 +83,12 @@ function createClient(
     onBustTokenCache?: () => void;
   } = {},
 ) {
-  const tokens = overrides.tokens ?? { access_token: "at", rbac_token: "rb", device_token: "dt", user_token: "ut" };
+  const tokens = overrides.tokens ?? {
+    access_token: "at",
+    rbac_token: "rb",
+    device_token: "dt",
+    user_token: "ut",
+  };
   const getTokens = vi.fn().mockResolvedValue(tokens);
   const onStatusChange = overrides.onStatusChange ?? vi.fn();
   const onFrame = overrides.onFrame ?? vi.fn();
@@ -99,7 +104,14 @@ function createClient(
     onBustTokenCache,
   );
 
-  return { client, getTokens, onStatusChange, onFrame, onAuthenticated, onBustTokenCache };
+  return {
+    client,
+    getTokens,
+    onStatusChange,
+    onFrame,
+    onAuthenticated,
+    onBustTokenCache,
+  };
 }
 
 describe("RealtimeClient", () => {
@@ -246,7 +258,9 @@ describe("RealtimeClient", () => {
       const ws = MockWebSocket.instances[0];
       ws.simulateOpen();
       ws.simulateMessage({ type: "authenticated" });
-      expect(ws.sent.some((s) => JSON.parse(s).topic === "post:abc123")).toBe(true);
+      expect(ws.sent.some((s) => JSON.parse(s).topic === "post:abc123")).toBe(
+        true,
+      );
     });
 
     it("rejects topics not matching allowlist", () => {
@@ -256,7 +270,9 @@ describe("RealtimeClient", () => {
       const ws = MockWebSocket.instances[0];
       ws.simulateOpen();
       ws.simulateMessage({ type: "authenticated" });
-      expect(ws.sent.some((s) => JSON.parse(s).topic === "admin:secrets")).toBe(false);
+      expect(ws.sent.some((s) => JSON.parse(s).topic === "admin:secrets")).toBe(
+        false,
+      );
     });
   });
 

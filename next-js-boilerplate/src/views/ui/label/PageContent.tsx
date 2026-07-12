@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/Tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { Label } from "@/components/ui/Label";
 import { Input } from "@/components/ui/Input";
 
@@ -49,17 +44,28 @@ export default function LabelPage() {
                 <Label htmlFor="example-email" required>
                   Email
                 </Label>
-                <Input id="example-email" type="email" placeholder="you@example.com" />
+                <Input
+                  id="example-email"
+                  type="email"
+                  placeholder="you@example.com"
+                />
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="example-password" required>
                   Password
                 </Label>
-                <Input id="example-password" type="password" placeholder="••••••••" />
+                <Input
+                  id="example-password"
+                  type="password"
+                  placeholder="••••••••"
+                />
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="example-bio">Bio</Label>
-                <Input id="example-bio" placeholder="Tell us about yourself..." />
+                <Input
+                  id="example-bio"
+                  placeholder="Tell us about yourself..."
+                />
               </div>
             </div>
           </section>

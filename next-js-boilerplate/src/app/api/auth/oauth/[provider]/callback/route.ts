@@ -89,18 +89,17 @@ export async function GET(
       return NextResponse.redirect(loginUrl, 302);
     }
 
-    const { accessToken, rbacToken, deviceToken, userToken } = data.loginWithOAuth;
+    const { accessToken, rbacToken, deviceToken, userToken } =
+      data.loginWithOAuth;
     const response = NextResponse.redirect(env.NEXT_PUBLIC_APP_URL, 302);
 
     // Set all auth cookies directly from body values (not relayed Set-Cookie headers,
     // which the Fetch API strips from server-to-server responses).
     response.cookies.set(accessTokenCookieOptions(accessToken));
-    if (rbacToken)
-      response.cookies.set(rbacTokenCookieOptions(rbacToken));
+    if (rbacToken) response.cookies.set(rbacTokenCookieOptions(rbacToken));
     if (deviceToken)
       response.cookies.set(deviceTokenCookieOptions(deviceToken));
-    if (userToken)
-      response.cookies.set(userTokenCookieOptions(userToken));
+    if (userToken) response.cookies.set(userTokenCookieOptions(userToken));
 
     return response;
   } catch {

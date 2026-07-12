@@ -1,12 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/Tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 
@@ -88,18 +83,18 @@ export default function AlertPage() {
             ) : (
               <div className="flex flex-col gap-3">
                 <div className="flex flex-wrap gap-2">
-                  {(["default", "success", "warning", "destructive"] as const).map(
-                    (v) => (
-                      <Button
-                        key={v}
-                        size="sm"
-                        variant={alertVariant === v ? "default" : "outline"}
-                        onClick={() => setAlertVariant(v)}
-                      >
-                        {v}
-                      </Button>
-                    ),
-                  )}
+                  {(
+                    ["default", "success", "warning", "destructive"] as const
+                  ).map((v) => (
+                    <Button
+                      key={v}
+                      size="sm"
+                      variant={alertVariant === v ? "default" : "outline"}
+                      onClick={() => setAlertVariant(v)}
+                    >
+                      {v}
+                    </Button>
+                  ))}
                 </div>
                 <Alert variant={alertVariant}>
                   <div className="flex items-start justify-between gap-4">

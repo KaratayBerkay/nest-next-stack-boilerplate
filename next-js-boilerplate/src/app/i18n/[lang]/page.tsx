@@ -5,7 +5,11 @@ import { isLocale, locales } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/get-messages";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import { I18nPageFallback } from "@/fallbacks";
-import type { LocaleContentProps, I18nPageProps, GenerateMetadataProps } from "@/types/i18n/LocaleContent-types";
+import type {
+  LocaleContentProps,
+  I18nPageProps,
+  GenerateMetadataProps,
+} from "@/types/i18n/LocaleContent-types";
 
 // Prerender one static page per supported locale at build time. Unsupported
 // locales (e.g. /i18n/fr) are rejected upstream in `proxy.ts` with a deterministic
@@ -26,9 +30,7 @@ export async function generateMetadata({
 
 // Reads the `[lang]` param (runtime data) inside `<Suspense>` so the page builds
 // cleanly under `cacheComponents` — same pattern as routing/items/[id].
-async function LocaleContent({
-  params,
-}: LocaleContentProps) {
+async function LocaleContent({ params }: LocaleContentProps) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
   const t = await getMessages(lang, "i18n");
@@ -53,9 +55,7 @@ async function LocaleContent({
   );
 }
 
-export default function I18nPage({
-  params,
-}: I18nPageProps) {
+export default function I18nPage({ params }: I18nPageProps) {
   return (
     <Suspense fallback={<I18nPageFallback />}>
       <LocaleContent params={params} />

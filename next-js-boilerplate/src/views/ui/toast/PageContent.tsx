@@ -1,17 +1,8 @@
 "use client";
 
 import { useState, Suspense, type Dispatch, type SetStateAction } from "react";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/Tabs";
-import {
-  ToastProvider,
-  ToastViewport,
-  useToast,
-} from "@/components/ui/Toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
+import { ToastProvider, ToastViewport, useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
@@ -65,7 +56,11 @@ function DemoControls() {
 function handleSubscribe(
   email: string,
   setEmail: Dispatch<SetStateAction<string>>,
-  toast: (opts: { title: string; description: string; variant?: "default" | "destructive" | "success" }) => void,
+  toast: (opts: {
+    title: string;
+    description: string;
+    variant?: "default" | "destructive" | "success";
+  }) => void,
 ) {
   if (!email.trim()) {
     toast({
@@ -96,7 +91,10 @@ function ExampleControls() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
-        <Button variant="primary" onClick={() => handleSubscribe(email, setEmail, toast)}>
+        <Button
+          variant="primary"
+          onClick={() => handleSubscribe(email, setEmail, toast)}
+        >
           Subscribe
         </Button>
       </div>

@@ -64,7 +64,9 @@ function handleNavigate(
   }
 }
 
-export function NotificationDropdown({ lang = "en" }: NotificationDropdownProps) {
+export function NotificationDropdown({
+  lang = "en",
+}: NotificationDropdownProps) {
   const { data: notifData } = useNotifications();
   const { data: unreadCount = 0 } = useUnreadNotificationCount();
   const { data: dmCount = 0 } = useDmUnreadCount();
@@ -111,9 +113,12 @@ export function NotificationDropdown({ lang = "en" }: NotificationDropdownProps)
         typeof document !== "undefined" &&
         createPortal(
           <>
+            {/* Decorative dismiss backdrop, not a control — the panel's own controls remain
+                keyboard-reachable; this scrim only needs a click target. */}
             <div
               className="fixed inset-0 z-40 bg-black/50"
               onClick={() => setOpen(false)}
+              aria-hidden="true"
             />
             <div className="bg-bg animate-fade-in fixed inset-0 z-50 flex flex-col p-4">
               <div className="flex items-center justify-between pb-3">

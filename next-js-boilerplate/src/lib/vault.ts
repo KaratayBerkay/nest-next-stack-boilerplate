@@ -1,10 +1,10 @@
 export type VaultSecrets = Record<string, string>;
 
-const VAULT_SECRET_PATH = 'secret/data/secret/production/frontend';
+const VAULT_SECRET_PATH = "secret/data/secret/production/frontend";
 
 function vaultConfig(): { addr: string; token: string } | null {
-  const addr = (process.env.VAULT_ADDR ?? '').replace(/\/+$/, '');
-  const token = process.env.VAULT_TOKEN ?? '';
+  const addr = (process.env.VAULT_ADDR ?? "").replace(/\/+$/, "");
+  const token = process.env.VAULT_TOKEN ?? "";
   return addr && token ? { addr, token } : null;
 }
 
@@ -14,10 +14,10 @@ export async function readVaultSecrets(
   const cfg = vaultConfig();
   if (!cfg) return {};
 
-  const url = `${cfg.addr}/v1/${path.replace(/^\/+/, '')}`;
+  const url = `${cfg.addr}/v1/${path.replace(/^\/+/, "")}`;
 
   const res = await fetch(url, {
-    headers: { 'X-Vault-Token': cfg.token },
+    headers: { "X-Vault-Token": cfg.token },
   });
 
   if (!res.ok) return {};
@@ -28,7 +28,7 @@ export async function readVaultSecrets(
 
   if (!body.data) return {};
 
-  return 'data' in body.data && typeof body.data.data === 'object'
+  return "data" in body.data && typeof body.data.data === "object"
     ? (body.data as { data: VaultSecrets }).data
     : (body.data as VaultSecrets);
 }
@@ -36,7 +36,7 @@ export async function readVaultSecrets(
 export async function loadVaultIntoEnv(): Promise<void> {
   const cfg = vaultConfig();
   if (!cfg) {
-    console.warn('[Vault] VAULT_ADDR or VAULT_TOKEN not set — skipping');
+    console.warn("[Vault] VAULT_ADDR or VAULT_TOKEN not set — skipping");
     return;
   }
 

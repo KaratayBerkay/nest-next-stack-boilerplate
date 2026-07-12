@@ -1,12 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/cn";
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useState,
-} from "react";
+import { createContext, useCallback, useContext, useState } from "react";
 import type { TabsProps } from "@/types/ui/Tabs-types";
 
 interface TabsContextValue {

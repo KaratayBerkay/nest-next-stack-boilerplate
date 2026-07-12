@@ -50,7 +50,12 @@ export function V1Header({
             <>
               <MessageDropdown conversations={conversations} lang={lang} />
               <NotificationDropdown lang={lang} />
-              <ProfileDropdown user={user} logout={logout} lang={lang} align="right">
+              <ProfileDropdown
+                user={user}
+                logout={logout}
+                lang={lang}
+                align="right"
+              >
                 <Avatar
                   src={user.avatarUrl}
                   fallback={initials(user.name || user.email)}

@@ -13,8 +13,7 @@ export function MediumPageView() {
   const t = useMessages("find-friends");
 
   if (loading) return <LoadingAuth />;
-  if (!user)
-    return <UnauthenticatedMessage message={t.signInRequired} />;
+  if (!user) return <UnauthenticatedMessage message={t.signInRequired} />;
 
   return (
     <Suspense fallback={<FindFriendsFallback />}>

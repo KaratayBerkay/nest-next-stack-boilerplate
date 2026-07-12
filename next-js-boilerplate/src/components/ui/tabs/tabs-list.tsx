@@ -42,6 +42,9 @@ export function TabsList({
     <div
       ref={listRef}
       role="tablist"
+      // Children already implement roving tabindex (TabsTrigger sets tabIndex 0/-1 per tab),
+      // so the tablist container itself stays out of the Tab order.
+      tabIndex={-1}
       onKeyDown={(e) => handleTabsKeyDown(e, listRef)}
       className={cn(
         "bg-surface inline-flex items-center gap-1 rounded-lg p-1",

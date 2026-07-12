@@ -17,8 +17,7 @@ export const settingsBillingPageInfo: PageInfoContent = {
     },
     {
       title: "Billing History",
-      description:
-        "View past invoices and payment receipts.",
+      description: "View past invoices and payment receipts.",
     },
     {
       title: "Cancel Subscription",

@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { csrfEchoHeaders, graphqlErrorStatus, graphqlFetch } from "@/lib/backend";
+import {
+  csrfEchoHeaders,
+  graphqlErrorStatus,
+  graphqlFetch,
+} from "@/lib/backend";
 import { getAccessToken } from "@/store/ssr-cookies";
 import { POSTS_QUERY, CREATE_POST_MUTATION } from "@/lib/graphql/queries";
 
@@ -15,7 +19,10 @@ export async function GET(request: Request) {
   }>(POSTS_QUERY, { cursor: cursor || undefined, take, search }, token);
 
   if (errors) {
-    return NextResponse.json({ error: errors[0]?.message ?? "GraphQL error" }, { status: graphqlErrorStatus(errors) });
+    return NextResponse.json(
+      { error: errors[0]?.message ?? "GraphQL error" },
+      { status: graphqlErrorStatus(errors) },
+    );
   }
 
   const all = data?.postList ?? [];
@@ -50,7 +57,10 @@ export async function POST(request: Request) {
 
   const extraHeaders = await csrfEchoHeaders();
   if (!extraHeaders) {
-    return NextResponse.json({ error: "Invalid or missing CSRF token" }, { status: 403 });
+    return NextResponse.json(
+      { error: "Invalid or missing CSRF token" },
+      { status: 403 },
+    );
   }
 
   const { data, errors } = await graphqlFetch<{
@@ -76,7 +86,10 @@ export async function POST(request: Request) {
   );
 
   if (errors) {
-    return NextResponse.json({ error: errors[0]?.message ?? "GraphQL error" }, { status: graphqlErrorStatus(errors) });
+    return NextResponse.json(
+      { error: errors[0]?.message ?? "GraphQL error" },
+      { status: graphqlErrorStatus(errors) },
+    );
   }
 
   return NextResponse.json({ post: data?.createPost }, { status: 201 });

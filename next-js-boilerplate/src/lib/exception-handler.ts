@@ -14,7 +14,12 @@ export type ExceptionCode =
 
 export type ClientException = Omit<ExceptionResponse, "statusCode">;
 
-export type ExceptionSurface = "toast" | "alert" | "badge" | "form-field" | "full-page";
+export type ExceptionSurface =
+  | "toast"
+  | "alert"
+  | "badge"
+  | "form-field"
+  | "full-page";
 
 const EXC_TO_SURFACE: Record<ExceptionCode, ExceptionSurface> = {
   EX_VALIDATION_FORM: "form-field",
@@ -63,5 +68,9 @@ export function clientException(
   msg: string,
   key?: string,
 ): ClientException {
-  return { exc, msg, key: key ?? `error.${exc.toLowerCase().replace(/^ex_/, "client_")}` };
+  return {
+    exc,
+    msg,
+    key: key ?? `error.${exc.toLowerCase().replace(/^ex_/, "client_")}`,
+  };
 }

@@ -23,13 +23,13 @@ export function PaginationBar({
       <button
         onClick={() => onPageChange(page - 1)}
         disabled={page <= 1}
-        className="rounded px-2 py-1 text-xs text-muted hover:bg-surface-hover disabled:opacity-30"
+        className="text-muted hover:bg-surface-hover rounded px-2 py-1 text-xs disabled:opacity-30"
       >
         {prevLabel}
       </button>
       {pages.map((p, i) =>
         p === "..." ? (
-          <span key={`ellipsis-${i}`} className="px-1 text-xs text-muted">
+          <span key={`ellipsis-${i}`} className="text-muted px-1 text-xs">
             ...
           </span>
         ) : (
@@ -49,7 +49,7 @@ export function PaginationBar({
       <button
         onClick={() => onPageChange(page + 1)}
         disabled={page >= totalPages}
-        className="rounded px-2 py-1 text-xs text-muted hover:bg-surface-hover disabled:opacity-30"
+        className="text-muted hover:bg-surface-hover rounded px-2 py-1 text-xs disabled:opacity-30"
       >
         {nextLabel}
       </button>

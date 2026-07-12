@@ -6,10 +6,7 @@ import { TIERS, tierLabel } from "@/lib/tier";
 import { Avatar } from "@/components/ui/Avatar";
 import { initials } from "@/lib/initials";
 
-export function UserTierRow({
-  user: u,
-  onSetTier,
-}: UserTierRowProps) {
+export function UserTierRow({ user: u, onSetTier }: UserTierRowProps) {
   const [selectedTier, setSelectedTier] = useState("FREE");
 
   return (

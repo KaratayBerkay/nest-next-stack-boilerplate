@@ -17,7 +17,15 @@ export async function GET(request: NextRequest) {
   const accessToken = await getAccessToken();
 
   if (!accessToken) {
-    return NextResponse.json({ statusCode: 401, exc: "EX_AUTH_INVALID_CREDENTIALS", msg: "Unauthorized", key: "auth.errors.unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      {
+        statusCode: 401,
+        exc: "EX_AUTH_INVALID_CREDENTIALS",
+        msg: "Unauthorized",
+        key: "auth.errors.unauthorized",
+      },
+      { status: 401 },
+    );
   }
 
   const q = request.nextUrl.searchParams.get("q") || "";

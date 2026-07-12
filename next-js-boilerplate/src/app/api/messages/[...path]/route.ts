@@ -9,7 +9,11 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   const token = await getAccessToken();
   const stHeaders = await sessionTokenHeaders();
   if (!token) return { "Content-Type": "application/json", ...stHeaders };
-  return { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...stHeaders };
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+    ...stHeaders,
+  };
 }
 
 export async function GET(

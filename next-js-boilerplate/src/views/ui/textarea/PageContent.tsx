@@ -1,12 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/Tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { Textarea, AutoResizeTextarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 
@@ -52,7 +47,10 @@ export default function TextareaPage() {
 
             <section className="flex flex-col gap-3">
               <h3 className="text-lg font-semibold">With Error</h3>
-              <Textarea error="This field is required" data-testid="textarea-error" />
+              <Textarea
+                error="This field is required"
+                data-testid="textarea-error"
+              />
             </section>
 
             <section className="flex flex-col gap-3">
@@ -75,7 +73,9 @@ export default function TextareaPage() {
                 onChange={(e) => setComment(e.target.value)}
               />
               <div className="flex items-center justify-between">
-                <span className="text-muted text-xs">{comment.length} characters</span>
+                <span className="text-muted text-xs">
+                  {comment.length} characters
+                </span>
                 <Button size="sm" variant="primary" disabled={!comment.trim()}>
                   Post Comment
                 </Button>
