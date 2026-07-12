@@ -23,4 +23,12 @@ export class MfaResolver {
   ): Promise<MfaVerifyPayload> {
     return this.mfa.verify(user.userId, code);
   }
+
+  @Mutation(() => Boolean)
+  disableMfa(
+    @CurrentUser() user: JwtUser,
+    @Args('code') code: string,
+  ): Promise<boolean> {
+    return this.mfa.disable(user.userId, code);
+  }
 }

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { DataTable } from "./DataTable";
+import { DataTable } from "@/views/(demos)/data-fetching/DataTable";
 import { LoadingTextFallback } from "@/fallbacks";
 
 export const metadata: Metadata = {

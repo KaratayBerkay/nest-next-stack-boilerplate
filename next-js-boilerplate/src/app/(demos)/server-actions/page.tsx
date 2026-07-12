@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import GreetingForm from "./GreetingForm";
+import GreetingForm from "@/views/(demos)/server-actions/GreetingForm";
 
 export const metadata: Metadata = {
   title: "Server Actions",

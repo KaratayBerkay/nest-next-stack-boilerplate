@@ -249,39 +249,60 @@ export class AuthService {
       });
     }
 
-    // Find the verified TOTP factor
+    // Try TOTP first, then fall back to backup codes.
+    const totpVerified = await this.verifyTotpCode(user.id, code);
+    if (!totpVerified) {
+      const backupUsed = await this.verifyBackupCode(user.id, code);
+      if (!backupUsed) {
+        throw new UnauthorizedException({
+          exc: 'EX_AUTH_MFA_INVALID_CODE',
+          msg: 'Invalid MFA code',
+          key: 'auth.errors.mfaInvalidCode',
+        });
+      }
+    }
+
+    // MFA verified — issue full session tokens
+    return this.issueTokens(user, ctx);
+  }
+
+  /** Verify a TOTP code against the user's verified factor. Returns true on success. */
+  private async verifyTotpCode(userId: string, code: string): Promise<boolean> {
     const factor = await this.prisma.mfaFactor.findFirst({
-      where: { userId: user.id, method: 'TOTP', verifiedAt: { not: null } },
+      where: { userId, method: 'TOTP', verifiedAt: { not: null } },
       orderBy: { createdAt: 'desc' },
     });
-    if (!factor?.secret) {
-      throw new UnauthorizedException({
-        exc: 'EX_AUTH_MFA_NO_FACTOR',
-        msg: 'No verified TOTP factor found',
-        key: 'auth.errors.mfaNoFactor',
-      });
-    }
+    if (!factor?.secret) return false;
 
     const secret = this.crypto.decrypt(Buffer.from(factor.secret));
     const result = await import('otplib').then((m) =>
       m.verify({ secret, token: code }),
     );
-    if (!result.valid) {
-      throw new UnauthorizedException({
-        exc: 'EX_AUTH_MFA_INVALID_CODE',
-        msg: 'Invalid MFA code',
-        key: 'auth.errors.mfaInvalidCode',
-      });
-    }
+    if (!result.valid) return false;
 
-    // Update last used timestamp
     await this.prisma.mfaFactor.update({
       where: { id: factor.id },
       data: { lastUsedAt: new Date() },
     });
+    return true;
+  }
 
-    // MFA verified — issue full session tokens
-    return this.issueTokens(user, ctx);
+  /** Verify a backup code (single-use, hash-compared). Returns true on success. */
+  private async verifyBackupCode(
+    userId: string,
+    code: string,
+  ): Promise<boolean> {
+    const codeHash = this.crypto.sha256(code);
+    const backupCode = await this.prisma.mfaBackupCode.findFirst({
+      where: { userId, codeHash, usedAt: null },
+    });
+    if (!backupCode) return false;
+
+    await this.prisma.mfaBackupCode.update({
+      where: { id: backupCode.id },
+      data: { usedAt: new Date() },
+    });
+    return true;
   }
 
   /** Consume an email-verification token: marks it used and activates the account. */
@@ -736,40 +757,47 @@ export class AuthService {
     if (header?.startsWith('Bearer ')) {
       return header.slice(7);
     }
-    const name = accessCookieName(this.config);
+    return this.extractCookie(ctx, accessCookieName(this.config));
+  }
+
+  private extractRbacToken(ctx: RequestContext): string | null {
+    return this.extractCookieOrHeader(
+      ctx,
+      rbacCookieName(this.config),
+      'x-rbac-token',
+    );
+  }
+
+  private extractDeviceToken(ctx: RequestContext): string | null {
+    return this.extractCookieOrHeader(
+      ctx,
+      deviceCookieName(this.config),
+      'x-device-token',
+    );
+  }
+
+  private extractUserToken(ctx: RequestContext): string | null {
+    return this.extractCookieOrHeader(
+      ctx,
+      userCookieName(this.config),
+      'x-user-token',
+    );
+  }
+
+  private extractCookie(ctx: RequestContext, name: string): string | null {
     const bag = (ctx.req as unknown as { cookies?: Record<string, string> })
       .cookies;
     return bag?.[name] ?? null;
   }
 
-  private extractRbacToken(ctx: RequestContext): string | null {
-    // Cookie first, then header (same precedence pattern as the access token).
-    const name = rbacCookieName(this.config);
-    const bag = (ctx.req as unknown as { cookies?: Record<string, string> })
-      .cookies;
-    const fromCookie = bag?.[name] ?? null;
+  private extractCookieOrHeader(
+    ctx: RequestContext,
+    cookieName: string,
+    headerName: string,
+  ): string | null {
+    const fromCookie = this.extractCookie(ctx, cookieName);
     if (fromCookie) return fromCookie;
-    const header = ctx.req.headers['x-rbac-token'];
-    return (Array.isArray(header) ? header[0] : header) ?? null;
-  }
-
-  private extractDeviceToken(ctx: RequestContext): string | null {
-    const name = deviceCookieName(this.config);
-    const bag = (ctx.req as unknown as { cookies?: Record<string, string> })
-      .cookies;
-    const fromCookie = bag?.[name] ?? null;
-    if (fromCookie) return fromCookie;
-    const header = ctx.req.headers['x-device-token'];
-    return (Array.isArray(header) ? header[0] : header) ?? null;
-  }
-
-  private extractUserToken(ctx: RequestContext): string | null {
-    const name = userCookieName(this.config);
-    const bag = (ctx.req as unknown as { cookies?: Record<string, string> })
-      .cookies;
-    const fromCookie = bag?.[name] ?? null;
-    if (fromCookie) return fromCookie;
-    const header = ctx.req.headers['x-user-token'];
+    const header = ctx.req.headers[headerName];
     return (Array.isArray(header) ? header[0] : header) ?? null;
   }
 

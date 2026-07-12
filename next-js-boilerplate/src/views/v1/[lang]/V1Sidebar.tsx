@@ -1,20 +1,12 @@
 "use client";
 
 import { forwardRef } from "react";
-import type { User } from "@/hooks/useAuth";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { cn } from "@/lib/cn";
 import { LOGIN_PATH } from "@/constants/routes";
 import { V1Nav } from "./V1Nav";
 import { ProfileSection } from "./ProfileSection";
-
-interface V1SidebarProps {
-  sidebarOpen: boolean;
-  user: User | null;
-  logout: () => void;
-  lang: string;
-  onNav: () => void;
-}
+import type { V1SidebarProps } from "@/types/v1/V1Sidebar-types";
 
 export const V1Sidebar = forwardRef<HTMLElement, V1SidebarProps>(
   function V1Sidebar({ sidebarOpen, user, logout, lang, onNav }, ref) {

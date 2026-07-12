@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Timestamp } from "./Timestamp";
+import { Timestamp } from "@/views/(demos)/dynamic/Timestamp";
 import { DynamicLoadingFallback } from "@/fallbacks";
 
 export const metadata: Metadata = {

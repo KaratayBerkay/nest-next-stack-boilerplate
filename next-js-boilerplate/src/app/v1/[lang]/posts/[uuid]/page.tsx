@@ -5,6 +5,8 @@ import { FreePageView } from "@/views/posts/[uuid]/FreePageView";
 import { BasicPageView } from "@/views/posts/[uuid]/BasicPageView";
 import { MediumPageView } from "@/views/posts/[uuid]/MediumPageView";
 import { PremiumPageView } from "@/views/posts/[uuid]/PremiumPageView";
+import type { PostPageProps } from "@/types/routing/PostPage-types";
+import { serverEnv } from "@/lib/env";
 
 const VIEWS = {
   FREE: FreePageView,
@@ -13,14 +15,10 @@ const VIEWS = {
   PREMIUM: PremiumPageView,
 };
 
-interface PageProps {
-  params: Promise<{ lang: string; uuid: string }>;
-}
-
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
   const { uuid } = await params;
   try {
-    const backendUrl = process.env.APP_URL ?? "http://localhost:3000";
+    const backendUrl = serverEnv().APP_URL;
     const gqlQuery = JSON.stringify({
       query: `query Post($id: ID!) { post(id: $id) { title content } }`,
       variables: { id: uuid },

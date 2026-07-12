@@ -1,10 +1,9 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { MetadataDemoFallback } from "@/fallbacks";
+import type { SlugPageProps } from "@/types/routing/SlugPage-types";
 
-type Props = { params: Promise<{ slug: string }> };
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params }: SlugPageProps): Promise<Metadata> {
   const { slug } = await params;
   return {
     title: `${slug} — dynamic`,
@@ -16,7 +15,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-async function SlugContent({ params }: Props) {
+async function SlugContent({ params }: SlugPageProps) {
   const { slug } = await params;
   return (
     <>
@@ -29,7 +28,7 @@ async function SlugContent({ params }: Props) {
   );
 }
 
-export default function SlugPage({ params }: Props) {
+export default function SlugPage({ params }: SlugPageProps) {
   return (
     <div className="flex flex-col gap-2">
       <Suspense fallback={<MetadataDemoFallback />}>

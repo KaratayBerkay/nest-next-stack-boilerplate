@@ -19,6 +19,7 @@ import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { TokenStoreService } from '../auth/token-store.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
+import { MfaService } from '../mfa/mfa.service';
 import { MinTier } from './min-tier.decorator';
 import { Roles } from './roles.decorator';
 import { RolesGuard } from './roles.guard';
@@ -81,7 +82,21 @@ export class AdminResolver {
     private readonly prisma: PrismaService,
     private readonly tokenStore: TokenStoreService,
     private readonly realtime: RealtimeGateway,
+    private readonly mfa: MfaService,
   ) {}
+
+  /** Look up the target user and reject if missing or role >= actor. Returns target role or null. */
+  private async findTargetOrReject(
+    userId: string,
+    actorRole: string,
+  ): Promise<string | null> {
+    const target = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+    if (!target || isTargetRoleGteActor(target.role, actorRole)) return null;
+    return target.role;
+  }
 
   @Query(() => String, { name: 'whoAmI' })
   whoAmI(@CurrentUser() user: JwtUser): string {
@@ -101,20 +116,13 @@ export class AdminResolver {
     @Args('userId') userId: string,
     @Args('tier', { type: () => SubscriptionTier }) tier: SubscriptionTier,
   ): Promise<boolean> {
-    const target = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { role: true },
-    });
-    if (!target || isTargetRoleGteActor(target.role, admin.role)) return false;
+    if (!(await this.findTargetOrReject(userId, admin.role))) return false;
 
-    // Update Postgres.
     await this.prisma.user.update({
       where: { id: userId },
       data: { subscriptionTier: tier },
     });
-    // Rewrite live Redis sessions via the reverse index.
     await this.tokenStore.rewriteFieldsForUser(userId, { tier });
-    // Push tier change to all live WS connections for this user.
     this.realtime.updateUserTier(userId, tier);
     return true;
   }
@@ -127,24 +135,14 @@ export class AdminResolver {
     @Args('status', { type: () => UserStatus }) status: UserStatus,
     @Args('reason', { nullable: true }) reason?: string,
   ): Promise<boolean> {
-    const target = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { role: true },
-    });
-    if (!target || isTargetRoleGteActor(target.role, admin.role)) return false;
+    if (!(await this.findTargetOrReject(userId, admin.role))) return false;
 
     await this.prisma.user.update({
       where: { id: userId },
       data: { status },
     });
-
-    // Revoke all active sessions so the user is logged out immediately.
     await this.tokenStore.revokeAllForUser(userId);
-
-    // Close any live WebSocket connections for this user.
     this.realtime.closeAllSocketsForUser(userId);
-
-    // Audit log the action.
     await this.prisma.auditLog.create({
       data: {
         actorId: admin.userId,
@@ -154,7 +152,6 @@ export class AdminResolver {
         summary: `User status changed to ${status}${reason ? `: ${reason}` : ''}`,
       },
     });
-
     return true;
   }
 
@@ -185,5 +182,29 @@ export class AdminResolver {
         this.prisma.friendship.count({ where: { status: 'ACCEPTED' } }),
       ]);
     return { totalUsers, newUsersLast7Days, totalPosts, totalFriendships };
+  }
+
+  @Roles(UserRole.SUPERADMIN)
+  @Mutation(() => Boolean)
+  async resetMfa(
+    @CurrentUser() admin: JwtUser,
+    @Args('userId') userId: string,
+  ): Promise<boolean> {
+    if (!(await this.findTargetOrReject(userId, admin.role))) return false;
+
+    const changed = await this.mfa.resetMfa(userId);
+    if (!changed) return false;
+
+    await this.tokenStore.revokeAllForUser(userId);
+    await this.prisma.auditLog.create({
+      data: {
+        actorId: admin.userId,
+        action: AuditAction.UPDATE,
+        entityType: 'User',
+        entityId: userId,
+        summary: 'MFA reset by administrator',
+      },
+    });
+    return true;
   }
 }

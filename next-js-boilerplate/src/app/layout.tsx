@@ -21,6 +21,7 @@ import { ClientLocaleProvider } from "@/components/ClientLocaleProvider";
 import { TimezoneProvider } from "@/components/TimezoneProvider";
 import { CurrencyProvider } from "@/components/CurrencyProvider";
 import { ThemeInitScript } from "./ThemeInitScript";
+import { clientEnv } from "@/lib/env";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -42,9 +43,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
-  ),
+  metadataBase: new URL(clientEnv.NEXT_PUBLIC_APP_URL),
   title: {
     default: "Next.js Boilerplate",
     template: "%s — Next.js Boilerplate",

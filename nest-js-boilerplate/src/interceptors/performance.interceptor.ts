@@ -23,7 +23,7 @@ export class PerformanceInterceptor implements NestInterceptor {
     let ip: string | undefined;
     let userAgent: string | undefined;
 
-    const type = context.getType();
+    const type = context.getType<'graphql' | 'http' | 'ws'>();
 
     if (type === 'graphql') {
       const args = context.getArgs();

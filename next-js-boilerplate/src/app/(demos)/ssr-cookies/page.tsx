@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AuthStatus } from "@/features/auth/ui/AuthStatus";
-import { CookieStatus } from "./CookieStatus";
+import { CookieStatus } from "@/views/(demos)/ssr-cookies/CookieStatus";
 import { CookieStatusFallback } from "@/fallbacks";
 
 export const metadata: Metadata = {

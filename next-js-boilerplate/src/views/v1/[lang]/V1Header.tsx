@@ -1,6 +1,5 @@
 "use client";
 
-import type { Conversation } from "@/lib/realtime/useConversations";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { Avatar } from "@/components/ui/Avatar";
 import { initials } from "@/lib/initials";
@@ -11,17 +10,7 @@ import { NotificationDropdown } from "@/components/feed/NotificationDropdown";
 import { MessageDropdown } from "./MessageDropdown";
 import { ProfileDropdown } from "./ProfileDropdown";
 import { LOGIN_PATH } from "@/constants/routes";
-import type { User } from "@/hooks/useAuth";
-
-interface V1HeaderProps {
-  toggle: () => void;
-  open: () => void;
-  loading: boolean;
-  user: User | null;
-  logout: () => void;
-  lang: string;
-  conversations: Conversation[];
-}
+import type { V1HeaderProps } from "@/types/v1/V1Header-types";
 
 export function V1Header({
   toggle,

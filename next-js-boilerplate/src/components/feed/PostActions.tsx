@@ -2,15 +2,7 @@
 
 import { IconMessageCircle } from "@tabler/icons-react";
 import { CommentSection } from "./CommentSection";
-import type { Post } from "@/types/feed/PostCard-types";
-
-interface PostActionsProps {
-  isExpanded: boolean;
-  postData: Post;
-  onToggle: () => void;
-  currentUserId?: string;
-  onCommentAdded: () => void;
-}
+import type { PostActionsProps } from "@/types/feed/PostActions-types";
 
 export function PostActions({
   isExpanded,

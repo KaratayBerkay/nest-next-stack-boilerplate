@@ -8,7 +8,7 @@ import {
   clearSessionUserCookieOptions,
   clearUserTokenCookieOptions,
 } from "@/lib/cookie";
-import { csrfEchoHeaders, graphqlFetch } from "@/lib/backend";
+import { clearCsrfCache, csrfEchoHeaders, graphqlFetch } from "@/lib/backend";
 
 const LOGOUT_QUERY = `
   mutation Logout {
@@ -32,6 +32,7 @@ export async function POST() {
     );
     revoked = !errors && data?.logout === true;
   }
+  clearCsrfCache();
   if (!revoked) {
     console.error("[logout] backend session revocation failed");
   }

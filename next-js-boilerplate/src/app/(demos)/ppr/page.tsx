@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { DynamicGreeting } from "./DynamicGreeting";
+import { DynamicGreeting } from "@/views/(demos)/ppr/DynamicGreeting";
 import { PprFallback } from "@/fallbacks";
 
 export const metadata: Metadata = {

@@ -1,6 +1,5 @@
 "use client";
 
-import type { Post } from "@/types/feed/PostCard-types";
 import { useAuth } from "@/hooks/useAuth";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -8,16 +7,7 @@ import { IconEye, IconPencil, IconTrash } from "@tabler/icons-react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ReactionInline } from "./ReactionButtons";
 import { formatDate } from "@/lib/date-time";
-import type { Dispatch, SetStateAction } from "react";
-
-interface PostHeaderProps {
-  postData: Post;
-  isOwn: boolean;
-  editing: boolean;
-  onRefresh: () => void;
-  onEditStart: () => void;
-  onDeleteConfirm: () => void;
-}
+import type { PostHeaderProps } from "@/types/feed/PostHeader-types";
 
 export function PostHeader({
   postData,

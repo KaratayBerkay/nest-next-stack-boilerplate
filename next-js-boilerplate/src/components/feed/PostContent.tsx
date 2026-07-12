@@ -1,16 +1,7 @@
 "use client";
 
-import type { Post } from "@/types/feed/PostCard-types";
 import { imageUrl } from "@/lib/image";
-
-interface PostContentProps {
-  postData: Post;
-  editing: boolean;
-  editTitle: string;
-  editContent: string;
-  onTitleChange: (value: string) => void;
-  onContentChange: (value: string) => void;
-}
+import type { PostContentProps } from "@/types/feed/PostContent-types";
 
 export function PostContent({
   postData,

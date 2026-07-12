@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { SignupForm } from "./Form";
+import { SignupForm } from "@/views/(demos)/form/Form";
 
 export const metadata: Metadata = {
   title: "Form",

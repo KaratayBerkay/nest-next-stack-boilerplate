@@ -1,5 +1,15 @@
 import "server-only";
+import { createHash } from "node:crypto";
 import { cookies, headers as nextHeaders } from "next/headers";
+import {
+  CSRF_TOKEN_HEADER,
+  DEVICE_TOKEN_HEADER,
+  JSON_CONTENT_TYPE_HEADER,
+  RBAC_TOKEN_HEADER,
+  USER_TOKEN_HEADER,
+  X_FORWARDED_FOR_HEADER,
+  bearerAuthHeader,
+} from "@/constants";
 import { DEVICE_TOKEN_COOKIE, RBAC_TOKEN_COOKIE, USER_TOKEN_COOKIE } from "./cookie";
 import { serverEnv } from "./env";
 
@@ -15,25 +25,20 @@ function backendBaseUrl(): string {
 }
 
 export async function forwardedForHeader(): Promise<Record<string, string>> {
-  // Forward the client IP from the incoming request so the backend sees the real
-  // browser IP (not the Next.js server's). Used by DeviceIpMiddleware for IP binding.
   const reqHeaders = await nextHeaders();
-  const forwarded = reqHeaders.get("x-forwarded-for");
-  return forwarded ? { "x-forwarded-for": forwarded } : {};
+  const forwarded = reqHeaders.get(X_FORWARDED_FOR_HEADER);
+  return forwarded ? { [X_FORWARDED_FOR_HEADER]: forwarded } : {};
 }
 
 export async function sessionTokenHeaders(): Promise<Record<string, string>> {
-  // The BFF's cookie names don't match the backend's production `__Secure-`
-  // names, so forwarding the Cookie header alone isn't enough. Send the
-  // fallback headers instead.
   const cookieStore = await cookies();
   const rbac = cookieStore.get(RBAC_TOKEN_COOKIE)?.value;
   const device = cookieStore.get(DEVICE_TOKEN_COOKIE)?.value;
   const user = cookieStore.get(USER_TOKEN_COOKIE)?.value;
   return {
-    ...(rbac ? { "x-rbac-token": rbac } : {}),
-    ...(device ? { "x-device-token": device } : {}),
-    ...(user ? { "x-user-token": user } : {}),
+    ...(rbac ? { [RBAC_TOKEN_HEADER]: rbac } : {}),
+    ...(device ? { [DEVICE_TOKEN_HEADER]: device } : {}),
+    ...(user ? { [USER_TOKEN_HEADER]: user } : {}),
   };
 }
 
@@ -48,7 +53,7 @@ export async function backendFetch<T = unknown>(
   const res = await fetch(url, {
     ...options,
     headers: {
-      "Content-Type": "application/json",
+      ...JSON_CONTENT_TYPE_HEADER,
       ...(cookieHeader ? { Cookie: cookieHeader } : {}),
       ...(await forwardedForHeader()),
       ...(await sessionTokenHeaders()),
@@ -83,6 +88,41 @@ function csrfCookieName(): string {
   return process.env.NODE_ENV === "production" ? CSRF_COOKIE_PROD : CSRF_COOKIE_DEV;
 }
 
+interface CsrfCacheEntry {
+  token: string;
+  cookie: string;
+  ts: number;
+}
+
+const CSRF_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const csrfCache = new Map<string, CsrfCacheEntry>();
+
+function sessionCacheKey(cookieStore: Awaited<ReturnType<typeof cookies>>): string {
+  const rbac = cookieStore.get(RBAC_TOKEN_COOKIE)?.value ?? "";
+  const device = cookieStore.get(DEVICE_TOKEN_COOKIE)?.value ?? "";
+  const user = cookieStore.get(USER_TOKEN_COOKIE)?.value ?? "";
+  return createHash("sha256").update(`${rbac}:${device}:${user}`).digest("hex");
+}
+
+/**
+ * Evict expired entries from the CSRF cache. Runs lazily on each miss.
+ */
+function evictStale(): void {
+  const now = Date.now();
+  for (const [key, entry] of csrfCache) {
+    if (now - entry.ts > CSRF_CACHE_TTL_MS) csrfCache.delete(key);
+  }
+}
+
+/**
+ * Clear the cached CSRF entry for the current session (call on logout).
+ */
+export function clearCsrfCache(): void {
+  cookies()
+    .then((cs) => csrfCache.delete(sessionCacheKey(cs)))
+    .catch(() => {});
+}
+
 /** Parse the name=value portion from a Set-Cookie header string. */
 function parseSetCookieValue(setCookie: string, cookieName: string): string | null {
   const re = new RegExp(`(?:^|,\\s*)${cookieName}=([^;]+)`);
@@ -97,10 +137,23 @@ function parseSetCookieValue(setCookie: string, cookieName: string): string | nu
  * session tokens must travel via the Authorization / x-*-token fallbacks.
  * Returns null when the backend won't issue a token (e.g. unreachable).
  *
- * No cross-request cache: each BFF request fetches its own CSRF token to avoid
- * cross-session contamination when multiple users share a server process.
+ * Session-scoped cache: keyed by a hash of the caller's session cookies so
+ * multiple mutations within the same request batch share one CSRF token without
+ * cross-session contamination.
  */
 export async function csrfEchoHeaders(): Promise<Record<string, string> | null> {
+  const cookieStore = await cookies();
+  const key = sessionCacheKey(cookieStore);
+  evictStale();
+
+  const cached = csrfCache.get(key);
+  if (cached && Date.now() - cached.ts < CSRF_CACHE_TTL_MS) {
+    return {
+      [CSRF_TOKEN_HEADER]: cached.token,
+      ...(cached.cookie ? { cookie: cached.cookie } : {}),
+    };
+  }
+
   const csrfRes = await backendFetch<{ token: string }>("/csrf/token");
   const csrfToken = csrfRes.data?.token;
   if (!csrfToken) {
@@ -112,8 +165,10 @@ export async function csrfEchoHeaders(): Promise<Record<string, string> | null> 
     ? parseSetCookieValue(setCookieHeader, csrfCookieName())
     : null;
 
+  csrfCache.set(key, { token: csrfToken, cookie: csrfCookieValue ?? "", ts: Date.now() });
+
   return {
-    "x-csrf-token": csrfToken,
+    [CSRF_TOKEN_HEADER]: csrfToken,
     ...(csrfCookieValue ? { cookie: csrfCookieValue } : {}),
   };
 }
@@ -173,9 +228,9 @@ export async function graphqlFetch<T>(
   const res = await fetch(url, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
+      ...JSON_CONTENT_TYPE_HEADER,
       ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-      ...(bearerToken ? { Authorization: `Bearer ${bearerToken}` } : {}),
+      ...(bearerToken ? bearerAuthHeader(bearerToken) : {}),
       ...(await forwardedForHeader()),
       ...(await sessionTokenHeaders()),
       ...(extraHeaders ?? {}),
