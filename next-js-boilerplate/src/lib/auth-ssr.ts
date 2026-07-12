@@ -5,7 +5,7 @@ import { SESSION_USER_COOKIE } from "@/lib/cookie";
 import { graphqlFetch, sessionTokenHeaders } from "@/lib/backend";
 import { ME_QUERY } from "@/lib/graphql/queries";
 import { getAccessToken } from "@/store/ssr-cookies";
-import type { User } from "@/features/auth/hooks/useAuth";
+import type { User } from "@/types/auth/User";
 
 function decodeBase64(value: string): string {
   return Buffer.from(value, "base64url").toString("utf-8");

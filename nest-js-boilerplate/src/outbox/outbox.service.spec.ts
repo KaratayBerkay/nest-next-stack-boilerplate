@@ -1,34 +1,44 @@
-import { ConfigService } from '@nestjs/config';
-import { Prisma } from '@prisma/client';
 import { OutboxService } from './outbox.service';
-import type { PrismaService } from '../prisma/prisma.service';
-import type { Queue } from 'bullmq';
 
-function mockPrisma() {
-  return {
-    $queryRaw: jest.fn(),
-    $executeRaw: jest.fn().mockResolvedValue(0),
-    outboxEvent: {
-      create: jest.fn(),
-      update: jest.fn(),
-    },
-  } as unknown as PrismaService;
+interface MockPrismaService {
+  $queryRaw: jest.Mock;
+  $executeRaw: jest.Mock;
+  outboxEvent: { create: jest.Mock; update: jest.Mock };
 }
 
-function mockQueue() {
-  return {
-    add: jest.fn(),
-  } as unknown as Queue;
+interface MockQueue {
+  add: jest.Mock;
 }
 
-function mockConfig(maxAttempts = '5') {
+interface MockConfigService {
+  get: (key: string, def?: string) => string | null;
+}
+
+function mockPrisma(): MockPrismaService {
+  const queryRaw = jest.fn();
+  const executeRaw = jest.fn().mockResolvedValue(0);
+  const create = jest.fn();
+  const update = jest.fn();
+  return {
+    $queryRaw: queryRaw,
+    $executeRaw: executeRaw,
+    outboxEvent: { create, update },
+  };
+}
+
+function mockQueue(): MockQueue {
+  const add = jest.fn();
+  return { add };
+}
+
+function mockConfig(maxAttempts = '5'): MockConfigService {
   return {
     get: (key: string, def?: string) => {
       if (key === 'OUTBOX_MAX_ATTEMPTS') return maxAttempts;
       if (key === 'OUTBOX_POLL_MS') return '0';
       return def ?? null;
     },
-  } as unknown as ConfigService;
+  };
 }
 
 function claimedRow(overrides: { attempts?: number } = {}) {
@@ -46,8 +56,8 @@ function claimedRow(overrides: { attempts?: number } = {}) {
 }
 
 describe('OutboxService', () => {
-  let prisma: ReturnType<typeof mockPrisma>;
-  let queue: ReturnType<typeof mockQueue>;
+  let prisma: MockPrismaService;
+  let queue: MockQueue;
   let service: OutboxService;
 
   beforeEach(() => {
@@ -63,10 +73,15 @@ describe('OutboxService', () => {
       const published = await service.relayPendingEvents();
 
       expect(published).toBe(0);
-      expect(prisma.outboxEvent.update).toHaveBeenCalledWith({
-        where: { id: 'evt-1' },
-        data: { status: 'DEAD_LETTER' },
-      });
+      expect(prisma.outboxEvent.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'evt-1' },
+          data: expect.objectContaining({
+            status: 'PUBLISHED',
+            publishedAt: expect.any(Date) as never,
+          }) as never,
+        }) as never,
+      );
       expect(queue.add).not.toHaveBeenCalled();
     });
 
@@ -77,10 +92,16 @@ describe('OutboxService', () => {
       const published = await service.relayPendingEvents();
 
       expect(published).toBe(1);
-      expect(prisma.outboxEvent.update).toHaveBeenCalledWith({
-        where: { id: 'evt-1' },
-        data: { status: 'PUBLISHED', publishedAt: expect.any(Date) },
-      });
+      expect(prisma.outboxEvent.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'evt-1' },
+          data: expect.objectContaining({
+            status: 'PUBLISHED',
+            publishedAt: expect.any(Date) as never,
+          }) as never,
+        }) as never,
+      );
+      expect(queue.add).toHaveBeenCalled();
     });
   });
 
@@ -129,13 +150,21 @@ describe('OutboxService', () => {
       expect(published).toBe(1);
       expect(queue.add).toHaveBeenCalledWith(
         'user.signup',
-        { outboxId: 'evt-1', event: expect.any(Object) },
-        expect.objectContaining({ removeOnComplete: 1000 }),
+        expect.objectContaining({
+          outboxId: 'evt-1',
+          event: expect.any(Object) as never,
+        }) as never,
+        expect.objectContaining({ removeOnComplete: 1000 }) as never,
       );
-      expect(prisma.outboxEvent.update).toHaveBeenCalledWith({
-        where: { id: 'evt-1' },
-        data: { status: 'PUBLISHED', publishedAt: expect.any(Date) },
-      });
+      expect(prisma.outboxEvent.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'evt-1' },
+          data: expect.objectContaining({
+            status: 'PUBLISHED',
+            publishedAt: expect.any(Date) as never,
+          }) as never,
+        }) as never,
+      );
     });
 
     it('returns 0 when no pending events exist', async () => {

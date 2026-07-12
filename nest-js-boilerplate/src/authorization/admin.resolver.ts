@@ -124,6 +124,15 @@ export class AdminResolver {
     });
     await this.tokenStore.rewriteFieldsForUser(userId, { tier });
     this.realtime.updateUserTier(userId, tier);
+    await this.prisma.auditLog.create({
+      data: {
+        actorId: admin.userId,
+        action: AuditAction.UPDATE,
+        entityType: 'User',
+        entityId: userId,
+        summary: `User tier changed to ${tier}`,
+      },
+    });
     return true;
   }
 

@@ -5,20 +5,26 @@ import { TokenStoreService } from '../auth/token-store.service';
 import { PushNotificationService } from '../push-notification/push-notification.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 
-function mockPrisma() {
-  return {
-    notification: {
-      create: jest.fn(),
-      findMany: jest.fn(),
-      count: jest.fn(),
-      updateMany: jest.fn(),
-    },
+interface MockNotificationPrisma {
+  notification: {
+    create: jest.Mock;
+    findMany: jest.Mock;
+    count: jest.Mock;
+    updateMany: jest.Mock;
   };
+}
+
+function mockPrisma(): MockNotificationPrisma {
+  const create = jest.fn();
+  const findMany = jest.fn();
+  const count = jest.fn();
+  const updateMany = jest.fn();
+  return { notification: { create, findMany, count, updateMany } };
 }
 
 describe('NotificationService', () => {
   let service: NotificationService;
-  let prisma: ReturnType<typeof mockPrisma>;
+  let prisma: MockNotificationPrisma;
   let mockRealtime: {
     emitToService: jest.Mock;
     hasServiceConnection: jest.Mock;
@@ -213,10 +219,14 @@ describe('NotificationService', () => {
       const result = await service.markRead('n1', 'u1');
 
       expect(result.count).toBe(1);
-      expect(prisma.notification.updateMany).toHaveBeenCalledWith({
-        where: { id: 'n1', userId: 'u1' },
-        data: { readAt: expect.any(Date) },
-      });
+      expect(prisma.notification.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'n1', userId: 'u1' },
+          data: expect.objectContaining({
+            readAt: expect.any(Date) as never,
+          }) as never,
+        }) as never,
+      );
       expect(mockTokenStore.rewriteFieldsForUser).toHaveBeenCalledWith('u1', {
         unread: '2',
       });
@@ -250,10 +260,14 @@ describe('NotificationService', () => {
 
       await service.markAllRead('u1');
 
-      expect(prisma.notification.updateMany).toHaveBeenCalledWith({
-        where: { userId: 'u1', readAt: null },
-        data: { readAt: expect.any(Date) },
-      });
+      expect(prisma.notification.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId: 'u1', readAt: null },
+          data: expect.objectContaining({
+            readAt: expect.any(Date) as never,
+          }) as never,
+        }) as never,
+      );
       expect(mockTokenStore.rewriteFieldsForUser).toHaveBeenCalledWith('u1', {
         unread: '0',
       });

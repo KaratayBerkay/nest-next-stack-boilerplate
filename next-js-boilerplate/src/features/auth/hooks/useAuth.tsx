@@ -28,19 +28,9 @@ import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 // Session snapshot fields arrive via /api/auth/me (Redis, zero-PG).
 // Login/register return a subset from AuthPayload; the snapshot is the
 // identity source after the first `me` call.
-export type User = {
-  id: string;
-  email: string;
-  name?: string;
-  username?: string;
-  avatarUrl?: string;
-  locale?: string;
-  timezone?: string;
-  status?: string;
-  role: string;
-  tier?: string;
-  sessionId?: string;
-};
+import type { User } from "@/types/auth/User";
+
+export type { User } from "@/types/auth/User";
 
 type AuthResponse = {
   user: User;

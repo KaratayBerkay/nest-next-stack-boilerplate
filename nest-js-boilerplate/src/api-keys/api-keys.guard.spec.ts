@@ -1,12 +1,16 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { ExecutionContext } from '@nestjs/common';
 import { ApiKeyGuard } from './api-keys.guard';
-import type { ApiKeysService } from './api-keys.service';
 
-function mockApiKeysService(overrides: { validate?: jest.Mock } = {}) {
-  return {
-    validate: overrides.validate ?? jest.fn(),
-  } as unknown as ApiKeysService;
+interface MockApiKeysService {
+  validate: jest.Mock;
+}
+
+function mockApiKeysService(
+  overrides: { validate?: jest.Mock } = {},
+): MockApiKeysService {
+  const validate = overrides.validate ?? jest.fn();
+  return { validate };
 }
 
 interface MockRequest {
@@ -46,7 +50,7 @@ function gqlCtx(
 describe('ApiKeyGuard', () => {
   it('skips when no Authorization header is present', async () => {
     const service = mockApiKeysService();
-    const guard = new ApiKeyGuard(service);
+    const guard = new ApiKeyGuard(service as never);
     const req = createRequest();
 
     const result = await guard.canActivate(

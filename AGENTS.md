@@ -130,7 +130,7 @@ export default function FeedPage() {
 When asked to read/show websocket logs, payment logs, billing logs, or any application logs, query the last logs from Elasticsearch.
 
 - **ES endpoint:** `http://localhost:9200`
-- **Kibana:** `http://10.10.2.51:5601`
+- **Kibana:** `http://10.10.2.175:5601`
 
 ### Quick queries
 

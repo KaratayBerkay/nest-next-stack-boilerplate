@@ -9,7 +9,11 @@
       "submitting": "Giriş yapılıyor...",
       "noAccount": "Hesabınız yok mu?",
       "registerLink": "Kayıt Ol",
-      "forgotPassword": "Şifremi unuttum"
+      "forgotPassword": "Şifremi unuttum",
+      "mfaTitle": "İki Faktörlü Doğrulama",
+      "mfaCodeLabel": "Doğrulama kodu",
+      "mfaVerify": "Doğrula",
+      "mfaVerifying": "Doğrulanıyor..."
     },
     "register": {
       "title": "Kayıt Ol",

@@ -9,7 +9,11 @@
       "submitting": "Signing in...",
       "noAccount": "No account?",
       "registerLink": "Register",
-      "forgotPassword": "Forgot password?"
+      "forgotPassword": "Forgot password?",
+      "mfaTitle": "Two-Factor Authentication",
+      "mfaCodeLabel": "Authentication code",
+      "mfaVerify": "Verify",
+      "mfaVerifying": "Verifying..."
     },
     "register": {
       "title": "Register",

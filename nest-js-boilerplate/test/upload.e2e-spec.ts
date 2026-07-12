@@ -2,13 +2,18 @@ import { INestApplication } from '@nestjs/common';
 import { ExecutionContext, Module } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
+import type { Server } from 'node:http';
 import { UploadModule } from '../src/upload/upload.module';
 import { SessionAuthGuard } from '../src/auth/session-auth.guard';
+
+interface StubRequest {
+  user: { userId: string; role: string; tier: string } | undefined;
+}
 
 // Stub SessionAuthGuard to bypass auth in e2e tests
 class StubSessionAuthGuard {
   canActivate(context: ExecutionContext): boolean {
-    const req = context.switchToHttp().getRequest();
+    const req = context.switchToHttp().getRequest<StubRequest>();
     req.user = { userId: 'test-user', role: 'USER', tier: 'FREE' };
     return true;
   }
@@ -41,7 +46,7 @@ describe('File upload (e2e)', () => {
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==',
       'base64',
     );
-    const res = await request(app.getHttpServer())
+    const res = await request(app.getHttpServer() as Server)
       .post('/upload/single')
       .attach('file', png, { filename: 'test.png', contentType: 'image/png' })
       .expect(201);
@@ -58,7 +63,7 @@ describe('File upload (e2e)', () => {
   });
 
   it('rejects non-image file on single (400)', async () => {
-    await request(app.getHttpServer())
+    await request(app.getHttpServer() as Server)
       .post('/upload/single')
       .attach('file', Buffer.from('not an image'), {
         filename: 'file.txt',
@@ -72,7 +77,7 @@ describe('File upload (e2e)', () => {
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==',
       'base64',
     );
-    const res = await request(app.getHttpServer())
+    const res = await request(app.getHttpServer() as Server)
       .post('/upload/multiple')
       .attach('files', png, { filename: 'a.png', contentType: 'image/png' })
       .attach('files', png, { filename: 'b.png', contentType: 'image/png' })
@@ -94,7 +99,7 @@ describe('File upload (e2e)', () => {
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==',
       'base64',
     );
-    await request(unauthApp.getHttpServer())
+    await request(unauthApp.getHttpServer() as Server)
       .post('/upload/single')
       .attach('file', png, { filename: 'test.png', contentType: 'image/png' })
       .expect(401);

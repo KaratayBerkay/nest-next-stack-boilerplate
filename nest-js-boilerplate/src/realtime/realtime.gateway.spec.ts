@@ -1,6 +1,21 @@
 import { RealtimeGateway } from './realtime.gateway';
 
-function makeWs(overrides: Record<string, unknown> = {}) {
+interface MockWs {
+  readyState: number;
+  userId: string;
+  sessionId: string;
+  deviceTokenHash: string;
+  authenticated: boolean;
+  isAlive: boolean;
+  send: jest.Mock;
+  close: jest.Mock;
+  tier?: string;
+  [key: string]: unknown;
+}
+
+function makeWs(overrides: Record<string, unknown> = {}): MockWs {
+  const send = jest.fn();
+  const close = jest.fn();
   return {
     readyState: 1, // OPEN
     userId: 'u1',
@@ -8,10 +23,10 @@ function makeWs(overrides: Record<string, unknown> = {}) {
     deviceTokenHash: 'hash-1',
     authenticated: true,
     isAlive: true,
-    send: jest.fn(),
-    close: jest.fn(),
+    send,
+    close,
     ...overrides,
-  } as unknown as WebSocket;
+  };
 }
 
 describe('RealtimeGateway — public methods', () => {
@@ -30,8 +45,8 @@ describe('RealtimeGateway — public methods', () => {
 
   describe('emitToUser', () => {
     it('sends to all open sockets for a user', () => {
-      const ws1 = makeWs({ send: jest.fn() });
-      const ws2 = makeWs({ send: jest.fn() });
+      const ws1 = makeWs();
+      const ws2 = makeWs();
       // Access private userSockets via bracket notation
       (
         gateway as unknown as { userSockets: Map<string, Set<unknown>> }
@@ -49,8 +64,8 @@ describe('RealtimeGateway — public methods', () => {
     });
 
     it('skips closed sockets', () => {
-      const wsClosed = makeWs({ readyState: 3, send: jest.fn() }); // CLOSED
-      const wsOpen = makeWs({ send: jest.fn() });
+      const wsClosed = makeWs({ readyState: 3 }); // CLOSED
+      const wsOpen = makeWs();
       (
         gateway as unknown as { userSockets: Map<string, Set<unknown>> }
       ).userSockets.set('u1', new Set([wsClosed, wsOpen]));
@@ -65,7 +80,7 @@ describe('RealtimeGateway — public methods', () => {
 
   describe('emitToService', () => {
     it('sends to registered service connections', () => {
-      const ws = makeWs({ send: jest.fn() });
+      const ws = makeWs();
       const serviceConns = (
         gateway as unknown as {
           serviceConnections: Map<string, Set<unknown>>;
@@ -120,12 +135,10 @@ describe('RealtimeGateway — public methods', () => {
       const wsMatch = makeWs({
         sessionId: 'sess-target',
         readyState: 1,
-        close: jest.fn(),
       });
       const wsOther = makeWs({
         sessionId: 'sess-other',
         readyState: 1,
-        close: jest.fn(),
       });
       (
         gateway as unknown as { userSockets: Map<string, Set<unknown>> }
@@ -145,8 +158,8 @@ describe('RealtimeGateway — public methods', () => {
 
   describe('updateUserTier', () => {
     it('updates tier on all user sockets and sends tier-changed frame', () => {
-      const ws1 = makeWs({ tier: 'FREE', send: jest.fn() });
-      const ws2 = makeWs({ tier: 'FREE', send: jest.fn() });
+      const ws1 = makeWs({ tier: 'FREE' });
+      const ws2 = makeWs({ tier: 'FREE' });
       (
         gateway as unknown as { userSockets: Map<string, Set<unknown>> }
       ).userSockets.set('u1', new Set([ws1, ws2]));

@@ -45,8 +45,7 @@ export class NotificationController {
               name: n.actor.name,
               email: n.actor.email,
               avatarUrl: (n.actor as Record<string, unknown>).avatarUrl as
-                | string
-                | null,
+                string | null,
             }
           : null,
       })),

@@ -44,6 +44,11 @@ next-env.d.ts
 # local-only docs / research notes (kept out of the repo per project convention)
 # docs/
 
+# generated i18n (produced by `pnpm generate-i18n-types` during prebuild)
+src/generated/i18n-messages-en.json
+src/generated/i18n-messages-tr.json
+src/generated/i18n-messages.d.ts
+
 # playwright
 /test-results/
 /playwright-report/

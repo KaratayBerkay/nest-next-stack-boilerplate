@@ -1,11 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
 import { BillingService } from './billing.service';
-import type {
-  PaymentProvider,
-  CreateSubscriptionInput,
-  CreateSubscriptionResult,
-} from './payment-provider.interface';
 
 type MockPrisma = {
   user: {
@@ -22,6 +17,13 @@ type MockPrisma = {
   $transaction: jest.Mock;
 };
 
+interface MockPaymentProvider {
+  createSubscription: jest.Mock;
+  cancelSubscription: jest.Mock;
+  chargeCredits?: jest.Mock;
+  getSubscriptionStatus?: jest.Mock;
+}
+
 type MockTokenStore = { rewriteFieldsForUser: jest.Mock };
 type MockNotification = { create: jest.Mock };
 type MockRealtime = { updateUserTier: jest.Mock };
@@ -32,7 +34,7 @@ type MockStripeService = {
 
 describe('BillingService', () => {
   let service: BillingService;
-  let mockProvider: jest.Mocked<PaymentProvider>;
+  let mockProvider: MockPaymentProvider;
   let mockPrisma: MockPrisma;
   let mockTokenStore: MockTokenStore;
   let mockNotification: MockNotification;
@@ -40,44 +42,46 @@ describe('BillingService', () => {
   let mockStripe: MockStripeService;
 
   beforeEach(() => {
-    mockProvider = {
-      createSubscription: jest.fn(),
-      cancelSubscription: jest.fn().mockResolvedValue(undefined),
-    };
+    const createSubscription = jest.fn();
+    const cancelSubscription = jest.fn().mockResolvedValue(undefined);
+    mockProvider = { createSubscription, cancelSubscription };
+
+    const findUniqueOrThrow = jest.fn();
+    const findUnique = jest.fn();
+    const update = jest.fn();
+    const wFindUnique = jest
+      .fn()
+      .mockResolvedValue({ id: 'w1', userId: 'u1', currency: 'USD' });
+    const wCreate = jest.fn();
+    const wtCreate = jest.fn();
+    const wtFindMany = jest.fn();
+    const wtFindFirst = jest.fn().mockResolvedValue(null);
+    const transaction = jest.fn((ops: unknown[]) => Promise.resolve(ops));
     mockPrisma = {
-      user: {
-        findUniqueOrThrow: jest.fn(),
-        findUnique: jest.fn(),
-        update: jest.fn(),
-      },
-      wallet: {
-        findUnique: jest
-          .fn()
-          .mockResolvedValue({ id: 'w1', userId: 'u1', currency: 'USD' }),
-        create: jest.fn(),
-      },
+      user: { findUniqueOrThrow, findUnique, update },
+      wallet: { findUnique: wFindUnique, create: wCreate },
       walletTransaction: {
-        create: jest.fn(),
-        findMany: jest.fn(),
-        findFirst: jest.fn().mockResolvedValue(null),
+        create: wtCreate,
+        findMany: wtFindMany,
+        findFirst: wtFindFirst,
       },
-      $transaction: jest.fn((ops: unknown[]) => Promise.resolve(ops)),
+      $transaction: transaction,
     };
-    mockTokenStore = {
-      rewriteFieldsForUser: jest.fn(),
-    };
-    mockNotification = {
-      create: jest.fn(),
-    };
-    mockRealtime = {
-      updateUserTier: jest.fn(),
-    };
-    mockStripe = {
-      createCustomer: jest.fn().mockResolvedValue({ id: 'cus_new123' }),
-      createSetupIntent: jest
-        .fn()
-        .mockResolvedValue({ client_secret: 'si_secret' }),
-    };
+
+    const rewriteFieldsForUser = jest.fn();
+    mockTokenStore = { rewriteFieldsForUser };
+
+    const createNotify = jest.fn();
+    mockNotification = { create: createNotify };
+
+    const updateUserTier = jest.fn();
+    mockRealtime = { updateUserTier };
+
+    const createCustomer = jest.fn().mockResolvedValue({ id: 'cus_new123' });
+    const createSetupIntent = jest
+      .fn()
+      .mockResolvedValue({ client_secret: 'si_secret' });
+    mockStripe = { createCustomer, createSetupIntent };
 
     service = new BillingService(
       mockPrisma as never,
@@ -117,7 +121,7 @@ describe('BillingService', () => {
         tier: SubscriptionTier.PREMIUM,
         paymentMethodId: 'pm_card123',
         stripeCustomerId: 'cus_existing',
-      });
+      } satisfies Record<string, unknown>);
       expect(mockTokenStore.rewriteFieldsForUser).toHaveBeenCalledWith('u1', {
         tier: SubscriptionTier.PREMIUM,
       });
@@ -152,7 +156,9 @@ describe('BillingService', () => {
         data: { stripeCustomerId: 'cus_new123' },
       });
       expect(mockProvider.createSubscription).toHaveBeenCalledWith(
-        expect.objectContaining({ stripeCustomerId: 'cus_new123' }),
+        expect.objectContaining({
+          stripeCustomerId: 'cus_new123',
+        } satisfies Record<string, unknown>),
       );
     });
 
@@ -202,8 +208,8 @@ describe('BillingService', () => {
           data: expect.objectContaining({
             subscriptionTier: SubscriptionTier.FREE,
             cancelAtPeriodEnd: true,
-          }),
-        }),
+          }) as never,
+        }) as never,
       );
       expect(mockTokenStore.rewriteFieldsForUser).toHaveBeenCalledWith('u1', {
         tier: SubscriptionTier.FREE,
@@ -257,8 +263,8 @@ describe('BillingService', () => {
               { fromWallet: { userId: 'u1' } },
               { toWallet: { userId: 'u1' } },
             ],
-          }),
-        }),
+          }) as never,
+        }) as never,
       );
     });
   });

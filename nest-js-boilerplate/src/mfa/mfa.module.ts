@@ -6,5 +6,6 @@ import { MfaService } from './mfa.service';
 @Module({
   imports: [AuthModule], // provides JwtAuthGuard + JwtModule for token verification
   providers: [MfaService, MfaResolver],
+  exports: [MfaService],
 })
 export class MfaModule {}

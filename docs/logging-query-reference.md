@@ -29,17 +29,17 @@ Backend session lifecycle. Emitted by `auth.service.ts`, `session-auth.guard.ts`
 
 ```bash
 # All events for a specific user
-curl -s 'http://10.10.2.51:9200/session-logs/_search?size=50' \
+curl -s 'http://10.10.2.175:9200/session-logs/_search?size=50' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"term":{"userId":"usr_abc123"}}}' | python3 -m json.tool
 
 # WebSocket auth failures in last hour
-curl -s 'http://10.10.2.51:9200/session-logs/_search?size=20' \
+curl -s 'http://10.10.2.175:9200/session-logs/_search?size=20' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"bool":{"filter":[{"term":{"event":"ws.auth_fail"}},{"range":{"@timestamp":{"gte":"now-1h"}}}]}}}' | python3 -m json.tool
 
 # Active connections (last 5 min)
-curl -s 'http://10.10.2.51:9200/session-logs/_search?size=20' \
+curl -s 'http://10.10.2.175:9200/session-logs/_search?size=20' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"bool":{"filter":[{"term":{"event":"ws.connect"}},{"range":{"@timestamp":{"gte":"now-5m"}}}]}}}' | python3 -m json.tool
 ```
@@ -57,17 +57,17 @@ Frontend page navigation. Emitted by `useEventLogger.ts` (client hook).
 
 ```bash
 # Slow pages (exit duration > 30s)
-curl -s 'http://10.10.2.51:9200/page-logs/_search?size=20' \
+curl -s 'http://10.10.2.175:9200/page-logs/_search?size=20' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"bool":{"filter":[{"term":{"event":"page.exit"}},{"range":{"durationMs":{"gt":30000}}}]}}}' | python3 -m json.tool
 
 # Most visited pages today
-curl -s 'http://10.10.2.51:9200/page-logs/_search?size=50' \
+curl -s 'http://10.10.2.175:9200/page-logs/_search?size=50' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"bool":{"filter":[{"term":{"event":"page.view"}},{"range":{"@timestamp":{"gte":"now-24h"}}}]}},"aggs":{"pages":{"terms":{"field":"page","size":10}}}}' | python3 -m json.tool
 
 # Bounce rate (single-page visits, durationMs < 5s)
-curl -s 'http://10.10.2.51:9200/page-logs/_search?size=20' \
+curl -s 'http://10.10.2.175:9200/page-logs/_search?size=20' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"bool":{"filter":[{"term":{"event":"page.exit"}},{"range":{"durationMs":{"lt":5000}}}]}}}' | python3 -m json.tool
 ```
@@ -88,22 +88,22 @@ frontend `useNetworkLogger` hook.
 
 ```bash
 # Rate-limited requests in last 24h
-curl -s 'http://10.10.2.51:9200/network-logs/_search?size=20' \
+curl -s 'http://10.10.2.175:9200/network-logs/_search?size=20' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"bool":{"filter":[{"term":{"event":"network.rate_limited"}},{"range":{"@timestamp":{"gte":"now-24h"}}}]}}}' | python3 -m json.tool
 
 # All CSRF failures (possible attack or misconfigured client)
-curl -s 'http://10.10.2.51:9200/network-logs/_search?size=50' \
+curl -s 'http://10.10.2.175:9200/network-logs/_search?size=50' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"term":{"event":"network.csrf_fail"}}}' | python3 -m json.tool
 
 # Top IPs hitting rate limits
-curl -s 'http://10.10.2.51:9200/network-logs/_search?size=0' \
+curl -s 'http://10.10.2.175:9200/network-logs/_search?size=0' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"term":{"event":"network.rate_limited"}},"aggs":{"ips":{"terms":{"field":"ip","size":10}}}}' | python3 -m json.tool
 
 # Connectivity issues (users going offline)
-curl -s 'http://10.10.2.51:9200/network-logs/_search?size=20' \
+curl -s 'http://10.10.2.175:9200/network-logs/_search?size=20' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"term":{"event":"network.offline"}}}' | python3 -m json.tool
 ```
@@ -122,17 +122,17 @@ Database query performance and errors. Emitted by `PrismaService` via Prisma `$o
 
 ```bash
 # Slow queries (>500ms) in last hour — ordered by duration
-curl -s 'http://10.10.2.51:9200/database-logs/_search?size=50' \
+curl -s 'http://10.10.2.175:9200/database-logs/_search?size=50' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"bool":{"filter":[{"term":{"event":"db.query_slow"}},{"range":{"@timestamp":{"gte":"now-1h"}}}]}},"sort":[{"durationMs":{"order":"desc"}}]}' | python3 -m json.tool
 
 # Database errors
-curl -s 'http://10.10.2.51:9200/database-logs/_search?size=20' \
+curl -s 'http://10.10.2.175:9200/database-logs/_search?size=20' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"term":{"event":"db.query_error"}}}' | python3 -m json.tool
 
 # Most common slow query patterns
-curl -s 'http://10.10.2.51:9200/database-logs/_search?size=0' \
+curl -s 'http://10.10.2.175:9200/database-logs/_search?size=0' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"term":{"event":"db.query_slow"}},"aggs":{"queries":{"significant_text":{"field":"query"}}}}' | python3 -m json.tool
 ```
@@ -156,27 +156,27 @@ Core Web Vitals from `usePerformanceLogger` (`useReportWebVitals`).
 
 ```bash
 # Slowest backend requests today
-curl -s 'http://10.10.2.51:9200/performance-logs/_search?size=20' \
+curl -s 'http://10.10.2.175:9200/performance-logs/_search?size=20' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"bool":{"filter":[{"term":{"event":"perf.slow_request"}},{"range":{"@timestamp":{"gte":"now-24h"}}}]}},"sort":[{"durationMs":{"order":"desc"}}]}' | python3 -m json.tool
 
 # Poor LCP scores (>2500ms = needs improvement / poor)
-curl -s 'http://10.10.2.51:9200/performance-logs/_search?size=20' \
+curl -s 'http://10.10.2.175:9200/performance-logs/_search?size=20' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"bool":{"filter":[{"term":{"event":"perf.page_lcp"}},{"range":{"@timestamp":{"gte":"now-24h"}}}]}},"sort":[{"durationMs":{"order":"desc"}}]}' | python3 -m json.tool
 
 # All poor Core Web Vitals (rating = "needs-improvement" or "poor")
-curl -s 'http://10.10.2.51:9200/performance-logs/_search?size=50' \
+curl -s 'http://10.10.2.175:9200/performance-logs/_search?size=50' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"bool":{"filter":[{"prefix":{"event":"perf.page_"}},{"range":{"@timestamp":{"gte":"now-24h"}}}]}}}' | python3 -m json.tool
 
 # Average LCP by page (using metric metadata.value)
-curl -s 'http://10.10.2.51:9200/performance-logs/_search?size=0' \
+curl -s 'http://10.10.2.175:9200/performance-logs/_search?size=0' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"term":{"event":"perf.page_lcp"}},"aggs":{"by_page":{"terms":{"field":"url","size":10},"aggs":{"avg_lcp":{"avg":{"field":"durationMs"}}}}}}' | python3 -m json.tool
 
 # Slowest API endpoints (by average duration)
-curl -s 'http://10.10.2.51:9200/performance-logs/_search?size=0' \
+curl -s 'http://10.10.2.175:9200/performance-logs/_search?size=0' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"term":{"event":"perf.slow_request"}},"aggs":{"endpoints":{"terms":{"field":"path","size":10},"aggs":{"avg_duration":{"avg":{"field":"durationMs"}}}}}}' | python3 -m json.tool
 ```
@@ -222,32 +222,32 @@ Backend exceptions are caught by `GlobalHttpExceptionFilter`, WebSocket exceptio
 
 ```bash
 # All 5xx errors in last 24h
-curl -s 'http://10.10.2.51:9200/http-exception-logs/_search?size=20' \
+curl -s 'http://10.10.2.175:9200/http-exception-logs/_search?size=20' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"bool":{"filter":[{"term":{"event":"exception.unhandled"}},{"range":{"@timestamp":{"gte":"now-24h"}}}]}}}' | python3 -m json.tool
 
 # Most common error messages
-curl -s 'http://10.10.2.51:9200/http-exception-logs/_search?size=0' \
+curl -s 'http://10.10.2.175:9200/http-exception-logs/_search?size=0' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"term":{"event":"exception.unhandled"}},"aggs":{"errors":{"significant_text":{"field":"errorMessage"}}}}' | python3 -m json.tool
 
 # Connection losses with abnormal close codes (>1001)
-curl -s 'http://10.10.2.51:9200/websocket-exception-logs/_search?size=20' \
+curl -s 'http://10.10.2.175:9200/websocket-exception-logs/_search?size=20' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"bool":{"filter":[{"term":{"event":"connection-loss"}},{"range":{"code":{"gt":1001}}}]}}}' | python3 -m json.tool
 
 # Frontend client errors
-curl -s 'http://10.10.2.51:9200/application-exception-logs/_search?size=20' \
+curl -s 'http://10.10.2.175:9200/application-exception-logs/_search?size=20' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"term":{"event":"exception"}}}' | python3 -m json.tool
 
 # Device IP changes
-curl -s 'http://10.10.2.51:9200/websocket-exception-logs/_search?size=20' \
+curl -s 'http://10.10.2.175:9200/websocket-exception-logs/_search?size=20' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"term":{"event":"device-change"}}}' | python3 -m json.tool
 
 # Errors by path (top 10)
-curl -s 'http://10.10.2.51:9200/http-exception-logs/_search?size=0' \
+curl -s 'http://10.10.2.175:9200/http-exception-logs/_search?size=0' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"term":{"event":"exception.unhandled"}},"aggs":{"paths":{"terms":{"field":"path","size":10}}}}' | python3 -m json.tool
 ```
@@ -259,7 +259,7 @@ curl -s 'http://10.10.2.51:9200/http-exception-logs/_search?size=0' \
 ### Trace a user across all logs
 
 ```bash
-curl -s 'http://10.10.2.51:9200/session-logs,http-exception-logs,network-logs/_search?size=20' \
+curl -s 'http://10.10.2.175:9200/session-logs,http-exception-logs,network-logs/_search?size=20' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"term":{"userId":"usr_abc123"}},"sort":[{"@timestamp":{"order":"desc"}}]}' | python3 -m json.tool
 ```
@@ -267,7 +267,7 @@ curl -s 'http://10.10.2.51:9200/session-logs,http-exception-logs,network-logs/_s
 ### All events in the last 5 minutes (recent activity)
 
 ```bash
-curl -s 'http://10.10.2.51:9200/*-logs/_search?size=50' \
+curl -s 'http://10.10.2.175:9200/*-logs/_search?size=50' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"range":{"@timestamp":{"gte":"now-5m"}}},"sort":[{"@timestamp":{"order":"desc"}}]}' | python3 -m json.tool
 ```
@@ -275,7 +275,7 @@ curl -s 'http://10.10.2.51:9200/*-logs/_search?size=50' \
 ### Errors by service
 
 ```bash
-curl -s 'http://10.10.2.51:9200/http-exception-logs/_search?size=0' \
+curl -s 'http://10.10.2.175:9200/http-exception-logs/_search?size=0' \
   -H 'Content-Type: application/json' \
   -d '{"query":{"range":{"@timestamp":{"gte":"now-24h"}}},"aggs":{"services":{"terms":{"field":"service","size":10}}}}' | python3 -m json.tool
 ```
@@ -286,13 +286,13 @@ curl -s 'http://10.10.2.51:9200/http-exception-logs/_search?size=0' \
 
 | Log type | Command |
 |---|---|
-| Session | `curl -s 'http://10.10.2.51:9200/session-logs/_search?size=20' \| python3 -m json.tool` |
-| Page | `curl -s 'http://10.10.2.51:9200/page-logs/_search?size=20' \| python3 -m json.tool` |
-| Network | `curl -s 'http://10.10.2.51:9200/network-logs/_search?size=20' \| python3 -m json.tool` |
-| Database | `curl -s 'http://10.10.2.51:9200/database-logs/_search?size=20' \| python3 -m json.tool` |
-| Performance | `curl -s 'http://10.10.2.51:9200/performance-logs/_search?size=20' \| python3 -m json.tool` |
-| HTTP Exception | `curl -s 'http://10.10.2.51:9200/http-exception-logs/_search?size=20' \| python3 -m json.tool` |
-| WS Exception | `curl -s 'http://10.10.2.51:9200/websocket-exception-logs/_search?size=20' \| python3 -m json.tool` |
-| App Exception | `curl -s 'http://10.10.2.51:9200/application-exception-logs/_search?size=20' \| python3 -m json.tool` |
-| All backend | `curl -s 'http://10.10.2.51:9200/app-logs/_search?size=20' \| python3 -m json.tool` |
-| All frontend | `curl -s 'http://10.10.2.51:9200/frontend-logs/_search?size=20' \| python3 -m json.tool` |
+| Session | `curl -s 'http://10.10.2.175:9200/session-logs/_search?size=20' \| python3 -m json.tool` |
+| Page | `curl -s 'http://10.10.2.175:9200/page-logs/_search?size=20' \| python3 -m json.tool` |
+| Network | `curl -s 'http://10.10.2.175:9200/network-logs/_search?size=20' \| python3 -m json.tool` |
+| Database | `curl -s 'http://10.10.2.175:9200/database-logs/_search?size=20' \| python3 -m json.tool` |
+| Performance | `curl -s 'http://10.10.2.175:9200/performance-logs/_search?size=20' \| python3 -m json.tool` |
+| HTTP Exception | `curl -s 'http://10.10.2.175:9200/http-exception-logs/_search?size=20' \| python3 -m json.tool` |
+| WS Exception | `curl -s 'http://10.10.2.175:9200/websocket-exception-logs/_search?size=20' \| python3 -m json.tool` |
+| App Exception | `curl -s 'http://10.10.2.175:9200/application-exception-logs/_search?size=20' \| python3 -m json.tool` |
+| All backend | `curl -s 'http://10.10.2.175:9200/app-logs/_search?size=20' \| python3 -m json.tool` |
+| All frontend | `curl -s 'http://10.10.2.175:9200/frontend-logs/_search?size=20' \| python3 -m json.tool` |

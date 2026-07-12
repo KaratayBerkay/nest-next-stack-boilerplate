@@ -14,6 +14,10 @@ export type I18nMessages = {
           "noAccount": string;
           "registerLink": string;
           "forgotPassword": string;
+          "mfaTitle": string;
+          "mfaCodeLabel": string;
+          "mfaVerify": string;
+          "mfaVerifying": string;
         };
         "register": {
           "title": string;

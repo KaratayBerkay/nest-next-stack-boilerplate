@@ -134,7 +134,7 @@ export function LoginForm() {
 
     return (
       <div className="flex flex-col gap-4 text-center">
-        <h2 className="text-brand text-sm font-semibold">Two-Factor Authentication</h2>
+        <h2 className="text-brand text-sm font-semibold">{t.form.login.mfaTitle}</h2>
         <p className="text-muted text-xs">
           Enter the 6-digit code from your authenticator app for {mfaState.user.email}.
         </p>
@@ -142,7 +142,7 @@ export function LoginForm() {
         <form onSubmit={handleMfaSubmit} className="flex flex-col gap-3">
           <div className="flex flex-col gap-1 text-left">
             <Label htmlFor="mfa-code-input" required>
-              Authentication code
+              {t.form.login.mfaCodeLabel}
             </Label>
             <Input
               id="mfa-code-input"
@@ -169,7 +169,7 @@ export function LoginForm() {
             className="w-full"
             data-testid="mfa-submit"
           >
-            {mfaSubmitting ? "Verifying..." : "Verify"}
+            {mfaSubmitting ? t.form.login.mfaVerifying : t.form.login.mfaVerify}
           </Button>
         </form>
 
