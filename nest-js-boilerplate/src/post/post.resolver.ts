@@ -13,12 +13,14 @@ import {
   Resolver,
 } from '@nestjs/graphql';
 import { Post } from '../@generated/post/post.model';
+import { User } from '../@generated/user/user.model';
 import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
 import type { JwtUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { MinTier } from '../authorization/min-tier.decorator';
 import { TierGuard } from '../authorization/tier.guard';
+import { DataloaderService } from '../common/dataloader/dataloader.service';
 import { CreatePostInput } from './dto/create-post.input';
 import { UpdatePostInput } from './dto/update-post.input';
 import { PostService } from './post.service';
@@ -67,7 +69,15 @@ export class Reactor {
 @UseGuards(SessionAuthGuard)
 @Resolver(() => Post)
 export class PostResolver {
-  constructor(private readonly postService: PostService) {}
+  constructor(
+    private readonly postService: PostService,
+    private readonly dataloader: DataloaderService,
+  ) {}
+
+  @ResolveField(() => User)
+  async author(@Parent() post: Post): Promise<User | null> {
+    return this.dataloader.getUserLoader().load(post.authorId);
+  }
 
   @ResolveField(() => String, { nullable: true })
   coverImage(@Parent() post: Post): string | null {

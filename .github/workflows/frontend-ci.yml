@@ -56,6 +56,10 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Lighthouse CI (performance budgets)
+        run: pnpm lighthouse:ci
+        continue-on-error: true
+
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium firefox webkit
 

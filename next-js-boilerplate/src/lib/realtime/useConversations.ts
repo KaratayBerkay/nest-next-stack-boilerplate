@@ -7,7 +7,7 @@ export interface Conversation {
     id: string;
     email: string;
     name: string;
-    avatar: string;
+    avatarUrl: string | null;
     online: boolean;
   };
   lastMessage: string;

@@ -50,7 +50,7 @@ export class NotificationProcessor extends WorkerHost {
       }
       default:
         this.logger.warn(
-          `Unknown notification job type: ${String((job.data as Record<string, string>).type)}`,
+          `Unknown notification job type: ${String((job.data as unknown as Record<string, string>).type)}`,
         );
     }
   }

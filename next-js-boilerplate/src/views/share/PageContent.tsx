@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { apiFetch } from "@/lib/api-client";
 import { useState, useRef, type Dispatch, type SetStateAction } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -184,11 +185,13 @@ export default function PageContent() {
             className="border-border bg-surface rounded-lg border px-3 py-2 text-sm file:mr-2 file:rounded file:border-0 file:bg-zinc-100 file:px-2 file:py-0.5 file:text-xs disabled:opacity-50"
           />
           {preview && (
-            <div className="relative mt-2">
-              <img
+            <div className="relative mt-2 h-48 w-full">
+              <Image
                 src={preview}
                 alt={t.preview}
-                className={`max-h-48 rounded-lg object-cover ${uploading ? "opacity-50" : ""}`}
+                fill
+                className={`rounded-lg object-cover ${uploading ? "opacity-50" : ""}`}
+                unoptimized
               />
               {uploading && (
                 <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/30">

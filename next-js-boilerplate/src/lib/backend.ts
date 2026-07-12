@@ -55,6 +55,7 @@ export async function backendFetch<T = unknown>(
 
   const url = `${backendBaseUrl()}${path}`;
   const res = await fetch(url, {
+    next: { revalidate: 60 },
     ...options,
     headers: {
       ...JSON_CONTENT_TYPE_HEADER,
@@ -250,6 +251,7 @@ export async function graphqlFetch<T>(
   const url = `${backendBaseUrl()}/graphql`;
   const res = await fetch(url, {
     method: "POST",
+    next: { revalidate: 60 },
     headers: {
       ...JSON_CONTENT_TYPE_HEADER,
       ...(cookieHeader ? { Cookie: cookieHeader } : {}),

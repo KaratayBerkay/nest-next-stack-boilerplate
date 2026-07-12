@@ -240,6 +240,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
               | 'broadcastToRoom'
               | 'emitToTopic'
               | 'emitToService'
+              | 'emitToUser'
               | 'emitToPage';
             frame: Record<string, unknown>;
             userId?: string;
@@ -262,6 +263,9 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
               break;
             case 'emitToService':
               if (userId && service) this.emitToService(userId, service, frame);
+              break;
+            case 'emitToUser':
+              if (userId) this.emitToUser(userId, frame);
               break;
             case 'emitToPage':
               if (userId && page) this.emitToPage(userId, page, frame);
@@ -873,6 +877,10 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         ws.send(msg);
         sent++;
       }
+    }
+    if (!this.forwardingFromRedis) {
+      const payload = JSON.stringify({ target: 'emitToUser', userId, frame });
+      this.redis.publish(RealtimeGateway.WS_CHANNEL, payload).catch(() => {});
     }
     return sent;
   }

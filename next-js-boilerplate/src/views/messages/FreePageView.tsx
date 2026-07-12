@@ -35,19 +35,28 @@ import type { MessagesViewProps } from "@/types/messages/MessagesView-types";
 import { MessagesSidebar } from "./MessagesSidebar";
 import { ChatView } from "./ChatView";
 
-type UserInfo = { id: string; name: string; email: string; avatar: string };
+type UserInfo = { id: string; name: string; email: string; avatarUrl: string | null };
 
-export function FreePageView({ initialUser }: MessagesViewProps) {
+export function FreePageView({
+  initialUser,
+  initialFriends,
+}: MessagesViewProps) {
   return (
     <Suspense fallback={<MessagesViewFallback />}>
       <ErrorBoundary>
-        <MessagesPageContent initialUser={initialUser} />
+        <MessagesPageContent
+          initialUser={initialUser}
+          initialFriends={initialFriends}
+        />
       </ErrorBoundary>
     </Suspense>
   );
 }
 
-function MessagesPageContent({ initialUser }: MessagesViewProps) {
+function MessagesPageContent({
+  initialUser,
+  initialFriends,
+}: MessagesViewProps) {
   const t = useMessages("messages");
   const { user, loading } = useAuth();
   const [selectedUser, setSelectedUser] = useState<UserInfo | null>(null);
@@ -58,6 +67,8 @@ function MessagesPageContent({ initialUser }: MessagesViewProps) {
       if (!res.ok) throw new Error(`Failed to fetch friends: ${res.status}`);
       return res.json();
     },
+    initialData: initialFriends as UserInfo[],
+    staleTime: 30_000,
     enabled: !!user,
   });
 
@@ -174,7 +185,7 @@ function MessagesPageContent({ initialUser }: MessagesViewProps) {
     id: user.id,
     name: user.name ?? "",
     email: user.email,
-    avatar: user.avatarUrl ?? "",
+    avatarUrl: user.avatarUrl ?? "",
   };
 
   return (

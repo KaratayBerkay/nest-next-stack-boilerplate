@@ -158,12 +158,14 @@ export class PostService {
             imageUrl: true,
             createdAt: true,
             status: true,
-            author: {
-              select: { id: true, name: true, email: true },
-            },
             reactions: {
               take: 50,
-              select: { id: true, type: true, userId: true },
+              select: {
+                id: true,
+                type: true,
+                userId: true,
+                user: { select: { name: true } },
+              },
             },
             _count: { select: { comments: true, reactions: true } },
           },
@@ -204,14 +206,24 @@ export class PostService {
                 },
                 reactions: {
                   take: 50,
-                  select: { id: true, type: true, userId: true },
+                  select: {
+                    id: true,
+                    type: true,
+                    userId: true,
+                    user: { select: { name: true } },
+                  },
                 },
                 _count: { select: { replies: true } },
               },
             },
             reactions: {
               take: 100,
-              select: { id: true, type: true, userId: true },
+              select: {
+                id: true,
+                type: true,
+                userId: true,
+                user: { select: { name: true } },
+              },
             },
             _count: { select: { comments: true, reactions: true } },
           },

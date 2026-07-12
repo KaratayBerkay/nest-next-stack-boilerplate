@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { cn } from "@/lib/cn";
 import type { AvatarProps } from "@/types/ui/Avatar-types";
 
@@ -45,11 +46,14 @@ export function Avatar({
       {...props}
     >
       {showImage && (
-        <img
-          src={src}
+        <Image
+          src={src!}
           alt={alt}
+          width={64}
+          height={64}
           className="size-full object-cover"
           onError={() => setImgError(true)}
+          unoptimized
         />
       )}
       {!showImage && (

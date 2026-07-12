@@ -7,6 +7,7 @@ import {
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationService } from '../notification/notification.service';
+import { CacheAsideService } from '../caching/cache-aside.service';
 import { CreateCommentInput } from './dto/create-comment.input';
 import { UpdateCommentInput } from './dto/update-comment.input';
 
@@ -16,6 +17,7 @@ export class CommentService {
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationService,
     private readonly realtime: RealtimeGateway,
+    private readonly cache: CacheAsideService,
   ) {}
 
   async create(authorId: string, data: CreateCommentInput) {
@@ -65,6 +67,8 @@ export class CommentService {
       });
     }
 
+    this.cache.invalidate(`cache:post:${data.postId}`).catch(() => {});
+    this.cache.invalidate('cache:feed:*').catch(() => {});
     this.realtime.emitToTopic('feed', {
       renew: 'Feed',
       type: 'Post',
@@ -100,6 +104,8 @@ export class CommentService {
       include: { author: true },
     });
 
+    this.cache.invalidate(`cache:post:${comment.postId}`).catch(() => {});
+    this.cache.invalidate('cache:feed:*').catch(() => {});
     this.realtime.emitToTopic('feed', {
       renew: 'Feed',
       type: 'Post',
@@ -131,6 +137,8 @@ export class CommentService {
       data: { deletedAt: new Date() },
     });
 
+    this.cache.invalidate(`cache:post:${comment.postId}`).catch(() => {});
+    this.cache.invalidate('cache:feed:*').catch(() => {});
     this.realtime.emitToTopic('feed', {
       renew: 'Feed',
       type: 'Post',

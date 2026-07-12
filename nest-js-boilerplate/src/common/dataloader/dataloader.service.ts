@@ -1,51 +1,39 @@
-import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Scope } from '@nestjs/common';
 import DataLoader from 'dataloader';
+import type { User } from '../../@generated/user/user.model';
+import type { Post } from '../../@generated/post/post.model';
 import { PrismaService } from '../../prisma/prisma.service';
 
-@Injectable()
-export class DataloaderService implements OnModuleDestroy {
-  private readonly loaders = new Map<string, DataLoader<string, unknown>>();
+@Injectable({ scope: Scope.REQUEST })
+export class DataloaderService {
+  private userLoader: DataLoader<string, User | null> | null = null;
+  private postLoader: DataLoader<string, Post | null> | null = null;
 
   constructor(private readonly prisma: PrismaService) {}
 
-  onModuleDestroy() {
-    for (const loader of this.loaders.values()) {
-      loader.clearAll();
+  getUserLoader(): DataLoader<string, User | null> {
+    if (!this.userLoader) {
+      this.userLoader = new DataLoader<string, User | null>(async (ids) => {
+        const users = await this.prisma.user.findMany({
+          where: { id: { in: [...ids] } },
+        });
+        const map = new Map(users.map((u) => [u.id, u]));
+        return ids.map((id) => map.get(id) ?? null);
+      });
     }
-    this.loaders.clear();
+    return this.userLoader;
   }
 
-  getUserLoader(): DataLoader<string, unknown> {
-    const key = 'user';
-    if (!this.loaders.has(key)) {
-      this.loaders.set(
-        key,
-        new DataLoader<string, unknown>(async (ids) => {
-          const users = await this.prisma.user.findMany({
-            where: { id: { in: [...ids] } },
-          });
-          const map = new Map(users.map((u) => [u.id, u]));
-          return ids.map((id) => map.get(id) ?? null);
-        }),
-      );
+  getPostLoader(): DataLoader<string, Post | null> {
+    if (!this.postLoader) {
+      this.postLoader = new DataLoader<string, Post | null>(async (ids) => {
+        const posts = await this.prisma.post.findMany({
+          where: { id: { in: [...ids] } },
+        });
+        const map = new Map(posts.map((p) => [p.id, p]));
+        return ids.map((id) => map.get(id) ?? null);
+      });
     }
-    return this.loaders.get(key)!;
-  }
-
-  getPostLoader(): DataLoader<string, unknown> {
-    const key = 'post';
-    if (!this.loaders.has(key)) {
-      this.loaders.set(
-        key,
-        new DataLoader<string, unknown>(async (ids) => {
-          const posts = await this.prisma.post.findMany({
-            where: { id: { in: [...ids] } },
-          });
-          const map = new Map(posts.map((p) => [p.id, p]));
-          return ids.map((id) => map.get(id) ?? null);
-        }),
-      );
-    }
-    return this.loaders.get(key)!;
+    return this.postLoader;
   }
 }

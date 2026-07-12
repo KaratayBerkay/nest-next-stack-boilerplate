@@ -1,6 +1,7 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { TokenStoreService } from '../auth/token-store.service';
+import { CacheAsideService } from '../caching/cache-aside.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { UpdateProfileInput } from './dto/update-profile.input';
 
@@ -9,6 +10,7 @@ export class ProfileService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly tokenStore: TokenStoreService,
+    private readonly cache: CacheAsideService,
   ) {}
 
   async isUsernameAvailable(
@@ -49,6 +51,8 @@ export class ProfileService {
     }
 
     const user = await this.prisma.user.update({ where: { id: userId }, data });
+
+    this.cache.invalidate(`cache:profile:${userId}`).catch(() => {});
 
     const redisFields: Record<string, string> = {};
     if (input.name !== undefined) redisFields.name = input.name;

@@ -17,35 +17,69 @@ export const options = {
 };
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000';
+const GRAPHQL = '/graphql';
+
+const FEED_QUERY = `query Feed($cursor: ID, $take: Int) {
+  postList(cursor: $cursor, take: $take) {
+    id title content imageUrl createdAt status
+    author { id name email }
+    reactions { id type userId user { name } }
+    _count { comments reactions }
+  }
+}`;
+
+const POST_QUERY = `query Post($id: ID!) {
+  post(id: $id) {
+    id title content imageUrl createdAt status
+    author { id name email }
+    comments {
+      id body createdAt authorId
+      author { id name email }
+    }
+    reactions { id type userId user { name } }
+    _count { comments reactions }
+  }
+}`;
 
 export default function () {
-  const ok = [200, 201, 204];
-
-  // Feed list
+  // Feed list (GraphQL)
   {
-    const r = http.get(`${BASE_URL}/api/posts?take=5`);
-    check(r, { 'feed status ok': () => ok.includes(r.status) });
-    errorRate.add(!ok.includes(r.status));
+    const r = http.post(`${BASE_URL}${GRAPHQL}`, JSON.stringify({
+      query: FEED_QUERY,
+      variables: { take: 5 },
+    }), { headers: { 'Content-Type': 'application/json' } });
+    check(r, { 'feed status ok': () => r.status === 200 });
+    errorRate.add(r.status !== 200);
     sleep(1);
   }
 
-  // Post detail (uses a known UUID; query /api/posts first to get a real one)
+  // Post detail (uses first post ID from feed)
   {
-    const feed = http.get(`${BASE_URL}/api/posts?take=1`).json();
-    const id = feed.posts?.[0]?.id;
+    const feedRes = http.post(`${BASE_URL}${GRAPHQL}`, JSON.stringify({
+      query: FEED_QUERY,
+      variables: { take: 1 },
+    }), { headers: { 'Content-Type': 'application/json' } });
+    const body = feedRes.json();
+    const id = body?.data?.postList?.[0]?.id;
     if (id) {
-      const r = http.get(`${BASE_URL}/api/posts/${id}`);
-      check(r, { 'post detail status ok': () => ok.includes(r.status) });
-      errorRate.add(!ok.includes(r.status));
+      const r = http.post(`${BASE_URL}${GRAPHQL}`, JSON.stringify({
+        query: POST_QUERY,
+        variables: { id },
+      }), { headers: { 'Content-Type': 'application/json' } });
+      check(r, { 'post detail status ok': () => r.status === 200 });
+      errorRate.add(r.status !== 200);
     }
     sleep(1);
   }
 
-  // Post search
+  // Post search (via GraphQL)
   {
-    const r = http.get(`${BASE_URL}/api/posts?take=5&search=test`);
-    check(r, { 'search status ok': () => ok.includes(r.status) });
-    errorRate.add(!ok.includes(r.status));
+    const r = http.post(`${BASE_URL}${GRAPHQL}`, JSON.stringify({
+      query: FEED_QUERY,
+      variables: { take: 5, search: 'test' },
+    }), { headers: { 'Content-Type': 'application/json' } });
+    check(r, { 'search status ok': () => r.status === 200 });
+    errorRate.add(r.status !== 200);
     sleep(1);
   }
 }

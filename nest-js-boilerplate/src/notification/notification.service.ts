@@ -76,18 +76,21 @@ export class NotificationService {
         : null,
     };
 
-    // Emit Item + Count via the consolidated realtime gateway (userId-keyed).
+    // Emit Item immediately, then fire the count query alongside (not blocking the response).
     this.realtime.emitToService(params.userId, 'NOTIFICATION', {
       renew: 'Notifications',
       type: 'Item',
       item: dto,
     });
-    const afterCount = await this.unreadCount(params.userId);
-    this.realtime.emitToService(params.userId, 'NOTIFICATION', {
-      renew: 'Notifications',
-      type: 'Count',
-      value: afterCount,
-    });
+    this.unreadCount(params.userId)
+      .then((afterCount) => {
+        this.realtime.emitToService(params.userId, 'NOTIFICATION', {
+          renew: 'Notifications',
+          type: 'Count',
+          value: afterCount,
+        });
+      })
+      .catch(() => {});
 
     // Push only if user has no live NOTIFICATION socket.
     if (!this.realtime.hasServiceConnection(params.userId, 'NOTIFICATION')) {

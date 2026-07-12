@@ -16,7 +16,7 @@ import { useParams } from "next/navigation";
 import { IconX, IconPlus } from "@tabler/icons-react";
 import type { Dispatch, SetStateAction } from "react";
 
-type UserInfo = { id: string; name: string; email: string; avatar: string };
+type UserInfo = { id: string; name: string; email: string; avatarUrl: string | null };
 
 interface MessagesSidebarProps {
   user: UserInfo;

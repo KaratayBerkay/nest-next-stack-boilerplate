@@ -6,10 +6,10 @@
       "startServerCommand": "pnpm start -p 4000",
       "startServerReadyPattern": "Ready in",
       "url": [
-        "http://localhost:4000/en/feed",
-        "http://localhost:4000/en/posts/example-post",
-        "http://localhost:4000/en/messages",
-        "http://localhost:4000/en/friends"
+        "http://localhost:4000/v1/en/feed",
+        "http://localhost:4000/v1/en/posts/example-post",
+        "http://localhost:4000/v1/en/messages",
+        "http://localhost:4000/v1/en/find-friends"
       ],
       "settings": {
         "onlyCategories": ["performance", "accessibility", "best-practices", "seo"],

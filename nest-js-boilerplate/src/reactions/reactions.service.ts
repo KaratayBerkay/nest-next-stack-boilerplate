@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationService } from '../notification/notification.service';
+import { CacheAsideService } from '../caching/cache-aside.service';
 import { CreateReactionInput } from './dto/create-reaction.input';
 
 export type ReactionWithTarget = {
@@ -22,6 +23,7 @@ export class ReactionsService {
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationService,
     private readonly realtime: RealtimeGateway,
+    private readonly cache: CacheAsideService,
   ) {}
 
   /** Scoped query — requires at least one of postId/commentId to prevent full-table scans. */
@@ -55,6 +57,8 @@ export class ReactionsService {
       if (existing.type === data.type) {
         await this.prisma.reaction.delete({ where: { id: existing.id } });
         if (targetPostId) {
+          this.cache.invalidate(`cache:post:${targetPostId}`).catch(() => {});
+          this.cache.invalidate('cache:feed:*').catch(() => {});
           this.realtime.emitToTopic('feed', {
             renew: 'Feed',
             type: 'Post',
@@ -77,6 +81,8 @@ export class ReactionsService {
         },
       });
       if (targetPostId) {
+        this.cache.invalidate(`cache:post:${targetPostId}`).catch(() => {});
+        this.cache.invalidate('cache:feed:*').catch(() => {});
         this.realtime.emitToTopic('feed', {
           renew: 'Feed',
           type: 'Post',
@@ -118,6 +124,8 @@ export class ReactionsService {
     }
 
     if (data.postId) {
+      this.cache.invalidate(`cache:post:${data.postId}`).catch(() => {});
+      this.cache.invalidate('cache:feed:*').catch(() => {});
       this.realtime.emitToTopic('feed', {
         renew: 'Feed',
         type: 'Post',

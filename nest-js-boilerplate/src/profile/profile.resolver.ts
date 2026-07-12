@@ -4,6 +4,7 @@ import { User } from '../@generated/user/user.model';
 import type { JwtUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
+import { CacheAsideService } from '../caching/cache-aside.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateProfileInput } from './dto/update-profile.input';
 import { ProfileService } from './profile.service';
@@ -14,11 +15,16 @@ export class ProfileResolver {
   constructor(
     private readonly profile: ProfileService,
     private readonly prisma: PrismaService,
+    private readonly cache: CacheAsideService,
   ) {}
 
   @Query(() => User, { name: 'myProfile' })
   async myProfile(@CurrentUser() user: JwtUser) {
-    return this.prisma.user.findUniqueOrThrow({ where: { id: user.userId } });
+    return this.cache.getOrFetch(
+      `cache:profile:${user.userId}`,
+      () => this.prisma.user.findUniqueOrThrow({ where: { id: user.userId } }),
+      60,
+    );
   }
 
   @Query(() => Boolean)

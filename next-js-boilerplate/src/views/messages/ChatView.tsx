@@ -21,7 +21,7 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { IconChevronLeft } from "@tabler/icons-react";
 import type { Dispatch, SetStateAction } from "react";
 
-type UserInfo = { id: string; name: string; email: string; avatar: string };
+type UserInfo = { id: string; name: string; email: string; avatarUrl: string | null };
 type Message = {
   id: string;
   senderId: string;
