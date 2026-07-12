@@ -12,7 +12,7 @@ import { IncomingMessage } from 'http';
 import crypto from 'crypto';
 import Redis from 'ioredis';
 import { Inject } from '@nestjs/common';
-import { REDIS_CLIENT } from '../redis/redis.module';
+import { REDIS_CLIENT, REDIS_SUBSCRIBER } from '../redis/redis.module';
 import { TokenStoreService } from '../auth/token-store.service';
 import { TokenDerivationService } from '../auth/token-derivation.service';
 import { CryptoService } from '../common/crypto/crypto.service';
@@ -75,6 +75,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(RealtimeGateway.name);
   private wss!: WebSocketServer;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  private forwardingFromRedis = false;
   private onlineCount = new Map<string, number>();
   private serviceConnections = new Map<string, Set<WebSocket>>();
   private serviceDeviceIndex = new Map<string, Set<string>>();
@@ -92,6 +93,8 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     (ws: WebSocket, params: Record<string, string>) => void
   >();
 
+  private static readonly WS_CHANNEL = 'ws:broadcast';
+
   constructor(
     private readonly adapterHost: HttpAdapterHost,
     private readonly jwt: JwtService,
@@ -99,6 +102,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     private readonly derivation: TokenDerivationService,
     private readonly crypto: CryptoService,
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
+    @Inject(REDIS_SUBSCRIBER) private readonly subscriber: Redis,
   ) {}
 
   onModuleInit() {
@@ -219,10 +223,62 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         this.refreshPresenceTTL().catch(() => {});
       }
     }, 30000);
+
+    this.subscriber.subscribe(RealtimeGateway.WS_CHANNEL, (err) => {
+      if (err) {
+        this.logger.warn(
+          'Redis pub/sub subscribe failed (multi-replica WS unavailable)',
+        );
+      }
+    });
+    this.subscriber.on('message', (_channel, raw) => {
+      try {
+        const { target, userId, service, room, topic, page, frame } =
+          JSON.parse(raw) as {
+            target:
+              | 'broadcastAll'
+              | 'broadcastToRoom'
+              | 'emitToTopic'
+              | 'emitToService'
+              | 'emitToPage';
+            frame: Record<string, unknown>;
+            userId?: string;
+            service?: string;
+            room?: string;
+            topic?: string;
+            page?: string;
+          };
+        this.forwardingFromRedis = true;
+        try {
+          switch (target) {
+            case 'broadcastAll':
+              this.broadcastAll(frame);
+              break;
+            case 'broadcastToRoom':
+              if (room) this.broadcastToRoom(room, frame);
+              break;
+            case 'emitToTopic':
+              if (topic) this.emitToTopic(topic, frame);
+              break;
+            case 'emitToService':
+              if (userId && service) this.emitToService(userId, service, frame);
+              break;
+            case 'emitToPage':
+              if (userId && page) this.emitToPage(userId, page, frame);
+              break;
+          }
+        } finally {
+          this.forwardingFromRedis = false;
+        }
+      } catch {
+        // malformed frame — ignore
+      }
+    });
   }
 
   onModuleDestroy() {
     if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
+    this.subscriber.unsubscribe(RealtimeGateway.WS_CHANNEL).catch(() => {});
     this.wss?.close();
   }
 
@@ -661,6 +717,15 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         sent++;
       }
     }
+    if (!this.forwardingFromRedis) {
+      const payload = JSON.stringify({
+        target: 'emitToPage',
+        userId,
+        page: pageKey,
+        frame,
+      });
+      this.redis.publish(RealtimeGateway.WS_CHANNEL, payload).catch(() => {});
+    }
     return sent;
   }
 
@@ -835,6 +900,15 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         }
       }
     }
+    if (!this.forwardingFromRedis) {
+      const payload = JSON.stringify({
+        target: 'emitToService',
+        userId,
+        service,
+        frame,
+      });
+      this.redis.publish(RealtimeGateway.WS_CHANNEL, payload).catch(() => {});
+    }
     return sent;
   }
 
@@ -849,6 +923,10 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         sent++;
       }
     }
+    if (!this.forwardingFromRedis) {
+      const payload = JSON.stringify({ target: 'emitToTopic', topic, frame });
+      this.redis.publish(RealtimeGateway.WS_CHANNEL, payload).catch(() => {});
+    }
     return sent;
   }
 
@@ -862,6 +940,10 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     this.wss.clients.forEach((c) => {
       if (c.readyState === WebSocket.OPEN) c.send(msg);
     });
+    if (!this.forwardingFromRedis) {
+      const payload = JSON.stringify({ target: 'broadcastAll', frame });
+      this.redis.publish(RealtimeGateway.WS_CHANNEL, payload).catch(() => {});
+    }
   }
 
   broadcastToRoom(room: string, payload: Record<string, unknown>): void {
@@ -872,6 +954,14 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         client.send(msg);
       }
     });
+    if (!this.forwardingFromRedis) {
+      const frame = JSON.stringify({
+        target: 'broadcastToRoom',
+        room,
+        frame: payload,
+      });
+      this.redis.publish(RealtimeGateway.WS_CHANNEL, frame).catch(() => {});
+    }
   }
 
   getOnlineUserIds(): string[] {

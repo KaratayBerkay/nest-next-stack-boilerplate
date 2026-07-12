@@ -43,7 +43,7 @@ function handleDeletePost(
   setExpandedPostId((prev) => (prev === postId ? null : prev));
 }
 
-export function FeedList({ search, currentUserId }: FeedListPremiumProps) {
+export function FeedList({ search, initialFeedData, currentUserId }: FeedListPremiumProps) {
   const t = useMessages("feed");
   const queryClient = useQueryClient();
   const realtime = useRealtime();
@@ -81,6 +81,12 @@ export function FeedList({ search, currentUserId }: FeedListPremiumProps) {
       }
       return res.json();
     },
+    staleTime: 30_000,
+    initialData: !search ? (initialFeedData as {
+      posts: Post[];
+      hasMore: boolean;
+      nextCursor: string | null;
+    }) : undefined,
   });
 
   const posts = useMemo(

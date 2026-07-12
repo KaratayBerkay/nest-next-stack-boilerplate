@@ -88,7 +88,10 @@ export class MessagingWsGateway implements OnModuleInit {
     const sender = message.sender as
       | { id?: string; name?: string | null; email?: string; avatar?: string }
       | undefined;
-    const unread = await this.ms.getUnreadCount(data.recipientId, ws.userId);
+    const [unread, totalDmUnread] = await Promise.all([
+      this.ms.getUnreadCount(data.recipientId, ws.userId),
+      this.ms.getTotalUnreadCount(data.recipientId),
+    ]);
     // Chrome: Conversation renew to all recipient MESSAGE sockets
     this.realtime.emitToService(data.recipientId, 'MESSAGE', {
       renew: 'Messages',
@@ -105,7 +108,6 @@ export class MessagingWsGateway implements OnModuleInit {
       },
     });
     // DM unread aggregate to notification bell (T5).
-    const totalDmUnread = await this.ms.getTotalUnreadCount(data.recipientId);
     this.realtime.emitToService(data.recipientId, 'NOTIFICATION', {
       renew: 'Notifications',
       type: 'DmCount',
@@ -125,8 +127,7 @@ export class MessagingWsGateway implements OnModuleInit {
       !this.realtime.hasServiceConnection(data.recipientId, 'NOTIFICATION')
     ) {
       const sender = message.sender as
-        | { name?: string | null; email?: string }
-        | undefined;
+        { name?: string | null; email?: string } | undefined;
       const senderName = displayName(sender ?? {});
       const body = typeof message.body === 'string' ? message.body : '';
       this.push

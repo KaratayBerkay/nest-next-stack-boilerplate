@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { getTierView } from "@/lib/tier-view";
 import { getSessionUser } from "@/lib/auth-ssr";
+import { graphqlFetch } from "@/lib/backend";
+import { POST_QUERY } from "@/lib/graphql/queries";
 import { FreePageView } from "@/views/posts/[uuid]/FreePageView";
 import { BasicPageView } from "@/views/posts/[uuid]/BasicPageView";
 import { MediumPageView } from "@/views/posts/[uuid]/MediumPageView";
@@ -43,8 +45,20 @@ export async function generateMetadata({
   }
 }
 
-export default async function PostPage() {
-  const user = await getSessionUser();
+export default async function PostPage({
+  params,
+}: PostPageProps) {
+  const { uuid } = await params;
+  const [user, postRes] = await Promise.all([
+    getSessionUser(),
+    graphqlFetch<{ post: unknown }>(POST_QUERY, { id: uuid }).catch(() => ({
+      data: undefined,
+      errors: undefined,
+      headers: new Headers(),
+    })),
+  ]);
 
-  return getTierView(user!.tier, VIEWS);
+  const initialPostData = postRes.data?.post ?? null;
+
+  return getTierView(user!.tier, VIEWS, { initialPostData });
 }

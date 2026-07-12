@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
+import zlib from 'zlib';
 import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
@@ -68,7 +69,15 @@ async function bootstrap() {
     helmet({ contentSecurityPolicy: process.env.NODE_ENV === 'production' }),
   );
   app.use(cookieParser(process.env.COOKIE_SECRET));
-  app.use(compression());
+  app.use(
+    compression({
+      brotli: {
+        params: {
+          [zlib.constants.BROTLI_PARAM_QUALITY]: 5,
+        },
+      },
+    }),
+  );
   const corsOrigin =
     process.env.CORS_ORIGIN?.split(',').map((o) => o.trim()) ?? false;
   app.enableCors({ origin: corsOrigin, credentials: true });

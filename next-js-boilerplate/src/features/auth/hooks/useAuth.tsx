@@ -60,20 +60,20 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
 
   useEffect(() => {
     const ssrUser = (window as { __INITIAL_USER__?: User }).__INITIAL_USER__;
+    const ssrToken = (window as { __INITIAL_TOKEN__?: string }).__INITIAL_TOKEN__;
 
     if (ssrUser) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setUser(ssrUser);
-      apiFetch(AUTH_TOKEN_URL)
-        .then((res) => (res.ok ? res.json() : null))
-        .then((t: { accessToken?: string } | null) => {
-          if (t?.accessToken) setToken(t.accessToken);
-        })
-        .catch(() => {});
+      if (ssrToken) setToken(ssrToken);
       return;
     }
 
     if (initialUser) {
+      if (ssrToken) {
+        setToken(ssrToken);
+        return;
+      }
       apiFetch(AUTH_TOKEN_URL)
         .then((res) => (res.ok ? res.json() : null))
         .then((t: { accessToken?: string } | null) => {

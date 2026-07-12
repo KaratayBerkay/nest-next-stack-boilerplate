@@ -24,6 +24,7 @@ export class PrismaService
     super({
       adapter: new PrismaPg({
         connectionString: config.getOrThrow<string>('DATABASE_URL'),
+        max: config.get<number>('DATABASE_POOL_MAX', 20),
       }),
       log: [
         { emit: 'event', level: 'query' },

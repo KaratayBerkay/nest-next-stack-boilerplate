@@ -35,7 +35,14 @@ export async function GET(
     );
   }
 
-  return NextResponse.json({ post: data.post });
+  return NextResponse.json(
+    { post: data.post },
+    {
+      headers: {
+        'Cache-Control': 'public, max-age=60, stale-while-revalidate=120',
+      },
+    },
+  );
 }
 
 async function mutationHeaders() {

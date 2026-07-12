@@ -1,0 +1,36 @@
+{
+  "$schema": "https://raw.githubusercontent.com/GoogleChrome/lighthouse/main/types/lhr/schema.json",
+  "ci": {
+    "collect": {
+      "staticDistDir": ".next",
+      "startServerCommand": "pnpm start -p 4000",
+      "startServerReadyPattern": "Ready in",
+      "url": [
+        "http://localhost:4000/en/feed",
+        "http://localhost:4000/en/posts/example-post",
+        "http://localhost:4000/en/messages",
+        "http://localhost:4000/en/friends"
+      ],
+      "settings": {
+        "onlyCategories": ["performance", "accessibility", "best-practices", "seo"],
+        "formFactor": "desktop",
+        "throttlingMethod": "simulate"
+      }
+    },
+    "assert": {
+      "preset": "lighthouse:recommended",
+      "assertions": {
+        "largest-contentful-paint": ["warn", { "maxNumericValue": 4000 }],
+        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }],
+        "interactive": ["warn", { "maxNumericValue": 5000 }],
+        "total-blocking-time": ["warn", { "maxNumericValue": 300 }],
+        "speed-index": ["warn", { "maxNumericValue": 6000 }],
+        "first-contentful-paint": ["warn", { "maxNumericValue": 3000 }]
+      }
+    },
+    "upload": {
+      "target": "filesystem",
+      "outputDir": "lighthouse-reports"
+    }
+  }
+}

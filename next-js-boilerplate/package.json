@@ -21,7 +21,11 @@
     "check-duplicate-messages": "tsx scripts/check-duplicate-messages.ts",
     "fallow-check": "fallow audit --ci --fail-on-issues",
     "fallow-fix": "fallow fix --yes",
-    "prepare": "husky"
+    "prepare": "husky",
+    "lighthouse:collect": "lighthouse-ci collect --config lighthouserc.json",
+    "lighthouse:assert": "lighthouse-ci assert --config lighthouserc.json",
+    "lighthouse:upload": "lighthouse-ci upload --config lighthouserc.json",
+    "lighthouse:ci": "pnpm lighthouse:collect && pnpm lighthouse:assert"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.1",
@@ -64,6 +68,7 @@
     "@axe-core/playwright": "^4.12.1",
     "@commitlint/cli": "^21.1.0",
     "@commitlint/config-conventional": "^21.1.0",
+    "@next/bundle-analyzer": "^16.2.10",
     "@opentelemetry/sdk-trace-base": "2.8.0",
     "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4",

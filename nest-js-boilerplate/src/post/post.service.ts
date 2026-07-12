@@ -7,6 +7,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { FriendsService } from '../friends/friends.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { NotificationService } from '../notification/notification.service';
+import { NotificationQueueService } from '../notification/notification-queue.service';
+import { CacheAsideService } from '../caching/cache-aside.service';
 import { CreatePostInput } from './dto/create-post.input';
 import { UpdatePostInput } from './dto/update-post.input';
 
@@ -27,6 +29,8 @@ export class PostService {
     private readonly friends: FriendsService,
     private readonly realtime: RealtimeGateway,
     private readonly notifications: NotificationService,
+    private readonly notificationQueue: NotificationQueueService,
+    private readonly cache: CacheAsideService,
   ) {}
 
   async create(authorId: string, data: CreatePostInput, friendIds?: string[]) {
@@ -50,26 +54,10 @@ export class PostService {
     // fall back to FriendsService only when absent/undefined.
     const ids = friendIds ?? (await this.friends.getFriendIds(authorId));
 
-    await Promise.all(
-      ids.map((userId) =>
-        this.notifications.create({
-          userId,
-          actorId: authorId,
-          type: 'POST',
-          title: 'New post from friend',
-          body:
-            data.title.length > 100
-              ? data.title.slice(0, 100) + '...'
-              : data.title,
-          payload: { postId: post.id },
-        }),
-      ),
-    );
-
-    this.realtime.emitToTopic('feed', {
-      renew: 'Feed',
-      type: 'New',
-    });
+    this.cache.invalidate('cache:feed:*').catch(() => {});
+    this.notificationQueue
+      .enqueueFriendPostNotification(authorId, ids, data.title, post.id)
+      .catch(() => {});
 
     return post;
   }
@@ -101,6 +89,8 @@ export class PostService {
       data: updateData,
       include: { author: true },
     });
+    this.cache.invalidate(`cache:post:${id}`).catch(() => {});
+    this.cache.invalidate('cache:feed:*').catch(() => {});
     this.realtime.emitToTopic('feed', {
       renew: 'Feed',
       type: 'Post',
@@ -152,39 +142,82 @@ export class PostService {
         { content: { contains: search, mode: 'insensitive' } },
       ];
     }
-    return this.prisma.post.findMany({
-      take: take + 1,
-      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
-      where,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        author: true,
-        reactions: true,
-        _count: { select: { comments: true, reactions: true } },
-      },
-    });
+    const cacheKey = `cache:feed:${cursor ?? ''}:${take}:${search ?? ''}`;
+    return this.cache.getOrFetch(
+      cacheKey,
+      () =>
+        this.prisma.post.findMany({
+          take: take + 1,
+          ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+          where,
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            title: true,
+            content: true,
+            imageUrl: true,
+            createdAt: true,
+            status: true,
+            author: {
+              select: { id: true, name: true, email: true },
+            },
+            reactions: {
+              take: 50,
+              select: { id: true, type: true, userId: true },
+            },
+            _count: { select: { comments: true, reactions: true } },
+          },
+        }),
+      30,
+    );
   }
 
   async findOne(id: string) {
-    return this.prisma.post.findFirst({
-      where: { id, deletedAt: null },
-      include: {
-        author: true,
-        comments: {
-          where: { deletedAt: null },
-          include: {
-            author: true,
-            reactions: true,
-            _count: { select: { replies: true } },
+    const cacheKey = `cache:post:${id}`;
+    return this.cache.getOrFetch(
+      cacheKey,
+      () =>
+        this.prisma.post.findFirst({
+          where: { id, deletedAt: null },
+          select: {
+            id: true,
+            title: true,
+            content: true,
+            imageUrl: true,
+            coverImage: true,
+            createdAt: true,
+            status: true,
+            author: {
+              select: { id: true, name: true, email: true },
+            },
+            comments: {
+              where: { deletedAt: null, parentId: null },
+              take: 20,
+              orderBy: { createdAt: 'desc' },
+              select: {
+                id: true,
+                body: true,
+                createdAt: true,
+                authorId: true,
+                author: {
+                  select: { id: true, name: true, email: true },
+                },
+                reactions: {
+                  take: 50,
+                  select: { id: true, type: true, userId: true },
+                },
+                _count: { select: { replies: true } },
+              },
+            },
+            reactions: {
+              take: 100,
+              select: { id: true, type: true, userId: true },
+            },
+            _count: { select: { comments: true, reactions: true } },
           },
-          orderBy: { createdAt: 'desc' },
-        },
-        reactions: {
-          include: { user: true },
-        },
-        _count: { select: { comments: true, reactions: true } },
-      },
-    });
+        }),
+      60,
+    );
   }
 
   async getMyPostStats(userId: string) {

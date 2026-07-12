@@ -2,9 +2,17 @@
 
 import { use, Suspense } from "react";
 import type { CheckoutPageProps } from "@/types/checkout/CheckoutPage-types";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-import { StripeCardForm } from "@/features/billing/ui/StripeCardForm";
+
+const StripeCardForm = dynamic(
+  () =>
+    import("@/features/billing/ui/StripeCardForm").then(
+      (mod) => mod.StripeCardForm,
+    ),
+  { ssr: false },
+);
 import {
   TIER_ORDER,
   tierLabel,

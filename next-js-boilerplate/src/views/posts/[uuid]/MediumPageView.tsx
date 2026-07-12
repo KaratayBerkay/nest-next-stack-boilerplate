@@ -2,6 +2,15 @@
 
 import { PostDetailBaseView } from "./PostDetailBaseView";
 
-export function MediumPageView() {
-  return <PostDetailBaseView showReactionBreakdown />;
+export function MediumPageView({
+  initialPostData: _initialPostData,
+}: {
+  initialPostData?: unknown;
+}) {
+  return (
+    <PostDetailBaseView
+      showReactionBreakdown
+      initialPostData={_initialPostData}
+    />
+  );
 }

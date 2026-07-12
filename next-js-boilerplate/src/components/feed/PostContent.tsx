@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { imageUrl } from "@/lib/image";
 import type { PostContentProps } from "@/types/feed/PostContent-types";
 
@@ -14,12 +15,15 @@ export function PostContent({
   return (
     <div className="flex gap-3">
       {postData.imageUrl && (
-        <img
-          src={imageUrl(postData.imageUrl, "badge")}
-          alt=""
-          className="mt-0.5 h-16 w-16 shrink-0 rounded-lg object-cover"
-          loading="lazy"
-        />
+        <div className="relative mt-0.5 h-16 w-16 shrink-0 overflow-hidden rounded-lg">
+          <Image
+            src={imageUrl(postData.imageUrl, "badge") ?? ""}
+            alt=""
+            fill
+            sizes="64px"
+            className="object-cover"
+          />
+        </div>
       )}
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">

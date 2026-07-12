@@ -2,6 +2,10 @@
 
 import { PostDetailBaseView } from "./PostDetailBaseView";
 
-export function FreePageView() {
-  return <PostDetailBaseView showPageInfo />;
+export function FreePageView({
+  initialPostData: _initialPostData,
+}: {
+  initialPostData?: unknown;
+}) {
+  return <PostDetailBaseView showPageInfo initialPostData={_initialPostData} />;
 }

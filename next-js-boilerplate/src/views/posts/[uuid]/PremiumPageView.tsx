@@ -2,6 +2,16 @@
 
 import { PostDetailBaseView } from "./PostDetailBaseView";
 
-export function PremiumPageView() {
-  return <PostDetailBaseView showReactionBreakdown showWhoReacted />;
+export function PremiumPageView({
+  initialPostData: _initialPostData,
+}: {
+  initialPostData?: unknown;
+}) {
+  return (
+    <PostDetailBaseView
+      showReactionBreakdown
+      showWhoReacted
+      initialPostData={_initialPostData}
+    />
+  );
 }

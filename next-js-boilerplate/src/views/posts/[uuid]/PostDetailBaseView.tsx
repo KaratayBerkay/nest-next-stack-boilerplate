@@ -3,6 +3,7 @@
 import { apiFetch } from "@/lib/api-client";
 import { useEffect, useState, Suspense } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   IconArrowLeft,
   IconMessageCircle,
@@ -64,12 +65,14 @@ export interface PostDetailBaseViewProps {
   showPageInfo?: boolean;
   showReactionBreakdown?: boolean;
   showWhoReacted?: boolean;
+  initialPostData?: unknown;
 }
 
 function PostDetailContent({
   showPageInfo = false,
   showReactionBreakdown = false,
   showWhoReacted = false,
+  initialPostData,
 }: PostDetailBaseViewProps) {
   const t = useMessages("posts");
   const params = useParams<{ lang: string; uuid: string }>();
@@ -102,6 +105,7 @@ function PostDetailContent({
       return data.post;
     },
     staleTime: 30_000,
+    initialData: initialPostData as Post | undefined,
   });
 
   return (
@@ -228,12 +232,16 @@ function PostDetailContent({
         ) : (
           <div className="flex flex-col gap-3">
             {post.imageUrl && (
-              <img
-                src={imageUrl(post.imageUrl, "full")}
-                alt=""
-                className="max-h-96 w-full rounded-xl object-cover shadow-sm"
-                loading="lazy"
-              />
+              <div className="relative max-h-96 w-full overflow-hidden rounded-xl shadow-sm">
+                <Image
+                  src={imageUrl(post.imageUrl, "full") ?? ""}
+                  alt=""
+                  fill
+                  priority
+                  sizes="(max-width: 768px) 100vw, 720px"
+                  className="max-h-96 object-cover"
+                />
+              </div>
             )}
             <h1 className="text-fg text-xl leading-tight font-bold">
               {post.title}

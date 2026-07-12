@@ -23,6 +23,7 @@ import { CookiesModule } from './cookies/cookies.module';
 import { CookiesSsrModule } from './cookies-ssr/cookies-ssr.module';
 import { CorsModule } from './cors/cors.module';
 import { CryptoModule } from './common/crypto/crypto.module';
+import { DataloaderModule } from './common/dataloader/dataloader.module';
 import { CqrsExampleModule } from './cqrs/cqrs.module';
 import { CsrfModule } from './csrf/csrf.module';
 import { ExceptionFiltersModule } from './exception-filters/exception-filters.module';
@@ -154,6 +155,7 @@ const CORE_MODULES = [
   HealthModule,
   RedisModule,
   CsrfModule,
+  DataloaderModule,
 ];
 
 // ── Demo modules — NestJS docs examples, gated behind LOAD_DEMO_MODULES ────

@@ -29,8 +29,7 @@ export class PerformanceInterceptor implements NestInterceptor {
       const args = context.getArgs();
       const gqlCtx = args[0] as { req?: Request } | undefined;
       const info = args[3] as
-        | { fieldName?: string; parentType?: { name?: string } }
-        | undefined;
+        { fieldName?: string; parentType?: { name?: string } } | undefined;
       method = 'GRAPHQL';
       path =
         info?.parentType?.name && info?.fieldName

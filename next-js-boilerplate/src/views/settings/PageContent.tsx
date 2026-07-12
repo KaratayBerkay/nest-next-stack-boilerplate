@@ -1,9 +1,10 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useState } from "react";
 import type { SettingsIndexPageProps } from "@/types/settings/SettingsIndexPage-types";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { apiFetchJson } from "@/lib/api-client";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import {
@@ -30,6 +31,13 @@ interface SubscriptionInfo {
   cancelAtPeriodEnd: boolean;
 }
 
+function useSubscription(userId: string | undefined) {
+  return useSuspenseQuery<{ subscription: SubscriptionInfo | null }>({
+    queryKey: ["subscription", userId],
+    queryFn: () => apiFetchJson(BILLING_SUBSCRIPTION_URL),
+  });
+}
+
 // fallow-ignore-next-line complexity
 export default function PageContent({ params }: SettingsIndexPageProps) {
   const { lang } = use(params);
@@ -37,18 +45,8 @@ export default function PageContent({ params }: SettingsIndexPageProps) {
   const t = useMessages("settings");
   const p = useMessages("pricing");
   const currency = useCurrencyCookie();
-  const [subscription, setSubscription] = useState<SubscriptionInfo | null>(
-    null,
-  );
-
-  useEffect(() => {
-    if (!user) return;
-    apiFetchJson<{ subscription: SubscriptionInfo | null }>(
-      BILLING_SUBSCRIPTION_URL,
-    )
-      .then((data) => setSubscription(data.subscription))
-      .catch(() => {});
-  }, [user]);
+  const { data: subscriptionData } = useSubscription(user?.id);
+  const subscription = subscriptionData?.subscription ?? null;
 
   const tier = (subscription?.tier as Tier) ?? (user!.tier as Tier) ?? "FREE";
   const periodEnd = subscription?.periodEnd;
