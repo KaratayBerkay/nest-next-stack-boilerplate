@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, type Dispatch, type SetStateAction } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { ToastProvider, ToastViewport, useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
+import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 function DemoControls() {
   const { toast } = useToast();
@@ -182,40 +183,39 @@ function ExampleControls() {
   );
 }
 
-function Content() {
-  return (
-    <div className="flex flex-col gap-6 w-full" data-testid="toast-demo">
-      <div className="space-y-1">
-        <h2 className="text-xl font-bold">Toast</h2>
-        <p className="text-muted text-sm">
-          A notification toast with different variants.
-        </p>
-      </div>
-
-      <Tabs defaultValue="components">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="components">Components</TabsTrigger>
-          <TabsTrigger value="examples">Examples</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="components">
-          <ToastProvider>
-            <DemoControls />
-            <ToastViewport />
-          </ToastProvider>
-        </TabsContent>
-
-        <TabsContent value="examples">
-          <ToastProvider>
-            <ExampleControls />
-            <ToastViewport />
-          </ToastProvider>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-}
+const examples: UIExample[] = [
+  {
+    id: "components",
+    title: "Variant Basics",
+    description: "One button per toast variant: default, destructive, success.",
+    render: () => (
+      <ToastProvider>
+        <DemoControls />
+        <ToastViewport />
+      </ToastProvider>
+    ),
+  },
+  {
+    id: "examples",
+    title: "Undoable Action",
+    description: "Toast with an action slot for undo.",
+    render: () => (
+      <ToastProvider>
+        <ExampleControls />
+        <ToastViewport />
+      </ToastProvider>
+    ),
+  },
+];
 
 export default function Page() {
-  return <Content />;
+  return (
+    <div data-testid="toast-demo">
+      <ExampleTabs
+        title="Toast"
+        intro="A notification toast with different variants."
+        examples={examples}
+      />
+    </div>
+  );
 }

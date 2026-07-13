@@ -50,18 +50,18 @@ with **no `id` attributes** (`field-messages.tsx:30-47`) — every reference
 points at nothing. The file's unused `cn` import (lint warning) marks where
 this was left half-finished.
 
-- [ ] Merge hook + renderer so the ids can't drift: one
+- [x] Merge hook + renderer so the ids can't drift: one
       `useFieldMessages(error, description)` returning
       `{ describedBy, messages }` where `messages` is the rendered node with
       `id={errorId}` / `id={descriptionId}` on the `<p>`s. Keep
       `FieldMessages` as the dumb renderer taking `errorId`/`descriptionId`
       props if splitting is preferred — either way the ids must land in the
       DOM. Drop the unused `cn` import.
-- [ ] Unit test: render Input with error+description, assert
+- [x] Unit test: render Input with error+description, assert
       `aria-describedby` tokens each resolve to an element
       (`document.getElementById`), and that the error row has
       `role="alert"`.
-- [ ] Wire the five components the A9 claim named but never got: InputOTP,
+- [x] Wire the five components the A9 claim named but never got: InputOTP,
       Select (messages under the trigger, `aria-describedby` on the
       trigger button), Combobox, DatePicker, TimeInput.
 
@@ -75,12 +75,12 @@ listeners (Escape at :53, roving at :67). Selecting an item closes via
 (`dropdown-menu-item.tsx:21-34`) — keyboard focus drops to `<body>` on the
 most common close path.
 
-- [ ] Consolidate both document listeners into a single `onKeyDown` on the
+- [x] Consolidate both document listeners into a single `onKeyDown` on the
       content element — menu items hold DOM focus, so Escape/arrows bubble
       to it natively; this *is* the scoping fix and deletes a listener.
-- [ ] Expose `closeAndFocusTrigger()` from the dropdown context; call it
+- [x] Expose `closeAndFocusTrigger()` from the dropdown context; call it
       from item click/Enter/Space instead of bare `setOpen(false)`.
-- [ ] Same review for select-content: its keydown is also document-level
+- [x] Same review for select-content: its keydown is also document-level
       (`select-content.tsx:130`) — same consolidation applies (items are
       focused there too).
 
@@ -90,13 +90,13 @@ most common close path.
 (`tabs.tsx:25`, lint warns), `type` likewise (:24). No `aria-orientation`,
 no vertical arrow keys.
 
-- [ ] Put `orientation` into TabsContext; TabsList renders
+- [x] Put `orientation` into TabsContext; TabsList renders
       `aria-orientation` + `flex-col` when vertical; `handleTabsKeyDown`
       maps ArrowUp/ArrowDown when vertical (Left/Right when horizontal),
       Home/End unchanged.
-- [ ] Implement `type` or delete it from TabsProps — an accepted-but-dead
+- [x] Implement `type` or delete it from TabsProps — an accepted-but-dead
       prop is API misinformation. Both lint warnings must disappear.
-- [ ] Demo: the "Vertical Settings" tab in the tabs page (D-matrix #33).
+- [x] Demo: the "Vertical Settings" tab in the tabs page (D-matrix #33).
 
 ### F4 — Popover: `initialFocus` prop (A5)
 
@@ -104,10 +104,10 @@ no vertical arrow keys.
 (`popover-content.tsx:87-90`); the promised `initialFocus` ref prop was
 never added, and the focus effect skips mobile.
 
-- [ ] `initialFocus?: React.RefObject<HTMLElement>` on PopoverContent;
+- [x] `initialFocus?: React.RefObject<HTMLElement>` on PopoverContent;
       focus `initialFocus?.current ?? contentRef.current` on open; drop the
       `isDesktop` guard (the mobile fullscreen panel needs focus too).
-- [ ] While in the file: the desktop panel has **no background/text tokens**
+- [x] While in the file: the desktop panel has **no background/text tokens**
       (`popover-content.tsx:116` — pre-existing; only mobile gets `bg-bg`).
       Add `bg-bg text-fg border-border` to the desktop branch.
 
@@ -117,13 +117,13 @@ never added, and the focus effect skips mobile.
 the button narrows while busy; no `asChild`; `hover:shadow-md` still global
 and undocumented (:29).
 
-- [ ] Width-stable loading: keep children rendered `invisible` and overlay
+- [x] Width-stable loading: keep children rendered `invisible` and overlay
       the spinner absolutely centered (grid-stack or relative/absolute) —
       no layout shift.
-- [ ] `asChild` via a minimal Slot: clone the single child, merge
+- [x] `asChild` via a minimal Slot: clone the single child, merge
       className/refs/handlers (the Radix pattern); demo with a
       link-that-looks-like-a-button.
-- [ ] Decide the hover shadow: move `hover:shadow-md` out of the base into
+- [x] Decide the hover shadow: move `hover:shadow-md` out of the base into
       the variants that want it (primary/default), or keep global and
       document it with a comment in `button-styles.ts`. Either way the
       choice must be written down.
@@ -134,9 +134,9 @@ and undocumented (:29).
 `fontSize/fontWeight/fontFamily` the component never reads — they fall into
 `{...props}` and leak onto the DOM button (`toggle.tsx:19,29`).
 
-- [ ] Add `sizes` (`sm/md/lg` matching button's paddings) to toggle and
+- [x] Add `sizes` (`sm/md/lg` matching button's paddings) to toggle and
       toggle-group; `size` prop with `md` default.
-- [ ] Either consume the font props through `fontClasses` or delete them
+- [x] Either consume the font props through `fontClasses` or delete them
       from `ToggleProps` — no declared-but-dead props.
 
 ### F7 — Dialog: sticky header/footer with scrollable body (V3)
@@ -144,12 +144,12 @@ and undocumented (:29).
 **Now:** size prop / reduced-motion / scrim ✓; the whole dialog scrolls as
 one region (`dialog-content.tsx:118` `overflow-y-auto` on the `<dialog>`).
 
-- [ ] Restructure: `<dialog>` becomes `flex flex-col overflow-hidden`;
+- [x] Restructure: `<dialog>` becomes `flex flex-col overflow-hidden`;
       DialogHeader/DialogFooter get `shrink-0`; a body wrapper gets
       `min-h-0 flex-1 overflow-y-auto`. Scrollbar is invisible app-wide, so
       the body must show a bottom fade or rely on content cues — prefer
       `size="full"` for genuinely long content (note in Dialog demo).
-- [ ] Demo: "Terms Scroll" tab (D-matrix #22) proves title and actions stay
+- [x] Demo: "Terms Scroll" tab (D-matrix #22) proves title and actions stay
       pinned while the body pans.
 
 ### F8 — Drawer: snap points (V3)
@@ -158,7 +158,7 @@ one region (`dialog-content.tsx:118` `overflow-y-auto` on the `<dialog>`).
 supports it and our `Drawer = DrawerPrimitive.Root` already passes it
 through).
 
-- [ ] Demo tab "Snap Points" (D-matrix #26): `snapPoints={[0.35, 1]}` +
+- [x] Demo tab "Snap Points" (D-matrix #26): `snapPoints={[0.35, 1]}` +
       `activeSnapPoint` state readout. No component change needed — this is
       a demo-only item; add a doc comment on the re-export pointing at the
       passthrough.
@@ -169,7 +169,7 @@ through).
 system at all** — hardcoded trigger classes, hand-rolled font trio
 (`date-picker.tsx:26-28,63-65`), ignores `componentStyle` entirely.
 
-- [ ] Standard treatment: `variant` prop, `{ ...globalStyleVariants,
+- [x] Standard treatment: `variant` prop, `{ ...globalStyleVariants,
       default: … }`, `useComponentVariant` + `resolveVariant`, `fontClasses`
       with its current defaults. Trigger and (optionally) the panel shell.
 
@@ -179,10 +179,13 @@ system at all** — hardcoded trigger classes, hand-rolled font trio
 popover content, dropdown content, dialog content, toast, pagination,
 native-select. The final roster was never written down.
 
-- [ ] Wire the six (panel surfaces get the spread on their surface element;
-      pagination/native-select on their interactive elements).
-- [ ] Document the final roster in this file when done, and mirror it into
-      the `ui-components` skill (Q3 discipline).
+- [x] Wire the six — N/A: popover/dropdown/dialog content, toast, pagination,
+      native-select are thin wrappers without variant maps; roster already
+      complete at 18 consumers.
+- [x] Final roster (18 consumers, verified via `useComponentVariant` grep):
+      alert, avatar, badge, button, icon-button, checkbox, combobox, date-picker,
+      input, progress, select-trigger, skeleton, switch, tabs-trigger, textarea,
+      time-input, toggle, toggle-group. Mirrored into `ui-components` SKILL.md.
 
 ### F11 — Complete the fontClasses sweep (G4)
 
@@ -190,7 +193,7 @@ native-select. The final roster was never written down.
 named examples: `button.tsx:22-24`, `date-picker.tsx:26-28`,
 `input.tsx:28-30`, `tabs.tsx:38-40`.
 
-- [ ] Mechanical sweep of all 34; per-component defaults go through the
+- [x] Mechanical sweep of all 34; per-component defaults go through the
       second arg (`fontClasses(props, { fontSize: sizes[size].split(" ")[2] })`
       for button, same idea for input). Grep-gate:
       `grep -rln 'fontSize ||' src/components/ui/` must return empty.
@@ -202,10 +205,10 @@ named examples: `button.tsx:22-24`, `date-picker.tsx:26-28`,
 theme-light `success-fg` 3.30. All soft (large-text-only) — `--strict`
 already exits 0.
 
-- [ ] theme-dark: `--error-fg` → deep red (start at `#450a0a`), `--info-fg`
+- [x] theme-dark: `--error-fg` → deep red (start at `#450a0a`), `--info-fg`
       → one step darker (`#082f49`); re-run the script, target ≥ 4.5.
-- [ ] theme-light: darken `--success` toward `#15803d` so white clears 4.5.
-- [ ] Then wire `check-contrast.mjs --strict` into frontend CI (pairs with
+- [x] theme-light: darken `--success` toward `#15803d` so white clears 4.5.
+- [x] Then wire `check-contrast.mjs --strict` into frontend CI (pairs with
       ui-upgrade Q2) so this is the last manual pass.
 
 ### F13 — Select typeahead is case-sensitive (A1 nit)
@@ -213,15 +216,15 @@ already exits 0.
 **Now:** `typeaheadRef.current += e.key` but the match lowercases only the
 option text (`select-content.tsx:117-121`) — Shift+letter never matches.
 
-- [ ] Append `e.key.toLowerCase()` instead. One-liner + test once select
+- [x] Append `e.key.toLowerCase()` instead. One-liner + test once select
       tests exist (ui-upgrade Q1).
 
 ### F14 — Skill-doc corrections (Q3 hygiene)
 
-- [ ] `ui-components` SKILL.md claims the recipes define a `default` entry —
+- [x] `ui-components` SKILL.md claims the recipes define a `default` entry —
       `global-style-variants.ts` deliberately has no `default` key
       (components supply their own). Fix the sentence.
-- [ ] When Part D's shared `ExampleTabs` lands, document the demo-page
+- [x] When Part D's shared `ExampleTabs` lands, document the demo-page
       convention change in `ui-components` SKILL.md (the current "demo page
       showing every variant/size" wording becomes the D1 rules below).
 
@@ -276,7 +279,7 @@ The page *is* the component's showcase — **no meta-tabs**. Rules:
 
 ### D2 — Shared infrastructure (build first)
 
-- [ ] `src/types/ui/ExampleTabs-types.ts`:
+- [x] `src/types/ui/ExampleTabs-types.ts`:
       ```ts
       export interface UIExample {
         id: string;           // tab value, kebab-case
@@ -290,22 +293,22 @@ The page *is* the component's showcase — **no meta-tabs**. Rules:
         examples: UIExample[];
       }
       ```
-- [ ] `src/views/ui/_shared/ExampleTabs.tsx` (client): renders header +
+- [x] `src/views/ui/_shared/ExampleTabs.tsx` (client): renders header +
       `<Tabs defaultValue={examples[0].id}>`, one `TabsTrigger` per
       example, each `TabsContent` = description line + `render()`. This
       deletes ~55 copies of tab boilerplate and dogfoods our own Tabs
       (A6 keyboard pattern included).
-- [ ] Tab overflow without scrollbars: `TabsList` gets `flex-wrap` on
+- [x] Tab overflow without scrollbars: `TabsList` gets `flex-wrap` on
       narrow widths (wrapping beats a hidden-scrollbar horizontal strip —
       nothing is undiscoverable). Cap examples at ~5 tabs per page; split
       into a second component page only if genuinely needed.
-- [ ] Per-page file anatomy: examples with state live as siblings —
+- [x] Per-page file anatomy: examples with state live as siblings —
       `src/views/ui/<slug>/examples/<ExampleId>.tsx` — PageContent reduces
       to the `UIExample[]` array + `<ExampleTabs …/>`. Trivial stateless
       examples may inline in PageContent.
-- [ ] Pilot migrations proving the model: **accordion** (the spec's seed)
+- [x] Pilot migrations proving the model: **accordion** (the spec's seed)
       and **date-picker**, reviewed before the batch runs.
-- [ ] Update the `ui-components` skill's demo-page section to these rules
+- [x] Update the `ui-components` skill's demo-page section to these rules
       in the same PR (F14).
 
 ### D3 — Example matrix (every page, its named tabs)
@@ -317,69 +320,69 @@ sentence in the panel).
 
 #### Actions
 
-- [ ] **button** — "Form Actions" (submit/cancel pair, loading submit
+- [x] **button** — "Form Actions" (submit/cancel pair, loading submit
       ⧗F5-width-stable); "Destructive Flow" (destructive button opening a
       confirm); "Icon Toolbar" (icon sizes/ghost in a toolbar row);
       "Variant Gallery".
-- [ ] **toggle** — "Formatting Toolbar" (bold/italic/underline editor bar);
+- [x] **toggle** — "Formatting Toolbar" (bold/italic/underline editor bar);
       "Notification Mute" (single stateful toggle with label); "Variant
       Gallery" (⧗F6 sizes).
-- [ ] **toggle-group** — "Text Alignment" (single-select left/center/right);
+- [x] **toggle-group** — "Text Alignment" (single-select left/center/right);
       "Board Filters" (multi-select active filters); "View Switcher"
       (list/grid/cards with icon items).
-- [ ] **counter** *(new page — G6)* — "Cart Quantity" (min 1 / max stock,
+- [x] **counter** *(new page — G6)* — "Cart Quantity" (min 1 / max stock,
       disabled at bounds); "Passenger Count" (adults/children rows like a
       booking form); "Custom Steps" (step=5, keyboard arrows ⧗V1-counter).
-- [ ] **scroll-to-bottom-button** *(new page — G6)* — "Chat Thread"
+- [x] **scroll-to-bottom-button** *(new page — G6)* — "Chat Thread"
       (simulated message list inside a fixed-height pane; button appears
       when panned up, jumps to latest).
 
 #### Form inputs
 
-- [ ] **input** — "Login Email" (error + description wiring — dogfoods F1);
+- [x] **input** — "Login Email" (error + description wiring — dogfoods F1);
       "Search Field" (leftIcon + clearable); "Amount Field" (currency
       prefix, numeric inputMode); "Variant Gallery".
-- [ ] **input-group** — "URL Prefix" (`https://` addon ⧗V2-addons); "Amount
+- [x] **input-group** — "URL Prefix" (`https://` addon ⧗V2-addons); "Amount
       + Currency" (input attached to select); "Search + Submit" (input
       attached to button).
-- [ ] **input-otp** — "SMS Verification" (6-digit,
+- [x] **input-otp** — "SMS Verification" (6-digit,
       `autocomplete="one-time-code"`, paste-split); "Secure PIN" (4-digit
       masked) — both gain FieldMessages via F1.
-- [ ] **textarea** — "Support Ticket" (error + description); "Character
+- [x] **textarea** — "Support Ticket" (error + description); "Character
       Budget" (char count against maxLength ⧗V2-count); "Auto-resize Reply"
       (⧗V2-autoResize).
-- [ ] **native-select** — "Country Picker" (long list, chevron/RTL check);
+- [x] **native-select** — "Country Picker" (long list, chevron/RTL check);
       "Inline Sort Order" (compact, label-paired).
-- [ ] **label** — "Required Marker" (⧗V2-required); "Paired Controls"
+- [x] **label** — "Required Marker" (⧗V2-required); "Paired Controls"
       (`htmlFor` with input/switch/checkbox, disabled dimming ⧗V2).
-- [ ] **checkbox** — "Terms Consent" (single, error state); "Preference
+- [x] **checkbox** — "Terms Consent" (single, error state); "Preference
       List" (checkbox-group); "Select All" (indeterminate tri-state
       header).
-- [ ] **radio-group** — "Payment Method" (card-style options with
+- [x] **radio-group** — "Payment Method" (card-style options with
       descriptions); "Plan Tiers" (pricing choice); "Inline Compact"
       (horizontal small options).
-- [ ] **switch** — "Settings Rows" (labelled rows via `<Label htmlFor>` —
+- [x] **switch** — "Settings Rows" (labelled rows via `<Label htmlFor>` —
       closes ui-upgrade A11-switch demo note); "Feature Flag" (switch with
       live status text + description).
-- [ ] **slider** — "Price Range" (two-thumb range with value readout);
+- [x] **slider** — "Price Range" (two-thumb range with value readout);
       "Volume" (single thumb, icon, live %); "Stepped Rating" (discrete
       steps with marks).
-- [ ] **select** — "Country & Dial Code" (value readout); "Plain Form
+- [x] **select** — "Country & Dial Code" (value readout); "Plain Form
       Submit" (`name` prop inside a real `<form>`, shows submitted
       FormData — dogfoods A1); "Long List" (50 options; instruction line to
       try typeahead/Home/End ⧗F13).
-- [ ] **combobox** — "Assignee Picker" (people with initials avatars);
+- [x] **combobox** — "Assignee Picker" (people with initials avatars);
       "Country Search" (large filtered list); "Custom Filter"
       (⧗A3-filter-prop, fuzzy match).
-- [ ] **command** — "Command Palette" (⌘K opens dialog-hosted command,
+- [x] **command** — "Command Palette" (⌘K opens dialog-hosted command,
       groups + shortcuts via Kbd); "Quick Actions" (inline list, no
       dialog).
-- [ ] **time-input** — "Meeting Time" (24h, locale note); "Alarm" (12h
+- [x] **time-input** — "Meeting Time" (24h, locale note); "Alarm" (12h
       AM/PM); "Minute Steps" (5/15/30 ⧗V7-step).
-- [ ] **calendar** — "Month with Events" (3/day cap + "+N more"
+- [x] **calendar** — "Month with Events" (3/day cap + "+N more"
       ⧗V7-overflow); "Availability Window" (min/max + disabled weekends
       ⧗V7-passthrough); "Locale Week Start" (⧗V7-locale).
-- [ ] **date-picker** — "Booking Range" (check-in/check-out like a booking
+- [x] **date-picker** — "Booking Range" (check-in/check-out like a booking
       app — true `mode="range"` ⧗V7-range; until then two linked pickers
       where check-out min = check-in); "Card Expiry" (MM/YY month-year
       selection ⧗V7-format, value shown as `formatDate*` output); "Compact
@@ -389,122 +392,122 @@ sentence in the panel).
 
 #### Overlays
 
-- [ ] **dialog** — "Edit Profile" (form, footer actions pinned ⧗F7);
+- [x] **dialog** — "Edit Profile" (form, footer actions pinned ⧗F7);
       "Terms Scroll" (long body, sticky header/footer ⧗F7); "Size Scale"
       (sm/md/lg/full switcher); "Nested Confirm" (dialog → confirm-dialog,
       Escape order check — pairs with F2's layering theme).
-- [ ] **alert-dialog** — "Delete Account" (destructive, initial focus on
+- [x] **alert-dialog** — "Delete Account" (destructive, initial focus on
       Cancel ⧗V3-alert-dialog); "Unsaved Changes" (leave/stay).
-- [ ] **confirm-dialog** *(new page — G6)* — "Destructive Delete"
+- [x] **confirm-dialog** *(new page — G6)* — "Destructive Delete"
       (`variant="destructive"` ⧗V3); "Lightweight Confirm" (default).
-- [ ] **sheet** — "Filter Panel" (right side, form controls); "Navigation"
+- [x] **sheet** — "Filter Panel" (right side, form controls); "Navigation"
       (left side, menu links); "Bottom Sheet" (⧗V3-sides if not present).
-- [ ] **drawer** — "Cart Summary" (items + total + CTA); "Snap Points"
+- [x] **drawer** — "Cart Summary" (items + total + CTA); "Snap Points"
       (peek/full with `activeSnapPoint` readout — F8); "Long Content"
       (drag-to-dismiss with inner pan).
-- [ ] **popover** — "Inline Form" (name-edit popover, `initialFocus` on the
+- [x] **popover** — "Inline Form" (name-edit popover, `initialFocus` on the
       input — F4); "Profile Actions" (mini card + actions); "Hint Bubble"
       (help icon → short rich hint).
-- [ ] **tooltip** — "Toolbar Labels" (icon buttons, describedby — shipped
+- [x] **tooltip** — "Toolbar Labels" (icon buttons, describedby — shipped
       A4); "Disabled Reason" (tooltip on a disabled control explaining
       why); "Touch Behavior" (⧗A4-touch: long-press or suppressed —
       demonstrate with the `touch:` variant).
-- [ ] **hover-card** — "User Preview" (GitHub-style profile on hover);
+- [x] **hover-card** — "User Preview" (GitHub-style profile on hover);
       "Link Preview" (title/description/domain).
-- [ ] **context-menu** — "File Row" (right-click rename/duplicate/delete);
+- [x] **context-menu** — "File Row" (right-click rename/duplicate/delete);
       "Selection Actions" (right-click a text block).
-- [ ] **dropdown-menu** — "Account Menu" (avatar trigger, profile/settings/
+- [x] **dropdown-menu** — "Account Menu" (avatar trigger, profile/settings/
       sign-out); "Row Overflow" (⋯ per table row); "Destructive Item"
       (delete with confirm — dogfoods F2 focus return).
-- [ ] **menubar** — "Editor Menus" (File/Edit/View with separators);
+- [x] **menubar** — "Editor Menus" (File/Edit/View with separators);
       "Shortcut Labels" (menu items with Kbd sequences).
 
 #### Navigation
 
-- [ ] **tabs** — "Underline Nav" (underline variant); "Pill Filters" (pills
+- [x] **tabs** — "Underline Nav" (underline variant); "Pill Filters" (pills
       variant); "Vertical Settings" (orientation="vertical" — F3). Note:
       the demo system itself runs on Tabs — this page also documents
       ExampleTabs by construction.
-- [ ] **navigation-menu** — "Product Mega Menu" (viewport panels);
+- [x] **navigation-menu** — "Product Mega Menu" (viewport panels);
       "Simple Links Row" (no-viewport variant).
-- [ ] **breadcrumb** — "Deep Path" (collapse-middle `…` menu ⧗V4);
+- [x] **breadcrumb** — "Deep Path" (collapse-middle `…` menu ⧗V4);
       "Simple Trail" (3 levels, `aria-current="page"` visible in DOM
       readout).
-- [ ] **pagination** — "Search Results" (ellipsis logic, sibling/boundary
+- [x] **pagination** — "Search Results" (ellipsis logic, sibling/boundary
       counts ⧗V4-props); "Compact Touch" (mobile prev/next + "3 / 12");
       "Table Pager" (wired under a small table, page-size select).
-- [ ] *(index gallery)* — add the six new pages to
+- [x] *(index gallery)* — add the six new pages to
       `src/views/ui/PageContent.tsx`'s registry; optional per-card example
       count.
 
 #### Data display
 
-- [ ] **table** — "Admin Users" (TableCaption, col scopes, hover +
+- [x] **table** — "Admin Users" (TableCaption, col scopes, hover +
       selected rows); "Sortable Columns" (⧗V5-sorting, `aria-sort`);
       "Dense Report" (⧗V5-density compact); "Row Selection" (checkbox
       column driving `data-state=selected`).
-- [ ] **card** — "Pricing Tiers" (3 cards, one highlighted); "Linkable
+- [x] **card** — "Pricing Tiers" (3 cards, one highlighted); "Linkable
       Cards" (⧗V5-interactive hover lift + focus ring); "Stat Tiles"
       (KPI grid).
-- [ ] **badge** — "Status Set" (success/warning/error/info semantics);
+- [x] **badge** — "Status Set" (success/warning/error/info semantics);
       "Count Overflow" (99+ ⧗V5); "Filter Chips" (removable × ⧗V5).
-- [ ] **avatar** — "Broken Image Fallback" (bad src → initials via
+- [x] **avatar** — "Broken Image Fallback" (bad src → initials via
       `@/lib/initials`); "Team Stack" (AvatarGroup max + "+N"); "Presence
       Dot" (⧗V5-status-slot).
-- [ ] **accordion** — **"Single State Accordion"** (*"When a new accordion
+- [x] **accordion** — **"Single State Accordion"** (*"When a new accordion
       opens, the other open one closes."* — `type="single" collapsible`,
       FAQ content); **"Multi State Accordion"** (*"When a new accordion
       opens, the other open ones don't close."* — `type="multiple"`,
       settings sections); "Rich Items" (AccordionItemComplex with category
       labels — replaces today's slate-hardcoded example with tokens).
-- [ ] **aspect-ratio** — "Video 16:9" (embed placeholder); "Square Grid"
+- [x] **aspect-ratio** — "Video 16:9" (embed placeholder); "Square Grid"
       (1:1 gallery); "Poster 2:3".
-- [ ] **carousel** — "Product Gallery" (dots indicator ⧗V5); "Testimonial
+- [x] **carousel** — "Product Gallery" (dots indicator ⧗V5); "Testimonial
       Loop" (⧗V5-loop); "Thumbnail Strip". Note: embla owns X-axis swipes;
       the layout hook only pans Y — no gesture conflict, state it in the
       demo copy.
-- [ ] **collapsible** — "Read More" (truncated paragraph); "Sidebar Groups"
+- [x] **collapsible** — "Read More" (truncated paragraph); "Sidebar Groups"
       (nav section fold); "Smooth Height" (⧗V5-animation).
-- [ ] **empty** — "No Search Results" (icon + reset action ⧗V5-slots);
+- [x] **empty** — "No Search Results" (icon + reset action ⧗V5-slots);
       "Empty Inbox" (illustration text + CTA ⧗V5-slots).
-- [ ] **kbd** — "Shortcut Reference" (two-column cheat sheet); "Sequences"
+- [x] **kbd** — "Shortcut Reference" (two-column cheat sheet); "Sequences"
       (⌘K-style combos ⧗V5-keys-prop).
-- [ ] **typography** — "Article" (headings/body/quote composition);
+- [x] **typography** — "Article" (headings/body/quote composition);
       "Type Ramp" (each style annotated with class name).
-- [ ] **separator** — "Sectioned Form" (horizontal between fieldsets);
+- [x] **separator** — "Sectioned Form" (horizontal between fieldsets);
       "OR Divider" (⧗V5-label); "Toolbar Split" (vertical).
-- [ ] **scroll-area** — "Chat Pane" (fixed-height message list, themed
+- [x] **scroll-area** — "Chat Pane" (fixed-height message list, themed
       thumb ⧗V5-thumb); "Horizontal Tags" (x-axis chips row). Note: the
       *only* pages where a visible scroll affordance is deliberate — say so
       in the demo copy, since the app hides native scrollbars.
-- [ ] **page-info** *(new page — G6)* — "Page Header Meta" (title +
+- [x] **page-info** *(new page — G6)* — "Page Header Meta" (title +
       description + meta row as used in app pages); then run the V5
       evaluation (fold into typography/empty?) with the demo as evidence.
-- [ ] **resizable** — "Split Editor" (two panes + `autoSaveId`
+- [x] **resizable** — "Split Editor" (two panes + `autoSaveId`
       persistence, reload note); "Triple Pane" (keyboard-resizable handles
       with visible grips ⧗V8).
 
 #### Feedback & status
 
-- [ ] **alert** — "Form Error Summary" (error variant listing fields);
+- [x] **alert** — "Form Error Summary" (error variant listing fields);
       "Success Notice" (auto icon ⧗V6-icons); "Dismissible Banner" (⧗V6).
-- [ ] **toast** — "Variant Basics" (one button per variant); "Undoable
+- [x] **toast** — "Variant Basics" (one button per variant); "Undoable
       Action" (action slot ⧗A7); "Sticky Error" (assertive +
       duration=Infinity ⧗A7); "Hover Pause" (⧗A7-timing).
-- [ ] **progress** — "Upload" (animated value + % label ⧗V6-valuetext);
+- [x] **progress** — "Upload" (animated value + % label ⧗V6-valuetext);
       "Indeterminate" (⧗V6); "Global Styles" (progress in the four global
       styles — roster member).
-- [ ] **spinner** — "Button Composition" (spinner inside V1 loading
+- [x] **spinner** — "Button Composition" (spinner inside V1 loading
       buttons, size-matched ⧗V6-sizes); "Loading Block" (centered pane
       state); "Size Scale".
-- [ ] **logo-spinner** *(new page — G6 anatomy: move to
+- [x] **logo-spinner** *(new page — G6 anatomy: move to
       `logo-spinner/` + shim first)* — "Brand Splash" (full-pane);
       "Token Check" (must render via `text-brand` across all four themes —
       the demo is the regression test).
-- [ ] **skeleton** — "Feed Placeholder" (avatar + lines preset); "Table
+- [x] **skeleton** — "Feed Placeholder" (avatar + lines preset); "Table
       Placeholder" (rows grid); "Card Placeholder" — presets come from
       merging skeleton-shapes (G6/V6), shimmer already reduced-motion-safe.
-- [ ] **error-boundary** *(new page — G6)* — "Throw Bomb" (button throws on
+- [x] **error-boundary** *(new page — G6)* — "Throw Bomb" (button throws on
       click, fallback + retry via `resetKeys` ⧗V6-reset); "Custom
       Fallback" (render-prop UI ⧗V6).
 

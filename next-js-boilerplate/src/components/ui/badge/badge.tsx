@@ -2,6 +2,7 @@ import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
 import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
+import { fontClasses } from "@/lib/font-classes";
 import type { BadgeProps } from "@/types/ui/Badge-types";
 
 const variants = {
@@ -28,9 +29,7 @@ export function Badge({
   ...props
 }: BadgeProps) {
   const effectiveVariant = useComponentVariant(variant);
-  const fontSizeClass = fontSize || "text-xs";
-  const fontWeightClass = fontWeight || "font-medium";
-  const fontFamilyClass = fontFamily || "font-sans";
+  const fonts = fontClasses({ fontSize, fontWeight, fontFamily }, { fontSize: "text-xs" });
 
   return (
     <span
@@ -40,9 +39,7 @@ export function Badge({
           ? "p-0"
           : "rounded-full px-2.5 py-0.5",
         resolveVariant(variants, effectiveVariant),
-        fontSizeClass,
-        fontWeightClass,
-        fontFamilyClass,
+        fonts,
         className,
       )}
       {...props}

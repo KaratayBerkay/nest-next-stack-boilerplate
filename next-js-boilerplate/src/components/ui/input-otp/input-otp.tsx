@@ -1,11 +1,13 @@
 "use client";
 import { forwardRef, useId } from "react";
 import { cn } from "@/lib/cn";
+import { useFieldMessages } from "@/components/ui/field-messages";
 import type { InputOTPProps } from "@/types/ui/InputOTP-types";
 
 export const InputOTP = forwardRef<HTMLInputElement, InputOTPProps>(
-  ({ className, value, onChange, maxLength, ...props }, ref) => {
+  ({ className, value, onChange, maxLength, error, description, ...props }, ref) => {
     const id = useId();
+    const { describedBy, messages } = useFieldMessages(error, description);
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const v = e.target.value.replace(/[^0-9]/g, "").slice(0, maxLength);
       onChange(v);
@@ -21,6 +23,7 @@ export const InputOTP = forwardRef<HTMLInputElement, InputOTPProps>(
           value={value}
           onChange={handleChange}
           className="sr-only"
+          aria-describedby={describedBy}
           {...props}
         />
         {/* Purely visual digit boxes — the real (sr-only) input above stays keyboard/screen-reader
@@ -47,6 +50,7 @@ export const InputOTP = forwardRef<HTMLInputElement, InputOTPProps>(
             );
           })}
         </div>
+        {messages}
       </div>
     );
   },

@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { DatePicker } from "@/components/ui/DatePicker";
+import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
+import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 function ComponentsTab() {
   const [defaultDate, setDefaultDate] = useState<Date | undefined>();
@@ -81,27 +82,27 @@ function ExamplesTab() {
   );
 }
 
+const examples: UIExample[] = [
+  {
+    id: "components",
+    title: "Event Date",
+    description: "Plain labelled date picker form field.",
+    render: () => <ComponentsTab />,
+  },
+  {
+    id: "examples",
+    title: "Booking Range",
+    description: "Check-in and check-out date pickers linked as a booking range.",
+    render: () => <ExamplesTab />,
+  },
+];
+
 export default function DatePickerPage() {
   return (
-    <div className="flex flex-col gap-4">
-      <div className="space-y-1">
-        <h2 className="text-xl font-bold">Date Picker</h2>
-        <p className="text-muted text-sm">
-          A date picker with popover calendar.
-        </p>
-      </div>
-      <Tabs defaultValue="components">
-        <TabsList>
-          <TabsTrigger value="components">Components</TabsTrigger>
-          <TabsTrigger value="examples">Examples</TabsTrigger>
-        </TabsList>
-        <TabsContent value="components">
-          <ComponentsTab />
-        </TabsContent>
-        <TabsContent value="examples">
-          <ExamplesTab />
-        </TabsContent>
-      </Tabs>
-    </div>
+    <ExampleTabs
+      title="Date Picker"
+      intro="A date picker with popover calendar."
+      examples={examples}
+    />
   );
 }

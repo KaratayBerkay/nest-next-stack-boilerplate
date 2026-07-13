@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import { fontClasses } from "@/lib/font-classes";
 import type { ToastDescriptionProps } from "@/types/ui/Toast-types";
 
 export function ToastDescription({
@@ -8,17 +9,13 @@ export function ToastDescription({
   fontFamily,
   ...props
 }: ToastDescriptionProps) {
-  const fontSizeClass = fontSize || "text-sm";
-  const fontWeightClass = fontWeight || "font-medium";
-  const fontFamilyClass = fontFamily || "font-sans";
+  const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
   return (
     <div
       className={cn(
         "text-sm opacity-90",
-        fontSizeClass,
-        fontWeightClass,
-        fontFamilyClass,
+        fonts,
         className,
       )}
       {...props}

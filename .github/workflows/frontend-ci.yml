@@ -47,6 +47,9 @@ jobs:
       - name: Unit tests
         run: pnpm test
 
+      - name: Theme contrast check (WCAG AA)
+        run: node .claude/skills/tailwind-theming/scripts/check-contrast.mjs --strict
+
       - name: Fallow dead-code
         run: npx fallow dead-code --ci --format json --quiet >> "$GITHUB_STEP_SUMMARY" || true
 

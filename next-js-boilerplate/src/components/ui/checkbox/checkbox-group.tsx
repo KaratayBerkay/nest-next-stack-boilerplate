@@ -2,6 +2,7 @@
 
 import { useId } from "react";
 import { cn } from "@/lib/cn";
+import { fontClasses } from "@/lib/font-classes";
 import type { CheckboxGroupProps } from "@/types/ui/Checkbox-types";
 
 export function CheckboxGroup({
@@ -17,9 +18,7 @@ export function CheckboxGroup({
   fontFamily,
 }: CheckboxGroupProps) {
   const autoId = useId();
-  const fontSizeClass = fontSize || "text-sm";
-  const fontWeightClass = fontWeight || "font-medium";
-  const fontFamilyClass = fontFamily || "font-sans";
+  const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
   const allSelected = items.every((item) => values.includes(item.value));
   const someSelected = items.some((item) => values.includes(item.value));
@@ -42,7 +41,7 @@ export function CheckboxGroup({
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      {label && <span className={cn("text-muted text-xs font-medium", fontSizeClass, fontWeightClass, fontFamilyClass)}>{label}</span>}
+      {label && <span className={cn("text-muted text-xs font-medium", fonts)}>{label}</span>}
       <div
         className={cn(
           "flex gap-3",

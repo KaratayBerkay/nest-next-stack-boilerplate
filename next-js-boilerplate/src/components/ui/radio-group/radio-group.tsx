@@ -2,24 +2,21 @@
 import { forwardRef } from "react";
 import { Root, Item, Indicator } from "@radix-ui/react-radio-group";
 import { cn } from "@/lib/cn";
+import { fontClasses } from "@/lib/font-classes";
 import type { RadioGroupProps, RadioGroupItemProps } from "@/types/ui/RadioGroup-types";
 
 export const RadioGroup = forwardRef<
   React.ElementRef<typeof Root>,
   RadioGroupProps
 >(({ className, fontSize, fontWeight, fontFamily, ...props }, ref) => {
-  const fontSizeClass = fontSize || "text-sm";
-  const fontWeightClass = fontWeight || "font-medium";
-  const fontFamilyClass = fontFamily || "font-sans";
+  const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
   return (
     <Root
       ref={ref}
       className={cn(
         "grid gap-2",
-        fontSizeClass,
-        fontWeightClass,
-        fontFamilyClass,
+        fonts,
         className,
       )}
       {...props}
@@ -32,9 +29,7 @@ export const RadioGroupItem = forwardRef<
   React.ElementRef<typeof Item>,
   RadioGroupItemProps
 >(({ className, fontSize, fontWeight, fontFamily, ...props }, ref) => {
-  const fontSizeClass = fontSize || "text-sm";
-  const fontWeightClass = fontWeight || "font-medium";
-  const fontFamilyClass = fontFamily || "font-sans";
+  const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
   return (
     <Item

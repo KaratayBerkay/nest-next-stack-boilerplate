@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import { fontClasses } from "@/lib/font-classes";
 import type { DialogDescriptionProps } from "@/types/ui/Dialog-types";
 
 export function DialogDescription({
@@ -8,17 +9,13 @@ export function DialogDescription({
   fontFamily,
   ...props
 }: DialogDescriptionProps) {
-  const fontSizeClass = fontSize || "text-sm";
-  const fontWeightClass = fontWeight || "font-medium";
-  const fontFamilyClass = fontFamily || "font-sans";
+  const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
   return (
     <p
       className={cn(
         "text-muted text-sm",
-        fontSizeClass,
-        fontWeightClass,
-        fontFamilyClass,
+        fonts,
         className,
       )}
       {...props}

@@ -7,6 +7,8 @@ export interface DatePickerProps {
   fontWeight?: string;
   fontFamily?: string;
   variant?: DatePickerVariant;
+  error?: string;
+  description?: string;
 }
 
 export type DatePickerVariant = "default" | "shiny" | "glass" | "neon" | "gradient";

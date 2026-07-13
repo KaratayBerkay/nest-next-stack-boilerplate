@@ -1,40 +1,47 @@
 "use client";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import {
   HoverCard,
   HoverCardTrigger,
   HoverCardContent,
 } from "@/components/ui/HoverCard";
+import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
+import type { UIExample } from "@/types/ui/ExampleTabs-types";
+
+const examples: UIExample[] = [
+  {
+    id: "components",
+    title: "User Preview",
+    description: "GitHub-style profile preview on hover.",
+    render: () => (
+      <div className="flex flex-col gap-4">
+        <section className="flex flex-col gap-3">
+          <h3 className="text-lg font-semibold">Default</h3>
+          <HoverCard>
+            <HoverCardTrigger className="cursor-help text-sm underline">
+              Hover me
+            </HoverCardTrigger>
+            <HoverCardContent>Content revealed on hover.</HoverCardContent>
+          </HoverCard>
+        </section>
+      </div>
+    ),
+  },
+  {
+    id: "examples",
+    title: "Link Preview",
+    description: "Link with title, description, and domain preview.",
+    render: () => (
+      <div className="flex flex-col gap-4"></div>
+    ),
+  },
+];
 
 export default function HoverCardPage() {
   return (
-    <div className="flex flex-col gap-4">
-      <div className="space-y-1">
-        <h2 className="text-xl font-bold">Hover Card</h2>
-        <p className="text-muted text-sm">A card that appears on hover.</p>
-      </div>
-      <Tabs defaultValue="components">
-        <TabsList>
-          <TabsTrigger value="components">Components</TabsTrigger>
-          <TabsTrigger value="examples">Examples</TabsTrigger>
-        </TabsList>
-        <TabsContent value="components">
-          <div className="flex flex-col gap-4">
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Default</h3>
-              <HoverCard>
-                <HoverCardTrigger className="cursor-help text-sm underline">
-                  Hover me
-                </HoverCardTrigger>
-                <HoverCardContent>Content revealed on hover.</HoverCardContent>
-              </HoverCard>
-            </section>
-          </div>
-        </TabsContent>
-        <TabsContent value="examples">
-          <div className="flex flex-col gap-4"></div>
-        </TabsContent>
-      </Tabs>
-    </div>
+    <ExampleTabs
+      title="Hover Card"
+      intro="A card that appears on hover."
+      examples={examples}
+    />
   );
 }

@@ -2,6 +2,7 @@ import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
 import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
+import { fontClasses } from "@/lib/font-classes";
 import type { CardProps } from "@/types/ui/Card-types";
 
 export function Card({ className, variant, fontSize, fontWeight, fontFamily, ...props }: CardProps) {
@@ -17,18 +18,14 @@ export function Card({ className, variant, fontSize, fontWeight, fontFamily, ...
     surface: "surface rounded-xl",
   };
 
-  const fontSizeClass = fontSize || "text-base";
-  const fontWeightClass = fontWeight || "font-normal";
-  const fontFamilyClass = fontFamily || "font-sans";
+  const fonts = fontClasses({ fontSize, fontWeight, fontFamily }, { fontSize: "text-base", fontWeight: "font-normal" });
 
   return (
     <div
       className={cn(
         resolveVariant(variants, effectiveVariant),
         className,
-        fontSizeClass,
-        fontWeightClass,
-        fontFamilyClass,
+        fonts,
       )}
       {...props}
     >

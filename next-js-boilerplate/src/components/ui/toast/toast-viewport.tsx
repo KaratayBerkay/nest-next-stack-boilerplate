@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import { fontClasses } from "@/lib/font-classes";
 import type { ToastViewportProps } from "@/types/ui/Toast-types";
 
 export function ToastViewport({
@@ -8,9 +9,7 @@ export function ToastViewport({
   fontFamily,
   ...props
 }: ToastViewportProps) {
-  const fontSizeClass = fontSize || "text-sm";
-  const fontWeightClass = fontWeight || "font-medium";
-  const fontFamilyClass = fontFamily || "font-sans";
+  const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
   return (
     <div
@@ -18,9 +17,7 @@ export function ToastViewport({
       aria-live="polite"
       className={cn(
         "pointer-events-none fixed inset-x-0 bottom-0 z-50 flex w-full flex-col-reverse gap-2 p-4 sm:right-4 sm:bottom-4 sm:left-auto sm:w-auto sm:max-w-sm",
-        fontSizeClass,
-        fontWeightClass,
-        fontFamilyClass,
+        fonts,
         className,
       )}
       {...props}

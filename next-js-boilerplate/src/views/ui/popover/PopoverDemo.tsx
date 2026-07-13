@@ -26,8 +26,8 @@ export function PopoverDemo() {
 
       <Tabs defaultValue="components">
         <TabsList>
-          <TabsTrigger value="components">Components</TabsTrigger>
-          <TabsTrigger value="examples">Examples</TabsTrigger>
+          <TabsTrigger value="components">Inline Form</TabsTrigger>
+          <TabsTrigger value="examples">Profile Actions</TabsTrigger>
         </TabsList>
 
         <TabsContent value="components">

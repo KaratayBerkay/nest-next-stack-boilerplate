@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/input-styles";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { useFieldMessages } from "@/components/ui/field-messages";
+import { fontClasses } from "@/lib/font-classes";
 import type { InputProps } from "@/types/ui/Input-types";
 
 export function Input({
@@ -25,9 +26,7 @@ export function Input({
   const effectiveVariant = useComponentVariant(variant);
   const variantClass = resolveVariant(inputVariants, effectiveVariant);
   const sizeClass = inputSizes.md;
-  const fontSizeClass = fontSize || sizeClass.split(" ")[1];
-  const fontWeightClass = fontWeight || "font-normal";
-  const fontFamilyClass = fontFamily || "font-sans";
+  const fonts = fontClasses({ fontSize: fontSize || sizeClass.split(" ")[1], fontWeight, fontFamily }, { fontWeight: "font-normal" });
 
   const errorStr = typeof error === "string" ? error : undefined;
   const { describedBy, messages } = useFieldMessages(errorStr, description);
@@ -46,9 +45,7 @@ export function Input({
             inputBaseClasses,
             variantClass,
             error && inputErrorClasses,
-            fontSizeClass,
-            fontWeightClass,
-            fontFamilyClass,
+            fonts,
             leftPadding,
             rightPadding,
             className,

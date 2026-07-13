@@ -6,6 +6,7 @@ import { resolveVariant } from "@/lib/resolve-variant";
 import { fontClasses } from "@/lib/font-classes";
 import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
+import { useFieldMessages } from "@/components/ui/field-messages";
 import { formatDateLong } from "@/lib/date-time";
 import type { DatePickerProps } from "@/types/ui/DatePicker-types";
 
@@ -31,10 +32,13 @@ export function DatePicker({
   fontWeight,
   fontFamily,
   variant,
+  error,
+  description,
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const effectiveVariant = useComponentVariant(variant);
   const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
+  const { describedBy, messages } = useFieldMessages(error, description);
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
@@ -73,6 +77,7 @@ export function DatePicker({
             "flex h-9 w-full items-center justify-between rounded border px-3 py-1 text-sm shadow-sm transition-colors",
             resolveVariant(variants, effectiveVariant),
           )}
+          aria-describedby={describedBy}
         >
           <span className={cn("truncate", fonts)}>
             {value ? (
@@ -106,6 +111,7 @@ export function DatePicker({
           </div>
         )}
       </div>
+      {messages}
     </div>
   );
 }

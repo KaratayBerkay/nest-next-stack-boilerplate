@@ -23,8 +23,8 @@ export function DropdownMenuDemo() {
 
       <Tabs defaultValue="components">
         <TabsList>
-          <TabsTrigger value="components">Components</TabsTrigger>
-          <TabsTrigger value="examples">Examples</TabsTrigger>
+          <TabsTrigger value="components">Account Menu</TabsTrigger>
+          <TabsTrigger value="examples">Row Overflow</TabsTrigger>
         </TabsList>
 
         <TabsContent value="components">

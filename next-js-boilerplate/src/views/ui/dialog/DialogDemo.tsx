@@ -28,8 +28,8 @@ export function DialogDemo() {
 
       <Tabs defaultValue="components">
         <TabsList>
-          <TabsTrigger value="components">Components</TabsTrigger>
-          <TabsTrigger value="examples">Examples</TabsTrigger>
+          <TabsTrigger value="components">Edit Profile</TabsTrigger>
+          <TabsTrigger value="examples">Size Scale</TabsTrigger>
         </TabsList>
 
         <TabsContent value="components">

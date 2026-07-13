@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import { fontClasses } from "@/lib/font-classes";
 import type { ToastTitleProps } from "@/types/ui/Toast-types";
 
 export function ToastTitle({
@@ -8,17 +9,13 @@ export function ToastTitle({
   fontFamily,
   ...props
 }: ToastTitleProps) {
-  const fontSizeClass = fontSize || "text-sm";
-  const fontWeightClass = fontWeight || "font-semibold";
-  const fontFamilyClass = fontFamily || "font-sans";
+  const fonts = fontClasses({ fontSize, fontWeight, fontFamily }, { fontWeight: "font-semibold" });
 
   return (
     <div
       className={cn(
         "text-sm font-semibold",
-        fontSizeClass,
-        fontWeightClass,
-        fontFamilyClass,
+        fonts,
         className,
       )}
       {...props}

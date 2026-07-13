@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import { fontClasses } from "@/lib/font-classes";
 import type { SpinnerProps } from "@/types/ui/Spinner-types";
 
 export function Spinner({
@@ -8,18 +9,14 @@ export function Spinner({
   fontFamily,
   ...props
 }: SpinnerProps) {
-  const fontSizeClass = fontSize || "text-sm";
-  const fontWeightClass = fontWeight || "font-medium";
-  const fontFamilyClass = fontFamily || "font-sans";
+  const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
   return (
     <svg
       className={cn(
         "animate-spin",
         "text-muted",
-        fontSizeClass,
-        fontWeightClass,
-        fontFamilyClass,
+        fonts,
         className,
       )}
       xmlns="http://www.w3.org/2000/svg"

@@ -2,6 +2,7 @@
 
 import { Component } from "react";
 import { cn } from "@/lib/cn";
+import { fontClasses } from "@/lib/font-classes";
 import type { ErrorBoundaryProps } from "@/types/ui/ErrorBoundary-types";
 
 interface State {
@@ -21,18 +22,14 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, State> {
 
   render() {
     const { fontSize, fontWeight, fontFamily, fallback } = this.props;
-    const fontSizeClass = fontSize || "text-sm";
-    const fontWeightClass = fontWeight || "font-medium";
-    const fontFamilyClass = fontFamily || "font-sans";
+    const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
     if (this.state.hasError) {
       return (
         fallback || (
           <div className={cn(
             "text-fg flex flex-col items-center justify-center gap-2 py-12",
-            fontSizeClass,
-            fontWeightClass,
-            fontFamilyClass,
+            fonts,
           )}>
             <p>Something went wrong</p>
             <button

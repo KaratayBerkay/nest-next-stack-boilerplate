@@ -13,6 +13,7 @@ import { resolveVariant } from "@/lib/resolve-variant";
 import { fontClasses } from "@/lib/font-classes";
 import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
+import { useFieldMessages } from "@/components/ui/field-messages";
 import type { ComboboxProps } from "@/types/ui/Combobox-types";
 
 const variants = {
@@ -30,10 +31,13 @@ export function Combobox({
   fontSize,
   fontWeight,
   fontFamily,
+  error,
+  description,
 }: ComboboxProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const effectiveVariant = useComponentVariant(variant);
+  const { describedBy, messages } = useFieldMessages(error, description);
 
   return (
     <div className={cn("relative", className)}>
@@ -43,6 +47,7 @@ export function Combobox({
           "flex h-9 w-full items-center justify-between rounded border px-3 py-1 text-sm shadow-sm",
           resolveVariant(variants, effectiveVariant),
         )}
+        aria-describedby={describedBy}
       >
         <span className={cn("truncate", fontClasses({ fontSize, fontWeight, fontFamily }))}>
           {value ? options.find((o) => o.value === value)?.label : placeholder}
@@ -59,6 +64,7 @@ export function Combobox({
           <path d="m6 9 6 6 6-6" />
         </svg>
       </button>
+      {messages}
       {open && (
         <div className="bg-bg border-border absolute z-50 mt-1 w-full rounded-md border p-1 shadow-md">
           <Command>

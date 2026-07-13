@@ -1,5 +1,5 @@
 "use client";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
+
 import {
   Menubar,
   MenubarMenu,
@@ -8,48 +8,56 @@ import {
   MenubarItem,
   MenubarSeparator,
 } from "@/components/ui/Menubar";
+import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
+import type { UIExample } from "@/types/ui/ExampleTabs-types";
+
+const examples: UIExample[] = [
+  {
+    id: "components",
+    title: "Editor Menus",
+    description: "File, Edit, and View menus with separators.",
+    render: () => (
+      <div className="flex flex-col gap-4">
+        <section className="flex flex-col gap-3">
+          <h3 className="text-lg font-semibold">Default</h3>
+          <Menubar>
+            <MenubarMenu>
+              <MenubarTrigger>File</MenubarTrigger>
+              <MenubarContent>
+                <MenubarItem>New Tab</MenubarItem>
+                <MenubarItem>New Window</MenubarItem>
+                <MenubarSeparator />
+                <MenubarItem>Exit</MenubarItem>
+              </MenubarContent>
+            </MenubarMenu>
+            <MenubarMenu>
+              <MenubarTrigger>Edit</MenubarTrigger>
+              <MenubarContent>
+                <MenubarItem>Undo</MenubarItem>
+                <MenubarItem>Redo</MenubarItem>
+              </MenubarContent>
+            </MenubarMenu>
+          </Menubar>
+        </section>
+      </div>
+    ),
+  },
+  {
+    id: "examples",
+    title: "Shortcut Labels",
+    description: "Menu items with keyboard shortcut sequences.",
+    render: () => (
+      <div className="flex flex-col gap-4"></div>
+    ),
+  },
+];
 
 export default function MenubarPage() {
   return (
-    <div className="flex flex-col gap-4">
-      <div className="space-y-1">
-        <h2 className="text-xl font-bold">Menubar</h2>
-        <p className="text-muted text-sm">A horizontal menu bar.</p>
-      </div>
-      <Tabs defaultValue="components">
-        <TabsList>
-          <TabsTrigger value="components">Components</TabsTrigger>
-          <TabsTrigger value="examples">Examples</TabsTrigger>
-        </TabsList>
-        <TabsContent value="components">
-          <div className="flex flex-col gap-4">
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Default</h3>
-              <Menubar>
-                <MenubarMenu>
-                  <MenubarTrigger>File</MenubarTrigger>
-                  <MenubarContent>
-                    <MenubarItem>New Tab</MenubarItem>
-                    <MenubarItem>New Window</MenubarItem>
-                    <MenubarSeparator />
-                    <MenubarItem>Exit</MenubarItem>
-                  </MenubarContent>
-                </MenubarMenu>
-                <MenubarMenu>
-                  <MenubarTrigger>Edit</MenubarTrigger>
-                  <MenubarContent>
-                    <MenubarItem>Undo</MenubarItem>
-                    <MenubarItem>Redo</MenubarItem>
-                  </MenubarContent>
-                </MenubarMenu>
-              </Menubar>
-            </section>
-          </div>
-        </TabsContent>
-        <TabsContent value="examples">
-          <div className="flex flex-col gap-4"></div>
-        </TabsContent>
-      </Tabs>
-    </div>
+    <ExampleTabs
+      title="Menubar"
+      intro="A horizontal menu bar."
+      examples={examples}
+    />
   );
 }

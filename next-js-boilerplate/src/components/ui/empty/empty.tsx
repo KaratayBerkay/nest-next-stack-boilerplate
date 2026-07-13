@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import { fontClasses } from "@/lib/font-classes";
 import type { EmptyProps } from "@/types/ui/Empty-types";
 
 export function Empty({
@@ -12,9 +13,7 @@ export function Empty({
   fontFamily,
   ...props
 }: EmptyProps) {
-  const fontSizeClass = fontSize || "text-sm";
-  const fontWeightClass = fontWeight || "font-semibold";
-  const fontFamilyClass = fontFamily || "font-sans";
+  const fonts = fontClasses({ fontSize, fontWeight, fontFamily }, { fontWeight: "font-semibold" });
 
   return (
     <div
@@ -24,10 +23,10 @@ export function Empty({
       )}
       {...props}
     >
-      {icon && <div className={cn("text-muted mb-2", fontSizeClass, fontWeightClass, fontFamilyClass)}>{icon}</div>}
-      <p className={cn("font-semibold", fontSizeClass, fontWeightClass, fontFamilyClass)}>{title}</p>
+      {icon && <div className={cn("text-muted mb-2", fonts)}>{icon}</div>}
+      <p className={cn("font-semibold", fonts)}>{title}</p>
       {description && (
-        <p className={cn("text-muted max-w-xs", fontSizeClass, fontWeightClass, fontFamilyClass)}>{description}</p>
+        <p className={cn("text-muted max-w-xs", fonts)}>{description}</p>
       )}
       {action && <div className="mt-2">{action}</div>}
     </div>

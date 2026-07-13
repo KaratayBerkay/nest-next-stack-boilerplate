@@ -6,6 +6,7 @@ import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
 import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
+import { fontClasses } from "@/lib/font-classes";
 import type { AvatarProps, AvatarVariant } from "@/types/ui/Avatar-types";
 
 const sizes = {
@@ -42,9 +43,7 @@ export function Avatar({
   const effectiveVariant = useComponentVariant(variant);
   const [imgError, setImgError] = useState(false);
   const showImage = src && !imgError;
-  const fontSizeClass = fontSize || "text-sm";
-  const fontWeightClass = fontWeight || "font-medium";
-  const fontFamilyClass = fontFamily || "font-sans";
+  const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
   return (
     <div
@@ -52,9 +51,7 @@ export function Avatar({
         "relative inline-flex items-center justify-center overflow-hidden rounded-full font-medium",
         sizes[size],
         resolveVariant(variants, effectiveVariant),
-        fontSizeClass,
-        fontWeightClass,
-        fontFamilyClass,
+        fonts,
         className,
       )}
       {...props}

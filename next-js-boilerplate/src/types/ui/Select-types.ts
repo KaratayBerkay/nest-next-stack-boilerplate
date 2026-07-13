@@ -11,6 +11,8 @@ export interface SelectProps {
 export interface SelectTriggerProps extends React.ComponentPropsWithoutRef<"button"> {
   variant?: SelectVariant;
   className?: string;
+  error?: string;
+  description?: string;
 }
 
 export interface SelectValueProps {

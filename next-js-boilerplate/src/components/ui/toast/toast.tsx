@@ -4,6 +4,7 @@ import { useToastContext } from "./toast-provider";
 import { ToastTitle } from "./toast-title";
 import { ToastDescription } from "./toast-description";
 import { ToastClose } from "./toast-close";
+import { fontClasses } from "@/lib/font-classes";
 import type { ToastProps } from "@/types/ui/Toast-types";
 
 export function Toast({
@@ -17,9 +18,7 @@ export function Toast({
   const { state, dispatch } = useToastContext();
   const toast = state.find((t) => t.id === id);
   const [visible, setVisible] = useState(false);
-  const fontSizeClass = fontSize || "text-sm";
-  const fontWeightClass = fontWeight || "font-medium";
-  const fontFamilyClass = fontFamily || "font-sans";
+  const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setVisible(true));
@@ -47,9 +46,7 @@ export function Toast({
         "group pointer-events-auto relative flex w-full items-start gap-3 rounded-lg border p-4 shadow-xl transition-all duration-300 ease-out motion-reduce:transition-none",
         "bg-bg border-border text-fg",
         toastVariantClasses[toast.variant],
-        fontSizeClass,
-        fontWeightClass,
-        fontFamilyClass,
+        fonts,
         visible
           ? "animate-slide-in-right translate-x-0 opacity-100"
           : "translate-x-[calc(100%+2rem)] opacity-0",

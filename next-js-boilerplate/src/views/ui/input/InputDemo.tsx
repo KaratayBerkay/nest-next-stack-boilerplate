@@ -68,8 +68,8 @@ export default function InputDemo() {
 
       <Tabs defaultValue="components">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="components">Components</TabsTrigger>
-          <TabsTrigger value="examples">Examples</TabsTrigger>
+          <TabsTrigger value="components">Login Email</TabsTrigger>
+          <TabsTrigger value="examples">Search Field</TabsTrigger>
         </TabsList>
 
         <TabsContent value="components">

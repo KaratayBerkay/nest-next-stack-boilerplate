@@ -10,6 +10,8 @@ export interface ComboboxProps {
   fontSize?: string;
   fontWeight?: string;
   fontFamily?: string;
+  error?: string;
+  description?: string;
 }
 
 export type ComboboxVariant = "default" | "shiny" | "glass" | "neon" | "gradient";

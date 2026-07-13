@@ -5,6 +5,7 @@ import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
 import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
+import { useFieldMessages } from "@/components/ui/field-messages";
 import type { TimeInputProps, TimeInputVariant } from "@/types/ui/TimeInput-types";
 
 function pad(n: number): string {
@@ -36,6 +37,7 @@ interface TimeUnitSelectProps {
   selectClassName?: string;
   use24Hour?: boolean;
   isHour?: boolean;
+  describedBy?: string;
 }
 
 function TimeUnitSelect({
@@ -46,6 +48,7 @@ function TimeUnitSelect({
   selectClassName,
   use24Hour: is24,
   isHour,
+  describedBy,
 }: TimeUnitSelectProps) {
   const options = useMemo(() => {
     const arr: { value: number; label: string }[] = [];
@@ -64,6 +67,7 @@ function TimeUnitSelect({
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         disabled={disabled}
+        aria-describedby={describedBy}
         className={cn(
           "h-10 w-[72px] appearance-none rounded-md border px-2 pr-7 text-sm font-medium shadow-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
           selectClassName,
@@ -99,8 +103,11 @@ export function TimeInput({
   className,
   disabled = false,
   label,
+  error,
+  description,
 }: TimeInputProps) {
   const effectiveVariant = useComponentVariant(variant);
+  const { describedBy, messages } = useFieldMessages(error, description);
   const update = (field: "hours" | "minutes" | "seconds", val: number) => {
     if (!onChange) return;
     onChange({ ...value, [field]: val });
@@ -149,6 +156,7 @@ export function TimeInput({
             selectClassName={resolveVariant(selectClasses, effectiveVariant)}
             use24Hour={use24Hour}
             isHour
+            describedBy={describedBy}
           />
 
           <span className="text-muted text-lg font-medium">:</span>
@@ -159,6 +167,7 @@ export function TimeInput({
             onChange={(val) => update("minutes", val)}
             disabled={disabled}
             selectClassName={resolveVariant(selectClasses, effectiveVariant)}
+            describedBy={describedBy}
           />
 
           {showSeconds && (
@@ -170,6 +179,7 @@ export function TimeInput({
                 onChange={(val) => update("seconds", val)}
                 disabled={disabled}
                 selectClassName={resolveVariant(selectClasses, effectiveVariant)}
+                describedBy={describedBy}
               />
             </>
           )}
@@ -210,6 +220,7 @@ export function TimeInput({
           {tzLabel}
         </span>
       </div>
+      {messages}
     </div>
   );
 }

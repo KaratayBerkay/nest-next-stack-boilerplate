@@ -1,10 +1,9 @@
 import { cn } from "@/lib/cn";
+import { fontClasses } from "@/lib/font-classes";
 import type { CardDescriptionProps } from "@/types/ui/Card-types";
 
 export function CardDescription({ className, fontSize, fontWeight, fontFamily, ...props }: CardDescriptionProps) {
-  const fontSizeClass = fontSize || "text-sm";
-  const fontWeightClass = fontWeight || "font-normal";
-  const fontFamilyClass = fontFamily || "font-sans";
+  const fonts = fontClasses({ fontSize, fontWeight, fontFamily }, { fontWeight: "font-normal" });
 
-  return <p className={cn("text-muted", fontSizeClass, fontWeightClass, fontFamilyClass, className)} {...props} />;
+  return <p className={cn("text-muted", fonts, className)} {...props} />;
 }

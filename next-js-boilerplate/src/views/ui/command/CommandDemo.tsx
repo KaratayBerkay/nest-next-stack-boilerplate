@@ -22,8 +22,8 @@ export function CommandDemo() {
 
       <Tabs defaultValue="components">
         <TabsList>
-          <TabsTrigger value="components">Components</TabsTrigger>
-          <TabsTrigger value="examples">Examples</TabsTrigger>
+          <TabsTrigger value="components">Command Palette</TabsTrigger>
+          <TabsTrigger value="examples">Quick Actions</TabsTrigger>
         </TabsList>
 
         <TabsContent value="components">

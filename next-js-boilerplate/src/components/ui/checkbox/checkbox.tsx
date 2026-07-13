@@ -5,6 +5,7 @@ import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
 import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
+import { fontClasses } from "@/lib/font-classes";
 import type { CheckboxProps, CheckboxVariant } from "@/types/ui/Checkbox-types";
 
 const checkVariants: Record<CheckboxVariant, string> = {
@@ -16,9 +17,7 @@ export function Checkbox({ className, id, label, variant, fontSize, fontWeight, 
   const effectiveVariant = useComponentVariant(variant);
   const autoId = useId();
   const generatedId = id ?? autoId;
-  const fontSizeClass = fontSize || "text-sm";
-  const fontWeightClass = fontWeight || "font-medium";
-  const fontFamilyClass = fontFamily || "font-sans";
+  const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
   return (
     <div className="inline-flex items-center gap-2">
@@ -37,9 +36,7 @@ export function Checkbox({ className, id, label, variant, fontSize, fontWeight, 
           htmlFor={generatedId}
           className={cn(
             "text-muted cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
-            fontSizeClass,
-            fontWeightClass,
-            fontFamilyClass,
+            fonts,
           )}
         >
           {label}

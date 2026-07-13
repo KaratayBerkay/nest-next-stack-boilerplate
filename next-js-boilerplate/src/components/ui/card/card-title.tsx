@@ -1,10 +1,9 @@
 import { cn } from "@/lib/cn";
+import { fontClasses } from "@/lib/font-classes";
 import type { CardTitleProps } from "@/types/ui/Card-types";
 
 export function CardTitle({ className, fontSize, fontWeight, fontFamily, ...props }: CardTitleProps) {
-  const fontSizeClass = fontSize || "text-base";
-  const fontWeightClass = fontWeight || "font-semibold";
-  const fontFamilyClass = fontFamily || "font-sans";
+  const fonts = fontClasses({ fontSize, fontWeight, fontFamily }, { fontSize: "text-base", fontWeight: "font-semibold" });
 
   return (
     // jsx-a11y/heading-has-content can't see that `children` arrives via `{...props}` — this
@@ -13,9 +12,7 @@ export function CardTitle({ className, fontSize, fontWeight, fontFamily, ...prop
     <h3
       className={cn(
         "text-base leading-none tracking-tight @sm:text-lg",
-        fontSizeClass,
-        fontWeightClass,
-        fontFamilyClass,
+        fonts,
         className,
       )}
       {...props}

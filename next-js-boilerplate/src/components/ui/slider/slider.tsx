@@ -2,24 +2,21 @@
 import { forwardRef } from "react";
 import { Root, Track, Range, Thumb } from "@radix-ui/react-slider";
 import { cn } from "@/lib/cn";
+import { fontClasses } from "@/lib/font-classes";
 import type { SliderProps } from "@/types/ui/Slider-types";
 
 export const Slider = forwardRef<
   React.ElementRef<typeof Root>,
   SliderProps
 >(({ className, fontSize, fontWeight, fontFamily, ...props }, ref) => {
-  const fontSizeClass = fontSize || "text-sm";
-  const fontWeightClass = fontWeight || "font-medium";
-  const fontFamilyClass = fontFamily || "font-sans";
+  const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
   return (
     <Root
       ref={ref}
       className={cn(
         "relative flex w-full touch-none items-center select-none",
-        fontSizeClass,
-        fontWeightClass,
-        fontFamilyClass,
+        fonts,
         className,
       )}
       {...props}

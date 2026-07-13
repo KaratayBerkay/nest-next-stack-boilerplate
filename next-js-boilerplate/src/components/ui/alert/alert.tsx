@@ -4,6 +4,7 @@ import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
 import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
+import { fontClasses } from "@/lib/font-classes";
 import type { AlertProps } from "@/types/ui/Alert-types";
 
 const variants = {
@@ -28,9 +29,7 @@ export function Alert({
   ...props
 }: AlertProps) {
   const effectiveVariant = useComponentVariant(variant);
-  const fontSizeClass = fontSize || "text-sm";
-  const fontWeightClass = fontWeight || "font-medium";
-  const fontFamilyClass = fontFamily || "font-sans";
+  const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
   return (
     <div
@@ -38,9 +37,7 @@ export function Alert({
       className={cn(
         "relative w-full rounded-lg border p-4 text-sm",
         resolveVariant(variants, effectiveVariant),
-        fontSizeClass,
-        fontWeightClass,
-        fontFamilyClass,
+        fonts,
         className,
       )}
       {...props}

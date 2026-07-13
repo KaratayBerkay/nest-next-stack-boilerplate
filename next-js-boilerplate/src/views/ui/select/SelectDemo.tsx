@@ -26,8 +26,8 @@ export function SelectDemo() {
 
       <Tabs defaultValue="components">
         <TabsList>
-          <TabsTrigger value="components">Components</TabsTrigger>
-          <TabsTrigger value="examples">Examples</TabsTrigger>
+          <TabsTrigger value="components">Country Picker</TabsTrigger>
+          <TabsTrigger value="examples">Long List</TabsTrigger>
         </TabsList>
 
         <TabsContent value="components">

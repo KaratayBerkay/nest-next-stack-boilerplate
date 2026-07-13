@@ -1,6 +1,6 @@
 "use client";
+
 import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import {
   Pagination,
   PaginationContent,
@@ -10,6 +10,8 @@ import {
   PaginationNext,
   PaginationEllipsis,
 } from "@/components/ui/Pagination";
+import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
+import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 const TOTAL_PAGES = 10;
 
@@ -83,66 +85,86 @@ function InteractivePagination({
   );
 }
 
+function ComponentsTab() {
+  return (
+    <div className="flex flex-col gap-4">
+      <section className="flex flex-col gap-3">
+        <h3 className="text-lg font-semibold">Default</h3>
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious href="#" />
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#">1</PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink isActive href="#">
+                2
+              </PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#">3</PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationEllipsis />
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationNext href="#" />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </section>
+    </div>
+  );
+}
+
+function ExamplesTab({
+  page,
+  setPage,
+}: {
+  page: number;
+  setPage: (page: number) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      <section className="flex flex-col gap-3">
+        <h3 className="text-lg font-semibold">Interactive</h3>
+        <InteractivePagination currentPage={page} onPageChange={setPage} />
+        <div className="bg-surface flex items-center justify-between rounded border border-border px-3 py-2">
+          <span className="text-sm">Current page: <strong>{page} of {TOTAL_PAGES}</strong></span>
+          <button type="button" onClick={() => setPage(1)} className="text-muted hover:text-fg p-0.5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export default function PaginationPage() {
   const [page, setPage] = useState(1);
 
+  const examples: UIExample[] = [
+    {
+      id: "components",
+      title: "Search Results",
+      description: "Pagination with ellipsis, sibling, and boundary counts.",
+      render: () => <ComponentsTab />,
+    },
+    {
+      id: "examples",
+      title: "Compact Touch",
+      description: "Mobile prev/next with page indicator.",
+      render: () => <ExamplesTab page={page} setPage={setPage} />,
+    },
+  ];
+
   return (
-    <div className="flex flex-col gap-4">
-      <div className="space-y-1">
-        <h2 className="text-xl font-bold">Pagination</h2>
-        <p className="text-muted text-sm">A pagination component.</p>
-      </div>
-      <Tabs defaultValue="components">
-        <TabsList>
-          <TabsTrigger value="components">Components</TabsTrigger>
-          <TabsTrigger value="examples">Examples</TabsTrigger>
-        </TabsList>
-        <TabsContent value="components">
-          <div className="flex flex-col gap-4">
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Default</h3>
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious href="#" />
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationLink href="#">1</PaginationLink>
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationLink isActive href="#">
-                      2
-                    </PaginationLink>
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationLink href="#">3</PaginationLink>
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationEllipsis />
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationNext href="#" />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </section>
-          </div>
-        </TabsContent>
-        <TabsContent value="examples">
-          <div className="flex flex-col gap-4">
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Interactive</h3>
-              <InteractivePagination currentPage={page} onPageChange={setPage} />
-              <div className="bg-surface flex items-center justify-between rounded border border-border px-3 py-2">
-                <span className="text-sm">Current page: <strong>{page} of {TOTAL_PAGES}</strong></span>
-                <button type="button" onClick={() => setPage(1)} className="text-muted hover:text-fg p-0.5">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                </button>
-              </div>
-            </section>
-          </div>
-        </TabsContent>
-      </Tabs>
-    </div>
+    <ExampleTabs
+      title="Pagination"
+      intro="A pagination component."
+      examples={examples}
+    />
   );
 }

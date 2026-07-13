@@ -7,4 +7,6 @@ export interface InputOTPProps extends Omit<
   value: string;
   onChange: (value: string) => void;
   maxLength: number;
+  error?: string;
+  description?: string;
 }

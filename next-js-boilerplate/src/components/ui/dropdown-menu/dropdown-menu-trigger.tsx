@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { useDropdownMenuContext } from "./dropdown-menu";
+import { fontClasses } from "@/lib/font-classes";
 import type { DropdownMenuTriggerProps } from "@/types/ui/DropdownMenu-types";
 
 const defaultStyles = "text-fg";
@@ -14,9 +15,7 @@ export function DropdownMenuTrigger({
   ...props
 }: DropdownMenuTriggerProps) {
   const { open, setOpen, triggerRef } = useDropdownMenuContext();
-  const fontSizeClass = fontSize || "text-sm";
-  const fontWeightClass = fontWeight || "font-medium";
-  const fontFamilyClass = fontFamily || "font-sans";
+  const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
   return (
     <button
@@ -29,9 +28,7 @@ export function DropdownMenuTrigger({
       className={cn(
         "inline-flex items-center justify-center",
         defaultStyles,
-        fontSizeClass,
-        fontWeightClass,
-        fontFamilyClass,
+        fonts,
         className,
       )}
       {...props}

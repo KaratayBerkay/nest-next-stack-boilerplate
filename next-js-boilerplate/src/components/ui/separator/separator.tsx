@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import { fontClasses } from "@/lib/font-classes";
 import type { SeparatorProps } from "@/types/ui/Separator-types";
 
 export function Separator({
@@ -9,9 +10,7 @@ export function Separator({
   fontFamily,
   ...props
 }: SeparatorProps) {
-  const fontSizeClass = fontSize || "text-sm";
-  const fontWeightClass = fontWeight || "font-medium";
-  const fontFamilyClass = fontFamily || "font-sans";
+  const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
   return (
     <div
@@ -21,9 +20,7 @@ export function Separator({
         "shrink-0",
         orientation === "horizontal" ? "h-px w-full" : "h-full w-px",
         "bg-border text-fg",
-        fontSizeClass,
-        fontWeightClass,
-        fontFamilyClass,
+        fonts,
         className,
       )}
       {...props}

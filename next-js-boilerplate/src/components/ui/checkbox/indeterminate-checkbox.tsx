@@ -2,6 +2,7 @@
 
 import { useId, useRef, useEffect } from "react";
 import { cn } from "@/lib/cn";
+import { fontClasses } from "@/lib/font-classes";
 import type { IndeterminateCheckboxProps } from "@/types/ui/Checkbox-types";
 
 export function IndeterminateCheckbox({
@@ -18,9 +19,7 @@ export function IndeterminateCheckbox({
   const autoId = useId();
   const generatedId = id ?? autoId;
   const ref = useRef<HTMLInputElement>(null);
-  const fontSizeClass = fontSize || "text-sm";
-  const fontWeightClass = fontWeight || "font-medium";
-  const fontFamilyClass = fontFamily || "font-sans";
+  const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
   useEffect(() => {
     if (ref.current) {
@@ -47,9 +46,7 @@ export function IndeterminateCheckbox({
           htmlFor={generatedId}
           className={cn(
             "text-muted cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
-            fontSizeClass,
-            fontWeightClass,
-            fontFamilyClass,
+            fonts,
           )}
         >
           {label}

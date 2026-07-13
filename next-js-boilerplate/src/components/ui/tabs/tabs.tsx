@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { createContext, useCallback, useContext, useId, useState } from "react";
+import { fontClasses } from "@/lib/font-classes";
 import type { TabsProps } from "@/types/ui/Tabs-types";
 
 interface TabsContextValue {
@@ -35,9 +36,7 @@ export function Tabs({
     setActiveValue(value);
   }, []);
 
-  const fontSizeClass = fontSize || "text-sm";
-  const fontWeightClass = fontWeight || "font-medium";
-  const fontFamilyClass = fontFamily || "font-sans";
+  const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
   return (
     <TabsContext.Provider value={{ activeValue, onValueChange, baseId, orientation }}>
@@ -45,9 +44,7 @@ export function Tabs({
         className={cn(
           "w-full",
           className,
-          fontSizeClass,
-          fontWeightClass,
-          fontFamilyClass,
+          fonts,
         )}
         {...props}
       />
