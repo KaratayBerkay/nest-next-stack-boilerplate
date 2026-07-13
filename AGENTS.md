@@ -150,3 +150,24 @@ When asked to read/show websocket logs, payment logs, billing logs, or any appli
 | Frontend logs (all) | `frontend-logs` | `curl -s http://localhost:9200/frontend-logs/_search?size=20` |
 
 Always return the results formatted with `python3 -m json.tool` and summarize key fields like `event`, `context`, `service`, `level`, `userId`, `errorMessage`, `category`.
+
+## Agent Skills
+
+Claude Code skills live in `.claude/skills/<skill-name>/` at the repo root. Each skill is a `SKILL.md` with YAML frontmatter (`name` + `description` — the description is what makes the skill trigger) followed by markdown instructions that load into context when the skill activates. Skills may bundle resources (e.g. `scripts/`) that are run or read on demand, keeping the always-loaded footprint small.
+
+Three skills are vendored from [anthropics/skills](https://github.com/anthropics/skills); four are custom-authored from this codebase's real conventions (exemplar files, not generic advice).
+
+| Skill | Source | Covers |
+|---|---|---|
+| `ui-components` | custom | Component anatomy in `next-js-boilerplate/src/components/ui`: kebab folder + PascalCase shim + central barrel, types in `src/types/ui/`, non-merging `cn()`, `as const` variant maps, `useComponentVariant`, semantic tokens, new-component checklist |
+| `tailwind-theming` | custom | Tailwind v4 CSS-first config, `.theme-*` token pipeline in `globals.css`, adding themes/tokens, color-harmony rules |
+| `radix-primitives` | custom | Wrapping `@radix-ui/react-*` primitives (hover-card pattern), which components are Radix-backed vs deliberately native, `data-state` styling, `asChild` |
+| `datetime-inputs` | custom | Calendar/DatePicker/TimeInput conventions, `@/lib/date-time` helpers, react-day-picker v10 API caution, store-UTC-display-local |
+| `frontend-design` | anthropics/skills | Distinctive visual design direction — typography, palette, layout choices that don't read as templated |
+| `theme-factory` | anthropics/skills | 10 pre-set color/font themes plus on-the-fly theme generation for pages and artifacts |
+| `webapp-testing` | anthropics/skills | Playwright-driven testing of the local app: verify flows, capture screenshots, read browser logs |
+
+Notes:
+
+- The four custom skills mirror real code. When a convention in `next-js-boilerplate/src/components/ui/` or `globals.css` changes, update the matching `SKILL.md` — a stale skill is misinformation.
+- `tailwind-theming` bundles a WCAG contrast checker; run it after any palette change: `node .claude/skills/tailwind-theming/scripts/check-contrast.mjs [theme] [--strict]` (from repo root).
