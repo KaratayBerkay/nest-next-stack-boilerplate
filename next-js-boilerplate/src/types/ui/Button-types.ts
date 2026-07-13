@@ -9,4 +9,5 @@ export interface ButtonProps extends React.ComponentPropsWithoutRef<"button"> {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   loading?: boolean;
+  asChild?: boolean;
 }

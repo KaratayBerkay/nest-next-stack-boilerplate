@@ -9,7 +9,7 @@ export function DialogHeader({ className, fontSize, fontWeight, fontFamily, ...p
   return (
     <div
       className={cn(
-        "flex flex-col gap-1.5 pr-8",
+        "flex shrink-0 flex-col gap-1.5 pr-8",
         fontSizeClass,
         fontWeightClass,
         fontFamilyClass,

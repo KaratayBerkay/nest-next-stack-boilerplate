@@ -9,7 +9,7 @@ export function DialogFooter({ className, fontSize, fontWeight, fontFamily, ...p
   return (
     <div
       className={cn(
-        "flex items-center justify-end gap-2 pt-2",
+        "flex shrink-0 items-center justify-end gap-2 pt-2",
         fontSizeClass,
         fontWeightClass,
         fontFamilyClass,

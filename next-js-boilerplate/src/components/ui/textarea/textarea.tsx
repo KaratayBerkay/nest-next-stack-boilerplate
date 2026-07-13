@@ -3,7 +3,7 @@ import { resolveVariant } from "@/lib/resolve-variant";
 import { fontClasses } from "@/lib/font-classes";
 import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
-import { FieldMessages, useFieldMessageIds } from "@/components/ui/field-messages";
+import { useFieldMessages } from "@/components/ui/field-messages";
 import type { TextareaProps } from "@/types/ui/Textarea-types";
 
 const variants = {
@@ -22,12 +22,8 @@ export function Textarea({
   ...props
 }: TextareaProps) {
   const effectiveVariant = useComponentVariant(variant);
-  const { errorId, descriptionId } = useFieldMessageIds(
-    typeof error === "string" ? error : undefined,
-    description,
-  );
-
-  const describedBy = [errorId, descriptionId].filter(Boolean).join(" ") || undefined;
+  const errorStr = typeof error === "string" ? error : undefined;
+  const { describedBy, messages } = useFieldMessages(errorStr, description);
 
   return (
     <div className="flex flex-col gap-1">
@@ -44,10 +40,7 @@ export function Textarea({
         aria-describedby={describedBy}
         {...props}
       />
-      <FieldMessages
-        error={typeof error === "string" ? error : undefined}
-        description={description}
-      />
+      {messages}
     </div>
   );
 }

@@ -115,7 +115,7 @@ export function DialogContent({ children, className, size = "md" }: DialogConten
         ref={dialogRef}
         className={cn(
           "backdrop:bg-overlay/50",
-          "text-fg m-auto flex h-dvh w-full flex-col overflow-y-auto border-0 shadow-xl sm:h-fit sm:max-h-[85vh] sm:rounded-xl sm:border sm:p-0",
+          "text-fg m-auto flex h-dvh w-full flex-col overflow-hidden border-0 shadow-xl sm:h-fit sm:max-h-[85vh] sm:rounded-xl sm:border sm:p-0",
           sizeStyles[size],
           !open && !closing && "hidden",
           closing ? "dialog-closing" : "dialog-open",
@@ -123,7 +123,7 @@ export function DialogContent({ children, className, size = "md" }: DialogConten
         )}
         onClick={handleBackdropClick}
       >
-        <div className="relative flex flex-col gap-4 p-6 sm:p-6">
+        <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-6 sm:p-6">
           <button
             type="button"
             aria-label="Close"

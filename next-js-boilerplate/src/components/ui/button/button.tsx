@@ -1,8 +1,53 @@
+import { Children, cloneElement } from "react";
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
 import { variants, sizes } from "@/components/ui/button-styles";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { ButtonProps } from "@/types/ui/Button-types";
+
+const Spinner = () => (
+  <svg
+    className="animate-spin"
+    xmlns="http://www.w3.org/2000/svg"
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+  >
+    <circle
+      cx="12"
+      cy="12"
+      r="10"
+      stroke="currentColor"
+      strokeWidth="3"
+      opacity="0.25"
+    />
+    <path
+      d="M12 2a10 10 0 0 1 10 10"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+function ButtonContent({
+  leftIcon,
+  rightIcon,
+  children,
+}: {
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <>
+      {leftIcon && <span className="flex items-center">{leftIcon}</span>}
+      {children}
+      {rightIcon && <span className="flex items-center">{rightIcon}</span>}
+    </>
+  );
+}
 
 export function Button({
   variant,
@@ -15,6 +60,7 @@ export function Button({
   leftIcon,
   rightIcon,
   loading,
+  asChild,
   children,
   ...props
 }: ButtonProps) {
@@ -23,50 +69,41 @@ export function Button({
   const fontWeightClass = fontWeight || "font-medium";
   const fontFamilyClass = fontFamily || "font-sans";
 
+  const classes = cn(
+    "focus-visible:ring-brand inline-flex items-center justify-center gap-2 rounded shadow-xs transition-all focus-visible:ring-2 focus-visible:outline-none active:shadow-xs disabled:pointer-events-none disabled:opacity-40",
+    resolveVariant(variants, effectiveVariant),
+    className,
+    fontSizeClass,
+    fontWeightClass,
+    fontFamilyClass,
+  );
+
+  const sharedProps = {
+    className: classes,
+    disabled: disabled || loading,
+    "aria-busy": loading || undefined,
+  };
+
+  if (asChild) {
+    const child = Children.only(children) as React.ReactElement;
+    const childClassName = (child.props as { className?: string }).className;
+    return cloneElement(child, {
+      ...sharedProps,
+      ...props,
+      className: cn(sharedProps.className, childClassName),
+    } as React.ComponentPropsWithoutRef<"button">);
+  }
+
   return (
-    <button
-      className={cn(
-        "focus-visible:ring-brand inline-flex items-center justify-center gap-2 rounded shadow-xs transition-all hover:shadow-md focus-visible:ring-2 focus-visible:outline-none active:shadow-xs disabled:pointer-events-none disabled:opacity-40",
-        resolveVariant(variants, effectiveVariant),
-        className,
-        fontSizeClass,
-        fontWeightClass,
-        fontFamilyClass,
-      )}
-      disabled={disabled || loading}
-      aria-busy={loading || undefined}
-      {...props}
-    >
+    <button {...sharedProps} {...props}>
       {loading ? (
-        <svg
-          className="animate-spin"
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-        >
-          <circle
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="3"
-            opacity="0.25"
-          />
-          <path
-            d="M12 2a10 10 0 0 1 10 10"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-        </svg>
+        <span className="inline-flex items-center justify-center">
+          <Spinner />
+        </span>
       ) : (
-        <>
-          {leftIcon && <span className="flex items-center">{leftIcon}</span>}
+        <ButtonContent leftIcon={leftIcon} rightIcon={rightIcon}>
           {children}
-          {rightIcon && <span className="flex items-center">{rightIcon}</span>}
-        </>
+        </ButtonContent>
       )}
     </button>
   );

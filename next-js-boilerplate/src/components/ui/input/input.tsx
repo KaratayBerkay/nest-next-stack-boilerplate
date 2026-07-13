@@ -7,7 +7,7 @@ import {
   inputSizes,
 } from "@/components/ui/input-styles";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
-import { FieldMessages, useFieldMessageIds } from "@/components/ui/field-messages";
+import { useFieldMessages } from "@/components/ui/field-messages";
 import type { InputProps } from "@/types/ui/Input-types";
 
 export function Input({
@@ -29,15 +29,11 @@ export function Input({
   const fontWeightClass = fontWeight || "font-normal";
   const fontFamilyClass = fontFamily || "font-sans";
 
-  const { errorId, descriptionId } = useFieldMessageIds(
-    typeof error === "string" ? error : undefined,
-    description,
-  );
+  const errorStr = typeof error === "string" ? error : undefined;
+  const { describedBy, messages } = useFieldMessages(errorStr, description);
 
   const leftPadding = leftIcon ? "pl-9" : undefined;
   const rightPadding = rightIcon ? "pr-9" : undefined;
-
-  const describedBy = [errorId, descriptionId].filter(Boolean).join(" ") || undefined;
 
   return (
     <div className="flex flex-col gap-1">
@@ -65,10 +61,7 @@ export function Input({
           <div className="absolute right-3 text-muted">{rightIcon}</div>
         )}
       </div>
-      <FieldMessages
-        error={typeof error === "string" ? error : undefined}
-        description={description}
-      />
+      {messages}
     </div>
   );
 }

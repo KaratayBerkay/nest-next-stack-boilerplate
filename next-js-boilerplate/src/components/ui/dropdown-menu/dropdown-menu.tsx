@@ -13,6 +13,7 @@ interface DropdownMenuContextValue {
   open: boolean;
   setOpen: (open: boolean) => void;
   triggerRef: React.RefObject<HTMLButtonElement | null>;
+  closeAndFocusTrigger: () => void;
 }
 
 const DropdownMenuContext = createContext<DropdownMenuContextValue | null>(
@@ -39,9 +40,14 @@ export function DropdownMenu({
     setOpen(v);
   }, []);
 
+  const closeAndFocusTrigger = useCallback(() => {
+    setOpen(false);
+    triggerRef.current?.focus();
+  }, []);
+
   return (
     <DropdownMenuContext.Provider
-      value={{ open, setOpen: setOpenSafe, triggerRef }}
+      value={{ open, setOpen: setOpenSafe, triggerRef, closeAndFocusTrigger }}
     >
       <div className={cn("relative inline-flex")}>{children}</div>
     </DropdownMenuContext.Provider>

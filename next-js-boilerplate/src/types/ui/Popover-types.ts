@@ -24,4 +24,5 @@ export interface PopoverContentProps extends React.ComponentPropsWithoutRef<"div
   sideOffset?: number;
   className?: string;
   variant?: PopoverVariant;
+  initialFocus?: React.RefObject<HTMLElement>;
 }

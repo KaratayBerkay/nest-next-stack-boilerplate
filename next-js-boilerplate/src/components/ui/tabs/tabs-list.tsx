@@ -8,6 +8,7 @@ import type { TabsListProps } from "@/types/ui/TabsList-types";
 function handleTabsKeyDown(
   e: React.KeyboardEvent,
   listRef: React.RefObject<HTMLDivElement | null>,
+  orientation: "horizontal" | "vertical",
 ) {
   const tabs =
     listRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]');
@@ -20,9 +21,12 @@ function handleTabsKeyDown(
 
   let nextIndex: number;
 
-  if (e.key === "ArrowRight") {
+  const nextKey = orientation === "vertical" ? "ArrowDown" : "ArrowRight";
+  const prevKey = orientation === "vertical" ? "ArrowUp" : "ArrowLeft";
+
+  if (e.key === nextKey) {
     nextIndex = (currentIndex + 1) % tabs.length;
-  } else if (e.key === "ArrowLeft") {
+  } else if (e.key === prevKey) {
     nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
   } else if (e.key === "Home") {
     nextIndex = 0;
@@ -43,15 +47,18 @@ export function TabsList({
   ...props
 }: TabsListProps) {
   const listRef = useRef<HTMLDivElement>(null);
+  const { orientation } = useTabsContext();
 
   return (
     <div
       ref={listRef}
       role="tablist"
       tabIndex={-1}
-      onKeyDown={(e) => handleTabsKeyDown(e, listRef)}
+      aria-orientation={orientation}
+      onKeyDown={(e) => handleTabsKeyDown(e, listRef, orientation)}
       className={cn(
         "bg-surface inline-flex items-center gap-1 rounded-lg p-1",
+        orientation === "vertical" && "flex-col",
         className,
       )}
       {...props}

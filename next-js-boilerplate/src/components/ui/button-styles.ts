@@ -2,7 +2,7 @@ import { globalStyleVariants } from "@/components/ui/global-style-variants";
 
 export const variants = {
   ...globalStyleVariants,
-  default:     "bg-surface text-fg hover:bg-surface-hover border border-border",
+  default:     "bg-surface text-fg hover:bg-surface-hover hover:shadow-md border border-border",
   primary:     "bg-brand text-brand-fg hover:opacity-90",
   secondary:   "bg-surface text-fg hover:bg-surface-hover",
   outline:     "border border-border bg-transparent hover:bg-surface-hover",
@@ -10,7 +10,7 @@ export const variants = {
   destructive: "bg-error text-error-fg hover:opacity-90 border border-error",
   link:        "text-brand underline-offset-4 hover:underline",
   soft:        "bg-brand/15 text-brand hover:bg-brand/20 border border-brand/30",
-  shadow:      "bg-fg text-bg hover:opacity-90 shadow-md",
+  shadow:      "bg-fg text-bg hover:opacity-90 hover:shadow-md shadow-md",
 } as const;
 
 export const sizes = {

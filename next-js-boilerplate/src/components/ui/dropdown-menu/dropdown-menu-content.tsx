@@ -51,48 +51,6 @@ export function DropdownMenuContent({
   }, [open, setOpen, triggerRef]);
 
   useEffect(() => {
-    if (!open) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setOpen(false);
-        triggerRef.current?.focus();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, setOpen, triggerRef]);
-
-  useEffect(() => {
-    if (open) {
-      const handleKeyDown = (e: KeyboardEvent) => {
-        const items = contentRef.current?.querySelectorAll<HTMLDivElement>(
-          '[role="menuitem"]:not([data-disabled])',
-        );
-        if (!items?.length) return;
-
-        const currentIndex = Array.from(items).findIndex(
-          (item) => item === document.activeElement,
-        );
-
-        if (e.key === "ArrowDown") {
-          e.preventDefault();
-          const nextIndex = (currentIndex + 1) % items.length;
-          items[nextIndex]?.focus();
-        } else if (e.key === "ArrowUp") {
-          e.preventDefault();
-          const prevIndex = (currentIndex - 1 + items.length) % items.length;
-          items[prevIndex]?.focus();
-        }
-      };
-
-      document.addEventListener("keydown", handleKeyDown);
-      return () => document.removeEventListener("keydown", handleKeyDown);
-    }
-  }, [open]);
-
-  useEffect(() => {
     if (open && contentRef.current && isDesktop) {
       const firstItem = contentRef.current.querySelector<HTMLDivElement>(
         '[role="menuitem"]:not([data-disabled])',
@@ -100,6 +58,34 @@ export function DropdownMenuContent({
       firstItem?.focus();
     }
   }, [open, isDesktop]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      e.stopPropagation();
+      setOpen(false);
+      triggerRef.current?.focus();
+      return;
+    }
+
+    const items = contentRef.current?.querySelectorAll<HTMLDivElement>(
+      '[role="menuitem"]:not([data-disabled])',
+    );
+    if (!items?.length) return;
+
+    const currentIndex = Array.from(items).findIndex(
+      (item) => item === document.activeElement,
+    );
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const nextIndex = (currentIndex + 1) % items.length;
+      items[nextIndex]?.focus();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const prevIndex = (currentIndex - 1 + items.length) % items.length;
+      items[prevIndex]?.focus();
+    }
+  };
 
   if (!open) return null;
 
@@ -116,6 +102,8 @@ export function DropdownMenuContent({
         ref={contentRef}
         role="menu"
         data-state="open"
+        tabIndex={-1}
+        onKeyDown={handleKeyDown}
         style={
           isDesktop && position
             ? { position: "fixed", top: position.top, left: position.left }

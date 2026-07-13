@@ -93,7 +93,7 @@ const effectiveVariant = useComponentVariant(variant);
 
 Always define at least a `default` entry; add entries for other global styles only where the component should actually differ.
 
-**6. Global style recipes.** For shared visual styles (shiny, glass, neon, gradient), import from `src/components/ui/global-style-variants.ts` and spread `globalStyleVariants[effectiveVariant]` into the element's className. The recipes define `default`, `shiny`, `glass`, `neon`, and `gradient` entries.
+**6. Global style recipes.** For shared visual styles (shiny, glass, neon, gradient), import from `src/components/ui/global-style-variants.ts` and spread `globalStyleVariants[effectiveVariant]` into the element's className. The recipes define `shiny`, `glass`, `neon`, and `gradient` entries — components supply their own `default` in the variant map.
 
 ```ts
 import { globalStyleVariants } from "@/components/ui/global-style-variants";

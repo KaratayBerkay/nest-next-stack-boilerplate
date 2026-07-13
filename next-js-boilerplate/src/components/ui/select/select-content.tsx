@@ -20,7 +20,7 @@ export function SelectContent({
     width: number;
   } | null>(null);
   const isDesktop = useBreakpoint("sm");
-  const typeaheadRef = useRef<string>("");
+  const typeaheadRef = useRef("");
 
   useEffect(() => {
     if (!open || !triggerRef.current || !isDesktop) return;
@@ -77,62 +77,49 @@ export function SelectContent({
     return () => document.removeEventListener("mousedown", handleMouseDown);
   }, [open, setOpen, triggerRef, contentRef, isDesktop]);
 
-  useEffect(() => {
-    if (!open) return;
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setOpen(false);
+      triggerRef.current?.focus();
+      return;
+    }
 
-    let typeaheadTimeout: ReturnType<typeof setTimeout>;
+    if (!contentRef.current) return;
+    const items = Array.from(
+      contentRef.current.querySelectorAll<HTMLElement>('[role="option"]'),
+    );
+    if (!items.length) return;
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        setOpen(false);
-        triggerRef.current?.focus();
-        return;
-      }
+    const currentIndex = items.findIndex(
+      (el) => el === document.activeElement,
+    );
 
-      if (!contentRef.current) return;
-      const items = Array.from(
-        contentRef.current.querySelectorAll<HTMLElement>('[role="option"]'),
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const next = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+      focusItem(items[next]);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const prev = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+      focusItem(items[prev]);
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      focusItem(items[0]);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      focusItem(items[items.length - 1]);
+    } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+      typeaheadRef.current += e.key.toLowerCase();
+      const match = items.find((el) =>
+        el.textContent?.toLowerCase().startsWith(typeaheadRef.current),
       );
-      if (!items.length) return;
-
-      const currentIndex = items.findIndex(
-        (el) => el === document.activeElement,
-      );
-
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        const next = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
-        focusItem(items[next]);
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        const prev = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
-        focusItem(items[prev]);
-      } else if (e.key === "Home") {
-        e.preventDefault();
-        focusItem(items[0]);
-      } else if (e.key === "End") {
-        e.preventDefault();
-        focusItem(items[items.length - 1]);
-      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-        typeaheadRef.current += e.key;
-        const match = items.find((el) =>
-          el.textContent?.toLowerCase().startsWith(typeaheadRef.current),
-        );
-        if (match) focusItem(match);
-        clearTimeout(typeaheadTimeout);
-        typeaheadTimeout = setTimeout(() => {
-          typeaheadRef.current = "";
-        }, 500);
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      clearTimeout(typeaheadTimeout);
-    };
-  }, [open, setOpen, triggerRef, contentRef, isDesktop, focusItem]);
+      if (match) focusItem(match);
+      setTimeout(() => {
+        typeaheadRef.current = "";
+      }, 500);
+    }
+  };
 
   if (!open) return null;
 
@@ -148,6 +135,8 @@ export function SelectContent({
       <div
         ref={contentRef}
         role="listbox"
+        tabIndex={-1}
+        onKeyDown={handleKeyDown}
         style={
           isDesktop && position
             ? {

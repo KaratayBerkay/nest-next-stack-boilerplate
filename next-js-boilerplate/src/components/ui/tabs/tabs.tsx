@@ -8,6 +8,7 @@ interface TabsContextValue {
   activeValue: string;
   onValueChange: (value: string) => void;
   baseId: string;
+  orientation: "horizontal" | "vertical";
 }
 
 const TabsContext = createContext<TabsContextValue | null>(null);
@@ -21,7 +22,6 @@ export function useTabsContext() {
 export function Tabs({
   defaultValue,
   className,
-  type = "single",
   orientation = "horizontal",
   fontSize,
   fontWeight,
@@ -40,7 +40,7 @@ export function Tabs({
   const fontFamilyClass = fontFamily || "font-sans";
 
   return (
-    <TabsContext.Provider value={{ activeValue, onValueChange, baseId }}>
+    <TabsContext.Provider value={{ activeValue, onValueChange, baseId, orientation }}>
       <div
         className={cn(
           "w-full",

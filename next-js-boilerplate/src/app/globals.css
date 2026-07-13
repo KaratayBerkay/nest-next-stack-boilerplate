@@ -25,7 +25,7 @@
   --border: #e4e4e7;
   --surface: #fafafa;
   --surface-hover: #f4f4f5;
-  --success: #16a34a;
+  --success: #15803d;
   --success-fg: #ffffff;
   --warning: #b45309;
   --warning-fg: #ffffff;
@@ -52,9 +52,9 @@
   --warning: #f59e0b;
   --warning-fg: #451a03;
   --error: #ef4444;
-  --error-fg: #ffffff;
+  --error-fg: #2a0808;
   --info: #38bdf8;
-  --info-fg: #0c4a6e;
+  --info-fg: #082f49;
   --overlay: #000000;
 }
 

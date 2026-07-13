@@ -12,6 +12,7 @@ export function PopoverContent({
   children,
   align = "start",
   sideOffset = 8,
+  initialFocus,
   ...props
 }: PopoverContentProps) {
   const { open, close, triggerRef, contentId } = usePopover();
@@ -85,9 +86,10 @@ export function PopoverContent({
   }, [open, close, triggerRef]);
 
   useEffect(() => {
-    if (!open || !isDesktop || !contentRef.current) return;
-    contentRef.current.focus();
-  }, [open, isDesktop]);
+    if (!open || !contentRef.current) return;
+    const target = initialFocus?.current ?? contentRef.current;
+    target.focus();
+  }, [open, initialFocus]);
 
   if (!open) return null;
 
@@ -113,7 +115,7 @@ export function PopoverContent({
         }
         className={cn(
           isDesktop
-            ? "z-50 min-w-[8rem] origin-top-right rounded-lg border p-4 shadow-lg"
+            ? "bg-bg text-fg border-border z-50 min-w-[8rem] origin-top-right rounded-lg border p-4 shadow-lg"
             : "bg-bg animate-fade-in fixed inset-0 z-50 flex flex-col p-4",
           className,
         )}

@@ -2,8 +2,17 @@
 import { useState } from "react";
 import { Calendar } from "@/components/ui/Calendar";
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { fontClasses } from "@/lib/font-classes";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { formatDateLong } from "@/lib/date-time";
 import type { DatePickerProps } from "@/types/ui/DatePicker-types";
+
+const variants = {
+  ...globalStyleVariants,
+  default: "border-border bg-bg text-fg hover:bg-surface-hover",
+};
 
 function handleToggle(open: boolean, setOpen: (v: boolean) => void) {
   setOpen(!open);
@@ -21,17 +30,17 @@ export function DatePicker({
   fontSize,
   fontWeight,
   fontFamily,
+  variant,
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
-  const fontSizeClass = fontSize || "text-sm";
-  const fontWeightClass = fontWeight || "font-medium";
-  const fontFamilyClass = fontFamily || "font-sans";
+  const effectiveVariant = useComponentVariant(variant);
+  const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
       {value && (
         <div className="flex items-center justify-between rounded border border-border bg-surface px-3 py-2">
-          <span className={cn("text-sm", fontSizeClass, fontWeightClass, fontFamilyClass)}>
+          <span className={cn("text-sm", fonts)}>
             {formatDateLong(value)}
           </span>
           <button
@@ -61,10 +70,11 @@ export function DatePicker({
           type="button"
           onClick={() => handleToggle(open, setOpen)}
           className={cn(
-            "border-border bg-bg text-fg hover:bg-surface-hover flex h-9 w-full items-center justify-between rounded border px-3 py-1 text-sm shadow-sm transition-colors",
+            "flex h-9 w-full items-center justify-between rounded border px-3 py-1 text-sm shadow-sm transition-colors",
+            resolveVariant(variants, effectiveVariant),
           )}
         >
-          <span className={cn("truncate", fontSizeClass, fontWeightClass, fontFamilyClass)}>
+          <span className={cn("truncate", fonts)}>
             {value ? (
               formatDateLong(value)
             ) : (

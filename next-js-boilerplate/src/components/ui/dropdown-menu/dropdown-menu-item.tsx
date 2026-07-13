@@ -10,7 +10,7 @@ export function DropdownMenuItem({
   children,
   ...props
 }: DropdownMenuItemProps) {
-  const { setOpen } = useDropdownMenuContext();
+  const { closeAndFocusTrigger } = useDropdownMenuContext();
 
   return (
     <div
@@ -20,14 +20,14 @@ export function DropdownMenuItem({
       aria-disabled={disabled}
       onClick={(e) => {
         if (disabled) return;
-        setOpen(false);
+        closeAndFocusTrigger();
         props.onClick?.(e);
       }}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           if (!disabled) {
-            setOpen(false);
+            closeAndFocusTrigger();
             (e.target as HTMLElement)?.click();
           }
         }
