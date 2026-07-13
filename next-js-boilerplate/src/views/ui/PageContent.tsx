@@ -50,6 +50,7 @@ const components = [
   { name: "Table", slug: "table" },
   { name: "Tabs", slug: "tabs" },
   { name: "Textarea", slug: "textarea" },
+  { name: "Time Input", slug: "time-input" },
   { name: "Toast", slug: "toast" },
   { name: "Toggle", slug: "toggle" },
   { name: "Toggle Group", slug: "toggle-group" },
