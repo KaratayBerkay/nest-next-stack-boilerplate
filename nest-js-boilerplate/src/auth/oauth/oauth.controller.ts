@@ -9,14 +9,10 @@ import {
   Query,
   Redirect,
   Res,
-  UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Response } from 'express';
 import { AuthService } from '../auth.service';
-import { SessionAuthGuard } from '../session-auth.guard';
-import { CurrentUser } from '../current-user.decorator';
-import type { JwtUser } from '../auth.types';
 import { OAuthService } from './oauth.service';
 
 @Controller('auth/oauth')
@@ -113,13 +109,9 @@ export class OAuthController {
    * that was stored during the callback. Requires an authenticated
    * session so the state token cannot be used by unauthorized parties.
    */
-  @UseGuards(SessionAuthGuard)
   @Get(':provider/profile')
   @HttpCode(HttpStatus.OK)
-  async getProfile(
-    @Query('state') state: string,
-    @CurrentUser() _user: JwtUser,
-  ) {
+  async getProfile(@Query('state') state: string) {
     return this.oauth.retrieveProfile(state);
   }
 }
