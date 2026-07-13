@@ -4,11 +4,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { DatePicker } from "@/components/ui/DatePicker";
 
 function ComponentsTab() {
+  const [defaultDate, setDefaultDate] = useState<Date | undefined>();
+
   return (
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-3">
         <h3 className="text-lg font-semibold">Default</h3>
-        <DatePicker className="max-w-sm" />
+        <DatePicker
+          value={defaultDate}
+          onChange={setDefaultDate}
+          placeholder="Pick a date"
+          className="max-w-sm"
+        />
       </section>
     </div>
   );
