@@ -63,7 +63,7 @@ export function DatePicker({
           <Calendar
             mode="single"
             selected={value}
-            onSelect={(d) => {
+            onDayClick={(d) => {
               onChange?.(d);
               setOpen(false);
             }}
