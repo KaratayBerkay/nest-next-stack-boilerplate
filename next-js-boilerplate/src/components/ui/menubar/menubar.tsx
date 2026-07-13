@@ -11,6 +11,7 @@ import {
   Label,
 } from "@radix-ui/react-menubar";
 import { cn } from "@/lib/cn";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { MenubarVariant } from "@/types/ui/Menubar-types";
 
 const variants: Record<MenubarVariant, string> = {
@@ -26,8 +27,9 @@ export const Menubar = forwardRef<
   React.ComponentPropsWithoutRef<typeof Root> & {
     variant?: MenubarVariant;
   }
->(({ className, variant = "default", ...props }, ref) => {
-  const variantClass = variants[variant];
+>(({ className, variant, ...props }, ref) => {
+  const effectiveVariant = useComponentVariant(variant);
+  const variantClass = variants[effectiveVariant as keyof typeof variants];
 
   return (
     <Root

@@ -9,6 +9,7 @@ import {
   Link,
 } from "@radix-ui/react-navigation-menu";
 import { cn } from "@/lib/cn";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { NavigationMenuVariant } from "@/types/ui/NavigationMenu-types";
 
 const variants: Record<NavigationMenuVariant, string> = {
@@ -24,8 +25,9 @@ export const NavigationMenu = forwardRef<
   React.ComponentPropsWithoutRef<typeof Root> & {
     variant?: NavigationMenuVariant;
   }
->(({ className, variant = "default", ...props }, ref) => {
-  const variantClass = variants[variant];
+>(({ className, variant, ...props }, ref) => {
+  const effectiveVariant = useComponentVariant(variant);
+  const variantClass = variants[effectiveVariant as keyof typeof variants];
 
   return (
     <Root

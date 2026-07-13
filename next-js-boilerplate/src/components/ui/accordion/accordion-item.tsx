@@ -3,11 +3,13 @@
 import { forwardRef } from "react";
 import { Item } from "@radix-ui/react-accordion";
 import { cn } from "@/lib/cn";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 
 export const AccordionItem = forwardRef<
   React.ElementRef<typeof Item>,
   React.ComponentPropsWithoutRef<typeof Item> & { variant?: "default" | "shiny" | "glass" | "neon" | "gradient" }
->(({ className, variant = "default", ...props }, ref) => {
+>(({ className, variant, ...props }, ref) => {
+  const effectiveVariant = useComponentVariant(variant);
   const variants = {
     default: "border-border border-b",
     shiny: "border-slate-700/50 border-b hover:border-slate-600 transition-colors",
@@ -19,7 +21,7 @@ export const AccordionItem = forwardRef<
   return (
     <Item
       ref={ref}
-      className={cn(variants[variant], className)}
+      className={cn(variants[effectiveVariant as keyof typeof variants], className)}
       {...props}
     />
   );

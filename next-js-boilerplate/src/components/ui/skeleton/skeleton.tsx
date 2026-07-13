@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { SkeletonProps, SkeletonVariant } from "@/types/ui/Skeleton-types";
 
 const variants: Record<SkeletonVariant, string> = {
@@ -11,10 +12,11 @@ const variants: Record<SkeletonVariant, string> = {
 
 export function Skeleton({
   className,
-  variant = "default",
+  variant,
   ...props
 }: SkeletonProps) {
-  const variantClass = variants[variant];
+  const effectiveVariant = useComponentVariant(variant);
+  const variantClass = variants[effectiveVariant as keyof typeof variants];
 
   return (
     <div

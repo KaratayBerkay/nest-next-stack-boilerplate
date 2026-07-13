@@ -98,6 +98,92 @@
   --info-fg: #0b0b1a;
 }
 
+/* ── Component style system ──────────────────────────────────────── */
+/*
+ * The active component style class is set on <html> by the ThemeProvider.
+ * Components read the global style via useComponentVariant() and apply
+ * the corresponding visual effects.
+ */
+
+/* ── Default style (no special effects) ──────────────────────────── */
+.style-default {
+  /* baseline — no overrides needed */
+}
+
+/* ── Shiny style ─────────────────────────────────────────────────── */
+.style-shiny {
+  --comp-card-bg: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+  --comp-card-border: rgba(148, 163, 184, 0.15);
+  --comp-card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  --comp-btn-bg: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  --comp-btn-text: #ffffff;
+  --comp-btn-border: transparent;
+  --comp-btn-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.3);
+  --comp-input-bg: rgba(15, 23, 42, 0.8);
+  --comp-input-border: rgba(148, 163, 184, 0.2);
+  --comp-badge-bg: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  --comp-badge-text: #ffffff;
+  --comp-alert-bg: rgba(15, 23, 42, 0.9);
+  --comp-alert-border: rgba(148, 163, 184, 0.2);
+}
+
+/* ── Glass style ─────────────────────────────────────────────────── */
+.style-glass {
+  --comp-card-bg: rgba(255, 255, 255, 0.05);
+  --comp-card-border: rgba(255, 255, 255, 0.1);
+  --comp-card-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  --comp-btn-bg: rgba(255, 255, 255, 0.1);
+  --comp-btn-text: #ffffff;
+  --comp-btn-border: rgba(255, 255, 255, 0.2);
+  --comp-btn-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  --comp-input-bg: rgba(255, 255, 255, 0.08);
+  --comp-input-border: rgba(255, 255, 255, 0.15);
+  --comp-badge-bg: rgba(255, 255, 255, 0.15);
+  --comp-badge-text: #ffffff;
+  --comp-alert-bg: rgba(255, 255, 255, 0.08);
+  --comp-alert-border: rgba(255, 255, 255, 0.15);
+}
+
+/* ── Neon style ──────────────────────────────────────────────────── */
+.style-neon {
+  --comp-card-bg: rgba(2, 6, 23, 0.8);
+  --comp-card-border: rgba(6, 182, 212, 0.3);
+  --comp-card-shadow: 0 0 20px rgba(6, 182, 212, 0.15);
+  --comp-btn-bg: transparent;
+  --comp-btn-text: #22d3ee;
+  --comp-btn-border: rgba(6, 182, 212, 0.3);
+  --comp-btn-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+  --comp-input-bg: rgba(2, 6, 23, 0.6);
+  --comp-input-border: rgba(6, 182, 212, 0.25);
+  --comp-badge-bg: rgba(6, 182, 212, 0.15);
+  --comp-badge-text: #22d3ee;
+  --comp-alert-bg: rgba(2, 6, 23, 0.8);
+  --comp-alert-border: rgba(6, 182, 212, 0.25);
+}
+
+/* ── Gradient style ──────────────────────────────────────────────── */
+.style-gradient {
+  --comp-card-bg: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+  --comp-card-border: transparent;
+  --comp-card-shadow: 0 25px 50px -12px rgba(88, 28, 135, 0.3);
+  --comp-btn-bg: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+  --comp-btn-text: #ffffff;
+  --comp-btn-border: transparent;
+  --comp-btn-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.3);
+  --comp-input-bg: rgba(30, 27, 75, 0.6);
+  --comp-input-border: rgba(139, 92, 246, 0.25);
+  --comp-badge-bg: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  --comp-badge-text: #ffffff;
+  --comp-alert-bg: rgba(30, 27, 75, 0.8);
+  --comp-alert-border: rgba(139, 92, 246, 0.25);
+}
+
+/* ── Glass backdrop blur utility ─────────────────────────────────── */
+.style-glass .glass-blur {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
 /* ── Map tokens to Tailwind utilities ────────────────────────────── */
 @theme inline {
   --color-bg: var(--bg);

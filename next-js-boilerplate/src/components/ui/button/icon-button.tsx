@@ -1,15 +1,17 @@
 import { cn } from "@/lib/cn";
 import { variants, sizes } from "@/components/ui/button-styles";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { IconButtonProps } from "@/types/ui/IconButton-types";
 
 export function IconButton({
   icon,
   label,
-  variant = "ghost",
+  variant,
   size = "icon",
   className,
   ...props
 }: IconButtonProps) {
+  const effectiveVariant = useComponentVariant(variant);
   return (
     <button
       type="button"
@@ -17,7 +19,7 @@ export function IconButton({
       title={label}
       className={cn(
         "focus-visible:ring-brand inline-flex items-center justify-center rounded font-medium transition-all focus-visible:ring-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-40",
-        variants[variant],
+        variants[effectiveVariant as keyof typeof variants],
         sizes[size],
         className,
       )}

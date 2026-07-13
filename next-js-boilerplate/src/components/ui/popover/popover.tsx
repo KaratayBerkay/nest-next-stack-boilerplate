@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { cn } from "@/lib/cn";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { PopoverProps, PopoverVariant } from "@/types/ui/Popover-types";
 
 interface PopoverContextValue {
@@ -36,16 +37,17 @@ const variants: Record<PopoverVariant, string> = {
   gradient: "bg-gradient-to-br from-slate-900 to-slate-950",
 };
 
-export function Popover({ children, defaultOpen = false, variant = "default" }: PopoverProps) {
+export function Popover({ children, defaultOpen = false, variant }: PopoverProps) {
+  const effectiveVariant = useComponentVariant(variant);
   const [open, setOpen] = useState(defaultOpen);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const variantClass = variants[variant];
+  const variantClass = variants[effectiveVariant as keyof typeof variants];
 
   const toggle = useCallback(() => setOpen((prev) => !prev), []);
   const close = useCallback(() => setOpen(false), []);
 
   return (
-    <PopoverContext.Provider value={{ open, toggle, close, triggerRef, variant }}>
+    <PopoverContext.Provider value={{ open, toggle, close, triggerRef, variant: effectiveVariant }}>
       <div className={cn(variantClass)}>{children}</div>
     </PopoverContext.Provider>
   );

@@ -10,6 +10,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { useDialog } from "./dialog";
 import type { DialogContentProps, DialogVariant } from "@/types/ui/Dialog-types";
 
@@ -21,8 +22,9 @@ const variants: Record<DialogVariant, string> = {
   gradient: "bg-gradient-to-br from-slate-900 to-slate-950 text-transparent bg-clip-text border-transparent shadow-2xl",
 };
 
-export function DialogContent({ children, className, variant = "default" }: DialogContentProps) {
+export function DialogContent({ children, className, variant }: DialogContentProps) {
   const { open, onOpenChange, variant: contextVariant } = useDialog();
+  const effectiveVariant = useComponentVariant(variant ?? contextVariant);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const mounted = useSyncExternalStore(
     () => () => {},

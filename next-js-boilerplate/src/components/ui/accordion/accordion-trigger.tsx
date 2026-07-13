@@ -3,11 +3,13 @@
 import { forwardRef } from "react";
 import { Header, Trigger } from "@radix-ui/react-accordion";
 import { cn } from "@/lib/cn";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 
 export const AccordionTrigger = forwardRef<
   React.ElementRef<typeof Trigger>,
   React.ComponentPropsWithoutRef<typeof Trigger> & { variant?: "default" | "shiny" | "glass" | "neon" | "gradient" }
->(({ className, children, variant = "default", value, ...props }, ref) => {
+>(({ className, children, variant, value, ...props }, ref) => {
+  const effectiveVariant = useComponentVariant(variant);
   const variants = {
     default: "hover:text-accent-foreground",
     shiny: "text-slate-200 hover:text-white",
@@ -23,7 +25,7 @@ export const AccordionTrigger = forwardRef<
         value={value}
         className={cn(
           "flex flex-1 items-center justify-between py-4 text-sm font-medium transition-all hover:underline [&[data-state=open]>svg]:rotate-180",
-          variants[variant],
+          variants[effectiveVariant as keyof typeof variants],
           className,
         )}
         {...props}
@@ -40,8 +42,8 @@ export const AccordionTrigger = forwardRef<
           strokeLinejoin="round"
           className={cn(
             "shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
-            variant === "neon" && "text-cyan-500 group-hover:text-cyan-400",
-            variant === "gradient" && "text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500",
+            effectiveVariant === "neon" && "text-cyan-500 group-hover:text-cyan-400",
+            effectiveVariant === "gradient" && "text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500",
           )}
         >
           <path d="m6 9 6 6 6-6" />

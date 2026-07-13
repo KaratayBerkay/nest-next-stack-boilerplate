@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { useTooltip } from "./tooltip";
 import type { TooltipContentProps, TooltipVariant } from "@/types/ui/Tooltip-types";
 
@@ -36,14 +37,15 @@ function getPosition(rect: DOMRect, side: string) {
   }
 }
 
-export function TooltipContent({ children, className, variant = "default" }: TooltipContentProps) {
+export function TooltipContent({ children, className, variant }: TooltipContentProps) {
   const { open, side, triggerRect, hide, isDesktop, variant: contextVariant } = useTooltip();
+  const effectiveVariant = useComponentVariant(variant ?? contextVariant);
   const mounted = useSyncExternalStore(
     () => () => {},
     () => true,
     () => false,
   );
-  const variantClass = variants[variant || contextVariant || "default"];
+  const variantClass = variants[effectiveVariant as keyof typeof variants];
 
   const hasEscapeRef = useRef(false);
   useEffect(() => {

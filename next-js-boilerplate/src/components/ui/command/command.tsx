@@ -8,6 +8,7 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { CommandProps } from "@/types/ui/Command-types";
 
 interface ItemData {
@@ -47,9 +48,10 @@ const variants: Record<"default" | "shiny" | "glass" | "neon" | "gradient", stri
 export function Command({
   className,
   children,
-  variant = "default",
+  variant,
   ...props
 }: CommandProps) {
+  const effectiveVariant = useComponentVariant(variant);
   const [search, setSearchRaw] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [items, setItems] = useState<ItemData[]>([]);
@@ -83,7 +85,7 @@ export function Command({
         selectedIndex,
         setSelectedIndex,
         registerItem,
-        variant,
+        variant: effectiveVariant,
       }}
     >
       <div

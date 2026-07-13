@@ -4,6 +4,7 @@ import { useToastContext } from "./toast-provider";
 import { ToastTitle } from "./toast-title";
 import { ToastDescription } from "./toast-description";
 import { ToastClose } from "./toast-close";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { ToastProps, ToastVariant } from "@/types/ui/Toast-types";
 
 const variants: Record<ToastVariant, string> = {
@@ -17,19 +18,20 @@ const variants: Record<ToastVariant, string> = {
 export function Toast({
   id,
   className,
-  variant = "default",
+  variant,
   fontSize,
   fontWeight,
   fontFamily,
   ...props
 }: ToastProps) {
+  const effectiveVariant = useComponentVariant(variant);
   const { state, dispatch } = useToastContext();
   const toast = state.find((t) => t.id === id);
   const [visible, setVisible] = useState(false);
   const fontSizeClass = fontSize || "text-sm";
   const fontWeightClass = fontWeight || "font-medium";
   const fontFamilyClass = fontFamily || "font-sans";
-  const variantClass = variants[variant];
+  const variantClass = variants[effectiveVariant as keyof typeof variants];
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setVisible(true));

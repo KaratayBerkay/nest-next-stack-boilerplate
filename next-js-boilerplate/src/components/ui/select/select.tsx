@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { SelectProps, SelectVariant } from "@/types/ui/Select-types";
 
 interface SelectContextValue {
@@ -30,8 +31,9 @@ export function Select({
   value,
   onValueChange,
   defaultOpen = false,
-  variant = "default",
+  variant,
 }: SelectProps) {
+  const effectiveVariant = useComponentVariant(variant);
   const [open, setOpen] = useState(defaultOpen);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -55,10 +57,10 @@ export function Select({
         labelMap,
         triggerRef,
         contentRef,
-        variant,
+        variant: effectiveVariant,
       }}
     >
-      <div className={cn(variants[variant])}>{children}</div>
+      <div className={cn(variants[effectiveVariant as keyof typeof variants])}>{children}</div>
     </SelectContext.Provider>
   );
 }

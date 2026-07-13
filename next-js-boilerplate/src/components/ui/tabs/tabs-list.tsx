@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { useRef } from "react";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { TabsListProps } from "@/types/ui/TabsList-types";
 
 function handleTabsKeyDown(
@@ -35,9 +36,10 @@ function handleTabsKeyDown(
 export function TabsList({
   className,
   children,
-  variant = "default",
+  variant,
   ...props
 }: TabsListProps) {
+  const effectiveVariant = useComponentVariant(variant);
   const listRef = useRef<HTMLDivElement>(null);
 
   const variants = {
@@ -55,7 +57,7 @@ export function TabsList({
       tabIndex={-1}
       onKeyDown={(e) => handleTabsKeyDown(e, listRef)}
       className={cn(
-        variants[variant],
+        variants[effectiveVariant as keyof typeof variants],
         className,
       )}
       {...props}

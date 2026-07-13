@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { KbdProps, KbdVariant } from "@/types/ui/Kbd-types";
 
 const variants: Record<KbdVariant, string> = {
@@ -11,13 +12,14 @@ const variants: Record<KbdVariant, string> = {
 
 export function Kbd({
   className,
-  variant = "default",
+  variant,
   fontSize,
   fontWeight,
   fontFamily,
   ...props
 }: KbdProps) {
-  const variantClass = variants[variant];
+  const effectiveVariant = useComponentVariant(variant);
+  const variantClass = variants[effectiveVariant as keyof typeof variants];
   const fontSizeClass = fontSize || "text-[10px]";
   const fontWeightClass = fontWeight || "font-medium";
   const fontFamilyClass = fontFamily || "font-mono";

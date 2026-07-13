@@ -1,7 +1,9 @@
 import { cn } from "@/lib/cn";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { CardProps } from "@/types/ui/Card-types";
 
-export function Card({ className, variant = "default", fontSize, fontWeight, fontFamily, ...props }: CardProps) {
+export function Card({ className, variant, fontSize, fontWeight, fontFamily, ...props }: CardProps) {
+  const effectiveVariant = useComponentVariant(variant);
   const variants = {
     default:
       "border-border bg-bg text-fg rounded-xl border shadow-sm transition-all hover:shadow-md",
@@ -23,7 +25,7 @@ export function Card({ className, variant = "default", fontSize, fontWeight, fon
   return (
     <div
       className={cn(
-        variants[variant],
+        variants[effectiveVariant as keyof typeof variants],
         className,
         fontSizeClass,
         fontWeightClass,
@@ -31,19 +33,19 @@ export function Card({ className, variant = "default", fontSize, fontWeight, fon
       )}
       {...props}
     >
-      {variant === "shiny" && (
+      {effectiveVariant === "shiny" && (
         <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent opacity-50 pointer-events-none" />
       )}
-      {variant === "glass" && (
+      {effectiveVariant === "glass" && (
         <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-white/5 pointer-events-none" />
       )}
-      {variant === "neon" && (
+      {effectiveVariant === "neon" && (
         <>
           <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-transparent to-purple-500/5 pointer-events-none" />
           <div className="absolute -inset-px bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-xl blur-lg opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none" />
         </>
       )}
-      {variant === "gradient" && (
+      {effectiveVariant === "gradient" && (
         <>
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 pointer-events-none" />
           <div className="absolute -inset-0.5 bg-gradient-to-br from-blue-500/30 via-purple-500/30 to-pink-500/30 rounded-xl blur opacity-30 transition-opacity duration-500 group-hover:opacity-50 pointer-events-none" />

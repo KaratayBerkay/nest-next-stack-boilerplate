@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { SeparatorProps, SeparatorVariant } from "@/types/ui/Separator-types";
 
 const variants: Record<SeparatorVariant, string> = {
@@ -12,13 +13,14 @@ const variants: Record<SeparatorVariant, string> = {
 export function Separator({
   orientation = "horizontal",
   className,
-  variant = "default",
+  variant,
   fontSize,
   fontWeight,
   fontFamily,
   ...props
 }: SeparatorProps) {
-  const variantClass = variants[variant];
+  const effectiveVariant = useComponentVariant(variant);
+  const variantClass = variants[effectiveVariant as keyof typeof variants];
   const fontSizeClass = fontSize || "text-sm";
   const fontWeightClass = fontWeight || "font-medium";
   const fontFamilyClass = fontFamily || "font-sans";

@@ -2,6 +2,7 @@
 import { forwardRef } from "react";
 import { Root, Trigger, Portal, Content } from "@radix-ui/react-hover-card";
 import { cn } from "@/lib/cn";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { HoverCardVariant } from "@/types/ui/HoverCard-types";
 
 const variants: Record<HoverCardVariant, string> = {
@@ -21,8 +22,9 @@ export const HoverCardContent = forwardRef<
     sideOffset?: number;
     variant?: HoverCardVariant;
   }
->(({ className, sideOffset = 4, variant = "default", ...props }, ref) => {
-  const variantClass = variants[variant];
+>(({ className, sideOffset = 4, variant, ...props }, ref) => {
+  const effectiveVariant = useComponentVariant(variant);
+  const variantClass = variants[effectiveVariant as keyof typeof variants];
 
   return (
     <Portal>

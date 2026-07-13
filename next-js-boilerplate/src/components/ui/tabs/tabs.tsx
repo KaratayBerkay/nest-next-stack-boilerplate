@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { createContext, useCallback, useContext, useState } from "react";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { TabsProps } from "@/types/ui/Tabs-types";
 
 interface TabsContextValue {
@@ -17,7 +18,8 @@ export function useTabsContext() {
   return ctx;
 }
 
-export function Tabs({ defaultValue, className, variant = "default", type = "single", fontSize, fontWeight, fontFamily, ...props }: TabsProps) {
+export function Tabs({ defaultValue, className, variant, type = "single", fontSize, fontWeight, fontFamily, ...props }: TabsProps) {
+  const effectiveVariant = useComponentVariant(variant);
   const [activeValue, setActiveValue] = useState(defaultValue);
 
   const onValueChange = useCallback((value: string) => {
@@ -40,7 +42,7 @@ export function Tabs({ defaultValue, className, variant = "default", type = "sin
     <TabsContext.Provider value={{ activeValue, onValueChange }}>
       <div
         className={cn(
-          variants[variant],
+          variants[effectiveVariant as keyof typeof variants],
           className,
           fontSizeClass,
           fontWeightClass,

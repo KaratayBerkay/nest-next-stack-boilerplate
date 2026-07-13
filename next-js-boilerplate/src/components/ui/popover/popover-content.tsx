@@ -4,6 +4,7 @@ import { cn } from "@/lib/cn";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useBreakpoint } from "@/hooks";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { usePopover } from "./popover";
 import type { PopoverContentProps, PopoverVariant } from "@/types/ui/Popover-types";
 
@@ -20,17 +21,18 @@ export function PopoverContent({
   children,
   align = "start",
   sideOffset = 8,
-  variant = "default",
+  variant,
   ...props
 }: PopoverContentProps) {
   const { open, close, triggerRef, variant: contextVariant } = usePopover();
+  const effectiveVariant = useComponentVariant(variant ?? contextVariant);
   const contentRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<{
     top: number;
     left: number;
   } | null>(null);
   const isDesktop = useBreakpoint("sm");
-  const variantClass = variants[variant || contextVariant || "default"];
+  const variantClass = variants[effectiveVariant as keyof typeof variants];
 
   useEffect(() => {
     if (!open || !triggerRef.current || !isDesktop) return;

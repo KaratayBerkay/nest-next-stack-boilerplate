@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/cn";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { useTabsContext } from "./tabs";
 import type { TabsTriggerProps } from "@/types/ui/TabsTrigger-types";
 
@@ -8,12 +9,13 @@ export function TabsTrigger({
   value,
   className,
   children,
-  variant = "default",
+  variant,
   fontSize,
   fontWeight,
   fontFamily,
   ...props
 }: TabsTriggerProps) {
+  const effectiveVariant = useComponentVariant(variant);
   const { activeValue, onValueChange } = useTabsContext();
   const isActive = activeValue === value;
 
@@ -39,7 +41,7 @@ export function TabsTrigger({
       onClick={() => onValueChange(value)}
       className={cn(
         "focus-visible:ring-brand inline-flex items-center justify-center rounded-md px-3 py-1.5 whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:outline-none",
-        variants[variant],
+        variants[effectiveVariant as keyof typeof variants],
         fontSizeClass,
         fontWeightClass,
         fontFamilyClass,

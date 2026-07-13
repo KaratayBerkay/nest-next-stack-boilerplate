@@ -2,6 +2,7 @@
 import { forwardRef } from "react";
 import { Root, Indicator } from "@radix-ui/react-progress";
 import { cn } from "@/lib/cn";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { ProgressProps, ProgressVariant } from "@/types/ui/Progress-types";
 
 const barVariants: Record<ProgressVariant, string> = {
@@ -23,13 +24,14 @@ const trackVariants: Record<ProgressVariant, string> = {
 export const Progress = forwardRef<
   React.ElementRef<typeof Root>,
   ProgressProps
->(({ className, variant = "default", value, ...props }, ref) => {
+>(({ className, variant, value, ...props }, ref) => {
+  const effectiveVariant = useComponentVariant(variant);
   return (
     <Root
       ref={ref}
       className={cn(
         "relative h-2 w-full overflow-hidden rounded-full",
-        trackVariants[variant],
+        trackVariants[effectiveVariant as keyof typeof trackVariants],
         className,
       )}
       {...props}
@@ -37,7 +39,7 @@ export const Progress = forwardRef<
       <Indicator
         className={cn(
           "h-full w-full flex-1 transition-all",
-          barVariants[variant],
+          barVariants[effectiveVariant as keyof typeof barVariants],
         )}
         style={{ transform: `translateX(-${100 - (value ?? 0)}%)` }}
       />

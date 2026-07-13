@@ -5,12 +5,13 @@ import {
   inputVariants,
   inputSizes,
 } from "@/components/ui/input-styles";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { InputProps } from "@/types/ui/Input-types";
 
 export function Input({
   className,
   error,
-  variant = "default",
+  variant,
   leftIcon,
   rightIcon,
   fontSize,
@@ -18,7 +19,8 @@ export function Input({
   fontFamily,
   ...props
 }: InputProps) {
-  const variantClass = inputVariants[variant];
+  const effectiveVariant = useComponentVariant(variant);
+  const variantClass = inputVariants[effectiveVariant as keyof typeof inputVariants];
   const sizeClass = inputSizes.md;
   const fontSizeClass = fontSize || sizeClass.split(" ")[1];
   const fontWeightClass = fontWeight || "font-normal";

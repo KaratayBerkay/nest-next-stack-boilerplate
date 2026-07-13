@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { useBreakpoint } from "@/hooks";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { TooltipProps, TooltipVariant } from "@/types/ui/Tooltip-types";
 
 type Side = "top" | "bottom" | "left" | "right";
@@ -42,12 +43,13 @@ const variants: Record<TooltipVariant, string> = {
   gradient: "bg-gradient-to-br from-slate-900 to-slate-950 text-transparent bg-clip-text border-transparent shadow-2xl",
 };
 
-export function Tooltip({ children, delay = 200, side = "top", variant = "default" }: TooltipProps) {
+export function Tooltip({ children, delay = 200, side = "top", variant }: TooltipProps) {
+  const effectiveVariant = useComponentVariant(variant);
   const [open, setOpen] = useState(false);
   const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const isDesktop = useBreakpoint("sm");
-  const variantClass = variants[variant];
+  const variantClass = variants[effectiveVariant as keyof typeof variants];
 
   const show = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -85,7 +87,7 @@ export function Tooltip({ children, delay = 200, side = "top", variant = "defaul
         toggle,
         setTriggerRect,
         isDesktop,
-        variant,
+        variant: effectiveVariant,
       }}
     >
       {children}

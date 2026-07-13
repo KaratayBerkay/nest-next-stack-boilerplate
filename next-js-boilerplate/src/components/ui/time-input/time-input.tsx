@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { cn } from "@/lib/cn";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { TimeInputProps, TimeInputVariant } from "@/types/ui/TimeInput-types";
 
 function pad(n: number): string {
@@ -143,13 +144,14 @@ function TimezoneBadge({ variant }: { variant: TimeInputVariant }) {
 export function TimeInput({
   value = { hours: 0, minutes: 0, seconds: 0 },
   onChange,
-  variant = "default",
+  variant,
   showSeconds = false,
   use24Hour = true,
   className,
   disabled = false,
   label,
 }: TimeInputProps) {
+  const effectiveVariant = useComponentVariant(variant);
   const update = (field: "hours" | "minutes" | "seconds", val: number) => {
     if (!onChange) return;
     onChange({ ...value, [field]: val });
@@ -178,7 +180,7 @@ export function TimeInput({
         <label className="text-sm font-medium text-foreground">{label}</label>
       )}
       <div className="flex items-center gap-3">
-        <div className={cn("flex items-center gap-2 p-2", variantStyles[variant])}>
+        <div className={cn("flex items-center gap-2 p-2", variantStyles[effectiveVariant as keyof typeof variantStyles])}>
           <TimeUnitSelect
             value={displayHour}
             max={hourMax}
@@ -192,8 +194,8 @@ export function TimeInput({
               }
             }}
             disabled={disabled}
-            selectClassName={selectClasses[variant]}
-            variant={variant}
+            selectClassName={selectClasses[effectiveVariant as keyof typeof selectClasses]}
+            variant={effectiveVariant as TimeInputVariant}
             use24Hour={use24Hour}
             isHour
           />
@@ -205,8 +207,8 @@ export function TimeInput({
             max={59}
             onChange={(val) => update("minutes", val)}
             disabled={disabled}
-            selectClassName={selectClasses[variant]}
-            variant={variant}
+            selectClassName={selectClasses[effectiveVariant as keyof typeof selectClasses]}
+            variant={effectiveVariant as TimeInputVariant}
           />
 
           {showSeconds && (
@@ -217,8 +219,8 @@ export function TimeInput({
                 max={59}
                 onChange={(val) => update("seconds", val)}
                 disabled={disabled}
-                selectClassName={selectClasses[variant]}
-                variant={variant}
+                selectClassName={selectClasses[effectiveVariant as keyof typeof selectClasses]}
+                variant={effectiveVariant as TimeInputVariant}
               />
             </>
           )}
@@ -230,13 +232,13 @@ export function TimeInput({
               disabled={disabled}
               className={cn(
                 "h-10 rounded-md border px-2.5 text-xs font-bold shadow-sm transition-colors",
-                variant === "neon"
+                effectiveVariant === "neon"
                   ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20"
-                  : variant === "gradient"
+                  : effectiveVariant === "gradient"
                     ? "border-white/20 bg-white/10 text-white hover:bg-white/20"
-                    : variant === "glass"
+                    : effectiveVariant === "glass"
                       ? "border-white/10 bg-white/10 text-white hover:bg-white/20"
-                      : variant === "shiny"
+                      : effectiveVariant === "shiny"
                         ? "border-slate-600 bg-slate-700/50 text-slate-300 hover:bg-slate-600/50"
                         : "border-border bg-surface text-foreground hover:bg-surface-hover",
                 disabled && "cursor-not-allowed opacity-50",
@@ -247,7 +249,7 @@ export function TimeInput({
           )}
         </div>
 
-        <TimezoneBadge variant={variant} />
+        <TimezoneBadge variant={effectiveVariant as TimeInputVariant} />
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { cn } from "@/lib/cn";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { DialogProps, DialogVariant } from "@/types/ui/Dialog-types";
 
 interface DialogContextType {
@@ -36,12 +37,13 @@ export function Dialog({
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
   children,
-  variant = "default",
+  variant,
 }: DialogProps) {
+  const effectiveVariant = useComponentVariant(variant);
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
-  const variantClass = variants[variant];
+  const variantClass = variants[effectiveVariant as keyof typeof variants];
 
   const onOpenChange = useCallback(
     (value: boolean) => {
@@ -52,7 +54,7 @@ export function Dialog({
   );
 
   return (
-    <DialogContext.Provider value={{ open, onOpenChange, variant }}>
+    <DialogContext.Provider value={{ open, onOpenChange, variant: effectiveVariant }}>
       <div className={cn(variantClass)}>{children}</div>
     </DialogContext.Provider>
   );

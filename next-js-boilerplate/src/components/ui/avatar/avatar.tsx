@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/cn";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { AvatarProps, AvatarVariant } from "@/types/ui/Avatar-types";
 
 const sizes = {
@@ -31,7 +32,7 @@ export function Avatar({
   alt = "",
   fallback,
   size = "md",
-  variant = "default",
+  variant,
   status,
   className,
   fontSize,
@@ -39,6 +40,7 @@ export function Avatar({
   fontFamily,
   ...props
 }: AvatarProps) {
+  const effectiveVariant = useComponentVariant(variant);
   const [imgError, setImgError] = useState(false);
   const showImage = src && !imgError;
   const fontSizeClass = fontSize || "text-sm";
@@ -50,7 +52,7 @@ export function Avatar({
       className={cn(
         "relative inline-flex items-center justify-center overflow-hidden rounded-full font-medium",
         sizes[size],
-        variants[variant],
+        variants[effectiveVariant as keyof typeof variants],
         fontSizeClass,
         fontWeightClass,
         fontFamilyClass,

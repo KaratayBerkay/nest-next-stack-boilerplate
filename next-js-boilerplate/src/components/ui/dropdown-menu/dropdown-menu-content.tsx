@@ -4,6 +4,7 @@ import { cn } from "@/lib/cn";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useBreakpoint } from "@/hooks";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { useDropdownMenuContext } from "./dropdown-menu";
 import type { DropdownMenuContentProps, DropdownMenuVariant } from "@/types/ui/DropdownMenu-types";
 
@@ -18,14 +19,15 @@ const variants: Record<DropdownMenuVariant, string> = {
 export function DropdownMenuContent({
   className,
   children,
-  variant = "default",
+  variant,
   ...props
 }: DropdownMenuContentProps) {
   const { open, setOpen, triggerRef, variant: contextVariant } = useDropdownMenuContext();
+  const effectiveVariant = useComponentVariant(variant ?? contextVariant);
   const contentRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const isDesktop = useBreakpoint("sm");
-  const variantClass = variants[variant || contextVariant || "default"];
+  const variantClass = variants[effectiveVariant as keyof typeof variants];
 
   useEffect(() => {
     if (open && triggerRef.current && isDesktop) {

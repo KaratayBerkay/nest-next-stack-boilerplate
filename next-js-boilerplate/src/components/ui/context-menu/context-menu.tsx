@@ -10,6 +10,7 @@ import {
   Label,
 } from "@radix-ui/react-context-menu";
 import { cn } from "@/lib/cn";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { ContextMenuVariant } from "@/types/ui/ContextMenu-types";
 
 const variants: Record<ContextMenuVariant, string> = {
@@ -50,8 +51,9 @@ export const ContextMenuContent = forwardRef<
   React.ComponentPropsWithoutRef<typeof Content> & {
     variant?: ContextMenuVariant;
   }
->(({ className, variant = "default", ...props }, ref) => {
-  const variantClass = variants[variant];
+>(({ className, variant, ...props }, ref) => {
+  const effectiveVariant = useComponentVariant(variant);
+  const variantClass = variants[effectiveVariant as keyof typeof variants];
 
   return (
     <Portal>

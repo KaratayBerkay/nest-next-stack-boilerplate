@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { BadgeProps } from "@/types/ui/Badge-types";
 
 const variants = {
@@ -20,13 +21,14 @@ const variants = {
 } as const;
 
 export function Badge({
-  variant = "default",
+  variant,
   className,
   fontSize,
   fontWeight,
   fontFamily,
   ...props
 }: BadgeProps) {
+  const effectiveVariant = useComponentVariant(variant);
   const fontSizeClass = fontSize || "text-xs";
   const fontWeightClass = fontWeight || "font-medium";
   const fontFamilyClass = fontFamily || "font-sans";
@@ -35,10 +37,10 @@ export function Badge({
     <span
       className={cn(
         "inline-flex items-center justify-center",
-        variant === "dot"
+        effectiveVariant === "dot"
           ? "p-0"
           : "rounded-full px-2.5 py-0.5",
-        variants[variant],
+        variants[effectiveVariant as keyof typeof variants],
         fontSizeClass,
         fontWeightClass,
         fontFamilyClass,

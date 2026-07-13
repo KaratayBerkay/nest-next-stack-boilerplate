@@ -2,6 +2,7 @@
 import { forwardRef } from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
 import { cn } from "@/lib/cn";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { DrawerVariant } from "@/types/ui/Drawer-types";
 
 const variants: Record<DrawerVariant, string> = {
@@ -21,8 +22,9 @@ export const DrawerContent = forwardRef<
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content> & {
     variant?: DrawerVariant;
   }
->(({ className, children, variant = "default", ...props }, ref) => {
-  const variantClass = variants[variant];
+>(({ className, children, variant, ...props }, ref) => {
+  const effectiveVariant = useComponentVariant(variant);
+  const variantClass = variants[effectiveVariant as keyof typeof variants];
 
   return (
     <DrawerPrimitive.Portal>

@@ -8,6 +8,7 @@ import {
   Corner,
 } from "@radix-ui/react-scroll-area";
 import { cn } from "@/lib/cn";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { ScrollAreaVariant } from "@/types/ui/ScrollArea-types";
 
 const variants: Record<ScrollAreaVariant, string> = {
@@ -23,8 +24,9 @@ export const ScrollArea = forwardRef<
   React.ComponentPropsWithoutRef<typeof Root> & {
     variant?: ScrollAreaVariant;
   }
->(({ className, children, variant = "default", ...props }, ref) => {
-  const variantClass = variants[variant];
+>(({ className, children, variant, ...props }, ref) => {
+  const effectiveVariant = useComponentVariant(variant);
+  const variantClass = variants[effectiveVariant as keyof typeof variants];
 
   return (
     <Root
@@ -37,7 +39,7 @@ export const ScrollArea = forwardRef<
       {...props}
     >
       <Viewport className="size-full rounded-[inherit]">{children}</Viewport>
-      <ScrollBar variant={variant} />
+      <ScrollBar variant={effectiveVariant as ScrollAreaVariant} />
       <Corner />
     </Root>
   );
@@ -49,8 +51,9 @@ export const ScrollBar = forwardRef<
   React.ComponentPropsWithoutRef<typeof Scrollbar> & {
     variant?: ScrollAreaVariant;
   }
->(({ className, orientation = "vertical", variant = "default", ...props }, ref) => {
-  const variantClass = variants[variant];
+>(({ className, orientation = "vertical", variant, ...props }, ref) => {
+  const effectiveVariant = useComponentVariant(variant);
+  const variantClass = variants[effectiveVariant as keyof typeof variants];
 
   return (
     <Scrollbar

@@ -11,6 +11,7 @@ import {
   Close,
 } from "@radix-ui/react-dialog";
 import { cn } from "@/lib/cn";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { SheetVariant } from "@/types/ui/Sheet-types";
 
 const variants: Record<SheetVariant, string> = {
@@ -31,8 +32,9 @@ export const SheetContent = forwardRef<
     side?: "top" | "bottom" | "left" | "right";
     variant?: SheetVariant;
   }
->(({ className, children, side = "right", variant = "default", ...props }, ref) => {
-  const variantClass = variants[variant];
+>(({ className, children, side = "right", variant, ...props }, ref) => {
+  const effectiveVariant = useComponentVariant(variant);
+  const variantClass = variants[effectiveVariant as keyof typeof variants];
 
   return (
     <Portal>

@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { cn } from "@/lib/cn";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { DropdownMenuVariant } from "@/types/ui/DropdownMenu-types";
 
 interface DropdownMenuContextValue {
@@ -41,11 +42,12 @@ const variants: Record<DropdownMenuVariant, string> = {
 
 export function DropdownMenu({
   children,
-  variant = "default",
+  variant,
 }: React.ComponentPropsWithoutRef<"div"> & { variant?: DropdownMenuVariant }) {
+  const effectiveVariant = useComponentVariant(variant);
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const variantClass = variants[variant];
+  const variantClass = variants[effectiveVariant as keyof typeof variants];
 
   const setOpenSafe = useCallback((v: boolean) => {
     setOpen(v);
@@ -53,7 +55,7 @@ export function DropdownMenu({
 
   return (
     <DropdownMenuContext.Provider
-      value={{ open, setOpen: setOpenSafe, triggerRef, variant }}
+      value={{ open, setOpen: setOpenSafe, triggerRef, variant: effectiveVariant }}
     >
       <div className={cn("relative inline-flex", variantClass)}>{children}</div>
     </DropdownMenuContext.Provider>

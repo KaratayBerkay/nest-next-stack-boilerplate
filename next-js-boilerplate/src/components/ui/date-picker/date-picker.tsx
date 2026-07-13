@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Calendar } from "@/components/ui/Calendar";
 import { cn } from "@/lib/cn";
 import { formatDateLong } from "@/lib/date-time";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { DatePickerProps, DatePickerVariant } from "@/types/ui/DatePicker-types";
 
 const variants: Record<DatePickerVariant, string> = {
@@ -21,12 +22,13 @@ export function DatePicker({
   value,
   onChange,
   placeholder = "Pick a date",
-  variant = "default",
+  variant,
   className,
   fontSize,
   fontWeight,
   fontFamily,
 }: DatePickerProps) {
+  const effectiveVariant = useComponentVariant(variant);
   const [open, setOpen] = useState(false);
   const fontSizeClass = fontSize || "text-sm";
   const fontWeightClass = fontWeight || "font-medium";
@@ -38,7 +40,7 @@ export function DatePicker({
         onClick={() => handleToggle(open, setOpen)}
         className={cn(
           "flex h-9 w-full items-center justify-between rounded border px-3 py-1 text-sm shadow-sm transition-colors",
-          variants[variant],
+          variants[effectiveVariant as keyof typeof variants],
         )}
       >
         <span className={cn("truncate", fontSizeClass, fontWeightClass, fontFamilyClass)}>

@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/cn";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { useTabsContext } from "./tabs";
 import type { TabsContentProps } from "@/types/ui/TabsContent-types";
 
@@ -8,12 +9,13 @@ export function TabsContent({
   value,
   className,
   children,
-  variant = "default",
+  variant,
   fontSize,
   fontWeight,
   fontFamily,
   ...props
 }: TabsContentProps) {
+  const effectiveVariant = useComponentVariant(variant);
   const { activeValue } = useTabsContext();
   if (activeValue !== value) return null;
 
@@ -34,7 +36,7 @@ export function TabsContent({
       role="tabpanel"
       data-state="active"
       className={cn(
-        variants[variant],
+        variants[effectiveVariant as keyof typeof variants],
         fontSizeClass,
         fontWeightClass,
         fontFamilyClass,

@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/cn";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { AlertProps } from "@/types/ui/Alert-types";
 
 const variants = {
@@ -18,7 +19,7 @@ const variants = {
 } as const;
 
 export function Alert({
-  variant = "default",
+  variant,
   className,
   fontSize,
   fontWeight,
@@ -27,6 +28,7 @@ export function Alert({
   header,
   ...props
 }: AlertProps) {
+  const effectiveVariant = useComponentVariant(variant);
   const fontSizeClass = fontSize || "text-sm";
   const fontWeightClass = fontWeight || "font-medium";
   const fontFamilyClass = fontFamily || "font-sans";
@@ -36,7 +38,7 @@ export function Alert({
       role="alert"
       className={cn(
         "relative w-full rounded-lg border p-4 text-sm",
-        variants[variant],
+        variants[effectiveVariant as keyof typeof variants],
         fontSizeClass,
         fontWeightClass,
         fontFamilyClass,

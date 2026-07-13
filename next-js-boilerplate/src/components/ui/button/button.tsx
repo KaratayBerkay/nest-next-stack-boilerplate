@@ -1,9 +1,10 @@
 import { cn } from "@/lib/cn";
 import { variants, sizes } from "@/components/ui/button-styles";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { ButtonProps } from "@/types/ui/Button-types";
 
 export function Button({
-  variant = "default",
+  variant,
   size = "md",
   className,
   disabled,
@@ -15,6 +16,7 @@ export function Button({
   children,
   ...props
 }: ButtonProps) {
+  const effectiveVariant = useComponentVariant(variant);
   const fontSizeClass = fontSize || sizes[size].split(" ")[2];
   const fontWeightClass = fontWeight || "font-medium";
   const fontFamilyClass = fontFamily || "font-sans";
@@ -23,7 +25,7 @@ export function Button({
     <button
       className={cn(
         "focus-visible:ring-brand inline-flex items-center justify-center gap-2 rounded shadow-xs transition-all hover:shadow-md focus-visible:ring-2 focus-visible:outline-none active:shadow-xs disabled:pointer-events-none disabled:opacity-40",
-        variants[variant],
+        variants[effectiveVariant as keyof typeof variants],
         className,
         fontSizeClass,
         fontWeightClass,

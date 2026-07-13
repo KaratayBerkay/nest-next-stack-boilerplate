@@ -13,16 +13,21 @@ import {
   THEMES,
   DARK_THEMES,
   THEME_COOKIE_NAME,
+  COMPONENT_STYLES,
+  COMPONENT_STYLE_COOKIE_NAME,
   type ThemeName,
+  type ComponentStyle,
 } from "@/constants/theme";
 import type { ThemeProviderProps } from "@/types/hooks/ThemeProvider-types";
-export { THEMES };
-export type { ThemeName };
+export { THEMES, COMPONENT_STYLES };
+export type { ThemeName, ComponentStyle };
 
 type ThemeContextValue = {
   theme: ThemeName;
   setTheme: (theme: ThemeName) => void;
   cycleTheme: () => void;
+  componentStyle: ComponentStyle;
+  setComponentStyle: (style: ComponentStyle) => void;
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -42,6 +47,21 @@ function setThemeCookie(theme: ThemeName) {
   document.cookie = `${THEME_COOKIE_NAME}=${theme};path=/;max-age=31536000;samesite=lax`;
 }
 
+function getComponentStyleCookie(): ComponentStyle | null {
+  const match = document.cookie.match(
+    new RegExp(`(?:^|;\\s*)${COMPONENT_STYLE_COOKIE_NAME}=([^;]*)`),
+  );
+  if (match) {
+    const value = match[1] as ComponentStyle;
+    if (COMPONENT_STYLES.some((s) => s.name === value)) return value;
+  }
+  return null;
+}
+
+function setComponentStyleCookie(style: ComponentStyle) {
+  document.cookie = `${COMPONENT_STYLE_COOKIE_NAME}=${style};path=/;max-age=31536000;samesite=lax`;
+}
+
 function getInitialTheme(): ThemeName {
   if (typeof window === "undefined") return "light";
   // Respect the class already set by server / inline script
@@ -57,6 +77,17 @@ function getInitialTheme(): ThemeName {
     : "light";
 }
 
+function getInitialComponentStyle(): ComponentStyle {
+  if (typeof window === "undefined") return "default";
+  const root = document.documentElement;
+  for (const s of COMPONENT_STYLES) {
+    if (root.classList.contains(`style-${s.name}`)) return s.name;
+  }
+  const fromCookie = getComponentStyleCookie();
+  if (fromCookie) return fromCookie;
+  return "default";
+}
+
 function applyTheme(theme: ThemeName) {
   const root = document.documentElement;
   // Remove all theme classes
@@ -70,8 +101,20 @@ function applyTheme(theme: ThemeName) {
   root.classList.toggle("dark", DARK_THEMES.includes(theme));
 }
 
+function applyComponentStyle(style: ComponentStyle) {
+  const root = document.documentElement;
+  // Remove all component style classes
+  for (const s of COMPONENT_STYLES) {
+    root.classList.remove(`style-${s.name}`);
+  }
+  // Add current component style class
+  root.classList.add(`style-${style}`);
+}
+
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<ThemeName>("light");
+  const [componentStyle, setComponentStyleState] =
+    useState<ComponentStyle>("default");
 
   // Intentional hydration guard: set theme once on mount from localStorage/cookie.
   useEffect(() => {
@@ -79,6 +122,10 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setThemeState(initial);
     applyTheme(initial);
+
+    const initialStyle = getInitialComponentStyle();
+    setComponentStyleState(initialStyle);
+    applyComponentStyle(initialStyle);
   }, []);
 
   const setTheme = useCallback((next: ThemeName) => {
@@ -93,8 +140,16 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     setTheme(next);
   }, [theme, setTheme]);
 
+  const setComponentStyle = useCallback((next: ComponentStyle) => {
+    setComponentStyleState(next);
+    applyComponentStyle(next);
+    setComponentStyleCookie(next);
+  }, []);
+
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, cycleTheme }}>
+    <ThemeContext.Provider
+      value={{ theme, setTheme, cycleTheme, componentStyle, setComponentStyle }}
+    >
       {children}
     </ThemeContext.Provider>
   );
