@@ -5,7 +5,10 @@ export interface SwitchProps extends Omit<
   "type" | "children"
 > {
   label?: string;
+  variant?: SwitchVariant;
   fontSize?: string;
   fontWeight?: string;
   fontFamily?: string;
 }
+
+export type SwitchVariant = "default" | "outline" | "shiny" | "glass" | "neon" | "gradient";

@@ -5,7 +5,10 @@ export interface TabsTriggerProps extends Omit<
   "value"
 > {
   value: string;
+  variant?: TabsTriggerVariant;
   fontSize?: string;
   fontWeight?: string;
   fontFamily?: string;
 }
+
+export type TabsTriggerVariant = "default" | "underline" | "pills" | "shiny" | "glass" | "neon" | "gradient";

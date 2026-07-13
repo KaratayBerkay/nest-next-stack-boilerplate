@@ -17,7 +17,7 @@ export function TooltipTrigger({
   ...props
 }: TooltipTriggerProps) {
   const ref = useRef<HTMLElement>(null);
-  const { show, hide, toggle, setTriggerRect, isDesktop } = useTooltip();
+  const { show, hide, toggle, setTriggerRect, isDesktop, open, tooltipId } = useTooltip();
 
   const updateRect = useCallback(() => {
     if (ref.current) {
@@ -100,6 +100,7 @@ export function TooltipTrigger({
         onKeyDown={handleKeyDown}
         role="button"
         tabIndex={0}
+        aria-describedby={open ? tooltipId : undefined}
         {...props}
       >
         {children}
@@ -119,6 +120,7 @@ export function TooltipTrigger({
       onKeyDown={handleKeyDown}
       tabIndex={0}
       role="button"
+      aria-describedby={open ? tooltipId : undefined}
       {...props}
     >
       {children}

@@ -9,15 +9,23 @@ import {
   CommandItem,
 } from "@/components/ui/Command";
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { fontClasses } from "@/lib/font-classes";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { ComboboxProps } from "@/types/ui/Combobox-types";
 
-const defaultStyles = "border-border bg-bg text-fg";
+const variants = {
+  ...globalStyleVariants,
+  default: "border-border bg-bg text-fg",
+};
 
 export function Combobox({
   options,
   value,
   onValueChange,
   placeholder = "Search...",
+  variant,
   className,
   fontSize,
   fontWeight,
@@ -25,9 +33,7 @@ export function Combobox({
 }: ComboboxProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const fontSizeClass = fontSize || "text-sm";
-  const fontWeightClass = fontWeight || "font-medium";
-  const fontFamilyClass = fontFamily || "font-sans";
+  const effectiveVariant = useComponentVariant(variant);
 
   return (
     <div className={cn("relative", className)}>
@@ -35,11 +41,10 @@ export function Combobox({
         onClick={() => setOpen(!open)}
         className={cn(
           "flex h-9 w-full items-center justify-between rounded border px-3 py-1 text-sm shadow-sm",
-          defaultStyles,
-          className,
+          resolveVariant(variants, effectiveVariant),
         )}
       >
-        <span className={cn("truncate", fontSizeClass, fontWeightClass, fontFamilyClass)}>
+        <span className={cn("truncate", fontClasses({ fontSize, fontWeight, fontFamily }))}>
           {value ? options.find((o) => o.value === value)?.label : placeholder}
         </span>
         <svg
@@ -79,7 +84,7 @@ export function Combobox({
                         setQuery("");
                       }}
                     >
-                      <span className={cn(fontSizeClass, fontWeightClass, fontFamilyClass)}>{opt.label}</span>
+                      <span className={cn(fontClasses({ fontSize, fontWeight, fontFamily }))}>{opt.label}</span>
                     </CommandItem>
                   ))}
               </CommandGroup>

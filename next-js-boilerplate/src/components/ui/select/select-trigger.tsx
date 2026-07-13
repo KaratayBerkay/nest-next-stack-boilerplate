@@ -1,22 +1,34 @@
 "use client";
 
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { useSelect } from "./select";
 import type { SelectTriggerProps } from "@/types/ui/Select-types";
 
+const variants = {
+  ...globalStyleVariants,
+  default: "border-border bg-bg text-fg",
+  outline: "border-2 border-border bg-transparent text-fg",
+};
+
 export function SelectTrigger({
   className,
+  variant,
   children,
   ...props
 }: SelectTriggerProps) {
   const { open, setOpen, triggerRef } = useSelect();
+  const effectiveVariant = useComponentVariant(variant);
 
   return (
     <button
       ref={triggerRef}
       type="button"
       className={cn(
-        "border-border bg-bg text-fg focus-visible:ring-brand flex h-9 w-full items-center justify-between gap-2 rounded border px-3 py-2 text-sm shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+        "focus-visible:ring-brand flex h-9 w-full items-center justify-between gap-2 rounded border px-3 py-2 text-sm shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40",
+        resolveVariant(variants, effectiveVariant),
         className,
       )}
       onClick={() => setOpen(!open)}

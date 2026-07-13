@@ -42,7 +42,7 @@ export interface IndeterminateCheckboxProps extends Omit<
   fontFamily?: string;
 }
 
-export type CheckboxVariant = "default";
+export type CheckboxVariant = "default" | "shiny" | "glass" | "neon" | "gradient";
 
 export type CheckboxGroupShinyProps = React.ComponentPropsWithoutRef<"div">;
 

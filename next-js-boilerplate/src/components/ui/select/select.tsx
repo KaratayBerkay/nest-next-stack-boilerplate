@@ -11,6 +11,7 @@ interface SelectContextValue {
   labelMap: React.MutableRefObject<Map<string, string>>;
   triggerRef: React.RefObject<HTMLButtonElement | null>;
   contentRef: React.RefObject<HTMLDivElement | null>;
+  name?: string;
 }
 
 const SelectContext = createContext<SelectContextValue | null>(null);
@@ -28,6 +29,7 @@ export function Select({
   value,
   onValueChange,
   defaultOpen = false,
+  name,
 }: SelectProps) {
   const [open, setOpen] = useState(defaultOpen);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -44,9 +46,13 @@ export function Select({
         labelMap,
         triggerRef,
         contentRef,
+        name,
       }}
     >
-      <div>{children}</div>
+      <div className="relative">
+        {name && <input type="hidden" name={name} value={value ?? ""} />}
+        {children}
+      </div>
     </SelectContext.Provider>
   );
 }

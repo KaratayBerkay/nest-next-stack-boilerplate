@@ -14,7 +14,7 @@ export function PopoverContent({
   sideOffset = 8,
   ...props
 }: PopoverContentProps) {
-  const { open, close, triggerRef } = usePopover();
+  const { open, close, triggerRef, contentId } = usePopover();
   const contentRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<{
     top: number;
@@ -84,20 +84,28 @@ export function PopoverContent({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open, close, triggerRef]);
 
+  useEffect(() => {
+    if (!open || !isDesktop || !contentRef.current) return;
+    contentRef.current.focus();
+  }, [open, isDesktop]);
+
   if (!open) return null;
 
   return createPortal(
     <>
       {!isDesktop && (
         <div
-          className="fixed inset-0 z-40 bg-black/50"
+          className="fixed inset-0 z-40 bg-overlay/50"
           onClick={close}
           aria-hidden="true"
         />
       )}
       <div
         ref={contentRef}
+        id={contentId}
         role="dialog"
+        aria-label="Popover"
+        tabIndex={-1}
         style={
           isDesktop && position
             ? { position: "fixed", top: position.top, left: position.left }

@@ -1,8 +1,11 @@
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { BadgeProps } from "@/types/ui/Badge-types";
 
 const variants = {
+  ...globalStyleVariants,
   default: "bg-surface text-fg border border-border",
   secondary: "bg-surface text-fg",
   outline: "border border-border text-muted",
@@ -36,7 +39,7 @@ export function Badge({
         effectiveVariant === "dot"
           ? "p-0"
           : "rounded-full px-2.5 py-0.5",
-        variants[effectiveVariant as keyof typeof variants],
+        resolveVariant(variants, effectiveVariant),
         fontSizeClass,
         fontWeightClass,
         fontFamilyClass,

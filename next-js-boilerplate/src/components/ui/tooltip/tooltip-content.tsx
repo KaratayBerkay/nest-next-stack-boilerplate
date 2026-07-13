@@ -29,7 +29,7 @@ function getPosition(rect: DOMRect, side: string) {
 }
 
 export function TooltipContent({ children, className }: TooltipContentProps) {
-  const { open, side, triggerRect, hide, isDesktop } = useTooltip();
+  const { open, side, triggerRect, hide, isDesktop, tooltipId } = useTooltip();
   const mounted = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -87,10 +87,16 @@ export function TooltipContent({ children, className }: TooltipContentProps) {
         .tooltip-open {
           animation: tooltip-in 0.15s ease-out;
         }
+        @media (prefers-reduced-motion: reduce) {
+          .tooltip-open {
+            animation: none;
+          }
+        }
       `}</style>
       <div style={positionStyle}>
         <div
           role="tooltip"
+          id={tooltipId}
           className={cn(
             "tooltip-open relative",
             "rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap shadow-lg",
@@ -111,13 +117,14 @@ export function TooltipContent({ children, className }: TooltipContentProps) {
   const mobileTooltip = (
     <>
       <div
-        className="animate-fade-in fixed inset-0 z-40 bg-black/50"
+        className="animate-fade-in fixed inset-0 z-40 bg-overlay/50"
         onClick={hide}
         aria-hidden="true"
       />
       <div className="animate-fade-in fixed inset-0 z-50 flex items-center justify-center p-6">
         <div
           role="tooltip"
+          id={tooltipId}
           className={cn(
             "bg-surface text-fg w-full max-w-sm rounded-xl px-5 py-4 text-sm shadow-lg",
             className,

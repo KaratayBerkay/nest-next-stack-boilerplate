@@ -12,7 +12,7 @@ export interface AvatarProps extends React.ComponentPropsWithoutRef<"div"> {
   fontFamily?: string;
 }
 
-export type AvatarVariant = "default" | "brand" | "success" | "warning" | "error" | "info";
+export type AvatarVariant = "default" | "brand" | "success" | "warning" | "error" | "info" | "shiny" | "glass" | "neon" | "gradient";
 
 export interface AvatarGroupProps extends React.ComponentPropsWithoutRef<"div"> {
   fontSize?: string;

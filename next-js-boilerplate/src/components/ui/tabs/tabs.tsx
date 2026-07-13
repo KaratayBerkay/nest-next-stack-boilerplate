@@ -1,12 +1,13 @@
 "use client";
 
 import { cn } from "@/lib/cn";
-import { createContext, useCallback, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useId, useState } from "react";
 import type { TabsProps } from "@/types/ui/Tabs-types";
 
 interface TabsContextValue {
   activeValue: string;
   onValueChange: (value: string) => void;
+  baseId: string;
 }
 
 const TabsContext = createContext<TabsContextValue | null>(null);
@@ -17,8 +18,18 @@ export function useTabsContext() {
   return ctx;
 }
 
-export function Tabs({ defaultValue, className, type = "single", fontSize, fontWeight, fontFamily, ...props }: TabsProps) {
+export function Tabs({
+  defaultValue,
+  className,
+  type = "single",
+  orientation = "horizontal",
+  fontSize,
+  fontWeight,
+  fontFamily,
+  ...props
+}: TabsProps) {
   const [activeValue, setActiveValue] = useState(defaultValue);
+  const baseId = useId();
 
   const onValueChange = useCallback((value: string) => {
     setActiveValue(value);
@@ -29,7 +40,7 @@ export function Tabs({ defaultValue, className, type = "single", fontSize, fontW
   const fontFamilyClass = fontFamily || "font-sans";
 
   return (
-    <TabsContext.Provider value={{ activeValue, onValueChange }}>
+    <TabsContext.Provider value={{ activeValue, onValueChange, baseId }}>
       <div
         className={cn(
           "w-full",

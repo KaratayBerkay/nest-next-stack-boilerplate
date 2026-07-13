@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   useEffect,
+  useId,
 } from "react";
 import { useBreakpoint } from "@/hooks";
 import type { TooltipProps } from "@/types/ui/Tooltip-types";
@@ -22,6 +23,7 @@ interface TooltipContextType {
   setTriggerRect: (rect: DOMRect) => void;
   toggle: () => void;
   isDesktop: boolean;
+  tooltipId: string;
 }
 
 const TooltipContext = createContext<TooltipContextType | null>(null);
@@ -37,6 +39,7 @@ export function Tooltip({ children, delay = 200, side = "top" }: TooltipProps) {
   const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const isDesktop = useBreakpoint("sm");
+  const tooltipId = useId();
 
   const show = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -74,6 +77,7 @@ export function Tooltip({ children, delay = 200, side = "top" }: TooltipProps) {
         toggle,
         setTriggerRect,
         isDesktop,
+        tooltipId,
       }}
     >
       {children}

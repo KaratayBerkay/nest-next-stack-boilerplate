@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useId,
   useRef,
   useState,
 } from "react";
@@ -15,6 +16,7 @@ interface PopoverContextValue {
   toggle: () => void;
   close: () => void;
   triggerRef: React.RefObject<HTMLButtonElement | null>;
+  contentId: string;
 }
 
 const PopoverContext = createContext<PopoverContextValue | null>(null);
@@ -30,12 +32,13 @@ export function usePopover() {
 export function Popover({ children, defaultOpen = false }: PopoverProps) {
   const [open, setOpen] = useState(defaultOpen);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const contentId = useId();
 
   const toggle = useCallback(() => setOpen((prev) => !prev), []);
   const close = useCallback(() => setOpen(false), []);
 
   return (
-    <PopoverContext.Provider value={{ open, toggle, close, triggerRef }}>
+    <PopoverContext.Provider value={{ open, toggle, close, triggerRef, contentId }}>
       <div className={cn()}>{children}</div>
     </PopoverContext.Provider>
   );

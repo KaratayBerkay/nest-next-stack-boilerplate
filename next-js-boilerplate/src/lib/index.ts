@@ -2,3 +2,5 @@
 export * from "./cn";
 export * from "./date-time";
 export * from "./env";
+export * from "./font-classes";
+export * from "./resolve-variant";

@@ -2,10 +2,13 @@
 
 import { useId } from "react";
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { CheckboxProps, CheckboxVariant } from "@/types/ui/Checkbox-types";
 
 const checkVariants: Record<CheckboxVariant, string> = {
+  ...globalStyleVariants,
   default: "border-border checked:bg-brand checked:border-brand",
 };
 
@@ -24,7 +27,7 @@ export function Checkbox({ className, id, label, variant, fontSize, fontWeight, 
         id={generatedId}
         className={cn(
           "peer bg-bg focus-visible:ring-brand size-4 shrink-0 cursor-pointer appearance-none rounded border focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-          checkVariants[effectiveVariant as keyof typeof checkVariants],
+          resolveVariant(checkVariants, effectiveVariant),
           className,
         )}
         {...props}

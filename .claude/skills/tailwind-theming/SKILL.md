@@ -41,6 +41,7 @@ Every theme must define all of these; components rely on the full set.
 | `muted` / `muted-fg` | secondary text / tertiary-secondary text |
 | `brand` / `brand-fg` | accent (buttons, links, focus rings) / text on accent |
 | `success|warning|error|info` + `-fg` | status colors / text on them |
+| `overlay` | overlay backdrops (dialog, drawer, sheet, popover, select, dropdown-menu, alert-dialog, tooltip) — use as `bg-overlay/50` |
 
 Plus theme-aware shadows (`shadow-xs`…`shadow-xl`, `shadow-elevated`, `shadow-success|warning|error|info` rings) and fonts (`font-sans`/`font-mono` → Geist via next/font vars).
 

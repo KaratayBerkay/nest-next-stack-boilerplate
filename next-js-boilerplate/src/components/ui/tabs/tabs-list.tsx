@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { useRef } from "react";
+import { useTabsContext } from "./tabs";
 import type { TabsListProps } from "@/types/ui/TabsList-types";
 
 function handleTabsKeyDown(
@@ -23,6 +24,10 @@ function handleTabsKeyDown(
     nextIndex = (currentIndex + 1) % tabs.length;
   } else if (e.key === "ArrowLeft") {
     nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+  } else if (e.key === "Home") {
+    nextIndex = 0;
+  } else if (e.key === "End") {
+    nextIndex = tabs.length - 1;
   } else {
     return;
   }

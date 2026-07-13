@@ -25,7 +25,7 @@ export const SheetContent = forwardRef<
 
   return (
     <Portal>
-      <Overlay className="data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out fixed inset-0 z-40 bg-black/50" />
+      <Overlay className="data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out fixed inset-0 z-40 bg-overlay/50" />
       <Content
         ref={ref}
         className={cn(

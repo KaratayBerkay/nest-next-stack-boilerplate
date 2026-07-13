@@ -1,10 +1,13 @@
 "use client";
 
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { AlertProps } from "@/types/ui/Alert-types";
 
 const variants = {
+  ...globalStyleVariants,
   default: "border-border bg-surface text-fg",
   destructive:
     "border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300",
@@ -34,7 +37,7 @@ export function Alert({
       role="alert"
       className={cn(
         "relative w-full rounded-lg border p-4 text-sm",
-        variants[effectiveVariant as keyof typeof variants],
+        resolveVariant(variants, effectiveVariant),
         fontSizeClass,
         fontWeightClass,
         fontFamilyClass,

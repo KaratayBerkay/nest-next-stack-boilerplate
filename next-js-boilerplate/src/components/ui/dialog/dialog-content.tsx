@@ -11,9 +11,16 @@ import {
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
 import { useDialog } from "./dialog";
-import type { DialogContentProps } from "@/types/ui/Dialog-types";
+import type { DialogContentProps, DialogSize } from "@/types/ui/Dialog-types";
 
-export function DialogContent({ children, className }: DialogContentProps) {
+const sizeStyles: Record<DialogSize, string> = {
+  sm: "sm:max-w-sm",
+  md: "sm:max-w-lg",
+  lg: "sm:max-w-2xl",
+  full: "sm:max-w-[90vw] sm:max-h-[90vh]",
+};
+
+export function DialogContent({ children, className, size = "md" }: DialogContentProps) {
   const { open, onOpenChange } = useDialog();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const mounted = useSyncExternalStore(
@@ -94,13 +101,22 @@ export function DialogContent({ children, className }: DialogContentProps) {
         dialog.dialog-closing::backdrop {
           animation: backdrop-fade-out 0.15s cubic-bezier(0.4, 0, 1, 1) forwards;
         }
+        @media (prefers-reduced-motion: reduce) {
+          dialog.dialog-open,
+          dialog.dialog-closing,
+          dialog.dialog-open::backdrop,
+          dialog.dialog-closing::backdrop {
+            animation: none;
+          }
+        }
       `}</style>
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions */}
       <dialog
         ref={dialogRef}
         className={cn(
-          "backdrop:bg-black/50",
-          "text-fg m-auto flex h-dvh w-full flex-col overflow-y-auto border-0 shadow-xl sm:h-fit sm:max-h-[85vh] sm:max-w-lg sm:rounded-xl sm:border sm:p-0",
+          "backdrop:bg-overlay/50",
+          "text-fg m-auto flex h-dvh w-full flex-col overflow-y-auto border-0 shadow-xl sm:h-fit sm:max-h-[85vh] sm:rounded-xl sm:border sm:p-0",
+          sizeStyles[size],
           !open && !closing && "hidden",
           closing ? "dialog-closing" : "dialog-open",
           className,

@@ -63,6 +63,7 @@ export const TableHead = forwardRef<
 >(({ className, ...props }, ref) => (
   <th
     ref={ref}
+    scope="col"
     className={cn(
       "text-muted h-10 px-2 text-left align-middle text-xs font-medium [&:has([role=checkbox])]:pr-0",
       className,

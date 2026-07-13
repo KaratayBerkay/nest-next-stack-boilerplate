@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { AvatarProps, AvatarVariant } from "@/types/ui/Avatar-types";
 
@@ -15,6 +17,7 @@ const sizes = {
 } as const;
 
 const variants: Record<AvatarVariant, string> = {
+  ...globalStyleVariants,
   default: "bg-surface text-muted",
   brand: "bg-brand text-brand-fg",
   success: "bg-success text-success-fg",
@@ -48,7 +51,7 @@ export function Avatar({
       className={cn(
         "relative inline-flex items-center justify-center overflow-hidden rounded-full font-medium",
         sizes[size],
-        variants[effectiveVariant as keyof typeof variants],
+        resolveVariant(variants, effectiveVariant),
         fontSizeClass,
         fontWeightClass,
         fontFamilyClass,

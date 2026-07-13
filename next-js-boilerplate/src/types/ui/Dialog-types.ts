@@ -49,8 +49,11 @@ export type DialogTitleProps = React.ComponentPropsWithoutRef<"h2"> & {
   fontFamily?: string;
 };
 
+export type DialogSize = "sm" | "md" | "lg" | "full";
+
 export interface DialogContentProps extends React.ComponentPropsWithoutRef<"dialog"> {
   children: React.ReactNode;
   className?: string;
   variant?: DialogVariant;
+  size?: DialogSize;
 }

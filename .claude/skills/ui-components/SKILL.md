@@ -13,9 +13,9 @@ All paths below are relative to `next-js-boilerplate/`.
 
 Before writing a new component, open the closest existing relative:
 
-- `src/components/ui/button/` + `src/components/ui/button-styles.ts` — variant/size maps, font-override props, interactive base classes
+- `src/components/ui/button/` + `src/components/ui/button-styles.ts` — variant/size maps, font-override props, interactive base classes, `loading` prop pattern
 - `src/components/ui/hover-card/hover-card.tsx` — wrapping a Radix primitive (details in the **radix-primitives** skill)
-- `src/components/ui/dialog/` — hand-rolled overlay on native `<dialog>`, portal + animation pattern
+- `src/components/ui/dialog/` — hand-rolled overlay on native `<dialog>`, portal + animation pattern, `size` prop
 - `src/components/ui/index.ts` — the central barrel
 
 ## Anatomy — where files go
@@ -49,6 +49,7 @@ export interface ButtonProps extends React.ComponentPropsWithoutRef<"button"> {
   fontFamily?: string;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  loading?: boolean;
 }
 ```
 
@@ -56,7 +57,7 @@ export interface ButtonProps extends React.ComponentPropsWithoutRef<"button"> {
 
 **1. `cn()` does not merge.** `cn` from `@/lib/cn` is a plain `filter(Boolean).join(" ")` — intentionally dependency-free, it does *not* deduplicate conflicting Tailwind classes. Consequence: a consumer's `className` cannot reliably override your base utilities (CSS stylesheet order decides conflicts, not class-attribute order). So design the API instead of relying on overrides — expose knobs as props. That is exactly why Button, DatePicker, and TimeInput take `variant`, `size`, `fontSize`, `fontWeight`, `fontFamily` rather than expecting `className="text-lg"` to win.
 
-**2. Semantic tokens only.** Style with theme tokens — `bg-bg`, `text-fg`, `bg-brand`, `text-brand-fg`, `bg-surface`, `hover:bg-surface-hover`, `border-border`, `text-muted`, `bg-success|warning|error|info` (+ their `-fg` pairs). Never hardcode palette colors (`bg-zinc-100`, `text-white`, `#hex`): there are four themes today (light, dark, ocean, violet) and components must survive all of them plus any future `.theme-*` block. Full token vocabulary and how themes work: **tailwind-theming** skill.
+**2. Semantic tokens only.** Style with theme tokens — `bg-bg`, `text-fg`, `bg-brand`, `text-brand-fg`, `bg-surface`, `hover:bg-surface-hover`, `border-border`, `text-muted`, `bg-success|warning|error|info` (+ their `-fg` pairs), `bg-overlay/50` for overlay scrims. Never hardcode palette colors (`bg-zinc-100`, `text-white`, `#hex`): there are four themes today (light, dark, ocean, violet) and components must survive all of them plus any future `.theme-*` block. Full token vocabulary and how themes work: **tailwind-theming** skill.
 
 **3. Standard interactive states** (copy from Button):
 
@@ -77,16 +78,36 @@ export const variants = {
 export type Variant = keyof typeof variants;
 ```
 
-**5. Resolve variants through `useComponentVariant`.** Users can set a site-wide component style (persisted in a cookie, applied as a `style-*` class by ThemeProvider; the list lives in `@/constants/theme`). An explicit `variant` prop wins over the global style:
+**5. Resolve variants through `useComponentVariant` + `resolveVariant`.** Users can set a site-wide component style (persisted in a cookie, applied as a `style-*` class by ThemeProvider; the list lives in `@/constants/theme`). An explicit `variant` prop wins over the global style:
 
 ```ts
+import { useComponentVariant } from "@/hooks/useComponentVariant";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { variants } from "./foo-bar-styles";
+
 const effectiveVariant = useComponentVariant(variant);
-// then: variants[effectiveVariant as keyof typeof variants]
+// apply: resolveVariant(variants, effectiveVariant)
 ```
+
+`resolveVariant` (`src/lib/resolve-variant.ts`) safely looks up a variant key, falling back to `variants.default` if the key is missing. Always use it instead of `variants[effectiveVariant]` directly.
 
 Always define at least a `default` entry; add entries for other global styles only where the component should actually differ.
 
-**6. Icons** come from `@tabler/icons-react`; tiny one-off glyphs (chevrons, close ×) are inlined as `stroke="currentColor"` SVGs so they inherit the text color — both patterns already exist, pick whichever the sibling components use.
+**6. Global style recipes.** For shared visual styles (shiny, glass, neon, gradient), import from `src/components/ui/global-style-variants.ts` and spread `globalStyleVariants[effectiveVariant]` into the element's className. The recipes define `default`, `shiny`, `glass`, `neon`, and `gradient` entries.
+
+```ts
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+// in className: ...resolveVariant(variants, effectiveVariant), globalStyleVariants[effectiveVariant]
+```
+
+**7. Font classes utility.** Use `fontClasses` from `src/lib/font-classes.ts` to deduplicate the font-trio pattern (`font-sans font-medium text-sm`):
+
+```ts
+import { fontClasses } from "@/lib/font-classes";
+// in className: ...fontClasses  (instead of manually writing "font-sans font-medium text-sm")
+```
+
+**8. Icons** come from `@tabler/icons-react`; tiny one-off glyphs (chevrons, close ×) are inlined as `stroke="currentColor"` SVGs so they inherit the text color — both patterns already exist, pick whichever the sibling components use.
 
 ## Client vs server
 
@@ -94,7 +115,30 @@ Components are server-rendered by default. Add `"use client"` only when the comp
 
 ## Overlays and portals
 
-Portal to `document.body` with `createPortal`, and wrap portaled children in `<div className="pointer-events-auto">` — a library-wide pattern; portaled content must re-enable pointer events. For enter/leave animation in hand-rolled overlays, use a scoped `<style>` block with keyframes plus an open/closing class pair, exactly as `dialog/dialog-content.tsx` does (150 ms close timer before unmount).
+Portal to `document.body` with `createPortal`, and wrap portaled content in `<div className="pointer-events-auto">` — a library-wide pattern; portaled content must re-enable pointer events. For enter/leave animation in hand-rolled overlays, use a scoped `<style>` block with keyframes plus an open/closing class pair, exactly as `dialog/dialog-content.tsx` does (150 ms close timer before unmount).
+
+**Overlay scrim token:** Always use `bg-overlay/50` for overlay backdrops (dialog, drawer, sheet, popover, select, dropdown-menu, alert-dialog, tooltip). The `--overlay` token is defined in all four theme blocks in `globals.css`.
+
+## Shared a11y partials
+
+For form inputs that need error/description wiring, use the shared `FieldMessages` component and `useFieldMessageIds` hook from `src/components/ui/field-messages.tsx`:
+
+```tsx
+import { FieldMessages, useFieldMessageIds } from "@/components/ui/field-messages";
+const ids = useFieldMessageIds();
+// on input: aria-describedby={ids.description ?? undefined}
+// after input: <FieldMessages description={description} error={error} />
+```
+
+## Loading state pattern
+
+For buttons and icon buttons, use the `loading` prop pattern:
+
+```tsx
+disabled={disabled || loading}
+aria-busy={loading || undefined}
+// render spinner SVG when loading, otherwise render children
+```
 
 ## Checklist for a new component
 

@@ -1,8 +1,11 @@
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { KbdProps, KbdVariant } from "@/types/ui/Kbd-types";
 
 const variants: Record<KbdVariant, string> = {
+  ...globalStyleVariants,
   default: "bg-surface border-border text-fg",
 };
 
@@ -15,7 +18,7 @@ export function Kbd({
   ...props
 }: KbdProps) {
   const effectiveVariant = useComponentVariant(variant);
-  const variantClass = variants[effectiveVariant as keyof typeof variants];
+  const variantClass = resolveVariant(variants, effectiveVariant);
   const fontSizeClass = fontSize || "text-[10px]";
   const fontWeightClass = fontWeight || "font-medium";
   const fontFamilyClass = fontFamily || "font-mono";

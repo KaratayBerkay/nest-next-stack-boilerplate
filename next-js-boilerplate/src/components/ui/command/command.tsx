@@ -1,6 +1,9 @@
 "use client";
 
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import {
   createContext,
   useContext,
@@ -34,14 +37,21 @@ export function useCommandContext() {
   return ctx;
 }
 
+const commandVariants = {
+  ...globalStyleVariants,
+  default: "border-border bg-bg",
+};
+
 export function Command({
   className,
+  variant,
   children,
   ...props
 }: CommandProps) {
   const [search, setSearchRaw] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [items, setItems] = useState<ItemData[]>([]);
+  const effectiveVariant = useComponentVariant(variant);
 
   const handleSetSearch = useCallback((value: string) => {
     setSearchRaw(value);
@@ -76,7 +86,8 @@ export function Command({
     >
       <div
         className={cn(
-          "border-border bg-bg flex h-full w-full flex-col overflow-hidden rounded-lg border shadow-lg",
+          "flex h-full w-full flex-col overflow-hidden rounded-lg border shadow-lg",
+          resolveVariant(commandVariants, effectiveVariant),
           className,
         )}
         {...props}

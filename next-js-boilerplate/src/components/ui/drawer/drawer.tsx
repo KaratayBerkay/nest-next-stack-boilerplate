@@ -12,7 +12,7 @@ export const DrawerContent = forwardRef<
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
 >(({ className, children, ...props }, ref) => (
   <DrawerPrimitive.Portal>
-    <DrawerPrimitive.Overlay className="fixed inset-0 z-40 bg-black/50" />
+    <DrawerPrimitive.Overlay className="fixed inset-0 z-40 bg-overlay/50" />
     <DrawerPrimitive.Content
       ref={ref}
       className={cn(
@@ -22,7 +22,7 @@ export const DrawerContent = forwardRef<
       )}
       {...props}
     >
-      <div className="mx-auto mb-4 h-1.5 w-12 rounded-full" />
+      <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-muted/40" />
       <div className="pointer-events-auto">{children}</div>
     </DrawerPrimitive.Content>
   </DrawerPrimitive.Portal>

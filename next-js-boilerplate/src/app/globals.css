@@ -27,12 +27,13 @@
   --surface-hover: #f4f4f5;
   --success: #16a34a;
   --success-fg: #ffffff;
-  --warning: #d97706;
+  --warning: #b45309;
   --warning-fg: #ffffff;
   --error: #dc2626;
   --error-fg: #ffffff;
-  --info: #0ea5e9;
+  --info: #0369a1;
   --info-fg: #ffffff;
+  --overlay: #000000;
 }
 
 /* ── Dark ────────────────────────────────────────────────────────── */
@@ -40,30 +41,31 @@
   --bg: #0a0a0a;
   --fg: #ededed;
   --brand: #818cf8;
-  --brand-fg: #ffffff;
+  --brand-fg: #0b0b1a;
   --muted: #a1a1aa;
   --muted-fg: #a1a1aa;
   --border: #27272a;
   --surface: #18181b;
   --surface-hover: #27272a;
   --success: #22c55e;
-  --success-fg: #ffffff;
+  --success-fg: #052e16;
   --warning: #f59e0b;
-  --warning-fg: #ffffff;
+  --warning-fg: #451a03;
   --error: #ef4444;
   --error-fg: #ffffff;
   --info: #38bdf8;
-  --info-fg: #ffffff;
+  --info-fg: #0c4a6e;
+  --overlay: #000000;
 }
 
 /* ── Ocean ───────────────────────────────────────────────────────── */
 .theme-ocean {
   --bg: #f0f9ff;
   --fg: #0c4a6e;
-  --brand: #0284c7;
+  --brand: #0369a1;
   --brand-fg: #ffffff;
-  --muted: #64748b;
-  --muted-fg: #64748b;
+  --muted: #475569;
+  --muted-fg: #475569;
   --border: #bae6fd;
   --surface: #e0f2fe;
   --surface-hover: #bae6fd;
@@ -73,8 +75,9 @@
   --warning-fg: #ffffff;
   --error: #b91c1c;
   --error-fg: #ffffff;
-  --info: #0284c7;
+  --info: #0369a1;
   --info-fg: #ffffff;
+  --overlay: #000000;
 }
 
 /* ── Violet ──────────────────────────────────────────────────────── */
@@ -96,6 +99,7 @@
   --error-fg: #0b0b1a;
   --info: #60a5fa;
   --info-fg: #0b0b1a;
+  --overlay: #000000;
 }
 
 /* ── Component style system ──────────────────────────────────────── */
@@ -203,6 +207,7 @@
   --color-error-fg: var(--error-fg);
   --color-info: var(--info);
   --color-info-fg: var(--info-fg);
+  --color-overlay: var(--overlay);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

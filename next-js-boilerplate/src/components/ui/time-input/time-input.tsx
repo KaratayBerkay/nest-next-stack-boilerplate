@@ -2,6 +2,8 @@
 
 import { useMemo } from "react";
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { TimeInputProps, TimeInputVariant } from "@/types/ui/TimeInput-types";
 
@@ -10,10 +12,12 @@ function pad(n: number): string {
 }
 
 const variantStyles: Record<TimeInputVariant, string> = {
+  ...globalStyleVariants,
   default: "border border-border bg-bg rounded-lg",
 };
 
 const selectClasses: Record<TimeInputVariant, string> = {
+  ...globalStyleVariants,
   default: "bg-bg border-border focus-visible:ring-brand",
 };
 
@@ -128,7 +132,7 @@ export function TimeInput({
         <label className="text-sm font-medium text-foreground">{label}</label>
       )}
       <div className="flex items-center gap-3">
-        <div className={cn("flex items-center gap-2 p-2", variantStyles[effectiveVariant as keyof typeof variantStyles])}>
+        <div className={cn("flex items-center gap-2 p-2", resolveVariant(variantStyles, effectiveVariant))}>
           <TimeUnitSelect
             value={displayHour}
             max={hourMax}
@@ -142,7 +146,7 @@ export function TimeInput({
               }
             }}
             disabled={disabled}
-            selectClassName={selectClasses[effectiveVariant as keyof typeof selectClasses]}
+            selectClassName={resolveVariant(selectClasses, effectiveVariant)}
             use24Hour={use24Hour}
             isHour
           />
@@ -154,7 +158,7 @@ export function TimeInput({
             max={59}
             onChange={(val) => update("minutes", val)}
             disabled={disabled}
-            selectClassName={selectClasses[effectiveVariant as keyof typeof selectClasses]}
+            selectClassName={resolveVariant(selectClasses, effectiveVariant)}
           />
 
           {showSeconds && (
@@ -165,7 +169,7 @@ export function TimeInput({
                 max={59}
                 onChange={(val) => update("seconds", val)}
                 disabled={disabled}
-                selectClassName={selectClasses[effectiveVariant as keyof typeof selectClasses]}
+                selectClassName={resolveVariant(selectClasses, effectiveVariant)}
               />
             </>
           )}

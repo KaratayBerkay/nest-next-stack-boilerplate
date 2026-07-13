@@ -5,9 +5,11 @@ export interface SelectProps {
   value?: string;
   onValueChange: (value: string) => void;
   defaultOpen?: boolean;
+  name?: string;
 }
 
 export interface SelectTriggerProps extends React.ComponentPropsWithoutRef<"button"> {
+  variant?: SelectVariant;
   className?: string;
 }
 
@@ -27,4 +29,4 @@ export interface SelectItemProps extends React.ComponentPropsWithoutRef<"button"
   className?: string;
 }
 
-export type SelectVariant = "default";
+export type SelectVariant = "default" | "outline" | "shiny" | "glass" | "neon" | "gradient";

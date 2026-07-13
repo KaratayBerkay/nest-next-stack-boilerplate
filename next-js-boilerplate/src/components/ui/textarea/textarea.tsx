@@ -1,27 +1,53 @@
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { fontClasses } from "@/lib/font-classes";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
+import { FieldMessages, useFieldMessageIds } from "@/components/ui/field-messages";
 import type { TextareaProps } from "@/types/ui/Textarea-types";
 
-const defaultStyles = "border-border focus-visible:ring-brand";
+const variants = {
+  ...globalStyleVariants,
+  default: "border-border focus-visible:ring-brand",
+};
 
-export function Textarea({ className, error, fontSize, fontWeight, fontFamily, ...props }: TextareaProps) {
-  const fontSizeClass = fontSize || "text-sm";
-  const fontWeightClass = fontWeight || "font-normal";
-  const fontFamilyClass = fontFamily || "font-sans";
+export function Textarea({
+  className,
+  error,
+  description,
+  variant,
+  fontSize,
+  fontWeight,
+  fontFamily,
+  ...props
+}: TextareaProps) {
+  const effectiveVariant = useComponentVariant(variant);
+  const { errorId, descriptionId } = useFieldMessageIds(
+    typeof error === "string" ? error : undefined,
+    description,
+  );
+
+  const describedBy = [errorId, descriptionId].filter(Boolean).join(" ") || undefined;
 
   return (
-    <textarea
-      className={cn(
-        "placeholder:text-muted focus-visible:ring-brand flex min-h-20 w-full rounded border bg-transparent px-3 py-2 shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-        defaultStyles,
-        error &&
-          "border-red-500 focus-visible:ring-red-500 dark:border-red-500",
-        fontSizeClass,
-        fontWeightClass,
-        fontFamilyClass,
-        className,
-      )}
-      aria-invalid={!!error}
-      {...props}
-    />
+    <div className="flex flex-col gap-1">
+      <textarea
+        className={cn(
+          "placeholder:text-muted focus-visible:ring-brand flex min-h-20 w-full rounded border bg-transparent px-3 py-2 shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40",
+          resolveVariant(variants, effectiveVariant),
+          error &&
+            "border-red-500 focus-visible:ring-red-500 dark:border-red-500",
+          fontClasses({ fontSize, fontWeight, fontFamily }, { fontWeight: "font-normal" }),
+          className,
+        )}
+        aria-invalid={!!error}
+        aria-describedby={describedBy}
+        {...props}
+      />
+      <FieldMessages
+        error={typeof error === "string" ? error : undefined}
+        description={description}
+      />
+    </div>
   );
 }

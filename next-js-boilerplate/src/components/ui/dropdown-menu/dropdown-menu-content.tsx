@@ -40,19 +40,28 @@ export function DropdownMenuContent({
         !triggerRef.current.contains(e.target as Node)
       ) {
         setOpen(false);
+        triggerRef.current?.focus();
       }
     };
 
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-
     document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleEscape);
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleEscape);
     };
+  }, [open, setOpen, triggerRef]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open, setOpen, triggerRef]);
 
   useEffect(() => {
@@ -98,7 +107,7 @@ export function DropdownMenuContent({
     <>
       {!isDesktop && (
         <div
-          className="fixed inset-0 z-40 bg-black/50"
+          className="fixed inset-0 z-40 bg-overlay/50"
           onClick={() => setOpen(false)}
           aria-hidden="true"
         />

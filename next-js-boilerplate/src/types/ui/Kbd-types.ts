@@ -7,4 +7,4 @@ export interface KbdProps extends React.ComponentPropsWithoutRef<"kbd"> {
   fontFamily?: string;
 }
 
-export type KbdVariant = "default";
+export type KbdVariant = "default" | "shiny" | "glass" | "neon" | "gradient";

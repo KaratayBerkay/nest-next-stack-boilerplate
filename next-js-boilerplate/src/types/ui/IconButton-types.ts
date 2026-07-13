@@ -9,4 +9,5 @@ export interface IconButtonProps extends Omit<
   label: string;
   variant?: Variant;
   size?: Extract<Size, "icon" | "icon-sm" | "icon-xs">;
+  loading?: boolean;
 }

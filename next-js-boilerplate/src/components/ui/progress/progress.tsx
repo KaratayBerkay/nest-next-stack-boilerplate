@@ -2,14 +2,18 @@
 import { forwardRef } from "react";
 import { Root, Indicator } from "@radix-ui/react-progress";
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { ProgressProps, ProgressVariant } from "@/types/ui/Progress-types";
 
 const barVariants: Record<ProgressVariant, string> = {
+  ...globalStyleVariants,
   default: "bg-brand",
 };
 
 const trackVariants: Record<ProgressVariant, string> = {
+  ...globalStyleVariants,
   default: "bg-surface",
 };
 
@@ -23,7 +27,7 @@ export const Progress = forwardRef<
       ref={ref}
       className={cn(
         "relative h-2 w-full overflow-hidden rounded-full",
-        trackVariants[effectiveVariant as keyof typeof trackVariants],
+        resolveVariant(trackVariants, effectiveVariant),
         className,
       )}
       {...props}
@@ -31,7 +35,7 @@ export const Progress = forwardRef<
       <Indicator
         className={cn(
           "h-full w-full flex-1 transition-all",
-          barVariants[effectiveVariant as keyof typeof barVariants],
+          resolveVariant(barVariants, effectiveVariant),
         )}
         style={{ transform: `translateX(-${100 - (value ?? 0)}%)` }}
       />
