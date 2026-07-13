@@ -10,21 +10,11 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
-import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { useDialog } from "./dialog";
-import type { DialogContentProps, DialogVariant } from "@/types/ui/Dialog-types";
+import type { DialogContentProps } from "@/types/ui/Dialog-types";
 
-const variants: Record<DialogVariant, string> = {
-  default: "border-border bg-bg text-fg",
-  shiny: "bg-gradient-to-br from-slate-900 to-slate-950 text-white border-transparent shadow-2xl",
-  glass: "bg-white/10 backdrop-blur-md text-white border-white/20 shadow-xl",
-  neon: "bg-slate-950/90 text-cyan-400 border border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.15)]",
-  gradient: "bg-gradient-to-br from-slate-900 to-slate-950 text-transparent bg-clip-text border-transparent shadow-2xl",
-};
-
-export function DialogContent({ children, className, variant }: DialogContentProps) {
-  const { open, onOpenChange, variant: contextVariant } = useDialog();
-  const effectiveVariant = useComponentVariant(variant ?? contextVariant);
+export function DialogContent({ children, className }: DialogContentProps) {
+  const { open, onOpenChange } = useDialog();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const mounted = useSyncExternalStore(
     () => () => {},

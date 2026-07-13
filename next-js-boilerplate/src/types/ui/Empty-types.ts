@@ -9,5 +9,3 @@ export interface EmptyProps extends React.ComponentPropsWithoutRef<"div"> {
   fontWeight?: string;
   fontFamily?: string;
 }
-
-export type EmptyVariant = "default" | "shiny" | "glass" | "neon" | "gradient";

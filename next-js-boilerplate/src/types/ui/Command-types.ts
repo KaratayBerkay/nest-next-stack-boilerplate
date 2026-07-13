@@ -2,7 +2,6 @@ import type React from "react";
 
 export interface CommandProps extends React.ComponentPropsWithoutRef<"div"> {
   className?: string;
-  variant?: "default" | "shiny" | "glass" | "neon" | "gradient";
 }
 
 export interface CommandInputProps extends React.ComponentPropsWithoutRef<"input"> {

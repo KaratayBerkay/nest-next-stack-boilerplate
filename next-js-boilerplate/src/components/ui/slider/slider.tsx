@@ -2,15 +2,7 @@
 import { forwardRef } from "react";
 import { Root, Track, Range, Thumb } from "@radix-ui/react-slider";
 import { cn } from "@/lib/cn";
-import type { SliderProps, SliderVariant } from "@/types/ui/Slider-types";
-
-const variants: Record<SliderVariant, string> = {
-  default: "text-fg",
-  shiny: "text-white",
-  glass: "text-white",
-  neon: "text-cyan-400",
-  gradient: "text-transparent bg-clip-text",
-};
+import type { SliderProps } from "@/types/ui/Slider-types";
 
 export const Slider = forwardRef<
   React.ElementRef<typeof Root>,

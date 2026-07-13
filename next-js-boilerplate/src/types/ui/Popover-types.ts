@@ -9,7 +9,7 @@ export interface PopoverProps {
   fontFamily?: string;
 }
 
-export type PopoverVariant = "default" | "shiny" | "glass" | "neon" | "gradient";
+export type PopoverVariant = "default";
 
 export interface PopoverTriggerProps extends React.ComponentPropsWithoutRef<"button"> {
   className?: string;

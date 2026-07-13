@@ -9,15 +9,9 @@ import {
   CommandItem,
 } from "@/components/ui/Command";
 import { cn } from "@/lib/cn";
-import type { ComboboxProps, ComboboxVariant } from "@/types/ui/Combobox-types";
+import type { ComboboxProps } from "@/types/ui/Combobox-types";
 
-const variants: Record<ComboboxVariant, string> = {
-  default: "border-border bg-bg text-fg",
-  shiny: "bg-gradient-to-r from-blue-500 to-purple-500 text-white border-transparent shadow-lg shadow-blue-500/20",
-  glass: "bg-white/20 backdrop-blur-md text-white border-white/20 shadow-md",
-  neon: "bg-slate-950 text-cyan-400 border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.3)]",
-  gradient: "bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-transparent bg-clip-text border-transparent",
-};
+const defaultStyles = "border-border bg-bg text-fg";
 
 export function Combobox({
   options,
@@ -41,7 +35,7 @@ export function Combobox({
         onClick={() => setOpen(!open)}
         className={cn(
           "flex h-9 w-full items-center justify-between rounded border px-3 py-1 text-sm shadow-sm",
-          variants.default,
+          defaultStyles,
           className,
         )}
       >

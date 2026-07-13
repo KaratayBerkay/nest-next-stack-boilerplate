@@ -4,34 +4,22 @@ import { useToastContext } from "./toast-provider";
 import { ToastTitle } from "./toast-title";
 import { ToastDescription } from "./toast-description";
 import { ToastClose } from "./toast-close";
-import { useComponentVariant } from "@/hooks/useComponentVariant";
-import type { ToastProps, ToastVariant } from "@/types/ui/Toast-types";
-
-const variants: Record<ToastVariant, string> = {
-  default: "bg-bg border-border text-fg",
-  shiny: "bg-gradient-to-br from-blue-500 to-purple-500 text-white border-transparent shadow-lg shadow-blue-500/20",
-  glass: "bg-white/10 backdrop-blur-md text-white border-white/20 shadow-xl",
-  neon: "bg-slate-950/90 text-cyan-400 border border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.15)]",
-  gradient: "bg-gradient-to-br from-slate-900 to-slate-950 text-transparent bg-clip-text border-transparent shadow-2xl",
-};
+import type { ToastProps } from "@/types/ui/Toast-types";
 
 export function Toast({
   id,
   className,
-  variant,
   fontSize,
   fontWeight,
   fontFamily,
   ...props
 }: ToastProps) {
-  const effectiveVariant = useComponentVariant(variant);
   const { state, dispatch } = useToastContext();
   const toast = state.find((t) => t.id === id);
   const [visible, setVisible] = useState(false);
   const fontSizeClass = fontSize || "text-sm";
   const fontWeightClass = fontWeight || "font-medium";
   const fontFamilyClass = fontFamily || "font-sans";
-  const variantClass = variants[effectiveVariant as keyof typeof variants];
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setVisible(true));
@@ -57,7 +45,7 @@ export function Toast({
     <div
       className={cn(
         "group pointer-events-auto relative flex w-full items-start gap-3 rounded-lg border p-4 shadow-xl transition-all duration-300 ease-out motion-reduce:transition-none",
-        variantClass,
+        "bg-bg border-border text-fg",
         toastVariantClasses[toast.variant],
         fontSizeClass,
         fontWeightClass,

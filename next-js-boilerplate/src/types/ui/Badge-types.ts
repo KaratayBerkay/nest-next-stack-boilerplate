@@ -11,11 +11,7 @@ type Variant =
   | "info"
   | "soft"
   | "dot"
-  | "pill"
-  | "shiny"
-  | "glass"
-  | "neon"
-  | "gradient";
+  | "pill";
 
 export interface BadgeProps extends React.ComponentPropsWithoutRef<"span"> {
   variant?: Variant;

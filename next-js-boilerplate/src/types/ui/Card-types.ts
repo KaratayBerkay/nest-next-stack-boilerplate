@@ -1,7 +1,7 @@
 import type React from "react";
 
 export type CardProps = React.ComponentPropsWithoutRef<"div"> & {
-  variant?: "default" | "elevated" | "interactive" | "outline" | "surface" | "shiny" | "glass" | "neon" | "gradient";
+  variant?: "default" | "elevated" | "interactive" | "outline" | "surface";
   fontSize?: string;
   fontWeight?: string;
   fontFamily?: string;

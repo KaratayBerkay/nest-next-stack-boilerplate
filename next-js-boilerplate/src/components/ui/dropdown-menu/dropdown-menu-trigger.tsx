@@ -2,15 +2,9 @@
 
 import { cn } from "@/lib/cn";
 import { useDropdownMenuContext } from "./dropdown-menu";
-import type { DropdownMenuTriggerProps, DropdownMenuVariant } from "@/types/ui/DropdownMenu-types";
+import type { DropdownMenuTriggerProps } from "@/types/ui/DropdownMenu-types";
 
-const variants: Record<DropdownMenuVariant, string> = {
-  default: "text-fg",
-  shiny: "text-white",
-  glass: "text-white",
-  neon: "text-cyan-400",
-  gradient: "text-transparent bg-clip-text",
-};
+const defaultStyles = "text-fg";
 
 export function DropdownMenuTrigger({
   className,
@@ -19,11 +13,10 @@ export function DropdownMenuTrigger({
   fontFamily,
   ...props
 }: DropdownMenuTriggerProps) {
-  const { open, setOpen, triggerRef, variant } = useDropdownMenuContext();
+  const { open, setOpen, triggerRef } = useDropdownMenuContext();
   const fontSizeClass = fontSize || "text-sm";
   const fontWeightClass = fontWeight || "font-medium";
   const fontFamilyClass = fontFamily || "font-sans";
-  const variantClass = variants[variant || "default"];
 
   return (
     <button
@@ -35,7 +28,7 @@ export function DropdownMenuTrigger({
       onClick={() => setOpen(!open)}
       className={cn(
         "inline-flex items-center justify-center",
-        variantClass,
+        defaultStyles,
         fontSizeClass,
         fontWeightClass,
         fontFamilyClass,

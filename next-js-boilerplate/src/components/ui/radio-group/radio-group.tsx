@@ -2,15 +2,7 @@
 import { forwardRef } from "react";
 import { Root, Item, Indicator } from "@radix-ui/react-radio-group";
 import { cn } from "@/lib/cn";
-import type { RadioGroupProps, RadioGroupItemProps, RadioGroupVariant } from "@/types/ui/RadioGroup-types";
-
-const variants: Record<RadioGroupVariant, string> = {
-  default: "text-fg",
-  shiny: "text-white",
-  glass: "text-white",
-  neon: "text-cyan-400",
-  gradient: "text-transparent bg-clip-text",
-};
+import type { RadioGroupProps, RadioGroupItemProps } from "@/types/ui/RadioGroup-types";
 
 export const RadioGroup = forwardRef<
   React.ElementRef<typeof Root>,

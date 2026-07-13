@@ -6,8 +6,6 @@ export interface ContextMenuProps extends React.ComponentPropsWithoutRef<"div"> 
   fontFamily?: string;
 }
 
-export type ContextMenuVariant = "default" | "shiny" | "glass" | "neon" | "gradient";
-
 export type ContextMenuTriggerProps = React.ComponentPropsWithoutRef<"div"> & {
   className?: string;
 };

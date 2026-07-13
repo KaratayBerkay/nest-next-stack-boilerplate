@@ -11,32 +11,17 @@ import {
   Label,
 } from "@radix-ui/react-menubar";
 import { cn } from "@/lib/cn";
-import { useComponentVariant } from "@/hooks/useComponentVariant";
-import type { MenubarVariant } from "@/types/ui/Menubar-types";
-
-const variants: Record<MenubarVariant, string> = {
-  default: "bg-surface border-border text-fg",
-  shiny: "bg-gradient-to-br from-slate-900 to-slate-950 text-white border-transparent shadow-2xl",
-  glass: "bg-white/10 backdrop-blur-md text-white border-white/20 shadow-xl",
-  neon: "bg-slate-950/90 text-cyan-400 border border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.15)]",
-  gradient: "bg-gradient-to-br from-slate-900 to-slate-950 text-transparent bg-clip-text border-transparent shadow-2xl",
-};
 
 export const Menubar = forwardRef<
   React.ElementRef<typeof Root>,
-  React.ComponentPropsWithoutRef<typeof Root> & {
-    variant?: MenubarVariant;
-  }
->(({ className, variant, ...props }, ref) => {
-  const effectiveVariant = useComponentVariant(variant);
-  const variantClass = variants[effectiveVariant as keyof typeof variants];
+  React.ComponentPropsWithoutRef<typeof Root>
+>(({ className, ...props }, ref) => {
 
   return (
     <Root
       ref={ref}
       className={cn(
         "flex h-9 items-center gap-1 rounded-md border p-1 shadow-sm",
-        variantClass,
         className,
       )}
       {...props}

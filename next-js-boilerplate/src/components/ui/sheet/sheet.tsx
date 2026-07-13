@@ -11,16 +11,6 @@ import {
   Close,
 } from "@radix-ui/react-dialog";
 import { cn } from "@/lib/cn";
-import { useComponentVariant } from "@/hooks/useComponentVariant";
-import type { SheetVariant } from "@/types/ui/Sheet-types";
-
-const variants: Record<SheetVariant, string> = {
-  default: "border-border bg-bg text-fg",
-  shiny: "bg-gradient-to-br from-slate-900 to-slate-950 text-white border-transparent shadow-2xl",
-  glass: "bg-white/10 backdrop-blur-md text-white border-white/20 shadow-xl",
-  neon: "bg-slate-950/90 text-cyan-400 border border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.15)]",
-  gradient: "bg-gradient-to-br from-slate-900 to-slate-950 text-transparent bg-clip-text border-transparent shadow-2xl",
-};
 
 export const Sheet = Root;
 export const SheetTrigger = Trigger;
@@ -30,11 +20,8 @@ export const SheetContent = forwardRef<
   React.ElementRef<typeof Content>,
   React.ComponentPropsWithoutRef<typeof Content> & {
     side?: "top" | "bottom" | "left" | "right";
-    variant?: SheetVariant;
   }
->(({ className, children, side = "right", variant, ...props }, ref) => {
-  const effectiveVariant = useComponentVariant(variant);
-  const variantClass = variants[effectiveVariant as keyof typeof variants];
+>(({ className, children, side = "right", ...props }, ref) => {
 
   return (
     <Portal>
@@ -51,7 +38,6 @@ export const SheetContent = forwardRef<
             "data-[state=open]:animate-slide-in-left inset-y-0 left-0 h-full w-3/4 border-r sm:max-w-sm",
           side === "right" &&
             "data-[state=open]:animate-slide-in-right inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm",
-          variantClass,
           className,
         )}
         {...props}

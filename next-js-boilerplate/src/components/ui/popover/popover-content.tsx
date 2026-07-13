@@ -4,35 +4,23 @@ import { cn } from "@/lib/cn";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useBreakpoint } from "@/hooks";
-import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { usePopover } from "./popover";
-import type { PopoverContentProps, PopoverVariant } from "@/types/ui/Popover-types";
-
-const variants: Record<PopoverVariant, string> = {
-  default: "border-border bg-bg text-fg",
-  shiny: "bg-gradient-to-br from-slate-900 to-slate-950 text-white border-transparent shadow-2xl",
-  glass: "bg-white/10 backdrop-blur-md text-white border-white/20 shadow-xl",
-  neon: "bg-slate-950/90 text-cyan-400 border border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.15)]",
-  gradient: "bg-gradient-to-br from-slate-900 to-slate-950 text-transparent bg-clip-text border-transparent shadow-2xl",
-};
+import type { PopoverContentProps } from "@/types/ui/Popover-types";
 
 export function PopoverContent({
   className,
   children,
   align = "start",
   sideOffset = 8,
-  variant,
   ...props
 }: PopoverContentProps) {
-  const { open, close, triggerRef, variant: contextVariant } = usePopover();
-  const effectiveVariant = useComponentVariant(variant ?? contextVariant);
+  const { open, close, triggerRef } = usePopover();
   const contentRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<{
     top: number;
     left: number;
   } | null>(null);
   const isDesktop = useBreakpoint("sm");
-  const variantClass = variants[effectiveVariant as keyof typeof variants];
 
   useEffect(() => {
     if (!open || !triggerRef.current || !isDesktop) return;
@@ -119,7 +107,6 @@ export function PopoverContent({
           isDesktop
             ? "z-50 min-w-[8rem] origin-top-right rounded-lg border p-4 shadow-lg"
             : "bg-bg animate-fade-in fixed inset-0 z-50 flex flex-col p-4",
-          variantClass,
           className,
         )}
         {...props}

@@ -6,8 +6,6 @@ export interface NavigationMenuProps extends React.ComponentPropsWithoutRef<"div
   fontFamily?: string;
 }
 
-export type NavigationMenuVariant = "default" | "shiny" | "glass" | "neon" | "gradient";
-
 export type NavigationMenuListProps = React.ComponentPropsWithoutRef<"ul"> & {
   className?: string;
 };

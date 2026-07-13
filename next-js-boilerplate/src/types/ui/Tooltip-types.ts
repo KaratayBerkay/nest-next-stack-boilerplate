@@ -4,13 +4,10 @@ export interface TooltipProps {
   children: React.ReactNode;
   delay?: number;
   side?: "top" | "bottom" | "left" | "right";
-  variant?: TooltipVariant;
   fontSize?: string;
   fontWeight?: string;
   fontFamily?: string;
 }
-
-export type TooltipVariant = "default" | "shiny" | "glass" | "neon" | "gradient";
 
 export interface TooltipTriggerProps extends React.ComponentPropsWithoutRef<"span"> {
   asChild?: boolean;
@@ -21,5 +18,4 @@ export interface TooltipTriggerProps extends React.ComponentPropsWithoutRef<"spa
 export interface TooltipContentProps extends React.ComponentPropsWithoutRef<"div"> {
   children: React.ReactNode;
   className?: string;
-  variant?: TooltipVariant;
 }

@@ -2,20 +2,12 @@
 
 import { Component } from "react";
 import { cn } from "@/lib/cn";
-import type { ErrorBoundaryProps, ErrorBoundaryVariant } from "@/types/ui/ErrorBoundary-types";
+import type { ErrorBoundaryProps } from "@/types/ui/ErrorBoundary-types";
 
 interface State {
   hasError: boolean;
   error: Error | null;
 }
-
-const variants: Record<ErrorBoundaryVariant, string> = {
-  default: "text-fg",
-  shiny: "text-white",
-  glass: "text-white",
-  neon: "text-cyan-400",
-  gradient: "text-transparent bg-clip-text",
-};
 
 export class ErrorBoundary extends Component<ErrorBoundaryProps, State> {
   constructor(props: ErrorBoundaryProps) {
@@ -34,12 +26,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, State> {
     const fontFamilyClass = fontFamily || "font-sans";
 
     if (this.state.hasError) {
-      const variantClass = variants[this.props.variant || "default"];
       return (
         fallback || (
           <div className={cn(
-            "flex flex-col items-center justify-center gap-2 py-12",
-            variantClass,
+            "text-fg flex flex-col items-center justify-center gap-2 py-12",
             fontSizeClass,
             fontWeightClass,
             fontFamilyClass,

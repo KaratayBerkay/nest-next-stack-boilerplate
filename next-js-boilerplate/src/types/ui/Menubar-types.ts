@@ -6,7 +6,7 @@ export interface MenubarProps extends React.ComponentPropsWithoutRef<"div"> {
   fontFamily?: string;
 }
 
-export type MenubarVariant = "default" | "shiny" | "glass" | "neon" | "gradient";
+export type MenubarVariant = "default";
 
 export type MenubarMenuProps = React.ComponentPropsWithoutRef<"div"> & {
   className?: string;

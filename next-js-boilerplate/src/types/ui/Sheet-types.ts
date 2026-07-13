@@ -6,7 +6,7 @@ export interface SheetProps extends React.ComponentPropsWithoutRef<"div"> {
   fontFamily?: string;
 }
 
-export type SheetVariant = "default" | "shiny" | "glass" | "neon" | "gradient";
+export type SheetVariant = "default";
 
 export type SheetFooterProps = React.ComponentPropsWithoutRef<"div"> & {
   fontSize?: string;

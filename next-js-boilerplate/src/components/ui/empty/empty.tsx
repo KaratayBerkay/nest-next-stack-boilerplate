@@ -1,13 +1,5 @@
 import { cn } from "@/lib/cn";
-import type { EmptyProps, EmptyVariant } from "@/types/ui/Empty-types";
-
-const variants: Record<EmptyVariant, string> = {
-  default: "text-fg",
-  shiny: "text-white",
-  glass: "text-white",
-  neon: "text-cyan-400",
-  gradient: "text-transparent bg-clip-text",
-};
+import type { EmptyProps } from "@/types/ui/Empty-types";
 
 export function Empty({
   className,

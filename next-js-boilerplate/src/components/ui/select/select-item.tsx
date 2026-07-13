@@ -3,15 +3,7 @@
 import { cn } from "@/lib/cn";
 import { useEffect, useRef } from "react";
 import { useSelect } from "./select";
-import type { SelectItemProps, SelectVariant } from "@/types/ui/Select-types";
-
-const variants: Record<SelectVariant, string> = {
-  default: "text-fg",
-  shiny: "text-white",
-  glass: "text-white",
-  neon: "text-cyan-400",
-  gradient: "text-transparent bg-clip-text",
-};
+import type { SelectItemProps } from "@/types/ui/Select-types";
 
 export function SelectItem({
   className,
@@ -19,11 +11,10 @@ export function SelectItem({
   children,
   ...props
 }: SelectItemProps) {
-  const { value, onValueChange, setOpen, triggerRef, labelMap, variant } = useSelect();
+  const { value, onValueChange, setOpen, triggerRef, labelMap } = useSelect();
   const itemRef = useRef<HTMLButtonElement>(null);
   const isSelected = value === itemValue;
   const text = typeof children === "string" ? children : "";
-  const variantClass = variants[variant || "default"];
 
   useEffect(() => {
     const map = labelMap.current;
@@ -48,7 +39,7 @@ export function SelectItem({
       className={cn(
         "focus-visible:bg-surface-hover relative flex w-full cursor-default items-center rounded px-2 py-1.5 text-sm transition-colors outline-none select-none focus-visible:outline-none",
         isSelected && "bg-surface-hover text-brand",
-        !isSelected && variantClass,
+        !isSelected && "text-fg",
         className,
       )}
       onClick={handleClick}

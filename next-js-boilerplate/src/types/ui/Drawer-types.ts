@@ -6,8 +6,6 @@ export interface DrawerProps extends React.ComponentPropsWithoutRef<"div"> {
   fontFamily?: string;
 }
 
-export type DrawerVariant = "default" | "shiny" | "glass" | "neon" | "gradient";
-
 export type DrawerFooterProps = React.ComponentPropsWithoutRef<"div"> & {
   fontSize?: string;
   fontWeight?: string;

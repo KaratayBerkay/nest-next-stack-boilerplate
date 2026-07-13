@@ -7,7 +7,7 @@ export interface SkeletonProps extends React.ComponentPropsWithoutRef<"div"> {
   fontFamily?: string;
 }
 
-export type SkeletonVariant = "default" | "shiny" | "glass" | "neon" | "gradient";
+export type SkeletonVariant = "default";
 
 export interface SkeletonLineProps extends React.ComponentPropsWithoutRef<"div"> {
   fontSize?: string;

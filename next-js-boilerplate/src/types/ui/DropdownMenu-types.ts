@@ -6,8 +6,6 @@ export interface DropdownMenuProps extends React.ComponentPropsWithoutRef<"div">
   fontFamily?: string;
 }
 
-export type DropdownMenuVariant = "default" | "shiny" | "glass" | "neon" | "gradient";
-
 export type DropdownMenuTriggerProps = React.ComponentPropsWithoutRef<"button"> & {
   className?: string;
   fontSize?: string;
@@ -17,7 +15,6 @@ export type DropdownMenuTriggerProps = React.ComponentPropsWithoutRef<"button"> 
 
 export type DropdownMenuContentProps = React.ComponentPropsWithoutRef<"div"> & {
   className?: string;
-  variant?: DropdownMenuVariant;
 };
 
 export type DropdownMenuItemProps = React.ComponentPropsWithoutRef<"div"> & {

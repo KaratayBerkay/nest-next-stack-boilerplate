@@ -10,5 +10,3 @@ export interface ComboboxProps {
   fontWeight?: string;
   fontFamily?: string;
 }
-
-export type ComboboxVariant = "default" | "shiny" | "glass" | "neon" | "gradient";

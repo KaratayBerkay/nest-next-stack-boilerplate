@@ -7,13 +7,10 @@ export interface ToastProviderProps {
 export interface ToastProps extends React.ComponentPropsWithoutRef<"div"> {
   id: string;
   className?: string;
-  variant?: ToastVariant;
   fontSize?: string;
   fontWeight?: string;
   fontFamily?: string;
 }
-
-export type ToastVariant = "default" | "shiny" | "glass" | "neon" | "gradient";
 
 export interface ToastTitleProps extends React.ComponentPropsWithoutRef<"div"> {
   className?: string;

@@ -1,25 +1,13 @@
 import { cn } from "@/lib/cn";
-import { useComponentVariant } from "@/hooks/useComponentVariant";
-import type { SpinnerProps, SpinnerVariant } from "@/types/ui/Spinner-types";
-
-const variants: Record<SpinnerVariant, string> = {
-  default: "text-muted",
-  shiny: "text-white",
-  glass: "text-white",
-  neon: "text-cyan-400",
-  gradient: "text-transparent bg-clip-text",
-};
+import type { SpinnerProps } from "@/types/ui/Spinner-types";
 
 export function Spinner({
   className,
-  variant,
   fontSize,
   fontWeight,
   fontFamily,
   ...props
 }: SpinnerProps) {
-  const effectiveVariant = useComponentVariant(variant);
-  const variantClass = variants[effectiveVariant as keyof typeof variants];
   const fontSizeClass = fontSize || "text-sm";
   const fontWeightClass = fontWeight || "font-medium";
   const fontFamilyClass = fontFamily || "font-sans";
@@ -28,7 +16,7 @@ export function Spinner({
     <svg
       className={cn(
         "animate-spin",
-        variantClass,
+        "text-muted",
         fontSizeClass,
         fontWeightClass,
         fontFamilyClass,

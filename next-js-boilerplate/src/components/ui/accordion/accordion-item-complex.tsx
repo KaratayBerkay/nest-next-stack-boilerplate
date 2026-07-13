@@ -3,8 +3,6 @@
 import { forwardRef } from "react";
 import { Item } from "@radix-ui/react-accordion";
 import { cn } from "@/lib/cn";
-import { useComponentVariant } from "@/hooks/useComponentVariant";
-
 export type AccordionUpperSectionProps = React.HTMLAttributes<HTMLDivElement>;
 
 export const AccordionUpperSection = forwardRef<
@@ -24,7 +22,7 @@ export type AccordionItemComplexProps = {
   trigger: React.ReactNode;
   upper?: React.ReactNode;
   content: React.ReactNode;
-  variant?: "default" | "shiny" | "glass" | "neon" | "gradient";
+  variant?: "default";
   triggerFontSize?: string;
   triggerFontWeight?: string;
   triggerFontFamily?: string;
@@ -43,7 +41,6 @@ export const AccordionItemComplex = forwardRef<
       trigger,
       upper,
       content,
-      variant,
       triggerFontSize = "text-sm",
       triggerFontWeight = "font-medium",
       triggerFontFamily = "font-sans",
@@ -53,15 +50,6 @@ export const AccordionItemComplex = forwardRef<
     },
     ref,
   ) => {
-    const effectiveVariant = useComponentVariant(variant);
-    const variants = {
-      default: "border-border border-b",
-      shiny: "border-slate-700/50 border-b hover:border-slate-600 transition-colors",
-      glass: "border-white/10 border-b hover:border-white/20 transition-colors",
-      neon: "border-cyan-500/30 border-b hover:border-cyan-400/50 transition-colors",
-      gradient: "border-transparent border-b hover:border-slate-700 transition-colors",
-    };
-
     const triggerClasses = cn(
       triggerFontSize,
       triggerFontWeight,
@@ -78,7 +66,7 @@ export const AccordionItemComplex = forwardRef<
       <Item
         ref={ref}
         value={value}
-        className={cn(variants[effectiveVariant as keyof typeof variants], "group")}
+        className={cn("border-border border-b", "group")}
       >
         <div className="flex flex-col">
           <div className="flex flex-1 items-center justify-between py-4 transition-all">

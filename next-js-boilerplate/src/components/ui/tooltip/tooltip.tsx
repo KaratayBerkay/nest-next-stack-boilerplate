@@ -7,11 +7,9 @@ import {
   useRef,
   useState,
   useEffect,
-  type ReactNode,
 } from "react";
 import { useBreakpoint } from "@/hooks";
-import { useComponentVariant } from "@/hooks/useComponentVariant";
-import type { TooltipProps, TooltipVariant } from "@/types/ui/Tooltip-types";
+import type { TooltipProps } from "@/types/ui/Tooltip-types";
 
 type Side = "top" | "bottom" | "left" | "right";
 
@@ -24,7 +22,6 @@ interface TooltipContextType {
   setTriggerRect: (rect: DOMRect) => void;
   toggle: () => void;
   isDesktop: boolean;
-  variant?: TooltipVariant;
 }
 
 const TooltipContext = createContext<TooltipContextType | null>(null);
@@ -35,21 +32,11 @@ export function useTooltip() {
   return ctx;
 }
 
-const variants: Record<TooltipVariant, string> = {
-  default: "bg-surface text-fg",
-  shiny: "bg-gradient-to-br from-blue-500 to-purple-500 text-white border-transparent shadow-lg shadow-blue-500/20",
-  glass: "bg-white/10 backdrop-blur-md text-white border-white/20 shadow-xl",
-  neon: "bg-slate-950/90 text-cyan-400 border border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.15)]",
-  gradient: "bg-gradient-to-br from-slate-900 to-slate-950 text-transparent bg-clip-text border-transparent shadow-2xl",
-};
-
-export function Tooltip({ children, delay = 200, side = "top", variant }: TooltipProps) {
-  const effectiveVariant = useComponentVariant(variant);
+export function Tooltip({ children, delay = 200, side = "top" }: TooltipProps) {
   const [open, setOpen] = useState(false);
   const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const isDesktop = useBreakpoint("sm");
-  const variantClass = variants[effectiveVariant as keyof typeof variants];
 
   const show = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -87,7 +74,6 @@ export function Tooltip({ children, delay = 200, side = "top", variant }: Toolti
         toggle,
         setTriggerRect,
         isDesktop,
-        variant: effectiveVariant,
       }}
     >
       {children}

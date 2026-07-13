@@ -11,25 +11,10 @@ function pad(n: number): string {
 
 const variantStyles: Record<TimeInputVariant, string> = {
   default: "border border-border bg-bg rounded-lg",
-  shiny:
-    "bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-lg shadow-lg",
-  glass: "bg-white/10 backdrop-blur-md border border-white/10 rounded-lg",
-  neon: "bg-slate-950 border border-cyan-500/40 rounded-lg shadow-[0_0_15px_rgba(6,182,212,0.15)]",
-  gradient:
-    "bg-gradient-to-br from-violet-600 to-indigo-600 border border-white/10 rounded-lg",
 };
 
 const selectClasses: Record<TimeInputVariant, string> = {
-  default:
-    "bg-bg border-border focus-visible:ring-brand",
-  shiny:
-    "bg-slate-900/80 border-slate-600 focus-visible:ring-cyan-500/50 text-white",
-  glass:
-    "bg-white/5 border-white/10 focus-visible:ring-white/30 text-white",
-  neon:
-    "bg-slate-900/80 border-cyan-500/30 focus-visible:ring-cyan-500/50 text-cyan-100",
-  gradient:
-    "bg-white/10 border-white/20 focus-visible:ring-white/40 text-white",
+  default: "bg-bg border-border focus-visible:ring-brand",
 };
 
 function formatHour(h: number, use24Hour: boolean): string {
@@ -45,7 +30,6 @@ interface TimeUnitSelectProps {
   onChange: (val: number) => void;
   disabled?: boolean;
   selectClassName?: string;
-  variant: TimeInputVariant;
   use24Hour?: boolean;
   isHour?: boolean;
 }
@@ -56,7 +40,6 @@ function TimeUnitSelect({
   onChange,
   disabled,
   selectClassName,
-  variant,
   use24Hour: is24,
   isHour,
 }: TimeUnitSelectProps) {
@@ -103,44 +86,6 @@ function TimeUnitSelect({
   );
 }
 
-function TimezoneBadge({ variant }: { variant: TimeInputVariant }) {
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const tzLabel = timezone.split("/").pop()?.replace("_", " ") ?? timezone;
-
-  const badgeVariant =
-    variant === "neon"
-      ? "bg-cyan-500/10 text-cyan-300 border-cyan-500/30"
-      : variant === "gradient"
-        ? "bg-white/10 text-white/80 border-white/20"
-        : variant === "glass"
-          ? "bg-white/10 text-white/70 border-white/10"
-          : variant === "shiny"
-            ? "bg-slate-700/50 text-slate-300 border-slate-600"
-            : "bg-surface text-muted border-border";
-
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium whitespace-nowrap",
-        badgeVariant,
-      )}
-    >
-      <svg
-        width="12"
-        height="12"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <circle cx="12" cy="12" r="10" />
-        <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-      </svg>
-      {tzLabel}
-    </span>
-  );
-}
-
 export function TimeInput({
   value = { hours: 0, minutes: 0, seconds: 0 },
   onChange,
@@ -174,6 +119,9 @@ export function TimeInput({
     onChange({ ...value, hours: Math.max(0, Math.min(23, newHours)) });
   };
 
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const tzLabel = timezone.split("/").pop()?.replace("_", " ") ?? timezone;
+
   return (
     <div className={cn("flex flex-col gap-2", className)}>
       {label && (
@@ -195,7 +143,6 @@ export function TimeInput({
             }}
             disabled={disabled}
             selectClassName={selectClasses[effectiveVariant as keyof typeof selectClasses]}
-            variant={effectiveVariant as TimeInputVariant}
             use24Hour={use24Hour}
             isHour
           />
@@ -208,7 +155,6 @@ export function TimeInput({
             onChange={(val) => update("minutes", val)}
             disabled={disabled}
             selectClassName={selectClasses[effectiveVariant as keyof typeof selectClasses]}
-            variant={effectiveVariant as TimeInputVariant}
           />
 
           {showSeconds && (
@@ -220,7 +166,6 @@ export function TimeInput({
                 onChange={(val) => update("seconds", val)}
                 disabled={disabled}
                 selectClassName={selectClasses[effectiveVariant as keyof typeof selectClasses]}
-                variant={effectiveVariant as TimeInputVariant}
               />
             </>
           )}
@@ -232,15 +177,7 @@ export function TimeInput({
               disabled={disabled}
               className={cn(
                 "h-10 rounded-md border px-2.5 text-xs font-bold shadow-sm transition-colors",
-                effectiveVariant === "neon"
-                  ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20"
-                  : effectiveVariant === "gradient"
-                    ? "border-white/20 bg-white/10 text-white hover:bg-white/20"
-                    : effectiveVariant === "glass"
-                      ? "border-white/10 bg-white/10 text-white hover:bg-white/20"
-                      : effectiveVariant === "shiny"
-                        ? "border-slate-600 bg-slate-700/50 text-slate-300 hover:bg-slate-600/50"
-                        : "border-border bg-surface text-foreground hover:bg-surface-hover",
+                "border-border bg-surface text-foreground hover:bg-surface-hover",
                 disabled && "cursor-not-allowed opacity-50",
               )}
             >
@@ -249,7 +186,25 @@ export function TimeInput({
           )}
         </div>
 
-        <TimezoneBadge variant={effectiveVariant as TimeInputVariant} />
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium whitespace-nowrap",
+            "bg-surface text-muted border-border",
+          )}
+        >
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+          </svg>
+          {tzLabel}
+        </span>
       </div>
     </div>
   );

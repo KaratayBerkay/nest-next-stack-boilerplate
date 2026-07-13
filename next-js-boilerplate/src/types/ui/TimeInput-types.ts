@@ -1,4 +1,4 @@
-export type TimeInputVariant = "default" | "shiny" | "glass" | "neon" | "gradient";
+export type TimeInputVariant = "default";
 
 export interface TimeInputProps {
   value?: { hours: number; minutes: number; seconds?: number };

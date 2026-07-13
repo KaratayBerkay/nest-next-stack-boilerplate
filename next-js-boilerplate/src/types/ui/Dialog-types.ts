@@ -11,7 +11,7 @@ export interface DialogProps {
   variant?: DialogVariant;
 }
 
-export type DialogVariant = "default" | "shiny" | "glass" | "neon" | "gradient";
+export type DialogVariant = "default";
 
 export type DialogFooterProps = React.ComponentPropsWithoutRef<"div"> & {
   fontSize?: string;

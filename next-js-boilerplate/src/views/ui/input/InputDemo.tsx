@@ -6,7 +6,6 @@ import {
   Input,
   DateInput,
   DateTimeInput,
-  InputWithIcon,
   FileInput,
 } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -111,50 +110,6 @@ export default function InputDemo() {
             </section>
 
             <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Shiny</h3>
-              <div className="bg-slate-950 p-6 rounded-xl">
-                <Input
-                  variant="shiny"
-                  placeholder="Shiny input..."
-                  className="max-w-sm"
-                />
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Glass</h3>
-              <div className="bg-slate-950 p-6 rounded-xl">
-                <Input
-                  variant="glass"
-                  placeholder="Glass input..."
-                  className="max-w-sm"
-                />
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Neon</h3>
-              <div className="bg-slate-950 p-6 rounded-xl">
-                <Input
-                  variant="neon"
-                  placeholder="Neon input..."
-                  className="max-w-sm"
-                />
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Gradient</h3>
-              <div className="bg-slate-950 p-6 rounded-xl">
-                <Input
-                  variant="gradient"
-                  placeholder="Gradient input..."
-                  className="max-w-sm"
-                />
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-3">
               <h3 className="text-lg font-semibold">Sizes</h3>
               <div className="flex flex-col gap-3 max-w-sm">
                 <Input
@@ -211,10 +166,9 @@ export default function InputDemo() {
         <TabsContent value="examples">
           <div className="flex flex-col gap-6">
             <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Search Bar (Glass)</h3>
-              <div className="bg-slate-950 p-6 rounded-xl max-w-sm">
+              <h3 className="text-lg font-semibold">Search Bar</h3>
+              <div className="max-w-sm">
                 <Input
-                  variant="glass"
                   leftIcon={SearchIcon}
                   placeholder="Search documentation..."
                 />
@@ -222,87 +176,54 @@ export default function InputDemo() {
             </section>
 
             <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Login Form (Neon)</h3>
-              <div className="bg-slate-950 p-6 rounded-xl max-w-sm space-y-4">
+              <h3 className="text-lg font-semibold">Login Form</h3>
+              <div className="max-w-sm space-y-4">
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="neon-email" className="text-cyan-300">
-                    Email
-                  </Label>
+                  <Label htmlFor="login-email">Email</Label>
                   <Input
-                    id="neon-email"
-                    variant="neon"
+                    id="login-email"
                     type="email"
                     placeholder="you@example.com"
                     leftIcon={MailIcon}
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="neon-password" className="text-cyan-300">
-                    Password
-                  </Label>
+                  <Label htmlFor="login-password">Password</Label>
                   <Input
-                    id="neon-password"
-                    variant="neon"
+                    id="login-password"
                     type="password"
                     placeholder="••••••••"
                     leftIcon={LockIcon}
                   />
                 </div>
-                <Button className="w-full bg-cyan-500 text-slate-950 hover:bg-cyan-400">
-                  Sign In
-                </Button>
+                <Button className="w-full">Sign In</Button>
               </div>
             </section>
 
             <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">
-                Registration Form (Gradient)
-              </h3>
-              <div className="bg-slate-950 p-6 rounded-xl max-w-sm space-y-4">
+              <h3 className="text-lg font-semibold">Registration Form</h3>
+              <div className="max-w-sm space-y-4">
                 <div className="flex flex-col gap-1.5">
-                  <Label
-                    htmlFor="grad-name"
-                    className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400"
-                  >
-                    Full Name
-                  </Label>
-                  <Input
-                    id="grad-name"
-                    variant="gradient"
-                    placeholder="John Doe"
-                  />
+                  <Label htmlFor="reg-name">Full Name</Label>
+                  <Input id="reg-name" placeholder="John Doe" />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <Label
-                    htmlFor="grad-email"
-                    className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400"
-                  >
-                    Email
-                  </Label>
+                  <Label htmlFor="reg-email">Email</Label>
                   <Input
-                    id="grad-email"
-                    variant="gradient"
+                    id="reg-email"
                     type="email"
                     placeholder="you@example.com"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <Label
-                    htmlFor="grad-password"
-                    className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400"
-                  >
-                    Password
-                  </Label>
+                  <Label htmlFor="reg-password">Password</Label>
                   <Input
-                    id="grad-password"
-                    variant="gradient"
+                    id="reg-password"
                     type="password"
                     placeholder="••••••••"
                   />
                 </div>
-                <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-400 hover:to-purple-400">
-                  Create Account
-                </Button>
+                <Button className="w-full">Create Account</Button>
               </div>
             </section>
 
@@ -310,17 +231,17 @@ export default function InputDemo() {
               <h3 className="text-lg font-semibold">Login Form (Default)</h3>
               <div className="surface max-w-sm space-y-4 p-4">
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="login-email">Email</Label>
+                  <Label htmlFor="default-email">Email</Label>
                   <Input
-                    id="login-email"
+                    id="default-email"
                     type="email"
                     placeholder="you@example.com"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="login-password">Password</Label>
+                  <Label htmlFor="default-password">Password</Label>
                   <Input
-                    id="login-password"
+                    id="default-password"
                     type="password"
                     placeholder="••••••••"
                   />

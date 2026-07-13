@@ -10,16 +10,6 @@ import {
   Label,
 } from "@radix-ui/react-context-menu";
 import { cn } from "@/lib/cn";
-import { useComponentVariant } from "@/hooks/useComponentVariant";
-import type { ContextMenuVariant } from "@/types/ui/ContextMenu-types";
-
-const variants: Record<ContextMenuVariant, string> = {
-  default: "bg-bg border-border text-fg",
-  shiny: "bg-gradient-to-br from-slate-900 to-slate-950 text-white border-transparent shadow-2xl",
-  glass: "bg-white/10 backdrop-blur-md text-white border-white/20 shadow-xl",
-  neon: "bg-slate-950/90 text-cyan-400 border border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.15)]",
-  gradient: "bg-gradient-to-br from-slate-900 to-slate-950 text-transparent bg-clip-text border-transparent shadow-2xl",
-};
 
 export const ContextMenu = Root;
 export const ContextMenuTrigger = Trigger;
@@ -48,29 +38,22 @@ ContextMenuLabel.displayName = "ContextMenuLabel";
 
 export const ContextMenuContent = forwardRef<
   React.ElementRef<typeof Content>,
-  React.ComponentPropsWithoutRef<typeof Content> & {
-    variant?: ContextMenuVariant;
-  }
->(({ className, variant, ...props }, ref) => {
-  const effectiveVariant = useComponentVariant(variant);
-  const variantClass = variants[effectiveVariant as keyof typeof variants];
-
-  return (
-    <Portal>
-      <Content
-        ref={ref}
-        className={cn(
-          "z-50 min-w-32 overflow-hidden rounded-md border p-1 shadow-md",
-          variantClass,
-          className,
-        )}
-        {...props}
-      >
-        <div className="pointer-events-auto">{props.children}</div>
-      </Content>
-    </Portal>
-  );
-});
+  React.ComponentPropsWithoutRef<typeof Content>
+>(({ className, ...props }, ref) => (
+  <Portal>
+    <Content
+      ref={ref}
+      className={cn(
+        "z-50 min-w-32 overflow-hidden rounded-md border p-1 shadow-md",
+        "bg-bg border-border text-fg",
+        className,
+      )}
+      {...props}
+    >
+      <div className="pointer-events-auto">{props.children}</div>
+    </Content>
+  </Portal>
+));
 ContextMenuContent.displayName = "ContextMenuContent";
 
 export const ContextMenuItem = forwardRef<

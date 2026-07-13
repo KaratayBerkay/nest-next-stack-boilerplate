@@ -6,9 +6,7 @@ import {
   useContext,
   useState,
   useCallback,
-  type ReactNode,
 } from "react";
-import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { CommandProps } from "@/types/ui/Command-types";
 
 interface ItemData {
@@ -24,7 +22,6 @@ interface CommandContextValue {
   selectedIndex: number;
   setSelectedIndex: React.Dispatch<React.SetStateAction<number>>;
   registerItem: (item: ItemData) => () => void;
-  variant?: "default" | "shiny" | "glass" | "neon" | "gradient";
 }
 
 const CommandContext = createContext<CommandContextValue | null>(null);
@@ -37,21 +34,11 @@ export function useCommandContext() {
   return ctx;
 }
 
-const variants: Record<"default" | "shiny" | "glass" | "neon" | "gradient", string> = {
-  default: "border-border bg-bg text-fg",
-  shiny: "bg-gradient-to-br from-slate-900 to-slate-950 text-white border-transparent shadow-2xl",
-  glass: "bg-white/10 backdrop-blur-md text-white border-white/20 shadow-xl",
-  neon: "bg-slate-950/90 text-cyan-400 border border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.15)]",
-  gradient: "bg-gradient-to-br from-slate-900 to-slate-950 text-transparent bg-clip-text border-transparent shadow-2xl",
-};
-
 export function Command({
   className,
   children,
-  variant,
   ...props
 }: CommandProps) {
-  const effectiveVariant = useComponentVariant(variant);
   const [search, setSearchRaw] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [items, setItems] = useState<ItemData[]>([]);
@@ -85,7 +72,6 @@ export function Command({
         selectedIndex,
         setSelectedIndex,
         registerItem,
-        variant: effectiveVariant,
       }}
     >
       <div

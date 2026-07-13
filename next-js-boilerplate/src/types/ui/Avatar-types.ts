@@ -5,14 +5,14 @@ export interface AvatarProps extends React.ComponentPropsWithoutRef<"div"> {
   alt?: string;
   fallback: string;
   size?: "xs" | "sm" | "md" | "lg" | "xl";
-  variant?: "default" | "brand" | "success" | "warning" | "error" | "info";
+  variant?: AvatarVariant;
   status?: "online" | "away";
   fontSize?: string;
   fontWeight?: string;
   fontFamily?: string;
 }
 
-export type AvatarVariant = "default" | "brand" | "success" | "warning" | "error" | "info" | "shiny" | "glass" | "neon" | "gradient";
+export type AvatarVariant = "default" | "brand" | "success" | "warning" | "error" | "info";
 
 export interface AvatarGroupProps extends React.ComponentPropsWithoutRef<"div"> {
   fontSize?: string;

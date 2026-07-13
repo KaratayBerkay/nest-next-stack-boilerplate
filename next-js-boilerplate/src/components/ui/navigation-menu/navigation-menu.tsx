@@ -9,32 +9,19 @@ import {
   Link,
 } from "@radix-ui/react-navigation-menu";
 import { cn } from "@/lib/cn";
-import { useComponentVariant } from "@/hooks/useComponentVariant";
-import type { NavigationMenuVariant } from "@/types/ui/NavigationMenu-types";
 
-const variants: Record<NavigationMenuVariant, string> = {
-  default: "bg-bg border-border text-fg",
-  shiny: "bg-gradient-to-br from-slate-900 to-slate-950 text-white border-transparent shadow-2xl",
-  glass: "bg-white/10 backdrop-blur-md text-white border-white/20 shadow-xl",
-  neon: "bg-slate-950/90 text-cyan-400 border border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.15)]",
-  gradient: "bg-gradient-to-br from-slate-900 to-slate-950 text-transparent bg-clip-text border-transparent shadow-2xl",
-};
+const defaultStyles = "bg-bg border-border text-fg";
 
 export const NavigationMenu = forwardRef<
   React.ElementRef<typeof Root>,
-  React.ComponentPropsWithoutRef<typeof Root> & {
-    variant?: NavigationMenuVariant;
-  }
->(({ className, variant, ...props }, ref) => {
-  const effectiveVariant = useComponentVariant(variant);
-  const variantClass = variants[effectiveVariant as keyof typeof variants];
-
+  React.ComponentPropsWithoutRef<typeof Root>
+>(({ className, ...props }, ref) => {
   return (
     <Root
       ref={ref}
       className={cn(
         "relative z-10 flex max-w-max flex-1 items-center justify-center",
-        variantClass,
+        defaultStyles,
         className,
       )}
       {...props}

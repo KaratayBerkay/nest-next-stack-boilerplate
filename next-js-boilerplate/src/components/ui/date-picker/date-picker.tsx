@@ -8,10 +8,6 @@ import type { DatePickerProps, DatePickerVariant } from "@/types/ui/DatePicker-t
 
 const variants: Record<DatePickerVariant, string> = {
   default: "border-border bg-bg text-fg",
-  shiny: "bg-gradient-to-br from-slate-900 to-slate-950 border-slate-700 text-white",
-  glass: "bg-white/5 backdrop-blur-md border-white/20 text-white",
-  neon: "bg-slate-950/90 border-cyan-500/30 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)]",
-  gradient: "bg-gradient-to-br from-slate-900 to-slate-950 border-transparent text-white",
 };
 
 function handleToggle(open: boolean, setOpen: (v: boolean) => void) {

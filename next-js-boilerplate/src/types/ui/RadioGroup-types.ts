@@ -12,5 +12,3 @@ export type RadioGroupItemProps = ComponentPropsWithoutRef<typeof Item> & {
   fontWeight?: string;
   fontFamily?: string;
 };
-
-export type RadioGroupVariant = "default" | "shiny" | "glass" | "neon" | "gradient";
