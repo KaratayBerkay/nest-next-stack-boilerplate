@@ -6,6 +6,7 @@ This document describes the enhanced CSS and UI system implemented in the Next.j
 
 - [Color System](#color-system)
 - [Theme System](#theme-system)
+- [Component Style System](#component-style-system)
 - [Typography System](#typography-system)
 - [Component Variants](#component-variants)
 - [Animations](#animations)
@@ -94,6 +95,67 @@ Then apply the class to `<html>`:
 ```tsx
 <html className="theme-mytheme">
 ```
+
+---
+
+## Component Style System
+
+The component style system is an independent dimension from the color theme. Users can switch between 5 visual styles from the header dropdown. The selected style applies a `style-*` class to `<html>`, which overrides CSS custom properties to change the visual appearance of all components globally.
+
+### Available Styles
+
+1. **Default** — Uses the base CSS variables from the current color theme
+2. **Shiny** — Gradient backgrounds, white text, subtle shadows
+3. **Glass** — Translucent backgrounds with backdrop blur
+4. **Neon** — Dark backgrounds with cyan accents and glow effects
+5. **Gradient** — Gradient text with dark backgrounds
+
+### How It Works
+
+1. `ThemeToggle` dropdown lets users pick a style
+2. Selection is persisted in a `componentStyle` cookie
+3. `style-*` class is applied to `<html>` element
+4. CSS variables are overridden in `globals.css` via `.style-shiny`, `.style-glass`, `.style-neon`, `.style-gradient`
+5. Components using semantic tokens (`bg-bg`, `text-fg`, `border-border`, etc.) automatically adapt
+
+### Adding a New Style
+
+Add a new `.style-*` block in `globals.css`:
+
+```css
+.style-mytheme {
+  --bg: #1a1a2e;
+  --fg: #e0e0e0;
+  --brand: #6c63ff;
+  --brand-fg: #ffffff;
+  /* ... override other tokens */
+}
+```
+
+Then register it in `src/constants/theme.ts`:
+
+```ts
+export const COMPONENT_STYLES = [
+  { value: "default", label: "Default", icon: "IconDefault" },
+  { value: "shiny", label: "Shiny", icon: "IconSparkles" },
+  { value: "glass", label: "Glass", icon: "IconGlass" },
+  { value: "neon", label: "Neon", icon: "IconBolt" },
+  { value: "gradient", label: "Gradient", icon: "IconFlame" },
+  { value: "mytheme", label: "My Theme", icon: "IconMyTheme" },
+] as const;
+```
+
+### Explicit Variant Override
+
+Components still accept an explicit `variant` prop that overrides the global style:
+
+```tsx
+<Button variant="primary">Always primary, regardless of style</Button>
+```
+
+### Flash Prevention
+
+`public/scripts/theme-init.js` reads the `componentStyle` cookie and applies the `style-*` class to `<html>` before paint, preventing a flash of default styles.
 
 ---
 

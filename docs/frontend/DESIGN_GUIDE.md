@@ -8,7 +8,9 @@
 
 ## Theming
 
-Three themes via CSS custom properties on `<html>` class (managed by `useTheme`):
+Two independent theme dimensions via CSS custom properties on `<html>` class (managed by `useTheme`):
+
+### Color Themes
 
 | Token | Light | Dark | Ocean |
 |---|---|---|---|
@@ -18,6 +20,18 @@ Three themes via CSS custom properties on `<html>` class (managed by `useTheme`)
 | `--muted` | `#71717a` | `#a1a1aa` | `#64748b` |
 | `--border` | `#e4e4e7` | `#27272a` | `#bae6fd` |
 | `--surface` | `#fafafa` | `#18181b` | `#e0f2fe` |
+
+### Component Styles (Visual Themes)
+
+Applied via `style-*` class on `<html>`. These override CSS custom properties to change visual appearance globally:
+
+| Style | Description |
+|---|---|
+| `default` | Base CSS variables from current color theme |
+| `shiny` | Gradient backgrounds, white text, shadows |
+| `glass` | Translucent with backdrop blur |
+| `neon` | Dark with cyan accents and glow |
+| `gradient` | Gradient text with dark backgrounds |
 
 Tailwind utilities: `bg-bg`, `text-fg`, `bg-brand`, `text-muted`, `border-border`, `bg-surface`, `bg-surface-hover`.
 
