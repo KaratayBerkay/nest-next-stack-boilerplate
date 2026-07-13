@@ -12,12 +12,54 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Label } from "@/components/ui/Label";
 
+const SearchIcon = (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <circle cx="11" cy="11" r="8" />
+    <path d="m21 21-4.3-4.3" />
+  </svg>
+);
+
+const MailIcon = (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <rect width="20" height="16" x="2" y="4" rx="2" />
+    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+  </svg>
+);
+
+const LockIcon = (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+);
+
 export default function InputDemo() {
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [dateTime, setDateTime] = useState<Date | undefined>(undefined);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6 w-full">
       <div className="space-y-1">
         <h2 className="text-xl font-bold">Input</h2>
         <p className="text-muted text-sm">
@@ -26,33 +68,24 @@ export default function InputDemo() {
       </div>
 
       <Tabs defaultValue="components">
-        <TabsList>
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="components">Components</TabsTrigger>
           <TabsTrigger value="examples">Examples</TabsTrigger>
         </TabsList>
 
         <TabsContent value="components">
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-6">
             <section className="flex flex-col gap-3">
               <h3 className="text-lg font-semibold">Default</h3>
               <Input data-testid="input-default" className="max-w-sm" />
             </section>
 
             <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">With Placeholder</h3>
+              <h3 className="text-lg font-semibold">With Left & Right Icons</h3>
               <Input
-                placeholder="Enter your email"
-                data-testid="input-placeholder"
-                className="max-w-sm"
-              />
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Disabled</h3>
-              <Input
-                disabled
-                placeholder="Disabled input"
-                data-testid="input-disabled"
+                leftIcon={SearchIcon}
+                rightIcon={MailIcon}
+                placeholder="Search or email..."
                 className="max-w-sm"
               />
             </section>
@@ -68,25 +101,72 @@ export default function InputDemo() {
             </section>
 
             <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">With Icon</h3>
-              <InputWithIcon
-                icon={
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="m21 21-4.3-4.3" />
-                  </svg>
-                }
-                placeholder="Search..."
+              <h3 className="text-lg font-semibold">Disabled</h3>
+              <Input
+                disabled
+                placeholder="Disabled input"
+                data-testid="input-disabled"
                 className="max-w-sm"
-                data-testid="input-with-icon"
               />
+            </section>
+
+            <section className="flex flex-col gap-3">
+              <h3 className="text-lg font-semibold">Shiny</h3>
+              <div className="bg-slate-950 p-6 rounded-xl">
+                <Input
+                  variant="shiny"
+                  placeholder="Shiny input..."
+                  className="max-w-sm"
+                />
+              </div>
+            </section>
+
+            <section className="flex flex-col gap-3">
+              <h3 className="text-lg font-semibold">Glass</h3>
+              <div className="bg-slate-950 p-6 rounded-xl">
+                <Input
+                  variant="glass"
+                  placeholder="Glass input..."
+                  className="max-w-sm"
+                />
+              </div>
+            </section>
+
+            <section className="flex flex-col gap-3">
+              <h3 className="text-lg font-semibold">Neon</h3>
+              <div className="bg-slate-950 p-6 rounded-xl">
+                <Input
+                  variant="neon"
+                  placeholder="Neon input..."
+                  className="max-w-sm"
+                />
+              </div>
+            </section>
+
+            <section className="flex flex-col gap-3">
+              <h3 className="text-lg font-semibold">Gradient</h3>
+              <div className="bg-slate-950 p-6 rounded-xl">
+                <Input
+                  variant="gradient"
+                  placeholder="Gradient input..."
+                  className="max-w-sm"
+                />
+              </div>
+            </section>
+
+            <section className="flex flex-col gap-3">
+              <h3 className="text-lg font-semibold">Sizes</h3>
+              <div className="flex flex-col gap-3 max-w-sm">
+                <Input
+                  placeholder="Small"
+                  className="h-8 text-xs px-2 py-1.5"
+                />
+                <Input placeholder="Medium (default)" />
+                <Input
+                  placeholder="Large"
+                  className="h-10 text-base px-4 py-2"
+                />
+              </div>
             </section>
 
             <section className="flex flex-col gap-3">
@@ -129,35 +209,133 @@ export default function InputDemo() {
         </TabsContent>
 
         <TabsContent value="examples">
-          <section className="flex flex-col gap-3">
-            <h3 className="text-lg font-semibold">Login Form</h3>
-            <div className="surface max-w-sm space-y-4 p-4">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="login-email">Email</Label>
+          <div className="flex flex-col gap-6">
+            <section className="flex flex-col gap-3">
+              <h3 className="text-lg font-semibold">Search Bar (Glass)</h3>
+              <div className="bg-slate-950 p-6 rounded-xl max-w-sm">
                 <Input
-                  id="login-email"
-                  type="email"
-                  placeholder="you@example.com"
+                  variant="glass"
+                  leftIcon={SearchIcon}
+                  placeholder="Search documentation..."
                 />
               </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="login-password">Password</Label>
-                <Input
-                  id="login-password"
-                  type="password"
-                  placeholder="••••••••"
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <label className="text-muted flex items-center gap-2 text-xs">
-                  <input type="checkbox" className="rounded" /> Remember me
-                </label>
-                <Button size="sm" variant="primary">
+            </section>
+
+            <section className="flex flex-col gap-3">
+              <h3 className="text-lg font-semibold">Login Form (Neon)</h3>
+              <div className="bg-slate-950 p-6 rounded-xl max-w-sm space-y-4">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="neon-email" className="text-cyan-300">
+                    Email
+                  </Label>
+                  <Input
+                    id="neon-email"
+                    variant="neon"
+                    type="email"
+                    placeholder="you@example.com"
+                    leftIcon={MailIcon}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="neon-password" className="text-cyan-300">
+                    Password
+                  </Label>
+                  <Input
+                    id="neon-password"
+                    variant="neon"
+                    type="password"
+                    placeholder="••••••••"
+                    leftIcon={LockIcon}
+                  />
+                </div>
+                <Button className="w-full bg-cyan-500 text-slate-950 hover:bg-cyan-400">
                   Sign In
                 </Button>
               </div>
-            </div>
-          </section>
+            </section>
+
+            <section className="flex flex-col gap-3">
+              <h3 className="text-lg font-semibold">
+                Registration Form (Gradient)
+              </h3>
+              <div className="bg-slate-950 p-6 rounded-xl max-w-sm space-y-4">
+                <div className="flex flex-col gap-1.5">
+                  <Label
+                    htmlFor="grad-name"
+                    className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400"
+                  >
+                    Full Name
+                  </Label>
+                  <Input
+                    id="grad-name"
+                    variant="gradient"
+                    placeholder="John Doe"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label
+                    htmlFor="grad-email"
+                    className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400"
+                  >
+                    Email
+                  </Label>
+                  <Input
+                    id="grad-email"
+                    variant="gradient"
+                    type="email"
+                    placeholder="you@example.com"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label
+                    htmlFor="grad-password"
+                    className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400"
+                  >
+                    Password
+                  </Label>
+                  <Input
+                    id="grad-password"
+                    variant="gradient"
+                    type="password"
+                    placeholder="••••••••"
+                  />
+                </div>
+                <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-400 hover:to-purple-400">
+                  Create Account
+                </Button>
+              </div>
+            </section>
+
+            <section className="flex flex-col gap-3">
+              <h3 className="text-lg font-semibold">Login Form (Default)</h3>
+              <div className="surface max-w-sm space-y-4 p-4">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="login-email">Email</Label>
+                  <Input
+                    id="login-email"
+                    type="email"
+                    placeholder="you@example.com"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="login-password">Password</Label>
+                  <Input
+                    id="login-password"
+                    type="password"
+                    placeholder="••••••••"
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <label className="text-muted flex items-center gap-2 text-xs">
+                    <input type="checkbox" className="rounded" /> Remember me
+                  </label>
+                  <Button size="sm" variant="primary">
+                    Sign In
+                  </Button>
+                </div>
+              </div>
+            </section>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
