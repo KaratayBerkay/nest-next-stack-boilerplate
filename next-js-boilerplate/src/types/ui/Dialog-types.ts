@@ -5,16 +5,52 @@ export interface DialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   children: ReactNode;
+  fontSize?: string;
+  fontWeight?: string;
+  fontFamily?: string;
+  variant?: DialogVariant;
 }
 
-export type DialogFooterProps = React.ComponentPropsWithoutRef<"div">;
+export type DialogVariant = "default" | "shiny" | "glass" | "neon" | "gradient";
 
-export type DialogTriggerProps = React.ComponentPropsWithoutRef<"button">;
+export type DialogFooterProps = React.ComponentPropsWithoutRef<"div"> & {
+  fontSize?: string;
+  fontWeight?: string;
+  fontFamily?: string;
+};
 
-export type DialogHeaderProps = React.ComponentPropsWithoutRef<"div">;
+export type DialogTriggerProps = React.ComponentPropsWithoutRef<"button"> & {
+  fontSize?: string;
+  fontWeight?: string;
+  fontFamily?: string;
+};
 
-export type DialogDescriptionProps = React.ComponentPropsWithoutRef<"p">;
+export type DialogHeaderProps = React.ComponentPropsWithoutRef<"div"> & {
+  fontSize?: string;
+  fontWeight?: string;
+  fontFamily?: string;
+};
 
-export type DialogCloseProps = React.ComponentPropsWithoutRef<"button">;
+export type DialogDescriptionProps = React.ComponentPropsWithoutRef<"p"> & {
+  fontSize?: string;
+  fontWeight?: string;
+  fontFamily?: string;
+};
 
-export type DialogTitleProps = React.ComponentPropsWithoutRef<"h2">;
+export type DialogCloseProps = React.ComponentPropsWithoutRef<"button"> & {
+  fontSize?: string;
+  fontWeight?: string;
+  fontFamily?: string;
+};
+
+export type DialogTitleProps = React.ComponentPropsWithoutRef<"h2"> & {
+  fontSize?: string;
+  fontWeight?: string;
+  fontFamily?: string;
+};
+
+export interface DialogContentProps extends React.ComponentPropsWithoutRef<"dialog"> {
+  children: React.ReactNode;
+  className?: string;
+  variant?: DialogVariant;
+}

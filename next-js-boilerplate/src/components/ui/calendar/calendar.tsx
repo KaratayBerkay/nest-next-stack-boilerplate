@@ -1,4 +1,5 @@
 "use client";
+import { type ComponentProps } from "react";
 import { DayPicker } from "react-day-picker";
 import { cn } from "@/lib/cn";
 import type { CalendarProps } from "@/types/ui/Calendar-types";
@@ -6,19 +7,24 @@ import type { CalendarProps } from "@/types/ui/Calendar-types";
 export function Calendar({
   className,
   classNames,
-  showOutsideDays = true,
+  fontSize,
+  fontWeight,
+  fontFamily,
   ...props
 }: CalendarProps) {
+  const fontSizeClass = fontSize || "text-sm";
+  const fontWeightClass = fontWeight || "font-medium";
+  const fontFamilyClass = fontFamily || "font-sans";
+
   return (
     <DayPicker
-      showOutsideDays={showOutsideDays}
       className={cn("p-3", className)}
       classNames={{
         root: cn("p-3", className),
         months: "flex flex-col sm:flex-row gap-2",
         month: "flex flex-col gap-2",
         month_caption: "flex justify-center pt-1 relative items-center",
-        caption_label: "text-sm font-medium",
+        caption_label: cn("text-sm font-medium", fontSizeClass, fontWeightClass, fontFamilyClass),
         nav: "flex items-center gap-1",
         button_previous: cn(
           "border-border hover:bg-surface-hover inline-flex h-7 w-7 items-center justify-center rounded-md border bg-transparent p-0 text-sm font-medium transition-colors absolute left-1",
@@ -28,7 +34,7 @@ export function Calendar({
         ),
         month_grid: "w-full border-collapse",
         weekdays: "flex",
-        weekday: "text-muted w-8 rounded-md text-[0.8rem] font-normal",
+        weekday: cn("text-muted w-8 rounded-md text-[0.8rem] font-normal", fontSizeClass, fontWeightClass, fontFamilyClass),
         week: "flex w-full mt-2",
         day: cn(
           "relative p-0 text-center text-sm focus-within:relative focus-within:z-20",
@@ -46,7 +52,7 @@ export function Calendar({
         hidden: "invisible",
         ...classNames,
       }}
-      {...props}
+      {...(props as ComponentProps<typeof DayPicker>)}
     />
   );
 }

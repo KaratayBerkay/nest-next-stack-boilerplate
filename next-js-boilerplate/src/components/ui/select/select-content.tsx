@@ -5,7 +5,15 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useBreakpoint } from "@/hooks";
 import { useSelect } from "./select";
-import type { SelectContentProps } from "@/types/ui/SelectContent-types";
+import type { SelectContentProps, SelectVariant } from "@/types/ui/Select-types";
+
+const variants: Record<SelectVariant, string> = {
+  default: "border-border bg-bg text-fg",
+  shiny: "bg-gradient-to-br from-slate-900 to-slate-950 text-white border-transparent shadow-2xl",
+  glass: "bg-white/10 backdrop-blur-md text-white border-white/20 shadow-xl",
+  neon: "bg-slate-950/90 text-cyan-400 border border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.15)]",
+  gradient: "bg-gradient-to-br from-slate-900 to-slate-950 text-transparent bg-clip-text border-transparent shadow-2xl",
+};
 
 export function SelectContent({
   className,
@@ -13,13 +21,14 @@ export function SelectContent({
   sideOffset = 8,
   ...props
 }: SelectContentProps) {
-  const { open, setOpen, triggerRef, contentRef } = useSelect();
+  const { open, setOpen, triggerRef, contentRef, variant } = useSelect();
   const [position, setPosition] = useState<{
     top: number;
     left: number;
     width: number;
   } | null>(null);
   const isDesktop = useBreakpoint("sm");
+  const variantClass = variants[variant || "default"];
 
   useEffect(() => {
     if (!open || !triggerRef.current || !isDesktop) return;
@@ -91,9 +100,6 @@ export function SelectContent({
   return createPortal(
     <>
       {!isDesktop && (
-        // Decorative dismiss backdrop, not a control — the select's own controls remain
-        // keyboard-reachable (Escape closes it above; there's also a visible Close button
-        // below); this scrim only needs a click target.
         <div
           className="fixed inset-0 z-40 bg-black/50"
           onClick={() => setOpen(false)}
@@ -115,8 +121,9 @@ export function SelectContent({
         }
         className={cn(
           isDesktop
-            ? "border-border bg-bg animate-fade-in-down z-50 max-h-60 min-w-[8rem] origin-top-right overflow-y-auto rounded-lg border p-1 shadow-lg"
+            ? "z-50 max-h-60 min-w-[8rem] origin-top-right overflow-y-auto rounded-lg border p-1 shadow-lg"
             : "bg-bg animate-fade-in fixed inset-0 z-50 flex flex-col p-4",
+          variantClass,
           className,
         )}
         {...props}
@@ -147,7 +154,7 @@ export function SelectContent({
             isDesktop ? "" : "flex flex-1 flex-col gap-0.5 overflow-y-auto",
           )}
         >
-          {children}
+          <div className="pointer-events-auto">{children}</div>
         </div>
       </div>
     </>,

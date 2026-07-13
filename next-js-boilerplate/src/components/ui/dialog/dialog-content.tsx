@@ -6,16 +6,23 @@ import {
   useEffect,
   useState,
   useSyncExternalStore,
-  type ReactNode,
   type MouseEvent,
 } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
 import { useDialog } from "./dialog";
-import type { DialogContentProps } from "@/types/ui/DialogContent-types";
+import type { DialogContentProps, DialogVariant } from "@/types/ui/Dialog-types";
 
-export function DialogContent({ children, className }: DialogContentProps) {
-  const { open, onOpenChange } = useDialog();
+const variants: Record<DialogVariant, string> = {
+  default: "border-border bg-bg text-fg",
+  shiny: "bg-gradient-to-br from-slate-900 to-slate-950 text-white border-transparent shadow-2xl",
+  glass: "bg-white/10 backdrop-blur-md text-white border-white/20 shadow-xl",
+  neon: "bg-slate-950/90 text-cyan-400 border border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.15)]",
+  gradient: "bg-gradient-to-br from-slate-900 to-slate-950 text-transparent bg-clip-text border-transparent shadow-2xl",
+};
+
+export function DialogContent({ children, className, variant = "default" }: DialogContentProps) {
+  const { open, onOpenChange, variant: contextVariant } = useDialog();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const mounted = useSyncExternalStore(
     () => () => {},
@@ -96,15 +103,12 @@ export function DialogContent({ children, className }: DialogContentProps) {
           animation: backdrop-fade-out 0.15s cubic-bezier(0.4, 0, 1, 1) forwards;
         }
       `}</style>
-      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions --
-          native <dialog> already closes on Escape via the "cancel" listener above and exposes
-          an explicit visible Close button below; this onClick only fires for clicks on the
-          backdrop area (e.target === dialogRef.current), never on interactive content inside. */}
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions */}
       <dialog
         ref={dialogRef}
         className={cn(
           "backdrop:bg-black/50",
-          "border-border bg-bg text-fg m-auto flex h-dvh w-full flex-col overflow-y-auto border-0 shadow-xl sm:h-fit sm:max-h-[85vh] sm:max-w-lg sm:rounded-xl sm:border sm:p-0",
+          "text-fg m-auto flex h-dvh w-full flex-col overflow-y-auto border-0 shadow-xl sm:h-fit sm:max-h-[85vh] sm:max-w-lg sm:rounded-xl sm:border sm:p-0",
           !open && !closing && "hidden",
           closing ? "dialog-closing" : "dialog-open",
           className,
@@ -137,7 +141,7 @@ export function DialogContent({ children, className }: DialogContentProps) {
               <path d="m6 6 12 12" />
             </svg>
           </button>
-          {children}
+          <div className="pointer-events-auto">{children}</div>
         </div>
       </dialog>
     </>

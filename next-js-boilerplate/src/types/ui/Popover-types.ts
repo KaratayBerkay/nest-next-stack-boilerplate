@@ -1,6 +1,27 @@
-import type { ReactNode } from "react";
+import type React from "react";
 
 export interface PopoverProps {
-  children: ReactNode;
+  children: React.ReactNode;
   defaultOpen?: boolean;
+  variant?: PopoverVariant;
+  fontSize?: string;
+  fontWeight?: string;
+  fontFamily?: string;
+}
+
+export type PopoverVariant = "default" | "shiny" | "glass" | "neon" | "gradient";
+
+export interface PopoverTriggerProps extends React.ComponentPropsWithoutRef<"button"> {
+  className?: string;
+  fontSize?: string;
+  fontWeight?: string;
+  fontFamily?: string;
+}
+
+export interface PopoverContentProps extends React.ComponentPropsWithoutRef<"div"> {
+  children: React.ReactNode;
+  align?: "start" | "end";
+  sideOffset?: number;
+  className?: string;
+  variant?: PopoverVariant;
 }

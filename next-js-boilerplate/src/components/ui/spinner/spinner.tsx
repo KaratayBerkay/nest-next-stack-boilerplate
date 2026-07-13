@@ -1,11 +1,37 @@
 import { cn } from "@/lib/cn";
+import type { SpinnerProps, SpinnerVariant } from "@/types/ui/Spinner-types";
+
+const variants: Record<SpinnerVariant, string> = {
+  default: "text-muted",
+  shiny: "text-white",
+  glass: "text-white",
+  neon: "text-cyan-400",
+  gradient: "text-transparent bg-clip-text",
+};
+
 export function Spinner({
   className,
+  variant = "default",
+  fontSize,
+  fontWeight,
+  fontFamily,
   ...props
-}: React.ComponentPropsWithoutRef<"svg">) {
+}: SpinnerProps) {
+  const variantClass = variants[variant];
+  const fontSizeClass = fontSize || "text-sm";
+  const fontWeightClass = fontWeight || "font-medium";
+  const fontFamilyClass = fontFamily || "font-sans";
+
   return (
     <svg
-      className={cn("text-muted animate-spin", className)}
+      className={cn(
+        "animate-spin",
+        variantClass,
+        fontSizeClass,
+        fontWeightClass,
+        fontFamilyClass,
+        className,
+      )}
       xmlns="http://www.w3.org/2000/svg"
       width="24"
       height="24"

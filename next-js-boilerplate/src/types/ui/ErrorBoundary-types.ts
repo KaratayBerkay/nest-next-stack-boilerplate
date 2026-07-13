@@ -1,6 +1,12 @@
-import type { ReactNode } from "react";
+import type React from "react";
 
 export interface ErrorBoundaryProps {
-  children: ReactNode;
-  fallback?: ReactNode;
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+  variant?: ErrorBoundaryVariant;
+  fontSize?: string;
+  fontWeight?: string;
+  fontFamily?: string;
 }
+
+export type ErrorBoundaryVariant = "default" | "shiny" | "glass" | "neon" | "gradient";

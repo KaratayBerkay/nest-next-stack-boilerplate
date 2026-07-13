@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useReducer, type ReactNode } from "react";
+import type { ToastProviderProps } from "@/types/ui/Toast-types";
 
 type ToastVariant = "default" | "destructive" | "success";
 
@@ -40,8 +41,6 @@ export function useToastContext() {
   }
   return ctx;
 }
-
-import type { ToastProviderProps } from "@/types/ui/ToastProvider-types";
 
 export function ToastProvider({ children }: ToastProviderProps) {
   const [state, dispatch] = useReducer(reducer, []);

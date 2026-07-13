@@ -1,9 +1,25 @@
-import type { ReactNode } from "react";
-
-type Side = "top" | "bottom" | "left" | "right";
+import type React from "react";
 
 export interface TooltipProps {
-  children: ReactNode;
+  children: React.ReactNode;
   delay?: number;
-  side?: Side;
+  side?: "top" | "bottom" | "left" | "right";
+  variant?: TooltipVariant;
+  fontSize?: string;
+  fontWeight?: string;
+  fontFamily?: string;
+}
+
+export type TooltipVariant = "default" | "shiny" | "glass" | "neon" | "gradient";
+
+export interface TooltipTriggerProps extends React.ComponentPropsWithoutRef<"span"> {
+  asChild?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+}
+
+export interface TooltipContentProps extends React.ComponentPropsWithoutRef<"div"> {
+  children: React.ReactNode;
+  className?: string;
+  variant?: TooltipVariant;
 }

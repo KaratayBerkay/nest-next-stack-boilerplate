@@ -5,4 +5,8 @@ export interface TabsContentProps extends Omit<
   "value"
 > {
   value: string;
+  variant?: "default" | "shiny" | "glass" | "neon" | "gradient";
+  fontSize?: string;
+  fontWeight?: string;
+  fontFamily?: string;
 }

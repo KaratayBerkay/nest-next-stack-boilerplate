@@ -5,14 +5,13 @@ import {
   Separator as Handle,
 } from "react-resizable-panels";
 import { cn } from "@/lib/cn";
+import type { ResizablePanelGroupProps } from "@/types/ui/Resizable-types";
 
 export function ResizablePanelGroup({
   className,
   direction,
   ...props
-}: React.ComponentPropsWithoutRef<typeof PanelGroup> & {
-  direction?: "horizontal" | "vertical";
-}) {
+}: ResizablePanelGroupProps) {
   return (
     <PanelGroup
       orientation={direction || "horizontal"}

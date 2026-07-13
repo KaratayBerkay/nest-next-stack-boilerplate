@@ -11,8 +11,15 @@ type Variant =
   | "info"
   | "soft"
   | "dot"
-  | "pill";
+  | "pill"
+  | "shiny"
+  | "glass"
+  | "neon"
+  | "gradient";
 
 export interface BadgeProps extends React.ComponentPropsWithoutRef<"span"> {
   variant?: Variant;
+  fontSize?: string;
+  fontWeight?: string;
+  fontFamily?: string;
 }

@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { useRef } from "react";
+import type { TabsListProps } from "@/types/ui/TabsList-types";
 
 function handleTabsKeyDown(
   e: React.KeyboardEvent,
@@ -34,20 +35,27 @@ function handleTabsKeyDown(
 export function TabsList({
   className,
   children,
+  variant = "default",
   ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+}: TabsListProps) {
   const listRef = useRef<HTMLDivElement>(null);
+
+  const variants = {
+    default: "bg-surface inline-flex items-center gap-1 rounded-lg p-1",
+    shiny: "bg-gradient-to-br from-slate-700 to-slate-900 inline-flex items-center gap-1 rounded-xl p-1 shadow-lg",
+    glass: "bg-white/10 backdrop-blur-md inline-flex items-center gap-1 rounded-xl p-1 border border-white/10",
+    neon: "bg-slate-950/80 border border-cyan-500/30 inline-flex items-center gap-1 rounded-xl p-1 shadow-[0_0_20px_rgba(6,182,212,0.15)]",
+    gradient: "bg-gradient-to-br from-slate-900 to-slate-950 inline-flex items-center gap-1 rounded-xl p-1 shadow-2xl",
+  };
 
   return (
     <div
       ref={listRef}
       role="tablist"
-      // Children already implement roving tabindex (TabsTrigger sets tabIndex 0/-1 per tab),
-      // so the tablist container itself stays out of the Tab order.
       tabIndex={-1}
       onKeyDown={(e) => handleTabsKeyDown(e, listRef)}
       className={cn(
-        "bg-surface inline-flex items-center gap-1 rounded-lg p-1",
+        variants[variant],
         className,
       )}
       {...props}

@@ -3,7 +3,7 @@
 import { cn } from "@/lib/cn";
 import { useCallback, useRef } from "react";
 import { useTooltip } from "./tooltip";
-import type { TooltipTriggerProps } from "@/types/ui/TooltipTrigger-types";
+import type { TooltipTriggerProps } from "@/types/ui/Tooltip-types";
 
 export function TooltipTrigger({
   asChild,
@@ -88,11 +88,7 @@ export function TooltipTrigger({
   );
 
   if (asChild) {
-    // The child (always a real <button> or <a> at call sites in this repo) supplies its own
-    // native keyboard semantics; this span is a non-interactive positioning wrapper that only
-    // observes the child's bubbled click event, so it doesn't need its own role/keyboard handler.
     return (
-      // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
       <span
         ref={ref}
         className={cn("inline-flex", className)}
@@ -101,6 +97,9 @@ export function TooltipTrigger({
         onFocus={handleFocus}
         onBlur={handleBlur}
         onClick={handleClick}
+        onKeyDown={handleKeyDown}
+        role="button"
+        tabIndex={0}
         {...props}
       >
         {children}

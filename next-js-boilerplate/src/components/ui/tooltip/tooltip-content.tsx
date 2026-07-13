@@ -10,9 +10,16 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { useTooltip } from "./tooltip";
-import type { TooltipContentProps } from "@/types/ui/TooltipContent-types";
+import type { TooltipContentProps, TooltipVariant } from "@/types/ui/Tooltip-types";
 
 const GAP = 8;
+const variants: Record<TooltipVariant, string> = {
+  default: "bg-surface text-fg",
+  shiny: "bg-gradient-to-br from-blue-500 to-purple-500 text-white border-transparent shadow-lg shadow-blue-500/20",
+  glass: "bg-white/10 backdrop-blur-md text-white border-white/20 shadow-xl",
+  neon: "bg-slate-950/90 text-cyan-400 border border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.15)]",
+  gradient: "bg-gradient-to-br from-slate-900 to-slate-950 text-transparent bg-clip-text border-transparent shadow-2xl",
+};
 
 function getPosition(rect: DOMRect, side: string) {
   switch (side) {
@@ -29,13 +36,14 @@ function getPosition(rect: DOMRect, side: string) {
   }
 }
 
-export function TooltipContent({ children, className }: TooltipContentProps) {
-  const { open, side, triggerRect, hide, isDesktop } = useTooltip();
+export function TooltipContent({ children, className, variant = "default" }: TooltipContentProps) {
+  const { open, side, triggerRect, hide, isDesktop, variant: contextVariant } = useTooltip();
   const mounted = useSyncExternalStore(
     () => () => {},
     () => true,
     () => false,
   );
+  const variantClass = variants[variant || contextVariant || "default"];
 
   const hasEscapeRef = useRef(false);
   useEffect(() => {
@@ -94,11 +102,12 @@ export function TooltipContent({ children, className }: TooltipContentProps) {
           role="tooltip"
           className={cn(
             "tooltip-open relative",
-            "bg-surface text-fg rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap shadow-lg",
+            "rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap shadow-lg",
+            variantClass,
             className,
           )}
         >
-          {children}
+          <div className="pointer-events-auto">{children}</div>
           <span
             className={cn("absolute size-0", arrowClass[side])}
             aria-hidden="true"
@@ -110,9 +119,6 @@ export function TooltipContent({ children, className }: TooltipContentProps) {
 
   const mobileTooltip = (
     <>
-      {/* Decorative dismiss backdrop, not a control: Escape is handled by the document
-          keydown listener above and the visible close button is a real <button>, so this
-          scrim doesn't need its own focus/keyboard target. */}
       <div
         className="animate-fade-in fixed inset-0 z-40 bg-black/50"
         onClick={hide}
@@ -145,7 +151,7 @@ export function TooltipContent({ children, className }: TooltipContentProps) {
               </svg>
             </button>
           </div>
-          {children}
+          <div className="pointer-events-auto">{children}</div>
         </div>
       </div>
     </>

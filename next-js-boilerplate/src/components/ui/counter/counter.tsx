@@ -1,25 +1,31 @@
 "use client";
 
 import { useState } from "react";
+import { cn } from "@/lib/cn";
 import type { CounterProps } from "@/types/ui/Counter-types";
 
-/**
- * A button whose click count lives in React state.
- *
- * Used to prove how the App Router treats layouts vs pages on navigation: a
- * layout *persists* (its count survives navigation between sibling pages),
- * while a page subtree is torn down and recreated (its count starts fresh).
- * The count starts at 0 on both server and client, so there's no hydration
- * concern.
- */
-export function Counter({ label }: CounterProps) {
+const variants: Record<"default" | "shiny" | "glass" | "neon" | "gradient", string> = {
+  default: "text-brand",
+  shiny: "text-white",
+  glass: "text-white",
+  neon: "text-cyan-400",
+  gradient: "text-transparent bg-clip-text",
+};
+
+export function Counter({ label, variant = "default", className }: CounterProps) {
   const [count, setCount] = useState(0);
+  const variantClass = variants[variant];
+
   return (
     <button
       type="button"
       data-testid={`counter-${label}`}
       onClick={() => setCount((c) => c + 1)}
-      className="text-brand underline"
+      className={cn(
+        "underline",
+        variantClass,
+        className,
+      )}
     >
       {label}: clicked {count} times
     </button>

@@ -1,12 +1,28 @@
 import { cn } from "@/lib/cn";
+import type { SkeletonProps, SkeletonVariant } from "@/types/ui/Skeleton-types";
+
+const variants: Record<SkeletonVariant, string> = {
+  default: "bg-surface-hover",
+  shiny: "bg-gradient-to-r from-blue-500 to-purple-500",
+  glass: "bg-white/20",
+  neon: "bg-cyan-500/30",
+  gradient: "bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500",
+};
 
 export function Skeleton({
   className,
+  variant = "default",
   ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+}: SkeletonProps) {
+  const variantClass = variants[variant];
+
   return (
     <div
-      className={cn("bg-surface-hover animate-pulse rounded", className)}
+      className={cn(
+        "animate-pulse rounded",
+        variantClass,
+        className,
+      )}
       {...props}
     />
   );

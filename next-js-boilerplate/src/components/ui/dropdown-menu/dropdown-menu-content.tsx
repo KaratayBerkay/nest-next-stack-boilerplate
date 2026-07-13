@@ -5,16 +5,27 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useBreakpoint } from "@/hooks";
 import { useDropdownMenuContext } from "./dropdown-menu";
+import type { DropdownMenuContentProps, DropdownMenuVariant } from "@/types/ui/DropdownMenu-types";
+
+const variants: Record<DropdownMenuVariant, string> = {
+  default: "bg-bg border-border text-fg",
+  shiny: "bg-gradient-to-br from-slate-900 to-slate-950 text-white border-transparent shadow-2xl",
+  glass: "bg-white/10 backdrop-blur-md text-white border-white/20 shadow-xl",
+  neon: "bg-slate-950/90 text-cyan-400 border border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.15)]",
+  gradient: "bg-gradient-to-br from-slate-900 to-slate-950 text-transparent bg-clip-text border-transparent shadow-2xl",
+};
 
 export function DropdownMenuContent({
   className,
   children,
+  variant = "default",
   ...props
-}: React.ComponentPropsWithoutRef<"div">) {
-  const { open, setOpen, triggerRef } = useDropdownMenuContext();
+}: DropdownMenuContentProps) {
+  const { open, setOpen, triggerRef, variant: contextVariant } = useDropdownMenuContext();
   const contentRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const isDesktop = useBreakpoint("sm");
+  const variantClass = variants[variant || contextVariant || "default"];
 
   useEffect(() => {
     if (open && triggerRef.current && isDesktop) {
@@ -94,9 +105,6 @@ export function DropdownMenuContent({
   return createPortal(
     <>
       {!isDesktop && (
-        // Decorative dismiss backdrop, not a control — the menu's own controls remain
-        // keyboard-reachable (Escape closes it above; there's also a visible Close button
-        // below); this scrim only needs a click target.
         <div
           className="fixed inset-0 z-40 bg-black/50"
           onClick={() => setOpen(false)}
@@ -114,8 +122,9 @@ export function DropdownMenuContent({
         }
         className={cn(
           isDesktop
-            ? "border-border bg-bg animate-fade-in-down z-50 min-w-44 origin-top-right rounded-xl border p-1 shadow-lg"
+            ? "z-50 min-w-44 origin-top-right rounded-xl border p-1 shadow-lg"
             : "bg-bg animate-fade-in fixed inset-0 z-50 flex flex-col p-4",
+          variantClass,
           className,
         )}
         {...props}
@@ -146,7 +155,7 @@ export function DropdownMenuContent({
             isDesktop ? "" : "flex flex-1 flex-col gap-0.5 overflow-y-auto",
           )}
         >
-          {children}
+          <div className="pointer-events-auto">{children}</div>
         </div>
       </div>
     </>,

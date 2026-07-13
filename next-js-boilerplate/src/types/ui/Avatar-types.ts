@@ -1,14 +1,21 @@
 import type React from "react";
 
-type Size = "xs" | "sm" | "md" | "lg" | "xl";
-type Variant = "default" | "brand" | "success" | "warning" | "error" | "info";
-type Status = "online" | "away";
-
 export interface AvatarProps extends React.ComponentPropsWithoutRef<"div"> {
   src?: string;
   alt?: string;
   fallback: string;
-  size?: Size;
-  variant?: Variant;
-  status?: Status;
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
+  variant?: "default" | "brand" | "success" | "warning" | "error" | "info";
+  status?: "online" | "away";
+  fontSize?: string;
+  fontWeight?: string;
+  fontFamily?: string;
+}
+
+export type AvatarVariant = "default" | "brand" | "success" | "warning" | "error" | "info" | "shiny" | "glass" | "neon" | "gradient";
+
+export interface AvatarGroupProps extends React.ComponentPropsWithoutRef<"div"> {
+  fontSize?: string;
+  fontWeight?: string;
+  fontFamily?: string;
 }

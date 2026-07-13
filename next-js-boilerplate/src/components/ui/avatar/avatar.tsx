@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/cn";
-import type { AvatarProps } from "@/types/ui/Avatar-types";
+import type { AvatarProps, AvatarVariant } from "@/types/ui/Avatar-types";
 
 const sizes = {
   xs: "size-6 text-[0.625rem]",
@@ -13,14 +13,18 @@ const sizes = {
   xl: "size-16 text-lg",
 } as const;
 
-const variants = {
+const variants: Record<AvatarVariant, string> = {
   default: "bg-surface text-muted",
   brand: "bg-brand text-brand-fg",
   success: "bg-success text-success-fg",
   warning: "bg-warning text-warning-fg",
   error: "bg-error text-error-fg",
   info: "bg-info text-info-fg",
-} as const;
+  shiny: "bg-gradient-to-br from-blue-500 to-purple-500 text-white",
+  glass: "bg-white/20 backdrop-blur-md text-white",
+  neon: "bg-slate-950 text-cyan-400 border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.3)]",
+  gradient: "bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 text-transparent bg-clip-text",
+};
 
 export function Avatar({
   src,
@@ -30,10 +34,16 @@ export function Avatar({
   variant = "default",
   status,
   className,
+  fontSize,
+  fontWeight,
+  fontFamily,
   ...props
 }: AvatarProps) {
   const [imgError, setImgError] = useState(false);
   const showImage = src && !imgError;
+  const fontSizeClass = fontSize || "text-sm";
+  const fontWeightClass = fontWeight || "font-medium";
+  const fontFamilyClass = fontFamily || "font-sans";
 
   return (
     <div
@@ -41,6 +51,9 @@ export function Avatar({
         "relative inline-flex items-center justify-center overflow-hidden rounded-full font-medium",
         sizes[size],
         variants[variant],
+        fontSizeClass,
+        fontWeightClass,
+        fontFamilyClass,
         className,
       )}
       {...props}

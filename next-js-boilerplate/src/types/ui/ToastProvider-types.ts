@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
+import type React from "react";
 
 export interface ToastProviderProps {
-  children: ReactNode;
+  children: React.ReactNode;
 }

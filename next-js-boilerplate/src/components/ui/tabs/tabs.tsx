@@ -17,16 +17,37 @@ export function useTabsContext() {
   return ctx;
 }
 
-export function Tabs({ defaultValue, className, ...props }: TabsProps) {
+export function Tabs({ defaultValue, className, variant = "default", type = "single", fontSize, fontWeight, fontFamily, ...props }: TabsProps) {
   const [activeValue, setActiveValue] = useState(defaultValue);
 
   const onValueChange = useCallback((value: string) => {
     setActiveValue(value);
   }, []);
 
+  const variants = {
+    default: "w-full",
+    shiny: "w-full bg-slate-900/50 rounded-2xl p-1",
+    glass: "w-full bg-white/5 backdrop-blur-md rounded-2xl p-1",
+    neon: "w-full bg-slate-950/80 border border-cyan-500/30 rounded-2xl p-1 shadow-[0_0_20px_rgba(6,182,212,0.15)]",
+    gradient: "w-full bg-gradient-to-br from-slate-900 to-slate-950 rounded-2xl p-1 shadow-2xl",
+  };
+
+  const fontSizeClass = fontSize || "text-sm";
+  const fontWeightClass = fontWeight || "font-medium";
+  const fontFamilyClass = fontFamily || "font-sans";
+
   return (
     <TabsContext.Provider value={{ activeValue, onValueChange }}>
-      <div className={cn(className)} {...props} />
+      <div
+        className={cn(
+          variants[variant],
+          className,
+          fontSizeClass,
+          fontWeightClass,
+          fontFamilyClass,
+        )}
+        {...props}
+      />
     </TabsContext.Provider>
   );
 }

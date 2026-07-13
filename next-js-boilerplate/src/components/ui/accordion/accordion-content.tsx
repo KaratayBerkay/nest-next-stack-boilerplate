@@ -6,17 +6,28 @@ import { cn } from "@/lib/cn";
 
 export const AccordionContent = forwardRef<
   React.ElementRef<typeof Content>,
-  React.ComponentPropsWithoutRef<typeof Content>
->(({ className, children, ...props }, ref) => (
-  <Content
-    ref={ref}
-    className={cn(
-      "data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden text-sm",
-      className,
-    )}
-    {...props}
-  >
-    <div className="pt-0 pb-4">{children}</div>
-  </Content>
-));
+  React.ComponentPropsWithoutRef<typeof Content> & { variant?: "default" | "shiny" | "glass" | "neon" | "gradient" }
+>(({ className, children, variant = "default", ...props }, ref) => {
+  const variants = {
+    default: "data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
+    shiny: "data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
+    glass: "data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
+    neon: "data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
+    gradient: "data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
+  };
+
+  return (
+    <Content
+      ref={ref}
+      className={cn(
+        variants[variant],
+        "overflow-hidden text-sm transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+        className,
+      )}
+      {...props}
+    >
+      <div className="pt-0 pb-4 pl-2 pr-4">{children}</div>
+    </Content>
+  );
+});
 AccordionContent.displayName = "AccordionContent";
