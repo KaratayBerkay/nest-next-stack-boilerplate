@@ -67,52 +67,6 @@ export default function AlertPage() {
                 </AlertDescription>
               </Alert>
             </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Shiny</h3>
-              <Alert variant="shiny">
-                <AlertTitle>Shiny Alert</AlertTitle>
-                <AlertDescription>
-                  A shiny gradient alert variant for emphasis.
-                </AlertDescription>
-              </Alert>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Glass</h3>
-              <div className="bg-slate-950 p-6 rounded-xl space-y-4">
-                <Alert variant="glass">
-                  <AlertTitle className="text-white">Glass Alert</AlertTitle>
-                  <AlertDescription className="text-white/70">
-                    A frosted glass alert variant for dark backgrounds.
-                  </AlertDescription>
-                </Alert>
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Neon</h3>
-              <div className="bg-slate-950 p-6 rounded-xl space-y-4">
-                <Alert variant="neon">
-                  <AlertTitle className="text-cyan-400">Neon Alert</AlertTitle>
-                  <AlertDescription className="text-cyan-400/70">
-                    A neon glow alert variant for dark backgrounds.
-                  </AlertDescription>
-                </Alert>
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Gradient</h3>
-              <div className="bg-slate-950 p-6 rounded-xl space-y-4">
-                <Alert variant="gradient">
-                  <AlertTitle>Gradient Alert</AlertTitle>
-                  <AlertDescription>
-                    A gradient text alert variant for dark backgrounds.
-                  </AlertDescription>
-                </Alert>
-              </div>
-            </section>
           </div>
         </TabsContent>
 

@@ -53,114 +53,6 @@ export default function Page() {
             </section>
 
             <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Shiny</h3>
-              <Tabs defaultValue="overview" variant="shiny">
-                <TabsList variant="shiny">
-                  <TabsTrigger variant="shiny" value="overview">Overview</TabsTrigger>
-                  <TabsTrigger variant="shiny" value="analytics">Analytics</TabsTrigger>
-                  <TabsTrigger variant="shiny" value="reports">Reports</TabsTrigger>
-                </TabsList>
-                <TabsContent variant="shiny" value="overview">
-                  <p className="text-slate-300 text-xs">
-                    Dashboard overview with shiny gradient styling.
-                  </p>
-                </TabsContent>
-                <TabsContent variant="shiny" value="analytics">
-                  <p className="text-slate-300 text-xs">
-                    Analytics data with enhanced visual effects.
-                  </p>
-                </TabsContent>
-                <TabsContent variant="shiny" value="reports">
-                  <p className="text-slate-300 text-xs">
-                    Generated reports with premium appearance.
-                  </p>
-                </TabsContent>
-              </Tabs>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Glass</h3>
-              <div className="rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 p-6">
-                <Tabs defaultValue="profile" variant="glass">
-                  <TabsList variant="glass">
-                    <TabsTrigger variant="glass" value="profile">Profile</TabsTrigger>
-                    <TabsTrigger variant="glass" value="security">Security</TabsTrigger>
-                    <TabsTrigger variant="glass" value="integrations">Integrations</TabsTrigger>
-                  </TabsList>
-                  <TabsContent variant="glass" value="profile">
-                    <p className="text-slate-300 text-xs">
-                      Profile settings with frosted glass effect.
-                    </p>
-                  </TabsContent>
-                  <TabsContent variant="glass" value="security">
-                    <p className="text-slate-300 text-xs">
-                      Security configuration with translucent panels.
-                    </p>
-                  </TabsContent>
-                  <TabsContent variant="glass" value="integrations">
-                    <p className="text-slate-300 text-xs">
-                      Third-party integrations management.
-                    </p>
-                  </TabsContent>
-                </Tabs>
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Neon</h3>
-              <div className="rounded-xl bg-slate-950 p-6">
-                <Tabs defaultValue="live" variant="neon">
-                  <TabsList variant="neon">
-                    <TabsTrigger variant="neon" value="live">Live</TabsTrigger>
-                    <TabsTrigger variant="neon" value="history">History</TabsTrigger>
-                    <TabsTrigger variant="neon" value="alerts">Alerts</TabsTrigger>
-                  </TabsList>
-                  <TabsContent variant="neon" value="live">
-                    <p className="text-cyan-400/70 text-xs">
-                      Live monitoring with neon glow effects.
-                    </p>
-                  </TabsContent>
-                  <TabsContent variant="neon" value="history">
-                    <p className="text-cyan-400/70 text-xs">
-                      Historical data with cyberpunk styling.
-                    </p>
-                  </TabsContent>
-                  <TabsContent variant="neon" value="alerts">
-                    <p className="text-cyan-400/70 text-xs">
-                      Alert management with illuminated borders.
-                    </p>
-                  </TabsContent>
-                </Tabs>
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Gradient</h3>
-              <Tabs defaultValue="design" variant="gradient">
-                <TabsList variant="gradient">
-                  <TabsTrigger variant="gradient" value="design">Design</TabsTrigger>
-                  <TabsTrigger variant="gradient" value="code">Code</TabsTrigger>
-                  <TabsTrigger variant="gradient" value="deploy">Deploy</TabsTrigger>
-                </TabsList>
-                <TabsContent variant="gradient" value="design">
-                  <p className="text-slate-400 text-xs">
-                    Design workspace with gradient text effects.
-                  </p>
-                </TabsContent>
-                <TabsContent variant="gradient" value="code">
-                  <p className="text-slate-400 text-xs">
-                    Code editor with deep gradient backgrounds.
-                  </p>
-                </TabsContent>
-                <TabsContent variant="gradient" value="deploy">
-                  <p className="text-slate-400 text-xs">
-                    Deployment pipeline with premium styling.
-                  </p>
-                </TabsContent>
-              </Tabs>
-            </section>
-
-            <section className="flex flex-col gap-3">
               <h3 className="text-lg font-semibold">With Different Content</h3>
               <Tabs defaultValue="text">
                 <TabsList>
@@ -206,91 +98,42 @@ export default function Page() {
         <TabsContent value="examples">
           <div className="flex flex-col gap-6">
             <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Settings Page (Glass)</h3>
+              <h3 className="text-lg font-semibold">Settings Page</h3>
               <p className="text-muted text-xs">
-                A settings page layout using glass-styled tabs.
+                A settings page layout using tabs.
               </p>
-              <div className="rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 p-6">
-                <Tabs defaultValue="profile" variant="glass">
-                  <TabsList variant="glass">
-                    <TabsTrigger variant="glass" value="profile">Profile</TabsTrigger>
-                    <TabsTrigger variant="glass" value="notifications">Notifications</TabsTrigger>
-                    <TabsTrigger variant="glass" value="billing">Billing</TabsTrigger>
-                  </TabsList>
-                  <TabsContent variant="glass" value="profile">
-                    <div className="space-y-3">
-                      <p className="text-sm font-medium text-white">Profile Settings</p>
-                      <div className="space-y-1.5">
-                        <p className="text-slate-300 text-xs">Name: Jane Doe</p>
-                        <p className="text-slate-300 text-xs">Email: jane@example.com</p>
-                      </div>
+              <Tabs defaultValue="profile">
+                <TabsList>
+                  <TabsTrigger value="profile">Profile</TabsTrigger>
+                  <TabsTrigger value="notifications">Notifications</TabsTrigger>
+                  <TabsTrigger value="billing">Billing</TabsTrigger>
+                </TabsList>
+                <TabsContent value="profile">
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium">Profile Settings</p>
+                    <div className="space-y-1.5">
+                      <p className="text-muted text-xs">Name: Jane Doe</p>
+                      <p className="text-muted text-xs">Email: jane@example.com</p>
                     </div>
-                  </TabsContent>
-                  <TabsContent variant="glass" value="notifications">
-                    <div className="space-y-3">
-                      <p className="text-sm font-medium text-white">Notification Preferences</p>
-                      <p className="text-slate-300 text-xs">
-                        Manage which notifications you receive.
-                      </p>
-                    </div>
-                  </TabsContent>
-                  <TabsContent variant="glass" value="billing">
-                    <div className="space-y-3">
-                      <p className="text-sm font-medium text-white">Billing & Plan</p>
-                      <p className="text-slate-300 text-xs">
-                        Current plan: Free. Upgrade to Pro for more features.
-                      </p>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Dashboard (Neon)</h3>
-              <p className="text-muted text-xs">
-                A dashboard layout using neon-styled tabs.
-              </p>
-              <div className="rounded-xl bg-slate-950 p-6">
-                <Tabs defaultValue="metrics" variant="neon">
-                  <TabsList variant="neon">
-                    <TabsTrigger variant="neon" value="metrics">Metrics</TabsTrigger>
-                    <TabsTrigger variant="neon" value="traffic">Traffic</TabsTrigger>
-                    <TabsTrigger variant="neon" value="revenue">Revenue</TabsTrigger>
-                  </TabsList>
-                  <TabsContent variant="neon" value="metrics">
-                    <div className="space-y-3">
-                      <p className="text-sm font-medium text-cyan-300">Key Metrics</p>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="rounded border border-cyan-500/20 p-3">
-                          <p className="text-cyan-400 text-lg font-bold">1,234</p>
-                          <p className="text-cyan-400/60 text-xs">Active Users</p>
-                        </div>
-                        <div className="rounded border border-cyan-500/20 p-3">
-                          <p className="text-cyan-400 text-lg font-bold">567</p>
-                          <p className="text-cyan-400/60 text-xs">Conversions</p>
-                        </div>
-                      </div>
-                    </div>
-                  </TabsContent>
-                  <TabsContent variant="neon" value="traffic">
-                    <div className="space-y-3">
-                      <p className="text-sm font-medium text-cyan-300">Traffic Sources</p>
-                      <p className="text-cyan-400/70 text-xs">
-                        Direct: 45% | Organic: 32% | Referral: 23%
-                      </p>
-                    </div>
-                  </TabsContent>
-                  <TabsContent variant="neon" value="revenue">
-                    <div className="space-y-3">
-                      <p className="text-sm font-medium text-cyan-300">Revenue Breakdown</p>
-                      <p className="text-cyan-400/70 text-xs">
-                        Subscriptions: $12,340 | One-time: $5,670 | Total: $18,010
-                      </p>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </div>
+                  </div>
+                </TabsContent>
+                <TabsContent value="notifications">
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium">Notification Preferences</p>
+                    <p className="text-muted text-xs">
+                      Manage which notifications you receive.
+                    </p>
+                  </div>
+                </TabsContent>
+                <TabsContent value="billing">
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium">Billing & Plan</p>
+                    <p className="text-muted text-xs">
+                      Current plan: Free. Upgrade to Pro for more features.
+                    </p>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </section>
           </div>
         </TabsContent>

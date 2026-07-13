@@ -30,52 +30,6 @@ export default function KbdPage() {
                 <Kbd variant="default">⌘ + K</Kbd>
               </div>
             </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Shiny</h3>
-              <div className="flex flex-wrap gap-3">
-                <Kbd variant="shiny">Ctrl + C</Kbd>
-                <Kbd variant="shiny">Ctrl + V</Kbd>
-                <Kbd variant="shiny">⌘ + S</Kbd>
-                <Kbd variant="shiny">⌘ + K</Kbd>
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Glass</h3>
-              <div className="bg-slate-950 p-6 rounded-xl space-y-4">
-                <div className="flex flex-wrap gap-3">
-                  <Kbd variant="glass">Ctrl + C</Kbd>
-                  <Kbd variant="glass">Ctrl + V</Kbd>
-                  <Kbd variant="glass">⌘ + S</Kbd>
-                  <Kbd variant="glass">⌘ + K</Kbd>
-                </div>
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Neon</h3>
-              <div className="bg-slate-950 p-6 rounded-xl space-y-4">
-                <div className="flex flex-wrap gap-3">
-                  <Kbd variant="neon">Ctrl + C</Kbd>
-                  <Kbd variant="neon">Ctrl + V</Kbd>
-                  <Kbd variant="neon">⌘ + S</Kbd>
-                  <Kbd variant="neon">⌘ + K</Kbd>
-                </div>
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Gradient</h3>
-              <div className="bg-slate-950 p-6 rounded-xl space-y-4">
-                <div className="flex flex-wrap gap-3">
-                  <Kbd variant="gradient">Ctrl + C</Kbd>
-                  <Kbd variant="gradient">Ctrl + V</Kbd>
-                  <Kbd variant="gradient">⌘ + S</Kbd>
-                  <Kbd variant="gradient">⌘ + K</Kbd>
-                </div>
-              </div>
-            </section>
           </div>
         </TabsContent>
 
@@ -103,7 +57,7 @@ export default function KbdPage() {
 
             <section className="flex flex-col gap-3">
               <h3 className="text-lg font-semibold">Hotkey Reference</h3>
-              <div className="bg-slate-950 p-6 rounded-xl space-y-3">
+              <div className="surface p-6 rounded-xl space-y-3">
                 {[
                   { keys: "⌘ + N", action: "New file" },
                   { keys: "⌘ + O", action: "Open file" },
@@ -115,8 +69,8 @@ export default function KbdPage() {
                     key={shortcut.keys}
                     className="flex items-center justify-between"
                   >
-                    <span className="text-white/70 text-sm">{shortcut.action}</span>
-                    <Kbd variant="neon">{shortcut.keys}</Kbd>
+                    <span className="text-sm">{shortcut.action}</span>
+                    <Kbd variant="default">{shortcut.keys}</Kbd>
                   </div>
                 ))}
               </div>

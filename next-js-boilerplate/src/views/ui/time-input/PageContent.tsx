@@ -15,10 +15,6 @@ function formatTime(t: Time, showSeconds?: boolean): string {
 
 export default function TimeInputPage() {
   const [defaultTime, setDefaultTime] = useState<Time>({ hours: 10, minutes: 30 });
-  const [shinyTime, setShinyTime] = useState<Time>({ hours: 14, minutes: 15 });
-  const [glassTime, setGlassTime] = useState<Time>({ hours: 9, minutes: 0 });
-  const [neonTime, setNeonTime] = useState<Time>({ hours: 20, minutes: 45 });
-  const [gradientTime, setGradientTime] = useState<Time>({ hours: 16, minutes: 20 });
   const [secondsTime, setSecondsTime] = useState<Time>({ hours: 12, minutes: 0, seconds: 30 });
   const [twelveTime, setTwelveTime] = useState<Time>({ hours: 14, minutes: 30 });
 
@@ -56,66 +52,6 @@ export default function TimeInputPage() {
           </section>
 
           <section className="flex flex-col gap-3">
-            <h3 className="text-lg font-semibold">Shiny</h3>
-            <div className="bg-slate-950 p-6 rounded-xl">
-              <TimeInput
-                value={shinyTime}
-                onChange={setShinyTime}
-                variant="shiny"
-                label="Shiny variant"
-              />
-              <p className="text-slate-400 text-xs mt-2">
-                Value: {formatTime(shinyTime)}
-              </p>
-            </div>
-          </section>
-
-          <section className="flex flex-col gap-3">
-            <h3 className="text-lg font-semibold">Glass</h3>
-            <div className="bg-slate-950 p-6 rounded-xl">
-              <TimeInput
-                value={glassTime}
-                onChange={setGlassTime}
-                variant="glass"
-                label="Glass variant"
-              />
-              <p className="text-slate-400 text-xs mt-2">
-                Value: {formatTime(glassTime)}
-              </p>
-            </div>
-          </section>
-
-          <section className="flex flex-col gap-3">
-            <h3 className="text-lg font-semibold">Neon</h3>
-            <div className="bg-slate-950 p-6 rounded-xl">
-              <TimeInput
-                value={neonTime}
-                onChange={setNeonTime}
-                variant="neon"
-                label="Neon variant"
-              />
-              <p className="text-slate-400 text-xs mt-2">
-                Value: {formatTime(neonTime)}
-              </p>
-            </div>
-          </section>
-
-          <section className="flex flex-col gap-3">
-            <h3 className="text-lg font-semibold">Gradient</h3>
-            <div className="bg-slate-950 p-6 rounded-xl">
-              <TimeInput
-                value={gradientTime}
-                onChange={setGradientTime}
-                variant="gradient"
-                label="Gradient variant"
-              />
-              <p className="text-slate-400 text-xs mt-2">
-                Value: {formatTime(gradientTime)}
-              </p>
-            </div>
-          </section>
-
-          <section className="flex flex-col gap-3">
             <h3 className="text-lg font-semibold">With Seconds</h3>
             <TimeInput
               value={secondsTime}
@@ -145,22 +81,21 @@ export default function TimeInputPage() {
         <TabsContent value="examples" className="space-y-6">
           <section className="flex flex-col gap-3">
             <h3 className="text-lg font-semibold">Meeting Scheduler</h3>
-            <div className="bg-slate-950 p-6 rounded-xl">
+            <div className="surface p-6 rounded-xl">
               <div className="mb-4">
-                <p className="text-sm font-semibold text-white">Schedule a Meeting</p>
-                <p className="text-slate-400 text-xs">Pick a time for your meeting</p>
+                <p className="text-sm font-semibold">Schedule a Meeting</p>
+                <p className="text-muted text-xs">Pick a time for your meeting</p>
               </div>
               <TimeInput
                 value={meetingTime}
                 onChange={setMeetingTime}
-                variant="neon"
                 label="Meeting time"
               />
-              <div className="mt-4 flex items-center justify-between border-t border-cyan-500/20 pt-4">
-                <p className="text-xs text-slate-400">
+              <div className="mt-4 flex items-center justify-between border-t pt-4">
+                <p className="text-xs text-muted">
                   Meeting at {formatTime(meetingTime)}
                 </p>
-                <button className="rounded-md bg-cyan-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-cyan-500">
+                <button className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90">
                   Confirm
                 </button>
               </div>
@@ -169,19 +104,18 @@ export default function TimeInputPage() {
 
           <section className="flex flex-col gap-3">
             <h3 className="text-lg font-semibold">Event Time Picker</h3>
-            <div className="bg-slate-950 p-6 rounded-xl">
+            <div className="surface p-6 rounded-xl">
               <div className="mb-4">
-                <p className="text-sm font-semibold text-white">Event Start Time</p>
-                <p className="text-slate-400 text-xs">When does the event begin?</p>
+                <p className="text-sm font-semibold">Event Start Time</p>
+                <p className="text-muted text-xs">When does the event begin?</p>
               </div>
               <TimeInput
                 value={eventTime}
                 onChange={setEventTime}
-                variant="glass"
                 label="Start time"
               />
-              <div className="mt-4 border-t border-white/10 pt-4">
-                <p className="text-xs text-slate-400">
+              <div className="mt-4 border-t pt-4">
+                <p className="text-xs text-muted">
                   Event starts at {formatTime(eventTime)}
                 </p>
               </div>
@@ -190,23 +124,22 @@ export default function TimeInputPage() {
 
           <section className="flex flex-col gap-3">
             <h3 className="text-lg font-semibold">Timer Settings</h3>
-            <div className="bg-slate-950 p-6 rounded-xl">
+            <div className="surface p-6 rounded-xl">
               <div className="mb-4">
-                <p className="text-sm font-semibold text-white">Countdown Timer</p>
-                <p className="text-slate-400 text-xs">Set timer duration with precision</p>
+                <p className="text-sm font-semibold">Countdown Timer</p>
+                <p className="text-muted text-xs">Set timer duration with precision</p>
               </div>
               <TimeInput
                 value={timerTime}
                 onChange={setTimerTime}
-                variant="shiny"
                 showSeconds
                 label="Duration"
               />
-              <div className="mt-4 flex items-center justify-between border-t border-slate-700 pt-4">
-                <p className="text-xs text-slate-400">
+              <div className="mt-4 flex items-center justify-between border-t pt-4">
+                <p className="text-xs text-muted">
                   {formatTime(timerTime, true)}
                 </p>
-                <button className="rounded-md bg-slate-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-600">
+                <button className="rounded-md bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground hover:bg-secondary/80">
                   Start Timer
                 </button>
               </div>

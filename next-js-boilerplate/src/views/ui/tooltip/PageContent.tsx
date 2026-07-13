@@ -57,132 +57,6 @@ export default function TooltipPage() {
                 </Tooltip>
               </div>
             </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Shiny</h3>
-              <div className="flex flex-wrap items-center gap-8">
-                <Tooltip variant="shiny" side="top">
-                  <TooltipTrigger asChild>
-                    <Button variant="outline">Top</Button>
-                  </TooltipTrigger>
-                  <TooltipContent variant="shiny">Shiny tooltip</TooltipContent>
-                </Tooltip>
-                <Tooltip variant="shiny" side="bottom">
-                  <TooltipTrigger asChild>
-                    <Button variant="outline">Bottom</Button>
-                  </TooltipTrigger>
-                  <TooltipContent variant="shiny">Shiny tooltip</TooltipContent>
-                </Tooltip>
-                <Tooltip variant="shiny" side="left">
-                  <TooltipTrigger asChild>
-                    <Button variant="outline">Left</Button>
-                  </TooltipTrigger>
-                  <TooltipContent variant="shiny">Shiny tooltip</TooltipContent>
-                </Tooltip>
-                <Tooltip variant="shiny" side="right">
-                  <TooltipTrigger asChild>
-                    <Button variant="outline">Right</Button>
-                  </TooltipTrigger>
-                  <TooltipContent variant="shiny">Shiny tooltip</TooltipContent>
-                </Tooltip>
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Glass</h3>
-              <div className="bg-slate-950 p-6 rounded-xl space-y-4">
-                <div className="flex flex-wrap items-center gap-8">
-                  <Tooltip variant="glass" side="top">
-                    <TooltipTrigger asChild>
-                      <Button variant="outline">Top</Button>
-                    </TooltipTrigger>
-                    <TooltipContent variant="glass">Glass tooltip</TooltipContent>
-                  </Tooltip>
-                  <Tooltip variant="glass" side="bottom">
-                    <TooltipTrigger asChild>
-                      <Button variant="outline">Bottom</Button>
-                    </TooltipTrigger>
-                    <TooltipContent variant="glass">Glass tooltip</TooltipContent>
-                  </Tooltip>
-                  <Tooltip variant="glass" side="left">
-                    <TooltipTrigger asChild>
-                      <Button variant="outline">Left</Button>
-                    </TooltipTrigger>
-                    <TooltipContent variant="glass">Glass tooltip</TooltipContent>
-                  </Tooltip>
-                  <Tooltip variant="glass" side="right">
-                    <TooltipTrigger asChild>
-                      <Button variant="outline">Right</Button>
-                    </TooltipTrigger>
-                    <TooltipContent variant="glass">Glass tooltip</TooltipContent>
-                  </Tooltip>
-                </div>
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Neon</h3>
-              <div className="bg-slate-950 p-6 rounded-xl space-y-4">
-                <div className="flex flex-wrap items-center gap-8">
-                  <Tooltip variant="neon" side="top">
-                    <TooltipTrigger asChild>
-                      <Button variant="outline">Top</Button>
-                    </TooltipTrigger>
-                    <TooltipContent variant="neon">Neon tooltip</TooltipContent>
-                  </Tooltip>
-                  <Tooltip variant="neon" side="bottom">
-                    <TooltipTrigger asChild>
-                      <Button variant="outline">Bottom</Button>
-                    </TooltipTrigger>
-                    <TooltipContent variant="neon">Neon tooltip</TooltipContent>
-                  </Tooltip>
-                  <Tooltip variant="neon" side="left">
-                    <TooltipTrigger asChild>
-                      <Button variant="outline">Left</Button>
-                    </TooltipTrigger>
-                    <TooltipContent variant="neon">Neon tooltip</TooltipContent>
-                  </Tooltip>
-                  <Tooltip variant="neon" side="right">
-                    <TooltipTrigger asChild>
-                      <Button variant="outline">Right</Button>
-                    </TooltipTrigger>
-                    <TooltipContent variant="neon">Neon tooltip</TooltipContent>
-                  </Tooltip>
-                </div>
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Gradient</h3>
-              <div className="bg-slate-950 p-6 rounded-xl space-y-4">
-                <div className="flex flex-wrap items-center gap-8">
-                  <Tooltip variant="gradient" side="top">
-                    <TooltipTrigger asChild>
-                      <Button variant="outline">Top</Button>
-                    </TooltipTrigger>
-                    <TooltipContent variant="gradient">Gradient tooltip</TooltipContent>
-                  </Tooltip>
-                  <Tooltip variant="gradient" side="bottom">
-                    <TooltipTrigger asChild>
-                      <Button variant="outline">Bottom</Button>
-                    </TooltipTrigger>
-                    <TooltipContent variant="gradient">Gradient tooltip</TooltipContent>
-                  </Tooltip>
-                  <Tooltip variant="gradient" side="left">
-                    <TooltipTrigger asChild>
-                      <Button variant="outline">Left</Button>
-                    </TooltipTrigger>
-                    <TooltipContent variant="gradient">Gradient tooltip</TooltipContent>
-                  </Tooltip>
-                  <Tooltip variant="gradient" side="right">
-                    <TooltipTrigger asChild>
-                      <Button variant="outline">Right</Button>
-                    </TooltipTrigger>
-                    <TooltipContent variant="gradient">Gradient tooltip</TooltipContent>
-                  </Tooltip>
-                </div>
-              </div>
-            </section>
           </div>
         </TabsContent>
 
@@ -203,7 +77,7 @@ export default function TooltipPage() {
                           ?
                         </button>
                       </TooltipTrigger>
-                      <TooltipContent variant="shiny">
+                      <TooltipContent>
                         We&apos;ll never share your email.
                       </TooltipContent>
                     </Tooltip>
@@ -222,7 +96,7 @@ export default function TooltipPage() {
                           ?
                         </button>
                       </TooltipTrigger>
-                      <TooltipContent variant="glass">
+                      <TooltipContent>
                         Must be at least 8 characters.
                       </TooltipContent>
                     </Tooltip>
@@ -247,7 +121,7 @@ export default function TooltipPage() {
                       </svg>
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent variant="neon">Bold</TooltipContent>
+                  <TooltipContent>Bold</TooltipContent>
                 </Tooltip>
                 <Tooltip side="top">
                   <TooltipTrigger asChild>
@@ -262,7 +136,7 @@ export default function TooltipPage() {
                       </svg>
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent variant="neon">Italic</TooltipContent>
+                  <TooltipContent>Italic</TooltipContent>
                 </Tooltip>
                 <Tooltip side="top">
                   <TooltipTrigger asChild>
@@ -276,7 +150,7 @@ export default function TooltipPage() {
                       </svg>
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent variant="neon">Underline</TooltipContent>
+                  <TooltipContent>Underline</TooltipContent>
                 </Tooltip>
                 <Tooltip side="top">
                   <TooltipTrigger asChild>
@@ -291,7 +165,7 @@ export default function TooltipPage() {
                       </svg>
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent variant="neon">Strikethrough</TooltipContent>
+                  <TooltipContent>Strikethrough</TooltipContent>
                 </Tooltip>
               </div>
             </section>

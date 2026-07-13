@@ -132,42 +132,6 @@ export default function CheckboxPage() {
               </div>
             </div>
           </section>
-
-          <section className="flex flex-col gap-4">
-            <h3 className="text-lg font-semibold">Shiny Variant</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Checkbox variant="shiny" label="Shiny unchecked" />
-              <Checkbox variant="shiny" defaultChecked label="Shiny checked" />
-            </div>
-          </section>
-
-          <section className="flex flex-col gap-4">
-            <h3 className="text-lg font-semibold">Glass Variant</h3>
-            <div className="bg-slate-950 p-6 rounded-xl">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Checkbox variant="glass" label="Glass unchecked" />
-                <Checkbox variant="glass" defaultChecked label="Glass checked" />
-              </div>
-            </div>
-          </section>
-
-          <section className="flex flex-col gap-4">
-            <h3 className="text-lg font-semibold">Neon Variant</h3>
-            <div className="bg-slate-950 p-6 rounded-xl">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Checkbox variant="neon" label="Neon unchecked" />
-                <Checkbox variant="neon" defaultChecked label="Neon checked" />
-              </div>
-            </div>
-          </section>
-
-          <section className="flex flex-col gap-4">
-            <h3 className="text-lg font-semibold">Gradient Variant</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Checkbox variant="gradient" label="Gradient unchecked" />
-              <Checkbox variant="gradient" defaultChecked label="Gradient checked" />
-            </div>
-          </section>
         </TabsContent>
 
         <TabsContent value="examples" className="space-y-6">
@@ -195,31 +159,31 @@ export default function CheckboxPage() {
           </section>
 
           <section className="flex flex-col gap-4">
-            <h3 className="text-lg font-semibold">Registration Form (Gradient)</h3>
-            <div className="bg-gradient-to-br from-slate-900 to-slate-950 p-6 rounded-xl space-y-4 max-w-sm">
-              <h4 className="text-sm font-semibold text-white uppercase tracking-wider">Terms & Preferences</h4>
+            <h3 className="text-lg font-semibold">Registration Form</h3>
+            <div className="surface max-w-sm p-6 rounded-xl space-y-4">
+              <h4 className="text-sm font-semibold uppercase tracking-wider">Terms & Preferences</h4>
               <div className="flex flex-col gap-3">
-                <Checkbox variant="gradient" label="I agree to the Terms of Service" />
-                <Checkbox variant="gradient" defaultChecked label="Subscribe to newsletter" />
-                <Checkbox variant="gradient" label="Enable two-factor authentication" />
+                <Checkbox label="I agree to the Terms of Service" />
+                <Checkbox defaultChecked label="Subscribe to newsletter" />
+                <Checkbox label="Enable two-factor authentication" />
               </div>
-              <button className="w-full rounded bg-gradient-to-r from-blue-500 to-purple-500 px-4 py-2 text-sm font-medium text-white hover:opacity-90">
+              <button className="w-full rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90">
                 Create Account
               </button>
             </div>
           </section>
 
           <section className="flex flex-col gap-4">
-            <h3 className="text-lg font-semibold">Preferences Panel (Neon)</h3>
-            <div className="bg-slate-950 border border-cyan-500/20 max-w-sm overflow-hidden rounded-xl">
-              <div className="px-4 py-2 border-b border-cyan-500/20">
-                <span className="text-xs font-semibold text-cyan-400 uppercase tracking-wider">Features</span>
+            <h3 className="text-lg font-semibold">Preferences Panel</h3>
+            <div className="surface max-w-sm overflow-hidden rounded-xl border">
+              <div className="px-4 py-2 border-b">
+                <span className="text-xs font-semibold uppercase tracking-wider">Features</span>
               </div>
-              <div className="divide-y divide-cyan-500/10 px-4 py-3">
+              <div className="divide-y px-4 py-3">
                 <div className="flex flex-col gap-3 py-2">
-                  <Checkbox variant="neon" defaultChecked label="Real-time sync" />
-                  <Checkbox variant="neon" label="Auto-updates" />
-                  <Checkbox variant="neon" defaultChecked label="Beta features" />
+                  <Checkbox defaultChecked label="Real-time sync" />
+                  <Checkbox label="Auto-updates" />
+                  <Checkbox defaultChecked label="Beta features" />
                 </div>
               </div>
             </div>

@@ -62,48 +62,6 @@ export default function BadgePage() {
             </section>
 
             <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Shiny</h3>
-              <div className="flex flex-wrap items-center gap-3">
-                <Badge variant="shiny" data-testid="badge-shiny">
-                  Shiny
-                </Badge>
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Glass</h3>
-              <div className="bg-slate-950 p-6 rounded-xl flex flex-wrap items-center gap-3">
-                <Badge variant="glass" data-testid="badge-glass">
-                  Glass
-                </Badge>
-                <Badge variant="glass">React</Badge>
-                <Badge variant="glass">TypeScript</Badge>
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Neon</h3>
-              <div className="bg-slate-950 p-6 rounded-xl flex flex-wrap items-center gap-3">
-                <Badge variant="neon" data-testid="badge-neon">
-                  Neon
-                </Badge>
-                <Badge variant="neon">Active</Badge>
-                <Badge variant="neon">Online</Badge>
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Gradient</h3>
-              <div className="bg-slate-950 p-6 rounded-xl flex flex-wrap items-center gap-3">
-                <Badge variant="gradient" data-testid="badge-gradient">
-                  Gradient
-                </Badge>
-                <Badge variant="gradient">Premium</Badge>
-                <Badge variant="gradient">Featured</Badge>
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-3">
               <h3 className="text-lg font-semibold">Sizes</h3>
               <div className="flex flex-wrap items-center gap-3">
                 <Badge variant="default" className="text-[10px] px-2 py-0">
@@ -232,34 +190,11 @@ export default function BadgePage() {
                   Click bell to increment ({notifCount})
                 </span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="bg-slate-950 p-4 rounded-xl flex flex-wrap gap-2">
-                  <Badge variant="neon">
-                    3 New Messages
-                  </Badge>
-                  <Badge variant="neon">
-                    1 Alert
-                  </Badge>
-                </div>
-                <div className="bg-slate-950 p-4 rounded-xl flex flex-wrap gap-2">
-                  <Badge variant="glass">
-                    5 Updates
-                  </Badge>
-                  <Badge variant="glass">
-                    2 Warnings
-                  </Badge>
-                </div>
-                <div className="bg-slate-950 p-4 rounded-xl flex flex-wrap gap-2">
-                  <Badge variant="shiny">
-                    12 Tasks Due
-                  </Badge>
-                </div>
-              </div>
             </section>
 
             <section className="flex flex-col gap-3">
               <h3 className="text-lg font-semibold">Tag Badges</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="surface p-4 rounded-xl space-y-2">
                   <p className="text-sm font-medium">Technology Tags</p>
                   <div className="flex flex-wrap gap-2">
@@ -270,26 +205,13 @@ export default function BadgePage() {
                     <Badge variant="default">Python</Badge>
                   </div>
                 </div>
-                <div className="bg-slate-950 p-4 rounded-xl space-y-2">
-                  <p className="text-sm font-medium text-white">
-                    Neon Tags
-                  </p>
+                <div className="surface p-4 rounded-xl space-y-2">
+                  <p className="text-sm font-medium">Category Tags</p>
                   <div className="flex flex-wrap gap-2">
-                    <Badge variant="neon">API</Badge>
-                    <Badge variant="neon">REST</Badge>
-                    <Badge variant="neon">GraphQL</Badge>
-                    <Badge variant="neon">WebSocket</Badge>
-                  </div>
-                </div>
-                <div className="bg-slate-950 p-4 rounded-xl space-y-2">
-                  <p className="text-sm font-medium text-white">
-                    Gradient Tags
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="gradient">Design</Badge>
-                    <Badge variant="gradient">UI/UX</Badge>
-                    <Badge variant="gradient">Frontend</Badge>
-                    <Badge variant="gradient">Full Stack</Badge>
+                    <Badge variant="info">API</Badge>
+                    <Badge variant="info">REST</Badge>
+                    <Badge variant="info">GraphQL</Badge>
+                    <Badge variant="info">WebSocket</Badge>
                   </div>
                 </div>
               </div>

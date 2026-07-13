@@ -6,27 +6,6 @@ import { ToastProvider, ToastViewport, useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
-function VariantPreview({
-  title,
-  description,
-  className,
-}: {
-  title: string;
-  description: string;
-  className: string;
-}) {
-  return (
-    <div
-      className={`group pointer-events-auto relative flex w-full items-start gap-3 rounded-lg border p-4 shadow-xl transition-all ${className}`}
-    >
-      <div className="flex-1 space-y-1">
-        <div className="text-sm font-medium">{title}</div>
-        <div className="text-xs opacity-80">{description}</div>
-      </div>
-    </div>
-  );
-}
-
 function DemoControls() {
   const { toast } = useToast();
 
@@ -86,46 +65,6 @@ function DemoControls() {
             Show Destructive Toast
           </Button>
         </div>
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Shiny</h3>
-        <VariantPreview
-          title="Shiny Toast"
-          description="Gradient background with enhanced shadow effects."
-          className="bg-gradient-to-br from-blue-500 to-purple-500 text-white border-transparent shadow-lg shadow-blue-500/20"
-        />
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Glass</h3>
-        <div className="rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 p-4">
-          <VariantPreview
-            title="Glass Toast"
-            description="Frosted glass effect with translucent background."
-            className="bg-white/10 backdrop-blur-md text-white border-white/20 shadow-xl"
-          />
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Neon</h3>
-        <div className="rounded-xl bg-slate-950 p-4">
-          <VariantPreview
-            title="Neon Toast"
-            description="Glowing cyan accents on dark background."
-            className="bg-slate-950/90 text-cyan-400 border border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.15)]"
-          />
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Gradient</h3>
-        <VariantPreview
-          title="Gradient Toast"
-          description="Deep gradient with transparent text clipping."
-          className="bg-gradient-to-br from-slate-900 to-slate-950 text-transparent bg-clip-text border-transparent shadow-2xl"
-        />
       </section>
     </div>
   );

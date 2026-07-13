@@ -72,108 +72,6 @@ export default function Page() {
             </section>
 
             <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Shiny</h3>
-              <Dialog>
-                <DialogTrigger className="bg-gradient-to-br from-slate-900 to-slate-950 inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium text-white hover:opacity-90 shadow-lg">
-                  Open Shiny Dialog
-                </DialogTrigger>
-                <DialogContent variant="shiny">
-                  <DialogHeader>
-                    <DialogTitle>Shiny Dialog</DialogTitle>
-                    <DialogDescription>
-                      This dialog uses the shiny variant with a gradient background
-                      and enhanced shadow effects.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter>
-                    <DialogClose className="border-border hover:bg-surface-hover inline-flex items-center justify-center rounded border bg-transparent px-4 py-2 text-sm font-medium">
-                      Cancel
-                    </DialogClose>
-                    <Button variant="primary">Confirm</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Glass</h3>
-              <div className="rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 p-6">
-                <Dialog>
-                  <DialogTrigger className="bg-white/10 backdrop-blur-md inline-flex items-center justify-center rounded border border-white/20 px-4 py-2 text-sm font-medium text-white hover:bg-white/20">
-                    Open Glass Dialog
-                  </DialogTrigger>
-                  <DialogContent variant="glass">
-                    <DialogHeader>
-                      <DialogTitle className="text-white">Glass Dialog</DialogTitle>
-                      <DialogDescription className="text-slate-300">
-                        This dialog uses the glass variant with a frosted glass
-                        effect and translucent background.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                      <DialogClose className="border-white/20 hover:bg-white/10 inline-flex items-center justify-center rounded border bg-transparent px-4 py-2 text-sm font-medium text-white">
-                        Cancel
-                      </DialogClose>
-                      <Button variant="primary">Confirm</Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Neon</h3>
-              <div className="rounded-xl bg-slate-950 p-6">
-                <Dialog>
-                  <DialogTrigger className="bg-cyan-500/20 inline-flex items-center justify-center rounded border border-cyan-500/30 px-4 py-2 text-sm font-medium text-cyan-300 hover:bg-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.2)]">
-                    Open Neon Dialog
-                  </DialogTrigger>
-                  <DialogContent variant="neon">
-                    <DialogHeader>
-                      <DialogTitle className="text-cyan-300">Neon Dialog</DialogTitle>
-                      <DialogDescription className="text-cyan-400/70">
-                        This dialog uses the neon variant with glowing cyan accents
-                        and a dark background.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                      <DialogClose className="border-cyan-500/30 hover:bg-cyan-500/10 inline-flex items-center justify-center rounded border bg-transparent px-4 py-2 text-sm font-medium text-cyan-400">
-                        Cancel
-                      </DialogClose>
-                      <Button variant="primary">Confirm</Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Gradient</h3>
-              <Dialog>
-                <DialogTrigger className="bg-gradient-to-br from-slate-900 to-slate-950 inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500 hover:opacity-90 shadow-2xl border border-transparent">
-                  Open Gradient Dialog
-                </DialogTrigger>
-                <DialogContent variant="gradient">
-                  <DialogHeader>
-                    <DialogTitle className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500">
-                      Gradient Dialog
-                    </DialogTitle>
-                    <DialogDescription className="text-slate-400">
-                      This dialog uses the gradient variant with text gradient effects
-                      and a deep gradient background.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter>
-                    <DialogClose className="border-border hover:bg-surface-hover inline-flex items-center justify-center rounded border bg-transparent px-4 py-2 text-sm font-medium">
-                      Cancel
-                    </DialogClose>
-                    <Button variant="primary">Confirm</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </section>
-
-            <section className="flex flex-col gap-3">
               <h3 className="text-lg font-semibold">With Different Content</h3>
               <Dialog>
                 <DialogTrigger className="bg-brand inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium text-white hover:opacity-90">
@@ -219,89 +117,85 @@ export default function Page() {
         <TabsContent value="examples">
           <div className="flex flex-col gap-6">
             <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Confirmation Dialog (Neon)</h3>
+              <h3 className="text-lg font-semibold">Confirmation Dialog</h3>
               <p className="text-muted text-xs">
-                A destructive confirmation dialog with neon styling.
-              </p>
-              <div className="rounded-xl bg-slate-950 p-6">
-                <Dialog>
-                  <DialogTrigger className="bg-red-600/20 inline-flex items-center justify-center rounded border border-red-500/30 px-4 py-2 text-sm font-medium text-red-300 hover:bg-red-600/30">
-                    {deleting ? "Deleting..." : "Delete Project"}
-                  </DialogTrigger>
-                  <DialogContent variant="neon">
-                    <DialogHeader>
-                      <DialogTitle className="text-cyan-300">
-                        Delete &ldquo;My Project&rdquo;?
-                      </DialogTitle>
-                      <DialogDescription className="text-cyan-400/70">
-                        This will permanently delete the project and all its data.
-                        This action cannot be undone.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                      <DialogClose className="border-cyan-500/30 hover:bg-cyan-500/10 inline-flex items-center justify-center rounded border bg-transparent px-4 py-2 text-sm font-medium text-cyan-400">
-                        Cancel
-                      </DialogClose>
-                      <Button
-                        variant="destructive"
-                        onClick={() => handleDelete(setDeleting)}
-                      >
-                        Confirm Delete
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Form Dialog (Glass)</h3>
-              <p className="text-muted text-xs">
-                A form dialog with glass styling for editing content.
-              </p>
-              <div className="rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 p-6">
-                <Dialog>
-                  <DialogTrigger className="bg-white/10 backdrop-blur-md inline-flex items-center justify-center rounded border border-white/20 px-4 py-2 text-sm font-medium text-white hover:bg-white/20">
-                    Edit Settings
-                  </DialogTrigger>
-                  <DialogContent variant="glass">
-                    <DialogHeader>
-                      <DialogTitle className="text-white">Edit Settings</DialogTitle>
-                      <DialogDescription className="text-slate-300">
-                        Update your notification preferences.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex flex-col gap-3">
-                      <label className="flex items-center gap-2 text-sm text-white">
-                        <input type="checkbox" defaultChecked className="rounded" />
-                        Email notifications
-                      </label>
-                      <label className="flex items-center gap-2 text-sm text-white">
-                        <input type="checkbox" className="rounded" />
-                        Push notifications
-                      </label>
-                    </div>
-                    <DialogFooter>
-                      <DialogClose className="border-white/20 hover:bg-white/10 inline-flex items-center justify-center rounded border bg-transparent px-4 py-2 text-sm font-medium text-white">
-                        Cancel
-                      </DialogClose>
-                      <Button variant="primary">Save</Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Info Dialog (Shiny)</h3>
-              <p className="text-muted text-xs">
-                An informational dialog with shiny styling.
+                A destructive confirmation dialog.
               </p>
               <Dialog>
-                <DialogTrigger className="bg-gradient-to-br from-slate-900 to-slate-950 inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium text-white hover:opacity-90 shadow-lg">
+                <DialogTrigger className="bg-brand inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium text-white hover:opacity-90">
+                  {deleting ? "Deleting..." : "Delete Project"}
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>
+                      Delete &ldquo;My Project&rdquo;?
+                    </DialogTitle>
+                    <DialogDescription>
+                      This will permanently delete the project and all its data.
+                      This action cannot be undone.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <DialogClose className="border-border hover:bg-surface-hover inline-flex items-center justify-center rounded border bg-transparent px-4 py-2 text-sm font-medium">
+                      Cancel
+                    </DialogClose>
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleDelete(setDeleting)}
+                    >
+                      Confirm Delete
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </section>
+
+            <section className="flex flex-col gap-3">
+              <h3 className="text-lg font-semibold">Form Dialog</h3>
+              <p className="text-muted text-xs">
+                A form dialog for editing content.
+              </p>
+              <Dialog>
+                <DialogTrigger className="bg-brand inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium text-white hover:opacity-90">
+                  Edit Settings
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Edit Settings</DialogTitle>
+                    <DialogDescription>
+                      Update your notification preferences.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="flex flex-col gap-3">
+                    <label className="flex items-center gap-2 text-sm">
+                      <input type="checkbox" defaultChecked className="rounded" />
+                      Email notifications
+                    </label>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input type="checkbox" className="rounded" />
+                      Push notifications
+                    </label>
+                  </div>
+                  <DialogFooter>
+                    <DialogClose className="border-border hover:bg-surface-hover inline-flex items-center justify-center rounded border bg-transparent px-4 py-2 text-sm font-medium">
+                      Cancel
+                    </DialogClose>
+                    <Button variant="primary">Save</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </section>
+
+            <section className="flex flex-col gap-3">
+              <h3 className="text-lg font-semibold">Info Dialog</h3>
+              <p className="text-muted text-xs">
+                An informational dialog with details.
+              </p>
+              <Dialog>
+                <DialogTrigger className="bg-brand inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium text-white hover:opacity-90">
                   View Details
                 </DialogTrigger>
-                <DialogContent variant="shiny">
+                <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Version 2.0 Released</DialogTitle>
                     <DialogDescription>
@@ -310,7 +204,7 @@ export default function Page() {
                       a completely redesigned interface.
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="rounded-lg bg-white/5 p-3 text-sm">
+                  <div className="rounded-lg bg-surface p-3 text-sm">
                     <p className="font-medium">What&apos;s New</p>
                     <ul className="text-muted mt-1 list-inside list-disc text-xs">
                       <li>Dark mode support</li>

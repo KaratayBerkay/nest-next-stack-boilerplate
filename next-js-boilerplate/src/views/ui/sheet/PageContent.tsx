@@ -88,95 +88,21 @@ export default function SheetPage() {
                 </Sheet>
               </div>
             </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Shiny</h3>
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline">Open Shiny Sheet</Button>
-                </SheetTrigger>
-                <SheetContent side="right" variant="shiny">
-                  <SheetHeader>
-                    <SheetTitle>Shiny Sheet</SheetTitle>
-                    <SheetDescription>
-                      A shiny gradient variant sheet panel.
-                    </SheetDescription>
-                  </SheetHeader>
-                </SheetContent>
-              </Sheet>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Glass</h3>
-              <div className="bg-slate-950 p-6 rounded-xl space-y-4">
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="outline">Open Glass Sheet</Button>
-                  </SheetTrigger>
-                  <SheetContent side="right" variant="glass">
-                    <SheetHeader>
-                      <SheetTitle className="text-white">Glass Sheet</SheetTitle>
-                      <SheetDescription className="text-white/70">
-                        A frosted glass variant sheet panel.
-                      </SheetDescription>
-                    </SheetHeader>
-                  </SheetContent>
-                </Sheet>
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Neon</h3>
-              <div className="bg-slate-950 p-6 rounded-xl space-y-4">
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="outline">Open Neon Sheet</Button>
-                  </SheetTrigger>
-                  <SheetContent side="right" variant="neon">
-                    <SheetHeader>
-                      <SheetTitle className="text-cyan-400">Neon Sheet</SheetTitle>
-                      <SheetDescription className="text-cyan-400/70">
-                        A neon glow variant sheet panel.
-                      </SheetDescription>
-                    </SheetHeader>
-                  </SheetContent>
-                </Sheet>
-              </div>
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Gradient</h3>
-              <div className="bg-slate-950 p-6 rounded-xl space-y-4">
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="outline">Open Gradient Sheet</Button>
-                  </SheetTrigger>
-                  <SheetContent side="right" variant="gradient">
-                    <SheetHeader>
-                      <SheetTitle>Gradient Sheet</SheetTitle>
-                      <SheetDescription>
-                        A gradient variant sheet panel.
-                      </SheetDescription>
-                    </SheetHeader>
-                  </SheetContent>
-                </Sheet>
-              </div>
-            </section>
           </div>
         </TabsContent>
 
         <TabsContent value="examples">
           <div className="flex flex-col gap-6">
             <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Cart Sheet (Glass)</h3>
+              <h3 className="text-lg font-semibold">Cart Sheet</h3>
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="outline">Open Cart</Button>
                 </SheetTrigger>
-                <SheetContent side="right" variant="glass">
+                <SheetContent side="right">
                   <SheetHeader>
-                    <SheetTitle className="text-white">Shopping Cart</SheetTitle>
-                    <SheetDescription className="text-white/70">
+                    <SheetTitle>Shopping Cart</SheetTitle>
+                    <SheetDescription>
                       3 items in your cart
                     </SheetDescription>
                   </SheetHeader>
@@ -188,10 +114,10 @@ export default function SheetPage() {
                     ].map((item) => (
                       <div
                         key={item.name}
-                        className="flex items-center justify-between rounded-lg border border-white/10 p-3"
+                        className="flex items-center justify-between rounded-lg border p-3"
                       >
-                        <span className="text-white text-sm">{item.name}</span>
-                        <span className="text-white/70 text-sm">{item.price}</span>
+                        <span className="text-sm">{item.name}</span>
+                        <span className="text-muted text-sm">{item.price}</span>
                       </div>
                     ))}
                   </div>
@@ -205,15 +131,15 @@ export default function SheetPage() {
             </section>
 
             <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Settings Sheet (Neon)</h3>
+              <h3 className="text-lg font-semibold">Settings Sheet</h3>
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="outline">Open Settings</Button>
                 </SheetTrigger>
-                <SheetContent side="left" variant="neon">
+                <SheetContent side="left">
                   <SheetHeader>
-                    <SheetTitle className="text-cyan-400">Settings</SheetTitle>
-                    <SheetDescription className="text-cyan-400/70">
+                    <SheetTitle>Settings</SheetTitle>
+                    <SheetDescription>
                       Manage your application preferences
                     </SheetDescription>
                   </SheetHeader>
@@ -222,7 +148,7 @@ export default function SheetPage() {
                       (item) => (
                         <button
                           key={item}
-                          className="text-cyan-400/80 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-lg p-3 text-left text-sm transition-colors"
+                          className="hover:bg-surface-hover rounded-lg p-3 text-left text-sm transition-colors"
                         >
                           {item}
                         </button>
@@ -239,12 +165,12 @@ export default function SheetPage() {
             </section>
 
             <section className="flex flex-col gap-3">
-              <h3 className="text-lg font-semibold">Navigation Sheet (Gradient)</h3>
+              <h3 className="text-lg font-semibold">Navigation Sheet</h3>
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="outline">Open Navigation</Button>
                 </SheetTrigger>
-                <SheetContent side="left" variant="gradient">
+                <SheetContent side="left">
                   <SheetHeader>
                     <SheetTitle>Navigation</SheetTitle>
                     <SheetDescription>
@@ -256,7 +182,7 @@ export default function SheetPage() {
                       (item) => (
                         <button
                           key={item}
-                          className="hover:bg-white/5 rounded-lg p-3 text-left text-sm font-medium transition-colors"
+                          className="hover:bg-surface-hover rounded-lg p-3 text-left text-sm font-medium transition-colors"
                         >
                           {item}
                         </button>
