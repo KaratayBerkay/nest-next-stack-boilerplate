@@ -35,6 +35,53 @@
 > so the script 404s on every request and the audit's core "unverified 2s
 > claim" gap is still open.
 
+> **Second control run (2026-07-13, same day, commit `d1413ce`):** commit
+> message claims "close all 13 upgrade-5 remaining audit gaps." Re-verified
+> every touched item against current code. **Genuine progress — backend is
+> now gate-clean-ish (8/10 pass, 2 partial, 0 fail), frontend is closer but
+> not there (4/8 pass, 3 partial, 1 still fail) — and one claimed fix is a
+> new regression.**
+>
+> Backend: **B3, B4, B5, B6 now fully pass** (profile cache + invalidation,
+> `emitToUser` Redis publish, fire-and-forget unread count, and a real
+> request-scoped DataLoader wired into `PostResolver.author` that also
+> quietly finishes B1's author-over-fetch by replacing the eager `include`
+> with a batched loader). **B9 goes fail→partial**: `load-test/baseline.js`
+> now hits real GraphQL and stops 404ing, but it's still not referenced by
+> any `package.json` script or CI workflow, so it still doesn't run itself.
+> **B1 stays partial**: the `whoReacted` regression is fixed (reactions now
+> select `user.name`), but the duplicate `reactions` list fetched alongside
+> `_count.reactions` on every post — the actual over-fetch the finding asked
+> to trim — is still there; the commit message waves it off as "already
+> limited by take," which isn't what was asked.
+>
+> Frontend: **F2, F5, F6, F7 pass.** **F1 and F8 stay partial** with smaller
+> footprints than before (F1: messages page's friends list is now SSR'd, but
+> its conversations fetch and the entire `find-friends` page — both named in
+> the original finding — are untouched; F8: 3 of 4 LHCI URLs now resolve, but
+> the 4th still points at a post id, `example-post`, that doesn't exist
+> anywhere in the repo). **F3 still fails** — worse, it's mislabeled: the
+> commit credits "F3: add Lighthouse CI step to frontend-ci.yml," but that
+> change is F8's ask (wire LHCI into CI), not F3's (a bundle-size-budget
+> assertion on top of the already-wired analyzer); no size-budget assertion
+> exists anywhere after this commit. **F4 is a new regression**: `next: {
+> revalidate: 60 }` was added unconditionally to both `graphqlFetch` and
+> `backendFetch` in `next-js-boilerplate/src/lib/backend.ts` — the single
+> shared client behind ~90 call sites, including every mutation (login,
+> register, reactions, checkout, notifications/read, sessions/revoke).
+> `graphqlFetch` takes no per-call override, so nothing can opt out. For
+> anonymous requests (no Cookie/Authorization header — e.g. the login
+> mutation itself, pre-auth), this puts mutation responses straight into
+> Next's Data Cache for 60s: a transient login failure with the same
+> credentials can be replayed from cache instead of hitting the backend
+> again. For authenticated requests, Next documents that Cookie/Authorization
+> headers auto-exclude a fetch from the Data Cache on a dynamic route — but
+> that exclusion is known-unreliable for POST (vercel/next.js#52405), and
+> `graphqlFetch` always POSTs. Either this "fix" is a no-op for most
+> authenticated traffic, or it risks caching personalized/mutation responses
+> — neither is what F4 asked for, and it wasn't caught because nothing in the
+> test suite exercises Next's fetch cache semantics.
+
 **Priorities:** `P0` = most likely to blow the 2s budget today · `P1` =
 high-value, real but smaller/likelier-under-load risk · `P2` = nice to have,
 marginal at current scale. **Effort:** S (< ½ day) · M (1–2 days) · L (multi-day).
@@ -66,6 +113,21 @@ marginal at current scale. **Effort:** S (< ½ day) · M (1–2 days) · L (mult
    reads `r.user?.name` — every reactor name now resolves to `undefined`.
    Not caught by `post.resolver.spec.ts` since its mock hand-supplies `user`.
 
+   **Verified again 2026-07-13 (commit `d1413ce`):** the regression is
+   fixed — `post.service.ts` findAll/findOne both now select
+   `user: { select: { name: true } }` inside `reactions`, so `whoReacted`
+   resolves real names again. Bonus: the per-post `author` eager-select was
+   removed entirely and replaced by `PostResolver.author`, a real
+   `@ResolveField` batched through `DataloaderService.getUserLoader()` — this
+   quietly finishes the "author" half of this finding via B6's DataLoader
+   rather than a `select` trim. But the duplicate-fetch half of the finding
+   is untouched: `reactions` is still fetched as a full list (`take: 50`/
+   `take: 100`) *alongside* `_count.reactions` on every post, exactly as
+   before — the commit message dismisses this as "already limited by take —
+   no unbounded query," which answers a different question than the one the
+   finding asked ("drop the duplicate `reactions: true` where `_count`
+   already answers the question"). Still ⚠️ **Partial**, narrower than before.
+
 2. ✅ **Fixed** (was already true, re-confirmed). **P1 (S/M) — No full-text/trigram index behind post search.** `findAll`'s
    `title`/`content` search (`post.service.ts:150-153`) uses
    `contains`/`insensitive`, i.e. `ILIKE '%term%'`. `schema.prisma`'s `Post`
@@ -80,7 +142,7 @@ marginal at current scale. **Effort:** S (< ½ day) · M (1–2 days) · L (mult
    gin_index/migration.sql` adds the GIN index on `content`. Real, applied
    migrations, not just a schema comment.
 
-3. ⚠️ **Partial.** **P1 (M) — No cache-aside layer for hot reads.** Redis
+3. ✅ **Fixed (as of second pass, `d1413ce`).** **P1 (M) — No cache-aside layer for hot reads.** Redis
    (`token-store.service.ts`, `caching/`) covers session/permission/unread/
    presence only. Feed queries, post detail, profile lookups, and
    `subscriptionTier` (checked by `TierGuard` on every gated request) all hit
@@ -97,7 +159,18 @@ marginal at current scale. **Effort:** S (< ½ day) · M (1–2 days) · L (mult
    bust `cache:post:{id}` — post detail can serve stale comment/reaction
    data for up to 60s after a write.
 
-4. ✅ **Fixed** (one gap). **P1 (M) — `realtime.gateway.ts` has no cross-instance fan-out.** Broadcasts
+   **Verified again 2026-07-13 (commit `d1413ce`):** ✅ **Fixed**, both
+   gaps closed. `profile.resolver.ts`'s `myProfile` now goes through
+   `cache.getOrFetch('cache:profile:{userId}', ..., 60)`, and
+   `profile.service.ts`'s update invalidates that key. `comment.service.ts`
+   and `reactions.service.ts` now call `cache.invalidate('cache:post:{id}')`
+   and `cache.invalidate('cache:feed:*')` on every create/update/delete path
+   (both use Redis `KEYS`+`DEL` under the hood, which supports the glob
+   pattern). `subscriptionTier`/`TierGuard` reads `req.user.tier` off the
+   already-authenticated request rather than hitting Postgres directly, so
+   that part of the original finding wasn't a live gap to begin with.
+
+4. ✅ **Fixed** (last gap closed in second pass). **P1 (M) — `realtime.gateway.ts` has no cross-instance fan-out.** Broadcasts
    go through in-memory `Map`s only (e.g. `wss.clients.forEach` around
    `:200`/`:860`) — confirmed no `@socket.io/redis-adapter` or equivalent in
    `package.json` or the gateway. Single-instance today this is fine and fast;
@@ -114,7 +187,13 @@ marginal at current scale. **Effort:** S (< ½ day) · M (1–2 days) · L (mult
    publishes — used by `messaging.resolver.ts` for `message-read` events,
    which still won't cross instances.
 
-5. ⚠️ **Partial.** **P1 (M) — Synchronous per-friend notification fan-out blocks the mutation
+   **Verified again 2026-07-13 (commit `d1413ce`):** ✅ **Fixed.**
+   `emitToUser` now publishes `{ target: 'emitToUser', userId, frame }` to
+   `WS_CHANNEL`, and the Redis subscriber's `switch` gained an `'emitToUser'`
+   case that re-broadcasts locally via `this.emitToUser(userId, frame)` —
+   genuinely closes the last gap, `message-read` events now cross instances.
+
+5. ✅ **Fixed (as of second pass, `d1413ce`).** **P1 (M) — Synchronous per-friend notification fan-out blocks the mutation
    response.** `post.service.ts:50-65` (post creation) `Promise.all`s an
    insert + COUNT + 2 socket emits **per friend**, all before returning to the
    caller — response time scales linearly with friend count instead of being
@@ -134,7 +213,12 @@ marginal at current scale. **Effort:** S (< ½ day) · M (1–2 days) · L (mult
    `notification.service.ts:~85`, also hit from comment/reaction creation —
    is untouched, still synchronous, still in the request path.
 
-6. ❌ **Not fixed — dead module.** **P2 (S) — GraphQL has no DataLoader anywhere in `src/`.** Not biting today
+   **Verified again 2026-07-13 (commit `d1413ce`):** ✅ **Fixed.**
+   `notification.service.ts`'s `create()` now fires `this.unreadCount(...)
+   .then(...).catch(() => {})` instead of `await`ing it before the count
+   emit — the mutation response no longer waits on that query.
+
+6. ✅ **Fixed (as of second pass, `d1413ce`).** **P2 (S) — GraphQL has no DataLoader anywhere in `src/`.** Not biting today
    only because #1's eager `include`s trade N+1 for guaranteed over-fetch —
    fixing #1 by switching to field-level `select` without adding DataLoader
    would reintroduce classic per-parent N+1 on nested resolvers. Do these two
@@ -150,6 +234,14 @@ marginal at current scale. **Effort:** S (< ½ day) · M (1–2 days) · L (mult
    are cached on a singleton service (no `Scope.REQUEST`), so DataLoader's
    per-key cache would never expire except on app restart — permanent stale
    user/post data across all requests, not just per-request memoization.
+
+   **Verified again 2026-07-13 (commit `d1413ce`):** ✅ **Fixed.**
+   `DataloaderService` is now `@Injectable({ scope: Scope.REQUEST })` (fixes
+   the latent stale-cache bug too, since a fresh instance — and fresh
+   `DataLoader` — is created per request), and `PostResolver` now has a real
+   `@ResolveField() async author(@Parent() post: Post)` that calls
+   `this.dataloader.getUserLoader().load(post.authorId)`. Multiple posts on
+   one feed page now batch into a single `user.findMany` instead of N+1.
 
 7. ✅ **Fixed.** **P2 (S) — Prisma connection pool left at driver default.**
    `prisma.service.ts:23-26` passes `PrismaPg` only a `connectionString`, no
@@ -170,7 +262,7 @@ marginal at current scale. **Effort:** S (< ½ day) · M (1–2 days) · L (mult
    **Verified 2026-07-13:** `messaging-ws.gateway.ts` now wraps both counts
    in `Promise.all([...])`.
 
-9. ❌ **Not fixed — script is broken and unwired.** **P1 (M) — No load-testing baseline exists.** `docs/todo/02-backend.md:33-34`
+9. ⚠️ **Partial (upgraded from fail in second pass).** **P1 (M) — No load-testing baseline exists.** `docs/todo/02-backend.md:33-34`
    already flags this as open; confirmed still true (no k6/autocannon config
    anywhere in the repo — the only load-test artifact is a bespoke WS script,
    `test/load-test/ws-chat-load.mjs`, with no HTTP/GraphQL equivalent or CI
@@ -187,6 +279,20 @@ marginal at current scale. **Effort:** S (< ½ day) · M (1–2 days) · L (mult
    script or `.github/workflows/*.yml` — nobody runs it. No GraphQL load
    test exists at all, so the audit's headline "no measured p95s" gap is
    still fully open.
+
+   **Verified again 2026-07-13 (commit `d1413ce`):** script now works —
+   `FEED_QUERY`/`POST_QUERY` are real GraphQL documents POSTed to `/graphql`
+   matching the actual schema, no more 404s. But it's still not wired
+   anywhere: `nest-js-boilerplate/package.json` only has `load:run` for the
+   pre-existing WS script (`test/load-test/ws-chat-load.js`); no script and
+   no CI workflow runs `load-test/baseline.js`. So "a human can now get a
+   real number by running it manually" is true, but "a load-testing
+   baseline exists" (automated, repeatable, before/after-comparable) still
+   isn't. Minor: the "search" block reuses `FEED_QUERY`, which only declares
+   `$cursor`/`$take`, with an extra `search` variable the query never
+   references — GraphQL silently drops unused variables, so this block
+   doesn't actually exercise the ILIKE/trigram search path B2 added an index
+   for, just repeats the plain feed query under a misleading label.
 
 10. ✅ **Fixed.** **P2 (S) — Compression is gzip-only, no brotli.** `main.ts:71` uses
     Express's `compression()` middleware (default gzip, gets no benefit from
@@ -227,6 +333,20 @@ marginal at current scale. **Effort:** S (< ½ day) · M (1–2 days) · L (mult
    were not touched by the fix commit and are still fully client-fetch-
    after-mount, unchanged.
 
+   **Verified again 2026-07-13 (commit `d1413ce`):** narrower gap, still
+   ⚠️ **Partial.** `messages/page.tsx` now does a server-side
+   `backendFetch(MESSAGES_FRIENDS_URL)` and passes `initialFriends` down;
+   `FreePageView.tsx`'s friends `useQuery` now sets `initialData:
+   initialFriends, staleTime: 30_000` — that round trip is genuinely gone.
+   But the *second* round trip this finding named on the same page —
+   conversations, via `useConversations()` — is untouched (no SSR data,
+   still a plain client fetch), and `find-friends/
+   FreeFindFriendsContent.tsx` (`git log` confirms its last touch predates
+   this audit) is completely untouched — still `useSuspenseQuery` +
+   `apiFetch` with no `initialData`. 1 of the 2 named round trips on 1 of
+   the 4 named pages closed; the commit message's "SSR pre-fetch friends
+   list for messages page" is accurate but oversells the finding as done.
+
 2. ⚠️ **Partial — worst offender fixed, 2 named files untouched.** **P0 (S/M) — `next/image` is essentially unused; a real `<img>` is likely
    the LCP element.** Only 2 files in the whole app use `next/image`
    (`(demos)/images/page.tsx`, `NavigationOverlay.tsx`) — everything else uses
@@ -244,6 +364,19 @@ marginal at current scale. **Effort:** S (< ½ day) · M (1–2 days) · L (mult
    share/PageContent.tsx:188` — both explicitly named in this finding — are
    confirmed still raw `<img>`, untouched by the fix commit.
 
+   **Verified again 2026-07-13 (commit `d1413ce`):** ✅ **Fixed** for what
+   this finding asked. Both named files now use `next/image` with explicit
+   `width`/`height` (avatar) or `fill` (share preview). One caveat: both
+   pass `unoptimized`, which turns off Next's actual resize/format
+   optimization — you get CLS protection from explicit dimensions and
+   default lazy-loading, not the compression/responsive-`srcset` gain that
+   was the point of the original P0 finding for hero images. That's fine
+   here since neither is the LCP element on its page (small avatar
+   thumbnails, a post-upload preview), unlike the `PostDetailBaseView.tsx`
+   hero image this finding was really about — but worth knowing if `next/
+   image` coverage gets audited again and someone assumes "uses next/image"
+   means "gets next/image's optimization."
+
 3. ⚠️ **Partial — analyzer wired, no CI budget.** **P1 (S) — No bundle analyzer or size budget.** Confirmed absent (`next.config.
    ts`, `package.json` scripts) — matches the two still-open P1 items in
    `docs/todo/03-frontend.md:40-42`. `next/dynamic` is used in only 3 files,
@@ -255,6 +388,18 @@ marginal at current scale. **Effort:** S (< ½ day) · M (1–2 days) · L (mult
    config with `@next/bundle-analyzer` behind `ANALYZE=true`. But no
    size-budget assertion was added to `frontend-ci.yml` — this finding
    explicitly asked for both, only the analyzer half landed.
+
+   **Verified again 2026-07-13 (commit `d1413ce`):** ❌ **Still not fixed**
+   — and mislabeled. The commit message lists "F3: add Lighthouse CI step to
+   frontend-ci.yml," but that's the only change to `frontend-ci.yml` in this
+   commit (a `pnpm lighthouse:ci` step), and it's F8's ask (wire the
+   already-existing `lighthouserc.json` into CI), not F3's (a bundle
+   *size-budget* assertion on top of the analyzer). No size-budget check —
+   `bundlewatch`, a `next.config.ts` webpack `performance.maxAssetSize`, a
+   CI step that fails on bundle growth, anything — exists anywhere in the
+   repo after this commit. This finding is exactly where the control run
+   left it; the "13 gaps closed" commit message double-counted F8's fix as
+   also closing F3.
 
 4. ⚠️ **Partial — narrower than the finding.** **P1 (M) — Zero HTTP caching / ISR anywhere in the app.**
    `src/lib/backend.ts`'s `graphqlFetch` (`:241-264`) and `backendFetch`
@@ -274,6 +419,45 @@ marginal at current scale. **Effort:** S (< ½ day) · M (1–2 days) · L (mult
    in that file. The SSR `page.tsx` calls added by #1 still hit the backend
    fully uncached; only the client-facing BFF route responses got headers,
    which is narrower than what this finding asked for.
+
+   **Verified again 2026-07-13 (commit `d1413ce`):** ⚠️ **Partial, and a
+   new regression.** `backend.ts` is touched now: both `graphqlFetch` and
+   `backendFetch` unconditionally add `next: { revalidate: 60 }` to every
+   `fetch()` call. The problem is these are the *shared, low-level* client
+   functions — confirmed via repo-wide grep, ~90 call sites use
+   `graphqlFetch` alone, covering essentially all backend traffic, not just
+   the cacheable public reads this finding meant. `graphqlFetch` in
+   particular takes no `RequestInit`/cache override parameter, so no caller
+   can opt out. It's always a POST, and it's what mutations go through too
+   — confirmed directly: `app/api/auth/login/route.ts`'s `LOGIN_QUERY`,
+   `app/api/reactions/route.ts`'s `CREATE_REACTION_MUTATION`,
+   `notifications/read`, `sessions/revoke(-others)`, `profile/update`,
+   `api-keys/[id]` all call it.
+   - For anonymous requests (no Cookie/session header — e.g. login itself,
+     pre-auth) this puts the response straight into Next's Data Cache for
+     60s with no auth header to trigger any exclusion: two identical login
+     POSTs (same credentials, e.g. a retry after a transient failure) within
+     that window get the *cached* response replayed, not a fresh call to
+     the backend.
+   - For authenticated requests, Next.js is documented to auto-exclude
+     fetches carrying Cookie/Authorization headers from the Data Cache on a
+     dynamic route (which these are, since `backend.ts` calls `cookies()`)
+     — but that exclusion is a known-unreliable case specifically for POST
+     (`vercel/next.js#52405`), and every `graphqlFetch` call is POST. So
+     this is genuinely one of two outcomes, not a clean fix either way: the
+     `revalidate: 60` is a no-op for most authenticated traffic (Next
+     ignores it), or it's a live risk of caching personalized query/mutation
+     responses across requests. Nothing in the test suite would catch
+     either, since neither is exercised outside a real Next.js server.
+   - Separate from the caching-semantics question: even in the "it's a
+     no-op for authenticated requests" reading, this still doesn't do what
+     F4 asked (cache the *cacheable public reads* — feed, post detail before
+     personalization) — it's an indiscriminate blanket setting on the wrong
+     layer, not a targeted one on the reads that should actually be cached.
+   Recommend reverting this specific change and instead setting `next.
+   revalidate` per call site (or via an options parameter `graphqlFetch`
+   doesn't currently have) only on the handful of genuinely public,
+   cacheable queries.
 
 5. ✅ **Fixed.** **P1 (S/M) — `AuthProvider` does a client round trip even when SSR already
    has the user.** `features/auth/hooks/useAuth.tsx:56-84`: `initialUser` is
@@ -337,6 +521,20 @@ marginal at current scale. **Effort:** S (< ½ day) · M (1–2 days) · L (mult
    in the repo. No rewrites bridge these. As configured, every collected
    URL would 404 — this "baseline" can't produce a number. Also not wired
    into `frontend-ci.yml`.
+
+   **Verified again 2026-07-13 (commit `d1413ce`):** ⚠️ **Partial —
+   upgraded from fail.** 3 of 4 URLs are fixed: `/v1` prefix added to all
+   four, and `/en/friends` → `/en/find-friends`. But `/v1/en/posts/
+   example-post` is untouched — `example-post` still isn't a real post id
+   anywhere in the repo (confirmed via repo-wide grep), and
+   `post.service.ts`'s `findOne` does `prisma.post.findFirst({ where: {
+   id, deletedAt: null } })`, so that URL still won't resolve to real
+   content — LHCI still can't get a valid trace for the post-detail page,
+   one of this audit's 9 core pages. Also now wired into
+   `frontend-ci.yml` as a `pnpm lighthouse:ci` step (this is the part the
+   commit message mislabeled as F3, see above) — but it's
+   `continue-on-error: true`, so even once all 4 URLs resolve, a budget
+   regression won't fail the build, just get logged.
 
 ---
 
