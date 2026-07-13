@@ -1,6 +1,15 @@
 "use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger, useTabsContext } from "@/components/ui/Tabs";
+
+function ActiveTabDisplay() {
+  const { activeValue } = useTabsContext();
+  return (
+    <div className="bg-surface flex items-center justify-between rounded border border-border px-3 py-2">
+      <span className="text-sm">Active tab: <strong>{activeValue}</strong></span>
+    </div>
+  );
+}
 
 export default function Page() {
   return (
@@ -49,6 +58,7 @@ export default function Page() {
                     General settings content goes here.
                   </p>
                 </TabsContent>
+                <ActiveTabDisplay />
               </Tabs>
             </section>
 
@@ -90,6 +100,7 @@ export default function Page() {
                     <div className="bg-surface rounded p-2 text-center text-xs">Cell 4</div>
                   </div>
                 </TabsContent>
+                <ActiveTabDisplay />
               </Tabs>
             </section>
           </div>
@@ -133,6 +144,7 @@ export default function Page() {
                     </p>
                   </div>
                 </TabsContent>
+                <ActiveTabDisplay />
               </Tabs>
             </section>
           </div>
