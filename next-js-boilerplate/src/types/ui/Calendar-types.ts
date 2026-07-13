@@ -1,11 +1,10 @@
-import type React from "react";
 import type { ComponentProps } from "react";
 import type { DayPicker } from "react-day-picker";
+import type { CalendarEvent } from "./CalendarEvent-types";
 
 export type CalendarProps = ComponentProps<typeof DayPicker> & {
   className?: string;
   classNames?: Record<string, string>;
-  fontSize?: string;
-  fontWeight?: string;
-  fontFamily?: string;
+  events?: CalendarEvent[];
+  onDayClick?: (date: Date) => void;
 };

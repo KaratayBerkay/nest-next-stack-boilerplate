@@ -194,6 +194,7 @@ export {
 } from "./table";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs";
 export { Textarea, AutoResizeTextarea } from "./textarea";
+export { TimeInput } from "./time-input";
 export {
   ToastProvider,
   ToastViewport,

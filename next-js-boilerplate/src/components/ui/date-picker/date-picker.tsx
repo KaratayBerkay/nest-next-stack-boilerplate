@@ -7,16 +7,21 @@ import type { DatePickerProps, DatePickerVariant } from "@/types/ui/DatePicker-t
 
 const variants: Record<DatePickerVariant, string> = {
   default: "border-border bg-bg text-fg",
-  shiny: "bg-gradient-to-r from-blue-500 to-purple-500 text-white border-transparent shadow-lg shadow-blue-500/20",
-  glass: "bg-white/20 backdrop-blur-md text-white border-white/20 shadow-md",
-  neon: "bg-slate-950 text-cyan-400 border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.3)]",
-  gradient: "bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-transparent bg-clip-text border-transparent",
+  shiny: "bg-gradient-to-br from-slate-900 to-slate-950 border-slate-700 text-white",
+  glass: "bg-white/5 backdrop-blur-md border-white/20 text-white",
+  neon: "bg-slate-950/90 border-cyan-500/30 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)]",
+  gradient: "bg-gradient-to-br from-slate-900 to-slate-950 border-transparent text-white",
 };
+
+function handleToggle(open: boolean, setOpen: (v: boolean) => void) {
+  setOpen(!open);
+}
 
 export function DatePicker({
   value,
   onChange,
   placeholder = "Pick a date",
+  variant = "default",
   className,
   fontSize,
   fontWeight,
@@ -30,10 +35,10 @@ export function DatePicker({
   return (
     <div className={cn("relative", className)}>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => handleToggle(open, setOpen)}
         className={cn(
-          "flex h-9 w-full items-center justify-between rounded border px-3 py-1 text-sm shadow-sm",
-          variants.default,
+          "flex h-9 w-full items-center justify-between rounded border px-3 py-1 text-sm shadow-sm transition-colors",
+          variants[variant],
         )}
       >
         <span className={cn("truncate", fontSizeClass, fontWeightClass, fontFamilyClass)}>
@@ -50,12 +55,9 @@ export function DatePicker({
           fill="none"
           stroke="currentColor"
           strokeWidth="2"
-          className="ml-2 opacity-50"
+          className="ml-2 shrink-0 opacity-50"
         >
-          <rect x="3" y="4" width="18" height="18" rx="2" />
-          <line x1="16" x2="16" y1="2" y2="6" />
-          <line x1="8" x2="8" y1="2" y2="6" />
-          <line x1="3" x2="21" y1="10" y2="10" />
+          <path d="M6 9l6 6 6-6" />
         </svg>
       </button>
       {open && (
