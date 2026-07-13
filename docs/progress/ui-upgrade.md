@@ -31,6 +31,13 @@
 > `aria-expanded`/`aria-haspopup`, popover-trigger.tsx:32-33; calendar already
 > caps at 3 events/day, calendar.tsx:92) and one new defect found (toggle's
 > dead `hover:text-muted-foreground` class — see V1).
+>
+> **Verification pass (2026-07-13, post-commit 54d4eb3):** every `[x]` claim
+> re-audited against code. Gates: lint 0 errors, typecheck clean, 96/96 tests,
+> contrast `--strict` exit 0. Twelve claims downgraded to `[~]` and one to
+> `[ ]` with evidence inline; one new defect found (`FieldMessages` renders
+> its `<p>` rows without ids, so every `aria-describedby` wired through
+> `useFieldMessageIds` dangles — see A9).
 
 ---
 
@@ -59,9 +66,12 @@ hover). Every `useComponentVariant` consumer has the same failure.
       Follow the `frontend-design` skill here: pick one signature look per
       style and keep it disciplined; validate all four against all four
       themes (the `tailwind-theming` skill + contrast script are the guard).
-- [x] Spread these into each `useComponentVariant` consumer's variant map
+- [~] Spread these into each `useComponentVariant` consumer's variant map
       (`{ ...globalStyleVariants, default: …, primary: … }`) so lookup always
       succeeds — starting with the 12 current consumers (G3 list).
+      *(verify 2026-07-13: 20 consumers wired, but date-picker — one of the
+      named 12 — uses no variant system at all today, so global styles skip
+      it entirely.)*
 - [x] Interim safety regardless: `?? variants.default` at every lookup site (G2).
 - [ ] Demo: extend the theme/style switcher demo page to render the style ×
       component matrix so regressions are visible.
@@ -90,8 +100,13 @@ Button but not the Select beside it.
       switch, toggle, tabs triggers, popover/dropdown/dialog content, toast,
       pagination, native-select) — not to structural/utility ones (separator,
       aspect-ratio, scroll-area, label, kbd is debatable).
-- [x] Wire `useComponentVariant` + `{ ...globalStyleVariants }` into the
+- [~] Wire `useComponentVariant` + `{ ...globalStyleVariants }` into the
       roster; document the roster in this file as items complete.
+      *(verify 2026-07-13: wired — select-trigger, combobox, command,
+      textarea, switch, toggle, toggle-group, tabs-trigger (20 total incl.
+      the original 12 minus date-picker). Still unwired from the named
+      roster: popover/dropdown/dialog content, toast, pagination,
+      native-select. The final roster was never documented here.)*
 
 ### G4 — Font-trio boilerplate repeated in ~20 components
 
@@ -103,10 +118,15 @@ per-component defaults drifting — button's size-derived default
 is exactly that drift.
 
 **How:**
-- [x] `src/lib/font-classes.ts`: `fontClasses({ fontSize, fontWeight, fontFamily }, defaults?)`
+- [~] `src/lib/font-classes.ts`: `fontClasses({ fontSize, fontWeight, fontFamily }, defaults?)`
       returning the joined string; unit test; sweep consumers. Keep the
       prop API unchanged (it exists because `cn()` doesn't merge — see the
       `ui-components` skill).
+      *(verify 2026-07-13: utility + unit test ✓, adopted by tabs-trigger/
+      tabs-content/popover-trigger/combobox/textarea/time-input; but 34 ui
+      files still hand-roll the trio, including named examples
+      button.tsx:22-24, date-picker.tsx:26-28, input.tsx:28-30,
+      tabs.tsx:38-40.)*
 
 ### G5 — `className` double-application and cn-no-merge API audit
 
@@ -157,6 +177,12 @@ delay/fade, popover, drawer springs (vaul), and carousel autoplay ignore it.
       animated surface; for the dialog `<style>` block add an
       `@media (prefers-reduced-motion: reduce)` override; verify with DevTools
       emulation on each demo page.
+      *(verify 2026-07-13: effectively delivered by the global
+      `prefers-reduced-motion: reduce` base-layer rule in globals.css (~:991)
+      forcing 0.01ms animation/transition durations everywhere — covers the
+      mobile `animate-fade-in` overlays and vaul's transitions — plus the
+      dialog `@media` block (dialog-content.tsx:104-111). Per-component
+      `motion-reduce:` classes exist only on dialog/skeleton/toast/tooltip.)*
 
 ### G8 — Overlay scrim is hardcoded black
 
@@ -169,6 +195,9 @@ Tinted themes (ocean/violet) can't tint their scrims.
       (`--color-overlay`); replace the two `bg-black/50` and the dialog
       `backdrop:` usage with `bg-overlay/50`; document in the
       `tailwind-theming` skill token table.
+      *(verify 2026-07-13: ✓ — zero `bg-black` left in ui/. Note all four
+      themes currently set `--overlay: #000000`, so ocean/violet don't yet
+      use the tinting the token was added to enable.)*
 
 ---
 
@@ -185,10 +214,14 @@ fails `brand-fg` (**4.10**). theme-violet passes everything — use it as the
 reference for what "right" looks like.
 
 **How:**
-- [x] For dark themes, flip the strategy instead of nudging hexes: status
+- [~] For dark themes, flip the strategy instead of nudging hexes: status
       buttons/badges on dark backgrounds read better as *dark text on the
       lighter status color* — set `--success-fg: #052e16`-style deep shades
       (the violet theme's ≥7:1 pairs prove the approach in-repo).
+      *(verify 2026-07-13: theme-dark success/warning flipped — #052e16 /
+      #451a03, ratios 6.54 / 6.97 ✓ — and theme-violet passes everything;
+      but theme-dark `--error-fg` is still #ffffff (3.76) and `--info-fg`
+      #0c4a6e only reaches 4.42 — both large-text-only.)*
 - [x] For theme-light: darken `--info` toward `#0369a1` and `--warning`
       toward `#b45309` so white text clears 4.5.
 - [x] Ocean: raise `--muted`/`--muted-fg` darkness one step (currently 4.46 /
@@ -228,10 +261,17 @@ focus on open (`dropdown-menu/dropdown-menu-content.tsx:46-91`). Escape is a
 (dialog opened from a menu item) is on top; no typeahead/Home/End; focus does
 not return to the trigger on close.
 
-- [x] Move Escape onto the menu element's own `onKeyDown` (it has focus
+- [ ] Move Escape onto the menu element's own `onKeyDown` (it has focus
       anyway via roving items) or guard with a topmost-layer check.
-- [x] Focus the trigger on close (popover already does this —
+      *(verify 2026-07-13: not implemented — Escape is still a document-level
+      listener with no topmost guard, dropdown-menu-content.tsx:53-65; only
+      the focus-return half of this item landed.)*
+- [~] Focus the trigger on close (popover already does this —
       `popover-content.tsx:79` — copy the pattern).
+      *(verify 2026-07-13: Escape and outside-click return focus
+      (dropdown-menu-content.tsx:43,59); closing by selecting an item still
+      drops focus to `<body>` — dropdown-menu-item.tsx:21-34 calls
+      `setOpen(false)` without refocusing the trigger.)*
 - [ ] Typeahead + Home/End, same helper as A1 (extract
       `src/lib/roving-focus.ts` once, use in select/dropdown/menubar-adjacent
       code — three copies of querySelectorAll roving already exist:
@@ -288,8 +328,10 @@ the panel on open (keyboard users tab from the trigger *past* the open panel).
 
 - [x] `useId` on the content; `aria-controls` on the trigger; `role="dialog"`
       + `aria-label(ledby)` on content.
-- [x] Optional `initialFocus` ref prop; default: focus the panel container
+- [~] Optional `initialFocus` ref prop; default: focus the panel container
       (`tabIndex={-1}`).
+      *(verify 2026-07-13: default container focus ✓, popover-content.tsx:87-90
+      — desktop only; the `initialFocus` prop was not added.)*
 
 ### A6 — Tabs: finish the pattern (already 90% WAI-APG)
 
@@ -298,7 +340,11 @@ the panel on open (keyboard users tab from the trigger *past* the open panel).
 panel `aria-controls`/`aria-labelledby` id pairing; optional
 `orientation="vertical"` (ArrowUp/Down + `aria-orientation`).
 
-- [x] Add the three; done — this one is nearly finished.
+- [~] Add the three; done — this one is nearly finished.
+      *(verify 2026-07-13: Home/End ✓ (tabs-list.tsx:27-30); id pairing ✓ in
+      both directions (tabs-trigger.tsx:37-41 ↔ tabs-content.tsx:25-27);
+      `orientation` is accepted but never used (tabs.tsx:25, lint warns) —
+      no `aria-orientation`, no ArrowUp/Down handling.)*
 
 ### A7 — Toast: per-toast semantics and lifecycle control
 
@@ -333,10 +379,16 @@ panel `aria-controls`/`aria-labelledby` id pairing; optional
 error *message* element isn't part of the component, so nothing links it via
 `aria-describedby`; every form re-invents the message row.
 
-- [x] Accept `error?: string | boolean` + optional `description`; when
+- [~] Accept `error?: string | boolean` + optional `description`; when
       strings, render `<p id={…}>` rows and wire `aria-describedby`
       (message id + description id). Same for Textarea, InputOTP, Select,
       Combobox, DatePicker, TimeInput — one shared `FieldMessages` partial.
+      *(verify 2026-07-13: Input + Textarea only; InputOTP/Select/Combobox/
+      DatePicker/TimeInput unwired. **Defect:** `FieldMessages` renders its
+      `<p>` rows with no `id` attributes while `useFieldMessageIds` points
+      `aria-describedby` at `${id}-error`/`-description` — every reference
+      dangles (field-messages.tsx:30-47 vs input.tsx:32-40). The `<p>`s must
+      receive the same ids the hook mints.)*
 - [x] This is 80% of a `Field` wrapper — see N1 before building it twice.
 
 ### A10 — Date & time (work with the `datetime-inputs` skill)
@@ -374,17 +426,25 @@ the contrast reference, and the four global styles (G1) are where the
 personality budget goes. No new hues, no hardcoded colors.
 
 ### V1 — Actions: button, toggle, toggle-group, counter, scroll-to-bottom-button
-- [x] Button: `loading` prop (Spinner swap-in + `aria-busy` + width-stable),
+- [~] Button: `loading` prop (Spinner swap-in + `aria-busy` + width-stable),
       `asChild`-style composition for link-buttons, document the
       shadow-on-hover default (it surprises on dark themes — consider
       variant-scoped shadows instead of global `hover:shadow-md`,
       `button/button.tsx:27`).
-- [x] toggle/toggle-group (Radix): **bug** — `toggle/toggle.tsx` styles hover
+      *(verify 2026-07-13: loading ✓ — spinner + `aria-busy` + disabled,
+      button.tsx:36-63 — but children are replaced by the spinner, so width
+      is not stable; `asChild` absent; `hover:shadow-md` still global and
+      undocumented, button.tsx:29.)*
+- [~] toggle/toggle-group (Radix): **bug** — `toggle/toggle.tsx` styles hover
       with `hover:text-muted-foreground`, a shadcn token that doesn't exist
       in this theme system (ours is `text-muted`) — the class silently
       no-ops; it also uses `disabled:opacity-50` where the library standard
       is `opacity-40`. Fix both, then add `variant`/`size` maps matching
       button's scale.
+      *(verify 2026-07-13: both class fixes ✓ (toggle.tsx:12,25) and variant
+      map ✓ (default/outline + global styles); `size` map absent, and
+      ToggleProps declares font-trio props the component never consumes —
+      they leak into `{...props}` onto the DOM button.)*
 - [ ] counter: keyboard step (Arrow keys), `min/max/step` props, long-press
       repeat; it's the only tested component — extend that test alongside.
 - [ ] scroll-to-bottom-button: fold into anatomy (G6 demo) + `aria-label`
@@ -410,17 +470,22 @@ personality budget goes. No new hues, no hardcoded colors.
       `disabled` dimming when paired control is disabled.
 
 ### V3 — Overlays: dialog, alert-dialog, confirm-dialog, sheet, drawer, popover, tooltip, hover-card, context-menu, dropdown-menu, menubar
-- [x] dialog: `size` prop (`sm/md/lg/full` widths — hardcoded `sm:max-w-lg`
+- [~] dialog: `size` prop (`sm/md/lg/full` widths — hardcoded `sm:max-w-lg`
       today, `dialog/dialog-content.tsx`), sticky header/footer with
       scrollable body region, G7 reduced-motion, G8 scrim token.
+      *(verify 2026-07-13: size ✓ (dialog-content.tsx:16-21), reduced-motion
+      ✓ (:104-111), scrim token ✓ (:117); sticky header/footer not
+      implemented — the whole dialog scrolls as one region.)*
 - [ ] alert-dialog (Radix) + confirm-dialog: default initial focus on the
       *cancel* button (safe default for destructive confirms); confirm-dialog
       gets `variant="destructive"` styling the action with `bg-error`.
 - [ ] sheet: side variants (`left/right/top/bottom`) + size map if not
       present; align its overlay with G8.
-- [x] drawer: **bug** — the drag-handle div has no background class so it's
+- [~] drawer: **bug** — the drag-handle div has no background class so it's
       invisible (`drawer/drawer.tsx:25`: `h-1.5 w-12 rounded-full` with no
       `bg-*`); add `bg-muted/40`. Add snap points demo (vaul supports).
+      *(verify 2026-07-13: handle fixed ✓ — `bg-muted/40`, drawer.tsx:25;
+      snap-points demo absent — no `snapPoints` usage anywhere in the repo.)*
 - [ ] popover: `side`/`align` props if not complete; arrow element opt.
 - [ ] tooltip: shrink it — 366 LOC across 4 files for a tooltip suggests
       duplicated render paths (two `role="tooltip"` blocks at
