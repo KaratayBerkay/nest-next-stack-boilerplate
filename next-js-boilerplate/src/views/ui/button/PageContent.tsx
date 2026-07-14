@@ -20,6 +20,25 @@ function handleSave(setSaving: Dispatch<SetStateAction<boolean>>) {
   setTimeout(() => setSaving(false), 1500);
 }
 
+const FORM_VARIANTS: { variant: Variant; label: string }[] = [
+  { variant: "default", label: "Default" },
+  { variant: "primary", label: "Primary" },
+  { variant: "secondary", label: "Secondary" },
+  { variant: "outline", label: "Outline" },
+  { variant: "ghost", label: "Ghost" },
+  { variant: "destructive", label: "Destructive" },
+  { variant: "link", label: "Link" },
+  { variant: "soft", label: "Soft" },
+  { variant: "shadow", label: "Shadow" },
+];
+
+const FORM_SIZES: { size: Size; label: string }[] = [
+  { size: "xs", label: "XS" },
+  { size: "sm", label: "Small" },
+  { size: "md", label: "Medium" },
+  { size: "lg", label: "Large" },
+];
+
 function FormActionsTab() {
   const [saving, setSaving] = useState(false);
 
@@ -28,35 +47,48 @@ function FormActionsTab() {
       <section className="flex flex-col gap-3">
         <h3 className="text-lg font-semibold">Variants</h3>
         <div className="flex flex-wrap items-center gap-3">
-          <Button variant="default">Default</Button>
-          <Button variant="primary">Primary</Button>
-          <Button variant="secondary">Secondary</Button>
-          <Button variant="outline">Outline</Button>
-          <Button variant="ghost">Ghost</Button>
-          <Button variant="destructive">Destructive</Button>
-          <Button variant="link">Link</Button>
-          <Button variant="soft">Soft</Button>
-          <Button variant="shadow">Shadow</Button>
+          {FORM_VARIANTS.map(({ variant, label }) => (
+            <Tooltip key={variant}>
+              <TooltipTrigger>
+                <Button variant={variant}>{label}</Button>
+              </TooltipTrigger>
+              <TooltipContent>variant=&quot;{variant}&quot;</TooltipContent>
+            </Tooltip>
+          ))}
         </div>
       </section>
 
       <section className="flex flex-col gap-3">
         <h3 className="text-lg font-semibold">Sizes</h3>
         <div className="flex flex-wrap items-center gap-3">
-          <Button size="xs">XS</Button>
-          <Button size="sm">Small</Button>
-          <Button size="md">Medium</Button>
-          <Button size="lg">Large</Button>
+          {FORM_SIZES.map(({ size, label }) => (
+            <Tooltip key={size}>
+              <TooltipTrigger>
+                <Button size={size}>{label}</Button>
+              </TooltipTrigger>
+              <TooltipContent>size=&quot;{size}&quot;</TooltipContent>
+            </Tooltip>
+          ))}
         </div>
       </section>
 
       <section className="flex flex-col gap-3">
         <h3 className="text-lg font-semibold">Loading & Disabled</h3>
         <div className="flex flex-wrap items-center gap-3">
-          <Button variant="primary" onClick={() => handleSave(setSaving)} disabled={saving}>
-            {saving ? "Saving..." : "Save Changes"}
-          </Button>
-          <Button variant="ghost">Cancel</Button>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button variant="primary" onClick={() => handleSave(setSaving)} disabled={saving}>
+                {saving ? "Saving..." : "Save Changes"}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Simulates a 1.5s save</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button variant="ghost">Cancel</Button>
+            </TooltipTrigger>
+            <TooltipContent>Dismiss without saving</TooltipContent>
+          </Tooltip>
           <Button disabled>Disabled</Button>
         </div>
       </section>

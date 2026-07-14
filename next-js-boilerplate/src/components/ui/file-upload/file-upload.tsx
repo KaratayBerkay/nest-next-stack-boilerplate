@@ -192,6 +192,21 @@ export function FileUpload({
 
   return (
     <div className={cn("flex flex-col gap-3", className)}>
+      {/* Outside the role="button" dropzone and out of the a11y tree — a
+          focusable input inside an interactive element is nested-interactive;
+          the dropzone itself is the keyboard/AT entry point. */}
+      <input
+        ref={inputRef}
+        id={autoId}
+        type="file"
+        multiple={multiple}
+        accept={accept}
+        onChange={handleInputChange}
+        className="sr-only"
+        tabIndex={-1}
+        aria-hidden="true"
+        disabled={disabled}
+      />
       <div
         role="button"
         tabIndex={disabled ? -1 : 0}
@@ -211,16 +226,6 @@ export function FileUpload({
           disabled && "cursor-not-allowed opacity-50",
         )}
       >
-        <input
-          ref={inputRef}
-          id={autoId}
-          type="file"
-          multiple={multiple}
-          accept={accept}
-          onChange={handleInputChange}
-          className="sr-only"
-          disabled={disabled}
-        />
         <svg
           className="text-muted mb-2 size-6"
           viewBox="0 0 24 24"

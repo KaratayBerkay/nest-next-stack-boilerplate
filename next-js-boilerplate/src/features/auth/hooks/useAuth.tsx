@@ -52,28 +52,47 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+// Internal channel for the SSR session bridge. Raw inline <script> tags in
+// the body (the old window.__INITIAL_USER__ approach) break React 19
+// hydration, so the session streams in as RSC props via SessionHydrator.
+const AuthHydrateContext = createContext<
+  ((user: User, token: string | null) => void) | null
+>(null);
+
+export function SessionHydrator({
+  user,
+  token,
+}: {
+  user: User;
+  token: string | null;
+}) {
+  const hydrate = useContext(AuthHydrateContext);
+  useEffect(() => {
+    hydrate?.(user, token);
+  }, [hydrate, user, token]);
+  return null;
+}
+
 export function AuthProvider({ children, initialUser }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(initialUser ?? null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(!initialUser);
   const logoutEventRef = useRef(false);
+  const ssrHydratedRef = useRef(false);
+
+  const hydrateFromSSR = useCallback((u: User, t: string | null) => {
+    ssrHydratedRef.current = true;
+    setUser(u);
+    if (t) setToken(t);
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
-    const ssrUser = (window as { __INITIAL_USER__?: User }).__INITIAL_USER__;
-    const ssrToken = (window as { __INITIAL_TOKEN__?: string }).__INITIAL_TOKEN__;
-
-    if (ssrUser) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setUser(ssrUser);
-      if (ssrToken) setToken(ssrToken);
-      return;
-    }
+    // SessionHydrator (a descendant) already delivered the SSR session —
+    // child effects run before parent effects, so the guard is set by now.
+    if (ssrHydratedRef.current) return;
 
     if (initialUser) {
-      if (ssrToken) {
-        setToken(ssrToken);
-        return;
-      }
       apiFetch(AUTH_TOKEN_URL)
         .then((res) => (res.ok ? res.json() : null))
         .then((t: { accessToken?: string } | null) => {
@@ -242,7 +261,13 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
     [user, token, loading, login, verifyMfa, register, logout, refreshUser],
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      <AuthHydrateContext.Provider value={hydrateFromSSR}>
+        {children}
+      </AuthHydrateContext.Provider>
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth(): AuthContextValue {

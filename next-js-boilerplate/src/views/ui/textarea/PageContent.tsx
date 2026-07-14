@@ -86,12 +86,12 @@ const examples: UIExample[] = [
 
         <section className="flex flex-col gap-4">
           <h3 className="text-lg font-semibold">Disabled</h3>
-          <Textarea disabled value="This textarea is disabled" data-testid="textarea-disabled" />
+          <Textarea disabled value="This textarea is disabled" aria-label="Disabled example" data-testid="textarea-disabled" />
         </section>
 
         <section className="flex flex-col gap-4">
           <h3 className="text-lg font-semibold">With Error</h3>
-          <Textarea error="This field is required" data-testid="textarea-error" />
+          <Textarea error="This field is required" aria-label="Error example" data-testid="textarea-error" />
         </section>
 
         <section className="flex flex-col gap-4">

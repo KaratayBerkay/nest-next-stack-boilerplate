@@ -31,7 +31,7 @@ describe("Calendar", () => {
     const { container } = render(
       <Calendar defaultMonth={new Date(2025, 0, 15)} onDayClick={onDayClick} />,
     );
-    const dayButtons = container.querySelectorAll('button[role="gridcell"]');
+    const dayButtons = container.querySelectorAll("button[data-day-button]");
     expect(dayButtons.length).toBeGreaterThan(0);
     const day15 = Array.from(dayButtons).find(
       (btn) => btn.textContent === "15",

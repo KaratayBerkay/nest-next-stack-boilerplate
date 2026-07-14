@@ -7,8 +7,12 @@ const ALL_VARIANTS = ["default", ...Object.keys(globalStyleVariants)];
 
 export function VariantGallery({ variants, sizes, render, title = "Variant Gallery" }: VariantGalleryProps) {
   const effectiveVariants = ALL_VARIANTS.filter((v) => variants.includes(v) || v === "default");
-  const componentVariants = variants.filter((v) => !Object.keys(globalStyleVariants).includes(v));
+  const componentVariants = variants.filter(
+    (v) => v !== "default" && !Object.keys(globalStyleVariants).includes(v),
+  );
   const allVariants = [...effectiveVariants, ...componentVariants];
+  // Components without a size prop pass sizes={[]} — still render one preview column.
+  const effectiveSizes = sizes.length > 0 ? sizes : [""];
 
   return (
     <div className="flex flex-col gap-4">
@@ -18,19 +22,17 @@ export function VariantGallery({ variants, sizes, render, title = "Variant Galle
           <thead>
             <tr>
               <th className="text-muted px-2 py-1.5 text-left text-xs font-medium">Variant</th>
-              {sizes.map((size) => (
-                <th key={size} className="text-muted px-2 py-1.5 text-left text-xs font-medium capitalize">{size}</th>
+              {effectiveSizes.map((size) => (
+                <th key={size} className="text-muted px-2 py-1.5 text-left text-xs font-medium capitalize">{size || "Preview"}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {allVariants.map((variant) => {
-              const isGlobalStyle = variant in globalStyleVariants;
-              const variantLabel = isGlobalStyle ? variant : variant;
               return (
                 <tr key={variant}>
-                  <td className="text-muted px-2 py-1.5 text-xs whitespace-nowrap">{variantLabel}</td>
-                  {sizes.map((size) => (
+                  <td className="text-muted px-2 py-1.5 text-xs whitespace-nowrap">{variant}</td>
+                  {effectiveSizes.map((size) => (
                     <td key={`${variant}-${size}`} className="px-2 py-1">
                       {render(variant, size)}
                     </td>

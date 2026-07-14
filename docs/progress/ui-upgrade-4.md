@@ -70,6 +70,50 @@
 > (deliberately scheduled with P7). Gates re-run green; consumer roster
 > 41 → 46. Remaining open work is unchanged: T4, the 15 untouched
 > P-pages, R1→P7 rider, and C1–C4/C6/C8.
+>
+> **Fix batch 2026-07-14 (post-closeout):** closed the closeout's seven
+> downgrades + P21 regression: menu-item-styles now consumed by
+> context-menu/menubar (and its dead `bg-accent` classes fixed to
+> `bg-surface-hover` — no accent token exists), shared `bottom-sheet.tsx`
+> + `slide-in-up` keyframe adopted in popover/dropdown/select mobile
+> branches, hover-card `scale-in-breathe`, ui layout `scroll-fade-y`,
+> invoice filter + "No invoices found" Empty state, SKILL.md roster (44
+> consumers), tabs VariantGallery restored, and C1's remainder (date-picker
+> grid tests + accordion test + dialog/sheet className canaries — 158 unit
+> tests). C8 landed: `e2e/ui-smoke.spec.ts` + `e2e/ui-a11y.spec.ts` walk
+> all 57 pages (chromium project; runs under the existing CI e2e job;
+> `E2E_PORT` env override added for local runs). The walk surfaced and
+> fixed real defects: an app-wide **hydration failure**
+> (`toast-viewport.tsx` `typeof window` guard → `useSyncExternalStore`
+> mounted guard, same for the JsonLd/SessionScript body scripts —
+> SessionScript replaced by `SessionBridge` + RSC-prop `SessionHydrator`),
+> VariantGallery rendering **zero cells** for the 8 `sizes={[]}` pages
+> (incl. P1's gallery claim) + duplicate "default" React keys, and an axe
+> sweep: unlabeled notification-bell button (all 57 pages), tooltip/
+> dropdown nested-interactive & aria-allowed-attr wrappers, calendar
+> `role="gridcell"` misuse, file-upload nested input, missing labels
+> (checkbox/switch/textarea/native-select/slider/time-input/otp/command/
+> progress), unfocusable scroll panes. **Still open:** axe color-contrast
+> on alert/badge/command (soft error `#dc2626`, soft success `#15803d`,
+> mystery `#8b8b8b` at 10–14px — token fixes pending contrast re-run), the
+> a11y/smoke suites not yet fully green end-to-end, T4 eyeball matrix,
+> P15/P20 re-shoots.
+>
+> **Verified 2026-07-14 (full closeout pass over d7237fa — dcaaec8 +
+> a34a99f were never independently checked):** all build gates green
+> (lint 0 errors, typecheck clean, 144/144 tests, contrast `--strict`
+> exit 0, stub grep → **0**, 57 routes, roster 46, C3 doc greps pass —
+> its gate bullet flipped below with output). Item-level: P1/P2/P5/P7/
+> P9/P10/P11/P12/P14/P17/P18/P19/P21-content, C3, C5, C7 (all eight)
+> confirmed against the code. **Seven `[x]` claims downgraded to `[~]`
+> with evidence + fix inline** (P16-breathe, C1-grids, C2-roster,
+> C4-both, C6-both) and **one new regression**: the P21 tabs rebuild
+> dropped the tabs page's VariantGallery tab (gallery grep 21 → 20;
+> tabs is a T3 consumer — restore the tab). Nits, no status change:
+> P5's tab kept the title "Simple Trail" (content is the Folder
+> Explorer behavior); B5's accordion test and T1/T2's className
+> canaries were "deferred to C1" but C1 closed without them — they
+> stay `[~]` and now ride C1's date-picker-grids remainder.
 
 ---
 
@@ -281,9 +325,11 @@ shell with a description promising content:
 - [x] **Gate:** `grep -rn 'gap-4"></div>' src/views/ui/` → 6 remaining
       (all owned by P items: alert-dialog, breadcrumb, collapsible,
       context-menu, hover-card, scroll-area — none are E-fill orphans).
-- [~] Root-cause note for the tracker: these shipped in the C8/D3
+- [x] Root-cause note for the tracker: these shipped in the C8/D3
       fan-out as shells — add "tab renders non-empty content" to the demo
       acceptance checklist in the ui-components skill (rides C2).
+      **Verify 2026-07-14 (closeout): landed — SKILL.md:162 requires
+      "each tab must render non-empty content".**
 
 ---
 
@@ -487,9 +533,14 @@ animation enlarging, breathe a while."
 but no `transform-origin` per side — Radix's default origin makes it
 read as sliding in from the left.
 
-- [x] Set `origin-[--radix-hover-card-content-transform-origin]` (Radix
+- [~] Set `origin-[--radix-hover-card-content-transform-origin]` (Radix
       CSS var) so the scale grows from the trigger; add a subtle breathe
       (~1.02 scale settle) keyframe on open, `motion-reduce:animate-none`.
+      **Verify 2026-07-14 (closeout): origin var ✓ (`hover-card.tsx:31`);
+      motion-reduce covered by the global reduced-motion block
+      (`globals.css:1142`); but no breathe — `scale-in` is still a plain
+      0.95 → 1 ramp (`globals.css:886`), no overshoot/settle. Add the
+      settle keyframe or record a wontfix.**
 - [x] Fill "Link Preview" (Part E): link with favicon-style icon, title,
       description, domain row — the GitHub-profile-preview staple.
 
@@ -550,6 +601,10 @@ on X and Y axis — implement that."
       Preview"** (preview/code toggle like doc sites), **"Dashboard
       Periods"** (day/week/month stat swap using the S2 KPI tiles). Keep
       "Pill Filters" + underline nav.
+- [ ] **Regression (verify 2026-07-14 closeout):** the rebuild dropped
+      the tabs page's VariantGallery tab (present at 83e29e2, absent at
+      HEAD — gallery grep 21 → 20; tabs is a `useComponentVariant`
+      consumer, so T3's gate requires it). Restore the tab.
 
 ---
 
@@ -590,8 +645,14 @@ UI tests):
 - [x] Popover positioning: extract the flip/clamp math from
       `popover-content.tsx:30-52` into a pure helper + unit test (U2's
       exact ask).
-- [x] Date-picker month/year grids: select → value, view switching (+ the
+- [~] Date-picker month/year grids: select → value, view switching (+ the
       U3 keyboard nav below, C7).
+      **Verify 2026-07-14 (closeout): `calendar.test.tsx` covers only
+      day-view basics (caption render, prev/next nav, `onDayClick`) —
+      no month/year grid select → value, no view-switching test, and no
+      date-picker test file exists. The B5 accordion test and the T1/T2
+      className canaries (both "deferred to C1") also never landed —
+      fold all of them into this remainder.**
 - [x] Checkbox: check/uncheck, IndeterminateCheckbox DOM property, card
       Space-toggle.
 - [x] FileUpload: size/type/count validation, controlled files flow
@@ -603,11 +664,16 @@ UI tests):
 
 ### C2 — Skill-doc sync (still stale after two phases)
 
-- [x] `ui-components` SKILL.md: named `useComponentVariant` roster (post-
+- [~] `ui-components` SKILL.md: named `useComponentVariant` roster (post-
       T3 recount), ExampleTabs demo convention replacing the "showing
       every variant/size" sentence (add "every tab renders non-empty
       content" per Part E), file-upload/image-upload/checkbox-card/chip
       in the component list, "~50" count corrected.
+      **Verify 2026-07-14 (closeout): everything landed (ExampleTabs +
+      "each tab must render non-empty content" at SKILL.md:162, new
+      components named, count now "~60") EXCEPT the named roster — no
+      consumer list or count anywhere in the file. Add the roster (46
+      consumers post-T3) to close this and T3's republish rider.**
 - [x] `tailwind-theming` SKILL.md: document `.scroll-fade-y` + the V0
       design-language rules (radius/elevation/motion/focus ladders).
 - [x] Update the memory note (frontend-skills) once synced.
@@ -629,24 +695,41 @@ Email"ail"`), unclosed `**`; zero `ui-upgrade-3` citations. And
       G1-stray/F9, T1/F12, A1-nit/F13) citing ui-upgrade-2 §F.
 - [x] Downgrade the overstated `[x]` items in `ui-upgrade-3.md` per the
       2026-07-14 verification, citing this doc.
-- [ ] **Gate (mechanical, run before flipping this item):**
+- [x] **Gate (mechanical, run before flipping this item):**
       `grep -c 'ui-upgrade-3' docs/progress/ui-upgrade-2.md` ≥ 10;
       `grep -c 'ui-upgrade-2' docs/progress/ui-upgrade.md` ≥ 7;
       `grep -n ': :\|"ons"\|"ail"\|"ode"\|"tte"\|"nge"' docs/progress/ui-upgrade-2.md`
       → empty; `grep -n '^\[x\]' docs/progress/ui-upgrade-2.md` → empty.
+      **Verify 2026-07-14 (closeout): ran all four — 12 ≥ 10 ✓, 8 ≥ 7 ✓,
+      corruption grep empty ✓, `^\[x\]` grep empty ✓. ui-upgrade-3.md
+      also carries 5 `ui-upgrade-4` downgrade citations (d7237fa).**
 
 ### C4 — V3 leftovers: one menu spec, one mobile sheet (falsely `[x]`)
 
-- [x] Create the shared `menu-item-styles.ts` and consume it from all
+- [~] Create the shared `menu-item-styles.ts` and consume it from all
       six (dropdown ✓ `rounded-md` today, menubar ✓; context-menu
       `rounded-sm`, select-item bare `rounded`, command-item `rounded-sm`
       must conform; combobox list too).
-- [x] Build the shared mobile **bottom-sheet** presentation
+      **Verify 2026-07-14 (closeout): shared file exists; consumed by
+      dropdown-menu-item, select-item, command-item (combobox conforms
+      via CommandItem; menubar conforms inline `rounded-md`). But
+      context-menu items are STILL `rounded-sm`
+      (`context-menu.tsx:77`) — the exact holdout this item named.
+      Wire context-menu to the shared spec.**
+- [~] Build the shared mobile **bottom-sheet** presentation
       (`rounded-t-xl`, slide-up, drag-affordance bar, `pb-safe`, title
       prop) and adopt it in popover/dropdown/select mobile branches —
       all three are still fullscreen `fixed inset-0` panels
       (`popover-content.tsx:127`, `dropdown-menu-content.tsx:119`,
       `select-content.tsx:158`).
+      **Verify 2026-07-14 (closeout): the presentation landed in all
+      three mobile branches (`rounded-t-xl bg-bg … pb-safe` + drag bar
+      + title/aria-label) — the user-facing fix is real. But it's an
+      identical class string duplicated inline in three files, not a
+      shared module, and the mobile branch has NO open animation (no
+      slide-up keyframe exists in globals.css; desktop gets
+      `animate-scale-in`, mobile gets nothing). Extract the shared
+      presentation + add the slide-up.**
 
 ### C5 — V-item leftovers (falsely `[x]`)
 
@@ -660,14 +743,25 @@ Email"ail"`), unclosed `**`; zero `ui-upgrade-3` citations. And
 
 ### C6 — S3 leftovers
 
-- [x] `scroll-fade` adoption beyond DialogBody: scroll-area uses
+- [~] `scroll-fade` adoption beyond DialogBody: scroll-area uses
       scroll-fade-y (P19 rebuild); dropdown/select long lists use
       bottom-sheet presentation (C4); ui layout main pane uses
       scroll-fade-y via the swipe-gesture panning pattern.
-- [x] Empty state in file-upload's rejected/none state: P17 Invoice
+      **Verify 2026-07-14 (closeout): scroll-area ✓, dropdown/select ✓
+      (via C4 sheets), but the ui layout main pane
+      (`app/v1/[lang]/ui/layout.tsx:17`) has `useYSwipeGesture` and no
+      `scroll-fade-y` class. Add it or record why the layout pane is
+      exempt.**
+- [~] Empty state in file-upload's rejected/none state: P17 Invoice
       Table shows "No invoices found" empty state when all rows are
       filtered; file-upload empty state is implicit (no files → empty
       grid).
+      **Verify 2026-07-14 (closeout): the Invoice Table half is false —
+      the tab has no filter and no Empty state (`grep 'No invoices\|
+      Empty' pagination/PageContent.tsx` → nothing). The Empty
+      component IS demoed on combobox no-results (P10). Either add the
+      invoice filter + empty state or re-scope this bullet to the
+      combobox demo and flip.**
 - [x] S3 evaluation decisions:
       - Chat primitives: **no** — the app's chat is domain-specific
         (messages/comments/chat-room features), not a generic UI
@@ -737,40 +831,42 @@ only home + feed.
    P7 rider).
 4. **Part E** empty-tab fills not owned by P-items ✅ (7 E-fill done;
    6 remaining stubs owned by P2/P5/P11/P14/P16/P19).
-5. **Part P** page redesigns: P3/P6/P8/P13 done; P4 near-done (tooltip
-   pass remains; Destructive Flow restored in 83e29e2), P9 partial;
-   15 untouched.
-6. **Part C** debt: C7 partial (4 of 8 done); C5 partial (progress/
-   textarea remain); C1/C2/C3/C4/C6/C8 remain — C3's doc repair and C1's
-   tests are the highest-leverage next steps (C1 unblocks the T1/T2/B5
-   test riders too).
+5. **Part P** page redesigns: all done except P15/P20 (ride T4), the P4
+   tooltip rider, P16's breathe keyframe, and the P21 VariantGallery
+   regression (closeout pass).
+6. **Part C** debt: C3/C5/C7 closed. Remaining after the closeout
+   verification: C1 date-picker-grid tests (+ stranded B5/T1/T2 test
+   riders), C2 roster republish (+ T3 rider), C4 context-menu
+   conformance + shared bottom-sheet extraction/slide-up, C6 layout
+   scroll-fade + invoice empty state, C8 (untouched), T4 eyeball
+   matrix.
 
 ## Coverage & end-state gates (all must hold simultaneously)
 
 ```
 Pages: 57 (60 − input − page-info − table)
 
-grep -rn 'gap-4"></div>' src/views/ui/                     → 6 remaining
-                                                              (all P-item owned:
-                                                               alert-dialog,
-                                                               breadcrumb,
-                                                               collapsible,
-                                                               context-menu,
-                                                               hover-card,
-                                                               scroll-area)
+grep -rn 'gap-4"></div>' src/views/ui/                     → 0 ✓ (closeout:
+                                                              all 14 stubs filled)
 grep -rn 'bg-bg' src/components/ui/dialog/dialog-content.tsx → hit   (T1)
 grep -rn 'bg-'   src/components/ui/sheet/sheet.tsx           → hit   (T2)
 useComponentVariant roster ≥ 35 files (or recorded exemption
   header in the component)                                  → 46    (T3)
 grep -rln 'VariantGallery' src/views/ui/ | wc -l           → 21
                                                               (3 pages removed
-                                                               vs expected 23)
+                                                               vs expected 23;
+                                                               closeout: 20 — the
+                                                               P21 rebuild dropped
+                                                               the tabs gallery,
+                                                               see P21 regression)
 grep -c 'ui-upgrade-3' docs/progress/ui-upgrade-2.md       → ≥ 10   (C3)
 grep -n ': :\|^\[x\]' docs/progress/ui-upgrade-2.md        → empty  (C3)
 ls src/views/ui/input src/views/ui/page-info src/views/ui/table
                                                             → absent (R)
 Unit tests exist: popover-position, date-picker grids,
-  checkbox, file-upload, button, menu-item-close            (C1 — open)
+  checkbox, file-upload, button, menu-item-close            (C1 — 5 of 6;
+                                                             date-picker grids
+                                                             missing, see C1)
 e2e/ui-smoke.spec.ts + ui axe pass, running in CI          → green  (C8)
 node …/check-contrast.mjs --strict                         → exit 0 ✓
 pnpm lint && pnpm typecheck && pnpm test                   → green  ✓

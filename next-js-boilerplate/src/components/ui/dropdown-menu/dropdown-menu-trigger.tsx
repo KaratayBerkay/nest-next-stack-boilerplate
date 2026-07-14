@@ -35,12 +35,14 @@ export function DropdownMenuTrigger({
     return (
       <span
         ref={triggerRef as React.Ref<HTMLSpanElement>}
-        aria-haspopup="menu"
-        aria-expanded={open}
         data-state={open ? "open" : "closed"}
       >
         {cloneElement(child, {
           onClick: mergedOnClick,
+          // aria popup state belongs on the interactive child, not the
+          // role-less wrapper span (aria-allowed-attr).
+          "aria-haspopup": "menu",
+          "aria-expanded": open,
           className: cn("inline-flex items-center justify-center", defaultStyles, fonts, className, child.props.className),
         } as React.HTMLAttributes<HTMLElement>)}
       </span>

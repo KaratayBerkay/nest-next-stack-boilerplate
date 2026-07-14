@@ -54,6 +54,7 @@ export function CommandList({
       }}
       tabIndex={-1}
       role="listbox"
+      aria-label="Options"
       {...props}
     >
       {children}

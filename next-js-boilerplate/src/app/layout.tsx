@@ -9,7 +9,7 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import { DeviceTypeInit } from "@/components/DeviceTypeInit";
 import { EventLoggerInit } from "@/components/EventLoggerInit";
 import { PushNotificationInit } from "@/components/PushNotificationInit";
-import { SessionScript } from "@/components/SessionScript";
+import { SessionBridge } from "@/components/SessionBridge";
 import { ToastProvider, ToastViewport } from "@/components/ui/Toast";
 import { getAllMessages } from "@/lib/i18n/get-all-messages";
 import { DEFAULT_LANG } from "@/constants/i18n";
@@ -63,6 +63,15 @@ export default function RootLayout({
     >
       <head>
         <ThemeInitScript />
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "Next.js Boilerplate",
+            description: "A battle-tested Next.js 16 boilerplate.",
+            url: "https://next-js-boilerplate.vercel.app",
+          }}
+        />
       </head>
       <body className="flex min-h-full flex-col">
         <DeviceTypeInit />
@@ -71,10 +80,10 @@ export default function RootLayout({
         </Suspense>
         <PushNotificationInit />
         <ThemeProvider>
-          <Suspense fallback={null}>
-            <SessionScript />
-          </Suspense>
           <AuthProvider>
+            <Suspense fallback={null}>
+              <SessionBridge />
+            </Suspense>
             <QueryProvider>
               <ToastProvider>
                 <ClientLocaleProvider defaultMessages={messages}>
@@ -87,15 +96,6 @@ export default function RootLayout({
             </QueryProvider>
           </AuthProvider>
         </ThemeProvider>
-        <JsonLd
-          data={{
-            "@context": "https://schema.org",
-            "@type": "WebSite",
-            name: "Next.js Boilerplate",
-            description: "A battle-tested Next.js 16 boilerplate.",
-            url: "https://next-js-boilerplate.vercel.app",
-          }}
-        />
       </body>
     </html>
   );

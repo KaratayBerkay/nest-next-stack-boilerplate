@@ -97,6 +97,7 @@ export function NotificationDropdown({
       <button
         onClick={() => handleToggle(setOpen)}
         className="text-muted hover:bg-surface-hover relative rounded-lg p-1.5"
+        aria-label={`Notifications${unreadCount + dmCount > 0 ? ` (${unreadCount + dmCount} unread)` : ""}`}
       >
         <IconBell size={20} stroke={1.5} />
         <Badge count={unreadCount + dmCount} />

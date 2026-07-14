@@ -44,8 +44,8 @@ function TermsConsentTab() {
       <section className="flex flex-col gap-3">
         <h3 className="text-sm font-semibold text-fg">Default</h3>
         <div className="flex flex-wrap gap-4">
-          <Checkbox data-testid="checkbox-default" />
-          <Checkbox defaultChecked data-testid="checkbox-checked" />
+          <Checkbox aria-label="Unchecked example" data-testid="checkbox-default" />
+          <Checkbox defaultChecked aria-label="Checked example" data-testid="checkbox-checked" />
         </div>
       </section>
 

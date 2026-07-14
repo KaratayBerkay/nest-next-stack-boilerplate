@@ -1,5 +1,6 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
 import { fontClasses } from "@/lib/font-classes";
@@ -18,8 +19,15 @@ export function ToastViewport({
 }: ToastViewportProps) {
   const { state } = useToastContext();
   const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
+  // Mounted guard (same pattern as dialog-content): a bare `typeof window`
+  // branch makes the first client render diverge from SSR and fails hydration.
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
-  if (typeof window === "undefined") return null;
+  if (!mounted) return null;
 
   return createPortal(
     <div

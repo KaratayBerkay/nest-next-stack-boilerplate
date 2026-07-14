@@ -1,6 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const PORT = 3100;
+// E2E_PORT override lets local runs avoid a port already claimed by the
+// dockerized app (CI leaves it unset → 3100).
+const PORT = Number(process.env.E2E_PORT ?? 3100);
 const baseURL = `http://localhost:${PORT}`;
 const AUTH_STATE = "playwright/.auth/user.json";
 

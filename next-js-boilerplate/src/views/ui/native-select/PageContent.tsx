@@ -13,6 +13,7 @@ function ComponentsTab() {
         <h3 className="text-lg font-semibold">Default</h3>
         <NativeSelect
           className="max-w-sm"
+          aria-label="Fruit"
           value={fruit}
           onChange={(e) => setFruit(e.target.value)}
         >
@@ -59,6 +60,7 @@ function ExamplesTab() {
         <h3 className="text-lg font-semibold">Country Selector</h3>
         <NativeSelect
           className="max-w-sm"
+          aria-label="Country"
           value={country}
           onChange={(e) => setCountry(e.target.value)}
         >

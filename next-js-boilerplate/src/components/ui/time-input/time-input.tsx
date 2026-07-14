@@ -38,6 +38,7 @@ interface TimeUnitSelectProps {
   use24Hour?: boolean;
   isHour?: boolean;
   describedBy?: string;
+  ariaLabel: string;
 }
 
 function TimeUnitSelect({
@@ -49,6 +50,7 @@ function TimeUnitSelect({
   use24Hour: is24,
   isHour,
   describedBy,
+  ariaLabel,
 }: TimeUnitSelectProps) {
   const options = useMemo(() => {
     const arr: { value: number; label: string }[] = [];
@@ -67,6 +69,7 @@ function TimeUnitSelect({
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         disabled={disabled}
+        aria-label={ariaLabel}
         aria-describedby={describedBy}
         className={cn(
           "h-9 w-[72px] appearance-none rounded-md border px-2 pr-7 text-sm font-medium shadow-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
@@ -157,6 +160,7 @@ export function TimeInput({
             use24Hour={use24Hour}
             isHour
             describedBy={describedBy}
+            ariaLabel="Hours"
           />
 
           <span className="text-muted text-lg font-medium">:</span>
@@ -168,6 +172,7 @@ export function TimeInput({
             disabled={disabled}
             selectClassName={resolveVariant(selectClasses, effectiveVariant)}
             describedBy={describedBy}
+            ariaLabel="Minutes"
           />
 
           {showSeconds && (
@@ -180,6 +185,7 @@ export function TimeInput({
                 disabled={disabled}
                 selectClassName={resolveVariant(selectClasses, effectiveVariant)}
                 describedBy={describedBy}
+                ariaLabel="Seconds"
               />
             </>
           )}

@@ -32,6 +32,7 @@ export const Progress = forwardRef<
     <div className="flex items-center gap-2">
       <Root
         ref={ref}
+        aria-label="Progress"
         className={cn(
           "relative w-full overflow-hidden rounded-full motion-reduce:animate-none",
           sizeMap[size],

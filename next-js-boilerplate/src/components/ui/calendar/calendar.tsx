@@ -83,8 +83,7 @@ export function Calendar({
                 "relative",
                 hasEvents && !dayButtonProps.modifiers.selected && "font-semibold",
               )}
-              tabIndex={0}
-              role="gridcell"
+              data-day-button
               onClick={() => handleDayClick(dayDate)}
             >
               <div className="flex flex-col items-center gap-0.5">

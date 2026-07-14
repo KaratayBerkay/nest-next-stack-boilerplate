@@ -27,6 +27,7 @@ export const Slider = forwardRef<
       {props.value?.map((_, i) => (
         <Thumb
           key={i}
+          aria-label={props.value && props.value.length > 1 ? `Value ${i + 1}` : "Value"}
           className="border-border bg-bg focus-visible:ring-brand block size-5 rounded-full border shadow-sm transition-all hover:scale-110 active:scale-105 focus-visible:ring-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
         />
       ))}

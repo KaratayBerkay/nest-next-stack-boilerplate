@@ -11,6 +11,8 @@ import {
   PaginationEllipsis,
 } from "@/components/ui/Pagination";
 import { Avatar } from "@/components/ui/Avatar";
+import { Empty } from "@/components/ui/Empty";
+import { Input } from "@/components/ui/Input";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { formatDate } from "@/lib/date-time";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
@@ -59,9 +61,6 @@ const INVOICES: Invoice[] = [
   { id: "INV-0025", customer: "Yara Nelson", amount: 634.7, date: "2025-05-05" },
 ];
 
-const INVOICE_TOTAL = INVOICES.length;
-const INVOICE_TOTAL_PAGES = Math.ceil(INVOICE_TOTAL / PAGE_SIZE);
-
 const FRIENDS: Friend[] = [
   { name: "Alice Johnson", initials: "AJ", online: true },
   { name: "Bob Smith", initials: "BS", online: false },
@@ -108,15 +107,6 @@ function buildPageNumbers(
   return pages;
 }
 
-function getPaginatedInvoices(page: number) {
-  const start = (page - 1) * PAGE_SIZE;
-  const end = Math.min(start + PAGE_SIZE, INVOICE_TOTAL);
-  return {
-    items: INVOICES.slice(start, end),
-    startIndex: start + 1,
-    endIndex: end,
-  };
-}
 
 function InteractivePagination({
   currentPage,
@@ -259,48 +249,81 @@ function InvoiceTableTab({
   page: number;
   setPage: (page: number) => void;
 }) {
-  const { items, startIndex, endIndex } = getPaginatedInvoices(page);
+  const [query, setQuery] = useState("");
+  const filtered = INVOICES.filter(
+    (inv) =>
+      inv.customer.toLowerCase().includes(query.toLowerCase()) ||
+      inv.id.toLowerCase().includes(query.toLowerCase()),
+  );
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const start = (safePage - 1) * PAGE_SIZE;
+  const end = Math.min(start + PAGE_SIZE, filtered.length);
+  const items = filtered.slice(start, end);
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="bg-surface overflow-hidden rounded border border-border">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-border text-muted border-b text-left text-xs uppercase">
-                <th className="px-4 py-3 font-medium">Invoice #</th>
-                <th className="px-4 py-3 font-medium">Customer</th>
-                <th className="px-4 py-3 text-right font-medium">Amount</th>
-                <th className="px-4 py-3 text-right font-medium">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((inv) => (
-                <tr key={inv.id} className="border-border border-b last:border-0">
-                  <td className="px-4 py-3 font-mono text-xs">{inv.id}</td>
-                  <td className="px-4 py-3">{inv.customer}</td>
-                  <td className="px-4 py-3 text-right">
-                    ${inv.amount.toFixed(2)}
-                  </td>
-                  <td className="text-muted px-4 py-3 text-right text-xs">
-                    {formatDate(inv.date)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <div className="flex items-center justify-between">
-        <span className="text-muted text-xs">
-          Showing {startIndex}–{endIndex} of {INVOICE_TOTAL}
-        </span>
-      </div>
-      <InteractivePagination
-        currentPage={page}
-        totalPages={INVOICE_TOTAL_PAGES}
-        onPageChange={setPage}
+      <Input
+        placeholder="Filter by customer or invoice #…"
+        value={query}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setPage(1);
+        }}
+        aria-label="Filter invoices"
       />
+      {filtered.length === 0 ? (
+        <Empty
+          icon={
+            <svg className="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          }
+          title="No invoices found"
+          description={`No invoices match "${query}". Try a different search.`}
+        />
+      ) : (
+        <>
+          <div className="bg-surface overflow-hidden rounded border border-border">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-border text-muted border-b text-left text-xs uppercase">
+                    <th className="px-4 py-3 font-medium">Invoice #</th>
+                    <th className="px-4 py-3 font-medium">Customer</th>
+                    <th className="px-4 py-3 text-right font-medium">Amount</th>
+                    <th className="px-4 py-3 text-right font-medium">Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((inv) => (
+                    <tr key={inv.id} className="border-border border-b last:border-0">
+                      <td className="px-4 py-3 font-mono text-xs">{inv.id}</td>
+                      <td className="px-4 py-3">{inv.customer}</td>
+                      <td className="px-4 py-3 text-right">
+                        ${inv.amount.toFixed(2)}
+                      </td>
+                      <td className="text-muted px-4 py-3 text-right text-xs">
+                        {formatDate(inv.date)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-muted text-xs">
+              Showing {start + 1}–{end} of {filtered.length}
+            </span>
+          </div>
+          <InteractivePagination
+            currentPage={safePage}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
+        </>
+      )}
     </div>
   );
 }

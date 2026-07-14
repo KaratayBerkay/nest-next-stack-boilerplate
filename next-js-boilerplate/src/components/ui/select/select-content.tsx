@@ -4,6 +4,7 @@ import { cn } from "@/lib/cn";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useBreakpoint } from "@/hooks";
+import { bottomSheetClasses, BottomSheetHandle } from "@/components/ui/bottom-sheet";
 import { useSelect } from "./select";
 import type { SelectContentProps } from "@/types/ui/Select-types";
 
@@ -155,14 +156,12 @@ export function SelectContent({
           "border-border bg-bg text-fg",
           isDesktop
             ? "z-50 max-h-60 min-w-[8rem] origin-top-right overflow-y-auto rounded-lg border p-1 shadow-lg"
-            : "fixed bottom-0 left-0 right-0 z-50 rounded-t-xl bg-bg border border-border shadow-lg pb-safe max-h-[85vh] overflow-y-auto p-4",
+            : bottomSheetClasses,
           className,
         )}
         {...props}
       >
-        {!isDesktop && (
-          <div className="mx-auto mb-2 h-1.5 w-8 rounded-full bg-border" />
-        )}
+        {!isDesktop && <BottomSheetHandle />}
         <div
           className={cn(
             isDesktop ? "" : "flex flex-1 flex-col gap-0.5 overflow-y-auto",

@@ -40,6 +40,7 @@ export const InputOTP = forwardRef<HTMLInputElement, InputOTPProps>(
           value={value}
           onChange={handleChange}
           className="sr-only"
+          aria-label="One-time code"
           aria-describedby={describedBy}
           {...props}
         />

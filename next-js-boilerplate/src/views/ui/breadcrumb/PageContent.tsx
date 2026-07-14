@@ -159,7 +159,7 @@ const examples: UIExample[] = [
   },
   {
     id: "variants",
-    title: "Simple Trail",
+    title: "Folder Explorer",
     description: "Folder explorer breadcrumb that changes context in-place.",
     render: () => <FolderExplorer />,
   },

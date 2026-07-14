@@ -112,6 +112,8 @@ import { globalStyleVariants } from "@/components/ui/global-style-variants";
 // in className: ...resolveVariant(variants, effectiveVariant), globalStyleVariants[effectiveVariant]
 ```
 
+Current `useComponentVariant` roster (44 component files; keep this list in sync when adding components): accordion (item, item-complex, trigger), alert, alert-dialog, avatar, badge, breadcrumb, button + icon-button, card, carousel, checkbox + checkbox-card + checkbox-chip, collapsible, combobox, command, context-menu, counter, date-picker, dialog-content, drawer, dropdown-menu-content, hover-card, input, kbd, menubar, navigation-menu, pagination, popover-content, progress, resizable, scroll-area, select-trigger, sheet, skeleton, switch, tabs-trigger, textarea, time-input, toggle, toggle-group, tooltip-content. Deliberately exempt (one-line exemption header in the component file): separator, aspect-ratio, spinner.
+
 **7. Font classes utility.** Use `fontClasses` from `src/lib/font-classes.ts` to deduplicate the font-trio pattern (`font-sans font-medium text-sm`):
 
 ```ts

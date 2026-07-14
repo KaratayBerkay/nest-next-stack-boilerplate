@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger, useTabsContext } from "@/components/ui/Tabs";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
+import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
+import type { TabsTriggerVariant } from "@/types/ui/TabsTrigger-types";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Switch } from "@/components/ui/Switch";
@@ -363,6 +365,31 @@ const examples: UIExample[] = [
     title: "Dashboard Periods",
     description: "Day, week, and month KPI tiles with trend indicators.",
     render: () => <DashboardPeriodsTab />,
+  },
+  {
+    id: "variant-gallery",
+    title: "Variant Gallery",
+    description: "All trigger variants including the global styles.",
+    render: () => (
+      <VariantGallery
+        variants={["default", "underline", "pills", "shiny", "glass", "neon", "gradient"]}
+        sizes={[]}
+        render={(variant) => (
+          <Tabs defaultValue="tab1">
+            <TabsList>
+              <TabsTrigger value="tab1" variant={variant as TabsTriggerVariant}>Tab 1</TabsTrigger>
+              <TabsTrigger value="tab2" variant={variant as TabsTriggerVariant}>Tab 2</TabsTrigger>
+            </TabsList>
+            <TabsContent value="tab1">
+              <p className="text-muted text-xs">Panel content</p>
+            </TabsContent>
+            <TabsContent value="tab2">
+              <p className="text-muted text-xs">Second panel</p>
+            </TabsContent>
+          </Tabs>
+        )}
+      />
+    ),
   },
 ];
 

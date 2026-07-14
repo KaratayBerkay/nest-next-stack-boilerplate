@@ -11,6 +11,7 @@ import {
   Label,
 } from "@radix-ui/react-menubar";
 import { cn } from "@/lib/cn";
+import { menuItemStyles } from "@/components/ui/menu-item-styles";
 import { resolveVariant } from "@/lib/resolve-variant";
 import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
@@ -85,7 +86,8 @@ export const MenubarItem = forwardRef<
   <Item
     ref={ref}
     className={cn(
-      "focus:bg-surface focus:text-fg relative flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      menuItemStyles,
+      "focus:bg-surface focus:text-fg gap-2",
       className,
     )}
     {...props}

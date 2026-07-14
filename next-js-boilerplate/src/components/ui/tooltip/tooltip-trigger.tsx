@@ -87,8 +87,14 @@ export function TooltipTrigger({
     [updateRect, toggle, isDesktop],
   );
 
+  // The wrapper span is deliberately passive (no role, no tabIndex): the
+  // trigger is almost always a real button/link, and a focusable role="button"
+  // wrapper around it is a nested-interactive violation. Focus/blur bubble up
+  // from the child (React onFocus = focusin), so keyboard show/hide still
+  // works. Wrapping plain text? Pass tabIndex={0} yourself.
   if (asChild) {
     return (
+      // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- passive wrapper: events bubble from the interactive child; a focusable role="button" here is a nested-interactive violation
       <span
         ref={ref}
         className={cn("inline-flex", className)}
@@ -98,8 +104,6 @@ export function TooltipTrigger({
         onBlur={handleBlur}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
-        role="button"
-        tabIndex={0}
         aria-describedby={open ? tooltipId : undefined}
         {...props}
       >
@@ -109,6 +113,7 @@ export function TooltipTrigger({
   }
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- passive wrapper: events bubble from the interactive child; a focusable role="button" here is a nested-interactive violation
     <span
       ref={ref}
       className={cn("inline-flex cursor-pointer", className)}
@@ -118,8 +123,6 @@ export function TooltipTrigger({
       onBlur={handleBlur}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      tabIndex={0}
-      role="button"
       aria-describedby={open ? tooltipId : undefined}
       {...props}
     >

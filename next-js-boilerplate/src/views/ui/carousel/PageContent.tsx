@@ -62,8 +62,8 @@ function CarouselWithDots() {
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="left-2 bg-bg/80 backdrop-blur-sm border shadow-sm" />
-        <CarouselNext className="right-2 bg-bg/80 backdrop-blur-sm border shadow-sm" />
+        <CarouselPrevious />
+        <CarouselNext />
         <Dots total={slides.length} active={activeIndex} />
       </div>
     </Carousel>

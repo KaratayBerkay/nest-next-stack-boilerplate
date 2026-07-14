@@ -65,7 +65,7 @@ export const SheetContent = forwardRef<
           >
             <path d="M18 6 6 18M6 6l12 12" />
           </svg>
-          <span className="sr-only sr-only">Close</span>
+          <span className="sr-only">Close</span>
         </Close>
       </Content>
     </Portal>

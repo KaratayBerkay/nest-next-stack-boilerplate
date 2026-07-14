@@ -102,8 +102,8 @@ function ToggleExamplesTab() {
       <section className="flex flex-col gap-4">
         <h3 className="text-lg font-semibold">Default</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Switch data-testid="switch-default" />
-          <Switch defaultChecked data-testid="switch-checked" />
+          <Switch aria-label="Off example" data-testid="switch-default" />
+          <Switch defaultChecked aria-label="On example" data-testid="switch-checked" />
         </div>
       </section>
 

@@ -128,6 +128,10 @@ function VerticalSwipeDemo() {
   return (
     <div
       ref={yPanRef}
+      role="region"
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- axe scrollable-region-focusable: keyboard users must be able to scroll this pane
+      tabIndex={0}
+      aria-label="Scrollable sections"
       className="scroll-fade-y border-border relative h-80 overflow-y-auto rounded-lg border"
     >
       <div className="flex flex-col">
@@ -154,6 +158,10 @@ function HorizontalTagsDemo() {
   return (
     <div
       ref={xPanRef}
+      role="region"
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- axe scrollable-region-focusable: keyboard users must be able to scroll this pane
+      tabIndex={0}
+      aria-label="Tag strip"
       className={cn(
         "scroll-fade-x border-border flex h-14 cursor-grab items-center gap-2 overflow-x-auto rounded-lg border px-3",
         scrollPos === "start" && "scrolled-to-left",
@@ -179,6 +187,10 @@ function ChatPaneDemo() {
   return (
     <div className="border-border bg-surface relative flex flex-col rounded-lg border">
       <div
+        role="region"
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- axe scrollable-region-focusable: keyboard users must be able to scroll this pane
+      tabIndex={0}
+        aria-label="Chat messages"
         className="scroll-fade-y flex flex-col gap-3 overflow-y-auto p-4"
         style={{ height: "400px" }}
       >

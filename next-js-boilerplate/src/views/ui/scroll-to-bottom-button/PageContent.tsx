@@ -57,6 +57,10 @@ function ChatThreadDemo() {
     <div className="border-border bg-surface relative flex flex-col rounded-lg border">
       <div
         ref={scrollContainerRef}
+        role="region"
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- axe scrollable-region-focusable: keyboard users must be able to scroll this pane
+      tabIndex={0}
+        aria-label="Message list"
         className="scroll-fade-y h-72 overflow-y-auto p-4"
       >
         <div className="flex flex-col gap-3">
