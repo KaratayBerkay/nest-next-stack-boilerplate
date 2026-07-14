@@ -5,7 +5,7 @@ import { useDialog } from "./dialog";
 import { fontClasses } from "@/lib/font-classes";
 import type { DialogTriggerProps } from "@/types/ui/Dialog-types";
 
-export function DialogTrigger({ className, fontSize, fontWeight, fontFamily, ...props }: DialogTriggerProps) {
+export function DialogTrigger({ className, fontSize, fontWeight, fontFamily, onClick, ...props }: DialogTriggerProps) {
   const { onOpenChange } = useDialog();
   const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
@@ -13,7 +13,10 @@ export function DialogTrigger({ className, fontSize, fontWeight, fontFamily, ...
     <button
       type="button"
       className={cn(fonts, className)}
-      onClick={() => onOpenChange(true)}
+      onClick={(e) => {
+        onClick?.(e);
+        if (!e.defaultPrevented) onOpenChange(true);
+      }}
       {...props}
     />
   );

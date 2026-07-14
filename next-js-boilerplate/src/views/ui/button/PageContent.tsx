@@ -7,7 +7,10 @@ import {
   ButtonGroup,
   ButtonGroupItem,
 } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
+import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
+import type { Variant, Size } from "@/components/ui/button-styles";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 function handleSave(setSaving: Dispatch<SetStateAction<boolean>>) {
@@ -300,15 +303,17 @@ export default function ButtonPage() {
   const [groupValue, setGroupValue] = useState("list");
   const [saving, setSaving] = useState(false);
 
+  const [deleting, setDeleting] = useState(false);
+
   const examples: UIExample[] = [
     {
-      id: "components",
+      id: "usage",
       title: "Form Actions",
       description: "Submit and cancel button pair with loading state on the primary action.",
       render: () => <ComponentsTab groupValue={groupValue} setGroupValue={setGroupValue} />,
     },
     {
-      id: "examples",
+      id: "variants",
       title: "Icon Toolbar",
       description: "Icon buttons in a toolbar row with size and variant variants.",
       render: () => (
@@ -332,7 +337,51 @@ export default function ButtonPage() {
         </section>
       ),
     },
-  ];
+  {
+    id: "destructive-flow",
+    title: "Destructive Flow",
+    description: "Destructive button opening a confirm dialog before executing a dangerous action.",
+    render: () => (
+      <div className="flex flex-col gap-4">
+        <ConfirmDialog
+          title="Delete Account"
+          description="This action cannot be undone. All your data will be permanently removed."
+          confirmLabel="Delete Account"
+          cancelLabel="Cancel"
+          onConfirm={() => {
+            setDeleting(true);
+            setTimeout(() => setDeleting(false), 1500);
+          }}
+        >
+          {(open: () => void) => (
+            <div className="surface max-w-sm space-y-3 p-4">
+              <p className="text-muted text-sm">
+                Click the button below to trigger a destructive action flow.
+              </p>
+              <Button variant="destructive" onClick={open} loading={deleting}>
+                {deleting ? "Deleting..." : "Delete Account"}
+              </Button>
+            </div>
+          )}
+        </ConfirmDialog>
+      </div>
+    ),
+  },
+  {
+    id: "variant-gallery",
+    title: "Variant Gallery",
+    description: "All variants and sizes.",
+    render: () => (
+      <VariantGallery
+        variants={["default", "primary", "secondary", "outline", "ghost", "destructive", "link", "soft", "shadow"]}
+        sizes={["xs", "sm", "md", "lg", "icon", "icon-sm", "icon-xs"]}
+        render={(variant, size) => (
+          <Button variant={variant as Variant} size={size as Size}>Button</Button>
+        )}
+      />
+    ),
+  },
+];
 
   return (
     <ExampleTabs

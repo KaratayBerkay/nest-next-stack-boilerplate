@@ -10,7 +10,7 @@ import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Split Editor",
     description: "Two resizable panes with autoSaveId persistence.",
     render: () => (
@@ -38,7 +38,7 @@ const examples: UIExample[] = [
     ),
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Triple Pane",
     description: "Three panes with keyboard-resizable handles.",
     render: () => (

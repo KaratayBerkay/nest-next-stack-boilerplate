@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { Combobox } from "@/components/ui/Combobox";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
+import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
+import type { ComboboxVariant } from "@/types/ui/Combobox-types";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 const frameworks = [
@@ -113,16 +115,30 @@ function ExamplesTab() {
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Assignee Picker",
     description: "Combobox with people items showing initials avatars.",
     render: () => <ComponentsTab />,
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Country Search",
     description: "Large filtered list with search input.",
     render: () => <ExamplesTab />,
+  },
+  {
+    id: "variant-gallery",
+    title: "Variant Gallery",
+    description: "All variants and sizes.",
+    render: () => (
+      <VariantGallery
+        variants={["default", "shiny", "glass", "neon", "gradient"]}
+        sizes={[]}
+        render={(variant, _size) => (
+          <Combobox variant={variant as ComboboxVariant} options={[{ value: "opt", label: "Option" }]} />
+        )}
+      />
+    ),
   },
 ];
 

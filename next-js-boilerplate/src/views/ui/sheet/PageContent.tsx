@@ -16,7 +16,7 @@ import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Filter Panel",
     description: "Right-side sheet with form controls.",
     render: () => (
@@ -82,7 +82,7 @@ const examples: UIExample[] = [
     ),
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Navigation",
     description: "Left-side sheet with menu links.",
     render: () => (

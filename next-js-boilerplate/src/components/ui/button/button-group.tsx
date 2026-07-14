@@ -34,7 +34,7 @@ export function ButtonGroupItem({
     <button
       type="button"
       className={cn(
-        "focus-visible:ring-brand relative inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium transition-all focus-visible:z-10 focus-visible:ring-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-40",
+        "focus-visible:ring-brand relative inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium transition-all focus-visible:z-10 focus-visible:ring-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
         active ? "bg-fg text-bg" : "bg-bg text-muted hover:bg-surface-hover",
         "first:rounded-l last:rounded-r",
         className,

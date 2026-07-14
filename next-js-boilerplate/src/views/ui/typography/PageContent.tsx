@@ -16,7 +16,7 @@ import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Article",
     description: "Headings, body text, and blockquote composition.",
     render: () => (
@@ -40,7 +40,7 @@ const examples: UIExample[] = [
     ),
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Type Ramp",
     description: "Each typography style annotated with its class name.",
     render: () => <div className="flex flex-col gap-4"></div>,

@@ -37,15 +37,19 @@ export const InputOTP = forwardRef<HTMLInputElement, InputOTPProps>(
               <div
                 key={i}
                 className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-md border text-sm shadow-sm transition-all",
-                  "border-border",
-                  isFocused && "ring-brand ring-2",
+                  "flex h-10 w-9 items-center justify-center rounded-md border text-sm shadow-sm transition-all",
+                  "border-border bg-surface/50",
+                  isFocused && "z-10 border-brand ring-2 ring-brand/40",
                   char && "border-brand",
                 )}
                 onClick={() => document.getElementById(id)?.focus()}
                 aria-hidden="true"
               >
-                {char || ""}
+                {isFocused && !char ? (
+                  <span className="animate-caret-blink motion-reduce:animate-none h-4 w-0.5 rounded bg-brand" />
+                ) : (
+                  char || ""
+                )}
               </div>
             );
           })}

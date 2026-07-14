@@ -15,7 +15,7 @@ import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Delete Account",
     description: "Destructive alert dialog with initial focus on Cancel.",
     render: () => (
@@ -37,7 +37,7 @@ const examples: UIExample[] = [
                 <AlertDialogCancel className="border-border hover:bg-surface-hover rounded border px-4 py-2 text-sm">
                   Cancel
                 </AlertDialogCancel>
-                <AlertDialogAction className="rounded bg-red-600 px-4 py-2 text-sm text-white">
+                <AlertDialogAction className="rounded bg-error px-4 py-2 text-sm text-error-fg">
                   Continue
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -48,7 +48,7 @@ const examples: UIExample[] = [
     ),
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Unsaved Changes",
     description: "Leave or stay prompt when there are unsaved changes.",
     render: () => (

@@ -2,7 +2,9 @@
 import { useState } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/ToggleGroup";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
+import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { ToggleSize } from "@/types/ui/Toggle-types";
 
 function ComponentsTab() {
   const [alignment, setAlignment] = useState("a");
@@ -52,16 +54,32 @@ function ExamplesTab() {
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Text Alignment",
     description: "Single-select alignment group with left, center, and right options.",
     render: () => <ComponentsTab />,
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Board Filters",
     description: "Multi-select filter chips for toggling active board filters.",
     render: () => <ExamplesTab />,
+  },
+  {
+    id: "variant-gallery",
+    title: "Variant Gallery",
+    description: "All variants and sizes.",
+    render: () => (
+      <VariantGallery
+        variants={["default", "outline", "shiny", "glass", "neon", "gradient"]}
+        sizes={["sm", "md", "lg"]}
+        render={(variant, size) => (
+          <ToggleGroup type="single">
+            <ToggleGroupItem value="opt" variant={variant} size={size as ToggleSize}>Opt</ToggleGroupItem>
+          </ToggleGroup>
+        )}
+      />
+    ),
   },
 ];
 

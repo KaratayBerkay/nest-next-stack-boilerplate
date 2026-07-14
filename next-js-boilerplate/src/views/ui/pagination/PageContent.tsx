@@ -147,13 +147,13 @@ export default function PaginationPage() {
 
   const examples: UIExample[] = [
     {
-      id: "components",
+      id: "usage",
       title: "Search Results",
       description: "Pagination with ellipsis, sibling, and boundary counts.",
       render: () => <ComponentsTab />,
     },
     {
-      id: "examples",
+      id: "variants",
       title: "Compact Touch",
       description: "Mobile prev/next with page indicator.",
       render: () => <ExamplesTab page={page} setPage={setPage} />,

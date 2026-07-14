@@ -13,7 +13,7 @@ import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Editor Menus",
     description: "File, Edit, and View menus with separators.",
     render: () => (
@@ -43,7 +43,7 @@ const examples: UIExample[] = [
     ),
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Shortcut Labels",
     description: "Menu items with keyboard shortcut sequences.",
     render: () => (

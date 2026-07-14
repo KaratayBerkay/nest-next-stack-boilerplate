@@ -99,13 +99,13 @@ function ExamplesTab() {
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Country Picker",
     description: "Native select with a long list, chevron indicator, and RTL check.",
     render: () => <ComponentsTab />,
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Inline Sort Order",
     description: "Compact native select paired with a label.",
     render: () => <ExamplesTab />,

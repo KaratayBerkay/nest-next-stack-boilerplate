@@ -6,7 +6,7 @@ import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Chat Pane",
     description: "Fixed-height message list with themed scroll thumb.",
     render: () => (
@@ -27,7 +27,7 @@ const examples: UIExample[] = [
     ),
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Horizontal Tags",
     description: "Horizontal scrollable row of tag chips.",
     render: () => (

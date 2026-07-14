@@ -2,7 +2,9 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger, useTabsContext } from "@/components/ui/Tabs";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
+import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { TabsTriggerVariant } from "@/types/ui/TabsTrigger-types";
 
 function ActiveTabDisplay() {
   const { activeValue } = useTabsContext();
@@ -69,13 +71,13 @@ function ComponentsTab() {
           <TabsContent value="list">
             <ul className="space-y-1.5 text-xs">
               <li className="flex items-center gap-2">
-                <span className="text-green-500">✓</span> Item one
+                <span className="text-success">✓</span> Item one
               </li>
               <li className="flex items-center gap-2">
-                <span className="text-green-500">✓</span> Item two
+                <span className="text-success">✓</span> Item two
               </li>
               <li className="flex items-center gap-2">
-                <span className="text-green-500">✓</span> Item three
+                <span className="text-success">✓</span> Item three
               </li>
             </ul>
           </TabsContent>
@@ -140,18 +142,89 @@ function ExamplesTab() {
   );
 }
 
+function PillFiltersTab() {
+  return (
+    <div className="flex flex-col gap-4">
+      <Tabs defaultValue="all">
+        <TabsList>
+          <TabsTrigger value="all" variant="pills">All</TabsTrigger>
+          <TabsTrigger value="design" variant="pills">Design</TabsTrigger>
+          <TabsTrigger value="dev" variant="pills">Development</TabsTrigger>
+          <TabsTrigger value="marketing" variant="pills">Marketing</TabsTrigger>
+          <TabsTrigger value="writing" variant="pills">Writing</TabsTrigger>
+        </TabsList>
+        <TabsContent value="all">
+          <div className="space-y-2 py-2">
+            <p className="text-sm font-medium">All Articles</p>
+            <p className="text-muted text-xs">Showing content from all categories.</p>
+          </div>
+        </TabsContent>
+        <TabsContent value="design">
+          <div className="space-y-2 py-2">
+            <p className="text-sm font-medium">Design</p>
+            <p className="text-muted text-xs">UI/UX, graphic design, and prototyping articles.</p>
+          </div>
+        </TabsContent>
+        <TabsContent value="dev">
+          <div className="space-y-2 py-2">
+            <p className="text-sm font-medium">Development</p>
+            <p className="text-muted text-xs">Frontend, backend, and DevOps articles.</p>
+          </div>
+        </TabsContent>
+        <TabsContent value="marketing">
+          <div className="space-y-2 py-2">
+            <p className="text-sm font-medium">Marketing</p>
+            <p className="text-muted text-xs">Growth, SEO, and content strategy articles.</p>
+          </div>
+        </TabsContent>
+        <TabsContent value="writing">
+          <div className="space-y-2 py-2">
+            <p className="text-sm font-medium">Writing</p>
+            <p className="text-muted text-xs">Technical writing and documentation articles.</p>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Underline Nav",
     description: "Tabs with underline variant for navigation.",
     render: () => <ComponentsTab />,
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Vertical Settings",
     description: "Vertical orientation tabs for a settings panel.",
     render: () => <ExamplesTab />,
+  },
+  {
+    id: "pill-filters",
+    title: "Pill Filters",
+    description: "Tabs with pill-shaped active state for category filtering.",
+    render: () => <PillFiltersTab />,
+  },
+  {
+    id: "variant-gallery",
+    title: "Variant Gallery",
+    description: "All variants and sizes.",
+    render: () => (
+      <VariantGallery
+        variants={["default", "underline", "pills", "shiny", "glass", "neon", "gradient"]}
+        sizes={[]}
+        render={(variant) => (
+          <Tabs defaultValue="tab1">
+            <TabsList>
+              <TabsTrigger value="tab1" variant={variant as TabsTriggerVariant}>Tab 1</TabsTrigger>
+            </TabsList>
+            <TabsContent value="tab1">Content</TabsContent>
+          </Tabs>
+        )}
+      />
+    ),
   },
 ];
 

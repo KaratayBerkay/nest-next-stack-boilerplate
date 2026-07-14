@@ -12,7 +12,7 @@ function InputOTPWrapper() {
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "SMS Verification",
     description: "6-digit OTP input with autocomplete and paste support.",
     render: () => (
@@ -25,7 +25,7 @@ const examples: UIExample[] = [
     ),
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Secure PIN",
     description: "4-digit masked PIN input.",
     render: () => <div className="flex flex-col gap-4"></div>,

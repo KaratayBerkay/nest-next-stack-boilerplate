@@ -14,8 +14,7 @@ export const AccordionTrigger = forwardRef<
         ref={ref}
         value={value}
         className={cn(
-          "flex flex-1 items-center justify-between py-4 text-sm font-medium transition-all hover:underline [&[data-state=open]>svg]:rotate-180",
-          "hover:text-accent-foreground",
+          "flex flex-1 items-center justify-between py-4 text-sm font-medium transition-colors hover:text-brand [&[data-state=open]>svg]:rotate-180",
           className,
         )}
         {...props}
@@ -30,7 +29,7 @@ export const AccordionTrigger = forwardRef<
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+          className="text-muted size-4 shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
         >
           <path d="m6 9 6 6 6-6" />
         </svg>

@@ -19,7 +19,7 @@ const examples: UIExample[] = [
         {(open) => (
           <button
             onClick={open}
-            className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700"
+            className="rounded-lg bg-error px-3 py-1.5 text-sm font-medium text-error-fg hover:opacity-90"
           >
             Delete Account
           </button>

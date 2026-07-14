@@ -9,8 +9,8 @@ import type { ToggleProps, ToggleSize } from "@/types/ui/Toggle-types";
 
 const variants = {
   ...globalStyleVariants,
-  default: "hover:bg-surface-hover hover:text-muted data-[state=on]:bg-surface data-[state=on]:text-fg",
-  outline: "border border-border hover:bg-surface-hover data-[state=on]:bg-surface data-[state=on]:text-fg",
+  default: "hover:bg-surface-hover hover:text-muted data-[state=on]:bg-brand/10 data-[state=on]:text-brand",
+  outline: "border border-border hover:bg-surface-hover data-[state=on]:bg-brand/10 data-[state=on]:text-brand data-[state=on]:border-brand/30",
 };
 
 const sizes: Record<ToggleSize, string> = {
@@ -28,7 +28,7 @@ export const Toggle = forwardRef<
     <Root
       ref={ref}
       className={cn(
-        "inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:size-4",
+        "inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4",
         resolveVariant(variants, effectiveVariant),
         sizes[size],
         className,

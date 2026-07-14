@@ -12,7 +12,7 @@ import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "File Row",
     description: "Right-click context menu with rename, duplicate, and delete.",
     render: () => (
@@ -36,7 +36,7 @@ const examples: UIExample[] = [
     ),
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Selection Actions",
     description: "Right-click a text block for contextual actions.",
     render: () => (

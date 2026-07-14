@@ -4,21 +4,54 @@ import { useState } from "react";
 import { cn } from "@/lib/cn";
 import type { CounterProps } from "@/types/ui/Counter-types";
 
-export function Counter({ label, className }: CounterProps) {
-  const [count, setCount] = useState(0);
+export function Counter({
+  label,
+  min = 0,
+  max = 99,
+  step = 1,
+  value: controlledValue,
+  onChange,
+  className,
+}: CounterProps) {
+  const [internalValue, setInternalValue] = useState(0);
+  const value = controlledValue ?? internalValue;
+
+  const setValue = (v: number) => {
+    const clamped = Math.min(max, Math.max(min, v));
+    if (controlledValue !== undefined) {
+      onChange?.(clamped);
+    } else {
+      setInternalValue(clamped);
+    }
+  };
 
   return (
-    <button
-      type="button"
-      data-testid={`counter-${label}`}
-      onClick={() => setCount((c) => c + 1)}
-      className={cn(
-        "underline",
-        "text-brand",
-        className,
-      )}
-    >
-      {label}: clicked {count} times
-    </button>
+    <div className={cn("inline-flex h-9 items-stretch rounded-md border border-border divide-x divide-border", className)}>
+      <button
+        type="button"
+        aria-label={`Decrease ${label}`}
+        disabled={value <= min}
+        onClick={() => setValue(value - step)}
+        className="inline-flex items-center justify-center rounded-l-md px-2.5 text-muted transition-colors hover:bg-surface-hover disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <path d="M5 12h14" />
+        </svg>
+      </button>
+      <span className="inline-flex min-w-10 items-center justify-center bg-surface/50 px-2 text-sm tabular-nums" aria-live="polite">
+        {value}
+      </span>
+      <button
+        type="button"
+        aria-label={`Increase ${label}`}
+        disabled={value >= max}
+        onClick={() => setValue(value + step)}
+        className="inline-flex items-center justify-center rounded-r-md px-2.5 text-muted transition-colors hover:bg-surface-hover disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+      </button>
+    </div>
   );
 }

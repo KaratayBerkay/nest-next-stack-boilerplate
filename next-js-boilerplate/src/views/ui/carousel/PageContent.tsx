@@ -11,7 +11,7 @@ import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Product Gallery",
     description: "Carousel with dot indicators and navigation.",
     render: () => (
@@ -36,7 +36,7 @@ const examples: UIExample[] = [
     ),
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Thumbnail Strip",
     description: "Horizontal thumbnail strip carousel.",
     render: () => <div className="flex flex-col gap-4" />,

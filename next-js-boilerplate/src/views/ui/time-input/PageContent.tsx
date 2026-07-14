@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { TimeInput } from "@/components/ui/TimeInput";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
+import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { TimeInputVariant } from "@/types/ui/TimeInput-types";
 
 type Time = { hours: number; minutes: number; seconds?: number };
 
@@ -141,16 +143,28 @@ function ExamplesTab() {
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Meeting Time",
     description: "24-hour time input with locale-aware formatting.",
     render: () => <ComponentsTab />,
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Alarm",
     description: "12-hour AM/PM time input.",
     render: () => <ExamplesTab />,
+  },
+  {
+    id: "variant-gallery",
+    title: "Variant Gallery",
+    description: "All variants and sizes.",
+    render: () => (
+      <VariantGallery
+        variants={["default", "shiny", "glass", "neon", "gradient"]}
+        sizes={[]}
+        render={(variant) => <TimeInput variant={variant as TimeInputVariant} />}
+      />
+    ),
   },
 ];
 

@@ -334,6 +334,45 @@
   --radius-full: 9999px;
 }
 
+/* ── V0 Design Language ────────────────────────────────────────── */
+/*
+ * Radius:
+ *   controls + menu items  → rounded-md
+ *   floating panels        → rounded-lg  (menus, popovers, hover-card, combobox list)
+ *   modal shells           → rounded-xl  (dialog, alert-dialog, drawer top, command)
+ *   pills / thumbs         → rounded-full
+ *
+ * Elevation (every float keeps border-border):
+ *   controls               → shadow-xs
+ *   inline bars            → shadow-xs  (menubar, tabs list)
+ *   small floats           → shadow-md  (tooltip, hover-card)
+ *   menus / popovers       → shadow-lg
+ *   modals / toasts        → shadow-xl
+ *
+ * Control heights: sm h-8 / md h-9 / lg h-10; touch targets ≥ 36px
+ *
+ * Focus:
+ *   focus-visible:ring-2 focus-visible:ring-brand
+ *   solid controls add:    ring-offset-1 ring-offset-bg
+ *   inputs add:            focus-visible:border-brand
+ *   no other ring recipe;  ring-ring is forbidden
+ *
+ * Disabled:
+ *   disabled:opacity-50 + disabled:pointer-events-none, period
+ *
+ * Status tinting (soft):
+ *   bg-<status>/10  border-<status>/30  text-<status>
+ *   solid: bg-<status> text-<status>-fg
+ *
+ * Motion:
+ *   menus/popovers/tooltips → animate-scale-in (~120ms) + useExitAnimation
+ *   modals                  → fade + rise
+ *   motion-reduce:animate-none
+ *
+ * Palette: semantic tokens ONLY — bg-error, text-success, border-warning, etc.
+ *          hardcoded palette (red-500, green-200, amber-*) is forbidden.
+ */
+
 /* ── Container sizes ─────────────────────────────────────────────── */
 @theme {
   --container-xs: 20rem;
@@ -361,6 +400,52 @@ body {
 }
 *::-webkit-scrollbar {
   display: none !important;
+}
+
+/* ── Scroll-fade affordance (S3) ──────────────────────────────────── */
+.scroll-fade-y {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 0.75rem,
+    #000 calc(100% - 0.75rem),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 0.75rem,
+    #000 calc(100% - 0.75rem),
+    transparent 100%
+  );
+}
+.scroll-fade-y.scrolled-to-top {
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0.75rem,
+    #000 calc(100% - 0.75rem),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0.75rem,
+    #000 calc(100% - 0.75rem),
+    transparent 100%
+  );
+}
+.scroll-fade-y.scrolled-to-bottom {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 0.75rem,
+    #000 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 0.75rem,
+    #000 100%
+  );
 }
 
 /* ── Shared surface style (kept for existing pages) ──────────────── */

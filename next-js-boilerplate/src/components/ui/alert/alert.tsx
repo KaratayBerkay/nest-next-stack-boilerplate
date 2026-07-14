@@ -10,12 +10,9 @@ import type { AlertProps } from "@/types/ui/Alert-types";
 const variants = {
   ...globalStyleVariants,
   default: "border-border bg-surface text-fg",
-  destructive:
-    "border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300",
-  success:
-    "border-green-200 bg-green-50 text-green-800 dark:border-green-900 dark:bg-green-950/50 dark:text-green-300",
-  warning:
-    "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300",
+  destructive: "border-error/30 bg-error/10 text-error",
+  success: "border-success/30 bg-success/10 text-success",
+  warning: "border-warning/30 bg-warning/10 text-warning",
 } as const;
 
 export function Alert({

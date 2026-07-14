@@ -25,7 +25,7 @@ export function Kbd({
   return (
     <kbd
       className={cn(
-        "pointer-events-none inline-flex items-center gap-1 rounded border px-1.5 py-0.5 font-medium opacity-100 select-none",
+        "pointer-events-none inline-flex items-center gap-1 rounded border px-1.5 py-0.5 font-medium opacity-100 select-none shadow-[inset_0_-1px_0_var(--border)] min-w-5 justify-center",
         variantClass,
         fonts,
         className,

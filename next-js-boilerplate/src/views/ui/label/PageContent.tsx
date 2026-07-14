@@ -7,7 +7,7 @@ import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Paired Controls",
     description: "Label with htmlFor connecting to input, switch, and checkbox.",
     render: () => (
@@ -27,7 +27,7 @@ const examples: UIExample[] = [
     ),
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Required Marker",
     description: "Label with required indicator and disabled dimming.",
     render: () => (

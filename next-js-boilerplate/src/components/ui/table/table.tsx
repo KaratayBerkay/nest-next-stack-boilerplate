@@ -5,7 +5,7 @@ export const Table = forwardRef<
   HTMLTableElement,
   React.ComponentPropsWithoutRef<"table">
 >(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto">
+  <div className="relative w-full overflow-auto rounded-lg border border-border">
     <table
       ref={ref}
       className={cn("w-full caption-bottom text-sm", className)}
@@ -50,7 +50,7 @@ export const TableRow = forwardRef<
   <tr
     ref={ref}
     className={cn(
-      "border-border hover:bg-surface/50 data-[state=selected]:bg-surface border-b transition-colors",
+      "border-border hover:bg-surface-hover/60 data-[state=selected]:bg-brand/5 border-b transition-colors",
       className,
     )}
     {...props}
@@ -65,7 +65,7 @@ export const TableHead = forwardRef<
     ref={ref}
     scope="col"
     className={cn(
-      "text-muted h-10 px-2 text-left align-middle text-xs font-medium [&:has([role=checkbox])]:pr-0",
+      "text-muted h-10 px-2 text-left align-middle text-xs uppercase tracking-wider font-medium bg-surface/50 [&:has([role=checkbox])]:pr-0",
       className,
     )}
     {...props}

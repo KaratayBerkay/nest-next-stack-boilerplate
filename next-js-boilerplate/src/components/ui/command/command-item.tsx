@@ -11,6 +11,8 @@ export function CommandItem({
   disabled = false,
   className,
   children,
+  onClick,
+  onKeyDown,
   ...props
 }: CommandItemProps) {
   const { search, filteredItems, selectedIndex, registerItem } =
@@ -63,11 +65,13 @@ export function CommandItem({
       // No roving-tabindex manager exists yet (focus normally stays on CommandInput while
       // typing), so make each option independently reachable/activatable via keyboard too.
       tabIndex={disabled ? -1 : 0}
-      onClick={() => {
-        if (!disabled) onSelect?.();
+      onClick={(e) => {
+        onClick?.(e);
+        if (!disabled && !e.defaultPrevented) onSelect?.();
       }}
       onKeyDown={(e) => {
-        if (disabled) return;
+        onKeyDown?.(e);
+        if (disabled || e.defaultPrevented) return;
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           onSelect?.();

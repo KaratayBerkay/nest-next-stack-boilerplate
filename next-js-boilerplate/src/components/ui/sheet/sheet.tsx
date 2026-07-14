@@ -43,7 +43,7 @@ export const SheetContent = forwardRef<
         {...props}
       >
         {children}
-        <Close className="text-muted hover:text-fg absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100">
+        <Close className="text-muted hover:bg-surface-hover absolute top-4 right-4 size-7 rounded-md inline-flex items-center justify-center transition-colors">
           <svg
             width="16"
             height="16"
@@ -54,7 +54,7 @@ export const SheetContent = forwardRef<
           >
             <path d="M18 6 6 18M6 6l12 12" />
           </svg>
-          <span className="sr-only">Close</span>
+          <span className="sr-only sr-only">Close</span>
         </Close>
       </Content>
     </Portal>

@@ -207,7 +207,7 @@ function ExamplesTab() {
         <div className="surface rounded-xl p-6">
           <div className="mb-4 flex flex-wrap gap-2">
             <span className="inline-flex items-center gap-1.5 text-xs">
-              <span className="bg-green-500 size-2 rounded-full" /> Birthday
+              <span className="bg-success size-2 rounded-full" /> Birthday
             </span>
           </div>
           <Calendar
@@ -224,19 +224,19 @@ function ExamplesTab() {
         <div className="surface rounded-xl p-6">
           <div className="mb-4 flex flex-wrap gap-3">
             <span className="inline-flex items-center gap-1.5 text-xs">
-              <span className="bg-blue-500 size-2 rounded-full" /> Focus
+              <span className="bg-info size-2 rounded-full" /> Focus
             </span>
             <span className="inline-flex items-center gap-1.5 text-xs">
-              <span className="bg-purple-500 size-2 rounded-full" /> Meeting
+              <span className="bg-brand size-2 rounded-full" /> Meeting
             </span>
             <span className="inline-flex items-center gap-1.5 text-xs">
-              <span className="bg-orange-500 size-2 rounded-full" /> Review
+              <span className="bg-warning size-2 rounded-full" /> Review
             </span>
             <span className="inline-flex items-center gap-1.5 text-xs">
-              <span className="bg-red-500 size-2 rounded-full" /> Deploy
+              <span className="bg-error size-2 rounded-full" /> Deploy
             </span>
             <span className="inline-flex items-center gap-1.5 text-xs">
-              <span className="bg-cyan-500 size-2 rounded-full" /> Planning
+              <span className="bg-info size-2 rounded-full" /> Planning
             </span>
           </div>
           <Calendar
@@ -253,13 +253,13 @@ function ExamplesTab() {
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Month with Events",
     description: "Calendar showing event indicators with a daily cap.",
     render: () => <ComponentsTab />,
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Availability Window",
     description: "Calendar with min/max dates and disabled weekends.",
     render: () => <ExamplesTab />,

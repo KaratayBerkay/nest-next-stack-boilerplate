@@ -14,7 +14,7 @@ function pad(n: number): string {
 
 const variantStyles: Record<TimeInputVariant, string> = {
   ...globalStyleVariants,
-  default: "border border-border bg-bg rounded-lg",
+  default: "border border-border bg-bg rounded-md",
 };
 
 const selectClasses: Record<TimeInputVariant, string> = {
@@ -69,7 +69,7 @@ function TimeUnitSelect({
         disabled={disabled}
         aria-describedby={describedBy}
         className={cn(
-          "h-10 w-[72px] appearance-none rounded-md border px-2 pr-7 text-sm font-medium shadow-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+          "h-9 w-[72px] appearance-none rounded-md border px-2 pr-7 text-sm font-medium shadow-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
           selectClassName,
         )}
       >
@@ -136,7 +136,7 @@ export function TimeInput({
   return (
     <div className={cn("flex flex-col gap-2", className)}>
       {label && (
-        <label className="text-sm font-medium text-foreground">{label}</label>
+        <label className="text-sm font-medium text-fg">{label}</label>
       )}
       <div className="flex items-center gap-3">
         <div className={cn("flex items-center gap-2 p-2", resolveVariant(variantStyles, effectiveVariant))}>
@@ -172,7 +172,7 @@ export function TimeInput({
 
           {showSeconds && (
             <>
-              <span className="text-muted text-lg font-medium">:</span>
+          <span className="text-muted text-sm font-medium">:</span>
               <TimeUnitSelect
                 value={value.seconds ?? 0}
                 max={59}
@@ -191,7 +191,7 @@ export function TimeInput({
               disabled={disabled}
               className={cn(
                 "h-10 rounded-md border px-2.5 text-xs font-bold shadow-sm transition-colors",
-                "border-border bg-surface text-foreground hover:bg-surface-hover",
+                "border-border bg-surface text-fg hover:bg-surface-hover",
                 disabled && "cursor-not-allowed opacity-50",
               )}
             >

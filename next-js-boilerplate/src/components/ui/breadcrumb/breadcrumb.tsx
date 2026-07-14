@@ -59,7 +59,7 @@ export const BreadcrumbSeparator = forwardRef<
     ref={ref}
     role="presentation"
     aria-hidden="true"
-    className={cn("[&>svg]:size-3.5", className)}
+    className={cn("text-muted/60 [&>svg]:size-3.5", className)}
     {...props}
   >
     {props.children ?? (
@@ -87,7 +87,7 @@ export const BreadcrumbPage = forwardRef<
     role="link"
     aria-disabled="true"
     aria-current="page"
-    className={cn("text-fg font-normal", className)}
+    className={cn("text-fg font-medium", className)}
     {...props}
   />
 ));

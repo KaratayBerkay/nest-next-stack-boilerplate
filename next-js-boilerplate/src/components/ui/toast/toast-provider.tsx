@@ -1,24 +1,13 @@
 "use client";
 
 import { createContext, useContext, useReducer, type ReactNode } from "react";
-import type { ToastProviderProps } from "@/types/ui/Toast-types";
-
-type ToastVariant = "default" | "destructive" | "success";
-
-interface ToastData {
-  id: string;
-  title?: React.ReactNode;
-  description?: React.ReactNode;
-  variant: ToastVariant;
-}
-
-type State = ToastData[];
+import type { ToastProviderProps, ToastData } from "@/types/ui/Toast-types";
 
 type Action =
   | { type: "ADD"; toast: ToastData }
   | { type: "DISMISS"; id: string };
 
-function reducer(state: State, action: Action): State {
+function reducer(state: ToastData[], action: Action): ToastData[] {
   switch (action.type) {
     case "ADD":
       return [...state, action.toast];
@@ -28,7 +17,7 @@ function reducer(state: State, action: Action): State {
 }
 
 interface ToastContextValue {
-  state: State;
+  state: ToastData[];
   dispatch: React.Dispatch<Action>;
 }
 

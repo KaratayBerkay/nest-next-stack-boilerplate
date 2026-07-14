@@ -57,3 +57,9 @@ export interface DialogContentProps extends React.ComponentPropsWithoutRef<"dial
   variant?: DialogVariant;
   size?: DialogSize;
 }
+
+export type DialogBodyProps = React.ComponentPropsWithoutRef<"div"> & {
+  fontSize?: string;
+  fontWeight?: string;
+  fontFamily?: string;
+};

@@ -9,7 +9,7 @@ import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "User Preview",
     description: "GitHub-style profile preview on hover.",
     render: () => (
@@ -27,7 +27,7 @@ const examples: UIExample[] = [
     ),
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Link Preview",
     description: "Link with title, description, and domain preview.",
     render: () => (

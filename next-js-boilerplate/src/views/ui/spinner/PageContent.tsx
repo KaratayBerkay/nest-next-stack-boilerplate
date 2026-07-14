@@ -5,7 +5,7 @@ import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Button Composition",
     description: "Spinner inside loading buttons, size-matched.",
     render: () => (
@@ -22,7 +22,7 @@ const examples: UIExample[] = [
     ),
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Size Scale",
     description: "Spinner at different sizes: sm, md, lg.",
     render: () => <div className="flex flex-col gap-4"></div>,

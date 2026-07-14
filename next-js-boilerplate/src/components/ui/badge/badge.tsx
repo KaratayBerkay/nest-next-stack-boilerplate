@@ -7,8 +7,8 @@ import type { BadgeProps } from "@/types/ui/Badge-types";
 
 const variants = {
   ...globalStyleVariants,
-  default: "bg-surface text-fg border border-border",
-  secondary: "bg-surface text-fg",
+  default: "bg-brand text-brand-fg",
+  secondary: "bg-surface text-fg border border-border",
   outline: "border border-border text-muted",
   destructive: "bg-error text-error-fg",
   success: "bg-success text-success-fg",

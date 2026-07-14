@@ -13,6 +13,8 @@ type Variant =
   | "dot"
   | "pill";
 
+export type BadgeVariant = Variant;
+
 export interface BadgeProps extends React.ComponentPropsWithoutRef<"span"> {
   variant?: Variant;
   fontSize?: string;

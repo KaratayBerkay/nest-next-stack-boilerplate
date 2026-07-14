@@ -20,6 +20,7 @@ export function SelectTrigger({
   children,
   error,
   description,
+  onClick,
   ...props
 }: SelectTriggerProps) {
   const { open, setOpen, triggerRef } = useSelect();
@@ -32,11 +33,14 @@ export function SelectTrigger({
         ref={triggerRef}
         type="button"
         className={cn(
-          "focus-visible:ring-brand flex h-9 w-full items-center justify-between gap-2 rounded border px-3 py-2 text-sm shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40",
+          "focus-visible:ring-brand flex h-9 w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
           resolveVariant(variants, effectiveVariant),
           className,
         )}
-        onClick={() => setOpen(!open)}
+        onClick={(e) => {
+          onClick?.(e);
+          if (!e.defaultPrevented) setOpen(!open);
+        }}
         data-state={open ? "open" : "closed"}
         aria-expanded={open}
         aria-haspopup="listbox"

@@ -52,7 +52,7 @@ export const AlertDialogContent = forwardRef<
     <Content
       ref={ref}
       className={cn(
-        "bg-bg border-border data-[state=open]:animate-fade-in-up data-[state=closed]:animate-fade-out fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border p-6 shadow-lg duration-200 sm:rounded-lg",
+        "bg-bg border-border data-[state=open]:animate-fade-in-up data-[state=closed]:animate-fade-out fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border p-6 shadow-xl duration-200 sm:rounded-xl",
         className,
       )}
       {...props}

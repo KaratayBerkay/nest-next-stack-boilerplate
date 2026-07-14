@@ -61,12 +61,12 @@ export function TooltipContent({ children, className }: TooltipContentProps) {
   };
 
   const arrowClass: Record<string, string> = {
-    top: "bottom-0 left-1/2 -translate-x-1/2 translate-y-full border-l-4 border-r-4 border-t-4 border-transparent border-t-surface",
+    top: "bottom-0 left-1/2 -translate-x-1/2 translate-y-full border-l-4 border-r-4 border-t-4 border-transparent border-t-fg",
     bottom:
-      "top-0 left-1/2 -translate-x-1/2 -translate-y-full border-l-4 border-r-4 border-b-4 border-transparent border-b-surface",
-    left: "right-0 top-1/2 translate-x-full -translate-y-1/2 border-t-4 border-b-4 border-l-4 border-transparent border-l-surface",
+      "top-0 left-1/2 -translate-x-1/2 -translate-y-full border-l-4 border-r-4 border-b-4 border-transparent border-b-fg",
+    left: "right-0 top-1/2 translate-x-full -translate-y-1/2 border-t-4 border-b-4 border-l-4 border-transparent border-l-fg",
     right:
-      "left-0 top-1/2 -translate-x-full -translate-y-1/2 border-t-4 border-b-4 border-r-4 border-transparent border-r-surface",
+      "left-0 top-1/2 -translate-x-full -translate-y-1/2 border-t-4 border-b-4 border-r-4 border-transparent border-r-fg",
   };
 
   const positionStyle: CSSProperties = {
@@ -99,8 +99,8 @@ export function TooltipContent({ children, className }: TooltipContentProps) {
           id={tooltipId}
           className={cn(
             "tooltip-open relative",
-            "rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap shadow-lg",
-            "bg-surface text-fg",
+            "rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap shadow-md",
+            "bg-fg text-bg",
             className,
           )}
         >

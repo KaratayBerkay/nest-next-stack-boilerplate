@@ -16,6 +16,7 @@ export interface PopoverTriggerProps extends React.ComponentPropsWithoutRef<"but
   fontSize?: string;
   fontWeight?: string;
   fontFamily?: string;
+  asChild?: boolean;
 }
 
 export interface PopoverContentProps extends React.ComponentPropsWithoutRef<"div"> {
@@ -25,4 +26,5 @@ export interface PopoverContentProps extends React.ComponentPropsWithoutRef<"div
   className?: string;
   variant?: PopoverVariant;
   initialFocus?: React.RefObject<HTMLElement>;
+  title?: string;
 }

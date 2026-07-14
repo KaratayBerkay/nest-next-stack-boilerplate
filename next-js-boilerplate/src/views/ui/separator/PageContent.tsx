@@ -7,7 +7,7 @@ import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Sectioned Form",
     description: "Horizontal separator between form fieldsets.",
     render: () => (
@@ -35,7 +35,7 @@ const examples: UIExample[] = [
     ),
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Toolbar Split",
     description: "Vertical separator in a toolbar layout.",
     render: () => (

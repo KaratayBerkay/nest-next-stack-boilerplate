@@ -9,9 +9,10 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
+import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 function handleLike(
@@ -334,29 +335,145 @@ function ExamplesTab({
   );
 }
 
+function PricingTiersTab() {
+  const tiers = [
+    {
+      name: "Starter",
+      price: 19,
+      description: "For individuals and small projects",
+      features: [
+        "5 GB cloud storage",
+        "1 team member",
+        "Basic analytics dashboard",
+        "Email support",
+      ],
+      cta: "Get Started",
+      popular: false,
+    },
+    {
+      name: "Professional",
+      price: 49,
+      description: "For growing teams and businesses",
+      features: [
+        "50 GB cloud storage",
+        "Up to 10 team members",
+        "Advanced analytics & reports",
+        "Priority email & chat support",
+        "Custom integrations",
+      ],
+      cta: "Get Started",
+      popular: true,
+    },
+    {
+      name: "Enterprise",
+      price: 99,
+      description: "For large organizations",
+      features: [
+        "Unlimited cloud storage",
+        "Unlimited team members",
+        "Advanced analytics & reports",
+        "Dedicated account manager",
+        "Custom integrations & SSO",
+      ],
+      cta: "Contact Sales",
+      popular: false,
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl">
+      {tiers.map((tier) => (
+        <Card
+          key={tier.name}
+          variant={tier.popular ? "interactive" : "default"}
+          className={tier.popular ? "relative border-brand" : ""}
+        >
+          {tier.popular && (
+            <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
+              Popular
+            </Badge>
+          )}
+          <CardHeader>
+            <CardTitle>{tier.name}</CardTitle>
+            <CardDescription>{tier.description}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-baseline gap-1">
+              <span className="text-3xl font-bold">${tier.price}</span>
+              <span className="text-muted text-sm">/month</span>
+            </div>
+            <ul className="text-muted space-y-2 text-sm">
+              {tier.features.map((feature) => (
+                <li key={feature} className="flex items-start gap-2">
+                  <span className="text-brand mt-0.5">✓</span>
+                  {feature}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+          <CardFooter>
+            <Button className="w-full" variant={tier.popular ? "default" : "outline"}>
+              {tier.cta}
+            </Button>
+          </CardFooter>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+function VariantGalleryTab() {
+  return (
+    <VariantGallery
+      variants={["default", "elevated", "interactive"]}
+      sizes={["sm", "md", "lg"]}
+      render={(variant, size) => (
+        <Card variant={variant as "default" | "elevated" | "interactive" | "outline" | "surface"} className="min-w-32">
+          <CardContent className={size === "sm" ? "p-3" : size === "lg" ? "p-6" : "p-4"}>
+            <p className="text-muted text-xs">
+              Variant: {variant}
+              <br />
+              Size: {size}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+    />
+  );
+}
+
 export default function CardPage() {
   const [liked, setLiked] = useState(false);
   const [count, setCount] = useState(42);
 
   const examples: UIExample[] = [
     {
-      id: "components",
-      title: "Pricing Tiers",
-      description: "Three cards with one highlighted as the recommended tier.",
-      render: () => <ComponentsTab />,
+      id: "card-examples",
+      title: "Card Examples",
+      description: "Card variants, structure demos, and composed example cards.",
+      render: () => (
+        <>
+          <ComponentsTab />
+          <ExamplesTab
+            liked={liked}
+            setLiked={setLiked}
+            count={count}
+            setCount={setCount}
+          />
+        </>
+      ),
     },
     {
-      id: "examples",
-      title: "Stat Tiles",
-      description: "KPI grid with metric cards.",
-      render: () => (
-        <ExamplesTab
-          liked={liked}
-          setLiked={setLiked}
-          count={count}
-          setCount={setCount}
-        />
-      ),
+      id: "pricing-tiers",
+      title: "Pricing Tiers",
+      description: "Three-column pricing grid with a highlighted Professional plan.",
+      render: () => <PricingTiersTab />,
+    },
+    {
+      id: "variant-gallery",
+      title: "Variant Gallery",
+      description: "All card variants and sizes in a side-by-side comparison table.",
+      render: () => <VariantGalleryTab />,
     },
   ];
 

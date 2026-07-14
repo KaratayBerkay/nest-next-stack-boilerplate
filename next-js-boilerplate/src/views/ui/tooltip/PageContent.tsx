@@ -13,7 +13,7 @@ import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Toolbar Labels",
     description: "Icon buttons with tooltip labels via describedby.",
     render: () => (
@@ -51,7 +51,7 @@ const examples: UIExample[] = [
     ),
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Disabled Reason",
     description: "Tooltip on a disabled control explaining why it's disabled.",
     render: () => (

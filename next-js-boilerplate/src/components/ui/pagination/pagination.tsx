@@ -47,7 +47,7 @@ export const PaginationLink = forwardRef<
     aria-current={isActive ? "page" : undefined}
     className={cn(
       "border-border hover:bg-surface-hover inline-flex h-9 w-9 items-center justify-center rounded-md border text-sm transition-colors",
-      isActive && "bg-surface border-fg pointer-events-none",
+      isActive && "bg-brand text-brand-fg border-transparent pointer-events-none",
       className,
     )}
     {...props}

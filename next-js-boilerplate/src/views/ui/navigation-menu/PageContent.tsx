@@ -13,7 +13,7 @@ import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Product Mega Menu",
     description: "Navigation menu with viewport panels.",
     render: () => (
@@ -54,7 +54,7 @@ const examples: UIExample[] = [
     ),
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Simple Links Row",
     description: "Horizontal links without viewport panels.",
     render: () => (

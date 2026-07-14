@@ -20,11 +20,13 @@ export function Skeleton({
   return (
     <div
       className={cn(
-        "animate-pulse rounded motion-reduce:animate-none",
+        "relative overflow-hidden rounded motion-reduce:animate-none",
         variantClass,
         className,
       )}
       {...props}
-    />
+    >
+      <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-bg/60 to-transparent motion-reduce:animate-none" />
+    </div>
   );
 }

@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
+import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
+import type { AlertVariant } from "@/types/ui/Alert-types";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 function ComponentsTab() {
@@ -197,16 +199,33 @@ function ExamplesTab() {
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Form Error Summary",
     description: "Error variant alert listing invalid fields.",
     render: () => <ComponentsTab />,
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Success Notice",
     description: "Success variant alert with auto icon.",
     render: () => <ExamplesTab />,
+  },
+  {
+    id: "variant-gallery",
+    title: "Variant Gallery",
+    description: "All variants and sizes.",
+    render: () => (
+      <VariantGallery
+        variants={["default", "destructive", "success", "warning"]}
+        sizes={[]}
+        render={(variant, _size) => (
+          <Alert variant={variant as AlertVariant}>
+            <AlertTitle>Alert Title</AlertTitle>
+            <AlertDescription>This is a {variant} variant alert.</AlertDescription>
+          </Alert>
+        )}
+      />
+    ),
   },
 ];
 

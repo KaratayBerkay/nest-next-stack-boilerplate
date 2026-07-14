@@ -7,9 +7,8 @@ const variants = {
   default: "bg-fg text-bg",
   secondary: "bg-surface text-fg",
   outline: "border border-border text-muted",
-  destructive: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  success:
-    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  destructive: "bg-error/10 text-error",
+  success: "bg-success/10 text-success",
 } as const;
 
 export function BadgeButton({

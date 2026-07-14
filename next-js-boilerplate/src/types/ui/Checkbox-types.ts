@@ -1,14 +1,17 @@
 import type React from "react";
 
+export type CheckboxSize = "sm" | "md" | "lg";
+
 export interface CheckboxProps extends Omit<
   React.ComponentPropsWithoutRef<"input">,
-  "type" | "children"
+  "type" | "children" | "size"
 > {
   label?: string;
   variant?: CheckboxVariant;
   fontSize?: string;
   fontWeight?: string;
   fontFamily?: string;
+  size?: CheckboxSize;
 }
 
 export interface CheckboxGroupItem {
@@ -32,7 +35,7 @@ export interface CheckboxGroupProps {
 
 export interface IndeterminateCheckboxProps extends Omit<
   React.ComponentPropsWithoutRef<"input">,
-  "type" | "children"
+  "type" | "children" | "size"
 > {
   indeterminate?: boolean;
   label?: string;
@@ -40,6 +43,26 @@ export interface IndeterminateCheckboxProps extends Omit<
   fontSize?: string;
   fontWeight?: string;
   fontFamily?: string;
+  size?: CheckboxSize;
+}
+
+export interface CheckboxCardProps {
+  icon?: React.ReactNode;
+  title: string;
+  description?: string;
+  checked: boolean;
+  onChange?: (checked: boolean) => void;
+  value?: string;
+  className?: string;
+}
+
+export interface CheckboxChipProps {
+  label: string;
+  checked: boolean;
+  onChange?: (checked: boolean) => void;
+  count?: number;
+  onRemove?: () => void;
+  className?: string;
 }
 
 export type CheckboxVariant = "default" | "shiny" | "glass" | "neon" | "gradient";

@@ -6,7 +6,7 @@ import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "URL Prefix",
     description: "Input with a https:// addon prefix.",
     render: () => (
@@ -24,7 +24,7 @@ const examples: UIExample[] = [
     ),
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Search + Submit",
     description: "Input attached to a button in a single row.",
     render: () => <div className="flex flex-col gap-4"></div>,

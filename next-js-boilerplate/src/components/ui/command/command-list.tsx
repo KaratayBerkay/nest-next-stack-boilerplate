@@ -7,6 +7,7 @@ import { useCommandContext } from "./command";
 export function CommandList({
   className,
   children,
+  onKeyDown,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
   const { filteredItems, selectedIndex, setSelectedIndex } =
@@ -47,7 +48,10 @@ export function CommandList({
     <div
       ref={listRef}
       className={cn("max-h-72 overflow-x-hidden overflow-y-auto", className)}
-      onKeyDown={handleKeyDown}
+      onKeyDown={(e) => {
+        onKeyDown?.(e);
+        if (!e.defaultPrevented) handleKeyDown(e);
+      }}
       tabIndex={-1}
       role="listbox"
       {...props}

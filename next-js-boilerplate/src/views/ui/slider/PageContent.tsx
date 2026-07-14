@@ -121,13 +121,13 @@ function ExamplesTab() {
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Price Range",
     description: "Two-thumb range slider with value readout.",
     render: () => <ComponentsTab />,
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Volume",
     description: "Single thumb slider with icon and live percentage.",
     render: () => <ExamplesTab />,

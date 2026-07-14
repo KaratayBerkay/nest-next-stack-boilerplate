@@ -40,15 +40,15 @@ export function Calendar({
         caption_label: "text-sm font-medium",
         nav: "flex items-center gap-1",
         button_previous:
-          "border-border hover:bg-surface-hover inline-flex h-7 w-7 items-center justify-center rounded-md border bg-transparent p-0 text-sm font-medium transition-colors absolute left-1",
+          "hover:bg-surface-hover text-muted inline-flex h-7 w-7 items-center justify-center rounded-md bg-transparent p-0 text-sm font-medium transition-colors absolute left-1",
         button_next:
-          "border-border hover:bg-surface-hover inline-flex h-7 w-7 items-center justify-center rounded-md border bg-transparent p-0 text-sm font-medium transition-colors absolute right-1",
+          "hover:bg-surface-hover text-muted inline-flex h-7 w-7 items-center justify-center rounded-md bg-transparent p-0 text-sm font-medium transition-colors absolute right-1",
         dropdowns: "flex gap-1",
         dropdown: "bg-surface border-border rounded-md border px-1 py-0.5 text-sm",
         month_grid: "w-full border-collapse",
         weekdays: "flex",
         weekday:
-          "text-muted w-full text-center text-[0.8rem] font-normal",
+          "text-muted w-full text-center text-xxs uppercase tracking-wide font-normal",
         weeks: "",
         week: "flex w-full mt-2",
         day: "relative p-0 text-center text-sm focus-within:relative focus-within:z-20",
@@ -56,11 +56,13 @@ export function Calendar({
           "hover:bg-surface-hover inline-flex h-8 w-8 items-center justify-center rounded-md p-0 text-sm font-normal transition-colors aria-selected:opacity-100",
         selected:
           "bg-brand text-brand-fg hover:bg-brand hover:text-brand-fg focus:bg-brand focus:text-brand-fg",
-        today: "bg-surface text-fg font-semibold",
+        today: "ring-1 ring-brand/50 font-semibold",
         outside: "text-muted opacity-50",
         disabled: "text-muted opacity-50",
         range_middle:
-          "aria-selected:bg-surface aria-selected:text-fg",
+          "aria-selected:bg-brand/10 aria-selected:text-fg rounded-none",
+        range_start: "rounded-l-md",
+        range_end: "rounded-r-md",
         hidden: "invisible",
         ...classNames,
       }}
@@ -94,12 +96,12 @@ export function Calendar({
                         key={event.id}
                         className={cn(
                           "size-1 rounded-full",
-                          event.color === "green" && "bg-green-500",
-                          event.color === "red" && "bg-red-500",
-                          event.color === "purple" && "bg-purple-500",
-                          event.color === "orange" && "bg-orange-500",
-                          event.color === "cyan" && "bg-cyan-500",
-                          (!event.color || event.color === "blue") && "bg-blue-500",
+                          event.color === "green" && "bg-success",
+                          event.color === "red" && "bg-error",
+                          event.color === "purple" && "bg-brand",
+                          event.color === "orange" && "bg-warning",
+                          event.color === "cyan" && "bg-info",
+                          (!event.color || event.color === "blue") && "bg-brand",
                         )}
                       />
                     ))}

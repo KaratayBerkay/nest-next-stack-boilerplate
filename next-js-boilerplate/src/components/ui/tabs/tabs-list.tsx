@@ -44,6 +44,7 @@ function handleTabsKeyDown(
 export function TabsList({
   className,
   children,
+  onKeyDown,
   ...props
 }: TabsListProps) {
   const listRef = useRef<HTMLDivElement>(null);
@@ -55,9 +56,12 @@ export function TabsList({
       role="tablist"
       tabIndex={-1}
       aria-orientation={orientation}
-      onKeyDown={(e) => handleTabsKeyDown(e, listRef, orientation)}
+      onKeyDown={(e) => {
+        onKeyDown?.(e);
+        if (!e.defaultPrevented) handleTabsKeyDown(e, listRef, orientation);
+      }}
       className={cn(
-        "bg-surface inline-flex items-center gap-1 rounded-lg p-1",
+        "bg-surface inline-flex items-center gap-1 rounded-lg p-1 shadow-xs",
         orientation === "vertical" && "flex-col",
         className,
       )}

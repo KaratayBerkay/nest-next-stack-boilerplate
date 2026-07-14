@@ -26,7 +26,7 @@ export function Input({
   const effectiveVariant = useComponentVariant(variant);
   const variantClass = resolveVariant(inputVariants, effectiveVariant);
   const sizeClass = inputSizes.md;
-  const fonts = fontClasses({ fontSize: fontSize || sizeClass.split(" ")[1], fontWeight, fontFamily }, { fontWeight: "font-normal" });
+  const fonts = fontClasses({ fontSize, fontWeight, fontFamily }, { fontSize: sizeClass.split(" ")[1], fontWeight: "font-normal" });
 
   const errorStr = typeof error === "string" ? error : undefined;
   const { describedBy, messages } = useFieldMessages(errorStr, description);

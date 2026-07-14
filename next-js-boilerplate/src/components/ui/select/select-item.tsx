@@ -9,6 +9,7 @@ export function SelectItem({
   className,
   value: itemValue,
   children,
+  onClick,
   ...props
 }: SelectItemProps) {
   const { value, onValueChange, setOpen, triggerRef, labelMap } = useSelect();
@@ -42,7 +43,10 @@ export function SelectItem({
         !isSelected && "text-fg",
         className,
       )}
-      onClick={handleClick}
+      onClick={(e) => {
+        onClick?.(e);
+        if (!e.defaultPrevented) handleClick();
+      }}
       tabIndex={-1}
       {...props}
     >

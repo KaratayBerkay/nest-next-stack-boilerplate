@@ -13,6 +13,7 @@ export function PopoverContent({
   align = "start",
   sideOffset = 8,
   initialFocus,
+  title,
   ...props
 }: PopoverContentProps) {
   const { open, close, triggerRef, contentId } = usePopover();
@@ -29,18 +30,25 @@ export function PopoverContent({
     const updatePosition = () => {
       const triggerRect = triggerRef.current!.getBoundingClientRect();
       const contentWidth = contentRef.current?.offsetWidth ?? 0;
-      let left: number;
+      const contentHeight = contentRef.current?.offsetHeight ?? 0;
 
+      let left: number;
       if (align === "end") {
         left = Math.max(8, triggerRect.right - contentWidth);
       } else {
         left = Math.max(8, triggerRect.left);
       }
+      left = Math.min(left, window.innerWidth - contentWidth - 8);
 
-      setPosition({
-        top: triggerRect.bottom + sideOffset,
-        left,
-      });
+      let top: number;
+      const spaceBelow = window.innerHeight - triggerRect.bottom;
+      if (contentHeight > spaceBelow && triggerRect.top > contentHeight) {
+        top = triggerRect.top - contentHeight - sideOffset;
+      } else {
+        top = triggerRect.bottom + sideOffset;
+      }
+
+      setPosition({ top, left });
     };
 
     updatePosition();
@@ -106,7 +114,7 @@ export function PopoverContent({
         ref={contentRef}
         id={contentId}
         role="dialog"
-        aria-label="Popover"
+        aria-label={title ?? "Popover"}
         tabIndex={-1}
         style={
           isDesktop && position
@@ -115,7 +123,7 @@ export function PopoverContent({
         }
         className={cn(
           isDesktop
-            ? "bg-bg text-fg border-border z-50 min-w-[8rem] origin-top-right rounded-lg border p-4 shadow-lg"
+            ? "bg-bg text-fg border-border z-50 min-w-[8rem] origin-top-right rounded-lg border p-4 shadow-lg animate-scale-in"
             : "bg-bg animate-fade-in fixed inset-0 z-50 flex flex-col p-4",
           className,
         )}
@@ -123,7 +131,7 @@ export function PopoverContent({
       >
         {!isDesktop && (
           <div className="flex items-center justify-between pb-3">
-            <span className="text-sm font-semibold">Menu</span>
+            <span className="text-sm font-semibold">{title ?? "Menu"}</span>
             <button
               onClick={close}
               className="text-muted hover:bg-surface-hover rounded-lg p-1"

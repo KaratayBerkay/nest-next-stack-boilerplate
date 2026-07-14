@@ -9,6 +9,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/Button";
 import type { ConfirmDialogProps } from "@/types/ui/ConfirmDialog-types";
 
 async function handleConfirm(
@@ -38,18 +39,12 @@ export function ConfirmDialog({
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <button
-            onClick={() => setOpen(false)}
-            className="text-muted hover:text-fg rounded-lg px-3 py-1.5 text-sm transition-colors"
-          >
+          <Button variant="ghost" onClick={() => setOpen(false)}>
             {cancelLabel}
-          </button>
-          <button
-            onClick={() => handleConfirm(onConfirm, setOpen)}
-            className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700"
-          >
+          </Button>
+          <Button variant="destructive" onClick={() => handleConfirm(onConfirm, setOpen)}>
             {confirmLabel}
-          </button>
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

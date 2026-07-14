@@ -77,13 +77,13 @@ function ExamplesTab() {
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Payment Method",
     description: "Card-style radio options with descriptions for each choice.",
     render: () => <ComponentsTab />,
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Plan Tiers",
     description: "Pricing plan selection with radio buttons.",
     render: () => <ExamplesTab />,

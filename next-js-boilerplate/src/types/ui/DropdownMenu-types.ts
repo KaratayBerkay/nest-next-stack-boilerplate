@@ -11,6 +11,7 @@ export type DropdownMenuTriggerProps = React.ComponentPropsWithoutRef<"button"> 
   fontSize?: string;
   fontWeight?: string;
   fontFamily?: string;
+  asChild?: boolean;
 };
 
 export type DropdownMenuContentProps = React.ComponentPropsWithoutRef<"div"> & {

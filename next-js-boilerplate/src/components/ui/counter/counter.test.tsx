@@ -1,15 +1,30 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { Counter } from "./counter";
 
 describe("Counter", () => {
-  it("increments its click count", () => {
-    render(<Counter label="probe" />);
-    const btn = screen.getByTestId("counter-probe");
-    expect(btn.textContent).toMatch(/clicked 0 times/);
+  it("increments and decrements value", () => {
+    render(<Counter label="qty" />);
+    const display = screen.getByText("0");
+    const inc = screen.getByLabelText("Increase qty");
+    const dec = screen.getByLabelText("Decrease qty");
 
-    fireEvent.click(btn);
-    fireEvent.click(btn);
-    expect(btn.textContent).toMatch(/clicked 2 times/);
+    expect(display).toBeTruthy();
+    expect((dec as HTMLButtonElement).disabled).toBe(true);
+
+    fireEvent.click(inc);
+    expect(display.textContent).toBe("1");
+    expect((dec as HTMLButtonElement).disabled).toBe(false);
+
+    fireEvent.click(inc);
+    expect(display.textContent).toBe("2");
+  });
+
+  it("calls onChange when controlled", () => {
+    const onChange = vi.fn();
+    render(<Counter label="qty" value={3} onChange={onChange} />);
+    const inc = screen.getByLabelText("Increase qty");
+    fireEvent.click(inc);
+    expect(onChange).toHaveBeenCalledWith(4);
   });
 });

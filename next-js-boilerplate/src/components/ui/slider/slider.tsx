@@ -27,7 +27,7 @@ export const Slider = forwardRef<
       {props.value?.map((_, i) => (
         <Thumb
           key={i}
-          className="border-border bg-bg focus-visible:ring-brand block h-4 w-4 rounded-full border shadow transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+          className="border-border bg-bg focus-visible:ring-brand block size-5 rounded-full border shadow-sm transition-all hover:scale-110 active:scale-105 focus-visible:ring-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
         />
       ))}
     </Root>

@@ -11,6 +11,7 @@ export function SelectContent({
   className,
   children,
   sideOffset = 8,
+  onKeyDown,
   ...props
 }: SelectContentProps) {
   const { open, setOpen, triggerRef, contentRef } = useSelect();
@@ -136,7 +137,10 @@ export function SelectContent({
         ref={contentRef}
         role="listbox"
         tabIndex={-1}
-        onKeyDown={handleKeyDown}
+        onKeyDown={(e) => {
+          onKeyDown?.(e);
+          if (!e.defaultPrevented) handleKeyDown(e);
+        }}
         style={
           isDesktop && position
             ? {

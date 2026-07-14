@@ -16,7 +16,7 @@ export const NativeSelect = forwardRef<
       {children}
     </select>
     <svg
-      className="text-muted pointer-events-none absolute top-0 right-0 mr-3 h-full"
+      className="text-muted pointer-events-none absolute top-0 right-0 mr-3 h-full rtl:left-0 rtl:mr-0 rtl:ml-3"
       width="16"
       height="16"
       viewBox="0 0 24 24"

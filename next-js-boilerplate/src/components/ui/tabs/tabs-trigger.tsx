@@ -23,6 +23,7 @@ export function TabsTrigger({
   fontSize,
   fontWeight,
   fontFamily,
+  onClick,
   ...props
 }: TabsTriggerProps) {
   const { activeValue, onValueChange, baseId } = useTabsContext();
@@ -41,7 +42,10 @@ export function TabsTrigger({
       aria-controls={panelId}
       data-state={isActive ? "active" : "inactive"}
       tabIndex={isActive ? 0 : -1}
-      onClick={() => onValueChange(value)}
+      onClick={(e) => {
+        onClick?.(e);
+        if (!e.defaultPrevented) onValueChange(value);
+      }}
       className={cn(
         "focus-visible:ring-brand inline-flex items-center justify-center rounded-md px-3 py-1.5 whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:outline-none",
         resolveVariant(variants, effectiveVariant),

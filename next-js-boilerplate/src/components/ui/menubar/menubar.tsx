@@ -21,7 +21,7 @@ export const Menubar = forwardRef<
     <Root
       ref={ref}
       className={cn(
-        "flex h-9 items-center gap-1 rounded-md border p-1 shadow-sm",
+        "flex h-9 items-center gap-1 rounded-md border p-1 shadow-xs",
         className,
       )}
       {...props}
@@ -38,7 +38,7 @@ export const MenubarTrigger = forwardRef<
   <Trigger
     ref={ref}
     className={cn(
-      "focus:bg-surface focus:text-fg data-[state=open]:bg-surface data-[state=open]:text-fg flex cursor-default items-center rounded-sm px-3 py-1 text-sm font-medium outline-none select-none",
+      "focus:bg-surface focus:text-fg data-[state=open]:bg-surface data-[state=open]:text-fg flex cursor-default items-center rounded-md px-3 py-1 text-sm font-medium outline-none select-none",
       className,
     )}
     {...props}
@@ -54,7 +54,7 @@ export const MenubarContent = forwardRef<
     <Content
       ref={ref}
       className={cn(
-        "bg-bg border-border z-50 min-w-48 overflow-hidden rounded-md border p-1 shadow-md",
+        "bg-bg border-border z-50 min-w-48 overflow-hidden rounded-lg border p-1 shadow-lg",
         className,
       )}
       {...props}
@@ -72,7 +72,7 @@ export const MenubarItem = forwardRef<
   <Item
     ref={ref}
     className={cn(
-      "focus:bg-surface focus:text-fg relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "focus:bg-surface focus:text-fg relative flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       className,
     )}
     {...props}

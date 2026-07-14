@@ -10,220 +10,186 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
+  DialogBody,
 } from "@/components/ui/Dialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Button } from "@/components/ui/Button";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
-function handleDelete(setDeleting: (v: boolean) => void) {
-  setDeleting(true);
-  setTimeout(() => setDeleting(false), 1000);
-}
+const inputClass = "border-border bg-bg rounded-md border px-3 py-2 text-sm focus-visible:ring-brand focus-visible:border-brand focus-visible:ring-2 focus-visible:outline-none";
 
-function ComponentsTab() {
+function EditProfileTab() {
   return (
-    <div className="flex flex-col gap-6">
-      <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Default</h3>
-        <Dialog>
-          <DialogTrigger
-            data-testid="dialog-trigger"
-            className="bg-brand inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium text-white hover:opacity-90"
-          >
-            Open Dialog
-          </DialogTrigger>
-          <DialogContent data-testid="dialog-content">
-            <DialogHeader>
-              <DialogTitle>Are you sure?</DialogTitle>
-              <DialogDescription>
-                This action cannot be undone. This will permanently delete
-                your account and remove your data from our servers.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <DialogClose
-                data-testid="dialog-cancel"
-                className="border-border hover:bg-surface-hover inline-flex items-center justify-center rounded border bg-transparent px-4 py-2 text-sm font-medium"
-              >
-                Cancel
-              </DialogClose>
-              <Button variant="destructive" data-testid="dialog-confirm">
-                Delete
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">With Different Content</h3>
-        <Dialog>
-          <DialogTrigger className="bg-brand inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium text-white hover:opacity-90">
-            Open Form Dialog
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Profile</DialogTitle>
-              <DialogDescription>
-                Make changes to your profile here. Click save when you&apos;re done.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="name" className="text-sm font-medium">Name</label>
-                <input
-                  id="name"
-                  defaultValue="John Doe"
-                  className="border-border bg-bg rounded border px-3 py-2 text-sm"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="email" className="text-sm font-medium">Email</label>
-                <input
-                  id="email"
-                  defaultValue="john@example.com"
-                  className="border-border bg-bg rounded border px-3 py-2 text-sm"
-                />
-              </div>
+    <Dialog>
+      <DialogTrigger className="bg-brand text-brand-fg hover:opacity-90 inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium shadow-xs transition-all focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none">
+        Edit Profile
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit Profile</DialogTitle>
+          <DialogDescription>
+            Make changes to your profile here. Click save when you&apos;re done.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogBody>
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="name" className="text-sm font-medium">Name</label>
+              <input id="name" defaultValue="John Doe" className={inputClass} />
             </div>
-            <DialogFooter>
-              <DialogClose className="border-border hover:bg-surface-hover inline-flex items-center justify-center rounded border bg-transparent px-4 py-2 text-sm font-medium">
-                Cancel
-              </DialogClose>
-              <Button variant="primary">Save Changes</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </section>
-    </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="email" className="text-sm font-medium">Email</label>
+              <input id="email" defaultValue="john@example.com" className={inputClass} />
+            </div>
+          </div>
+        </DialogBody>
+        <DialogFooter>
+          <DialogClose className="border-border hover:bg-surface-hover inline-flex items-center justify-center rounded-md border bg-transparent px-4 py-2 text-sm font-medium transition-colors">
+            Cancel
+          </DialogClose>
+          <Button variant="primary">Save Changes</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
-function ExamplesTab() {
-  const [deleting, setDeleting] = useState(false);
+function SizeScaleTab() {
+  const sizes = ["sm", "md", "lg", "full"] as const;
 
   return (
-    <div className="flex flex-col gap-6">
-      <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Confirmation Dialog</h3>
-        <p className="text-muted text-xs">
-          A destructive confirmation dialog.
-        </p>
-        <Dialog>
-          <DialogTrigger className="bg-brand inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium text-white hover:opacity-90">
-            {deleting ? "Deleting..." : "Delete Project"}
+    <div className="flex flex-wrap gap-3">
+      {sizes.map((s) => (
+        <Dialog key={s}>
+          <DialogTrigger className="border-border bg-transparent hover:bg-surface-hover inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium shadow-xs transition-all focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none">
+            {s}
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent size={s}>
             <DialogHeader>
-              <DialogTitle>
-                Delete &ldquo;My Project&rdquo;?
-              </DialogTitle>
+              <DialogTitle>Size: {s}</DialogTitle>
               <DialogDescription>
-                This will permanently delete the project and all its data.
-                This action cannot be undone.
+                This dialog uses the &ldquo;{s}&rdquo; size preset.
               </DialogDescription>
             </DialogHeader>
+            <DialogBody>
+              <p className="text-muted text-sm">Content area with scroll-fade treatment.</p>
+            </DialogBody>
             <DialogFooter>
-              <DialogClose className="border-border hover:bg-surface-hover inline-flex items-center justify-center rounded border bg-transparent px-4 py-2 text-sm font-medium">
-                Cancel
-              </DialogClose>
-              <Button
-                variant="destructive"
-                onClick={() => handleDelete(setDeleting)}
-              >
-                Confirm Delete
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Form Dialog</h3>
-        <p className="text-muted text-xs">
-          A form dialog for editing content.
-        </p>
-        <Dialog>
-          <DialogTrigger className="bg-brand inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium text-white hover:opacity-90">
-            Edit Settings
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Settings</DialogTitle>
-              <DialogDescription>
-                Update your notification preferences.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex flex-col gap-3">
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" defaultChecked className="rounded" />
-                Email notifications
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" className="rounded" />
-                Push notifications
-              </label>
-            </div>
-            <DialogFooter>
-              <DialogClose className="border-border hover:bg-surface-hover inline-flex items-center justify-center rounded border bg-transparent px-4 py-2 text-sm font-medium">
-                Cancel
-              </DialogClose>
-              <Button variant="primary">Save</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Info Dialog</h3>
-        <p className="text-muted text-xs">
-          An informational dialog with details.
-        </p>
-        <Dialog>
-          <DialogTrigger className="bg-brand inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium text-white hover:opacity-90">
-            View Details
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Version 2.0 Released</DialogTitle>
-              <DialogDescription>
-                We&apos;re excited to announce the release of version 2.0 with
-                new features including dark mode, improved performance, and
-                a completely redesigned interface.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="rounded-lg bg-surface p-3 text-sm">
-              <p className="font-medium">What&apos;s New</p>
-              <ul className="text-muted mt-1 list-inside list-disc text-xs">
-                <li>Dark mode support</li>
-                <li>3x faster load times</li>
-                <li>Redesigned dashboard</li>
-              </ul>
-            </div>
-            <DialogFooter>
-              <DialogClose className="border-border hover:bg-surface-hover inline-flex items-center justify-center rounded border bg-transparent px-4 py-2 text-sm font-medium">
+              <DialogClose className="border-border hover:bg-surface-hover inline-flex items-center justify-center rounded-md border bg-transparent px-4 py-2 text-sm font-medium transition-colors">
                 Close
               </DialogClose>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </section>
+      ))}
     </div>
+  );
+}
+
+function TermsScrollTab() {
+  const [accepted, setAccepted] = useState(false);
+
+  return (
+    <Dialog>
+      <DialogTrigger className="bg-brand text-brand-fg hover:opacity-90 inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium shadow-xs transition-all focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none">
+        View Terms of Service
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Terms of Service</DialogTitle>
+          <DialogDescription>
+            Please read the following terms carefully before continuing.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogBody>
+          <div className="text-muted flex flex-col gap-3 text-sm">
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+            <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+            <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+            <p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+            <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam.</p>
+            <p>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.</p>
+            <p>At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.</p>
+            <p>Similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio.</p>
+          </div>
+        </DialogBody>
+        <DialogFooter>
+          <DialogClose className="border-border hover:bg-surface-hover inline-flex items-center justify-center rounded-md border bg-transparent px-4 py-2 text-sm font-medium transition-colors">
+            Decline
+          </DialogClose>
+          <Button variant="primary" disabled={accepted} onClick={() => setAccepted(true)}>
+            {accepted ? "Accepted" : "Accept"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function NestedConfirmTab() {
+  return (
+    <Dialog>
+      <DialogTrigger className="bg-error text-error-fg hover:opacity-90 inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium shadow-xs transition-all focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none">
+        Delete Account
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete Account</DialogTitle>
+          <DialogDescription>
+            This will permanently delete your account. Are you sure?
+          </DialogDescription>
+        </DialogHeader>
+        <DialogBody>
+          <p className="text-muted text-sm">
+            All your data will be removed from our servers. This action cannot be undone.
+          </p>
+        </DialogBody>
+        <DialogFooter>
+          <DialogClose className="border-border hover:bg-surface-hover inline-flex items-center justify-center rounded-md border bg-transparent px-4 py-2 text-sm font-medium transition-colors">
+            Cancel
+          </DialogClose>
+          <ConfirmDialog
+            title="Confirm Deletion"
+            description="Are you absolutely sure? This cannot be undone."
+            onConfirm={() => {}}
+          >
+            {(openDialog) => (
+              <Button variant="destructive" onClick={openDialog}>
+                Delete
+              </Button>
+            )}
+          </ConfirmDialog>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "edit-profile",
     title: "Edit Profile",
-    description: "Dialog with a form, footer actions pinned at the bottom.",
-    render: () => <ComponentsTab />,
+    description: "Dialog with a form and pinned header/footer actions.",
+    render: () => <EditProfileTab />,
   },
   {
-    id: "examples",
+    id: "size-scale",
     title: "Size Scale",
     description: "Dialog size variants: sm, md, lg, and full.",
-    render: () => <ExamplesTab />,
+    render: () => <SizeScaleTab />,
+  },
+  {
+    id: "terms-scroll",
+    title: "Terms Scroll",
+    description: "Long form body with pinned header and footer. Body scrolls with scroll-fade treatment.",
+    render: () => <TermsScrollTab />,
+  },
+  {
+    id: "nested-confirm",
+    title: "Nested Confirm",
+    description: "Dialog containing a confirm-dialog. Escape closes only the top layer.",
+    render: () => <NestedConfirmTab />,
   },
 ];
 
@@ -231,7 +197,7 @@ export default function Page() {
   return (
     <ExampleTabs
       title="Dialog"
-      intro="A modal window that interrupts the user with content."
+      intro="A modal window that interrupts the user with content. Header and footer are pinned; body scrolls independently."
       examples={examples}
     />
   );

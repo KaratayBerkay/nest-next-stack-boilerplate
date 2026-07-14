@@ -2,30 +2,30 @@ import { cn } from "@/lib/cn";
 import type { CalendarEventProps } from "@/types/ui/CalendarEvent-types";
 
 const colorMap: Record<string, string> = {
-  blue: "bg-blue-500",
-  green: "bg-green-500",
-  red: "bg-red-500",
-  purple: "bg-purple-500",
-  orange: "bg-orange-500",
-  cyan: "bg-cyan-500",
+  blue: "bg-brand",
+  green: "bg-success",
+  red: "bg-error",
+  purple: "bg-brand",
+  orange: "bg-warning",
+  cyan: "bg-info",
 };
 
 const textColorMap: Record<string, string> = {
-  blue: "text-blue-700 dark:text-blue-300",
-  green: "text-green-700 dark:text-green-300",
-  red: "text-red-700 dark:text-red-300",
-  purple: "text-purple-700 dark:text-purple-300",
-  orange: "text-orange-700 dark:text-orange-300",
-  cyan: "text-cyan-700 dark:text-cyan-300",
+  blue: "text-brand",
+  green: "text-success",
+  red: "text-error",
+  purple: "text-brand",
+  orange: "text-warning",
+  cyan: "text-info",
 };
 
 const bgColorMap: Record<string, string> = {
-  blue: "bg-blue-50 dark:bg-blue-950/30",
-  green: "bg-green-50 dark:bg-green-950/30",
-  red: "bg-red-50 dark:bg-red-950/30",
-  purple: "bg-purple-50 dark:bg-purple-950/30",
-  orange: "bg-orange-50 dark:bg-orange-950/30",
-  cyan: "bg-cyan-50 dark:bg-cyan-950/30",
+  blue: "bg-brand/10",
+  green: "bg-success/10",
+  red: "bg-error/10",
+  purple: "bg-brand/10",
+  orange: "bg-warning/10",
+  cyan: "bg-info/10",
 };
 
 export function CalendarEvent({ event, compact }: CalendarEventProps) {

@@ -1,5 +1,11 @@
 import { globalStyleVariants } from "@/components/ui/global-style-variants";
 
+// Elevation rule: base `shadow-xs` on all buttons (flat variants get no
+// base shadow but keep active:translate-y-px for press feedback).
+// Hover-lift (`hover:shadow-md`) is reserved for surface-colored variants
+// (`default`, `shadow`) so it reads as a physical rise; flat variants
+// (primary, secondary, outline, ghost, destructive, link, soft) stay flat
+// on hover — no illusion to break.
 export const variants = {
   ...globalStyleVariants,
   default:     "bg-surface text-fg hover:bg-surface-hover hover:shadow-md border border-border",

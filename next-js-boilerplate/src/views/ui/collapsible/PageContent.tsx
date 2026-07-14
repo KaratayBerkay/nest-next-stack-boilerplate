@@ -9,7 +9,7 @@ import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Read More",
     description: "Collapsible section for truncated paragraph content.",
     render: () => (
@@ -39,7 +39,7 @@ const examples: UIExample[] = [
     ),
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Sidebar Groups",
     description: "Navigation section with collapsible group headers.",
     render: () => <div className="flex flex-col gap-4"></div>,

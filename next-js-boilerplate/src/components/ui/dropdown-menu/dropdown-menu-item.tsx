@@ -8,6 +8,8 @@ export function DropdownMenuItem({
   disabled,
   className,
   children,
+  onClick,
+  onKeyDown,
   ...props
 }: DropdownMenuItemProps) {
   const { closeAndFocusTrigger } = useDropdownMenuContext();
@@ -20,13 +22,14 @@ export function DropdownMenuItem({
       aria-disabled={disabled}
       onClick={(e) => {
         if (disabled) return;
-        closeAndFocusTrigger();
-        props.onClick?.(e);
+        onClick?.(e);
+        if (!e.defaultPrevented) closeAndFocusTrigger();
       }}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          if (!disabled) {
+          onKeyDown?.(e);
+          if (!disabled && !e.defaultPrevented) {
             closeAndFocusTrigger();
             (e.target as HTMLElement)?.click();
           }

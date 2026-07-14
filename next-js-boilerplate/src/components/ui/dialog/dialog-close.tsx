@@ -5,7 +5,7 @@ import { useDialog } from "./dialog";
 import { fontClasses } from "@/lib/font-classes";
 import type { DialogCloseProps } from "@/types/ui/Dialog-types";
 
-export function DialogClose({ className, fontSize, fontWeight, fontFamily, ...props }: DialogCloseProps) {
+export function DialogClose({ className, fontSize, fontWeight, fontFamily, onClick, ...props }: DialogCloseProps) {
   const { onOpenChange } = useDialog();
   const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
@@ -13,7 +13,10 @@ export function DialogClose({ className, fontSize, fontWeight, fontFamily, ...pr
     <button
       type="button"
       className={cn(fonts, className)}
-      onClick={() => onOpenChange(false)}
+      onClick={(e) => {
+        onClick?.(e);
+        if (!e.defaultPrevented) onOpenChange(false);
+      }}
       {...props}
     />
   );

@@ -1,4 +1,6 @@
 "use client";
+// Vaul Drawer — wraps vaul's Root. Props like `snapPoints`, `snapTo`,
+// `fadeFromIndex`, `closeThreshold`, `scrollLockTimeout` pass through.
 import { forwardRef } from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
 import { cn } from "@/lib/cn";
@@ -16,13 +18,13 @@ export const DrawerContent = forwardRef<
     <DrawerPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-xl border p-4",
+        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-2xl border px-4 pb-6",
         "border-border bg-bg text-fg",
         className,
       )}
       {...props}
     >
-      <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-muted/40" />
+      <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-border" />
       <div className="pointer-events-auto">{children}</div>
     </DrawerPrimitive.Content>
   </DrawerPrimitive.Portal>

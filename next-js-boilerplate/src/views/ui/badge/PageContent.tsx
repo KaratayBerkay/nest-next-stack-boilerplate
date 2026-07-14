@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Badge, BadgeButton } from "@/components/ui/Badge";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
+import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
+import type { BadgeVariant } from "@/types/ui/Badge-types";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 function ComponentsTab() {
@@ -217,20 +219,34 @@ export default function BadgePage() {
 
   const examples: UIExample[] = [
     {
-      id: "components",
+      id: "usage",
       title: "Status Set",
       description: "Badge variants for success, warning, error, and info semantics.",
       render: () => <ComponentsTab />,
     },
-    {
-      id: "examples",
-      title: "Filter Chips",
-      description: "Removable badge chips for filtering.",
-      render: () => (
-        <ExamplesTab notifCount={notifCount} setNotifCount={setNotifCount} />
-      ),
-    },
-  ];
+  {
+    id: "variants",
+    title: "Filter Chips",
+    description: "Removable badge chips for filtering.",
+    render: () => (
+      <ExamplesTab notifCount={notifCount} setNotifCount={setNotifCount} />
+    ),
+  },
+  {
+    id: "variant-gallery",
+    title: "Variant Gallery",
+    description: "All variants and sizes.",
+    render: () => (
+      <VariantGallery
+        variants={["default", "secondary", "outline", "destructive", "success", "warning", "error", "info", "soft", "dot", "pill"]}
+        sizes={[]}
+        render={(variant, _size) => (
+          <Badge variant={variant as BadgeVariant}>{variant}</Badge>
+        )}
+      />
+    ),
+  },
+];
 
   return (
     <ExampleTabs

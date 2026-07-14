@@ -20,7 +20,7 @@ export const HoverCardContent = forwardRef<
         ref={ref}
         sideOffset={sideOffset}
         className={cn(
-          "z-50 w-64 rounded-md border p-4 shadow-md",
+          "z-50 w-72 rounded-lg border p-4 shadow-lg data-[state=open]:animate-scale-in",
           defaultStyles,
           className,
         )}

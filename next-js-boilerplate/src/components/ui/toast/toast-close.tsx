@@ -14,7 +14,7 @@ export function ToastClose({
   return (
     <button
       className={cn(
-        "text-muted hover:text-fg focus:ring-brand absolute top-2 right-2 rounded-md p-1 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100 focus:ring-2 focus:outline-none",
+        "text-muted hover:text-fg focus-visible:ring-brand absolute top-2 right-2 rounded-md p-1 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:outline-none",
         fonts,
         className,
       )}

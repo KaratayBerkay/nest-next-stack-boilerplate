@@ -14,7 +14,7 @@ import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Deep Path",
     description: "Breadcrumb with collapsed middle items in an ellipsis menu.",
     render: () => (
@@ -41,7 +41,7 @@ const examples: UIExample[] = [
     ),
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Simple Trail",
     description: "Three-level breadcrumb with aria-current on the last item.",
     render: () => (

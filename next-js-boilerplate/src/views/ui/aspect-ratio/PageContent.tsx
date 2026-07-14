@@ -6,7 +6,7 @@ import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Video 16:9",
     description: "Embed placeholder with 16:9 aspect ratio.",
     render: () => (
@@ -23,7 +23,7 @@ const examples: UIExample[] = [
     ),
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Square Grid",
     description: "1:1 gallery grid of items.",
     render: () => (

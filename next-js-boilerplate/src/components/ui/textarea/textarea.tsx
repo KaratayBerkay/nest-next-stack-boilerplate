@@ -29,10 +29,9 @@ export function Textarea({
     <div className="flex flex-col gap-1">
       <textarea
         className={cn(
-          "placeholder:text-muted focus-visible:ring-brand flex min-h-20 w-full rounded border bg-transparent px-3 py-2 shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40",
+          "placeholder:text-muted/70 selection:bg-brand/20 focus-visible:ring-brand flex min-h-20 w-full rounded-md border bg-transparent px-3 py-2 shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 resize-none",
           resolveVariant(variants, effectiveVariant),
-          error &&
-            "border-red-500 focus-visible:ring-red-500 dark:border-red-500",
+          error && "border-error focus-visible:ring-error",
           fontClasses({ fontSize, fontWeight, fontFamily }, { fontWeight: "font-normal" }),
           className,
         )}

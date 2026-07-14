@@ -1,17 +1,16 @@
 "use client";
 
-import {
-  useState,
-  type Dispatch,
-  type SetStateAction,
-  type ChangeEvent,
-} from "react";
+import { useState, type Dispatch, type SetStateAction, type ChangeEvent } from "react";
 import {
   Checkbox,
   CheckboxGroup,
   IndeterminateCheckbox,
+  CheckboxCard,
+  CheckboxChip,
 } from "@/components/ui/Checkbox";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
+import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
+import type { CheckboxVariant, CheckboxSize } from "@/types/ui/Checkbox-types";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 type Todo = { id: string; label: string; done: boolean };
@@ -32,7 +31,7 @@ function toggleTodo(id: string, setTodos: Dispatch<SetStateAction<Todo[]>>) {
   );
 }
 
-function ComponentsTab() {
+function TermsConsentTab() {
   const [groupValues, setGroupValues] = useState<string[]>(["react"]);
   const [child1Checked, setChild1Checked] = useState(false);
   const [child2Checked, setChild2Checked] = useState(false);
@@ -41,33 +40,31 @@ function ComponentsTab() {
   const someChildren = child1Checked || child2Checked;
 
   return (
-    <>
-      <section className="flex flex-col gap-4">
-        <h3 className="text-lg font-semibold">Default</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="flex flex-col gap-4">
+      <section className="flex flex-col gap-3">
+        <h3 className="text-sm font-semibold text-fg">Default</h3>
+        <div className="flex flex-wrap gap-4">
           <Checkbox data-testid="checkbox-default" />
           <Checkbox defaultChecked data-testid="checkbox-checked" />
         </div>
       </section>
 
-      <section className="flex flex-col gap-4">
-        <h3 className="text-lg font-semibold">Disabled</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Checkbox disabled data-testid="checkbox-disabled" />
-          <Checkbox disabled defaultChecked data-testid="checkbox-disabled-checked" />
+      <section className="flex flex-col gap-3">
+        <h3 className="text-sm font-semibold text-fg">With Label</h3>
+        <Checkbox label="Accept terms and conditions" />
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h3 className="text-sm font-semibold text-fg">Disabled</h3>
+        <div className="flex flex-wrap gap-4">
+          <Checkbox disabled />
+          <Checkbox disabled defaultChecked />
+          <Checkbox disabled label="Disabled option" />
         </div>
       </section>
 
-      <section className="flex flex-col gap-4">
-        <h3 className="text-lg font-semibold">With Label</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Checkbox label="Accept terms and conditions" data-testid="checkbox-with-label" />
-          <Checkbox label="Disabled option" disabled data-testid="checkbox-disabled-label" />
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-4">
-        <h3 className="text-lg font-semibold">Checkbox Group</h3>
+      <section className="flex flex-col gap-3">
+        <h3 className="text-sm font-semibold text-fg">Checkbox Group</h3>
         <CheckboxGroup
           label="Favorite frameworks"
           values={groupValues}
@@ -79,15 +76,14 @@ function ComponentsTab() {
             { value: "svelte", label: "Svelte" },
             { value: "angular", label: "Angular", disabled: true },
           ]}
-          data-testid="checkbox-group"
         />
         <p className="text-muted text-xs">
           Selected: {groupValues.join(", ") || "none"}
         </p>
       </section>
 
-      <section className="flex flex-col gap-4">
-        <h3 className="text-lg font-semibold">Indeterminate Checkbox (Tree)</h3>
+      <section className="flex flex-col gap-3">
+        <h3 className="text-sm font-semibold text-fg">Indeterminate</h3>
         <div className="flex flex-col gap-2">
           <IndeterminateCheckbox
             checked={allChildren}
@@ -96,40 +92,51 @@ function ComponentsTab() {
             onChange={(e) =>
               handleParentChange(e, setChild1Checked, setChild2Checked)
             }
-            data-testid="indeterminate-parent"
           />
           <div className="ml-6 flex flex-col gap-2">
             <Checkbox
               checked={child1Checked}
               onChange={(e) => setChild1Checked(e.target.checked)}
               label="Child Item 1"
-              data-testid="indeterminate-child1"
             />
             <Checkbox
               checked={child2Checked}
               onChange={(e) => setChild2Checked(e.target.checked)}
               label="Child Item 2"
-              data-testid="indeterminate-child2"
             />
           </div>
         </div>
       </section>
-    </>
+    </div>
   );
 }
 
-function ExamplesTab() {
+function SelectAllTab() {
   const [todos, setTodos] = useState<Todo[]>([
     { id: "1", label: "Buy groceries", done: false },
     { id: "2", label: "Walk the dog", done: true },
     { id: "3", label: "Read a book", done: false },
   ]);
 
+  const allDone = todos.every((t) => t.done);
+  const someDone = todos.some((t) => t.done);
+
   return (
-    <>
-      <section className="flex flex-col gap-4">
-        <h3 className="text-lg font-semibold">To-do List</h3>
+    <div className="flex flex-col gap-4">
+      <section className="flex flex-col gap-3">
+        <h3 className="text-sm font-semibold text-fg">To-do List</h3>
         <div className="surface divide-border max-w-sm divide-y overflow-hidden">
+          <div className="px-4 py-2">
+            <IndeterminateCheckbox
+              checked={allDone}
+              indeterminate={someDone && !allDone}
+              label="Select all"
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setTodos((prev) => prev.map((t) => ({ ...t, done: checked })));
+              }}
+            />
+          </div>
           {todos.map((todo) => (
             <label
               key={todo.id}
@@ -139,7 +146,7 @@ function ExamplesTab() {
                 checked={todo.done}
                 onChange={() => toggleTodo(todo.id, setTodos)}
               />
-              <span className={todo.done ? "text-muted line-through" : ""}>
+              <span className={todo.done ? "text-muted line-through" : "text-fg"}>
                 {todo.label}
               </span>
             </label>
@@ -149,53 +156,119 @@ function ExamplesTab() {
           </div>
         </div>
       </section>
+    </div>
+  );
+}
 
-      <section className="flex flex-col gap-4">
-        <h3 className="text-lg font-semibold">Registration Form</h3>
-        <div className="surface max-w-sm p-6 rounded-xl space-y-4">
-          <h4 className="text-sm font-semibold uppercase tracking-wider">Terms & Preferences</h4>
-          <div className="flex flex-col gap-3">
-            <Checkbox label="I agree to the Terms of Service" />
-            <Checkbox defaultChecked label="Subscribe to newsletter" />
-            <Checkbox label="Enable two-factor authentication" />
-          </div>
-          <button className="w-full rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90">
-            Create Account
-          </button>
-        </div>
-      </section>
+function PlanCardsTab() {
+  const [selected, setSelected] = useState<string>("standard");
 
-      <section className="flex flex-col gap-4">
-        <h3 className="text-lg font-semibold">Preferences Panel</h3>
-        <div className="surface max-w-sm overflow-hidden rounded-xl border">
-          <div className="px-4 py-2 border-b">
-            <span className="text-xs font-semibold uppercase tracking-wider">Features</span>
-          </div>
-          <div className="divide-y px-4 py-3">
-            <div className="flex flex-col gap-3 py-2">
-              <Checkbox defaultChecked label="Real-time sync" />
-              <Checkbox label="Auto-updates" />
-              <Checkbox defaultChecked label="Beta features" />
-            </div>
-          </div>
-        </div>
-      </section>
-    </>
+  const plans = [
+    { value: "basic", title: "Basic", description: "For individuals", icon: "★" },
+    { value: "standard", title: "Standard", description: "For teams", icon: "★★" },
+    { value: "premium", title: "Premium", description: "For enterprises", icon: "★★★" },
+  ];
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-muted text-xs">Select a plan (radio-like single select via CheckboxCard).</p>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {plans.map((plan) => (
+          <CheckboxCard
+            key={plan.value}
+            icon={<span className="text-lg">{plan.icon}</span>}
+            title={plan.title}
+            description={plan.description}
+            checked={selected === plan.value}
+            onChange={(checked) => {
+              if (checked) setSelected(plan.value);
+            }}
+          />
+        ))}
+      </div>
+      <p className="text-sm text-fg">Selected: {selected}</p>
+    </div>
+  );
+}
+
+function InterestChipsTab() {
+  const [interests, setInterests] = useState<string[]>(["design", "coding"]);
+
+  const allChips = [
+    { value: "design", label: "Design", count: 12 },
+    { value: "coding", label: "Coding", count: 24 },
+    { value: "marketing", label: "Marketing", count: 8 },
+    { value: "photography", label: "Photography", count: 5 },
+  ];
+
+  function toggleChip(value: string) {
+    setInterests((prev) =>
+      prev.includes(value)
+        ? prev.filter((v) => v !== value)
+        : [...prev, value],
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-muted text-xs">Filter chips — toggle interests.</p>
+      <div className="flex flex-wrap gap-2">
+        {allChips.map((chip) => (
+          <CheckboxChip
+            key={chip.value}
+            label={chip.label}
+            count={chip.count}
+            checked={interests.includes(chip.value)}
+            onChange={() => toggleChip(chip.value)}
+            onRemove={interests.includes(chip.value) ? () => toggleChip(chip.value) : undefined}
+          />
+        ))}
+      </div>
+      <p className="text-sm text-fg">
+        Selected: {interests.join(", ") || "none"}
+      </p>
+    </div>
   );
 }
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "terms-consent",
     title: "Terms Consent",
-    description: "Single checkbox for accepting terms and conditions.",
-    render: () => <ComponentsTab />,
+    description: "Single checkbox with indeterminate state and group.",
+    render: () => <TermsConsentTab />,
   },
   {
-    id: "examples",
-    title: "Preference List",
-    description: "Checkbox group with select-all indeterminate state.",
-    render: () => <ExamplesTab />,
+    id: "select-all",
+    title: "Select All",
+    description: "Real indeterminate checkbox driving a todo list.",
+    render: () => <SelectAllTab />,
+  },
+  {
+    id: "plan-cards",
+    title: "Plan Cards",
+    description: "CheckboxCard grid acting as a radio-like selector.",
+    render: () => <PlanCardsTab />,
+  },
+  {
+    id: "interest-chips",
+    title: "Interest Chips",
+    description: "CheckboxChip set for filter-style toggles.",
+    render: () => <InterestChipsTab />,
+  },
+  {
+    id: "variant-gallery",
+    title: "Variant Gallery",
+    description: "All variants and sizes.",
+    render: () => (
+      <VariantGallery
+        variants={["default", "shiny", "glass", "neon", "gradient"]}
+        sizes={["sm", "md", "lg"]}
+        render={(variant, size) => (
+          <Checkbox variant={variant as CheckboxVariant} size={size as CheckboxSize} />
+        )}
+      />
+    ),
   },
 ];
 
@@ -203,7 +276,7 @@ export default function CheckboxPage() {
   return (
     <ExampleTabs
       title="Checkbox"
-      intro="A control that allows the user to toggle between checked and unchecked states with multiple stylish variants."
+      intro="A control that allows the user to toggle between checked and unchecked states."
       examples={examples}
     />
   );

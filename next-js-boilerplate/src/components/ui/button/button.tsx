@@ -4,33 +4,8 @@ import { resolveVariant } from "@/lib/resolve-variant";
 import { variants, sizes } from "@/components/ui/button-styles";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { fontClasses } from "@/lib/font-classes";
+import { Spinner } from "@/components/ui/Spinner";
 import type { ButtonProps } from "@/types/ui/Button-types";
-
-const Spinner = () => (
-  <svg
-    className="animate-spin"
-    xmlns="http://www.w3.org/2000/svg"
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-  >
-    <circle
-      cx="12"
-      cy="12"
-      r="10"
-      stroke="currentColor"
-      strokeWidth="3"
-      opacity="0.25"
-    />
-    <path
-      d="M12 2a10 10 0 0 1 10 10"
-      stroke="currentColor"
-      strokeWidth="3"
-      strokeLinecap="round"
-    />
-  </svg>
-);
 
 function ButtonContent({
   leftIcon,
@@ -50,6 +25,16 @@ function ButtonContent({
   );
 }
 
+function composeRefs<T>(...refs: (React.Ref<T> | undefined)[]) {
+  return (node: T) => {
+    for (const ref of refs) {
+      if (typeof ref === "function") ref(node);
+      else if (ref && typeof ref === "object")
+        (ref as React.MutableRefObject<T | null>).current = node;
+    }
+  };
+}
+
 export function Button({
   variant,
   size = "md",
@@ -66,10 +51,13 @@ export function Button({
   ...props
 }: ButtonProps) {
   const effectiveVariant = useComponentVariant(variant);
-  const fonts = fontClasses({ fontSize: fontSize || sizes[size].split(" ")[2], fontWeight, fontFamily });
+  const fonts = fontClasses(
+    { fontSize, fontWeight, fontFamily },
+    { fontSize: sizes[size].split(" ")[2] },
+  );
 
   const classes = cn(
-    "focus-visible:ring-brand inline-flex items-center justify-center gap-2 rounded shadow-xs transition-all focus-visible:ring-2 focus-visible:outline-none active:shadow-xs disabled:pointer-events-none disabled:opacity-40",
+    "relative inline-flex items-center justify-center gap-2 rounded-md shadow-xs transition-all focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none active:translate-y-px active:shadow-xs disabled:pointer-events-none disabled:opacity-50",
     resolveVariant(variants, effectiveVariant),
     className,
     fonts,
@@ -82,25 +70,37 @@ export function Button({
   };
 
   if (asChild) {
-    const child = Children.only(children) as React.ReactElement;
-    const childClassName = (child.props as { className?: string }).className;
+    const child = Children.only(children) as React.ReactElement<{
+      onClick?: React.MouseEventHandler;
+      ref?: React.Ref<unknown>;
+      className?: string;
+    }>;
+    const childOnClick = child.props.onClick as React.MouseEventHandler<HTMLButtonElement> | undefined;
+    const childRef = child.props.ref;
+    const buttonOnClick = (props as React.ComponentPropsWithoutRef<"button">).onClick;
     return cloneElement(child, {
       ...sharedProps,
       ...props,
-      className: cn(sharedProps.className, childClassName),
+      onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
+        childOnClick?.(e);
+        if (!e.defaultPrevented) buttonOnClick?.(e);
+      },
+      ref: composeRefs(childRef, (props as { ref?: React.Ref<unknown> }).ref),
+      className: cn(sharedProps.className, child.props.className),
     } as React.ComponentPropsWithoutRef<"button">);
   }
 
   return (
     <button {...sharedProps} {...props}>
-      {loading ? (
-        <span className="inline-flex items-center justify-center">
-          <Spinner />
-        </span>
-      ) : (
+      <span className={cn(loading && "invisible")}>
         <ButtonContent leftIcon={leftIcon} rightIcon={rightIcon}>
           {children}
         </ButtonContent>
+      </span>
+      {loading && (
+        <span className="absolute inset-0 inline-flex items-center justify-center">
+          <Spinner size="sm" />
+        </span>
       )}
     </button>
   );

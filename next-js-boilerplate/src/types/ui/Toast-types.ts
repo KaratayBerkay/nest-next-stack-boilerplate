@@ -1,5 +1,23 @@
 import type React from "react";
 
+export interface ToastData {
+  id: string;
+  title?: React.ReactNode;
+  description?: React.ReactNode;
+  variant: "default" | "destructive" | "success";
+  action?: React.ReactNode;
+  duration: number;
+  createdAt: number;
+}
+
+export interface ToastOptions {
+  title?: React.ReactNode;
+  description?: React.ReactNode;
+  variant?: "default" | "destructive" | "success";
+  action?: React.ReactNode;
+  duration?: number;
+}
+
 export interface ToastProviderProps {
   children: React.ReactNode;
 }

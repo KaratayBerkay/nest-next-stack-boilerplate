@@ -57,13 +57,25 @@ export interface ButtonProps extends React.ComponentPropsWithoutRef<"button"> {
 
 **1. `cn()` does not merge.** `cn` from `@/lib/cn` is a plain `filter(Boolean).join(" ")` — intentionally dependency-free, it does *not* deduplicate conflicting Tailwind classes. Consequence: a consumer's `className` cannot reliably override your base utilities (CSS stylesheet order decides conflicts, not class-attribute order). So design the API instead of relying on overrides — expose knobs as props. That is exactly why Button, DatePicker, and TimeInput take `variant`, `size`, `fontSize`, `fontWeight`, `fontFamily` rather than expecting `className="text-lg"` to win.
 
-**2. Semantic tokens only.** Style with theme tokens — `bg-bg`, `text-fg`, `bg-brand`, `text-brand-fg`, `bg-surface`, `hover:bg-surface-hover`, `border-border`, `text-muted`, `bg-success|warning|error|info` (+ their `-fg` pairs), `bg-overlay/50` for overlay scrims. Never hardcode palette colors (`bg-zinc-100`, `text-white`, `#hex`): there are four themes today (light, dark, ocean, violet) and components must survive all of them plus any future `.theme-*` block. Full token vocabulary and how themes work: **tailwind-theming** skill.
+**2. Semantic tokens only.** Style with theme tokens — `bg-bg`, `text-fg`, `bg-brand`, `text-brand-fg`, `bg-surface`, `hover:bg-surface-hover`, `border-border`, `text-muted`, `bg-success|warning|error|info` (+ their `-fg` pairs), `bg-overlay/50` for overlay scrims. Never hardcode palette colors (`bg-zinc-100`, `text-white`, `#hex`, `bg-red-500`, `text-green-700`): there are four themes today (light, dark, ocean, violet) and components must survive all of them plus any future `.theme-*` block. Full token vocabulary and how themes work: **tailwind-theming** skill.
+
+**Status tinting recipes (V0):**
+- Soft: `bg-<status>/10 border-<status>/30 text-<status>` (e.g. `bg-error/10 border-error/30 text-error`)
+- Solid: `bg-<status> text-<status>-fg` (e.g. `bg-error text-error-fg`)
+
+**V0 Design Language (enforced across all components):**
+- **Radius:** controls → `rounded-md`; floating panels → `rounded-lg`; modals → `rounded-xl`; pills → `rounded-full`
+- **Elevation:** controls → `shadow-xs`; inline bars → `shadow-xs`; small floats → `shadow-md`; menus/popovers → `shadow-lg`; modals/toasts → `shadow-xl`
+- **Control heights:** `sm h-8` / `md h-9` / `lg h-10`; touch targets ≥ 36px
+- **Focus:** `focus-visible:ring-2 focus-visible:ring-brand` + `ring-offset-1 ring-offset-bg` on solid controls; inputs add `focus-visible:border-brand`; `ring-ring` is forbidden
+- **Disabled:** `disabled:opacity-50 disabled:pointer-events-none`, period
+- **Palette:** semantic tokens ONLY; hardcoded palette colors are forbidden in component files
 
 **3. Standard interactive states** (copy from Button):
 
 ```
 focus-visible:ring-brand focus-visible:ring-2 focus-visible:outline-none
-disabled:pointer-events-none disabled:opacity-40
+disabled:pointer-events-none disabled:opacity-50
 transition-all   (or transition-colors for color-only changes)
 ```
 

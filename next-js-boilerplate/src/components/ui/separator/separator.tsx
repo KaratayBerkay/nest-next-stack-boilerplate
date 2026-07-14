@@ -4,6 +4,7 @@ import type { SeparatorProps } from "@/types/ui/Separator-types";
 
 export function Separator({
   orientation = "horizontal",
+  label,
   className,
   fontSize,
   fontWeight,
@@ -11,6 +12,25 @@ export function Separator({
   ...props
 }: SeparatorProps) {
   const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
+
+  if (label && orientation === "horizontal") {
+    return (
+      <div
+        role="separator"
+        aria-orientation={orientation}
+        className={cn(
+          "flex items-center gap-3",
+          fonts,
+          className,
+        )}
+        {...props}
+      >
+        <span className="bg-border h-px flex-1" />
+        <span className="text-muted text-xs whitespace-nowrap">{label}</span>
+        <span className="bg-border h-px flex-1" />
+      </div>
+    );
+  }
 
   return (
     <div

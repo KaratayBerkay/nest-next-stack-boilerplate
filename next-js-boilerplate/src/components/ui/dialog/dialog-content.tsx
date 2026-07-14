@@ -123,33 +123,33 @@ export function DialogContent({ children, className, size = "md" }: DialogConten
         )}
         onClick={handleBackdropClick}
       >
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-6 sm:p-6">
-          <button
-            type="button"
-            aria-label="Close"
-            onClick={() => onOpenChange(false)}
-            className={cn(
-              "text-muted absolute top-4 right-4 inline-flex size-6 items-center justify-center rounded-sm transition-colors",
-              "hover:bg-surface-hover hover:text-fg",
-              "focus-visible:ring-brand focus-visible:ring-2 focus-visible:outline-none",
-            )}
+        <button
+          type="button"
+          aria-label="Close"
+          onClick={() => onOpenChange(false)}
+          className={cn(
+            "text-muted absolute top-3 right-3 z-10 inline-flex size-7 items-center justify-center rounded-md transition-colors",
+            "hover:bg-surface-hover hover:text-fg",
+            "focus-visible:ring-brand focus-visible:ring-2 focus-visible:outline-none",
+          )}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M18 6 6 18" />
-              <path d="m6 6 12 12" />
-            </svg>
-          </button>
-          <div className="pointer-events-auto">{children}</div>
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+          </svg>
+        </button>
+        <div className="pointer-events-auto flex min-h-0 flex-1 flex-col">
+          {children}
         </div>
       </dialog>
     </>

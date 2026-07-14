@@ -2,7 +2,9 @@
 import { useState } from "react";
 import { Toggle } from "@/components/ui/Toggle";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
+import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { ToggleVariant, ToggleSize } from "@/types/ui/Toggle-types";
 
 function ComponentsTab() {
   const [bold, setBold] = useState(false);
@@ -160,16 +162,28 @@ function ExamplesTab() {
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Formatting Toolbar",
     description: "Bold, italic, and underline toggle buttons in an editor toolbar.",
     render: () => <ComponentsTab />,
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Notification Mute",
     description: "A single stateful toggle with a label and status readout.",
     render: () => <ExamplesTab />,
+  },
+  {
+    id: "variant-gallery",
+    title: "Variant Gallery",
+    description: "All variants and sizes.",
+    render: () => (
+      <VariantGallery
+        variants={["default", "outline", "shiny", "glass", "neon", "gradient"]}
+        sizes={["sm", "md", "lg"]}
+        render={(variant, size) => <Toggle variant={variant as ToggleVariant} size={size as ToggleSize}>Toggle</Toggle>}
+      />
+    ),
   },
 ];
 

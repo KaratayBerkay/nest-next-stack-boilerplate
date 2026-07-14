@@ -27,8 +27,10 @@ const components = [
   { name: "Drawer", slug: "drawer" },
   { name: "Dropdown Menu", slug: "dropdown-menu" },
   { name: "Empty", slug: "empty" },
+  { name: "File Upload", slug: "file-upload" },
   { name: "Error Boundary", slug: "error-boundary" },
   { name: "Hover Card", slug: "hover-card" },
+  { name: "Image Upload", slug: "image-upload" },
   { name: "Input", slug: "input" },
   { name: "Input Group", slug: "input-group" },
   { name: "Input OTP", slug: "input-otp" },
@@ -81,7 +83,7 @@ export default function UIPage() {
           <Link
             key={c.slug}
             href={`/v1/${lang}/ui/${c.slug}`}
-            className="surface flex items-center justify-center p-4 text-center text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-900"
+            className="surface flex items-center justify-center p-4 text-center text-sm font-medium hover:bg-surface-hover"
           >
             {c.name}
           </Link>

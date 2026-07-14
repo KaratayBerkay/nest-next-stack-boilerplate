@@ -35,13 +35,13 @@ export const RadioGroupItem = forwardRef<
     <Item
       ref={ref}
       className={cn(
-        "border-border text-brand focus-visible:ring-brand aspect-square h-4 w-4 rounded-full border focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+        "border-border text-brand focus-visible:ring-brand aspect-square size-4.5 rounded-full border focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       {...props}
     >
       <Indicator className="flex items-center justify-center">
-        <span className="bg-brand h-2 w-2 rounded-full" />
+        <span className="bg-brand size-2 animate-scale-in rounded-full" />
       </Indicator>
     </Item>
   );

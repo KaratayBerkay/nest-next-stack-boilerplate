@@ -11,7 +11,7 @@ import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Single State Accordion",
     description: "When a new accordion opens, the other open one closes.",
     render: () => (
@@ -41,7 +41,7 @@ const examples: UIExample[] = [
     ),
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Multi State Accordion",
     description: "When a new accordion opens, the other open ones don't close.",
     render: () => (

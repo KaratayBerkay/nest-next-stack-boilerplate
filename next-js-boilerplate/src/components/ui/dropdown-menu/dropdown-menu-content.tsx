@@ -12,6 +12,7 @@ const defaultStyles = "bg-bg border-border text-fg";
 export function DropdownMenuContent({
   className,
   children,
+  onKeyDown,
   ...props
 }: DropdownMenuContentProps) {
   const { open, setOpen, triggerRef } = useDropdownMenuContext();
@@ -103,7 +104,10 @@ export function DropdownMenuContent({
         role="menu"
         data-state="open"
         tabIndex={-1}
-        onKeyDown={handleKeyDown}
+        onKeyDown={(e) => {
+          onKeyDown?.(e);
+          if (!e.defaultPrevented) handleKeyDown(e);
+        }}
         style={
           isDesktop && position
             ? { position: "fixed", top: position.top, left: position.left }

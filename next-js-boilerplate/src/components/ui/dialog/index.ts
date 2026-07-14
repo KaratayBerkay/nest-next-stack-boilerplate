@@ -6,3 +6,4 @@ export { DialogTitle } from "./dialog-title";
 export { DialogDescription } from "./dialog-description";
 export { DialogFooter } from "./dialog-footer";
 export { DialogClose } from "./dialog-close";
+export { DialogBody } from "./dialog-body";

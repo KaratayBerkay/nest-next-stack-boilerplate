@@ -1,11 +1,21 @@
+"use client";
+
 import { cn } from "@/lib/cn";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { useToastContext } from "./toast-provider";
 import { ToastTitle } from "./toast-title";
 import { ToastDescription } from "./toast-description";
 import { ToastClose } from "./toast-close";
 import { fontClasses } from "@/lib/font-classes";
 import type { ToastProps } from "@/types/ui/Toast-types";
+
+const EXIT_DURATION = 200;
+
+const variantClasses = {
+  default: "",
+  destructive: "bg-error/10 border-error/30 text-error",
+  success: "bg-success/10 border-success/30 text-success",
+};
 
 export function Toast({
   id,
@@ -17,39 +27,74 @@ export function Toast({
 }: ToastProps) {
   const { state, dispatch } = useToastContext();
   const toast = state.find((t) => t.id === id);
-  const [visible, setVisible] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
   const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => setVisible(true));
-    return () => cancelAnimationFrame(frame);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const startTimeRef = useRef(0);
+  const remainingRef = useRef(0);
+
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = undefined;
+    }
   }, []);
 
+  const pause = useCallback(() => {
+    if (timerRef.current) {
+      const elapsed = performance.now() - startTimeRef.current;
+      remainingRef.current = Math.max(0, remainingRef.current - elapsed);
+      clearTimer();
+    }
+  }, [clearTimer]);
+
+  const resume = useCallback(() => {
+    if (remainingRef.current === Infinity || remainingRef.current <= 0) return;
+    startTimeRef.current = performance.now();
+    timerRef.current = setTimeout(() => setDismissed(true), remainingRef.current);
+  }, []);
+
+  const handleDismiss = useCallback(() => {
+    pause();
+    setDismissed(true);
+    setTimeout(() => dispatch({ type: "DISMISS", id }), EXIT_DURATION);
+  }, [pause, id, dispatch]);
+
+  const toastDuration = toast?.duration;
+
   useEffect(() => {
-    const timer = setTimeout(() => dispatch({ type: "DISMISS", id }), 5000);
-    return () => clearTimeout(timer);
-  }, [id, dispatch]);
+    if (!toastDuration || toastDuration === Infinity) return;
+    remainingRef.current = toastDuration;
+    startTimeRef.current = performance.now();
+    timerRef.current = setTimeout(() => setDismissed(true), toastDuration);
+    return clearTimer;
+  }, [toastDuration, clearTimer]);
+
+  useEffect(() => {
+    if (dismissed) {
+      const timer = setTimeout(() => dispatch({ type: "DISMISS", id }), EXIT_DURATION);
+      return () => clearTimeout(timer);
+    }
+  }, [dismissed, id, dispatch]);
 
   if (!toast) return null;
 
-  const toastVariantClasses = {
-    default: "bg-bg border-border text-fg",
-    destructive:
-      "bg-red-50 border-red-200 text-red-900 dark:bg-red-950 dark:border-red-900 dark:text-red-100",
-    success:
-      "bg-green-50 border-green-200 text-green-900 dark:bg-green-950 dark:border-green-900 dark:text-green-100",
-  };
-
   return (
     <div
+      role={toast.variant === "destructive" ? "alert" : "status"}
+      onMouseEnter={pause}
+      onMouseLeave={resume}
+      onFocusCapture={pause}
+      onBlurCapture={resume}
       className={cn(
-        "group pointer-events-auto relative flex w-full items-start gap-3 rounded-lg border p-4 shadow-xl transition-all duration-300 ease-out motion-reduce:transition-none",
+        "group pointer-events-auto relative flex w-full items-start gap-3 rounded-lg border p-4 shadow-xl motion-reduce:transition-none",
+        dismissed
+          ? "animate-slide-out-right opacity-0 translate-x-full"
+          : "animate-slide-in-right opacity-100 translate-x-0",
         "bg-bg border-border text-fg",
-        toastVariantClasses[toast.variant],
+        toast.variant !== "default" && variantClasses[toast.variant],
         fonts,
-        visible
-          ? "animate-slide-in-right translate-x-0 opacity-100"
-          : "translate-x-[calc(100%+2rem)] opacity-0",
         className,
       )}
       {...props}
@@ -60,7 +105,10 @@ export function Toast({
           <ToastDescription>{toast.description}</ToastDescription>
         )}
       </div>
-      <ToastClose onClick={() => dispatch({ type: "DISMISS", id })} />
+      {toast.action && (
+        <div className="shrink-0 self-center">{toast.action}</div>
+      )}
+      <ToastClose onClick={handleDismiss} />
     </div>
   );
 }

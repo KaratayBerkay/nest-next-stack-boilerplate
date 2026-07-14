@@ -10,10 +10,10 @@ export function Card({ className, variant, fontSize, fontWeight, fontFamily, ...
   const variants = {
     ...globalStyleVariants,
     default:
-      "border-border bg-bg text-fg rounded-xl border shadow-sm transition-all hover:shadow-md",
-    elevated: "border-border bg-bg text-fg rounded-xl border shadow-elevated",
+      "border-border bg-bg text-fg rounded-xl border shadow-xs",
+    elevated: "border-border bg-bg text-fg rounded-xl border shadow-md",
     interactive:
-      "border-border bg-bg text-fg rounded-xl border transition-all hover:shadow-md hover:border-brand cursor-pointer",
+      "border-border bg-bg text-fg rounded-xl border shadow-xs transition-[box-shadow,transform] hover:shadow-md hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-brand cursor-pointer",
     outline: "border-2 border-border bg-transparent text-fg rounded-xl",
     surface: "surface rounded-xl",
   };

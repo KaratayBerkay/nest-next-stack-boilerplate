@@ -4,7 +4,9 @@ import { useState } from "react";
 import { Textarea, AutoResizeTextarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
+import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { TextareaVariant } from "@/types/ui/Textarea-types";
 
 function ExamplesTab() {
   const [comment, setComment] = useState("");
@@ -69,7 +71,7 @@ function ExamplesTab() {
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Support Ticket",
     description: "Textarea with error state and helper description.",
     render: () => (
@@ -100,10 +102,22 @@ const examples: UIExample[] = [
     ),
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Auto-resize Reply",
     description: "Textarea that grows with content up to a max height.",
     render: () => <ExamplesTab />,
+  },
+  {
+    id: "variant-gallery",
+    title: "Variant Gallery",
+    description: "All variants and sizes.",
+    render: () => (
+      <VariantGallery
+        variants={["default", "shiny", "glass", "neon", "gradient"]}
+        sizes={[]}
+        render={(variant) => <Textarea variant={variant as TextareaVariant} placeholder="Textarea..." />}
+      />
+    ),
   },
 ];
 

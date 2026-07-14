@@ -2,11 +2,13 @@
 
 import { Kbd } from "@/components/ui/Kbd";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
+import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
+import type { KbdVariant } from "@/types/ui/Kbd-types";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {
-    id: "components",
+    id: "usage",
     title: "Shortcut Reference",
     description: "Two-column keyboard shortcut cheat sheet.",
     render: () => (
@@ -24,7 +26,7 @@ const examples: UIExample[] = [
     ),
   },
   {
-    id: "examples",
+    id: "variants",
     title: "Sequences",
     description: "Key combination sequences like Cmd+K style.",
     render: () => (
@@ -70,6 +72,20 @@ const examples: UIExample[] = [
           </div>
         </section>
       </div>
+    ),
+  },
+  {
+    id: "variant-gallery",
+    title: "Variant Gallery",
+    description: "All variants and sizes.",
+    render: () => (
+      <VariantGallery
+        variants={["default", "shiny", "glass", "neon", "gradient"]}
+        sizes={[]}
+        render={(variant, _size) => (
+          <Kbd variant={variant as KbdVariant}>⌘K</Kbd>
+        )}
+      />
     ),
   },
 ];

@@ -106,7 +106,7 @@ export function CarouselPrevious({
       disabled={!canScrollPrev}
       onClick={scrollPrev}
       className={cn(
-        "border-border bg-bg hover:bg-surface-hover absolute top-1/2 -left-3 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border shadow-sm transition-colors disabled:opacity-30",
+        "border-border bg-bg hover:bg-surface-hover absolute top-1/2 -left-3 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border shadow-sm transition-colors disabled:opacity-50",
         className,
       )}
       {...props}
@@ -135,7 +135,7 @@ export function CarouselNext({
       disabled={!canScrollNext}
       onClick={scrollNext}
       className={cn(
-        "border-border bg-bg hover:bg-surface-hover absolute top-1/2 -right-3 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border shadow-sm transition-colors disabled:opacity-30",
+        "border-border bg-bg hover:bg-surface-hover absolute top-1/2 -right-3 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border shadow-sm transition-colors disabled:opacity-50",
         className,
       )}
       {...props}

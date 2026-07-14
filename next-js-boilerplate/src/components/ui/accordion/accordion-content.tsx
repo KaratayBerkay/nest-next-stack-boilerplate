@@ -18,7 +18,7 @@ export const AccordionContent = forwardRef<
       )}
       {...props}
     >
-      <div className="pt-0 pb-4 pl-2 pr-4">{children}</div>
+      <div className="text-muted pb-4">{children}</div>
     </Content>
   );
 });
