@@ -64,6 +64,12 @@
 > evidence + fix inline (T3-wiring, B4, R1, P8-rider, C7-label); one
 > regression note added to P4 (dropped "Destructive Flow" tab). Everything
 > else claimed done was verified against the code.
+>
+> **Re-verified 2026-07-14 (fix batch 83e29e2):** all five downgrades +
+> the P4 regression re-checked and closed except R1's Login Card re-home
+> (deliberately scheduled with P7). Gates re-run green; consumer roster
+> 41 → 46. Remaining open work is unchanged: T4, the 15 untouched
+> P-pages, R1→P7 rider, and C1–C4/C6/C8.
 
 ---
 
@@ -119,23 +125,16 @@ point), plus the new checkbox-card/checkbox-chip (`grep -c` → 0 in both).
 This is why "accordions do not change at all when theme is changed" and
 why alert-dialog/confirm-dialog "are not theme applicable".
 
-- [~] Wire `useComponentVariant` + `{ ...globalStyleVariants }` into the
+- [x] Wire `useComponentVariant` + `{ ...globalStyleVariants }` into the
       *surface shell* of each visual component above (panel/trigger/item
       surfaces — same pattern as card). Where a component genuinely has no
       styleable surface (separator, aspect-ratio, spinner by design
       inherits `currentColor`), record an explicit one-line exemption in
       the component file header instead.
-      **Verify 2026-07-14: 41 consumer files ✓, but three components
-      named above are still unwired — breadcrumb, collapsible, resizable
-      — and the exemption headers were never written (separator.tsx /
-      aspect-ratio.tsx / spinner.tsx have no comment). Fix: wire the
-      three with the same `resolveVariant` pattern as pagination
-      (breadcrumb → list container, collapsible → trigger row, resizable
-      → handle grip chip); add the one-line exemption comment atop the
-      three exempt files. Same-complaint stragglers not in the original
-      list: dropdown-menu and popover panels are also unthemed — wire
-      their content surfaces while in there (context-menu/menubar already
-      are).**
+      **Verify 2026-07-14 (83e29e2): closed. Breadcrumb, collapsible,
+      resizable wired with the resolveVariant pattern; dropdown-menu +
+      popover content panels wired too; exemption headers present on
+      separator/aspect-ratio/spinner. Consumer count 41 → 46.**
 - [~] Recount and republish the roster (rides C2's SKILL.md sync). Gate:
       the style switcher visibly changes every non-exempt component page;
       VariantGallery tabs render the four global styles on each.
@@ -213,22 +212,15 @@ filters the file-picker dialog — drag-dropping a PDF is silently
 accepted or dropped with no feedback ("if user tries to upload a file
 instead image pop an alert").
 
-- [~] Validate MIME type on both paths (picker + drop); rejected files
+- [x] Validate MIME type on both paths (picker + drop); rejected files
       fire a destructive toast ("Only images can be uploaded — got
       report.pdf") and appear nowhere in the grid. Unit test the
       validation (rides C1's file-upload test debt).
-      **Verify 2026-07-14: FileUpload core validates + toasts
-      (`file-upload.tsx:59-75`) and ImageUpload's grid path inherits it
-      ✓ — but avatar mode's own raw `<input type="file">`
-      (`image-upload.tsx:89-94`) still accepts any file: a PDF picked via
-      the OS "All files" filter becomes the avatar preview with no
-      feedback. Fix: run the same `file.type.startsWith("image/")` check
-      in the avatar onChange before `createObjectURL`, toast on mismatch.
-      Second bug: the rejection copy hardcodes "Only images can be
-      uploaded" for every accept mismatch — a `.pdf`-only FileUpload
-      rejecting a `.docx` claims it wants images; derive the message from
-      the `accept` value (or add a `rejectMessage` prop). Unit test still
-      rides C1.**
+      **Verify 2026-07-14 (83e29e2): closed. Avatar mode now checks
+      `file.type.startsWith("image/")` + toasts
+      (`image-upload.tsx:94-95`); reject copy derives from `accept` via
+      `acceptLabels` (`file-upload.tsx:69-77`). The unit test remains
+      tracked under C1.**
 
 ### B5 — accordion "Rich Items" is static text
 
@@ -358,12 +350,15 @@ buttons must have a tooltip."
 - [~] Tooltips on all interactive examples across the page's tabs.
       (Tooltips added to Icon Buttons tab; Form Actions tab gets
        tooltips on a future pass.)
-- [ ] **Regression (verify 2026-07-14):** the rebuild dropped the
+- [x] **Regression (verify 2026-07-14):** the rebuild dropped the
       "Destructive Flow" tab that phase-3 C8 shipped — the tab list is
       now Form Actions | Sign-in Buttons | Icon Buttons | Button Groups |
       Variant Gallery. Restore it (destructive button → confirm-dialog →
       undoable toast, dogfooding C5 + U1) or record the consolidation
       decision here and flip the phase-3 citation.
+      **Verify 2026-07-14 (83e29e2): restored — tab list is Form Actions
+      | Sign-in Buttons | Destructive Flow | Icon Buttons | Button Groups
+      | Variant Gallery.**
 
 ### P5 — breadcrumb: crumbs that switch context in place
 
@@ -413,17 +408,15 @@ can click on day and display on right."
       real-looking local mock images (bundled `public/` assets or
       generated SVG/gradient placeholders with captions — CSP forbids
       remote images); swipe/drag friendly.
-- [~] Carry-over V5 rider (was falsely `[x]`): nav buttons move inside
+- [x] Carry-over V5 rider (was falsely `[x]`): nav buttons move inside
       the frame (`left-2/right-2`, `bg-bg/80 backdrop-blur-sm border
       shadow-sm` circles), dots indicator (`size-1.5` → active `bg-fg
       w-4`), edge scroll-fade on the thumbnail strip.
-      **Verify 2026-07-14: the demo page achieves all of this via
-      className overrides (`views/ui/carousel/PageContent.tsx:65-66`),
-      but `carousel.tsx:119,151` component defaults are still
-      `-left-3`/`-right-3` outside the frame — every other consumer keeps
-      the old look. Fix: make `left-2/right-2 bg-bg/80 backdrop-blur-sm`
-      the CarouselPrevious/Next defaults and delete the demo overrides;
-      dots stay demo-level composition (placement varies by use).**
+      **Verify 2026-07-14 (83e29e2): closed. `carousel.tsx:119,151`
+      defaults are now `left-2`/`right-2` + `bg-bg/80 backdrop-blur-sm`.
+      Optional cleanup: the demo's className overrides
+      (`PageContent.tsx:65-66`) are now redundant no-ops — drop them on
+      the next touch.**
 
 ### P9 — checkbox: themed + sized
 
@@ -575,7 +568,8 @@ User-directed; components stay in the library, only demo pages retire.
       Fix: rebuild it as a card-page tab when P7 splits the card examples
       (email+password Inputs, remember-me Checkbox, submit Button with C1
       loading, F1 error wiring — it dogfoods four components in one
-      block).**
+      block). Still open after the 83e29e2 fix batch — lands with P7's
+      rider.**
 - [x] **R2 page-info page**: delete page + route + index entry.
 - [x] **R3 table page** ("we will implement this somewhere else"): delete
       page + route + index entry; the Invoice block re-homes to
@@ -664,9 +658,8 @@ Email"ail"`), unclosed `**`; zero `ui-upgrade-3` citations. And
 - [ ] progress: indeterminate variant (translating 40% bar keyframe,
       motion-reduce → pulse), size scale `h-1.5/2/3`, optional
       `tabular-nums` value label.
-- [~] carousel: rides P8 — demo look ✓, component defaults still open
-      (see the P8 downgrade note: move `left-2/right-2` inside-frame
-      styling into `carousel.tsx` defaults).
+- [x] carousel: rides P8 — closed in 83e29e2 (component defaults moved
+      inside-frame; see P8 note).
 - [x] calendar/date-picker sizing: rides P13.
 
 ### C6 — S3 leftovers
@@ -683,14 +676,12 @@ Email"ail"`), unclosed `**`; zero `ui-upgrade-3` citations. And
 
 - [x] `checkbox.tsx:77-81`: remove the unconditional
       `data-indeterminate` stamp + dead MinusIcon from base Checkbox.
-- [~] Both checkbox files: `peer-disabled:` on the label can never match
+- [x] Both checkbox files: `peer-disabled:` on the label can never match
       (input is wrapped in a span) — restyle via `has-[:disabled]` on
       the wrapper or move the label into the peer scope.
-      **Verify 2026-07-14: `checkbox.tsx` fixed with the
-      `has-[:disabled]` wrapper ✓; `indeterminate-checkbox.tsx:105` still
-      carries the dead `peer-disabled:` label classes. Fix: apply the
-      identical wrapper treatment there and drop the peer-disabled
-      classes from the label.**
+      **Verify 2026-07-14 (83e29e2): closed. Both files use the
+      `has-[:disabled]` wrapper; no `peer-disabled:` remnants
+      (`grep -rn 'peer-disabled' src/components/ui/checkbox/` → empty).**
 - [ ] U3 grid keyboard nav: arrows move month/year grid focus, Enter
       selects, Escape backs out one view (not closing the popover).
 - [ ] U1 "Hover Pause": add the demo scenario + the pause-on-hover unit
@@ -730,21 +721,21 @@ only home + feed.
 ## Execution order
 
 1. **T1 + T2** ✅ (two-class regressions, worst user-facing — same-day fix)
-   → T3 roster expansion `[~]` (breadcrumb/collapsible/resizable +
-   exemption headers + dropdown/popover panels open), T4 eyeball matrix
-   (deferred).
-2. **Part B** broken behavior: B1/B2/B3/B5/B6 ✅; B4 `[~]` (avatar-mode
-   validation + toast copy open).
+   → T3 wiring ✅ (83e29e2; roster republish still rides C2), T4 eyeball
+   matrix (deferred).
+2. **Part B** broken behavior ✅ (B1–B6; B4 closed in 83e29e2, its unit
+   test rides C1).
 3. **Part R** removals ✅ pages gone; R1 `[~]` (Login Card re-home →
    P7 rider).
 4. **Part E** empty-tab fills not owned by P-items ✅ (7 E-fill done;
    6 remaining stubs owned by P2/P5/P11/P14/P16/P19).
-5. **Part P** page redesigns: P3/P6/P13 done; P4 near-done (tooltip
-   pass + Destructive Flow restore), P8 demo-done (component defaults
-   open), P9 partial; 15 untouched.
-6. **Part C** debt: C7 partial (3 of 8 done); C5 partial; C1/C2/C3/C4/
-   C6/C8 remain — C3's doc repair and C1's tests are the highest-leverage
-   next steps (C1 unblocks the T1/T2/B5 test riders too).
+5. **Part P** page redesigns: P3/P6/P8/P13 done; P4 near-done (tooltip
+   pass remains; Destructive Flow restored in 83e29e2), P9 partial;
+   15 untouched.
+6. **Part C** debt: C7 partial (4 of 8 done); C5 partial (progress/
+   textarea remain); C1/C2/C3/C4/C6/C8 remain — C3's doc repair and C1's
+   tests are the highest-leverage next steps (C1 unblocks the T1/T2/B5
+   test riders too).
 
 ## Coverage & end-state gates (all must hold simultaneously)
 
@@ -762,7 +753,7 @@ grep -rn 'gap-4"></div>' src/views/ui/                     → 6 remaining
 grep -rn 'bg-bg' src/components/ui/dialog/dialog-content.tsx → hit   (T1)
 grep -rn 'bg-'   src/components/ui/sheet/sheet.tsx           → hit   (T2)
 useComponentVariant roster ≥ 35 files (or recorded exemption
-  header in the component)                                  → 41    (T3)
+  header in the component)                                  → 46    (T3)
 grep -rln 'VariantGallery' src/views/ui/ | wc -l           → 21
                                                               (3 pages removed
                                                                vs expected 23)
