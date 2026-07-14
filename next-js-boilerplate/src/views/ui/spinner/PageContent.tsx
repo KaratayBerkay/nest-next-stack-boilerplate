@@ -25,7 +25,31 @@ const examples: UIExample[] = [
     id: "variants",
     title: "Size Scale",
     description: "Spinner at different sizes: sm, md, lg.",
-    render: () => <div className="flex flex-col gap-4"></div>,
+    render: () => (
+      <div className="flex flex-col gap-4">
+        <section className="flex flex-col gap-3">
+          <h3 className="text-lg font-semibold">Size Scale</h3>
+          <div className="flex items-end gap-6">
+            <div className="flex flex-col items-center gap-2">
+              <Spinner className="size-4" />
+              <span className="text-muted text-xs">sm</span>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <Spinner className="size-6" />
+              <span className="text-muted text-xs">md</span>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <Spinner className="size-8" />
+              <span className="text-muted text-xs">lg</span>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <Spinner className="size-10" />
+              <span className="text-muted text-xs">xl</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    ),
   },
 ];
 

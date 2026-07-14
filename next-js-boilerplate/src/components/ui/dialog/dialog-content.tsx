@@ -10,6 +10,9 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { useDialog } from "./dialog";
 import type { DialogContentProps, DialogSize } from "@/types/ui/Dialog-types";
 
@@ -20,7 +23,13 @@ const sizeStyles: Record<DialogSize, string> = {
   full: "sm:max-w-[90vw] sm:max-h-[90vh]",
 };
 
-export function DialogContent({ children, className, size = "md" }: DialogContentProps) {
+const dialogVariants = {
+  ...globalStyleVariants,
+  default: "bg-bg border-border text-fg shadow-xl sm:border sm:rounded-xl",
+};
+
+export function DialogContent({ children, className, size = "md", variant }: DialogContentProps) {
+  const effectiveVariant = useComponentVariant(variant);
   const { open, onOpenChange } = useDialog();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const mounted = useSyncExternalStore(
@@ -114,8 +123,8 @@ export function DialogContent({ children, className, size = "md" }: DialogConten
       <dialog
         ref={dialogRef}
         className={cn(
-          "backdrop:bg-overlay/50",
-          "text-fg m-auto flex h-dvh w-full flex-col overflow-hidden border-0 shadow-xl sm:h-fit sm:max-h-[85vh] sm:rounded-xl sm:border sm:p-0",
+          "backdrop:bg-overlay/50 m-auto flex h-dvh w-full flex-col overflow-hidden border-0 sm:h-fit sm:max-h-[85vh] sm:p-0",
+          resolveVariant(dialogVariants, effectiveVariant),
           sizeStyles[size],
           !open && !closing && "hidden",
           closing ? "dialog-closing" : "dialog-open",

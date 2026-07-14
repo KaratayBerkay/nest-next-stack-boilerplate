@@ -3,6 +3,7 @@
 import { useRef, useState, useCallback, useId } from "react";
 import { cn } from "@/lib/cn";
 import { Progress } from "@/components/ui/Progress";
+import { useToast } from "@/components/ui/toast/use-toast";
 import type { FileUploadProps, UploadFile } from "@/types/ui/FileUpload-types";
 
 function humanSize(bytes: number): string {
@@ -33,6 +34,7 @@ export function FileUpload({
   const dragCounter = useRef(0);
   const autoId = useId();
   const [uploading, setUploading] = useState(false);
+  const { toast } = useToast();
 
   const addFiles = useCallback(
     async (incoming: File[]) => {
@@ -53,6 +55,26 @@ export function FileUpload({
           });
           continue;
         }
+
+        if (accept) {
+          const acceptTypes = accept.split(",").map((t) => t.trim());
+          const mimeMatch = acceptTypes.some((type) => {
+            if (type.endsWith("/*")) {
+              const category = type.slice(0, -2);
+              return file.type.startsWith(category + "/");
+            }
+            return file.type === type;
+          });
+          if (!mimeMatch) {
+            toast({
+              title: "Invalid file type",
+              description: `Only images can be uploaded — got ${file.name}`,
+              variant: "destructive",
+            });
+            continue;
+          }
+        }
+
         newFiles.push({
           id: nextId(),
           file,
@@ -64,7 +86,7 @@ export function FileUpload({
       const updated = [...files, ...newFiles];
       onFilesChange(updated);
     },
-    [disabled, files, maxFiles, maxSizeBytes, onFilesChange],
+    [disabled, files, maxFiles, maxSizeBytes, onFilesChange, accept, toast],
   );
 
   const handleClick = useCallback(() => {

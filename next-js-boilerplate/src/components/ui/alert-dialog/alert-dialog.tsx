@@ -12,6 +12,14 @@ import {
   Action,
 } from "@radix-ui/react-alert-dialog";
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
+
+const alertDialogVariants = {
+  ...globalStyleVariants,
+  default: "bg-bg border-border border shadow-xl sm:rounded-xl",
+};
 
 export const AlertDialog = Root;
 export const AlertDialogTrigger = Trigger;
@@ -45,20 +53,24 @@ AlertDialogFooter.displayName = "AlertDialogFooter";
 
 export const AlertDialogContent = forwardRef<
   React.ElementRef<typeof Content>,
-  React.ComponentPropsWithoutRef<typeof Content>
->(({ className, ...props }, ref) => (
-  <Portal>
-    <Overlay className="data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out fixed inset-0 z-50 bg-overlay/50" />
-    <Content
-      ref={ref}
-      className={cn(
-        "bg-bg border-border data-[state=open]:animate-fade-in-up data-[state=closed]:animate-fade-out fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border p-6 shadow-xl duration-200 sm:rounded-xl",
-        className,
-      )}
-      {...props}
-    />
-  </Portal>
-));
+  React.ComponentPropsWithoutRef<typeof Content> & { variant?: string }
+>(({ className, variant, ...props }, ref) => {
+  const effectiveVariant = useComponentVariant(variant);
+  return (
+    <Portal>
+      <Overlay className="data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out fixed inset-0 z-50 bg-overlay/50" />
+      <Content
+        ref={ref}
+        className={cn(
+          "data-[state=open]:animate-fade-in-up data-[state=closed]:animate-fade-out fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 p-6 duration-200",
+          resolveVariant(alertDialogVariants, effectiveVariant),
+          className,
+        )}
+        {...props}
+      />
+    </Portal>
+  );
+});
 AlertDialogContent.displayName = "AlertDialogContent";
 
 export const AlertDialogTitle = forwardRef<

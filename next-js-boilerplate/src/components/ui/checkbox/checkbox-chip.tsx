@@ -2,7 +2,15 @@
 
 import { useId } from "react";
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { CheckboxChipProps } from "@/types/ui/Checkbox-types";
+
+const checkboxChipVariants = {
+  ...globalStyleVariants,
+  default: "bg-surface text-muted hover:bg-surface-hover",
+};
 
 export function CheckboxChip({
   label,
@@ -10,8 +18,10 @@ export function CheckboxChip({
   onChange,
   count,
   onRemove,
+  variant,
   className,
 }: CheckboxChipProps) {
+  const effectiveVariant = useComponentVariant(variant);
   const autoId = useId();
 
   return (
@@ -21,7 +31,7 @@ export function CheckboxChip({
         "inline-flex cursor-pointer select-none items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
         checked
           ? "bg-brand text-brand-fg"
-          : "bg-surface text-muted hover:bg-surface-hover",
+          : resolveVariant(checkboxChipVariants, effectiveVariant),
         className,
       )}
     >

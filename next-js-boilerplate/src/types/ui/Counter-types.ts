@@ -5,6 +5,6 @@ export interface CounterProps {
   step?: number;
   value?: number;
   onChange?: (value: number) => void;
-  variant?: "default";
+  variant?: string;
   className?: string;
 }

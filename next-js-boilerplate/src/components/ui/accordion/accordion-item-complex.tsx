@@ -1,9 +1,18 @@
 "use client";
 
 import { forwardRef } from "react";
-import { Item } from "@radix-ui/react-accordion";
+import { Item, Header, Trigger, Content } from "@radix-ui/react-accordion";
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
+
 export type AccordionUpperSectionProps = React.HTMLAttributes<HTMLDivElement>;
+
+const accordionComplexVariants = {
+  ...globalStyleVariants,
+  default: "text-fg",
+};
 
 export const AccordionUpperSection = forwardRef<
   HTMLDivElement,
@@ -22,7 +31,7 @@ export type AccordionItemComplexProps = {
   trigger: React.ReactNode;
   upper?: React.ReactNode;
   content: React.ReactNode;
-  variant?: "default";
+  variant?: string;
   triggerFontSize?: string;
   triggerFontWeight?: string;
   triggerFontFamily?: string;
@@ -41,6 +50,7 @@ export const AccordionItemComplex = forwardRef<
       trigger,
       upper,
       content,
+      variant,
       triggerFontSize = "text-sm",
       triggerFontWeight = "font-medium",
       triggerFontFamily = "font-sans",
@@ -50,6 +60,8 @@ export const AccordionItemComplex = forwardRef<
     },
     ref,
   ) => {
+    const effectiveVariant = useComponentVariant(variant);
+
     const triggerClasses = cn(
       triggerFontSize,
       triggerFontWeight,
@@ -66,16 +78,45 @@ export const AccordionItemComplex = forwardRef<
       <Item
         ref={ref}
         value={value}
-        className={cn("border-border border-b", "group")}
+        className="border-border border-b group"
       >
         <div className="flex flex-col">
-          <div className="flex flex-1 items-center justify-between py-4 transition-all">
-            <span className={triggerClasses}>{trigger}</span>
-          </div>
+          <Header className="flex">
+            <Trigger
+              className={cn(
+                "flex flex-1 items-center justify-between py-4 transition-all",
+                "hover:text-brand",
+                "[&[data-state=open]>svg]:rotate-180",
+                resolveVariant(accordionComplexVariants, effectiveVariant),
+                triggerClasses,
+              )}
+            >
+              {trigger}
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-muted size-4 shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </Trigger>
+          </Header>
           {upper && <AccordionUpperSection>{upper}</AccordionUpperSection>}
-          <div className={cn("overflow-hidden", contentClasses)}>
+          <Content
+            className={cn(
+              "data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
+              "overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+              contentClasses,
+            )}
+          >
             <div className="pb-4 pl-2 pr-4">{content}</div>
-          </div>
+          </Content>
         </div>
       </Item>
     );

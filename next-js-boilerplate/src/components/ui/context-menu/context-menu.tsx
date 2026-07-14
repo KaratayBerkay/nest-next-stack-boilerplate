@@ -10,6 +10,14 @@ import {
   Label,
 } from "@radix-ui/react-context-menu";
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
+
+const contextMenuVariants = {
+  ...globalStyleVariants,
+  default: "bg-bg border-border text-fg",
+};
 
 export const ContextMenu = Root;
 export const ContextMenuTrigger = Trigger;
@@ -38,22 +46,25 @@ ContextMenuLabel.displayName = "ContextMenuLabel";
 
 export const ContextMenuContent = forwardRef<
   React.ElementRef<typeof Content>,
-  React.ComponentPropsWithoutRef<typeof Content>
->(({ className, ...props }, ref) => (
-  <Portal>
-    <Content
-      ref={ref}
-      className={cn(
-        "z-50 min-w-32 overflow-hidden rounded-md border p-1 shadow-md",
-        "bg-bg border-border text-fg",
-        className,
-      )}
-      {...props}
-    >
-      <div className="pointer-events-auto">{props.children}</div>
-    </Content>
-  </Portal>
-));
+  React.ComponentPropsWithoutRef<typeof Content> & { variant?: string }
+>(({ className, variant, ...props }, ref) => {
+  const effectiveVariant = useComponentVariant(variant);
+  return (
+    <Portal>
+      <Content
+        ref={ref}
+        className={cn(
+          "z-50 min-w-32 overflow-hidden rounded-md border p-1 shadow-md",
+          resolveVariant(contextMenuVariants, effectiveVariant),
+          className,
+        )}
+        {...props}
+      >
+        <div className="pointer-events-auto">{props.children}</div>
+      </Content>
+    </Portal>
+  );
+});
 ContextMenuContent.displayName = "ContextMenuContent";
 
 export const ContextMenuItem = forwardRef<

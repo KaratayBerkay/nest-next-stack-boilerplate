@@ -9,19 +9,26 @@ import {
   Link,
 } from "@radix-ui/react-navigation-menu";
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 
-const defaultStyles = "bg-bg border-border text-fg";
+const navMenuVariants = {
+  ...globalStyleVariants,
+  default: "bg-bg border-border text-fg",
+};
 
 export const NavigationMenu = forwardRef<
   React.ElementRef<typeof Root>,
-  React.ComponentPropsWithoutRef<typeof Root>
->(({ className, ...props }, ref) => {
+  React.ComponentPropsWithoutRef<typeof Root> & { variant?: string }
+>(({ className, variant, ...props }, ref) => {
+  const effectiveVariant = useComponentVariant(variant);
   return (
     <Root
       ref={ref}
       className={cn(
         "relative z-10 flex max-w-max flex-1 items-center justify-center",
-        defaultStyles,
+        resolveVariant(navMenuVariants, effectiveVariant),
         className,
       )}
       {...props}
@@ -78,17 +85,21 @@ NavigationMenuTrigger.displayName = "NavigationMenuTrigger";
 
 export const NavigationMenuContent = forwardRef<
   React.ElementRef<typeof Content>,
-  React.ComponentPropsWithoutRef<typeof Content>
->(({ className, ...props }, ref) => (
-  <Content
-    ref={ref}
-    className={cn(
-      "bg-bg border-border data-[motion=from-start]:animate-fade-in-up data-[motion=from-end]:animate-fade-in-up data-[motion=to-start]:animate-fade-in-up data-[motion=to-end]:animate-fade-in-up top-0 left-0 w-full rounded-md border p-4 shadow-md sm:w-auto",
-      className,
-    )}
-    {...props}
-  >
-    <div className="pointer-events-auto">{props.children}</div>
-  </Content>
-));
+  React.ComponentPropsWithoutRef<typeof Content> & { variant?: string }
+>(({ className, variant, ...props }, ref) => {
+  const effectiveVariant = useComponentVariant(variant);
+  return (
+    <Content
+      ref={ref}
+      className={cn(
+        "data-[motion=from-start]:animate-fade-in-up data-[motion=from-end]:animate-fade-in-up data-[motion=to-start]:animate-fade-in-up data-[motion=to-end]:animate-fade-in-up top-0 left-0 w-full rounded-md border p-4 shadow-md sm:w-auto",
+        resolveVariant(navMenuVariants, effectiveVariant),
+        className,
+      )}
+      {...props}
+    >
+      <div className="pointer-events-auto">{props.children}</div>
+    </Content>
+  );
+});
 NavigationMenuContent.displayName = "NavigationMenuContent";

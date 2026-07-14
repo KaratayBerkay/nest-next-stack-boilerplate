@@ -2,7 +2,15 @@
 
 import { useId } from "react";
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { CheckboxCardProps } from "@/types/ui/Checkbox-types";
+
+const checkboxCardVariants = {
+  ...globalStyleVariants,
+  default: "border-border bg-surface hover:bg-surface-hover",
+};
 
 export function CheckboxCard({
   icon,
@@ -10,8 +18,10 @@ export function CheckboxCard({
   description,
   checked,
   onChange,
+  variant,
   className,
 }: CheckboxCardProps) {
+  const effectiveVariant = useComponentVariant(variant);
   const autoId = useId();
 
   return (
@@ -21,7 +31,7 @@ export function CheckboxCard({
         "focus-within:ring-brand relative flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors focus-within:ring-2 focus-within:outline-none",
         checked
           ? "border-brand bg-brand/5"
-          : "border-border bg-surface hover:bg-surface-hover",
+          : resolveVariant(checkboxCardVariants, effectiveVariant),
         className,
       )}
     >

@@ -1,5 +1,13 @@
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { forwardRef } from "react";
+
+const paginationVariants = {
+  ...globalStyleVariants,
+  default: "border-border",
+};
 
 export const Pagination = forwardRef<
   HTMLElement,
@@ -39,20 +47,24 @@ PaginationItem.displayName = "PaginationItem";
 // generic wrapper, not an anchor rendered without content.
 export const PaginationLink = forwardRef<
   HTMLAnchorElement,
-  React.ComponentPropsWithoutRef<"a"> & { isActive?: boolean }
->(({ className, isActive, ...props }, ref) => (
-  // eslint-disable-next-line jsx-a11y/anchor-has-content
-  <a
-    ref={ref}
-    aria-current={isActive ? "page" : undefined}
-    className={cn(
-      "border-border hover:bg-surface-hover inline-flex h-9 w-9 items-center justify-center rounded-md border text-sm transition-colors",
-      isActive && "bg-brand text-brand-fg border-transparent pointer-events-none",
-      className,
-    )}
-    {...props}
-  />
-));
+  React.ComponentPropsWithoutRef<"a"> & { isActive?: boolean; variant?: string }
+>(({ className, isActive, variant, ...props }, ref) => {
+  const effectiveVariant = useComponentVariant(variant);
+  return (
+    // eslint-disable-next-line jsx-a11y/anchor-has-content
+    <a
+      ref={ref}
+      aria-current={isActive ? "page" : undefined}
+      className={cn(
+        "hover:bg-surface-hover inline-flex h-9 w-9 items-center justify-center rounded-md border text-sm transition-colors",
+        resolveVariant(paginationVariants, effectiveVariant),
+        isActive && "bg-brand text-brand-fg border-transparent pointer-events-none",
+        className,
+      )}
+      {...props}
+    />
+  );
+});
 PaginationLink.displayName = "PaginationLink";
 
 export const PaginationPrevious = forwardRef<

@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useEffect } from "react";
+import { useId, useRef } from "react";
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
 import { globalStyleVariants } from "@/components/ui/global-style-variants";
@@ -41,21 +41,6 @@ function CheckIcon({ className }: { className?: string }) {
   );
 }
 
-function MinusIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={cn(className, "text-brand-fg")}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="3"
-      strokeLinecap="round"
-    >
-      <path d="M5 12h14" />
-    </svg>
-  );
-}
-
 export function Checkbox({
   className,
   id,
@@ -74,14 +59,8 @@ export function Checkbox({
   const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.dataset.indeterminate = "";
-    }
-  }, []);
-
   return (
-    <div className="inline-flex items-center gap-2">
+    <div className="inline-flex items-center gap-2 has-[:disabled]:opacity-50 has-[:disabled]:cursor-not-allowed">
       <span className="relative inline-flex shrink-0">
         <input
           ref={inputRef}
@@ -107,7 +86,7 @@ export function Checkbox({
         <label
           htmlFor={generatedId}
           className={cn(
-            "text-fg cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+            "text-fg cursor-pointer",
             fonts,
           )}
         >

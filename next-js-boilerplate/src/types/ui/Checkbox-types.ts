@@ -53,6 +53,7 @@ export interface CheckboxCardProps {
   checked: boolean;
   onChange?: (checked: boolean) => void;
   value?: string;
+  variant?: string;
   className?: string;
 }
 
@@ -62,6 +63,7 @@ export interface CheckboxChipProps {
   onChange?: (checked: boolean) => void;
   count?: number;
   onRemove?: () => void;
+  variant?: string;
   className?: string;
 }
 

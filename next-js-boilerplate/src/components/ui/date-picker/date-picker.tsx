@@ -9,7 +9,7 @@ import { fontClasses } from "@/lib/font-classes";
 import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { useFieldMessages } from "@/components/ui/field-messages";
-import { formatDateLong, MONTHS } from "@/lib/date-time";
+import { formatDateLong, formatMonthYear, MONTHS } from "@/lib/date-time";
 import type { DatePickerProps } from "@/types/ui/DatePicker-types";
 
 const variants = {
@@ -38,10 +38,7 @@ function formatPickerValue(
   if (!value) return "";
   if (picker === "year") return value.getFullYear().toString();
   if (picker === "month")
-    return value.toLocaleDateString("en-US", {
-      month: "short",
-      year: "numeric",
-    });
+    return formatMonthYear(value);
   return formatDateLong(value);
 }
 
@@ -276,7 +273,7 @@ export function DatePicker({
           <button
             type="button"
             className={cn(
-              "flex h-9 w-full items-center justify-between rounded border px-3 py-1 text-sm shadow-sm transition-colors",
+              "flex h-9 w-full items-center justify-between rounded-md border px-3 py-1 text-sm shadow-xs transition-colors",
               resolveVariant(variants, effectiveVariant),
               fonts,
             )}
@@ -290,11 +287,18 @@ export function DatePicker({
               )}
             </span>
             {value && (
-              <button
-                type="button"
+              <span
+                role="button"
+                tabIndex={0}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleClear(onChange);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                    handleClear(onChange);
+                  }
                 }}
                 className="text-muted hover:text-fg mx-1 inline-flex shrink-0 items-center justify-center rounded p-0.5 transition-colors"
                 aria-label="Clear date"
@@ -312,7 +316,7 @@ export function DatePicker({
                   <path d="M18 6 6 18" />
                   <path d="m6 6 12 12" />
                 </svg>
-              </button>
+              </span>
             )}
             <svg
               width="16"
@@ -327,7 +331,7 @@ export function DatePicker({
             </svg>
           </button>
         </PopoverTrigger>
-        <PopoverContent title="Pick a date">
+        <PopoverContent title="Pick a date" className="w-80">
           <DatePickerCalendar
             value={value}
             onChange={onChange}

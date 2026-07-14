@@ -8,21 +8,32 @@ import {
   Corner,
 } from "@radix-ui/react-scroll-area";
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
+
+const scrollAreaVariants = {
+  ...globalStyleVariants,
+  default: "text-fg",
+};
 
 export const ScrollArea = forwardRef<
   React.ElementRef<typeof Root>,
-  React.ComponentPropsWithoutRef<typeof Root>
->(({ className, children, ...props }, ref) => (
-  <Root
-    ref={ref}
-    className={cn("relative overflow-hidden", "text-fg", className)}
-    {...props}
-  >
-    <Viewport className="size-full rounded-[inherit]">{children}</Viewport>
-    <ScrollBar />
-    <Corner />
-  </Root>
-));
+  React.ComponentPropsWithoutRef<typeof Root> & { variant?: string }
+>(({ className, children, variant, ...props }, ref) => {
+  const effectiveVariant = useComponentVariant(variant);
+  return (
+    <Root
+      ref={ref}
+      className={cn("relative overflow-hidden", resolveVariant(scrollAreaVariants, effectiveVariant), className)}
+      {...props}
+    >
+      <Viewport className="size-full rounded-[inherit]">{children}</Viewport>
+      <ScrollBar />
+      <Corner />
+    </Root>
+  );
+});
 ScrollArea.displayName = "ScrollArea";
 
 export const ScrollBar = forwardRef<

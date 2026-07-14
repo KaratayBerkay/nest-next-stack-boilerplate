@@ -43,8 +43,8 @@ export function Calendar({
           "hover:bg-surface-hover text-muted inline-flex h-7 w-7 items-center justify-center rounded-md bg-transparent p-0 text-sm font-medium transition-colors absolute left-1",
         button_next:
           "hover:bg-surface-hover text-muted inline-flex h-7 w-7 items-center justify-center rounded-md bg-transparent p-0 text-sm font-medium transition-colors absolute right-1",
-        dropdowns: "flex gap-1",
-        dropdown: "bg-surface border-border rounded-md border px-1 py-0.5 text-sm",
+        dropdowns: "flex items-center gap-2 w-full",
+        dropdown: "bg-surface border-border h-9 rounded-md border px-2.5 text-sm cursor-pointer",
         month_grid: "w-full border-collapse",
         weekdays: "flex",
         weekday:
@@ -53,7 +53,7 @@ export function Calendar({
         week: "flex w-full mt-2",
         day: "relative p-0 text-center text-sm focus-within:relative focus-within:z-20",
         day_button:
-          "hover:bg-surface-hover inline-flex h-8 w-8 items-center justify-center rounded-md p-0 text-sm font-normal transition-colors aria-selected:opacity-100",
+          "hover:bg-surface-hover inline-flex size-9 items-center justify-center rounded-md p-0 text-sm font-normal transition-colors aria-selected:opacity-100",
         selected:
           "bg-brand text-brand-fg hover:bg-brand hover:text-brand-fg focus:bg-brand focus:text-brand-fg",
         today: "ring-1 ring-brand/50 font-semibold",
@@ -77,7 +77,7 @@ export function Calendar({
           return (
             <button
               className={cn(
-                "hover:bg-surface-hover inline-flex h-8 w-8 items-center justify-center rounded-md p-0 text-sm font-normal transition-colors",
+                "hover:bg-surface-hover inline-flex size-9 items-center justify-center rounded-md p-0 text-sm font-normal transition-colors",
                 dayButtonProps.modifiers.selected && "bg-brand text-brand-fg",
                 dayButtonProps.modifiers.today && !dayButtonProps.modifiers.selected && "bg-surface text-fg font-semibold",
                 "relative",

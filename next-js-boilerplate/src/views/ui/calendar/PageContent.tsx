@@ -14,15 +14,6 @@ const Calendar = dynamic(
   { ssr: false },
 );
 
-function formatDate(date: Date | undefined): string {
-  if (!date) return "—";
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
 function makeDate(dayOffset: number, hour: number = 0, minute: number = 0): Date {
   const d = new Date();
   d.setDate(d.getDate() + dayOffset);
@@ -30,239 +21,227 @@ function makeDate(dayOffset: number, hour: number = 0, minute: number = 0): Date
   return d;
 }
 
-const now = new Date();
-
-const sampleEvents: CalendarEventType[] = [
-  { id: "1", title: "Team Standup", date: makeDate(0, 9, 0), time: "09:00", color: "blue" },
-  { id: "2", title: "Sprint Review", date: makeDate(0, 14, 0), time: "14:00", color: "purple" },
-  { id: "3", title: "Deadline", date: makeDate(2), color: "red" },
-  { id: "4", title: "Lunch with Alex", date: makeDate(1, 12, 30), time: "12:30", color: "green" },
-  { id: "5", title: "Design Workshop", date: makeDate(3, 10, 0), time: "10:00", color: "orange" },
-  { id: "6", title: "Code Review", date: makeDate(4, 16, 0), time: "16:00", color: "cyan" },
-  { id: "7", title: "Product Demo", date: makeDate(5, 11, 0), time: "11:00", color: "purple" },
-  { id: "8", title: "1:1 with Manager", date: makeDate(7, 15, 30), time: "15:30", color: "blue" },
-  { id: "9", title: "Release v2.0", date: makeDate(10), color: "red" },
-  { id: "10", title: "Team Happy Hour", date: makeDate(6, 17, 0), time: "17:00", color: "green" },
+const meetingEvents: CalendarEventType[] = [
+  { id: "m1", title: "Team Standup", date: makeDate(0, 9, 0), time: "09:00", color: "blue" },
+  { id: "m2", title: "Sprint Review", date: makeDate(0, 14, 0), time: "14:00", color: "purple" },
+  { id: "m3", title: "Lunch with Alex", date: makeDate(0, 12, 30), time: "12:30", color: "green" },
+  { id: "m4", title: "Design Review", date: makeDate(1, 10, 0), time: "10:00", color: "orange" },
+  { id: "m5", title: "1:1 with Manager", date: makeDate(2, 15, 30), time: "15:30", color: "blue" },
+  { id: "m6", title: "Product Demo", date: makeDate(3, 11, 0), time: "11:00", color: "purple" },
+  { id: "m7", title: "Team Happy Hour", date: makeDate(4, 17, 0), time: "17:00", color: "green" },
 ];
 
 const birthdayEvents: CalendarEventType[] = [
-  { id: "b1", title: "Alice", date: makeDate(3), color: "green" },
-  { id: "b2", title: "Bob", date: makeDate(12), color: "green" },
-  { id: "b3", title: "Charlie", date: makeDate(20), color: "green" },
+  { id: "b1", title: "Alice", date: makeDate(0), color: "green" },
+  { id: "b2", title: "Bob", date: makeDate(3), color: "green" },
+  { id: "b3", title: "Charlie", date: makeDate(7), color: "green" },
+  { id: "b4", title: "Diana", date: makeDate(14), color: "green" },
+  { id: "b5", title: "Eve", date: makeDate(21), color: "green" },
 ];
 
-const teamScheduleEvents: CalendarEventType[] = [
-  { id: "t1", title: "Alice - Focus", date: makeDate(0), time: "09:00", color: "blue" },
-  { id: "t2", title: "Bob - Meeting", date: makeDate(1), time: "10:00", color: "purple" },
-  { id: "t3", title: "Carol - Review", date: makeDate(2), time: "14:00", color: "orange" },
-  { id: "t4", title: "Dave - Deploy", date: makeDate(3), time: "16:00", color: "red" },
-  { id: "t5", title: "Eve - Planning", date: makeDate(4), time: "11:00", color: "cyan" },
+const noteEntries: { date: Date; text: string }[] = [
+  { date: makeDate(0), text: "Finish Q2 report draft" },
+  { date: makeDate(0), text: "Review PR #1423" },
+  { date: makeDate(1), text: "Prepare slide deck for sprint review" },
+  { date: makeDate(2), text: "Update API documentation" },
+  { date: makeDate(3), text: "Sync with design team on new mockups" },
 ];
 
-function ComponentsTab() {
-  const [selected, setSelected] = useState<Date | undefined>(undefined);
-  const [range, setRange] = useState<DateRange | undefined>(undefined);
+function formatDate(d: Date | undefined): string {
+  if (!d) return "";
+  return d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+}
 
-  const todayEvents = useMemo(() => {
-    return sampleEvents.filter((e) => {
-      if (!e.date) return false;
-      return (
-        e.date.getFullYear() === now.getFullYear() &&
-        e.date.getMonth() === now.getMonth() &&
-        e.date.getDate() === now.getDate()
-      );
-    });
-  }, []);
+function AppointmentRangeTab() {
+  const [range, setRange] = useState<DateRange | undefined>({
+    from: makeDate(0),
+    to: makeDate(4),
+  });
 
   return (
-    <>
-      <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Default</h3>
-        <Calendar />
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">With Events</h3>
-        <p className="text-muted text-sm">
-          Days with events show colored dots below the date number.
-        </p>
-        <Calendar
-          mode="single"
-          events={sampleEvents}
-          onDayClick={(date) => setSelected(date)}
-        />
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Selected Date</h3>
-        <div className="flex flex-col gap-3 md:flex-row md:items-start">
-          <Calendar
-            mode="single"
-            selected={selected}
-            onSelect={setSelected}
-            events={sampleEvents}
-          />
-          <div className="surface rounded-lg p-4 text-sm min-w-[200px]">
-            <p className="text-muted text-xs uppercase tracking-wider">Selected</p>
-            <p className="font-medium">{formatDate(selected)}</p>
-            {selected && todayEvents.length > 0 && (
-              <div className="mt-3 space-y-1.5">
-                <p className="text-muted text-xs uppercase tracking-wider">Events</p>
-                {todayEvents.map((e) => (
-                  <CalendarEvent key={e.id} event={e} compact />
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Date Range (2 Months)</h3>
+    <div className="flex flex-col gap-4">
+      <p className="text-muted text-xs">
+        Select a check-in and check-out date range.
+      </p>
+      <div className="surface flex max-w-fit flex-col gap-4 rounded-xl border p-4 shadow-sm">
         <Calendar
           mode="range"
           selected={range}
           onSelect={setRange}
           numberOfMonths={2}
         />
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Week Numbers</h3>
-        <Calendar showWeekNumber events={sampleEvents} />
-      </section>
-    </>
+        <div className="flex gap-4 text-sm">
+          <div>
+            <span className="text-muted text-xs uppercase tracking-wider">Check-in</span>
+            <p className="font-medium">{range?.from ? formatDate(range.from) : "—"}</p>
+          </div>
+          <div>
+            <span className="text-muted text-xs uppercase tracking-wider">Check-out</span>
+            <p className="font-medium">{range?.to ? formatDate(range.to) : "—"}</p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
-function ExamplesTab() {
-  const [selected, setSelected] = useState<Date | undefined>(undefined);
+function MeetingsTab() {
+  const [selected, setSelected] = useState<Date | undefined>(makeDate(0));
 
-  const todayEvents = useMemo(() => {
-    return sampleEvents.filter((e) => {
-      if (!e.date) return false;
+  const dayMeetings = useMemo(() => {
+    return meetingEvents.filter((e) => {
+      if (!e.date || !selected) return false;
       return (
-        e.date.getFullYear() === now.getFullYear() &&
-        e.date.getMonth() === now.getMonth() &&
-        e.date.getDate() === now.getDate()
+        e.date.getFullYear() === selected.getFullYear() &&
+        e.date.getMonth() === selected.getMonth() &&
+        e.date.getDate() === selected.getDate()
       );
     });
-  }, []);
-
-  const upcomingEvents = useMemo(() => {
-    return sampleEvents
-      .filter((e) => e.date && e.date > now)
-      .sort((a, b) => (a.date?.getTime() ?? 0) - (b.date?.getTime() ?? 0))
-      .slice(0, 5);
-  }, []);
+  }, [selected]);
 
   return (
-    <>
-      <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Monthly Planner</h3>
-        <div className="surface rounded-xl p-6">
-          <div className="flex flex-col lg:flex-row gap-6">
-            <div className="flex-1 min-w-0">
-              <Calendar
-                mode="single"
-                selected={selected}
-                onSelect={setSelected}
-                events={sampleEvents}
-                className="w-full"
-              />
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+        <Calendar
+          mode="single"
+          selected={selected}
+          onSelect={setSelected}
+          events={meetingEvents}
+          className="shrink-0"
+        />
+        <div className="surface flex-1 rounded-xl border p-4 shadow-sm">
+          <p className="text-sm font-semibold mb-2">
+            {selected ? formatDate(selected) : "Select a day"}
+          </p>
+          {dayMeetings.length === 0 ? (
+            <p className="text-muted text-xs">No meetings scheduled</p>
+          ) : (
+            <div className="space-y-2">
+              {dayMeetings
+                .sort((a, b) => {
+                  if (!a.date || !b.date) return 0;
+                  return a.date.getTime() - b.date.getTime();
+                })
+                .map((event) => (
+                  <CalendarEvent key={event.id} event={event} />
+                ))}
             </div>
-            <div className="flex-1 min-w-0 space-y-4">
-              <div>
-                <p className="text-sm font-semibold mb-2">Today&apos;s Schedule</p>
-                <div className="space-y-1.5">
-                  {todayEvents.length === 0 ? (
-                    <p className="text-muted text-xs">No events today</p>
-                  ) : (
-                    todayEvents.map((e) => (
-                      <CalendarEvent key={e.id} event={e} />
-                    ))
-                  )}
-                </div>
-              </div>
-              <div className="border-t border-border pt-3">
-                <p className="text-sm font-semibold mb-2">Upcoming</p>
-                <div className="space-y-1.5">
-                  {upcomingEvents.map((e) => (
-                    <div key={e.id} className="flex items-center gap-2 text-sm">
-                      <span className="text-muted text-xs w-12 shrink-0">
-                        {e.date?.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                      </span>
-                      <CalendarEvent event={e} compact />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
-      </section>
+      </div>
+    </div>
+  );
+}
 
-      <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Birthdays</h3>
-        <div className="surface rounded-xl p-6">
-          <div className="mb-4 flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-1.5 text-xs">
-              <span className="bg-success size-2 rounded-full" /> Birthday
-            </span>
-          </div>
-          <Calendar
-            mode="single"
-            events={birthdayEvents}
-            selected={selected}
-            onSelect={setSelected}
-          />
-        </div>
-      </section>
+function BirthdaysTab() {
+  const [selected, setSelected] = useState<Date | undefined>(undefined);
 
-      <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Team Schedule</h3>
-        <div className="surface rounded-xl p-6">
-          <div className="mb-4 flex flex-wrap gap-3">
-            <span className="inline-flex items-center gap-1.5 text-xs">
-              <span className="bg-info size-2 rounded-full" /> Focus
-            </span>
-            <span className="inline-flex items-center gap-1.5 text-xs">
-              <span className="bg-brand size-2 rounded-full" /> Meeting
-            </span>
-            <span className="inline-flex items-center gap-1.5 text-xs">
-              <span className="bg-warning size-2 rounded-full" /> Review
-            </span>
-            <span className="inline-flex items-center gap-1.5 text-xs">
-              <span className="bg-error size-2 rounded-full" /> Deploy
-            </span>
-            <span className="inline-flex items-center gap-1.5 text-xs">
-              <span className="bg-info size-2 rounded-full" /> Planning
-            </span>
-          </div>
-          <Calendar
-            mode="single"
-            events={teamScheduleEvents}
-            selected={selected}
-            onSelect={setSelected}
-          />
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="surface max-w-fit rounded-xl border p-4 shadow-sm">
+        <div className="mb-3 flex items-center gap-2">
+          <span className="size-2 rounded-full bg-success" />
+          <span className="text-muted text-xs">Birthdays this month</span>
         </div>
-      </section>
-    </>
+        <Calendar
+          mode="single"
+          events={birthdayEvents}
+          selected={selected}
+          onSelect={setSelected}
+        />
+        {selected && (
+          <div className="mt-3 space-y-1">
+            {birthdayEvents
+              .filter((e) => {
+                if (!e.date) return false;
+                return (
+                  e.date.getFullYear() === selected.getFullYear() &&
+                  e.date.getMonth() === selected.getMonth() &&
+                  e.date.getDate() === selected.getDate()
+                );
+              })
+              .map((e) => (
+                <div key={e.id} className="text-sm">
+                  <span className="bg-success mr-1.5 inline-block size-1.5 rounded-full" />
+                  {e.title}&apos;s Birthday
+                </div>
+              ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DailyNotesTab() {
+  const [selected, setSelected] = useState<Date | undefined>(makeDate(0));
+
+  const dayNotes = useMemo(() => {
+    return noteEntries.filter((n) => {
+      if (!selected) return false;
+      return (
+        n.date.getFullYear() === selected.getFullYear() &&
+        n.date.getMonth() === selected.getMonth() &&
+        n.date.getDate() === selected.getDate()
+      );
+    });
+  }, [selected]);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+        <Calendar
+          mode="single"
+          selected={selected}
+          onSelect={setSelected}
+          className="shrink-0"
+        />
+        <div className="surface min-h-[200px] flex-1 rounded-xl border p-4 shadow-sm">
+          <p className="text-sm font-semibold mb-3">
+            {selected ? formatDate(selected) : "Select a day"}
+          </p>
+          {dayNotes.length === 0 ? (
+            <p className="text-muted text-xs">No notes for this day</p>
+          ) : (
+            <ul className="space-y-2">
+              {dayNotes.map((note, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm">
+                  <span className="mt-1 size-1.5 shrink-0 rounded-full bg-brand" />
+                  {note.text}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
 const examples: UIExample[] = [
   {
-    id: "usage",
-    title: "Month with Events",
-    description: "Calendar showing event indicators with a daily cap.",
-    render: () => <ComponentsTab />,
+    id: "appointment-range",
+    title: "Appointment Range",
+    description: "Date range picker with check-in/out readout.",
+    render: () => <AppointmentRangeTab />,
   },
   {
-    id: "variants",
-    title: "Availability Window",
-    description: "Calendar with min/max dates and disabled weekends.",
-    render: () => <ExamplesTab />,
+    id: "meetings",
+    title: "Meetings",
+    description: "Day view with time-based event list.",
+    render: () => <MeetingsTab />,
+  },
+  {
+    id: "birthdays",
+    title: "Birthdays",
+    description: "Recurring birthday markers with month navigation.",
+    render: () => <BirthdaysTab />,
+  },
+  {
+    id: "daily-notes",
+    title: "Daily Notes",
+    description: "Calendar left + notes panel right; click a day to show notes.",
+    render: () => <DailyNotesTab />,
   },
 ];
 

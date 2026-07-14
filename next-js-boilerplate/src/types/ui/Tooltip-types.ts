@@ -18,4 +18,5 @@ export interface TooltipTriggerProps extends React.ComponentPropsWithoutRef<"spa
 export interface TooltipContentProps extends React.ComponentPropsWithoutRef<"div"> {
   children: React.ReactNode;
   className?: string;
+  variant?: string;
 }

@@ -58,7 +58,35 @@ const examples: UIExample[] = [
     title: "Simple Links Row",
     description: "Horizontal links without viewport panels.",
     render: () => (
-      <div className="flex flex-col gap-4"></div>
+      <div className="flex flex-col gap-4">
+        <section className="flex flex-col gap-3">
+          <h3 className="text-lg font-semibold">Simple Links Row</h3>
+          <NavigationMenu>
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <NavigationMenuLink className="hover:bg-surface-hover rounded-md px-3 py-1.5 text-sm transition-colors" href="/docs">
+                  Docs
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuLink className="hover:bg-surface-hover rounded-md px-3 py-1.5 text-sm transition-colors" href="/api">
+                  API
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuLink className="hover:bg-surface-hover rounded-md px-3 py-1.5 text-sm transition-colors" href="/blog">
+                  Blog
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuLink className="hover:bg-surface-hover rounded-md px-3 py-1.5 text-sm transition-colors" href="/pricing">
+                  Pricing
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
+        </section>
+      </div>
     ),
   },
 ];

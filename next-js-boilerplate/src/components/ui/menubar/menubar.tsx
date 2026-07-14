@@ -11,17 +11,26 @@ import {
   Label,
 } from "@radix-ui/react-menubar";
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
+
+const menubarVariants = {
+  ...globalStyleVariants,
+  default: "bg-bg border-border",
+};
 
 export const Menubar = forwardRef<
   React.ElementRef<typeof Root>,
-  React.ComponentPropsWithoutRef<typeof Root>
->(({ className, ...props }, ref) => {
-
+  React.ComponentPropsWithoutRef<typeof Root> & { variant?: string }
+>(({ className, variant, ...props }, ref) => {
+  const effectiveVariant = useComponentVariant(variant);
   return (
     <Root
       ref={ref}
       className={cn(
         "flex h-9 items-center gap-1 rounded-md border p-1 shadow-xs",
+        resolveVariant(menubarVariants, effectiveVariant),
         className,
       )}
       {...props}
@@ -48,21 +57,25 @@ MenubarTrigger.displayName = "MenubarTrigger";
 
 export const MenubarContent = forwardRef<
   React.ElementRef<typeof Content>,
-  React.ComponentPropsWithoutRef<typeof Content>
->(({ className, ...props }, ref) => (
-  <Portal>
-    <Content
-      ref={ref}
-      className={cn(
-        "bg-bg border-border z-50 min-w-48 overflow-hidden rounded-lg border p-1 shadow-lg",
-        className,
-      )}
-      {...props}
-    >
-      <div className="pointer-events-auto">{props.children}</div>
-    </Content>
-  </Portal>
-));
+  React.ComponentPropsWithoutRef<typeof Content> & { variant?: string }
+>(({ className, variant, ...props }, ref) => {
+  const effectiveVariant = useComponentVariant(variant);
+  return (
+    <Portal>
+      <Content
+        ref={ref}
+        className={cn(
+          "z-50 min-w-48 overflow-hidden rounded-lg border p-1 shadow-lg",
+          resolveVariant(menubarVariants, effectiveVariant),
+          className,
+        )}
+        {...props}
+      >
+        <div className="pointer-events-auto">{props.children}</div>
+      </Content>
+    </Portal>
+  );
+});
 MenubarContent.displayName = "MenubarContent";
 
 export const MenubarItem = forwardRef<

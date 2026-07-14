@@ -9,6 +9,9 @@ import {
 } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 
 interface CarouselContextValue {
   scrollPrev: () => void;
@@ -16,6 +19,11 @@ interface CarouselContextValue {
   canScrollPrev: boolean;
   canScrollNext: boolean;
 }
+const carouselNavVariants = {
+  ...globalStyleVariants,
+  default: "border-border bg-bg",
+};
+
 const CarouselContext = createContext<CarouselContextValue | null>(null);
 export function useCarousel() {
   const ctx = useContext(CarouselContext);
@@ -98,15 +106,18 @@ export function CarouselItem({
 
 export function CarouselPrevious({
   className,
+  variant,
   ...props
-}: React.ComponentPropsWithoutRef<"button">) {
+}: React.ComponentPropsWithoutRef<"button"> & { variant?: string }) {
+  const effectiveVariant = useComponentVariant(variant);
   const { scrollPrev, canScrollPrev } = useCarousel();
   return (
     <button
       disabled={!canScrollPrev}
       onClick={scrollPrev}
       className={cn(
-        "border-border bg-bg hover:bg-surface-hover absolute top-1/2 -left-3 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border shadow-sm transition-colors disabled:opacity-50",
+        "hover:bg-surface-hover absolute top-1/2 -left-3 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border shadow-sm transition-colors disabled:opacity-50",
+        resolveVariant(carouselNavVariants, effectiveVariant),
         className,
       )}
       {...props}
@@ -127,15 +138,18 @@ export function CarouselPrevious({
 
 export function CarouselNext({
   className,
+  variant,
   ...props
-}: React.ComponentPropsWithoutRef<"button">) {
+}: React.ComponentPropsWithoutRef<"button"> & { variant?: string }) {
+  const effectiveVariant = useComponentVariant(variant);
   const { scrollNext, canScrollNext } = useCarousel();
   return (
     <button
       disabled={!canScrollNext}
       onClick={scrollNext}
       className={cn(
-        "border-border bg-bg hover:bg-surface-hover absolute top-1/2 -right-3 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border shadow-sm transition-colors disabled:opacity-50",
+        "hover:bg-surface-hover absolute top-1/2 -right-3 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border shadow-sm transition-colors disabled:opacity-50",
+        resolveVariant(carouselNavVariants, effectiveVariant),
         className,
       )}
       {...props}

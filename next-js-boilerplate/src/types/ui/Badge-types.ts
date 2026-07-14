@@ -15,8 +15,11 @@ type Variant =
 
 export type BadgeVariant = Variant;
 
+export type BadgeSize = "sm" | "md" | "lg";
+
 export interface BadgeProps extends React.ComponentPropsWithoutRef<"span"> {
   variant?: Variant;
+  size?: BadgeSize;
   fontSize?: string;
   fontWeight?: string;
   fontFamily?: string;

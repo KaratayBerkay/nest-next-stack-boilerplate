@@ -62,6 +62,13 @@ export function formatDateLong(input: DateInput, locale?: string): string {
   });
 }
 
+export function formatMonthYear(input: DateInput, locale?: string): string {
+  return toDate(input).toLocaleDateString(locale, {
+    year: "numeric",
+    month: "short",
+  });
+}
+
 export function getRelativeTime(input: DateInput): string {
   const diff = Date.now() - toDate(input).getTime();
   const seconds = Math.floor(diff / 1000);

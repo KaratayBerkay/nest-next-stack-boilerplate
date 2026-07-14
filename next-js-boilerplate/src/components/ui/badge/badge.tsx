@@ -3,7 +3,7 @@ import { resolveVariant } from "@/lib/resolve-variant";
 import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { fontClasses } from "@/lib/font-classes";
-import type { BadgeProps } from "@/types/ui/Badge-types";
+import type { BadgeProps, BadgeSize } from "@/types/ui/Badge-types";
 
 const variants = {
   ...globalStyleVariants,
@@ -20,9 +20,16 @@ const variants = {
   pill: "rounded-full px-4",
 } as const;
 
+const sizeMap: Record<BadgeSize, string> = {
+  sm: "px-2 py-0 text-[10px]",
+  md: "px-2.5 py-0.5 text-xs",
+  lg: "px-3 py-1 text-sm",
+};
+
 export function Badge({
   variant,
   className,
+  size = "md",
   fontSize,
   fontWeight,
   fontFamily,
@@ -37,8 +44,9 @@ export function Badge({
         "inline-flex items-center justify-center",
         effectiveVariant === "dot"
           ? "p-0"
-          : "rounded-full px-2.5 py-0.5",
+          : "rounded-full",
         resolveVariant(variants, effectiveVariant),
+        effectiveVariant !== "dot" && sizeMap[size],
         fonts,
         className,
       )}

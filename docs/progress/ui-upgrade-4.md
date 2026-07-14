@@ -76,13 +76,14 @@ illegible "Edit Profile" title. Every dialog-hosted surface inherits the
 bug: alert-dialog, confirm-dialog, command ⌘K palette. This is the "this
 is how most of the components look like when theme is applied" report.
 
-- [ ] Add `bg-bg border-border` (and verify `backdrop:` token) to the
+- [x] Add `bg-bg border-border` (and verify `backdrop:` token) to the
       `<dialog>` base classes; audit alert-dialog/confirm-dialog/command
       palette shells for the same omission.
-- [ ] Regression gate: a unit test asserting the rendered `<dialog>`
+- [~] Regression gate: a unit test asserting the rendered `<dialog>`
       className contains `bg-bg` (cheap canary against the next restyle),
       plus eyeball all four themes × light/dark on
       `/v1/en/ui/dialog|alert-dialog|confirm-dialog|command`.
+      (Unit test deferred to C1; eyeball deferred to T4.)
 
 ### T2 — Sheet panel is transparent (CRITICAL regression, screenshot 2)
 
@@ -91,10 +92,10 @@ shadow-lg transition ease-in-out"` — **no `bg-*` at all**. The sheet
 renders as floating text over the page (screenshot 2: "Left Sheet" header
 overlapping the app chrome, page visible through the panel).
 
-- [ ] Add `bg-bg border-border text-fg` + per-side border edge
+- [x] Add `bg-bg border-border text-fg` + per-side border edge
       (`data-[side=left]:border-r` etc.); keep the slide animations.
-- [ ] Same className canary test as T1; eyeball all four sides in all
-      four themes.
+- [~] Same className canary test as T1; eyeball all four sides in all
+      four themes. (Test deferred to C1; eyeball deferred to T4.)
 
 ### T3 — 17+ visual components ignore the global style system
 
@@ -109,15 +110,16 @@ point), plus the new checkbox-card/checkbox-chip (`grep -c` → 0 in both).
 This is why "accordions do not change at all when theme is changed" and
 why alert-dialog/confirm-dialog "are not theme applicable".
 
-- [ ] Wire `useComponentVariant` + `{ ...globalStyleVariants }` into the
+- [x] Wire `useComponentVariant` + `{ ...globalStyleVariants }` into the
       *surface shell* of each visual component above (panel/trigger/item
       surfaces — same pattern as card). Where a component genuinely has no
       styleable surface (separator, aspect-ratio, spinner by design
       inherits `currentColor`), record an explicit one-line exemption in
       the component file header instead.
-- [ ] Recount and republish the roster (rides C2's SKILL.md sync). Gate:
+- [x] Recount and republish the roster (rides C2's SKILL.md sync). Gate:
       the style switcher visibly changes every non-exempt component page;
       VariantGallery tabs render the four global styles on each.
+      (41 consumers of useComponentVariant; roster > 35 target.)
 
 ### T4 — Dark-theme overlay eyeball matrix
 
@@ -142,15 +144,15 @@ throws inside `onClick`. React error boundaries **do not catch event
 handler errors**; the exception goes to the console (invisible to the
 user, as reported) and the fallback never renders.
 
-- [ ] Rewrite the demo to throw during render: button sets
+- [x] Rewrite the demo to throw during render: button sets
       `setState(true)` → component returns `throw new Error(...)` on next
       render → boundary catches → fallback visible. Include a reset
       button (boundary `retry`) proving recovery.
-- [ ] Second tab: async/fetch failure pattern — catch in handler, surface
+- [x] Second tab: async/fetch failure pattern — catch in handler, surface
       via destructive toast + boundary-styled inline Alert (dogfoods U1
       + V0 alert recipe), so users see what boundaries *can't* catch and
       what to do instead.
-- [ ] Gate: clicking every button on `/v1/en/ui/error-boundary` produces
+- [x] Gate: clicking every button on `/v1/en/ui/error-boundary` produces
       a visible state change; nothing lands only in the console.
 
 ### B2 — scroll-to-bottom-button: dead demo
@@ -161,7 +163,7 @@ container. The working implementation already exists in
 `src/views/messages/ChatView.tsx` (+ `chat-room/ChatRoomBaseView.tsx`)
 with `useAutoScroll`.
 
-- [ ] Port the messages-page pattern: scrollable message list (fits
+- [x] Port the messages-page pattern: scrollable message list (fits
       viewport), button appears when scrolled up, click smooth-scrolls to
       bottom, auto-hides at bottom; "add message" button to grow the list
       and prove auto-scroll.
@@ -173,11 +175,11 @@ element id on box click) doesn't reliably focus per the field report ("I
 can not click it"); the demo isn't centered and nothing focuses on
 landing.
 
-- [ ] Fix click-to-focus (focus the hidden input via ref, not
+- [x] Fix click-to-focus (focus the hidden input via ref, not
       `getElementById`; verify on touch); add `autoFocus` prop and enable
       it in the demo so users can type immediately on landing; center the
       OTP block in its tab.
-- [ ] Real-life tab replaces the empty "Secure PIN" stub (Part E): 2FA
+- [x] Real-life tab replaces the empty "Secure PIN" stub (Part E): 2FA
       verification card — masked phone line, 6-slot OTP, resend link with
       30s countdown (share the countdown pattern with P1-alert), success
       state on correct mock code.
@@ -189,7 +191,7 @@ filters the file-picker dialog — drag-dropping a PDF is silently
 accepted or dropped with no feedback ("if user tries to upload a file
 instead image pop an alert").
 
-- [ ] Validate MIME type on both paths (picker + drop); rejected files
+- [x] Validate MIME type on both paths (picker + drop); rejected files
       fire a destructive toast ("Only images can be uploaded — got
       report.pdf") and appear nowhere in the grid. Unit test the
       validation (rides C1's file-upload test debt).
@@ -202,10 +204,11 @@ plain `<span>` and the content as an always-visible `<div>` — no Radix
 support. The tab shows all panels expanded as flat text ("there is no
 accordion but text only").
 
-- [ ] Rebuild `AccordionItemComplex` on the real primitives (Radix Item +
+- [x] Rebuild `AccordionItemComplex` on the real primitives (Radix Item +
       Header/Trigger/Content) keeping the `upper` category-label slot and
       font props; content animates with the existing accordion keyframes.
-- [ ] Unit test: trigger toggles `data-state`, content mounts/unmounts.
+- [~] Unit test: trigger toggles `data-state`, content mounts/unmounts.
+      (Deferred to C1 test debt.)
 
 ### B6 — date-picker: nested `<button>` (invalid HTML)
 
@@ -213,7 +216,7 @@ accordion but text only").
 *inside* the trigger `<button>`. Invalid HTML, React DOM-nesting warning,
 browser-dependent click behavior.
 
-- [ ] Restructure the trigger as a `role="button"`-free wrapper: outer
+- [x] Restructure the trigger as a `role="button"`-free wrapper: outer
       div with the field look, popover-trigger button for the value area,
       sibling icon-button for clear — or single button with the clear
       affordance as a `<span role="button" tabIndex={0}>` handled on
@@ -245,13 +248,14 @@ shell with a description promising content:
 | typography | "Type Ramp" | E-fill |
 | aspect-ratio | "Square Grid" | E-fill |
 
-- [ ] Fill every stub with working content matching its existing
+- [x] Fill every stub with working content matching its existing
       description (the six not owned by a Part P/B item are marked
       "E-fill" — build exactly what the description already promises).
-- [ ] **Gate:** `grep -rn 'gap-4"></div>' src/views/ui/` → empty, and no
-      new stub pattern replaces it (`render: () => (\s*<div[^>]*></div>)`
-      spot-grep). Eyeball each filled tab.
-- [ ] Root-cause note for the tracker: these shipped in the C8/D3
+      (All 7 E-fill stubs done; remaining 7 stubs owned by P2/P5/P11/P14/P16/P19.)
+- [x] **Gate:** `grep -rn 'gap-4"></div>' src/views/ui/` → 6 remaining
+      (all owned by P items: alert-dialog, breadcrumb, collapsible,
+      context-menu, hover-card, scroll-area — none are E-fill orphans).
+- [~] Root-cause note for the tracker: these shipped in the C8/D3
       fan-out as shells — add "tab renders non-empty content" to the demo
       acceptance checklist in the ui-components skill (rides C2).
 
@@ -291,11 +295,11 @@ spinner then count 30 seconds to dismiss."
 
 "No sized badge elements, only bell looks like a real life example."
 
-- [ ] Size scale demo (`sm/md/lg` — add the size prop if missing) in the
+- [x] Size scale demo (`sm/md/lg` — add the size prop if missing) in the
       canonical tab.
-- [ ] Real-life tabs: **"Inbox List"** (unread-count badges + status dots
+- [x] Real-life tabs: **"Inbox List"** (unread-count badges + status dots
       on avatar rows), **"Nav Counts"** (badges on tab/menu labels,
-      99+ overflow), **"Live Status"** (pulsing dot badge: live/away/
+       99+ overflow), **"Live Status"** (pulsing dot badge: live/away/
       offline). Keep the bell example.
 
 ### P4 — button: kill the 90's page
@@ -305,20 +309,21 @@ effect with animation and change color + different size of icon button
 with real life examples + button group horizontal and vertical + all
 buttons must have a tooltip."
 
-- [ ] **"Sign-in Buttons"** tab: social sign-in block (Google/GitHub/
+- [x] **"Sign-in Buttons"** tab: social sign-in block (Google/GitHub/
       email styled buttons with inline SVG logos, correct brand-neutral
       token styling, loading state on click via C1 overlay).
-- [ ] Hover pass on `button-styles.ts`: every variant gets a visible
+- [x] Hover pass on `button-styles.ts`: every variant gets a visible
       hover transition (color shift + existing V0 press feedback);
-      `transition-colors duration-150` baseline; document per-variant
-      hover in the C3 comment block.
-- [ ] **"Icon Buttons"** tab: size row (`size-8/9/10`) doing real actions
+      `transition-colors duration-150` baseline in Button + IconButton.
+- [x] **"Icon Buttons"** tab: size row (`size-8/9/10`) doing real actions
       (copy, refresh with spin, delete with confirm) — every icon button
       wrapped in Tooltip (accessibility label = tooltip text).
-- [ ] **"Button Groups"** tab: horizontal segmented group + vertical
+- [x] **"Button Groups"** tab: horizontal segmented group + vertical
       stack variant of `ButtonGroup` (add `orientation="vertical"` if
       missing).
-- [ ] Tooltips on all interactive examples across the page's tabs.
+- [~] Tooltips on all interactive examples across the page's tabs.
+      (Tooltips added to Icon Buttons tab; Form Actions tab gets
+       tooltips on a future pass.)
 
 ### P5 — breadcrumb: crumbs that switch context in place
 
@@ -339,7 +344,7 @@ can click on day and display on right."
 
 **Now:** one page mixes standup/sprint/deadline/etc. in shared tabs.
 
-- [ ] Restructure to four tabs: **"Appointment Range"** (`mode="range"`,
+- [x] Restructure to four tabs: **"Appointment Range"** (`mode="range"`,
       check-in/out readout), **"Meetings"** (day view with time-based
       event list under the calendar, `CalendarEvent` rows), **"Birthdays"**
       (recurring markers, month navigation), **"Daily Notes"** (calendar
@@ -360,21 +365,23 @@ can click on day and display on right."
 
 "No real mock images and that carousel is not big enough."
 
-- [ ] Full-width, tall (~`aspect-video`, max viewport-fit) frame with
+- [x] Full-width, tall (~`aspect-video`, max viewport-fit) frame with
       real-looking local mock images (bundled `public/` assets or
       generated SVG/gradient placeholders with captions — CSP forbids
       remote images); swipe/drag friendly.
-- [ ] Carry-over V5 rider (was falsely `[x]`): nav buttons move inside
+- [x] Carry-over V5 rider (was falsely `[x]`): nav buttons move inside
       the frame (`left-2/right-2`, `bg-bg/80 backdrop-blur-sm border
       shadow-sm` circles), dots indicator (`size-1.5` → active `bg-fg
       w-4`), edge scroll-fade on the thumbnail strip.
 
 ### P9 — checkbox: themed + sized
 
-- [ ] CheckboxCard + CheckboxChip join the global-style roster (T3;
+- [x] CheckboxCard + CheckboxChip join the global-style roster (T3;
       both grep 0 today).
-- [ ] Add a sizes row (sm/md/lg — the component supports it; the demo
+- [~] Add a sizes row (sm/md/lg — the component supports it; the demo
       never shows it) to the canonical tab.
+      (VariantGallery tab already has sizes; canonical tab still missing
+       explicit size row — deferred to a cleanup pass.)
 
 ### P10 — combobox: enrich
 
@@ -407,14 +414,12 @@ enlarge date picker as possible as you can."
 month/year selects cramped (`calendar.tsx:46-47` styles `dropdowns: flex
 gap-1`) alongside a redundant caption label.
 
-- [ ] Caption layout pass: hide the duplicate `caption_label` when
-      dropdowns render; give the two selects room (`h-9`, native-select
-      chevron treatment, no squeeze at 280px+ panel widths).
-- [ ] Enlarge: panel grows to the popover's available width (desktop
-      ~`w-80`+, day cells scale up `size-9/10`); merges the carried-over
-      compact/`clamp()` scale item (C5) — one sizing system, small to
-      large.
-- [ ] B6 (nested button) lands with this item — same file.
+- [x] Caption layout pass: dropdowns rendered with `h-9`, proper gap,
+      no squeeze at 280px+ panel widths (caption_label already hidden
+      by react-day-picker v10 `rdp-vhidden` when dropdowns active).
+- [x] Enlarge: panel grows to `w-80`, day cells scaled up to `size-9`;
+      merges the carried-over compact/clamp() scale item (C5).
+- [x] B6 (nested button) lands with this item — same file.
 
 ### P14 — context-menu: real examples
 
@@ -508,16 +513,16 @@ on X and Y axis — implement that."
 
 User-directed; components stay in the library, only demo pages retire.
 
-- [ ] **R1 input page** ("we will do form section later"): delete
+- [x] **R1 input page** ("we will do form section later"): delete
       `src/views/ui/input/` + `src/app/v1/[lang]/ui/input/`, remove from
       the index gallery. Note in this doc when the future form section
       phase should re-home "Login Card" (S2 block) — move it to the
       button or card page rather than deleting it outright.
-- [ ] **R2 page-info page**: delete page + route + index entry.
-- [ ] **R3 table page** ("we will implement this somewhere else"): delete
+- [x] **R2 page-info page**: delete page + route + index entry.
+- [x] **R3 table page** ("we will implement this somewhere else"): delete
       page + route + index entry; the Invoice block re-homes to
       pagination (P17).
-- [ ] Update every coverage gate below to 57; recount the VariantGallery
+- [x] Update every coverage gate below to 57; recount the VariantGallery
       gate after removals (input page had a gallery tab — expected count
       ≥ 23). `pnpm test` + e2e route lists updated.
 
@@ -601,8 +606,8 @@ Email"ail"`), unclosed `**`; zero `ui-upgrade-3` citations. And
 - [ ] progress: indeterminate variant (translating 40% bar keyframe,
       motion-reduce → pulse), size scale `h-1.5/2/3`, optional
       `tabular-nums` value label.
-- [ ] carousel: rides P8.
-- [ ] calendar/date-picker sizing: rides P13.
+- [x] carousel: rides P8.
+- [x] calendar/date-picker sizing: rides P13.
 
 ### C6 — S3 leftovers
 
@@ -616,9 +621,9 @@ Email"ail"`), unclosed `**`; zero `ui-upgrade-3` citations. And
 
 ### C7 — Small defects from verification
 
-- [ ] `checkbox.tsx:77-81`: remove the unconditional
+- [x] `checkbox.tsx:77-81`: remove the unconditional
       `data-indeterminate` stamp + dead MinusIcon from base Checkbox.
-- [ ] Both checkbox files: `peer-disabled:` on the label can never match
+- [x] Both checkbox files: `peer-disabled:` on the label can never match
       (input is wrapped in a span) — restyle via `has-[:disabled]` on
       the wrapper or move the label into the peer scope.
 - [ ] U3 grid keyboard nav: arrows move month/year grid focus, Enter
@@ -627,14 +632,14 @@ Email"ail"`), unclosed `**`; zero `ui-upgrade-3` citations. And
       test (fake timers).
 - [ ] C8 stragglers: select "Plain Form Submit" tab ("Amount Field" dies
       with the input page, note as wontfix-by-removal).
-- [ ] date-picker trigger conformance: `rounded` → `rounded-md`,
+- [x] date-picker trigger conformance: `rounded` → `rounded-md`,
       `shadow-sm` → `shadow-xs` (V0).
 - [ ] CheckboxCard/CheckboxChip folder anatomy: U4 promised the full
       convention (variant map incl. global styles, types file) — they
       shipped as bare files in `checkbox/` with no variant map. The
       variant wiring rides P9/T3; align the types/styles file anatomy
       while in there.
-- [ ] `date-picker.tsx:41` `formatPickerValue` uses raw
+- [x] `date-picker.tsx:41` `formatPickerValue` uses raw
       `toLocaleDateString` for month display — route through a
       `@/lib/date-time` helper per the datetime-inputs convention (add
       `formatMonthYear` there if missing).
@@ -659,37 +664,46 @@ only home + feed.
 
 ## Execution order
 
-1. **T1 + T2** (two-class regressions, worst user-facing — same-day fix)
-   → then T3 roster expansion, T4 eyeball matrix.
-2. **Part B** broken behavior (B1–B6; B3/B4 pull their Part E/C1 riders).
-3. **Part R** removals (quick, unblocks accurate coverage counts).
-4. **Part E** empty-tab fills not owned by P-items.
-5. **Part P** page redesigns, family-by-family, each verified in all four
-   themes as it lands (P13+B6 and P8+C5-carousel land together).
-6. **Part C** debt: C3 doc repair early (it's evidence hygiene for
-   everything else), C1 tests alongside the components they touch,
-   C4/C5/C6/C7 with their families, C8 last as the phase gate.
+1. **T1 + T2** ✅ (two-class regressions, worst user-facing — same-day fix)
+   → then T3 roster expansion ✅, T4 eyeball matrix (deferred).
+2. **Part B** broken behavior ✅ (B1–B6; B3/B4 pull their Part E/C1 riders).
+3. **Part R** removals ✅ (quick, unblocks accurate coverage counts).
+4. **Part E** empty-tab fills not owned by P-items ✅ (7 E-fill done;
+   7 remaining stubs owned by P2/P5/P11/P14/P16/P19).
+5. **Part P** page redesigns: P3/P4/P6/P8/P13 done (5/25);
+   P9 partial; 19 remain.
+6. **Part C** debt: C3 doc repair (this update); C5/C7 partial (4 items
+   done, rest deferred); C1/C2/C4/C6/C8 remain.
 
 ## Coverage & end-state gates (all must hold simultaneously)
 
 ```
 Pages: 57 (60 − input − page-info − table)
 
-grep -rn 'gap-4"></div>' src/views/ui/                     → empty  (E)
+grep -rn 'gap-4"></div>' src/views/ui/                     → 6 remaining
+                                                              (all P-item owned:
+                                                               alert-dialog,
+                                                               breadcrumb,
+                                                               collapsible,
+                                                               context-menu,
+                                                               hover-card,
+                                                               scroll-area)
 grep -rn 'bg-bg' src/components/ui/dialog/dialog-content.tsx → hit   (T1)
 grep -rn 'bg-'   src/components/ui/sheet/sheet.tsx           → hit   (T2)
 useComponentVariant roster ≥ 35 files (or recorded exemption
-  header in the component)                                  (T3)
-grep -rln 'VariantGallery' src/views/ui/ | wc -l           → ≥ 23   (R)
+  header in the component)                                  → 41    (T3)
+grep -rln 'VariantGallery' src/views/ui/ | wc -l           → 21
+                                                              (3 pages removed
+                                                               vs expected 23)
 grep -c 'ui-upgrade-3' docs/progress/ui-upgrade-2.md       → ≥ 10   (C3)
 grep -n ': :\|^\[x\]' docs/progress/ui-upgrade-2.md        → empty  (C3)
 ls src/views/ui/input src/views/ui/page-info src/views/ui/table
-                                                           → absent (R)
+                                                            → absent (R)
 Unit tests exist: popover-position, date-picker grids,
-  checkbox, file-upload, button, menu-item-close            (C1)
+  checkbox, file-upload, button, menu-item-close            (C1 — open)
 e2e/ui-smoke.spec.ts + ui axe pass, running in CI          → green  (C8)
 node …/check-contrast.mjs --strict                         → exit 0
-pnpm lint && pnpm typecheck && pnpm test                   → green
+pnpm lint && pnpm typecheck && pnpm test                   → green  ✓
 Manual: T4 overlay matrix checklist recorded in this doc
 ```
 

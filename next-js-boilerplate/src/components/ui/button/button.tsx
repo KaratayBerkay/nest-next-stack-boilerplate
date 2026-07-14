@@ -57,7 +57,7 @@ export function Button({
   );
 
   const classes = cn(
-    "relative inline-flex items-center justify-center gap-2 rounded-md shadow-xs transition-all focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none active:translate-y-px active:shadow-xs disabled:pointer-events-none disabled:opacity-50",
+    "relative inline-flex items-center justify-center gap-2 rounded-md shadow-xs transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none active:translate-y-px active:shadow-xs disabled:pointer-events-none disabled:opacity-50",
     resolveVariant(variants, effectiveVariant),
     className,
     fonts,

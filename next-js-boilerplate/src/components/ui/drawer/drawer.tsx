@@ -4,6 +4,14 @@
 import { forwardRef } from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
+
+const drawerVariants = {
+  ...globalStyleVariants,
+  default: "border-border bg-bg text-fg",
+};
 
 export const Drawer = DrawerPrimitive.Root;
 export const DrawerTrigger = DrawerPrimitive.Trigger;
@@ -11,24 +19,27 @@ export const DrawerClose = DrawerPrimitive.Close;
 
 export const DrawerContent = forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <DrawerPrimitive.Portal>
-    <DrawerPrimitive.Overlay className="fixed inset-0 z-40 bg-overlay/50" />
-    <DrawerPrimitive.Content
-      ref={ref}
-      className={cn(
-        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-2xl border px-4 pb-6",
-        "border-border bg-bg text-fg",
-        className,
-      )}
-      {...props}
-    >
-      <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-border" />
-      <div className="pointer-events-auto">{children}</div>
-    </DrawerPrimitive.Content>
-  </DrawerPrimitive.Portal>
-));
+  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content> & { variant?: string }
+>(({ className, children, variant, ...props }, ref) => {
+  const effectiveVariant = useComponentVariant(variant);
+  return (
+    <DrawerPrimitive.Portal>
+      <DrawerPrimitive.Overlay className="fixed inset-0 z-40 bg-overlay/50" />
+      <DrawerPrimitive.Content
+        ref={ref}
+        className={cn(
+          "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-2xl border px-4 pb-6",
+          resolveVariant(drawerVariants, effectiveVariant),
+          className,
+        )}
+        {...props}
+      >
+        <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-border" />
+        <div className="pointer-events-auto">{children}</div>
+      </DrawerPrimitive.Content>
+    </DrawerPrimitive.Portal>
+  );
+});
 DrawerContent.displayName = "DrawerContent";
 
 export const DrawerHeader = forwardRef<

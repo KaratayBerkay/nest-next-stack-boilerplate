@@ -11,6 +11,14 @@ import {
   Close,
 } from "@radix-ui/react-dialog";
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
+
+const sheetVariants = {
+  ...globalStyleVariants,
+  default: "bg-bg border-border text-fg",
+};
 
 export const Sheet = Root;
 export const SheetTrigger = Trigger;
@@ -20,8 +28,10 @@ export const SheetContent = forwardRef<
   React.ElementRef<typeof Content>,
   React.ComponentPropsWithoutRef<typeof Content> & {
     side?: "top" | "bottom" | "left" | "right";
+    variant?: string;
   }
->(({ className, children, side = "right", ...props }, ref) => {
+>(({ className, children, side = "right", variant, ...props }, ref) => {
+  const effectiveVariant = useComponentVariant(variant);
 
   return (
     <Portal>
@@ -30,6 +40,7 @@ export const SheetContent = forwardRef<
         ref={ref}
         className={cn(
           "fixed z-50 gap-4 p-6 shadow-lg transition ease-in-out",
+          resolveVariant(sheetVariants, effectiveVariant),
           side === "top" &&
             "data-[state=open]:animate-fade-in-down inset-x-0 top-0 border-b",
           side === "bottom" &&

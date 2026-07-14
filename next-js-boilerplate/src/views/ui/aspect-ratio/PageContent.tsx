@@ -27,7 +27,20 @@ const examples: UIExample[] = [
     title: "Square Grid",
     description: "1:1 gallery grid of items.",
     render: () => (
-      <div className="flex flex-col gap-4"></div>
+      <div className="flex flex-col gap-4">
+        <section className="flex flex-col gap-3">
+          <h3 className="text-lg font-semibold">Square Grid</h3>
+          <div className="grid grid-cols-3 gap-2">
+            {["A", "B", "C", "D", "E", "F"].map((letter) => (
+              <AspectRatio key={letter} ratio={1} className="bg-surface rounded-md">
+                <div className="text-muted flex h-full items-center justify-center text-sm font-medium">
+                  {letter}
+                </div>
+              </AspectRatio>
+            ))}
+          </div>
+        </section>
+      </div>
     ),
   },
 ];

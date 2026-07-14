@@ -1,6 +1,9 @@
 "use client";
 
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import {
   useEffect,
   useRef,
@@ -28,7 +31,13 @@ function getPosition(rect: DOMRect, side: string) {
   }
 }
 
-export function TooltipContent({ children, className }: TooltipContentProps) {
+const tooltipVariants = {
+  ...globalStyleVariants,
+  default: "bg-fg text-bg",
+};
+
+export function TooltipContent({ children, className, variant }: TooltipContentProps) {
+  const effectiveVariant = useComponentVariant(variant);
   const { open, side, triggerRect, hide, isDesktop, tooltipId } = useTooltip();
   const mounted = useSyncExternalStore(
     () => () => {},
@@ -100,7 +109,7 @@ export function TooltipContent({ children, className }: TooltipContentProps) {
           className={cn(
             "tooltip-open relative",
             "rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap shadow-md",
-            "bg-fg text-bg",
+            resolveVariant(tooltipVariants, effectiveVariant),
             className,
           )}
         >

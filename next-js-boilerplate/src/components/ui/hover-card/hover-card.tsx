@@ -2,8 +2,14 @@
 import { forwardRef } from "react";
 import { Root, Trigger, Portal, Content } from "@radix-ui/react-hover-card";
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 
-const defaultStyles = "bg-bg border-border text-fg";
+const hoverCardVariants = {
+  ...globalStyleVariants,
+  default: "bg-bg border-border text-fg",
+};
 
 export const HoverCard = Root;
 export const HoverCardTrigger = Trigger;
@@ -12,8 +18,10 @@ export const HoverCardContent = forwardRef<
   React.ElementRef<typeof Content>,
   React.ComponentPropsWithoutRef<typeof Content> & {
     sideOffset?: number;
+    variant?: string;
   }
->(({ className, sideOffset = 4, ...props }, ref) => {
+>(({ className, sideOffset = 4, variant, ...props }, ref) => {
+  const effectiveVariant = useComponentVariant(variant);
   return (
     <Portal>
       <Content
@@ -21,7 +29,7 @@ export const HoverCardContent = forwardRef<
         sideOffset={sideOffset}
         className={cn(
           "z-50 w-72 rounded-lg border p-4 shadow-lg data-[state=open]:animate-scale-in",
-          defaultStyles,
+          resolveVariant(hoverCardVariants, effectiveVariant),
           className,
         )}
         {...props}

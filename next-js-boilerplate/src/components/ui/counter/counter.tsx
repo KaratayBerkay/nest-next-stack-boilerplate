@@ -2,7 +2,15 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { CounterProps } from "@/types/ui/Counter-types";
+
+const counterVariants = {
+  ...globalStyleVariants,
+  default: "border-border",
+};
 
 export function Counter({
   label,
@@ -11,8 +19,10 @@ export function Counter({
   step = 1,
   value: controlledValue,
   onChange,
+  variant,
   className,
 }: CounterProps) {
+  const effectiveVariant = useComponentVariant(variant);
   const [internalValue, setInternalValue] = useState(0);
   const value = controlledValue ?? internalValue;
 
@@ -26,7 +36,7 @@ export function Counter({
   };
 
   return (
-    <div className={cn("inline-flex h-9 items-stretch rounded-md border border-border divide-x divide-border", className)}>
+    <div className={cn("inline-flex h-9 items-stretch rounded-md border divide-x", resolveVariant(counterVariants, effectiveVariant), className)}>
       <button
         type="button"
         aria-label={`Decrease ${label}`}

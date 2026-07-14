@@ -2,6 +2,10 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { Counter } from "./counter";
 
+vi.mock("@/hooks/useComponentVariant", () => ({
+  useComponentVariant: () => "default",
+}));
+
 describe("Counter", () => {
   it("increments and decrements value", () => {
     render(<Counter label="qty" />);
