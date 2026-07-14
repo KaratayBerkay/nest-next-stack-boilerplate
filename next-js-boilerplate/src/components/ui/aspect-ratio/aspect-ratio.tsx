@@ -1,3 +1,4 @@
+// Exempt from global style system — structural/utility component with no styleable surface.
 "use client";
 import { Root } from "@radix-ui/react-aspect-ratio";
 import { cn } from "@/lib/cn";

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/cn";
 import { FileUpload } from "@/components/ui/FileUpload";
+import { useToast } from "@/components/ui/toast/use-toast";
 import type { ImageUploadProps } from "@/types/ui/ImageUpload-types";
 import type { UploadFile } from "@/types/ui/FileUpload-types";
 
@@ -16,6 +17,7 @@ export function ImageUpload({
   aspect = "square",
   className,
 }: ImageUploadProps) {
+  const { toast } = useToast();
   const revokeRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -89,6 +91,15 @@ export function ImageUpload({
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
+                  if (!file.type.startsWith("image/")) {
+                    toast({
+                      title: "Invalid file type",
+                      description: `Only images can be uploaded — got ${file.name}`,
+                      variant: "destructive",
+                    });
+                    e.target.value = "";
+                    return;
+                  }
                   const preview = URL.createObjectURL(file);
                   revokeRef.current.add(preview);
                   onChange([{ id: "avatar", file, progress: 0, status: "done", preview } as UploadFile]);

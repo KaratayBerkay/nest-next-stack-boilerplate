@@ -66,9 +66,15 @@ export function FileUpload({
             return file.type === type;
           });
           if (!mimeMatch) {
+            const acceptLabels = accept.split(",").map((t) => {
+              const trimmed = t.trim();
+              if (trimmed.endsWith("/*")) return trimmed.replace("/*", "s");
+              if (trimmed.startsWith(".")) return trimmed.slice(1).toUpperCase();
+              return trimmed;
+            });
             toast({
               title: "Invalid file type",
-              description: `Only images can be uploaded — got ${file.name}`,
+              description: `Only ${acceptLabels.join(", ")} can be uploaded — got ${file.name}`,
               variant: "destructive",
             });
             continue;

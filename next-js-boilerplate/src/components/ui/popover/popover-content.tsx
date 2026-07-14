@@ -5,7 +5,17 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useBreakpoint } from "@/hooks";
 import { usePopover } from "./popover";
-import type { PopoverContentProps } from "@/types/ui/Popover-types";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
+import type { PopoverContentProps as PopoverContentPropsOriginal } from "@/types/ui/Popover-types";
+
+type PopoverContentProps = Omit<PopoverContentPropsOriginal, "variant"> & { variant?: string };
+
+const popoverVariants = {
+  ...globalStyleVariants,
+  default: "bg-bg text-fg border-border",
+};
 
 export function PopoverContent({
   className,
@@ -14,8 +24,10 @@ export function PopoverContent({
   sideOffset = 8,
   initialFocus,
   title,
+  variant,
   ...props
-}: PopoverContentProps) {
+}: PopoverContentProps & { variant?: string }) {
+  const effectiveVariant = useComponentVariant(variant);
   const { open, close, triggerRef, contentId } = usePopover();
   const contentRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<{
@@ -123,8 +135,9 @@ export function PopoverContent({
         }
         className={cn(
           isDesktop
-            ? "bg-bg text-fg border-border z-50 min-w-[8rem] origin-top-right rounded-lg border p-4 shadow-lg animate-scale-in"
-            : "bg-bg animate-fade-in fixed inset-0 z-50 flex flex-col p-4",
+            ? "z-50 min-w-[8rem] origin-top-right rounded-lg border p-4 shadow-lg animate-scale-in"
+            : "animate-fade-in fixed inset-0 z-50 flex flex-col p-4",
+          resolveVariant(popoverVariants, effectiveVariant),
           className,
         )}
         {...props}

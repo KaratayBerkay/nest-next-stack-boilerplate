@@ -75,7 +75,7 @@ export function IndeterminateCheckbox({
   const showMinus = indeterminate;
 
   return (
-    <div className="inline-flex items-center gap-2">
+    <div className="inline-flex items-center gap-2 has-[:disabled]:opacity-50 has-[:disabled]:cursor-not-allowed">
       <span className="relative inline-flex shrink-0">
         <input
           ref={ref}
@@ -102,7 +102,7 @@ export function IndeterminateCheckbox({
         <label
           htmlFor={generatedId}
           className={cn(
-            "text-fg cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+            "text-fg cursor-pointer",
             fonts,
           )}
         >

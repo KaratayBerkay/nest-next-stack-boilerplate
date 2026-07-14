@@ -2,6 +2,14 @@
 import { forwardRef } from "react";
 import { Root, Trigger, Content } from "@radix-ui/react-collapsible";
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
+
+const collapsibleVariants = {
+  ...globalStyleVariants,
+  default: "hover:bg-surface-hover",
+};
 
 export const Collapsible = Root as React.FC<
   React.ComponentPropsWithoutRef<typeof Root>
@@ -9,10 +17,20 @@ export const Collapsible = Root as React.FC<
 
 export const CollapsibleTrigger = forwardRef<
   React.ElementRef<typeof Trigger>,
-  React.ComponentPropsWithoutRef<typeof Trigger>
->(({ className, ...props }, ref) => (
-  <Trigger ref={ref} className={cn(className)} {...props} />
-));
+  React.ComponentPropsWithoutRef<typeof Trigger> & { variant?: string }
+>(({ className, variant, ...props }, ref) => {
+  const effectiveVariant = useComponentVariant(variant);
+  return (
+    <Trigger
+      ref={ref}
+      className={cn(
+        resolveVariant(collapsibleVariants, effectiveVariant),
+        className,
+      )}
+      {...props}
+    />
+  );
+});
 CollapsibleTrigger.displayName = "CollapsibleTrigger";
 
 export const CollapsibleContent = forwardRef<

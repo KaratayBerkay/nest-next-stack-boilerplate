@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/Button";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/Tooltip";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useToast } from "@/components/ui/toast/use-toast";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
 import type { Variant, Size } from "@/components/ui/button-styles";
@@ -21,7 +22,6 @@ function handleSave(setSaving: Dispatch<SetStateAction<boolean>>) {
 
 function FormActionsTab() {
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
 
   return (
     <div className="flex flex-col gap-4">
@@ -60,25 +60,45 @@ function FormActionsTab() {
           <Button disabled>Disabled</Button>
         </div>
       </section>
+    </div>
+  );
+}
 
+function DestructiveFlowTab() {
+  const [deleting, setDeleting] = useState(false);
+  const { toast } = useToast();
+
+  return (
+    <div className="flex flex-col gap-4">
       <section className="flex flex-col gap-3">
         <h3 className="text-lg font-semibold">Destructive Flow</h3>
-        <ConfirmDialog
-          title="Delete Account"
-          description="This action cannot be undone."
-          confirmLabel="Delete"
-          cancelLabel="Cancel"
-          onConfirm={() => {
-            setDeleting(true);
-            setTimeout(() => setDeleting(false), 1500);
-          }}
-        >
-          {(open: () => void) => (
-            <Button variant="destructive" onClick={open} loading={deleting}>
-              {deleting ? "Deleting..." : "Delete Account"}
-            </Button>
-          )}
-        </ConfirmDialog>
+        <p className="text-muted text-sm">Click the button below to trigger a destructive action with confirmation.</p>
+        <div>
+          <ConfirmDialog
+            title="Delete Account"
+            description="This action cannot be undone. All your data will be permanently removed."
+            confirmLabel="Delete"
+            cancelLabel="Cancel"
+            onConfirm={() => {
+              setDeleting(true);
+              setTimeout(() => {
+                setDeleting(false);
+                toast({
+                  title: "Account deleted",
+                  description: "Your account has been deleted. This action can be undone for 30 seconds.",
+                  variant: "destructive",
+                  duration: 10000,
+                });
+              }, 1500);
+            }}
+          >
+            {(open: () => void) => (
+              <Button variant="destructive" onClick={open} loading={deleting}>
+                {deleting ? "Deleting..." : "Delete Account"}
+              </Button>
+            )}
+          </ConfirmDialog>
+        </div>
       </section>
     </div>
   );
@@ -323,6 +343,12 @@ export default function ButtonPage() {
       title: "Sign-in Buttons",
       description: "Social sign-in with Google, GitHub, and email with loading states.",
       render: () => <SignInButtonsTab />,
+    },
+    {
+      id: "destructive-flow",
+      title: "Destructive Flow",
+      description: "Destructive action with confirmation dialog and undoable toast.",
+      render: () => <DestructiveFlowTab />,
     },
     {
       id: "icon-buttons",

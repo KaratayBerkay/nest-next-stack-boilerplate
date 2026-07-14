@@ -1,3 +1,4 @@
+// Exempt from global style system — structural/utility component with no styleable surface.
 import { cn } from "@/lib/cn";
 import { fontClasses } from "@/lib/font-classes";
 import type { SeparatorProps } from "@/types/ui/Separator-types";

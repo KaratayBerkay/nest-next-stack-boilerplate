@@ -1,5 +1,13 @@
 import { cn } from "@/lib/cn";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { forwardRef } from "react";
+
+const breadcrumbVariants = {
+  ...globalStyleVariants,
+  default: "text-muted",
+};
 
 export const Breadcrumb = forwardRef<
   HTMLElement,
@@ -11,17 +19,21 @@ Breadcrumb.displayName = "Breadcrumb";
 
 export const BreadcrumbList = forwardRef<
   HTMLOListElement,
-  React.ComponentPropsWithoutRef<"ol">
->(({ className, ...props }, ref) => (
-  <ol
-    ref={ref}
-    className={cn(
-      "text-muted flex flex-wrap items-center gap-1.5 text-sm break-words sm:gap-2.5",
-      className,
-    )}
-    {...props}
-  />
-));
+  React.ComponentPropsWithoutRef<"ol"> & { variant?: string }
+>(({ className, variant, ...props }, ref) => {
+  const effectiveVariant = useComponentVariant(variant);
+  return (
+    <ol
+      ref={ref}
+      className={cn(
+        "flex flex-wrap items-center gap-1.5 text-sm break-words sm:gap-2.5",
+        resolveVariant(breadcrumbVariants, effectiveVariant),
+        className,
+      )}
+      {...props}
+    />
+  );
+});
 BreadcrumbList.displayName = "BreadcrumbList";
 
 export const BreadcrumbItem = forwardRef<

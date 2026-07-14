@@ -5,16 +5,24 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useBreakpoint } from "@/hooks";
 import { useDropdownMenuContext } from "./dropdown-menu";
+import { resolveVariant } from "@/lib/resolve-variant";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { DropdownMenuContentProps } from "@/types/ui/DropdownMenu-types";
 
-const defaultStyles = "bg-bg border-border text-fg";
+const dropdownVariants = {
+  ...globalStyleVariants,
+  default: "bg-bg border-border text-fg",
+};
 
 export function DropdownMenuContent({
   className,
   children,
   onKeyDown,
+  variant,
   ...props
-}: DropdownMenuContentProps) {
+}: DropdownMenuContentProps & { variant?: string }) {
+  const effectiveVariant = useComponentVariant(variant);
   const { open, setOpen, triggerRef } = useDropdownMenuContext();
   const contentRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
@@ -116,8 +124,8 @@ export function DropdownMenuContent({
         className={cn(
           isDesktop
             ? "z-50 min-w-44 origin-top-right rounded-xl border p-1 shadow-lg"
-            : "bg-bg animate-fade-in fixed inset-0 z-50 flex flex-col p-4",
-          defaultStyles,
+            : "animate-fade-in fixed inset-0 z-50 flex flex-col p-4",
+          resolveVariant(dropdownVariants, effectiveVariant),
           className,
         )}
         {...props}
