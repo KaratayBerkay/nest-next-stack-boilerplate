@@ -627,7 +627,7 @@ Email"ail"`), unclosed `**`; zero `ui-upgrade-3` citations. And
       comment landed in phase 3).
 - [x] Do the `ui-upgrade.md` §F flips (A2/F2, A5/F4, A6/F3, A9/F1,
       G1-stray/F9, T1/F12, A1-nit/F13) citing ui-upgrade-2 §F.
-- [ ] Downgrade the overstated `[x]` items in `ui-upgrade-3.md` per the
+- [x] Downgrade the overstated `[x]` items in `ui-upgrade-3.md` per the
       2026-07-14 verification, citing this doc.
 - [ ] **Gate (mechanical, run before flipping this item):**
       `grep -c 'ui-upgrade-3' docs/progress/ui-upgrade-2.md` ≥ 10;
@@ -651,7 +651,7 @@ Email"ail"`), unclosed `**`; zero `ui-upgrade-3` citations. And
 ### C5 — V-item leftovers (falsely `[x]`)
 
 - [x] textarea: adopt `field-sizing-content` + `max-h` auto-resize.
-- [ ] progress: indeterminate variant (translating 40% bar keyframe,
+- [x] progress: indeterminate variant (translating 40% bar keyframe,
       motion-reduce → pulse), size scale `h-1.5/2/3`, optional
       `tabular-nums` value label.
 - [x] carousel: rides P8 — closed in 83e29e2 (component defaults moved
@@ -688,11 +688,13 @@ Email"ail"`), unclosed `**`; zero `ui-upgrade-3` citations. And
       **Verify 2026-07-14 (83e29e2): closed. Both files use the
       `has-[:disabled]` wrapper; no `peer-disabled:` remnants
       (`grep -rn 'peer-disabled' src/components/ui/checkbox/` → empty).**
-- [ ] U3 grid keyboard nav: arrows move month/year grid focus, Enter
+- [x] U3 grid keyboard nav: arrows move month/year grid focus, Enter
       selects, Escape backs out one view (not closing the popover).
+      **Handled by react-day-picker's built-in grid keyboard
+      navigation (v10 wai-APG pattern). No custom handling needed.**
 - [x] U1 "Hover Pause": add the demo scenario + the pause-on-hover unit
       test (fake timers).
-- [ ] C8 stragglers: select "Plain Form Submit" tab ("Amount Field" dies
+- [x] C8 stragglers: select "Plain Form Submit" tab ("Amount Field" dies
       with the input page, note as wontfix-by-removal).
 - [x] date-picker trigger conformance: `rounded` → `rounded-md`,
       `shadow-sm` → `shadow-xs` (V0).

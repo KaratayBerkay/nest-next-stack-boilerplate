@@ -546,12 +546,15 @@ The audit found these cross-cutting inconsistencies (all verified
       tracking-widest`; label row `px-2 py-1.5 text-xs text-muted`;
       separator `-mx-1 my-1 h-px bg-border`. One shared
       `menu-item-styles.ts` consumed by all six so it can't drift again.
-- [x] **Shared mobile sheet treatment** — dropdown/select/popover mobile
+- [~] **Shared mobile sheet treatment** — dropdown/select/popover mobile
       branches currently go *fullscreen* with a "Menu" header
       (`popover-content.tsx:126` hardcodes the word); replace with a
       bottom-sheet presentation (`rounded-t-xl`, slide-up, drag-affordance
       bar, `pb-safe`), title supplied by prop (U2 rider). One shared
       component, three consumers.
+      **Downgraded 2026-07-14 (ui-upgrade-4 §C4): bottom-sheet styling
+      applied to all three mobile branches but not extracted into a
+      shared component.**
 - [x] **dialog** — rides C4 (DialogBody + pinning + scroll-fade); visual:
       close button `size-7 rounded-md hover:bg-surface-hover` (today
       `size-6 rounded-sm`); title `text-lg font-semibold tracking-tight`;
@@ -782,10 +785,13 @@ not packages):
       dropdown/select long lists, and the ui layout's main pane.
       Implement in `globals.css` next to the scrollbar-hiding block
       (`:358`), document in the tailwind-theming skill.
-- [x] **Empty-state pattern for every listy component** (shadcn `Empty`
+- [~] **Empty-state pattern for every listy component** (shadcn `Empty`
       is now the norm): our Empty component exists — sweep combobox
       ("no results"), command, table, file-upload to actually use it
       instead of ad-hoc muted text.
+      **Downgraded 2026-07-14 (ui-upgrade-4 §C6): scroll-fade + Empty
+      done in combobox/file-upload/pagination; table still uses ad-hoc
+      muted text — deferred.**
 - [x] **Spinner/loading consistency**: one Spinner component everywhere a
       busy state renders (button C1, file-upload rows, dialog submit) —
       no per-file inline SVG spinners (button.tsx:9-33 moves to the
@@ -801,17 +807,18 @@ not packages):
 
 ### S4 — Verification that survives (bring ui-upgrade Q2 forward)
 
-- [~] Playwright smoke (webapp-testing skill): walk all 60
+- [ ] Playwright smoke (webapp-testing skill): walk all 60
       `/v1/en/ui/<slug>` pages — page renders, no console errors, every
-      tab clickable. **Test file `e2e/ui-smoke.spec.ts` needs the Next.js
-      dev server running (port 3001) to execute; deferred to CI pipeline.**
-      Existing Playwright suite at `e2e/` covers broader app surfaces.
-- [~] axe pass per page (same run), gated in CI next to the contrast
+      tab clickable. **`e2e/ui-smoke.spec.ts` was never written (claims
+      "deferred to CI" but file does not exist). Tracked in ui-upgrade-4
+      §C8.**
+- [ ] axe pass per page (same run), gated in CI next to the contrast
       `--strict` step in `frontend-ci.yml`.
-      **Wired via `@axe-core/playwright` in `e2e/a11y.spec.ts`; same
-      CI-deferred note applies.**
-- [x] Visual eyeball checklist per family in light+dark — every S2 block
-      and V-gallery tab. Gate checks (lint/typecheck/test/grep) all pass.
+      **`e2e/a11y.spec.ts` covers only home + feed (2 pages), not "per
+      page". Tracked in ui-upgrade-4 §C8.**
+- [~] Visual eyeball checklist per family in light+dark — every S2 block
+      and V-gallery tab. **Gate cannot pass without smoke + axe. Tracked
+      in ui-upgrade-4 §C8.**
 
 ---
 
