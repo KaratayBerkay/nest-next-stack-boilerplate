@@ -946,9 +946,29 @@ body {
     transform: translateY(0);
   }
 }
+@keyframes progress-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  60% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
 
 @theme {
   --animate-fade-in: fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-fade-out: fade-out 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   --animate-fade-in-up: fade-in-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   --animate-fade-in-down: fade-in-down 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   --animate-fade-in-left: fade-in-left 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -967,6 +987,7 @@ body {
   --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --animate-shimmer: shimmer 1.5s infinite linear;
   --animate-stagger: stagger 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-progress-indeterminate: progress-indeterminate 1.5s ease-in-out infinite;
 }
 
 /* ── Stagger animation for lists ─────────────────────────────────── */

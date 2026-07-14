@@ -50,6 +50,15 @@ function TermsConsentTab() {
       </section>
 
       <section className="flex flex-col gap-3">
+        <h3 className="text-sm font-semibold text-fg">Sizes</h3>
+        <div className="flex flex-wrap items-center gap-4">
+          <Checkbox size="sm" label="Small" />
+          <Checkbox size="md" label="Medium" defaultChecked />
+          <Checkbox size="lg" label="Large" />
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
         <h3 className="text-sm font-semibold text-fg">With Label</h3>
         <Checkbox label="Accept terms and conditions" />
       </section>

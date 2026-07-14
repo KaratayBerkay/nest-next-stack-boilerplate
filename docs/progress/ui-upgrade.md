@@ -66,12 +66,10 @@ hover). Every `useComponentVariant` consumer has the same failure.
       Follow the `frontend-design` skill here: pick one signature look per
       style and keep it disciplined; validate all four against all four
       themes (the `tailwind-theming` skill + contrast script are the guard).
-- [~] Spread these into each `useComponentVariant` consumer's variant map
-      (`{ ...globalStyleVariants, default: …, primary: … }`) so lookup always
+- [x] Spread these into each `useComponentVariant` consumer's variant map
+      (`{ ...globalStyleVariants, default: …, primary: …, }`) so lookup always
       succeeds — starting with the 12 current consumers (G3 list).
-      *(verify 2026-07-13: 20 consumers wired, but date-picker — one of the
-      named 12 — uses no variant system at all today, so global styles skip
-      it entirely.)*
+      (fixed in ui-upgrade-2 §F9: DatePicker joined the variant system)
 - [x] Interim safety regardless: `?? variants.default` at every lookup site (G2).
 - [ ] Demo: extend the theme/style switcher demo page to render the style ×
       component matrix so regressions are visible.
@@ -214,14 +212,11 @@ fails `brand-fg` (**4.10**). theme-violet passes everything — use it as the
 reference for what "right" looks like.
 
 **How:**
-- [~] For dark themes, flip the strategy instead of nudging hexes: status
+- [x] For dark themes, flip the strategy instead of nudging hexes: status
       buttons/badges on dark backgrounds read better as *dark text on the
       lighter status color* — set `--success-fg: #052e16`-style deep shades
       (the violet theme's ≥7:1 pairs prove the approach in-repo).
-      *(verify 2026-07-13: theme-dark success/warning flipped — #052e16 /
-      #451a03, ratios 6.54 / 6.97 ✓ — and theme-violet passes everything;
-      but theme-dark `--error-fg` is still #ffffff (3.76) and `--info-fg`
-      #0c4a6e only reaches 4.42 — both large-text-only.)*
+      (fixed in ui-upgrade-2 §F12: theme-dark error/info flipped, theme-light success darkened, --strict wired to CI)
 - [x] For theme-light: darken `--info` toward `#0369a1` and `--warning`
       toward `#b45309` so white text clears 4.5.
 - [x] Ocean: raise `--muted`/`--muted-fg` darkness one step (currently 4.46 /
@@ -250,6 +245,7 @@ scroll-selected-into-view on open.
       prop is passed.
 - [x] Typeahead (accumulate printable keys ~500 ms, jump to match), Home/End,
       and `selectedEl.scrollIntoView({ block: "nearest" })` on open.
+      (fixed in ui-upgrade-2 §F13: case-insensitive matching)
 - [ ] `aria-activedescendant` on the listbox alternative to moving DOM focus —
       pick one model and note it in the demo page.
 
@@ -261,17 +257,12 @@ focus on open (`dropdown-menu/dropdown-menu-content.tsx:46-91`). Escape is a
 (dialog opened from a menu item) is on top; no typeahead/Home/End; focus does
 not return to the trigger on close.
 
-- [ ] Move Escape onto the menu element's own `onKeyDown` (it has focus
+- [x] Move Escape onto the menu element's own `onKeyDown` (it has focus
       anyway via roving items) or guard with a topmost-layer check.
-      *(verify 2026-07-13: not implemented — Escape is still a document-level
-      listener with no topmost guard, dropdown-menu-content.tsx:53-65; only
-      the focus-return half of this item landed.)*
-- [~] Focus the trigger on close (popover already does this —
+      (fixed in ui-upgrade-2 §F2)
+- [x] Focus the trigger on close (popover already does this —
       `popover-content.tsx:79` — copy the pattern).
-      *(verify 2026-07-13: Escape and outside-click return focus
-      (dropdown-menu-content.tsx:43,59); closing by selecting an item still
-      drops focus to `<body>` — dropdown-menu-item.tsx:21-34 calls
-      `setOpen(false)` without refocusing the trigger.)*
+      (fixed in ui-upgrade-2 §F2)
 - [ ] Typeahead + Home/End, same helper as A1 (extract
       `src/lib/roving-focus.ts` once, use in select/dropdown/menubar-adjacent
       code — three copies of querySelectorAll roving already exist:
@@ -328,10 +319,9 @@ the panel on open (keyboard users tab from the trigger *past* the open panel).
 
 - [x] `useId` on the content; `aria-controls` on the trigger; `role="dialog"`
       + `aria-label(ledby)` on content.
-- [~] Optional `initialFocus` ref prop; default: focus the panel container
+- [x] Optional `initialFocus` ref prop; default: focus the panel container
       (`tabIndex={-1}`).
-      *(verify 2026-07-13: default container focus ✓, popover-content.tsx:87-90
-      — desktop only; the `initialFocus` prop was not added.)*
+      (fixed in ui-upgrade-2 §F4)
 
 ### A6 — Tabs: finish the pattern (already 90% WAI-APG)
 
@@ -340,11 +330,8 @@ the panel on open (keyboard users tab from the trigger *past* the open panel).
 panel `aria-controls`/`aria-labelledby` id pairing; optional
 `orientation="vertical"` (ArrowUp/Down + `aria-orientation`).
 
-- [~] Add the three; done — this one is nearly finished.
-      *(verify 2026-07-13: Home/End ✓ (tabs-list.tsx:27-30); id pairing ✓ in
-      both directions (tabs-trigger.tsx:37-41 ↔ tabs-content.tsx:25-27);
-      `orientation` is accepted but never used (tabs.tsx:25, lint warns) —
-      no `aria-orientation`, no ArrowUp/Down handling.)*
+- [x] Add the three; done — this one is nearly finished.
+      (fixed in ui-upgrade-2 §F3: orientation implemented, lint warnings resolved)
 
 ### A7 — Toast: per-toast semantics and lifecycle control
 
@@ -379,16 +366,11 @@ panel `aria-controls`/`aria-labelledby` id pairing; optional
 error *message* element isn't part of the component, so nothing links it via
 `aria-describedby`; every form re-invents the message row.
 
-- [~] Accept `error?: string | boolean` + optional `description`; when
+- [x] Accept `error?: string | boolean` + optional `description`; when
       strings, render `<p id={…}>` rows and wire `aria-describedby`
       (message id + description id). Same for Textarea, InputOTP, Select,
       Combobox, DatePicker, TimeInput — one shared `FieldMessages` partial.
-      *(verify 2026-07-13: Input + Textarea only; InputOTP/Select/Combobox/
-      DatePicker/TimeInput unwired. **Defect:** `FieldMessages` renders its
-      `<p>` rows with no `id` attributes while `useFieldMessageIds` points
-      `aria-describedby` at `${id}-error`/`-description` — every reference
-      dangles (field-messages.tsx:30-47 vs input.tsx:32-40). The `<p>`s must
-      receive the same ids the hook mints.)*
+      (fixed in ui-upgrade-2 §F1: FieldMessages ids wired, 5 components adopted)
 - [x] This is 80% of a `Field` wrapper — see N1 before building it twice.
 
 ### A10 — Date & time (work with the `datetime-inputs` skill)

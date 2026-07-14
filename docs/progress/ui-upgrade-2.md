@@ -72,13 +72,16 @@ this was left half-finished.
       `FieldMessages` as the dumb renderer taking `errorId`/`descriptionId`
       props if splitting is preferred — either way the ids must land in the
       DOM. Drop the unused `cn` import.
+      (verified in ui-upgrade-3 §C3: progress-doc repair)
 - [x] Unit test: render Input with error+description, assert
       `aria-describedby` tokens each resolve to an element
       (`document.getElementById`), and that the error row has
       `role="alert"`.
+      (verified in ui-upgrade-3 §C3: progress-doc repair)
 - [x] Wire the five components the A9 claim named but never got: InputOTP,
       Select (messages under the trigger, `aria-describedby` on the
       trigger button), Combobox, DatePicker, TimeInput.
+      (verified in ui-upgrade-3 §C3: progress-doc repair)
 
 ### F2 — DropdownMenu: Escape scoping + focus return on item select (A2)
 
@@ -93,12 +96,15 @@ most common close path.
 - [x] Consolidate both document listeners into a single `onKeyDown` on the
       content element — menu items hold DOM focus, so Escape/arrows bubble
       to it natively; this *is* the scoping fix and deletes a listener.
+      (verified in ui-upgrade-3 §C3: progress-doc repair)
 - [x] Expose `closeAndFocusTrigger()` from the dropdown context; call it
       from item click/Enter/Space instead of bare `setOpen(false)`.
+      (verified in ui-upgrade-3 §C3: progress-doc repair)
 - [x] Same review for select-content: its keydown is also document-level
       (`select-content.tsx:130`) — same consolidation applies (items are
       focused there too).
-[x] **New defect (verify 2026-07-13): :** `DropdownMenuItem` and
+      (verified in ui-upgrade-3 §C3: progress-doc repair)
+- [ ] **New defect (verify 2026-07-13):** `DropdownMenuItem` and
       `DropdownMenuContent` define `onClick`/`onKeyDown` *before*
       `{...props}` (`dropdown-menu-item.tsx:21-41`), so a consumer-passed
       handler silently replaces the one that calls `closeAndFocusTrigger()`
@@ -117,9 +123,12 @@ no vertical arrow keys.
       `aria-orientation` + `flex-col` when vertical; `handleTabsKeyDown`
       maps ArrowUp/ArrowDown when vertical (Left/Right when horizontal),
       Home/End unchanged.
+      (verified in ui-upgrade-3 §C3: progress-doc repair)
 - [x] Implement `type` or delete it from TabsProps — an accepted-but-dead
       prop is API misinformation. Both lint warnings must disappear.
+      (verified in ui-upgrade-3 §C3: progress-doc repair)
 - [x] Demo: the "Vertical Settings" tab in the tabs page (D-matrix #33).
+      (verified in ui-upgrade-3 §C3: progress-doc repair)
 
 ### F4 — Popover: `initialFocus` prop (A5)
 
@@ -130,9 +139,11 @@ never added, and the focus effect skips mobile.
 - [x] `initialFocus?: React.RefObject<HTMLElement>` on PopoverContent;
       focus `initialFocus?.current ?? contentRef.current` on open; drop the
       `isDesktop` guard (the mobile fullscreen panel needs focus too).
+      (verified in ui-upgrade-3 §C3: progress-doc repair)
 - [x] While in the file: the desktop panel has **no background/text tokens**
       (`popover-content.tsx:116` — pre-existing; only mobile gets `bg-bg`).
       Add `bg-bg text-fg border-border` to the desktop branch.
+      (verified in ui-upgrade-3 §C3: progress-doc repair)
 
 ### F5 — Button: width-stable loading, `asChild`, shadow decision (V1)
 
@@ -140,18 +151,18 @@ never added, and the focus effect skips mobile.
 the button narrows while busy; no `asChild`; `hover:shadow-md` still global
 and undocumented (:29).
 
-[x] **Width-stable loading: keep children rendered `invisible` and overlay
+- [ ] Width-stable loading: keep children rendered `invisible` and overlay
       the spinner absolutely centered (grid-stack or relative/absolute) —
       no layout shift. **Verify 2026-07-13: not implemented — loading still
       swaps children for the spinner (`button.tsx:96-104`); the button
       narrows while busy, the exact bug this item describes.**
-[x] **asChild via a minimal Slot: : clone the single child, merge
+- [~] `asChild` via a minimal Slot: clone the single child, merge
       className/refs/handlers (the Radix pattern); demo with a
       link-that-looks-like-a-button. **Verify: cloneElement Slot with
       className merge shipped (`button.tsx:84-92`), but child refs/handlers
       are overridden rather than merged, and no `asChild` demo exists
       anywhere in `src/views/` (grep empty).**
-[x] **Decide the hover shadow: move `hover:shadow-md` out of the base into
+- [~] Decide the hover shadow: move `hover:shadow-md` out of the base into
       the variants that want it (primary/default), or keep global and
       document it with a comment in `button-styles.ts`. Either way the
       choice must be written down. **Verify: moved into `default` +
@@ -174,7 +185,7 @@ and undocumented (:29).
 **Now:** size prop / reduced-motion / scrim ✓; the whole dialog scrolls as
 one region (`dialog-content.tsx:118` `overflow-y-auto` on the `<dialog>`).
 
-[x] **Restructure: `<dialog>` becomes `flex flex-col overflow-hidden`;
+- [~] Restructure: `<dialog>` becomes `flex flex-col overflow-hidden`;
       DialogHeader/DialogFooter get `shrink-0`; a body wrapper gets
       `min-h-0 flex-1 overflow-y-auto`. Scrollbar is invisible app-wide, so
       the body must show a bottom fade or rely on content cues — prefer
@@ -186,7 +197,7 @@ one region (`dialog-content.tsx:118` `overflow-y-auto` on the `<dialog>`).
       (`dialog-content.tsx:126,152`). The scroll container sits *above*
       header/footer, so they scroll away with the content; no `min-h-0
       flex-1` body wrapper exists. Pinning is not achieved.**
-[x] **Demo: "Terms Scroll" tab (D-matrix #22) proves title and actions stay
+- [ ] Demo: "Terms Scroll" tab (D-matrix #22) proves title and actions stay
       pinned while the body pans. **Verify: no such tab — the dialog page
       ships only "Edit Profile" + "Size Scale".**
 
@@ -196,13 +207,10 @@ one region (`dialog-content.tsx:118` `overflow-y-auto` on the `<dialog>`).
 supports it and our `Drawer = DrawerPrimitive.Root` already passes it
 through).
 
-- [~] Demo tab "Snap Points" (D-matrix #26): `snapPoints={[0.35, 1]}` +
+- [x] Demo tab "Snap Points" (D-matrix #26): `snapPoints={[0.35, 1]}` +
       `activeSnapPoint` state readout. No component change needed — this is
       a demo-only item; add a doc comment on the re-export pointing at the
-      passthrough. **Verify 2026-07-13: demo tab shipped with snapPoints +
-      activeSnapPoint readout (`views/ui/drawer/PageContent.tsx:72-121`);
-      the doc comment on the re-export is missing (`drawer.tsx:6` is
-      bare).**
+      passthrough. (Fixed in ui-upgrade-3 §D1: drawer comment added.)
 
 ### F9 — DatePicker joins the variant system (G1/G3 stray)
 
@@ -223,7 +231,7 @@ native-select. The final roster was never written down.
 - [x] Wire the six — N/A: popover/dropdown/dialog content, toast, pagination,
       native-select are thin wrappers without variant maps; roster already
       complete at 18 consumers.
-[x] **Final roster (18 consumers, verified via `useComponentVariant` grep):
+- [~] Final roster (18 consumers, verified via `useComponentVariant` grep):
       alert, avatar, badge, button, icon-button, checkbox, combobox, date-picker,
       input, progress, select-trigger, skeleton, switch, tabs-trigger, textarea,
       time-input, toggle, toggle-group. Mirrored into `ui-components` SKILL.md.
@@ -237,7 +245,7 @@ native-select. The final roster was never written down.
 named examples: `button.tsx:22-24`, `date-picker.tsx:26-28`,
 `input.tsx:28-30`, `tabs.tsx:38-40`.
 
-[x] **Mechanical sweep of all 34; per-component defaults go through the
+- [~] Mechanical sweep of all 34; per-component defaults go through the
       second arg (`fontClasses(props, { fontSize: sizes[size].split(" ")[2] })`
       for button, same idea for input). Grep-gate:
       `grep -rln 'fontSize ||' src/components/ui/` must return empty.
@@ -271,7 +279,7 @@ option text (`select-content.tsx:117-121`) — Shift+letter never matches.
 - [x] `ui-components` SKILL.md claims the recipes define a `default` entry —
       `global-style-variants.ts` deliberately has no `default` key
       (components supply their own). Fix the sentence.
-[x] **When Part D's shared `ExampleTabs` lands, document the demo-page
+- [ ] When Part D's shared `ExampleTabs` lands, document the demo-page
       convention change in `ui-components` SKILL.md (the current "demo page
       showing every variant/size" wording becomes the D1 rules below).
       **Verify 2026-07-13: not done — SKILL.md still says "demo page …
@@ -356,7 +364,7 @@ The page *is* the component's showcase — **no meta-tabs**. Rules:
       `src/views/ui/<slug>/examples/<ExampleId>.tsx` — PageContent reduces
       to the `UIExample[]` array + `<ExampleTabs …/>`. Trivial stateless
       examples may inline in PageContent.
-[x] **Pilot migrations proving the model: **accordion** (the spec's seed)
+- [~] Pilot migrations proving the model: **accordion** (the spec's seed)
       and **date-picker**, reviewed before the batch runs. **Verify
       2026-07-13: accordion fully matches the model — 3 named tabs with the
       spec's exact description sentences, token-clean. date-picker ships
@@ -388,12 +396,12 @@ sentence in the panel).
 
 #### Actions
 
-[x] **button — "Form Actions"ons" (submit/cancel pair, loading submit
+- [~] **button** — "Form Actions" (submit/cancel pair, loading submit
       ⧗F5-width-stable); "Destructive Flow" (destructive button opening a
       confirm); "Icon Toolbar" (icon sizes/ghost in a toolbar row);
       "Variant Gallery". **Verify: ships "Form Actions" + "Icon Toolbar"
       only — no Destructive Flow, no Variant Gallery, no asChild demo.**
-[x] **toggle — "Formatting Toolbar"bar" (bold/italic/underline editor bar);
+- [~] **toggle** — "Formatting Toolbar" (bold/italic/underline editor bar);
       "Notification Mute" (single stateful toggle with label); "Variant
       Gallery" (⧗F6 sizes). **Verify: first two shipped; no Variant
       Gallery (F6 sizes are done, so it's not deferrable).**
@@ -409,7 +417,7 @@ sentence in the panel).
 
 #### Form inputs
 
-[x] **input — "Login Email"ail" (error + description wiring — dogfoods F1);
+- [~] **input** — "Login Email" (error + description wiring — dogfoods F1);
       "Search Field" (leftIcon + clearable); "Amount Field" (currency
       prefix, numeric inputMode); "Variant Gallery". **Verify: shell
       migration — tab 1 renders the entire old `InputDemo` (its own h2 +
@@ -440,7 +448,7 @@ sentence in the panel).
 - [x] **slider** — "Price Range" (two-thumb range with value readout);
       "Volume" (single thumb, icon, live %); "Stepped Rating" (discrete
       steps with marks).
-[x] **select — "Country & Dial Code"ode" (value readout); "Plain Form
+- [~] **select** — "Country & Dial Code" (value readout); "Plain Form
       Submit" (`name` prop inside a real `<form>`, shows submitted
       FormData — dogfoods A1); "Long List" (50 options; instruction line to
       try typeahead/Home/End ⧗F13). **Verify: shell migration — tab 1
@@ -450,7 +458,7 @@ sentence in the panel).
 - [x] **combobox** — "Assignee Picker" (people with initials avatars);
       "Country Search" (large filtered list); "Custom Filter"
       (⧗A3-filter-prop, fuzzy match).
-[x] **command — "Command Palette"tte" (⌘K opens dialog-hosted command,
+- [ ] **command** — "Command Palette" (⌘K opens dialog-hosted command,
       groups + shortcuts via Kbd); "Quick Actions" (inline list, no
       dialog). **Verify: not migrated — PageContent still renders the old
       `CommandDemo` with the old two-tab skeleton, no ExampleTabs.**
@@ -459,7 +467,7 @@ sentence in the panel).
 - [x] **calendar** — "Month with Events" (3/day cap + "+N more"
       ⧗V7-overflow); "Availability Window" (min/max + disabled weekends
       ⧗V7-passthrough); "Locale Week Start" (⧗V7-locale).
-[x] **date-picker — "Booking Range"nge" (check-in/check-out like a booking
+- [~] **date-picker** — "Booking Range" (check-in/check-out like a booking
       app — true `mode="range"` ⧗V7-range; until then two linked pickers
       where check-out min = check-in); "Card Expiry" (MM/YY month-year
       selection ⧗V7-format, value shown as `formatDate*` output); "Compact
@@ -472,7 +480,7 @@ sentence in the panel).
 
 #### Overlays
 
-[x] **dialog — "Edit Profile"ile" (form, footer actions pinned ⧗F7);
+- [~] **dialog** — "Edit Profile" (form, footer actions pinned ⧗F7);
       "Terms Scroll" (long body, sticky header/footer ⧗F7); "Size Scale"
       (sm/md/lg/full switcher); "Nested Confirm" (dialog → confirm-dialog,
       Escape order check — pairs with F2's layering theme). **Verify:
@@ -488,7 +496,7 @@ sentence in the panel).
 - [x] **drawer** — "Cart Summary" (items + total + CTA); "Snap Points"
       (peek/full with `activeSnapPoint` readout — F8); "Long Content"
       (drag-to-dismiss with inner pan).
-[x] **popover — "Inline Form"orm" (name-edit popover, `initialFocus` on the
+- [ ] **popover** — "Inline Form" (name-edit popover, `initialFocus` on the
       input — F4); "Profile Actions" (mini card + actions); "Hint Bubble"
       (help icon → short rich hint). **Verify: not migrated — PageContent
       still renders the old `PopoverDemo`; F4's `initialFocus` therefore
@@ -501,7 +509,7 @@ sentence in the panel).
       "Link Preview" (title/description/domain).
 - [x] **context-menu** — "File Row" (right-click rename/duplicate/delete);
       "Selection Actions" (right-click a text block).
-[x] **dropdown-menu — "Account Menu"enu" (avatar trigger, profile/settings/
+- [ ] **dropdown-menu** — "Account Menu" (avatar trigger, profile/settings/
       sign-out); "Row Overflow" (⋯ per table row); "Destructive Item"
       (delete with confirm — dogfoods F2 focus return). **Verify: not
       migrated — PageContent still renders the old `DropdownMenuDemo`
@@ -513,7 +521,7 @@ sentence in the panel).
 
 #### Navigation
 
-[x] **tabs — "Underline Nav"Nav" (underline variant); "Pill Filters" (pills
+- [~] **tabs** — "Underline Nav" (underline variant); "Pill Filters" (pills
       variant); "Vertical Settings" (orientation="vertical" — F3). Note:
       the demo system itself runs on Tabs — this page also documents
       ExampleTabs by construction. **Verify: "Underline Nav" + "Vertical
@@ -591,7 +599,7 @@ sentence in the panel).
 - [x] **spinner** — "Button Composition" (spinner inside V1 loading
       buttons, size-matched ⧗V6-sizes); "Loading Block" (centered pane
       state); "Size Scale".
-[x] **logo-spinner r** *(new page — G6 anatomy: move to
+- [~] **logo-spinner** *(new page — G6 anatomy: move to
       `logo-spinner/` + shim first)* — "Brand Splash" (full-pane);
       "Token Check" (must render via `text-brand` across all four themes —
       the demo is the regression test). **Verify: page + both tabs exist,

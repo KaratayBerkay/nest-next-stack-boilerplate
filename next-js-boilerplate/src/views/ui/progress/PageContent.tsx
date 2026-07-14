@@ -27,16 +27,24 @@ const examples: UIExample[] = [
   {
     id: "progress-examples",
     title: "Progress Examples",
-    description: "Progress bar with percentage label and indeterminate animation.",
+    description: "Progress bar with percentage label, indeterminate animation, and size scale.",
     render: () => (
       <div className="flex flex-col gap-8">
         <section className="flex flex-col gap-3">
-          <h3 className="text-lg font-semibold">Upload</h3>
-          <Progress value={60} className="max-w-sm" />
+          <h3 className="text-lg font-semibold">Determinate</h3>
+          <Progress value={60} showValueLabel className="max-w-sm" />
         </section>
         <section className="flex flex-col gap-3">
           <h3 className="text-lg font-semibold">Indeterminate</h3>
-          <Progress value={60} className="max-w-sm" />
+          <Progress indeterminate className="max-w-sm" />
+        </section>
+        <section className="flex flex-col gap-3">
+          <h3 className="text-lg font-semibold">Size Scale</h3>
+          <div className="flex w-full max-w-sm flex-col gap-3">
+            <Progress value={75} size="sm" showValueLabel />
+            <Progress value={50} size="md" showValueLabel />
+            <Progress value={90} size="lg" showValueLabel />
+          </div>
         </section>
       </div>
     ),

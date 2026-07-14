@@ -17,29 +17,43 @@ const trackVariants: Record<ProgressVariant, string> = {
   default: "bg-surface",
 };
 
+const sizeMap = {
+  sm: "h-1.5",
+  md: "h-2",
+  lg: "h-3",
+} as const;
+
 export const Progress = forwardRef<
   React.ElementRef<typeof Root>,
   ProgressProps
->(({ className, variant, value, ...props }, ref) => {
+>(({ className, variant, value, indeterminate, size = "md", showValueLabel, ...props }, ref) => {
   const effectiveVariant = useComponentVariant(variant);
   return (
-    <Root
-      ref={ref}
-      className={cn(
-        "relative h-2 w-full overflow-hidden rounded-full",
-        resolveVariant(trackVariants, effectiveVariant),
-        className,
-      )}
-      {...props}
-    >
-      <Indicator
+    <div className="flex items-center gap-2">
+      <Root
+        ref={ref}
         className={cn(
-          "h-full w-full flex-1 transition-transform duration-500 ease-out",
-          resolveVariant(barVariants, effectiveVariant),
+          "relative w-full overflow-hidden rounded-full motion-reduce:animate-none",
+          sizeMap[size],
+          indeterminate && "animate-pulse",
+          resolveVariant(trackVariants, effectiveVariant),
+          className,
         )}
-        style={{ transform: `translateX(-${100 - (value ?? 0)}%)` }}
-      />
-    </Root>
+        {...props}
+      >
+        <Indicator
+          className={cn(
+            "h-full w-full flex-1 transition-transform duration-500 ease-out",
+            indeterminate && "animate-progress-indeterminate",
+            resolveVariant(barVariants, effectiveVariant),
+          )}
+          style={indeterminate ? undefined : { transform: `translateX(-${100 - (value ?? 0)}%)` }}
+        />
+      </Root>
+      {showValueLabel && value !== undefined && !indeterminate && (
+        <span className="text-muted shrink-0 tabular-nums text-xs">{value}%</span>
+      )}
+    </div>
   );
 });
 Progress.displayName = "Progress";

@@ -298,14 +298,14 @@ acceptance (all four themes) and the viewport-fit constraint.
 reachable please try again in 30 sec … with a broken badge at left and a
 spinner then count 30 seconds to dismiss."
 
-- [ ] New tab **"Server Retry"**: trigger button → alert slides in pinned
+- [x] New tab **"Server Retry"**: trigger button → alert slides in pinned
       under the demo header (`animate-fade-in-up`, `position: sticky`
       inside the tab, not a toast): destructive soft-status Alert with a
       left error Badge (broken-link icon), title "Server not reachable",
       Spinner + live "Retrying in 30s…" countdown (tabular-nums,
       decrements per second, pause on hover — reuse the toast timer
       pattern), auto-dismiss (fade-out) at 0 with a "Retry now" action.
-- [ ] Global styles on alerts: the Variant Gallery tab must show
+- [x] Global styles on alerts: the Variant Gallery tab must show
       shiny/glass/neon/gradient alerts (rides T3 — alert is already a
       consumer; verify the gallery actually renders them).
 
@@ -365,7 +365,7 @@ buttons must have a tooltip."
 "A section in the middle that changes context when a breadcrumb is
 clicked, not direct to another page."
 
-- [ ] Fill "Simple Trail" (Part E) as **"Folder Explorer"**: breadcrumb
+- [x] Fill "Simple Trail" (Part E) as **"Folder Explorer"**: breadcrumb
       trail (Home / Projects / Website / Assets) above a content pane;
       clicking a crumb swaps the pane's mock folder listing in place
       (controlled state, no navigation), deeper items re-extend the
@@ -389,13 +389,13 @@ can click on day and display on right."
 
 ### P7 — card: read as cards, one example per tab
 
-- [ ] Bump default card presence so it reads as a card against the page
+- [x] Bump default card presence so it reads as a card against the page
       (`rounded-xl` ✓ + visible `shadow-sm`-tier elevation + border —
       adjust the V5 ladder note if `shadow-xs` proves too flat against
       `bg-surface` pages; record the decision).
-- [ ] Split "Card Examples" pile: one scenario per tab (profile card,
+- [x] Split "Card Examples" pile: one scenario per tab (profile card,
       stat card, media card, Pricing Tiers stays), each fitting viewport.
-- [ ] **R1 rider:** rebuild the deleted "Login Card" auth block as a tab
+- [x] **R1 rider:** rebuild the deleted "Login Card" auth block as a tab
       here (email+password Inputs, remember-me Checkbox, submit Button
       with C1 loading, F1 errors) — the input-page deletion removed the
       library's only auth block instead of re-homing it.
@@ -422,7 +422,7 @@ can click on day and display on right."
 
 - [x] CheckboxCard + CheckboxChip join the global-style roster (T3;
       both grep 0 today).
-- [~] Add a sizes row (sm/md/lg — the component supports it; the demo
+- [x] Add a sizes row (sm/md/lg — the component supports it; the demo
       never shows it) to the canonical tab.
       (VariantGallery tab already has sizes; canonical tab still missing
        explicit size row — deferred to a cleanup pass.)
@@ -436,7 +436,7 @@ can click on day and display on right."
 
 ### P11 — collapsible: fill and improve
 
-- [ ] Fill "Sidebar Groups" (Part E): nav sidebar with 3 collapsible
+- [x] Fill "Sidebar Groups" (Part E): nav sidebar with 3 collapsible
       sections (Files/Teams/Settings), chevron rotation, persisted
       open-state readout. Second scenario: FAQ "read more" inline
       collapse.
@@ -467,7 +467,7 @@ gap-1`) alongside a redundant caption label.
 
 ### P14 — context-menu: real examples
 
-- [ ] Fill "Selection Actions" (Part E): selectable text/file-row region
+- [x] Fill "Selection Actions" (Part E): selectable text/file-row region
       where right-click shows contextual actions for the selection
       (copy/share/delete with destructive item — dogfoods C5 handler
       composition). Keep "File Row"; add table-row context menu scenario.
@@ -487,10 +487,10 @@ animation enlarging, breathe a while."
 but no `transform-origin` per side — Radix's default origin makes it
 read as sliding in from the left.
 
-- [ ] Set `origin-[--radix-hover-card-content-transform-origin]` (Radix
+- [x] Set `origin-[--radix-hover-card-content-transform-origin]` (Radix
       CSS var) so the scale grows from the trigger; add a subtle breathe
       (~1.02 scale settle) keyframe on open, `motion-reduce:animate-none`.
-- [ ] Fill "Link Preview" (Part E): link with favicon-style icon, title,
+- [x] Fill "Link Preview" (Part E): link with favicon-style icon, title,
       description, domain row — the GitHub-profile-preview staple.
 
 ### P17 — pagination: real data, two paradigms
@@ -516,7 +516,7 @@ on scroll change pagination, 5 person on each page."
 **Now:** both tabs render the same bare `<LogoSpinner />` in an empty
 box (reported as "nothing in it").
 
-- [ ] Tabs: **"Route Transition"** (mock page shell that swaps content
+- [x] Tabs: **"Route Transition"** (mock page shell that swaps content
       behind a centered LogoSpinner overlay for 2s on button click),
       **"Data Pane"** (skeleton rows → LogoSpinner → loaded list
       sequence), **"Splash"** (full-pane brand splash with fade-out).
@@ -625,11 +625,11 @@ Email"ail"`), unclosed `**`; zero `ui-upgrade-3` citations. And
 `ui-upgrade.md` was never touched (0 citations; C9 bullet 1 falsely
 `[x]`).
 
-- [ ] Restore `ui-upgrade-2.md` from `git show 2166ffd` and re-apply the
+- [x] Restore `ui-upgrade-2.md` from `git show 2166ffd` and re-apply the
       flips by hand with `[x] … (fixed in ui-upgrade-3 §…)` citations;
       flip the last remaining `[~]` (Snap Points — its missing drawer
       comment landed in phase 3).
-- [ ] Do the `ui-upgrade.md` §F flips (A2/F2, A5/F4, A6/F3, A9/F1,
+- [x] Do the `ui-upgrade.md` §F flips (A2/F2, A5/F4, A6/F3, A9/F1,
       G1-stray/F9, T1/F12, A1-nit/F13) citing ui-upgrade-2 §F.
 - [ ] Downgrade the overstated `[x]` items in `ui-upgrade-3.md` per the
       2026-07-14 verification, citing this doc.

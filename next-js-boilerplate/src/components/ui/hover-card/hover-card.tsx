@@ -28,7 +28,7 @@ export const HoverCardContent = forwardRef<
         ref={ref}
         sideOffset={sideOffset}
         className={cn(
-          "z-50 w-72 rounded-lg border p-4 shadow-lg data-[state=open]:animate-scale-in",
+          "z-50 w-72 rounded-lg border p-4 shadow-lg data-[state=open]:animate-scale-in origin-[--radix-hover-card-content-transform-origin]",
           resolveVariant(hoverCardVariants, effectiveVariant),
           className,
         )}

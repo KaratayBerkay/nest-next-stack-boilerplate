@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { Spinner } from "@/components/ui/Spinner";
+import { cn } from "@/lib/cn";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
 import type { AlertVariant } from "@/types/ui/Alert-types";
@@ -197,6 +200,149 @@ function ExamplesTab() {
   );
 }
 
+function ServerRetryTab() {
+  const [status, setStatus] = useState<"idle" | "active" | "dismissing" | "dismissed">("idle");
+  const [countdown, setCountdown] = useState(30);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const remainingRef = useRef(30);
+  const startTimeRef = useRef(0);
+
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  const tick = useCallback(() => {
+    const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+    const remaining = Math.max(0, remainingRef.current - elapsed);
+    setCountdown(remaining);
+    if (remaining <= 0) {
+      clearTimer();
+      setStatus("dismissing");
+    }
+  }, [clearTimer]);
+
+  const startTimer = useCallback(() => {
+    remainingRef.current = 30;
+    startTimeRef.current = Date.now();
+    timerRef.current = setInterval(tick, 100);
+  }, [tick]);
+
+  const handleSimulate = useCallback(() => {
+    setStatus("active");
+    setCountdown(30);
+    startTimer();
+  }, [startTimer]);
+
+  const handleMouseEnter = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+    remainingRef.current = Math.max(0, remainingRef.current - elapsed);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    startTimeRef.current = Date.now();
+    timerRef.current = setInterval(tick, 100);
+  }, [tick]);
+
+  const handleRetry = useCallback(() => {
+    setStatus("active");
+    setCountdown(30);
+    startTimer();
+  }, [startTimer]);
+
+  useEffect(() => {
+    return () => clearTimer();
+  }, [clearTimer]);
+
+  return (
+    <div className="flex flex-col gap-6">
+      {status === "idle" && (
+        <div className="flex flex-col gap-3">
+          <p className="text-muted text-sm">
+            Click the button to simulate a server error.
+          </p>
+          <Button onClick={handleSimulate} variant="destructive" className="w-fit">
+            Simulate Server Error
+          </Button>
+        </div>
+      )}
+
+      {(status === "active" || status === "dismissing") && (
+        <div
+          className={cn(
+            "sticky top-0 z-10",
+            status === "active" && "animate-fade-in-up",
+            status === "dismissing" && "animate-fade-out",
+          )}
+          onAnimationEnd={() => {
+            if (status === "dismissing") {
+              setStatus("dismissed");
+            }
+          }}
+        >
+          <Alert
+            variant="destructive"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+          >
+            <div className="flex items-start gap-3">
+              <Badge variant="error" size="sm" className="mt-0.5 shrink-0">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                </svg>
+              </Badge>
+              <div className="flex-1 space-y-1">
+                <AlertTitle>Server not reachable</AlertTitle>
+                <div className="flex items-center gap-1.5">
+                  <Spinner size="xs" />
+                  <span className="tabular-nums text-sm">
+                    Retrying in {countdown}s…
+                  </span>
+                </div>
+                {status === "dismissing" && (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={handleRetry}
+                    className="h-auto p-0 text-xs font-medium"
+                  >
+                    Retry now
+                  </Button>
+                )}
+              </div>
+            </div>
+          </Alert>
+        </div>
+      )}
+
+      {status === "dismissed" && (
+        <div className="flex flex-col gap-3">
+          <p className="text-muted text-sm">Alert was auto-dismissed.</p>
+          <Button onClick={handleRetry} className="w-fit">
+            Retry now
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const examples: UIExample[] = [
   {
     id: "usage",
@@ -209,6 +355,12 @@ const examples: UIExample[] = [
     title: "Success Notice",
     description: "Success variant alert with auto icon.",
     render: () => <ExamplesTab />,
+  },
+  {
+    id: "server-retry",
+    title: "Server Retry",
+    description: "Destructive alert with countdown, sticky positioning, and auto-dismiss.",
+    render: () => <ServerRetryTab />,
   },
   {
     id: "variant-gallery",
