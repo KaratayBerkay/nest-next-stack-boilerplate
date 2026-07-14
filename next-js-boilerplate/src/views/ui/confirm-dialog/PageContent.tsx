@@ -1,8 +1,147 @@
 "use client";
 
+import { useState, type Dispatch, type SetStateAction } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogBody,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
+
+/* ── Typed Confirmation ── */
+
+function handleTypedInputChange(
+  e: React.ChangeEvent<HTMLInputElement>,
+  setInputValue: Dispatch<SetStateAction<string>>,
+) {
+  setInputValue(e.target.value);
+}
+
+function handleTypedCancel(
+  setOpen: Dispatch<SetStateAction<boolean>>,
+  setInputValue: Dispatch<SetStateAction<string>>,
+) {
+  setInputValue("");
+  setOpen(false);
+}
+
+function handleTypedDelete(
+  setOpen: Dispatch<SetStateAction<boolean>>,
+  setInputValue: Dispatch<SetStateAction<string>>,
+) {
+  setInputValue("");
+  setOpen(false);
+}
+
+function TypedConfirmationDemo() {
+  const [open, setOpen] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+  const isExactMatch = inputValue === "DELETE";
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <Button variant="destructive" onClick={() => setOpen(true)}>
+        Delete Account
+      </Button>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete Account</DialogTitle>
+          <DialogDescription>
+            This action is permanent and cannot be undone. Type{" "}
+            <strong>DELETE</strong> to confirm.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogBody>
+          <Input
+            value={inputValue}
+            onChange={(e) => handleTypedInputChange(e, setInputValue)}
+            placeholder='Type "DELETE" to confirm'
+          />
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => handleTypedCancel(setOpen, setInputValue)}>
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            disabled={!isExactMatch}
+            onClick={() => handleTypedDelete(setOpen, setInputValue)}
+          >
+            Delete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ── Async Confirm ── */
+
+function handleAsyncConfirm(
+  setLoading: Dispatch<SetStateAction<boolean>>,
+  setOpen: Dispatch<SetStateAction<boolean>>,
+) {
+  setLoading(true);
+  setTimeout(() => {
+    setLoading(false);
+    setOpen(false);
+  }, 2000);
+}
+
+function handleAsyncCancel(
+  setOpen: Dispatch<SetStateAction<boolean>>,
+) {
+  setOpen(false);
+}
+
+function AsyncConfirmDemo() {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(val) => {
+        if (!val) setLoading(false);
+        setOpen(val);
+      }}
+    >
+      <Button variant="primary" onClick={() => setOpen(true)}>
+        Open Dialog
+      </Button>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Confirm Action</DialogTitle>
+          <DialogDescription>
+            This action may take a moment. Click Confirm to proceed.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => handleAsyncCancel(setOpen)}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            loading={loading}
+            onClick={() => handleAsyncConfirm(setLoading, setOpen)}
+          >
+            Confirm
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ── Examples ── */
 
 const examples: UIExample[] = [
   {
@@ -49,6 +188,18 @@ const examples: UIExample[] = [
         )}
       </ConfirmDialog>
     ),
+  },
+  {
+    id: "typed-confirmation",
+    title: "Typed Confirmation",
+    description: "Requires typing DELETE to enable the destructive action.",
+    render: () => <TypedConfirmationDemo />,
+  },
+  {
+    id: "async-confirm",
+    title: "Async Confirm",
+    description: "Simulates an async operation with a loading spinner on the confirm button.",
+    render: () => <AsyncConfirmDemo />,
   },
 ];
 

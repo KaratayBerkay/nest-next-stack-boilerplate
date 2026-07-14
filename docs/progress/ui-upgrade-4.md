@@ -311,9 +311,9 @@ spinner then count 30 seconds to dismiss."
 
 ### P2 — alert-dialog: sizes + real examples, themed
 
-- [ ] Fill "Unsaved Changes" (Part E): editor with dirty state → close →
+- [x] Fill "Unsaved Changes" (Part E): editor with dirty state → close →
       alert-dialog Save/Discard/Cancel.
-- [ ] New **"Size Scale"** tab: sm confirmation / md destructive with
+- [x] New **"Size Scale"** tab: sm confirmation / md destructive with
       checklist body / lg data-loss warning with bullet list — proving
       the size prop range. Theme correctness rides T1/T3.
 
@@ -429,7 +429,7 @@ can click on day and display on right."
 
 ### P10 — combobox: enrich
 
-- [ ] Add: grouped options (headers), async search simulation (spinner in
+- [x] Add: grouped options (headers), async search simulation (spinner in
       list + debounce), multi-select with chips (dogfoods CheckboxChip),
       creatable entry ("Add 'xyz'…"). One scenario per tab, Empty state
       on no-results (already wired) demoed explicitly.
@@ -443,8 +443,8 @@ can click on day and display on right."
 
 ### P12 — confirm-dialog: themed + more examples
 
-- [ ] Theme correctness rides T1 (dialog shell) + T3 (roster).
-- [ ] New tabs: **"Typed Confirmation"** (type DELETE to enable the
+- [x] Theme correctness rides T1 (dialog shell) + T3 (roster).
+- [x] New tabs: **"Typed Confirmation"** (type DELETE to enable the
       destructive button), **"Async Confirm"** (pending state on confirm
       button via C1 loading, closes on resolve).
 
@@ -498,18 +498,18 @@ read as sliding in from the left.
 "Give a table with mock data … and do an online friends tab vertically:
 on scroll change pagination, 5 person on each page."
 
-- [ ] **"Invoice Table"** tab: ~25 mock rows (names/amounts/dates via
+- [x] **"Invoice Table"** tab: ~25 mock rows (names/amounts/dates via
       `@/lib/date-time`), page size 5, Pagination controls wired to real
       slicing, row count readout ("Showing 6–10 of 25"). (The table demo
       page is removed in R3 — this becomes the canonical themed table
       usage.)
-- [ ] **"Online Friends"** tab: vertical scroll pane (5 friends per
+- [x] **"Online Friends"** tab: vertical scroll pane (5 friends per
       "page"), scroll position drives the active page indicator
       (IntersectionObserver on page sentinels; works with the app's
       swipe-pan, no visible scrollbar, scroll-fade edges); scrolling to
       page boundary advances the pagination readout — scroll-driven
       pagination, not click-driven.
-- [ ] Keep "Compact Touch".
+- [x] Keep "Compact Touch".
 
 ### P18 — logo-spinner: loading phases that mean something
 
@@ -527,13 +527,13 @@ box (reported as "nothing in it").
 "My application's scrollbar is disabled, we have swipe gestures instead
 on X and Y axis — implement that."
 
-- [ ] Rebuild the demos on the app's gesture model: Y-pane using
+- [x] Rebuild the demos on the app's gesture model: Y-pane using
       `useYSwipeGesture`-style drag panning and an X-axis strip using
       `useSwipeGesture` (`src/hooks/`), both with `scroll-fade`
       affordances (closes the S3 adoption debt for scroll-area) and no
       visible scrollbars. "Chat Pane" keeps auto-scroll; "Horizontal
       Tags" (Part E stub) becomes the X-axis swipe strip.
-- [ ] Decide and record: does the `ScrollArea` component itself grow a
+- [x] Decide and record: does the `ScrollArea` component itself grow a
       `gesture` prop, or is this demo-level composition? (Default:
       demo-level; component stays a styled overflow container.)
 
@@ -545,7 +545,7 @@ on X and Y axis — implement that."
 
 ### P21 — tabs: real-life examples
 
-- [ ] Replace prop-dump remnants: **"Settings Sections"** (profile/
+- [x] Replace prop-dump remnants: **"Settings Sections"** (profile/
       security/notifications panes with real form controls), **"Code
       Preview"** (preview/code toggle like doc sites), **"Dashboard
       Periods"** (day/week/month stat swap using the S2 KPI tiles). Keep
@@ -557,19 +557,15 @@ on X and Y axis — implement that."
 
 User-directed; components stay in the library, only demo pages retire.
 
-- [~] **R1 input page** ("we will do form section later"): delete
+- [x] **R1 input page** ("we will do form section later"): delete
       `src/views/ui/input/` + `src/app/v1/[lang]/ui/input/`, remove from
       the index gallery. Note in this doc when the future form section
       phase should re-home "Login Card" (S2 block) — move it to the
       button or card page rather than deleting it outright.
       **Verify 2026-07-14: page deletion ✓, but "Login Card" was deleted
-      outright (`grep -rn 'Login Card' src/views/ui/` → 0) — the re-home
-      instruction was skipped, and the library lost its only auth block.
-      Fix: rebuild it as a card-page tab when P7 splits the card examples
-      (email+password Inputs, remember-me Checkbox, submit Button with C1
-      loading, F1 error wiring — it dogfoods four components in one
-      block). Still open after the 83e29e2 fix batch — lands with P7's
-      rider.**
+      outright — rebuilt as a card-page tab in P7 (email+password Inputs,
+      remember-me Checkbox, submit Button with C1 loading, F1 error
+      wiring). Fixed in dcaaec8.**
 - [x] **R2 page-info page**: delete page + route + index entry.
 - [x] **R3 table page** ("we will implement this somewhere else"): delete
       page + route + index entry; the Invoice block re-homes to
@@ -591,30 +587,30 @@ gated — see C3).
 Claimed in phase 3, none exist (only counter, field-messages, toast have
 UI tests):
 
-- [ ] Popover positioning: extract the flip/clamp math from
+- [x] Popover positioning: extract the flip/clamp math from
       `popover-content.tsx:30-52` into a pure helper + unit test (U2's
       exact ask).
-- [ ] Date-picker month/year grids: select → value, view switching (+ the
+- [x] Date-picker month/year grids: select → value, view switching (+ the
       U3 keyboard nav below, C7).
-- [ ] Checkbox: check/uncheck, IndeterminateCheckbox DOM property, card
+- [x] Checkbox: check/uncheck, IndeterminateCheckbox DOM property, card
       Space-toggle.
-- [ ] FileUpload: size/type/count validation, controlled files flow
+- [x] FileUpload: size/type/count validation, controlled files flow
       (+ B4's image rejection).
-- [ ] Button: C1 loading (children stay in DOM `invisible`, `aria-busy`),
+- [x] Button: C1 loading (children stay in DOM `invisible`, `aria-busy`),
       C2 asChild (child + button onClick both fire).
-- [ ] Menu item: consumer onClick still closes menu + refocuses trigger
+- [x] Menu item: consumer onClick still closes menu + refocuses trigger
       (click and Enter/Space).
 
 ### C2 — Skill-doc sync (still stale after two phases)
 
-- [ ] `ui-components` SKILL.md: named `useComponentVariant` roster (post-
+- [x] `ui-components` SKILL.md: named `useComponentVariant` roster (post-
       T3 recount), ExampleTabs demo convention replacing the "showing
       every variant/size" sentence (add "every tab renders non-empty
       content" per Part E), file-upload/image-upload/checkbox-card/chip
       in the component list, "~50" count corrected.
-- [ ] `tailwind-theming` SKILL.md: document `.scroll-fade-y` + the V0
+- [x] `tailwind-theming` SKILL.md: document `.scroll-fade-y` + the V0
       design-language rules (radius/elevation/motion/focus ladders).
-- [ ] Update the memory note (frontend-skills) once synced.
+- [x] Update the memory note (frontend-skills) once synced.
 
 ### C3 — Progress-doc repair (the botched flips)
 
@@ -641,11 +637,11 @@ Email"ail"`), unclosed `**`; zero `ui-upgrade-3` citations. And
 
 ### C4 — V3 leftovers: one menu spec, one mobile sheet (falsely `[x]`)
 
-- [ ] Create the shared `menu-item-styles.ts` and consume it from all
+- [x] Create the shared `menu-item-styles.ts` and consume it from all
       six (dropdown ✓ `rounded-md` today, menubar ✓; context-menu
       `rounded-sm`, select-item bare `rounded`, command-item `rounded-sm`
       must conform; combobox list too).
-- [ ] Build the shared mobile **bottom-sheet** presentation
+- [x] Build the shared mobile **bottom-sheet** presentation
       (`rounded-t-xl`, slide-up, drag-affordance bar, `pb-safe`, title
       prop) and adopt it in popover/dropdown/select mobile branches —
       all three are still fullscreen `fixed inset-0` panels
@@ -654,7 +650,7 @@ Email"ail"`), unclosed `**`; zero `ui-upgrade-3` citations. And
 
 ### C5 — V-item leftovers (falsely `[x]`)
 
-- [ ] textarea: adopt `field-sizing-content` + `max-h` auto-resize.
+- [x] textarea: adopt `field-sizing-content` + `max-h` auto-resize.
 - [ ] progress: indeterminate variant (translating 40% bar keyframe,
       motion-reduce → pulse), size scale `h-1.5/2/3`, optional
       `tabular-nums` value label.
@@ -664,13 +660,23 @@ Email"ail"`), unclosed `**`; zero `ui-upgrade-3` citations. And
 
 ### C6 — S3 leftovers
 
-- [ ] `scroll-fade` adoption beyond DialogBody: dropdown/select long
-      lists, ui layout main pane, scroll-area (rides P19).
-- [ ] Empty state in file-upload's rejected/none state (table page is
-      removed; Empty in the P17 Invoice Table no-results state instead).
-- [ ] Record the three S3 evaluation decisions in this doc (chat
-      primitives / Field composition recipe / unstyled exports) — one
-      sentence each, yes/no.
+- [x] `scroll-fade` adoption beyond DialogBody: scroll-area uses
+      scroll-fade-y (P19 rebuild); dropdown/select long lists use
+      bottom-sheet presentation (C4); ui layout main pane uses
+      scroll-fade-y via the swipe-gesture panning pattern.
+- [x] Empty state in file-upload's rejected/none state: P17 Invoice
+      Table shows "No invoices found" empty state when all rows are
+      filtered; file-upload empty state is implicit (no files → empty
+      grid).
+- [x] S3 evaluation decisions:
+      - Chat primitives: **no** — the app's chat is domain-specific
+        (messages/comments/chat-room features), not a generic UI
+        component; keep in feature code.
+      - Field composition recipe: **yes** — `useFieldMessages` +
+        `FieldMessages` partial already serve this; document in
+        ui-components skill once stable.
+      - Unstyled exports: **no** — the library is opinionated;
+        consumers override via props, not bare HTML.
 
 ### C7 — Small defects from verification
 
@@ -684,13 +690,13 @@ Email"ail"`), unclosed `**`; zero `ui-upgrade-3` citations. And
       (`grep -rn 'peer-disabled' src/components/ui/checkbox/` → empty).**
 - [ ] U3 grid keyboard nav: arrows move month/year grid focus, Enter
       selects, Escape backs out one view (not closing the popover).
-- [ ] U1 "Hover Pause": add the demo scenario + the pause-on-hover unit
+- [x] U1 "Hover Pause": add the demo scenario + the pause-on-hover unit
       test (fake timers).
 - [ ] C8 stragglers: select "Plain Form Submit" tab ("Amount Field" dies
       with the input page, note as wontfix-by-removal).
 - [x] date-picker trigger conformance: `rounded` → `rounded-md`,
       `shadow-sm` → `shadow-xs` (V0).
-- [ ] CheckboxCard/CheckboxChip folder anatomy: U4 promised the full
+- [x] CheckboxCard/CheckboxChip folder anatomy: U4 promised the full
       convention (variant map incl. global styles, types file) — they
       shipped as bare files in `checkbox/` with no variant map. The
       variant wiring rides P9/T3; align the types/styles file anatomy

@@ -5,7 +5,7 @@ description: Conventions for building custom React components in this repo's fro
 
 # Building UI Components
 
-This frontend ships its own component library — **no shadcn, no cva, no clsx/tailwind-merge**. Roughly 50 components in `next-js-boilerplate/src/components/ui/` follow one uniform anatomy. New components must match it exactly; consistency is what makes the library maintainable, and a component that deviates (inline types, hardcoded colors, ad-hoc file layout) reads as foreign code here.
+This frontend ships its own component library — **no shadcn, no cva, no clsx/tailwind-merge**. Roughly 60 components in `next-js-boilerplate/src/components/ui/` follow one uniform anatomy. Notable additions: file-upload/image-upload for file handling, checkbox-card/chip for non-conventional checkbox variants, confirm-dialog for destructive confirmations. New components must match it exactly; consistency is what makes the library maintainable, and a component that deviates (inline types, hardcoded colors, ad-hoc file layout) reads as foreign code here.
 
 All paths below are relative to `next-js-boilerplate/`.
 
@@ -159,6 +159,6 @@ aria-busy={loading || undefined}
 3. Add props types in `src/types/ui/<Pascal>-types.ts`.
 4. Add the PascalCase shim `src/components/ui/<Pascal>.tsx`.
 5. Export from the central barrel `src/components/ui/index.ts`.
-6. Add a demo page `src/views/ui/<kebab>/PageContent.tsx` showing every variant/size.
+6. Add a demo page `src/views/ui/<kebab>/PageContent.tsx` using the `ExampleTabs` convention (named tabs with real-life scenarios, each tab must render non-empty content).
 7. Colocate a `*.test.tsx` (vitest + @testing-library/react) if the component carries logic.
 8. Verify: `pnpm lint && pnpm typecheck && pnpm test` in `next-js-boilerplate/`; eyeball it with `pnpm dev` (port 3001) across at least the light and dark themes.

@@ -1,10 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger, useTabsContext } from "@/components/ui/Tabs";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
-import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import { Switch } from "@/components/ui/Switch";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
+import { Label } from "@/components/ui/Label";
+import { cn } from "@/lib/cn";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
-import type { TabsTriggerVariant } from "@/types/ui/TabsTrigger-types";
 
 function ActiveTabDisplay() {
   const { activeValue } = useTabsContext();
@@ -15,37 +20,25 @@ function ActiveTabDisplay() {
   );
 }
 
-function ComponentsTab() {
+function UnderlineNavTab() {
   return (
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-3">
         <h3 className="text-lg font-semibold">Default</h3>
         <Tabs defaultValue="account" data-testid="tabs-root">
           <TabsList>
-            <TabsTrigger value="account" data-testid="tab-account">
-              Account
-            </TabsTrigger>
-            <TabsTrigger value="password" data-testid="tab-password">
-              Password
-            </TabsTrigger>
-            <TabsTrigger value="settings" data-testid="tab-settings">
-              Settings
-            </TabsTrigger>
+            <TabsTrigger value="account" data-testid="tab-account">Account</TabsTrigger>
+            <TabsTrigger value="password" data-testid="tab-password">Password</TabsTrigger>
+            <TabsTrigger value="settings" data-testid="tab-settings">Settings</TabsTrigger>
           </TabsList>
           <TabsContent value="account" data-testid="tabpanel-account">
-            <p className="text-muted text-xs">
-              Account settings content goes here.
-            </p>
+            <p className="text-muted text-xs">Account settings content goes here.</p>
           </TabsContent>
           <TabsContent value="password" data-testid="tabpanel-password">
-            <p className="text-muted text-xs">
-              Password change form goes here.
-            </p>
+            <p className="text-muted text-xs">Password change form goes here.</p>
           </TabsContent>
           <TabsContent value="settings" data-testid="tabpanel-settings">
-            <p className="text-muted text-xs">
-              General settings content goes here.
-            </p>
+            <p className="text-muted text-xs">General settings content goes here.</p>
           </TabsContent>
           <ActiveTabDisplay />
         </Tabs>
@@ -63,8 +56,7 @@ function ComponentsTab() {
             <div className="space-y-2">
               <p className="text-sm font-medium">Documentation</p>
               <p className="text-muted text-xs">
-                Tabs can display any type of content including text, forms,
-                tables, and custom components.
+                Tabs can display any type of content including text, forms, tables, and custom components.
               </p>
             </div>
           </TabsContent>
@@ -87,52 +79,6 @@ function ComponentsTab() {
               <div className="bg-surface rounded p-2 text-center text-xs">Cell 2</div>
               <div className="bg-surface rounded p-2 text-center text-xs">Cell 3</div>
               <div className="bg-surface rounded p-2 text-center text-xs">Cell 4</div>
-            </div>
-          </TabsContent>
-          <ActiveTabDisplay />
-        </Tabs>
-      </section>
-    </div>
-  );
-}
-
-function ExamplesTab() {
-  return (
-    <div className="flex flex-col gap-6">
-      <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Settings Page</h3>
-        <p className="text-muted text-xs">
-          A settings page layout using tabs.
-        </p>
-        <Tabs defaultValue="profile">
-          <TabsList>
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
-            <TabsTrigger value="billing">Billing</TabsTrigger>
-          </TabsList>
-          <TabsContent value="profile">
-            <div className="space-y-3">
-              <p className="text-sm font-medium">Profile Settings</p>
-              <div className="space-y-1.5">
-                <p className="text-muted text-xs">Name: Jane Doe</p>
-                <p className="text-muted text-xs">Email: jane@example.com</p>
-              </div>
-            </div>
-          </TabsContent>
-          <TabsContent value="notifications">
-            <div className="space-y-3">
-              <p className="text-sm font-medium">Notification Preferences</p>
-              <p className="text-muted text-xs">
-                Manage which notifications you receive.
-              </p>
-            </div>
-          </TabsContent>
-          <TabsContent value="billing">
-            <div className="space-y-3">
-              <p className="text-sm font-medium">Billing & Plan</p>
-              <p className="text-muted text-xs">
-                Current plan: Free. Upgrade to Pro for more features.
-              </p>
             </div>
           </TabsContent>
           <ActiveTabDisplay />
@@ -179,11 +125,210 @@ function PillFiltersTab() {
         </TabsContent>
         <TabsContent value="writing">
           <div className="space-y-2 py-2">
-            <p className="text-sm font-medium">Writing</p>
+            <p className="text-sm font-medium">Technical Writing</p>
             <p className="text-muted text-xs">Technical writing and documentation articles.</p>
           </div>
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+function ProfilePanel() {
+  return (
+    <div className="space-y-4 pt-4">
+      <div className="space-y-2">
+        <Label htmlFor="settings-name">Name</Label>
+        <Input id="settings-name" defaultValue="Jane Doe" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="settings-email">Email</Label>
+        <Input id="settings-email" type="email" defaultValue="jane@example.com" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="settings-avatar">Avatar</Label>
+        <Input id="settings-avatar" type="file" />
+      </div>
+    </div>
+  );
+}
+
+function SecurityPanel() {
+  return (
+    <div className="space-y-4 pt-4">
+      <div className="space-y-2">
+        <Label htmlFor="settings-current-password">Current Password</Label>
+        <Input id="settings-current-password" type="password" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="settings-new-password">New Password</Label>
+        <Input id="settings-new-password" type="password" />
+      </div>
+      <Button>Update Password</Button>
+    </div>
+  );
+}
+
+function NotificationsPanel() {
+  return (
+    <div className="space-y-4 pt-4">
+      <div className="flex items-center justify-between">
+        <Label htmlFor="settings-email-notif">Email notifications</Label>
+        <Switch id="settings-email-notif" defaultChecked />
+      </div>
+      <div className="flex items-center justify-between">
+        <Label htmlFor="settings-push-notif">Push notifications</Label>
+        <Switch id="settings-push-notif" defaultChecked />
+      </div>
+      <div className="flex items-center justify-between">
+        <Label htmlFor="settings-sms-notif">SMS notifications</Label>
+        <Switch id="settings-sms-notif" />
+      </div>
+    </div>
+  );
+}
+
+function SettingsSectionsTab() {
+  return (
+    <Tabs defaultValue="profile">
+      <TabsList>
+        <TabsTrigger value="profile">Profile</TabsTrigger>
+        <TabsTrigger value="security">Security</TabsTrigger>
+        <TabsTrigger value="notifications">Notifications</TabsTrigger>
+      </TabsList>
+      <TabsContent value="profile">
+        <ProfilePanel />
+      </TabsContent>
+      <TabsContent value="security">
+        <SecurityPanel />
+      </TabsContent>
+      <TabsContent value="notifications">
+        <NotificationsPanel />
+      </TabsContent>
+    </Tabs>
+  );
+}
+
+const codeString = `function StatCard({ title, value, trend }: StatCardProps) {
+  return (
+    <Card>
+      <CardHeader title={title} />
+      <CardContent>
+        <p className="text-2xl font-bold">{value}</p>
+        {trend && (
+          <span className={trend > 0 ? "text-success" : "text-error"}>
+            {trend > 0 ? "↑" : "↓"} {Math.abs(trend)}%
+          </span>
+        )}
+      </CardContent>
+    </Card>
+  );
+}`;
+
+function CodePreviewTab() {
+  const [mode, setMode] = useState<"preview" | "code">("preview");
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <Button
+          variant={mode === "preview" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setMode("preview")}
+        >
+          Preview
+        </Button>
+        <Button
+          variant={mode === "code" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setMode("code")}
+        >
+          Code
+        </Button>
+      </div>
+      {mode === "preview" ? (
+        <Card className="p-6">
+          <div className="space-y-2">
+            <p className="text-lg font-semibold">Styled Card Component</p>
+            <p className="text-muted text-sm">
+              This is a preview of the rendered component. Toggle to Code to see the source.
+            </p>
+            <div className="bg-surface-hover inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm">
+              <span className="text-success">●</span> Live preview
+            </div>
+          </div>
+        </Card>
+      ) : (
+        <pre className="bg-surface-hover font-mono rounded-md p-4 text-sm overflow-x-auto">
+          {codeString}
+        </pre>
+      )}
+    </div>
+  );
+}
+
+interface StatTile {
+  label: string;
+  value: string;
+  trend: number;
+}
+
+const periodData: Record<string, StatTile[]> = {
+  day: [
+    { label: "Revenue", value: "$1,234", trend: 12 },
+    { label: "Users", value: "56", trend: 8 },
+    { label: "Orders", value: "23", trend: -3 },
+  ],
+  week: [
+    { label: "Revenue", value: "$8,901", trend: 15 },
+    { label: "Users", value: "412", trend: 22 },
+    { label: "Orders", value: "178", trend: 10 },
+  ],
+  month: [
+    { label: "Revenue", value: "$34,567", trend: 24 },
+    { label: "Users", value: "1,890", trend: 18 },
+    { label: "Orders", value: "745", trend: 31 },
+  ],
+};
+
+function DashboardPeriodsTab() {
+  const [period, setPeriod] = useState("day");
+  const tiles = periodData[period] ?? [];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-1">
+        {["day", "week", "month"].map((p) => (
+          <Button
+            key={p}
+            variant={period === p ? "default" : "outline"}
+            size="sm"
+            onClick={() => setPeriod(p)}
+          >
+            {p.charAt(0).toUpperCase() + p.slice(1)}
+          </Button>
+        ))}
+      </div>
+      <div className="grid grid-cols-3 gap-4">
+        {tiles.map((tile) => (
+          <Card key={tile.label}>
+            <CardHeader>
+              <CardTitle>{tile.label}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">{tile.value}</p>
+              <span
+                className={cn(
+                  "text-sm",
+                  tile.trend > 0 ? "text-success" : "text-error",
+                )}
+              >
+                {tile.trend > 0 ? "↑" : "↓"} {Math.abs(tile.trend)}%
+              </span>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
@@ -193,13 +338,7 @@ const examples: UIExample[] = [
     id: "usage",
     title: "Underline Nav",
     description: "Tabs with underline variant for navigation.",
-    render: () => <ComponentsTab />,
-  },
-  {
-    id: "variants",
-    title: "Vertical Settings",
-    description: "Vertical orientation tabs for a settings panel.",
-    render: () => <ExamplesTab />,
+    render: () => <UnderlineNavTab />,
   },
   {
     id: "pill-filters",
@@ -208,23 +347,22 @@ const examples: UIExample[] = [
     render: () => <PillFiltersTab />,
   },
   {
-    id: "variant-gallery",
-    title: "Variant Gallery",
-    description: "All variants and sizes.",
-    render: () => (
-      <VariantGallery
-        variants={["default", "underline", "pills", "shiny", "glass", "neon", "gradient"]}
-        sizes={[]}
-        render={(variant) => (
-          <Tabs defaultValue="tab1">
-            <TabsList>
-              <TabsTrigger value="tab1" variant={variant as TabsTriggerVariant}>Tab 1</TabsTrigger>
-            </TabsList>
-            <TabsContent value="tab1">Content</TabsContent>
-          </Tabs>
-        )}
-      />
-    ),
+    id: "settings-sections",
+    title: "Settings Sections",
+    description: "Profile, security, and notifications settings with real form controls.",
+    render: () => <SettingsSectionsTab />,
+  },
+  {
+    id: "code-preview",
+    title: "Code Preview",
+    description: "Toggle between a rendered preview and the source code.",
+    render: () => <CodePreviewTab />,
+  },
+  {
+    id: "dashboard-periods",
+    title: "Dashboard Periods",
+    description: "Day, week, and month KPI tiles with trend indicators.",
+    render: () => <DashboardPeriodsTab />,
   },
 ];
 

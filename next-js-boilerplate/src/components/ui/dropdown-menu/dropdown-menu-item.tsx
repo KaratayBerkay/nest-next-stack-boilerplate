@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/cn";
+import { menuItemStyles } from "@/components/ui/menu-item-styles";
 import { useDropdownMenuContext } from "./dropdown-menu";
 import type { DropdownMenuItemProps } from "@/types/ui/DropdownMenuItem-types";
 
@@ -27,18 +28,17 @@ export function DropdownMenuItem({
       }}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
           onKeyDown?.(e);
           if (!disabled && !e.defaultPrevented) {
+            e.preventDefault();
             closeAndFocusTrigger();
             (e.target as HTMLElement)?.click();
           }
         }
       }}
       className={cn(
-        "relative flex cursor-pointer items-center rounded-md px-2 py-1.5 text-sm transition-colors outline-none select-none",
-        "hover:bg-surface-hover focus-visible:bg-surface-hover",
-        "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        menuItemStyles,
+        "cursor-pointer hover:bg-surface-hover focus-visible:bg-surface-hover",
         className,
       )}
       {...props}

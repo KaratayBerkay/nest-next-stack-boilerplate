@@ -187,6 +187,26 @@ describe("Toast", () => {
     expect(alert.textContent).toContain("Fatal Error");
   });
 
+  it("pauses auto-dismiss on hover and resumes on leave", () => {
+    renderToast();
+    fireEvent.click(screen.getByTestId("trigger"));
+
+    act(() => { vi.advanceTimersByTime(2500); });
+    expect(screen.getByText("Hello")).toBeTruthy();
+
+    const toastEl = screen.getByText("Hello").closest("[role='status']")!;
+    fireEvent.mouseEnter(toastEl);
+
+    act(() => { vi.advanceTimersByTime(3000); });
+    expect(screen.getByText("Hello")).toBeTruthy();
+
+    fireEvent.mouseLeave(toastEl);
+    act(() => { vi.advanceTimersByTime(2500); });
+
+    act(() => { vi.advanceTimersByTime(200); });
+    expect(screen.queryByText("Hello")).toBeNull();
+  });
+
   it("viewport has a permanent role=status region", () => {
     renderToast();
     expect(screen.getByRole("status")).toBeTruthy();

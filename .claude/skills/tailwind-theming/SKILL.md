@@ -80,6 +80,25 @@ node .claude/skills/tailwind-theming/scripts/check-contrast.mjs --strict # exit 
 
 Run it (from the repo root) after any palette change — it parses the `.theme-*` blocks straight out of globals.css and prints WCAG ratios for every critical pair. Don't eyeball contrast; the script is the arbiter.
 
+## Scroll-fade affordances
+
+The app has no visible scrollbars (`scrollbar-width: none`, `::-webkit-scrollbar { display: none }`). To hint at scrollable content, use fade-mask gradients:
+
+- `.scroll-fade-y` — applies a `mask-image` linear gradient on the Y axis (top and bottom fade). Defined in `globals.css`.
+- `.scroll-fade-x` — applies a mask-image linear gradient on the X axis (left and right fade). Defined in `globals.css`.
+- `.scrolled-to-top` / `.scrolled-to-bottom` (Y) and `.scrolled-to-left` / `.scrolled-to-right` (X) — complementary classes that let JS toggle the fade at the scrolled edge.
+
+Use these on any overflow container in the UI layout or component demos.
+
+## V0 Design Language (enforced across all components)
+
+- **Radius:** controls → `rounded-md`; floating panels → `rounded-lg`; modals → `rounded-xl`; pills → `rounded-full`
+- **Elevation:** controls → `shadow-xs`; inline bars → `shadow-xs`; small floats → `shadow-md`; menus/popovers → `shadow-lg`; modals/toasts → `shadow-xl`
+- **Control heights:** `sm h-8` / `md h-9` / `lg h-10`; touch targets ≥ 36px
+- **Focus:** `focus-visible:ring-2 focus-visible:ring-brand` + `ring-offset-1 ring-offset-bg` on solid controls; inputs add `focus-visible:border-brand`; `ring-ring` is forbidden
+- **Disabled:** `disabled:opacity-50 disabled:pointer-events-none`, period
+- **Palette:** semantic tokens ONLY (`bg-bg`, `text-fg`, `bg-brand`, `border-border`, etc.); hardcoded palette colors are forbidden in component files
+
 ## Practical notes
 
 - Prefer v4 utility forms: `size-9` over `h-9 w-9`, opacity modifiers like `bg-brand/15`, arbitrary values sparingly.

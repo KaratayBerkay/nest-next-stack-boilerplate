@@ -155,31 +155,13 @@ export function SelectContent({
           "border-border bg-bg text-fg",
           isDesktop
             ? "z-50 max-h-60 min-w-[8rem] origin-top-right overflow-y-auto rounded-lg border p-1 shadow-lg"
-            : "bg-bg animate-fade-in fixed inset-0 z-50 flex flex-col p-4",
+            : "fixed bottom-0 left-0 right-0 z-50 rounded-t-xl bg-bg border border-border shadow-lg pb-safe max-h-[85vh] overflow-y-auto p-4",
           className,
         )}
         {...props}
       >
         {!isDesktop && (
-          <div className="flex items-center justify-between pb-3">
-            <span className="text-sm font-semibold">Select</span>
-            <button
-              onClick={() => setOpen(false)}
-              className="text-muted hover:bg-surface-hover rounded-lg p-1"
-              aria-label="Close menu"
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M18 6 6 18M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+          <div className="mx-auto mb-2 h-1.5 w-8 rounded-full bg-border" />
         )}
         <div
           className={cn(

@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/cn";
+import { menuItemStyles } from "@/components/ui/menu-item-styles";
 import { useEffect } from "react";
 import { useCommandContext } from "./command";
 import type { CommandItemProps } from "@/types/ui/CommandItem-types";
@@ -51,10 +52,10 @@ export function CommandItem({
   return (
     <div
       className={cn(
-        "relative flex cursor-default items-center rounded-sm px-2 py-1.5 text-sm transition-colors outline-none select-none",
+        menuItemStyles,
+        "rounded-sm",
         isSelected && "bg-surface",
         !isSelected && "hover:bg-surface-hover",
-        disabled && "pointer-events-none opacity-50",
         className,
       )}
       role="option"

@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/cn";
+import { menuItemStyles } from "@/components/ui/menu-item-styles";
 import { useEffect, useRef } from "react";
 import { useSelect } from "./select";
 import type { SelectItemProps } from "@/types/ui/Select-types";
@@ -38,7 +39,8 @@ export function SelectItem({
       role="option"
       aria-selected={isSelected}
       className={cn(
-        "focus-visible:bg-surface-hover relative flex w-full cursor-default items-center rounded px-2 py-1.5 text-sm transition-colors outline-none select-none focus-visible:outline-none",
+        menuItemStyles,
+        "w-full focus-visible:bg-surface-hover",
         isSelected && "bg-surface-hover text-brand",
         !isSelected && "text-fg",
         className,

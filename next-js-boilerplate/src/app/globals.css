@@ -448,6 +448,51 @@ body {
   );
 }
 
+.scroll-fade-x {
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 0.75rem,
+    #000 calc(100% - 0.75rem),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 0.75rem,
+    #000 calc(100% - 0.75rem),
+    transparent 100%
+  );
+}
+.scroll-fade-x.scrolled-to-left {
+  mask-image: linear-gradient(
+    to right,
+    #000 0.75rem,
+    #000 calc(100% - 0.75rem),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    #000 0.75rem,
+    #000 calc(100% - 0.75rem),
+    transparent 100%
+  );
+}
+.scroll-fade-x.scrolled-to-right {
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 0.75rem,
+    #000 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 0.75rem,
+    #000 100%
+  );
+}
+
 /* ── Shared surface style (kept for existing pages) ──────────────── */
 .surface {
   border: 1px solid color-mix(in oklab, currentColor 12%, transparent);
