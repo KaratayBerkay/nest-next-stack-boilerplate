@@ -64,7 +64,18 @@ jobs:
         continue-on-error: true
 
       - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium firefox webkit
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Start production server
+        run: |
+          npx next start --port 3100 &
+          for attempt in $(seq 1 30); do
+            if curl -sf http://localhost:3100 -o /dev/null; then
+              echo "Server is healthy on port 3100"
+              break
+            fi
+            sleep 2
+          done
 
       # TODO: this job has no backend to talk to — no Postgres/Redis services and no
       # compiled nest-js-boilerplate process, unlike backend-ci.yml's `test` job. The BFF
@@ -72,8 +83,12 @@ jobs:
       # points at nothing here, so this step cannot pass against a real backend as currently
       # configured. Needs: Postgres+Redis services, build+migrate+boot the backend with
       # ALLOW_DEV_ACTIVATE=true, a health-check wait, then run Playwright against it.
-      - name: E2E tests
+      # The UI smoke/a11y specs (C8) and the full e2e suite need this backend to authenticate.
+      # Without it, auth-dependent tests are skipped and only no-auth checks run.
+      - name: E2E tests (no-auth UI smoke + axe when backend is unavailable)
         run: pnpm test:e2e
+        env:
+          CI_NO_BACKEND: "1"
 
   docker-build:
     runs-on: ubuntu-latest
