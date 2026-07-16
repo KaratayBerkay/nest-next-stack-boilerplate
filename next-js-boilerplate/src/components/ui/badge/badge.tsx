@@ -20,9 +20,9 @@ const variants = {
 } as const;
 
 const sizeMap: Record<BadgeSize, string> = {
-  sm: "px-2 py-0.5 text-[10px] leading-tight",
-  md: "px-2.5 py-1 text-xs leading-tight",
-  lg: "px-3.5 py-1.5 text-sm leading-tight",
+  sm: "px-3 py-1.5 text-sm",
+  md: "px-4 py-2 text-base",
+  lg: "px-5 py-2.5 text-lg",
 };
 
 export function Badge({
@@ -44,7 +44,7 @@ export function Badge({
       className={cn(
         "inline-flex items-center justify-center",
         pill ? "rounded-full" : "rounded-full",
-        dot && "p-0 size-2 rounded-full border border-border",
+        dot && "p-0 size-3.5 rounded-full border-2 border-border",
         !dot && resolveVariant(variants, effectiveVariant),
         !dot && sizeMap[size],
         fonts,
