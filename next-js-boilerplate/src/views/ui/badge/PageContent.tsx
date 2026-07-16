@@ -1,54 +1,65 @@
 "use client";
 
-import { Badge, BadgeButton } from "@/components/ui/Badge";
+import { Badge, BadgeButton, BadgeCount } from "@/components/ui/Badge";
 import { cn } from "@/lib/cn";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
 import type { BadgeSize, BadgeVariant } from "@/types/ui/Badge-types";
+import type { BadgeCountDirection } from "@/types/ui/BadgeCount-types";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
+
+const bellIcon = (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+  </svg>
+);
+
+const chatIcon = (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </svg>
+);
+
+const mailIcon = (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="4" width="20" height="16" rx="2" />
+    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+  </svg>
+);
+
+const groupIcon = (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+  </svg>
+);
+
+const positions: { dir: BadgeCountDirection; label: string }[] = [
+  { dir: "right-top", label: "Right top" },
+  { dir: "left-top", label: "Left top" },
+  { dir: "right-bottom", label: "Right bottom" },
+  { dir: "left-bottom", label: "Left bottom" },
+  { dir: "middle-top", label: "Middle top" },
+  { dir: "middle-bottom", label: "Middle bottom" },
+];
 
 function NotificationPatternsTab() {
   return (
     <div className="flex flex-col gap-8">
       <section className="flex flex-col gap-3">
         <h3 className="text-lg font-semibold">Notification Bell</h3>
-        <div className="flex items-end gap-10">
-          <div className="flex flex-col items-center gap-2">
-            <div className="relative inline-flex">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-              </svg>
-              <span className="absolute -top-3 -right-3">
-                <Badge variant="error" size="sm">3</Badge>
-              </span>
+        <div className="flex flex-wrap items-end gap-8">
+          {positions.map(({ dir, label }) => (
+            <div key={dir} className="flex flex-col items-center gap-2">
+              <BadgeCount direction={dir} count={3} rule="negative">
+                {bellIcon}
+              </BadgeCount>
+              <span className="text-muted text-xs">{label}</span>
             </div>
-            <span className="text-muted text-xs">Top right</span>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <div className="relative inline-flex">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-              </svg>
-              <span className="absolute -top-3 -left-3">
-                <Badge variant="warning" size="sm">12</Badge>
-              </span>
-            </div>
-            <span className="text-muted text-xs">Top left</span>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <div className="relative inline-flex">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-              </svg>
-              <span className="absolute -bottom-3 -right-3">
-                <Badge variant="info" size="sm">99+</Badge>
-              </span>
-            </div>
-            <span className="text-muted text-xs">Bottom right</span>
-          </div>
+          ))}
         </div>
       </section>
 
@@ -90,43 +101,42 @@ function NotificationPatternsTab() {
 
       <section className="flex flex-col gap-3">
         <h3 className="text-lg font-semibold">Message Notifications</h3>
-        <div className="flex items-end gap-10">
+        <div className="flex flex-wrap items-end gap-8">
           <div className="flex flex-col items-center gap-2">
-            <div className="relative inline-flex">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>
-              <span className="absolute -top-3 -right-3">
-                <Badge variant="default" size="sm">5</Badge>
-              </span>
-            </div>
-            <span className="text-muted text-xs">Top right</span>
+            <BadgeCount direction="right-top" count={5} rule="negative">
+              {chatIcon}
+            </BadgeCount>
+            <span className="text-muted text-xs">Chat</span>
           </div>
           <div className="flex flex-col items-center gap-2">
-            <div className="relative inline-flex">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="4" width="20" height="16" rx="2" />
-                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-              </svg>
-              <span className="absolute -top-3 -left-3">
-                <Badge variant="info" size="sm">12</Badge>
-              </span>
-            </div>
-            <span className="text-muted text-xs">Top left</span>
+            <BadgeCount direction="left-top" count={12} rule="negative">
+              {mailIcon}
+            </BadgeCount>
+            <span className="text-muted text-xs">Mail</span>
           </div>
           <div className="flex flex-col items-center gap-2">
-            <div className="relative inline-flex">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-              </svg>
-              <span className="absolute -bottom-3 -right-3">
-                <Badge variant="soft" size="sm">3</Badge>
-              </span>
-            </div>
-            <span className="text-muted text-xs">Bottom right</span>
+            <BadgeCount direction="right-bottom" count={3} rule="negative">
+              {groupIcon}
+            </BadgeCount>
+            <span className="text-muted text-xs">Groups</span>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <BadgeCount direction="middle-top" count={99} max={99} rule="negative">
+              {bellIcon}
+            </BadgeCount>
+            <span className="text-muted text-xs">Overflow 99+</span>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <BadgeCount direction="right-top" count={0} rule="negative" showZero>
+              {bellIcon}
+            </BadgeCount>
+            <span className="text-muted text-xs">Zero count</span>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <BadgeCount direction="right-top" count={0} rule="negative" dot>
+              {bellIcon}
+            </BadgeCount>
+            <span className="text-muted text-xs">Dot only</span>
           </div>
         </div>
       </section>
