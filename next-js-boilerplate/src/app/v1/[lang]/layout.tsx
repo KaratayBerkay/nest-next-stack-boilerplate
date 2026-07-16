@@ -10,6 +10,7 @@ import { getSessionUser } from "@/lib/auth-ssr";
 import { AuthProvider } from "@/hooks/useAuth";
 import { LOGIN_PATH } from "@/constants/routes";
 import { V1ShellFallback } from "@/fallbacks";
+import { V1ContentFallback } from "@/fallbacks";
 
 export default async function V1Layout({ children, params }: V1LayoutProps) {
   const { lang } = await params;
@@ -23,13 +24,7 @@ export default async function V1Layout({ children, params }: V1LayoutProps) {
         <main className="flex w-full flex-1 flex-col">
           <Suspense fallback={<V1ShellFallback />}>
             <V1Shell>
-              <Suspense
-                fallback={
-                  <section className="surface flex flex-col gap-2 p-5">
-                    {children}
-                  </section>
-                }
-              >
+              <Suspense fallback={<V1ContentFallback />}>
                 <PageNavWrapper>{children}</PageNavWrapper>
               </Suspense>
             </V1Shell>

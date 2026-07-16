@@ -4,6 +4,7 @@ export { MessagesViewFallback } from "./views/messages/MessagesViewFallback";
 export { FindFriendsFallback } from "./views/find-friends/FindFriendsFallback";
 export { NotificationFallback } from "./views/notification/NotificationFallback";
 export { V1ShellFallback } from "./app/v1/[lang]/V1ShellFallback";
+export { V1ContentFallback } from "./app/v1/[lang]/V1ContentFallback";
 export { MessagesLoadingFallback } from "./app/v1/[lang]/messages/MessagesLoadingFallback";
 export { AdminLoadingFallback } from "./app/v1/[lang]/admin/AdminLoadingFallback";
 export { ShareLoadingFallback } from "./app/v1/[lang]/share/ShareLoadingFallback";
