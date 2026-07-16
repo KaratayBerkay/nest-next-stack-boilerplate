@@ -8,6 +8,8 @@ import { bottomSheetClasses, BottomSheetHandle } from "@/components/ui/bottom-sh
 import { useSelect } from "./select";
 import type { SelectContentProps } from "@/types/ui/Select-types";
 
+const ENABLED_OPTION_SELECTOR = '[role="option"]:not([data-disabled])';
+
 export function SelectContent({
   className,
   children,
@@ -23,6 +25,13 @@ export function SelectContent({
   } | null>(null);
   const isDesktop = useBreakpoint("sm");
   const typeaheadRef = useRef("");
+  const typeaheadTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => {
+    return () => {
+      if (typeaheadTimerRef.current) clearTimeout(typeaheadTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!open || !triggerRef.current || !isDesktop) return;
@@ -52,10 +61,10 @@ export function SelectContent({
 
   useEffect(() => {
     if (!open || !isDesktop || !contentRef.current) return;
-    const items = contentRef.current.querySelectorAll('[role="option"]');
+    const items = contentRef.current.querySelectorAll(ENABLED_OPTION_SELECTOR);
     if (items.length > 0) {
       const selected = contentRef.current.querySelector(
-        '[aria-selected="true"]',
+        '[aria-selected="true"]:not([data-disabled])',
       );
       focusItem((selected ?? items[0]) as HTMLElement);
     }
@@ -89,7 +98,7 @@ export function SelectContent({
 
     if (!contentRef.current) return;
     const items = Array.from(
-      contentRef.current.querySelectorAll<HTMLElement>('[role="option"]'),
+      contentRef.current.querySelectorAll<HTMLElement>(ENABLED_OPTION_SELECTOR),
     );
     if (!items.length) return;
 
@@ -112,12 +121,13 @@ export function SelectContent({
       e.preventDefault();
       focusItem(items[items.length - 1]);
     } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+      if (typeaheadTimerRef.current) clearTimeout(typeaheadTimerRef.current);
       typeaheadRef.current += e.key.toLowerCase();
       const match = items.find((el) =>
         el.textContent?.toLowerCase().startsWith(typeaheadRef.current),
       );
       if (match) focusItem(match);
-      setTimeout(() => {
+      typeaheadTimerRef.current = setTimeout(() => {
         typeaheadRef.current = "";
       }, 500);
     }

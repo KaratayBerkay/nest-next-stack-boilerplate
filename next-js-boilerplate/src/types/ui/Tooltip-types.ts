@@ -1,4 +1,5 @@
 import type React from "react";
+import type { GlobalVariant } from "@/components/ui/global-style-variants";
 
 export interface TooltipProps {
   children: React.ReactNode;
@@ -18,5 +19,5 @@ export interface TooltipTriggerProps extends React.ComponentPropsWithoutRef<"spa
 export interface TooltipContentProps extends React.ComponentPropsWithoutRef<"div"> {
   children: React.ReactNode;
   className?: string;
-  variant?: string;
+  variant?: GlobalVariant;
 }

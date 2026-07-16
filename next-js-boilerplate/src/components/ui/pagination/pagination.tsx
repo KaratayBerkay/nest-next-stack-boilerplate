@@ -1,6 +1,8 @@
+"use client";
+
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
-import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { forwardRef } from "react";
 
@@ -47,7 +49,7 @@ PaginationItem.displayName = "PaginationItem";
 // generic wrapper, not an anchor rendered without content.
 export const PaginationLink = forwardRef<
   HTMLAnchorElement,
-  React.ComponentPropsWithoutRef<"a"> & { isActive?: boolean; variant?: string }
+  React.ComponentPropsWithoutRef<"a"> & { isActive?: boolean; variant?: GlobalVariant }
 >(({ className, isActive, variant, ...props }, ref) => {
   const effectiveVariant = useComponentVariant(variant);
   return (
@@ -70,7 +72,7 @@ PaginationLink.displayName = "PaginationLink";
 export const PaginationPrevious = forwardRef<
   HTMLAnchorElement,
   React.ComponentPropsWithoutRef<"a">
->(({ className, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => (
   <a
     ref={ref}
     aria-label="Go to previous page"
@@ -80,17 +82,21 @@ export const PaginationPrevious = forwardRef<
     )}
     {...props}
   >
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path d="m15 18-6-6 6-6" />
-    </svg>
-    Previous
+    {children ?? (
+      <>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path d="m15 18-6-6 6-6" />
+        </svg>
+        Previous
+      </>
+    )}
   </a>
 ));
 PaginationPrevious.displayName = "PaginationPrevious";
@@ -98,7 +104,7 @@ PaginationPrevious.displayName = "PaginationPrevious";
 export const PaginationNext = forwardRef<
   HTMLAnchorElement,
   React.ComponentPropsWithoutRef<"a">
->(({ className, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => (
   <a
     ref={ref}
     aria-label="Go to next page"
@@ -108,17 +114,21 @@ export const PaginationNext = forwardRef<
     )}
     {...props}
   >
-    Next
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path d="m9 18 6-6-6-6" />
-    </svg>
+    {children ?? (
+      <>
+        Next
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path d="m9 18 6-6-6-6" />
+        </svg>
+      </>
+    )}
   </a>
 ));
 PaginationNext.displayName = "PaginationNext";

@@ -47,7 +47,7 @@ export {
   CarouselPrevious,
   CarouselNext,
 } from "./carousel";
-export { Checkbox, CheckboxGroup, IndeterminateCheckbox } from "./checkbox";
+export { Checkbox, CheckboxGroup, IndeterminateCheckbox, CheckboxCard, CheckboxChip } from "./checkbox";
 export {
   Collapsible,
   CollapsibleTrigger,
@@ -103,7 +103,9 @@ export {
 } from "./dropdown-menu";
 export { Empty } from "./empty";
 export { ErrorBoundary } from "./error-boundary";
+export { FileUpload } from "./file-upload";
 export { HoverCard, HoverCardTrigger, HoverCardContent } from "./hover-card";
+export { ImageUpload } from "./image-upload";
 export {
   Input,
   DateInput,
@@ -115,6 +117,7 @@ export { InputGroup } from "./input-group";
 export { InputOTP, InputOTPGroup } from "./input-otp";
 export { Kbd } from "./kbd";
 export { Label } from "./label";
+export { LogoSpinner } from "./logo-spinner";
 export {
   Menubar,
   MenubarMenu,
@@ -207,8 +210,8 @@ export {
 export { Toggle } from "./toggle";
 export { ToggleGroup, ToggleGroupItem } from "./toggle-group";
 export { Tooltip, TooltipTrigger, TooltipContent } from "./tooltip";
-export { Typography } from "./Typography";
 export {
+  Typography,
   H1,
   H2,
   H3,

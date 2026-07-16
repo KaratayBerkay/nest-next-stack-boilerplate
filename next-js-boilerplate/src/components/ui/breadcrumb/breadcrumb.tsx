@@ -1,6 +1,8 @@
+"use client";
+
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
-import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { forwardRef } from "react";
 
@@ -19,7 +21,7 @@ Breadcrumb.displayName = "Breadcrumb";
 
 export const BreadcrumbList = forwardRef<
   HTMLOListElement,
-  React.ComponentPropsWithoutRef<"ol"> & { variant?: string }
+  React.ComponentPropsWithoutRef<"ol"> & { variant?: GlobalVariant }
 >(({ className, variant, ...props }, ref) => {
   const effectiveVariant = useComponentVariant(variant);
   return (

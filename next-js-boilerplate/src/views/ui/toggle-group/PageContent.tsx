@@ -5,6 +5,7 @@ import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
 import type { ToggleSize } from "@/types/ui/Toggle-types";
+import type { GlobalVariant } from "@/components/ui/global-style-variants";
 
 function ComponentsTab() {
   const [alignment, setAlignment] = useState("a");
@@ -75,7 +76,7 @@ const examples: UIExample[] = [
         sizes={["sm", "md", "lg"]}
         render={(variant, size) => (
           <ToggleGroup type="single">
-            <ToggleGroupItem value="opt" variant={variant} size={size as ToggleSize}>Opt</ToggleGroupItem>
+            <ToggleGroupItem value="opt" variant={variant as GlobalVariant} size={size as ToggleSize}>Opt</ToggleGroupItem>
           </ToggleGroup>
         )}
       />

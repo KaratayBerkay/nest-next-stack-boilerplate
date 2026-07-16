@@ -10,7 +10,7 @@ import {
 import useEmblaCarousel from "embla-carousel-react";
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
-import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 
 interface CarouselContextValue {
@@ -108,7 +108,7 @@ export function CarouselPrevious({
   className,
   variant,
   ...props
-}: React.ComponentPropsWithoutRef<"button"> & { variant?: string }) {
+}: React.ComponentPropsWithoutRef<"button"> & { variant?: GlobalVariant }) {
   const effectiveVariant = useComponentVariant(variant);
   const { scrollPrev, canScrollPrev } = useCarousel();
   return (
@@ -140,7 +140,7 @@ export function CarouselNext({
   className,
   variant,
   ...props
-}: React.ComponentPropsWithoutRef<"button"> & { variant?: string }) {
+}: React.ComponentPropsWithoutRef<"button"> & { variant?: GlobalVariant }) {
   const effectiveVariant = useComponentVariant(variant);
   const { scrollNext, canScrollNext } = useCarousel();
   return (

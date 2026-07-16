@@ -9,6 +9,7 @@ import type { SelectItemProps } from "@/types/ui/Select-types";
 export function SelectItem({
   className,
   value: itemValue,
+  disabled,
   children,
   onClick,
   ...props
@@ -16,17 +17,21 @@ export function SelectItem({
   const { value, onValueChange, setOpen, triggerRef, labelMap } = useSelect();
   const itemRef = useRef<HTMLButtonElement>(null);
   const isSelected = value === itemValue;
-  const text = typeof children === "string" ? children : "";
 
   useEffect(() => {
+    const label =
+      typeof children === "string"
+        ? children
+        : (itemRef.current?.textContent ?? "");
     const map = labelMap.current;
-    map.set(itemValue, text);
+    map.set(itemValue, label);
     return () => {
       map.delete(itemValue);
     };
-  }, [itemValue, text, labelMap]);
+  }, [itemValue, children, labelMap]);
 
   const handleClick = () => {
+    if (disabled) return;
     onValueChange(itemValue);
     setOpen(false);
     triggerRef.current?.focus();
@@ -38,11 +43,14 @@ export function SelectItem({
       type="button"
       role="option"
       aria-selected={isSelected}
+      aria-disabled={disabled || undefined}
+      data-disabled={disabled ? "" : undefined}
       className={cn(
         menuItemStyles,
         "w-full focus-visible:bg-surface-hover",
         isSelected && "bg-surface-hover text-brand",
         !isSelected && "text-fg",
+        disabled && "cursor-not-allowed opacity-50",
         className,
       )}
       onClick={(e) => {

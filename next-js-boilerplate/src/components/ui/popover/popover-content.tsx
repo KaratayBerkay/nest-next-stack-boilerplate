@@ -7,11 +7,11 @@ import { useBreakpoint } from "@/hooks";
 import { bottomSheetClasses, BottomSheetHandle } from "@/components/ui/bottom-sheet";
 import { usePopover } from "./popover";
 import { resolveVariant } from "@/lib/resolve-variant";
-import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { PopoverContentProps as PopoverContentPropsOriginal } from "@/types/ui/Popover-types";
 
-type PopoverContentProps = Omit<PopoverContentPropsOriginal, "variant"> & { variant?: string };
+type PopoverContentProps = Omit<PopoverContentPropsOriginal, "variant"> & { variant?: GlobalVariant };
 
 const popoverVariants = {
   ...globalStyleVariants,
@@ -27,7 +27,7 @@ export function PopoverContent({
   title,
   variant,
   ...props
-}: PopoverContentProps & { variant?: string }) {
+}: PopoverContentProps & { variant?: GlobalVariant }) {
   const effectiveVariant = useComponentVariant(variant);
   const { open, close, triggerRef, contentId } = usePopover();
   const contentRef = useRef<HTMLDivElement>(null);

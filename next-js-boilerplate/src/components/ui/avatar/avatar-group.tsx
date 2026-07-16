@@ -2,7 +2,7 @@
 
 import React from "react";
 import { cn } from "@/lib/cn";
-import type { AvatarGroupProps } from "@/types/ui/AvatarGroup-types";
+import type { AvatarGroupProps } from "@/types/ui/Avatar-types";
 
 export function AvatarGroup({
   children,

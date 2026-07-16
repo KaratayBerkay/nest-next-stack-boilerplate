@@ -23,3 +23,5 @@ export const globalStyleVariants = {
   gradient:
     "bg-gradient-to-r from-brand to-info text-brand-fg",
 } as const;
+
+export type GlobalVariant = keyof typeof globalStyleVariants;

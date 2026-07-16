@@ -1,3 +1,5 @@
+"use client";
+
 import { Children, cloneElement } from "react";
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";

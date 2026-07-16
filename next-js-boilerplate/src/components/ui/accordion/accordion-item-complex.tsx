@@ -4,7 +4,7 @@ import { forwardRef } from "react";
 import { Item, Header, Trigger, Content } from "@radix-ui/react-accordion";
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
-import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 
 export type AccordionUpperSectionProps = React.HTMLAttributes<HTMLDivElement>;
@@ -31,7 +31,7 @@ export type AccordionItemComplexProps = {
   trigger: React.ReactNode;
   upper?: React.ReactNode;
   content: React.ReactNode;
-  variant?: string;
+  variant?: GlobalVariant;
   triggerFontSize?: string;
   triggerFontWeight?: string;
   triggerFontFamily?: string;

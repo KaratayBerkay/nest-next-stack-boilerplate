@@ -4,7 +4,7 @@ export interface ToastData {
   id: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
-  variant: "default" | "destructive" | "success";
+  variant: "default" | "destructive" | "success" | "warning" | "info";
   action?: React.ReactNode;
   duration: number;
   createdAt: number;
@@ -13,7 +13,7 @@ export interface ToastData {
 export interface ToastOptions {
   title?: React.ReactNode;
   description?: React.ReactNode;
-  variant?: "default" | "destructive" | "success";
+  variant?: "default" | "destructive" | "success" | "warning" | "info";
   action?: React.ReactNode;
   duration?: number;
 }

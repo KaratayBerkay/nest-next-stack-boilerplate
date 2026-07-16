@@ -1,3 +1,5 @@
+"use client";
+
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
 import { globalStyleVariants } from "@/components/ui/global-style-variants";
@@ -10,14 +12,11 @@ const variants = {
   default: "bg-brand text-brand-fg",
   secondary: "bg-surface text-fg border border-border",
   outline: "border border-border text-muted",
-  destructive: "bg-error text-error-fg",
   success: "bg-success text-success-fg",
   warning: "bg-warning text-warning-fg",
   error: "bg-error text-error-fg",
   info: "bg-info text-info-fg",
   soft: "bg-brand/15 text-brand border border-brand/30",
-  dot: "size-2 rounded-full border border-border",
-  pill: "rounded-full px-4",
 } as const;
 
 const sizeMap: Record<BadgeSize, string> = {
@@ -28,6 +27,8 @@ const sizeMap: Record<BadgeSize, string> = {
 
 export function Badge({
   variant,
+  pill,
+  dot,
   className,
   size = "md",
   fontSize,
@@ -42,11 +43,10 @@ export function Badge({
     <span
       className={cn(
         "inline-flex items-center justify-center",
-        effectiveVariant === "dot"
-          ? "p-0"
-          : "rounded-full",
-        resolveVariant(variants, effectiveVariant),
-        effectiveVariant !== "dot" && sizeMap[size],
+        pill ? "rounded-full" : "rounded-full",
+        dot && "p-0 size-2 rounded-full border border-border",
+        !dot && resolveVariant(variants, effectiveVariant),
+        !dot && sizeMap[size],
         fonts,
         className,
       )}

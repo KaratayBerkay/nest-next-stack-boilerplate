@@ -3,7 +3,7 @@ import { forwardRef } from "react";
 import { Root, Item } from "@radix-ui/react-toggle-group";
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
-import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { ToggleSize } from "@/types/ui/Toggle-types";
 
@@ -33,7 +33,7 @@ ToggleGroup.displayName = "ToggleGroup";
 
 export const ToggleGroupItem = forwardRef<
   React.ElementRef<typeof Item>,
-  React.ComponentPropsWithoutRef<typeof Item> & { variant?: string; size?: ToggleSize }
+  React.ComponentPropsWithoutRef<typeof Item> & { variant?: GlobalVariant; size?: ToggleSize }
 >(({ className, variant, size = "md", ...props }, ref) => {
   const effectiveVariant = useComponentVariant(variant);
   return (

@@ -8,6 +8,7 @@ const variants = {
   secondary: "bg-surface text-fg",
   outline: "border border-border text-muted",
   destructive: "bg-error/10 text-error",
+  error: "bg-error/10 text-error",
   success: "bg-success/10 text-success",
 } as const;
 

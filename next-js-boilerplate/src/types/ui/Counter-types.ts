@@ -1,3 +1,5 @@
+import type { GlobalVariant } from "@/components/ui/global-style-variants";
+
 export interface CounterProps {
   label: string;
   min?: number;
@@ -5,6 +7,6 @@ export interface CounterProps {
   step?: number;
   value?: number;
   onChange?: (value: number) => void;
-  variant?: string;
+  variant?: GlobalVariant;
   className?: string;
 }

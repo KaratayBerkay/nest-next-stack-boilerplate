@@ -23,14 +23,14 @@ function SizeScaleTab() {
           <Badge variant="default">Default</Badge>
           <Badge variant="secondary">Secondary</Badge>
           <Badge variant="outline">Outline</Badge>
-          <Badge variant="destructive">Destructive</Badge>
+          <Badge variant="error">Error</Badge>
           <Badge variant="success">Success</Badge>
           <Badge variant="warning">Warning</Badge>
           <Badge variant="error">Error</Badge>
           <Badge variant="info">Info</Badge>
           <Badge variant="soft">Soft</Badge>
-          <Badge variant="dot" />
-          <Badge variant="pill">Pill</Badge>
+          <Badge dot />
+          <Badge pill>Pill</Badge>
         </div>
       </section>
 
@@ -54,7 +54,7 @@ function SizeScaleTab() {
               <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
             </svg>
             <span className="absolute -top-2 -right-2">
-              <Badge variant="destructive" size="sm">3</Badge>
+              <Badge variant="error" size="sm">3</Badge>
             </span>
           </div>
           <span className="text-muted text-xs">3 unread notifications</span>

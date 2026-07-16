@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useCallback, useId, useRef, useState } from "react";
 import {
   Command,
   CommandInput,
@@ -14,6 +14,7 @@ import { fontClasses } from "@/lib/font-classes";
 import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { useFieldMessages } from "@/components/ui/field-messages";
+import { useClickOutside } from "@/hooks/useClickOutside";
 import type { ComboboxProps } from "@/types/ui/Combobox-types";
 
 const variants = {
@@ -26,6 +27,10 @@ export function Combobox({
   value,
   onValueChange,
   placeholder = "Search...",
+  searchPlaceholder,
+  emptyTitle = "No results",
+  emptyDescription = "No items match your search.",
+  disabled,
   variant,
   className,
   fontSize,
@@ -38,15 +43,39 @@ export function Combobox({
   const [query, setQuery] = useState("");
   const effectiveVariant = useComponentVariant(variant);
   const { describedBy, messages } = useFieldMessages(error, description);
+  const listId = useId();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const close = useCallback(() => {
+    setOpen(false);
+    setQuery("");
+    triggerRef.current?.focus();
+  }, []);
+
+  useClickOutside(wrapperRef, close);
 
   return (
-    <div className={cn("relative", className)}>
+    <div
+      ref={wrapperRef}
+      className={cn("relative", className)}
+    >
       <button
+        ref={triggerRef}
+        type="button"
+        disabled={disabled}
         onClick={() => setOpen(!open)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") close();
+        }}
         className={cn(
-          "focus-visible:ring-brand flex h-9 w-full items-center justify-between rounded-md border px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none",
+          "focus-visible:ring-brand flex h-9 w-full items-center justify-between rounded-md border px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
           resolveVariant(variants, effectiveVariant),
         )}
+        role="combobox"
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        aria-controls={listId}
         aria-describedby={describedBy}
       >
         <span className={cn("truncate", fontClasses({ fontSize, fontWeight, fontFamily }))}>
@@ -69,11 +98,11 @@ export function Combobox({
         <div className="bg-bg border-border absolute z-50 mt-1 w-full rounded-lg border p-1 shadow-lg">
           <Command>
             <CommandInput
-              placeholder={placeholder}
+              placeholder={searchPlaceholder ?? placeholder}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-            <CommandList>
+            <CommandList id={listId}>
               <CommandGroup>
                 {options
                   .filter((o) =>
@@ -85,8 +114,7 @@ export function Combobox({
                       value={opt.value}
                       onSelect={() => {
                         onValueChange?.(opt.value);
-                        setOpen(false);
-                        setQuery("");
+                        close();
                       }}
                     >
                       <span className={cn(fontClasses({ fontSize, fontWeight, fontFamily }))}>{opt.label}</span>
@@ -102,8 +130,8 @@ export function Combobox({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   }
-                  title="No results"
-                  description="No items match your search."
+                  title={emptyTitle}
+                  description={emptyDescription}
                 />
               )}
             </CommandList>

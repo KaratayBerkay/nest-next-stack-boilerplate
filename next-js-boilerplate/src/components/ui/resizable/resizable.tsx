@@ -6,7 +6,7 @@ import {
 } from "react-resizable-panels";
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
-import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { ResizablePanelGroupProps } from "@/types/ui/Resizable-types";
 
@@ -38,7 +38,7 @@ export function ResizableHandle({
   className,
   variant,
   ...props
-}: React.ComponentPropsWithoutRef<typeof Handle> & { variant?: string }) {
+}: React.ComponentPropsWithoutRef<typeof Handle> & { variant?: GlobalVariant }) {
   const effectiveVariant = useComponentVariant(variant);
   return (
     <Handle

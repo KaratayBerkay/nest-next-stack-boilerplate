@@ -15,6 +15,8 @@ const variantClasses = {
   default: "",
   destructive: "bg-error/10 border-error/30 text-error",
   success: "bg-success/10 border-success/30 text-success",
+  warning: "bg-warning/10 border-warning/30 text-warning",
+  info: "bg-info/10 border-info/30 text-info",
 };
 
 export function Toast({

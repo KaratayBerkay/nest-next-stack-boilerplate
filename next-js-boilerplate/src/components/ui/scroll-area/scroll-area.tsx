@@ -9,7 +9,7 @@ import {
 } from "@radix-ui/react-scroll-area";
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
-import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 
 const scrollAreaVariants = {
@@ -19,7 +19,7 @@ const scrollAreaVariants = {
 
 export const ScrollArea = forwardRef<
   React.ElementRef<typeof Root>,
-  React.ComponentPropsWithoutRef<typeof Root> & { variant?: string }
+  React.ComponentPropsWithoutRef<typeof Root> & { variant?: GlobalVariant }
 >(({ className, children, variant, ...props }, ref) => {
   const effectiveVariant = useComponentVariant(variant);
   return (

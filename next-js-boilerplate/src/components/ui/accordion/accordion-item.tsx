@@ -4,7 +4,7 @@ import { forwardRef } from "react";
 import { Item } from "@radix-ui/react-accordion";
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
-import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 
 const accordionItemVariants = {
@@ -14,7 +14,7 @@ const accordionItemVariants = {
 
 export const AccordionItem = forwardRef<
   React.ElementRef<typeof Item>,
-  React.ComponentPropsWithoutRef<typeof Item> & { variant?: string }
+  React.ComponentPropsWithoutRef<typeof Item> & { variant?: GlobalVariant }
 >(({ className, variant, ...props }, ref) => {
   const effectiveVariant = useComponentVariant(variant);
   return (

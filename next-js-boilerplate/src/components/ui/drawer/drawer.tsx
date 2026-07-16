@@ -5,7 +5,7 @@ import { forwardRef } from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
-import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 
 const drawerVariants = {
@@ -19,7 +19,7 @@ export const DrawerClose = DrawerPrimitive.Close;
 
 export const DrawerContent = forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content> & { variant?: string }
+  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content> & { variant?: GlobalVariant }
 >(({ className, children, variant, ...props }, ref) => {
   const effectiveVariant = useComponentVariant(variant);
   return (

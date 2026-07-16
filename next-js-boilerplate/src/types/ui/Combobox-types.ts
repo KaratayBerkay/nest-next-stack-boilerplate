@@ -5,6 +5,10 @@ export interface ComboboxProps {
   value?: string;
   onValueChange?: (value: string) => void;
   placeholder?: string;
+  searchPlaceholder?: string;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  disabled?: boolean;
   variant?: ComboboxVariant;
   className?: string;
   fontSize?: string;

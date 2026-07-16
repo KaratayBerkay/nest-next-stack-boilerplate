@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 import { menuItemStyles } from "@/components/ui/menu-item-styles";
 import { useEffect } from "react";
 import { useCommandContext } from "./command";
-import type { CommandItemProps } from "@/types/ui/CommandItem-types";
+import type { CommandItemProps } from "@/types/ui/Command-types";
 
 export function CommandItem({
   value,

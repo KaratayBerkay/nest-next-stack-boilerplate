@@ -12,7 +12,7 @@ import {
 } from "@radix-ui/react-dialog";
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
-import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 
 const sheetVariants = {
@@ -28,7 +28,7 @@ export const SheetContent = forwardRef<
   React.ElementRef<typeof Content>,
   React.ComponentPropsWithoutRef<typeof Content> & {
     side?: "top" | "bottom" | "left" | "right";
-    variant?: string;
+    variant?: GlobalVariant;
   }
 >(({ className, children, side = "right", variant, ...props }, ref) => {
   const effectiveVariant = useComponentVariant(variant);

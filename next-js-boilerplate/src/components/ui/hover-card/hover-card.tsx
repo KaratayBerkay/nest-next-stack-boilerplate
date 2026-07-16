@@ -3,7 +3,7 @@ import { forwardRef } from "react";
 import { Root, Trigger, Portal, Content } from "@radix-ui/react-hover-card";
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
-import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 
 const hoverCardVariants = {
@@ -18,7 +18,7 @@ export const HoverCardContent = forwardRef<
   React.ElementRef<typeof Content>,
   React.ComponentPropsWithoutRef<typeof Content> & {
     sideOffset?: number;
-    variant?: string;
+    variant?: GlobalVariant;
   }
 >(({ className, sideOffset = 4, variant, ...props }, ref) => {
   const effectiveVariant = useComponentVariant(variant);

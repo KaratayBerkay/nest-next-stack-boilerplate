@@ -1,6 +1,6 @@
 import type React from "react";
 
-type Variant = "default" | "destructive" | "success" | "warning";
+type Variant = "default" | "destructive" | "success" | "warning" | "info";
 
 export type AlertVariant = Variant;
 

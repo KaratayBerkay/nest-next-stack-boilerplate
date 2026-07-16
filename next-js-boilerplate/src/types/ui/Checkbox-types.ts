@@ -1,4 +1,5 @@
 import type React from "react";
+import type { GlobalVariant } from "@/components/ui/global-style-variants";
 
 export type CheckboxSize = "sm" | "md" | "lg";
 
@@ -53,7 +54,7 @@ export interface CheckboxCardProps {
   checked: boolean;
   onChange?: (checked: boolean) => void;
   value?: string;
-  variant?: string;
+  variant?: GlobalVariant;
   className?: string;
 }
 
@@ -63,7 +64,7 @@ export interface CheckboxChipProps {
   onChange?: (checked: boolean) => void;
   count?: number;
   onRemove?: () => void;
-  variant?: string;
+  variant?: GlobalVariant;
   className?: string;
 }
 

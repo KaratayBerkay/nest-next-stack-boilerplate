@@ -3,7 +3,7 @@ import { forwardRef } from "react";
 import { Root, Trigger, Content } from "@radix-ui/react-collapsible";
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
-import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 
 const collapsibleVariants = {
@@ -17,7 +17,7 @@ export const Collapsible = Root as React.FC<
 
 export const CollapsibleTrigger = forwardRef<
   React.ElementRef<typeof Trigger>,
-  React.ComponentPropsWithoutRef<typeof Trigger> & { variant?: string }
+  React.ComponentPropsWithoutRef<typeof Trigger> & { variant?: GlobalVariant }
 >(({ className, variant, ...props }, ref) => {
   const effectiveVariant = useComponentVariant(variant);
   return (

@@ -3,7 +3,7 @@
 import { cn } from "@/lib/cn";
 import { menuItemStyles } from "@/components/ui/menu-item-styles";
 import { useDropdownMenuContext } from "./dropdown-menu";
-import type { DropdownMenuItemProps } from "@/types/ui/DropdownMenuItem-types";
+import type { DropdownMenuItemProps } from "@/types/ui/DropdownMenu-types";
 
 export function DropdownMenuItem({
   disabled,

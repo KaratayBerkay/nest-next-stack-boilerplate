@@ -12,7 +12,7 @@ import {
 import { cn } from "@/lib/cn";
 import { menuItemStyles } from "@/components/ui/menu-item-styles";
 import { resolveVariant } from "@/lib/resolve-variant";
-import { globalStyleVariants } from "@/components/ui/global-style-variants";
+import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 
 const contextMenuVariants = {
@@ -47,7 +47,7 @@ ContextMenuLabel.displayName = "ContextMenuLabel";
 
 export const ContextMenuContent = forwardRef<
   React.ElementRef<typeof Content>,
-  React.ComponentPropsWithoutRef<typeof Content> & { variant?: string }
+  React.ComponentPropsWithoutRef<typeof Content> & { variant?: GlobalVariant }
 >(({ className, variant, ...props }, ref) => {
   const effectiveVariant = useComponentVariant(variant);
   return (

@@ -10,6 +10,7 @@ export interface SkeletonProps extends React.ComponentPropsWithoutRef<"div"> {
 export type SkeletonVariant = "default" | "shiny" | "glass" | "neon" | "gradient";
 
 export interface SkeletonLineProps extends React.ComponentPropsWithoutRef<"div"> {
+  width?: string;
   fontSize?: string;
   fontWeight?: string;
   fontFamily?: string;
@@ -22,6 +23,7 @@ export interface SkeletonMessageProps extends React.ComponentPropsWithoutRef<"di
 }
 
 export interface SkeletonChatMessageProps extends React.ComponentPropsWithoutRef<"div"> {
+  isMe?: boolean;
   fontSize?: string;
   fontWeight?: string;
   fontFamily?: string;
