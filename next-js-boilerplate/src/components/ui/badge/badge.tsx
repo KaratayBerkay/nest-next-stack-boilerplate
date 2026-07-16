@@ -20,9 +20,9 @@ const variants = {
 } as const;
 
 const sizeMap: Record<BadgeSize, string> = {
-  sm: "px-2 py-0 text-[10px]",
-  md: "px-2.5 py-0.5 text-xs",
-  lg: "px-3 py-1 text-sm",
+  sm: "px-2 py-0.5 text-[10px] leading-tight",
+  md: "px-2.5 py-1 text-xs leading-tight",
+  lg: "px-3.5 py-1.5 text-sm leading-tight",
 };
 
 export function Badge({

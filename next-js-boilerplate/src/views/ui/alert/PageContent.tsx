@@ -126,16 +126,17 @@ function ExamplesTab() {
                 </div>
                 <button
                   onClick={() => setDismissed(true)}
-                  className="text-muted hover:text-fg shrink-0 rounded p-1 transition-colors"
+                  className="hover:bg-surface-hover inline-flex size-10 shrink-0 items-center justify-center rounded-md transition-colors"
                   aria-label="Dismiss"
                 >
                   <svg
-                    width="14"
-                    height="14"
+                    width="20"
+                    height="20"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="2"
+                    strokeLinecap="round"
                   >
                     <path d="M18 6 6 18M6 6l12 12" />
                   </svg>
@@ -217,6 +218,7 @@ function ExamplesTab() {
 function ServerRetryTab() {
   const [status, setStatus] = useState<"idle" | "active" | "dismissing" | "dismissed">("idle");
   const [countdown, setCountdown] = useState(30);
+  const [retryCount, setRetryCount] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const remainingRef = useRef(30);
   const startTimeRef = useRef(0);
@@ -234,7 +236,7 @@ function ServerRetryTab() {
     setCountdown(remaining);
     if (remaining <= 0) {
       clearTimer();
-      setStatus("dismissing");
+      setStatus((prev) => (prev === "active" ? "dismissing" : prev));
     }
   }, [clearTimer]);
 
@@ -247,6 +249,7 @@ function ServerRetryTab() {
   const handleSimulate = useCallback(() => {
     setStatus("active");
     setCountdown(30);
+    setRetryCount(0);
     startTimer();
   }, [startTimer]);
 
@@ -260,13 +263,16 @@ function ServerRetryTab() {
   }, []);
 
   const handleMouseLeave = useCallback(() => {
-    startTimeRef.current = Date.now();
-    timerRef.current = setInterval(tick, 100);
+    if (timerRef.current === null && remainingRef.current > 0) {
+      startTimeRef.current = Date.now();
+      timerRef.current = setInterval(tick, 100);
+    }
   }, [tick]);
 
   const handleRetry = useCallback(() => {
     setStatus("active");
     setCountdown(30);
+    setRetryCount((c) => c + 1);
     startTimer();
   }, [startTimer]);
 
@@ -277,12 +283,34 @@ function ServerRetryTab() {
   return (
     <div className="flex flex-col gap-6">
       {status === "idle" && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
+          <div className="border-border rounded-lg border p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <div className="bg-success size-2 rounded-full" />
+              <span className="text-sm font-medium">api.example.com</span>
+              <Badge variant="success" size="sm">Healthy</Badge>
+            </div>
+            <div className="text-muted grid grid-cols-3 gap-4 text-xs">
+              <div>
+                <div className="mb-0.5 font-medium uppercase tracking-wider opacity-60">Latency</div>
+                <div>42ms</div>
+              </div>
+              <div>
+                <div className="mb-0.5 font-medium uppercase tracking-wider opacity-60">Uptime</div>
+                <div>99.98%</div>
+              </div>
+              <div>
+                <div className="mb-0.5 font-medium uppercase tracking-wider opacity-60">Last Check</div>
+                <div>Just now</div>
+              </div>
+            </div>
+          </div>
           <p className="text-muted text-sm">
-            Click the button to simulate a server error.
+            Simulate a server outage to see the auto-retry behavior with
+            countdown and exponential backoff.
           </p>
           <Button onClick={handleSimulate} variant="destructive" className="w-fit">
-            Simulate Server Error
+            Simulate Server Outage
           </Button>
         </div>
       )}
@@ -317,28 +345,56 @@ function ServerRetryTab() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
-                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                  <line x1="1" x2="23" y1="1" y2="23" />
+                  <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55" />
+                  <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39" />
+                  <path d="M10.71 5.05A16 16 0 0 1 22.56 9" />
+                  <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88" />
+                  <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+                  <line x1="12" x2="12.01" y1="20" y2="20" />
                 </svg>
               </Badge>
-              <div className="flex-1 space-y-1">
-                <AlertTitle>Server not reachable</AlertTitle>
-                <div className="flex items-center gap-1.5">
-                  <Spinner size="xs" />
-                  <span className="tabular-nums text-sm">
-                    Retrying in {countdown}s…
-                  </span>
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center gap-2">
+                  <AlertTitle>Connection lost to api.example.com</AlertTitle>
                 </div>
-                {status === "dismissing" && (
-                  <Button
-                    variant="link"
-                    size="sm"
-                    onClick={handleRetry}
-                    className="h-auto p-0 text-xs font-medium"
-                  >
-                    Retry now
-                  </Button>
-                )}
+                <div className="text-muted space-y-1 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-medium text-error">ERR_CONNECTION_REFUSED</span>
+                    <span>·</span>
+                    <span>Attempt {retryCount + 1} of 5</span>
+                  </div>
+                  <p>
+                    Unable to reach the API server at{" "}
+                    <code className="bg-error/10 rounded px-1 py-0.5 font-mono">
+                      https://api.example.com/health
+                    </code>
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <Spinner size="xs" />
+                    <span className="tabular-nums text-sm font-medium">
+                      Retrying in {countdown}s…
+                    </span>
+                  </div>
+                  {status === "dismissing" && (
+                    <Button
+                      variant="link"
+                      size="sm"
+                      onClick={handleRetry}
+                      className="h-auto p-0 text-xs font-medium"
+                    >
+                      Retry now
+                    </Button>
+                  )}
+                </div>
+                <div className="bg-error/10 mt-1 h-1 w-full overflow-hidden rounded-full">
+                  <div
+                    className="bg-error h-full transition-[width] duration-100 ease-linear"
+                    style={{ width: `${((30 - countdown) / 30) * 100}%` }}
+                  />
+                </div>
               </div>
             </div>
           </Alert>
@@ -346,10 +402,33 @@ function ServerRetryTab() {
       )}
 
       {status === "dismissed" && (
-        <div className="flex flex-col gap-3">
-          <p className="text-muted text-sm">Alert was auto-dismissed.</p>
-          <Button onClick={handleRetry} className="w-fit">
-            Retry now
+        <div className="flex flex-col gap-4">
+          <div className="border-border rounded-lg border p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <div className="bg-error size-2 rounded-full" />
+              <span className="text-sm font-medium">api.example.com</span>
+              <Badge variant="error" size="sm">Down</Badge>
+            </div>
+            <div className="text-muted grid grid-cols-3 gap-4 text-xs">
+              <div>
+                <div className="mb-0.5 font-medium uppercase tracking-wider opacity-60">Attempts</div>
+                <div>{retryCount + 1} failed</div>
+              </div>
+              <div>
+                <div className="mb-0.5 font-medium uppercase tracking-wider opacity-60">Last Error</div>
+                <div>Connection refused</div>
+              </div>
+              <div>
+                <div className="mb-0.5 font-medium uppercase tracking-wider opacity-60">Status</div>
+                <div className="text-error">Exhausted</div>
+              </div>
+            </div>
+          </div>
+          <p className="text-muted text-sm">
+            All retry attempts failed. The server is currently unreachable.
+          </p>
+          <Button onClick={handleRetry} variant="destructive" className="w-fit">
+            Restart Health Check
           </Button>
         </div>
       )}

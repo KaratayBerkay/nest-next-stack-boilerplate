@@ -125,6 +125,60 @@ export default function FeedPage() {
 
 **Rule of thumb:** If a view/page file exceeds ~150 lines, split it.
 
+## Visiting Deployed URLs with Playwright
+
+When asked to visit a URL that requires authentication (e.g. `https://app.eys.gen.tr/...`), use Playwright with cookies to bypass the login form.
+
+### Auth flow
+
+1. **Navigate to the site** first to establish the domain context
+2. **Register a test user** via `POST /api/auth/register` with `{ email, password, name }`
+3. **Set cookies** from the registration response — `access_token` and `session_user` (base64url-encoded JSON)
+4. **Navigate to the target URL**
+
+```python
+import time, json, base64, uuid
+from playwright.sync_api import sync_playwright
+
+BASE = "https://app.eys.gen.tr"
+EMAIL = f"test-{uuid.uuid4().hex[:8]}@test.com"
+PASSWORD = "TestPass123!"
+
+with sync_playwright() as p:
+    browser = p.chromium.launch(headless=True)
+    context = browser.new_context(viewport={"width": 1280, "height": 900})
+    page = context.new_page()
+
+    # 1. Establish domain context
+    page.goto(BASE, timeout=30000, wait_until="domcontentloaded")
+    page.wait_for_load_state("networkidle", timeout=15000)
+
+    # 2. Register
+    reg = page.request.post(f"{BASE}/api/auth/register", data={
+        "email": EMAIL, "password": PASSWORD, "name": "Test User"
+    }).json()
+
+    # 3. Set cookies
+    context.add_cookies([
+        {"name": "access_token", "value": reg["accessToken"],
+         "domain": "app.eys.gen.tr", "path": "/"},
+        {"name": "session_user", "value": base64.urlsafe_b64encode(
+            json.dumps(reg["user"]).encode()).decode(),
+         "domain": "app.eys.gen.tr", "path": "/"},
+    ])
+
+    # 4. Navigate
+    page.goto(f"{BASE}/v1/en/ui/alert?tab=variants", timeout=30000)
+    page.wait_for_load_state("networkidle", timeout=15000)
+```
+
+### Key details
+
+- `dev-activate` returns **404** in production — new users stay `PENDING_VERIFICATION` unless email is verified. Registering still returns an `accessToken` that works for cookie-based access.
+- `device_token` cookie is set by the backend **after** login — not needed for the register-then-cookie approach.
+- Always use `uuid.uuid4().hex[:8]` suffix on the email to avoid conflicts with existing test users.
+- `POST /api/auth/login` returns **500** for `PENDING_VERIFICATION` users — don't use login, use register + cookies.
+
 ## Log Query Hooks
 
 When asked to read/show websocket logs, payment logs, billing logs, or any application logs, query the last logs from Elasticsearch.
