@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Carousel component demo",
 };
 
-export default function CarouselPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function CarouselPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

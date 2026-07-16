@@ -46,12 +46,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function InputGroupPage() {
+export default function InputGroupPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Input Group"
       intro="A group of related inputs."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

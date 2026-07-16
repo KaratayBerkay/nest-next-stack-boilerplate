@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Empty component demo",
 };
 
-export default function EmptyPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function EmptyPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

@@ -219,12 +219,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function AvatarPage() {
+export default function AvatarPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Avatar"
       intro="An image element with a fallback for representing the user."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

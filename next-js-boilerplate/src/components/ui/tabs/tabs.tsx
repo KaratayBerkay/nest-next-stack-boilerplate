@@ -22,6 +22,8 @@ export function useTabsContext() {
 
 export function Tabs({
   defaultValue,
+  value: controlledValue,
+  onValueChange: onControlledChange,
   className,
   orientation = "horizontal",
   fontSize,
@@ -29,12 +31,15 @@ export function Tabs({
   fontFamily,
   ...props
 }: TabsProps) {
-  const [activeValue, setActiveValue] = useState(defaultValue);
+  const [internalValue, setInternalValue] = useState(defaultValue);
+  const isControlled = controlledValue !== undefined;
+  const activeValue = (isControlled ? controlledValue : internalValue) ?? "";
   const baseId = useId();
 
   const onValueChange = useCallback((value: string) => {
-    setActiveValue(value);
-  }, []);
+    if (!isControlled) setInternalValue(value);
+    onControlledChange?.(value);
+  }, [isControlled, onControlledChange]);
 
   const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 

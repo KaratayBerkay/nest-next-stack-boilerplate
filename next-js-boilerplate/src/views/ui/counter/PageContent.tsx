@@ -30,12 +30,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function CounterPage() {
+export default function CounterPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Counter"
       intro="A simple click counter button."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

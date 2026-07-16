@@ -799,12 +799,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function ComboboxPage() {
+export default function ComboboxPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Combobox"
       intro="Searchable select with autocomplete."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

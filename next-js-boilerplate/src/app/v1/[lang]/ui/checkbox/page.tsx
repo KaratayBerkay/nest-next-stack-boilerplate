@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Checkbox component demo",
 };
 
-export default function CheckboxPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function CheckboxPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

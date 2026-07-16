@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Popover component demo",
 };
 
-export default function PopoverPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function PopoverPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

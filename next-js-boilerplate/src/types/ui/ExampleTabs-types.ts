@@ -11,4 +11,7 @@ export interface ExampleTabsProps {
   title: string;
   intro: string;
   examples: UIExample[];
+  initialTab?: string;
+  value?: string;
+  onValueChange?: (value: string) => void;
 }

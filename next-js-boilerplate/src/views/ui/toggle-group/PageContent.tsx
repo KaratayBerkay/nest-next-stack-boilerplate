@@ -84,12 +84,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function ToggleGroupPage() {
+export default function ToggleGroupPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Toggle Group"
       intro="A group of toggle buttons."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

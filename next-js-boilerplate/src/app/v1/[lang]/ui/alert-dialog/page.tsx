@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Alert Dialog component demo",
 };
 
-export default function AlertDialogPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function AlertDialogPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

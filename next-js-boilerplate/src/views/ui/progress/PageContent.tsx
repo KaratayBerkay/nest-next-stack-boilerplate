@@ -93,12 +93,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function ProgressPage() {
+export default function ProgressPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Progress"
       intro="A progress bar component."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

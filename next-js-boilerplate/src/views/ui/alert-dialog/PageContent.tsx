@@ -301,12 +301,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function AlertDialogPage() {
+export default function AlertDialogPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Alert Dialog"
       intro="A modal dialog that interrupts the user."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

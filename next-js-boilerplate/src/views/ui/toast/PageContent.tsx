@@ -339,13 +339,14 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function Page() {
+export default function Page({ initialTab }: { initialTab?: string }) {
   return (
     <div data-testid="toast-demo">
       <ExampleTabs
         title="Toast"
         intro="A notification toast with different variants and auto-dismiss."
         examples={examples}
+        initialTab={initialTab}
       />
     </div>
   );

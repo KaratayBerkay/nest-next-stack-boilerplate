@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { cookies } from "next/headers";
+import Script from "next/script";
 import { JsonLd } from "@/lib/seo/JsonLd";
 import { QueryProvider } from "@/integrations/tanstack-query/QueryProvider";
 import { AuthProvider } from "@/hooks/useAuth";
@@ -17,7 +19,6 @@ import type { I18nMessages } from "@/generated/i18n-messages";
 import { ClientLocaleProvider } from "@/components/ClientLocaleProvider";
 import { TimezoneProvider } from "@/components/TimezoneProvider";
 import { CurrencyProvider } from "@/components/CurrencyProvider";
-import { ThemeInitScript } from "./ThemeInitScript";
 import { clientEnv } from "@/lib/env";
 import "./globals.css";
 
@@ -49,20 +50,39 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
 };
 
-export default function RootLayout({
+const THEME_NAMES = ["light", "dark", "shiny", "glass", "neon", "gradient"] as const;
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const messages = getAllMessages<I18nMessages>(DEFAULT_LANG);
+
+  const cookieStore = await cookies();
+  const themeCookie = cookieStore.get("theme")?.value;
+  const activeTheme = themeCookie && THEME_NAMES.includes(themeCookie as typeof THEME_NAMES[number])
+    ? themeCookie as typeof THEME_NAMES[number]
+    : null;
+
+  const classes = [
+    geistSans.variable,
+    geistMono.variable,
+    "h-full antialiased",
+  ];
+  if (activeTheme) {
+    classes.push(`style-${activeTheme}`);
+    if (activeTheme !== "light") classes.push("dark");
+  }
+
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={classes.join(" ")}
       suppressHydrationWarning
     >
       <head>
-        <ThemeInitScript />
+        <Script src="/scripts/theme-init.js" strategy="beforeInteractive" />
         <JsonLd
           data={{
             "@context": "https://schema.org",

@@ -187,12 +187,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function TogglePage() {
+export default function TogglePage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Toggle"
       intro="A toggle button."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

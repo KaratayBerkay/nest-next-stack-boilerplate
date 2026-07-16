@@ -45,12 +45,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function AspectRatioPage() {
+export default function AspectRatioPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Aspect Ratio"
       intro="Displays content within a desired ratio."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

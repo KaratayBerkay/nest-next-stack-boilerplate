@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Image upload component demo",
 };
 
-export default function ImageUploadPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function ImageUploadPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

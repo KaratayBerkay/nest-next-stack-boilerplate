@@ -168,12 +168,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function DrawerPage() {
+export default function DrawerPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Drawer"
       intro="A modal drawer that slides in from the bottom."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

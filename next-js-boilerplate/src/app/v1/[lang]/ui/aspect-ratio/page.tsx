@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Aspect Ratio component demo",
 };
 
-export default function AspectRatioPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function AspectRatioPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

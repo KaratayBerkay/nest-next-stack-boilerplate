@@ -245,12 +245,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function CalendarPage() {
+export default function CalendarPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Calendar"
       intro="A full-featured event calendar for displaying events, schedules, and deadlines."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

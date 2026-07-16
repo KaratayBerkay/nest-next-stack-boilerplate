@@ -168,12 +168,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function TooltipPage() {
+export default function TooltipPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Tooltip"
       intro="A tooltip that appears on hover with configurable side and variant."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

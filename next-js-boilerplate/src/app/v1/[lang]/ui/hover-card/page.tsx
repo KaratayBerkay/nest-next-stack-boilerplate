@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Hover Card component demo",
 };
 
-export default function HoverCardPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function HoverCardPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Dropdown Menu component demo",
 };
 
-export default function DropdownMenuPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function DropdownMenuPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

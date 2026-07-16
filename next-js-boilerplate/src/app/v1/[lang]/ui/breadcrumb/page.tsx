@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Breadcrumb component demo",
 };
 
-export default function BreadcrumbPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function BreadcrumbPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

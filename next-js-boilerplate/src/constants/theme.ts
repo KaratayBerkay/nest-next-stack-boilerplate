@@ -1,24 +1,20 @@
-export type ThemeName = "light" | "dark" | "ocean" | "violet";
+export type ThemeName = "light" | "dark" | "shiny" | "glass" | "neon" | "gradient";
 
 export const THEMES: { name: ThemeName; label: string }[] = [
   { name: "light", label: "Light" },
   { name: "dark", label: "Dark" },
-  { name: "ocean", label: "Ocean" },
-  { name: "violet", label: "Violet" },
-];
-
-export const DARK_THEMES: ThemeName[] = ["dark", "violet"];
-
-export const THEME_COOKIE_NAME = "theme";
-
-export type ComponentStyle = "default" | "shiny" | "glass" | "neon" | "gradient";
-
-export const COMPONENT_STYLES: { name: ComponentStyle; label: string }[] = [
-  { name: "default", label: "Default" },
   { name: "shiny", label: "Shiny" },
   { name: "glass", label: "Glass" },
   { name: "neon", label: "Neon" },
   { name: "gradient", label: "Gradient" },
 ];
 
-export const COMPONENT_STYLE_COOKIE_NAME = "componentStyle";
+export const THEME_COOKIE_NAME = "theme";
+
+/* Kept for backward compat with useComponentVariant */
+export type ComponentStyle = "default" | "shiny" | "glass" | "neon" | "gradient";
+
+export function themeToComponentStyle(theme: ThemeName): ComponentStyle {
+  if (theme === "light" || theme === "dark") return "default";
+  return theme as ComponentStyle;
+}

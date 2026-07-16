@@ -114,12 +114,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function InputOtpPage() {
+export default function InputOtpPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Input OTP"
       intro="A one-time password input."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

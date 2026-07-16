@@ -1,6 +1,6 @@
 "use client";
 
-import { useTheme } from "@/hooks/useTheme";
+import { useTheme, THEMES } from "@/hooks/useTheme";
 
 export default function ThemePage() {
   const { theme, setTheme } = useTheme();
@@ -16,41 +16,19 @@ export default function ThemePage() {
             {theme}
           </span>
         </p>
-        <p className="text-muted text-sm">
-          Toggle with the button in the header above, or use the explicit
-          buttons below.
-        </p>
       </section>
 
       <section className="flex flex-wrap gap-2">
-        <button
-          onClick={() => setTheme("light")}
-          data-testid="set-light"
-          className="border-border text-fg hover:bg-surface-hover rounded border px-4 py-2 text-sm font-medium"
-        >
-          Light
-        </button>
-        <button
-          onClick={() => setTheme("dark")}
-          data-testid="set-dark"
-          className="border-border text-fg hover:bg-surface-hover rounded border px-4 py-2 text-sm font-medium"
-        >
-          Dark
-        </button>
-        <button
-          onClick={() => setTheme("ocean")}
-          data-testid="set-ocean"
-          className="border-border text-fg hover:bg-surface-hover rounded border px-4 py-2 text-sm font-medium"
-        >
-          Ocean
-        </button>
-        <button
-          onClick={() => setTheme("violet")}
-          data-testid="set-violet"
-          className="border-border text-fg theme-violet hover:bg-surface-hover rounded border px-4 py-2 text-sm font-medium"
-        >
-          Violet
-        </button>
+        {THEMES.map((t) => (
+          <button
+            key={t.name}
+            onClick={() => setTheme(t.name)}
+            data-testid={`set-${t.name}`}
+            className="border-border text-fg hover:bg-surface-hover rounded border px-4 py-2 text-sm font-medium"
+          >
+            {t.label}
+          </button>
+        ))}
       </section>
 
       <section className="flex flex-wrap gap-3">

@@ -125,12 +125,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function HoverCardPage() {
+export default function HoverCardPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Hover Card"
       intro="A card that appears on hover."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

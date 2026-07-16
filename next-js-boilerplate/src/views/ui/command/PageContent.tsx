@@ -160,12 +160,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function CommandPage() {
+export default function CommandPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Command"
       intro="Searchable command palette with keyboard navigation, filtering, and groups."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

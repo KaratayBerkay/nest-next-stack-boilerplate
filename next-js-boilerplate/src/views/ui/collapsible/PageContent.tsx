@@ -165,12 +165,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function CollapsiblePage() {
+export default function CollapsiblePage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Collapsible"
       intro="An interactive component that expands/collapses."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

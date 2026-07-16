@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Typography component demo",
 };
 
-export default function TypographyPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function TypographyPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

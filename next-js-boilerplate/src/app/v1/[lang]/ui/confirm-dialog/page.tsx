@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Confirm Dialog component demo",
 };
 
-export default function ConfirmDialogPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function ConfirmDialogPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

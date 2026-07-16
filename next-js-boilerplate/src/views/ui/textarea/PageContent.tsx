@@ -121,12 +121,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function TextareaPage() {
+export default function TextareaPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Textarea"
       intro="A multi-line text input field with multiple stylish variants."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

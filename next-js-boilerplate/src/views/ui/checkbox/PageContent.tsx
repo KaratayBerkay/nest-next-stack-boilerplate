@@ -281,12 +281,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function CheckboxPage() {
+export default function CheckboxPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Checkbox"
       intro="A control that allows the user to toggle between checked and unchecked states."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

@@ -164,12 +164,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function DatePickerPage() {
+export default function DatePickerPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Date Picker"
       intro="A date picker with popover calendar and multiple selection modes."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

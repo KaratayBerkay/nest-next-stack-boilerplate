@@ -168,12 +168,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function TimeInputPage() {
+export default function TimeInputPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Time Input"
       intro="A time picker with dropdown selectors for hours, minutes, and seconds with automatic timezone detection."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

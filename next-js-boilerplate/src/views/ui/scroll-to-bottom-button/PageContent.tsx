@@ -98,12 +98,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function ScrollToBottomButtonPage() {
+export default function ScrollToBottomButtonPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Scroll To Bottom Button"
       intro="A button that scrolls to the bottom of a container."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

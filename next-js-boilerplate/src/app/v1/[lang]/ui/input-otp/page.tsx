@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Input OTP component demo",
 };
 
-export default function InputOtpPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function InputOtpPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

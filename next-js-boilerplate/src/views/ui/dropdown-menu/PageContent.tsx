@@ -111,12 +111,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function Page() {
+export default function Page({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Dropdown Menu"
       intro="A contextual menu that appears on trigger click. Items close the menu on selection."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

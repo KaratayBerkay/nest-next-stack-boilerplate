@@ -53,12 +53,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function SpinnerPage() {
+export default function SpinnerPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Spinner"
       intro="A loading spinner."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

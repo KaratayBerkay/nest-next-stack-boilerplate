@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Skeleton component demo",
 };
 
-export default function SkeletonPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function SkeletonPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

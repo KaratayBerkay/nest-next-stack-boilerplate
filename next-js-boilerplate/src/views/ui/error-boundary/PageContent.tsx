@@ -92,12 +92,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function ErrorBoundaryPage() {
+export default function ErrorBoundaryPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Error Boundary"
       intro="Catches errors in child components and displays a fallback UI."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

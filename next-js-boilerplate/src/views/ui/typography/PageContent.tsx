@@ -95,12 +95,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function TypographyPage() {
+export default function TypographyPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Typography"
       intro="Pre-styled typography components."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

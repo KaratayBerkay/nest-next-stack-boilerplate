@@ -11,23 +11,19 @@ import {
 
 import {
   THEMES,
-  DARK_THEMES,
   THEME_COOKIE_NAME,
-  COMPONENT_STYLES,
-  COMPONENT_STYLE_COOKIE_NAME,
+  themeToComponentStyle,
   type ThemeName,
   type ComponentStyle,
 } from "@/constants/theme";
 import type { ThemeProviderProps } from "@/types/hooks/ThemeProvider-types";
-export { THEMES, COMPONENT_STYLES };
+export { THEMES };
 export type { ThemeName, ComponentStyle };
 
 type ThemeContextValue = {
   theme: ThemeName;
   setTheme: (theme: ThemeName) => void;
-  cycleTheme: () => void;
   componentStyle: ComponentStyle;
-  setComponentStyle: (style: ComponentStyle) => void;
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -47,28 +43,21 @@ function setThemeCookie(theme: ThemeName) {
   document.cookie = `${THEME_COOKIE_NAME}=${theme};path=/;max-age=31536000;samesite=lax`;
 }
 
-function getComponentStyleCookie(): ComponentStyle | null {
-  const match = document.cookie.match(
-    new RegExp(`(?:^|;\\s*)${COMPONENT_STYLE_COOKIE_NAME}=([^;]*)`),
-  );
-  if (match) {
-    const value = match[1] as ComponentStyle;
-    if (COMPONENT_STYLES.some((s) => s.name === value)) return value;
-  }
-  return null;
-}
-
-function setComponentStyleCookie(style: ComponentStyle) {
-  document.cookie = `${COMPONENT_STYLE_COOKIE_NAME}=${style};path=/;max-age=31536000;samesite=lax`;
-}
-
 function getInitialTheme(): ThemeName {
-  if (typeof window === "undefined") return "light";
-  // Respect the class already set by server / inline script
+  if (typeof window === "undefined") return "dark";
   const root = document.documentElement;
-  if (root.classList.contains("theme-violet")) return "violet";
-  for (const t of THEMES) {
-    if (root.classList.contains(`theme-${t.name}`)) return t.name;
+  // Reconstruct from DOM classes — all options use style-{name}
+  if (root.classList.contains("style-gradient")) return "gradient";
+  if (root.classList.contains("style-neon")) return "neon";
+  if (root.classList.contains("style-glass")) return "glass";
+  if (root.classList.contains("style-shiny")) return "shiny";
+  if (root.classList.contains("style-dark")) return "dark";
+  if (root.classList.contains("style-light")) return "light";
+  // Check legacy componentStyle cookie
+  const legacyStyleMatch = document.cookie.match(/(?:^|;\s*)componentStyle=([^;]*)/);
+  if (legacyStyleMatch) {
+    const v = legacyStyleMatch[1];
+    if (["shiny", "glass", "neon", "gradient"].includes(v)) return v as ThemeName;
   }
   const fromCookie = getThemeCookie();
   if (fromCookie) return fromCookie;
@@ -77,55 +66,34 @@ function getInitialTheme(): ThemeName {
     : "light";
 }
 
-function getInitialComponentStyle(): ComponentStyle {
-  if (typeof window === "undefined") return "default";
-  const root = document.documentElement;
-  for (const s of COMPONENT_STYLES) {
-    if (root.classList.contains(`style-${s.name}`)) return s.name;
-  }
-  const fromCookie = getComponentStyleCookie();
-  if (fromCookie) return fromCookie;
-  return "default";
-}
-
 function applyTheme(theme: ThemeName) {
   const root = document.documentElement;
-  // Remove all theme classes
-  for (const t of THEMES) {
-    root.classList.remove(`theme-${t.name}`);
+  // Remove all style classes
+  for (const s of ["light", "dark", "default", "shiny", "glass", "neon", "gradient"] as const) {
+    root.classList.remove(`style-${s}`);
   }
-  root.classList.remove("theme-violet");
-  // Add current theme class
-  root.classList.add(`theme-${theme}`);
-  // Keep `dark` class for Tailwind `dark:` variant backward compat
-  root.classList.toggle("dark", DARK_THEMES.includes(theme));
-}
-
-function applyComponentStyle(style: ComponentStyle) {
-  const root = document.documentElement;
-  // Remove all component style classes
-  for (const s of COMPONENT_STYLES) {
-    root.classList.remove(`style-${s.name}`);
+  root.classList.remove("dark");
+  // Map unified theme to a single style-{name} class
+  root.classList.add(`style-${theme}`);
+  if (theme !== "light") {
+    root.classList.add("dark");
   }
-  // Add current component style class
-  root.classList.add(`style-${style}`);
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  const [theme, setThemeState] = useState<ThemeName>("light");
-  const [componentStyle, setComponentStyleState] =
-    useState<ComponentStyle>("default");
+  const [theme, setThemeState] = useState<ThemeName>("dark");
 
-  // Intentional hydration guard: set theme once on mount from localStorage/cookie.
   useEffect(() => {
     const initial = getInitialTheme();
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setThemeState(initial);
     applyTheme(initial);
 
-    const initialStyle = getInitialComponentStyle();
-    setComponentStyleState(initialStyle);
-    applyComponentStyle(initialStyle);
+    // Migrate legacy componentStyle cookie
+    const legacyStyleMatch = document.cookie.match(/(?:^|;\s*)componentStyle=([^;]*)/);
+    if (legacyStyleMatch) {
+      document.cookie = "componentStyle=;path=/;max-age=0;samesite=lax";
+    }
   }, []);
 
   const setTheme = useCallback((next: ThemeName) => {
@@ -134,21 +102,11 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     setThemeCookie(next);
   }, []);
 
-  const cycleTheme = useCallback(() => {
-    const idx = THEMES.findIndex((t) => t.name === theme);
-    const next = THEMES[(idx + 1) % THEMES.length].name;
-    setTheme(next);
-  }, [theme, setTheme]);
-
-  const setComponentStyle = useCallback((next: ComponentStyle) => {
-    setComponentStyleState(next);
-    applyComponentStyle(next);
-    setComponentStyleCookie(next);
-  }, []);
+  const componentStyle = themeToComponentStyle(theme);
 
   return (
     <ThemeContext.Provider
-      value={{ theme, setTheme, cycleTheme, componentStyle, setComponentStyle }}
+      value={{ theme, setTheme, componentStyle }}
     >
       {children}
     </ThemeContext.Provider>

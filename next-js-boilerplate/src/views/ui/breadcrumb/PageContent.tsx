@@ -165,12 +165,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function BreadcrumbPage() {
+export default function BreadcrumbPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Breadcrumb"
       intro="Navigation hierarchy indicator."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

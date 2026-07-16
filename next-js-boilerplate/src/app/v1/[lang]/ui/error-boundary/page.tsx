@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Error Boundary component demo",
 };
 
-export default function ErrorBoundaryPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function ErrorBoundaryPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

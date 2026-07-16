@@ -96,12 +96,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function Page() {
+export default function Page({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Select"
       intro="A custom select component with dropdown items and typeahead support."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

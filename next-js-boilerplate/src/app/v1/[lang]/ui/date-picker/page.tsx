@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Date Picker component demo",
 };
 
-export default function DatePickerPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function DatePickerPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

@@ -70,12 +70,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function Page() {
+export default function Page({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Popover"
       intro="A popover that displays content anchored to a trigger element. On mobile it renders as a bottom sheet."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

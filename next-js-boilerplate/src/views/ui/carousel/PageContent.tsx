@@ -111,12 +111,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function CarouselPage() {
+export default function CarouselPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Carousel"
       intro="A carousel with motion and swipe."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

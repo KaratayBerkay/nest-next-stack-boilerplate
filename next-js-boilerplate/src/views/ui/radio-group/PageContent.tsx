@@ -90,12 +90,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function RadioGroupPage() {
+export default function RadioGroupPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Radio Group"
       intro="A set of radio buttons."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

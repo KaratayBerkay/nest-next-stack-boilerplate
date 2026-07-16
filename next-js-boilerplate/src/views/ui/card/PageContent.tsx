@@ -459,7 +459,7 @@ function VariantGalleryTab() {
 
 // ---------- Page ----------
 
-export default function CardPage() {
+export default function CardPage({ initialTab }: { initialTab?: string }) {
   const examples: UIExample[] = [
     {
       id: "profile-card",
@@ -504,6 +504,7 @@ export default function CardPage() {
       title="Card"
       intro="A container component with header, content, and footer sections."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

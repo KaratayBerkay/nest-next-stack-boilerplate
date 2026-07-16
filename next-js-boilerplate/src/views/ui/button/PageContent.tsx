@@ -362,7 +362,7 @@ function ButtonGroupsTab() {
   );
 }
 
-export default function ButtonPage() {
+export default function ButtonPage({ initialTab }: { initialTab?: string }) {
   const examples: UIExample[] = [
     {
       id: "usage",
@@ -415,6 +415,7 @@ export default function ButtonPage() {
       title="Button"
       intro="Displays a button or a component that looks like a button."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

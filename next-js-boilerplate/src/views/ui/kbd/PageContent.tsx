@@ -90,12 +90,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function KbdPage() {
+export default function KbdPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Kbd"
       intro="A keyboard shortcut indicator with multiple variants."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

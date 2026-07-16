@@ -505,7 +505,7 @@ function LocalizedTab() {
   );
 }
 
-export default function PaginationPage() {
+export default function PaginationPage({ initialTab }: { initialTab?: string }) {
   const [page, setPage] = useState(1);
   const [invoicePage, setInvoicePage] = useState(1);
   const [friendPage, setFriendPage] = useState(1);
@@ -553,6 +553,7 @@ export default function PaginationPage() {
       title="Pagination"
       intro="A pagination component."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

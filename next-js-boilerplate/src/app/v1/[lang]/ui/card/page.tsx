@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Card component demo",
 };
 
-export default function CardPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function CardPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

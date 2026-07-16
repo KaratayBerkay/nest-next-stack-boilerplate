@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Input Group component demo",
 };
 
-export default function InputGroupPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function InputGroupPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

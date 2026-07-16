@@ -196,12 +196,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function SheetPage() {
+export default function SheetPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Sheet"
       intro="A slide-in panel from the edge with configurable side and variant."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

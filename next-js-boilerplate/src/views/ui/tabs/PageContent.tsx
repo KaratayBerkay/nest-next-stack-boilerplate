@@ -393,12 +393,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function Page() {
+export default function Page({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Tabs"
       intro="A set of layered content panels shown one at a time."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

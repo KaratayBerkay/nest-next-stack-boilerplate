@@ -106,7 +106,7 @@ function ExamplesTab({ loading, setLoading }: { loading: boolean; setLoading: Re
   );
 }
 
-export default function SkeletonPage() {
+export default function SkeletonPage({ initialTab }: { initialTab?: string }) {
   const [loading, setLoading] = useState(true);
 
   const examples: UIExample[] = [
@@ -141,6 +141,7 @@ export default function SkeletonPage() {
       title="Skeleton"
       intro="A loading placeholder for content that has not loaded yet."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

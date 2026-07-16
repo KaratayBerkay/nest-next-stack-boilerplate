@@ -10,7 +10,7 @@ import type { TabsTriggerProps } from "@/types/ui/TabsTrigger-types";
 
 const variants = {
   ...globalStyleVariants,
-  default: "data-[state=active]:bg-bg data-[state=active]:text-fg data-[state=active]:shadow-sm data-[state=inactive]:text-muted data-[state=inactive]:hover:text-fg",
+  default: "data-[state=active]:bg-surface-hover data-[state=active]:text-fg data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-border data-[state=inactive]:text-muted data-[state=inactive]:hover:text-fg data-[state=inactive]:hover:bg-surface-hover/50",
   underline: "data-[state=active]:border-b-2 data-[state=active]:border-brand rounded-none",
   pills: "data-[state=active]:bg-brand data-[state=active]:text-brand-fg rounded-full",
 };

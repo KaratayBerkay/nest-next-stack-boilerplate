@@ -134,12 +134,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function SliderPage() {
+export default function SliderPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Slider"
       intro="A range slider component."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

@@ -193,12 +193,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function Page() {
+export default function Page({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Dialog"
       intro="A modal window that interrupts the user with content. Header and footer are pinned; body scrolls independently."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

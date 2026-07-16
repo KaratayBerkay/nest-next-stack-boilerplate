@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Collapsible component demo",
 };
 
-export default function CollapsiblePage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function CollapsiblePage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

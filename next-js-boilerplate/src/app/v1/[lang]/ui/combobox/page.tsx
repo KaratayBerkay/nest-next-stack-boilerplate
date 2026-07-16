@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Combobox component demo",
 };
 
-export default function ComboboxPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function ComboboxPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

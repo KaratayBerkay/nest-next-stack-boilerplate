@@ -230,12 +230,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function SwitchPage() {
+export default function SwitchPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Switch"
       intro="A toggle switch for binary settings with multiple stylish variants."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

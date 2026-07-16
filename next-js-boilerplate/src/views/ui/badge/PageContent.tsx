@@ -255,12 +255,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function BadgePage() {
+export default function BadgePage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Badge"
       intro="Displays a badge or a component that looks like a badge."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

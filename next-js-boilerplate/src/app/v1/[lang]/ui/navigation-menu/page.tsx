@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Navigation Menu component demo",
 };
 
-export default function NavigationMenuPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function NavigationMenuPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

@@ -5,26 +5,26 @@
 @custom-variant mouse (&:where(.mouse-device, .mouse-device *));
 
 /*
- * Theme system — each named theme defines its own color palette via CSS
- * custom properties. Add new themes by dropping another `.theme-*` block.
+ * Theme system — each option defines its own color palette via CSS
+ * custom properties. Add new themes by dropping another `.style-*` block.
  *
  * The active theme class is set on <html> by the ThemeProvider hook.
  * Components consume these tokens through the Tailwind mappings below
  * (e.g. `bg-surface`, `text-fg`, `border-border`).
  */
 
-/* ── Light (default) ─────────────────────────────────────────────── */
+/* ── Light (default browser palette) ─────────────────────────────── */
 :root,
-.theme-light {
+.style-light {
   --bg: #ffffff;
   --fg: #171717;
   --brand: #4f46e5;
   --brand-fg: #ffffff;
-  --muted: #71717a;
+  --muted: #737373;
   --muted-fg: #52525b;
-  --border: #e4e4e7;
-  --surface: #fafafa;
-  --surface-hover: #f4f4f5;
+  --border: #d4d4d4;
+  --surface: #f5f5f5;
+  --surface-hover: #e5e5e5;
   --success: #15803d;
   --success-fg: #ffffff;
   --warning: #b45309;
@@ -36,17 +36,17 @@
   --overlay: #000000;
 }
 
-/* ── Dark ────────────────────────────────────────────────────────── */
-.theme-dark {
-  --bg: #0a0a0a;
-  --fg: #ededed;
+/* ── Dark (pure black) ──────────────────────────────────────────── */
+.style-dark {
+  --bg: #000000;
+  --fg: #e5e5e5;
   --brand: #818cf8;
   --brand-fg: #0b0b1a;
-  --muted: #a1a1aa;
-  --muted-fg: #a1a1aa;
-  --border: #27272a;
-  --surface: #18181b;
-  --surface-hover: #27272a;
+  --muted: #a3a3a3;
+  --muted-fg: #a3a3a3;
+  --border: #262626;
+  --surface: #171717;
+  --surface-hover: #262626;
   --success: #22c55e;
   --success-fg: #052e16;
   --warning: #f59e0b;
@@ -55,50 +55,6 @@
   --error-fg: #2a0808;
   --info: #38bdf8;
   --info-fg: #082f49;
-  --overlay: #000000;
-}
-
-/* ── Ocean ───────────────────────────────────────────────────────── */
-.theme-ocean {
-  --bg: #f0f9ff;
-  --fg: #0c4a6e;
-  --brand: #0369a1;
-  --brand-fg: #ffffff;
-  --muted: #475569;
-  --muted-fg: #475569;
-  --border: #bae6fd;
-  --surface: #e0f2fe;
-  --surface-hover: #bae6fd;
-  --success: #15803d;
-  --success-fg: #ffffff;
-  --warning: #b45309;
-  --warning-fg: #ffffff;
-  --error: #b91c1c;
-  --error-fg: #ffffff;
-  --info: #0369a1;
-  --info-fg: #ffffff;
-  --overlay: #000000;
-}
-
-/* ── Violet ──────────────────────────────────────────────────────── */
-.theme-violet {
-  --bg: #0b0b1a;
-  --fg: #e2e8f0;
-  --brand: #a78bfa;
-  --brand-fg: #0b0b1a;
-  --muted: #94a3b8;
-  --muted-fg: #94a3b8;
-  --border: #1e293b;
-  --surface: #12122a;
-  --surface-hover: #1a1a3e;
-  --success: #4ade80;
-  --success-fg: #0b0b1a;
-  --warning: #fbbf24;
-  --warning-fg: #0b0b1a;
-  --error: #f87171;
-  --error-fg: #0b0b1a;
-  --info: #60a5fa;
-  --info-fg: #0b0b1a;
   --overlay: #000000;
 }
 
@@ -116,6 +72,24 @@
 
 /* ── Shiny style ─────────────────────────────────────────────────── */
 .style-shiny {
+  --bg: #020617;
+  --fg: #e2e8f0;
+  --surface: #0f172a;
+  --surface-hover: #1e293b;
+  --muted: #94a3b8;
+  --muted-fg: #94a3b8;
+  --border: #1e293b;
+  --brand: #3b82f6;
+  --brand-fg: #ffffff;
+  --success: #22c55e;
+  --success-fg: #052e16;
+  --warning: #f59e0b;
+  --warning-fg: #451a03;
+  --error: #ef4444;
+  --error-fg: #2a0808;
+  --info: #38bdf8;
+  --info-fg: #082f49;
+  --overlay: #000000;
   --comp-card-bg: linear-gradient(135deg, #0f172a 0%, #020617 100%);
   --comp-card-border: rgba(148, 163, 184, 0.15);
   --comp-card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
@@ -133,6 +107,24 @@
 
 /* ── Glass style ─────────────────────────────────────────────────── */
 .style-glass {
+  --bg: #0a0a0a;
+  --fg: #e2e8f0;
+  --surface: rgba(255, 255, 255, 0.05);
+  --surface-hover: rgba(255, 255, 255, 0.1);
+  --muted: #94a3b8;
+  --muted-fg: #94a3b8;
+  --border: rgba(255, 255, 255, 0.12);
+  --brand: #818cf8;
+  --brand-fg: #0b0b1a;
+  --success: #22c55e;
+  --success-fg: #052e16;
+  --warning: #f59e0b;
+  --warning-fg: #451a03;
+  --error: #ef4444;
+  --error-fg: #2a0808;
+  --info: #38bdf8;
+  --info-fg: #082f49;
+  --overlay: #000000;
   --comp-card-bg: rgba(255, 255, 255, 0.05);
   --comp-card-border: rgba(255, 255, 255, 0.1);
   --comp-card-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
@@ -150,6 +142,24 @@
 
 /* ── Neon style ──────────────────────────────────────────────────── */
 .style-neon {
+  --bg: #020617;
+  --fg: #e2e8f0;
+  --surface: #071422;
+  --surface-hover: #0d2f45;
+  --muted: #94a3b8;
+  --muted-fg: #94a3b8;
+  --border: rgba(6, 182, 212, 0.25);
+  --brand: #06b6d4;
+  --brand-fg: #020617;
+  --success: #22c55e;
+  --success-fg: #052e16;
+  --warning: #f59e0b;
+  --warning-fg: #451a03;
+  --error: #ef4444;
+  --error-fg: #2a0808;
+  --info: #06b6d4;
+  --info-fg: #020617;
+  --overlay: #000000;
   --comp-card-bg: rgba(2, 6, 23, 0.8);
   --comp-card-border: rgba(6, 182, 212, 0.3);
   --comp-card-shadow: 0 0 20px rgba(6, 182, 212, 0.15);
@@ -167,19 +177,37 @@
 
 /* ── Gradient style ──────────────────────────────────────────────── */
 .style-gradient {
-  --comp-card-bg: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+  --bg: #1e1e32;
+  --fg: #e2e8f0;
+  --surface: #2d2d52;
+  --surface-hover: #3a3a6e;
+  --muted: #a1a1aa;
+  --muted-fg: #a1a1aa;
+  --border: rgba(167, 139, 250, 0.2);
+  --brand: #818cf8;
+  --brand-fg: #0b0b1a;
+  --success: #4ade80;
+  --success-fg: #052e16;
+  --warning: #facc15;
+  --warning-fg: #451a03;
+  --error: #f87171;
+  --error-fg: #2a0808;
+  --info: #a78bfa;
+  --info-fg: #0b0b1a;
+  --overlay: #000000;
+  --comp-card-bg: linear-gradient(135deg, #2d2d52 0%, #1e1e32 100%);
   --comp-card-border: transparent;
   --comp-card-shadow: 0 25px 50px -12px rgba(88, 28, 135, 0.3);
-  --comp-btn-bg: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+  --comp-btn-bg: linear-gradient(135deg, #818cf8 0%, #a78bfa 50%, #f9a8d4 100%);
   --comp-btn-text: #ffffff;
   --comp-btn-border: transparent;
   --comp-btn-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.3);
-  --comp-input-bg: rgba(30, 27, 75, 0.6);
-  --comp-input-border: rgba(139, 92, 246, 0.25);
-  --comp-badge-bg: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  --comp-input-bg: rgba(45, 45, 82, 0.6);
+  --comp-input-border: rgba(167, 139, 250, 0.2);
+  --comp-badge-bg: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
   --comp-badge-text: #ffffff;
-  --comp-alert-bg: rgba(30, 27, 75, 0.8);
-  --comp-alert-border: rgba(139, 92, 246, 0.25);
+  --comp-alert-bg: rgba(45, 45, 82, 0.8);
+  --comp-alert-border: rgba(167, 139, 250, 0.2);
 }
 
 /* ── Glass backdrop blur utility ─────────────────────────────────── */

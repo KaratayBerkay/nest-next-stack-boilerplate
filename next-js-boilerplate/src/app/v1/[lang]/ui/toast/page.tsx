@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Toast component demo",
 };
 
-export default function ToastPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function ToastPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

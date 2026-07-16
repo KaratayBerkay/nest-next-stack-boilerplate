@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Resizable component demo",
 };
 
-export default function ResizablePage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function ResizablePage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

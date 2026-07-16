@@ -114,12 +114,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function FileUploadPage() {
+export default function FileUploadPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="File Upload"
       intro="A dropzone-based file uploader with drag-and-drop, validation, progress bars, and remove actions."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

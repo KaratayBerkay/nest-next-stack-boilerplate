@@ -114,12 +114,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function NativeSelectPage() {
+export default function NativeSelectPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Native Select"
       intro="A native HTML select element."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

@@ -2,6 +2,55 @@
 // Run `pnpm generate-i18n-types` after adding / updating message files.
 
 export type I18nMessages = {
+  "accordion": {
+      "title": string;
+      "intro": string;
+      "singleState": string;
+      "singleStateDesc": string;
+      "multiState": string;
+      "multiStateDesc": string;
+      "richItems": string;
+      "richItemsDesc": string;
+      "default": string;
+      "multipleOpen": string;
+      "faqWithIcons": string;
+      "userProfiles": string;
+      "accessibleQ": string;
+      "accessibleA": string;
+      "styledQ": string;
+      "styledA": string;
+      "animatedQ": string;
+      "animatedA": string;
+      "faq1Title": string;
+      "faq1Desc": string;
+      "faq1Content1": string;
+      "faq1Content2": string;
+      "faq2Title": string;
+      "faq2Desc": string;
+      "faq2Content1": string;
+      "faq2Content2": string;
+      "faq3Title": string;
+      "faq3Desc": string;
+      "faq3Content1": string;
+      "faq3Content2": string;
+      "categoryGeneral": string;
+      "categoryCustomization": string;
+      "categoryBehavior": string;
+      "sarahName": string;
+      "sarahRole": string;
+      "sarahBio": string;
+      "mikeName": string;
+      "mikeRole": string;
+      "mikeBio": string;
+      "statusActive": string;
+      "skillFigma": string;
+      "skillPrototyping": string;
+      "skillUserResearch": string;
+      "skillReact": string;
+      "skillTypeScript": string;
+      "skillAWS": string;
+    }
+
   "auth": {
       "form": {
         "login": {

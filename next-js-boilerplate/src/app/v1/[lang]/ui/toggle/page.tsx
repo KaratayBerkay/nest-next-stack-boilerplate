@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Toggle component demo",
 };
 
-export default function TogglePage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function TogglePage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

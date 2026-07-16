@@ -62,12 +62,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function SeparatorPage() {
+export default function SeparatorPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Separator"
       intro="A visual divider for separating content."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Switch component demo",
 };
 
-export default function SwitchPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function SwitchPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

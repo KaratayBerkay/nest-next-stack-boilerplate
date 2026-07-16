@@ -64,12 +64,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function ResizablePage() {
+export default function ResizablePage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Resizable"
       intro="A resizable panel container."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

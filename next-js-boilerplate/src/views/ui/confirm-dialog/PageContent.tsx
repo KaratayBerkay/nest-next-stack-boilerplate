@@ -203,12 +203,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function ConfirmDialogPage() {
+export default function ConfirmDialogPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Confirm Dialog"
       intro="A modal dialog that asks for confirmation before performing an action."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

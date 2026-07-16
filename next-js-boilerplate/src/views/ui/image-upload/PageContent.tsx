@@ -134,12 +134,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function ImageUploadPage() {
+export default function ImageUploadPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Image Upload"
       intro="An image-focused uploader built on FileUpload with thumbnail previews, multiple layout modes, and avatar support."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

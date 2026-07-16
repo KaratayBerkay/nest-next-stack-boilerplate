@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "File upload component demo",
 };
 
-export default function FileUploadPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function FileUploadPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

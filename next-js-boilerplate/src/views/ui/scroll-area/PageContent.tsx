@@ -250,12 +250,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function ScrollAreaPage() {
+export default function ScrollAreaPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Scroll Area"
       intro="Gesture-driven scroll demos. The ScrollArea component stays a styled overflow container — interaction is demo-level composition."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

@@ -67,12 +67,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function LabelPage() {
+export default function LabelPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Label"
       intro="A form label with optional required indicator."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

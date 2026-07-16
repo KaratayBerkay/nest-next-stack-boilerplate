@@ -111,12 +111,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function MenubarPage() {
+export default function MenubarPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Menubar"
       intro="A horizontal menu bar."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

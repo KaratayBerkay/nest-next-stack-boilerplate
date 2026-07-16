@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Time input component with dropdown selectors and timezone support",
 };
 
-export default function TimeInputPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function TimeInputPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

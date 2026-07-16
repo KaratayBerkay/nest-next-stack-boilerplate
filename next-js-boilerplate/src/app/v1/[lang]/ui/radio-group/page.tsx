@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Radio Group component demo",
 };
 
-export default function RadioGroupPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function RadioGroupPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

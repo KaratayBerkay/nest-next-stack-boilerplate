@@ -6,6 +6,7 @@ import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
 import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
+import type { AccordionItemComplexProps } from "@/types/ui/Accordion-types";
 
 export type AccordionUpperSectionProps = React.HTMLAttributes<HTMLDivElement>;
 
@@ -26,20 +27,6 @@ export const AccordionUpperSection = forwardRef<
 ));
 AccordionUpperSection.displayName = "AccordionUpperSection";
 
-export type AccordionItemComplexProps = {
-  value: string;
-  trigger: React.ReactNode;
-  upper?: React.ReactNode;
-  content: React.ReactNode;
-  variant?: GlobalVariant;
-  triggerFontSize?: string;
-  triggerFontWeight?: string;
-  triggerFontFamily?: string;
-  contentFontSize?: string;
-  contentFontWeight?: string;
-  contentFontFamily?: string;
-};
-
 export const AccordionItemComplex = forwardRef<
   React.ElementRef<typeof Item>,
   AccordionItemComplexProps
@@ -48,6 +35,9 @@ export const AccordionItemComplex = forwardRef<
     {
       value,
       trigger,
+      leftSlot,
+      centerSlot,
+      rightSlot,
       upper,
       content,
       variant,
@@ -74,37 +64,41 @@ export const AccordionItemComplex = forwardRef<
       contentFontFamily,
     );
 
+    const hasFlexibleSlots = leftSlot || centerSlot || rightSlot;
+
     return (
       <Item
         ref={ref}
         value={value}
-        className="border-border border-b group"
+        className={cn(
+          "border-border border-b",
+          "bg-surface hover:bg-surface-hover data-[state=open]:bg-surface-hover",
+          "transition-colors duration-200",
+        )}
       >
         <div className="flex flex-col">
           <Header className="flex">
             <Trigger
               className={cn(
-                "flex flex-1 items-center justify-between py-4 transition-all",
+                "flex flex-1 items-center py-4 px-4 transition-all",
                 "hover:text-brand",
-                "[&[data-state=open]>svg]:rotate-180",
                 resolveVariant(accordionComplexVariants, effectiveVariant),
                 triggerClasses,
               )}
             >
-              {trigger}
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-muted size-4 shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
-              >
-                <path d="m6 9 6 6 6-6" />
-              </svg>
+              {hasFlexibleSlots ? (
+                <div className="flex flex-1 items-center gap-4">
+                  {leftSlot && (
+                    <div className="flex-shrink-0">{leftSlot}</div>
+                  )}
+                  <div className="flex-1 min-w-0">{centerSlot}</div>
+                  {rightSlot && (
+                    <div className="flex-shrink-0">{rightSlot}</div>
+                  )}
+                </div>
+              ) : (
+                trigger
+              )}
             </Trigger>
           </Header>
           {upper && <AccordionUpperSection>{upper}</AccordionUpperSection>}
@@ -112,10 +106,11 @@ export const AccordionItemComplex = forwardRef<
             className={cn(
               "data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
               "overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+              "data-[state=open]:bg-surface-hover",
               contentClasses,
             )}
           >
-            <div className="pb-4 pl-2 pr-4">{content}</div>
+            <div className="px-4 pb-4 pt-2">{content}</div>
           </Content>
         </div>
       </Item>

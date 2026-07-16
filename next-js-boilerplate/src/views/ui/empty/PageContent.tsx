@@ -58,12 +58,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function EmptyPage() {
+export default function EmptyPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Empty"
       intro="An empty state placeholder."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

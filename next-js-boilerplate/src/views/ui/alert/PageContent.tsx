@@ -394,12 +394,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function AlertPage() {
+export default function AlertPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Alert"
       intro="Displays a callout for user attention with multiple variants."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

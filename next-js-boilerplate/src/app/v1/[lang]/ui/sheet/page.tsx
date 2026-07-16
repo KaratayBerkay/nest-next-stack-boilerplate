@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Sheet component demo",
 };
 
-export default function SheetPage() {
-  return <PageContent />;
+interface PageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function SheetPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

@@ -208,12 +208,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function ContextMenuPage() {
+export default function ContextMenuPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Context Menu"
       intro="A right-click context menu."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }

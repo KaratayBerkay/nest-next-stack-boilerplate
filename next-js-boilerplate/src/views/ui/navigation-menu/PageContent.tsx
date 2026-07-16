@@ -91,12 +91,13 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function NavigationMenuPage() {
+export default function NavigationMenuPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Navigation Menu"
       intro="A navigation menu component."
       examples={examples}
+      initialTab={initialTab}
     />
   );
 }
