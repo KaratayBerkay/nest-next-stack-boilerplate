@@ -3,6 +3,8 @@
 import { Badge, BadgeButton } from "@/components/ui/Badge";
 import { cn } from "@/lib/cn";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
+import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
+import type { BadgeSize, BadgeVariant } from "@/types/ui/Badge-types";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 function SizeScaleTab() {
@@ -23,12 +25,11 @@ function SizeScaleTab() {
           <Badge variant="default">Default</Badge>
           <Badge variant="secondary">Secondary</Badge>
           <Badge variant="outline">Outline</Badge>
-          <Badge variant="error">Error</Badge>
+          <Badge variant="soft">Soft</Badge>
+          <Badge variant="info">Info</Badge>
           <Badge variant="success">Success</Badge>
           <Badge variant="warning">Warning</Badge>
           <Badge variant="error">Error</Badge>
-          <Badge variant="info">Info</Badge>
-          <Badge variant="soft">Soft</Badge>
           <Badge dot />
           <Badge pill>Pill</Badge>
         </div>
@@ -40,7 +41,7 @@ function SizeScaleTab() {
           <BadgeButton variant="default">Clickable</BadgeButton>
           <BadgeButton variant="secondary">Dismiss</BadgeButton>
           <BadgeButton variant="outline">Add tag</BadgeButton>
-          <BadgeButton variant="destructive">Remove</BadgeButton>
+          <BadgeButton variant="error">Remove</BadgeButton>
           <BadgeButton variant="success">Approve</BadgeButton>
         </div>
       </section>
@@ -226,6 +227,31 @@ const examples: UIExample[] = [
     title: "Live Status",
     description: "Pulsing status dot badges for live/away/offline states.",
     render: () => <LiveStatusTab />,
+  },
+  {
+    id: "variant-gallery",
+    title: "Variant Gallery",
+    description: "All variants and sizes.",
+    render: () => (
+      <VariantGallery
+        variants={[
+          "default",
+          "secondary",
+          "outline",
+          "soft",
+          "info",
+          "success",
+          "warning",
+          "error",
+        ]}
+        sizes={["sm", "md", "lg"]}
+        render={(variant, size) => (
+          <Badge variant={variant as BadgeVariant} size={size as BadgeSize}>
+            {variant}
+          </Badge>
+        )}
+      />
+    ),
   },
 ];
 

@@ -1,6 +1,13 @@
 import type React from "react";
 
-type Variant = "default" | "destructive" | "success" | "warning" | "info";
+type Variant =
+  | "default"
+  | "info"
+  | "success"
+  | "warning"
+  | "error"
+  // Back-compat alias for `error` (A11); same recipe in the variant map.
+  | "destructive";
 
 export type AlertVariant = Variant;
 

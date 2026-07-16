@@ -85,4 +85,22 @@ describe("Combobox", () => {
     expect(onValueChange).toHaveBeenCalledWith("banana");
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
   });
+
+  it("renders custom search placeholder and empty-state copy (A10)", () => {
+    render(
+      <Combobox
+        options={options}
+        searchPlaceholder="Ara..."
+        emptyTitle="Sonuç yok"
+        emptyDescription="Eşleşen öğe bulunamadı."
+      />,
+    );
+    fireEvent.click(screen.getByRole("combobox"));
+
+    const input = screen.getByPlaceholderText("Ara...");
+    fireEvent.change(input, { target: { value: "zzz" } });
+
+    expect(screen.getByText("Sonuç yok")).toBeDefined();
+    expect(screen.getByText("Eşleşen öğe bulunamadı.")).toBeDefined();
+  });
 });

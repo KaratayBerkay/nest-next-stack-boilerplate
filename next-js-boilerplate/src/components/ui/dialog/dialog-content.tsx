@@ -28,7 +28,13 @@ const dialogVariants = {
   default: "bg-bg border-border text-fg shadow-xl sm:border sm:rounded-xl",
 };
 
-export function DialogContent({ children, className, size = "md", variant }: DialogContentProps) {
+export function DialogContent({
+  children,
+  className,
+  size = "md",
+  variant,
+  closeLabel = "Close",
+}: DialogContentProps) {
   const effectiveVariant = useComponentVariant(variant);
   const { open, onOpenChange } = useDialog();
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -134,7 +140,7 @@ export function DialogContent({ children, className, size = "md", variant }: Dia
       >
         <button
           type="button"
-          aria-label="Close"
+          aria-label={closeLabel}
           onClick={() => onOpenChange(false)}
           className={cn(
             "text-muted absolute top-3 right-3 z-10 inline-flex size-7 items-center justify-center rounded-md transition-colors",

@@ -11,7 +11,7 @@ export function ConnectionUnstable({
   const t = useMessages("error");
   return (
     <div className="flex items-center justify-center p-8">
-      <Alert variant="destructive" className="max-w-md">
+      <Alert variant="error" className="max-w-md">
         <AlertTitle>{title ?? t.connectionLost}</AlertTitle>
         <AlertDescription>
           {description ?? t.tryingToReconnect}

@@ -1,11 +1,14 @@
 # solutions-1 — designed fixes for everything in ui-analyze.md
 
 > Written 2026-07-16. Companion to `ui-analyze.md` (same item IDs). This
-> is a **design document — no work has started**. Every item below is a
-> decided solution: API shape, files to touch, implementation notes where
-> the design is non-obvious, and the per-item gate. When a phase is
-> green-lit, copy its items into a `ui-upgrade-5.md` tracker with
-> checkboxes; statuses live there, never here.
+> is a **design document** — it stays frozen as the design record. Every
+> item below is a decided solution: API shape, files to touch,
+> implementation notes where the design is non-obvious, and the per-item
+> gate. When a phase is green-lit, copy its items into the
+> `ui-upgrade-5.md` tracker with checkboxes; statuses live there, never
+> here. *(Progress note: Phase A landed in b349c61 and was
+> control-verified with gate fixes on 2026-07-16 — see the tracker.
+> Parts B/C/D not started.)*
 >
 > **Global constraints honored by every solution** (house rules): no new
 > runtime dependencies; token-only styling; `cn()` does not merge — new

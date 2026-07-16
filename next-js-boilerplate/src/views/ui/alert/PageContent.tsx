@@ -25,11 +25,11 @@ function ComponentsTab() {
       </section>
 
       <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Destructive</h3>
-        <Alert variant="destructive">
-          <AlertTitle>Error</AlertTitle>
+        <h3 className="text-lg font-semibold">Info</h3>
+        <Alert variant="info">
+          <AlertTitle>Scheduled maintenance</AlertTitle>
           <AlertDescription>
-            Your session has expired. Please log in again.
+            The service will be briefly unavailable on Sunday at 02:00 UTC.
           </AlertDescription>
         </Alert>
       </section>
@@ -53,6 +53,16 @@ function ComponentsTab() {
           </AlertDescription>
         </Alert>
       </section>
+
+      <section className="flex flex-col gap-3">
+        <h3 className="text-lg font-semibold">Error</h3>
+        <Alert variant="error">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            Your session has expired. Please log in again.
+          </AlertDescription>
+        </Alert>
+      </section>
     </div>
   );
 }
@@ -60,7 +70,7 @@ function ComponentsTab() {
 function ExamplesTab() {
   const [dismissed, setDismissed] = useState(false);
   const [alertVariant, setAlertVariant] = useState<
-    "default" | "destructive" | "success" | "warning"
+    "default" | "info" | "success" | "warning" | "error"
   >("default");
 
   return (
@@ -78,7 +88,7 @@ function ExamplesTab() {
           <div className="flex flex-col gap-3">
             <div className="flex flex-wrap gap-2">
               {(
-                ["default", "success", "warning", "destructive"] as const
+                ["default", "info", "success", "warning", "error"] as const
               ).map((v) => (
                 <Button
                   key={v}
@@ -94,15 +104,18 @@ function ExamplesTab() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <AlertTitle>
-                    {alertVariant === "default" && "Information"}
-                    {alertVariant === "destructive" && "Error"}
+                    {alertVariant === "default" && "Note"}
+                    {alertVariant === "info" && "Information"}
+                    {alertVariant === "error" && "Error"}
                     {alertVariant === "success" && "Success"}
                     {alertVariant === "warning" && "Warning"}
                   </AlertTitle>
                   <AlertDescription>
                     {alertVariant === "default" &&
+                      "This is a neutral message."}
+                    {alertVariant === "info" &&
                       "This is an informational message."}
-                    {alertVariant === "destructive" &&
+                    {alertVariant === "error" &&
                       "Something went wrong. Please try again."}
                     {alertVariant === "success" &&
                       "Operation completed successfully."}
@@ -174,7 +187,7 @@ function ExamplesTab() {
               Server memory usage is at 87%. Consider scaling up.
             </AlertDescription>
           </Alert>
-          <Alert variant="destructive">
+          <Alert variant="error">
             <div className="flex items-center gap-2">
               <svg
                 width="16"
@@ -287,7 +300,7 @@ function ServerRetryTab() {
           }}
         >
           <Alert
-            variant="destructive"
+            variant="error"
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           >
@@ -359,7 +372,7 @@ const examples: UIExample[] = [
   {
     id: "server-retry",
     title: "Server Retry",
-    description: "Destructive alert with countdown, sticky positioning, and auto-dismiss.",
+    description: "Error alert with countdown, sticky positioning, and auto-dismiss.",
     render: () => <ServerRetryTab />,
   },
   {
@@ -368,7 +381,7 @@ const examples: UIExample[] = [
     description: "All variants and sizes.",
     render: () => (
       <VariantGallery
-        variants={["default", "destructive", "success", "warning"]}
+        variants={["default", "info", "success", "warning", "error"]}
         sizes={[]}
         render={(variant, _size) => (
           <Alert variant={variant as AlertVariant}>

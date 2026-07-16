@@ -89,6 +89,32 @@ function VariantBasicsContent() {
         Show Success
       </Button>
       <Button
+        variant="outline"
+        data-testid="toast-info-btn"
+        onClick={() =>
+          toast({
+            title: "Heads up",
+            description: "A new version is available.",
+            variant: "info",
+          })
+        }
+      >
+        Show Info
+      </Button>
+      <Button
+        variant="outline"
+        data-testid="toast-warning-btn"
+        onClick={() =>
+          toast({
+            title: "Warning",
+            description: "Please double-check your input.",
+            variant: "warning",
+          })
+        }
+      >
+        Show Warning
+      </Button>
+      <Button
         variant="destructive"
         data-testid="toast-destructive-btn"
         onClick={() =>
@@ -256,12 +282,28 @@ function NotificationCenterContent() {
 }
 
 function ToastGalleryContent() {
+  const { toast } = useToast();
   return (
     <VariantGallery
-      variants={["default", "success", "destructive"]}
+      variants={["default", "info", "success", "warning", "destructive"]}
       sizes={["md"]}
       render={(variant, _size) => (
-        <Button variant={variant === "default" ? "outline" : variant as "primary" | "destructive"} size="sm">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            toast({
+              title: `${variant} toast`,
+              description: `This is a ${variant} toast.`,
+              variant: variant as
+                | "default"
+                | "info"
+                | "success"
+                | "warning"
+                | "destructive",
+            })
+          }
+        >
           {variant}
         </Button>
       )}

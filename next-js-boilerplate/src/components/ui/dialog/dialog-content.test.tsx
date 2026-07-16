@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi, beforeAll } from "vitest";
 import { Dialog } from "./dialog";
 import { DialogContent } from "./dialog-content";
@@ -31,5 +31,25 @@ describe("DialogContent theme canary", () => {
     expect(dialog!.className).toContain("bg-bg");
     expect(dialog!.className).toContain("border-border");
     expect(dialog!.className).toContain("text-fg");
+  });
+});
+
+describe("DialogContent close-button label (A10 string override)", () => {
+  it("defaults the close button label to 'Close'", () => {
+    render(
+      <Dialog open onOpenChange={() => {}}>
+        <DialogContent>content</DialogContent>
+      </Dialog>,
+    );
+    expect(screen.getByRole("button", { name: "Close" })).toBeDefined();
+  });
+
+  it("renders a custom closeLabel", () => {
+    render(
+      <Dialog open onOpenChange={() => {}}>
+        <DialogContent closeLabel="Kapat">content</DialogContent>
+      </Dialog>,
+    );
+    expect(screen.getByRole("button", { name: "Kapat" })).toBeDefined();
   });
 });
