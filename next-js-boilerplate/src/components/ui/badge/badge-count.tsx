@@ -14,7 +14,7 @@ const directionStyles: Record<BadgeCountDirection, string> = {
 
 function formatCount(count: number | string, max: number): string {
   if (typeof count === "string") return count;
-  if (count > max) return `${max}+`;
+  if (count > max) return `${max}`;
   return String(count);
 }
 
@@ -55,10 +55,10 @@ export function BadgeCount({
       {shouldShow && (
         <span
           className={cn(
-            "absolute flex min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold leading-none shadow-sm",
+            "absolute flex size-5 items-center justify-center rounded-full text-[10px] font-semibold leading-none shadow-sm",
             directionStyles[direction],
             ruleStyles(rule, hasCount),
-            dot && "size-2.5 px-0",
+            dot && "size-2",
           )}
         >
           {!dot && displayCount}
