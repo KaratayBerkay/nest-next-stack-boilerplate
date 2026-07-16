@@ -3,14 +3,14 @@
 import { cn } from "@/lib/cn";
 import type { BadgeCountProps, BadgeCountDirection } from "@/types/ui/BadgeCount-types";
 
-const directionStyles: Record<BadgeCountDirection, string> = {
+const directionStyles = {
   "left-top": "-top-1 -left-1",
   "left-bottom": "-bottom-1 -left-1",
   "right-top": "-top-1 -right-1",
   "right-bottom": "-bottom-1 -right-1",
   "middle-top": "-top-1 left-1/2 -translate-x-1/2",
   "middle-bottom": "-bottom-1 left-1/2 -translate-x-1/2",
-};
+} as const;
 
 function formatCount(count: number | string, max: number): string {
   if (typeof count === "string") return count;
