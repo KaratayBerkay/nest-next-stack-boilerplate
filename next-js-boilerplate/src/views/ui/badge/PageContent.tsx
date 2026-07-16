@@ -194,34 +194,42 @@ function StatusLabelsTab() {
 
       <section className="flex flex-col gap-3">
         <h3 className="text-lg font-semibold">Order Status</h3>
-        <div className="surface rounded-xl border shadow-sm">
-          <div className="grid grid-cols-4 border-b px-4 py-2.5 text-sm font-medium text-muted">
-            <span>Order</span>
-            <span>Status</span>
-            <span>Amount</span>
-            <span>Date</span>
-          </div>
-          {orders.map((order) => (
-            <div key={order.id} className="grid grid-cols-4 items-center border-b border-border/50 px-4 py-4 last:border-0">
-              <span className="text-base font-medium">{order.id}</span>
-              <Badge
-                variant={
-                  order.status === "delivered"
-                    ? "success"
-                    : order.status === "processing"
-                      ? "info"
-                      : order.status === "shipped"
-                        ? "warning"
-                        : "error"
-                }
-                size="sm"
-              >
-                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-              </Badge>
-              <span className="text-base">{order.amount}</span>
-              <span className="text-muted text-sm">{order.date}</span>
-            </div>
-          ))}
+        <div className="surface overflow-hidden rounded-xl border shadow-sm">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b text-left text-sm font-medium text-muted">
+                <th className="px-5 py-3">Order</th>
+                <th className="px-5 py-3">Status</th>
+                <th className="px-5 py-3">Amount</th>
+                <th className="px-5 py-3">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map((order) => (
+                <tr key={order.id} className="border-b border-border/50 last:border-0">
+                  <td className="px-5 py-4 text-base font-medium">{order.id}</td>
+                  <td className="px-5 py-4">
+                    <Badge
+                      variant={
+                        order.status === "delivered"
+                          ? "success"
+                          : order.status === "processing"
+                            ? "info"
+                            : order.status === "shipped"
+                              ? "warning"
+                              : "error"
+                      }
+                      size="sm"
+                    >
+                      {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                    </Badge>
+                  </td>
+                  <td className="px-5 py-4 text-base">{order.amount}</td>
+                  <td className="px-5 py-4 text-muted text-sm">{order.date}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
 
