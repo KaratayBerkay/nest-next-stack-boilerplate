@@ -8,6 +8,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { cn } from "@/lib/cn";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
+import { PopupAlertsExample } from "@/views/ui/alert/PopupAlertsExample";
 import type { AlertVariant } from "@/types/ui/Alert-types";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
@@ -374,6 +375,13 @@ const examples: UIExample[] = [
     title: "Server Retry",
     description: "Error alert with countdown, sticky positioning, and auto-dismiss.",
     render: () => <ServerRetryTab />,
+  },
+  {
+    id: "popup-alerts",
+    title: "Pop-up Alerts",
+    description:
+      "Button-triggered overlay alerts with 30-second auto-dismiss countdowns.",
+    render: () => <PopupAlertsExample />,
   },
   {
     id: "variant-gallery",
