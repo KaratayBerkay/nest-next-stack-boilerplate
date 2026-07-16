@@ -51,9 +51,9 @@ function NotificationPatternsTab() {
     <div className="flex flex-col gap-8">
       <section className="flex flex-col gap-3">
         <h3 className="text-lg font-semibold">Notification Bell</h3>
-        <div className="flex flex-wrap items-end gap-8">
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
           {positions.map(({ dir, label }) => (
-            <div key={dir} className="flex flex-col items-center gap-2">
+            <div key={dir} className="surface flex flex-col items-center gap-3 rounded-xl border p-4 shadow-sm">
               <BadgeCount direction={dir} count={3} rule="negative">
                 {bellIcon}
               </BadgeCount>
@@ -101,38 +101,38 @@ function NotificationPatternsTab() {
 
       <section className="flex flex-col gap-3">
         <h3 className="text-lg font-semibold">Message Notifications</h3>
-        <div className="flex flex-wrap items-end gap-8">
-          <div className="flex flex-col items-center gap-2">
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+          <div className="surface flex flex-col items-center gap-3 rounded-xl border p-4 shadow-sm">
             <BadgeCount direction="right-top" count={5} rule="negative">
               {chatIcon}
             </BadgeCount>
             <span className="text-muted text-xs">Chat</span>
           </div>
-          <div className="flex flex-col items-center gap-2">
+          <div className="surface flex flex-col items-center gap-3 rounded-xl border p-4 shadow-sm">
             <BadgeCount direction="left-top" count={12} rule="negative">
               {mailIcon}
             </BadgeCount>
             <span className="text-muted text-xs">Mail</span>
           </div>
-          <div className="flex flex-col items-center gap-2">
+          <div className="surface flex flex-col items-center gap-3 rounded-xl border p-4 shadow-sm">
             <BadgeCount direction="right-bottom" count={3} rule="negative">
               {groupIcon}
             </BadgeCount>
             <span className="text-muted text-xs">Groups</span>
           </div>
-          <div className="flex flex-col items-center gap-2">
+          <div className="surface flex flex-col items-center gap-3 rounded-xl border p-4 shadow-sm">
             <BadgeCount direction="middle-top" count={99} max={99} rule="negative">
               {bellIcon}
             </BadgeCount>
             <span className="text-muted text-xs">Overflow 99+</span>
           </div>
-          <div className="flex flex-col items-center gap-2">
+          <div className="surface flex flex-col items-center gap-3 rounded-xl border p-4 shadow-sm">
             <BadgeCount direction="right-top" count={0} rule="negative" showZero>
               {bellIcon}
             </BadgeCount>
             <span className="text-muted text-xs">Zero count</span>
           </div>
-          <div className="flex flex-col items-center gap-2">
+          <div className="surface flex flex-col items-center gap-3 rounded-xl border p-4 shadow-sm">
             <BadgeCount direction="right-top" count={0} rule="negative" dot>
               {bellIcon}
             </BadgeCount>
