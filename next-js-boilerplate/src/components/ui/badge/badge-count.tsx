@@ -4,12 +4,12 @@ import { cn } from "@/lib/cn";
 import type { BadgeCountProps, BadgeCountDirection } from "@/types/ui/BadgeCount-types";
 
 const directionStyles: Record<BadgeCountDirection, string> = {
-  "left-top": "-top-1.5 -left-1.5",
-  "left-bottom": "-bottom-1.5 -left-1.5",
-  "right-top": "-top-1.5 -right-1.5",
-  "right-bottom": "-bottom-1.5 -right-1.5",
-  "middle-top": "-top-1.5 left-1/2 -translate-x-1/2",
-  "middle-bottom": "-bottom-1.5 left-1/2 -translate-x-1/2",
+  "left-top": "-top-1 -left-1",
+  "left-bottom": "-bottom-1 -left-1",
+  "right-top": "-top-1 -right-1",
+  "right-bottom": "-bottom-1 -right-1",
+  "middle-top": "-top-1 left-1/2 -translate-x-1/2",
+  "middle-bottom": "-bottom-1 left-1/2 -translate-x-1/2",
 };
 
 function formatCount(count: number | string, max: number): string {
@@ -27,7 +27,7 @@ function ruleStyles(rule: string, hasCount: boolean): string {
     case "icon":
       return hasCount
         ? "bg-error text-error-fg"
-        : "bg-border text-muted";
+        : "bg-muted text-fg";
     case "string":
     default:
       return "bg-brand text-brand-fg";
@@ -50,15 +50,15 @@ export function BadgeCount({
   const shouldShow = dot || hasCount || showZero;
 
   return (
-    <span className={cn("relative inline-flex p-2", className)} {...props}>
+    <span className={cn("relative inline-flex p-2.5", className)} {...props}>
       {children}
       {shouldShow && (
         <span
           className={cn(
-            "absolute flex min-w-5 items-center justify-center rounded-full border-2 border-bg px-1.5 text-[11px] font-bold leading-none",
+            "absolute flex min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold leading-none shadow-sm",
             directionStyles[direction],
             ruleStyles(rule, hasCount),
-            dot && "size-3 px-0",
+            dot && "size-2.5 px-0",
           )}
         >
           {!dot && displayCount}
