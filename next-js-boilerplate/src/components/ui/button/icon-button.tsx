@@ -26,7 +26,7 @@ export function IconButton({
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       className={cn(
-        "focus-visible:ring-brand inline-flex items-center justify-center rounded-md font-medium transition-colors duration-150 focus-visible:ring-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
+        "ring-offset-bg inline-flex shrink-0 items-center justify-center rounded-md font-medium transition-all duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1 focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50",
         resolveVariant(variants, effectiveVariant),
         sizes[size],
         className,

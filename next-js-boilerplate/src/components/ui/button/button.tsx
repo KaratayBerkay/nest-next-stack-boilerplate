@@ -3,7 +3,7 @@
 import { Children, cloneElement } from "react";
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
-import { variants, sizes } from "@/components/ui/button-styles";
+import { variants, sizes, sizeFonts } from "@/components/ui/button-styles";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { fontClasses } from "@/lib/font-classes";
 import { Spinner } from "@/components/ui/Spinner";
@@ -55,11 +55,12 @@ export function Button({
   const effectiveVariant = useComponentVariant(variant);
   const fonts = fontClasses(
     { fontSize, fontWeight, fontFamily },
-    { fontSize: sizes[size].split(" ")[2] },
+    { fontSize: sizeFonts[size] },
   );
 
   const classes = cn(
-    "relative inline-flex items-center justify-center gap-2 rounded-md shadow-xs transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none active:translate-y-px active:shadow-xs disabled:pointer-events-none disabled:opacity-50",
+    "ring-offset-bg relative inline-flex items-center justify-center rounded-md whitespace-nowrap transition-all duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1 focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50",
+    sizes[size],
     resolveVariant(variants, effectiveVariant),
     className,
     fonts,
@@ -94,7 +95,10 @@ export function Button({
 
   return (
     <button {...sharedProps} {...props}>
-      <span className={cn(loading && "invisible")}>
+      {/* display:contents keeps icon/text as direct flex items of the
+          button (so items-center + per-size gap apply) while still letting
+          visibility:hidden cascade to them during loading. */}
+      <span className={cn("contents", loading && "invisible")}>
         <ButtonContent leftIcon={leftIcon} rightIcon={rightIcon}>
           {children}
         </ButtonContent>

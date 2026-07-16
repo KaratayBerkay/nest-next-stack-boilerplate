@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@/lib/cn";
-import { variants } from "@/components/ui/button-styles";
 import type {
   ButtonGroupProps,
   ButtonGroupItemProps,
@@ -9,17 +8,16 @@ import type {
 
 export function ButtonGroup({
   children,
-  variant = "outline",
   className,
   orientation = "horizontal",
 }: ButtonGroupProps) {
   return (
     <div
       className={cn(
-        orientation === "horizontal"
-          ? "inline-flex -space-x-px"
-          : "inline-flex flex-col -space-y-px",
-        "border-border rounded border",
+        // w-fit prevents flex-column parents (align-items: stretch) from
+        // stretching the group to full container width.
+        "border-border divide-border inline-flex w-fit rounded-md border shadow-xs",
+        orientation === "horizontal" ? "divide-x" : "flex-col divide-y",
         className,
       )}
     >
@@ -38,11 +36,13 @@ export function ButtonGroupItem({
     <button
       type="button"
       className={cn(
-        "focus-visible:ring-brand relative inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium transition-colors duration-150 focus-visible:z-10 focus-visible:ring-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
-        active ? "bg-fg text-bg" : "bg-bg text-muted hover:bg-surface-hover",
+        "focus-visible:ring-brand relative inline-flex h-8 items-center gap-2 px-3 text-sm font-medium whitespace-nowrap transition-colors duration-150 focus-visible:z-10 focus-visible:ring-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
+        active
+          ? "bg-brand/10 text-brand"
+          : "bg-bg text-muted hover:bg-surface-hover hover:text-fg",
         orientation === "horizontal"
-          ? "first:rounded-l last:rounded-r"
-          : "first:rounded-t last:rounded-b",
+          ? "justify-center first:rounded-l-md last:rounded-r-md"
+          : "justify-start first:rounded-t-md last:rounded-b-md",
         className,
       )}
       {...props}
