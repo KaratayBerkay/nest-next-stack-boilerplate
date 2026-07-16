@@ -9,36 +9,45 @@ import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 function NotificationPatternsTab() {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       <section className="flex flex-col gap-3">
         <h3 className="text-lg font-semibold">Notification Bell</h3>
-        <div className="flex items-center gap-8">
-          <div className="relative inline-flex">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-              <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-            </svg>
-            <span className="absolute -top-3 -right-3">
-              <Badge variant="error" size="sm">3</Badge>
-            </span>
+        <div className="flex items-end gap-10">
+          <div className="flex flex-col items-center gap-2">
+            <div className="relative inline-flex">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+              </svg>
+              <span className="absolute -top-3 -right-3">
+                <Badge variant="error" size="sm">3</Badge>
+              </span>
+            </div>
+            <span className="text-muted text-xs">Top right</span>
           </div>
-          <div className="relative inline-flex">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-              <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-            </svg>
-            <span className="absolute -top-3 -right-3">
-              <Badge variant="error" size="sm">99+</Badge>
-            </span>
+          <div className="flex flex-col items-center gap-2">
+            <div className="relative inline-flex">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+              </svg>
+              <span className="absolute -top-3 -left-3">
+                <Badge variant="warning" size="sm">12</Badge>
+              </span>
+            </div>
+            <span className="text-muted text-xs">Top left</span>
           </div>
-          <div className="relative inline-flex">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-              <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-            </svg>
-            <span className="absolute -top-2 -right-2">
-              <Badge variant="error" dot />
-            </span>
+          <div className="flex flex-col items-center gap-2">
+            <div className="relative inline-flex">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+              </svg>
+              <span className="absolute -bottom-3 -right-3">
+                <Badge variant="info" size="sm">99+</Badge>
+              </span>
+            </div>
+            <span className="text-muted text-xs">Bottom right</span>
           </div>
         </div>
       </section>
@@ -81,34 +90,43 @@ function NotificationPatternsTab() {
 
       <section className="flex flex-col gap-3">
         <h3 className="text-lg font-semibold">Message Notifications</h3>
-        <div className="flex items-center gap-6">
-          <div className="relative inline-flex">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
-            <span className="absolute -top-3 -right-3">
-              <Badge variant="default" size="sm">5</Badge>
-            </span>
+        <div className="flex items-end gap-10">
+          <div className="flex flex-col items-center gap-2">
+            <div className="relative inline-flex">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              <span className="absolute -top-3 -right-3">
+                <Badge variant="default" size="sm">5</Badge>
+              </span>
+            </div>
+            <span className="text-muted text-xs">Top right</span>
           </div>
-          <div className="relative inline-flex">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="4" width="20" height="16" rx="2" />
-              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-            </svg>
-            <span className="absolute -top-3 -right-3">
-              <Badge variant="info" size="sm">12</Badge>
-            </span>
+          <div className="flex flex-col items-center gap-2">
+            <div className="relative inline-flex">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="2" />
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+              </svg>
+              <span className="absolute -top-3 -left-3">
+                <Badge variant="info" size="sm">12</Badge>
+              </span>
+            </div>
+            <span className="text-muted text-xs">Top left</span>
           </div>
-          <div className="relative inline-flex">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-            <span className="absolute -top-3 -right-3">
-              <Badge variant="soft" size="sm">3</Badge>
-            </span>
+          <div className="flex flex-col items-center gap-2">
+            <div className="relative inline-flex">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+              <span className="absolute -bottom-3 -right-3">
+                <Badge variant="soft" size="sm">3</Badge>
+              </span>
+            </div>
+            <span className="text-muted text-xs">Bottom right</span>
           </div>
         </div>
       </section>
