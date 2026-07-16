@@ -55,7 +55,7 @@ export function BadgeCount({
       {shouldShow && (
         <span
           className={cn(
-            "absolute flex size-5 items-center justify-center rounded-full text-[10px] font-semibold leading-none shadow-sm",
+            "absolute flex size-6 items-center justify-center rounded-full text-[11px] font-semibold leading-none shadow-sm",
             directionStyles[direction],
             ruleStyles(rule, hasCount),
             dot && "size-2",
