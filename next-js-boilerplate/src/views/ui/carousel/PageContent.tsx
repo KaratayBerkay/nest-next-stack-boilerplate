@@ -121,7 +121,8 @@ function ProductGallery() {
         <CarouselContent>
           {products.map((product, i) => (
             <CarouselItem key={i}>
-              <div className="group relative bg-surface rounded-xl border border-border overflow-hidden transition-shadow hover:shadow-lg">
+              <div className="flex justify-center px-4">
+              <div className="group relative bg-surface rounded-xl border border-border overflow-hidden transition-shadow hover:shadow-lg w-full max-w-md">
                 <div className="relative aspect-[4/3] overflow-hidden">
                   <div
                     className={cn(
@@ -162,6 +163,7 @@ function ProductGallery() {
                     Add to Cart
                   </Button>
                 </div>
+              </div>
               </div>
             </CarouselItem>
           ))}
@@ -219,7 +221,8 @@ function TestimonialCarousel() {
         <CarouselContent>
           {testimonials.map((t, i) => (
             <CarouselItem key={i}>
-              <div className="bg-surface rounded-xl border border-border p-8 flex flex-col items-center text-center min-h-[280px] justify-center">
+              <div className="flex justify-center px-4">
+              <div className="bg-surface rounded-xl border border-border p-8 flex flex-col items-center text-center min-h-[280px] justify-center w-full max-w-2xl">
                 <Stars rating={t.rating} />
                 <p className="text-fg mt-4 mb-6 max-w-lg text-base italic leading-relaxed">
                   &ldquo;{t.text}&rdquo;
@@ -229,6 +232,7 @@ function TestimonialCarousel() {
                   <p className="font-semibold text-sm">{t.name}</p>
                   <p className="text-muted text-xs">{t.role}</p>
                 </div>
+              </div>
               </div>
             </CarouselItem>
           ))}
@@ -257,7 +261,7 @@ const logoPartners = [
 function LogoCarousel() {
   return (
     <Carousel className="relative w-full" opts={{ loop: true }}>
-      <div className="relative w-full">
+      <div className="relative w-full overflow-hidden rounded-xl">
         <CarouselContent>
           {logoPartners.map((logo, i) => (
             <CarouselItem key={i} className="basis-1/3 md:basis-1/5">
@@ -345,11 +349,11 @@ function PureCssCarousel() {
         {cssSlides.map((slide, i) => (
           <div
             key={i}
-            className="snap-center shrink-0 w-full"
+            className="snap-center shrink-0 w-full flex justify-center px-4"
           >
             <div
               className={cn(
-                "relative h-64 rounded-xl bg-gradient-to-br flex flex-col items-center justify-center text-center p-8",
+                "relative h-64 w-full max-w-lg rounded-xl bg-gradient-to-br flex flex-col items-center justify-center text-center p-8",
                 slide.gradient,
               )}
             >
