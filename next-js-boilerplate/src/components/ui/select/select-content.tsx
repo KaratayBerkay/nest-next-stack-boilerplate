@@ -9,6 +9,54 @@ import { useSelect } from "./select";
 import type { SelectContentProps } from "@/types/ui/Select-types";
 
 const ENABLED_OPTION_SELECTOR = '[role="option"]:not([data-disabled])';
+const SCROLL_STEP = 40;
+const SCROLL_REPEAT_MS = 60;
+
+function ScrollChevron({
+  direction,
+  onScroll,
+}: {
+  direction: "up" | "down";
+  onScroll: () => void;
+}) {
+  const repeatRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+
+  const start = () => {
+    onScroll();
+    repeatRef.current = setInterval(onScroll, SCROLL_REPEAT_MS);
+  };
+  const stop = () => {
+    if (repeatRef.current) clearInterval(repeatRef.current);
+    repeatRef.current = undefined;
+  };
+
+  useEffect(() => stop, []);
+
+  return (
+    <div
+      onMouseEnter={start}
+      onMouseLeave={stop}
+      className={cn(
+        "bg-bg text-muted hover:text-fg sticky z-10 flex h-8 w-full items-center justify-center transition-colors",
+        direction === "up" ? "top-0" : "bottom-0",
+      )}
+      aria-hidden="true"
+    >
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d={direction === "up" ? "m6 15 6-6 6 6" : "m6 9 6 6 6-6"} />
+      </svg>
+    </div>
+  );
+}
 
 export function SelectContent({
   className,
@@ -26,6 +74,21 @@ export function SelectContent({
   const isDesktop = useBreakpoint("sm");
   const typeaheadRef = useRef("");
   const typeaheadTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const [canScrollUp, setCanScrollUp] = useState(false);
+  const [canScrollDown, setCanScrollDown] = useState(false);
+
+  const updateScrollButtons = useCallback(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    setCanScrollUp(el.scrollTop > 0);
+    setCanScrollDown(el.scrollTop + el.clientHeight < el.scrollHeight - 1);
+  }, [contentRef]);
+
+  useEffect(() => {
+    if (!open || !isDesktop) return;
+    const raf = requestAnimationFrame(updateScrollButtons);
+    return () => cancelAnimationFrame(raf);
+  }, [open, isDesktop, updateScrollButtons]);
 
   useEffect(() => {
     return () => {
@@ -55,12 +118,16 @@ export function SelectContent({
   }, [open, sideOffset, triggerRef, isDesktop]);
 
   const focusItem = useCallback((item: HTMLElement) => {
-    item.focus();
+    item.focus({ preventScroll: true });
     item.scrollIntoView({ block: "nearest" });
   }, []);
 
   useEffect(() => {
-    if (!open || !isDesktop || !contentRef.current) return;
+    // Gated on `position` (not just `open`): before it's computed, the panel
+    // has no fixed coordinates yet, and scrollIntoView on a descendant would
+    // scroll the whole page instead of the list — corrupting every other
+    // fixed-position panel on screen that recomputes on window scroll.
+    if (!open || !isDesktop || !position || !contentRef.current) return;
     const items = contentRef.current.querySelectorAll(ENABLED_OPTION_SELECTOR);
     if (items.length > 0) {
       const selected = contentRef.current.querySelector(
@@ -68,7 +135,7 @@ export function SelectContent({
       );
       focusItem((selected ?? items[0]) as HTMLElement);
     }
-  }, [open, isDesktop, contentRef, focusItem]);
+  }, [open, isDesktop, position, contentRef, focusItem]);
 
   useEffect(() => {
     if (!open || !isDesktop) return;
@@ -133,6 +200,11 @@ export function SelectContent({
     }
   };
 
+  const scrollBy = (delta: number) => {
+    contentRef.current?.scrollBy({ top: delta });
+    updateScrollButtons();
+  };
+
   if (!open) return null;
 
   return createPortal(
@@ -148,30 +220,37 @@ export function SelectContent({
         ref={contentRef}
         role="listbox"
         tabIndex={-1}
+        data-portal-layer=""
+        onScroll={isDesktop ? updateScrollButtons : undefined}
         onKeyDown={(e) => {
           onKeyDown?.(e);
           if (!e.defaultPrevented) handleKeyDown(e);
         }}
         style={
           isDesktop && position
-            ? {
-                position: "fixed",
-                top: position.top,
-                left: position.left,
-                width: position.width,
-              }
+            ? { top: position.top, left: position.left, width: position.width }
             : undefined
         }
         className={cn(
           "border-border bg-bg text-fg",
           isDesktop
-            ? "z-50 max-h-60 min-w-[8rem] origin-top-right overflow-y-auto rounded-lg border p-1 shadow-lg"
+            ? cn(
+                // `fixed` from the very first paint (not only once `position`
+                // is known) — otherwise the panel briefly sits in normal
+                // document flow at the end of <body>, and any scrollIntoView
+                // on a descendant during that frame scrolls the whole page.
+                "fixed z-50 max-h-60 min-w-[8rem] origin-top-right overflow-y-auto rounded-lg border p-1 shadow-lg",
+                !position && "invisible",
+                className,
+              )
             : bottomSheetClasses,
-          className,
         )}
         {...props}
       >
         {!isDesktop && <BottomSheetHandle />}
+        {isDesktop && canScrollUp && (
+          <ScrollChevron direction="up" onScroll={() => scrollBy(-SCROLL_STEP)} />
+        )}
         <div
           className={cn(
             isDesktop ? "" : "flex flex-1 flex-col gap-0.5 overflow-y-auto",
@@ -179,6 +258,9 @@ export function SelectContent({
         >
           <div className="pointer-events-auto">{children}</div>
         </div>
+        {isDesktop && canScrollDown && (
+          <ScrollChevron direction="down" onScroll={() => scrollBy(SCROLL_STEP)} />
+        )}
       </div>
     </>,
     document.body,

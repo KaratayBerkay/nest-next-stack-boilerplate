@@ -93,6 +93,7 @@ export {
   DrawerFooter,
   DrawerClose,
 } from "./drawer";
+export { Dropdown } from "./dropdown";
 export {
   DropdownMenu,
   DropdownMenuTrigger,

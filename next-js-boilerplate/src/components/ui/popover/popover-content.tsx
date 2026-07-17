@@ -83,6 +83,13 @@ export function PopoverContent({
         triggerRef.current &&
         !triggerRef.current.contains(e.target as Node)
       ) {
+        // Clicks inside another portaled layer (e.g. a Dropdown list opened
+        // from within this popover) are not "outside" — keep the popover open.
+        const layer =
+          e.target instanceof Element
+            ? e.target.closest("[data-portal-layer]")
+            : null;
+        if (layer && !contentRef.current.contains(layer)) return;
         close();
       }
     };
@@ -96,6 +103,13 @@ export function PopoverContent({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        // Let a nested portaled layer (e.g. an open Dropdown list) consume
+        // Escape first; only close the popover when the event is its own.
+        const layer =
+          e.target instanceof Element
+            ? e.target.closest("[data-portal-layer]")
+            : null;
+        if (layer && !contentRef.current?.contains(layer)) return;
         e.preventDefault();
         close();
         triggerRef.current?.focus();
@@ -107,10 +121,15 @@ export function PopoverContent({
   }, [open, close, triggerRef]);
 
   useEffect(() => {
-    if (!open || !contentRef.current) return;
+    // Gated on `position` (not just `open`): before it's computed, the panel
+    // has no fixed coordinates yet, and focus()'s default scroll-into-view
+    // would scroll the whole page instead — corrupting every other
+    // fixed-position panel on screen that recomputes on window scroll.
+    // preventScroll is defense in depth (we position the panel ourselves).
+    if (!open || (isDesktop && !position) || !contentRef.current) return;
     const target = initialFocus?.current ?? contentRef.current;
-    target.focus();
-  }, [open, initialFocus]);
+    target.focus({ preventScroll: true });
+  }, [open, initialFocus, isDesktop, position]);
 
   if (!open) return null;
 
@@ -129,17 +148,25 @@ export function PopoverContent({
         role="dialog"
         aria-label={title ?? "Popover"}
         tabIndex={-1}
+        data-portal-layer=""
         style={
           isDesktop && position
-            ? { position: "fixed", top: position.top, left: position.left }
+            ? { top: position.top, left: position.left }
             : undefined
         }
         className={cn(
           isDesktop
-            ? "z-50 min-w-[8rem] origin-top-right rounded-lg border p-4 shadow-lg animate-scale-in"
+            ? cn(
+                // `fixed` from the very first paint (not only once `position`
+                // is known) — otherwise the panel briefly sits in normal
+                // document flow at the end of <body>, and focus()'s default
+                // scroll-into-view during that frame scrolls the whole page.
+                "fixed z-50 min-w-[8rem] origin-top-right rounded-lg border p-4 shadow-lg animate-scale-in",
+                !position && "invisible",
+                className,
+              )
             : bottomSheetClasses,
           resolveVariant(popoverVariants, effectiveVariant),
-          className,
         )}
         {...props}
       >

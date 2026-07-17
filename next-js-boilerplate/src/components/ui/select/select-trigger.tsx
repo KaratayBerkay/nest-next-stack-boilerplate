@@ -14,9 +14,15 @@ const variants = {
   outline: "border-2 border-border bg-transparent text-fg",
 };
 
+const sizes = {
+  sm: "h-8 gap-1 px-2 py-1",
+  md: "h-9 gap-2 px-3 py-2",
+} as const;
+
 export function SelectTrigger({
   className,
   variant,
+  size = "md",
   children,
   error,
   description,
@@ -33,7 +39,8 @@ export function SelectTrigger({
         ref={triggerRef}
         type="button"
         className={cn(
-          "focus-visible:ring-brand flex h-9 w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+          "focus-visible:ring-brand flex w-full items-center justify-between rounded-md border text-sm shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+          sizes[size],
           resolveVariant(variants, effectiveVariant),
           className,
         )}

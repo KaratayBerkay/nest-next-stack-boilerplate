@@ -1,9 +1,78 @@
 "use client";
-import { type ComponentProps, useCallback } from "react";
-import { DayPicker } from "react-day-picker";
+import { type ComponentProps, type ChangeEvent, useCallback } from "react";
+import { DayPicker, type DropdownProps } from "react-day-picker";
+import { enUS, tr } from "react-day-picker/locale";
 import { cn } from "@/lib/cn";
+import { Dropdown } from "@/components/ui/Dropdown";
+import { useLang } from "@/hooks/useLang";
+import type { Lang } from "@/constants/i18n";
 import { CalendarEvent } from "./calendar-event";
 import type { CalendarProps } from "@/types/ui/Calendar-types";
+
+const LOCALES: Record<Lang, typeof enUS> = { en: enUS, tr };
+
+const CHEVRON_PATHS = {
+  left: "M15 18l-6-6 6-6",
+  right: "M9 18l6-6-6-6",
+  down: "M6 9l6 6 6-6",
+  up: "M18 15l-6-6-6 6",
+} as const;
+
+// Replaces DayPicker's native <select> caption dropdowns with the themed
+// Dropdown so the option list matches the app theme (the OS-drawn native
+// option list can't be styled).
+function CaptionDropdown({
+  widthClass,
+  options,
+  value,
+  onChange,
+  disabled,
+  "aria-label": ariaLabel,
+}: DropdownProps & { widthClass: string }) {
+  return (
+    <Dropdown
+      size="sm"
+      className={widthClass}
+      aria-label={ariaLabel}
+      disabled={disabled}
+      value={value == null ? undefined : String(value)}
+      options={(options ?? []).map((option) => ({
+        value: String(option.value),
+        label: option.label,
+        disabled: option.disabled,
+      }))}
+      onChange={(v) => {
+        onChange?.({
+          target: { value: v },
+        } as unknown as ChangeEvent<HTMLSelectElement>);
+      }}
+    />
+  );
+}
+
+function Chevron({
+  orientation = "left",
+  className,
+}: {
+  orientation?: keyof typeof CHEVRON_PATHS;
+  className?: string;
+}) {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d={CHEVRON_PATHS[orientation]} />
+    </svg>
+  );
+}
 
 function getEventsForDate(events: NonNullable<CalendarProps["events"]>, date: Date) {
   return events.filter((e) => {
@@ -23,6 +92,7 @@ export function Calendar({
   onDayClick,
   ...props
 }: CalendarProps) {
+  const lang = useLang();
   const handleDayClick = useCallback(
     (day: Date) => {
       onDayClick?.(day);
@@ -32,20 +102,26 @@ export function Calendar({
 
   return (
     <DayPicker
+      locale={LOCALES[lang]}
+      navLayout="around"
       classNames={{
         root: "p-3",
         months: "flex flex-col sm:flex-row gap-2",
-        month: "flex flex-col gap-2",
-        month_caption: "flex justify-center pt-1 relative items-center h-8",
+        // Header row: prev button / caption / next button. With two months the
+        // outer months only carry one button each, so the side columns are fixed.
+        month: "grid grid-cols-[2rem_1fr_2rem] items-center gap-y-2",
+        // Month and year stack vertically (rather than side by side) so each
+        // dropdown gets the full caption width — a narrow half-width year
+        // select truncates 4-digit years.
+        month_caption: "col-start-2 flex flex-col items-stretch justify-center gap-1",
         caption_label: "text-sm font-medium",
         nav: "flex items-center gap-1",
         button_previous:
-          "hover:bg-surface-hover text-muted inline-flex h-7 w-7 items-center justify-center rounded-md bg-transparent p-0 text-sm font-medium transition-colors absolute left-1",
+          "col-start-1 hover:bg-surface-hover text-muted hover:text-fg inline-flex h-8 w-8 items-center justify-center rounded-md bg-transparent p-0 transition-colors",
         button_next:
-          "hover:bg-surface-hover text-muted inline-flex h-7 w-7 items-center justify-center rounded-md bg-transparent p-0 text-sm font-medium transition-colors absolute right-1",
-        dropdowns: "flex items-center gap-2 w-full",
-        dropdown: "bg-surface border-border h-9 rounded-md border px-2.5 text-sm cursor-pointer",
-        month_grid: "w-full border-collapse",
+          "col-start-3 hover:bg-surface-hover text-muted hover:text-fg inline-flex h-8 w-8 items-center justify-center rounded-md bg-transparent p-0 transition-colors",
+        dropdowns: "flex flex-col items-stretch gap-1 w-full",
+        month_grid: "col-span-full w-full border-collapse",
         weekdays: "flex",
         weekday:
           "text-muted w-full text-center text-xxs uppercase tracking-wide font-normal",
@@ -67,6 +143,13 @@ export function Calendar({
         ...classNames,
       }}
       components={{
+        Chevron,
+        MonthsDropdown: (dropdownProps) => (
+          <CaptionDropdown {...dropdownProps} widthClass="w-full" />
+        ),
+        YearsDropdown: (dropdownProps) => (
+          <CaptionDropdown {...dropdownProps} widthClass="w-full" />
+        ),
         DayButton: (dayButtonProps) => {
           const dayDate = dayButtonProps.day.date;
           const dayEvents = events

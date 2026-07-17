@@ -23,6 +23,7 @@ export const UI_COMPONENTS = [
   { name: "Date Picker", slug: "date-picker" },
   { name: "Dialog", slug: "dialog" },
   { name: "Drawer", slug: "drawer" },
+  { name: "Dropdown", slug: "dropdown" },
   { name: "Dropdown Menu", slug: "dropdown-menu" },
   { name: "Empty", slug: "empty" },
   { name: "File Upload", slug: "file-upload" },

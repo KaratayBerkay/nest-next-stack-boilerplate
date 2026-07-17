@@ -9,7 +9,9 @@ import { fontClasses } from "@/lib/font-classes";
 import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { useFieldMessages } from "@/components/ui/field-messages";
-import { formatDateLong, formatMonthYear, MONTHS } from "@/lib/date-time";
+import { useLang } from "@/hooks/useLang";
+import type { Lang } from "@/constants/i18n";
+import { formatDateLong, formatMonthYear, getMonthNames } from "@/lib/date-time";
 import type { DatePickerProps } from "@/types/ui/DatePicker-types";
 
 const variants = {
@@ -19,7 +21,43 @@ const variants = {
 
 type PickerView = "days" | "months" | "years";
 
-const MONTHS_SHORT = MONTHS.map((m) => m.slice(0, 3));
+const LABELS: Record<
+  Lang,
+  {
+    pickDate: string;
+    pickYear: string;
+    moreYears: string;
+    back: string;
+    prevYear: string;
+    nextYear: string;
+    prevPage: string;
+    nextPage: string;
+    clearDate: string;
+  }
+> = {
+  en: {
+    pickDate: "Pick a date",
+    pickYear: "Pick year",
+    moreYears: "More years",
+    back: "Back",
+    prevYear: "Previous year",
+    nextYear: "Next year",
+    prevPage: "Previous page",
+    nextPage: "Next page",
+    clearDate: "Clear date",
+  },
+  tr: {
+    pickDate: "Tarih seçin",
+    pickYear: "Yıl seçin",
+    moreYears: "Diğer yıllar",
+    back: "Geri",
+    prevYear: "Önceki yıl",
+    nextYear: "Sonraki yıl",
+    prevPage: "Önceki sayfa",
+    nextPage: "Sonraki sayfa",
+    clearDate: "Tarihi temizle",
+  },
+};
 
 function defaultEndMonth() {
   const d = new Date();
@@ -34,26 +72,27 @@ function handleClear(onChange?: (date: Date | undefined) => void) {
 function formatPickerValue(
   value: Date | undefined,
   picker: "day" | "month" | "year",
+  locale?: string,
 ): string {
   if (!value) return "";
   if (picker === "year") return value.getFullYear().toString();
   if (picker === "month")
-    return formatMonthYear(value);
-  return formatDateLong(value);
+    return formatMonthYear(value, locale);
+  return formatDateLong(value, locale);
 }
 
 function MonthGrid({
-  year,
+  monthNames,
   selectedMonth,
   onSelect,
 }: {
-  year: number;
+  monthNames: string[];
   selectedMonth?: number;
   onSelect: (month: number) => void;
 }) {
   return (
     <div className="grid grid-cols-3 gap-1 p-2">
-      {MONTHS_SHORT.map((name, i) => (
+      {monthNames.map((name, i) => (
         <button
           key={name}
           type="button"
@@ -121,6 +160,9 @@ function DatePickerCalendar({
   endMonth?: Date;
 }) {
   const { close } = usePopover();
+  const lang = useLang();
+  const labels = LABELS[lang];
+  const monthNames = getMonthNames(lang, "short");
   const today = new Date();
   const selectedYear = value?.getFullYear();
   const selectedMonth = value?.getMonth();
@@ -157,22 +199,22 @@ function DatePickerCalendar({
             type="button"
             onClick={() => setYearOffset((o) => o - 1)}
             className="text-muted hover:text-fg rounded-md p-1 transition-colors"
-            aria-label="Previous year"
+            aria-label={labels.prevYear}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
           </button>
           <span className="text-sm font-medium">{displayYear}</span>
           <button
             type="button"
             onClick={() => setYearOffset((o) => o + 1)}
             className="text-muted hover:text-fg rounded-md p-1 transition-colors"
-            aria-label="Next year"
+            aria-label={labels.nextYear}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
           </button>
         </div>
         <MonthGrid
-          year={displayYear}
+          monthNames={monthNames}
           selectedMonth={picker === "month" ? selectedMonth : undefined}
           onSelect={handleSelectMonth}
         />
@@ -182,7 +224,7 @@ function DatePickerCalendar({
             onClick={() => setView("years")}
             className="text-muted hover:text-fg w-full rounded-md px-2 py-1 text-xs transition-colors"
           >
-            {picker === "month" ? "Pick year" : "More years"}
+            {picker === "month" ? labels.pickYear : labels.moreYears}
           </button>
         </div>
       </div>
@@ -198,18 +240,18 @@ function DatePickerCalendar({
             type="button"
             onClick={() => setYearOffset((o) => o - 12)}
             className="text-muted hover:text-fg rounded-md p-1 transition-colors"
-            aria-label="Previous page"
+            aria-label={labels.prevPage}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
           </button>
           <span className="text-sm font-medium">{decadeStart}–{decadeStart + 11}</span>
           <button
             type="button"
             onClick={() => setYearOffset((o) => o + 12)}
             className="text-muted hover:text-fg rounded-md p-1 transition-colors"
-            aria-label="Next page"
+            aria-label={labels.nextPage}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
           </button>
         </div>
         <YearGrid
@@ -223,7 +265,7 @@ function DatePickerCalendar({
             onClick={() => setView(picker === "year" ? "months" : "months")}
             className="text-muted hover:text-fg w-full rounded-md px-2 py-1 text-xs transition-colors"
           >
-            Back
+            {labels.back}
           </button>
         </div>
       </div>
@@ -248,7 +290,7 @@ function DatePickerCalendar({
 export function DatePicker({
   value,
   onChange,
-  placeholder = "Pick a date",
+  placeholder,
   className,
   fontSize,
   fontWeight,
@@ -261,10 +303,12 @@ export function DatePicker({
   startMonth,
   endMonth,
 }: DatePickerProps) {
+  const lang = useLang();
+  const labels = LABELS[lang];
   const effectiveVariant = useComponentVariant(variant);
   const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
   const { describedBy, messages } = useFieldMessages(error, description);
-  const displayValue = formatPickerValue(value, picker);
+  const displayValue = formatPickerValue(value, picker, lang);
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
@@ -283,7 +327,7 @@ export function DatePicker({
               {value ? (
                 displayValue
               ) : (
-                <span className="text-muted">{placeholder}</span>
+                <span className="text-muted">{placeholder ?? labels.pickDate}</span>
               )}
             </span>
             {value && (
@@ -301,7 +345,7 @@ export function DatePicker({
                   }
                 }}
                 className="text-muted hover:text-fg mx-1 inline-flex shrink-0 items-center justify-center rounded p-0.5 transition-colors"
-                aria-label="Clear date"
+                aria-label={labels.clearDate}
               >
                 <svg
                   width="14"
@@ -331,7 +375,7 @@ export function DatePicker({
             </svg>
           </button>
         </PopoverTrigger>
-        <PopoverContent title="Pick a date" className="w-80">
+        <PopoverContent title={labels.pickDate} className="w-80">
           <DatePickerCalendar
             value={value}
             onChange={onChange}

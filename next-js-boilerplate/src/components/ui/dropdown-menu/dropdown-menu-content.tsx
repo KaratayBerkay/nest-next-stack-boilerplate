@@ -65,7 +65,7 @@ export function DropdownMenuContent({
       const firstItem = contentRef.current.querySelector<HTMLDivElement>(
         '[role="menuitem"]:not([data-disabled])',
       );
-      firstItem?.focus();
+      firstItem?.focus({ preventScroll: true });
     }
   }, [open, isDesktop]);
 
@@ -124,10 +124,12 @@ export function DropdownMenuContent({
         }
         className={cn(
           isDesktop
-            ? "z-50 min-w-44 origin-top-right rounded-xl border p-1 shadow-lg"
+            ? cn(
+                "z-50 min-w-44 origin-top-right rounded-xl border p-1 shadow-lg",
+                className,
+              )
             : bottomSheetClasses,
           resolveVariant(dropdownVariants, effectiveVariant),
-          className,
         )}
         {...props}
       >

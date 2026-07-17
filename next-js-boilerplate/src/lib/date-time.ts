@@ -190,6 +190,14 @@ export function formatHoursMinutes(hours: number, minutes: number): string {
   return `${h12}:${String(minutes).padStart(2, "0")} ${ampm}`;
 }
 
+export function getMonthNames(
+  locale?: string,
+  month: "long" | "short" = "long",
+): string[] {
+  const fmt = new Intl.DateTimeFormat(locale, { month });
+  return Array.from({ length: 12 }, (_, i) => fmt.format(new Date(2000, i, 1)));
+}
+
 export const MONTHS = [
   "January",
   "February",

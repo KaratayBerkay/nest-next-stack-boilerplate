@@ -10,6 +10,7 @@ export interface SelectProps {
 
 export interface SelectTriggerProps extends React.ComponentPropsWithoutRef<"button"> {
   variant?: SelectVariant;
+  size?: SelectSize;
   className?: string;
   error?: string;
   description?: string;
@@ -32,3 +33,5 @@ export interface SelectItemProps extends React.ComponentPropsWithoutRef<"button"
 }
 
 export type SelectVariant = "default" | "outline" | "shiny" | "glass" | "neon" | "gradient";
+
+export type SelectSize = "sm" | "md";

@@ -14,7 +14,6 @@ function EventDateTab() {
       <DatePicker
         value={date}
         onChange={setDate}
-        placeholder="Pick a date"
         className="max-w-sm"
       />
     </div>
