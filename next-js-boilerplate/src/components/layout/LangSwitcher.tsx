@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { LANGS, LANG_COOKIE, type Lang } from "@/constants/i18n";
 import { IconLanguage } from "@tabler/icons-react";
 import { useClickOutside } from "@/hooks/useClickOutside";
@@ -44,6 +44,7 @@ export function LangSwitcher() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const currentLang = detectLang(pathname ?? "");
 
@@ -53,9 +54,11 @@ export function LangSwitcher() {
     (target: Lang) => {
       setLangCookie(target);
       setOpen(false);
-      router.push(localizePathname(pathname ?? "", currentLang, target));
+      const localized = localizePathname(pathname ?? "", currentLang, target);
+      const qs = searchParams.toString();
+      router.push(qs ? `${localized}?${qs}` : localized);
     },
-    [pathname, currentLang, router],
+    [pathname, currentLang, searchParams, router],
   );
 
   return (
