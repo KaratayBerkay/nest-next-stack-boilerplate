@@ -84,8 +84,8 @@ export function Carousel({
     <CarouselContext.Provider
       value={{ scrollPrev, scrollNext, canScrollPrev, canScrollNext, selectedIndex }}
     >
-      <div className={cn("relative", className)} {...props}>
-        <div ref={emblaRef} className="overflow-hidden">
+      <div className={cn("relative w-full", className)} {...props}>
+        <div ref={emblaRef} className="overflow-hidden w-full">
           {children}
         </div>
       </div>
@@ -97,7 +97,7 @@ export function CarouselContent({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  return <div className={cn("flex", className)} {...props} />;
+  return <div className={cn("flex w-full", className)} {...props} />;
 }
 
 export function CarouselItem({

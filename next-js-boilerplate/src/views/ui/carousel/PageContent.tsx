@@ -117,7 +117,7 @@ function Dots({ total }: { total: number }) {
 function ProductGallery() {
   return (
     <Carousel className="relative w-full" opts={{ startIndex: 0, loop: true }}>
-      <div className="relative overflow-hidden rounded-xl">
+      <div className="relative w-full overflow-hidden rounded-xl">
         <CarouselContent>
           {products.map((product, i) => (
             <CarouselItem key={i}>
@@ -215,7 +215,7 @@ const testimonials = [
 function TestimonialCarousel() {
   return (
     <Carousel className="relative w-full" opts={{ startIndex: 0, loop: true }}>
-      <div className="relative overflow-hidden rounded-xl">
+      <div className="relative w-full overflow-hidden rounded-xl">
         <CarouselContent>
           {testimonials.map((t, i) => (
             <CarouselItem key={i}>
@@ -257,7 +257,7 @@ const logoPartners = [
 function LogoCarousel() {
   return (
     <Carousel className="relative w-full" opts={{ loop: true }}>
-      <div className="relative">
+      <div className="relative w-full">
         <CarouselContent>
           {logoPartners.map((logo, i) => (
             <CarouselItem key={i} className="basis-1/3 md:basis-1/5">
