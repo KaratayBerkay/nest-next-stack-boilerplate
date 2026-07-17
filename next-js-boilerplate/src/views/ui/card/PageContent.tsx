@@ -18,7 +18,6 @@ import { Input } from "@/components/ui/Input";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { FieldMessages } from "@/components/ui/field-messages";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
-import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { cn } from "@/lib/cn";
 import { cardLoginFormSchema, cardRegisterFormSchema } from "@/lib/validation/auth";
@@ -1103,35 +1102,129 @@ function PricingTiersTab() {
 
 function VariantGalleryTab() {
   return (
-    <VariantGallery
-      variants={["default", "elevated", "interactive"]}
-      sizes={["sm", "md", "lg"]}
-      render={(variant, size) => (
-        <Card
-          variant={
-            variant as
-              | "default"
-              | "elevated"
-              | "interactive"
-              | "outline"
-              | "surface"
-          }
-          className="min-w-32"
-        >
-          <CardContent
-            className={
-              size === "sm" ? "p-3" : size === "lg" ? "p-6" : "p-4"
-            }
-          >
-            <p className="text-muted text-xs">
-              Variant: {variant}
-              <br />
-              Size: {size}
-            </p>
-          </CardContent>
-        </Card>
-      )}
-    />
+    <div className="flex flex-col gap-8">
+      <div>
+        <h3 className="text-lg font-semibold mb-1">Card Variants</h3>
+        <p className="text-muted text-sm mb-4">
+          Six visual styles for different contexts: default for general use, elevated for emphasis,
+          interactive for clickable cards, outline for lightweight separation, surface for
+          content areas, and soft for subtle tinting.
+        </p>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {(
+            [
+              "default",
+              "elevated",
+              "interactive",
+              "outline",
+              "surface",
+            ] as const
+          ).map((variant) => (
+            <Card key={variant} variant={variant}>
+              <CardHeader>
+                <CardTitle className="text-sm capitalize">{variant}</CardTitle>
+                <CardDescription>
+                  {variant === "default" && "Standard card with border and subtle shadow."}
+                  {variant === "elevated" && "Prominent shadow for emphasis and hierarchy."}
+                  {variant === "interactive" && "Hover to lift — perfect for clickable content."}
+                  {variant === "outline" && "Border-only for lightweight visual grouping."}
+                  {variant === "surface" && "Background-tinted for nested content areas."}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted text-xs">
+                  Use this variant when you need to {variant === "default" ? "display neutral content" : variant === "elevated" ? "draw attention to important info" : variant === "interactive" ? "make content clickable and engaging" : variant === "outline" ? "group content without adding weight" : "nest content within sections"}.
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-lg font-semibold mb-1">Sizes</h3>
+        <p className="text-muted text-sm mb-4">
+          Three padding sizes control internal spacing without changing the card&apos;s visual style.
+        </p>
+        <div className="flex flex-wrap items-end gap-4">
+          {(["sm", "md", "lg"] as const).map((size) => (
+            <Card key={size} className="min-w-40">
+              <CardContent
+                className={cn(
+                  "flex flex-col items-center justify-center",
+                  size === "sm" ? "p-3" : size === "lg" ? "p-8" : "p-5",
+                )}
+              >
+                <span className="text-muted text-xs font-medium uppercase tracking-wider">
+                  {size}
+                </span>
+                <span className="text-muted/60 mt-1 text-[10px]">
+                  {size === "sm" ? "p-3" : size === "lg" ? "p-6-8" : "p-4-5"}
+                </span>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-lg font-semibold mb-1">All Combinations</h3>
+        <p className="text-muted text-sm mb-4">
+          Every variant and size pairing in a grid.
+        </p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-border border-b">
+                <th className="text-muted px-3 py-2.5 text-left text-xs font-medium">Variant</th>
+                {["sm", "md", "lg"].map((size) => (
+                  <th
+                    key={size}
+                    className="text-muted px-3 py-2.5 text-center text-xs font-medium uppercase"
+                  >
+                    {size}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {(
+                [
+                  "default",
+                  "elevated",
+                  "interactive",
+                  "outline",
+                  "surface",
+                ] as const
+              ).map((variant) => (
+                <tr key={variant} className="border-border border-b last:border-b-0">
+                  <td className="px-3 py-2 text-xs font-medium capitalize whitespace-nowrap">
+                    {variant}
+                  </td>
+                  {(["sm", "md", "lg"] as const).map((size) => (
+                    <td key={`${variant}-${size}`} className="px-3 py-2">
+                      <div className="flex justify-center">
+                        <Card variant={variant} className="min-w-32">
+                          <CardContent
+                            className={cn(
+                              size === "sm" ? "p-2" : size === "lg" ? "p-5" : "p-3",
+                            )}
+                          >
+                            <p className="text-muted text-[10px] text-center">
+                              {variant} / {size}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 }
 
