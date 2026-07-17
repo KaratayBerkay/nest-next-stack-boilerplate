@@ -18,6 +18,7 @@ interface CarouselContextValue {
   scrollNext: () => void;
   canScrollPrev: boolean;
   canScrollNext: boolean;
+  selectedIndex: number;
 }
 const carouselNavVariants = {
   ...globalStyleVariants,
@@ -35,13 +36,16 @@ export function Carousel({
   className,
   children,
   opts,
+  onSelect: onSelectProp,
   ...props
 }: React.ComponentPropsWithoutRef<"div"> & {
   opts?: Parameters<typeof useEmblaCarousel>[0];
+  onSelect?: (index: number) => void;
 }) {
   const [emblaRef, emblaApi] = useEmblaCarousel(opts);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const canScrollPrevRef = useRef(false);
   const canScrollNextRef = useRef(false);
 
@@ -54,6 +58,7 @@ export function Carousel({
     canScrollNextRef.current = emblaApi.canScrollNext();
     setCanScrollPrev(canScrollPrevRef.current);
     setCanScrollNext(canScrollNextRef.current);
+    setSelectedIndex(emblaApi.selectedScrollSnap());
 
     const onSelect = () => {
       const prev = emblaApi.canScrollPrev();
@@ -62,6 +67,9 @@ export function Carousel({
       canScrollNextRef.current = next;
       setCanScrollPrev(prev);
       setCanScrollNext(next);
+      const idx = emblaApi.selectedScrollSnap();
+      setSelectedIndex(idx);
+      onSelectProp?.(idx);
     };
 
     emblaApi.on("select", onSelect);
@@ -70,11 +78,11 @@ export function Carousel({
       emblaApi.off("select", onSelect);
       emblaApi.off("reInit", onSelect);
     };
-  }, [emblaApi]);
+  }, [emblaApi, onSelectProp]);
 
   return (
     <CarouselContext.Provider
-      value={{ scrollPrev, scrollNext, canScrollPrev, canScrollNext }}
+      value={{ scrollPrev, scrollNext, canScrollPrev, canScrollNext, selectedIndex }}
     >
       <div className={cn("relative", className)} {...props}>
         <div ref={emblaRef} className="overflow-hidden">

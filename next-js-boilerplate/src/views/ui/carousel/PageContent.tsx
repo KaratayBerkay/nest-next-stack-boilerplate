@@ -1,5 +1,4 @@
 "use client";
-import { useState } from "react";
 import {
   Carousel,
   CarouselContent,
@@ -7,6 +6,7 @@ import {
   CarouselPrevious,
   CarouselNext,
 } from "@/components/ui/Carousel";
+import { useCarousel } from "@/components/ui/Carousel";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
@@ -96,7 +96,8 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
-function Dots({ total, active }: { total: number; active: number }) {
+function Dots({ total }: { total: number }) {
+  const { selectedIndex } = useCarousel();
   return (
     <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
       {Array.from({ length: total }).map((_, i) => (
@@ -104,7 +105,7 @@ function Dots({ total, active }: { total: number; active: number }) {
           key={i}
           className={cn(
             "rounded-full transition-all duration-300",
-            i === active ? "size-1.5 bg-fg w-4" : "size-1.5 bg-fg/40",
+            i === selectedIndex ? "size-1.5 bg-fg w-4" : "size-1.5 bg-fg/40",
           )}
         />
       ))}
@@ -113,8 +114,6 @@ function Dots({ total, active }: { total: number; active: number }) {
 }
 
 function ProductGallery() {
-  const [activeIndex] = useState(0);
-
   return (
     <Carousel className="relative w-full" opts={{ startIndex: 0, loop: true }}>
       <div className="relative overflow-hidden rounded-xl">
@@ -168,7 +167,7 @@ function ProductGallery() {
         </CarouselContent>
         <CarouselPrevious />
         <CarouselNext />
-        <Dots total={products.length} active={activeIndex} />
+        <Dots total={products.length} />
       </div>
     </Carousel>
   );
@@ -213,8 +212,6 @@ const testimonials = [
 ];
 
 function TestimonialCarousel() {
-  const [activeIndex] = useState(0);
-
   return (
     <Carousel className="relative w-full" opts={{ startIndex: 0, loop: true }}>
       <div className="relative overflow-hidden rounded-xl">
@@ -237,7 +234,7 @@ function TestimonialCarousel() {
         </CarouselContent>
         <CarouselPrevious />
         <CarouselNext />
-        <Dots total={testimonials.length} active={activeIndex} />
+        <Dots total={testimonials.length} />
       </div>
     </Carousel>
   );
@@ -274,6 +271,8 @@ function LogoCarousel() {
             </CarouselItem>
           ))}
         </CarouselContent>
+        <CarouselPrevious />
+        <CarouselNext />
         <div className="from-bg pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r to-transparent" />
         <div className="from-bg pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l to-transparent" />
       </div>

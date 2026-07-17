@@ -4,4 +4,5 @@ export {
   CarouselItem,
   CarouselPrevious,
   CarouselNext,
+  useCarousel,
 } from "./carousel";
