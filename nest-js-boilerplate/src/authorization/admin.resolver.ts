@@ -101,7 +101,7 @@ export class AdminResolver {
     return target.role;
   }
 
-  private async createAuditLog(data: Prisma.AuditLogCreateInput) {
+  private async createAuditLog(data: Prisma.AuditLogUncheckedCreateInput) {
     try {
       return await this.prisma.auditLog.create({ data });
     } catch (err) {
