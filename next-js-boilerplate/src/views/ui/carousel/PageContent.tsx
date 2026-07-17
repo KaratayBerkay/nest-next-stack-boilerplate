@@ -121,8 +121,7 @@ function ProductGallery() {
         <CarouselContent>
           {products.map((product, i) => (
             <CarouselItem key={i}>
-              <div className="flex justify-center px-4">
-              <div className="group relative bg-surface rounded-xl border border-border overflow-hidden transition-shadow hover:shadow-lg w-full max-w-md">
+              <div className="group relative bg-surface rounded-xl border border-border overflow-hidden transition-shadow hover:shadow-lg max-w-md mx-auto">
                 <div className="relative aspect-[4/3] overflow-hidden">
                   <div
                     className={cn(
@@ -163,7 +162,6 @@ function ProductGallery() {
                     Add to Cart
                   </Button>
                 </div>
-              </div>
               </div>
             </CarouselItem>
           ))}
@@ -221,8 +219,7 @@ function TestimonialCarousel() {
         <CarouselContent>
           {testimonials.map((t, i) => (
             <CarouselItem key={i}>
-              <div className="flex justify-center px-4">
-              <div className="bg-surface rounded-xl border border-border p-8 flex flex-col items-center text-center min-h-[280px] justify-center w-full max-w-2xl">
+              <div className="bg-surface rounded-xl border border-border p-8 flex flex-col items-center text-center min-h-[280px] justify-center max-w-2xl mx-auto">
                 <Stars rating={t.rating} />
                 <p className="text-fg mt-4 mb-6 max-w-lg text-base italic leading-relaxed">
                   &ldquo;{t.text}&rdquo;
@@ -232,7 +229,6 @@ function TestimonialCarousel() {
                   <p className="font-semibold text-sm">{t.name}</p>
                   <p className="text-muted text-xs">{t.role}</p>
                 </div>
-              </div>
               </div>
             </CarouselItem>
           ))}
@@ -349,11 +345,11 @@ function PureCssCarousel() {
         {cssSlides.map((slide, i) => (
           <div
             key={i}
-            className="snap-center shrink-0 w-full flex justify-center px-4"
+            className="snap-center shrink-0 w-full"
           >
             <div
               className={cn(
-                "relative h-64 w-full max-w-lg rounded-xl bg-gradient-to-br flex flex-col items-center justify-center text-center p-8",
+                "relative h-64 max-w-lg mx-auto rounded-xl bg-gradient-to-br flex flex-col items-center justify-center text-center p-8",
                 slide.gradient,
               )}
             >
