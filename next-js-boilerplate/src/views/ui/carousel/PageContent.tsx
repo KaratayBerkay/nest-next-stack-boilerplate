@@ -339,7 +339,7 @@ function PureCssCarousel() {
     <div className="relative w-full">
       <div
         ref={scrollRef}
-        className="flex overflow-x-auto snap-x snap-mandatory gap-4 rounded-xl scroll-smooth"
+        className="flex w-full overflow-x-auto snap-x snap-mandatory gap-4 rounded-xl scroll-smooth"
         style={{ scrollbarWidth: "none" }}
       >
         {cssSlides.map((slide, i) => (
