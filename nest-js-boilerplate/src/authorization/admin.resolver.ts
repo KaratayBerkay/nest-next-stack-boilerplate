@@ -1,4 +1,4 @@
-import { UseGuards } from '@nestjs/common';
+import { UseGuards, Logger } from '@nestjs/common';
 import {
   Args,
   Field,
@@ -17,6 +17,7 @@ import type { JwtUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { TokenStoreService } from '../auth/token-store.service';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { MfaService } from '../mfa/mfa.service';
@@ -78,6 +79,8 @@ export class GrowthStatsPayload {
 @UseGuards(SessionAuthGuard, RolesGuard)
 @Resolver()
 export class AdminResolver {
+  private readonly logger = new Logger(AdminResolver.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly tokenStore: TokenStoreService,
@@ -96,6 +99,26 @@ export class AdminResolver {
     });
     if (!target || isTargetRoleGteActor(target.role, actorRole)) return null;
     return target.role;
+  }
+
+  private async createAuditLog(data: Prisma.AuditLogCreateInput) {
+    try {
+      return await this.prisma.auditLog.create({ data });
+    } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2003' &&
+        data.actorId
+      ) {
+        this.logger.warn(
+          `actorId ${JSON.stringify(data.actorId)} no longer exists — retrying with null`,
+        );
+        return await this.prisma.auditLog.create({
+          data: { ...data, actorId: null },
+        });
+      }
+      throw err;
+    }
   }
 
   @Query(() => String, { name: 'whoAmI' })

@@ -31,25 +31,43 @@ export class AuditLogProcessor extends WorkerHost {
   async process(job: Job<OutboxJob>): Promise<void> {
     const e = job.data.event;
 
-    const audit = await this.prisma.auditLog.create({
-      data: {
-        action: e.action,
-        level: e.level ?? 'INFO',
-        entityType: e.aggregateType,
-        entityId: e.aggregateId,
-        summary: e.summary ?? null,
-        actorId: e.actorId ?? null,
-        organizationId: e.organizationId ?? null,
-        before: this.toJson(e.before),
-        after: this.toJson(e.after),
-        ip: e.ip ?? null,
-        userAgent: e.userAgent ?? null,
-        requestId: e.requestId ?? null,
-        correlationId: e.correlationId ?? null,
-      },
+    const audit = await this.createAuditLog({
+      action: e.action,
+      level: e.level ?? 'INFO',
+      entityType: e.aggregateType,
+      entityId: e.aggregateId,
+      summary: e.summary ?? null,
+      actorId: e.actorId ?? null,
+      organizationId: e.organizationId ?? null,
+      before: this.toJson(e.before),
+      after: this.toJson(e.after),
+      ip: e.ip ?? null,
+      userAgent: e.userAgent ?? null,
+      requestId: e.requestId ?? null,
+      correlationId: e.correlationId ?? null,
     });
 
     await this.exportToSearch(audit.id, e);
+  }
+
+  private async createAuditLog(data: Prisma.AuditLogCreateInput) {
+    try {
+      return await this.prisma.auditLog.create({ data });
+    } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2003' &&
+        data.actorId
+      ) {
+        this.logger.warn(
+          `actorId ${JSON.stringify(data.actorId)} no longer exists — retrying with null`,
+        );
+        return await this.prisma.auditLog.create({
+          data: { ...data, actorId: null },
+        });
+      }
+      throw err;
+    }
   }
 
   /**
