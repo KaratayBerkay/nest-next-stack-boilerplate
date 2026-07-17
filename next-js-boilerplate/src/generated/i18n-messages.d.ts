@@ -55,14 +55,17 @@ export type I18nMessages = {
       "form": {
         "login": {
           "title": string;
+          "heading": string;
           "emailLabel": string;
           "emailPlaceholder": string;
           "passwordLabel": string;
+          "passwordPlaceholder": string;
+          "rememberMe": string;
+          "forgotPassword": string;
           "submit": string;
           "submitting": string;
           "noAccount": string;
           "registerLink": string;
-          "forgotPassword": string;
           "mfaTitle": string;
           "mfaCodeLabel": string;
           "mfaVerify": string;
@@ -70,10 +73,20 @@ export type I18nMessages = {
         };
         "register": {
           "title": string;
+          "heading": string;
+          "subheading": string;
           "nameLabel": string;
           "namePlaceholder": string;
+          "firstNameLabel": string;
+          "firstNamePlaceholder": string;
+          "lastNameLabel": string;
+          "lastNamePlaceholder": string;
           "emailLabel": string;
+          "emailPlaceholder": string;
           "passwordLabel": string;
+          "passwordPlaceholder": string;
+          "confirmPasswordLabel": string;
+          "confirmPasswordPlaceholder": string;
           "submit": string;
           "submitting": string;
           "hasAccount": string;
@@ -108,10 +121,14 @@ export type I18nMessages = {
         "passwordRequired": string;
         "passwordMin": string;
         "passwordMax": string;
+        "passwordMin6": string;
+        "firstNameRequired": string;
+        "lastNameRequired": string;
+        "confirmPasswordRequired": string;
+        "passwordsMustMatch": string;
         "loginFailed": string;
         "registerFailed": string;
         "emailTaken": string;
-        "passwordsMustMatch": string;
         "resetPasswordTokenMissing": string;
         "resetPasswordFailed": string;
         "verifyEmailTokenMissing": string;
