@@ -1,4 +1,5 @@
 "use client";
+import { useRef, useState, useCallback, useEffect } from "react";
 import {
   Carousel,
   CarouselContent,
@@ -280,6 +281,105 @@ function LogoCarousel() {
   );
 }
 
+const cssSlides = [
+  {
+    title: "Mountain Retreat",
+    description: "Escape to serenity in the Swiss Alps",
+    gradient: "from-emerald-800 to-teal-900",
+  },
+  {
+    title: "Coastal Sunrise",
+    description: "Golden light over the Pacific coast",
+    gradient: "from-amber-700 to-orange-800",
+  },
+  {
+    title: "Urban Nights",
+    description: "City lights and skyline reflections",
+    gradient: "from-indigo-800 to-violet-900",
+  },
+  {
+    title: "Desert Dunes",
+    description: "Endless waves of sand at dusk",
+    gradient: "from-rose-800 to-red-900",
+  },
+  {
+    title: "Forest Canopy",
+    description: "Sunlight filtering through ancient trees",
+    gradient: "from-green-800 to-emerald-900",
+  },
+];
+
+function PureCssCarousel() {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const scrollLeft = el.scrollLeft;
+    const itemWidth = el.scrollWidth / cssSlides.length;
+    setActiveIndex(Math.round(scrollLeft / itemWidth));
+  }, []);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", handleScroll, { passive: true });
+    return () => el.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
+
+  const scrollTo = useCallback((index: number) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const itemWidth = el.scrollWidth / cssSlides.length;
+    el.scrollTo({ left: itemWidth * index, behavior: "smooth" });
+  }, []);
+
+  return (
+    <div className="relative w-full">
+      <div
+        ref={scrollRef}
+        className="flex overflow-x-auto snap-x snap-mandatory gap-4 rounded-xl scroll-smooth"
+        style={{ scrollbarWidth: "none" }}
+      >
+        {cssSlides.map((slide, i) => (
+          <div
+            key={i}
+            className="snap-center shrink-0 w-full"
+          >
+            <div
+              className={cn(
+                "relative h-64 rounded-xl bg-gradient-to-br flex flex-col items-center justify-center text-center p-8",
+                slide.gradient,
+              )}
+            >
+              <h3 className="text-white text-xl font-bold mb-2">{slide.title}</h3>
+              <p className="text-white/70 text-sm">{slide.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Dots */}
+      <div className="flex justify-center gap-1.5 mt-3">
+        {cssSlides.map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => scrollTo(i)}
+            className={cn(
+              "rounded-full transition-all duration-300",
+              i === activeIndex
+                ? "w-4 h-1.5 bg-fg"
+                : "w-1.5 h-1.5 bg-fg/30 hover:bg-fg/50",
+            )}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const examples: UIExample[] = [
   {
     id: "usage",
@@ -301,6 +401,13 @@ const examples: UIExample[] = [
     description:
       "Partner logo carousel with scroll-fade edges for landing pages.",
     render: () => <LogoCarousel />,
+  },
+  {
+    id: "pure-css",
+    title: "Pure CSS",
+    description:
+      "CSS scroll-snap carousel — no JS library, just native browser scrolling with Tailwind utilities.",
+    render: () => <PureCssCarousel />,
   },
 ];
 
