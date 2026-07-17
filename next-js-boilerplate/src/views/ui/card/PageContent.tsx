@@ -20,6 +20,7 @@ import { FieldMessages } from "@/components/ui/field-messages";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { cn } from "@/lib/cn";
 import { cardLoginFormSchema, cardRegisterFormSchema } from "@/lib/validation/auth";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
@@ -804,92 +805,258 @@ function FeatureCardsTab() {
 
 // ---------- Pricing Tiers Tab ----------
 
-function PricingTiersTab() {
-  const tiers = [
-    {
-      name: "Starter",
-      price: 19,
-      description: "For individuals and small projects",
-      features: [
-        "5 GB cloud storage",
-        "1 team member",
-        "Basic analytics dashboard",
-        "Email support",
-      ],
-      cta: "Get Started",
-      popular: false,
-    },
-    {
-      name: "Professional",
-      price: 49,
-      description: "For growing teams and businesses",
-      features: [
-        "50 GB cloud storage",
-        "Up to 10 team members",
-        "Advanced analytics & reports",
-        "Priority email & chat support",
-        "Custom integrations",
-      ],
-      cta: "Get Started",
-      popular: true,
-    },
-    {
-      name: "Enterprise",
-      price: 99,
-      description: "For large organizations",
-      features: [
-        "Unlimited cloud storage",
-        "Unlimited team members",
-        "Advanced analytics & reports",
-        "Dedicated account manager",
-        "Custom integrations & SSO",
-      ],
-      cta: "Contact Sales",
-      popular: false,
-    },
-  ];
+const tiers = [
+  {
+    name: "Starter",
+    price: 19,
+    description: "Perfect for side projects and experiments.",
+    cta: "Start free trial",
+    popular: false,
+    logos: ["Vercel", "Netlify", "Cloudflare"],
+  },
+  {
+    name: "Professional",
+    price: 49,
+    description: "For growing teams that need more power.",
+    cta: "Start free trial",
+    popular: true,
+    logos: ["Stripe", "Supabase", "PlanetScale"],
+  },
+  {
+    name: "Enterprise",
+    price: 99,
+    description: "For large organizations with custom needs.",
+    cta: "Contact sales",
+    popular: false,
+    logos: ["AWS", "Google Cloud", "Azure"],
+  },
+];
 
+const sections = [
+  {
+    name: "Features",
+    features: [
+      {
+        name: "Cloud storage",
+        tiers: ["5 GB", "50 GB", "Unlimited"],
+      },
+      {
+        name: "Team members",
+        tiers: ["1", "Up to 10", "Unlimited"],
+      },
+      {
+        name: "API requests",
+        tiers: ["10k / mo", "100k / mo", "Unlimited"],
+      },
+      {
+        name: "Integrations",
+        tiers: ["Basic", "Advanced", "Custom"],
+      },
+    ],
+  },
+  {
+    name: "Support",
+    features: [
+      {
+        name: "Community forum",
+        tiers: [true, true, true],
+      },
+      {
+        name: "Email support",
+        tiers: [true, true, true],
+      },
+      {
+        name: "Priority chat support",
+        tiers: [false, true, true],
+      },
+      {
+        name: "Dedicated account manager",
+        tiers: [false, false, true],
+      },
+      {
+        name: "Custom SLA",
+        tiers: [false, false, true],
+      },
+    ],
+  },
+  {
+    name: "Security & Compliance",
+    features: [
+      {
+        name: "SSL certificates",
+        tiers: [true, true, true],
+      },
+      {
+        name: "SOC 2 Type II",
+        tiers: [false, true, true],
+      },
+      {
+        name: "SSO / SAML",
+        tiers: [false, false, true],
+      },
+      {
+        name: "Custom data retention",
+        tiers: [false, false, true],
+      },
+    ],
+  },
+];
+
+function CheckIcon() {
   return (
-    <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-3">
-      {tiers.map((tier) => (
-        <Card
-          key={tier.name}
-          variant={tier.popular ? "interactive" : "default"}
-          className={tier.popular ? "relative border-brand" : ""}
-        >
-          {tier.popular && (
-            <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
-              Popular
-            </Badge>
-          )}
-          <CardHeader>
-            <CardTitle>{tier.name}</CardTitle>
-            <CardDescription>{tier.description}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-baseline gap-1">
-              <span className="text-3xl font-bold">${tier.price}</span>
-              <span className="text-muted text-sm">/month</span>
-            </div>
-            <ul className="text-muted space-y-2 text-sm">
-              {tier.features.map((feature) => (
-                <li key={feature} className="flex items-start gap-2">
-                  <span className="text-brand mt-0.5">✓</span>
-                  {feature}
-                </li>
+    <svg
+      className="text-brand h-5 w-5 shrink-0"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path
+        fillRule="evenodd"
+        d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+}
+
+function MinusIcon() {
+  return (
+    <svg
+      className="text-muted/40 h-5 w-5 shrink-0"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M4 10a.75.75 0 0 1 .75-.75h10.5a.75.75 0 0 1 0 1.5H4.75A.75.75 0 0 1 4 10Z" />
+    </svg>
+  );
+}
+
+function PricingTiersTab() {
+  return (
+    <div className="mx-auto max-w-5xl">
+      <div className="isolate grid grid-cols-1 md:grid-cols-3 gap-6">
+        {tiers.map((tier) => (
+          <div
+            key={tier.name}
+            className={cn(
+              "rounded-xl border p-8 flex flex-col",
+              tier.popular
+                ? "border-brand bg-surface relative ring-1 ring-brand shadow-lg"
+                : "border-border bg-surface",
+            )}
+          >
+            {tier.popular && (
+              <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
+                Most popular
+              </Badge>
+            )}
+
+            <div className="flex items-center gap-3 mb-4">
+              {tier.logos.map((logo) => (
+                <span
+                  key={logo}
+                  className="bg-muted/30 text-muted flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold"
+                >
+                  {logo[0]}
+                </span>
               ))}
-            </ul>
-          </CardContent>
-          <CardFooter>
+            </div>
+
+            <h3 className="text-lg font-semibold">{tier.name}</h3>
+            <p className="text-muted mt-1 text-sm">{tier.description}</p>
+
+            <div className="mt-6 flex items-baseline gap-1">
+              <span className="text-4xl font-bold tracking-tight">
+                ${tier.price}
+              </span>
+              <span className="text-muted text-sm font-medium">/month</span>
+            </div>
+
             <Button
-              className="w-full"
+              className="mt-8 w-full"
               variant={tier.popular ? "default" : "outline"}
             >
               {tier.cta}
             </Button>
-          </CardFooter>
-        </Card>
-      ))}
+
+            <p className="text-muted mt-3 text-center text-xs">
+              14-day free trial &middot; No credit card required
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* Feature comparison table */}
+      <div className="mt-16">
+        <h3 className="text-xl font-bold text-center mb-8">
+          Compare features across all tiers
+        </h3>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-border border-b">
+                <th className="py-3.5 pr-4 text-left font-semibold" />
+                {tiers.map((tier) => (
+                  <th
+                    key={tier.name}
+                    className={cn(
+                      "px-4 py-3.5 text-center font-semibold",
+                      tier.popular && "text-brand",
+                    )}
+                  >
+                    {tier.name}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sections.map((section) => (
+                <>
+                  <tr key={section.name}>
+                    <td
+                      colSpan={4}
+                      className="text-muted pt-8 pb-2 text-xs font-semibold uppercase tracking-wider"
+                    >
+                      {section.name}
+                    </td>
+                  </tr>
+                  {section.features.map((feature) => (
+                    <tr
+                      key={feature.name}
+                      className="border-border border-b"
+                    >
+                      <td className="py-4 pr-4 text-fg font-medium">
+                        {feature.name}
+                      </td>
+                      {feature.tiers.map((value, i) => (
+                        <td
+                          key={i}
+                          className={cn(
+                            "px-4 py-4 text-center",
+                            tiers[i]?.popular && "bg-brand/5",
+                          )}
+                        >
+                          {typeof value === "boolean" ? (
+                            value ? (
+                              <CheckIcon />
+                            ) : (
+                              <MinusIcon />
+                            )
+                          ) : (
+                            <span className="text-fg">{value}</span>
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
