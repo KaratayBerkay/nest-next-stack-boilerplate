@@ -10,6 +10,8 @@ export const AUTH_LOGIN_MFA_URL = "/api/auth/login/mfa" as const;
 export const AUTH_REGISTER_URL = "/api/auth/register" as const;
 export const AUTH_LOGOUT_URL = "/api/auth/logout" as const;
 export const AUTH_VERIFY_EMAIL_URL = "/api/auth/verify-email" as const;
+export const AUTH_REQUEST_PASSWORD_RESET_URL =
+  "/api/auth/request-password-reset" as const;
 export const AUTH_RESET_PASSWORD_URL = "/api/auth/reset-password" as const;
 
 export const POSTS_URL = "/api/posts" as const;

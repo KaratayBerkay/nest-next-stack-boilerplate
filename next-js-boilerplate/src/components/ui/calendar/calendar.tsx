@@ -279,7 +279,7 @@ export function Calendar({
           "hover:bg-surface-hover inline-flex w-full max-w-10 aspect-square items-center justify-center rounded-md p-0 text-sm font-normal transition-colors aria-selected:opacity-100",
         selected:
           "bg-brand text-brand-fg hover:bg-brand hover:text-brand-fg focus:bg-brand focus:text-brand-fg",
-        today: "ring-1 ring-brand/50 font-semibold",
+        today: "bg-brand/10 font-semibold",
         outside: "text-muted opacity-50",
         disabled: "text-muted opacity-50",
         range_middle:

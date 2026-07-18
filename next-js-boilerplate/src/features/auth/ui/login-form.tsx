@@ -2,7 +2,7 @@
 
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { REGISTER_PATH, RESET_PASSWORD_PATH } from "@/constants/routes";
+import { REGISTER_PATH, FORGOT_PASSWORD_PATH } from "@/constants/routes";
 import { LANG_COOKIE, LANGS, DEFAULT_LANG } from "@/constants/i18n";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -259,7 +259,7 @@ export function LoginForm() {
         </div>
 
         <Link
-          href={RESET_PASSWORD_PATH}
+          href={FORGOT_PASSWORD_PATH}
           className="text-muted hover:text-brand -mt-1 text-xs underline"
         >
           {t.form.login.forgotPassword}

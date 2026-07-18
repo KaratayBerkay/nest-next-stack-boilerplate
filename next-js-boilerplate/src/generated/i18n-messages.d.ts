@@ -101,6 +101,15 @@ export type I18nMessages = {
           "success": string;
           "loginLink": string;
         };
+        "forgotPassword": {
+          "title": string;
+          "emailLabel": string;
+          "emailPlaceholder": string;
+          "submit": string;
+          "submitting": string;
+          "success": string;
+          "loginLink": string;
+        };
         "verifyEmail": {
           "title": string;
           "verifying": string;

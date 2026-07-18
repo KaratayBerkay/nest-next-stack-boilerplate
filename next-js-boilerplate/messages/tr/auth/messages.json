@@ -48,6 +48,15 @@
       "success": "Şifreniz belirlendi. Şimdi giriş yapabilirsiniz.",
       "loginLink": "Giriş Yap"
     },
+    "forgotPassword": {
+      "title": "Şifremi Unuttum",
+      "emailLabel": "E-posta adresi",
+      "emailPlaceholder": "ornek@eposta.com",
+      "submit": "Sıfırlama Bağlantısı Gönder",
+      "submitting": "Gönderiliyor...",
+      "success": "Bu e-posta ile kayıtlı bir hesap varsa, şifre sıfırlama bağlantısı alacaksınız.",
+      "loginLink": "Giriş Yap'a Dön"
+    },
     "verifyEmail": {
       "title": "E-posta Doğrulama",
       "verifying": "E-posta doğrulanıyor...",
