@@ -2,10 +2,9 @@
 import {
   createContext,
   useContext,
-  useState,
   useCallback,
   useEffect,
-  useRef,
+  useSyncExternalStore,
 } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import { cn } from "@/lib/cn";
@@ -14,8 +13,10 @@ import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 
 interface CarouselContextValue {
+  emblaRef: ReturnType<typeof useEmblaCarousel>[0];
   scrollPrev: () => void;
   scrollNext: () => void;
+  scrollTo: (index: number) => void;
   canScrollPrev: boolean;
   canScrollNext: boolean;
   selectedIndex: number;
@@ -43,51 +44,65 @@ export function Carousel({
   onSelect?: (index: number) => void;
 }) {
   const [emblaRef, emblaApi] = useEmblaCarousel(opts);
-  const [canScrollPrev, setCanScrollPrev] = useState(false);
-  const [canScrollNext, setCanScrollNext] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const canScrollPrevRef = useRef(false);
-  const canScrollNextRef = useRef(false);
 
   const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
   const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
+  const scrollTo = useCallback(
+    (index: number) => emblaApi?.scrollTo(index),
+    [emblaApi],
+  );
+
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      if (!emblaApi) return () => {};
+      emblaApi.on("select", onChange);
+      emblaApi.on("reInit", onChange);
+      return () => {
+        emblaApi.off("select", onChange);
+        emblaApi.off("reInit", onChange);
+      };
+    },
+    [emblaApi],
+  );
+  const canScrollPrev = useSyncExternalStore(
+    subscribe,
+    () => emblaApi?.canScrollPrev() ?? false,
+    () => false,
+  );
+  const canScrollNext = useSyncExternalStore(
+    subscribe,
+    () => emblaApi?.canScrollNext() ?? false,
+    () => false,
+  );
+  const selectedIndex = useSyncExternalStore(
+    subscribe,
+    () => emblaApi?.selectedScrollSnap() ?? 0,
+    () => 0,
+  );
 
   useEffect(() => {
-    if (!emblaApi) return;
-    canScrollPrevRef.current = emblaApi.canScrollPrev();
-    canScrollNextRef.current = emblaApi.canScrollNext();
-    setCanScrollPrev(canScrollPrevRef.current);
-    setCanScrollNext(canScrollNextRef.current);
-    setSelectedIndex(emblaApi.selectedScrollSnap());
-
-    const onSelect = () => {
-      const prev = emblaApi.canScrollPrev();
-      const next = emblaApi.canScrollNext();
-      canScrollPrevRef.current = prev;
-      canScrollNextRef.current = next;
-      setCanScrollPrev(prev);
-      setCanScrollNext(next);
-      const idx = emblaApi.selectedScrollSnap();
-      setSelectedIndex(idx);
-      onSelectProp?.(idx);
-    };
-
+    if (!emblaApi || !onSelectProp) return;
+    const onSelect = () => onSelectProp(emblaApi.selectedScrollSnap());
     emblaApi.on("select", onSelect);
-    emblaApi.on("reInit", onSelect);
     return () => {
       emblaApi.off("select", onSelect);
-      emblaApi.off("reInit", onSelect);
     };
   }, [emblaApi, onSelectProp]);
 
   return (
     <CarouselContext.Provider
-      value={{ scrollPrev, scrollNext, canScrollPrev, canScrollNext, selectedIndex }}
+      value={{
+        emblaRef,
+        scrollPrev,
+        scrollNext,
+        scrollTo,
+        canScrollPrev,
+        canScrollNext,
+        selectedIndex,
+      }}
     >
       <div className={cn("relative w-full", className)} {...props}>
-        <div ref={emblaRef} className="overflow-hidden w-full">
-          {children}
-        </div>
+        {children}
       </div>
     </CarouselContext.Provider>
   );
@@ -95,9 +110,18 @@ export function Carousel({
 
 export function CarouselContent({
   className,
+  containerClassName,
   ...props
-}: React.ComponentPropsWithoutRef<"div">) {
-  return <div className={cn("flex w-full", className)} {...props} />;
+}: React.ComponentPropsWithoutRef<"div"> & { containerClassName?: string }) {
+  const { emblaRef } = useCarousel();
+  return (
+    <div
+      ref={emblaRef}
+      className={cn("w-full overflow-hidden", containerClassName)}
+    >
+      <div className={cn("flex w-full", className)} {...props} />
+    </div>
+  );
 }
 
 export function CarouselItem({
@@ -121,6 +145,8 @@ export function CarouselPrevious({
   const { scrollPrev, canScrollPrev } = useCarousel();
   return (
     <button
+      type="button"
+      aria-label="Previous slide"
       disabled={!canScrollPrev}
       onClick={scrollPrev}
       className={cn(
@@ -153,6 +179,8 @@ export function CarouselNext({
   const { scrollNext, canScrollNext } = useCarousel();
   return (
     <button
+      type="button"
+      aria-label="Next slide"
       disabled={!canScrollNext}
       onClick={scrollNext}
       className={cn(

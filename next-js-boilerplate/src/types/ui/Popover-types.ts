@@ -27,4 +27,6 @@ export interface PopoverContentProps extends React.ComponentPropsWithoutRef<"div
   variant?: PopoverVariant;
   initialFocus?: React.RefObject<HTMLElement>;
   title?: string;
+  /** Always render as the mobile bottom sheet, regardless of viewport width. */
+  forceBottomSheet?: boolean;
 }

@@ -83,15 +83,20 @@ export function IndeterminateCheckbox({
           id={generatedId}
           checked={checked}
           className={cn(
-            "peer appearance-none cursor-pointer border bg-bg focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-            "border-border checked:bg-brand checked:border-brand",
+            "peer appearance-none cursor-pointer border bg-bg transition-colors focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1 focus-visible:outline-none disabled:cursor-not-allowed",
+            "border-border hover:border-brand/60 checked:bg-brand checked:border-brand indeterminate:bg-brand indeterminate:border-brand",
             sizeMap[size],
             className,
           )}
           {...props}
         />
         <span
-          className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-120 ease-out motion-reduce:transition-none peer-checked:opacity-100"
+          className={cn(
+            "pointer-events-none absolute inset-0 flex items-center justify-center transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none",
+            showMinus
+              ? "scale-100 opacity-100"
+              : "scale-50 opacity-0 peer-checked:scale-100 peer-checked:opacity-100",
+          )}
           aria-hidden="true"
         >
           {showCheck && <CheckIcon className={iconSizeMap[size]} />}

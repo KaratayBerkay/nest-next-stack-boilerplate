@@ -28,9 +28,9 @@ export function CheckboxCard({
     <label
       htmlFor={autoId}
       className={cn(
-        "focus-within:ring-brand relative flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors focus-within:ring-2 focus-within:outline-none",
+        "focus-within:ring-brand relative flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-all focus-within:ring-2 focus-within:ring-inset focus-within:outline-none",
         checked
-          ? "border-brand bg-brand/5"
+          ? "border-brand bg-brand/5 ring-1 ring-brand ring-inset shadow-sm"
           : resolveVariant(checkboxCardVariants, effectiveVariant),
         className,
       )}
@@ -45,7 +45,7 @@ export function CheckboxCard({
       {icon && (
         <div className="text-muted shrink-0">{icon}</div>
       )}
-      <div className="flex-1 space-y-1">
+      <div className="min-w-0 flex-1 space-y-1">
         <div className="text-sm font-medium text-fg">{title}</div>
         {description && (
           <div className="text-muted text-xs">{description}</div>
@@ -53,7 +53,7 @@ export function CheckboxCard({
       </div>
       <span
         className={cn(
-          "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-[3px] border transition-colors",
+          "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-[5px] border transition-colors",
           checked
             ? "border-brand bg-brand"
             : "border-border bg-bg",
@@ -62,7 +62,7 @@ export function CheckboxCard({
       >
         {checked && (
           <svg
-            className="size-2.5 text-brand-fg"
+            className="size-3 text-brand-fg"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"

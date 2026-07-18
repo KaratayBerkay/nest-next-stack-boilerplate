@@ -3,6 +3,8 @@
 import { useId } from "react";
 import { cn } from "@/lib/cn";
 import { fontClasses } from "@/lib/font-classes";
+import { Checkbox } from "./checkbox";
+import { IndeterminateCheckbox } from "./indeterminate-checkbox";
 import type { CheckboxGroupProps } from "@/types/ui/Checkbox-types";
 
 export function CheckboxGroup({
@@ -49,51 +51,29 @@ export function CheckboxGroup({
         )}
       >
         {showSelectAll && items.length > 0 && (
-          <label
-            key="select-all"
-            className="flex cursor-pointer items-center gap-2 text-sm"
-          >
-            <input
-              type="checkbox"
-              checked={allSelected}
-              ref={(el) => {
-                if (el) el.indeterminate = someSelected && !allSelected;
-              }}
-              onChange={handleSelectAll}
-              className={cn(
-                "peer border-border bg-bg checked:border-brand checked:bg-brand focus-visible:ring-brand size-4 shrink-0 cursor-pointer appearance-none rounded border focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-              )}
-            />
-            <span className="text-muted text-xs font-medium">Select all</span>
-          </label>
+          <IndeterminateCheckbox
+            checked={allSelected}
+            indeterminate={someSelected && !allSelected}
+            onChange={handleSelectAll}
+            label="Select all"
+            fontSize={fontSize}
+            fontWeight={fontWeight}
+            fontFamily={fontFamily}
+          />
         )}
-        {items.map((item) => {
-          const id = `${autoId}-${item.value}`;
-          return (
-            <label
-              key={item.value}
-              htmlFor={id}
-              className={cn(
-                "flex cursor-pointer items-center gap-2 text-sm",
-                item.disabled && "cursor-not-allowed opacity-50",
-              )}
-            >
-              <input
-                type="checkbox"
-                id={id}
-                checked={values.includes(item.value)}
-                disabled={item.disabled}
-                onChange={() => handleToggle(item.value)}
-                className={cn(
-                  "peer border-border bg-bg checked:border-brand checked:bg-brand focus-visible:ring-brand size-4 shrink-0 cursor-pointer appearance-none rounded border focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-                )}
-              />
-              <span className="text-muted peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
-                {item.label}
-              </span>
-            </label>
-          );
-        })}
+        {items.map((item) => (
+          <Checkbox
+            key={item.value}
+            id={`${autoId}-${item.value}`}
+            checked={values.includes(item.value)}
+            disabled={item.disabled}
+            onChange={() => handleToggle(item.value)}
+            label={item.label}
+            fontSize={fontSize}
+            fontWeight={fontWeight}
+            fontFamily={fontFamily}
+          />
+        ))}
       </div>
     </div>
   );

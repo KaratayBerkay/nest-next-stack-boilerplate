@@ -18,7 +18,7 @@ import { useComponentVariant } from "@/hooks/useComponentVariant";
 
 const alertDialogVariants = {
   ...globalStyleVariants,
-  default: "bg-bg border-border border shadow-xl sm:rounded-xl",
+  default: "bg-bg border-border border shadow-xl rounded-xl",
 };
 
 export const AlertDialog = Root;
@@ -31,7 +31,7 @@ export const AlertDialogHeader = forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex flex-col gap-1 text-center sm:text-left", className)}
+    className={cn("flex flex-col gap-1.5 text-center sm:text-left", className)}
     {...props}
   />
 ));
@@ -62,7 +62,7 @@ export const AlertDialogContent = forwardRef<
       <Content
         ref={ref}
         className={cn(
-          "data-[state=open]:animate-fade-in-up data-[state=closed]:animate-fade-out fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 p-6 duration-200",
+          "data-[state=open]:animate-fade-in-up data-[state=closed]:animate-fade-out fixed top-[50%] left-[50%] z-50 grid w-[calc(100%-2rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 overflow-y-auto p-6 duration-200 max-h-[85vh]",
           resolveVariant(alertDialogVariants, effectiveVariant),
           className,
         )}

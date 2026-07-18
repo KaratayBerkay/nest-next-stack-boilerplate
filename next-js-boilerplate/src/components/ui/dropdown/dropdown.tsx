@@ -27,6 +27,7 @@ export function Dropdown({
   error,
   description,
   "aria-label": ariaLabel,
+  forceBottomSheet,
 }: DropdownProps) {
   const selected = options.find((option) => option.value === value);
 
@@ -45,7 +46,7 @@ export function Dropdown({
             {selected?.label ?? placeholder ?? ""}
           </span>
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent forceBottomSheet={forceBottomSheet}>
           {options.map((option) => (
             <SelectItem
               key={option.value}

@@ -279,6 +279,7 @@ function DatePickerCalendar({
       captionLayout={captionLayout ?? "dropdown"}
       startMonth={startMonth ?? new Date(1900, 0, 1)}
       endMonth={endMonth ?? defaultEndMonth()}
+      forceDropdownBottomSheet
       onDayClick={(d) => {
         onChange?.(d);
         close();
@@ -375,7 +376,7 @@ export function DatePicker({
             </svg>
           </button>
         </PopoverTrigger>
-        <PopoverContent title={labels.pickDate} className="w-80">
+        <PopoverContent title={labels.pickDate} forceBottomSheet>
           <DatePickerCalendar
             value={value}
             onChange={onChange}

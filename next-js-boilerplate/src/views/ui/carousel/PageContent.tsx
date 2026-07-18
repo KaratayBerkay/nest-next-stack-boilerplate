@@ -1,5 +1,11 @@
 "use client";
-import { useRef, useState, useCallback, useEffect } from "react";
+import {
+  useRef,
+  useState,
+  useCallback,
+  useEffect,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import {
   Carousel,
   CarouselContent,
@@ -97,18 +103,28 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
-function Dots({ total }: { total: number }) {
-  const { selectedIndex } = useCarousel();
+function Dots({ total, className }: { total: number; className?: string }) {
+  const { selectedIndex, scrollTo } = useCarousel();
   return (
-    <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
+    <div className={cn("flex justify-center", className)}>
       {Array.from({ length: total }).map((_, i) => (
-        <span
+        <button
           key={i}
-          className={cn(
-            "rounded-full transition-all duration-300",
-            i === selectedIndex ? "size-1.5 bg-fg w-4" : "size-1.5 bg-fg/40",
-          )}
-        />
+          type="button"
+          aria-label={`Go to slide ${i + 1}`}
+          aria-current={i === selectedIndex || undefined}
+          onClick={() => scrollTo(i)}
+          className="group flex h-8 w-8 items-center justify-center"
+        >
+          <span
+            className={cn(
+              "h-2 rounded-full transition-all duration-300",
+              i === selectedIndex
+                ? "w-5 bg-fg"
+                : "w-2 bg-fg/30 group-hover:bg-fg/50",
+            )}
+          />
+        </button>
       ))}
     </div>
   );
@@ -116,13 +132,16 @@ function Dots({ total }: { total: number }) {
 
 function ProductGallery() {
   return (
-    <Carousel className="relative w-full" opts={{ startIndex: 0, loop: true }}>
-      <div className="relative w-full overflow-hidden rounded-xl">
-        <CarouselContent>
+    <Carousel opts={{ loop: true }}>
+      <div className="relative">
+        <CarouselContent className="-ml-4">
           {products.map((product, i) => (
-            <CarouselItem key={i}>
-              <div className="group relative bg-surface rounded-xl border border-border overflow-hidden transition-shadow hover:shadow-lg max-w-md mx-auto">
-                <div className="relative aspect-[4/3] overflow-hidden">
+            <CarouselItem
+              key={i}
+              className="pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
+            >
+              <div className="group relative bg-surface rounded-xl border border-border overflow-hidden transition-shadow hover:shadow-lg h-full">
+                <div className="relative aspect-[4/3] lg:aspect-video overflow-hidden">
                   <div
                     className={cn(
                       "h-full w-full bg-gradient-to-br transition-transform duration-500 group-hover:scale-105",
@@ -168,8 +187,8 @@ function ProductGallery() {
         </CarouselContent>
         <CarouselPrevious />
         <CarouselNext />
-        <Dots total={products.length} />
       </div>
+      <Dots total={products.length} className="mt-3" />
     </Carousel>
   );
 }
@@ -214,14 +233,14 @@ const testimonials = [
 
 function TestimonialCarousel() {
   return (
-    <Carousel className="relative w-full" opts={{ startIndex: 0, loop: true }}>
-      <div className="relative w-full overflow-hidden rounded-xl">
-        <CarouselContent>
+    <Carousel opts={{ loop: true }}>
+      <div className="relative">
+        <CarouselContent className="-ml-4">
           {testimonials.map((t, i) => (
-            <CarouselItem key={i}>
-              <div className="bg-surface rounded-xl border border-border p-8 flex flex-col items-center text-center min-h-[280px] justify-center max-w-2xl mx-auto">
+            <CarouselItem key={i} className="pl-4">
+              <div className="bg-surface rounded-xl border border-border p-8 md:p-12 flex flex-col items-center text-center min-h-[280px] justify-center">
                 <Stars rating={t.rating} />
-                <p className="text-fg mt-4 mb-6 max-w-lg text-base italic leading-relaxed">
+                <p className="text-fg mt-4 mb-6 max-w-2xl text-base md:text-lg italic leading-relaxed">
                   &ldquo;{t.text}&rdquo;
                 </p>
                 <Avatar className="h-12 w-12 mb-3 ring-2 ring-border" fallback={t.avatar} />
@@ -235,8 +254,8 @@ function TestimonialCarousel() {
         </CarouselContent>
         <CarouselPrevious />
         <CarouselNext />
-        <Dots total={testimonials.length} />
       </div>
+      <Dots total={testimonials.length} className="mt-3" />
     </Carousel>
   );
 }
@@ -256,11 +275,11 @@ const logoPartners = [
 
 function LogoCarousel() {
   return (
-    <Carousel className="relative w-full" opts={{ loop: true }}>
-      <div className="relative w-full overflow-hidden rounded-xl">
-        <CarouselContent>
+    <Carousel opts={{ loop: true }}>
+      <div className="relative">
+        <CarouselContent className="-ml-3">
           {logoPartners.map((logo, i) => (
-            <CarouselItem key={i} className="basis-1/3 md:basis-1/5">
+            <CarouselItem key={i} className="pl-3 basis-1/3 md:basis-1/5">
               <div className="bg-surface hover:bg-surface-hover flex h-20 items-center justify-center rounded-lg border border-border transition-colors">
                 <span className="text-muted text-xl font-bold tracking-tight">
                   {logo.letter}
@@ -309,17 +328,33 @@ const cssSlides = [
   },
 ];
 
+const AUTOPLAY_INTERVAL = 4000;
+
 function PureCssCarousel() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [hovered, setHovered] = useState(false);
+  const dragRef = useRef<{ startX: number; startScroll: number } | null>(null);
+  const lastInteractionRef = useRef(0);
+
+  const getStride = useCallback((el: HTMLDivElement) => {
+    const first = el.children[0] as HTMLElement | undefined;
+    const second = el.children[1] as HTMLElement | undefined;
+    return first && second
+      ? second.offsetLeft - first.offsetLeft
+      : el.scrollWidth;
+  }, []);
+
+  const markInteraction = useCallback(() => {
+    lastInteractionRef.current = Date.now();
+  }, []);
 
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const scrollLeft = el.scrollLeft;
-    const itemWidth = el.scrollWidth / cssSlides.length;
-    setActiveIndex(Math.round(scrollLeft / itemWidth));
-  }, []);
+    const index = Math.round(el.scrollLeft / getStride(el));
+    setActiveIndex(Math.min(cssSlides.length - 1, Math.max(0, index)));
+  }, [getStride]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -328,18 +363,96 @@ function PureCssCarousel() {
     return () => el.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  const scrollTo = useCallback((index: number) => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const itemWidth = el.scrollWidth / cssSlides.length;
-    el.scrollTo({ left: itemWidth * index, behavior: "smooth" });
+  const scrollTo = useCallback(
+    (index: number) => {
+      const el = scrollRef.current;
+      if (!el) return;
+      markInteraction();
+      el.scrollTo({ left: getStride(el) * index, behavior: "smooth" });
+    },
+    [getStride, markInteraction],
+  );
+
+  useEffect(() => {
+    if (hovered) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const id = setInterval(() => {
+      const el = scrollRef.current;
+      if (!el) return;
+      if (Date.now() - lastInteractionRef.current < AUTOPLAY_INTERVAL) return;
+      const stride = getStride(el);
+      const next = (Math.round(el.scrollLeft / stride) + 1) % cssSlides.length;
+      el.scrollTo({ left: stride * next, behavior: "smooth" });
+    }, AUTOPLAY_INTERVAL);
+    return () => clearInterval(id);
+  }, [hovered, getStride]);
+
+  // Snap must stay off until the post-drag settle scroll finishes, or the
+  // browser jumps straight to the nearest snap point.
+  const restoreSnap = useCallback((el: HTMLDivElement) => {
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      el.removeEventListener("scrollend", finish);
+      el.style.scrollSnapType = "";
+      el.style.scrollBehavior = "";
+    };
+    el.addEventListener("scrollend", finish);
+    window.setTimeout(finish, 700);
   }, []);
 
+  const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== "mouse" || e.button !== 0) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    e.preventDefault();
+    markInteraction();
+    dragRef.current = { startX: e.clientX, startScroll: el.scrollLeft };
+    el.setPointerCapture(e.pointerId);
+    el.style.scrollSnapType = "none";
+    el.style.scrollBehavior = "auto";
+  };
+
+  const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    const el = scrollRef.current;
+    if (!drag || !el) return;
+    markInteraction();
+    el.scrollLeft = drag.startScroll - (e.clientX - drag.startX);
+  };
+
+  const endDrag = () => {
+    const drag = dragRef.current;
+    const el = scrollRef.current;
+    if (!drag || !el) return;
+    dragRef.current = null;
+    markInteraction();
+    const stride = getStride(el);
+    const index = Math.min(
+      cssSlides.length - 1,
+      Math.max(0, Math.round(el.scrollLeft / stride)),
+    );
+    el.scrollTo({ left: stride * index, behavior: "smooth" });
+    restoreSnap(el);
+  };
+
   return (
-    <div className="relative w-full">
+    <div
+      className="relative w-full"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
       <div
         ref={scrollRef}
-        className="flex w-full overflow-x-auto snap-x snap-mandatory gap-4 rounded-xl scroll-smooth"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onTouchStart={markInteraction}
+        onTouchMove={markInteraction}
+        onWheel={markInteraction}
+        className="flex w-full overflow-x-auto snap-x snap-mandatory gap-4 rounded-xl scroll-smooth select-none cursor-grab active:cursor-grabbing"
         style={{ scrollbarWidth: "none" }}
       >
         {cssSlides.map((slide, i) => (
@@ -349,31 +462,41 @@ function PureCssCarousel() {
           >
             <div
               className={cn(
-                "relative h-64 max-w-lg mx-auto rounded-xl bg-gradient-to-br flex flex-col items-center justify-center text-center p-8",
+                "relative h-64 sm:h-80 lg:h-[min(24rem,55vh)] w-full rounded-xl bg-gradient-to-br flex flex-col items-center justify-center text-center p-8",
                 slide.gradient,
               )}
             >
-              <h3 className="text-white text-xl font-bold mb-2">{slide.title}</h3>
-              <p className="text-white/70 text-sm">{slide.description}</p>
+              <h3 className="text-white text-xl sm:text-2xl font-bold mb-2">
+                {slide.title}
+              </h3>
+              <p className="text-white/70 text-sm sm:text-base">
+                {slide.description}
+              </p>
             </div>
           </div>
         ))}
       </div>
 
       {/* Dots */}
-      <div className="flex justify-center gap-1.5 mt-3">
+      <div className="flex justify-center mt-2">
         {cssSlides.map((_, i) => (
           <button
             key={i}
             type="button"
+            aria-label={`Go to slide ${i + 1}`}
+            aria-current={i === activeIndex || undefined}
             onClick={() => scrollTo(i)}
-            className={cn(
-              "rounded-full transition-all duration-300",
-              i === activeIndex
-                ? "w-4 h-1.5 bg-fg"
-                : "w-1.5 h-1.5 bg-fg/30 hover:bg-fg/50",
-            )}
-          />
+            className="group flex h-8 w-8 items-center justify-center"
+          >
+            <span
+              className={cn(
+                "h-2 rounded-full transition-all duration-300",
+                i === activeIndex
+                  ? "w-5 bg-fg"
+                  : "w-2 bg-fg/30 group-hover:bg-fg/50",
+              )}
+            />
+          </button>
         ))}
       </div>
     </div>
@@ -406,7 +529,7 @@ const examples: UIExample[] = [
     id: "pure-css",
     title: "Pure CSS",
     description:
-      "CSS scroll-snap carousel — no JS library, just native browser scrolling with Tailwind utilities.",
+      "CSS scroll-snap carousel — no JS library, native browser scrolling with autoplay and mouse drag.",
     render: () => <PureCssCarousel />,
   },
 ];

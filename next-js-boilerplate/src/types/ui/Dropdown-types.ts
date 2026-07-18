@@ -20,6 +20,8 @@ export interface DropdownProps {
   error?: string;
   description?: string;
   "aria-label"?: string;
+  /** Always render the option list as the mobile bottom sheet, regardless of viewport width. */
+  forceBottomSheet?: boolean;
 }
 
 export type DropdownVariant = SelectVariant;

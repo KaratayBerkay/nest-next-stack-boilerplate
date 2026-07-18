@@ -20,7 +20,7 @@ const sizeStyles: Record<DialogSize, string> = {
   sm: "sm:max-w-sm",
   md: "sm:max-w-lg",
   lg: "sm:max-w-2xl",
-  full: "sm:max-w-[90vw] sm:max-h-[90vh]",
+  full: "sm:max-w-[90vw]",
 };
 
 const dialogVariants = {
@@ -143,7 +143,7 @@ export function DialogContent({
           aria-label={closeLabel}
           onClick={() => onOpenChange(false)}
           className={cn(
-            "text-muted absolute top-3 right-3 z-10 inline-flex size-7 items-center justify-center rounded-md transition-colors",
+            "text-muted absolute top-4 right-4 z-10 inline-flex size-7 items-center justify-center rounded-md transition-colors",
             "hover:bg-surface-hover hover:text-fg",
             "focus-visible:ring-brand focus-visible:ring-2 focus-visible:outline-none",
           )}

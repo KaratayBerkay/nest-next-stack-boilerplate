@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type Dispatch, type SetStateAction, type ChangeEvent } from "react";
+import { IconBuilding, IconUser, IconUsers } from "@tabler/icons-react";
 import {
   Checkbox,
   CheckboxGroup,
@@ -40,18 +41,18 @@ function TermsConsentTab() {
   const someChildren = child1Checked || child2Checked;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-3">
         <h3 className="text-sm font-semibold text-fg">Default</h3>
-        <div className="flex flex-wrap gap-4">
-          <Checkbox aria-label="Unchecked example" data-testid="checkbox-default" />
-          <Checkbox defaultChecked aria-label="Checked example" data-testid="checkbox-checked" />
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <Checkbox label="Unchecked" data-testid="checkbox-default" />
+          <Checkbox defaultChecked label="Checked" data-testid="checkbox-checked" />
         </div>
       </section>
 
       <section className="flex flex-col gap-3">
         <h3 className="text-sm font-semibold text-fg">Sizes</h3>
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
           <Checkbox size="sm" label="Small" />
           <Checkbox size="md" label="Medium" defaultChecked />
           <Checkbox size="lg" label="Large" />
@@ -65,10 +66,9 @@ function TermsConsentTab() {
 
       <section className="flex flex-col gap-3">
         <h3 className="text-sm font-semibold text-fg">Disabled</h3>
-        <div className="flex flex-wrap gap-4">
-          <Checkbox disabled />
-          <Checkbox disabled defaultChecked />
-          <Checkbox disabled label="Disabled option" />
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <Checkbox disabled label="Unchecked" />
+          <Checkbox disabled defaultChecked label="Checked" />
         </div>
       </section>
 
@@ -102,7 +102,7 @@ function TermsConsentTab() {
               handleParentChange(e, setChild1Checked, setChild2Checked)
             }
           />
-          <div className="ml-6 flex flex-col gap-2">
+          <div className="border-border ml-[9px] flex flex-col gap-2 border-l pl-[15px]">
             <Checkbox
               checked={child1Checked}
               onChange={(e) => setChild1Checked(e.target.checked)}
@@ -173,19 +173,23 @@ function PlanCardsTab() {
   const [selected, setSelected] = useState<string>("standard");
 
   const plans = [
-    { value: "basic", title: "Basic", description: "For individuals", icon: "★" },
-    { value: "standard", title: "Standard", description: "For teams", icon: "★★" },
-    { value: "premium", title: "Premium", description: "For enterprises", icon: "★★★" },
+    { value: "basic", title: "Basic", description: "For individuals", Icon: IconUser },
+    { value: "standard", title: "Standard", description: "For teams", Icon: IconUsers },
+    { value: "premium", title: "Premium", description: "For enterprises", Icon: IconBuilding },
   ];
 
   return (
     <div className="flex flex-col gap-3">
       <p className="text-muted text-xs">Select a plan (radio-like single select via CheckboxCard).</p>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(15rem,1fr))] gap-3">
         {plans.map((plan) => (
           <CheckboxCard
             key={plan.value}
-            icon={<span className="text-lg">{plan.icon}</span>}
+            icon={
+              <span className="bg-surface-hover flex size-9 items-center justify-center rounded-md">
+                <plan.Icon className="size-5" aria-hidden="true" />
+              </span>
+            }
             title={plan.title}
             description={plan.description}
             checked={selected === plan.value}

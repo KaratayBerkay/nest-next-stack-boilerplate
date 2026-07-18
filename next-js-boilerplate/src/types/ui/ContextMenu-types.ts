@@ -10,8 +10,11 @@ export type ContextMenuTriggerProps = React.ComponentPropsWithoutRef<"div"> & {
   className?: string;
 };
 
+export type ContextMenuAnimation = "center" | "left" | "right" | "top" | "bottom";
+
 export type ContextMenuContentProps = React.ComponentPropsWithoutRef<"div"> & {
   className?: string;
+  animation?: ContextMenuAnimation;
 };
 
 export type ContextMenuItemProps = React.ComponentPropsWithoutRef<"div"> & {

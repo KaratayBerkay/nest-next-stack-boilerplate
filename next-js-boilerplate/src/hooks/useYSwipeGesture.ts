@@ -2,7 +2,8 @@
 
 import { useRef, useCallback, useLayoutEffect, useState } from "react";
 
-const IGNORE_SELECTOR = "button, a, input, textarea, [contenteditable]";
+const IGNORE_SELECTOR =
+  "button, a, input, textarea, label, select, [contenteditable]";
 
 export function useYSwipeGesture<T extends HTMLElement>() {
   const elRef = useRef<T | null>(null);
@@ -23,14 +24,31 @@ export function useYSwipeGesture<T extends HTMLElement>() {
         tag === "INPUT" ||
         tag === "TEXTAREA" ||
         tag === "BUTTON" ||
-        tag === "A"
+        tag === "A" ||
+        tag === "LABEL" ||
+        tag === "SELECT"
       )
         return true;
       return !!node.closest(IGNORE_SELECTOR);
     };
 
+    // Gestures starting inside a nested horizontal scroller (e.g. a CSS
+    // scroll-snap carousel) must stay native, or preventDefault() below
+    // kills the swipe before the browser can scroll it.
+    const inHorizontalScroller = (target: EventTarget | null): boolean => {
+      let node = target instanceof HTMLElement ? target : null;
+      while (node && node !== el) {
+        if (node.scrollWidth > node.clientWidth) {
+          const { overflowX } = getComputedStyle(node);
+          if (overflowX === "auto" || overflowX === "scroll") return true;
+        }
+        node = node.parentElement;
+      }
+      return false;
+    };
+
     const onDown = (e: MouseEvent | TouchEvent) => {
-      if (!el || isIgnored(e.target)) return;
+      if (!el || isIgnored(e.target) || inHorizontalScroller(e.target)) return;
       if ("touches" in e) e.preventDefault();
 
       dragging.current = true;

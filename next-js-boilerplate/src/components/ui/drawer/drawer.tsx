@@ -61,7 +61,7 @@ export const DrawerFooter = forwardRef<
   <div
     ref={ref}
     className={cn(
-      "flex flex-col sm:flex-row sm:justify-end sm:gap-2",
+      "flex flex-col gap-2 sm:flex-row sm:justify-end",
       className,
     )}
     {...props}

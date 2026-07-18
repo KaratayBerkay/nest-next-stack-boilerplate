@@ -14,10 +14,19 @@ import { menuItemStyles } from "@/components/ui/menu-item-styles";
 import { resolveVariant } from "@/lib/resolve-variant";
 import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
+import type { ContextMenuAnimation } from "@/types/ui/ContextMenu-types";
 
 const contextMenuVariants = {
   ...globalStyleVariants,
   default: "bg-bg border-border text-fg",
+};
+
+const contextMenuAnimations: Record<ContextMenuAnimation, string> = {
+  center: "animate-scale-in",
+  left: "animate-fade-in-left",
+  right: "animate-fade-in-right",
+  top: "animate-fade-in-down",
+  bottom: "animate-fade-in-up",
 };
 
 export const ContextMenu = Root;
@@ -47,8 +56,11 @@ ContextMenuLabel.displayName = "ContextMenuLabel";
 
 export const ContextMenuContent = forwardRef<
   React.ElementRef<typeof Content>,
-  React.ComponentPropsWithoutRef<typeof Content> & { variant?: GlobalVariant }
->(({ className, variant, ...props }, ref) => {
+  React.ComponentPropsWithoutRef<typeof Content> & {
+    variant?: GlobalVariant;
+    animation?: ContextMenuAnimation;
+  }
+>(({ className, variant, animation = "center", ...props }, ref) => {
   const effectiveVariant = useComponentVariant(variant);
   return (
     <Portal>
@@ -56,6 +68,8 @@ export const ContextMenuContent = forwardRef<
         ref={ref}
         className={cn(
           "z-50 min-w-32 overflow-hidden rounded-md border p-1 shadow-md",
+          contextMenuAnimations[animation] ?? contextMenuAnimations.center,
+          "motion-reduce:animate-none",
           resolveVariant(contextMenuVariants, effectiveVariant),
           className,
         )}

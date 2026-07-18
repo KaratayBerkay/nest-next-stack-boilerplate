@@ -24,6 +24,8 @@ export interface SelectValueProps {
 export interface SelectContentProps extends React.ComponentPropsWithoutRef<"div"> {
   children: React.ReactNode;
   sideOffset?: number;
+  /** Always render as the mobile bottom sheet, regardless of viewport width. */
+  forceBottomSheet?: boolean;
 }
 
 export interface SelectItemProps extends React.ComponentPropsWithoutRef<"button"> {

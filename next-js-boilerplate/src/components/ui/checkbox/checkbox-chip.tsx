@@ -9,7 +9,8 @@ import type { CheckboxChipProps } from "@/types/ui/Checkbox-types";
 
 const checkboxChipVariants = {
   ...globalStyleVariants,
-  default: "bg-surface text-muted hover:bg-surface-hover",
+  default:
+    "bg-surface text-muted border-border hover:bg-surface-hover hover:text-fg",
 };
 
 export function CheckboxChip({
@@ -28,9 +29,9 @@ export function CheckboxChip({
     <label
       htmlFor={autoId}
       className={cn(
-        "inline-flex cursor-pointer select-none items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+        "inline-flex cursor-pointer select-none items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors",
         checked
-          ? "bg-brand text-brand-fg"
+          ? "bg-brand text-brand-fg border-brand"
           : resolveVariant(checkboxChipVariants, effectiveVariant),
         className,
       )}
@@ -42,6 +43,20 @@ export function CheckboxChip({
         onChange={(e) => onChange?.(e.target.checked)}
         className="sr-only"
       />
+      {checked && (
+        <svg
+          className="-ml-0.5 size-3.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M20 6L9 17l-5-5" />
+        </svg>
+      )}
       {label}
       {count !== undefined && (
         <span
@@ -60,7 +75,7 @@ export function CheckboxChip({
             e.stopPropagation();
             onRemove();
           }}
-          className="ml-0.5 inline-flex items-center justify-center rounded-full p-0.5 hover:bg-brand/20"
+          className="ml-0.5 inline-flex items-center justify-center rounded-full p-1 hover:bg-brand-fg/20"
           aria-label={`Remove ${label}`}
         >
           <svg

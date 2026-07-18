@@ -7,4 +7,6 @@ export type CalendarProps = ComponentProps<typeof DayPicker> & {
   classNames?: Record<string, string>;
   events?: CalendarEvent[];
   onDayClick?: (date: Date) => void;
+  /** Always render the month/year dropdowns as the mobile bottom sheet, regardless of viewport width. */
+  forceDropdownBottomSheet?: boolean;
 };

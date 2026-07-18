@@ -1142,6 +1142,12 @@ body {
       transition-duration: 200ms;
     }
   }
+
+  /* Radix positions floating content by setting transform on this wrapper;
+     transitioning it makes menus fly in from the viewport corner. */
+  [data-radix-popper-content-wrapper] {
+    transition: none;
+  }
 }
 
 /* ── Device-type utilities (set by useDeviceType) ────────────────── */

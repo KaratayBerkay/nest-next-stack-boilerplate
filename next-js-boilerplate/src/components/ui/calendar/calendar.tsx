@@ -1,5 +1,10 @@
 "use client";
-import { type ComponentProps, type ChangeEvent, useCallback } from "react";
+import {
+  type ComponentProps,
+  type ComponentPropsWithoutRef,
+  type ChangeEvent,
+  useCallback,
+} from "react";
 import { DayPicker, type DropdownProps } from "react-day-picker";
 import { enUS, tr } from "react-day-picker/locale";
 import { cn } from "@/lib/cn";
@@ -23,18 +28,20 @@ const CHEVRON_PATHS = {
 // option list can't be styled).
 function CaptionDropdown({
   widthClass,
+  forceBottomSheet,
   options,
   value,
   onChange,
   disabled,
   "aria-label": ariaLabel,
-}: DropdownProps & { widthClass: string }) {
+}: DropdownProps & { widthClass: string; forceBottomSheet?: boolean }) {
   return (
     <Dropdown
       size="sm"
       className={widthClass}
       aria-label={ariaLabel}
       disabled={disabled}
+      forceBottomSheet={forceBottomSheet}
       value={value == null ? undefined : String(value)}
       options={(options ?? []).map((option) => ({
         value: String(option.value),
@@ -74,6 +81,24 @@ function Chevron({
   );
 }
 
+// Hovering the strip navigates the same as clicking it (mouseenter and click
+// share the same handler) — touch devices have no hover concept, so a tap
+// still works there via the native click. Declared at module scope, not
+// inline inside `components={}` below: that object is a fresh literal on
+// every render, so an inline arrow function is a *new* component type each
+// time — React would unmount and remount this button on every month change.
+// A freshly-mounted DOM node under an already-stationary cursor still gets
+// its own `mouseenter` from the browser (hover state is recomputed after DOM
+// changes, not just mouse movement), which re-fires onClick, which changes
+// the month again, remounting again — an infinite loop that only stopped
+// when the mouse physically left the strip.
+function MonthNavButton({
+  onClick,
+  ...buttonProps
+}: ComponentPropsWithoutRef<"button">) {
+  return <button {...buttonProps} onClick={onClick} onMouseEnter={onClick} />;
+}
+
 function getEventsForDate(events: NonNullable<CalendarProps["events"]>, date: Date) {
   return events.filter((e) => {
     if (!e.date) return false;
@@ -90,6 +115,7 @@ export function Calendar({
   classNames,
   events,
   onDayClick,
+  forceDropdownBottomSheet,
   ...props
 }: CalendarProps) {
   const lang = useLang();
@@ -100,34 +126,78 @@ export function Calendar({
     [onDayClick],
   );
 
+  // Stable across renders (only changes if forceDropdownBottomSheet itself
+  // does — a constant in every current caller). Same reasoning as
+  // MonthNavButton above: `components={}` is a fresh object every render, so
+  // an inline arrow function here is a *new* component type each time,
+  // which unmounts and remounts the whole Select subtree underneath it —
+  // silently resetting SelectContent's scroll-chevron state (and its
+  // ResizeObserver) on every unrelated Calendar re-render while the list is
+  // open, not just on month/year navigation.
+  const renderCaptionDropdown = useCallback(
+    (dropdownProps: DropdownProps) => (
+      <CaptionDropdown
+        {...dropdownProps}
+        widthClass="w-full"
+        forceBottomSheet={forceDropdownBottomSheet}
+      />
+    ),
+    [forceDropdownBottomSheet],
+  );
+
   return (
     <DayPicker
       locale={LOCALES[lang]}
       navLayout="around"
+      showOutsideDays
       classNames={{
         root: "p-3",
         months: "flex flex-col sm:flex-row gap-2",
-        // Header row: prev button / caption / next button. With two months the
-        // outer months only carry one button each, so the side columns are fixed.
-        month: "grid grid-cols-[2rem_1fr_2rem] items-center gap-y-2",
+        // Row 1: caption (month + year dropdowns), full width. Row 2: a
+        // prev/next hover strip flanking each side of the day grid — not
+        // small buttons next to the dropdowns. Default `align-items: stretch`
+        // (no `items-center` override) makes the strips fill row 2's full
+        // height, matching the day grid's height exactly.
+        // `minmax(0,1fr)`, not plain `1fr`: a bare `1fr` track still has an
+        // implicit min-size of its content's natural width, and the 7-column
+        // day table's natural width is wider than the space actually left
+        // over once the two side columns are reserved — so the track (and
+        // the button_next strip after it) got pushed past the card's edge.
+        // `minmax(0, …)` lets the track — and month_grid's `table-fixed`
+        // below — actually shrink to fit.
+        month: "grid grid-cols-[1.5rem_minmax(0,1fr)_1.5rem] gap-y-2",
         // Month and year stack vertically (rather than side by side) so each
         // dropdown gets the full caption width — a narrow half-width year
         // select truncates 4-digit years.
-        month_caption: "col-start-2 flex flex-col items-stretch justify-center gap-1",
+        month_caption: "col-span-full row-start-1 flex flex-col items-stretch justify-center gap-1",
         caption_label: "text-sm font-medium",
         nav: "flex items-center gap-1",
+        // Full-height hover strips beside the day grid (row 2), not buttons
+        // beside the caption. `onMouseEnter` is wired to the same handler as
+        // `onClick` below, so hovering changes the month without a click;
+        // `aria-disabled:pointer-events-none` stops that at the date-range
+        // boundary instead of firing into a no-op.
         button_previous:
-          "col-start-1 hover:bg-surface-hover text-muted hover:text-fg inline-flex h-8 w-8 items-center justify-center rounded-md bg-transparent p-0 transition-colors",
+          "col-start-1 row-start-2 hover:bg-surface-hover text-muted hover:text-fg flex items-center justify-center rounded-md bg-transparent p-0 transition-colors aria-disabled:pointer-events-none aria-disabled:opacity-30",
         button_next:
-          "col-start-3 hover:bg-surface-hover text-muted hover:text-fg inline-flex h-8 w-8 items-center justify-center rounded-md bg-transparent p-0 transition-colors",
+          "col-start-3 row-start-2 hover:bg-surface-hover text-muted hover:text-fg flex items-center justify-center rounded-md bg-transparent p-0 transition-colors aria-disabled:pointer-events-none aria-disabled:opacity-30",
         dropdowns: "flex flex-col items-stretch gap-1 w-full",
-        month_grid: "col-span-full w-full border-collapse",
+        // `min-w-0 table-fixed`: without a fixed layout, an auto-layout
+        // table sizes its columns from content and ignores a `width` that's
+        // narrower than that — which is exactly what was overflowing the
+        // card. Fixed layout makes the 7 columns actually split whatever
+        // width the grid track gives them.
+        month_grid: "col-start-2 row-start-2 w-full min-w-0 table-fixed border-collapse",
         weekdays: "flex",
         weekday:
           "text-muted w-full text-center text-xxs uppercase tracking-wide font-normal",
         weeks: "",
         week: "flex w-full mt-2",
-        day: "relative p-0 text-center text-sm focus-within:relative focus-within:z-20",
+        // `w-full`: `.week` is a flex row, and an empty (`hidden`) cell has no
+        // content to size itself by. Without a width, it collapses to 0 and
+        // every real day after it shifts left under the wrong weekday column
+        // — the same reason `weekday` below carries `w-full` too.
+        day: "relative w-full p-0 text-center text-sm focus-within:relative focus-within:z-20",
         day_button:
           "hover:bg-surface-hover inline-flex size-9 items-center justify-center rounded-md p-0 text-sm font-normal transition-colors aria-selected:opacity-100",
         selected:
@@ -144,14 +214,28 @@ export function Calendar({
       }}
       components={{
         Chevron,
-        MonthsDropdown: (dropdownProps) => (
-          <CaptionDropdown {...dropdownProps} widthClass="w-full" />
-        ),
-        YearsDropdown: (dropdownProps) => (
-          <CaptionDropdown {...dropdownProps} widthClass="w-full" />
-        ),
+        PreviousMonthButton: MonthNavButton,
+        NextMonthButton: MonthNavButton,
+        MonthsDropdown: renderCaptionDropdown,
+        YearsDropdown: renderCaptionDropdown,
         DayButton: (dayButtonProps) => {
           const dayDate = dayButtonProps.day.date;
+
+          // Outside days (previous/next month's overflow, shown for grid
+          // continuity via showOutsideDays) are a plain label, not a button —
+          // they fill the leading/trailing cells but stay unselectable.
+          // `classNames.outside` on the parent <td> already dims them.
+          if (dayButtonProps.modifiers.outside) {
+            return (
+              <span
+                className="inline-flex w-full max-w-9 aspect-square items-center justify-center text-sm font-normal"
+                aria-hidden="true"
+              >
+                {dayDate.getDate()}
+              </span>
+            );
+          }
+
           const dayEvents = events
             ? getEventsForDate(events, dayDate)
             : [];
@@ -160,7 +244,13 @@ export function Calendar({
           return (
             <button
               className={cn(
-                "hover:bg-surface-hover inline-flex size-9 items-center justify-center rounded-md p-0 text-sm font-normal transition-colors",
+                // `w-full max-w-9`, not a fixed `size-9`: the day grid's
+                // column width now depends on how much room the side nav
+                // strips leave (see `month_grid`'s `table-fixed`), which can
+                // be less than 36px. A fixed size would refuse to shrink and
+                // overflow its cell; capping instead of fixing still caps it
+                // at the original 36px when there's room to spare.
+                "hover:bg-surface-hover inline-flex w-full max-w-9 aspect-square items-center justify-center rounded-md p-0 text-sm font-normal transition-colors",
                 dayButtonProps.modifiers.selected && "bg-brand text-brand-fg",
                 dayButtonProps.modifiers.today && !dayButtonProps.modifiers.selected && "bg-surface text-fg font-semibold",
                 "relative",

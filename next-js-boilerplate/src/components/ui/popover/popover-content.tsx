@@ -26,6 +26,7 @@ export function PopoverContent({
   initialFocus,
   title,
   variant,
+  forceBottomSheet,
   ...props
 }: PopoverContentProps & { variant?: GlobalVariant }) {
   const effectiveVariant = useComponentVariant(variant);
@@ -35,7 +36,11 @@ export function PopoverContent({
     top: number;
     left: number;
   } | null>(null);
-  const isDesktop = useBreakpoint("sm");
+  // Hook always runs (rules of hooks); forceBottomSheet just overrides the
+  // result so callers like DatePicker can opt into the bottom sheet at every
+  // width without changing the breakpoint for every other popover.
+  const isAboveBreakpoint = useBreakpoint("sm");
+  const isDesktop = forceBottomSheet ? false : isAboveBreakpoint;
 
   useEffect(() => {
     if (!open || !triggerRef.current || !isDesktop) return;

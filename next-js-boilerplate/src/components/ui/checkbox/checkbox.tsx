@@ -8,9 +8,25 @@ import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { fontClasses } from "@/lib/font-classes";
 import type { CheckboxProps, CheckboxVariant, CheckboxSize } from "@/types/ui/Checkbox-types";
 
+// Global styles carry no checked: state, so each variant appends one —
+// otherwise clicking gives no visual feedback (white check on light bg).
 const checkVariants: Record<CheckboxVariant, string> = {
-  ...globalStyleVariants,
-  default: "border-border checked:bg-brand checked:border-brand",
+  shiny: cn(
+    globalStyleVariants.shiny,
+    "checked:from-brand checked:to-brand checked:border-brand",
+  ),
+  glass: cn(
+    globalStyleVariants.glass,
+    "checked:bg-brand/80 checked:border-brand",
+  ),
+  neon: cn(
+    globalStyleVariants.neon,
+    "checked:bg-info checked:shadow-[0_0_16px_var(--info)]",
+  ),
+  gradient:
+    "border-border bg-bg checked:border-transparent checked:bg-gradient-to-r checked:from-brand checked:to-info",
+  default:
+    "border-border hover:border-brand/60 checked:bg-brand checked:border-brand",
 };
 
 const sizeMap: Record<CheckboxSize, string> = {
@@ -68,7 +84,7 @@ export function Checkbox({
           id={generatedId}
           checked={checked}
           className={cn(
-            "peer appearance-none cursor-pointer border bg-bg focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+            "peer appearance-none cursor-pointer border bg-bg transition-colors focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1 focus-visible:outline-none disabled:cursor-not-allowed",
             resolveVariant(checkVariants, effectiveVariant),
             sizeMap[size],
             className,
@@ -76,7 +92,7 @@ export function Checkbox({
           {...props}
         />
         <span
-          className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-120 ease-out motion-reduce:transition-none peer-checked:opacity-100"
+          className="pointer-events-none absolute inset-0 flex scale-50 items-center justify-center opacity-0 transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none peer-checked:scale-100 peer-checked:opacity-100"
           aria-hidden="true"
         >
           <CheckIcon className={iconSizeMap[size]} />
