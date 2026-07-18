@@ -117,7 +117,7 @@ export function NotificationDropdown({
             {/* Decorative dismiss backdrop, not a control — the panel's own controls remain
                 keyboard-reachable; this scrim only needs a click target. */}
             <div
-              className="fixed inset-0 z-40 bg-black/50"
+              className="fixed inset-0 z-40 bg-overlay/50"
               onClick={() => setOpen(false)}
               aria-hidden="true"
             />

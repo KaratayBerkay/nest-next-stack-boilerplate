@@ -162,7 +162,7 @@ export function V1Shell({ children }: V1ShellProps) {
             // Decorative dismiss backdrop, not a control — the sidebar's own controls remain
             // keyboard-reachable; this scrim only needs a click target.
             <div
-              className="animate-fade-in fixed inset-0 z-30 bg-black/30 md:hidden"
+              className="animate-fade-in fixed inset-0 z-30 bg-overlay/30 md:hidden"
               onClick={close}
               aria-hidden="true"
             />

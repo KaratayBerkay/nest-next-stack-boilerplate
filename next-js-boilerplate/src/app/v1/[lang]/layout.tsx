@@ -21,7 +21,7 @@ export default async function V1Layout({ children, params }: V1LayoutProps) {
   return (
     <AuthProvider initialUser={user}>
       <MessagesProvider messages={messages}>
-        <main className="flex w-full flex-1 flex-col">
+        <main id="main-content" className="flex w-full flex-1 flex-col">
           <Suspense fallback={<V1ShellFallback />}>
             <V1Shell>
               <Suspense fallback={<V1ContentFallback />}>

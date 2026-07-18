@@ -1,12 +1,19 @@
-"use client";
-
 import React from "react";
 import { cn } from "@/lib/cn";
-import type { AvatarGroupProps } from "@/types/ui/Avatar-types";
+import type { AvatarGroupProps, AvatarGroupSize } from "@/types/ui/Avatar-types";
+
+const overflowSizes: Record<AvatarGroupSize, string> = {
+  xs: "size-6",
+  sm: "size-8",
+  md: "size-10",
+  lg: "size-12",
+  xl: "size-16",
+};
 
 export function AvatarGroup({
   children,
   max = 4,
+  size = "md",
   className,
 }: AvatarGroupProps) {
   const items = React.Children.toArray(children);
@@ -21,7 +28,12 @@ export function AvatarGroup({
         </div>
       ))}
       {overflow > 0 && (
-        <div className="bg-surface text-muted ring-bg inline-flex size-10 items-center justify-center rounded-full text-xs font-medium ring-2">
+        <div
+          className={cn(
+            "bg-surface text-muted ring-bg inline-flex items-center justify-center rounded-full text-xs font-medium ring-2",
+            overflowSizes[size],
+          )}
+        >
           +{overflow}
         </div>
       )}

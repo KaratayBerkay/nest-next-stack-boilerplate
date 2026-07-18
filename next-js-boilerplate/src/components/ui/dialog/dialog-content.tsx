@@ -87,44 +87,6 @@ export function DialogContent({
 
   const dialog = (
     <>
-      <style>{`
-        @keyframes dialog-fade-in {
-          from { opacity: 0; transform: scale(0.95) translateY(-8px); }
-          to   { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        @keyframes dialog-fade-out {
-          from { opacity: 1; transform: scale(1) translateY(0); }
-          to   { opacity: 0; transform: scale(0.95) translateY(-8px); }
-        }
-        @keyframes backdrop-fade-in {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-        @keyframes backdrop-fade-out {
-          from { opacity: 1; }
-          to   { opacity: 0; }
-        }
-        dialog.dialog-open {
-          animation: dialog-fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        dialog.dialog-closing {
-          animation: dialog-fade-out 0.15s cubic-bezier(0.4, 0, 1, 1) forwards;
-        }
-        dialog.dialog-open::backdrop {
-          animation: backdrop-fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        dialog.dialog-closing::backdrop {
-          animation: backdrop-fade-out 0.15s cubic-bezier(0.4, 0, 1, 1) forwards;
-        }
-        @media (prefers-reduced-motion: reduce) {
-          dialog.dialog-open,
-          dialog.dialog-closing,
-          dialog.dialog-open::backdrop,
-          dialog.dialog-closing::backdrop {
-            animation: none;
-          }
-        }
-      `}</style>
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions */}
       <dialog
         ref={dialogRef}

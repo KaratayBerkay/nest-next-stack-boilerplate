@@ -122,7 +122,7 @@ function NotificationPageContent() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <button
-            onClick={() => router.back()}
+            onClick={() => navigateToFeed(router, lang)}
             className="text-muted hover:bg-surface-hover rounded-lg p-1.5"
             aria-label="Back"
           >
@@ -222,7 +222,7 @@ function NotificationPageContent() {
                 </p>
               </div>
               {!n.readAt && (
-                <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-blue-500" />
+                <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-info" />
               )}
             </button>
           ))

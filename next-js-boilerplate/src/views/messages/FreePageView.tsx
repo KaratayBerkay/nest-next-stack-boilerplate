@@ -232,11 +232,11 @@ function MessagesPageContent({
               }
             />
             {connectionState === "online" ? (
-              <span className="border-bg absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 bg-green-500" />
+              <span className="border-bg absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 bg-success" />
             ) : connectionState === "connecting" ? (
-              <span className="border-bg absolute -right-0.5 -bottom-0.5 h-3 w-3 animate-pulse rounded-full border-2 bg-green-300" />
+              <span className="border-bg absolute -right-0.5 -bottom-0.5 h-3 w-3 animate-pulse rounded-full border-2 bg-success" />
             ) : (
-              <span className="border-bg absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 bg-red-400" />
+              <span className="border-bg absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 bg-error" />
             )}
           </div>
           <h2 className="text-brand text-lg font-bold">{t.title}</h2>
@@ -249,7 +249,7 @@ function MessagesPageContent({
           // Decorative dismiss backdrop, not a control — the sidebar itself and its own
           // controls remain keyboard-reachable; this scrim only needs a click target.
           <div
-            className="fixed inset-0 z-40 bg-black/30 md:hidden"
+            className="fixed inset-0 z-40 bg-overlay/30 md:hidden"
             onClick={() => setSidebarOpen(false)}
             aria-hidden="true"
           />

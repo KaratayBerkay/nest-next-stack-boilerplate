@@ -71,7 +71,7 @@ export function FreeFindFriendsContent({
           <TabsTrigger value="pending" className="flex-1">
             {t.pendingRequests}
             {friendRequests.length > 0 && (
-              <span className="ml-1.5 rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+              <span className="ml-1.5 rounded-full bg-warning px-1.5 py-0.5 text-[10px] font-semibold text-white">
                 {friendRequests.length}
               </span>
             )}
@@ -175,7 +175,7 @@ export function FreeFindFriendsContent({
                   <>
                     <button
                       onClick={() => acceptFriendRequest(r.user.id)}
-                      className="rounded bg-green-500 px-3 py-1 text-xs text-white hover:bg-green-600"
+                      className="rounded bg-success px-3 py-1 text-xs text-white hover:brightness-90"
                     >
                       {t.accept}
                     </button>

@@ -17,7 +17,7 @@ export const V1Sidebar = forwardRef<HTMLElement, V1SidebarProps>(
         ref={ref}
         className={cn(
           "bg-bg border-border flex-col overflow-hidden border-r shadow-lg transition-all duration-300 ease-out motion-reduce:transition-none",
-          "fixed top-14 left-0 z-45 h-[calc(100dvh-3.5rem)] w-full",
+          "fixed top-14 left-0 z-50 h-[calc(100dvh-3.5rem)] w-full",
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
           "md:static md:z-auto md:flex md:h-auto md:translate-x-0",
           sidebarOpen

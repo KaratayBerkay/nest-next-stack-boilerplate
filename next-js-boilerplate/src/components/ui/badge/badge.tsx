@@ -43,7 +43,7 @@ export function Badge({
     <span
       className={cn(
         "inline-flex items-center justify-center",
-        pill ? "rounded-full" : "rounded-full",
+        pill ? "rounded-full" : "rounded-md",
         dot && "p-0 size-3.5 rounded-full border-2 border-border",
         !dot && resolveVariant(variants, effectiveVariant),
         !dot && sizeMap[size],

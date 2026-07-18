@@ -369,11 +369,11 @@ function ChatRoomContent({
               }
             />
             {connectionState === "online" ? (
-              <span className="border-bg absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 bg-green-500" />
+              <span className="border-bg absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 bg-success" />
             ) : connectionState === "connecting" ? (
-              <span className="border-bg absolute -right-0.5 -bottom-0.5 h-3 w-3 animate-pulse rounded-full border-2 bg-green-300" />
+              <span className="border-bg absolute -right-0.5 -bottom-0.5 h-3 w-3 animate-pulse rounded-full border-2 bg-success" />
             ) : (
-              <span className="border-bg absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 bg-red-400" />
+              <span className="border-bg absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 bg-error" />
             )}
           </div>
           <h2 className="text-brand text-lg font-bold">{t.title}</h2>
@@ -386,7 +386,7 @@ function ChatRoomContent({
           // Decorative dismiss backdrop, not a control — the sidebar's own controls remain
           // keyboard-reachable; this scrim only needs a click target.
           <div
-            className="fixed inset-0 z-40 bg-black/30 md:hidden"
+            className="fixed inset-0 z-40 bg-overlay/30 md:hidden"
             onClick={() => setSidebarOpen(false)}
             aria-hidden="true"
           />
@@ -500,11 +500,11 @@ function ChatRoomContent({
 
             <div
               ref={messagesRef}
-              className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3 select-none"
+              className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3 select-text"
             >
               {msgsError && (
                 <div className="flex flex-1 items-center justify-center">
-                  <p className="text-xs text-red-500">
+                  <p className="text-xs text-error">
                     Failed to load messages
                   </p>
                 </div>
@@ -537,7 +537,7 @@ function ChatRoomContent({
                           className="bg-brand mt-0.5 h-6 w-6 text-[9px] text-white"
                         />
                         {onlineUserIds.has(msg.senderId) && (
-                          <span className="border-bg absolute right-0 bottom-0 h-2 w-2 rounded-full border-2 bg-green-500" />
+                      <span className="border-bg absolute right-0 bottom-0 h-2 w-2 rounded-full border-2 bg-success" />
                         )}
                       </div>
                     )}

@@ -29,7 +29,7 @@ const LEVEL_COLORS: Record<string, string> = {
 
 export default function PageContent() {
   const { user } = useAuth();
-  const t = useMessages("error");
+  const t = useMessages("admin");
   const [entries, setEntries] = useState<AuditLogEntry[]>([]);
   const [total, setTotal] = useState(0);
   const [loadingLogs, setLoadingLogs] = useState(true);
@@ -75,7 +75,7 @@ export default function PageContent() {
   if (!isAdmin) {
     return (
       <div className="flex flex-col gap-4">
-        <h2 className="text-brand text-sm font-semibold">Audit Log</h2>
+        <h2 className="text-brand text-sm font-semibold">{t.auditLogTitle}</h2>
         <AccessDeniedPage message={t.accessDenied} />
       </div>
     );
@@ -86,7 +86,7 @@ export default function PageContent() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <IconEye size={18} className="text-brand" />
-          <h2 className="text-brand text-sm font-semibold">Audit Log</h2>
+          <h2 className="text-brand text-sm font-semibold">{t.auditLogTitle}</h2>
         </div>
         <PageInfoButton content={adminAuditLogsPageInfo} />
       </div>
@@ -100,7 +100,7 @@ export default function PageContent() {
           }}
           className="border-border bg-surface text-fg rounded-lg border px-2 py-1.5 text-xs"
         >
-          <option value="">All actions</option>
+          <option value="">{t.allActions}</option>
           <option value="CREATE">Create</option>
           <option value="UPDATE">Update</option>
           <option value="DELETE">Delete</option>
@@ -129,7 +129,7 @@ export default function PageContent() {
           }}
           className="border-border bg-surface text-fg rounded-lg border px-2 py-1.5 text-xs"
         >
-          <option value="">All levels</option>
+          <option value="">{t.allLevels}</option>
           <option value="TRACE">TRACE</option>
           <option value="DEBUG">DEBUG</option>
           <option value="INFO">INFO</option>
@@ -151,19 +151,19 @@ export default function PageContent() {
               setEntityFilter(e.target.value);
               setPage(0);
             }}
-            placeholder="Entity type..."
+            placeholder={t.entityType}
             className="w-40 pl-7 text-xs"
           />
         </div>
       </div>
 
       {loadingLogs && (
-        <p className="text-muted text-center text-xs">Loading...</p>
+        <p className="text-muted text-center text-xs">{t.loading}</p>
       )}
 
       {!loadingLogs && entries.length === 0 && (
         <p className="text-muted text-center text-xs">
-          No audit log entries found.
+          {t.noEntriesFound}
         </p>
       )}
 
@@ -173,13 +173,13 @@ export default function PageContent() {
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="text-muted border-border border-b">
-                  <th className="py-2 pr-2 font-medium">Time</th>
-                  <th className="py-2 pr-2 font-medium">Action</th>
-                  <th className="py-2 pr-2 font-medium">Level</th>
-                  <th className="py-2 pr-2 font-medium">Actor</th>
-                  <th className="py-2 pr-2 font-medium">Entity</th>
-                  <th className="py-2 pr-2 font-medium">Summary</th>
-                  <th className="py-2 pr-2 font-medium">IP</th>
+                  <th className="py-2 pr-2 font-medium">{t.time}</th>
+                  <th className="py-2 pr-2 font-medium">{t.action}</th>
+                  <th className="py-2 pr-2 font-medium">{t.level}</th>
+                  <th className="py-2 pr-2 font-medium">{t.actor}</th>
+                  <th className="py-2 pr-2 font-medium">{t.entity}</th>
+                  <th className="py-2 pr-2 font-medium">{t.summary}</th>
+                  <th className="py-2 pr-2 font-medium">{t.ip}</th>
                   <th className="py-2 pr-2 font-medium"></th>
                 </tr>
               </thead>
@@ -206,7 +206,7 @@ export default function PageContent() {
                     </td>
                     <td className="py-2 pr-2 whitespace-nowrap">
                       {entry.actor?.name ?? (
-                        <span className="text-muted">system</span>
+                        <span className="text-muted">{t.system}</span>
                       )}
                     </td>
                     <td className="py-2 pr-2 whitespace-nowrap">
@@ -234,7 +234,7 @@ export default function PageContent() {
                             )
                           }
                         >
-                          {expandedId === entry.id ? "Hide" : "Diff"}
+                          {expandedId === entry.id ? t.hide : t.diff}
                         </Button>
                       )}
                     </td>
@@ -246,7 +246,7 @@ export default function PageContent() {
 
           {/* Pagination */}
           <div className="flex items-center justify-between">
-            <p className="text-muted text-[10px]">{total} total entries</p>
+            <p className="text-muted text-[10px]">{t.totalEntries.replace("{total}", String(total))}</p>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -254,10 +254,10 @@ export default function PageContent() {
                 disabled={page === 0}
                 onClick={() => setPage((p) => Math.max(0, p - 1))}
               >
-                Prev
+                {t.prev}
               </Button>
               <span className="text-muted text-[10px]">
-                Page {page + 1} of {totalPages || 1}
+                {t.pageOf.replace("{page}", String(page + 1)).replace("{totalPages}", String(totalPages || 1))}
               </span>
               <Button
                 variant="outline"
@@ -265,7 +265,7 @@ export default function PageContent() {
                 disabled={page >= totalPages - 1}
                 onClick={() => setPage((p) => p + 1)}
               >
-                Next
+                {t.next}
               </Button>
             </div>
           </div>
@@ -280,13 +280,13 @@ export default function PageContent() {
           return (
             <div className="border-border mt-2 rounded-lg border p-4">
               <h4 className="text-fg mb-2 text-xs font-semibold">
-                Change Details
+                {t.changeDetails}
               </h4>
               <div className="flex flex-col gap-4 sm:flex-row">
                 {entry.before !== null && entry.before !== undefined && (
                   <div className="flex-1">
                     <p className="text-muted mb-1 text-[10px] font-medium">
-                      Before
+                      {t.before}
                     </p>
                     <pre className="bg-surface border-border max-h-48 overflow-auto rounded border p-2 text-[10px]">
                       {JSON.stringify(entry.before, null, 2)}
@@ -296,7 +296,7 @@ export default function PageContent() {
                 {entry.after !== null && entry.after !== undefined && (
                   <div className="flex-1">
                     <p className="text-muted mb-1 text-[10px] font-medium">
-                      After
+                      {t.after}
                     </p>
                     <pre className="bg-surface border-border max-h-48 overflow-auto rounded border p-2 text-[10px]">
                       {JSON.stringify(entry.after, null, 2)}

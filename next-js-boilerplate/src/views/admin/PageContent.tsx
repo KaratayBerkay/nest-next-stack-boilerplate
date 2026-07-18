@@ -17,7 +17,7 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 
 export default function PageContent() {
   const { user } = useAuth();
-  const t = useMessages("error");
+  const t = useMessages("admin");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<UserResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -32,7 +32,7 @@ export default function PageContent() {
   if (!isAdmin) {
     return (
       <div className="flex flex-col gap-4">
-        <h2 className="text-brand text-sm font-semibold">Admin</h2>
+        <h2 className="text-brand text-sm font-semibold">{t.title}</h2>
         <AccessDeniedPage message={t.accessDenied} />
       </div>
     );
@@ -41,7 +41,7 @@ export default function PageContent() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-brand text-sm font-semibold">Admin</h2>
+        <h2 className="text-brand text-sm font-semibold">{t.title}</h2>
         <PageInfoButton content={adminPageInfo} />
       </div>
 
@@ -57,7 +57,7 @@ export default function PageContent() {
           onChange={(e) =>
             onQueryChange(e, setQuery, setResults, setSearching, searchTimer)
           }
-          placeholder="Search users by name or email..."
+          placeholder={t.searchPlaceholder}
           className="border-border bg-surface text-fg w-full rounded-lg border py-1.5 pr-3 pl-7 text-xs"
         />
       </div>
@@ -75,11 +75,11 @@ export default function PageContent() {
       )}
 
       {searching && (
-        <p className="text-muted text-center text-xs">Searching...</p>
+        <p className="text-muted text-center text-xs">{t.searching}</p>
       )}
 
       {!searching && results.length === 0 && query.trim().length >= 2 && (
-        <p className="text-muted text-center text-xs">No users found</p>
+        <p className="text-muted text-center text-xs">{t.noUsersFound}</p>
       )}
 
       <div className="flex flex-col gap-2">

@@ -1,5 +1,3 @@
-"use client";
-
 import { cn } from "@/lib/cn";
 import type { BadgeButtonProps } from "@/types/ui/BadgeButton-types";
 

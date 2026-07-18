@@ -13,6 +13,7 @@ import {
 import type { FeedListProps } from "@/types/feed/FeedList-types";
 import type { Post } from "@/types/feed/PostCard-types";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import {
   useSuspenseQuery,
   useQuery,
@@ -88,6 +89,8 @@ function refreshFeedList(
 
 export function FeedList({ search, initialFeedData }: FeedListProps) {
   const t = useMessages("feed");
+  const params = useParams<{ lang: string }>();
+  const lang = params?.lang ?? "en";
   const queryClient = useQueryClient();
   const realtime = useRealtime();
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
@@ -221,7 +224,7 @@ export function FeedList({ search, initialFeedData }: FeedListProps) {
         <div className="flex flex-col items-center justify-center gap-3 py-12">
           <p className="text-muted text-sm">{t.noPostsYet}</p>
           <Link
-            href="/v1/en/share"
+            href={`/v1/${lang}/share`}
             className="bg-brand rounded-lg px-4 py-2 text-sm font-medium text-white"
           >
             {t.beFirstToShare}

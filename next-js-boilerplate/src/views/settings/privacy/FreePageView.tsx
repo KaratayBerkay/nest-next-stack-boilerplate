@@ -10,8 +10,23 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsPrivacyPageInfo } from "@/constants/page-info";
+import { apiFetchJson } from "@/lib/api-client";
 
-async function handleSave(toast: ReturnType<typeof useToast>["toast"]) {
+async function handleSave(
+  toast: ReturnType<typeof useToast>["toast"],
+  hideProfilePicture: boolean,
+  useNickname: boolean,
+  nickname: string,
+  enable2FA: boolean,
+) {
+  const payload = { hideProfilePicture, useNickname, nickname, enable2FA };
+  // TODO: Add real API endpoint when backend privacy settings endpoint exists
+  // await apiFetchJson("/api/profile/privacy", {
+  //   method: "POST",
+  //   headers: JSON_CONTENT_TYPE_HEADER,
+  //   body: JSON.stringify(payload),
+  // });
+  console.log("Saving privacy preferences:", payload);
   toast({ title: "Preferences saved", variant: "success" });
 }
 
@@ -84,7 +99,7 @@ export function FreePageView() {
       </div>
 
       <Button
-        onClick={() => handleSave(toast)}
+        onClick={() => handleSave(toast, hideProfilePicture, useNickname, nickname, enable2FA)}
         variant="primary"
         className="self-start"
       >

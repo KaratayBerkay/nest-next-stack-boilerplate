@@ -156,18 +156,18 @@ export function ChatView({
             className="bg-brand h-8 w-8 shrink-0 text-xs text-white"
           />
           {onlineUsers.has(selectedUser.id) && (
-            <span className="border-bg absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2 bg-green-500" />
+            <span className="border-bg absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2 bg-success" />
           )}
         </div>
         <span className="text-sm font-semibold">{selectedUser.name}</span>
       </div>
       <div
         ref={messagesRef}
-        className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4 select-none"
+        className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4 select-text"
       >
         {msgsError && (
           <div className="flex flex-1 items-center justify-center">
-            <p className="text-sm text-red-500">{t.failedToLoad}</p>
+            <p className="text-sm text-error">{t.failedToLoad}</p>
           </div>
         )}
         {!msgsError && conversationMessages.length === 0 && (
@@ -238,7 +238,7 @@ export function ChatView({
             className="bg-surface text-fg focus:border-fg rounded-xl px-4 py-2.5"
           />
           {messageError && (
-            <p className="mt-1.5 text-xs text-red-500">{messageError}</p>
+            <p className="mt-1.5 text-xs text-error">{messageError}</p>
           )}
         </div>
         <Button

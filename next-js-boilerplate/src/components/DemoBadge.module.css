@@ -9,5 +9,5 @@
   font-weight: 600;
   line-height: 1.25rem;
   background: var(--color-brand);
-  color: var(--color-brand-foreground);
+  color: var(--color-brand-fg);
 }

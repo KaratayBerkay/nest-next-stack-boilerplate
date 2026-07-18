@@ -36,8 +36,7 @@ const geistMono = Geist_Mono({
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  maximumScale: 5,
   themeColor: "#0f0f0f",
 };
 
@@ -95,6 +94,12 @@ export default async function RootLayout({
         />
       </head>
       <body className="flex min-h-full flex-col">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-md focus:bg-bg focus:px-4 focus:py-2 focus:text-fg focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-brand"
+        >
+          Skip to content
+        </a>
         <DeviceTypeInit />
         <Suspense fallback={null}>
           <EventLoggerInit />

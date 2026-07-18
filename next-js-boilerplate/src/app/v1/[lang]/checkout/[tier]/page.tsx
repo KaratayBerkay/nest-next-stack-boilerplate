@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import CheckoutContent from "@/views/checkout/CheckoutContent";
 import type { CheckoutContentPageProps } from "@/types/checkout/CheckoutPage-types";
+import { CheckoutLoadingFallback } from "@/fallbacks";
 
 export const metadata: Metadata = {
   title: "Checkout",
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function CheckoutPage({ params }: CheckoutContentPageProps) {
   return (
-    <Suspense>
+    <Suspense fallback={<CheckoutLoadingFallback />}>
       <CheckoutContent params={params} />
     </Suspense>
   );

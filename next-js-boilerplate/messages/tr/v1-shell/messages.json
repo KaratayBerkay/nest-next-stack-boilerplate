@@ -19,5 +19,10 @@
   "authLoading": "Kimlik doğrulama...",
   "toggleSidebar": "Kenar çubuğunu aç/kapat",
   "settingsLink": "Ayarlar",
-  "navSettings": "Ayarlar"
+  "navSettings": "Ayarlar",
+  "navFeed": "Akış",
+  "navShare": "Paylaş",
+  "navPremium": "Premium",
+  "navAdmin": "Yönetici",
+  "navAuditLog": "Denetim Günlüğü"
 }

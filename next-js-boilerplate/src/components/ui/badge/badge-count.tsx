@@ -1,5 +1,3 @@
-"use client";
-
 import { cn } from "@/lib/cn";
 import type { BadgeCountProps, BadgeCountDirection } from "@/types/ui/BadgeCount-types";
 

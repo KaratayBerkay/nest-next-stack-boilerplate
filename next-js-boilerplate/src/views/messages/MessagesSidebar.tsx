@@ -187,7 +187,7 @@ export function MessagesSidebar({
 
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
         {convsError && (
-          <p className="py-16 text-center text-sm text-red-500">
+          <p className="py-16 text-center text-sm text-error">
             {t.failedToLoad}
           </p>
         )}
@@ -218,7 +218,7 @@ export function MessagesSidebar({
                     className="bg-brand h-10 w-10 text-white"
                   />
                   {onlineUsers.has(c.user.id) && (
-                    <span className="border-bg absolute right-0 bottom-0 h-3 w-3 rounded-full border-2 bg-green-500" />
+                    <span className="border-bg absolute right-0 bottom-0 h-3 w-3 rounded-full border-2 bg-success" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -227,7 +227,7 @@ export function MessagesSidebar({
                       {c.user.name || c.user.email}
                     </span>
                     {c.unread > 0 && (
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-error text-[10px] font-bold text-white">
                         {c.unread > 99 ? "99+" : c.unread}
                       </span>
                     )}
@@ -268,7 +268,7 @@ export function MessagesSidebar({
                         className="bg-brand h-9 w-9 text-white"
                       />
                       {onlineUsers.has(u.id) && (
-                        <span className="border-bg absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2 bg-green-500" />
+                        <span className="border-bg absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2 bg-success" />
                       )}
                     </div>
                     <div className="min-w-0 flex-1">

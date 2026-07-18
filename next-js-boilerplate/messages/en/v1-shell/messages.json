@@ -19,5 +19,10 @@
   "authLoading": "Auth...",
   "toggleSidebar": "Toggle sidebar",
   "settingsLink": "Settings",
-  "navSettings": "Settings"
+  "navSettings": "Settings",
+  "navFeed": "Feed",
+  "navShare": "Share",
+  "navPremium": "Premium",
+  "navAdmin": "Admin",
+  "navAuditLog": "Audit Log"
 }

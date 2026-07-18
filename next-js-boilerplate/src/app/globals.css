@@ -430,6 +430,11 @@ body {
   display: none !important;
 }
 
+/* ── Safe-area bottom padding for notch devices ─────────────────── */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 /* ── Scroll-fade affordance (S3) ──────────────────────────────────── */
 .scroll-fade-y {
   mask-image: linear-gradient(
@@ -1060,6 +1065,22 @@ body {
     opacity: 0;
   }
 }
+@keyframes dialog-fade-in {
+  from { opacity: 0; transform: scale(0.95) translateY(-8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes dialog-fade-out {
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to   { opacity: 0; transform: scale(0.95) translateY(-8px); }
+}
+@keyframes backdrop-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes backdrop-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
 
 @theme {
   --animate-fade-in: fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1085,6 +1106,27 @@ body {
   --animate-shimmer: shimmer 1.5s infinite linear;
   --animate-stagger: stagger 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   --animate-progress-indeterminate: progress-indeterminate 1.5s ease-in-out infinite;
+}
+
+dialog.dialog-open {
+  animation: dialog-fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+dialog.dialog-closing {
+  animation: dialog-fade-out 0.15s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+dialog.dialog-open::backdrop {
+  animation: backdrop-fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+dialog.dialog-closing::backdrop {
+  animation: backdrop-fade-out 0.15s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  dialog.dialog-open,
+  dialog.dialog-closing,
+  dialog.dialog-open::backdrop,
+  dialog.dialog-closing::backdrop {
+    animation: none;
+  }
 }
 
 /* ── Stagger animation for lists ─────────────────────────────────── */

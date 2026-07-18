@@ -103,7 +103,7 @@ function PostDetailContent({
       className="flex max-h-full min-h-0 w-full flex-col gap-4 overflow-y-auto py-6 max-md:px-1"
     >
       <button
-        onClick={() => router.back()}
+        onClick={() => router.push(`/v1/${params?.lang ?? "en"}/feed`)}
         className="text-muted hover:text-fg flex items-center gap-1 text-xs transition-colors"
       >
         <IconArrowLeft size={16} stroke={1.5} />

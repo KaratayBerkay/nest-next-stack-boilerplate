@@ -24,7 +24,7 @@ const css = readFileSync(cssPath, "utf8");
 
 // Collect .theme-* blocks (`:root, .theme-light { ... }` also matches).
 const themes = {};
-const blockRe = /\.theme-([a-z0-9-]+)\s*\{([^}]*)\}/g;
+const blockRe = /\.style-([a-z0-9-]+)\s*\{([^}]*)\}/g;
 for (const m of css.matchAll(blockRe)) {
   const [, name, body] = m;
   const vars = {};

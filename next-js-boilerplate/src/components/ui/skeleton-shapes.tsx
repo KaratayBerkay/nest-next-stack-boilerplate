@@ -8,10 +8,11 @@ export function SkeletonLine({
   return (
     <div
       className={cn(
-        "bg-surface-hover h-4 w-full animate-pulse rounded",
-        width && `w-[${width}]`,
+        "bg-surface-hover h-4 animate-pulse rounded",
+        width ? undefined : "w-full",
         className,
       )}
+      style={width ? { width } : undefined}
       {...props}
     />
   );

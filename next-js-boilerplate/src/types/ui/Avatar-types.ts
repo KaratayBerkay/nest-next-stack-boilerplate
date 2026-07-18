@@ -14,8 +14,11 @@ export interface AvatarProps extends React.ComponentPropsWithoutRef<"div"> {
 
 export type AvatarVariant = "default" | "brand" | "success" | "warning" | "error" | "info" | "shiny" | "glass" | "neon" | "gradient";
 
+export type AvatarGroupSize = "xs" | "sm" | "md" | "lg" | "xl";
+
 export interface AvatarGroupProps extends React.ComponentPropsWithoutRef<"div"> {
   max?: number;
+  size?: AvatarGroupSize;
   fontSize?: string;
   fontWeight?: string;
   fontFamily?: string;

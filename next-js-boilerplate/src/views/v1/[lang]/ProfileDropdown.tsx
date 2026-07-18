@@ -53,7 +53,7 @@ export function ProfileDropdown({
           setOpen(false);
           logout();
         }}
-        className="hover:bg-surface-hover mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-red-600"
+        className="hover:bg-surface-hover mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-error"
       >
         <IconLogout size={16} stroke={1.5} />
         {t.signOut}
@@ -85,7 +85,7 @@ export function ProfileDropdown({
             {/* Decorative dismiss backdrop, not a control — the panel's own controls remain
                 keyboard-reachable; this scrim only needs a click target. */}
             <div
-              className="fixed inset-0 z-40 bg-black/50"
+              className="fixed inset-0 z-40 bg-overlay/50"
               onClick={() => setOpen(false)}
               aria-hidden="true"
             />

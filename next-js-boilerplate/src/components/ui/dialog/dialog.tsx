@@ -41,7 +41,7 @@ export function Dialog({
 
   return (
     <DialogContext.Provider value={{ open, onOpenChange }}>
-      <div className={cn()}>{children}</div>
+      {children}
     </DialogContext.Provider>
   );
 }

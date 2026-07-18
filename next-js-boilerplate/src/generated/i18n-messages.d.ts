@@ -51,6 +51,37 @@ export type I18nMessages = {
       "skillAWS": string;
     }
 
+  "admin": {
+      "title": string;
+      "searchPlaceholder": string;
+      "searching": string;
+      "noUsersFound": string;
+      "auditLogTitle": string;
+      "allActions": string;
+      "allLevels": string;
+      "entityType": string;
+      "loading": string;
+      "noEntriesFound": string;
+      "time": string;
+      "action": string;
+      "level": string;
+      "actor": string;
+      "entity": string;
+      "summary": string;
+      "ip": string;
+      "hide": string;
+      "diff": string;
+      "totalEntries": string;
+      "prev": string;
+      "pageOf": string;
+      "next": string;
+      "changeDetails": string;
+      "before": string;
+      "after": string;
+      "system": string;
+      "accessDenied": string;
+    }
+
   "auth": {
       "form": {
         "login": {
@@ -633,5 +664,10 @@ export type I18nMessages = {
       "toggleSidebar": string;
       "settingsLink": string;
       "navSettings": string;
+      "navFeed": string;
+      "navShare": string;
+      "navPremium": string;
+      "navAdmin": string;
+      "navAuditLog": string;
     }
 };

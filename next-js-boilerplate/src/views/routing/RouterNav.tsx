@@ -28,7 +28,7 @@ export function RouterNav() {
         type="button"
         data-testid="router-back"
         className="text-brand underline"
-        onClick={() => router.back()}
+        onClick={() => router.push("/routing")}
       >
         back
       </button>

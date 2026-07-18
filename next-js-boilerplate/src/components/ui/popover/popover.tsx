@@ -39,7 +39,7 @@ export function Popover({ children, defaultOpen = false }: PopoverProps) {
 
   return (
     <PopoverContext.Provider value={{ open, toggle, close, triggerRef, contentId }}>
-      <div className={cn()}>{children}</div>
+      {children}
     </PopoverContext.Provider>
   );
 }

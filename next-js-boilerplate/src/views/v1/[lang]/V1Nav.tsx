@@ -43,13 +43,13 @@ export function V1Nav({ onNav }: V1NavProps) {
 
   const links = [
     { href: "", label: t.navHome, Icon: IconHome },
-    { href: "/feed", label: "Feed", Icon: IconRss, auth: true },
-    { href: "/share", label: "Share", Icon: IconShare, auth: true },
+    { href: "/feed", label: t.navFeed, Icon: IconRss, auth: true },
+    { href: "/share", label: t.navShare, Icon: IconShare, auth: true },
     { href: "/users/list", label: t.navUsers, Icon: IconUsers },
     { href: "/chat-room", label: t.navChatRoom, Icon: IconMessage },
     { href: "/messages", label: t.navMessages, Icon: IconMail },
     { href: FIND_FRIENDS_PATH, label: t.navFindFriends, Icon: IconUserPlus },
-    { href: "/premium", label: "Premium", Icon: IconShield, auth: true },
+    { href: "/premium", label: t.navPremium, Icon: IconShield, auth: true },
     {
       href: "/settings/general",
       label: t.navSettings,
@@ -65,13 +65,13 @@ export function V1Nav({ onNav }: V1NavProps) {
   if (isAdmin) {
     links.push({
       href: "/admin",
-      label: "Admin",
+      label: t.navAdmin,
       Icon: IconShield,
       auth: true,
     });
     links.push({
       href: "/admin/audit-logs",
-      label: "Audit Log",
+      label: t.navAuditLog,
       Icon: IconEye,
       auth: true,
     });
