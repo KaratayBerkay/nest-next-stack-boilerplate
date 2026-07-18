@@ -4,6 +4,7 @@ import {
   type ComponentPropsWithoutRef,
   type ChangeEvent,
   useCallback,
+  useEffect,
   useRef,
 } from "react";
 import { DayPicker, type DropdownProps } from "react-day-picker";
@@ -82,35 +83,65 @@ function Chevron({
   );
 }
 
-// Hovering the strip navigates the same as clicking it (mouseenter and click
-// share the same handler) — touch devices have no hover concept, so a tap
-// still works there via the native click. Declared at module scope, not
-// inline inside `components={}` below: that object is a fresh literal on
+// Hold-to-scroll: pressing and holding the nav button continuously
+// navigates months (fires onClick every 300 ms). Declared at module scope,
+// not inline inside `components={}`: that object is a fresh literal on
 // every render, so an inline arrow function is a *new* component type each
 // time — React would unmount and remount this button on every month change.
-// A debounce (`COOLDOWN_MS`) prevents the re-mount loop: a freshly-mounted
-// DOM node under an already-stationary cursor still gets its own `mouseenter`
-// (hover state is recomputed after DOM changes, not just mouse movement),
-// which would re-fire onClick, change the month, and loop. 300 ms is long
-// enough for React to finish the render cycle and short enough that a real
-// re-hover is barely noticeable.
-const COOLDOWN_MS = 300;
+// The interval is ref-based so it survives re-renders; a window mouseup
+// listener ensures cleanup even when mouseup lands outside the button or
+// after the button's DOM node has been replaced.
+const REPEAT_RATE_MS = 300;
 function MonthNavButton({
   onClick,
   ...buttonProps
 }: ComponentPropsWithoutRef<"button">) {
-  const lastCall = useRef(0);
-  const handleHover = useCallback(
+  const onClickRef = useRef(onClick);
+  onClickRef.current = onClick;
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const clearTimer = useCallback(() => {
+    if (timerRef.current !== null) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  // Clean up on unmount
+  useEffect(() => clearTimer, [clearTimer]);
+
+  const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
-      const now = Date.now();
-      if (now - lastCall.current > COOLDOWN_MS) {
-        lastCall.current = now;
-        onClick?.(e);
-      }
+      clearTimer();
+      onClickRef.current?.(e);
+
+      timerRef.current = setInterval(() => {
+        onClickRef.current?.(
+          {} as React.MouseEvent<HTMLButtonElement>,
+        );
+      }, REPEAT_RATE_MS);
+
+      const onWindowMouseUp = () => {
+        clearTimer();
+        window.removeEventListener("mouseup", onWindowMouseUp);
+      };
+      window.addEventListener("mouseup", onWindowMouseUp);
     },
-    [onClick],
+    [clearTimer],
   );
-  return <button {...buttonProps} onClick={onClick} onMouseEnter={handleHover} />;
+
+  const handleMouseUp = useCallback(() => {
+    clearTimer();
+  }, [clearTimer]);
+
+  return (
+    <button
+      {...buttonProps}
+      onClick={onClick}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+    />
+  );
 }
 
 function getEventsForDate(events: NonNullable<CalendarProps["events"]>, date: Date) {
