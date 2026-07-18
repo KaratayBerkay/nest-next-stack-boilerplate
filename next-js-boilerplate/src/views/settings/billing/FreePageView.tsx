@@ -10,8 +10,9 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { TIER_PRICES_CENTS, tierLabel, type Tier } from "@/lib/tier";
 import { formatPrice } from "@/lib/currency";
 import { useCurrencyCookie } from "@/hooks/useCurrencyCookie";
+import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { plansPath } from "@/constants/routes";
-import { formatDate } from "@/lib/date-time";
+import { formatDateByPreference } from "@/lib/date-time";
 import {
   BILLING_SUBSCRIPTION_URL,
   BILLING_HISTORY_URL,
@@ -44,6 +45,7 @@ export function FreePageView() {
   const { user, loading } = useAuth();
   const t = useMessages("settings");
   const currency = useCurrencyCookie();
+  const dateDisplay = useDateDisplayCookie();
   const [subscription, setSubscription] = useState<SubscriptionInfo | null>(
     null,
   );
@@ -94,8 +96,8 @@ export function FreePageView() {
           {tier !== "FREE" && periodEnd && (
             <p className="text-muted mt-1 text-xs">
               {cancelAtPeriodEnd
-                ? `Cancels on ${formatDate(periodEnd)}`
-                : `Next payment: ${formatDate(periodEnd)}`}
+                ? `Cancels on ${formatDateByPreference(periodEnd, dateDisplay)}`
+                : `Next payment: ${formatDateByPreference(periodEnd, dateDisplay)}`}
             </p>
           )}
         </div>
@@ -131,7 +133,7 @@ export function FreePageView() {
               >
                 <div>
                   <p className="text-muted text-xs">
-                    {formatDate(tx.createdAt)}
+                    {formatDateByPreference(tx.createdAt, dateDisplay)}
                   </p>
                   <p className="text-sm font-medium">
                     {tx.reference.replace("subscription:", "")}

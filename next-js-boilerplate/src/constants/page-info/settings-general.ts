@@ -19,5 +19,10 @@ export const settingsGeneralPageInfo: PageInfoContent = {
       description:
         "Customize the appearance of the application with light or dark mode.",
     },
+    {
+      title: "Date Display",
+      description:
+        "Choose how dates are shown throughout the app: long form, ISO timestamp, or short numeric.",
+    },
   ],
 };

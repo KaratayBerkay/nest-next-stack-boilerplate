@@ -1,30 +1,32 @@
 import { useState } from "react";
 import { Combobox } from "@/components/ui/Combobox";
 import { getLabel } from "./helpers";
-import { languages } from "./data";
+import { countries } from "./data";
 
 export function ExamplesTab() {
-  const [language, setLanguage] = useState("");
+  const [country, setCountry] = useState("");
 
   return (
     <div className="flex flex-col gap-4">
       <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Language Selector</h3>
+        <h3 className="text-lg font-semibold">Country Search</h3>
         <Combobox
-          options={languages}
-          value={language}
-          onValueChange={setLanguage}
+          options={countries}
+          value={country}
+          onValueChange={setCountry}
+          placeholder="Select your country..."
+          searchPlaceholder="Search countries..."
           className="max-w-sm"
         />
-        {language && (
+        {country && (
           <div className="bg-surface flex items-center justify-between rounded border border-border px-3 py-2">
             <span className="text-sm">
               Selected:{" "}
-              <strong>{getLabel(language, languages)}</strong>
+              <strong>{getLabel(country, countries)}</strong>
             </span>
             <button
               type="button"
-              onClick={() => setLanguage("")}
+              onClick={() => setCountry("")}
               className="text-muted hover:text-fg p-0.5"
             >
               <svg

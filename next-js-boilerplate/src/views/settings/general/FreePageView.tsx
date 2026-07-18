@@ -22,6 +22,13 @@ import {
   DEFAULT_CURRENCY,
 } from "@/constants/currency";
 import type { CurrencyCode } from "@/constants/currency";
+import {
+  DATE_DISPLAY_FORMATS,
+  DATE_DISPLAY_COOKIE,
+  DEFAULT_DATE_DISPLAY,
+} from "@/constants/date-display";
+import type { DateDisplayFormat } from "@/constants/date-display";
+import { formatDateLong, formatDateShort, toISOString } from "@/lib/date-time";
 import { PROFILE_UPDATE_URL } from "@/constants/api/urls";
 import { POST } from "@/constants/api/methods";
 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
@@ -36,6 +43,18 @@ function readCurrencyCookie(): CurrencyCode {
     return val as CurrencyCode;
   }
   return DEFAULT_CURRENCY;
+}
+
+function readDateDisplayCookie(): DateDisplayFormat {
+  if (typeof document === "undefined") return DEFAULT_DATE_DISPLAY;
+  const match = document.cookie.match(
+    new RegExp(`${DATE_DISPLAY_COOKIE}=([^;]+)`),
+  );
+  const val = match?.[1];
+  if (val && (DATE_DISPLAY_FORMATS as readonly string[]).includes(val)) {
+    return val as DateDisplayFormat;
+  }
+  return DEFAULT_DATE_DISPLAY;
 }
 
 const LOCALES = [
@@ -64,6 +83,14 @@ function setCurrency(
 ) {
   setCurrencyState(code);
   document.cookie = `${CURRENCY_COOKIE}=${code};path=/;max-age=${60 * 60 * 24 * 365};samesite=lax`;
+}
+
+function setDateDisplay(
+  format: DateDisplayFormat,
+  setDateDisplayState: Dispatch<SetStateAction<DateDisplayFormat>>,
+) {
+  setDateDisplayState(format);
+  document.cookie = `${DATE_DISPLAY_COOKIE}=${format};path=/;max-age=${60 * 60 * 24 * 365};samesite=lax`;
 }
 
 async function save(
@@ -102,8 +129,11 @@ export function FreePageView() {
   const [timezone, setTimezone] = useState("UTC");
   const [currency, setCurrencyState] =
     useState<CurrencyCode>(readCurrencyCookie);
+  const [dateDisplay, setDateDisplayState] =
+    useState<DateDisplayFormat>(readDateDisplayCookie);
   const [saving, setSaving] = useState(false);
   const loadedRef = useRef(false);
+  const now = new Date();
 
   useEffect(() => {
     if (!user || loadedRef.current) return;
@@ -171,6 +201,24 @@ export function FreePageView() {
             <option value="USD">US Dollar ($)</option>
             <option value="EUR">Euro (€)</option>
             <option value="TRY">Turkish Lira (₺)</option>
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <Label>{t.dateDisplay}</Label>
+          <select
+            value={dateDisplay}
+            onChange={(e) =>
+              setDateDisplay(
+                e.target.value as DateDisplayFormat,
+                setDateDisplayState,
+              )
+            }
+            className="border-border bg-bg rounded-lg border px-3 py-2 text-sm"
+          >
+            <option value="long">{`${t.dateDisplayLong} (${formatDateLong(now)})`}</option>
+            <option value="iso">{`${t.dateDisplayIso} (${toISOString(now)})`}</option>
+            <option value="short">{`${t.dateDisplayShort} (${formatDateShort(now)})`}</option>
           </select>
         </div>
       </div>

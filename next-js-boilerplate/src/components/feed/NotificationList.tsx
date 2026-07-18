@@ -4,7 +4,8 @@ import { useMemo } from "react";
 import type { NotificationListProps } from "@/types/feed/NotificationList-types";
 import Link from "next/link";
 import { IconChevronRight } from "@tabler/icons-react";
-import { formatDate } from "@/lib/date-time";
+import { formatDateByPreference } from "@/lib/date-time";
+import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 
 export function NotificationList({
   notifications,
@@ -14,6 +15,7 @@ export function NotificationList({
   lang = "en",
 }: NotificationListProps) {
   const unread = notifications.filter((n) => !n.readAt);
+  const dateDisplay = useDateDisplayCookie();
 
   const sorted = useMemo(
     () =>
@@ -76,7 +78,7 @@ export function NotificationList({
                   </p>
                 )}
                 <p className="text-muted mt-0.5 text-[10px]">
-                  {formatDate(n.createdAt)}
+                  {formatDateByPreference(n.createdAt, dateDisplay)}
                 </p>
               </div>
               {!n.readAt && (

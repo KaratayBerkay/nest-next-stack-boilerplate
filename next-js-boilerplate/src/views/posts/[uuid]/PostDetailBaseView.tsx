@@ -19,7 +19,8 @@ import { ReactionInline } from "@/components/feed/ReactionButtons";
 import { CommentSection } from "@/components/feed/CommentSection";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { formatDate } from "@/lib/date-time";
+import { formatDateByPreference } from "@/lib/date-time";
+import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { Avatar } from "@/components/ui/Avatar";
 import { initials } from "@/lib/initials";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
@@ -85,6 +86,7 @@ function PostDetailContent({
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
   const swipeRef = useYSwipeGesture<HTMLDivElement>();
+  const dateDisplay = useDateDisplayCookie();
 
   useEffect(() => {
     if (!uuid) return;
@@ -132,7 +134,7 @@ function PostDetailContent({
                 {post.author.name || post.author.email}
               </p>
               <p className="text-muted text-[11px]">
-                {formatDate(post.createdAt)}
+                {formatDateByPreference(post.createdAt, dateDisplay)}
               </p>
             </div>
           </div>

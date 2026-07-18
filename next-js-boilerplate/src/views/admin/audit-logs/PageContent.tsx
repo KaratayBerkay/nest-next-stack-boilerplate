@@ -6,7 +6,8 @@ import { apiFetchJson } from "@/lib/api-client";
 import { IconEye, IconSearch } from "@tabler/icons-react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { formatDateTime } from "@/lib/date-time";
+import { formatDateTimeByPreference } from "@/lib/date-time";
+import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { adminAuditLogsPageInfo } from "@/constants/page-info";
 import { AccessDeniedPage } from "@/features/statics";
@@ -37,6 +38,7 @@ export default function PageContent() {
   const [levelFilter, setLevelFilter] = useState("");
   const [entityFilter, setEntityFilter] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const dateDisplay = useDateDisplayCookie();
   const pageSize = 50;
 
   const isAdmin = user?.role === "ADMIN" || user?.role === "SUPERADMIN";
@@ -188,7 +190,7 @@ export default function PageContent() {
                     className="border-border hover:bg-surface/50 border-b transition-colors"
                   >
                     <td className="text-muted py-2 pr-2 whitespace-nowrap">
-                      {formatDateTime(entry.createdAt)}
+                      {formatDateTimeByPreference(entry.createdAt, dateDisplay)}
                     </td>
                     <td className="py-2 pr-2 font-medium whitespace-nowrap">
                       {entry.action.replace(/_/g, " ")}

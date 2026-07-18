@@ -69,6 +69,59 @@ export function formatMonthYear(input: DateInput, locale?: string): string {
   });
 }
 
+export type DateDisplayPreference = "long" | "iso" | "short";
+
+export function formatDateShort(input: DateInput, locale?: string): string {
+  return toDate(input).toLocaleDateString(locale, { dateStyle: "short" });
+}
+
+export function formatDateTimeShort(input: DateInput, locale?: string): string {
+  return toDate(input).toLocaleString(locale, {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+}
+
+export function formatDateByPreference(
+  input: DateInput,
+  preference: DateDisplayPreference,
+  locale?: string,
+): string {
+  switch (preference) {
+    case "iso":
+      try {
+        return toISOString(input);
+      } catch {
+        return "Invalid Date";
+      }
+    case "short":
+      return formatDateShort(input, locale);
+    case "long":
+    default:
+      return formatDateLong(input, locale);
+  }
+}
+
+export function formatDateTimeByPreference(
+  input: DateInput,
+  preference: DateDisplayPreference,
+  locale?: string,
+): string {
+  switch (preference) {
+    case "iso":
+      try {
+        return toISOString(input);
+      } catch {
+        return "Invalid Date";
+      }
+    case "short":
+      return formatDateTimeShort(input, locale);
+    case "long":
+    default:
+      return formatDateTime(input, locale);
+  }
+}
+
 export function getRelativeTime(input: DateInput): string {
   const diff = Date.now() - toDate(input).getTime();
   const seconds = Math.floor(diff / 1000);

@@ -21,7 +21,8 @@ import { PageInfoButton } from "@/components/ui/page-info";
 import { notificationPageInfo } from "@/constants/page-info";
 import { NotificationFallback } from "@/fallbacks";
 import { useNotifications } from "@/lib/realtime/useNotifications";
-import { formatDate } from "@/lib/date-time";
+import { formatDateByPreference } from "@/lib/date-time";
+import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { useQueryClient } from "@tanstack/react-query";
 import { notificationTarget } from "@/lib/notifications/target";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
@@ -33,6 +34,7 @@ function NotificationPageContent() {
   const queryClient = useQueryClient();
   const t = useMessages("notification");
   const { data: notifData, isLoading } = useNotifications();
+  const dateDisplay = useDateDisplayCookie();
   const notifications = useMemo(
     () => notifData?.items ?? [],
     [notifData?.items],
@@ -208,7 +210,7 @@ function NotificationPageContent() {
                   </p>
                 )}
                 <p className="text-muted mt-1 text-[10px]">
-                  {formatDate(n.createdAt)}
+                  {formatDateByPreference(n.createdAt, dateDisplay)}
                 </p>
               </div>
               {!n.readAt && (

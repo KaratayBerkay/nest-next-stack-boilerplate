@@ -7,7 +7,8 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { formatDate } from "@/lib/date-time";
+import { formatDateByPreference } from "@/lib/date-time";
+import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { API_KEYS_URL, API_KEYS_PREFIX } from "@/constants/api/urls";
 import { POST, DELETE } from "@/constants/api/methods";
 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
@@ -104,6 +105,7 @@ export default function PageContent() {
   const [newExpiry, setNewExpiry] = useState("");
   const [creating, setCreating] = useState(false);
   const [newKeyResult, setNewKeyResult] = useState<string | null>(null);
+  const dateDisplay = useDateDisplayCookie();
 
   const loadKeys = useCallback(async () => {
     try {
@@ -262,12 +264,12 @@ export default function PageContent() {
                   {key.keyPrefix}...
                 </code>
                 <div className="text-muted flex gap-4 text-xs">
-                  <span>Created {formatDate(key.createdAt)}</span>
+                  <span>Created {formatDateByPreference(key.createdAt, dateDisplay)}</span>
                   {key.lastUsedAt && (
-                    <span>Last used {formatDate(key.lastUsedAt)}</span>
+                    <span>Last used {formatDateByPreference(key.lastUsedAt, dateDisplay)}</span>
                   )}
                   {key.expiresAt && (
-                    <span>Expires {formatDate(key.expiresAt)}</span>
+                    <span>Expires {formatDateByPreference(key.expiresAt, dateDisplay)}</span>
                   )}
                   {!key.expiresAt && <span>No expiry</span>}
                 </div>

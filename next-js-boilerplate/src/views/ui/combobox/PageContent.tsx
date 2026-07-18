@@ -17,13 +17,13 @@ const examples: UIExample[] = [
   {
     id: "usage",
     title: "Assignee Picker",
-    description: "Combobox with people items showing initials avatars.",
+    description: "Assign an item to a teammate from a searchable people list.",
     render: () => <ComponentsTab />,
   },
   {
     id: "variants",
     title: "Country Search",
-    description: "Large filtered list with search input.",
+    description: "Searchable list of world countries.",
     render: () => <ExamplesTab />,
   },
   {

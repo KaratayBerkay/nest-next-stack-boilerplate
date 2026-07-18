@@ -378,6 +378,10 @@ export type I18nMessages = {
       "timezone": string;
       "currency": string;
       "theme": string;
+      "dateDisplay": string;
+      "dateDisplayLong": string;
+      "dateDisplayIso": string;
+      "dateDisplayShort": string;
       "billingHeading": string;
       "currentPlan": string;
       "upgradePlan": string;

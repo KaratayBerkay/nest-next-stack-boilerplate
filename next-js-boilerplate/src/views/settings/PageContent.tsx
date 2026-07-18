@@ -16,8 +16,9 @@ import {
 } from "@/lib/tier";
 import { formatPrice } from "@/lib/currency";
 import { useCurrencyCookie } from "@/hooks/useCurrencyCookie";
+import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { plansPath } from "@/constants/routes";
-import { formatDate } from "@/lib/date-time";
+import { formatDateByPreference } from "@/lib/date-time";
 import { BILLING_SUBSCRIPTION_URL } from "@/constants/api/urls";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsPageInfo } from "@/constants/page-info";
@@ -45,6 +46,7 @@ export default function PageContent({ params }: SettingsIndexPageProps) {
   const t = useMessages("settings");
   const p = useMessages("pricing");
   const currency = useCurrencyCookie();
+  const dateDisplay = useDateDisplayCookie();
   const { data: subscriptionData } = useSubscription(user?.id);
   const subscription = subscriptionData?.subscription ?? null;
 
@@ -76,8 +78,8 @@ export default function PageContent({ params }: SettingsIndexPageProps) {
             {tier !== "FREE" && periodEnd && (
               <p className="text-muted mt-1 text-xs">
                 {cancelAtPeriodEnd
-                  ? `Cancels on ${formatDate(periodEnd)}`
-                  : `Next payment: ${formatDate(periodEnd)}`}
+                  ? `Cancels on ${formatDateByPreference(periodEnd, dateDisplay)}`
+                  : `Next payment: ${formatDateByPreference(periodEnd, dateDisplay)}`}
               </p>
             )}
           </div>

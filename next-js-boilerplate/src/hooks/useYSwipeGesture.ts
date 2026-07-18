@@ -47,8 +47,29 @@ export function useYSwipeGesture<T extends HTMLElement>() {
       return false;
     };
 
+    // Same idea for a nested vertical scroller (e.g. an inner overflow-y-auto
+    // list) — without this, dragging inside it hijacks the outer page's
+    // scrollTop instead of the inner list's.
+    const inVerticalScroller = (target: EventTarget | null): boolean => {
+      let node = target instanceof HTMLElement ? target : null;
+      while (node && node !== el) {
+        if (node.scrollHeight > node.clientHeight) {
+          const { overflowY } = getComputedStyle(node);
+          if (overflowY === "auto" || overflowY === "scroll") return true;
+        }
+        node = node.parentElement;
+      }
+      return false;
+    };
+
     const onDown = (e: MouseEvent | TouchEvent) => {
-      if (!el || isIgnored(e.target) || inHorizontalScroller(e.target)) return;
+      if (
+        !el ||
+        isIgnored(e.target) ||
+        inHorizontalScroller(e.target) ||
+        inVerticalScroller(e.target)
+      )
+        return;
       if ("touches" in e) e.preventDefault();
 
       dragging.current = true;

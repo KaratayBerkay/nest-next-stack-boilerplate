@@ -4,7 +4,8 @@ import { apiFetch } from "@/lib/api-client";
 import { useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { useToast } from "@/components/ui/Toast";
 import { ReactionInline } from "./ReactionButtons";
-import { toISOString, formatDate } from "@/lib/date-time";
+import { toISOString, formatDateByPreference } from "@/lib/date-time";
+import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { IconPencil, IconTrash } from "@tabler/icons-react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { COMMENTS_URL, COMMENTS_PREFIX } from "@/constants/api/urls";
@@ -72,6 +73,7 @@ export function CommentSection({
   const tempIdCounter = useRef(0);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingBody, setEditingBody] = useState("");
+  const dateDisplay = useDateDisplayCookie();
 
   const allComments = [
     ...comments
@@ -245,7 +247,7 @@ export function CommentSection({
                     {comment.author.name || comment.author.email}
                   </span>
                   <span className="text-muted shrink-0 text-[10px] leading-none">
-                    {formatDate(comment.createdAt)}
+                    {formatDateByPreference(comment.createdAt, dateDisplay)}
                   </span>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
@@ -359,7 +361,7 @@ export function CommentSection({
                         {reply.author.name || reply.author.email}
                       </span>
                       <span className="text-muted shrink-0 text-[10px] leading-none">
-                        {formatDate(reply.createdAt)}
+                        {formatDateByPreference(reply.createdAt, dateDisplay)}
                       </span>
                     </div>
                     <div className="flex shrink-0 items-center gap-1">

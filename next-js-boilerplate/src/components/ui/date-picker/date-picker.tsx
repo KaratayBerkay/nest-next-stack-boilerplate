@@ -11,7 +11,9 @@ import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { useFieldMessages } from "@/components/ui/field-messages";
 import { useLang } from "@/hooks/useLang";
 import type { Lang } from "@/constants/i18n";
-import { formatDateLong, formatMonthYear, getMonthNames } from "@/lib/date-time";
+import { formatDateByPreference, formatMonthYear, getMonthNames } from "@/lib/date-time";
+import type { DateDisplayPreference } from "@/lib/date-time";
+import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import type { DatePickerProps } from "@/types/ui/DatePicker-types";
 
 const variants = {
@@ -72,13 +74,14 @@ function handleClear(onChange?: (date: Date | undefined) => void) {
 function formatPickerValue(
   value: Date | undefined,
   picker: "day" | "month" | "year",
-  locale?: string,
+  locale: string | undefined,
+  dateDisplay: DateDisplayPreference,
 ): string {
   if (!value) return "";
   if (picker === "year") return value.getFullYear().toString();
   if (picker === "month")
     return formatMonthYear(value, locale);
-  return formatDateLong(value, locale);
+  return formatDateByPreference(value, dateDisplay, locale);
 }
 
 function MonthGrid({
@@ -273,7 +276,7 @@ function DatePickerCalendar({
   }
 
   return (
-    <div className="mx-auto max-w-80">
+    <div className="w-full">
       <Calendar
         mode="single"
         selected={value}
@@ -312,7 +315,8 @@ export function DatePicker({
   const effectiveVariant = useComponentVariant(variant);
   const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
   const { describedBy, messages } = useFieldMessages(error, description);
-  const displayValue = formatPickerValue(value, picker, lang);
+  const dateDisplay = useDateDisplayCookie();
+  const displayValue = formatPickerValue(value, picker, lang, dateDisplay);
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
@@ -321,18 +325,34 @@ export function DatePicker({
           <button
             type="button"
             className={cn(
-              "flex h-9 w-full items-center justify-between rounded-md border px-3 py-1 text-sm shadow-xs transition-colors",
+              "flex h-9 w-full items-center gap-2 rounded-md border px-3 py-1 text-sm shadow-xs transition-colors",
               resolveVariant(variants, effectiveVariant),
               fonts,
             )}
             aria-describedby={describedBy}
           >
-            <span className="truncate">
-              {value ? (
-                displayValue
-              ) : (
-                <span className="text-muted">{placeholder ?? labels.pickDate}</span>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-muted shrink-0"
+              aria-hidden="true"
+            >
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <path d="M16 2v4M8 2v4M3 10h18" />
+            </svg>
+            <span
+              className={cn(
+                "flex-1 truncate text-left tabular-nums",
+                !value && "text-muted",
               )}
+            >
+              {value ? displayValue : (placeholder ?? labels.pickDate)}
             </span>
             {value && (
               <span
@@ -348,7 +368,7 @@ export function DatePicker({
                     handleClear(onChange);
                   }
                 }}
-                className="text-muted hover:text-fg mx-1 inline-flex shrink-0 items-center justify-center rounded p-0.5 transition-colors"
+                className="text-muted hover:text-fg inline-flex shrink-0 items-center justify-center rounded p-0.5 transition-colors"
                 aria-label={labels.clearDate}
               >
                 <svg
@@ -366,17 +386,6 @@ export function DatePicker({
                 </svg>
               </span>
             )}
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              className="shrink-0 opacity-50"
-            >
-              <path d="M6 9l6 6 6-6" />
-            </svg>
           </button>
         </PopoverTrigger>
         <PopoverContent title={labels.pickDate} forceBottomSheet>

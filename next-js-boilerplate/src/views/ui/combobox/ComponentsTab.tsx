@@ -1,29 +1,31 @@
 import { useState } from "react";
 import { Combobox } from "@/components/ui/Combobox";
 import { getLabel } from "./helpers";
-import { frameworks } from "./data";
+import { assignees } from "./data";
 
 export function ComponentsTab() {
-  const [framework, setFramework] = useState("");
+  const [assignee, setAssignee] = useState("");
 
   return (
     <div className="flex flex-col gap-4">
       <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Default</h3>
+        <h3 className="text-lg font-semibold">Assignee</h3>
         <Combobox
-          options={frameworks}
-          value={framework}
-          onValueChange={setFramework}
+          options={assignees}
+          value={assignee}
+          onValueChange={setAssignee}
+          placeholder="Select assignee..."
+          searchPlaceholder="Search teammates..."
           className="max-w-sm"
         />
-        {framework && (
+        {assignee && (
           <div className="bg-surface flex items-center justify-between rounded border border-border px-3 py-2">
             <span className="text-sm">
-              Selected: <strong>{getLabel(framework, frameworks)}</strong>
+              Assigned to: <strong>{getLabel(assignee, assignees)}</strong>
             </span>
             <button
               type="button"
-              onClick={() => setFramework("")}
+              onClick={() => setAssignee("")}
               className="text-muted hover:text-fg p-0.5"
             >
               <svg

@@ -6,7 +6,8 @@ import Link from "next/link";
 import { IconEye, IconPencil, IconTrash } from "@tabler/icons-react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ReactionInline } from "./ReactionButtons";
-import { formatDate } from "@/lib/date-time";
+import { formatDateByPreference } from "@/lib/date-time";
+import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import type { PostHeaderProps } from "@/types/feed/PostHeader-types";
 
 export function PostHeader({
@@ -19,6 +20,7 @@ export function PostHeader({
 }: PostHeaderProps) {
   const { user } = useAuth();
   const params = useParams<{ lang: string }>();
+  const dateDisplay = useDateDisplayCookie();
 
   return (
     <div className="flex items-start justify-between gap-2">
@@ -33,7 +35,7 @@ export function PostHeader({
             {postData.author.name || postData.author.email}
           </span>
           <span className="text-muted text-[10px] leading-none">
-            {formatDate(postData.createdAt)}
+            {formatDateByPreference(postData.createdAt, dateDisplay)}
           </span>
         </div>
       </div>

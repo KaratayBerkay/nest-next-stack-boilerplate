@@ -61,7 +61,7 @@ export function CommandItem({
       role="option"
       aria-selected={isSelected}
       data-selected={isSelected}
-      data-disabled={disabled}
+      data-disabled={disabled ? "" : undefined}
       data-command-item
       // No roving-tabindex manager exists yet (focus normally stays on CommandInput while
       // typing), so make each option independently reachable/activatable via keyboard too.

@@ -10,7 +10,8 @@ import {
   IconDeviceMobile,
   IconWorld,
 } from "@tabler/icons-react";
-import { formatDateTime } from "@/lib/date-time";
+import { formatDateTimeByPreference } from "@/lib/date-time";
+import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import {
   SESSIONS_LIST_URL,
   SESSIONS_REVOKE_URL,
@@ -28,6 +29,7 @@ export function FreePageView() {
   const t = useMessages("settings");
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [loadingSessions, setLoadingSessions] = useState(true);
+  const dateDisplay = useDateDisplayCookie();
 
   useEffect(() => {
     if (!user) return;
@@ -146,7 +148,9 @@ export function FreePageView() {
                         </span>
                       )}
                       {session.issuedAt && (
-                        <span>Started: {formatDateTime(session.issuedAt)}</span>
+                        <span>
+                          Started: {formatDateTimeByPreference(session.issuedAt, dateDisplay)}
+                        </span>
                       )}
                     </div>
                     {session.deviceId && (

@@ -104,7 +104,9 @@ function MonthNavButton({
   ...buttonProps
 }: ComponentPropsWithoutRef<"button">) {
   const onClickRef = useRef(onClick);
-  onClickRef.current = onClick;
+  useEffect(() => {
+    onClickRef.current = onClick;
+  }, [onClick]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const suppressClickRef = useRef(false);
 
@@ -209,7 +211,7 @@ export function Calendar({
     "hover:bg-surface-hover text-muted hover:text-fg flex items-center justify-center rounded-md bg-transparent p-0 transition-colors aria-disabled:pointer-events-none aria-disabled:opacity-30";
   const navButtonClasses = isTouch ? "hidden" : navButtonBase;
   const monthGridCols = isTouch
-    ? "minmax(0,1fr)"
+    ? "grid-cols-[minmax(0,1fr)]"
     : "grid-cols-[1.5rem_minmax(0,1fr)_1.5rem]";
 
   // Stable across renders (only changes if forceDropdownBottomSheet itself
@@ -268,15 +270,33 @@ export function Calendar({
         // narrower than that — which is exactly what was overflowing the
         // card. Fixed layout makes the 7 columns actually split whatever
         // width the grid track gives them.
-        month_grid: "col-start-2 row-start-2 w-full min-w-0 table-fixed border-collapse",
+        // Column placement must track `monthGridCols`: touch's single-track
+        // grid only has column 1, so `col-start-2` (correct for the 3-column
+        // non-touch layout) would push this table into an implicit,
+        // unsized extra column instead — the table then falls back to its
+        // own content width and floats to the right of an empty gap. The two
+        // nav buttons don't need the same treatment: they're `display:none`
+        // (`navButtonClasses` = "hidden") on touch, and a non-rendered
+        // element can't force implicit tracks into existence.
+        month_grid: cn(
+          isTouch ? "col-start-1" : "col-start-2",
+          "row-start-2 w-full min-w-0 table-fixed border-collapse",
+        ),
         weekdays: "flex gap-0.5",
         weekday:
           "text-muted w-full text-center text-xxs uppercase tracking-wide font-normal",
         weeks: "",
         week: "flex w-full mt-2",
         day: "relative w-full p-0 text-center text-sm focus-within:relative focus-within:z-20",
+        // `h-12`, not `aspect-square`: the day grid is full-width (no cap on
+        // the DatePicker sheet), so an aspect-square cell would grow exactly
+        // as tall as it is wide — on a wide screen that pushes the 6th week
+        // below the sheet's `max-h-[85vh]` and forces scrolling to see the
+        // rest of the month. A fixed height keeps cells roughly square at
+        // mobile's natural ~48px column width while becoming wide rectangles
+        // (not scroll-inducing giants) as columns grow on larger screens.
         day_button:
-          "hover:bg-surface-hover inline-flex w-full aspect-square items-center justify-center rounded-md px-0 text-sm font-normal transition-colors aria-selected:opacity-100",
+          "hover:bg-surface-hover inline-flex w-full h-12 items-center justify-center rounded-md px-0 text-sm font-normal transition-colors aria-selected:opacity-100",
         selected:
           "bg-brand text-brand-fg hover:bg-brand hover:text-brand-fg focus:bg-brand focus:text-brand-fg",
         today: "bg-brand/10 font-semibold",
@@ -305,7 +325,7 @@ export function Calendar({
           if (dayButtonProps.modifiers.outside) {
             return (
               <span
-                className="inline-flex w-full aspect-square items-center justify-center px-0 text-sm font-normal"
+                className="inline-flex w-full h-12 items-center justify-center px-0 text-sm font-normal"
                 aria-hidden="true"
               >
                 {dayDate.getDate()}
@@ -321,7 +341,7 @@ export function Calendar({
           return (
             <button
               className={cn(
-                "hover:bg-surface-hover inline-flex w-full aspect-square items-center justify-center rounded-md px-0 text-sm font-normal transition-colors",
+                "hover:bg-surface-hover inline-flex w-full h-12 items-center justify-center rounded-md px-0 text-sm font-normal transition-colors",
                 dayButtonProps.modifiers.selected && "bg-brand text-brand-fg",
                 dayButtonProps.modifiers.today && !dayButtonProps.modifiers.selected && "bg-surface text-fg font-semibold",
                 "relative",

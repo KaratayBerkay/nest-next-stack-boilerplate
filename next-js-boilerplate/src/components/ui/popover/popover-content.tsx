@@ -168,9 +168,12 @@ export function PopoverContent({
                 // scroll-into-view during that frame scrolls the whole page.
                 "fixed z-50 min-w-[8rem] origin-top-right rounded-lg border p-4 shadow-lg animate-scale-in",
                 !position && "invisible",
-                className,
               )
             : bottomSheetClasses,
+          // Applies in both branches: a forceBottomSheet caller (e.g.
+          // DatePicker) needs to customize the sheet's own width/position,
+          // not just the floating-desktop variant.
+          className,
           resolveVariant(popoverVariants, effectiveVariant),
         )}
         {...props}
