@@ -20,10 +20,14 @@ function ScrollChevron({
   onScroll: () => void;
 }) {
   const repeatRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const onScrollRef = useRef(onScroll);
+  useEffect(() => {
+    onScrollRef.current = onScroll;
+  });
 
   const start = () => {
-    onScroll();
-    repeatRef.current = setInterval(onScroll, SCROLL_REPEAT_MS);
+    onScrollRef.current();
+    repeatRef.current = setInterval(() => onScrollRef.current(), SCROLL_REPEAT_MS);
   };
   const stop = () => {
     if (repeatRef.current) clearInterval(repeatRef.current);
