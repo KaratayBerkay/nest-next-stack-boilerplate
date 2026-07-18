@@ -1,7 +1,18 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, type Dispatch, type SetStateAction } from "react";
 import { getLabel, getAllItems, renderGroupedItems } from "./helpers";
 import { groupedData } from "./data";
 import { Command, CommandInput, CommandList } from "@/components/ui/Command";
+
+function handleSelectModuleLevel(
+  itemValue: string,
+  setValue: Dispatch<SetStateAction<string>>,
+  setOpen: Dispatch<SetStateAction<boolean>>,
+  setQuery: Dispatch<SetStateAction<string>>,
+) {
+  setValue(itemValue);
+  setOpen(false);
+  setQuery("");
+}
 
 export function GroupedTab() {
   const [open, setOpen] = useState(false);
@@ -11,11 +22,10 @@ export function GroupedTab() {
   const allItems = useMemo(() => getAllItems(groupedData), []);
   const selectedLabel = value ? getLabel(value, allItems) : "";
 
-  const handleSelect = useCallback((itemValue: string) => {
-    setValue(itemValue);
-    setOpen(false);
-    setQuery("");
-  }, []);
+  const handleSelect = useCallback(
+    (itemValue: string) => handleSelectModuleLevel(itemValue, setValue, setOpen, setQuery),
+    [setValue, setOpen, setQuery],
+  );
 
   return (
     <div className="flex flex-col gap-4">

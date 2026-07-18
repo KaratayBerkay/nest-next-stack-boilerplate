@@ -1,10 +1,11 @@
 import { apiFetch } from "@/lib/api-client";
+import { AUTH_TOKEN_URL } from "@/constants";
 
 async function fetchTokens(
   token: string,
 ): Promise<Record<string, string> | null> {
   try {
-    const res = await apiFetch("/api/auth/token");
+    const res = await apiFetch(AUTH_TOKEN_URL);
     if (!res.ok) return null;
     const json = await res.json();
     return {

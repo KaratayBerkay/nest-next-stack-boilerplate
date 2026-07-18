@@ -1,7 +1,33 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, type Dispatch, type SetStateAction } from "react";
 import { Command, CommandInput, CommandList, CommandItem } from "@/components/ui/Command";
 import { getLabel } from "./helpers";
 import { creatableInitial } from "./data";
+
+function handleCreateModuleLevel(
+  query: string,
+  setOptions: Dispatch<SetStateAction<typeof creatableInitial>>,
+  setValue: Dispatch<SetStateAction<string>>,
+  setOpen: Dispatch<SetStateAction<boolean>>,
+  setQuery: Dispatch<SetStateAction<string>>,
+) {
+  const newValue = query.toLowerCase().replace(/\s+/g, "-");
+  const newOption = { value: newValue, label: query };
+  setOptions((prev) => [...prev, newOption]);
+  setValue(newValue);
+  setOpen(false);
+  setQuery("");
+}
+
+function handleSelectModuleLevel(
+  itemValue: string,
+  setValue: Dispatch<SetStateAction<string>>,
+  setOpen: Dispatch<SetStateAction<boolean>>,
+  setQuery: Dispatch<SetStateAction<string>>,
+) {
+  setValue(itemValue);
+  setOpen(false);
+  setQuery("");
+}
 
 export function CreatableTab() {
   const [open, setOpen] = useState(false);
@@ -23,20 +49,15 @@ export function CreatableTab() {
       (opt) => opt.label.toLowerCase() === query.toLowerCase(),
     );
 
-  const handleCreate = useCallback(() => {
-    const newValue = query.toLowerCase().replace(/\s+/g, "-");
-    const newOption = { value: newValue, label: query };
-    setOptions((prev) => [...prev, newOption]);
-    setValue(newValue);
-    setOpen(false);
-    setQuery("");
-  }, [query]);
+  const handleCreate = useCallback(
+    () => handleCreateModuleLevel(query, setOptions, setValue, setOpen, setQuery),
+    [query, setOptions, setValue, setOpen, setQuery],
+  );
 
-  const handleSelect = useCallback((itemValue: string) => {
-    setValue(itemValue);
-    setOpen(false);
-    setQuery("");
-  }, []);
+  const handleSelect = useCallback(
+    (itemValue: string) => handleSelectModuleLevel(itemValue, setValue, setOpen, setQuery),
+    [setValue, setOpen, setQuery],
+  );
 
   const selectedLabel = getLabel(value, options);
 

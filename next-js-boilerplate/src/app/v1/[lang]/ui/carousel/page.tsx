@@ -1,13 +1,19 @@
-import type { Metadata } from "next";
+import { getMessages } from "@/lib/i18n/get-messages";
+import type { Lang } from "@/constants/i18n";
 import PageContent from "@/views/ui/carousel/PageContent";
 
-export const metadata: Metadata = {
-  title: "Carousel",
-  description: "Carousel component demo",
-};
-
 interface PageProps {
+  params: Promise<{ lang: string }>;
   searchParams: Promise<{ tab?: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps) {
+  const { lang } = await params;
+  const t = getMessages(lang as Lang, "ui");
+  return {
+    title: t.carouselTitle,
+    description: t.carouselDescription,
+  };
 }
 
 export default async function CarouselPage({ searchParams }: PageProps) {

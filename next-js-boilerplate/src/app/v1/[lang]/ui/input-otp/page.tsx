@@ -1,13 +1,19 @@
-import type { Metadata } from "next";
+import { getMessages } from "@/lib/i18n/get-messages";
+import type { Lang } from "@/constants/i18n";
 import PageContent from "@/views/ui/input-otp/PageContent";
 
-export const metadata: Metadata = {
-  title: "Input OTP",
-  description: "Input OTP component demo",
-};
-
 interface PageProps {
+  params: Promise<{ lang: string }>;
   searchParams: Promise<{ tab?: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps) {
+  const { lang } = await params;
+  const t = getMessages(lang as Lang, "ui");
+  return {
+    title: t.inputOtpTitle,
+    description: t.inputOtpDescription,
+  };
 }
 
 export default async function InputOtpPage({ searchParams }: PageProps) {

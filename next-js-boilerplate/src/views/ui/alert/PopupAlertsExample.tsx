@@ -6,21 +6,15 @@ import {
   useRef,
   useState,
   type MouseEvent,
+  type RefObject,
 } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
+import type { PopupAlertProps, PopupPhase } from "@/types/ui/PopupAlert-types";
 
 const AUTO_DISMISS_SECONDS = 30;
 const CLOSE_ANIMATION_MS = 300;
-
-type PopupPhase = "closed" | "open" | "closing";
-
-interface PopupAlertProps {
-  phase: PopupPhase;
-  remainingMs: number;
-  onDismiss: () => void;
-}
 
 function useAutoDismiss(totalSeconds: number) {
   const [phase, setPhase] = useState<PopupPhase>("closed");
@@ -112,12 +106,29 @@ function CountdownRing({
   );
 }
 
+function handleKeyDownModuleLevel(e: KeyboardEvent, onDismiss: () => void) {
+  if (e.key === "Escape") onDismiss();
+}
+
+function handleCancelModuleLevel(e: Event, onDismiss: () => void) {
+  e.preventDefault();
+  onDismiss();
+}
+
+function handleBackdropClickModuleLevel(
+  e: MouseEvent<HTMLDialogElement>,
+  dialogRef: RefObject<HTMLDialogElement | null>,
+  onDismiss: () => void,
+) {
+  if (e.target === dialogRef.current) {
+    onDismiss();
+  }
+}
+
 function TopBannerAlert({ phase, remainingMs, onDismiss }: PopupAlertProps) {
   useEffect(() => {
     if (phase !== "open") return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onDismiss();
-    };
+    const handleKeyDown = (e: KeyboardEvent) => handleKeyDownModuleLevel(e, onDismiss);
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [phase, onDismiss]);
@@ -203,21 +214,15 @@ function FullWidthModalAlert({ phase, remainingMs, onDismiss }: PopupAlertProps)
     const dialog = dialogRef.current;
     if (!dialog) return;
 
-    const handleCancel = (e: Event) => {
-      e.preventDefault();
-      onDismiss();
-    };
+    const handleCancel = (e: Event) => handleCancelModuleLevel(e, onDismiss);
 
     dialog.addEventListener("cancel", handleCancel);
     return () => dialog.removeEventListener("cancel", handleCancel);
   }, [phase, onDismiss]);
 
   const handleBackdropClick = useCallback(
-    (e: MouseEvent<HTMLDialogElement>) => {
-      if (e.target === dialogRef.current) {
-        onDismiss();
-      }
-    },
+    (e: MouseEvent<HTMLDialogElement>) =>
+      handleBackdropClickModuleLevel(e, dialogRef, onDismiss),
     [onDismiss],
   );
 

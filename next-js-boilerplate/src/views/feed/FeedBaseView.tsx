@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense, type ReactNode } from "react";
+import { useState, Suspense } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
@@ -8,17 +8,9 @@ import { IconSearch } from "@tabler/icons-react";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { feedPageInfo } from "@/constants/page-info";
-import { SkeletonFeedList } from "@/components/ui/skeleton-shapes";
+import { FeedLoadingFallback } from "@/fallbacks";
 import { PostStatsSidebar } from "@/components/feed/PostStatsSidebar";
-
-export interface FeedBaseViewProps {
-  /** Renders the tier-specific `FeedList` for the current search term. */
-  renderFeedList: (search: string) => ReactNode;
-  /** Free tier shows the page-info tooltip button next to the share link. */
-  showPageInfo?: boolean;
-  /** Medium/Premium show the post-stats sidebar alongside the feed. */
-  showSidebar?: boolean;
-}
+import type { FeedBaseViewProps } from "@/types/feed/FeedBaseView-types";
 
 export function FeedBaseView({
   renderFeedList,
@@ -48,7 +40,7 @@ export function FeedBaseView({
       </div>
 
       <ErrorBoundary>
-        <Suspense fallback={<SkeletonFeedList />}>
+        <Suspense fallback={<FeedLoadingFallback />}>
           {renderFeedList(search)}
         </Suspense>
       </ErrorBoundary>

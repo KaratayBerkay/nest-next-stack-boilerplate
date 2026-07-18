@@ -1,13 +1,19 @@
-import type { Metadata } from "next";
+import { getMessages } from "@/lib/i18n/get-messages";
+import type { Lang } from "@/constants/i18n";
 import PageContent from "@/views/ui/radio-group/PageContent";
 
-export const metadata: Metadata = {
-  title: "Radio Group",
-  description: "Radio Group component demo",
-};
-
 interface PageProps {
+  params: Promise<{ lang: string }>;
   searchParams: Promise<{ tab?: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps) {
+  const { lang } = await params;
+  const t = getMessages(lang as Lang, "ui");
+  return {
+    title: t.radioGroupTitle,
+    description: t.radioGroupDescription,
+  };
 }
 
 export default async function RadioGroupPage({ searchParams }: PageProps) {

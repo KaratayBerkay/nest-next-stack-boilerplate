@@ -1,17 +1,26 @@
-import type { Metadata } from "next";
+import { getMessages } from "@/lib/i18n/get-messages";
+import type { Lang } from "@/constants/i18n";
 import { MultiStateExample } from "@/views/ui/accordion/MultiStateExample";
 
-export const metadata: Metadata = {
-  title: "Accordion - Multi State",
-  description: "When a new accordion opens, the other open ones don't close.",
-};
+interface PageProps {
+  params: Promise<{ lang: string }>;
+}
 
-export default function VariantsPage() {
+export async function generateMetadata({ params }: PageProps) {
+  const { lang } = await params;
+  const t = getMessages(lang as Lang, "ui");
+  return {
+    title: t.accordionVariantsTitle,
+    description: t.accordionVariantsDescription,
+  };
+}
+
+export default async function VariantsPage({ params }: PageProps) {
+  const { lang } = await params;
+  const t = getMessages(lang as Lang, "ui");
   return (
     <section className="space-y-4">
-      <p className="text-muted text-sm italic">
-        When a new accordion opens, the other open ones don&apos;t close.
-      </p>
+      <p className="text-muted text-sm italic">{t.accordionVariantsText}</p>
       <MultiStateExample />
     </section>
   );

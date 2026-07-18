@@ -72,6 +72,21 @@ async function handleCreateApiKey(
   }
 }
 
+async function loadApiKeys(
+  setKeys: Dispatch<SetStateAction<ApiKey[]>>,
+  toast: ReturnType<typeof useToast>["toast"],
+  setLoadingKeys: Dispatch<SetStateAction<boolean>>,
+) {
+  try {
+    const data = await apiFetchJson<{ apiKeys: ApiKey[] }>(API_KEYS_URL);
+    setKeys(data.apiKeys);
+  } catch {
+    toast({ title: "Failed to load API keys", variant: "destructive" });
+  } finally {
+    setLoadingKeys(false);
+  }
+}
+
 async function handleRevokeApiKey(
   id: string,
   name: string,
@@ -107,16 +122,10 @@ export default function PageContent() {
   const [newKeyResult, setNewKeyResult] = useState<string | null>(null);
   const dateDisplay = useDateDisplayCookie();
 
-  const loadKeys = useCallback(async () => {
-    try {
-      const data = await apiFetchJson<{ apiKeys: ApiKey[] }>(API_KEYS_URL);
-      setKeys(data.apiKeys);
-    } catch {
-      toast({ title: "Failed to load API keys", variant: "destructive" });
-    } finally {
-      setLoadingKeys(false);
-    }
-  }, [toast]);
+  const loadKeys = useCallback(
+    () => loadApiKeys(setKeys, toast, setLoadingKeys),
+    [toast],
+  );
 
   useEffect(() => {
     if (user)

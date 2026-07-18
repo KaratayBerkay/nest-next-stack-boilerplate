@@ -1,4 +1,5 @@
 import { useId, type ReactNode } from "react";
+import type { FieldMessagesProps } from "@/types/ui/FieldMessages-types";
 
 interface UseFieldMessagesReturn {
   describedBy: string | undefined;
@@ -48,11 +49,6 @@ export function useFieldMessages(
   );
 
   return { describedBy, errorId, descriptionId, messages };
-}
-
-interface FieldMessagesProps {
-  error?: string;
-  description?: string;
 }
 
 /**

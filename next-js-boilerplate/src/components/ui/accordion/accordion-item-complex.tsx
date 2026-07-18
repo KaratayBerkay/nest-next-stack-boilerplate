@@ -7,8 +7,7 @@ import { resolveVariant } from "@/lib/resolve-variant";
 import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { AccordionItemComplexProps } from "@/types/ui/Accordion-types";
-
-export type AccordionUpperSectionProps = React.HTMLAttributes<HTMLDivElement>;
+import type { AccordionUpperSectionProps } from "@/types/ui/AccordionUpperSection-types";
 
 const accordionComplexVariants = {
   ...globalStyleVariants,

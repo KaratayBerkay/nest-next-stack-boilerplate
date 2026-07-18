@@ -9,6 +9,7 @@ import { MediumPageView } from "@/views/posts/[uuid]/MediumPageView";
 import { PremiumPageView } from "@/views/posts/[uuid]/PremiumPageView";
 import type { PostPageProps } from "@/types/routing/PostPage-types";
 import { serverEnv } from "@/lib/env";
+import { POST, JSON_CONTENT_TYPE_HEADER } from "@/constants";
 
 const VIEWS = {
   FREE: FreePageView,
@@ -28,8 +29,8 @@ export async function generateMetadata({
       variables: { id: uuid },
     });
     const res = await fetch(`${backendUrl}/graphql`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: POST,
+      headers: JSON_CONTENT_TYPE_HEADER,
       body: gqlQuery,
       cache: "no-store",
     });

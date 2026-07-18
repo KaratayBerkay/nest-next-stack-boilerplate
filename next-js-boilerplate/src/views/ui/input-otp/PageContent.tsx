@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, type Dispatch, type SetStateAction } from "react";
 import { InputOTP } from "@/components/ui/InputOTP";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
@@ -10,6 +10,29 @@ const MOCK_CODE = "123456";
 function InputOTPWrapper() {
   const [val, setVal] = useState("");
   return <InputOTP value={val} onChange={setVal} maxLength={6} />;
+}
+
+function handleResendModuleLevel(
+  setCountdown: Dispatch<SetStateAction<number>>,
+  setCode: Dispatch<SetStateAction<string>>,
+  setStatus: Dispatch<SetStateAction<"idle" | "success">>,
+) {
+  setCountdown(30);
+  setCode("");
+  setStatus("idle");
+}
+
+function handleChangeModuleLevel(
+  v: string,
+  setCode: Dispatch<SetStateAction<string>>,
+  setStatus: Dispatch<SetStateAction<"idle" | "success">>,
+) {
+  setCode(v);
+  if (v === MOCK_CODE) {
+    setStatus("success");
+  } else {
+    setStatus("idle");
+  }
 }
 
 function TwoFactorVerification() {
@@ -23,20 +46,15 @@ function TwoFactorVerification() {
     return () => clearInterval(t);
   }, [countdown]);
 
-  const handleResend = useCallback(() => {
-    setCountdown(30);
-    setCode("");
-    setStatus("idle");
-  }, []);
+  const handleResend = useCallback(
+    () => handleResendModuleLevel(setCountdown, setCode, setStatus),
+    [setCountdown, setCode, setStatus],
+  );
 
-  const handleChange = useCallback((v: string) => {
-    setCode(v);
-    if (v === MOCK_CODE) {
-      setStatus("success");
-    } else {
-      setStatus("idle");
-    }
-  }, []);
+  const handleChange = useCallback(
+    (v: string) => handleChangeModuleLevel(v, setCode, setStatus),
+    [setCode, setStatus],
+  );
 
   if (status === "success") {
     return (

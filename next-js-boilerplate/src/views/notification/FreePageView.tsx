@@ -27,6 +27,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { notificationTarget } from "@/lib/notifications/target";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 
+function navigateToFeed(
+  router: ReturnType<typeof useRouter>,
+  lang: string,
+) {
+  router.push(`/v1/${lang}/feed`);
+}
+
 function NotificationPageContent() {
   const params = useParams<{ lang: string }>();
   const lang = params?.lang ?? "en";
@@ -88,9 +95,10 @@ function NotificationPageContent() {
   const pointer = useDeviceType();
   const isTouch = pointer === "touch";
 
-  const goToFeed = useCallback(() => {
-    router.push(`/v1/${lang}/feed`);
-  }, [router, lang]);
+  const goToFeed = useCallback(
+    () => navigateToFeed(router, lang),
+    [router, lang],
+  );
 
   const { progress, direction, isSwiping } = useSwipeGesture({
     threshold: 60,

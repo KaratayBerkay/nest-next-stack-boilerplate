@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { serverEnv } from "@/lib/env";
+import { GET as GET_METHOD, POST as POST_METHOD } from "@/constants/api/methods";
+import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 
 export async function GET(
   _request: NextRequest,
@@ -8,7 +10,7 @@ export async function GET(
 ) {
   const { path } = await params;
   const backendPath = "/" + path.join("/");
-  return proxyToBackend(backendPath, { method: "GET" });
+  return proxyToBackend(backendPath, { method: GET_METHOD });
 }
 
 export async function POST(
@@ -19,7 +21,7 @@ export async function POST(
   const backendPath = "/" + path.join("/");
   const body = await request.json();
   return proxyToBackend(backendPath, {
-    method: "POST",
+    method: POST_METHOD,
     body: JSON.stringify(body),
   });
 }
@@ -32,7 +34,7 @@ async function proxyToBackend(backendPath: string, init: RequestInit) {
   const res = await fetch(url, {
     ...init,
     headers: {
-      "Content-Type": "application/json",
+      ...JSON_CONTENT_TYPE_HEADER,
       ...(cookieHeader ? { Cookie: cookieHeader } : {}),
       ...(init.headers as Record<string, string>),
     },

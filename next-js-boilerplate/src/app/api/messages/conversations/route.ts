@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { serverEnv } from "@/lib/env";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
 import { forwardedForHeader, sessionTokenHeaders } from "@/lib/backend";
+import { bearerAuthHeader } from "@/constants/api/headers";
 
 const BACKEND = serverEnv().APP_URL;
 
@@ -15,7 +16,7 @@ export async function GET() {
   const url = `${BACKEND}/api/conversations`;
   const res = await fetch(url, {
     headers: {
-      Authorization: `Bearer ${accessToken}`,
+      ...bearerAuthHeader(accessToken),
       ...(await forwardedForHeader()),
       ...(await sessionTokenHeaders()),
     },

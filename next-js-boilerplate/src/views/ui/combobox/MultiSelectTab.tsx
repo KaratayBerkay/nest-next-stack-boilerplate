@@ -1,8 +1,22 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, type Dispatch, type SetStateAction } from "react";
 import { CheckboxChip } from "@/components/ui/Checkbox";
 import { Command, CommandInput, CommandList, CommandItem } from "@/components/ui/Command";
 import { toggleItem } from "./helpers";
 import { multiData } from "./data";
+
+function handleSelectModuleLevel(
+  itemValue: string,
+  setSelected: Dispatch<SetStateAction<string[]>>,
+) {
+  setSelected((prev) => toggleItem(prev, itemValue));
+}
+
+function handleRemoveModuleLevel(
+  val: string,
+  setSelected: Dispatch<SetStateAction<string[]>>,
+) {
+  setSelected((prev) => prev.filter((v) => v !== val));
+}
 
 export function MultiSelectTab() {
   const [open, setOpen] = useState(false);
@@ -17,13 +31,15 @@ export function MultiSelectTab() {
     [query],
   );
 
-  const handleSelect = useCallback((itemValue: string) => {
-    setSelected((prev) => toggleItem(prev, itemValue));
-  }, []);
+  const handleSelect = useCallback(
+    (itemValue: string) => handleSelectModuleLevel(itemValue, setSelected),
+    [setSelected],
+  );
 
-  const handleRemove = useCallback((val: string) => {
-    setSelected((prev) => prev.filter((v) => v !== val));
-  }, []);
+  const handleRemove = useCallback(
+    (val: string) => handleRemoveModuleLevel(val, setSelected),
+    [setSelected],
+  );
 
   return (
     <div className="flex flex-col gap-4">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import { Counter } from "@/components/ui/Counter";
 import { Button } from "@/components/ui/Button";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
@@ -21,6 +21,14 @@ type CartItem = {
 
 const FREE_SHIPPING_THRESHOLD = 75;
 
+function setQtyModuleLevel(
+  id: string,
+  qty: number,
+  setItems: Dispatch<SetStateAction<CartItem[]>>,
+) {
+  setItems((prev) => prev.map((item) => (item.id === id ? { ...item, qty } : item)));
+}
+
 function CartTab() {
   const [items, setItems] = useState<CartItem[]>([
     { id: "tee", name: "Organic Cotton Tee", detail: "Size M · Sage", price: 24, stock: 10, qty: 1 },
@@ -28,9 +36,7 @@ function CartTab() {
     { id: "cap", name: "Corduroy Cap", detail: "One size", price: 19, stock: 2, qty: 1 },
   ]);
 
-  const setQty = (id: string, qty: number) => {
-    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, qty } : item)));
-  };
+  const setQty = (id: string, qty: number) => setQtyModuleLevel(id, qty, setItems);
 
   const itemCount = items.reduce((sum, item) => sum + item.qty, 0);
   const subtotal = items.reduce((sum, item) => sum + item.qty * item.price, 0);
@@ -84,6 +90,15 @@ function CartTab() {
 
 const MAX_SEATS = 9;
 
+function handleAdultsModuleLevel(
+  v: number,
+  setAdults: Dispatch<SetStateAction<number>>,
+  setInfants: Dispatch<SetStateAction<number>>,
+) {
+  setAdults(v);
+  setInfants((prev) => Math.min(prev, v));
+}
+
 function PassengersTab() {
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
@@ -91,11 +106,7 @@ function PassengersTab() {
 
   const travellers = adults + children + infants;
 
-  const handleAdults = (v: number) => {
-    setAdults(v);
-    // Infants ride on an adult's lap — never more infants than adults.
-    setInfants((prev) => Math.min(prev, v));
-  };
+  const handleAdults = (v: number) => handleAdultsModuleLevel(v, setAdults, setInfants);
 
   const rows = [
     {

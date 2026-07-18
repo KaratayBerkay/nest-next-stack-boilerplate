@@ -7,6 +7,7 @@ import {
   useRef,
   useMemo,
   type Dispatch,
+  type MutableRefObject,
   type SetStateAction,
 } from "react";
 import type { FeedListPremiumProps } from "@/types/feed/FeedList-types";
@@ -41,6 +42,49 @@ function handleDeletePost(
 ) {
   setExtraPosts((prev) => prev.filter((p) => p.id !== postId));
   setExpandedPostId((prev) => (prev === postId ? null : prev));
+}
+
+async function handleLoadMore(
+  loadingRef: MutableRefObject<boolean>,
+  hasMore: boolean,
+  cursorRef: MutableRefObject<string | null>,
+  search: string,
+  setLoadingMore: Dispatch<SetStateAction<boolean>>,
+  setExtraPosts: Dispatch<SetStateAction<Post[]>>,
+  setExtraHasMore: Dispatch<SetStateAction<boolean>>,
+) {
+  if (loadingRef.current || !hasMore || !cursorRef.current) return;
+  loadingRef.current = true;
+  setLoadingMore(true);
+  try {
+    const p = new URLSearchParams();
+    p.set("take", String(PAGE_SIZE));
+    p.set("cursor", cursorRef.current);
+    if (search) p.set("search", search);
+    const res = await apiFetch(`${POSTS_URL}?${p}`);
+    if (!res.ok) return;
+    const result = await res.json();
+    setExtraPosts((prev) => [...prev, ...result.posts]);
+    setExtraHasMore(result.hasMore);
+    cursorRef.current = result.nextCursor;
+  } catch {
+    // silent
+  } finally {
+    setLoadingMore(false);
+    loadingRef.current = false;
+  }
+}
+
+function refreshFeedList(
+  queryClient: ReturnType<typeof useQueryClient>,
+  setExtraPosts: Dispatch<SetStateAction<Post[]>>,
+  setExtraHasMore: Dispatch<SetStateAction<boolean>>,
+  search: string,
+) {
+  queryClient.setQueryData(["feed", "new-flag"], false);
+  setExtraPosts([]);
+  setExtraHasMore(true);
+  queryClient.invalidateQueries({ queryKey: ["feed", "list", search] });
 }
 
 export function FeedList({ search, initialFeedData, currentUserId }: FeedListPremiumProps) {
@@ -96,28 +140,10 @@ export function FeedList({ search, initialFeedData, currentUserId }: FeedListPre
   const hasMore =
     extraPosts.length > 0 ? extraHasMore : (data?.hasMore ?? false);
 
-  const loadMore = useCallback(async () => {
-    if (loadingRef.current || !hasMore || !cursorRef.current) return;
-    loadingRef.current = true;
-    setLoadingMore(true);
-    try {
-      const p = new URLSearchParams();
-      p.set("take", String(PAGE_SIZE));
-      p.set("cursor", cursorRef.current);
-      if (search) p.set("search", search);
-      const res = await apiFetch(`${POSTS_URL}?${p}`);
-      if (!res.ok) return;
-      const result = await res.json();
-      setExtraPosts((prev) => [...prev, ...result.posts]);
-      setExtraHasMore(result.hasMore);
-      cursorRef.current = result.nextCursor;
-    } catch {
-      // silent
-    } finally {
-      setLoadingMore(false);
-      loadingRef.current = false;
-    }
-  }, [hasMore, search]);
+  const loadMore = useCallback(
+    () => handleLoadMore(loadingRef, hasMore, cursorRef, search, setLoadingMore, setExtraPosts, setExtraHasMore),
+    [hasMore, search],
+  );
 
   useEffect(() => {
     cursorRef.current = data?.nextCursor ?? null;
@@ -175,12 +201,10 @@ export function FeedList({ search, initialFeedData, currentUserId }: FeedListPre
     staleTime: Infinity,
   }).data;
 
-  const handleRefresh = useCallback(() => {
-    queryClient.setQueryData(["feed", "new-flag"], false);
-    setExtraPosts([]);
-    setExtraHasMore(true);
-    queryClient.invalidateQueries({ queryKey: ["feed", "list", search] });
-  }, [queryClient, search]);
+  const handleRefresh = useCallback(
+    () => refreshFeedList(queryClient, setExtraPosts, setExtraHasMore, search),
+    [queryClient, search],
+  );
 
   useEffect(() => {
     if (newFlag && posts.length > 0) {

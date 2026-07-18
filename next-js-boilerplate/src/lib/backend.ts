@@ -5,6 +5,7 @@ import {
   CSRF_TOKEN_HEADER,
   DEVICE_TOKEN_HEADER,
   JSON_CONTENT_TYPE_HEADER,
+  POST,
   RBAC_TOKEN_HEADER,
   USER_TOKEN_HEADER,
   X_FORWARDED_FOR_HEADER,
@@ -250,7 +251,7 @@ export async function graphqlFetch<T>(
 
   const url = `${backendBaseUrl()}/graphql`;
   const res = await fetch(url, {
-    method: "POST",
+    method: POST,
     next: { revalidate: 60 },
     headers: {
       ...JSON_CONTENT_TYPE_HEADER,

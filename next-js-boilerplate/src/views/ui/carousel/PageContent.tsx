@@ -5,6 +5,8 @@ import {
   useCallback,
   useEffect,
   type PointerEvent as ReactPointerEvent,
+  type MutableRefObject,
+  type RefObject,
 } from "react";
 import {
   Carousel,
@@ -330,6 +332,57 @@ const cssSlides = [
 
 const AUTOPLAY_INTERVAL = 4000;
 
+function onPointerDownModuleLevel(
+  e: ReactPointerEvent<HTMLDivElement>,
+  scrollRef: RefObject<HTMLDivElement | null>,
+  dragRef: MutableRefObject<{ startX: number; startScroll: number } | null>,
+  markInteraction: () => void,
+) {
+  if (e.pointerType !== "mouse" || e.button !== 0) return;
+  const el = scrollRef.current;
+  if (!el) return;
+  e.preventDefault();
+  markInteraction();
+  dragRef.current = { startX: e.clientX, startScroll: el.scrollLeft };
+  el.setPointerCapture(e.pointerId);
+  el.style.scrollSnapType = "none";
+  el.style.scrollBehavior = "auto";
+}
+
+function onPointerMoveModuleLevel(
+  e: ReactPointerEvent<HTMLDivElement>,
+  dragRef: MutableRefObject<{ startX: number; startScroll: number } | null>,
+  scrollRef: RefObject<HTMLDivElement | null>,
+  markInteraction: () => void,
+) {
+  const drag = dragRef.current;
+  const el = scrollRef.current;
+  if (!drag || !el) return;
+  markInteraction();
+  el.scrollLeft = drag.startScroll - (e.clientX - drag.startX);
+}
+
+function endDragModuleLevel(
+  dragRef: MutableRefObject<{ startX: number; startScroll: number } | null>,
+  scrollRef: RefObject<HTMLDivElement | null>,
+  markInteraction: () => void,
+  getStride: (el: HTMLDivElement) => number,
+  restoreSnap: (el: HTMLDivElement) => void,
+) {
+  const drag = dragRef.current;
+  const el = scrollRef.current;
+  if (!drag || !el) return;
+  dragRef.current = null;
+  markInteraction();
+  const stride = getStride(el);
+  const index = Math.min(
+    cssSlides.length - 1,
+    Math.max(0, Math.round(el.scrollLeft / stride)),
+  );
+  el.scrollTo({ left: stride * index, behavior: "smooth" });
+  restoreSnap(el);
+}
+
 function PureCssCarousel() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -402,40 +455,22 @@ function PureCssCarousel() {
     window.setTimeout(finish, 700);
   }, []);
 
-  const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (e.pointerType !== "mouse" || e.button !== 0) return;
-    const el = scrollRef.current;
-    if (!el) return;
-    e.preventDefault();
-    markInteraction();
-    dragRef.current = { startX: e.clientX, startScroll: el.scrollLeft };
-    el.setPointerCapture(e.pointerId);
-    el.style.scrollSnapType = "none";
-    el.style.scrollBehavior = "auto";
-  };
+  const onPointerDown = useCallback(
+    (e: ReactPointerEvent<HTMLDivElement>) =>
+      onPointerDownModuleLevel(e, scrollRef, dragRef, markInteraction),
+    [markInteraction],
+  );
 
-  const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current;
-    const el = scrollRef.current;
-    if (!drag || !el) return;
-    markInteraction();
-    el.scrollLeft = drag.startScroll - (e.clientX - drag.startX);
-  };
+  const onPointerMove = useCallback(
+    (e: ReactPointerEvent<HTMLDivElement>) =>
+      onPointerMoveModuleLevel(e, dragRef, scrollRef, markInteraction),
+    [markInteraction],
+  );
 
-  const endDrag = () => {
-    const drag = dragRef.current;
-    const el = scrollRef.current;
-    if (!drag || !el) return;
-    dragRef.current = null;
-    markInteraction();
-    const stride = getStride(el);
-    const index = Math.min(
-      cssSlides.length - 1,
-      Math.max(0, Math.round(el.scrollLeft / stride)),
-    );
-    el.scrollTo({ left: stride * index, behavior: "smooth" });
-    restoreSnap(el);
-  };
+  const endDrag = useCallback(
+    () => endDragModuleLevel(dragRef, scrollRef, markInteraction, getStride, restoreSnap),
+    [markInteraction, getStride, restoreSnap],
+  );
 
   return (
     <div

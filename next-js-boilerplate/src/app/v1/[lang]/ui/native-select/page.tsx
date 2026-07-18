@@ -1,13 +1,19 @@
-import type { Metadata } from "next";
+import { getMessages } from "@/lib/i18n/get-messages";
+import type { Lang } from "@/constants/i18n";
 import PageContent from "@/views/ui/native-select/PageContent";
 
-export const metadata: Metadata = {
-  title: "Native Select",
-  description: "Native Select component demo",
-};
-
 interface PageProps {
+  params: Promise<{ lang: string }>;
   searchParams: Promise<{ tab?: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps) {
+  const { lang } = await params;
+  const t = getMessages(lang as Lang, "ui");
+  return {
+    title: t.nativeSelectTitle,
+    description: t.nativeSelectDescription,
+  };
 }
 
 export default async function NativeSelectPage({ searchParams }: PageProps) {

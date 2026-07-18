@@ -1,6 +1,11 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import {
+  useState,
+  useCallback,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import { apiFetch } from "@/lib/api-client";
 import { MESSAGES_CONVERSATIONS_PREFIX } from "@/constants/api/urls";
 import { POST } from "@/constants/api/methods";
@@ -19,26 +24,61 @@ import { MessageTick } from "@/components/MessageTick";
 import { initials } from "@/lib/initials";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { IconChevronLeft } from "@tabler/icons-react";
-import type { Dispatch, SetStateAction } from "react";
+import type { ChatViewProps, Message } from "@/types/messages/ChatView-types";
 
-type UserInfo = { id: string; name: string; email: string; avatarUrl: string | null };
-type Message = {
-  id: string;
-  senderId: string;
-  recipientId: string;
-  body: string;
-  createdAt: string;
-  readAt: string | null;
-  deliveredAt: string | null;
-};
+async function sendMessageToUser(
+  recipientId: string,
+  text: string,
+  queryClient: ReturnType<typeof useQueryClient>,
+) {
+  const res = await apiFetch(
+    `${MESSAGES_CONVERSATIONS_PREFIX}${recipientId}/messages`,
+    { method: POST, body: JSON.stringify({ text }) },
+  );
+  if (res.ok) {
+    const msg = await res.json().catch(() => null);
+    if (msg?.id) {
+      queryClient.setQueryData(
+        ["messages", recipientId],
+        (old: unknown) => {
+          const data = old as
+            | { pages: { messages: Record<string, unknown>[] }[] }
+            | undefined;
+          if (!data?.pages?.length) return old;
+          const pages = [...data.pages];
+          const first = { ...pages[0] };
+          if (first.messages.some((m) => m.id === msg.id)) return old;
+          first.messages = [...first.messages, msg];
+          pages[0] = first;
+          return { ...data, pages };
+        },
+      );
+    }
+  }
+}
 
-interface ChatViewProps {
-  selectedUser: UserInfo;
-  user: UserInfo;
-  setSelectedUser: Dispatch<SetStateAction<UserInfo | null>>;
-  setSidebarOpen: Dispatch<SetStateAction<boolean>>;
-  onlineUsers: Set<string>;
-  connectionState: string;
+async function chatViewHandleSend(
+  selectedUser: { id: string } | null,
+  input: string,
+  sendMessage: (recipientId: string, text: string) => Promise<void>,
+  setInput: Dispatch<SetStateAction<string>>,
+  setMessageError: Dispatch<SetStateAction<string | null>>,
+  scrollToBottom: () => void,
+) {
+  if (!selectedUser) return;
+  const parsed = sendMessageSchema.safeParse({ text: input });
+  if (!parsed.success) {
+    setMessageError(parsed.error.issues[0]?.message ?? "Invalid message");
+    return;
+  }
+  setMessageError(null);
+  try {
+    await sendMessage(selectedUser.id, parsed.data.text);
+    setInput("");
+    scrollToBottom();
+  } catch {
+    setMessageError("Failed to send message. Try again.");
+  }
 }
 
 export function ChatView({
@@ -71,51 +111,14 @@ export function ChatView({
   );
 
   const sendMessage = useCallback(
-    async (recipientId: string, text: string) => {
-      const res = await apiFetch(
-        `${MESSAGES_CONVERSATIONS_PREFIX}${recipientId}/messages`,
-        { method: POST, body: JSON.stringify({ text }) },
-      );
-      if (res.ok) {
-        const msg = await res.json().catch(() => null);
-        if (msg?.id) {
-          queryClient.setQueryData(
-            ["messages", recipientId],
-            (old: unknown) => {
-              const data = old as
-                | { pages: { messages: Record<string, unknown>[] }[] }
-                | undefined;
-              if (!data?.pages?.length) return old;
-              const pages = [...data.pages];
-              const first = { ...pages[0] };
-              if (first.messages.some((m) => m.id === msg.id)) return old;
-              first.messages = [...first.messages, msg];
-              pages[0] = first;
-              return { ...data, pages };
-            },
-          );
-        }
-      }
-    },
+    (recipientId: string, text: string) => sendMessageToUser(recipientId, text, queryClient),
     [queryClient],
   );
 
-  const handleSend = useCallback(async () => {
-    if (!selectedUser) return;
-    const parsed = sendMessageSchema.safeParse({ text: input });
-    if (!parsed.success) {
-      setMessageError(parsed.error.issues[0]?.message ?? "Invalid message");
-      return;
-    }
-    setMessageError(null);
-    try {
-      await sendMessage(selectedUser.id, parsed.data.text);
-      setInput("");
-      scrollToBottom();
-    } catch {
-      setMessageError("Failed to send message. Try again.");
-    }
-  }, [selectedUser, input, sendMessage, scrollToBottom]);
+  const handleSend = useCallback(
+    () => chatViewHandleSend(selectedUser, input, sendMessage, setInput, setMessageError, scrollToBottom),
+    [selectedUser, input, sendMessage, scrollToBottom],
+  );
 
   if (connectionState === "unstable") {
     return (

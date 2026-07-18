@@ -1,9 +1,20 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type Dispatch, type SetStateAction } from "react";
 import { Spinner } from "@/components/ui/Spinner";
 import { Command, CommandInput, CommandList, CommandItem } from "@/components/ui/Command";
 import { getLabel } from "./helpers";
 import { asyncData } from "./data";
 import { useDebounce } from "@/hooks/ui/useDebounce";
+
+function handleSelectModuleLevel(
+  itemValue: string,
+  setValue: Dispatch<SetStateAction<string>>,
+  setOpen: Dispatch<SetStateAction<boolean>>,
+  setQuery: Dispatch<SetStateAction<string>>,
+) {
+  setValue(itemValue);
+  setOpen(false);
+  setQuery("");
+}
 
 export function AsyncTab() {
   const [open, setOpen] = useState(false);
@@ -29,11 +40,10 @@ export function AsyncTab() {
 
   const selectedLabel = getLabel(value, asyncData);
 
-  const handleSelect = useCallback((itemValue: string) => {
-    setValue(itemValue);
-    setOpen(false);
-    setQuery("");
-  }, []);
+  const handleSelect = useCallback(
+    (itemValue: string) => handleSelectModuleLevel(itemValue, setValue, setOpen, setQuery),
+    [setValue, setOpen, setQuery],
+  );
 
   return (
     <div className="flex flex-col gap-4">

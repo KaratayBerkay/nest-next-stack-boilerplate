@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { getAccessToken } from "@/store/ssr-cookies";
 import { sessionTokenHeaders } from "@/lib/backend";
+import { POST as POST_METHOD } from "@/constants/api/methods";
+import { JSON_CONTENT_TYPE_HEADER, bearerAuthHeader } from "@/constants/api/headers";
 
 const BACKEND = serverEnv().APP_URL;
 
@@ -20,7 +22,7 @@ export async function GET(
 
   const res = await fetch(url.toString(), {
     headers: {
-      Authorization: `Bearer ${token}`,
+      ...bearerAuthHeader(token),
       ...(await sessionTokenHeaders()),
     },
   });
@@ -49,10 +51,10 @@ export async function POST(
   const body = await request.text();
 
   const res = await fetch(`${BACKEND}/api/conversations/${userId}/messages`, {
-    method: "POST",
+    method: POST_METHOD,
     headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+      ...JSON_CONTENT_TYPE_HEADER,
+      ...bearerAuthHeader(token),
       ...(await sessionTokenHeaders()),
     },
     body,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
@@ -23,6 +24,36 @@ import { POST } from "@/constants/api/methods";
 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsAccountPageInfo } from "@/constants/page-info";
+
+async function uploadAvatarFile(
+  file: File,
+  toast: ReturnType<typeof useToast>["toast"],
+  t: Record<string, string>,
+  setAvatarUrl: Dispatch<SetStateAction<string>>,
+) {
+  const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+  if (!allowed.includes(file.type)) {
+    toast({ title: t.invalidFileType, variant: "destructive" });
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    toast({ title: t.fileTooLarge, variant: "destructive" });
+    return;
+  }
+  const form = new FormData();
+  form.append("file", file);
+  try {
+    const uploadRes = await apiFetchJson<{ urls: { full: string } }>(
+      UPLOAD_URL,
+      { method: POST, body: form },
+    );
+    setAvatarUrl(uploadRes.urls.full);
+  } catch (err) {
+    const exception = (err as Error & { exception?: { msg?: string } })
+      .exception;
+    toast({ title: exception?.msg ?? t.uploadFailed, variant: "destructive" });
+  }
+}
 
 export function FreePageView() {
   const { user, loading, refreshUser } = useAuth();
@@ -88,37 +119,8 @@ export function FreePageView() {
   }, [username, user?.username]);
 
   const handleAvatarFile = useCallback(
-    async (file: File) => {
-      const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-      if (!allowed.includes(file.type)) {
-        toast({ title: t.invalidFileType, variant: "destructive" });
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        toast({ title: t.fileTooLarge, variant: "destructive" });
-        return;
-      }
-      const form = new FormData();
-      form.append("file", file);
-      try {
-        const uploadRes = await apiFetchJson<{ urls: { full: string } }>(
-          UPLOAD_URL,
-          {
-            method: POST,
-            body: form,
-          },
-        );
-        setAvatarUrl(uploadRes.urls.full);
-      } catch (err) {
-        const exception = (err as Error & { exception?: { msg?: string } })
-          .exception;
-        toast({
-          title: exception?.msg ?? t.uploadFailed,
-          variant: "destructive",
-        });
-      }
-    },
-    [toast, t.uploadFailed, t.invalidFileType, t.fileTooLarge],
+    (file: File) => uploadAvatarFile(file, toast, t, setAvatarUrl),
+    [toast, t],
   );
 
   const saveProfile = useCallback(async () => {

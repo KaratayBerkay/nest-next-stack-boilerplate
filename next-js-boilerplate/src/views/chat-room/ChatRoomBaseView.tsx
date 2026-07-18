@@ -7,7 +7,9 @@ import {
   Suspense,
   useMemo,
   type ChangeEvent,
+  type Dispatch,
   type KeyboardEvent,
+  type SetStateAction,
 } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
@@ -34,24 +36,7 @@ import { useRouter } from "next/navigation";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { chatRoomPageInfo } from "@/constants/page-info";
 import { ChatRoomFallback } from "@/fallbacks";
-import type { ChatRoomViewProps } from "@/types/chat-room/ChatRoomView-types";
-
-/**
- * Tier-specific rendering knobs for ChatRoomBaseView.
- *
- * - `showPageInfo`: Free tier shows the page-info tooltip button in the header.
- * - `vipRooms`: Medium/Premium unlock an extra VIP room in the room list (marked with a crown icon).
- * - `useNativeControls`: Medium/Premium render raw `<button>`/`<input>` elements with bespoke
- *   Tailwind classes instead of the shared `Button`/`Input` components that Free uses.
- * - `showSelfCrown`: Premium shows a crown icon next to the current user's own entry in the
- *   online-members list.
- */
-export interface ChatRoomBaseViewProps extends ChatRoomViewProps {
-  showPageInfo?: boolean;
-  vipRooms?: string[];
-  useNativeControls?: boolean;
-  showSelfCrown?: boolean;
-}
+import type { ChatRoomBaseViewProps } from "@/types/chat-room/ChatRoomBaseView-types";
 
 function SidebarCloseButton({
   useNativeControls,
@@ -248,6 +233,38 @@ function SendButton({
   );
 }
 
+function chatRoomHandleSend(
+  input: string,
+  realtime: ReturnType<typeof useRealtime> | null,
+  room: string,
+  setInput: Dispatch<SetStateAction<string>>,
+  scrollToBottom: () => void,
+) {
+  if (!input.trim() || !realtime) return;
+  const tempId = `temp-${nowMs()}`;
+  realtime.send({
+    type: "room-message",
+    room,
+    text: input.trim(),
+    tempId,
+  });
+  setInput("");
+  scrollToBottom();
+}
+
+function selectChatRoom(
+  r: string,
+  setRoom: Dispatch<SetStateAction<string>>,
+  setRoomMembers: Dispatch<SetStateAction<{ id: string; name: string; avatar?: string }[]>>,
+  setSidebarOpen: Dispatch<SetStateAction<boolean>>,
+  router: ReturnType<typeof useRouter>,
+) {
+  setRoom(r);
+  setRoomMembers([]);
+  setSidebarOpen(false);
+  router.replace(`?room=${r}`, { scroll: false });
+}
+
 function ChatRoomContent({
   initialRoom = "general",
   showPageInfo = false,
@@ -316,18 +333,10 @@ function ChatRoomContent({
     };
   }, [realtime, room]);
 
-  const handleSend = useCallback(() => {
-    if (!input.trim() || !realtime) return;
-    const tempId = `temp-${nowMs()}`;
-    realtime.send({
-      type: "room-message",
-      room,
-      text: input.trim(),
-      tempId,
-    });
-    setInput("");
-    scrollToBottom();
-  }, [input, scrollToBottom, realtime, room]);
+  const handleSend = useCallback(
+    () => chatRoomHandleSend(input, realtime, room, setInput, scrollToBottom),
+    [input, realtime, room, scrollToBottom],
+  );
 
   const connectionState = useConnectionState();
   const onlineUserIds = useMemo(
@@ -337,12 +346,7 @@ function ChatRoomContent({
   const rooms = useMemo(() => [...CHAT_ROOMS, ...vipRooms], [vipRooms]);
 
   const selectRoom = useCallback(
-    (r: string) => {
-      setRoom(r);
-      setRoomMembers([]);
-      setSidebarOpen(false);
-      router.replace(`?room=${r}`, { scroll: false });
-    },
+    (r: string) => selectChatRoom(r, setRoom, setRoomMembers, setSidebarOpen, router),
     [router],
   );
 

@@ -1,13 +1,19 @@
-import type { Metadata } from "next";
+import { getMessages } from "@/lib/i18n/get-messages";
+import type { Lang } from "@/constants/i18n";
 import PageContent from "@/views/ui/pagination/PageContent";
 
-export const metadata: Metadata = {
-  title: "Pagination",
-  description: "Pagination component demo",
-};
-
 interface PageProps {
+  params: Promise<{ lang: string }>;
   searchParams: Promise<{ tab?: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps) {
+  const { lang } = await params;
+  const t = getMessages(lang as Lang, "ui");
+  return {
+    title: t.paginationTitle,
+    description: t.paginationDescription,
+  };
 }
 
 export default async function PaginationPage({ searchParams }: PageProps) {

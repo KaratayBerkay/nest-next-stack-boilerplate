@@ -36,4 +36,6 @@ export { SearchParamsServerFallback } from "./app/(demos)/search-params/SearchPa
 export { SearchParamsClientFallback } from "./app/(demos)/search-params/SearchParamsClientFallback";
 export { CookieStatusFallback } from "./app/(demos)/ssr-cookies/CookieStatusFallback";
 export { DynamicLoadingFallback } from "./app/(demos)/dynamic/DynamicLoadingFallback";
+export { FeedLoadingFallback } from "./app/v1/[lang]/feed/FeedLoadingFallback";
+export { FindFriendsLoadingFallback } from "./app/v1/[lang]/find-friends/FindFriendsLoadingFallback";
 export { PprFallback } from "./app/(demos)/ppr/PprFallback";

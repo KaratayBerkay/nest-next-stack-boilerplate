@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect, useCallback } from "react";
+import type { Dispatch, SetStateAction, MutableRefObject } from "react";
 import type { V1ShellProps } from "@/types/v1/V1Shell-types";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,6 +23,56 @@ import {
   handleServiceWorkerMessage,
 } from "@/lib/v1/touch-handlers";
 
+interface DragState {
+  dragging: boolean;
+  startX: number;
+  currentX: number;
+}
+
+function openSidebar(setSidebarOpen: Dispatch<SetStateAction<boolean>>) {
+  setSidebarOpen(true);
+}
+
+function closeSidebar(setSidebarOpen: Dispatch<SetStateAction<boolean>>) {
+  setSidebarOpen(false);
+}
+
+function toggleSidebar(setSidebarOpen: Dispatch<SetStateAction<boolean>>) {
+  setSidebarOpen((p) => !p);
+}
+
+function dragOnStart(
+  clientX: number,
+  dragStateRef: MutableRefObject<DragState>,
+) {
+  dragStateRef.current = { dragging: true, startX: clientX, currentX: clientX };
+}
+
+function dragOnMove(
+  clientX: number,
+  dragStateRef: MutableRefObject<DragState>,
+) {
+  if (!dragStateRef.current.dragging) return;
+  dragStateRef.current.currentX = clientX;
+}
+
+function dragOnEnd(
+  dragStateRef: MutableRefObject<DragState>,
+  close: () => void,
+) {
+  if (!dragStateRef.current.dragging) return;
+  const dx = dragStateRef.current.currentX - dragStateRef.current.startX;
+  dragStateRef.current.dragging = false;
+  if (dx < -50) close();
+}
+
+function onServiceWorkerMessage(
+  e: MessageEvent,
+  router: ReturnType<typeof useRouter>,
+) {
+  handleServiceWorkerMessage(e, router);
+}
+
 export function V1Shell({ children }: V1ShellProps) {
   const params = useParams<{ lang: string }>();
   const lang = params?.lang ?? "";
@@ -38,9 +89,9 @@ export function V1Shell({ children }: V1ShellProps) {
     currentX: number;
   }>({ dragging: false, startX: 0, currentX: 0 });
 
-  const open = useCallback(() => setSidebarOpen(true), []);
-  const close = useCallback(() => setSidebarOpen(false), []);
-  const toggle = useCallback(() => setSidebarOpen((p) => !p), []);
+  const open = useCallback(() => openSidebar(setSidebarOpen), []);
+  const close = useCallback(() => closeSidebar(setSidebarOpen), []);
+  const toggle = useCallback(() => toggleSidebar(setSidebarOpen), []);
 
   useEdgeSwipe({
     onSwipeRight: open,
@@ -52,30 +103,16 @@ export function V1Shell({ children }: V1ShellProps) {
     const el = sidebarRef.current;
     if (!el) return;
 
-    const onStart = (clientX: number) => {
-      dragStateRef.current = {
-        dragging: true,
-        startX: clientX,
-        currentX: clientX,
-      };
-    };
-    const onMove = (clientX: number) => {
-      if (!dragStateRef.current.dragging) return;
-      dragStateRef.current.currentX = clientX;
-    };
-    const onEnd = () => {
-      if (!dragStateRef.current.dragging) return;
-      const dx = dragStateRef.current.currentX - dragStateRef.current.startX;
-      dragStateRef.current.dragging = false;
-      if (dx < -50) close();
-    };
-
-    const touchStart = (e: TouchEvent) => handleTouchStart(e, onStart);
-    const touchMove = (e: TouchEvent) => handleTouchMove(e, onMove);
-    const touchEnd = () => handleTouchEnd(onEnd);
-    const mouseDown = (e: MouseEvent) => handleMouseDown(e, onStart);
-    const mouseMove = (e: MouseEvent) => handleMouseMove(e, onMove);
-    const mouseUp = () => handleMouseUp(onEnd);
+    const touchStart = (e: TouchEvent) =>
+      handleTouchStart(e, (cx) => dragOnStart(cx, dragStateRef));
+    const touchMove = (e: TouchEvent) =>
+      handleTouchMove(e, (cx) => dragOnMove(cx, dragStateRef));
+    const touchEnd = () => handleTouchEnd(() => dragOnEnd(dragStateRef, close));
+    const mouseDown = (e: MouseEvent) =>
+      handleMouseDown(e, (cx) => dragOnStart(cx, dragStateRef));
+    const mouseMove = (e: MouseEvent) =>
+      handleMouseMove(e, (cx) => dragOnMove(cx, dragStateRef));
+    const mouseUp = () => handleMouseUp(() => dragOnEnd(dragStateRef, close));
 
     el.addEventListener("touchstart", touchStart, { passive: true });
     el.addEventListener("touchmove", touchMove, { passive: true });
@@ -100,7 +137,7 @@ export function V1Shell({ children }: V1ShellProps) {
     if (typeof window === "undefined" || !("serviceWorker" in navigator))
       return;
     navigator.serviceWorker.register("/sw.js").catch(() => {});
-    const handler = (e: MessageEvent) => handleServiceWorkerMessage(e, router);
+    const handler = (e: MessageEvent) => onServiceWorkerMessage(e, router);
     navigator.serviceWorker.addEventListener("message", handler);
     return () => {
       navigator.serviceWorker.removeEventListener("message", handler);

@@ -4,12 +4,13 @@ import {
   deviceTokenCookieOptions,
   clearDeviceCookieOptions,
 } from "@/lib/cookie";
+import { POST as POST_METHOD } from "@/constants/api/methods";
 
 export async function POST() {
   const backend = await backendFetch<{ deviceToken: string }>(
     "/devices/handshake",
     {
-      method: "POST",
+      method: POST_METHOD,
     },
   );
 

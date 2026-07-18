@@ -16,9 +16,45 @@ import { checkoutPath } from "@/constants/routes";
 import { LOGIN_PATH } from "@/constants/routes";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useCurrencyCookie } from "@/hooks/useCurrencyCookie";
+import type { CurrencyCode } from "@/constants/currency";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { plansPageInfo } from "@/constants/page-info";
 import Link from "next/link";
+
+function buildTierCards(
+  user: { tier?: string } | null,
+  currency: CurrencyCode,
+  lang: string,
+  FEATURES: Record<Tier, string[]>,
+  t: Record<string, string | string[]>,
+) {
+  return TIERS.map((tier) => {
+    const isCurrent = tier === user?.tier;
+    const hasAccess = user?.tier && tierAtLeast(user.tier, tier);
+    const isUpgrade = user?.tier && !hasAccess && tier !== user.tier;
+
+    return (
+      <TierCard
+        key={tier}
+        tier={tier}
+        price={formatPrice(TIER_PRICES_CENTS[tier], currency)}
+        features={FEATURES[tier]}
+        current={isCurrent}
+        currentLabel={t.currentPlan as string}
+        ctaLabel={
+          isCurrent ? (t.currentPlan as string) : hasAccess ? (t.included as string) : (t.upgrade as string)
+        }
+        ctaHref={
+          isUpgrade && user
+            ? checkoutPath(tier, lang)
+            : !user
+              ? LOGIN_PATH
+              : undefined
+        }
+      />
+    );
+  });
+}
 
 function TierCard({
   tier,
@@ -79,33 +115,7 @@ export default function PageContent({ params }: PlansPageProps) {
     PREMIUM: t.featuresPro,
   };
 
-  // fallow-ignore-next-line complexity
-  const tierCards = TIERS.map((tier) => {
-    const isCurrent = tier === user?.tier;
-    const hasAccess = user?.tier && tierAtLeast(user.tier, tier);
-    const isUpgrade = user?.tier && !hasAccess && tier !== user.tier;
-
-    return (
-      <TierCard
-        key={tier}
-        tier={tier}
-        price={formatPrice(TIER_PRICES_CENTS[tier], currency)}
-        features={FEATURES[tier]}
-        current={isCurrent}
-        currentLabel={t.currentPlan}
-        ctaLabel={
-          isCurrent ? t.currentPlan : hasAccess ? t.included : t.upgrade
-        }
-        ctaHref={
-          isUpgrade && user
-            ? checkoutPath(tier, lang)
-            : !user
-              ? LOGIN_PATH
-              : undefined
-        }
-      />
-    );
-  });
+  const tierCards = buildTierCards(user, currency, lang, FEATURES, t);
 
   return (
     <div className="flex flex-col gap-8">

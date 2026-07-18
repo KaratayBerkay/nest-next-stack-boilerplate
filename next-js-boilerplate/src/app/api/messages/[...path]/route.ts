@@ -2,18 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { getAccessToken } from "@/store/ssr-cookies";
 import { sessionTokenHeaders } from "@/lib/backend";
+import { POST as POST_METHOD } from "@/constants/api/methods";
+import { JSON_CONTENT_TYPE_HEADER, bearerAuthHeader } from "@/constants/api/headers";
 
 const BACKEND = serverEnv().APP_URL;
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const token = await getAccessToken();
   const stHeaders = await sessionTokenHeaders();
-  if (!token) return { "Content-Type": "application/json", ...stHeaders };
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-    ...stHeaders,
-  };
+  if (!token) return { ...JSON_CONTENT_TYPE_HEADER, ...stHeaders };
+  return { ...JSON_CONTENT_TYPE_HEADER, ...bearerAuthHeader(token), ...stHeaders };
 }
 
 export async function GET(
@@ -45,7 +43,7 @@ export async function POST(
   const url = `${BACKEND}/api/${path.join("/")}`;
   const headers = await getAuthHeaders();
   const res = await fetch(url, {
-    method: "POST",
+    method: POST_METHOD,
     headers,
     body,
   });

@@ -1,9 +1,26 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, type Dispatch, type SetStateAction } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
-import type { ExampleTabsProps } from "@/types/ui/ExampleTabs-types";
+import type { ExampleTabsProps, UIExample } from "@/types/ui/ExampleTabs-types";
+
+function handleChangeModuleLevel(
+  newValue: string,
+  isControlled: boolean,
+  setInternalValue: Dispatch<SetStateAction<string>>,
+  onControlledChange: ((value: string) => void) | undefined,
+  examples: UIExample[],
+  router: ReturnType<typeof useRouter>,
+  pathname: string,
+) {
+  const next = newValue || examples[0]?.id || "";
+  if (!isControlled) setInternalValue(next);
+  onControlledChange?.(next);
+
+  const qs = next !== examples[0]?.id ? `?tab=${next}` : "";
+  router.replace(qs ? `${pathname}${qs}` : pathname, { scroll: false });
+}
 
 export function ExampleTabs({
   title,
@@ -25,14 +42,16 @@ export function ExampleTabs({
   const [accordionOpen, setAccordionOpen] = useState(false);
 
   const handleChange = useCallback(
-    (newValue: string) => {
-      const next = newValue || examples[0]?.id || "";
-      if (!isControlled) setInternalValue(next);
-      onControlledChange?.(next);
-
-      const qs = next !== examples[0]?.id ? `?tab=${next}` : "";
-      router.replace(qs ? `${pathname}${qs}` : pathname, { scroll: false });
-    },
+    (newValue: string) =>
+      handleChangeModuleLevel(
+        newValue,
+        isControlled,
+        setInternalValue,
+        onControlledChange,
+        examples,
+        router,
+        pathname,
+      ),
     [isControlled, onControlledChange, router, pathname, examples],
   );
 

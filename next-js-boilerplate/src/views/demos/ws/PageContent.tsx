@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 import { useConnectionState } from "@/hooks/useConnectionState";
 import { ConnectionUnstable } from "@/components/ConnectionUnstable";
@@ -23,18 +24,28 @@ const STATUS_COLOR: Record<string, string> = {
   down: "text-red-600",
 };
 
+function sendWsMessage(
+  input: string,
+  realtime: { send: (data: Record<string, unknown>) => void } | null,
+  setMsgs: Dispatch<SetStateAction<string[]>>,
+  setInput: Dispatch<SetStateAction<string>>,
+) {
+  if (!input.trim() || !realtime) return;
+  realtime.send({ type: "echo", body: input.trim() });
+  setMsgs((prev) => [...prev, `> ${input.trim()}`]);
+  setInput("");
+}
+
 export default function WsPage() {
   const realtime = useRealtime();
   const connectionState = useConnectionState();
   const [input, setInput] = useState("");
   const [msgs, setMsgs] = useState<string[]>([]);
 
-  const handleSend = useCallback(() => {
-    if (!input.trim() || !realtime) return;
-    realtime.send({ type: "echo", body: input.trim() });
-    setMsgs((prev) => [...prev, `> ${input.trim()}`]);
-    setInput("");
-  }, [input, realtime]);
+  const handleSend = useCallback(
+    () => sendWsMessage(input, realtime, setMsgs, setInput),
+    [input, realtime],
+  );
 
   if (!realtime) {
     return (

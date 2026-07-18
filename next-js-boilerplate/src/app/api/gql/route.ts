@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 import { serverEnv } from "@/lib/env";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
 import { forwardedForHeader, sessionTokenHeaders } from "@/lib/backend";
+import { POST as POST_METHOD } from "@/constants/api/methods";
+import { JSON_CONTENT_TYPE_HEADER, bearerAuthHeader } from "@/constants/api/headers";
 
 const BACKEND = serverEnv().APP_URL;
 
@@ -15,10 +17,10 @@ export async function POST(request: NextRequest) {
   const body = await request.text();
   const url = `${BACKEND}/graphql`;
   const res = await fetch(url, {
-    method: "POST",
+    method: POST_METHOD,
     headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
+      ...JSON_CONTENT_TYPE_HEADER,
+      ...bearerAuthHeader(accessToken),
       ...(await forwardedForHeader()),
       ...(await sessionTokenHeaders()),
     },

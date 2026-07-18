@@ -2,6 +2,7 @@
 
 import type { ProviderIconProps } from "@/types/auth/ProviderIcon-types";
 import type { SocialLoginButtonProps } from "@/types/auth/SocialLoginButton-types";
+import { AUTH_OAUTH_PREFIX } from "@/constants/api/urls";
 
 function ProviderIcon({ provider }: ProviderIconProps) {
   const size = 18;
@@ -96,7 +97,7 @@ export function SocialLoginButton({ provider, label }: SocialLoginButtonProps) {
   return (
     <button
       onClick={() => {
-        window.location.href = `/api/auth/oauth/${provider}`;
+        window.location.href = `${AUTH_OAUTH_PREFIX}${provider}`;
       }}
       className={`border-border flex w-full items-center gap-3 rounded-xl border px-4 py-2.5 text-sm font-medium shadow-sm transition-all hover:shadow-md ${style.bg} ${style.hover} ${style.text}`}
     >

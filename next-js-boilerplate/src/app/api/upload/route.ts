@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
+import { POST as POST_METHOD } from "@/constants/api/methods";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_SIZE = 5 * 1024 * 1024;
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
     backendFormData.set("file", file);
 
     const res = await fetch(`${serverEnv().APP_URL}/upload/single`, {
-      method: "POST",
+      method: POST_METHOD,
       body: backendFormData,
     });
 

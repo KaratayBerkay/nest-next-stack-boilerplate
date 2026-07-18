@@ -9,12 +9,16 @@ import {
   useMemo,
   startTransition,
   Suspense,
+  type Dispatch,
+  type MutableRefObject,
+  type SetStateAction,
 } from "react";
 import {
   MESSAGES_FRIENDS_URL,
   MESSAGES_READ_URL,
   USERS_SEARCH_PREFIX,
 } from "@/constants/api/urls";
+import { POST } from "@/constants";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
@@ -36,6 +40,62 @@ import { MessagesSidebar } from "./MessagesSidebar";
 import { ChatView } from "./ChatView";
 
 type UserInfo = { id: string; name: string; email: string; avatarUrl: string | null };
+
+function debouncedUserSearch(
+  val: string,
+  searchTimerRef: MutableRefObject<ReturnType<typeof setTimeout> | null>,
+  searchAbortRef: MutableRefObject<AbortController | null>,
+  setFindResults: Dispatch<SetStateAction<UserInfo[]>>,
+) {
+  if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+  searchTimerRef.current = setTimeout(async () => {
+    if (searchAbortRef.current) searchAbortRef.current.abort();
+    if (val.length < 1) {
+      setFindResults([]);
+      return;
+    }
+    const ac = new AbortController();
+    searchAbortRef.current = ac;
+    try {
+      const res = await apiFetch(
+        `${USERS_SEARCH_PREFIX}?q=${encodeURIComponent(val)}`,
+        { signal: ac.signal },
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (!ac.signal.aborted) setFindResults(data.items ?? []);
+      } else setFindResults([]);
+    } catch {
+      if (!ac.signal.aborted) setFindResults([]);
+    }
+  }, 300);
+}
+
+async function markMessagesReadAction(
+  userId: string,
+  refetchConversations: () => void,
+) {
+  try {
+    await apiFetch(MESSAGES_READ_URL, {
+      method: POST,
+      body: JSON.stringify({ userId }),
+    });
+    refetchConversations();
+  } catch {}
+}
+
+function openConversationAction(
+  u: UserInfo,
+  markMessagesRead: (userId: string) => void,
+  setSelectedUser: Dispatch<SetStateAction<UserInfo | null>>,
+  setTab: Dispatch<SetStateAction<"conversations" | "friends">>,
+  setSidebarOpen: Dispatch<SetStateAction<boolean>>,
+) {
+  setSelectedUser(u);
+  setTab("conversations");
+  setSidebarOpen(false);
+  markMessagesRead(u.id);
+}
 
 export function FreePageView({
   initialUser,
@@ -79,30 +139,10 @@ function MessagesPageContent({
   const searchAbortRef = useRef<AbortController | null>(null);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const debouncedSearch = useCallback((val: string) => {
-    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-    searchTimerRef.current = setTimeout(async () => {
-      if (searchAbortRef.current) searchAbortRef.current.abort();
-      if (val.length < 1) {
-        setFindResults([]);
-        return;
-      }
-      const ac = new AbortController();
-      searchAbortRef.current = ac;
-      try {
-        const res = await apiFetch(
-          `${USERS_SEARCH_PREFIX}?q=${encodeURIComponent(val)}`,
-          { signal: ac.signal },
-        );
-        if (res.ok) {
-          const data = await res.json();
-          if (!ac.signal.aborted) setFindResults(data.items ?? []);
-        } else setFindResults([]);
-      } catch {
-        if (!ac.signal.aborted) setFindResults([]);
-      }
-    }, 300);
-  }, []);
+  const debouncedSearch = useCallback(
+    (val: string) => debouncedUserSearch(val, searchTimerRef, searchAbortRef, setFindResults),
+    [],
+  );
 
   const {
     data: conversationsData,
@@ -125,15 +165,7 @@ function MessagesPageContent({
   }, [tab]);
 
   const markMessagesRead = useCallback(
-    async (userId: string) => {
-      try {
-        await apiFetch(MESSAGES_READ_URL, {
-          method: "POST",
-          body: JSON.stringify({ userId }),
-        });
-        refetchConversations();
-      } catch {}
-    },
+    (userId: string) => markMessagesReadAction(userId, refetchConversations),
     [refetchConversations],
   );
 
@@ -160,12 +192,7 @@ function MessagesPageContent({
   }, [selectedUser]);
 
   const openConversation = useCallback(
-    async (u: UserInfo) => {
-      setSelectedUser(u);
-      setTab("conversations");
-      setSidebarOpen(false);
-      markMessagesRead(u.id);
-    },
+    (u: UserInfo) => openConversationAction(u, markMessagesRead, setSelectedUser, setTab, setSidebarOpen),
     [markMessagesRead],
   );
 

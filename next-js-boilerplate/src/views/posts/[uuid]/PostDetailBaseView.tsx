@@ -31,6 +31,7 @@ import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { postsPageInfo } from "@/constants/page-info";
 import { PostDetailFallback } from "@/fallbacks";
+import type { PostDetailBaseViewProps } from "@/types/posts/PostDetailBaseView-types";
 
 interface Post {
   id: string;
@@ -53,20 +54,6 @@ interface Post {
   reactionBreakdown?: Array<{ type: string; count: number }>;
   whoReacted?: Array<{ userId: string; name?: string; type: string }>;
   _count?: { comments: number; reactions: number };
-}
-
-/**
- * Tier-specific rendering knobs for PostDetailBaseView.
- *
- * - `showPageInfo`: Free tier shows the page-info tooltip button in the header actions.
- * - `showReactionBreakdown`: Medium/Premium show a per-reaction-type count summary.
- * - `showWhoReacted`: Premium additionally shows the list of users who reacted.
- */
-export interface PostDetailBaseViewProps {
-  showPageInfo?: boolean;
-  showReactionBreakdown?: boolean;
-  showWhoReacted?: boolean;
-  initialPostData?: unknown;
 }
 
 function PostDetailContent({

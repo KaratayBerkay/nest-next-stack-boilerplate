@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, type Dispatch, type SetStateAction } from "react";
 import {
   Pagination,
   PaginationContent,
@@ -328,6 +328,16 @@ function InvoiceTableTab({
   );
 }
 
+function scrollToPageModuleLevel(
+  pageIndex: number,
+  sentinelRefs: React.MutableRefObject<(HTMLDivElement | null)[]>,
+) {
+  const sentinel = sentinelRefs.current[pageIndex - 1];
+  if (sentinel) {
+    sentinel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
 function OnlineFriendsTab({
   page,
   setPage,
@@ -366,12 +376,10 @@ function OnlineFriendsTab({
     return () => observer.disconnect();
   }, [setPage]);
 
-  const scrollToPage = useCallback((pageIndex: number) => {
-    const sentinel = sentinelRefs.current[pageIndex - 1];
-    if (sentinel) {
-      sentinel.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, []);
+  const scrollToPage = useCallback(
+    (pageIndex: number) => scrollToPageModuleLevel(pageIndex, sentinelRefs),
+    [sentinelRefs],
+  );
 
   return (
     <div className="flex flex-col gap-4">
