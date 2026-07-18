@@ -273,19 +273,21 @@ function DatePickerCalendar({
   }
 
   return (
-    <Calendar
-      mode="single"
-      selected={value}
-      captionLayout={captionLayout ?? "dropdown"}
-      startMonth={startMonth ?? new Date(1900, 0, 1)}
-      endMonth={endMonth ?? defaultEndMonth()}
-      forceDropdownBottomSheet
-      swipeDisabled={!open}
-      onDayClick={(d) => {
-        onChange?.(d);
-        close();
-      }}
-    />
+    <div className="mx-auto max-w-80">
+      <Calendar
+        mode="single"
+        selected={value}
+        captionLayout={captionLayout ?? "dropdown"}
+        startMonth={startMonth ?? new Date(1900, 0, 1)}
+        endMonth={endMonth ?? defaultEndMonth()}
+        forceDropdownBottomSheet
+        swipeDisabled={!open}
+        onDayClick={(d) => {
+          onChange?.(d);
+          close();
+        }}
+      />
+    </div>
   );
 }
 
