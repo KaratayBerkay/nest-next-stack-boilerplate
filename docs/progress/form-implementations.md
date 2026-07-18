@@ -1,8 +1,76 @@
 # Forms Page — Implementation Plan
 
+> **Revision 3** — re-audited after revision 2, now with (a) a web + local check of the latest
+> TanStack Form v1.33 APIs against what's actually installed in this repo, (b) four additional
+> real-life tabs (Checkout & Addresses, Content Editor, Admin Form Builder, Inline Editable
+> Table), (c) an AGENTS.md-compliance pass that corrected several file placements and API-call
+> layering from rev 2, and (d) verified-source corrections (`getMessages` argument order, the
+> real server-page pattern, the missing `/upload/multiple` proxy route, and the officially
+> documented server-error→field mapping replacing rev 2's `setFieldMeta` workaround).
+> **Revision 4** — a four-lens solidity pass (security / functionality / compatibility /
+> ease): hardened simulation endpoint, secret & draft hygiene, sanitization rules, a
+> functionality risk register with committed fallbacks, a verified compatibility matrix
+> (Next 16.2.9 / React 19.2.4), and a copy-paste map. Corrections applied inline per tab.
+> Planning only — nothing below has been implemented.
+
 ## Overview
 
-Add a top-level "Forms" page at `/v1/:lang/forms` that demonstrates complex real-world form patterns using `@tanstack/react-form`. The page uses tabs to switch between self-contained form examples, each usable as boilerplate.
+Add a top-level "Forms" page at `/v1/:lang/forms` that demonstrates complex real-world form
+patterns using `@tanstack/react-form` (`^1.33.0` installed). The page uses tabs to switch
+between self-contained form examples, each usable as boilerplate — including file uploads and
+async submission where the API returns a specific, structured error that renders fully
+translated (en/tr).
+
+Two spines run through every tab:
+
+1. **The error spine** — every server failure flows through one pipeline:
+   `apiFetchJson` → `err.exception` (`ExceptionResponse`) → `exceptionToFormErrors` +
+   `getSurface` → field error / form banner / toast / badge / full-page, translated via the
+   backend-provided `key` against the merged i18n tree.
+2. **The composition spine** — every tab builds on one `useAppForm` hook
+   (`createFormHook`) with pre-bound field components wrapping this repo's existing ui kit,
+   so each example demonstrates a pattern, not re-derived wiring boilerplate.
+
+## What Changed in Revision 3
+
+- **New:** TanStack Form v1.33 capability audit (each feature verified against the installed
+  package's type defs, not just docs) + mapping to the 17 official examples
+- **New tabs 9–12:** Checkout & Addresses (field groups), Content Editor (submit intent /
+  draft-publish), Admin Form Builder (schema-driven dynamic forms), Inline Editable Table
+  (array-mode field API)
+- **Architecture change:** adopt `createFormHook`/`useAppForm` composition (the officially
+  recommended setup) instead of raw `useForm` per tab
+- **Correction:** server-error→field mapping now uses the documented form-level
+  `onSubmitAsync` returning `{ form, fields }` (matches the official
+  `field-errors-from-form-validators` example) instead of rev 2's `form.setFieldMeta` poking
+- **Correction:** `getMessages(locale, page)` — rev 2 had the arguments reversed
+- **Correction:** there is **no Next proxy route for `/upload/multiple`** — only
+  `app/api/upload/route.ts` (single). Gallery uploads become N parallel single-file calls
+  (better per-file progress anyway); adding a multiple-proxy route is flagged optional
+- **Dropped:** custom `async-validator.ts` debounce helper — v1.33 has built-in
+  `asyncDebounceMs` / `onChangeAsyncDebounceMs` / `onBlurAsyncDebounceMs` (verified in
+  `FieldApi.d.ts:59,81`, `FormApi.d.ts:138`)
+- **AGENTS.md compliance fixes:** per-component types files (not one shared file), two-layer
+  API wrappers for the simulation endpoint, URL constants, PascalCase shims + central barrel +
+  colocated tests for the three new ui components, module-level handlers, ~150-line view split
+  rule acknowledged
+- **New:** verification/definition-of-done section wired to this repo's actual scripts
+  (`generate-i18n-types`, `check-duplicate-messages`, lint, typecheck)
+
+## What Changed in Revision 4
+
+- **New:** Solidity Review section — security checklist (S1–S10), functionality risk register
+  (R1–R7) with fallbacks, verified compatibility matrix, copy-paste map
+- **Hardened:** simulation endpoint (session-gated via `getSessionUser`, Zod-validated body,
+  `delayMs` clamped, `failRate` bounded); `xhrUpload` (401 → `auth:logout` parity with
+  `apiFetch`, guarded JSON parsing); API-key secret and localStorage-draft hygiene rules
+- **Corrected:** Tab 1 splits persisted fields (the real `updateProfile` payload) from
+  demo-only fields; Tab 8 specifies how both locales' messages reach the client; Tab 10's nav
+  guard is scoped to what App Router actually allows
+- **Verified:** `revalidateLogic` is exported in the installed 1.33 (`ValidationLogic.d.ts:52`);
+  Next 16.2.9 + React 19.2.4; dependency-cruiser config is active (added to the gates)
+
+---
 
 ## Route & Nav
 
@@ -10,210 +78,988 @@ Add a top-level "Forms" page at `/v1/:lang/forms` that demonstrates complex real
 /v1/:lang/forms
 ```
 
+Verified against the real `src/views/v1/[lang]/V1Nav.tsx` (links array of
+`{ href, label, Icon }`; icons from `@tabler/icons-react`):
+
 - Add `navForms: "Forms"` to `messages/{en,tr}/v1-shell/messages.json`
-- Add `{ href: "/forms", label: t.navForms, Icon: IconForms }` to `V1Nav.tsx` (between UI Components and Error Test)
-- Register `IconForms` from `@tabler/icons-react`
+- Insert into the `links` array between the existing `/ui` and `/boom` entries:
+  `{ href: "/forms", label: t.navForms, Icon: IconForms }` (confirm `IconForms` exists in the
+  installed tabler set at implementation time; `IconClipboardText` as fallback)
 
 ## Page Structure
 
-### Server page
-`src/app/v1/[lang]/forms/page.tsx` — server component:
-- `getMessages("forms", lang)` for `generateMetadata`
-- Wraps `<FormContent />` with a `<Suspense>` boundary
+### Server page — `src/app/v1/[lang]/forms/page.tsx`
 
-### Client view
-`src/views/forms/PageContent.tsx` — "use client" with tabbed form examples:
+Mirror the verified pattern from `src/app/v1/[lang]/ui/file-upload/page.tsx` exactly (note:
+`getMessages(lang, page)` — locale first; `searchParams` is a Promise; the layout already
+provides Suspense boundaries, the page does not add its own):
 
-The page uses the same `ExampleTabs` pattern from `@/views/ui/_shared/ExampleTabs` with tabs as `UIExample[]`. Each tab's `render` is a self-contained form component from a sibling file.
+```tsx
+import { getMessages } from "@/lib/i18n/get-messages";
+import type { Lang } from "@/constants/i18n";
+import PageContent from "@/views/forms/PageContent";
+
+interface PageProps {
+  params: Promise<{ lang: string }>;
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps) {
+  const { lang } = await params;
+  const t = getMessages(lang as Lang, "forms");
+  return { title: t.title, description: t.description };
+}
+
+export default async function FormsPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
+}
+```
+
+### Client view — `src/views/forms/PageContent.tsx`
+
+"use client", renders `ExampleTabs` (`src/views/ui/_shared/ExampleTabs.tsx`, types in
+`src/types/ui/ExampleTabs-types.ts`) with 12 `UIExample` entries. `ExampleTabs` already
+handles URL `?tab=` sync, desktop pill row, and mobile accordion — nothing new needed there.
+Each tab's `render` is a self-contained component from a sibling file; per the AGENTS
+~150-line rule, larger tabs (1, 2, 9, 10) will extract their sections into further sibling
+sub-components.
+
+---
+
+## Codebase Audit — What Already Exists
+
+Verified directly against source. Carried from rev 2 with rev 3 corrections marked.
+
+### 1. The error pipeline is fully built — and has zero real callers
+
+`nest-js-boilerplate` normalizes every thrown exception (custom, Prisma, bare `Error`) into one
+JSON shape via a global filter (`src/exception-filters/global-http-exception.filter.ts` →
+`src/common/exceptions/to-exception-response.ts`):
+
+```ts
+// nest-js-boilerplate/src/common/exceptions/exception-response.interface.ts
+export type ExceptionFieldError = { field: string; msg: string; key: string };
+export type ExceptionResponse = {
+  statusCode: number;
+  exc: ExceptionCode;
+  msg: string;
+  key: string;        // dotted path into frontend messages, e.g. "apiKeys.errors.nameExists"
+  field?: string;      // single-field shorthand
+  fields?: ExceptionFieldError[]; // multi-field (class-validator) shape
+};
+```
+
+Real, verified throw sites:
+
+| Site | Payload |
+|---|---|
+| `auth.service.ts:67` (register, dup email) | `{ exc: "EX_AUTH_EMAIL_TAKEN", msg: "Email already registered", key: "auth.errors.emailTaken" }` |
+| `profile.service.ts:43` (update, dup username) | `{ exc: "EX_PROFILE_USERNAME_TAKEN", msg: "Username is already taken", key: "settings.errors.usernameTaken", field: "username" }` |
+| `api-keys.service.ts:47` (create, dup name) | `{ exc: "EX_API_KEY_NAME_EXISTS", msg: 'An API key named "X" already exists', key: "apiKeys.errors.nameExists" }` |
+
+Frontend: `src/lib/api-client.ts` `apiFetchJson` attaches the parsed body as `err.exception`;
+`src/lib/exception-handler.ts` exports `exceptionHandler(error, messages)` (key → translated
+string, `msg` fallback), `getSurface(exc)` (code → `"toast" | "alert" | "badge" | "form-field"
+| "full-page"`), and `clientException()`. All unit-tested (`exception-handler.test.ts`) — and
+**unused in any real flow**. The only import (`views/premium/BasicPageView.tsx`) is dead code;
+every live error site hand-rolls its own branching (`register-form.tsx` string-matches
+`exc === "EX_AUTH_EMAIL_TAKEN"` with hardcoded fallbacks). **The Forms page becomes the first
+real consumer of the intended pipeline.**
+
+### 2. A live bug proves the gap
+
+`profile.service.ts` throws `key: "settings.errors.usernameTaken"`, but
+`messages/{en,tr}/settings/messages.json` has **no `errors` block at all**. A Turkish user who
+picks a taken username sees raw English today (`resolveByPath` → `undefined` →
+`exceptionHandler` falls back to `error.msg`). Tab 1 fixes this for real.
+
+### 3. `useMessages()` can't feed `exceptionHandler()` — prerequisite fix
+
+Backend `key`s are cross-namespace (`"apiKeys.errors.nameExists"`), but `useMessages(page)`
+returns one namespace slice. Verified: `app/v1/[lang]/layout.tsx` already populates
+`MessagesProvider` with the full `getAllMessages<I18nMessages>(lang)` tree — the context holds
+everything; there's just no hook returning the whole tree. **Fix:** add `useAllMessages()` to
+`src/lib/i18n/MessagesProvider.tsx` (~6 lines, additive).
+
+### 4. `ExceptionCode` union vs. reality — prerequisite fix
+
+The declared 10-code union (backend `exception-code.ts`, mirrored in frontend
+`exception-handler.ts`) doesn't include real ad-hoc codes (`EX_API_KEY_NAME_EXISTS`,
+`EX_PROFILE_USERNAME_TAKEN`). `getSurface(exc: ExceptionCode)` won't type-check against real
+payloads. **Fix:** widen the parameter to `string`; runtime already tolerates unknowns
+(`EXC_TO_SURFACE[exc] ?? "toast"`).
+
+### 5. File upload is fully built — wiring and i18n are the gaps
+
+**Backend** (`nest-js-boilerplate/src/upload/`, behind `SessionAuthGuard`): `POST
+/upload/single` (field `file`) and `POST /upload/multiple` (field `files`, max 10); 10 MB
+limit; `image/(jpeg|png|webp|gif|avif)`; `sharp` → 3 webp variants (badge 64×64, medium
+400×400, full 1920×1080) → MinIO; returns `{ urls: {badge,medium,full}, originalname,
+mimetype, size }`.
+
+**Frontend:** `components/ui/file-upload/` (`FileUpload` — dropzone, per-file validation,
+`Progress` bars, pending/uploading/done/error states, `onUpload?: (file, reportProgress) =>
+Promise<void>`), `components/ui/image-upload/` (`ImageUpload` — avatar / gallery modes),
+`app/api/upload/route.ts` proxy, `uploadAvatarServer` already in use.
+
+Verified gaps:
+
+1. **Never wired to `@tanstack/react-form`** — though `ImageUploadProps` (`value` /
+   `onChange`) is already field-shaped.
+2. **Hardcoded English inside the components** ("Drag & drop files or click to browse",
+   "Invalid file type" toast, "Uploaded", "Remove photo"). Fix via additive `labels?` prop, not
+   a rewrite (existing callers unaffected).
+3. **No real progress** — `reportProgress(pct)` exists but all callers use `fetch()`, which has
+   no upload-progress event; bars jump 0→100. Needs an XHR transport helper.
+4. **Proxy limit 5 MB vs backend 10 MB** — a 7 MB file is backend-legal but proxy-rejected.
+   Client `maxSizeBytes` must be **5 MB** (the binding layer); comment it at the call site.
+5. **(New in rev 3) There is no Next proxy route for `/upload/multiple`.** Only
+   `app/api/upload/route.ts` (single, field `file`) exists. Tab 7's gallery therefore uploads N
+   files as N parallel single-file requests — which also gives true per-file XHR progress.
+   Adding `app/api/upload/multiple/route.ts` is flagged as an optional alternative, not
+   assumed.
+
+### 6. Real vs. simulated backend, per tab
+
+| Feature | Backend reality | Plan |
+|---|---|---|
+| Profile update / avatar / username check | Real REST, wired frontend layers exist | Real (Tab 1, 7) |
+| API keys create/revoke/list | Real (GraphQL resolver + `api/{server,client}/api-keys/*` complete) | Real (Tab 3) — flagship error tab |
+| Team invite by email | No such feature — real `team-members` resolver is "join team by UUID" (GraphQL FK-depth proof), semantically different | Simulated (Tab 2), labeled in-page |
+| Billing subscription/history/setup-intent | Real endpoints exist (`api/server/billing/*`) | Optional real wiring (Tabs 4, 9) |
+| Coupon code / tax ID | No backend feature (`grep -ri coupon` across both apps: zero hits) | Simulated (Tab 4) |
+| Content drafts, form builder configs, table rows | No backend feature | Simulated (Tabs 10–12) |
+
+All simulations go through **one** shared endpoint returning the exact `ExceptionResponse`
+envelope (see [Error Simulation Architecture](#error-simulation-architecture)) — downstream
+code cannot tell simulation from reality, which is the point.
+
+---
+
+## TanStack Form v1.33 Capability Audit
+
+Checked 2026-07-19 against the current official docs/examples **and** the locally installed
+`@tanstack/form-core@1.33.0` type definitions (docs can run ahead of installed versions — here
+they don't; everything below is usable today).
+
+| Feature | Local evidence (installed package) | Where this plan uses it |
+|---|---|---|
+| `createFormHook` / `useAppForm` / `form.AppField` pre-bound components | `react-form/dist/esm/createFormHook.d.ts` exported from index | All tabs (composition spine) |
+| `withForm` HOC (split large forms without prop drilling) | part of `createFormHook` return | Tabs 2, 9, 12 |
+| Field groups: `withFieldGroup` / `useFieldGroup` | `useFieldGroup.d.ts`, `FieldGroupApi.js` in form-core | Tab 9 (shipping/billing address reuse) |
+| Standard Schema: Zod passed directly to validators (no adapter — `validatorAdapter` is gone in v1) | repo has `zod ^4.4.3` (Standard Schema native); form-core resolves `StandardSchemaV1Issue[]` (`FormApi.d.ts:517`) | All tabs |
+| Built-in async debounce: `asyncDebounceMs`, `onChangeAsyncDebounceMs`, `onBlurAsyncDebounceMs` | `FieldApi.d.ts:59,81`; `FormApi.d.ts:138` | Tabs 1 (username), 4 (coupon) — replaces rev 2's custom helper |
+| Form-level validator returning `{ fields: {...} }` to set field errors (incl. from the server) | `FormApi.d.ts:505` (`fields: Record<DeepKeys<TFormData>, ...>`) | Error spine — Tabs 1, 3, 4, 7 |
+| `revalidateLogic()` — dynamic validation modes ("reward early, punish late": submit-first, then per-change) via `onDynamic` validators | `ValidationLogic.d.ts:52` (`export declare const revalidateLogic`), re-exported from the form-core index; `ValidationCause` includes `"dynamic"` | Tab 6 (validation-modes section) |
+| Linked fields: `onChangeListenTo` / `onBlurListenTo` (revalidate confirm-password when password changes) | `FieldApi.d.ts:63,85` | Tabs 6, 9 |
+| `listeners` (side effects on field events — clear/derive dependent fields) | `FieldListenerFn`, `listeners.onSubmit` etc. in `FieldApi.d.ts:109` | Tabs 4 (plan→coupon reset), 9 (country→province reset), 10 (title→slug) |
+| Array-mode field API: `pushValue`, `insertValue`, `removeValue`, `moveValue`, `swapValues` | `FieldApi.d.ts:218–238` | Tabs 2 (email chips), 3 (IP allowlist), 12 (rows) |
+| Submit meta: `form.handleSubmit(submitMeta)` typed via `onSubmitMeta` | `types.d.ts:112` (`handleSubmit(submitMeta)`) | Tab 10 (publish vs. schedule intent) |
+| Next.js server actions: `createServerValidate`, `ServerValidateError`, `initialFormState`, `mergeForm`/`useTransform` | already used by this repo — `src/features/auth/actions/signup.ts` + `views/(demos)/form/Form.tsx` (`@tanstack/react-form-nextjs`) | Tab 2 |
+| `form.Subscribe` selector-scoped re-renders | already used in the existing demo | All tabs (submit buttons) |
+
+**Official example roster** (verified against `TanStack/form` repo, `examples/react/`):
+`array`, `compiler`, `composition`, `devtools`, `dynamic`, `expo`,
+`field-errors-from-form-validators`, `large-form`, `multi-step-wizard`,
+`next-server-actions`, `next-server-actions-zod`, `query-integration`, `remix`, `simple`,
+`standard-schema`, `tanstack-start`, `ui-libraries`.
+
+Mapping to this page (every non-platform example has a home here):
+
+| Official example | Covered by |
+|---|---|
+| `composition`, `large-form` | Composition spine + Tabs 9/12 (`withForm`) |
+| `field-errors-from-form-validators` | Error spine (Tabs 1, 3, 4) |
+| `multi-step-wizard`, `next-server-actions(-zod)` | Tab 2 |
+| `query-integration` | Tabs 3, 12 |
+| `array` | Tabs 2, 3, 12 |
+| `dynamic` | Tabs 6, 11 |
+| `standard-schema`, `simple` | Everywhere (Zod v4 direct) |
+| `ui-libraries` | Same idea, but bound to this repo's own ui kit instead of MUI/Mantine |
+
+---
+
+## Form Architecture — the Composition Spine
+
+One `createFormHook` setup shared by all tabs, following the canonical file split from the
+official form-composition guide (contexts separate from the hook for tree-shaking), adapted to
+AGENTS.md placement rules:
+
+```
+src/lib/forms/form-context.ts     — createFormHookContexts() → fieldContext, formContext, useFieldContext, useFormContext
+src/lib/forms/form-hook.tsx       — createFormHook({...}) → useAppForm, withForm, withFieldGroup
+src/components/forms/             — pre-bound field components (see decision #6)
+  TextField.tsx  TextareaField.tsx  SelectField.tsx  ComboboxField.tsx
+  CheckboxField.tsx  SwitchField.tsx  RadioGroupField.tsx
+  DateField.tsx  TimeField.tsx  UploadField.tsx  SubmitButton.tsx
+src/types/forms/<Component>-types.ts — props types per component (AGENTS: never inline)
+```
+
+Each bound component wraps the **existing** ui kit (`Input`, `Textarea`, `NativeSelect`,
+`Combobox`, `Checkbox`, `Switch`, `RadioGroup`, `DatePicker`, `TimeInput`, `ImageUpload`) plus
+`FormFieldInfo` (errors + validating spinner), via `useFieldContext<T>()`:
+
+```tsx
+// src/components/forms/TextField.tsx (shape — final code follows ui-components conventions)
+import { useFieldContext } from "@/lib/forms/form-context";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
+import { FormFieldInfo } from "@/components/ui/FormFieldInfo";
+import type { TextFieldProps } from "@/types/forms/TextField-types";
+
+export function TextField({ label, required, ...inputProps }: TextFieldProps) {
+  const field = useFieldContext<string>();
+  return (
+    <div className="flex flex-col gap-1">
+      <Label htmlFor={field.name} required={required}>{label}</Label>
+      <Input
+        id={field.name}
+        value={field.state.value}
+        onBlur={field.handleBlur}
+        onChange={(e) => field.handleChange(e.target.value)}
+        error={field.state.meta.errors[0]}
+        {...inputProps}
+      />
+      <FormFieldInfo field={field} />
+    </div>
+  );
+}
+```
+
+Usage in every tab then collapses to:
+
+```tsx
+const form = useAppForm({ ...profileFormOpts, validators: { onSubmitAsync: submitProfile } });
+// ...
+<form.AppField name="firstName" validators={{ onChange: fieldSchemas.firstName }}>
+  {(field) => <field.TextField label={t.profile.firstName} required />}
+</form.AppField>
+```
+
+Why this matters for a boilerplate: the composition layer is itself the single most reusable
+artifact this page produces — consumers copy `form-context.ts` + `form-hook.tsx` +
+`components/forms/` into any project and get typed, i18n-ready, error-wired fields.
+`DateField`/`TimeField` must follow the `datetime-inputs` skill conventions (controlled
+`value`/`onChange`, `@/lib/date-time` helpers — load that skill when building them).
+
+---
+
+## Error Handling Architecture — the Error Spine
+
+```mermaid
+flowchart TD
+  A["NestJS service throws\nConflictException({ exc, msg, key, field? })"] --> B["Global exception filter\n→ ExceptionResponse JSON"]
+  B --> C["Next proxy route (app/api/*)"]
+  C --> D["apiFetchJson\nthrows Error + err.exception"]
+  D --> E{"getSurface(exc)"}
+  E -->|form-field| F["onSubmitAsync returns\n{ form, fields } via\nexceptionToFormErrors"]
+  E -->|toast| G["useToast destructive\n(translated via exceptionHandler)"]
+  E -->|alert / badge| H["FormErrorBanner / Badge"]
+  E -->|full-page| I["Blocking panel / redirect"]
+  F --> J["field.state.meta.errors\n→ FormFieldInfo (same slot\nas client Zod errors)"]
+  K["messages tree via useAllMessages()\n(key: 'settings.errors.usernameTaken')"] --> F
+  K --> G
+```
+
+Three mechanisms, each with exactly one canonical home:
+
+| Mechanism | Used by | How |
+|---|---|---|
+| **Fetch-submitted forms** (most tabs) | Tabs 1, 3, 4, 7, 9, 10, 12 | Form-level `validators.onSubmitAsync` performs the submit, catches, and returns `{ form, fields }` — the officially documented shape (`field-errors-from-form-validators` example). Field entries land in each field's `errors` exactly like client Zod errors; no special rendering path. |
+| **Server-action forms** | Tab 2 | The repo's existing `@tanstack/react-form-nextjs` flow (verified in `features/auth/actions/signup.ts`): `createServerValidate` → throw `ServerValidateError` → `e.formState` returned from the action → `mergeForm`/`useTransform` merges `errorMap.onServer` into the client form. |
+| **Client-only errors** (no network) | Tab 8 (offline condition) | `clientException(exc, msg, key?)` from `exception-handler.ts` — currently has zero usages anywhere; Tab 8 gives it its first. |
+
+The one new helper (replaces rev 2's `applyServerFieldErrors` — simpler, no meta poking, no
+`as never` casts):
+
+```ts
+// src/lib/forms/exception-to-form-errors.ts
+import { resolveByPath } from "@/lib/exception-handler";
+import type { ExceptionResponse } from "@/lib/api-client";
+
+export function exceptionToFormErrors(
+  exc: ExceptionResponse,
+  messages: Record<string, unknown>,
+): { form: string | null; fields: Record<string, string> } {
+  const resolve = (key: string, fallback: string) =>
+    resolveByPath(messages, key) ?? fallback;
+  const targets = exc.fields?.length
+    ? exc.fields
+    : exc.field
+      ? [{ field: exc.field, msg: exc.msg, key: exc.key }]
+      : [];
+  const fields = Object.fromEntries(
+    targets.map((t) => [t.field, resolve(t.key, t.msg)]),
+  );
+  return targets.length
+    ? { form: null, fields }
+    : { form: resolve(exc.key, exc.msg), fields: {} };
+}
+```
+
+Canonical submit wiring (module-level per AGENTS, receiving deps as params):
+
+```ts
+async function submitProfile(
+  { value }: { value: ProfileFormValues },
+  deps: { updateProfile: ..., toast: ..., messages: I18nMessages },
+) {
+  try {
+    await deps.updateProfile(value);
+    return null; // no errors
+  } catch (err) {
+    const exc = (err as { exception?: ExceptionResponse }).exception;
+    if (!exc) return { form: deps.messages.forms.errors.unknown, fields: {} };
+    if (getSurface(exc.exc) === "toast") {
+      deps.toast({ description: exceptionHandler(exc, deps.messages), variant: "destructive" });
+      return null; // surfaced already — no inline error
+    }
+    return exceptionToFormErrors(exc, deps.messages);
+  }
+}
+```
+
+`getSurface` decides *where*; `exceptionToFormErrors`/`exceptionHandler` decide *what text*.
+No tab ever writes `if (exc === "EX_...")` — that's the anti-pattern `register-form.tsx`
+demonstrates today and this page exists to retire.
+
+Two behavioral notes (rev 4): **(a)** field errors returned by a form-level validator persist
+until that validator re-runs (i.e. the next submit) — editing the field does not clear them.
+That matches the official example's semantics and is the desired UX here ("username taken"
+stays true until re-checked); `FormFieldInfo` treats it as state, not a stale-render bug.
+**(b)** on a failed submit, the shared submit helper focuses the first errored field (every
+bound component sets `id={field.name}`, so `document.getElementById` is the lookup) and
+`FormErrorBanner` renders with `role="alert"` — keyboard and screen-reader users land where
+the problem is.
+
+---
+
+## Error Simulation Architecture
+
+One generic route + registry, consumed **through the two-layer API pattern** (AGENTS: views
+never call `apiFetchJson` or `fetch` directly — rev 2 under-specified this):
+
+- `src/lib/forms/error-scenarios.ts` — `ERROR_SCENARIOS: ErrorScenario[]` registry (id,
+  status, `exc`, `key`, `msg`, `field?`, `fields?`), importable by both the route handler and
+  Tab 8's picker UI. Every entry mirrors the exact backend envelope; several deliberately
+  reuse real codes (`EX_CONFLICT_DUPLICATE`, `EX_TIER_INSUFFICIENT`, `EX_VALIDATION_FORM`) and
+  two use real *unmapped* codes to prove the `?? "toast"` fallback.
+- `src/app/api/forms-demo/simulate-error/route.ts` — POST `{ scenarioId, delayMs?, failRate? }`
+  → optional delay → optional random success → replies with the scenario's status + body.
+  **Hardened (rev 4):** body Zod-validated (`src/validators/forms/simulate-error.ts`);
+  `delayMs` clamped to `0..10_000` and `failRate` to `0..1` — an unclamped, unauthenticated
+  delay parameter is a free connection-holding DoS primitive, and this app deploys to a real
+  domain. Session-gated with `getSessionUser()` from `@/lib/auth-ssr` (401 without a session,
+  consistent with the `/v1` layout gate). Side-effect-free by construction, so CSRF-irrelevant;
+  POST route handlers are never cached by Next.
+- `src/constants/api/urls.ts` — add `FORMS_DEMO_SIMULATE_ERROR_URL = "/api/forms-demo/simulate-error" as const`.
+- `src/api/server/forms-demo/simulate.ts` — `simulateErrorServer(scenarioId, opts)` via
+  `apiFetchJson` + constants.
+- `src/api/client/forms-demo/actions.ts` — `useFormsDemoActions()` dynamic-importing the
+  server layer (matches `api/client/api-keys/actions.ts` shape).
+
+Because the reply is the same envelope `apiFetchJson` already parses, every simulated call
+exercises byte-identical client code to a real backend 4xx/5xx.
+
+---
+
+## File Upload Architecture
+
+**Reuse, don't rebuild.** Wiring:
+
+```tsx
+<form.AppField name="avatar">
+  {(field) => (
+    <field.UploadField
+      avatar
+      maxSizeBytes={5 * 1024 * 1024} // Next proxy's limit — stricter than backend's 10 MB
+      labels={t.upload}
+    />
+  )}
+</form.AppField>
+```
+
+**i18n `labels?` prop (additive):** extend `src/types/ui/FileUpload-types.ts` with
+`FileUploadLabels` (`dropzoneIdle`, `dropzoneActive`, `accepted(accept)`, `invalidType(file,
+accepted)`, `tooLarge(file, max)`, `uploaded`, `remove(file)`), default every entry to the
+current hardcoded English. `ImageUpload` passes it through. Existing callers
+(`/ui/file-upload`, `/ui/image-upload`, `/ui/avatar`, `FreePageView.tsx`) unaffected.
+
+**Real progress — transport primitive + layered wrappers:**
+
+- `src/lib/xhr-upload.ts` — the only file allowed to touch `XMLHttpRequest` (transport
+  primitive, sibling of `api-client.ts`; parses error bodies into the same `err.exception`
+  shape so upload failures ride the error spine too). **Rev 4:** mirrors `apiFetch`'s 401
+  behavior — dispatch `auth:logout` on a 401 so an expired session mid-upload logs out exactly
+  like a fetch would; both success and error `responseText` parses are try/catch-guarded
+  (non-JSON bodies never throw); same-origin XHR sends session cookies by default — no token
+  handling in this file
+- `src/api/server/upload/xhr-single.ts` — `uploadSingleWithProgress(file, onProgress)` using
+  `UPLOAD_URL` constant
+- `src/api/client/upload/actions.ts` — hook wrapper, dynamic import
+
+**Multiple files:** N parallel `uploadSingleWithProgress` calls (one XHR + one progress bar per
+file — matches `FileUpload`'s per-file `UploadFile.progress` model exactly). Optional
+alternative flagged: add `app/api/upload/multiple/route.ts` proxying backend
+`/upload/multiple`; not required for the tab.
+
+**Not building:** chunked/resumable upload (needs new backend work), drag-to-reorder gallery.
+
+---
+
+## Design Decisions Requiring Confirmation
+
+1. **`useAllMessages()` in `MessagesProvider.tsx`** (additive ~6 lines) — linchpin of the
+   error-i18n story. Recommended: yes.
+2. **Widen `getSurface(exc)` to `string`** — real ad-hoc codes must type-check. Recommended:
+   yes.
+3. **`labels?` prop on `FileUpload`/`ImageUpload`** instead of full component i18n rewrite.
+   Recommended: yes (backward-compatible).
+4. **Add missing `errors` block to `messages/{en,tr}/settings/messages.json`** — fixes the
+   live untranslated-username-conflict bug. Recommended: yes.
+5. **Tab 2 targets a simulated endpoint**, not the real `createTeamMember` GraphQL mutation
+   (semantically different feature). Alternative: descope to "join by team ID" to go real.
+6. **Location for pre-bound field components: `src/components/forms/`** (new domain folder,
+   sibling to `components/ui/` — they're app-level composites of ui-kit pieces, not ui-kit
+   primitives, so they skip the ui barrel/shim/gallery conventions). Alternative:
+   `src/features/forms/ui/` (precedent: `features/auth/ui/`). Recommendation:
+   `components/forms/`.
+7. **Gallery demo pages for the 3 new ui-kit components** (`FormFieldInfo`, `FormErrorBanner`,
+   `StepIndicator`): the ui-components conventions imply every `components/ui/` addition gets a
+   `/ui/<name>` gallery page + tests + barrel + shim. Recommendation: yes for all three
+   (small pages; keeps the "all AGENTS violations fixed" state) — but this adds 3 gallery pages
+   + `ui` namespace keys to the scope.
+8. **Adopt `useAppForm` composition as the page-wide architecture** (this plan's default). The
+   alternative — raw `useForm` per tab like the existing `(demos)/form` — produces ~40% more
+   per-tab boilerplate and no reusable field library. Recommendation: composition.
+
+---
 
 ## Tab Examples
 
-### Tab 1: "User Profile" (Create/Update — sync submit)
+Tabs are ordered basic → advanced in the UI; each tab's intro states its backend mode
+(**real** / **simulated** / **none**) with a small badge.
 
-**Goal:** Full user profile form demonstrating every input type with field-level validation.
+### Tab 1: "User Profile" — every input type + real field-level server error *(real)*
 
-**Fields:**
-- `avatar` — ImageUpload (drag-and-drop with preview)
-- `firstName`, `lastName` — Input (text)
-- `email` — Input (email) with async availability check (debounced)
-- `bio` — Textarea (auto-resize, char counter)
-- `country` — Combobox (searchable, with grouped options)
-- `language` — NativeSelect
-- `newsletter` — Switch (toggle)
-- `interests` — Checkbox group (multi-select)
-- `role` — RadioGroup
-- `birthDate` — DatePicker
-- `meetingTime` — TimeInput
-- `notificationPrefs` — nested object (push email sms) with Switch fields
+Fields: `avatar` (UploadField avatar), `firstName`, `lastName` (TextField), `username`
+(TextField + **real** debounced availability check — `onChangeAsync` calling
+`checkUsernameAvailableServer`, `onChangeAsyncDebounceMs: 500`; rev 2 note: the only real
+availability endpoint is username, not email), `email` (client-validated only), `bio`
+(TextareaField, char counter), `country` (ComboboxField, grouped), `language`
+(SelectField), `newsletter` (SwitchField), `interests` (CheckboxField group), `role`
+(RadioGroupField), `birthDate` (DateField), `meetingTime` (TimeField), `notificationPrefs`
+(nested object of SwitchFields).
 
-**Patterns shown:**
-- `form.Field` render-prop for each field type
-- Zod field schemas per field (onChange + onBlur validators)
-- Async validation: debounced email uniqueness check with `validatorAdapter`
-- `FieldInfo` sub-component for errors + validation spinner
-- `form.Subscribe` for submit button disable during async validation
-- Sync `onSubmit` that calls `api/client/profile/actions` `updateProfile`
-- Toast on success, Alert on error
-- i18n messages for labels, placeholders, errors
+Error story (real): submit a username taken by a seeded user → 409
+`{ exc: "EX_PROFILE_USERNAME_TAKEN", key: "settings.errors.usernameTaken", field: "username" }`
+→ `onSubmitAsync` catch → `exceptionToFormErrors` → the `username` field shows the translated
+message in the same slot as its Zod errors. `getSurface` returns `"form-field"`, so no toast
+fires. Success → toast.
 
-### Tab 2: "Team Invite" (Create — async submit with server action)
+**Persistence contract (rev 4):** the real `updateProfile` layer accepts only
+`{ name, username?, bio?, avatarUrl? }` (verified in `api/client/profile/actions.ts`; the
+backend service additionally takes `timezone`). The submit handler maps the form to exactly
+that payload (`firstName`+`lastName` → `name`; the avatar's uploaded URL → `avatarUrl`); the
+remaining fields (country, interests, birthDate, …) are **demo-only** — fully
+client-validated, shown in a submitted-values preview, never sent. The tab intro labels the
+two groups, so the example never implies the backend persists fields it would strip or reject.
 
-**Goal:** Multi-step form with server-side validation and progress state.
+Patterns: `form.AppField` for all 13 field shapes; Zod v4 per-field schemas (Standard Schema,
+no adapter); built-in async debounce; `form.Subscribe` submit button; the canonical
+`submitProfile` wiring shown above.
 
-**Fields:**
-- Step 1: `emails` — tag-style multi-email input (InputGroup + chips)
-- Step 2: `role` — Select with permission descriptions
-- Step 3: `message` — Textarea (optional personal message)
-- Step 4: `sendInvite` — Confirm Dialog before final submit
+### Tab 2: "Team Invite" — multi-step wizard + server actions *(simulated)*
 
-**Patterns shown:**
-- Multi-step / wizard form with step indicator
-- `useActionState` + TanStack Form server action integration
-- `createServerValidate` with Zod schema (server re-validates)
-- `ServerValidateError` handling
-- Dynamic field arrays (add/remove email chips)
-- `form.state.isSubmitting` for loading overlay
-- Toast per step completion
-- Navigate back/forward between steps preserving state
+Steps: 1) `emails` — chip input, array-mode field (`pushValue`/`removeValue`, dedupe, Enter
+to add); 2) `role` — SelectField with permission descriptions; 3) `message` — optional
+TextareaField; 4) review + `ConfirmDialog`.
 
-### Tab 3: "API Key" (Create/Delete — async submit with optimistic updates)
+Server flow: mirrors the repo's verified `signup.ts` pattern (`createServerValidate`,
+`ServerValidateError`, `initialFormState`, `mergeForm` + `useTransform`) — improving on it by
+returning per-field errors where the demo returns one joined string. Simulated scenarios:
+`emails.2` already a member → array-index field error mapped onto the exact chip;
+invite quota → `EX_TIER_INSUFFICIENT` → `"full-page"` surface rendered as a blocking inline
+upsell panel (deliberate variant: full-page ≠ navigation).
 
-**Goal:** Form that creates a resource and shows it in a list with delete capability.
+Patterns: `StepIndicator`; per-step validation gates (validate only the step's fields before
+advancing); `withForm` to split step components without prop drilling; back/forward preserving
+state; `form.state.isSubmitting` overlay.
 
-**Fields:**
-- `name` — Input (text, required)
-- `expiresIn` — Select (30d / 60d / 90d / never)
-- `permissions` — checkbox group with "select all"
-- `ipWhitelist` — InputGroup with add/remove (dynamic array of IPs)
+**Known risk (R1):** decoding an *array* field (`emails`) from `FormData` through
+`@tanstack/react-form-nextjs` must be spiked before building the tab — the repo's existing
+demo only round-trips scalars. Committed fallback if decode is awkward: the final step submits
+scalars plus the email list serialized as one JSON-string field, re-parsed inside
+`createServerValidate`'s `onServerValidate`. The tab's UX is identical either way.
 
-**Patterns shown:**
-- TanStack Query `useMutation` with `onMutate` optimistic add to list
-- `queryClient.setQueryData` for instant UI update
-- `queryClient.invalidateQueries` on settle
-- Form clears on success
-- Delete action with ConfirmDialog
-- Toast with undo action
-- Masked secret display after creation (copy to clipboard)
+### Tab 3: "API Key" — real mutations, optimistic list, reveal-once secret *(real)*
 
-### Tab 4: "Billing" (Update/Patch — async submit with dependent fields)
+Fields: `name`, `expiresIn` (30/60/90/never), `permissions` (checkbox group + select-all),
+`ipWhitelist` (array-mode field of IPs, `pushValue`/`removeValue`).
 
-**Goal:** Form with dependent fields, conditional sections, and real-time validation.
+Error story (real): duplicate name → 409 `EX_API_KEY_NAME_EXISTS` — **no `field`**, and the
+code is **unmapped** in `EXC_TO_SURFACE`, so `getSurface` falls through to `"toast"`:
+translated toast via the new `apiKeys.errors.nameExists` message. Direct contrast with Tab 1's
+field-level rendering of a structurally similar 409 — the clearest demonstration of why
+`getSurface` exists.
 
-**Fields:**
-- `plan` — RadioGroup (Free / Basic / Medium / Premium) with pricing cards
-- `billingPeriod` — Segmented control (monthly / yearly) — dependent on plan
-- `paymentMethod` — Select (existing cards + "add new")
-- `couponCode` — Input with async coupon validation on blur
-- `taxId` — Input with format validation per country
+Patterns: TanStack Query `useMutation` (`onMutate` optimistic insert into
+`apiKeyListQueryOptions()` cache, rollback on error, invalidate on settle — the
+`query-integration` example, but real); form reset on success; revoke with `ConfirmDialog` +
+undo toast; reveal-once `fullKey` panel with copy-to-clipboard ("you won't see this again" —
+falls straight out of the existing `CreateApiKeyResult` type: list returns only `keyPrefix`).
 
-**Patterns shown:**
-- `form.store` subscribing to related field values
-- Conditional rendering: coupon section only when coupon input focused
-- Dependent validation: taxId required only for certain countries
-- Auto-save: debounced `onChange` that calls `PATCH` endpoint
-- Patch vs full update: only send changed fields
-- Error recovery: retry button on failed save
-- Dirty field tracking (`form.state.isDirty`, field `state.meta.isDirty`)
+**Secret hygiene (rev 4):** `fullKey` lives only in local component state — never in the Query
+cache (the optimistic list entry carries `keyPrefix` only), never in a toast, never in any
+logged object (this app ships a `frontend-logs` Elasticsearch pipeline; a key in a log line is
+a real credential leak). State clears on tab unmount; the reveal panel is the single place the
+secret ever renders.
 
-### Tab 5: "Filters" (Read — sync submit, URL-synced)
+### Tab 4: "Billing" — dependent fields, auto-save patch *(mixed: real endpoints exist for subscription; coupon/tax simulated)*
 
-**Goal:** Complex filter panel synced to URL search params.
+Fields: `plan` (RadioGroup pricing cards), `billingPeriod` (segmented, dependent on plan),
+`paymentMethod` (Select; optional real wiring via existing `api/server/billing/*`),
+`couponCode` (async validate on blur — `onBlurAsync` + `onBlurAsyncDebounceMs`), `taxId`
+(per-country Zod format, required only for VAT countries).
 
-**Fields:**
-- `search` — Input with debounced onChange
-- `category` — Combobox (multi-select)
-- `tags` — Tag input with autocomplete
-- `dateRange` — DatePicker range
-- `sortBy` — Select
-- `sortOrder` — Toggle (asc/desc)
-- `pageSize` — NativeSelect
-- `status` — Checkbox group
+Simulated errors: `EXPIRED10` → `EX_CONFLICT_DUPLICATE` (mapped surface: toast) vs `INVALID` →
+`EX_VALIDATION_FORM` (mapped surface: form-field) — same input, two surfaces, chosen by the
+server's code, not the client's guess.
 
-**Patterns shown:**
-- URL sync: read initial values from `searchParams`, write back via `router.replace`
-- `useEffect` to sync form state to URL on debounce
-- Reset button to clear all filters
-- Persist across page navigation (URL drives initial state)
-- No actual API call — just renders filter state as JSON preview
+Patterns: `listeners` — plan change resets `couponCode` and revalidates `billingPeriod`;
+`useStore(form.store, ...)` price summary; debounced auto-save sending **only dirty fields**
+(`field.state.meta.isDirty` diffing) as a PATCH; retry banner on failed auto-save (distinct
+from coupon's inline error); `form.state.isDirty` unsaved indicator.
 
-### Tab 6: "Validation Showcase" (All states — sync, no submit)
+### Tab 5: "Filters" — URL-synced filter panel *(none)*
 
-**Goal:** Reference page showing every possible field state.
+Unchanged from rev 2: `search` (debounced), `category` (multi Combobox), `tags`
+(autocomplete chips), `dateRange` (DatePicker range), `sortBy`, `sortOrder`, `pageSize`,
+`status` checkboxes. URL is the single source of truth (`searchParams` → defaults,
+`router.replace` writeback, reset button); renders resolved state as JSON preview. No API.
 
-**States per field type:**
-- Default (empty)
-- Filled (valid)
-- Error (with message)
-- Warning (with message via custom meta)
-- Disabled
-- Loading (async validating)
-- Read-only
-- Required indicator
+### Tab 6: "Field States & Validation Modes" — reference showcase *(none)*
 
-**Patterns shown:**
-- All input types in one place
-- Programmatic error setting via `field.setMeta`
-- Custom meta extension for warning/severity levels
-- `aria-invalid`, `aria-describedby` inspection
-- Accessibility labels and descriptions
+Every client-side state per field type: default, filled, error, warning (custom meta
+severity), disabled, loading (async validating), read-only, required. Plus (new in rev 3) a
+**validation-modes** section: the same 3-field form mounted three ways —
+eager (`onChange`), classic (`onBlur`), and `revalidateLogic()` with `onDynamic` validators
+("reward early, punish late": quiet until first submit, then live) — the official `dynamic`
+example, side by side. Also: programmatic `field.setMeta`, linked-field confirm-password
+(`onChangeListenTo: ["password"]`), `aria-invalid`/`aria-describedby` inspection.
+
+### Tab 7: "File Uploads & Attachments" *(mixed real/simulated)*
+
+1. **Avatar (real):** `UploadField avatar` → `uploadAvatarServer`, 5 MB/image-only limits.
+2. **Gallery (real):** `maxFiles={6}`, N parallel single-file XHR uploads with true per-file
+   progress, per-file retry, remove-before-upload.
+3. **Documents (simulated):** `accept="application/pdf,.docx"` — backend is image-only (would
+   415), so this section routes through the simulation endpoint and says so: it exists to show
+   the seam where a real generic-file route would go.
+
+Errors: oversize → client pre-check (plus note on the real proxy 400 for crafted requests —
+that proxy returns bare `{ error }`, not the envelope; bringing it in line is optional polish);
+wrong MIME → real backend `FileTypeValidator`; "virus scan failed" (simulated `EX_INTERNAL` →
+toast); mid-transfer network drop → per-file `status: "error"` + retry (the error-state UI
+that exists today but nothing ever triggers).
+
+### Tab 8: "Error & Async States Lab" — the flagship error showcase *(simulated by design)*
+
+A control panel, not a business form: **scenario picker** (every `ERROR_SCENARIOS` entry,
+grouped by surface — toast / alert / badge / form-field / full-page — including the two real
+unmapped codes proving the `?? "toast"` fallback is load-bearing); **locale toggle** (en/tr
+scoped to the preview pane — same scenario twice, compare translations); **network
+conditions** (instant / 800 ms / 5 s timeout / offline via `clientException()` short-circuit /
+30% random failure) driving loading, retry-with-backoff, and timeout-vs-error distinction; and
+a **raw payload inspector** (collapsible `<pre>` of the exact `ExceptionResponse`).
+
+**Locale-compare mechanism (rev 4):** `getAllMessages` is server-only and the client provider
+holds only the active locale — so the forms `page.tsx` additionally loads the error-bearing
+namespaces (`auth`, `settings`, `apiKeys`, `forms`, `error`) for **both** locales via
+`getMessages(locale, ns)` and passes them to this tab as an `errorMessagesByLocale` prop (a
+few KB, not the whole tree). The toggle just switches which tree `exceptionHandler` resolves
+against.
+
+This tab is the reference implementation the real tabs (1, 3, 4, 7) are held to.
+
+### Tab 9: "Checkout & Addresses" — field groups + linked fields *(simulated; optional real Stripe)* — NEW
+
+The `withFieldGroup` showcase. One `AddressFieldGroup` (street, city, province/state, postal
+code, country) defined **once**, mounted twice — `shippingAddress` and `billingAddress` — plus
+contact and order-summary sections composed via `withForm`.
+
+Fields/behaviors: "billing same as shipping" SwitchField — toggling hides the billing group
+and mirrors values via `listeners`; `country` change resets `province` and swaps its options
+(dependent selects) and switches the postal-code Zod regex (TR/US/DE formats); phone with
+country prefix; `email` confirm pair via `onChangeListenTo`.
+
+Simulated errors: postal code rejected server-side for the selected country (field error
+inside a *group* — proves group-prefixed paths like `billingAddress.postalCode` map correctly
+through `exceptionToFormErrors`); payment declined → toast. Optional stretch: wire the payment
+step to the real `STRIPE_CREATE_SETUP_INTENT_URL` flow. **Payment-input rule (rev 4):** this
+tab never renders raw card-number/CVC inputs — a demo teaching hand-rolled card fields teaches
+a PCI anti-pattern. Payment is a saved-methods select; "add new" either launches the real
+Stripe setup-intent flow or renders a clearly disabled stub.
+
+Real-life value: address blocks are the single most copy-pasted form structure in production
+apps; this tab is the one people will actually lift wholesale.
+
+### Tab 10: "Content Editor" — submit intents, drafts, unsaved-changes guard *(simulated)* — NEW
+
+A blog-post editor: `title`, `slug` (auto-derived from title via `listeners` until the user
+edits slug manually — then it's theirs), `tags` (chips), `coverImage` (UploadField), `body`
+(TextareaField with preview toggle), `publishAt` (DateField + TimeField, only for schedule).
+
+Submission model:
+- **Save draft** — no validation ceremony (real life: drafts are allowed to be broken); saves
+  `form.state.values` directly, also auto-saved to `localStorage` (debounced) with a restore
+  banner on next mount ("Draft from 14:32 — restore / discard")
+- **Publish** and **Schedule** — both go through `form.handleSubmit({ intent })` with
+  `onSubmitMeta` typing `{ intent: "publish" | "schedule" }` (verified:
+  `handleSubmit(submitMeta)`); full validators run; `onSubmit` branches endpoint + success
+  toast on `meta.intent`; schedule additionally requires `publishAt` (conditional Zod)
+- **Unsaved-changes guard** — `form.state.isDirty` + `beforeunload` for hard navigation and
+  tab close; in-page guards (ExampleTabs `onValueChange`, preview toggle) via `ConfirmDialog`.
+  **Scope honestly stated (R2):** App Router exposes no router events, so arbitrary
+  client-side route changes (e.g. the left nav) are *not* intercepted — the tab intro says so
+  instead of shipping a half-working guard
+
+**Draft hygiene (rev 4):** the draft key is `forms:draft:<userId>` (no cross-account bleed on
+a shared browser), cleared on the existing `auth:logout` window event, size-capped, and stores
+**text fields only** — never `File` objects, object URLs, or data-URI images. localStorage is
+XSS-readable by definition; nothing sensitive is ever drafted. The body preview renders as
+plain text (`whitespace-pre-wrap`) — **no** `dangerouslySetInnerHTML`, no HTML-producing
+markdown rendering anywhere on this page.
+
+Real-life value: draft/publish duality, slug derivation, and dirty-guard are near-universal
+CMS/admin requirements and none of the official examples combine them.
+
+### Tab 11: "Admin Form Builder" — schema-driven dynamic forms *(simulated)* — NEW
+
+Split view. Left: a builder form (itself TanStack) editing an array of field configs — `type`
+(text/select/checkbox/date), `label`, `required`, `options[]` for selects — with array-mode
+add/remove/`moveValue` reorder. Right: a live preview that **renders a second form generated
+from that config** — `defaultValues` as `Record<string, unknown>`, a Zod schema composed at
+runtime from the config, and `AppField` components chosen per `type`.
+
+Patterns: forms driven by data instead of code (CMS-defined intake/survey forms — the
+real-world case behind the official `dynamic` example); runtime schema composition;
+`form.reset` when the config changes; a JSON export of both the config and a submission.
+
+**Name sanitization (rev 4):** generated field names must match
+`/^[a-zA-Z][a-zA-Z0-9]{0,30}$/` and pass a reserved-name blocklist (`__proto__`,
+`constructor`, `prototype`); dots are rejected outright because `.` is TanStack's deep-key
+separator and a crafted name would address a different value path. If config import ever
+lands, imported JSON goes through the same Zod schema before touching the form.
+
+Real-life value: every back-office eventually needs "let admins define the form." This tab is
+the proof that the composition spine handles fields that don't exist at compile time.
+
+### Tab 12: "Inline Editable Table" — array-mode rows + per-row persistence *(simulated)* — NEW
+
+An invoice line-items grid (description, quantity, unit price, tax class): one array-mode
+field of row objects; `pushValue` (add row), `insertValue` (duplicate below), `removeValue`,
+`moveValue`/`swapValues` (keyboard-accessible reorder buttons); per-row Zod (quantity ≥ 1,
+price format); per-row save state — edited rows PATCH individually with optimistic update and
+per-row error badges on simulated failure (row 3 rejected → error pinned to that row, others
+saved); footer totals via `useStore` selector.
+
+Patterns: `mode="array"`, `withForm` row-editor split, mixed row-level + form-level
+validation, the `query-integration` optimistic pattern applied per-row.
+
+Real-life value: admin grids and invoice editors are where naive form libraries fall over;
+this is the stress-test tab.
+
+---
+
+## Coverage Matrices
+
+**Every `ExceptionCode` → demonstrated surface** (Tab 8 covers all; column lists where it
+also appears in a real flow):
+
+| Code | Surface (`EXC_TO_SURFACE`) | Real-flow tab |
+|---|---|---|
+| `EX_VALIDATION_FORM` | form-field | 4 (coupon INVALID) |
+| `EX_AUTH_INVALID_CREDENTIALS` | toast | 8 only |
+| `EX_AUTH_EMAIL_TAKEN` | form-field | 8 (real code, simulated trigger) |
+| `EX_AUTH_ACCOUNT_LOCKED` | toast | 8 only |
+| `EX_CONFLICT_DUPLICATE` | toast | 4 (coupon EXPIRED10) |
+| `EX_NOT_FOUND` | full-page | 8 only |
+| `EX_FORBIDDEN` | full-page | 8 only |
+| `EX_WS_UNSTABLE` | badge | 8 only |
+| `EX_TIER_INSUFFICIENT` | full-page | 2 (quota, inline variant) |
+| `EX_INTERNAL` | toast | 7 (scan failed) |
+| `EX_PROFILE_USERNAME_TAKEN` *(unmapped → toast fallback; field present → form-field via `exceptionToFormErrors`)* | — | 1 (real 409) |
+| `EX_API_KEY_NAME_EXISTS` *(unmapped → toast fallback)* | — | 3 (real 409) |
+
+**Every headline TanStack feature has exactly one canonical tab** (others may use it, one
+teaches it): composition → spine; `{fields}` server errors → 1; wizard + server actions → 2;
+query integration → 3; listeners + dirty-patch → 4; URL state → 5; validation modes +
+linked fields → 6; upload wiring → 7; error surfaces → 8; field groups → 9; submit meta →
+10; dynamic schema → 11; array mode → 12.
+
+---
+
+## i18n Architecture for Errors
+
+Convention (from real backend throw sites): `key` is always `<namespace>.<path>` where
+`<namespace>` **must literally equal a folder name** under `messages/{locale}/` —
+`getAllMessages` keys the merged tree by folder name. So the new namespace for
+`apiKeys.errors.nameExists` must be the camelCase folder `messages/{en,tr}/apiKeys/` (the
+existing folders are kebab/lowercase, but the backend contract wins here; note it in the
+folder's sibling comment or README line).
+
+New/extended files:
+
+- `messages/{en,tr}/forms/messages.json` — page title/description, tab titles+descriptions
+  (12), field labels/placeholders per tab, upload labels block, `errors` block for
+  simulated scenarios (`emailAlreadyMember`, `inviteQuotaExceeded`, `couponInvalid`,
+  `couponExpired`, `connectionUnstable`, `scanFailed`, `postalCodeInvalid`,
+  `paymentDeclined`, `rowRejected`, `unknown`), plus editor/wizard chrome (draft restore
+  banner, unsaved-changes dialog, step labels)
+- `messages/{en,tr}/apiKeys/messages.json` — `errors.nameExists` (en: `An API key named
+  "{name}" already exists`; tr mirror)
+- `messages/{en,tr}/settings/messages.json` — **add** `errors.usernameTaken` (en: `Username is
+  already taken`, tr: `Bu kullanıcı adı zaten alınmış`) — the live-bug fix
+- `messages/{en,tr}/v1-shell/messages.json` — `navForms`
+- `messages/{en,tr}/ui/messages.json` — only if decision #7 lands (gallery pages for the 3 new
+  ui components)
+
+**Build step (verified):** message types are generated — `pnpm generate-i18n-types`
+(`scripts/generate-i18n-types.ts`; auto-runs on `prebuild` only). After adding any namespace,
+run it manually or `useMessages("forms")`/`getMessages(lang, "forms")` won't type-check. Also
+run `pnpm check-duplicate-messages` (existing script) after adding keys.
+
+---
+
+## Reusable Utilities
+
+| Utility | Location | Status |
+|---|---|---|
+| `form-context.ts` / `form-hook.tsx` | `src/lib/forms/` | New — composition spine |
+| Bound field components (×11) | `src/components/forms/` | New — wrap existing ui kit |
+| `FormFieldInfo` | `src/components/ui/form-field-info/` + `FormFieldInfo.tsx` shim + barrel + test | Lifted from inline `FieldInfo` in `views/(demos)/form/Form.tsx` |
+| `FormErrorBanner` | `src/components/ui/form-error-banner/` (+shim/barrel/test) | New — renders `onSubmitAsync`'s `form`-level string via `Alert` |
+| `StepIndicator` | `src/components/ui/step-indicator/` (+shim/barrel/test) | New |
+| `exceptionToFormErrors` | `src/lib/forms/exception-to-form-errors.ts` | New — the error spine |
+| `xhrUpload` | `src/lib/xhr-upload.ts` | New — transport primitive |
+| `ERROR_SCENARIOS` | `src/lib/forms/error-scenarios.ts` | New — simulation registry |
+| `useAllMessages` | extend `src/lib/i18n/MessagesProvider.tsx` | Prerequisite |
+| ~~`async-validator.ts`~~ | — | **Dropped** — built-in `asyncDebounceMs` covers it |
 
 ## Files to Create
 
-| # | File | Purpose |
-|---|---|---|
-| 1 | `src/app/v1/[lang]/forms/page.tsx` | Server page with metadata |
-| 2 | `src/views/forms/PageContent.tsx` | Main page with ExampleTabs |
-| 3 | `src/views/forms/UserProfileForm.tsx` | Tab 1 — full CRUD profile form |
-| 4 | `src/views/forms/TeamInviteForm.tsx` | Tab 2 — multi-step wizard |
-| 5 | `src/views/forms/ApiKeyForm.tsx` | Tab 3 — create + optimistic list |
-| 6 | `src/views/forms/BillingForm.tsx` | Tab 4 — dependent/patch form |
-| 7 | `src/views/forms/FilterPanel.tsx` | Tab 5 — URL-synced filters |
-| 8 | `src/views/forms/ValidationShowcase.tsx` | Tab 6 — all field states |
-| 9 | `src/types/forms/PageContent-types.ts` | Types for form examples, tab defs |
-| 10 | `src/validators/forms/schema.ts` | Zod schemas for all forms |
-| 11 | `src/lib/forms/profile-options.ts` | `formOptions` for profile form |
-| 12 | `src/lib/forms/invite-options.ts` | `formOptions` for invite form |
-| 13 | `src/lib/forms/api-key-options.ts` | `formOptions` for API key form |
-| 14 | `src/lib/forms/billing-options.ts` | `formOptions` for billing form |
-| 15 | `src/lib/forms/filter-options.ts` | `formOptions` for filter form |
-| 16 | `messages/{en,tr}/forms/messages.json` | i18n messages for forms page |
+**Route & tabs** (types per component in `src/types/forms/<Name>-types.ts` — AGENTS rule):
+
+| File | Purpose |
+|---|---|
+| `src/app/v1/[lang]/forms/page.tsx` | Server page (verified pattern) |
+| `src/views/forms/PageContent.tsx` | ExampleTabs with 12 entries |
+| `src/views/forms/UserProfileForm.tsx` | Tab 1 |
+| `src/views/forms/TeamInviteForm.tsx` | Tab 2 |
+| `src/views/forms/ApiKeyForm.tsx` | Tab 3 |
+| `src/views/forms/BillingForm.tsx` | Tab 4 |
+| `src/views/forms/FilterPanel.tsx` | Tab 5 |
+| `src/views/forms/FieldStatesShowcase.tsx` | Tab 6 |
+| `src/views/forms/FileUploadsForm.tsx` | Tab 7 |
+| `src/views/forms/ErrorAsyncLab.tsx` | Tab 8 |
+| `src/views/forms/CheckoutForm.tsx` | Tab 9 |
+| `src/views/forms/ContentEditorForm.tsx` | Tab 10 |
+| `src/views/forms/FormBuilder.tsx` | Tab 11 |
+| `src/views/forms/EditableTable.tsx` | Tab 12 |
+
+(+ sibling sub-components where a tab exceeds ~150 lines, per AGENTS.)
+
+**Form infrastructure:** `src/lib/forms/form-context.ts`, `src/lib/forms/form-hook.tsx`,
+`src/components/forms/{TextField,TextareaField,SelectField,ComboboxField,CheckboxField,SwitchField,RadioGroupField,DateField,TimeField,UploadField,SubmitButton}.tsx`
+(+ matching `src/types/forms/*-types.ts`).
+
+**Lib / API / constants:** `src/lib/forms/exception-to-form-errors.ts`,
+`src/lib/forms/error-scenarios.ts`, `src/lib/xhr-upload.ts`,
+`src/api/server/forms-demo/simulate.ts`, `src/api/client/forms-demo/actions.ts`,
+`src/api/server/upload/xhr-single.ts`, `src/api/client/upload/actions.ts`,
+`src/app/api/forms-demo/simulate-error/route.ts`.
+
+**UI kit (per ui-components conventions — kebab folder + PascalCase shim + barrel entry +
+colocated test + types in `src/types/ui/`):** `form-field-info/`, `form-error-banner/`,
+`step-indicator/` (+ 3 gallery pages if decision #7 lands).
+
+**Validators & options:** `src/validators/forms/schema.ts` (may split per-tab if large);
+`src/lib/forms/{profile,invite,api-key,billing,filter,upload,checkout,editor,builder,table}-options.ts`
+(`formOptions` per form; each asserts `defaultValues` matches its Zod schema).
+
+**Messages:** `messages/{en,tr}/forms/messages.json`, `messages/{en,tr}/apiKeys/messages.json`.
 
 ## Files to Modify
 
-| # | File | Change |
-|---|---|---|
-| 1 | `src/views/v1/[lang]/V1Nav.tsx` | Add `/forms` nav link + `IconForms` import |
-| 2 | `messages/{en,tr}/v1-shell/messages.json` | Add `navForms: "Forms"` |
-
-## Reusable Utilities (extract from existing code)
-
-- `FieldInfo` — already in `src/views/(demos)/form/Form.tsx` and `src/types/demos/FieldInfo-types.ts` — lift to `src/components/ui/form-field-info.tsx` for reuse across all forms
-- `asyncValidator` helper — debounced async validation wrapper → `src/lib/forms/async-validator.ts`
-- `formErrorBanner` — extracted form-level error display → `src/components/ui/form-error-banner.tsx`
-- `stepIndicator` — wizard step progress → `src/components/ui/step-indicator.tsx`
+| File | Change |
+|---|---|
+| `src/views/v1/[lang]/V1Nav.tsx` | Nav link between `/ui` and `/boom` + icon import |
+| `messages/{en,tr}/v1-shell/messages.json` | `navForms` |
+| `src/lib/i18n/MessagesProvider.tsx` | **Prereq** — `useAllMessages()` |
+| `src/lib/exception-handler.ts` | **Prereq** — `getSurface(exc: string)` |
+| `messages/{en,tr}/settings/messages.json` | **Prereq** — `errors.usernameTaken` (live-bug fix) |
+| `src/types/ui/FileUpload-types.ts` / `ImageUpload-types.ts` | `labels?: FileUploadLabels` |
+| `src/components/ui/file-upload/file-upload.tsx` / `image-upload/image-upload.tsx` | consume `labels` with current strings as defaults |
+| `src/components/ui/index.ts` | barrel entries for the 3 new components |
+| `src/constants/api/urls.ts` | `FORMS_DEMO_SIMULATE_ERROR_URL` |
+| `src/generated/i18n-messages.d.ts` | regenerated (never hand-edited) via `pnpm generate-i18n-types` |
+| `src/app/api/upload/route.ts` | *Optional polish* — envelope-shaped errors instead of bare `{ error }` |
 
 ## Implementation Order
 
-1. **Prerequisites:** Create `FieldInfo` component, `asyncValidator` utility, `formErrorBanner` component, `stepIndicator` component
-2. **Scaffold:** Nav link, i18n keys, server page, `PageContent` with `ExampleTabs`
-3. **Tab 6 (Validation Showcase)** — simplest, no logic, pure rendering — establishes all field patterns
-4. **Tab 1 (User Profile)** — full CRUD with all input types — establishes the core form pattern
-5. **Tab 5 (Filters)** — URL sync pattern — standalone, no API calls
-6. **Tab 3 (API Key)** — optimistic mutations — introduces TanStack Query integration
-7. **Tab 4 (Billing)** — dependent fields + patch — advanced form dynamics
-8. **Tab 2 (Team Invite)** — multi-step + server actions — most complex, last
+Phases are self-contained and land in sequence; per the phased-roadmap convention, each phase
+gets checked off here before the next starts.
 
-## Key Conventions to Follow
+- **Phase 0 — Prerequisites** *(safe to ship alone; nothing user-visible yet)*:
+  `useAllMessages`, `getSurface` widening, `settings.errors.usernameTaken` (en+tr),
+  `labels?` prop on upload components. Run `generate-i18n-types`.
+- **Phase 1 — Scaffold**: nav, `forms` + `apiKeys` message namespaces, server page,
+  `PageContent` with 12 placeholder tabs. Regenerate i18n types.
+- **Phase 2 — Composition + error spine** *(load `ui-components` skill for the 3 ui-kit
+  components; `datetime-inputs` for Date/Time bound fields)*: `form-context`/`form-hook`,
+  the 11 bound field components, `FormFieldInfo` lift, `FormErrorBanner`, `StepIndicator`,
+  `exceptionToFormErrors`, `error-scenarios`, simulation route + its api layers.
+- **Phase 3 — Tab 6** (field states + validation modes) — proves every bound component renders
+  every state; no submit logic.
+- **Phase 4 — Tab 8** (error lab) — proves the whole error spine before any real form leans on
+  it.
+- **Phase 5 — Tab 1** (profile) — first real form, first real 409 through the spine.
+- **Phase 6 — Tab 7** (uploads) — `xhrUpload` + labels in anger.
+- **Phase 7 — Tab 5** (filters) — standalone URL-state pattern.
+- **Phase 8 — Tab 3** (API keys) — TanStack Query optimistic mutations, real conflict toast.
+- **Phase 9 — Tab 4** (billing) — listeners, dirty-diff PATCH, dual-surface coupon errors.
+- **Phase 10 — Tab 9** (checkout) — `withFieldGroup`, linked fields, dependent country logic.
+- **Phase 11 — Tabs 10 + 11** (editor; builder) — submit meta + dynamic schemas.
+- **Phase 12 — Tabs 2 + 12** (wizard + server actions; editable table) — most moving parts
+  last.
 
-- All Zod schemas → `src/validators/forms/schema.ts`
-- All API calls → through `@/api/client/` (existing pattern)
-- All i18n → `useMessages("forms")` with keys in `messages/{en,tr}/forms/messages.json`
-- All toasts → `useToast()` from `@/components/ui/toast/use-toast`
-- All alerts → `Alert` from `@/components/ui/Alert`
-- All types → `src/types/forms/PageContent-types.ts`
-- Extract handlers to module-level functions (not inside component)
-- Sub-components extracted to sibling files (not inline)
-- Form options in `src/lib/forms/` (one file per form type)
-- Every form option file validates its `defaultValues` shape matches the Zod schema
-- Every form field uses `validators={{ onChange: ..., onBlur: ... }}` for per-field validation
-- Every form has both client-side validation (Zod) and server-side validation (where applicable)
+## Verification & Definition of Done (per phase)
+
+Wired to this repo's actual scripts and working agreements:
+
+1. `pnpm lint` and `pnpm typecheck` clean (includes regenerated i18n types)
+2. `pnpm generate-i18n-types` run after any `messages/` change; `pnpm check-duplicate-messages`
+   clean
+3. en/tr parity: every new key exists in both locales (the error-code rule below)
+4. **No automated test or Playwright runs by default** — per working agreement, Berkay
+   exercises the UI manually after changes; test files for the 3 ui-kit components are still
+   *written* (convention), just not run as a gate
+5. Manual smoke for error tabs: trigger Tab 1's real username 409 and Tab 3's real duplicate
+   409 in both locales — the translated string must appear (this retro-verifies the Phase 0
+   `settings` fix and the new `apiKeys` namespace)
+6. `pnpm depcruise` green — the repo's dependency-cruiser forbidden rules are active; the new
+   `api/server` ↔ `api/client` ↔ views layering must not regress them (run per phase, not
+   just at the end)
+7. Simulation-route hardening smoke: unauthenticated POST → 401; `delayMs: 999999` → response
+   within the 10 s clamp
+8. A11y spot check on failed submits: focus lands on the first errored field; the banner
+   announces via `role="alert"` (manual keyboard + screen-reader pass — no automated gate)
+
+## Key Conventions (binding for every phase)
+
+- All Zod schemas → `src/validators/forms/` (never inline)
+- All prop types → `src/types/<feature>/<Component>-types.ts` (never inline)
+- All API calls → two-layer `api/server` + `api/client`; URLs/methods/headers from
+  `src/constants/api/`; **components never touch `fetch`/`apiFetchJson`/XHR** — the only XHR
+  lives in `src/lib/xhr-upload.ts`
+- All server errors → `getSurface` picks the surface, `exceptionToFormErrors` /
+  `exceptionHandler` pick the text; **never** a hand-rolled `if (exc === "...")`
+- New error codes follow `EX_<DOMAIN>_<REASON>` and ship a `<namespace>.errors.<camelCase>`
+  key in **both** locales in the same commit — no code without a translation (the rule the
+  live `settings` bug violated)
+- i18n namespace folder name must literally equal the key's first segment (`apiKeys` folder
+  for `apiKeys.*` keys)
+- Handlers at module level with explicit params; view files split at ~150 lines; sub-components
+  in sibling files
+- Client `maxSizeBytes` = the **stricter** of proxy/backend limits (5 MB), with a comment
+- `formOptions` per form in `src/lib/forms/`; `defaultValues` shape asserted against the Zod
+  schema
+
+## Explicitly Out of Scope
+
+- Chunked/resumable upload (new backend work)
+- Full i18n of `FileUpload`/`ImageUpload` internals beyond the `labels` prop
+- Drag-and-drop reorder (gallery images, builder fields, table rows — buttons only; DnD is its
+  own follow-up)
+- Real backend features for: email team-invites, coupons, tax-ID validation, content drafts,
+  form-builder persistence, invoice rows
+- Retrofitting the error spine into existing call sites (`register-form.tsx`,
+  `BasicPageView.tsx`, `FreePageView.tsx`) — natural follow-up once this page proves the
+  pattern
+- `@tanstack/react-form` devtools integration (official `devtools` example) — nice-to-have,
+  revisit after the page lands
+
+## Solidity Review — Security · Functionality · Compatibility · Ease
+
+Four-lens pass over every example (rev 4). Items marked *inline* are already reflected in the
+sections above; this is the consolidated register an implementer checks off per phase.
+
+### Security checklist
+
+| # | Surface | Decision |
+|---|---|---|
+| S1 | Simulation endpoint abuse | Session-gated (401 unauth), Zod-validated body, `delayMs ≤ 10 s`, `failRate ∈ [0,1]` — *inline in Error Simulation Architecture*. An unclamped delay on an open route is a connection-holding DoS primitive on the real deployment |
+| S2 | Upload transport | XHR mirrors `apiFetch`'s 401 → `auth:logout`; success and error parses guarded; same-origin cookies only, no token handling — *inline* |
+| S3 | Malicious file content | Client MIME/size checks are UX only; the security boundary is the backend: MIME allowlist + **sharp re-encode to webp**, which strips scripts/EXIF/polyglot payloads. SVG never renders (not in the allowlist) |
+| S4 | Document-upload section (Tab 7) | Never transmits file bytes — the simulated scenario sends metadata only; files stay in client memory |
+| S5 | API-key secret (Tab 3) | `fullKey` in component state only; never Query cache / toast / logged object (the `frontend-logs` ES pipeline makes a logged key a real credential leak); cleared on unmount — *inline* |
+| S6 | Draft storage (Tab 10) | Per-user key `forms:draft:<userId>`, cleared on `auth:logout`, text-only, size-capped; localStorage is XSS-readable, so nothing sensitive is ever drafted — *inline* |
+| S7 | Injection surface | Every string (server `msg`, user content, payload inspector) renders as React text nodes; zero `dangerouslySetInnerHTML` on the page; markdown preview is plain text |
+| S8 | Dynamic field names (Tab 11) | Identifier regex + `__proto__`/`constructor`/`prototype` blocklist + no dots (TanStack deep-key separator) — *inline* |
+| S9 | Payment inputs (Tab 9) | No raw card/CVC fields ever (PCI anti-pattern in a teaching demo); saved-methods select + real Stripe flow or disabled stub — *inline* |
+| S10 | URL-driven state (Tab 5) | `searchParams` Zod-coerced and clamped (enums, `pageSize`, dates) before entering form state; output React-escaped |
+
+### Functionality risk register
+
+| # | Risk | Sev | Mitigation / fallback |
+|---|---|---|---|
+| R1 | `FormData` decode of an array field via `react-form-nextjs` is unproven in this repo (Tab 2) | Med | Spike before building the tab; committed fallback: emails as one JSON-string field parsed in `onServerValidate` — *inline* |
+| R2 | App Router has no route-change events → full nav interception impossible (Tab 10) | Low | Guard scoped to `beforeunload` + in-page switches; limitation stated in the tab intro — *inline* |
+| R3 | Real `updateProfile` accepts a subset of Tab 1's fields | — | **Closed by design:** persisted vs demo-only field split — *inline* |
+| R4 | Tab 8 needs both locales client-side but `getAllMessages` is server-only | — | **Closed:** `errorMessagesByLocale` prop from the server page — *inline* |
+| R5 | TypeScript instantiation cost of 12 heavily-generic forms slows `tsc` | Low–Med | Per-tab isolated `formOptions`; no mega `z.union` schemas; watch `pnpm typecheck` duration each phase — if it degrades, type-erase only at the ExampleTabs seam |
+| R6 | Form-validator field errors persist until the next submit | — | **Accepted** — official semantics and the intended UX; noted in the error spine |
+| R7 | 12 tab pills wrap on narrow desktops | — | **Accepted** — `ExampleTabs` wraps pills; mobile accordion unaffected |
+
+### Compatibility matrix (verified, not assumed)
+
+| Pair | Status |
+|---|---|
+| Next `16.2.9` + React `19.2.4` + `useActionState` | ✅ already shipping in this repo (`(demos)/form`) |
+| `@tanstack/react-form@1.33` + `@tanstack/react-form-nextjs@1.33` | ✅ the exact pairing the existing demo uses |
+| Zod `^4.4.3` as Standard Schema, no adapter | ✅ form-core resolves `StandardSchemaV1Issue[]` |
+| `revalidateLogic` in installed 1.33 | ✅ `ValidationLogic.d.ts:52`, re-exported from the index |
+| `XMLHttpRequest` progress, `navigator.onLine`, `crypto.randomUUID` | ✅ baseline in every browser this app targets |
+| `labels?` prop on `FileUpload`/`ImageUpload` | ✅ additive — all four existing call sites compile unchanged |
+| camelCase `apiKeys` messages folder | ✅ `getAllMessages` and the type generator key by literal folder name |
+| dependency-cruiser forbidden rules | ⚠️ active in the repo — every new file must respect the layering; gate added to the DoD |
+
+### Ease — copy-paste map
+
+The boilerplate contract: each tab imports only the composition spine, the error spine, and
+its own `*-options.ts` + validators — never another tab. What to lift per need:
+
+| You need | Copy |
+|---|---|
+| Typed form fields wired to this ui kit | `lib/forms/form-context.ts` + `form-hook.tsx`, `components/forms/*`, `ui/form-field-info` |
+| Translated server errors on fields | `lib/forms/exception-to-form-errors.ts`, `useAllMessages`, Tab 1's submit wiring |
+| Multi-step wizard | `ui/step-indicator` + Tab 2 |
+| Optimistic create/delete lists | Tab 3 |
+| Auto-save / dirty-field PATCH | Tab 4 |
+| URL-synced filters | Tab 5 |
+| Upload with real progress | `lib/xhr-upload.ts`, `api/{server,client}/upload/*`, Tab 7 |
+| Reusable address block | Tab 9's `AddressFieldGroup` |
+| Draft/publish editor | Tab 10 |
+| Config-driven forms | Tab 11 |
+| Editable table rows | Tab 12 |
+
+## References
+
+- TanStack Form — Form Composition guide (createFormHook / useAppForm / withForm /
+  withFieldGroup): https://tanstack.com/form/latest/docs/framework/react/guides/form-composition
+- TanStack Form — official React examples (roster verified via the repo):
+  https://github.com/TanStack/form/tree/main/examples/react
+- Local verification: `@tanstack/form-core@1.33.0` type defs under
+  `next-js-boilerplate/node_modules/.pnpm/@tanstack+form-core@1.33.0/` (citations inline above)
