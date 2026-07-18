@@ -6,14 +6,10 @@ import {
   type Dispatch,
   type SetStateAction,
 } from "react";
-import { apiFetch } from "@/lib/api-client";
-import { MESSAGES_CONVERSATIONS_PREFIX } from "@/constants/api/urls";
-import { POST } from "@/constants/api/methods";
 import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
 import { useConversation } from "@/lib/realtime/useConversation";
-import { useQueryClient } from "@tanstack/react-query";
-import { sendMessageSchema } from "@/lib/validation/message";
+import { sendMessageSchema } from "@/validators/messages/schema";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -25,37 +21,7 @@ import { initials } from "@/lib/initials";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { IconChevronLeft } from "@tabler/icons-react";
 import type { ChatViewProps, Message } from "@/types/messages/ChatView-types";
-
-async function sendMessageToUser(
-  recipientId: string,
-  text: string,
-  queryClient: ReturnType<typeof useQueryClient>,
-) {
-  const res = await apiFetch(
-    `${MESSAGES_CONVERSATIONS_PREFIX}${recipientId}/messages`,
-    { method: POST, body: JSON.stringify({ text }) },
-  );
-  if (res.ok) {
-    const msg = await res.json().catch(() => null);
-    if (msg?.id) {
-      queryClient.setQueryData(
-        ["messages", recipientId],
-        (old: unknown) => {
-          const data = old as
-            | { pages: { messages: Record<string, unknown>[] }[] }
-            | undefined;
-          if (!data?.pages?.length) return old;
-          const pages = [...data.pages];
-          const first = { ...pages[0] };
-          if (first.messages.some((m) => m.id === msg.id)) return old;
-          first.messages = [...first.messages, msg];
-          pages[0] = first;
-          return { ...data, pages };
-        },
-      );
-    }
-  }
-}
+import { useMessageActions } from "@/api/client/messages/actions";
 
 async function chatViewHandleSend(
   selectedUser: { id: string } | null,
@@ -91,7 +57,6 @@ export function ChatView({
 }: ChatViewProps) {
   const t = useMessages("messages");
   const messagesRef = useYSwipeGesture<HTMLDivElement>();
-  const queryClient = useQueryClient();
   const [input, setInput] = useState("");
   const [messageError, setMessageError] = useState<string | null>(null);
 
@@ -110,10 +75,7 @@ export function ChatView({
     !!selectedUser,
   );
 
-  const sendMessage = useCallback(
-    (recipientId: string, text: string) => sendMessageToUser(recipientId, text, queryClient),
-    [queryClient],
-  );
+  const { sendMessage } = useMessageActions();
 
   const handleSend = useCallback(
     () => chatViewHandleSend(selectedUser, input, sendMessage, setInput, setMessageError, scrollToBottom),

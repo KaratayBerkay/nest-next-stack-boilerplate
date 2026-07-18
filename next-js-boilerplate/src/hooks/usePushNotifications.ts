@@ -1,11 +1,8 @@
 "use client";
 
-import { apiFetch } from "@/lib/api-client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { clientEnv } from "@/lib/env";
-import { PUSH_SUBSCRIBE_URL, PUSH_UNSUBSCRIBE_URL } from "@/constants/api/urls";
-import { POST } from "@/constants/api/methods";
-import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
+import { usePushNotificationActions } from "@/api/client/push-notifications/actions";
 
 function urlBase64ToUint8Array(base64: string): Uint8Array {
   const padding = "=".repeat((4 - (base64.length % 4)) % 4);
@@ -27,6 +24,9 @@ export function usePushNotifications() {
       "PushManager" in window,
   );
   const swRef = useRef<ServiceWorkerRegistration | null>(null);
+
+  const { subscribe: subscribePush, unsubscribe: unsubscribePush } =
+    usePushNotificationActions();
 
   useEffect(() => {
     if (!supported) return;
@@ -63,16 +63,12 @@ export function usePushNotifications() {
         });
         setSubscription(sub);
 
-        await apiFetch(PUSH_SUBSCRIBE_URL, {
-          method: POST,
-          headers: JSON_CONTENT_TYPE_HEADER,
-          body: JSON.stringify(sub.toJSON()),
-        });
+        await subscribePush(sub.toJSON() as Record<string, unknown>);
       }
     } catch (err) {
       console.error("Push subscription failed:", err);
     }
-  }, [supported]);
+  }, [supported, subscribePush]);
 
   const unsubscribe = useCallback(async () => {
     if (!subscription) return;
@@ -80,15 +76,11 @@ export function usePushNotifications() {
       await subscription.unsubscribe();
       setSubscription(null);
 
-      await apiFetch(PUSH_UNSUBSCRIBE_URL, {
-        method: POST,
-        headers: JSON_CONTENT_TYPE_HEADER,
-        body: JSON.stringify({ endpoint: subscription.endpoint }),
-      });
+      await unsubscribePush(subscription.endpoint);
     } catch {
       // silent
     }
-  }, [subscription]);
+  }, [subscription, unsubscribePush]);
 
   return {
     supported,

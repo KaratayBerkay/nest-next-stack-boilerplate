@@ -1,6 +1,5 @@
 "use client";
 
-import { apiFetch } from "@/lib/api-client";
 import {
   useState,
   type Dispatch,
@@ -10,7 +9,7 @@ import {
 import { useToast } from "@/components/ui/Toast";
 import { exceptionHandler } from "@/lib/exception-handler";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
-import { PREMIUM_STATS_URL } from "@/constants/api/urls";
+import { fetchPremiumStatsServer } from "@/api/server/premium/stats";
 
 async function loadStats(
   setLoadingStats: Dispatch<SetStateAction<boolean>>,
@@ -29,17 +28,8 @@ async function loadStats(
 ) {
   setLoadingStats(true);
   try {
-    const res = await apiFetch(PREMIUM_STATS_URL);
-    if (res.ok) {
-      const data = await res.json();
-      setStats(data.stats);
-    } else {
-      const data = await res.json();
-      const description = data.exc
-        ? exceptionHandler(data)
-        : (data.error ?? t.errorStatus.replace("{status}", String(res.status)));
-      toast({ description, variant: "destructive" });
-    }
+    const data = await fetchPremiumStatsServer() as unknown as { stats: { totalUsers: number; activeUsers: number; revenue: number } };
+    setStats(data.stats);
   } catch {
     toast({ description: t.networkError, variant: "destructive" });
   } finally {

@@ -20,7 +20,7 @@ import { FieldMessages } from "@/components/ui/field-messages";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { cn } from "@/lib/cn";
-import { cardLoginFormSchema, cardRegisterFormSchema } from "@/lib/validation/auth";
+import { cardLoginFormSchema, cardRegisterFormSchema } from "@/validators/auth/schema";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 // ---------- Shared ----------

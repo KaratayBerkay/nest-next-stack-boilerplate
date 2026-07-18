@@ -22,9 +22,9 @@ import {
 import { PostCard } from "@/components/feed/PostCard";
 import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
-import { apiFetch } from "@/lib/api-client";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
-import { POSTS_URL } from "@/constants";
+import { feedListQueryOptions } from "@/api/client/posts/query";
+import { fetchFeedListServer } from "@/api/server/posts/list";
 
 const PAGE_SIZE = 5;
 
@@ -57,13 +57,7 @@ async function handleLoadMore(
   loadingRef.current = true;
   setLoadingMore(true);
   try {
-    const p = new URLSearchParams();
-    p.set("take", String(PAGE_SIZE));
-    p.set("cursor", cursorRef.current);
-    if (search) p.set("search", search);
-    const res = await apiFetch(`${POSTS_URL}?${p}`);
-    if (!res.ok) return;
-    const result = await res.json();
+    const result = await fetchFeedListServer(PAGE_SIZE, cursorRef.current, search);
     setExtraPosts((prev) => [...prev, ...result.posts]);
     setExtraHasMore(result.hasMore);
     cursorRef.current = result.nextCursor;
@@ -110,24 +104,8 @@ export function FeedList({ search, initialFeedData }: FeedListProps) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const scrollRef = useYSwipeGesture<HTMLDivElement>();
 
-  const { data } = useSuspenseQuery<{
-    posts: Post[];
-    hasMore: boolean;
-    nextCursor: string | null;
-  }>({
-    queryKey: ["feed", "list", search],
-    queryFn: async () => {
-      const p = new URLSearchParams();
-      p.set("take", String(PAGE_SIZE));
-      if (search) p.set("search", search);
-      const res = await apiFetch(`${POSTS_URL}?${p}`);
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? t.failedToLoadPosts);
-      }
-      return res.json();
-    },
-    staleTime: 30_000,
+  const { data } = useSuspenseQuery({
+    ...feedListQueryOptions(PAGE_SIZE, null, search),
     initialData: !search ? (initialFeedData as {
       posts: Post[];
       hasMore: boolean;

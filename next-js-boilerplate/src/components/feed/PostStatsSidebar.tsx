@@ -3,19 +3,11 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
-import { apiFetch } from "@/lib/api-client";
-import { GQL_URL } from "@/constants/api/urls";
-import { POST } from "@/constants/api/methods";
-import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
+import { fetchPostStatsServer } from "@/api/server/posts/stats";
+import type { PostStats } from "@/api/server/posts/stats";
 
 async function loadStats(
-  setStats: Dispatch<
-    SetStateAction<{
-      totalPosts: number;
-      totalReactions: number;
-      avgReactionsPerPost: number;
-    } | null>
-  >,
+  setStats: Dispatch<SetStateAction<PostStats | null>>,
   setLoading: Dispatch<SetStateAction<boolean>>,
   toast: ({
     title,
@@ -30,23 +22,8 @@ async function loadStats(
 ) {
   setLoading(true);
   try {
-    const res = await apiFetch(GQL_URL, {
-      method: POST,
-      headers: JSON_CONTENT_TYPE_HEADER,
-      body: JSON.stringify({
-        query: `query { myPostStats { totalPosts totalReactions avgReactionsPerPost } }`,
-      }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setStats(data.data?.myPostStats);
-    } else {
-      const data = await res.json();
-      toast({
-        description: data.error ?? t.failedToLoadStats,
-        variant: "destructive",
-      });
-    }
+    const stats = await fetchPostStatsServer();
+    setStats(stats);
   } catch {
     toast({ description: t.networkError, variant: "destructive" });
   } finally {
@@ -57,11 +34,7 @@ async function loadStats(
 export function PostStatsSidebar() {
   const t = useMessages("feed");
   const { toast } = useToast();
-  const [stats, setStats] = useState<{
-    totalPosts: number;
-    totalReactions: number;
-    avgReactionsPerPost: number;
-  } | null>(null);
+  const [stats, setStats] = useState<PostStats | null>(null);
   const [loading, setLoading] = useState(false);
 
   return (

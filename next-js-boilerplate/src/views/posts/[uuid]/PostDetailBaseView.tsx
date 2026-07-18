@@ -1,6 +1,5 @@
 "use client";
 
-import { apiFetch } from "@/lib/api-client";
 import { useEffect, useState, Suspense } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
@@ -25,12 +24,11 @@ import { Avatar } from "@/components/ui/Avatar";
 import { initials } from "@/lib/initials";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useMarkPostNotificationsRead } from "@/lib/notifications/useMarkPostNotificationsRead";
-import { POSTS_PREFIX } from "@/constants/api/urls";
-import { PUT, DELETE } from "@/constants/api/methods";
-import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { postsPageInfo } from "@/constants/page-info";
 import { PostDetailFallback } from "@/fallbacks";
+import { singlePostQueryOptions } from "@/api/client/posts/query";
+import { usePostActions } from "@/api/client/posts/actions";
 import type { PostDetailBaseViewProps } from "@/types/posts/PostDetailBaseView-types";
 
 interface Post {
@@ -74,6 +72,7 @@ function PostDetailContent({
   const [editContent, setEditContent] = useState("");
   const swipeRef = useYSwipeGesture<HTMLDivElement>();
   const dateDisplay = useDateDisplayCookie();
+  const { updatePost, deletePost } = usePostActions();
 
   useEffect(() => {
     if (!uuid) return;
@@ -84,16 +83,8 @@ function PostDetailContent({
 
   useMarkPostNotificationsRead(uuid);
 
-  const { data: post } = useSuspenseQuery<Post>({
-    queryKey: ["posts", uuid],
-    queryFn: async () => {
-      const res = await apiFetch(POSTS_PREFIX + uuid);
-      if (!res.ok) throw new Error(t.postNotFound);
-      const data = await res.json();
-      if (!data.post) throw new Error(t.postNotFound);
-      return data.post;
-    },
-    staleTime: 30_000,
+  const { data: post } = useSuspenseQuery({
+    ...singlePostQueryOptions(uuid),
     initialData: initialPostData as Post | undefined,
   });
 
@@ -151,10 +142,8 @@ function PostDetailContent({
                   title={t.deletePost}
                   description={t.deletePostConfirm}
                   onConfirm={async () => {
-                    const res = await apiFetch(POSTS_PREFIX + post.id, {
-                      method: DELETE,
-                    });
-                    if (res.ok) router.push(`/v1/${params?.lang ?? "en"}/feed`);
+                    await deletePost(post.id);
+                    router.push(`/v1/${params?.lang ?? "en"}/feed`);
                   }}
                 >
                   {(open) => (
@@ -191,20 +180,8 @@ function PostDetailContent({
               <button
                 onClick={async () => {
                   if (!editTitle.trim() || !editContent.trim()) return;
-                  const res = await apiFetch(POSTS_PREFIX + post.id, {
-                    method: PUT,
-                    headers: JSON_CONTENT_TYPE_HEADER,
-                    body: JSON.stringify({
-                      title: editTitle.trim(),
-                      content: editContent.trim(),
-                    }),
-                  });
-                  if (res.ok) {
-                    setEditing(false);
-                    queryClient.invalidateQueries({
-                      queryKey: ["posts", uuid],
-                    });
-                  }
+                  await updatePost(post.id, editTitle.trim(), editContent.trim());
+                  setEditing(false);
                 }}
                 className="bg-brand rounded-lg px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
               >

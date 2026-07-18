@@ -8,24 +8,21 @@ import {
   IconChevronLeft,
   IconArrowLeft,
 } from "@tabler/icons-react";
-import { apiFetch } from "@/lib/api-client";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { useDeviceType } from "@/hooks/useDeviceType";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { SkeletonMessage } from "@/components/ui/skeleton-shapes";
-import { NOTIFICATIONS_READ_URL } from "@/constants/api/urls";
-import { POST } from "@/constants/api/methods";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { notificationPageInfo } from "@/constants/page-info";
 import { NotificationFallback } from "@/fallbacks";
 import { useNotifications } from "@/lib/realtime/useNotifications";
 import { formatDateByPreference } from "@/lib/date-time";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
-import { useQueryClient } from "@tanstack/react-query";
 import { notificationTarget } from "@/lib/notifications/target";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { useNotificationActions } from "@/api/client/notifications/actions";
 
 function navigateToFeed(
   router: ReturnType<typeof useRouter>,
@@ -38,7 +35,6 @@ function NotificationPageContent() {
   const params = useParams<{ lang: string }>();
   const lang = params?.lang ?? "en";
   const router = useRouter();
-  const queryClient = useQueryClient();
   const t = useMessages("notification");
   const { data: notifData, isLoading } = useNotifications();
   const dateDisplay = useDateDisplayCookie();
@@ -47,41 +43,16 @@ function NotificationPageContent() {
     [notifData?.items],
   );
 
-  const markedRef = useRef(false);
+  const { markAllRead, markRead } = useNotificationActions();
 
-  const markAllReadOnce = useCallback(async () => {
-    try {
-      await apiFetch(NOTIFICATIONS_READ_URL, {
-        method: POST,
-        body: JSON.stringify({ all: true }),
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ["notifications"],
-      });
-    } catch {}
-  }, [queryClient]);
+  const markedRef = useRef(false);
 
   useEffect(() => {
     if (notifications.length > 0 && !markedRef.current) {
       markedRef.current = true;
-      markAllReadOnce();
+      markAllRead();
     }
-  }, [notifications.length, markAllReadOnce]);
-
-  const markRead = useCallback(
-    async (id: string) => {
-      try {
-        await apiFetch(NOTIFICATIONS_READ_URL, {
-          method: POST,
-          body: JSON.stringify({ id }),
-        });
-        await queryClient.invalidateQueries({
-          queryKey: ["notifications"],
-        });
-      } catch {}
-    },
-    [queryClient],
-  );
+  }, [notifications.length, markAllRead]);
 
   const notifSwipeRef = useYSwipeGesture<HTMLDivElement>();
 
@@ -149,9 +120,9 @@ function NotificationPageContent() {
               <IconBell size={16} stroke={1.5} />
             </button>
           )}
-          {unread.length > 0 && (
+            {unread.length > 0 && (
             <button
-              onClick={markAllReadOnce}
+              onClick={markAllRead}
               className="text-brand text-xs font-medium hover:underline"
             >
               {t.markAllRead}

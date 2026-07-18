@@ -6,15 +6,9 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-import { apiFetchJson } from "@/lib/api-client";
 import { StripeElements } from "@/components/StripeProvider";
 import type { StripeCardFormProps } from "@/types/billing/StripeCardForm-types";
-import {
-  STRIPE_CREATE_SETUP_INTENT_URL,
-  STRIPE_SUBSCRIBE_URL,
-} from "@/constants/api/urls";
-import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
-import { POST } from "@/constants/api/methods";
+import { useBillingActions } from "@/api/client/billing/actions";
 
 export function StripeCardForm({
   tier,
@@ -23,19 +17,16 @@ export function StripeCardForm({
 }: StripeCardFormProps) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const { createSetupIntent } = useBillingActions();
 
   useEffect(() => {
-    apiFetchJson<{ clientSecret: string }>(STRIPE_CREATE_SETUP_INTENT_URL, {
-      method: POST,
-      headers: JSON_CONTENT_TYPE_HEADER,
-      body: JSON.stringify({ tier }),
-    })
+    createSetupIntent(tier)
       .then((data) => setClientSecret(data.clientSecret))
       .catch((err) => {
         onError((err as Error).message ?? "Failed to initialize payment");
         setLoading(false);
       });
-  }, [tier, onError]);
+  }, [tier, onError, createSetupIntent]);
 
   if (!clientSecret) {
     return (
@@ -64,6 +55,7 @@ async function handleStripeSubmit(
   setSubmitting: Dispatch<SetStateAction<boolean>>,
   onSuccess: () => void,
   onError: (msg: string) => void,
+  subscribe: (tier: string, paymentMethodId?: string) => Promise<void>,
 ) {
   e.preventDefault();
   if (!stripe || !elements) return;
@@ -98,14 +90,7 @@ async function handleStripeSubmit(
   }
 
   try {
-    await apiFetchJson(STRIPE_SUBSCRIBE_URL, {
-      method: POST,
-      headers: JSON_CONTENT_TYPE_HEADER,
-      body: JSON.stringify({
-        tier,
-        paymentMethodId: setupIntent.payment_method,
-      }),
-    });
+    await subscribe(tier, setupIntent.payment_method as string | undefined);
     onSuccess();
   } catch (err) {
     onError((err as Error).message ?? "Subscription failed");
@@ -122,6 +107,7 @@ function StripeCardFormInner({
   const stripe = useStripe();
   const elements = useElements();
   const [submitting, setSubmitting] = useState(false);
+  const { subscribe } = useBillingActions();
 
   return (
     <form
@@ -134,6 +120,7 @@ function StripeCardFormInner({
           setSubmitting,
           onSuccess,
           onError,
+          subscribe,
         )
       }
       className="flex flex-col gap-4"

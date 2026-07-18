@@ -6,7 +6,7 @@ import { LOGIN_PATH } from "@/constants/routes";
 import Link from "next/link";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { I18nMessages } from "@/generated/i18n-messages";
-import { registerFormSchema } from "@/lib/validation/auth";
+import { registerFormSchema } from "@/validators/auth/schema";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";

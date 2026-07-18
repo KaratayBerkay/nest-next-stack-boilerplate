@@ -4,9 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { LOGIN_PATH } from "@/constants/routes";
-import { AUTH_VERIFY_EMAIL_URL } from "@/constants/api/urls";
-import { POST } from "@/constants/api/methods";
-import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
+import { verifyEmailServer } from "@/api/server/auth/verify-email";
 import type { VerifyEmailFormProps } from "@/types/auth/VerifyEmailForm-types";
 
 export function VerifyEmailForm({ token }: VerifyEmailFormProps) {
@@ -22,24 +20,13 @@ export function VerifyEmailForm({ token }: VerifyEmailFormProps) {
   useEffect(() => {
     if (!token) return;
 
-    fetch(AUTH_VERIFY_EMAIL_URL, {
-      method: POST,
-      headers: JSON_CONTENT_TYPE_HEADER,
-      body: JSON.stringify({ token }),
-    })
-      .then((res) => {
-        if (res.ok) {
-          setStatus("success");
-        } else {
-          return res.json().then((body) => {
-            setStatus("error");
-            setErrorMsg(body.msg ?? t.errors.verifyEmailFailed);
-          });
-        }
+    verifyEmailServer(token)
+      .then(() => {
+        setStatus("success");
       })
-      .catch(() => {
+      .catch((err: Error) => {
         setStatus("error");
-        setErrorMsg(t.errors.verifyEmailFailed);
+        setErrorMsg(err.message ?? t.errors.verifyEmailFailed);
       });
   }, [token, t]);
 

@@ -1,23 +1,4 @@
-import { apiFetch } from "@/lib/api-client";
-import { AUTH_TOKEN_URL } from "@/constants";
-
-async function fetchTokens(
-  token: string,
-): Promise<Record<string, string> | null> {
-  try {
-    const res = await apiFetch(AUTH_TOKEN_URL);
-    if (!res.ok) return null;
-    const json = await res.json();
-    return {
-      accessToken: json.accessToken ?? token,
-      rbacToken: json.rbacToken ?? "",
-      deviceToken: json.deviceToken ?? "",
-      userToken: json.userToken ?? "",
-    };
-  } catch {
-    return null;
-  }
-}
+import { refreshTokenServer } from "@/api/server/auth/refresh-token";
 
 let _tokKey = "";
 let _tokData: Record<string, string> | null = null;
@@ -33,7 +14,7 @@ export function cachedFetchTokens(
   }
   if (_tokKey === key && _tokPromise) return _tokPromise;
   _tokKey = key;
-  _tokPromise = fetchTokens(token);
+  _tokPromise = refreshTokenServer(token);
   return _tokPromise.then((d) => {
     _tokPromise = null;
     if (d) {

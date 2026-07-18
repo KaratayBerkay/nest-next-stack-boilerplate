@@ -1,74 +1,54 @@
-import { useState, useEffect, useReducer, useRef, useCallback } from "react";
-import { apiFetch } from "@/lib/api-client";
-import { USERS_SEARCH_PREFIX } from "@/constants/api/urls";
-import { searchReducer, PAGE_SIZE, type User } from "./search-utils";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { searchUsersQueryOptions } from "@/api/client/users/search";
+import { PAGE_SIZE, type User } from "./search-utils";
 
 export function useFriendSearch(currentUserId?: string) {
-  const [search, dispatch] = useReducer(searchReducer, {
-    items: [],
-    total: 0,
-    page: 0,
-  });
   const [query, setQuery] = useState("");
-  const [searching, setSearching] = useState(false);
-  const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [page, setPage] = useState(0);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const totalPages = Math.ceil(search.total / PAGE_SIZE);
+  useEffect(() => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      setDebouncedQuery(query);
+      setPage(0);
+    }, 300);
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, [query]);
 
-  const doSearch = useCallback((q: string, p: number) => {
-    const trimmed = q.trim();
-    if (trimmed.length < 3) {
-      dispatch({ type: "clear" });
-      return;
-    }
-    const skip = p * PAGE_SIZE;
-    setSearching(true);
-    apiFetch(
-      `${USERS_SEARCH_PREFIX}?q=${encodeURIComponent(trimmed)}&take=${PAGE_SIZE}&skip=${skip}`,
-    )
-      .then((res) => (res.ok ? res.json() : { items: [], total: 0 }))
-      .then((data) =>
-        dispatch({ type: "results", items: data.items, total: data.total }),
-      )
-      .catch(() => dispatch({ type: "results", items: [], total: 0 }))
-      .finally(() => setSearching(false));
-  }, []);
+  const skip = page * PAGE_SIZE;
+
+  const { data, isLoading } = useQuery(
+    searchUsersQueryOptions(debouncedQuery, PAGE_SIZE, skip),
+  );
+
+  const total = data?.total ?? 0;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  const items = (data?.items ?? []).filter((u) => u.id !== currentUserId);
 
   const onQueryChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const q = e.target.value;
-      setQuery(q);
-      if (q.trim().length < 3) {
-        dispatch({ type: "clear" });
-        return;
-      }
-      dispatch({ type: "page", page: 0 });
-      if (searchTimer.current) clearTimeout(searchTimer.current);
-      searchTimer.current = setTimeout(() => doSearch(q, 0), 300);
+      setQuery(e.target.value);
     },
-    [doSearch],
+    [],
   );
 
-  useEffect(() => {
-    return () => {
-      if (searchTimer.current) clearTimeout(searchTimer.current);
-    };
-  }, []);
-
-  const filtered = search.items.filter((u) => {
-    if (u.id === currentUserId) return false;
-    return true;
-  });
+  const goToPage = useCallback((p: number) => setPage(p), []);
 
   return {
-    search,
-    dispatch,
+    items,
+    total,
+    page,
     query,
     setQuery,
-    searching,
-    filtered,
+    searching: isLoading,
     totalPages,
     onQueryChange,
-    doSearch,
+    goToPage,
   };
 }

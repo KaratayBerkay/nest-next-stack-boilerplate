@@ -10,7 +10,6 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
-import { apiFetchJson } from "@/lib/api-client";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
@@ -29,11 +28,9 @@ import {
 } from "@/constants/date-display";
 import type { DateDisplayFormat } from "@/constants/date-display";
 import { formatDateLong, formatDateShort, toISOString } from "@/lib/date-time";
-import { PROFILE_UPDATE_URL } from "@/constants/api/urls";
-import { POST } from "@/constants/api/methods";
-import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsGeneralPageInfo } from "@/constants/page-info";
+import { useProfileActions } from "@/api/client/profile/actions";
 
 function readCurrencyCookie(): CurrencyCode {
   if (typeof document === "undefined") return DEFAULT_CURRENCY;
@@ -101,14 +98,11 @@ async function save(
   saveSuccess: string,
   saveFailed: string,
   refreshUser: () => Promise<void>,
+  updateProfile: (data: { name: string; username?: string; bio?: string; avatarUrl?: string; locale?: string; timezone?: string }) => Promise<void>,
 ) {
   setSaving(true);
   try {
-    await apiFetchJson(PROFILE_UPDATE_URL, {
-      method: POST,
-      headers: JSON_CONTENT_TYPE_HEADER,
-      body: JSON.stringify({ locale, timezone }),
-    });
+    await updateProfile({ name: "", locale, timezone });
     toast({ title: saveSuccess, variant: "success" });
     await refreshUser();
   } catch (err) {
@@ -124,6 +118,7 @@ export function FreePageView() {
   const { user, loading, refreshUser } = useAuth();
   const t = useMessages("settings");
   const { toast } = useToast();
+  const { updateProfile } = useProfileActions();
 
   const [locale, setLocale] = useState("en");
   const [timezone, setTimezone] = useState("UTC");
@@ -233,6 +228,7 @@ export function FreePageView() {
             t.saveSuccess,
             t.saveFailed,
             refreshUser,
+            updateProfile,
           )
         }
         disabled={saving}

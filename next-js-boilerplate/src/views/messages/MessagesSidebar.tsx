@@ -1,20 +1,18 @@
 "use client";
 
-import { apiFetch } from "@/lib/api-client";
 import { useCallback } from "react";
 import Link from "next/link";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
 import { FIND_FRIENDS_PATH } from "@/constants/routes";
-import { MESSAGES_FRIENDS_REQUEST_PREFIX } from "@/constants/api/urls";
-import { POST } from "@/constants/api/methods";
 import { cn } from "@/lib/cn";
 import { initials } from "@/lib/initials";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useParams } from "next/navigation";
 import { IconX, IconPlus } from "@tabler/icons-react";
 import type { MessagesSidebarProps } from "@/types/messages/MessagesSidebar-types";
+import { useFriendActions } from "@/api/client/friends/actions";
 
 export function MessagesSidebar({
   user,
@@ -44,16 +42,7 @@ export function MessagesSidebar({
   const t = useMessages("messages");
   const params = useParams<{ lang: string }>();
 
-  const sendFriendRequest = useCallback(async (userId: string) => {
-    try {
-      const res = await apiFetch(MESSAGES_FRIENDS_REQUEST_PREFIX + userId, {
-        method: POST,
-      });
-      return res.ok;
-    } catch {
-      return false;
-    }
-  }, []);
+  const { sendRequest: sendFriendRequest } = useFriendActions();
 
   return (
     <div

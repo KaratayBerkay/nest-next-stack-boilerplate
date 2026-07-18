@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsPrivacyPageInfo } from "@/constants/page-info";
-import { apiFetchJson } from "@/lib/api-client";
 
 async function handleSave(
   toast: ReturnType<typeof useToast>["toast"],

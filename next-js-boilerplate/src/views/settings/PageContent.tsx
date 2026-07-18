@@ -5,7 +5,6 @@ import type { SettingsIndexPageProps } from "@/types/settings/SettingsIndexPage-
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { apiFetchJson } from "@/lib/api-client";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import {
   TIERS,
@@ -20,24 +19,12 @@ import type { CurrencyCode } from "@/constants/currency";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { plansPath } from "@/constants/routes";
 import { formatDateByPreference, type DateDisplayPreference } from "@/lib/date-time";
-import { BILLING_SUBSCRIPTION_URL } from "@/constants/api/urls";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsPageInfo } from "@/constants/page-info";
-
-interface SubscriptionInfo {
-  tier: string;
-  priceCents: number;
-  currency: string;
-  periodStart: string;
-  periodEnd: string;
-  cancelAtPeriodEnd: boolean;
-}
+import { subscriptionQueryOptions } from "@/api/client/billing/query";
 
 function useSubscription(userId: string | undefined) {
-  return useSuspenseQuery<{ subscription: SubscriptionInfo | null }>({
-    queryKey: ["subscription", userId],
-    queryFn: () => apiFetchJson(BILLING_SUBSCRIPTION_URL),
-  });
+  return useSuspenseQuery(subscriptionQueryOptions(userId));
 }
 
 function renderPlanInfo(
@@ -135,11 +122,10 @@ export default function PageContent({ params }: SettingsIndexPageProps) {
   const p = useMessages("pricing");
   const currency = useCurrencyCookie();
   const dateDisplay = useDateDisplayCookie();
-  const { data: subscriptionData } = useSubscription(user?.id);
-  const subscription = subscriptionData?.subscription ?? null;
+  const { data: subscription } = useSubscription(user?.id);
 
   const tier = (subscription?.tier as Tier) ?? (user!.tier as Tier) ?? "FREE";
-  const periodEnd = subscription?.periodEnd;
+  const periodEnd = (subscription as { periodEnd?: string } | null)?.periodEnd;
   const cancelAtPeriodEnd = subscription?.cancelAtPeriodEnd ?? false;
 
   const FEATURES: Record<Tier, string[]> = {

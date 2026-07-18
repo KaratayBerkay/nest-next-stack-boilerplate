@@ -24,9 +24,7 @@ import { useCurrencyCookie } from "@/hooks/useCurrencyCookie";
 import { PRICING_PATH } from "@/constants/routes";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useState, type Dispatch, type SetStateAction } from "react";
-import { STRIPE_SUBSCRIBE_URL } from "@/constants/api/urls";
-import { POST } from "@/constants/api/methods";
-import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
+import { useBillingActions } from "@/api/client/billing/actions";
 
 import { TIER_FEATURES } from "@/lib/checkout/tier-features";
 
@@ -35,16 +33,11 @@ async function handleDowngrade(
   setError: Dispatch<SetStateAction<string | null>>,
   setSuccess: Dispatch<SetStateAction<boolean>>,
   router: ReturnType<typeof useRouter>,
+  subscribe: (tier: string, paymentMethodId?: string) => Promise<void>,
 ) {
   setError(null);
   try {
-    const res = await fetch(STRIPE_SUBSCRIBE_URL, {
-      method: POST,
-      headers: JSON_CONTENT_TYPE_HEADER,
-      body: JSON.stringify({ tier: targetTier }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.msg ?? "Failed to change plan");
+    await subscribe(targetTier);
     setSuccess(true);
     setTimeout(() => router.push(PRICING_PATH), 2000);
   } catch (err) {
@@ -68,6 +61,7 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
   const currency = useCurrencyCookie();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const { subscribe } = useBillingActions();
 
   const currentRank = TIER_ORDER[user!.tier as Tier] ?? 0;
   const targetRank = TIER_ORDER[targetTier as Tier] ?? 0;
@@ -133,7 +127,7 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
           )}
           <button
             onClick={() =>
-              handleDowngrade(targetTier, setError, setSuccess, router)
+              handleDowngrade(targetTier, setError, setSuccess, router, subscribe)
             }
             data-testid="confirm-downgrade"
             className="bg-muted hover:bg-muted/80 w-full rounded px-4 py-2 text-sm font-medium"

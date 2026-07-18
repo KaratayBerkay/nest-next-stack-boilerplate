@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { apiFetchJson } from "@/lib/api-client";
+import { useQuery } from "@tanstack/react-query";
 import { IconEye, IconSearch } from "@tabler/icons-react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -12,10 +12,9 @@ import { PageInfoButton } from "@/components/ui/page-info";
 import { adminAuditLogsPageInfo } from "@/constants/page-info";
 import { AccessDeniedPage } from "@/features/statics";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
-import { ADMIN_AUDIT_LOGS_URL } from "@/constants/api/urls";
+import { auditLogsQueryOptions } from "@/api/client/admin/query";
 import type {
   AuditLogEntry,
-  AuditLogResponse,
 } from "@/types/admin/AuditLog-types";
 
 const LEVEL_COLORS: Record<string, string> = {
@@ -30,9 +29,6 @@ const LEVEL_COLORS: Record<string, string> = {
 export default function PageContent() {
   const { user } = useAuth();
   const t = useMessages("admin");
-  const [entries, setEntries] = useState<AuditLogEntry[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loadingLogs, setLoadingLogs] = useState(true);
   const [page, setPage] = useState(0);
   const [actionFilter, setActionFilter] = useState("");
   const [levelFilter, setLevelFilter] = useState("");
@@ -43,32 +39,21 @@ export default function PageContent() {
 
   const isAdmin = user?.role === "ADMIN" || user?.role === "SUPERADMIN";
 
-  const loadLogs = useCallback(async () => {
-    setLoadingLogs(true);
-    try {
-      const params = new URLSearchParams();
-      params.set("take", String(pageSize));
-      params.set("skip", String(page * pageSize));
-      if (actionFilter) params.set("action", actionFilter);
-      if (levelFilter) params.set("level", levelFilter);
-      if (entityFilter) params.set("entityType", entityFilter);
+  const queryParams = {
+    take: pageSize,
+    skip: page * pageSize,
+    actionFilter: actionFilter || undefined,
+    levelFilter: levelFilter || undefined,
+    entityFilter: entityFilter || undefined,
+  };
 
-      const data = await apiFetchJson<AuditLogResponse>(
-        `${ADMIN_AUDIT_LOGS_URL}?${params.toString()}`,
-      );
-      setEntries(data.items);
-      setTotal(data.total);
-    } catch {
-      setEntries([]);
-      setTotal(0);
-    } finally {
-      setLoadingLogs(false);
-    }
-  }, [page, actionFilter, levelFilter, entityFilter]);
+  const { data, isLoading: loadingLogs } = useQuery({
+    ...auditLogsQueryOptions(queryParams),
+    enabled: isAdmin,
+  });
 
-  useEffect(() => {
-    if (isAdmin) loadLogs(); // eslint-disable-line react-hooks/set-state-in-effect
-  }, [loadLogs, isAdmin]);
+  const entries = data?.items ?? [];
+  const total = data?.total ?? 0;
 
   const totalPages = Math.ceil(total / pageSize);
 

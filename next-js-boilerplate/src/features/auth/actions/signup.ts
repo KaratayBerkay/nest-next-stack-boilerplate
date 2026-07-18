@@ -5,14 +5,8 @@ import {
   createServerValidate,
   initialFormState,
 } from "@tanstack/react-form-nextjs";
-import { z } from "zod";
 import { signupFormOpts } from "@/lib/forms/signup-options";
-
-const signupSchema = z.object({
-  name: z.string().min(1, "Server: Name is required"),
-  email: z.string().email("Server: Invalid email"),
-  age: z.number().min(18, "Server: Must be 18 or older"),
-});
+import { signupSchema } from "@/validators/auth/signup-schema";
 
 const serverValidate = createServerValidate({
   ...signupFormOpts,

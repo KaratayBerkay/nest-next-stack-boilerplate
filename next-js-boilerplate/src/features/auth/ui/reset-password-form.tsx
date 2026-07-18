@@ -5,14 +5,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { I18nMessages } from "@/generated/i18n-messages";
-import { resetPasswordFormSchema } from "@/lib/validation/auth";
+import { resetPasswordFormSchema } from "@/validators/auth/schema";
 import { LOGIN_PATH } from "@/constants/routes";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
-import { AUTH_RESET_PASSWORD_URL } from "@/constants/api/urls";
-import { POST } from "@/constants/api/methods";
-import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
+import { resetPasswordServer } from "@/api/server/auth/reset-password";
 import type { ResetPasswordFormProps } from "@/types/auth/ResetPasswordForm-types";
 
 async function handleResetPasswordSubmit(
@@ -43,22 +41,13 @@ async function handleResetPasswordSubmit(
 
   setSubmitting(true);
   try {
-    const res = await fetch(AUTH_RESET_PASSWORD_URL, {
-      method: POST,
-      headers: JSON_CONTENT_TYPE_HEADER,
-      body: JSON.stringify({ token, newPassword: password }),
-    });
-    if (!res.ok) {
-      const body = await res.json();
-      setFieldErrors({
-        form: body.msg ?? t.errors.resetPasswordFailed,
-      });
-      return;
-    }
+    await resetPasswordServer(token, password);
     setSuccess(true);
     setTimeout(() => router.push(LOGIN_PATH), 2000);
-  } catch {
-    setFieldErrors({ form: t.errors.resetPasswordFailed });
+  } catch (err) {
+    setFieldErrors({
+      form: (err as Error).message ?? t.errors.resetPasswordFailed,
+    });
   } finally {
     setSubmitting(false);
   }

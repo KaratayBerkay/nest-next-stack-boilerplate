@@ -1,19 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import { apiFetch } from "@/lib/api-client";
 import { useState, useRef, type Dispatch, type SetStateAction } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
-import { UPLOAD_URL, POSTS_URL } from "@/constants/api/urls";
-import { POST } from "@/constants/api/methods";
-import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { sharePageInfo } from "@/constants/page-info";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { uploadImageServer } from "@/api/server/posts/upload";
+import { usePostActions } from "@/api/client/posts/actions";
 
 function handleFileChange(
   e: React.ChangeEvent<HTMLInputElement>,
@@ -45,6 +43,7 @@ async function handleShareSubmit(
   router: ReturnType<typeof useRouter>,
   lang: string,
   failedToCreatePost: string,
+  createPost: (title: string, content: string, imageUrl?: string) => Promise<void>,
 ) {
   e.preventDefault();
   if (!title.trim() || !content.trim() || submitting) return;
@@ -55,16 +54,17 @@ async function handleShareSubmit(
   try {
     if (file && !uploadError) {
       setUploading(true);
-      const formData = new FormData();
-      formData.set("file", file);
-      const uploadRes = await apiFetch(UPLOAD_URL, {
-        method: POST,
-        body: formData,
-      });
-      if (uploadRes.ok) {
-        const uploadData = await uploadRes.json();
-        coverImageRef.current = uploadData.urls?.full;
-      } else {
+      try {
+        const url = await uploadImageServer(file);
+        if (url) {
+          coverImageRef.current = url;
+        } else {
+          setUploadError(true);
+          setSubmitting(false);
+          setUploading(false);
+          return;
+        }
+      } catch {
         setUploadError(true);
         setSubmitting(false);
         setUploading(false);
@@ -73,22 +73,8 @@ async function handleShareSubmit(
       setUploading(false);
     }
 
-    const res = await apiFetch(POSTS_URL, {
-      method: POST,
-      headers: JSON_CONTENT_TYPE_HEADER,
-      body: JSON.stringify({
-        title: title.trim(),
-        content: content.trim(),
-        ...(coverImageRef.current ? { imageUrl: coverImageRef.current } : {}),
-      }),
-    });
-
-    if (res.ok) {
-      router.push(`/v1/${lang}/feed`);
-    } else {
-      const data = await res.json();
-      setError(data.error || failedToCreatePost);
-    }
+    await createPost(title.trim(), content.trim(), coverImageRef.current);
+    router.push(`/v1/${lang}/feed`);
   } catch {
     setError(failedToCreatePost);
   } finally {
@@ -112,6 +98,7 @@ export default function PageContent() {
   const [uploadError, setUploadError] = useState(false);
   const coverImageRef = useRef<string | undefined>(undefined);
   const fileRef = useRef<HTMLInputElement>(null);
+  const { createPost } = usePostActions();
 
   const isDisabled =
     !title.trim() || !content.trim() || submitting || uploadError;
@@ -140,6 +127,7 @@ export default function PageContent() {
             router,
             lang,
             t.failedToCreatePost,
+            createPost,
           )
         }
         className="flex flex-col gap-4"

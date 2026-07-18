@@ -7,135 +7,34 @@ import { usePathname } from "next/navigation";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { Avatar } from "@/components/ui/Avatar";
 import { initials } from "@/lib/initials";
-import { apiFetch } from "@/lib/api-client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  GQL_URL,
-  MESSAGES_FRIENDS_URL,
-  MESSAGES_FRIENDS_REQUESTS_URL,
-} from "@/constants/api/urls";
-import { POST } from "@/constants/api/methods";
-import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
+import { friendsQueryOptions, friendRequestsQueryOptions } from "@/api/client/friends/query";
 import type { User, FriendRequest } from "./search-utils";
-import { goToPage } from "./search-utils";
 import { PaginationBar } from "./PaginationBar";
 import { useToast } from "@/components/ui/Toast";
 import { useFriendSearch } from "./useFriendSearch";
 import { useFriendActions } from "./useFriendActions";
-import type { Dispatch, SetStateAction, ReactNode } from "react";
-
-async function loadSuggested(
-  setLoading: Dispatch<SetStateAction<boolean>>,
-  setSuggested: Dispatch<
-    SetStateAction<
-      Array<{ id: string; name?: string; email: string; mutualFriends: number }>
-    >
-  >,
-  toast: (opts: {
-    description?: ReactNode;
-    variant?: "default" | "destructive" | "success";
-  }) => string,
-  t: Record<string, string>,
-) {
-  setLoading(true);
-  try {
-    const res = await apiFetch(GQL_URL, {
-      method: POST,
-      headers: JSON_CONTENT_TYPE_HEADER,
-      body: JSON.stringify({
-        query: `query { suggestedFriends { id name email mutualFriends } }`,
-      }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setSuggested(data.data?.suggestedFriends ?? []);
-    } else {
-      const data = await res.json();
-      toast({
-        description: data.error ?? t.failedToLoadSuggestions,
-        variant: "destructive",
-      });
-    }
-  } catch {
-    toast({ description: "Network error", variant: "destructive" });
-  } finally {
-    setLoading(false);
-  }
-}
-
-function SuggestedFriendsPanel() {
-  const t = useMessages("find-friends");
-  const { toast } = useToast();
-  const [suggested, setSuggested] = useState<
-    Array<{ id: string; name?: string; email: string; mutualFriends: number }>
-  >([]);
-  const [loading, setLoading] = useState(false);
-
-  return (
-    <div className="border-border rounded-xl border p-4">
-      <h3 className="text-muted mb-3 text-xs font-semibold tracking-wide uppercase">
-        {t.suggestedFriends}
-      </h3>
-      {!suggested.length && (
-        <button
-          onClick={() => loadSuggested(setLoading, setSuggested, toast, t)}
-          disabled={loading}
-          className="bg-brand/10 text-brand hover:bg-brand/20 w-full rounded-lg px-3 py-2 text-xs font-medium transition-colors disabled:opacity-50"
-        >
-          {loading ? t.loadingSuggestions : t.loadSuggestions}
-        </button>
-      )}
-      {suggested.length > 0 && (
-        <div className="flex flex-col gap-2">
-          {suggested.map((s) => (
-            <div key={s.id} className="flex items-center gap-2">
-              <Avatar
-                fallback={initials(s.name ?? "?")}
-                className="bg-brand h-8 w-8 shrink-0 text-[10px] text-white"
-              />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">
-                  {s.name ?? s.email}
-                </p>
-                <p className="text-muted text-[10px]">
-                  {t.mutualFriends.replace("{count}", String(s.mutualFriends))}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+import { fetchSuggestedFriendsServer } from "@/api/server/friends/suggested";
 
 export function MediumFindFriendsContent({
   user: _user,
 }: FindFriendsContentProps) {
   const t = useMessages("find-friends");
   const pathname = usePathname();
-  const { data: friends = [] } = useSuspenseQuery<User[]>({
-    queryKey: ["friends", "list"],
-    queryFn: () => apiFetch(MESSAGES_FRIENDS_URL).then((r) => r.json()),
-  });
-  const { data: friendRequests = [] } = useSuspenseQuery<FriendRequest[]>({
-    queryKey: ["friends", "requests"],
-    queryFn: () =>
-      apiFetch(MESSAGES_FRIENDS_REQUESTS_URL).then((r) => r.json()),
-  });
+  const { data: friends = [] } = useSuspenseQuery(friendsQueryOptions());
+  const { data: friendRequests = [] } = useSuspenseQuery(friendRequestsQueryOptions());
 
   const {
-    search,
-    dispatch,
+    items,
+    total,
+    page,
     query,
     searching,
-    filtered,
     totalPages,
     onQueryChange,
-    doSearch,
+    goToPage,
   } = useFriendSearch(_user?.id);
-  const { sendFriendRequest, acceptFriendRequest, declineFriendRequest } =
-    useFriendActions();
+  const { sendRequest, acceptRequest, declineRequest } = useFriendActions();
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
 
   const pendingIds = new Set(friendRequests.map((r) => r.user.id));
@@ -181,13 +80,13 @@ export function MediumFindFriendsContent({
               )}
               {!searching &&
                 query.trim().length >= 3 &&
-                filtered.length === 0 && (
+                items.length === 0 && (
                   <p className="text-muted py-8 text-center text-sm">
                     {t.noUsersFound}
                   </p>
                 )}
               {!searching &&
-                filtered.map((u) => {
+                items.map((u) => {
                   const isPending = pendingIds.has(u.id) || sentIds.has(u.id);
                   return (
                     <div
@@ -208,7 +107,7 @@ export function MediumFindFriendsContent({
                       ) : (
                         <button
                           onClick={async () => {
-                            const ok = await sendFriendRequest(u.id);
+                            const ok = await sendRequest(u.id);
                             if (ok)
                               setSentIds((prev) => new Set(prev).add(u.id));
                           }}
@@ -220,20 +119,18 @@ export function MediumFindFriendsContent({
                     </div>
                   );
                 })}
-              {!searching && search.total > 0 && (
+              {!searching && total > 0 && (
                 <PaginationBar
-                  page={search.page + 1}
+                  page={page + 1}
                   totalPages={totalPages}
-                  onPageChange={(p) =>
-                    goToPage(p - 1, dispatch, query, doSearch)
-                  }
+                  onPageChange={(p) => goToPage(p - 1)}
                   prevLabel={t.prev}
                   nextLabel={t.next}
                 />
               )}
-              {!searching && search.total > 0 && (
+              {!searching && total > 0 && (
                 <p className="text-muted text-center text-[10px]">
-                  {t.usersFound.replace("{count}", String(search.total))}
+                  {t.usersFound.replace("{count}", String(total))}
                 </p>
               )}
             </div>
@@ -264,13 +161,13 @@ export function MediumFindFriendsContent({
                   {r.direction === "incoming" ? (
                     <>
                       <button
-                        onClick={() => acceptFriendRequest(r.user.id)}
+                        onClick={() => acceptRequest(r.user.id)}
                         className="rounded bg-success px-3 py-1 text-xs text-white hover:brightness-90"
                       >
                         {t.accept}
                       </button>
                       <button
-                        onClick={() => declineFriendRequest(r.user.id)}
+                        onClick={() => declineRequest(r.user.id)}
                         className="bg-surface hover:bg-surface-hover rounded px-3 py-1 text-xs"
                       >
                         {t.decline}
@@ -290,6 +187,80 @@ export function MediumFindFriendsContent({
       <div className="hidden w-56 shrink-0 md:block">
         <SuggestedFriendsPanel />
       </div>
+    </div>
+  );
+}
+
+async function loadSuggested(
+  setLoading: (v: boolean) => void,
+  setSuggested: (v: Array<{
+    id: string;
+    name?: string;
+    email: string;
+    mutualFriends: number;
+  }>) => void,
+  toast: (opts: {
+    description?: string;
+    variant?: "default" | "destructive" | "success";
+  }) => string,
+  failedMessage: string,
+) {
+  setLoading(true);
+  try {
+    const data = await fetchSuggestedFriendsServer();
+    setSuggested(data);
+  } catch (err) {
+    toast({
+      description: err instanceof Error ? err.message : failedMessage,
+      variant: "destructive",
+    });
+  } finally {
+    setLoading(false);
+  }
+}
+
+function SuggestedFriendsPanel() {
+  const t = useMessages("find-friends");
+  const { toast } = useToast();
+  const [suggested, setSuggested] = useState<
+    Array<{ id: string; name?: string; email: string; mutualFriends: number }>
+  >([]);
+  const [loading, setLoading] = useState(false);
+
+  return (
+    <div className="border-border rounded-xl border p-4">
+      <h3 className="text-muted mb-3 text-xs font-semibold tracking-wide uppercase">
+        {t.suggestedFriends}
+      </h3>
+      {!suggested.length && (
+        <button
+          onClick={() => loadSuggested(setLoading, setSuggested, toast, t.failedToLoadSuggestions)}
+          disabled={loading}
+          className="bg-brand/10 text-brand hover:bg-brand/20 w-full rounded-lg px-3 py-2 text-xs font-medium transition-colors disabled:opacity-50"
+        >
+          {loading ? t.loadingSuggestions : t.loadSuggestions}
+        </button>
+      )}
+      {suggested.length > 0 && (
+        <div className="flex flex-col gap-2">
+          {suggested.map((s) => (
+            <div key={s.id} className="flex items-center gap-2">
+              <Avatar
+                fallback={initials(s.name ?? "?")}
+                className="bg-brand h-8 w-8 shrink-0 text-[10px] text-white"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">
+                  {s.name ?? s.email}
+                </p>
+                <p className="text-muted text-[10px]">
+                  {t.mutualFriends.replace("{count}", String(s.mutualFriends))}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

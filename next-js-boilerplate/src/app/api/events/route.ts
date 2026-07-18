@@ -1,6 +1,6 @@
 import "server-only";
 import { NextRequest, NextResponse } from "next/server";
-import { eventsBatchSchema } from "@/lib/events.schema";
+import { eventsBatchSchema } from "@/validators/events/schema";
 import { publishEvent } from "@/lib/kafka";
 import { getAccessToken } from "@/store/ssr-cookies";
 import { graphqlFetch } from "@/lib/backend";

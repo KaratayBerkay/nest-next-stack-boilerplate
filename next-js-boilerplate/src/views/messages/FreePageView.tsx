@@ -1,6 +1,5 @@
 "use client";
 
-import { apiFetch } from "@/lib/api-client";
 import {
   useState,
   useRef,
@@ -13,16 +12,13 @@ import {
   type MutableRefObject,
   type SetStateAction,
 } from "react";
-import {
-  MESSAGES_FRIENDS_URL,
-  MESSAGES_READ_URL,
-  USERS_SEARCH_PREFIX,
-} from "@/constants/api/urls";
-import { POST } from "@/constants";
+import { apiFetch } from "@/lib/api-client";
+import { USERS_SEARCH_PREFIX } from "@/constants/api/urls";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { useConversations } from "@/lib/realtime/useConversations";
+import { useMessageActions } from "@/api/client/messages/actions";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { useConnectionState } from "@/hooks/useConnectionState";
 import { usePresence } from "@/hooks/usePresence";
@@ -38,6 +34,7 @@ import { IconMenu2 } from "@tabler/icons-react";
 import type { MessagesViewProps } from "@/types/messages/MessagesView-types";
 import { MessagesSidebar } from "./MessagesSidebar";
 import { ChatView } from "./ChatView";
+import { friendsQueryOptions } from "@/api/client/friends/query";
 
 type UserInfo = { id: string; name: string; email: string; avatarUrl: string | null };
 
@@ -69,19 +66,6 @@ function debouncedUserSearch(
       if (!ac.signal.aborted) setFindResults([]);
     }
   }, 300);
-}
-
-async function markMessagesReadAction(
-  userId: string,
-  refetchConversations: () => void,
-) {
-  try {
-    await apiFetch(MESSAGES_READ_URL, {
-      method: POST,
-      body: JSON.stringify({ userId }),
-    });
-    refetchConversations();
-  } catch {}
 }
 
 function openConversationAction(
@@ -120,17 +104,19 @@ function MessagesPageContent({
   const t = useMessages("messages");
   const { user, loading } = useAuth();
   const [selectedUser, setSelectedUser] = useState<UserInfo | null>(null);
-  const { data: friends = [] } = useQuery<UserInfo[]>({
-    queryKey: ["friends", "list"],
-    queryFn: async () => {
-      const res = await apiFetch(MESSAGES_FRIENDS_URL);
-      if (!res.ok) throw new Error(`Failed to fetch friends: ${res.status}`);
-      return res.json();
-    },
+  const { data: friendsData } = useQuery({
+    ...friendsQueryOptions(),
     initialData: initialFriends as UserInfo[],
-    staleTime: 30_000,
     enabled: !!user,
   });
+  const friends: UserInfo[] = useMemo(
+    () =>
+      (friendsData ?? []).map((f) => ({
+        ...f,
+        avatarUrl: (f as UserInfo).avatarUrl ?? null,
+      })),
+    [friendsData],
+  );
 
   const [search, setSearch] = useState("");
   const [findInput, setFindInput] = useState("");
@@ -164,10 +150,7 @@ function MessagesPageContent({
     sessionStorage.setItem("msg_tab", tab);
   }, [tab]);
 
-  const markMessagesRead = useCallback(
-    (userId: string) => markMessagesReadAction(userId, refetchConversations),
-    [refetchConversations],
-  );
+  const { markRead: markMessagesRead } = useMessageActions();
 
   const lastParamRef = useRef<string | null>(null);
   useEffect(() => {

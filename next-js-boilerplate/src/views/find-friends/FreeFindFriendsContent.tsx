@@ -8,17 +8,12 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { Avatar } from "@/components/ui/Avatar";
 import { Input } from "@/components/ui/Input";
 import { initials } from "@/lib/initials";
-import { apiFetch } from "@/lib/api-client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { friendsQueryOptions, friendRequestsQueryOptions } from "@/api/client/friends/query";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { findFriendsPageInfo } from "@/constants/page-info";
 import { FindFriendsFallback } from "@/fallbacks";
-import {
-  MESSAGES_FRIENDS_URL,
-  MESSAGES_FRIENDS_REQUESTS_URL,
-} from "@/constants/api/urls";
 import type { User, FriendRequest } from "./search-utils";
-import { goToPage } from "./search-utils";
 import { PaginationBar } from "./PaginationBar";
 import { useFriendSearch } from "./useFriendSearch";
 import { useFriendActions } from "./useFriendActions";
@@ -28,28 +23,20 @@ export function FreeFindFriendsContent({
 }: FindFriendsContentProps) {
   const t = useMessages("find-friends");
   const pathname = usePathname();
-  const { data: friends = [] } = useSuspenseQuery<User[]>({
-    queryKey: ["friends", "list"],
-    queryFn: () => apiFetch(MESSAGES_FRIENDS_URL).then((r) => r.json()),
-  });
-  const { data: friendRequests = [] } = useSuspenseQuery<FriendRequest[]>({
-    queryKey: ["friends", "requests"],
-    queryFn: () =>
-      apiFetch(MESSAGES_FRIENDS_REQUESTS_URL).then((r) => r.json()),
-  });
+  const { data: friends = [] } = useSuspenseQuery(friendsQueryOptions());
+  const { data: friendRequests = [] } = useSuspenseQuery(friendRequestsQueryOptions());
 
   const {
-    search,
-    dispatch,
+    items,
+    total,
+    page,
     query,
     searching,
-    filtered,
     totalPages,
     onQueryChange,
-    doSearch,
+    goToPage,
   } = useFriendSearch(_user?.id);
-  const { sendFriendRequest, acceptFriendRequest, declineFriendRequest } =
-    useFriendActions();
+  const { sendRequest, acceptRequest, declineRequest } = useFriendActions();
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
 
   const pendingIds = new Set(friendRequests.map((r) => r.user.id));
@@ -96,13 +83,13 @@ export function FreeFindFriendsContent({
             )}
             {!searching &&
               query.trim().length >= 3 &&
-              filtered.length === 0 && (
+              items.length === 0 && (
                 <p className="text-muted py-8 text-center text-sm">
                   {t.noUsersFound}
                 </p>
               )}
             {!searching &&
-              filtered.map((u) => {
+              items.map((u) => {
                 const isPending = pendingIds.has(u.id) || sentIds.has(u.id);
                 return (
                   <div
@@ -121,7 +108,7 @@ export function FreeFindFriendsContent({
                     ) : (
                       <button
                         onClick={async () => {
-                          const ok = await sendFriendRequest(u.id);
+                          const ok = await sendRequest(u.id);
                           if (ok) setSentIds((prev) => new Set(prev).add(u.id));
                         }}
                         className="bg-brand rounded-lg px-3 py-1 text-sm text-white hover:opacity-80"
@@ -132,18 +119,18 @@ export function FreeFindFriendsContent({
                   </div>
                 );
               })}
-            {!searching && search.total > 0 && (
+            {!searching && total > 0 && (
               <PaginationBar
-                page={search.page + 1}
+                page={page + 1}
                 totalPages={totalPages}
-                onPageChange={(p) => goToPage(p - 1, dispatch, query, doSearch)}
+                onPageChange={(p) => goToPage(p - 1)}
                 prevLabel={t.prev}
                 nextLabel={t.next}
               />
             )}
-            {!searching && search.total > 0 && (
+            {!searching && total > 0 && (
               <p className="text-muted text-center text-[10px]">
-                {t.usersFound.replace("{count}", String(search.total))}
+                {t.usersFound.replace("{count}", String(total))}
               </p>
             )}
           </div>
@@ -174,13 +161,13 @@ export function FreeFindFriendsContent({
                 {r.direction === "incoming" ? (
                   <>
                     <button
-                      onClick={() => acceptFriendRequest(r.user.id)}
+                      onClick={() => acceptRequest(r.user.id)}
                       className="rounded bg-success px-3 py-1 text-xs text-white hover:brightness-90"
                     >
                       {t.accept}
                     </button>
                     <button
-                      onClick={() => declineFriendRequest(r.user.id)}
+                      onClick={() => declineRequest(r.user.id)}
                       className="bg-surface hover:bg-surface-hover rounded px-3 py-1 text-xs"
                     >
                       {t.decline}

@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
-import { apiFetchJson } from "@/lib/api-client";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { TIER_PRICES_CENTS, tierLabel, type Tier } from "@/lib/tier";
 import { formatPrice } from "@/lib/currency";
@@ -14,12 +12,13 @@ import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { plansPath } from "@/constants/routes";
 import { formatDateByPreference, type DateDisplayPreference } from "@/lib/date-time";
 import type { CurrencyCode } from "@/constants/currency";
-import {
-  BILLING_SUBSCRIPTION_URL,
-  BILLING_HISTORY_URL,
-} from "@/constants/api/urls";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsBillingPageInfo } from "@/constants/page-info";
+import { useQuery } from "@tanstack/react-query";
+import {
+  subscriptionQueryOptions,
+  billingHistoryQueryOptions,
+} from "@/api/client/billing/query";
 
 interface Transaction {
   id: string;
@@ -151,30 +150,17 @@ export function FreePageView() {
   const t = useMessages("settings");
   const currency = useCurrencyCookie();
   const dateDisplay = useDateDisplayCookie();
-  const [subscription, setSubscription] = useState<SubscriptionInfo | null>(
-    null,
+
+  const { data: subData, isLoading: loadingSub } = useQuery(
+    subscriptionQueryOptions(user?.id),
   );
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loadingSub, setLoadingSub] = useState(true);
-  const [loadingHistory, setLoadingHistory] = useState(true);
+  const subscription = (subData as unknown as SubscriptionInfo | null) ?? null;
 
-  useEffect(() => {
-    if (!user) return;
-    apiFetchJson<{ subscription: SubscriptionInfo | null }>(
-      BILLING_SUBSCRIPTION_URL,
-    )
-      .then((data) => setSubscription(data.subscription))
-      .catch(() => setSubscription(null))
-      .finally(() => setLoadingSub(false));
-  }, [user]);
-
-  useEffect(() => {
-    if (!user) return;
-    apiFetchJson<{ transactions: Transaction[] }>(BILLING_HISTORY_URL)
-      .then((data) => setTransactions(data.transactions))
-      .catch(() => setTransactions([]))
-      .finally(() => setLoadingHistory(false));
-  }, [user]);
+  const { data: historyData, isLoading: loadingHistory } = useQuery({
+    ...billingHistoryQueryOptions(),
+    enabled: !!user,
+  });
+  const transactions = (historyData as Transaction[] | undefined) ?? [];
 
   if (loading) return <LoadingAuth />;
   if (!user)

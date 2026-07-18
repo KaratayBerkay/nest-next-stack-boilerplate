@@ -7,5 +7,3 @@ export const sendMessageSchema = z.object({
     .max(5000, "Message is too long (max 5000 characters)")
     .trim(),
 });
-
-type SendMessageInput = z.infer<typeof sendMessageSchema>;

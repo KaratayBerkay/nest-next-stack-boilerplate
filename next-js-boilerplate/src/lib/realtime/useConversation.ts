@@ -1,8 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { apiFetch } from "@/lib/api-client";
-import { MESSAGES_CONVERSATION_MESSAGES_PREFIX } from "@/constants/api/urls";
+import { conversationMessagesQueryOptions } from "@/api/client/messages/query";
 
-interface Message {
+export interface Message {
   id: string;
   senderId: string;
   recipientId: string;
@@ -12,28 +11,6 @@ interface Message {
   deliveredAt: string | null;
 }
 
-interface ConversationPage {
-  messages: Message[];
-  hasMore: boolean;
-}
-
 export function useConversation(peerId: string | null) {
-  return useInfiniteQuery<ConversationPage>({
-    queryKey: ["messages", peerId],
-    queryFn: async ({ pageParam }) => {
-      const params = new URLSearchParams();
-      if (pageParam) params.set("before", pageParam as string);
-      params.set("take", "30");
-      const res = await apiFetch(
-        `${MESSAGES_CONVERSATION_MESSAGES_PREFIX}${peerId}/messages?${params.toString()}`,
-      );
-      if (!res.ok) throw new Error("Failed to fetch messages");
-      return res.json();
-    },
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? lastPage.messages[0]?.createdAt : undefined,
-    enabled: !!peerId,
-    staleTime: Infinity,
-  });
+  return useInfiniteQuery(conversationMessagesQueryOptions(peerId));
 }

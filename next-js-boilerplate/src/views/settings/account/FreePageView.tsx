@@ -5,7 +5,6 @@ import type { Dispatch, SetStateAction } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
-import { apiFetchJson } from "@/lib/api-client";
 import { Avatar } from "@/components/ui/Avatar";
 import { initials } from "@/lib/initials";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
@@ -14,22 +13,16 @@ import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
-import {
-  PROFILE_URL,
-  UPLOAD_URL,
-  PROFILE_UPDATE_URL,
-  PROFILE_USERNAME_AVAILABLE_PREFIX,
-} from "@/constants/api/urls";
-import { POST } from "@/constants/api/methods";
-import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsAccountPageInfo } from "@/constants/page-info";
+import { useProfileActions } from "@/api/client/profile/actions";
 
 async function uploadAvatarFile(
   file: File,
   toast: ReturnType<typeof useToast>["toast"],
   t: Record<string, string>,
   setAvatarUrl: Dispatch<SetStateAction<string>>,
+  uploadAvatar: (file: File) => Promise<{ urls: { full: string } }>,
 ) {
   const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
   if (!allowed.includes(file.type)) {
@@ -40,13 +33,8 @@ async function uploadAvatarFile(
     toast({ title: t.fileTooLarge, variant: "destructive" });
     return;
   }
-  const form = new FormData();
-  form.append("file", file);
   try {
-    const uploadRes = await apiFetchJson<{ urls: { full: string } }>(
-      UPLOAD_URL,
-      { method: POST, body: form },
-    );
+    const uploadRes = await uploadAvatar(file);
     setAvatarUrl(uploadRes.urls.full);
   } catch (err) {
     const exception = (err as Error & { exception?: { msg?: string } })
@@ -60,6 +48,7 @@ export function FreePageView() {
   const t = useMessages("settings");
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { updateProfile, uploadAvatar, checkUsername } = useProfileActions();
 
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
@@ -77,14 +66,8 @@ export function FreePageView() {
     profileLoadedRef.current = true;
     (async () => {
       try {
-        const data = await apiFetchJson<{
-          user: {
-            name?: string;
-            username?: string;
-            bio?: string;
-            avatarUrl?: string;
-          };
-        }>(PROFILE_URL);
+        const { getProfileServer } = await import("@/api/server/profile/get");
+        const data = await getProfileServer();
         const p = data.user;
         setName(p.name ?? "");
         setUsername(p.username ?? "");
@@ -107,34 +90,28 @@ export function FreePageView() {
     if (checkTimer.current) clearTimeout(checkTimer.current);
     checkTimer.current = setTimeout(() => {
       setAvailability("checking");
-      apiFetchJson<{ available: boolean }>(
-        `${PROFILE_USERNAME_AVAILABLE_PREFIX}?u=${encodeURIComponent(username)}`,
-      )
-        .then((res) => setAvailability(res.available ? "available" : "taken"))
+      checkUsername(username)
+        .then((available) => setAvailability(available ? "available" : "taken"))
         .catch(() => setAvailability("taken"));
     }, 300);
     return () => {
       if (checkTimer.current) clearTimeout(checkTimer.current);
     };
-  }, [username, user?.username]);
+  }, [username, user?.username, checkUsername]);
 
   const handleAvatarFile = useCallback(
-    (file: File) => uploadAvatarFile(file, toast, t, setAvatarUrl),
-    [toast, t],
+    (file: File) => uploadAvatarFile(file, toast, t, setAvatarUrl, uploadAvatar),
+    [toast, t, uploadAvatar],
   );
 
   const saveProfile = useCallback(async () => {
     setSaving(true);
     try {
-      await apiFetchJson(PROFILE_UPDATE_URL, {
-        method: POST,
-        headers: JSON_CONTENT_TYPE_HEADER,
-        body: JSON.stringify({
-          name,
-          username: username || undefined,
-          bio,
-          avatarUrl: avatarUrl || undefined,
-        }),
+      await updateProfile({
+        name,
+        username: username || undefined,
+        bio,
+        avatarUrl: avatarUrl || undefined,
       });
       toast({ title: t.saveSuccess, variant: "success" });
       await refreshUser();
@@ -154,6 +131,7 @@ export function FreePageView() {
     t.saveSuccess,
     t.saveFailed,
     refreshUser,
+    updateProfile,
   ]);
 
   if (loading) return <LoadingAuth />;

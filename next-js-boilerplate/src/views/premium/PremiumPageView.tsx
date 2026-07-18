@@ -1,15 +1,12 @@
 "use client";
 
-import { apiFetch } from "@/lib/api-client";
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { useToast } from "@/components/ui/Toast";
-import { exceptionHandler } from "@/lib/exception-handler";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { I18nMessages } from "@/generated/i18n-messages";
 import { getToday } from "@/lib/date-time";
-import { PREMIUM_STATS_URL, GQL_URL } from "@/constants/api/urls";
-import { POST } from "@/constants/api/methods";
-import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
+import { fetchPremiumStatsServer } from "@/api/server/premium/stats";
+import { fetchGrowthStatsServer } from "@/api/server/premium/growth-stats";
 
 async function loadPremiumStats(
   setLoadingStats: Dispatch<SetStateAction<boolean>>,
@@ -25,17 +22,8 @@ async function loadPremiumStats(
 ) {
   setLoadingStats(true);
   try {
-    const res = await apiFetch(PREMIUM_STATS_URL);
-    if (res.ok) {
-      const data = await res.json();
-      setStats(data.stats);
-    } else {
-      const data = await res.json();
-      const description = data.exc
-        ? exceptionHandler(data)
-        : (data.error ?? t.errorStatus.replace("{status}", String(res.status)));
-      toast({ description, variant: "destructive" });
-    }
+    const data = await fetchPremiumStatsServer() as unknown as { stats: { totalUsers: number; activeUsers: number; revenue: number } };
+    setStats(data.stats);
   } catch {
     toast({ description: t.networkError, variant: "destructive" });
   } finally {
@@ -58,23 +46,8 @@ async function loadPremiumGrowthStats(
 ) {
   setLoadingGrowth(true);
   try {
-    const res = await apiFetch(GQL_URL, {
-      method: POST,
-      headers: JSON_CONTENT_TYPE_HEADER,
-      body: JSON.stringify({
-        query: `query { growthStats { totalUsers newUsersLast7Days totalPosts totalFriendships } }`,
-      }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setGrowthStats(data.data?.growthStats);
-    } else {
-      const data = await res.json();
-      const description = data.exc
-        ? exceptionHandler(data)
-        : (data.error ?? t.errorStatus.replace("{status}", String(res.status)));
-      toast({ description, variant: "destructive" });
-    }
+    const growthStats = await fetchGrowthStatsServer();
+    setGrowthStats(growthStats);
   } catch {
     toast({ description: t.networkError, variant: "destructive" });
   } finally {

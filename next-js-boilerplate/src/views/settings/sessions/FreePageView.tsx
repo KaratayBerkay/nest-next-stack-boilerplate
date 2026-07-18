@@ -3,7 +3,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
-import { apiFetch, apiFetchJson } from "@/lib/api-client";
 import { useCallback, useEffect, useState } from "react";
 import {
   IconDeviceDesktop,
@@ -12,16 +11,10 @@ import {
 } from "@tabler/icons-react";
 import { formatDateTimeByPreference } from "@/lib/date-time";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
-import {
-  SESSIONS_LIST_URL,
-  SESSIONS_REVOKE_URL,
-  SESSIONS_REVOKE_OTHERS_URL,
-} from "@/constants/api/urls";
-import { POST } from "@/constants/api/methods";
-import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsSessionsPageInfo } from "@/constants/page-info";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { useSessionActions } from "@/api/client/sessions/actions";
 import type { SessionInfo } from "@/types/settings/SessionInfo-types";
 
 export function FreePageView() {
@@ -30,38 +23,42 @@ export function FreePageView() {
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [loadingSessions, setLoadingSessions] = useState(true);
   const dateDisplay = useDateDisplayCookie();
+  const { revokeSession, revokeOtherSessions } = useSessionActions();
 
   useEffect(() => {
     if (!user) return;
-    apiFetchJson<{ sessions: SessionInfo[] }>(SESSIONS_LIST_URL)
-      .then((data) => setSessions(data.sessions))
-      .catch(() => setSessions([]))
-      .finally(() => setLoadingSessions(false));
+    (async () => {
+      try {
+        const { listSessionsServer } = await import("@/api/server/sessions/list");
+        const data = await listSessionsServer();
+        setSessions(data as unknown as SessionInfo[]);
+      } catch {
+        setSessions([]);
+      } finally {
+        setLoadingSessions(false);
+      }
+    })();
   }, [user]);
 
-  const revokeSession = useCallback(async (sessionId: string) => {
+  const handleRevokeSession = useCallback(async (sessionId: string) => {
     try {
-      await apiFetchJson(SESSIONS_REVOKE_URL, {
-        method: POST,
-        body: JSON.stringify({ sessionId }),
-        headers: JSON_CONTENT_TYPE_HEADER,
-      });
+      await revokeSession(sessionId);
       setSessions((prev) => prev.filter((s) => s.sessionId !== sessionId));
     } catch {
       // silently fail
     }
-  }, []);
+  }, [revokeSession]);
 
-  const revokeAllOtherSessions = useCallback(async () => {
+  const handleRevokeAllOtherSessions = useCallback(async () => {
     try {
-      await apiFetch(SESSIONS_REVOKE_OTHERS_URL, { method: POST });
+      await revokeOtherSessions();
       setSessions((prev) =>
         prev.filter((s) => s.sessionId === user?.sessionId),
       );
     } catch {
       // silently fail
     }
-  }, [user?.sessionId]);
+  }, [revokeOtherSessions, user?.sessionId]);
 
   if (loading) return <LoadingAuth />;
   if (!user)
@@ -76,7 +73,7 @@ export function FreePageView() {
         <div className="flex items-center gap-2">
           {sessions.length > 1 && (
             <button
-              onClick={revokeAllOtherSessions}
+              onClick={handleRevokeAllOtherSessions}
               className="text-xs text-red-600 transition-colors hover:text-red-700"
             >
               Log out all other sessions
@@ -170,7 +167,7 @@ export function FreePageView() {
                 </div>
                 {!isCurrent && (
                   <button
-                    onClick={() => revokeSession(session.sessionId)}
+                    onClick={() => handleRevokeSession(session.sessionId)}
                     className="shrink-0 text-xs whitespace-nowrap text-red-600 transition-colors hover:text-red-700"
                     aria-label={`Revoke session from ${session.ip ?? "unknown device"}`}
                   >

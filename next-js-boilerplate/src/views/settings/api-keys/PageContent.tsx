@@ -2,36 +2,20 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { apiFetchJson } from "@/lib/api-client";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { formatDateByPreference } from "@/lib/date-time";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
-import { API_KEYS_URL, API_KEYS_PREFIX } from "@/constants/api/urls";
-import { POST, DELETE } from "@/constants/api/methods";
-import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsApiKeysPageInfo } from "@/constants/page-info";
+import { useApiKeyActions } from "@/api/client/api-keys/actions";
+import type { ApiKeyInfo } from "@/api/server/api-keys/list";
+import type { CreateApiKeyResult } from "@/api/server/api-keys/create";
 import type { Dispatch, SetStateAction } from "react";
 
-interface ApiKey {
-  id: string;
-  name: string;
-  keyPrefix: string;
-  createdAt: string;
-  lastUsedAt: string | null;
-  expiresAt: string | null;
-  enabled: boolean;
-  role: string;
-  tier: string;
-}
-
-interface CreateResult {
-  fullKey: string;
-  key: ApiKey;
-}
+type ApiKey = ApiKeyInfo;
 
 async function handleCreateApiKey(
   newName: string,
@@ -42,19 +26,13 @@ async function handleCreateApiKey(
   setNewExpiry: Dispatch<SetStateAction<string>>,
   loadKeys: () => Promise<void>,
   newExpiry: string,
+  createApiKey: (name: string, expiresInDays: number | null) => Promise<CreateApiKeyResult>,
 ) {
   if (!newName.trim()) return;
   setCreating(true);
   setNewKeyResult(null);
   try {
-    const result = await apiFetchJson<CreateResult>(API_KEYS_URL, {
-      method: POST,
-      headers: JSON_CONTENT_TYPE_HEADER,
-      body: JSON.stringify({
-        name: newName.trim(),
-        expiresInDays: newExpiry ? parseInt(newExpiry, 10) : null,
-      }),
-    });
+    const result = await createApiKey(newName.trim(), newExpiry ? parseInt(newExpiry, 10) : null);
     setNewKeyResult(result.fullKey);
     toast({ title: "API key created" });
     setNewName("");
@@ -78,8 +56,9 @@ async function loadApiKeys(
   setLoadingKeys: Dispatch<SetStateAction<boolean>>,
 ) {
   try {
-    const data = await apiFetchJson<{ apiKeys: ApiKey[] }>(API_KEYS_URL);
-    setKeys(data.apiKeys);
+    const { listApiKeysServer } = await import("@/api/server/api-keys/list");
+    const data = await listApiKeysServer();
+    setKeys(data);
   } catch {
     toast({ title: "Failed to load API keys", variant: "destructive" });
   } finally {
@@ -92,10 +71,11 @@ async function handleRevokeApiKey(
   name: string,
   toast: ReturnType<typeof useToast>["toast"],
   loadKeys: () => Promise<void>,
+  revokeApiKey: (id: string) => Promise<void>,
 ) {
   if (!confirm(`Revoke API key "${name}"? This cannot be undone.`)) return;
   try {
-    await apiFetchJson(API_KEYS_PREFIX + id, { method: DELETE });
+    await revokeApiKey(id);
     toast({ title: `API key "${name}" revoked` });
     await loadKeys();
   } catch (err) {
@@ -112,6 +92,7 @@ export default function PageContent() {
   const { user } = useAuth();
   const t = useMessages("settings");
   const { toast } = useToast();
+  const { createApiKey, revokeApiKey } = useApiKeyActions();
 
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loadingKeys, setLoadingKeys] = useState(true);
@@ -219,6 +200,7 @@ export default function PageContent() {
                   setNewExpiry,
                   loadKeys,
                   newExpiry,
+                  createApiKey,
                 )
               }
               disabled={creating || !newName.trim()}
@@ -287,7 +269,7 @@ export default function PageContent() {
                 variant="destructive"
                 size="sm"
                 onClick={() =>
-                  handleRevokeApiKey(key.id, key.name, toast, loadKeys)
+                  handleRevokeApiKey(key.id, key.name, toast, loadKeys, revokeApiKey)
                 }
               >
                 Revoke

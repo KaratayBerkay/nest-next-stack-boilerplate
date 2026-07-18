@@ -15,6 +15,51 @@ Example: `src/types/billing/StripeCardForm-types.ts` → `StripeCardFormProps` �
 - `src/views/feed/FreePageView.tsx` → `src/types/feed/FreePageView-types.ts`
 - `src/lib/realtime/RealtimeProvider.tsx` → `src/types/lib/RealtimeProvider-types.ts`
 
+### API calls to `src/api/` (two-layer pattern)
+
+Never call `apiFetch`, `apiFetchJson`, or raw `fetch` directly in views, components, hooks, or lib files. Instead:
+
+1. **Server layer** (`src/api/server/<domain>/<file>.ts`) — Functions that make the actual HTTP call using `apiFetch`/`apiFetchJson` and import URL/method/header constants from `@/constants/api/`.
+2. **Client layer** (`src/api/client/<domain>/<file>.ts`) — Wrappers that dynamically import and call server functions. Use `queryOptions()` from `@tanstack/react-query` for queries, React hooks for mutations.
+
+```ts
+// ✅ Good — server layer: api/server/users/search.ts
+import { apiFetch } from "@/lib/api-client";
+import { USERS_SEARCH_PREFIX } from "@/constants/api/urls";
+import { POST } from "@/constants/api/methods";
+import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
+export async function searchUsersServer(q: string): Promise<UserSearchResult> {
+  const res = await apiFetch(USERS_SEARCH_PREFIX, { ... });
+  return res.json();
+}
+```
+
+```ts
+// ✅ Good — client layer: api/client/users/search.ts
+import { queryOptions } from "@tanstack/react-query";
+export function searchUsersQueryOptions(q: string) {
+  return queryOptions({
+    queryKey: ["users", "search", q],
+    queryFn: async () => {
+      const { searchUsersServer } = await import("@/api/server/users/search");
+      return searchUsersServer(q);
+    },
+  });
+}
+```
+
+```tsx
+// ✅ Good — view imports from api/client only
+import { searchUsersQueryOptions } from "@/api/client/users/search";
+import { useFriendActions } from "@/api/client/friends/actions";
+```
+
+**Directory structure mirrors the feature domain:**
+- `src/api/server/messages/friends.ts` → `src/api/client/friends/query.ts`
+- `src/api/server/auth/login.ts` → `src/api/client/auth/actions.ts`
+
+See `src/api/index.ts` for barrel re-exports.
+
 ### API constants to `src/constants/api/`
 
 Never hardcode URLs, HTTP methods, or headers inline. Instead:
@@ -24,6 +69,34 @@ Never hardcode URLs, HTTP methods, or headers inline. Instead:
 3. **Headers** → `src/constants/api/headers.ts` — `export const JSON_CONTENT_TYPE_HEADER = { "Content-Type": "application/json" } as const`
 
 Import with `import { NAME } from "@/constants/api/<file>"`. Barrel re-exports are in `src/constants/index.ts`.
+
+### Zod validators to `src/validators/`
+
+Never define zod schemas inline in component, hook, or lib files. Instead:
+
+1. Create a file at `src/validators/<feature>/<name>.ts`
+2. Define and export the zod schema
+3. Import it where used
+
+```ts
+// ✅ Good — src/validators/auth/schema.ts
+import { z } from "zod";
+export const loginFormSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+});
+```
+
+```tsx
+// ✅ Good — imported in component
+import { loginFormSchema } from "@/validators/auth/schema";
+```
+
+**Directory structure mirrors feature domain:**
+- `src/validators/auth/schema.ts` — auth forms
+- `src/validators/messages/schema.ts` — chat messages
+- `src/validators/billing/schema.ts` — payment forms
+- `src/validators/events/schema.ts` — event logging
 
 ### Multi-page views and client components to `src/views/`
 

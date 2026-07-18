@@ -1,8 +1,6 @@
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
-import { apiFetch } from "@/lib/api-client";
-import { ADMIN_SET_TIER_URL, USERS_SEARCH_PREFIX } from "@/constants/api/urls";
-import { POST } from "@/constants/api/methods";
-import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
+import { searchAdminUsersServer } from "@/api/server/admin/search-users";
+import { setTierServer } from "@/api/server/admin/set-tier";
 
 export interface UserResult {
   id: string;
@@ -21,13 +19,8 @@ export async function doSearch(
   }
   setSearching(true);
   try {
-    const res = await apiFetch(
-      `${USERS_SEARCH_PREFIX}?q=${encodeURIComponent(q)}&take=20`,
-    );
-    if (res.ok) {
-      const data = await res.json();
-      setResults(data.items ?? []);
-    }
+    const items = await searchAdminUsersServer(q);
+    setResults(items);
   } catch {
     setResults([]);
   } finally {
@@ -60,18 +53,13 @@ export async function setTier(
 ) {
   setStatusMsg(null);
   try {
-    const res = await apiFetch(ADMIN_SET_TIER_URL, {
-      method: POST,
-      headers: JSON_CONTENT_TYPE_HEADER,
-      body: JSON.stringify({ userId, tier }),
-    });
-    if (res.ok) {
+    const result = await setTierServer(userId, tier);
+    if (result.success) {
       setStatusMsg({ type: "success", text: "Tier updated successfully" });
     } else {
-      const data = await res.json();
       setStatusMsg({
         type: "error",
-        text: data.error ?? "Failed to update tier",
+        text: result.error ?? "Failed to update tier",
       });
     }
   } catch {

@@ -1,12 +1,9 @@
 "use client";
 
-import { apiFetch } from "@/lib/api-client";
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/Toast";
-import { POSTS_PREFIX } from "@/constants/api/urls";
-import { PUT, DELETE } from "@/constants/api/methods";
-import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
+import { usePostActions } from "@/api/client/posts/actions";
 import type { PostCardProps, Post } from "@/types/feed/PostCard-types";
 import { PostHeader } from "./PostHeader";
 import { PostContent } from "./PostContent";
@@ -16,23 +13,11 @@ async function refreshPostData(
   postId: string,
   toast: ReturnType<typeof useToast>["toast"],
   setPostData: Dispatch<SetStateAction<Post>>,
+  refreshPost: (id: string) => Promise<Post>,
 ) {
   try {
-    const res = await apiFetch(POSTS_PREFIX + postId);
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      toast({
-        title: body.error ?? `Failed to load post (${res.status})`,
-        variant: "destructive",
-      });
-      return;
-    }
-    const data = await res.json();
-    if (data.post) {
-      setPostData(data.post);
-    } else {
-      toast({ title: "Post not found", variant: "destructive" });
-    }
+    const post = await refreshPost(postId);
+    setPostData(post);
   } catch {
     toast({ title: "Network error loading post", variant: "destructive" });
   }
@@ -44,23 +29,15 @@ async function handleEditPost(
   editContent: string,
   setPostData: Dispatch<SetStateAction<Post>>,
   setEditing: Dispatch<SetStateAction<boolean>>,
+  updatePost: (id: string, title: string, content: string) => Promise<void>,
+  refreshPost: (id: string) => Promise<Post>,
 ) {
   if (!editTitle.trim() || !editContent.trim()) return;
   try {
-    const res = await apiFetch(POSTS_PREFIX + postDataId, {
-      method: PUT,
-      headers: JSON_CONTENT_TYPE_HEADER,
-      body: JSON.stringify({
-        title: editTitle.trim(),
-        content: editContent.trim(),
-      }),
-    });
-    if (!res.ok) return;
-    const data = await res.json();
-    if (data.post) {
-      setPostData(data.post);
-      setEditing(false);
-    }
+    await updatePost(postDataId, editTitle.trim(), editContent.trim());
+    const post = await refreshPost(postDataId);
+    setPostData(post);
+    setEditing(false);
   } catch {
     // silent
   }
@@ -69,12 +46,10 @@ async function handleEditPost(
 async function handleDeletePost(
   postDataId: string,
   onDelete: ((id: string) => void) | undefined,
+  deletePost: (id: string) => Promise<void>,
 ) {
   try {
-    const res = await apiFetch(POSTS_PREFIX + postDataId, {
-      method: DELETE,
-    });
-    if (!res.ok) return;
+    await deletePost(postDataId);
     onDelete?.(postDataId);
   } catch {
     // silent
@@ -87,10 +62,11 @@ function handleToggle(
   postId: string,
   toast: ReturnType<typeof useToast>["toast"],
   setPostData: Dispatch<SetStateAction<Post>>,
+  refreshPost: (id: string) => Promise<Post>,
 ) {
   const willExpand = !isExpanded;
   onToggle?.();
-  if (willExpand) refreshPostData(postId, toast, setPostData);
+  if (willExpand) refreshPostData(postId, toast, setPostData, refreshPost);
 }
 
 export function PostCard({
@@ -106,6 +82,7 @@ export function PostCard({
   const [editContent, setEditContent] = useState("");
   const isOwn = user && postData.author.id === user.id;
   const { toast } = useToast();
+  const { updatePost, deletePost, refreshPost } = usePostActions();
 
   return (
     <div
@@ -116,13 +93,13 @@ export function PostCard({
         postData={postData}
         isOwn={!!isOwn}
         editing={editing}
-        onRefresh={() => refreshPostData(postData.id, toast, setPostData)}
+        onRefresh={() => refreshPostData(postData.id, toast, setPostData, refreshPost)}
         onEditStart={() => {
           setEditTitle(postData.title);
           setEditContent(postData.content);
           setEditing(true);
         }}
-        onDeleteConfirm={() => handleDeletePost(postData.id, onDelete)}
+        onDeleteConfirm={() => handleDeletePost(postData.id, onDelete, deletePost)}
       />
 
       <PostContent
@@ -144,6 +121,8 @@ export function PostCard({
                 editContent,
                 setPostData,
                 setEditing,
+                updatePost,
+                refreshPost,
               )
             }
             className="bg-brand rounded-lg px-3 py-1 text-xs font-medium text-white"
@@ -163,10 +142,10 @@ export function PostCard({
         isExpanded={isExpanded}
         postData={postData}
         onToggle={() =>
-          handleToggle(isExpanded, onToggle, postData.id, toast, setPostData)
+          handleToggle(isExpanded, onToggle, postData.id, toast, setPostData, refreshPost)
         }
         currentUserId={user?.id}
-        onCommentAdded={() => refreshPostData(postData.id, toast, setPostData)}
+        onCommentAdded={() => refreshPostData(postData.id, toast, setPostData, refreshPost)}
       />
     </div>
   );

@@ -8,9 +8,7 @@ import { LOGIN_PATH } from "@/constants/routes";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
-import { AUTH_REQUEST_PASSWORD_RESET_URL } from "@/constants/api/urls";
-import { POST } from "@/constants/api/methods";
-import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
+import { requestPasswordResetServer } from "@/api/server/auth/request-password-reset";
 
 async function handleForgotPasswordSubmit(
   e: React.SyntheticEvent,
@@ -30,21 +28,12 @@ async function handleForgotPasswordSubmit(
 
   setSubmitting(true);
   try {
-    const res = await fetch(AUTH_REQUEST_PASSWORD_RESET_URL, {
-      method: POST,
-      headers: JSON_CONTENT_TYPE_HEADER,
-      body: JSON.stringify({ email }),
-    });
-    if (!res.ok) {
-      const body = await res.json();
-      setFieldErrors({
-        form: body.msg ?? "Request failed",
-      });
-      return;
-    }
+    await requestPasswordResetServer(email);
     setSubmitted(true);
-  } catch {
-    setFieldErrors({ form: "Request failed" });
+  } catch (err) {
+    setFieldErrors({
+      form: (err as Error).message ?? "Request failed",
+    });
   } finally {
     setSubmitting(false);
   }

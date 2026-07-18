@@ -3,9 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { clientEnv } from "@/lib/env";
-import { apiFetch } from "@/lib/api-client";
-import { MESSAGES_READ_URL } from "@/constants/api/urls";
-import { POST } from "@/constants/api/methods";
+import { markMessagesReadServer } from "@/api/server/messages/mark-read";
 import { RealtimeClient, type RealtimeStatus } from "./realtime-client";
 import { cachedFetchTokens, bustTokenCache } from "./token-cache";
 import { openBc, type Cmd } from "./tab-coordinator";
@@ -74,10 +72,7 @@ export function useRealtimeCoordination() {
               return c;
             });
           });
-          apiFetch(MESSAGES_READ_URL, {
-            method: POST,
-            body: JSON.stringify({ userId: msg.senderId }),
-          }).catch(() => {});
+          markMessagesReadServer(msg.senderId).catch(() => {});
         }
       }
       const t = frame.type as string;

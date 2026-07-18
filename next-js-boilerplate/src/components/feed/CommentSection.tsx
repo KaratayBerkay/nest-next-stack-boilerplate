@@ -1,6 +1,5 @@
 "use client";
 
-import { apiFetch } from "@/lib/api-client";
 import { useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { useToast } from "@/components/ui/Toast";
 import { ReactionInline } from "./ReactionButtons";
@@ -8,9 +7,7 @@ import { toISOString, formatDateByPreference } from "@/lib/date-time";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { IconPencil, IconTrash } from "@tabler/icons-react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { COMMENTS_URL, COMMENTS_PREFIX } from "@/constants/api/urls";
-import { PUT, DELETE, POST } from "@/constants/api/methods";
-import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
+import { usePostActions } from "@/api/client/posts/actions";
 import type {
   CommentSectionProps,
   Comment,
@@ -23,23 +20,12 @@ async function handleEditComment(
   setEditingBody: Dispatch<SetStateAction<string>>,
   setLocalEdits: Dispatch<SetStateAction<Record<string, string>>>,
   onCommentAdded: (() => void) | undefined,
+  updateComment: (commentId: string, body: string) => Promise<void>,
 ) {
   if (!editingBody.trim()) return;
   setLocalEdits((prev) => ({ ...prev, [commentId]: editingBody.trim() }));
   try {
-    const res = await apiFetch(COMMENTS_PREFIX + commentId, {
-      method: PUT,
-      headers: JSON_CONTENT_TYPE_HEADER,
-      body: JSON.stringify({ body: editingBody.trim() }),
-    });
-    if (!res.ok) {
-      setLocalEdits((prev) => {
-        const next = { ...prev };
-        delete next[commentId];
-        return next;
-      });
-      return;
-    }
+    await updateComment(commentId, editingBody.trim());
     setEditingId(null);
     setEditingBody("");
     setLocalEdits((prev) => {
@@ -74,6 +60,7 @@ export function CommentSection({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingBody, setEditingBody] = useState("");
   const dateDisplay = useDateDisplayCookie();
+  const { createComment, updateComment, deleteComment } = usePostActions();
 
   const allComments = [
     ...comments
@@ -90,20 +77,11 @@ export function CommentSection({
     commentId: string,
     setLocalDeletes: Dispatch<SetStateAction<Set<string>>>,
     onCommentAdded: (() => void) | undefined,
+    deleteComment: (commentId: string) => Promise<void>,
   ) {
     setLocalDeletes((prev) => new Set(prev).add(commentId));
     try {
-      const res = await apiFetch(COMMENTS_PREFIX + commentId, {
-        method: DELETE,
-      });
-      if (!res.ok) {
-        setLocalDeletes((prev) => {
-          const next = new Set(prev);
-          next.delete(commentId);
-          return next;
-        });
-        return;
-      }
+      await deleteComment(commentId);
       setLocalDeletes((prev) => {
         const next = new Set(prev);
         next.delete(commentId);
@@ -152,26 +130,7 @@ export function CommentSection({
     const prevReplyTo = replyTo;
     setReplyTo(null);
     try {
-      const res = await apiFetch(COMMENTS_URL, {
-        method: POST,
-        headers: JSON_CONTENT_TYPE_HEADER,
-        body: JSON.stringify({
-          postId,
-          body: trimmedBody,
-          ...(replyTo ? { parentId: replyTo } : {}),
-        }),
-      });
-      if (!res.ok) {
-        setPendingComments((prev) => prev.filter((c) => c.id !== temp.id));
-        const data = await res.json().catch(() => ({}));
-        toast({
-          title: data.error ?? `Failed (${res.status})`,
-          variant: "destructive",
-        });
-        setBody(trimmedBody);
-        setReplyTo(prevReplyTo);
-        return;
-      }
+      await createComment(postId, trimmedBody, replyTo);
       setPendingComments((prev) => prev.filter((c) => c.id !== temp.id));
       onCommentAdded?.();
     } catch {
@@ -279,13 +238,14 @@ export function CommentSection({
                       <ConfirmDialog
                         title="Delete comment"
                         description="Are you sure you want to delete this comment?"
-                        onConfirm={() =>
-                          handleDeleteComment(
-                            comment.id,
-                            setLocalDeletes,
-                            onCommentAdded,
-                          )
-                        }
+                          onConfirm={() =>
+                            handleDeleteComment(
+                              comment.id,
+                              setLocalDeletes,
+                              onCommentAdded,
+                              deleteComment,
+                            )
+                          }
                       >
                         {(open) => (
                           <button
@@ -319,6 +279,7 @@ export function CommentSection({
                           setEditingBody,
                           setLocalEdits,
                           onCommentAdded,
+                          updateComment,
                         );
                       if (e.key === "Escape") setEditingId(null);
                     }}
@@ -332,6 +293,7 @@ export function CommentSection({
                         setEditingBody,
                         setLocalEdits,
                         onCommentAdded,
+                        updateComment,
                       )
                     }
                     className="bg-brand rounded-lg px-3 py-1.5 text-xs font-medium text-white"
@@ -390,6 +352,7 @@ export function CommentSection({
                                 reply.id,
                                 setLocalDeletes,
                                 onCommentAdded,
+                                deleteComment,
                               )
                             }
                           >
@@ -425,6 +388,7 @@ export function CommentSection({
                               setEditingBody,
                               setLocalEdits,
                               onCommentAdded,
+                              updateComment,
                             );
                           if (e.key === "Escape") setEditingId(null);
                         }}
@@ -438,6 +402,7 @@ export function CommentSection({
                             setEditingBody,
                             setLocalEdits,
                             onCommentAdded,
+                            updateComment,
                           )
                         }
                         className="bg-brand rounded-lg px-3 py-1.5 text-xs font-medium text-white"

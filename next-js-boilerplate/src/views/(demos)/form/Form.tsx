@@ -10,22 +10,12 @@ import {
   useTransform,
 } from "@tanstack/react-form-nextjs";
 import type { AnyFieldApi } from "@tanstack/react-form";
-import { z } from "zod";
+import { fieldSchemas } from "@/validators/demos/form-schema";
 import { signupFormOpts } from "@/lib/forms/signup-options";
 import { signupAction } from "@/features/auth/actions/signup";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
-
-// Per-field schemas. Using field-level validators (rather than a single
-// form-level schema) keeps each field's errors independent: blurring one field
-// only validates that field, so a stale "still invalid" error can't linger on a
-// field the user later fixes without re-blurring it.
-const fieldSchemas = {
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email"),
-  age: z.number().min(18, "Must be 18 or older"),
-};
 
 function FieldInfo({ field }: FieldInfoProps) {
   return (

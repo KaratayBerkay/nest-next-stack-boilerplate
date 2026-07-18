@@ -5,44 +5,18 @@ import type { NotificationDropdownProps } from "@/types/feed/NotificationDropdow
 import type { NotificationItem } from "@/lib/realtime/useNotifications";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { apiFetch } from "@/lib/api-client";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import { useBreakpoint } from "@/hooks";
 import { IconBell } from "@tabler/icons-react";
-import { NOTIFICATIONS_READ_URL } from "@/constants/api/urls";
-import { POST } from "@/constants/api/methods";
 import {
   useNotifications,
   useUnreadNotificationCount,
   useDmUnreadCount,
 } from "@/lib/realtime/useNotifications";
 import { notificationTarget } from "@/lib/notifications/target";
-import { useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/feed/Badge";
 import { NotificationList } from "@/components/feed/NotificationList";
-
-async function markRead(
-  id: string,
-  queryClient: ReturnType<typeof useQueryClient>,
-) {
-  try {
-    await apiFetch(NOTIFICATIONS_READ_URL, {
-      method: POST,
-      body: JSON.stringify({ id }),
-    });
-    queryClient.invalidateQueries({ queryKey: ["notifications"] });
-  } catch {}
-}
-
-async function markAllRead(queryClient: ReturnType<typeof useQueryClient>) {
-  try {
-    await apiFetch(NOTIFICATIONS_READ_URL, {
-      method: POST,
-      body: JSON.stringify({ all: true }),
-    });
-    queryClient.invalidateQueries({ queryKey: ["notifications"] });
-  } catch {}
-}
+import { useNotificationActions } from "@/api/client/notifications/actions";
 
 function handleToggle(setOpen: Dispatch<SetStateAction<boolean>>) {
   setOpen((prev) => !prev);
@@ -80,13 +54,13 @@ export function NotificationDropdown({
     if (isDesktop) setOpen(false);
   });
 
-  const queryClient = useQueryClient();
+  const { markRead, markAllRead } = useNotificationActions();
 
   const content = (
     <NotificationList
       notifications={notifications}
-      onMarkRead={(id) => markRead(id, queryClient)}
-      onMarkAllRead={() => markAllRead(queryClient)}
+      onMarkRead={(id) => markRead(id)}
+      onMarkAllRead={() => markAllRead()}
       onNavigate={(n) => handleNavigate(n, lang, setOpen, router)}
       lang={lang}
     />
