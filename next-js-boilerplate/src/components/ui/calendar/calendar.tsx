@@ -91,9 +91,8 @@ function Chevron({
 // The interval is ref-based so it survives re-renders; a window mouseup
 // listener ensures cleanup even when mouseup lands outside the button or
 // after the button's DOM node has been replaced.
-// onClick is deliberately omitted from JSX — the browser fires a click
-// event after mousedown+mouseup on the same element, which would double-
-// navigate alongside the immediate call in handleMouseDown.
+// A suppressClick ref prevents double-fire: the browser fires click after
+// mousedown+mouseup, but handleMouseDown already dispatched onClick.
 const REPEAT_RATE_MS = 300;
 function MonthNavButton({
   onClick,
@@ -102,6 +101,7 @@ function MonthNavButton({
   const onClickRef = useRef(onClick);
   onClickRef.current = onClick;
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const suppressClickRef = useRef(false);
 
   const clearTimer = useCallback(() => {
     if (timerRef.current !== null) {
@@ -116,6 +116,7 @@ function MonthNavButton({
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
       clearTimer();
+      suppressClickRef.current = true;
       onClickRef.current?.(e);
 
       timerRef.current = setInterval(() => {
@@ -125,6 +126,7 @@ function MonthNavButton({
       }, REPEAT_RATE_MS);
 
       const onWindowMouseUp = () => {
+        suppressClickRef.current = false;
         clearTimer();
         window.removeEventListener("mouseup", onWindowMouseUp);
       };
@@ -133,23 +135,17 @@ function MonthNavButton({
     [clearTimer],
   );
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLButtonElement>) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        onClickRef.current?.(
-          {} as React.MouseEvent<HTMLButtonElement>,
-        );
-      }
-    },
-    [],
-  );
-
   return (
     <button
       {...buttonProps}
+      onClick={(e) => {
+        if (suppressClickRef.current) {
+          suppressClickRef.current = false;
+          return;
+        }
+        onClick?.(e);
+      }}
       onMouseDown={handleMouseDown}
-      onKeyDown={handleKeyDown}
     />
   );
 }
