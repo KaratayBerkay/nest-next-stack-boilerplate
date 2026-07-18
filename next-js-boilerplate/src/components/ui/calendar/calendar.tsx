@@ -4,6 +4,7 @@ import {
   type ComponentPropsWithoutRef,
   type ChangeEvent,
   useCallback,
+  useRef,
 } from "react";
 import { DayPicker, type DropdownProps } from "react-day-picker";
 import { enUS, tr } from "react-day-picker/locale";
@@ -87,16 +88,29 @@ function Chevron({
 // inline inside `components={}` below: that object is a fresh literal on
 // every render, so an inline arrow function is a *new* component type each
 // time — React would unmount and remount this button on every month change.
-// A freshly-mounted DOM node under an already-stationary cursor still gets
-// its own `mouseenter` from the browser (hover state is recomputed after DOM
-// changes, not just mouse movement), which re-fires onClick, which changes
-// the month again, remounting again — an infinite loop that only stopped
-// when the mouse physically left the strip.
+// A debounce (`COOLDOWN_MS`) prevents the re-mount loop: a freshly-mounted
+// DOM node under an already-stationary cursor still gets its own `mouseenter`
+// (hover state is recomputed after DOM changes, not just mouse movement),
+// which would re-fire onClick, change the month, and loop. 300 ms is long
+// enough for React to finish the render cycle and short enough that a real
+// re-hover is barely noticeable.
+const COOLDOWN_MS = 300;
 function MonthNavButton({
   onClick,
   ...buttonProps
 }: ComponentPropsWithoutRef<"button">) {
-  return <button {...buttonProps} onClick={onClick} onMouseEnter={onClick} />;
+  const lastCall = useRef(0);
+  const handleHover = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      const now = Date.now();
+      if (now - lastCall.current > COOLDOWN_MS) {
+        lastCall.current = now;
+        onClick?.(e);
+      }
+    },
+    [onClick],
+  );
+  return <button {...buttonProps} onClick={onClick} onMouseEnter={handleHover} />;
 }
 
 function getEventsForDate(events: NonNullable<CalendarProps["events"]>, date: Date) {
