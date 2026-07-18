@@ -276,7 +276,7 @@ export function Calendar({
         week: "flex w-full mt-2",
         day: "relative w-full p-0 text-center text-sm focus-within:relative focus-within:z-20",
         day_button:
-          "hover:bg-surface-hover inline-flex w-full max-w-10 aspect-square items-center justify-center rounded-md p-0 text-sm font-normal transition-colors aria-selected:opacity-100",
+          "hover:bg-surface-hover inline-flex w-full aspect-square items-center justify-center rounded-md p-0 text-sm font-normal transition-colors aria-selected:opacity-100",
         selected:
           "bg-brand text-brand-fg hover:bg-brand hover:text-brand-fg focus:bg-brand focus:text-brand-fg",
         today: "bg-brand/10 font-semibold",
@@ -305,7 +305,7 @@ export function Calendar({
           if (dayButtonProps.modifiers.outside) {
             return (
               <span
-                className="inline-flex w-full max-w-10 aspect-square items-center justify-center text-sm font-normal"
+                className="inline-flex w-full aspect-square items-center justify-center text-sm font-normal"
                 aria-hidden="true"
               >
                 {dayDate.getDate()}
@@ -321,7 +321,7 @@ export function Calendar({
           return (
             <button
               className={cn(
-                "hover:bg-surface-hover inline-flex w-full max-w-10 aspect-square items-center justify-center rounded-md p-0 text-sm font-normal transition-colors",
+                "hover:bg-surface-hover inline-flex w-full aspect-square items-center justify-center rounded-md p-0 text-sm font-normal transition-colors",
                 dayButtonProps.modifiers.selected && "bg-brand text-brand-fg",
                 dayButtonProps.modifiers.today && !dayButtonProps.modifiers.selected && "bg-surface text-fg font-semibold",
                 "relative",
