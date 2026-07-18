@@ -148,7 +148,10 @@ services:
       postgres:
         condition: service_healthy
     env_file: ./.vault-envs/backend.env
-    command: ["node_modules/.bin/prisma", "db", "push", "--accept-data-loss", "--force-reset"]
+    # NEVER add --force-reset here: it drops the whole schema (all data) on every
+    # `compose up`, since app depends_on this service. It silently wiped the live
+    # DB on each deploy between 2026-06-19 (686741f) and 2026-07-17.
+    command: ["node_modules/.bin/prisma", "db", "push", "--accept-data-loss"]
 
   app:
     build:

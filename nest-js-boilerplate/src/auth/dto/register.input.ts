@@ -1,5 +1,11 @@
 import { Field, InputType } from '@nestjs/graphql';
-import { IsEmail, IsOptional, MaxLength, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsOptional,
+  IsTimeZone,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 // Slim, purpose-built input — not the giant generated UserCreateInput. The boilerplate
 // keeps auth inputs hand-written so the public API surface stays intentional.
@@ -18,4 +24,9 @@ export class RegisterInput {
   @IsOptional()
   @MaxLength(80)
   name?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsTimeZone()
+  timezone?: string;
 }

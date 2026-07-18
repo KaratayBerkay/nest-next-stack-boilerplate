@@ -78,3 +78,6 @@ src/schema.gql
 .next/
 next-env.d.ts
 .vault-envs/
+
+# session exports
+.sessions/

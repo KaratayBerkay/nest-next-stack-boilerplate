@@ -84,6 +84,7 @@ export class AuthService {
           passwordHash,
           passwordSetAt: new Date(),
           status: 'PENDING_VERIFICATION',
+          ...(input.timezone ? { timezone: input.timezone } : {}),
         },
       });
       await tx.verificationToken.create({
@@ -200,7 +201,12 @@ export class AuthService {
 
     await this.prisma.user.update({
       where: { id: user.id },
-      data: { failedLoginCount: 0, lockedUntil: null, lastLoginAt: new Date() },
+      data: {
+        failedLoginCount: 0,
+        lockedUntil: null,
+        lastLoginAt: new Date(),
+        ...(input.timezone ? { timezone: input.timezone } : {}),
+      },
     });
 
     const device = ctx
