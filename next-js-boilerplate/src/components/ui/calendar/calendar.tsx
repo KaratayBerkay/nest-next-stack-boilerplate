@@ -91,6 +91,9 @@ function Chevron({
 // The interval is ref-based so it survives re-renders; a window mouseup
 // listener ensures cleanup even when mouseup lands outside the button or
 // after the button's DOM node has been replaced.
+// onClick is deliberately omitted from JSX — the browser fires a click
+// event after mousedown+mouseup on the same element, which would double-
+// navigate alongside the immediate call in handleMouseDown.
 const REPEAT_RATE_MS = 300;
 function MonthNavButton({
   onClick,
@@ -130,16 +133,23 @@ function MonthNavButton({
     [clearTimer],
   );
 
-  const handleMouseUp = useCallback(() => {
-    clearTimer();
-  }, [clearTimer]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLButtonElement>) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        onClickRef.current?.(
+          {} as React.MouseEvent<HTMLButtonElement>,
+        );
+      }
+    },
+    [],
+  );
 
   return (
     <button
       {...buttonProps}
-      onClick={onClick}
       onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
+      onKeyDown={handleKeyDown}
     />
   );
 }
