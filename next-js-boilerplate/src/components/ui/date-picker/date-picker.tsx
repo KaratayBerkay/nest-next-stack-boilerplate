@@ -377,7 +377,7 @@ export function DatePicker({
             </svg>
           </button>
         </PopoverTrigger>
-        <PopoverContent title={labels.pickDate} forceBottomSheet>
+        <PopoverContent title={labels.pickDate} className="w-auto" forceBottomSheet>
           <DatePickerCalendar
             value={value}
             onChange={onChange}
