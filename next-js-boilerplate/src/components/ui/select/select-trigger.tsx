@@ -27,6 +27,7 @@ export function SelectTrigger({
   error,
   description,
   onClick,
+  hideChevron,
   ...props
 }: SelectTriggerProps) {
   const { open, setOpen, triggerRef } = useSelect();
@@ -55,24 +56,26 @@ export function SelectTrigger({
         {...props}
       >
         <span className="pointer-events-none flex-1 truncate">{children}</span>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className={cn(
-            "text-muted shrink-0 transition-transform",
-            open && "rotate-180",
-          )}
-          aria-hidden="true"
-        >
-          <path d="m6 9 6 6 6-6" />
-        </svg>
+        {!hideChevron && (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={cn(
+              "text-muted shrink-0 transition-transform",
+              open && "rotate-180",
+            )}
+            aria-hidden="true"
+          >
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        )}
       </button>
       {messages}
     </>

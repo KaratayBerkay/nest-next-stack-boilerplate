@@ -28,6 +28,7 @@ export function Dropdown({
   description,
   "aria-label": ariaLabel,
   forceBottomSheet,
+  hideChevron,
 }: DropdownProps) {
   const selected = options.find((option) => option.value === value);
 
@@ -41,6 +42,7 @@ export function Dropdown({
           aria-label={ariaLabel}
           error={error}
           description={description}
+          hideChevron={hideChevron}
         >
           <span className={cn("truncate", !selected && "text-muted")}>
             {selected?.label ?? placeholder ?? ""}

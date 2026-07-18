@@ -14,6 +14,8 @@ export interface SelectTriggerProps extends React.ComponentPropsWithoutRef<"butt
   className?: string;
   error?: string;
   description?: string;
+  /** Hide the chevron icon — used when the select opens a bottom sheet instead of a dropdown. */
+  hideChevron?: boolean;
 }
 
 export interface SelectValueProps {

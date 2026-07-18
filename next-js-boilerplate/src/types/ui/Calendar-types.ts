@@ -9,4 +9,6 @@ export type CalendarProps = ComponentProps<typeof DayPicker> & {
   onDayClick?: (date: Date) => void;
   /** Always render the month/year dropdowns as the mobile bottom sheet, regardless of viewport width. */
   forceDropdownBottomSheet?: boolean;
+  /** Prevent swipe gesture from changing months (e.g. when the popover is closed). */
+  swipeDisabled?: boolean;
 };

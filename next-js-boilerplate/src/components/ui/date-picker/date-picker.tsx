@@ -159,7 +159,7 @@ function DatePickerCalendar({
   startMonth?: Date;
   endMonth?: Date;
 }) {
-  const { close } = usePopover();
+  const { close, open } = usePopover();
   const lang = useLang();
   const labels = LABELS[lang];
   const monthNames = getMonthNames(lang, "short");
@@ -280,6 +280,7 @@ function DatePickerCalendar({
       startMonth={startMonth ?? new Date(1900, 0, 1)}
       endMonth={endMonth ?? defaultEndMonth()}
       forceDropdownBottomSheet
+      swipeDisabled={!open}
       onDayClick={(d) => {
         onChange?.(d);
         close();

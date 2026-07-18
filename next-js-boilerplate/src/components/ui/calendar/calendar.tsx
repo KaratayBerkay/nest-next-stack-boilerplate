@@ -6,12 +6,16 @@ import {
   useCallback,
   useEffect,
   useRef,
+  useState,
 } from "react";
 import { DayPicker, type DropdownProps } from "react-day-picker";
 import { enUS, tr } from "react-day-picker/locale";
 import { cn } from "@/lib/cn";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { useLang } from "@/hooks/useLang";
+import { useDeviceType } from "@/hooks/useDeviceType";
+import { useSwipeGesture } from "@/hooks/useSwipeGesture";
+import { addMonths } from "@/lib/date-time";
 import type { Lang } from "@/constants/i18n";
 import { CalendarEvent } from "./calendar-event";
 import type { CalendarProps } from "@/types/ui/Calendar-types";
@@ -44,6 +48,7 @@ function CaptionDropdown({
       aria-label={ariaLabel}
       disabled={disabled}
       forceBottomSheet={forceBottomSheet}
+      hideChevron
       value={value == null ? undefined : String(value)}
       options={(options ?? []).map((option) => ({
         value: String(option.value),
@@ -167,15 +172,45 @@ export function Calendar({
   events,
   onDayClick,
   forceDropdownBottomSheet,
+  swipeDisabled,
   ...props
 }: CalendarProps) {
   const lang = useLang();
+  const deviceType = useDeviceType();
+  const isTouch = deviceType === "touch";
+
+  const [currentMonth, setCurrentMonth] = useState(() =>
+    props.defaultMonth ?? props.month ?? new Date(),
+  );
+
+  const handleSwipeLeft = useCallback(() => {
+    if (swipeDisabled) return;
+    setCurrentMonth((prev) => addMonths(prev, 1));
+  }, [swipeDisabled]);
+
+  const handleSwipeRight = useCallback(() => {
+    if (swipeDisabled) return;
+    setCurrentMonth((prev) => addMonths(prev, -1));
+  }, [swipeDisabled]);
+
+  useSwipeGesture({
+    onSwipeLeft: handleSwipeLeft,
+    onSwipeRight: handleSwipeRight,
+  });
+
   const handleDayClick = useCallback(
     (day: Date) => {
       onDayClick?.(day);
     },
     [onDayClick],
   );
+
+  const navButtonBase =
+    "hover:bg-surface-hover text-muted hover:text-fg flex items-center justify-center rounded-md bg-transparent p-0 transition-colors aria-disabled:pointer-events-none aria-disabled:opacity-30";
+  const navButtonClasses = isTouch ? "hidden" : navButtonBase;
+  const monthGridCols = isTouch
+    ? "minmax(0,1fr)"
+    : "grid-cols-[1.5rem_minmax(0,1fr)_1.5rem]";
 
   // Stable across renders (only changes if forceDropdownBottomSheet itself
   // does — a constant in every current caller). Same reasoning as
@@ -199,10 +234,12 @@ export function Calendar({
   return (
     <DayPicker
       locale={LOCALES[lang]}
+      month={currentMonth}
+      onMonthChange={setCurrentMonth}
       navLayout="around"
       showOutsideDays
       classNames={{
-        root: "p-3",
+        root: "p-4",
         months: "flex flex-col sm:flex-row gap-2",
         // Row 1: caption (month + year dropdowns), full width. Row 2: a
         // prev/next hover strip flanking each side of the day grid — not
@@ -216,22 +253,15 @@ export function Calendar({
         // the button_next strip after it) got pushed past the card's edge.
         // `minmax(0, …)` lets the track — and month_grid's `table-fixed`
         // below — actually shrink to fit.
-        month: "grid grid-cols-[1.5rem_minmax(0,1fr)_1.5rem] gap-y-2",
+        month: cn("grid gap-y-3", monthGridCols),
         // Month and year stack vertically (rather than side by side) so each
         // dropdown gets the full caption width — a narrow half-width year
         // select truncates 4-digit years.
         month_caption: "col-span-full row-start-1 flex flex-col items-stretch justify-center gap-1",
         caption_label: "text-sm font-medium",
         nav: "flex items-center gap-1",
-        // Full-height hover strips beside the day grid (row 2), not buttons
-        // beside the caption. `onMouseEnter` is wired to the same handler as
-        // `onClick` below, so hovering changes the month without a click;
-        // `aria-disabled:pointer-events-none` stops that at the date-range
-        // boundary instead of firing into a no-op.
-        button_previous:
-          "col-start-1 row-start-2 hover:bg-surface-hover text-muted hover:text-fg flex items-center justify-center rounded-md bg-transparent p-0 transition-colors aria-disabled:pointer-events-none aria-disabled:opacity-30",
-        button_next:
-          "col-start-3 row-start-2 hover:bg-surface-hover text-muted hover:text-fg flex items-center justify-center rounded-md bg-transparent p-0 transition-colors aria-disabled:pointer-events-none aria-disabled:opacity-30",
+        button_previous: cn("col-start-1 row-start-2", navButtonClasses),
+        button_next: cn("col-start-3 row-start-2", navButtonClasses),
         dropdowns: "flex flex-col items-stretch gap-1 w-full",
         // `min-w-0 table-fixed`: without a fixed layout, an auto-layout
         // table sizes its columns from content and ignores a `width` that's
@@ -239,18 +269,14 @@ export function Calendar({
         // card. Fixed layout makes the 7 columns actually split whatever
         // width the grid track gives them.
         month_grid: "col-start-2 row-start-2 w-full min-w-0 table-fixed border-collapse",
-        weekdays: "flex",
+        weekdays: "flex gap-0.5",
         weekday:
           "text-muted w-full text-center text-xxs uppercase tracking-wide font-normal",
         weeks: "",
         week: "flex w-full mt-2",
-        // `w-full`: `.week` is a flex row, and an empty (`hidden`) cell has no
-        // content to size itself by. Without a width, it collapses to 0 and
-        // every real day after it shifts left under the wrong weekday column
-        // — the same reason `weekday` below carries `w-full` too.
         day: "relative w-full p-0 text-center text-sm focus-within:relative focus-within:z-20",
         day_button:
-          "hover:bg-surface-hover inline-flex size-9 items-center justify-center rounded-md p-0 text-sm font-normal transition-colors aria-selected:opacity-100",
+          "hover:bg-surface-hover inline-flex w-full max-w-10 aspect-square items-center justify-center rounded-md p-0 text-sm font-normal transition-colors aria-selected:opacity-100",
         selected:
           "bg-brand text-brand-fg hover:bg-brand hover:text-brand-fg focus:bg-brand focus:text-brand-fg",
         today: "ring-1 ring-brand/50 font-semibold",
@@ -279,7 +305,7 @@ export function Calendar({
           if (dayButtonProps.modifiers.outside) {
             return (
               <span
-                className="inline-flex w-full max-w-9 aspect-square items-center justify-center text-sm font-normal"
+                className="inline-flex w-full max-w-10 aspect-square items-center justify-center text-sm font-normal"
                 aria-hidden="true"
               >
                 {dayDate.getDate()}
@@ -295,13 +321,7 @@ export function Calendar({
           return (
             <button
               className={cn(
-                // `w-full max-w-9`, not a fixed `size-9`: the day grid's
-                // column width now depends on how much room the side nav
-                // strips leave (see `month_grid`'s `table-fixed`), which can
-                // be less than 36px. A fixed size would refuse to shrink and
-                // overflow its cell; capping instead of fixing still caps it
-                // at the original 36px when there's room to spare.
-                "hover:bg-surface-hover inline-flex w-full max-w-9 aspect-square items-center justify-center rounded-md p-0 text-sm font-normal transition-colors",
+                "hover:bg-surface-hover inline-flex w-full max-w-10 aspect-square items-center justify-center rounded-md p-0 text-sm font-normal transition-colors",
                 dayButtonProps.modifiers.selected && "bg-brand text-brand-fg",
                 dayButtonProps.modifiers.today && !dayButtonProps.modifiers.selected && "bg-surface text-fg font-semibold",
                 "relative",
