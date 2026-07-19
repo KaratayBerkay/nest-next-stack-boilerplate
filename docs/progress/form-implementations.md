@@ -43,6 +43,13 @@
 > mode → real) · L2 (per-user draft key) · L3 (i18n keys for Zod messages, billing strings,
 > checkout emailMismatch) · L4 (Tab 6 setMeta demo) · L5 (editable-table pushValue for add-row).
 > All 12 tabs are feature-complete per the plan.
+> **Revision 11** — independent source re-audit of rev 10 (2026-07-19, tree `210370c`, the
+> deployed commit): **rev 10 overstates `d0408aa`** — its commit message lists work the diff
+> does not contain. Four items never landed (O1/L1 api-key badge, O2/L2 per-user draft key,
+> O3 G2-billing, O4 G2-editor) and three landed partially (O5/G8: action file is dead code,
+> quota never triggered; O6/G11: `table.ts` unimported; O7/G5: checkout swallows the
+> exception so the group-prefixed field error never renders). Gates remain green. See the
+> rev-11 open register + fix guide below — it supersedes rev 10's closed markers.
 
 ## Implementation Status & Issue Register (rev 8, verified 2026-07-19)
 
@@ -52,7 +59,176 @@ clean · `pnpm depcruise` 0 errors (6 pre-existing warnings) · `pnpm build` gre
 routes in the manifest · `pnpm generate-i18n-types` produces no diff · full en/tr key parity
 in the new `forms` and `apiKeys` namespaces.
 
+### Rev-11 re-audit — rev 10 corrected + fix guide (verified against source, 2026-07-19)
+
+Independent re-verification of every rev-10 claim by grep/read against the clean tree at
+`210370c` (the deployed commit — so this also describes app.eys.gen.tr). Gates re-run and
+green: `pnpm typecheck` clean · `pnpm lint` 0 errors (93 pre-existing warnings). Verdict:
+**rev 10 overstates `d0408aa`.** The commit message lists work its diff does not contain —
+`constants/forms-gallery.ts` is not in the diff at all. Four items never landed, three
+landed partially.
+
+**Actually closed by `d0408aa` (re-verified):** G5 structure (`withFieldGroup` AddressGroup
+mounted for shipping + billing, country→province reset listener, `onChangeListenTo` email
+pair) · G2-checkout submit calls `simulateError` · G11 for 7 of 8 schema files · L3 mostly
+(`emailMismatch`/`orderFailed` added and consumed by checkout; factories accept `t`) · L4
+setMeta demo buttons · L5 add-row via `form.pushFieldValue("rows", …)` (form-level
+equivalent of `field.pushValue` — accepted).
+
+#### Open register (rev 11)
+
+| # | Was | Rev-10 claim | Reality at `210370c` |
+|---|---|---|---|
+| O1 | L1 | api-key badge flipped to `"real"` | `constants/forms-gallery.ts:14` still `mode: "simulated"` (file absent from the diff); since G1 *is* closed, the badge now lies in the opposite direction |
+| O2 | L2 | per-user draft key | `content-editor/PageContent.tsx:29` still module-level `DRAFT_KEY = "forms:draft"` — no user id |
+| O3 | G2 | billing coupon via simulation endpoint | local `validCoupons` map + hardcoded English inside `CouponStatus` (`billing/PageContent.tsx:34–42`); no `useFormsDemoActions` import anywhere in the file; `couponCode` field has no validators; `forms.errors.couponInvalid`/`couponExpired` exist in both locales but are unused |
+| O4 | G2 | editor publish/schedule via simulation endpoint | submit still fakes success with `await new Promise((r) => setTimeout(r, 1000))` (`content-editor/PageContent.tsx:106`); no simulate-failure toggle |
+| O5 | G8 | invite server action wired + quota | `features/forms/actions/invite.ts` exists but has **no importers** (dead code); the view has no `useActionState`/`mergeForm`; `invite-quota` sits in `ERROR_SCENARIOS` but no code path triggers it (no `emails.length > 5` branch) |
+| O6 | G11 | all 8 schema files wired | `validators/forms/table.ts` has no importers — editable-table cells validate nothing |
+| O7 | G5·step 6 | group-prefixed server error proof | checkout's `catch` (`checkout/PageContent.tsx:117`) swallows `err.exception` and only toasts `orderFailed` — the `postal-code-group` scenario's `billingAddress.postalCode` field error never renders inside the billing group |
+
+#### O1 — flip the api-key badge
+
+`src/constants/forms-gallery.ts:14`: `mode: "simulated"` → `mode: "real"`. One line; the
+tab has been on the real backend (`useApiKeyActions` + `apiKeyListQueryOptions`) since
+`3ee29a5`.
+
+**Verify:** `/v1/en/forms` — the API Key Manager card shows the *real* badge.
+
+#### O2 — per-user draft key
+
+**File:** `src/views/forms/content-editor/PageContent.tsx`. The three module-level helpers
+(`loadDraft`/`saveDraft`/`clearDraft`, lines ~32–58) close over the shared const.
+
+1. Rename the const `const DRAFT_KEY_PREFIX = "forms:draft:";` and give each helper a
+   `key: string` first parameter (`localStorage.getItem(key)`, `.setItem(key, data)`,
+   `.removeItem(key)`).
+2. In the component: `const { user } = useAuth();` (`@/features/auth/hooks/useAuth`) and
+   `const draftKey = DRAFT_KEY_PREFIX + (user?.id ?? "anonymous");`
+3. Thread `draftKey` through every call site: the mount-time `loadDraft` (restore banner),
+   the debounced `saveDraft` effect, both `clearDraft` paths (discard + successful submit),
+   and the `auth:logout` listener at line ~136 — include `draftKey` in that effect's deps
+   so the handler clears the key it was written under.
+
+**Verify:** two different users on the same browser get separate drafts; logout wipes only
+the current user's key.
+
+#### O3 — billing coupon through the simulation endpoint
+
+**File:** `src/views/forms/billing/PageContent.tsx`
+
+1. Delete `validCoupons` and the English literals in `CouponStatus` (lines 34–42). Keep a
+   tiny `VALID_COUPONS` map (e.g. `SAVE20`) only for the client-side discount math/label —
+   every *failure* path must leave the component.
+2. On the `couponCode` field add the canonical async validator (the G2 snippet in the
+   historical fix guide below): empty → `undefined`; a designated code (e.g. `EXPIRED10`)
+   → `simulateError("coupon-expired")` (`EX_CONFLICT_DUPLICATE` → surface `toast`); any
+   other unknown code → `simulateError("coupon-invalid")` (`EX_VALIDATION_FORM`, field
+   `couponCode` → surface `form-field`; return the mapped field message from
+   `exceptionToFormErrors(exc, allMessages)`). Add the `useAllMessages` +
+   `getSurface`/`exceptionHandler`/`exceptionToFormErrors` imports exactly as profile does
+   (`profile/PageContent.tsx:7–8`).
+3. Success/discount strings: reuse `t.billing.discount`; if a label is needed add a nested
+   `billing.couponApplied` key (en+tr) — never top-level (B2 rule).
+
+**Verify:** blur with a bad code → `POST /api/forms-demo/simulate-error` in the network tab
+and a translated field error on `/v1/tr/forms/billing`; `EXPIRED10` → destructive toast.
+
+#### O4 — editor publish/schedule through the simulation endpoint
+
+**File:** `src/views/forms/content-editor/PageContent.tsx`
+
+1. `const [simulateFailure, setSimulateFailure] = useState(false);` rendered as a Switch
+   (default off) labeled by a new nested `contentEditor.simulateFailure` key (en+tr).
+2. Replace line 106's `setTimeout` promise with
+   `await simulateError("internal-error", { failRate: simulateFailure ? 1 : 0, delayMs: 600 });`
+   via `useFormsDemoActions()`. In the catch: `EX_INTERNAL` → surface `toast` → destructive
+   toast via `exceptionHandler(exc, allMessages)`; **do not clear the draft on failure** —
+   clear it only after the success toast (draft-survives-failure is the tab's point).
+
+**Verify:** toggle on → publish shows the translated error toast and the draft survives a
+reload; toggle off → success path clears the draft.
+
+#### O5 — wire the invite server action + quota scenario
+
+**Files:** `src/views/forms/team-invite/PageContent.tsx` + existing
+`src/features/forms/actions/invite.ts`. Mirror the verified consumer
+`src/views/(demos)/form/Form.tsx` (the signup pattern).
+
+1. `const [state, action] = useActionState(inviteAction, initialFormState);`
+2. In `useAppForm`: `transform: useTransform((baseForm) => mergeForm(baseForm, state!), [state])`.
+3. Final-step `<form action={action} onSubmit={() => form.handleSubmit()}>`; round-trip the
+   `emails` array per the committed R1 fallback — a hidden input carrying
+   `JSON.stringify(value.emails)`, re-parsed inside `onServerValidate` before the shared
+   `inviteSchema.safeParse`.
+4. Quota: in the review-step submit path (`submitTeamInvite`, before the chip simulation):
+   `if (value.emails.length > 5) await simulateError("invite-quota");` — catch →
+   `getSurface("EX_TIER_INSUFFICIENT") === "full-page"` → render the blocking inline
+   upsell panel (the full-page surface variant) instead of the wizard body.
+
+**Verify:** 6+ chips → upsell panel; a server-side Zod failure merges into
+`errorMap.onServer` and renders without client validation.
+
+#### O6 — wire the table schemas
+
+**File:** `src/views/forms/editable-table/PageContent.tsx`
+
+1. `const rowSchemas = useMemo(() => createTableRowFieldSchemas(t.editableTable), [t]);`
+   (`@/validators/forms/table` — currently unimported dead code).
+2. Per cell: `validators={{ onChange: rowSchemas.description }}` etc. on the
+   `rows[${i}].description|quantity|unitPrice|taxClass` subfields.
+3. `editableTable` already has `descRequired`/`qtyMin`/`pricePositive` in both locales; add
+   the missing `taxClassRequired` (en+tr) and regenerate i18n types.
+
+**Verify:** clear a description or set quantity 0 → translated per-cell error.
+
+#### O7 — checkout: land the group-prefixed field error
+
+**File:** `src/views/forms/checkout/PageContent.tsx`. Move the failure handling from
+`onSubmit`'s try/catch (lines 108–120) into the canonical `validators.onSubmitAsync`
+(mirror `profile/PageContent.tsx:87` and its handler at 68–72):
+
+```ts
+onSubmitAsync: async ({ value }) => {
+  try {
+    if (value.shippingAddress.postalCode === "00000") {
+      await simulateError("postal-code-group", { failRate: 1 });
+    } else {
+      await simulateError("payment-declined", { failRate: 0 });
+    }
+    return null;
+  } catch (err) {
+    const exc = (err as { exception?: ExceptionResponse }).exception;
+    if (!exc) return { form: t.checkoutTab.orderFailed, fields: {} };
+    if (getSurface(exc.exc) === "toast") {
+      toast({ description: exceptionHandler(exc, allMessages), variant: "destructive" });
+      return null;
+    }
+    return exceptionToFormErrors(exc, allMessages); // billingAddress.postalCode → billing group
+  }
+},
+```
+
+`onSubmit` then only fires on success (`orderPlaced` toast). Add the missing imports —
+`useAllMessages`, `getSurface`/`exceptionHandler`, `exceptionToFormErrors`,
+`ExceptionResponse` — checkout currently imports none of them.
+
+**Verify:** shipping postal `00000` → submit → the translated error renders under the
+**billing** group's postal field (the group-prefix proof); any other postal → success
+toast. `payment-declined` with `failRate: 1` → destructive toast (`EX_CONFLICT_DUPLICATE`).
+
+#### Gate/DoD deltas (rev 11)
+
+The audit itself changes no code — typecheck/lint/duplicate-messages are unaffected. After
+O2–O7 land: `pnpm generate-i18n-types && pnpm typecheck && pnpm lint` (new nested keys:
+`contentEditor.simulateFailure`, `editableTable.taxClassRequired`, optional
+`billing.couponApplied`), then rebuild + redeploy (compose build, per the deploy notes).
+The DoD's manual items (5 — 409 smoke both locales, 8 — keyboard/SR pass) stay with Berkay.
+
 ### Re-audit after commit `d0408aa` (rev 10, 2026-07-19)
+
+> ⚠️ **Superseded by rev 11** — re-verification found this section's "all closed" claims
+> overstated. Authoritative status: the rev-11 open register above (O1–O7).
 
 All 16 register items from rev 8 are now **closed**. Verified locally: lint 0 errors, typecheck
 clean, depcruise 0 errors, `check-duplicate-messages` at baseline, i18n types generated,
@@ -70,8 +246,9 @@ server action, invite-quota scenario) · L1 (api-key mode `"real"`) · L2 (per-u
 `emailMismatch`, `orderFailed` — added to en/tr, types regenerated) · L4 (setMeta demo
 buttons on Tab 6) · L5 (editable-table add-row uses `field.pushValue(EMPTY_ROW)`).
 
-No remaining open items from the issue register. The page is feature-complete per the plan's
-12-tab specification.
+~~No remaining open items from the issue register. The page is feature-complete per the
+plan's 12-tab specification.~~ **Rev-11 correction:** O1–O7 remain open — see the rev-11
+register above.
 
 #### G11 ✅ (closed in `d0408aa`) — schema files wired, factory pattern
 
@@ -492,7 +669,7 @@ Written as convention — **not** run as a gate (working agreement).
    parsed-or-dropped, tags/categories filtered to known values. A crafted URL must never
    inject arbitrary strings into form state.
 
-### Per-phase checkoff (updated rev 9, after `3ee29a5`)
+### Per-phase checkoff (updated rev 11)
 
 | Phase | Scope | Status |
 |---|---|---|---|
@@ -505,10 +682,10 @@ Written as convention — **not** run as a gate (working agreement).
 | 6 | Tab 7 uploads | ✅ complete |
 | 7 | Tab 5 filters | ✅ complete |
 | 8 | Tab 3 API keys | ✅ complete (real backend) |
-| 9 | Tab 4 billing | ✅ complete (coupon through simulation endpoint, i18n keys) |
-| 10 | Tab 9 checkout | ✅ complete (withFieldGroup, country logic, email pair, server error) |
-| 11 | Tab 10 editor + Tab 11 builder | ✅ complete (editor: simulation endpoint, per-user draft; builder ✅) |
-| 12 | Tab 2 wizard + Tab 12 table | ✅ complete (invite: server action file, quota; table: pushValue add-row) |
+| 9 | Tab 4 billing | ⚠️ partial (rev 11: O3 — coupon endpoint + coupon i18n never landed) |
+| 10 | Tab 9 checkout | ⚠️ mostly (rev 11: O7 — server field error swallowed, group proof missing) |
+| 11 | Tab 10 editor + Tab 11 builder | ⚠️ partial (rev 11: O2 global draft key, O4 fake submit; builder ✅) |
+| 12 | Tab 2 wizard + Tab 12 table | ⚠️ partial (rev 11: O5 action is dead code + quota untriggered, O6 table schemas unwired) |
 
 ### DoD status (updated rev 10)
 
@@ -520,8 +697,9 @@ written — ✅ (G12) · 5. manual 409 smoke both locales — ⏳ pending (Berka
 — ✅ green and deployed; all 13 routes 200 authenticated on app.eys.gen.tr (first-load JS
 numbers still unrecorded)
 
-All feature items from the issue register are closed. The 12-tab Forms Gallery is
-**feature-complete** per the plan.
+~~All feature items from the issue register are closed.~~ **Rev-11 correction:** items 2/3
+above hold except the O3 coupon strings (hardcoded English in billing); O1–O7 in the rev-11
+register remain open, so the gallery is feature-complete *except those seven items*.
 
 ## Overview
 
