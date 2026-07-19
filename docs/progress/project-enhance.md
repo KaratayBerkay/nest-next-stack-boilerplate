@@ -24,8 +24,14 @@
 > per-playbook status, **four open fixes (F-1…F-4)** with ready-to-apply code,
 > and the intentional deviations. All F-fix code was applied to a scratch working
 > tree on this machine and verified (`pnpm typecheck` clean, `pnpm lint` 0 errors)
-> before being written down, then reverted — the fixes are **documented, not yet
-> applied**.
+> before being written down, then reverted — the fixes were **documented, not yet
+> applied** at rev 2.2 time.
+>
+> **Rev 2.3 — F-1…F-4 applied 2026-07-19** in commit `b6ef35c`, verified in
+> source and re-checked: `pnpm typecheck` clean, `pnpm lint` 0 errors
+> (92 pre-existing warnings). Boilerplate-side application is **complete** except
+> the two items that were always out of band: N-4 unit tests and the §10 manual
+> QA matrix (see §13.4).
 >
 > **Scope:** schema layer, form view layer, API client layer, error handling.
 > Does not cover auth, routing, or deployment.
@@ -1640,9 +1646,10 @@ is about. Tightening those two `z.any()`s is a separate, optional improvement.
 
 Outstanding for the boilerplate-side application to be truly complete:
 
-1. Apply **F-1…F-4** (all code above is copy-ready and compile-verified).
-2. Re-run §10 automated checks — expected: typecheck clean, lint 0 errors.
-3. N-4 unit tests.
-4. Manual QA matrix (§10) on checkout + profile — specifically the two
+1. ✅ Apply **F-1…F-4** — done in `b6ef35c`, verified in source (rev 2.3).
+2. ✅ Re-run §10 automated checks — typecheck clean, lint 0 errors
+   (92 pre-existing warnings), 2026-07-19.
+3. ⏳ N-4 unit tests (Berkay, out of band).
+4. ⏳ Manual QA matrix (§10) on checkout + profile — specifically the two
    just-fixed behaviors: form-level banner on unknown failure, submit-button
    spinner on slow submit.
