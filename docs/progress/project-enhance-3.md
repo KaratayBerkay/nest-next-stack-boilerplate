@@ -4,6 +4,18 @@
 > health/complexity, security candidates) plus manual review of lint, typecheck,
 > and test results. Supersedes the now-closed [project-enhance-2.md](project-enhance-2.md).
 >
+> **Rev 3 — 2026-07-20.** Added §14: CI/CD, repo tooling, frontend & GraphQL
+> audit — 23 findings, roadmap rows 57–79. Headline: **main is red on both
+> workflows at HEAD.** Frontend CI dies at the prettier check — 387 drifted
+> files, red since 2026-07-13, so no later gate has run on main (CI-0) — and
+> two more failures are latent behind it: the Lighthouse binary is not a
+> dependency of any package (CI-1) and e2e runs browser projects CI never
+> installs (CI-2). Backend CI fails at `pnpm test`: 4 spec suites with drifted
+> mocks (TE-3). Git hooks are dead at the monorepo root (GH-1), which is how
+> the drift accumulated. GraphQL: verified no mock queries — every frontend
+> operation is a live backend query (GQ-1) — but ~28 route handlers keep
+> inline documents outside the central catalog (GQ-3).
+>
 > **Baseline:** `tsc` clean · `lint` clean (0 errors both stacks) · 40/40 test files
 > passing (268/268 tests after ResizeObserver fix) · 10 fallow security candidates
 > (3 actionable, 7 false positives after review + fixes) · 3+ high-complexity functions ·
@@ -24,6 +36,11 @@
 9. [Documentation drift (P3)](#9-documentation-drift-p3)
 10. [Compose hardening (P3)](#10-compose-hardening-p3)
 11. [Roadmap](#11-roadmap)
+12. [Backend code audit — deep-dive findings](#12-backend-code-audit--deep-dive-findings)
+13. [Roadmap (updated)](#13-roadmap-updated)
+14. [Rev 3 — CI/CD, tooling, frontend & GraphQL audit](#14-rev-3--cicd-tooling-frontend--graphql-audit)
+
+- [Appendix: Fallow auto-fix lessons](#appendix-fallow-auto-fix-lessons)
 
 ---
 
@@ -860,6 +877,10 @@ unused dependency.
 
 ## 13. Roadmap (updated)
 
+> Rev 3 appended rows 57–79 — findings in
+> [§14](#14-rev-3--cicd-tooling-frontend--graphql-audit), table in
+> [§14.6](#146-roadmap-additions-rev-3).
+
 | Seq | Item | Section | Prio | Effort | Status |
 |---|---|---|---|---|---|
 | 1 | Open redirect fix | CR-1 | P0 | S | ✅ Done |
@@ -918,6 +939,425 @@ unused dependency.
 | 54 | Create docs/README.md index | DM-3 | P3 | S | Pending |
 | 55 | Kafka healthcheck in compose | CP-1 | P3 | S | Pending |
 | 56 | Pin minio images | CP-2 | P3 | S | Pending |
+
+---
+
+## 14. Rev 3 — CI/CD, tooling, frontend & GraphQL audit
+
+> Manual review of the GitHub workflows, repo tooling (hooks, lockfiles,
+> dependabot), e2e infrastructure, the frontend security spine, and the
+> frontend↔backend GraphQL wiring — areas §12 did not cover (it was
+> backend-only). All findings verified against the working tree and the latest
+> main CI runs on 2026-07-20.
+
+### 14.1 CI pipeline (P1 — CI-0 is today's red; CI-1/CI-2 are latent behind it)
+
+#### 🔴 CI-0 — Frontend CI red since 2026-07-13: prettier drift blocks every later gate
+
+**File:** `.github/workflows/frontend-ci.yml` (`pnpm format:check` step)
+
+**What:** Every Frontend CI run on main fails in under 2 minutes at the format
+check — **387 files** of prettier drift (verified locally 2026-07-20; largely
+tailwind class-sort). Because verify is one serial job, unit tests, contrast,
+build, Lighthouse, and e2e have not executed on main since 2026-07-13. CI-1
+and CI-2 below are latent failures sitting behind this one.
+
+**How to fix:** One `pnpm format` commit in `next-js-boilerplate/`. Drift this
+large means the pre-commit hook never ran — GH-1 is the recurrence guard.
+
+#### 🔴 CI-1 — Lighthouse step can never run: binary is not a dependency
+
+**Files:**
+
+- `.github/workflows/frontend-ci.yml:103` — `run: pnpm lighthouse:ci`
+- `next-js-boilerplate/package.json:25-28` — scripts invoke a `lighthouse-ci` binary
+- `next-js-boilerplate/lighthouserc.json:5-6`
+
+**What:** No package in the repo provides a `lighthouse-ci` (or `lhci`) binary —
+it appears in no `package.json` and no `node_modules/.bin`. The CI step fails
+with "command not found" on every run. Separately, `lighthouserc.json` sets
+both `staticDistDir` and `startServerCommand`; LHCI does not use both
+(`staticDistDir` takes precedence), so even with the binary installed the
+intended `pnpm start -p 4000` server would never boot and the four `/v1/en/*`
+URLs could not be served.
+
+**How to fix:** Add `@lhci/cli` as a devDependency and change the scripts to
+`lhci collect|assert|upload`; delete `staticDistDir` from `lighthouserc.json`
+(keep `startServerCommand`). Or drop the step and scripts until perf budgets
+are actually wanted.
+
+#### 🔴 CI-2 — e2e runs browser projects CI never installs
+
+**Files:**
+
+- `.github/workflows/frontend-ci.yml:106` — installs chromium only
+- `.github/workflows/frontend-ci.yml:154` — `pnpm test:e2e` (unscoped, all projects)
+- `next-js-boilerplate/playwright.config.ts` — declares chromium, firefox, webkit, mobile-chrome
+
+**What:** CI installs only Chromium, but the unscoped `pnpm test:e2e` also runs
+the firefox and webkit projects — each fails with "Executable doesn't exist".
+(mobile-chrome is a Pixel 7 profile on the Chromium binary, so it is fine.)
+
+**How to fix:** Scope the CI run
+(`pnpm test:e2e --project=chromium --project=mobile-chrome`) or install all
+browsers (`playwright install --with-deps`, ~2–3 min slower). Scoping plus an
+optional scheduled full-matrix job is the usual trade.
+
+#### CI-3 — Backend suite runs twice per CI run
+
+**File:** `.github/workflows/backend-ci.yml:77-78`
+
+**What:** `pnpm test` followed by `pnpm test:cov` executes the full Jest suite
+twice back-to-back.
+
+**How to fix:** Drop line 77 — `test:cov` runs the same suite with coverage.
+
+#### CI-4 — Node version drift across the toolchain
+
+**What:**
+
+- Backend `engines.node >= 24`; backend CI uses Node 24 ✓
+- Frontend CI verify job starts on Node 22 (`frontend-ci.yml:68`), then
+  switches to 24 mid-job for the backend steps (`:108-111`)
+- Frontend/root `engines.node >= 20`, while the frontend Dockerfile builds on
+  `node:24.18.0-alpine`
+- Frontend `@types/node` is `^20` (`package.json:78`) while every runtime that
+  matters is 22/24
+
+**How to fix:** Run the whole verify job on Node 24 (deleting the mid-job
+switch), raise frontend/root engines to `>=24` to match the Dockerfile, bump
+`@types/node` to `^24`.
+
+#### CI-5 — Workflow hygiene: no concurrency cancellation; stale comment
+
+**What:** Neither workflow declares a `concurrency` group, so stacked pushes
+run every stale build to completion. And the docker-build comment at
+`frontend-ci.yml:166` still describes the verify job as "backend-less" — the
+job has booted a real backend since the workflow was reworked.
+
+**How to fix:** Add to both workflows:
+
+```yaml
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+```
+
+and update the comment.
+
+---
+
+### 14.2 Supply chain & repo automation (P1/P2)
+
+#### SC-1 — Dependabot misses root, actions, and docker ecosystems
+
+**File:** `.github/dependabot.yml`
+
+**What:** Covers npm in the two app directories only. Not covered: the root
+workspace (`/` — root `package.json` + `packages/*`), `github-actions`
+(checkout / setup-node / pnpm action pins), and `docker` (base images in both
+Dockerfiles and docker-compose).
+
+**How to fix:** Add the three missing `updates:` entries.
+
+#### SC-2 — No secret scanning or dependency audit in CI
+
+**What:** §12.1 found live secrets on disk (LS-1/LS-2) — but nothing in CI
+would catch the next one. There is no gitleaks/trufflehog workflow, no
+`pnpm audit` gate, no CodeQL.
+
+**How to fix:** Add a secret-scan job (gitleaks-action) on push/PR — the
+mechanized guard for the LS-class findings. Add
+`pnpm audit --prod --audit-level high` (or osv-scanner) as a soft gate first.
+CodeQL js/ts is optional on top.
+
+#### GH-1 — Git hooks are dead: husky lives below the git root
+
+**Files:**
+
+- `next-js-boilerplate/.husky/` — commit-msg, pre-commit, pre-push
+- `next-js-boilerplate/package.json` — `prepare: husky`, lint-staged config
+
+**What:** The git dir is the monorepo root, but husky and its `prepare` script
+live only in the frontend package. `git config core.hooksPath` is unset and
+`.git/hooks` contains only samples — so commitlint, lint-staged, and the
+pre-push hook never fire for anyone. Dead weight that looks like protection.
+
+**How to fix:** Install husky from the repo root (root `prepare` script,
+`.husky/` at root) and have each hook delegate into the packages, e.g.
+`pnpm --dir next-js-boilerplate exec lint-staged`. Verify
+`git config core.hooksPath` is set after `pnpm install`.
+
+#### GH-2 — Three lockfiles, no sync guard
+
+**Files:** `pnpm-lock.yaml` (root), `nest-js-boilerplate/pnpm-lock.yaml`,
+`next-js-boilerplate/pnpm-lock.yaml`
+
+**What:** The root workspace declares both apps, yet each app keeps its own
+`pnpm-workspace.yaml` + lockfile "for isolated dev" (root
+`pnpm-workspace.yaml` comment). Two resolution universes: CI installs from the
+per-app lockfiles, local root dev writes the root lockfile. Nothing checks
+they resolve the same versions — drift is silent until CI behaves differently
+from local.
+
+**How to fix:** Either drop the per-app lockfiles (CI installs from root with
+`--filter`), or add a CI step running `pnpm install --frozen-lockfile` in all
+three roots so drift fails loudly.
+
+---
+
+### 14.3 Quality gates & e2e infrastructure (P1/P2)
+
+#### QG-1 — Coverage is collected but never enforced
+
+**Files:**
+
+- `next-js-boilerplate/vitest.config.ts:13` — coverage block has no `thresholds`
+- `nest-js-boilerplate/package.json` — jest config has no `coverageThreshold`
+
+**What:** Backend CI runs `test:cov`, frontend CI runs plain `test` — and in
+both stacks no threshold exists, so coverage can drop to zero without failing
+anything. §12.5 documents 10+ untested critical services; without a ratchet
+the number only grows.
+
+**How to fix:** Add thresholds pinned at today's actuals (ratchet upward
+later), switch frontend CI to `test:coverage`, upload both reports as
+artifacts.
+
+#### 🔴 TE-3 — 4 backend spec suites broken at HEAD (16 tests): mock drift
+
+**Files:**
+
+- `nest-js-boilerplate/src/profile/profile.service.spec.ts`
+- `nest-js-boilerplate/src/notification/notification.service.spec.ts`
+- `nest-js-boilerplate/src/comment/comment.service.spec.ts`
+- `nest-js-boilerplate/src/realtime/realtime.gateway.spec.ts`
+
+**What:** This is why Backend CI is red — it fails at `pnpm test`
+(CI: 4 suites / 16 tests failed, 317 passed; reproduced locally). Two shapes:
+`Cannot read properties of undefined (reading 'invalidate')` — the service
+under test gained a cache dependency whose mock the spec never provides — and
+`this.redis.publish is not a function` — the gateway spec's redis mock lacks
+`publish`. The CQ-2 pattern in action: hand-rolled partial mocks drift
+silently when constructor dependencies change. Supersedes the Rev 2 baseline
+claim that the suites were green.
+
+**How to fix:** Add the missing members to the mocks (cache `invalidate`,
+redis `publish`). Adopting `@suites/unit` (CQ-3), which auto-mocks every
+constructor dependency, would eliminate this failure class.
+
+#### 🔴 EE-1 — Stale auth state mass-skips the e2e suite with exit 0
+
+**File:** `next-js-boilerplate/playwright.config.ts:7,19` —
+`storageState: "playwright/.auth/user.json"`
+
+**What:** Observed incident (2026-07): an expired `playwright/.auth/user.json`
+made authenticated specs skip en masse and the run still exited 0 — a green
+signal with almost nothing tested. The setup project writes the state but
+nothing validates it before the suite trusts it.
+
+**How to fix:** In the setup project, probe an authenticated endpoint with the
+saved state and re-login when it fails. Then add a skip-budget gate: emit the
+JSON reporter and fail CI when skipped > N (e.g. `jq` over the report in a
+final step).
+
+#### EE-2 — e2e env check verifies a variable, not a backend
+
+**File:** `next-js-boilerplate/scripts/check-e2e-env.mjs:2`
+
+**What:** `REQUIRED` is just `["NEXT_PUBLIC_APP_URL"]`. A booted-but-backendless
+environment passes the check and produces the EE-1 signature (mass skips) —
+the bare `next dev` webServer has no compose env, so auth can never succeed in
+that mode.
+
+**How to fix:** Also probe the backend (`GET {APP_URL}/health`, the same check
+frontend-ci uses) and exit with the compose hint when unreachable, unless
+`CI_NO_BACKEND=1`.
+
+#### EE-3 — Local e2e runs a dev server; CI runs the prod build
+
+**File:** `next-js-boilerplate/playwright.config.ts:49`
+
+**What:** Locally the webServer is `next dev`; CI runs `next build` +
+`next start`. Under `cacheComponents`/PPR the two behave differently — exactly
+what the `rendering-*.spec.ts` files assert. A spec can pass locally and fail
+in CI, or the reverse.
+
+**How to fix:** Support `E2E_PROD=1` locally (webServer command switches to
+`next build && next start`) and document it as the pre-push flow for
+rendering-sensitive changes.
+
+---
+
+### 14.4 Frontend hardening (P2/P3)
+
+#### FE-1 — Deployment hostnames hardcoded in source
+
+**Files:**
+
+- `next-js-boilerplate/next.config.ts:42,46` — `app.eys.gen.tr`,
+  `minio.eys.gen.tr` in `images.remotePatterns`
+- `next-js-boilerplate/src/proxy.ts:31` — `img-src … https://minio.eys.gen.tr`
+  in the CSP
+
+**What:** Same class as LS-2: one deployment's hostnames baked into boilerplate
+source. Forks ship a CSP and image allowlist pointing at eys.gen.tr.
+
+**How to fix:** Drive both from env (e.g. `NEXT_PUBLIC_ASSET_HOST`) with
+localhost defaults; keep picsum for the demo pages.
+
+#### FE-2 — Request-id reflected without validation
+
+**File:** `next-js-boilerplate/src/proxy.ts:58-61`
+
+**What:** Incoming `x-request-id` / `x-correlation-id` values are reflected
+into the response header and flow into logs/traces unbounded. Node's header
+API rejects CRLF (so no CR-2-style injection), but an attacker-supplied
+arbitrary-length string is still accepted as the canonical request id.
+
+**How to fix:** Accept only `^[A-Za-z0-9._-]{1,128}$`; otherwise fall through
+to the existing `crypto.randomUUID()` fallback.
+
+#### FE-3 — Missing Cross-Origin-Opener-Policy
+
+**File:** `next-js-boilerplate/next.config.ts:11`
+
+**What:** The global header set (HSTS, nosniff, frame deny, referrer,
+permissions) lacks COOP, leaving `window.opener` linkage open.
+
+**How to fix:** Add `Cross-Origin-Opener-Policy: same-origin`. Evaluate
+COEP/CORP separately — `require-corp` would break the allowed remote images.
+
+#### FE-4 — `proxy.ts` — 223 security-critical lines, zero unit tests
+
+**File:** `next-js-boilerplate/src/proxy.ts`
+
+**What:** The proxy is the frontend's security spine — auth gating for
+`/v1/{lang}` and `/dashboard`, CSP builder, locale negotiation, version
+canonicalization, request-id propagation. Only e2e slices cover it
+(`routing-proxy.spec.ts`, `security-csp.spec.ts`); no vitest file imports it.
+The redirect matrix (version × lang × cookie) is exactly the kind of logic
+that regresses silently.
+
+**How to fix:** Extract the pure parts (`buildCsp`, the redirect decision) and
+unit-test them; `NextRequest` can be constructed directly in vitest for the
+rest. This is the frontend counterpart of §12.5 — worth a fuller frontend
+test-gap audit as follow-up.
+
+#### CP-3 — `app` and `nextjs` compose services have no healthcheck
+
+**File:** `docker-compose.yml:162,181`
+
+**What:** Infra services have healthchecks (postgres, redis, rabbitmq,
+elasticsearch, fluent-bit, minio — kafka pending as CP-1) but the two
+first-party services don't. `depends_on: service_healthy` can't gate on them,
+and the external prod proxy can route to a booted-but-unready container.
+mongo and nats also lack checks (lower value).
+
+**How to fix:** `app`: curl `http://localhost:3000/health` (endpoint already
+exists — frontend-ci probes it). `nextjs`: curl `/`. Wire `depends_on`
+conditions accordingly.
+
+---
+
+### 14.5 GraphQL wiring — no mocks found; keep it that way (P2/P3)
+
+#### GQ-1 — Audit result: every frontend GraphQL operation is a live backend query
+
+**Files:** `next-js-boilerplate/src/lib/graphql/queries.ts`,
+`next-js-boilerplate/src/lib/backend.ts:247` (`graphqlFetch`)
+
+**Verified 2026-07-20:**
+
+- The central catalog holds 15 documents (ME, POSTS, POST, notifications,
+  post/comment/reaction mutations) — every one is imported by a live caller
+  and sent via `graphqlFetch` to `backendBaseUrl() + /graphql`. No dead docs.
+- 42 files call `graphqlFetch`; none stub, intercept, or fabricate responses.
+  There is no MSW layer and no mock resolver in runtime code.
+- `src/fallbacks/` is Suspense loading skeletons, not data mocks. Static
+  datasets in gallery/demo `PageContent` views are presentation-only demos and
+  exempt from this rule.
+- `src/data/` is an **empty directory** — delete it so it doesn't grow into a
+  mock-data dumping ground.
+
+**Rule going forward:** a PR must not introduce hardcoded response-shaped data
+into `src/app/v1/**`, `src/services/**`, or `src/api/**`. Any mock found later
+converts to a real backend query with this checklist:
+
+1. **Schema first** — add or extend the `@Query`/`@Mutation` on the relevant
+   NestJS resolver and serve real data from the service layer; never fabricate
+   the shape in the frontend.
+2. Add the document to `src/lib/graphql/queries.ts` (UPPER_SNAKE constant,
+   minimal field selection).
+3. Call it with `graphqlFetch<T>()` from the server component / route handler
+   and surface errors — no `.catch(() => empty)` (see GQ-2).
+4. Type `T` to match the selection exactly (until codegen from GQ-3 lands).
+5. Delete the mock and its imports in the same PR; grep for the old symbol to
+   confirm nothing still references it.
+
+#### GQ-2 — Silent empty-success fallbacks fake a healthy backend
+
+**Files:**
+
+- `next-js-boilerplate/src/app/v1/[lang]/feed/page.tsx:32`
+- `next-js-boilerplate/src/app/v1/[lang]/posts/[uuid]/page.tsx:55`
+
+**What:** Both pages wrap `graphqlFetch` in
+`.catch(() => ({ data: undefined, … }))` — the only mock-shaped behavior found
+in the app: on any backend/GraphQL failure they fabricate an empty success, so
+an outage renders as an empty feed or a missing post instead of an error. The
+user cannot distinguish "no posts yet" from "backend down".
+
+**How to fix:** Remove the fabricating catch; log the failure and render an
+explicit degraded state (route `error.tsx` or an inline notice). Reserve
+`notFound()` for a true `post: null` with no `errors` array.
+
+#### GQ-3 — ~28 route handlers keep inline GraphQL documents outside the catalog
+
+**Files:** `next-js-boilerplate/src/app/api/**` — auth (10 handlers), billing
+(4), sessions (3), profile (3), api-keys (2), admin (2), push (2), premium,
+users; e.g. `src/app/api/api-keys/route.ts:7-21`
+
+**What:** 42 files call `graphqlFetch` but only 14 import from
+`src/lib/graphql/queries.ts` — the rest define their documents inline. All are
+real backend queries (verified), but there is no single audit point for the
+GQ-1 rule, field selections duplicate, and the hand-written `graphqlFetch<T>`
+generics are never checked against the backend schema.
+
+**How to fix:** Move inline documents into `src/lib/graphql/` (per-domain
+files are fine). Then evaluate GraphQL Code Generator against the backend SDL
+(the backend already ships an `sdl-generator` module) so `T` comes from the
+schema instead of hand-typing.
+
+---
+
+### 14.6 Roadmap additions (Rev 3)
+
+| Seq | Item | Section | Prio | Effort | Status |
+|---|---|---|---|---|---|
+| 57 | Format the frontend tree (387 drifted files) — unreds Frontend CI | CI-0 | P1 | S | Pending |
+| 58 | Fix 4 backend spec suites (cache/redis mock drift) — unreds Backend CI | TE-3 | P1 | S | Pending |
+| 59 | Fix or drop Lighthouse CI step (missing binary + config conflict) | CI-1 | P1 | S | Pending |
+| 60 | Scope CI e2e to installed browsers | CI-2 | P1 | S | Pending |
+| 61 | Auth-state freshness check + skip-budget gate | EE-1 | P1 | M | Pending |
+| 62 | Secret-scan + dependency-audit workflows | SC-2 | P1 | M | Pending |
+| 63 | Drop duplicate backend test run | CI-3 | P2 | S | Pending |
+| 64 | Align Node 24 (CI, engines, @types/node) | CI-4 | P2 | S | Pending |
+| 65 | Activate git hooks at repo root | GH-1 | P2 | S | Pending |
+| 66 | Lockfile sync guard (3 lockfiles) | GH-2 | P2 | S | Pending |
+| 67 | Coverage thresholds in both stacks | QG-1 | P2 | M | Pending |
+| 68 | Backend health probe in e2e env check | EE-2 | P2 | S | Pending |
+| 69 | Env-driven deployment hostnames | FE-1 | P2 | S | Pending |
+| 70 | Unit tests for proxy.ts | FE-4 | P2 | M | Pending |
+| 71 | Extend dependabot (root, actions, docker) | SC-1 | P2 | S | Pending |
+| 72 | Fix silent empty-success GraphQL fallbacks (feed, post detail) | GQ-2 | P2 | S | Pending |
+| 73 | Centralize inline GraphQL docs; evaluate SDL codegen | GQ-3 | P2 | M | Pending |
+| 74 | Workflow hygiene (concurrency, stale comment) | CI-5 | P3 | S | Pending |
+| 75 | Prod-parity e2e mode (E2E_PROD) | EE-3 | P3 | M | Pending |
+| 76 | Validate request-id charset/length | FE-2 | P3 | S | Pending |
+| 77 | Add COOP header | FE-3 | P3 | S | Pending |
+| 78 | Healthchecks for app/nextjs compose services | CP-3 | P3 | S | Pending |
+| 79 | No-mock GraphQL protocol; delete empty src/data | GQ-1 | P3 | S | Pending |
 
 ---
 
