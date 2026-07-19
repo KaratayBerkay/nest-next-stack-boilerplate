@@ -1,9 +1,9 @@
 {
-  "pageTitle": "Forms Demo",
-  "pageDescription": "Real-world form patterns built with TanStack Form",
-  "back": "Back",
-  "breadcrumbLabel": "Forms",
   "gallery": {
+    "pageTitle": "Forms Demo",
+    "pageDescription": "Real-world form patterns built with TanStack Form",
+    "back": "Back",
+    "breadcrumbLabel": "Forms",
     "title": "Forms Demo",
     "description": "Real-world form patterns built with TanStack Form"
   },
@@ -102,7 +102,12 @@
     "revealSecret": "Your API Key",
     "secretNote": "You won't see this again",
     "empty": "No API keys yet",
-    "loadFailed": "Failed to load API keys"
+    "loadFailed": "Failed to load API keys",
+    "reveal": "Reveal",
+    "copy": "Copy",
+    "dismiss": "Dismiss",
+    "cancel": "Cancel",
+    "newKey": "New Key"
   },
   "billing": {
     "heading": "Billing & Plan",
@@ -123,7 +128,8 @@
     "autoSave": "Auto-saved",
     "autoSaveFailed": "Auto-save failed",
     "saveSuccess": "Billing updated",
-    "unsaved": "Unsaved changes"
+    "unsaved": "Unsaved changes",
+    "updateButton": "Update Billing"
   },
   "filters": {
     "heading": "Filters",
@@ -167,7 +173,21 @@
     "gallery": "Gallery",
     "documents": "Documents",
     "uploadLabel": "Upload files",
-    "simulatedNote": "This section uses simulated backend — real file upload would 415"
+    "simulatedNote": "This section uses simulated backend — real file upload would 415",
+    "avatarDescription": "Single image, 5 MB max, uploaded on selection",
+    "galleryDescription": "Up to 6 images, parallel XHR uploads with real progress",
+    "documentsDescription": "Simulated — the backend only accepts images (JPEG, PNG, WebP, GIF, AVIF). This section shows where a real generic-file route would go.",
+    "labels": {
+      "dropzoneIdle": "Drop images here or click to browse",
+      "dropzoneActive": "Drop images here",
+      "uploaded": "Uploaded",
+      "uploadFailed": "Upload failed",
+      "uploading": "Uploading...",
+      "remove": "Remove {file}",
+      "docDropzoneIdle": "Drag PDF/DOCX here",
+      "docDropzoneActive": "Drop files here",
+      "invalidType": "Only {accepted} files are allowed — got {file}"
+    }
   },
   "errorLab": {
     "heading": "Error & Async States Lab",
@@ -184,7 +204,7 @@
     "en": "English",
     "tr": "Turkish"
   },
-  "checkout": {
+  "checkoutTab": {
     "heading": "Checkout",
     "shippingAddress": "Shipping Address",
     "billingAddress": "Billing Address",

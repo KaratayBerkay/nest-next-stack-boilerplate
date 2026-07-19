@@ -40,11 +40,11 @@ export default function FormsLayout({ children }: FormsLayoutProps) {
               >
                 <path d="m15 18-6-6 6-6" />
               </svg>
-              {t.back}
+              {t.gallery.back}
             </Link>
           )}
           <span className="text-muted mx-1 text-xs">/</span>
-          <span className="text-sm font-semibold">{t.breadcrumbLabel}</span>
+          <span className="text-sm font-semibold">{t.gallery.breadcrumbLabel}</span>
           <span className="text-muted hidden text-xs md:inline">
             /v1/:lang/forms/:example
           </span>

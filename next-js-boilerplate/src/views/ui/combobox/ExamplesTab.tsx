@@ -13,7 +13,7 @@ export function ExamplesTab() {
         <Combobox
           options={countries}
           value={country}
-          onValueChange={setCountry}
+          onValueChange={(val) => setCountry(val as string)}
           placeholder="Select your country..."
           searchPlaceholder="Search countries..."
           className="max-w-sm"

@@ -13,7 +13,7 @@ export function ComponentsTab() {
         <Combobox
           options={assignees}
           value={assignee}
-          onValueChange={setAssignee}
+          onValueChange={(val) => setAssignee(val as string)}
           placeholder="Select assignee..."
           searchPlaceholder="Search teammates..."
           className="max-w-sm"

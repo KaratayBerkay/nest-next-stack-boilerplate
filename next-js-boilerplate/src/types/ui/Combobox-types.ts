@@ -2,8 +2,9 @@ import type React from "react";
 
 export interface ComboboxProps {
   options: { value: string; label: string }[];
-  value?: string;
-  onValueChange?: (value: string) => void;
+  value?: string | string[];
+  onValueChange?: (value: string | string[]) => void;
+  multiple?: boolean;
   placeholder?: string;
   searchPlaceholder?: string;
   emptyTitle?: string;

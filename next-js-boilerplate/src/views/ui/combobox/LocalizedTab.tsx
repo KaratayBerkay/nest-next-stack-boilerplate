@@ -18,7 +18,7 @@ export function LocalizedTab() {
         <Combobox
           options={cities}
           value={city}
-          onValueChange={setCity}
+          onValueChange={(val) => setCity(val as string)}
           placeholder="Şehir seçin..."
           searchPlaceholder="Şehir ara..."
           emptyTitle="Sonuç yok"

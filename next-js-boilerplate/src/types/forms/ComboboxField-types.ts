@@ -9,4 +9,5 @@ export interface ComboboxFieldProps {
   required?: boolean;
   placeholder?: string;
   options: ComboboxFieldOption[];
+  multiple?: boolean;
 }

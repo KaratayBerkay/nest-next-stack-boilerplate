@@ -76,7 +76,7 @@ export default function ProfilePage() {
   const t = useMessages("forms");
   const allMessages = useAllMessages();
   const { toast } = useToast();
-  const { updateProfile } = useProfileActions();
+  const { updateProfile, checkUsername } = useProfileActions();
   const [formError, setFormError] = useState<string | null>(null);
 
   const form = useAppForm({
@@ -117,7 +117,16 @@ export default function ProfilePage() {
           </form.AppField>
         </div>
 
-        <form.AppField name="username">
+        <form.AppField
+          name="username"
+          validators={{
+            onChangeAsyncDebounceMs: 500,
+            onChangeAsync: async ({ value }) => {
+              if (!value) return undefined;
+              return (await checkUsername(value)) ? undefined : t.profile.usernameTaken;
+            },
+          }}
+        >
           {(field) => <field.TextField label={t.profile.username} />}
         </form.AppField>
 

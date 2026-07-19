@@ -10,24 +10,9 @@ import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
 import { FormErrorBanner } from "@/components/ui/FormErrorBanner";
 import { exceptionHandler, getSurface } from "@/lib/exception-handler";
-
-interface ApiKey {
-  id: string;
-  name: string;
-  prefix: string;
-  createdAt: string;
-  expiresAt: string | null;
-  permissions: string[];
-  lastUsed: string | null;
-  revoked: boolean;
-  ipWhitelist: string[];
-}
-
-let nextId = 3;
-const STORE: ApiKey[] = [
-  { id: "1", name: "CI/CD Pipeline", prefix: "eys_abc", createdAt: "2026-06-01", expiresAt: null, permissions: ["read:users", "read:posts"], lastUsed: "2026-07-18", revoked: false, ipWhitelist: [] },
-  { id: "2", name: "Development", prefix: "eys_def", createdAt: "2026-07-01", expiresAt: "2026-09-30", permissions: ["read:users", "write:posts"], lastUsed: null, revoked: false, ipWhitelist: ["192.168.1.0/24"] },
-];
+import { useApiKeyActions } from "@/api/client/api-keys/actions";
+import { apiKeyListQueryOptions } from "@/api/client/api-keys/query";
+import type { ApiKeyInfo } from "@/api/server/api-keys/list";
 
 const PERMISSION_OPTIONS = [
   { value: "read:users", label: "Read Users" },
@@ -46,15 +31,12 @@ const EXPIRY_OPTIONS = [
   { value: "never", label: "No Expiry" },
 ];
 
-function queryKeys() {
-  return { queryKey: ["api-keys"], queryFn: async () => { await new Promise((r) => setTimeout(r, 400)); return [...STORE.filter((k) => !k.revoked)]; } };
-}
-
 export default function ApiKeyPage() {
   const t = useMessages("forms");
   const messages = useAllMessages();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { createApiKey, revokeApiKey } = useApiKeyActions();
   const [showForm, setShowForm] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [newKeySecret, setNewKeySecret] = useState<string | null>(null);
@@ -62,35 +44,19 @@ export default function ApiKeyPage() {
   const [ipInput, setIpInput] = useState("");
   const [ipWhitelist, setIpWhitelist] = useState<string[]>([]);
 
-  const { data: keys, isLoading } = useQuery(queryKeys());
+  const { data: keys, isLoading } = useQuery(apiKeyListQueryOptions());
 
   const createMutation = useMutation({
     mutationFn: async (data: { name: string; expiresIn: string; permissions: string[] }) => {
-      await new Promise((r) => setTimeout(r, 1200));
-      if (STORE.some((k) => k.name === data.name && !k.revoked)) {
-        const err = new Error(`An API key named "${data.name}" already exists`);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (err as any).exception = {
-          exc: "EX_API_KEY_NAME_EXISTS",
-          msg: `An API key named "${data.name}" already exists`,
-          key: "apiKeys.errors.nameExists",
-        };
-        throw err;
-      }
-      const id = String(++nextId);
-      const prefix = `eys_${Math.random().toString(36).slice(2, 8)}`;
-      const secret = `${prefix}_${Math.random().toString(36).slice(2, 20)}`;
-      const now = new Date().toISOString().split("T")[0];
-      const expiresAt = data.expiresIn === "never" ? null : new Date(Date.now() + Number(data.expiresIn) * 86400000).toISOString().split("T")[0];
-      STORE.push({ id, name: data.name, prefix, createdAt: now, expiresAt, permissions: data.permissions, lastUsed: null, revoked: false, ipWhitelist: [...ipWhitelist] });
-      setIpWhitelist([]);
-      return { id, secret };
+      const expiresInDays = data.expiresIn === "never" ? null : Number(data.expiresIn);
+      return createApiKey(data.name, expiresInDays);
     },
     onSuccess: (result) => {
-      setNewKeySecret(result.secret);
+      setNewKeySecret(result.fullKey);
       setShowForm(false);
+      setIpWhitelist([]);
       form.reset();
-      queryClient.invalidateQueries({ queryKey: ["api-keys"] });
+      queryClient.invalidateQueries({ queryKey: ["api-keys", "list"] });
     },
     onError: (err) => {
       const exc = (err as { exception?: { exc: string; key: string; msg: string } }).exception;
@@ -107,21 +73,19 @@ export default function ApiKeyPage() {
 
   const revokeMutation = useMutation({
     mutationFn: async (id: string) => {
-      await new Promise((r) => setTimeout(r, 600));
-      const key = STORE.find((k) => k.id === id);
-      if (key) key.revoked = true;
+      await revokeApiKey(id);
     },
     onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: ["api-keys"] });
-      const previous = queryClient.getQueryData<ApiKey[]>(["api-keys"]);
-      queryClient.setQueryData<ApiKey[]>(["api-keys"], (old) => old?.filter((k) => k.id !== id));
+      await queryClient.cancelQueries({ queryKey: ["api-keys", "list"] });
+      const previous = queryClient.getQueryData<ApiKeyInfo[]>(["api-keys", "list"]);
+      queryClient.setQueryData<ApiKeyInfo[]>(["api-keys", "list"], (old) => old?.filter((k) => k.id !== id));
       return { previous };
     },
     onError: (_err, _id, context) => {
-      if (context?.previous) queryClient.setQueryData(["api-keys"], context.previous);
+      if (context?.previous) queryClient.setQueryData(["api-keys", "list"], context.previous);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["api-keys"] });
+      queryClient.invalidateQueries({ queryKey: ["api-keys", "list"] });
     },
   });
 
@@ -173,7 +137,7 @@ export default function ApiKeyPage() {
           <h2 className="text-sm font-semibold">{t.apiKey.heading}</h2>
         </div>
         <Button size="sm" onClick={() => { setShowForm((p) => !p); setFormError(null); }}>
-          {showForm ? "Cancel" : "New Key"}
+          {showForm ? t.apiKey.cancel : t.apiKey.newKey}
         </Button>
       </div>
 
@@ -185,8 +149,8 @@ export default function ApiKeyPage() {
           <code className="mt-1 block break-all rounded bg-emphasis p-2 text-xs">{newKeySecret}</code>
           <p className="text-xxs text-destructive mt-1">{t.apiKey.secretNote}</p>
           <div className="mt-2 flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => handleCopy(newKeySecret)}>Copy</Button>
-            <Button size="sm" variant="outline" onClick={() => setNewKeySecret(null)}>Dismiss</Button>
+            <Button size="sm" variant="outline" onClick={() => handleCopy(newKeySecret)}>{t.apiKey.copy}</Button>
+            <Button size="sm" variant="outline" onClick={() => setNewKeySecret(null)}>{t.apiKey.dismiss}</Button>
           </div>
         </div>
       )}
@@ -247,28 +211,23 @@ export default function ApiKeyPage() {
                 <div className="flex gap-1.5">
                   {!revealedSecrets.has(key.id) ? (
                     <Button size="sm" variant="ghost" onClick={() => setRevealedSecrets((prev) => new Set(prev).add(key.id))}>
-                      Reveal
+                      {t.apiKey.reveal}
                     </Button>
                   ) : (
-                    <Button size="sm" variant="ghost" onClick={() => handleCopy(key.prefix)}>Copy</Button>
+                    <Button size="sm" variant="ghost" onClick={() => handleCopy(key.keyPrefix)}>{t.apiKey.copy}</Button>
                   )}
                   <Button size="sm" variant="destructive" onClick={() => handleRevoke(key.id)}>
                     {t.apiKey.revoke}
                   </Button>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-1">
-                {key.permissions.map((p) => (
-                  <span key={p} className="rounded bg-emphasis px-1.5 py-0.5 text-xxs">{p}</span>
-                ))}
-              </div>
               <div className="text-xxs text-muted flex items-center gap-3">
                 <span>Created {key.createdAt}</span>
                 {key.expiresAt && <span>Expires {key.expiresAt}</span>}
-                {key.lastUsed && <span>Last used {key.lastUsed}</span>}
+                {key.lastUsedAt && <span>Last used {key.lastUsedAt}</span>}
               </div>
               {revealedSecrets.has(key.id) && (
-                <code className="block break-all rounded bg-emphasis p-2 text-xxs">{key.prefix}_****</code>
+                <code className="block break-all rounded bg-emphasis p-2 text-xxs">{key.keyPrefix}_****</code>
               )}
             </div>
           ))}

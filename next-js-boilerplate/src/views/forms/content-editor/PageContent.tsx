@@ -17,17 +17,43 @@ interface Draft {
   savedAt: number;
 }
 
+interface DraftValues {
+  title: string;
+  slug: string;
+  tags: string[];
+  body: string;
+}
+
+const DRAFT_KEY = "forms:draft";
+const DRAFT_SIZE_CAP = 50_000;
+
 function loadDraft(): Draft | null {
   try {
-    const raw = sessionStorage.getItem("editor-draft");
-    return raw ? JSON.parse(raw) : null;
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Draft;
+    if (new Date(parsed.savedAt).getTime() < Date.now() - 86400000) {
+      localStorage.removeItem(DRAFT_KEY);
+      return null;
+    }
+    return parsed;
   } catch {
     return null;
   }
 }
 
-function saveDraft(values: { title: string; slug: string; tags: string[]; body: string }) {
-  sessionStorage.setItem("editor-draft", JSON.stringify({ ...values, savedAt: Date.now() }));
+function saveDraft(values: DraftValues) {
+  try {
+    const data = JSON.stringify({ ...values, savedAt: Date.now() });
+    if (data.length > DRAFT_SIZE_CAP) return;
+    localStorage.setItem(DRAFT_KEY, data);
+  } catch {
+    /* quota exceeded */
+  }
+}
+
+function clearDraft() {
+  localStorage.removeItem(DRAFT_KEY);
 }
 
 function deriveSlug(title: string): string {
@@ -56,22 +82,31 @@ export default function ContentEditorPage() {
   const { toast } = useToast();
   const [preview, setPreview] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [draftAlert, setDraftAlert] = useState<Draft | null>(() => {
-    const draft = loadDraft();
-    if (draft && draft.savedAt > Date.now() - 86400000) return draft;
-    return null;
-  });
+  const [draftAlert, setDraftAlert] = useState<Draft | null>(() => loadDraft());
   const dirtyRef = useRef(false);
   const slugEditedByUser = useRef(false);
   const [schedule, setSchedule] = useState(false);
 
   const form = useAppForm({
     ...editorFormOpts,
+    onSubmitMeta: {} as { intent: "publish" | "schedule" },
     validators: {
       onChange: () => {
         dirtyRef.current = true;
         return undefined;
       },
+    },
+    onSubmit: async ({ value, meta }) => {
+      if (meta?.intent === "schedule" && !value.publishAt) {
+        return { form: "Schedule date is required", fields: {} };
+      }
+      await new Promise((r) => setTimeout(r, 1000));
+      toast({
+        description: meta?.intent === "schedule" ? t.contentEditor.scheduled : t.contentEditor.published,
+        variant: "default",
+      });
+      dirtyRef.current = false;
+      return null;
     },
   });
 
@@ -93,17 +128,18 @@ export default function ContentEditorPage() {
     return () => window.removeEventListener("beforeunload", handler);
   }, [form]);
 
+  useEffect(() => {
+    const handler = () => clearDraft();
+    window.addEventListener("auth:logout", handler);
+    return () => window.removeEventListener("auth:logout", handler);
+  }, []);
+
   const handleSaveDraft = useCallback(() => {
-    saveDraft(form.state.values);
+    const { title, slug, tags, body } = form.state.values;
+    saveDraft({ title, slug, tags, body });
     dirtyRef.current = false;
     toast({ description: t.contentEditor.draftSaved, variant: "default" });
   }, [form.state.values, toast, t]);
-
-  const handlePublish = useCallback(async () => {
-    await new Promise((r) => setTimeout(r, 1000));
-    toast({ description: t.contentEditor.published, variant: "default" });
-    dirtyRef.current = false;
-  }, [toast, t]);
 
   const handleRestore = useCallback(() => {
     if (!draftAlert) return;
@@ -111,12 +147,15 @@ export default function ContentEditorPage() {
     form.setFieldValue("slug", draftAlert.slug);
     form.setFieldValue("tags", draftAlert.tags);
     form.setFieldValue("body", draftAlert.body);
-    toast({ description: t.contentEditor.draftRestored.replace("{time}", new Date(draftAlert.savedAt).toLocaleString()), variant: "default" });
+    toast({
+      description: t.contentEditor.draftRestored.replace("{time}", new Date(draftAlert.savedAt).toLocaleString()),
+      variant: "default",
+    });
     setDraftAlert(null);
   }, [draftAlert, form, toast, t]);
 
   const handleDiscard = useCallback(() => {
-    sessionStorage.removeItem("editor-draft");
+    clearDraft();
     setDraftAlert(null);
   }, []);
 
@@ -199,7 +238,10 @@ export default function ContentEditorPage() {
 
         <div className="flex gap-2">
           <Button type="button" variant="outline" onClick={handleSaveDraft}>{t.contentEditor.saveDraft}</Button>
-          <Button type="button" onClick={handlePublish}>{t.contentEditor.publish}</Button>
+          <Button type="button" onClick={() => form.handleSubmit({ intent: "publish" })}>{t.contentEditor.publish}</Button>
+          {schedule && (
+            <Button type="button" onClick={() => form.handleSubmit({ intent: "schedule" })}>{t.contentEditor.schedule}</Button>
+          )}
         </div>
       </form>
     </div>

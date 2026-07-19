@@ -302,11 +302,11 @@ export type I18nMessages = {
     }
 
   "forms": {
-      "pageTitle": string;
-      "pageDescription": string;
-      "back": string;
-      "breadcrumbLabel": string;
       "gallery": {
+        "pageTitle": string;
+        "pageDescription": string;
+        "back": string;
+        "breadcrumbLabel": string;
         "title": string;
         "description": string;
       };
@@ -406,6 +406,11 @@ export type I18nMessages = {
         "secretNote": string;
         "empty": string;
         "loadFailed": string;
+        "reveal": string;
+        "copy": string;
+        "dismiss": string;
+        "cancel": string;
+        "newKey": string;
       };
       "billing": {
         "heading": string;
@@ -427,6 +432,7 @@ export type I18nMessages = {
         "autoSaveFailed": string;
         "saveSuccess": string;
         "unsaved": string;
+        "updateButton": string;
       };
       "filters": {
         "heading": string;
@@ -471,6 +477,20 @@ export type I18nMessages = {
         "documents": string;
         "uploadLabel": string;
         "simulatedNote": string;
+        "avatarDescription": string;
+        "galleryDescription": string;
+        "documentsDescription": string;
+        "labels": {
+          "dropzoneIdle": string;
+          "dropzoneActive": string;
+          "uploaded": string;
+          "uploadFailed": string;
+          "uploading": string;
+          "remove": string;
+          "docDropzoneIdle": string;
+          "docDropzoneActive": string;
+          "invalidType": string;
+        };
       };
       "errorLab": {
         "heading": string;
@@ -487,7 +507,7 @@ export type I18nMessages = {
         "en": string;
         "tr": string;
       };
-      "checkout": {
+      "checkoutTab": {
         "heading": string;
         "shippingAddress": string;
         "billingAddress": string;

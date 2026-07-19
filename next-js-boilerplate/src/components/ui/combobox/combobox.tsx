@@ -22,10 +22,15 @@ const variants = {
   default: "border-border bg-bg text-fg",
 };
 
+function isMultiValue(value: string | string[] | undefined): value is string[] {
+  return Array.isArray(value);
+}
+
 export function Combobox({
   options,
   value,
   onValueChange,
+  multiple,
   placeholder = "Search...",
   searchPlaceholder,
   emptyTitle = "No results",
@@ -47,6 +52,8 @@ export function Combobox({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
+  const selectedValues = multiple && isMultiValue(value) ? value : [];
+
   const close = useCallback(() => {
     setOpen(false);
     setQuery("");
@@ -54,6 +61,31 @@ export function Combobox({
   }, []);
 
   useClickOutside(wrapperRef, close);
+
+  const toggleValue = useCallback((val: string) => {
+    if (!multiple || !isMultiValue(value)) {
+      onValueChange?.(val);
+      close();
+      return;
+    }
+    const next = value.includes(val)
+      ? value.filter((v: string) => v !== val)
+      : [...value, val];
+    onValueChange?.(next);
+  }, [multiple, value, onValueChange, close]);
+
+  const triggerLabel = (() => {
+    if (!multiple || !isMultiValue(value) || value.length === 0) {
+      if (value && !Array.isArray(value)) {
+        return options.find((o) => o.value === value)?.label;
+      }
+      return undefined;
+    }
+    if (value.length <= 2) {
+      return value.map((v: string) => options.find((o) => o.value === v)?.label ?? v).join(", ");
+    }
+    return `${value.length} selected`;
+  })();
 
   return (
     <div
@@ -79,7 +111,7 @@ export function Combobox({
         aria-describedby={describedBy}
       >
         <span className={cn("truncate", fontClasses({ fontSize, fontWeight, fontFamily }))}>
-          {value ? options.find((o) => o.value === value)?.label : placeholder}
+          {triggerLabel || placeholder}
         </span>
         <svg
           width="16"
@@ -88,7 +120,7 @@ export function Combobox({
           fill="none"
           stroke="currentColor"
           strokeWidth="2"
-          className="ml-2 opacity-50"
+          className="ml-2 shrink-0 opacity-50"
         >
           <path d="m6 9 6 6 6-6" />
         </svg>
@@ -108,18 +140,32 @@ export function Combobox({
                   .filter((o) =>
                     o.label.toLowerCase().includes(query.toLowerCase()),
                   )
-                  .map((opt) => (
-                    <CommandItem
-                      key={opt.value}
-                      value={opt.value}
-                      onSelect={() => {
-                        onValueChange?.(opt.value);
-                        close();
-                      }}
-                    >
-                      <span className={cn(fontClasses({ fontSize, fontWeight, fontFamily }))}>{opt.label}</span>
-                    </CommandItem>
-                  ))}
+                  .map((opt) => {
+                    const isSelected = multiple && selectedValues.includes(opt.value);
+                    return (
+                      <CommandItem
+                        key={opt.value}
+                        value={opt.value}
+                        onSelect={() => toggleValue(opt.value)}
+                      >
+                        <span className={cn("flex items-center gap-2", fontClasses({ fontSize, fontWeight, fontFamily }))}>
+                          {multiple && (
+                            <span className={cn(
+                              "flex size-4 items-center justify-center rounded-[2px] border",
+                              isSelected ? "bg-brand border-brand" : "border-border",
+                            )}>
+                              {isSelected && (
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+                                  <path d="M20 6L9 17l-5-5" />
+                                </svg>
+                              )}
+                            </span>
+                          )}
+                          {opt.label}
+                        </span>
+                      </CommandItem>
+                    );
+                  })}
               </CommandGroup>
               {options.filter((o) =>
                 o.label.toLowerCase().includes(query.toLowerCase()),

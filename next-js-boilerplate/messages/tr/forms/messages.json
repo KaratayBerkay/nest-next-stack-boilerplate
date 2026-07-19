@@ -1,9 +1,9 @@
 {
-  "pageTitle": "Form Demoları",
-  "pageDescription": "TanStack Form ile gerçek dünya form desenleri",
-  "back": "Geri",
-  "breadcrumbLabel": "Formlar",
   "gallery": {
+    "pageTitle": "Form Demoları",
+    "pageDescription": "TanStack Form ile gerçek dünya form desenleri",
+    "back": "Geri",
+    "breadcrumbLabel": "Formlar",
     "title": "Form Demoları",
     "description": "TanStack Form ile gerçek dünya form desenleri"
   },
@@ -102,7 +102,12 @@
     "revealSecret": "API Anahtarınız",
     "secretNote": "Bir daha gösterilmeyecek",
     "empty": "Henüz API anahtarı yok",
-    "loadFailed": "API anahtarları yüklenemedi"
+    "loadFailed": "API anahtarları yüklenemedi",
+    "reveal": "Göster",
+    "copy": "Kopyala",
+    "dismiss": "Kapat",
+    "cancel": "İptal",
+    "newKey": "Yeni Anahtar"
   },
   "billing": {
     "heading": "Fatura & Plan",
@@ -123,7 +128,8 @@
     "autoSave": "Otomatik kaydedildi",
     "autoSaveFailed": "Otomatik kaydetme başarısız",
     "saveSuccess": "Fatura güncellendi",
-    "unsaved": "Kaydedilmemiş değişiklikler"
+    "unsaved": "Kaydedilmemiş değişiklikler",
+    "updateButton": "Faturalandırmayı Güncelle"
   },
   "filters": {
     "heading": "Filtreler",
@@ -167,7 +173,21 @@
     "gallery": "Galeri",
     "documents": "Belgeler",
     "uploadLabel": "Dosyaları yükle",
-    "simulatedNote": "Bu bölüm simüle edilmiş bir arka uç kullanır — gerçek dosya yükleme 415 hatası verir"
+    "simulatedNote": "Bu bölüm simüle edilmiş bir arka uç kullanır — gerçek dosya yükleme 415 hatası verir",
+    "avatarDescription": "Tek görsel, maksimum 5 MB, seçimle yüklenir",
+    "galleryDescription": "6 görsele kadar, paralel XHR yüklemeleri",
+    "documentsDescription": "Simüle edildi — arka uç yalnızca görselleri kabul eder (JPEG, PNG, WebP, GIF, AVIF).",
+    "labels": {
+      "dropzoneIdle": "Görselleri buraya sürükleyin veya göz atmak için tıklayın",
+      "dropzoneActive": "Görselleri buraya sürükleyin",
+      "uploaded": "Yüklendi",
+      "uploadFailed": "Yükleme başarısız",
+      "uploading": "Yükleniyor...",
+      "remove": "{file} dosyasını kaldır",
+      "docDropzoneIdle": "PDF/DOCX dosyasını buraya sürükleyin",
+      "docDropzoneActive": "Dosyaları buraya sürükleyin",
+      "invalidType": "Yalnızca {accepted} dosyalarına izin verilir — {file} yüklendi"
+    }
   },
   "errorLab": {
     "heading": "Hata & Async Durum Laboratuvarı",
@@ -184,7 +204,7 @@
     "en": "İngilizce",
     "tr": "Türkçe"
   },
-  "checkout": {
+  "checkoutTab": {
     "heading": "Ödeme",
     "shippingAddress": "Teslimat Adresi",
     "billingAddress": "Fatura Adresi",

@@ -1,28 +1,39 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useUploadActions } from "@/api/client/upload/actions";
+import { useProfileActions } from "@/api/client/profile/actions";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import { FileUpload } from "@/components/ui/FileUpload";
 import { FormErrorBanner } from "@/components/ui/FormErrorBanner";
 import type { UploadFile } from "@/types/ui/FileUpload-types";
 
-const GALLERY_LABELS = {
-  dropzoneIdle: "Drop images here or click to browse",
-  dropzoneActive: "Drop images here",
-  uploaded: "Uploaded",
-  uploadFailed: "Upload failed",
-  uploading: "Uploading...",
-  uploadButton: (count: number) => `Upload ${count} image(s)`,
-  remove: (file: string) => `Remove ${file}`,
-};
-
 export default function UploadsPage() {
+  const t = useMessages("forms");
   const { uploadWithProgress } = useUploadActions();
+  const { uploadAvatar } = useProfileActions();
   const [avatarFiles, setAvatarFiles] = useState<UploadFile[]>([]);
   const [galleryFiles, setGalleryFiles] = useState<UploadFile[]>([]);
   const [docFiles, setDocFiles] = useState<UploadFile[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  const galleryLabels = {
+    dropzoneIdle: t.uploads.labels.dropzoneIdle,
+    dropzoneActive: t.uploads.labels.dropzoneActive,
+    uploaded: t.uploads.labels.uploaded,
+    uploadFailed: t.uploads.labels.uploadFailed,
+    uploading: t.uploads.labels.uploading,
+    uploadButton: (count: number) => `Upload ${count} image(s)`,
+    remove: (file: string) => t.uploads.labels.remove.replace("{file}", file),
+  };
+
+  const docLabels = {
+    dropzoneIdle: t.uploads.labels.docDropzoneIdle,
+    dropzoneActive: t.uploads.labels.docDropzoneActive,
+    invalidType: (file: string, accepted: string) =>
+      t.uploads.labels.invalidType.replace("{accepted}", accepted).replace("{file}", file),
+  };
 
   const handleGalleryUpload = useCallback(
     async (file: File, reportProgress: (pct: number) => void) => {
@@ -42,24 +53,42 @@ export default function UploadsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-sm font-semibold">File Uploads & Attachments</h2>
-        <p className="text-muted text-xs">Real avatar/gallery uploads with progress bars</p>
+        <h2 className="text-sm font-semibold">{t.uploads.heading}</h2>
+        <p className="text-muted text-xs">{t.examples.uploadsDescription}</p>
       </div>
 
       <section className="surface flex flex-col gap-3 rounded-lg border border-border p-4">
-        <h3 className="text-xs font-medium">Avatar</h3>
-        <p className="text-xxs text-muted">Single image, 5 MB max, auto-uploaded</p>
+        <h3 className="text-xs font-medium">{t.uploads.avatar}</h3>
+        <p className="text-xxs text-muted">{t.uploads.avatarDescription}</p>
         <ImageUpload
           avatar
           value={avatarFiles}
-          onChange={setAvatarFiles}
+          onChange={(files) => {
+            const newFile = files.find(f => f.status === "pending" && !avatarFiles.some(af => af.id === f.id));
+            if (newFile) {
+              uploadAvatar(newFile.file).then((result) => {
+                setAvatarFiles((prev) =>
+                  prev.map((f) =>
+                    f.id === newFile.id
+                      ? { ...f, status: "done", progress: 100, preview: result.urls?.full }
+                      : f
+                  )
+                );
+              }).catch(() => {
+                setAvatarFiles((prev) =>
+                  prev.map((f) => (f.id === newFile.id ? { ...f, status: "error" } : f))
+                );
+              });
+            }
+            setAvatarFiles(files);
+          }}
           maxSizeBytes={5 * 1024 * 1024}
         />
       </section>
 
       <section className="surface flex flex-col gap-3 rounded-lg border border-border p-4">
-        <h3 className="text-xs font-medium">Gallery</h3>
-        <p className="text-xxs text-muted">Up to 6 images, parallel XHR uploads with real progress</p>
+        <h3 className="text-xs font-medium">{t.uploads.gallery}</h3>
+        <p className="text-xxs text-muted">{t.uploads.galleryDescription}</p>
         <FileUpload
           multiple
           accept="image/*"
@@ -68,15 +97,14 @@ export default function UploadsPage() {
           files={galleryFiles}
           onFilesChange={setGalleryFiles}
           onUpload={handleGalleryUpload}
-          labels={GALLERY_LABELS}
+          labels={galleryLabels}
         />
       </section>
 
       <section className="surface flex flex-col gap-3 rounded-lg border border-border p-4">
-        <h3 className="text-xs font-medium">Documents</h3>
+        <h3 className="text-xs font-medium">{t.uploads.documents}</h3>
         <p className="text-xxs text-muted">
-          Simulated — the backend only accepts images (JPEG, PNG, WebP, GIF, AVIF).
-          This section shows where a real generic-file route would go.
+          {t.uploads.documentsDescription}
         </p>
         <FileUpload
           multiple
@@ -86,11 +114,7 @@ export default function UploadsPage() {
           files={docFiles}
           onFilesChange={setDocFiles}
           onUpload={handleDocSimulate}
-          labels={{
-            dropzoneIdle: "Drag PDF/DOCX here",
-            dropzoneActive: "Drop files here",
-            invalidType: (file, accepted) => `Only ${accepted} files are allowed — got ${file}`,
-          }}
+          labels={docLabels}
         />
       </section>
 

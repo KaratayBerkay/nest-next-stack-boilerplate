@@ -134,7 +134,7 @@ export default function BillingPage() {
         </div>
 
         <Button type="submit" onClick={(e) => { e.preventDefault(); toast({ description: t.billing.saveSuccess, variant: "default" }); }}>
-          Update Billing
+          {t.billing.updateButton}
         </Button>
       </form>
     </div>

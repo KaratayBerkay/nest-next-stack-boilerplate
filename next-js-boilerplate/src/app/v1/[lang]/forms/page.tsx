@@ -10,8 +10,8 @@ export async function generateMetadata({ params }: PageProps) {
   const { lang } = await params;
   const t = getMessages(lang as Lang, "forms");
   return {
-    title: t.pageTitle,
-    description: t.pageDescription,
+    title: t.gallery.pageTitle,
+    description: t.gallery.pageDescription,
   };
 }
 

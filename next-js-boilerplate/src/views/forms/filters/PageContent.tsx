@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
+import { usePathname } from "next/navigation";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useAppForm } from "@/features/forms/form-hook";
 import { formOptions } from "@tanstack/react-form";
@@ -31,21 +32,30 @@ const SORT_OPTIONS = [
   { value: "name", label: "Name" },
 ];
 
+const ALLOWED_SORT = ["relevance", "date", "name"];
+const ALLOWED_PAGE_SIZES = ["10", "25", "50"];
+const ALLOWED_STATUSES = ["", "active", "pending", "archived"];
+
 interface FiltersPageProps {
   initialSearchParams: Record<string, string | string[] | undefined>;
 }
 
 export default function FiltersPage({ initialSearchParams }: FiltersPageProps) {
   const t = useMessages("forms");
+  const pathname = usePathname();
+  const sp = initialSearchParams;
 
   const defaultValues = useMemo(() => ({
-    search: (initialSearchParams.search as string) ?? "",
-    tags: (initialSearchParams.tags as string)?.split(",").filter(Boolean) ?? [],
-    sortBy: (initialSearchParams.sortBy as string) ?? "relevance",
-    sortOrder: (initialSearchParams.sortDir as string) ?? "desc",
-    status: (initialSearchParams.status as string) ?? "",
-    pageSize: (initialSearchParams.pageSize as string) ?? "25",
-  }), [initialSearchParams.search, initialSearchParams.tags, initialSearchParams.sortBy, initialSearchParams.sortDir, initialSearchParams.status, initialSearchParams.pageSize]);
+    search: (sp.search as string) ?? "",
+    tags: (sp.tags as string)?.split(",").filter(Boolean) ?? [],
+    sortBy: ALLOWED_SORT.includes(sp.sortBy as string) ? (sp.sortBy as string) : "relevance",
+    sortOrder: sp.sortDir === "asc" ? "asc" : "desc",
+    status: ALLOWED_STATUSES.includes(sp.status as string) ? (sp.status as string) : "",
+    pageSize: ALLOWED_PAGE_SIZES.includes(sp.pageSize as string) ? (sp.pageSize as string) : "25",
+    category: (sp.category as string)?.split(",").filter((c) => ALL_CATEGORIES.some((cat) => cat.value === c)) ?? [],
+    dateFrom: (sp.dateFrom as string) ?? "",
+    dateTo: (sp.dateTo as string) ?? "",
+  }), [sp.search, sp.tags, sp.sortBy, sp.sortDir, sp.status, sp.pageSize, sp.category, sp.dateFrom, sp.dateTo]);
 
   const formOpts = useMemo(() => formOptions({
     defaultValues,
@@ -58,20 +68,23 @@ export default function FiltersPage({ initialSearchParams }: FiltersPageProps) {
         if (value.sortOrder !== "desc") params.set("sortDir", value.sortOrder);
         if (value.status) params.set("status", value.status);
         if (value.pageSize !== "25") params.set("pageSize", value.pageSize);
+        if (value.category.length) params.set("category", value.category.join(","));
+        if (value.dateFrom) params.set("dateFrom", value.dateFrom);
+        if (value.dateTo) params.set("dateTo", value.dateTo);
         const qs = params.toString();
-        const url = qs ? `/v1/en/forms/filters?${qs}` : "/v1/en/forms/filters";
+        const url = qs ? `${pathname}?${qs}` : pathname;
         window.history.replaceState(null, "", url);
         return undefined;
       },
     },
-  }), [defaultValues]);
+  }), [defaultValues, pathname]);
 
   const form = useAppForm(formOpts);
 
   const handleReset = useCallback(() => {
     form.reset();
-    window.history.replaceState(null, "", "/v1/en/forms/filters");
-  }, [form]);
+    window.history.replaceState(null, "", pathname);
+  }, [form, pathname]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -84,28 +97,9 @@ export default function FiltersPage({ initialSearchParams }: FiltersPageProps) {
           {(field) => <field.TextField label={t.filters.search} placeholder={t.filters.searchPlaceholder} />}
         </form.AppField>
 
-        <FilterSection label={t.filters.category ?? "Category"}>
-          <div className="flex flex-wrap gap-1.5">
-            {ALL_CATEGORIES.map((cat) => {
-              const selected = form.state.values.tags.includes(cat.value);
-              return (
-                <Button
-                  key={cat.value}
-                  variant={selected ? "default" : "secondary"}
-                  size="sm"
-                  onClick={() => {
-                    const next = selected
-                      ? form.state.values.tags.filter((v: string) => v !== cat.value)
-                      : [...form.state.values.tags, cat.value];
-                    form.setFieldValue("tags", next);
-                  }}
-                >
-                  {cat.label}
-                </Button>
-              );
-            })}
-          </div>
-        </FilterSection>
+        <form.AppField name="category">
+          {(field) => <field.ComboboxField label={t.filters.category ?? "Category"} options={ALL_CATEGORIES} multiple />}
+        </form.AppField>
 
         <form.AppField name="tags">
           {(field) => <field.ComboboxField label={t.filters.tags} options={ALL_CATEGORIES} />}
@@ -113,7 +107,20 @@ export default function FiltersPage({ initialSearchParams }: FiltersPageProps) {
 
         <div className="grid grid-cols-2 gap-4">
           <FilterSection label={t.filters.dateRange ?? "Date Range"}>
-            <div className="text-xxs text-muted">Mock date-range toggle — real DateRangePicker coming with a full date library integration</div>
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="date"
+                value={form.state.values.dateFrom}
+                onChange={(e) => form.setFieldValue("dateFrom", e.target.value)}
+                className="border-border bg-bg text-fg focus-visible:ring-brand flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+              />
+              <input
+                type="date"
+                value={form.state.values.dateTo}
+                onChange={(e) => form.setFieldValue("dateTo", e.target.value)}
+                className="border-border bg-bg text-fg focus-visible:ring-brand flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+              />
+            </div>
           </FilterSection>
 
           <form.AppField name="sortBy">
