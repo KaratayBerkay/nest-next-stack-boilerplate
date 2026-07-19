@@ -8,6 +8,8 @@ import { formOptions } from "@tanstack/react-form";
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
 import type { ReactNode } from "react";
+import { z } from "zod";
+import { filtersSchema } from "@/validators/forms/filters";
 
 function FilterSection({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -48,14 +50,14 @@ export default function FiltersPage({ initialSearchParams }: FiltersPageProps) {
   const defaultValues = useMemo(() => ({
     search: (sp.search as string) ?? "",
     tags: (sp.tags as string)?.split(",").filter(Boolean) ?? [],
-    sortBy: ALLOWED_SORT.includes(sp.sortBy as string) ? (sp.sortBy as string) : "relevance",
-    sortOrder: sp.sortDir === "asc" ? "asc" : "desc",
-    status: ALLOWED_STATUSES.includes(sp.status as string) ? (sp.status as string) : "",
-    pageSize: ALLOWED_PAGE_SIZES.includes(sp.pageSize as string) ? (sp.pageSize as string) : "25",
+    sortBy: (ALLOWED_SORT.includes(sp.sortBy as string) ? (sp.sortBy as string) : "relevance") as "relevance" | "date" | "name",
+    sortOrder: (sp.sortDir === "asc" ? "asc" : "desc") as "asc" | "desc",
+    status: (ALLOWED_STATUSES.includes(sp.status as string) ? (sp.status as string) : "") as "" | "active" | "pending" | "archived",
+    pageSize: (ALLOWED_PAGE_SIZES.includes(sp.pageSize as string) ? (sp.pageSize as string) : "25") as "10" | "25" | "50",
     category: (sp.category as string)?.split(",").filter((c) => ALL_CATEGORIES.some((cat) => cat.value === c)) ?? [],
     dateFrom: (sp.dateFrom as string) ?? "",
     dateTo: (sp.dateTo as string) ?? "",
-  }), [sp.search, sp.tags, sp.sortBy, sp.sortDir, sp.status, sp.pageSize, sp.category, sp.dateFrom, sp.dateTo]);
+  } satisfies z.input<typeof filtersSchema>), [sp.search, sp.tags, sp.sortBy, sp.sortDir, sp.status, sp.pageSize, sp.category, sp.dateFrom, sp.dateTo]);
 
   const formOpts = useMemo(() => formOptions({
     defaultValues,

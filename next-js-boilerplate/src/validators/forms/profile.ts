@@ -21,9 +21,11 @@ export const profileSchema = z.object({
   }).optional(),
 });
 
-export const profileFieldSchemas = {
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  username: z.string().min(2, "Username must be at least 2 characters").max(30),
-  email: z.string().email("Invalid email"),
-};
+export function createProfileFieldSchemas(t: Record<string, string>) {
+  return {
+    firstName: z.string().min(1, t.firstNameRequired ?? "First name is required"),
+    lastName: z.string().min(1, t.lastNameRequired ?? "Last name is required"),
+    username: z.string().min(2, t.usernameMin ?? "Username must be at least 2 characters").max(30),
+    email: z.string().email(t.emailInvalid ?? "Invalid email"),
+  };
+}

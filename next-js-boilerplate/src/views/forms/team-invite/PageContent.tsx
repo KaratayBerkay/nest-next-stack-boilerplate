@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMessages, useAllMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
 import { formOptions } from "@tanstack/react-form";
@@ -13,6 +13,8 @@ import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
 import { getSurface, exceptionHandler } from "@/lib/exception-handler";
 import { exceptionToFormErrors } from "@/lib/forms/exception-to-form-errors";
 import type { ExceptionResponse } from "@/lib/api-client";
+import { z } from "zod";
+import { createInviteSchema, inviteSchema } from "@/validators/forms/invite";
 
 const STEPS = ["Emails", "Role", "Message", "Review"];
 
@@ -28,9 +30,9 @@ const teamFormOpts = formOptions({
   defaultValues: {
     emails: [] as string[],
     emailInput: "",
-    role: "member" as string,
+    role: "member" as "member" | "admin" | "owner",
     message: "",
-  },
+  } satisfies z.input<typeof inviteSchema> & { emailInput: string },
 });
 
 async function submitTeamInvite(
@@ -81,6 +83,7 @@ export default function TeamInvitePage() {
   const { simulateError } = useFormsDemoActions();
   const [step, setStep] = useState(0);
   const [formError, setFormError] = useState<string | null>(null);
+  const inviteSchemas = useMemo(() => createInviteSchema(t.teamInvite), [t]);
 
   const form = useAppForm({
     ...teamFormOpts,
@@ -180,7 +183,7 @@ export default function TeamInvitePage() {
         {step === 1 && (
           <div className="flex flex-col gap-3">
             <p className="text-xs font-medium">{t.teamInvite.stepRole}</p>
-            <form.AppField name="role">
+            <form.AppField name="role" validators={{ onChange: inviteSchemas.shape.role }}>
               {(field) => (
                 <field.RadioGroupField label={t.teamInvite.roleLabel} options={ROLE_OPTIONS} />
               )}

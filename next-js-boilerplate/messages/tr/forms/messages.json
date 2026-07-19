@@ -60,7 +60,11 @@
     "demoOnlyFields": "Aşağıdaki alanlar yalnızca demo amaçlıdır, kaydedilmez",
     "usernameChecking": "Kullanılabilirlik kontrol ediliyor…",
     "usernameAvailable": "Kullanılabilir",
-    "usernameTaken": "Zaten alınmış"
+    "usernameTaken": "Zaten alınmış",
+    "firstNameRequired": "Ad gereklidir",
+    "lastNameRequired": "Soyad gereklidir",
+    "usernameMin": "Kullanıcı adı en az 2 karakter olmalıdır",
+    "emailInvalid": "Geçersiz e-posta"
   },
   "teamInvite": {
     "heading": "Ekip Üyesi Davet Et",
@@ -77,7 +81,10 @@
     "messageLabel": "Kişisel Mesaj (isteğe bağlı)",
     "messagePlaceholder": "Kişisel bir not ekleyin...",
     "inviteSent": "Davetler başarıyla gönderildi",
-    "inviteFailed": "Davetler gönderilemedi"
+    "inviteFailed": "Davetler gönderilemedi",
+    "emailRequired": "En az bir e-posta gereklidir",
+    "emailInvalid": "Geçersiz e-posta formatı",
+    "roleRequired": "Lütfen bir rol seçin"
   },
   "apiKey": {
     "heading": "API Anahtarı Yöneticisi",
@@ -129,7 +136,9 @@
     "autoSaveFailed": "Otomatik kaydetme başarısız",
     "saveSuccess": "Fatura güncellendi",
     "unsaved": "Kaydedilmemiş değişiklikler",
-    "updateButton": "Faturalandırmayı Güncelle"
+    "updateButton": "Faturalandırmayı Güncelle",
+    "planRequired": "Lütfen bir plan seçin",
+    "periodRequired": "Lütfen bir fatura dönemi seçin"
   },
   "filters": {
     "heading": "Filtreler",
@@ -165,7 +174,10 @@
     "dynamic": "Dinamik (önce ödüllendir, sonra cezalandır)",
     "linkedFields": "Bağlantılı Alanlar",
     "confirmPassword": "Şifreyi Onayla",
-    "password": "Şifre"
+    "password": "Şifre",
+    "nameMin": "Ad en az 2 karakter olmalıdır",
+    "emailInvalid": "Geçersiz e-posta adresi",
+    "roleRequired": "Lütfen bir rol seçin"
   },
   "uploads": {
     "heading": "Dosya Yüklemeleri & Ekler",
@@ -223,7 +235,15 @@
     "addPaymentMethod": "Ödeme Yöntemi Ekle",
     "stripeSetup": "Stripe ile kart ekle",
     "paymentDeclined": "Ödeme reddedildi",
-    "orderPlaced": "Sipariş başarıyla verildi"
+    "orderPlaced": "Sipariş başarıyla verildi",
+    "streetRequired": "Cadde/Sokak gereklidir",
+    "cityRequired": "Şehir gereklidir",
+    "provinceRequired": "İlçe/Eyalet gereklidir",
+    "postalCodeInvalid": "Geçersiz posta kodu",
+    "emailInvalid": "Geçersiz e-posta",
+    "emailMismatch": "E-postalar eşleşmelidir",
+    "paymentMethodRequired": "Ödeme yöntemi gereklidir",
+    "orderFailed": "Sipariş başarısız oldu. Lütfen tekrar deneyin."
   },
   "contentEditor": {
     "heading": "İçerik Düzenleyici",
@@ -249,7 +269,9 @@
     "unsavedChanges": "Kaydedilmemiş değişiklikleriniz var",
     "unsavedDescription": "Değişiklikleriniz kaydedilmeyebilir",
     "stay": "Kal",
-    "leave": "Ayrıl"
+    "leave": "Ayrıl",
+    "titleRequired": "Başlık gereklidir",
+    "slugInvalid": "Yalnızca küçük harf, sayı ve tire kullanılabilir"
   },
   "formBuilder": {
     "heading": "Form Oluşturucu",
@@ -288,7 +310,10 @@
     "saving": "Kaydediliyor...",
     "rowError": "Satır reddedildi",
     "saveSuccess": "Tüm satırlar kaydedildi",
-    "saveFailed": "Bazı satırlar kaydedilemedi"
+    "saveFailed": "Bazı satırlar kaydedilemedi",
+    "descRequired": "Açıklama gereklidir",
+    "qtyMin": "Minimum adet 1'dir",
+    "pricePositive": "Fiyat pozitif olmalıdır"
   },
   "errors": {
     "emailAlreadyMember": "Bu e-posta zaten bir üye",

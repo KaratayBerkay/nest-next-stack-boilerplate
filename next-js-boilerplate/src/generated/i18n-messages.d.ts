@@ -364,6 +364,10 @@ export type I18nMessages = {
         "usernameChecking": string;
         "usernameAvailable": string;
         "usernameTaken": string;
+        "firstNameRequired": string;
+        "lastNameRequired": string;
+        "usernameMin": string;
+        "emailInvalid": string;
       };
       "teamInvite": {
         "heading": string;
@@ -381,6 +385,9 @@ export type I18nMessages = {
         "messagePlaceholder": string;
         "inviteSent": string;
         "inviteFailed": string;
+        "emailRequired": string;
+        "emailInvalid": string;
+        "roleRequired": string;
       };
       "apiKey": {
         "heading": string;
@@ -433,6 +440,8 @@ export type I18nMessages = {
         "saveSuccess": string;
         "unsaved": string;
         "updateButton": string;
+        "planRequired": string;
+        "periodRequired": string;
       };
       "filters": {
         "heading": string;
@@ -469,6 +478,9 @@ export type I18nMessages = {
         "linkedFields": string;
         "confirmPassword": string;
         "password": string;
+        "nameMin": string;
+        "emailInvalid": string;
+        "roleRequired": string;
       };
       "uploads": {
         "heading": string;
@@ -527,6 +539,14 @@ export type I18nMessages = {
         "stripeSetup": string;
         "paymentDeclined": string;
         "orderPlaced": string;
+        "streetRequired": string;
+        "cityRequired": string;
+        "provinceRequired": string;
+        "postalCodeInvalid": string;
+        "emailInvalid": string;
+        "emailMismatch": string;
+        "paymentMethodRequired": string;
+        "orderFailed": string;
       };
       "contentEditor": {
         "heading": string;
@@ -553,6 +573,8 @@ export type I18nMessages = {
         "unsavedDescription": string;
         "stay": string;
         "leave": string;
+        "titleRequired": string;
+        "slugInvalid": string;
       };
       "formBuilder": {
         "heading": string;
@@ -592,6 +614,9 @@ export type I18nMessages = {
         "rowError": string;
         "saveSuccess": string;
         "saveFailed": string;
+        "descRequired": string;
+        "qtyMin": string;
+        "pricePositive": string;
       };
       "errors": {
         "emailAlreadyMember": string;

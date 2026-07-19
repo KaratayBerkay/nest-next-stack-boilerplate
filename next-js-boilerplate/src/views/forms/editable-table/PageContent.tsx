@@ -136,7 +136,7 @@ export default function EditableTablePage() {
                                 />
                                 {subField.state.meta.errors.length > 0 && (
                                   <span className="text-destructive text-xxs">
-                                    {subField.state.meta.errors[0]}
+                                    {String(subField.state.meta.errors[0])}
                                   </span>
                                 )}
                               </div>
@@ -166,7 +166,7 @@ export default function EditableTablePage() {
                                 />
                                 {subField.state.meta.errors.length > 0 && (
                                   <span className="text-destructive text-xxs">
-                                    {subField.state.meta.errors[0]}
+                                    {String(subField.state.meta.errors[0])}
                                   </span>
                                 )}
                               </div>
@@ -197,7 +197,7 @@ export default function EditableTablePage() {
                                 />
                                 {subField.state.meta.errors.length > 0 && (
                                   <span className="text-destructive text-xxs">
-                                    {subField.state.meta.errors[0]}
+                                    {String(subField.state.meta.errors[0])}
                                   </span>
                                 )}
                               </div>

@@ -1,18 +1,15 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useAppForm } from "@/features/forms/form-hook";
 import { formOptions, revalidateLogic } from "@tanstack/react-form";
-import { z } from "zod";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Label } from "@/components/ui/Label";
 import { FormFieldInfo } from "@/components/ui/FormFieldInfo";
-
-const nameSchema = z.string().min(2, "Name must be at least 2 characters");
-const emailSchema = z.string().email("Invalid email address");
-const roleSchema = z.string().min(1, "Select a role");
+import { createFieldStateSchemas } from "@/validators/forms/field-states";
+import { z } from "zod";
 
 const ROLE_OPTIONS = [
   { value: "admin", label: "Admin" },
@@ -146,19 +143,21 @@ function FieldStatesGrid() {
 }
 
 function EagerForm() {
+  const t = useMessages("forms");
+  const fieldSchemas = useMemo(() => createFieldStateSchemas(t.fieldStates), [t]);
   const form = useAppForm({
     ...validationFormOpts,
   });
 
   return (
     <form className="flex flex-col gap-3">
-      <form.AppField name="name" validators={{ onChange: nameSchema }}>
+      <form.AppField name="name" validators={{ onChange: fieldSchemas.name }}>
         {(field) => <field.TextField label="Name" />}
       </form.AppField>
-      <form.AppField name="email" validators={{ onChange: emailSchema }}>
+      <form.AppField name="email" validators={{ onChange: fieldSchemas.email }}>
         {(field) => <field.TextField label="Email" />}
       </form.AppField>
-      <form.AppField name="role" validators={{ onChange: roleSchema }}>
+      <form.AppField name="role" validators={{ onChange: fieldSchemas.role }}>
         {(field) => <field.SelectField label="Role" options={ROLE_OPTIONS} placeholder="Select a role..." />}
       </form.AppField>
     </form>
@@ -166,19 +165,21 @@ function EagerForm() {
 }
 
 function ClassicForm() {
+  const t = useMessages("forms");
+  const fieldSchemas = useMemo(() => createFieldStateSchemas(t.fieldStates), [t]);
   const form = useAppForm({
     ...validationFormOpts,
   });
 
   return (
     <form className="flex flex-col gap-3">
-      <form.AppField name="name" validators={{ onBlur: nameSchema }}>
+      <form.AppField name="name" validators={{ onBlur: fieldSchemas.name }}>
         {(field) => <field.TextField label="Name" />}
       </form.AppField>
-      <form.AppField name="email" validators={{ onBlur: emailSchema }}>
+      <form.AppField name="email" validators={{ onBlur: fieldSchemas.email }}>
         {(field) => <field.TextField label="Email" />}
       </form.AppField>
-      <form.AppField name="role" validators={{ onBlur: roleSchema }}>
+      <form.AppField name="role" validators={{ onBlur: fieldSchemas.role }}>
         {(field) => <field.SelectField label="Role" options={ROLE_OPTIONS} placeholder="Select a role..." />}
       </form.AppField>
     </form>
@@ -186,6 +187,8 @@ function ClassicForm() {
 }
 
 function DynamicForm() {
+  const t = useMessages("forms");
+  const fieldSchemas = useMemo(() => createFieldStateSchemas(t.fieldStates), [t]);
   const form = useAppForm({
     ...validationFormOpts,
     validationLogic: revalidateLogic({ mode: "blur" }),
@@ -193,13 +196,13 @@ function DynamicForm() {
 
   return (
     <form className="flex flex-col gap-3">
-      <form.AppField name="name" validators={{ onDynamic: nameSchema }}>
+      <form.AppField name="name" validators={{ onDynamic: fieldSchemas.name }}>
         {(field) => <field.TextField label="Name" />}
       </form.AppField>
-      <form.AppField name="email" validators={{ onDynamic: emailSchema }}>
+      <form.AppField name="email" validators={{ onDynamic: fieldSchemas.email }}>
         {(field) => <field.TextField label="Email" />}
       </form.AppField>
-      <form.AppField name="role" validators={{ onDynamic: roleSchema }}>
+      <form.AppField name="role" validators={{ onDynamic: fieldSchemas.role }}>
         {(field) => <field.SelectField label="Role" options={ROLE_OPTIONS} placeholder="Select a role..." />}
       </form.AppField>
     </form>

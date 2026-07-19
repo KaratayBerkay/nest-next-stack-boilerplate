@@ -7,6 +7,7 @@ import { useAppForm } from "@/features/forms/form-hook";
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
 import { useToast } from "@/components/ui/Toast";
+import { createBillingFieldSchemas } from "@/validators/forms/billing";
 
 const PLANS = [
   { value: "free", label: "Free", monthly: 0, yearly: 0 },
@@ -43,6 +44,7 @@ function CouponStatus({ code, period }: { code: string; period: string }) {
 
 export default function BillingPage() {
   const t = useMessages("forms");
+  const fieldSchemas = useMemo(() => createBillingFieldSchemas(t.billing), [t]);
   const { toast } = useToast();
   const prevPlan = useRef("pro");
 
@@ -79,7 +81,7 @@ export default function BillingPage() {
       </div>
 
       <form className="flex flex-col gap-4">
-        <form.AppField name="plan">
+        <form.AppField name="plan" validators={{ onChange: fieldSchemas.plan }}>
           {(field) => (
             <field.RadioGroupField label={t.billing.plan} options={PLANS.map((p) => ({
               value: p.value,
@@ -88,7 +90,7 @@ export default function BillingPage() {
           )}
         </form.AppField>
 
-        <form.AppField name="billingPeriod">
+        <form.AppField name="billingPeriod" validators={{ onChange: fieldSchemas.billingPeriod }}>
           {(field) => (
             <field.RadioGroupField
               label={t.billing.billingPeriod}

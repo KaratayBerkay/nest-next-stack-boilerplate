@@ -2,13 +2,16 @@
 
 import { useCallback } from "react";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
-import { useAppForm } from "@/features/forms/form-hook";
+import { useAppForm, withFieldGroup } from "@/features/forms/form-hook";
 import { formOptions } from "@tanstack/react-form";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
 import { Switch } from "@/components/ui/Switch";
 import { Label } from "@/components/ui/Label";
+import { checkoutSchema } from "@/validators/forms/checkout";
+import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
+import { z } from "zod";
 
 const ADDRESS_OPTIONS = [
   { value: "us", label: "United States" },
@@ -17,91 +20,114 @@ const ADDRESS_OPTIONS = [
   { value: "tr", label: "Turkey" },
 ];
 
-interface AddressFieldsProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  form: any;
-  prefix: "shippingAddress" | "billingAddress";
-}
+const ADDRESS_DEFAULTS = {
+  street: "",
+  city: "",
+  province: "",
+  postalCode: "",
+  country: "us" as const,
+  phone: "",
+};
 
-function AddressFields({ form, prefix }: AddressFieldsProps) {
-  const t = useMessages("forms");
-
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-2 gap-3">
-        <form.AppField name={`${prefix}.street`}>
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {(field: any) => <field.TextField label={t.checkoutTab.street} />}
-        </form.AppField>
-        <form.AppField name={`${prefix}.city`}>
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {(field: any) => <field.TextField label={t.checkoutTab.city} />}
-        </form.AppField>
+const AddressGroup = withFieldGroup({
+  defaultValues: ADDRESS_DEFAULTS,
+  render: function AddressGroupInner({ group }) {
+    const t = useMessages("forms");
+    return (
+      <div className="flex flex-col gap-3">
+        <div className="grid grid-cols-2 gap-3">
+          <group.AppField name="street">
+            {(field) => <field.TextField label={t.checkoutTab.street} />}
+          </group.AppField>
+          <group.AppField name="city">
+            {(field) => <field.TextField label={t.checkoutTab.city} />}
+          </group.AppField>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <group.AppField name="province">
+            {(field) => <field.TextField label={t.checkoutTab.province} />}
+          </group.AppField>
+          <group.AppField name="postalCode">
+            {(field) => <field.TextField label={t.checkoutTab.postalCode} />}
+          </group.AppField>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <group.AppField
+            name="country"
+            listeners={{
+              onChange: () => {
+                group.form.setFieldValue("province", "");
+              },
+            }}
+          >
+            {(field) => (
+              <field.SelectField
+                label={t.checkoutTab.country}
+                options={ADDRESS_OPTIONS}
+              />
+            )}
+          </group.AppField>
+          <group.AppField name="phone">
+            {(field) => <field.TextField label={t.checkoutTab.phone} />}
+          </group.AppField>
+        </div>
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        <form.AppField name={`${prefix}.province`}>
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {(field: any) => <field.TextField label={t.checkoutTab.province} />}
-        </form.AppField>
-        <form.AppField name={`${prefix}.postalCode`}>
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {(field: any) => <field.TextField label={t.checkoutTab.postalCode} />}
-        </form.AppField>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <form.AppField name={`${prefix}.country`}>
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {(field: any) => (
-            <field.SelectField label={t.checkoutTab.country} options={ADDRESS_OPTIONS} />
-          )}
-        </form.AppField>
-        <form.AppField name={`${prefix}.phone`}>
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {(field: any) => <field.TextField label={t.checkoutTab.phone} />}
-        </form.AppField>
-      </div>
-    </div>
-  );
-}
+    );
+  },
+});
 
 const checkoutFormOpts = formOptions({
   defaultValues: {
-    shippingAddress: { street: "", city: "", province: "", postalCode: "", country: "us", phone: "" },
-    billingAddress: { street: "", city: "", province: "", postalCode: "", country: "us", phone: "" },
+    shippingAddress: ADDRESS_DEFAULTS,
+    billingAddress: ADDRESS_DEFAULTS,
     sameAsShipping: false,
     email: "",
     confirmEmail: "",
     paymentMethod: "stripe",
-  },
-  validators: {
-    onChange: ({ value }) => {
-      if (value.email && value.confirmEmail && value.email !== value.confirmEmail) {
-        return { form: "Emails must match", fields: { confirmEmail: "Must match email" } };
-      }
-      return undefined;
-    },
-  },
+  } satisfies z.input<typeof checkoutSchema>,
 });
 
 export default function CheckoutPage() {
   const t = useMessages("forms");
   const { toast } = useToast();
+  const { simulateError } = useFormsDemoActions();
 
-  const form = useAppForm(checkoutFormOpts);
+  const form = useAppForm({
+    ...checkoutFormOpts,
+    validators: {
+      onChange: ({ value }) => {
+        if (value.email && value.confirmEmail && value.email !== value.confirmEmail) {
+          return {
+            form: t.checkoutTab.emailMismatch,
+            fields: { confirmEmail: t.checkoutTab.emailMismatch },
+          };
+        }
+        return undefined;
+      },
+    },
+    onSubmit: async ({ value }) => {
+      const postal = value.shippingAddress.postalCode;
+      try {
+        if (postal === "00000") {
+          await simulateError("postal-code-group", { failRate: 1 });
+        } else {
+          await simulateError("payment-declined", { failRate: 0 });
+        }
+        toast({ description: t.checkoutTab.orderPlaced, variant: "default" });
+      } catch {
+        toast({ description: t.checkoutTab.orderFailed, variant: "destructive" });
+      }
+    },
+  });
 
   const handleToggleSame = useCallback(() => {
     const next = !form.state.values.sameAsShipping;
-    form.setFieldValue("sameAsShipping", next);
+    form.setFieldValue("sameAsShipping", next as false);
     if (next) {
       const sa = form.state.values.shippingAddress;
       form.setFieldValue("billingAddress", { ...sa });
     }
   }, [form]);
-
-  const handleSubmit = useCallback(async () => {
-    await new Promise((r) => setTimeout(r, 1500));
-    toast({ description: t.checkoutTab.orderPlaced, variant: "default" });
-  }, [toast, t]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -115,7 +141,7 @@ export default function CheckoutPage() {
           className="flex flex-col gap-4"
         >
           <h3 className="text-xs font-medium">{t.checkoutTab.shippingAddress}</h3>
-          <AddressFields form={form} prefix="shippingAddress" />
+          <AddressGroup form={form} fields="shippingAddress" />
 
           <Separator />
 
@@ -136,7 +162,7 @@ export default function CheckoutPage() {
             <>
               <Separator />
               <h3 className="text-xs font-medium">{t.checkoutTab.billingAddress}</h3>
-              <AddressFields form={form} prefix="billingAddress" />
+              <AddressGroup form={form} fields="billingAddress" />
             </>
           )}
 
@@ -146,7 +172,19 @@ export default function CheckoutPage() {
             <form.AppField name="email">
               {(field) => <field.TextField label={t.checkoutTab.email} />}
             </form.AppField>
-            <form.AppField name="confirmEmail">
+            <form.AppField
+              name="confirmEmail"
+              validators={{
+                onChangeListenTo: ["email"],
+                onChange: ({ value, fieldApi }) => {
+                  const email = fieldApi.form.getFieldValue("email");
+                  if (value && email && value !== email) {
+                    return t.checkoutTab.emailMismatch;
+                  }
+                  return undefined;
+                },
+              }}
+            >
               {(field) => <field.TextField label={t.checkoutTab.confirmEmail} />}
             </form.AppField>
           </div>
@@ -160,7 +198,7 @@ export default function CheckoutPage() {
             )}
           </form.AppField>
 
-          <Button type="submit" onClick={handleSubmit}>{t.checkoutTab.placeOrder}</Button>
+          <Button type="submit">{t.checkoutTab.placeOrder}</Button>
         </form>
       </form.AppForm>
     </div>

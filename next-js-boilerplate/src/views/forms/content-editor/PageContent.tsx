@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
 import { formOptions } from "@tanstack/react-form";
@@ -8,6 +8,8 @@ import { useAppForm } from "@/features/forms/form-hook";
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
 import { FormErrorBanner } from "@/components/ui/FormErrorBanner";
+import { z } from "zod";
+import { editorSchema, createEditorSchema } from "@/validators/forms/editor";
 
 interface Draft {
   title: string;
@@ -74,7 +76,7 @@ const editorFormOpts = formOptions({
     body: "",
     publishAt: undefined as Date | undefined,
     publishTime: { hours: 0, minutes: 0, seconds: 0 },
-  },
+  } satisfies z.input<typeof editorSchema>,
 });
 
 export default function ContentEditorPage() {
@@ -86,6 +88,7 @@ export default function ContentEditorPage() {
   const dirtyRef = useRef(false);
   const slugEditedByUser = useRef(false);
   const [schedule, setSchedule] = useState(false);
+  const editorSchemas = useMemo(() => createEditorSchema(t.contentEditor), [t]);
 
   const form = useAppForm({
     ...editorFormOpts,
@@ -196,11 +199,11 @@ export default function ContentEditorPage() {
           </div>
         ) : (
           <>
-            <form.AppField name="title">
+            <form.AppField name="title" validators={{ onChange: editorSchemas.shape.title }}>
               {(field) => <field.TextField label={t.contentEditor.title} placeholder={t.contentEditor.titlePlaceholder} />}
             </form.AppField>
 
-            <form.AppField name="slug">
+            <form.AppField name="slug" validators={{ onChange: editorSchemas.shape.slug }}>
               {(field) => <field.TextField label={t.contentEditor.slug} />}
             </form.AppField>
 

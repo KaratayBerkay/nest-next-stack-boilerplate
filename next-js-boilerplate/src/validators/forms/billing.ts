@@ -8,7 +8,9 @@ export const billingSchema = z.object({
   taxId: z.string().optional(),
 });
 
-export const billingFieldSchemas = {
-  plan: z.string().min(1),
-  billingPeriod: z.enum(["monthly", "yearly"]),
-};
+export function createBillingFieldSchemas(t: Record<string, string>) {
+  return {
+    plan: z.string().min(1, t.planRequired ?? "Plan is required"),
+    billingPeriod: z.enum(["monthly", "yearly"], { message: t.periodRequired ?? "Billing period is required" }),
+  };
+}

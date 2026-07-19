@@ -60,7 +60,11 @@
     "demoOnlyFields": "The following fields are demo-only and not persisted",
     "usernameChecking": "Checking availability…",
     "usernameAvailable": "Available",
-    "usernameTaken": "Already taken"
+    "usernameTaken": "Already taken",
+    "firstNameRequired": "First name is required",
+    "lastNameRequired": "Last name is required",
+    "usernameMin": "Username must be at least 2 characters",
+    "emailInvalid": "Invalid email"
   },
   "teamInvite": {
     "heading": "Invite Team Members",
@@ -77,7 +81,10 @@
     "messageLabel": "Personal Message (optional)",
     "messagePlaceholder": "Add a personal note...",
     "inviteSent": "Invites sent successfully",
-    "inviteFailed": "Failed to send invites"
+    "inviteFailed": "Failed to send invites",
+    "emailRequired": "At least one email is required",
+    "emailInvalid": "Invalid email format",
+    "roleRequired": "Please select a role"
   },
   "apiKey": {
     "heading": "API Key Manager",
@@ -129,7 +136,9 @@
     "autoSaveFailed": "Auto-save failed",
     "saveSuccess": "Billing updated",
     "unsaved": "Unsaved changes",
-    "updateButton": "Update Billing"
+    "updateButton": "Update Billing",
+    "planRequired": "Please select a plan",
+    "periodRequired": "Please select a billing period"
   },
   "filters": {
     "heading": "Filters",
@@ -165,7 +174,10 @@
     "dynamic": "Dynamic (reward early, punish late)",
     "linkedFields": "Linked Fields",
     "confirmPassword": "Confirm Password",
-    "password": "Password"
+    "password": "Password",
+    "nameMin": "Name must be at least 2 characters",
+    "emailInvalid": "Invalid email address",
+    "roleRequired": "Please select a role"
   },
   "uploads": {
     "heading": "File Uploads & Attachments",
@@ -223,7 +235,15 @@
     "addPaymentMethod": "Add Payment Method",
     "stripeSetup": "Add card via Stripe",
     "paymentDeclined": "Payment declined",
-    "orderPlaced": "Order placed successfully"
+    "orderPlaced": "Order placed successfully",
+    "streetRequired": "Street is required",
+    "cityRequired": "City is required",
+    "provinceRequired": "Province is required",
+    "postalCodeInvalid": "Invalid postal code",
+    "emailInvalid": "Invalid email",
+    "emailMismatch": "Emails must match",
+    "paymentMethodRequired": "Payment method is required",
+    "orderFailed": "Order failed. Please try again."
   },
   "contentEditor": {
     "heading": "Content Editor",
@@ -249,7 +269,9 @@
     "unsavedChanges": "You have unsaved changes",
     "unsavedDescription": "Your changes may not be saved",
     "stay": "Stay",
-    "leave": "Leave"
+    "leave": "Leave",
+    "titleRequired": "Title is required",
+    "slugInvalid": "Only lowercase letters, numbers, and hyphens allowed"
   },
   "formBuilder": {
     "heading": "Form Builder",
@@ -288,7 +310,10 @@
     "saving": "Saving...",
     "rowError": "Row rejected",
     "saveSuccess": "All rows saved",
-    "saveFailed": "Some rows failed"
+    "saveFailed": "Some rows failed",
+    "descRequired": "Description is required",
+    "qtyMin": "Minimum quantity is 1",
+    "pricePositive": "Price must be positive"
   },
   "errors": {
     "emailAlreadyMember": "This email is already a member",

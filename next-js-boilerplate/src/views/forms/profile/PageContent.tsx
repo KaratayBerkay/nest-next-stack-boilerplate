@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMessages, useAllMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
 import { useProfileActions } from "@/api/client/profile/actions";
@@ -11,6 +11,7 @@ import { useAppForm } from "@/features/forms/form-hook";
 import { FormErrorBanner } from "@/components/ui/FormErrorBanner";
 import { Separator } from "@/components/ui/Separator";
 import type { ExceptionResponse } from "@/lib/api-client";
+import { createProfileFieldSchemas } from "@/validators/forms/profile";
 
 const profileFormOpts = formOptions({
   defaultValues: {
@@ -78,6 +79,7 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const { updateProfile, checkUsername } = useProfileActions();
   const [formError, setFormError] = useState<string | null>(null);
+  const fieldSchemas = useMemo(() => createProfileFieldSchemas(t.profile), [t]);
 
   const form = useAppForm({
     ...profileFormOpts,
@@ -109,10 +111,10 @@ export default function ProfilePage() {
         </form.AppField>
 
         <div className="grid grid-cols-2 gap-4">
-          <form.AppField name="firstName">
+          <form.AppField name="firstName" validators={{ onChange: fieldSchemas.firstName }}>
             {(field) => <field.TextField label={t.profile.firstName} />}
           </form.AppField>
-          <form.AppField name="lastName">
+          <form.AppField name="lastName" validators={{ onChange: fieldSchemas.lastName }}>
             {(field) => <field.TextField label={t.profile.lastName} />}
           </form.AppField>
         </div>
@@ -120,6 +122,7 @@ export default function ProfilePage() {
         <form.AppField
           name="username"
           validators={{
+            onChange: fieldSchemas.username,
             onChangeAsyncDebounceMs: 500,
             onChangeAsync: async ({ value }) => {
               if (!value) return undefined;
@@ -130,7 +133,7 @@ export default function ProfilePage() {
           {(field) => <field.TextField label={t.profile.username} />}
         </form.AppField>
 
-        <form.AppField name="email">
+        <form.AppField name="email" validators={{ onChange: fieldSchemas.email }}>
           {(field) => <field.TextField label={t.profile.email} />}
         </form.AppField>
 
