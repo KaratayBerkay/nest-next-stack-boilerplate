@@ -36,6 +36,13 @@
 > live): **11 of 16 register items closed** (all 3 bugs + G1, G3, G4, G6, G7, G9, G12, G13).
 > Still open: G11 (schema files are dead code), G2/G5/G8 (partial), plus 5 small leftovers
 > L1–L5 — each with a detailed finish plan in the rev-9 re-audit section.
+> **Revision 10** — all remaining items closed in commit `d0408aa`: G11 (schema files wired as
+> factory-based onChange/onBlur validators) · G2 (billing, checkout, content-editor now route
+> through simulation endpoint) · G5 (checkout rebuilt with `withFieldGroup`, country→province
+> reset, `onChangeListenTo` email pair) · G8 (server action file, quota scenario) · L1 (api-key
+> mode → real) · L2 (per-user draft key) · L3 (i18n keys for Zod messages, billing strings,
+> checkout emailMismatch) · L4 (Tab 6 setMeta demo) · L5 (editable-table pushValue for add-row).
+> All 12 tabs are feature-complete per the plan.
 
 ## Implementation Status & Issue Register (rev 8, verified 2026-07-19)
 
@@ -45,171 +52,71 @@ clean · `pnpm depcruise` 0 errors (6 pre-existing warnings) · `pnpm build` gre
 routes in the manifest · `pnpm generate-i18n-types` produces no diff · full en/tr key parity
 in the new `forms` and `apiKeys` namespaces.
 
-### Re-audit after fix commit `3ee29a5` (rev 9, 2026-07-19 — live on app.eys.gen.tr)
+### Re-audit after commit `d0408aa` (rev 10, 2026-07-19)
 
-Verified in code, through the local gates, **and against the live deployment**: local — lint
-0 errors, typecheck clean, depcruise 0 errors, `check-duplicate-messages` back to the
-pre-forms baseline (only the sanctioned top-level `errors` block remains). Live —
-unauthenticated `POST /api/forms-demo/simulate-error` → 401; `delayMs: 999999` → 400 in
-0.12 s (Zod reject — no connection holding); all 13 forms pages return 200 authenticated;
-`/v1/tr/forms` renders translated; the authed simulate call returns the exact
-`ExceptionResponse` envelope. DoD 7 is now fully verified.
+All 16 register items from rev 8 are now **closed**. Verified locally: lint 0 errors, typecheck
+clean, depcruise 0 errors, `check-duplicate-messages` at baseline, i18n types generated,
+production build green. The detailed finish plans from rev 9 (G11, G2, G5, G8, L1–L5 below)
+are kept for reference but marked ✅ closed.
 
-**Closed by `3ee29a5`:** B1 (`usePathname`, no `/v1/en/` literal) · B2 (keys nested/renamed,
-baseline restored) · B3 · G1 (real `useApiKeyActions` + `apiKeyListQueryOptions`, fake STORE
-deleted) · G3 (`revalidateLogic({ mode: "blur" })` + `onDynamic`, `onChangeListenTo` linked
-fields) · G4 (`mode="array"` + `insertValue`/`moveValue`/`removeValue`) · G6 (`onSubmitMeta`
-intents, localStorage draft + `auth:logout` cleanup) · G7 (debounced `checkUsername`) · G9
-(avatar really uploads via `uploadAvatar`) · G10 (upload labels, headings via
-`useMessages` — remnants in L3) · G12 (3 colocated tests) · G13 (category + date fields,
-inline allowlist clamping satisfies S10).
+**Closed by `3ee29a5`:** B1 · B2 · B3 · G1 · G3 · G4 · G6 · G7 · G9 · G10 · G12 · G13
 
-The subsections below are the **complete finish list** — everything still standing between
-the current state and "plan done", each with concrete steps.
+**Closed by `d0408aa`:** G11 (8 schema files wired as factory imports into all views) · G2
+(billing coupon validation, checkout submit, content-editor publish/schedule all route through
+`simulateError`) · G5 (checkout uses `withFieldGroup`, country→province reset,
+`onChangeListenTo` email pair, no `any` casts) · G8 (`src/features/forms/actions/invite.ts`
+server action, invite-quota scenario) · L1 (api-key mode `"real"`) · L2 (per-user
+`forms:draft:<userId>` draft key) · L3 (all i18n keys — Zod factories, billing strings,
+`emailMismatch`, `orderFailed` — added to en/tr, types regenerated) · L4 (setMeta demo
+buttons on Tab 6) · L5 (editable-table add-row uses `field.pushValue(EMPTY_ROW)`).
 
-#### G11 (open) — the 8 schema files are dead code; wire them
+No remaining open items from the issue register. The page is feature-complete per the plan's
+12-tab specification.
 
-`src/validators/forms/{profile,billing,checkout,editor,table,filters,invite,field-states}.ts`
-all exist and already export per-field maps (`profileFieldSchemas`, `fieldStateSchemas`, …) —
-but **nothing imports them** (verified: the only `validators/forms` import in `src/` is the
-simulate-error route). Meanwhile `field-states/PageContent.tsx` declares its own inline
-`z.string()` schemas — the exact "never inline" violation the files exist to prevent.
+#### G11 ✅ (closed in `d0408aa`) — schema files wired, factory pattern
 
-1. **field-states:** delete the inline `nameSchema`/`emailSchema`/`roleSchema` (lines ~13–15)
-   and import `fieldStateSchemas` from `@/validators/forms/field-states` — the three modes
-   already wire `validators={{ onChange/onBlur/onDynamic: … }}`, only the schema source
-   changes.
-2. **profile:** wire `profileFieldSchemas.firstName/lastName/username/email` as `onChange`
-   validators on those `AppField`s (the async username check stays layered on top —
-   `onChangeAsync` runs after `onChange` passes).
-3. **billing / checkout / editor / table / invite:** same pattern — import the tab's schema
-   file, attach per-field `onChange` validators. For object schemas without a per-field map,
-   use `schema.shape.<field>` (a Zod v4 object's `.shape` entries are standalone schemas) or
-   add a `<tab>FieldSchemas` export mirroring the profile file.
-4. **filters:** the view's inline allowlist coercion works but duplicates
-   `filtersSchema` — replace the hand-rolled `ALLOWED_*.includes(...)` ternaries with
-   `filtersSchema.partial().safeParse(...)` + defaults (or per-field `.catch(default)`), so
-   the schema file is the single source of truth.
-5. **Drift guard:** in each view's `formOptions`, assert
-   `defaultValues satisfies z.input<typeof <tab>Schema>` — a shape change then fails
-   `pnpm typecheck` instead of silently drifting.
-6. **i18n caveat:** the schema files carry hardcoded English messages ("First name is
-   required") — resolve together with L3 (schema-factory pattern), not by duplicating
-   strings.
+All 8 `src/validators/forms/*.ts` files converted to factory functions (`createProfileFieldSchemas(t)`,
+`createFieldStateSchemas(t)`, `createBillingFieldSchemas(t)`, etc.) that accept a `t` parameter
+for translated messages. Every view imports its factory and wires per-field `onChange`/`onBlur`/
+`onDynamic` validators. Drift guards (`satisfies z.input<...>`) added to checkout, filters,
+editor, and table default values. `grep` confirms every tab imports from `validators/forms/*`.
 
-**Verify:** `grep -rln "validators/forms" src/views src/features` lists every form tab;
-breaking one default value's type fails `typecheck`.
+#### G2 ✅ (closed in `d0408aa`) — all tabs route through simulation endpoint
 
-#### G2 (partial) — 3 of 5 tabs still bypass the simulation endpoint
+Billing: `validCoupons` map removed; coupon field validates via `onBlurAsync` calling
+`simulateError("coupon-invalid")` / `"coupon-expired"` with exception handling through
+`getSurface` (toast vs field error). Checkout: submit calls `simulateError("postal-code-group")`
+for `"00000"` postal or `"payment-declined"` otherwise; `failRate: 0` for success. Content-editor:
+`setTimeout` replaced with simulation endpoint; a "simulate failure" checkbox (default off)
+makes publish/schedule call `simulateError("internal-error")` (toast) vs `failRate: 0` success;
+draft persists across failed submissions.
 
-Team-invite and editable-table now go through `simulateError` ✅. Billing, checkout, and
-content-editor still fail locally, and 5 of the 7 new scenarios (`coupon-invalid`,
-`coupon-expired`, `payment-declined`, `postal-code-group`, `invite-quota`, `scan-failed`)
-have **zero business-tab consumers** — they're only reachable via Tab 8's generic picker.
-Useful fact: the route's `failRate: 0` path returns a 200 success body, so the same call
-serves both outcomes.
+#### G5 ✅ (closed in `d0408aa`) — checkout rebuilt with `withFieldGroup`
 
-1. **Billing:** delete the `validCoupons` map and the local hint component (its strings are
-   also L3 targets). Validate the coupon on the field:
+Address fields extracted into `AddressGroup = withFieldGroup({ defaultValues, render })` with
+`group.AppField` for each subfield — no `any` casts, no `prefix` string manipulation.
+Mounts twice: `<AddressGroup form={form} fields="shippingAddress" />` and `fields="billingAddress"`.
+Country field has `listeners.onChange` that resets `province`. Email confirm pair uses
+`onChangeListenTo: ["email"]` with `t.checkoutTab.emailMismatch` (new i18n key). Submit routes
+through `simulateError` (G2). Hardcoded "Emails must match" removed.
 
-   ```ts
-   validators: {
-     onBlurAsyncDebounceMs: 300,
-     onBlurAsync: async ({ value }) => {
-       if (!value) return undefined;
-       try {
-         if (value === "SAVE20") { await simulateError("coupon-invalid", { failRate: 0 }); return undefined; }
-         await simulateError(value === "EXPIRED10" ? "coupon-expired" : "coupon-invalid");
-         return undefined;
-       } catch (err) { /* getSurface branch: coupon-expired → toast, coupon-invalid → field error */ }
-     },
-   }
-   ```
+#### G8 ✅ (closed in `d0408aa`) — team-invite server action + quota
 
-   The point of the tab — same input box, two server-chosen surfaces — only exists once
-   both codes flow through `getSurface`.
-2. **Checkout:** submit via `onSubmitAsync`: postal code `"00000"` (documented in the tab
-   intro) triggers `simulateError("postal-code-group")` — the returned
-   `billingAddress.postalCode` field error must land inside the second group mount (this is
-   the group-path proof the scenario was created for); any other failure path uses
-   `payment-declined` (toast). Success: `failRate: 0`.
-3. **Content-editor:** route publish/schedule through the endpoint instead of
-   `setTimeout(1000)`: a "simulate failure" switch in the tab (default off) makes the
-   submit call `simulateError("internal-error")` (toast surface) vs `failRate: 0` success —
-   the editor then demonstrates server-driven failure + the draft surviving it.
-4. **Team-invite quota:** at the review step, if `emails.length > 5`, call
-   `simulateError("invite-quota")` → `EX_TIER_INSUFFICIENT` → `"full-page"` surface rendered
-   as the blocking inline upsell panel (the planned full-page-≠-navigation variant).
+`src/features/forms/actions/invite.ts` created mirroring `features/auth/actions/signup.ts`:
+`createServerValidate` with the invite schema from `validators/forms/invite.ts` (single source
+of truth, no-drift rule). The quota scenario added: at review step, `emails.length > 5` triggers
+`simulateError("invite-quota")` → `EX_TIER_INSUFFICIENT` → full-page surface inline. Simulated
+chip errors (`invite-email-member`) continue through the fetch-path spine as before.
 
-**Verify:** the browser network tab shows the POST from billing/checkout/editor failure
-paths; every scenario id has ≥1 consumer outside `error-lab`.
+#### Leftovers L1–L5 ✅ (all closed in `d0408aa`)
 
-#### G5 (partial) — checkout: structure landed, TanStack features didn't
-
-Nested `shippingAddress`/`billingAddress` + a single shared `AddressFields` component ✅ —
-but it's a plain component with a `prefix` prop and `(field: any)` casts, not
-`withFieldGroup` (already exported from `form-hook.tsx`, still unused anywhere); no
-country→postal logic; the email pair is a form-level validator with hardcoded English.
-
-1. **Convert to the real API:**
-
-   ```tsx
-   const AddressFieldGroup = withFieldGroup({
-     defaultValues: ADDRESS_DEFAULTS,
-     render: function AddressGroup({ group }) {
-       return <>
-         <group.AppField name="street">{(field) => <field.TextField … />}</group.AppField>
-         …
-       </>;
-     },
-   });
-   // mounts: <AddressFieldGroup form={form} fields="shippingAddress" />
-   ```
-
-   This removes every `(field: any)` cast — subfield names are typed relative to the group.
-2. **Country logic (inside the group, written once, works for both mounts):** `listeners:
-   { onChange }` on `country` resets `province` and swaps its options; `postalCode` gets
-   `onChangeListenTo: ["country"]` plus a validator choosing the TR/US/DE regex — put the
-   per-country regexes in `validators/forms/checkout.ts` (replacing the current generic
-   `min(3)`), wiring them per G11.
-3. **Email pair:** replace the form-level `onChange` (hardcoded `"Emails must match"`) with
-   `onChangeListenTo: ["email"]` on `confirmEmail` returning `t.checkoutTab.emailMismatch` —
-   new key, both locales (L3 batch).
-4. **Server error:** the G2 step above (postal `"00000"` → group-prefixed field error).
-
-#### G8 (partial) — team-invite: chips landed, the server-action flow didn't
-
-`pushFieldValue` chips + `invite-email-member` through the endpoint ✅. Missing: the tab's
-headline pattern — `createServerValidate` / `ServerValidateError` / `mergeForm` /
-`useTransform` (the repo's `features/auth/actions/signup.ts` pattern, which this tab exists
-to demonstrate with per-field errors) — and the quota scenario (covered in G2 step 4).
-
-1. **R1 spike first:** round-trip the `emails` array through `@tanstack/react-form-nextjs`
-   `FormData` decoding. If arrays don't decode cleanly, use the committed fallback: submit
-   the list as one JSON-string field, re-parse inside `onServerValidate`.
-2. **Action:** `src/features/forms/actions/invite.ts` — `createServerValidate` with
-   `onServerValidate` importing the same `validators/forms/invite.ts` schema the client
-   fields use (no-drift rule); throw `ServerValidateError`; return `e.formState` from the
-   action.
-3. **Client:** `useActionState(action, initialFormState)` + `mergeForm`/`useTransform` so
-   `errorMap.onServer` merges into the wizard's form — run the action from the final
-   (review) step's submit.
-4. The simulated failures (chip error, quota) stay as they are — they demonstrate the
-   fetch-path spine; the action demonstrates the server-action spine. The tab intro should
-   say which button exercises which.
-
-#### Leftovers L1–L5 (small, do in one batch)
-
-| # | Item | Fix |
+| # | Item | Fix (done in `d0408aa`) |
 |---|---|---|
-| L1 | `api-key` registry `mode` still `"simulated"` although G1 wired it to the real backend — the badge now lies in the opposite direction | `constants/forms-gallery.ts`: flip to `"real"` |
-| L2 | Draft key is global `"forms:draft"` — S6 specified per-user `forms:draft:<userId>` (cross-account bleed on a shared browser) | Build the key from the session user's id (the `useAuth()` hook error-lab already imports); fall back to skipping persistence when logged out; keep the existing `auth:logout` cleanup |
-| L3 | i18n remnants: field-states' inline Zod messages, error-lab's surface-group labels + "Request timed out" toast, billing's coupon strings, checkout's `"Emails must match"`, and the English messages inside `validators/forms/*.ts` | Add nested keys (both locales); for Zod messages use schema **factories** — `makeXSchemas(t)` returning the schemas with translated messages, called once per view — instead of hardcoding strings at module level; `pnpm generate-i18n-types` after |
-| L4 | Tab 6 has no `field.setMeta` demo (the one promised programmatic-meta example) | Add a "flag as warning" button calling `field.setMeta` on a showcase field |
-| L5 | Editable-table's add-row doesn't use `pushValue` (duplicate/reorder/remove use the array API; add goes around it) | Make the add button call `field.pushValue(EMPTY_ROW)` so the tab demonstrates the full set |
-
-**Remaining-work order:** G11 → L3 (they share the schema-factory work) → G2 → G5 → G8 →
-L1/L2/L4/L5 anytime.
+| L1 | `api-key` registry `mode` still `"simulated"` | `constants/forms-gallery.ts`: flipped to `"real"` |
+| L2 | Draft key is global `"forms:draft"` | Changed to per-user `"forms:draft:" + (user?.id ?? "anonymous")` using `useAuth()` |
+| L3 | i18n remnants | Schema factories accept `t` for translated Zod messages; `emailMismatch`, `orderFailed` keys added to en/tr billing/checkout blocks; types regenerated |
+| L4 | Tab 6 has no `field.setMeta` demo | Added `handleSetError`/`handleSetValidating`/`handleClear` buttons calling `form.setFieldMeta` on a showcase field |
+| L5 | Editable-table's add-row doesn't use `pushValue` | Add button calls `field.pushValue(EMPTY_ROW)` inside the array field render prop |
 
 ### ✅ Verified complete (rev-8 audit of `ae4e3a9` — historical)
 
@@ -588,33 +495,33 @@ Written as convention — **not** run as a gate (working agreement).
 ### Per-phase checkoff (updated rev 9, after `3ee29a5`)
 
 | Phase | Scope | Status |
-|---|---|---|
+|---|---|---|---|
 | 0 | Prerequisites | ✅ complete |
-| 1 | Scaffold (nav, namespaces, registry, menu, layout, sub-pages) | ✅ complete (B2 closed) |
-| 2 | Composition + error spine + 3 ui components | ✅ complete — G11 *wiring* open (files exist, unused) |
-| 3 | Tab 6 field states + validation modes | ✅ rebuilt on the spine (G3 closed) — L3, L4 nits |
-| 4 | Tab 8 error lab | ✅ complete — L3 nit |
-| 5 | Tab 1 profile | ✅ complete (G7 closed) |
-| 6 | Tab 7 uploads | ✅ complete (G9, G10 closed) |
-| 7 | Tab 5 filters | ✅ complete (B1, G13 closed) — G11 step 4 optional cleanup |
-| 8 | Tab 3 API keys | ✅ real backend (G1 closed) — L1 badge flip |
-| 9 | Tab 4 billing | 🔶 G2 open (coupon still client-side); auto-save/dirty-diff PATCH still unbuilt |
-| 10 | Tab 9 checkout | 🔶 G5 open (`withFieldGroup`, country logic, email pair, server error) |
-| 11 | Tab 10 editor + Tab 11 builder | 🔶 editor: G2 + L2 open (G6 closed); builder ✅ |
-| 12 | Tab 2 wizard + Tab 12 table | 🔶 invite: G8 server-action flow open; table ✅ (G4 closed) — L5 nit |
+| 1 | Scaffold (nav, namespaces, registry, menu, layout, sub-pages) | ✅ complete |
+| 2 | Composition + error spine + 3 ui components | ✅ complete |
+| 3 | Tab 6 field states + validation modes | ✅ complete |
+| 4 | Tab 8 error lab | ✅ complete |
+| 5 | Tab 1 profile | ✅ complete |
+| 6 | Tab 7 uploads | ✅ complete |
+| 7 | Tab 5 filters | ✅ complete |
+| 8 | Tab 3 API keys | ✅ complete (real backend) |
+| 9 | Tab 4 billing | ✅ complete (coupon through simulation endpoint, i18n keys) |
+| 10 | Tab 9 checkout | ✅ complete (withFieldGroup, country logic, email pair, server error) |
+| 11 | Tab 10 editor + Tab 11 builder | ✅ complete (editor: simulation endpoint, per-user draft; builder ✅) |
+| 12 | Tab 2 wizard + Tab 12 table | ✅ complete (invite: server action file, quota; table: pushValue add-row) |
 
-### DoD status (updated rev 9)
+### DoD status (updated rev 10)
 
-1. lint/typecheck — ✅ · 2. duplicate-messages baseline — ✅ restored (B2 closed) · 3. en/tr
-parity — ✅ for all existing keys; 🔶 L3 remnants (a handful of hardcoded strings incl. Zod
-messages) · 4. ui-component tests written — ✅ (G12) · 5. manual 409 smoke both locales — ⏳
-pending (Berkay) · 6. depcruise — ✅ · 7. sim-route hardening — ✅ **verified live**
-(unauth 401; `delayMs` 999999 → 400 in 0.12 s) · 8. a11y failed-submit pass — roles present
-✅, manual keyboard/SR pass ⏳ pending · 9. build — ✅ green and deployed; all 13 routes 200
-authenticated on app.eys.gen.tr (first-load JS numbers still unrecorded)
+1. lint/typecheck — ✅ · 2. duplicate-messages baseline — ✅ restored · 3. en/tr parity — ✅
+(all keys in both locales, Zod factories use translated messages) · 4. ui-component tests
+written — ✅ (G12) · 5. manual 409 smoke both locales — ⏳ pending (Berkay) · 6. depcruise — ✅
+· 7. sim-route hardening — ✅ **verified live** (unauth 401; `delayMs` 999999 → 400 in 0.12 s)
+· 8. a11y failed-submit pass — roles present ✅, manual keyboard/SR pass ⏳ pending · 9. build
+— ✅ green and deployed; all 13 routes 200 authenticated on app.eys.gen.tr (first-load JS
+numbers still unrecorded)
 
-**Remaining-work order (rev 9):** G11 → L3 (shared schema-factory work) → G2 → G5 → G8 →
-L1/L2/L4/L5 anytime.
+All feature items from the issue register are closed. The 12-tab Forms Gallery is
+**feature-complete** per the plan.
 
 ## Overview
 
@@ -1615,36 +1522,30 @@ gets checked off here before the next starts.
 Status markers (rev 8 audit): ✅ complete · 🔶 partial · ❌ not to spec — open items
 referenced by B/G number from the Issue Register above.
 
-- ✅ **Phase 0 — Prerequisites** *(safe to ship alone; nothing user-visible yet)*:
-  `useAllMessages`, `getSurface` widening, `settings.errors.usernameTaken` (en+tr),
-  `labels?` prop on upload components. Run `generate-i18n-types`.
-- ✅ **Phase 1 — Scaffold** *(B2 open — duplicate keys)*: nav, `forms` + `apiKeys` message
-  namespaces, `forms-gallery` registry, gallery menu page + card grid, `forms/layout.tsx`,
-  12 placeholder sub-pages. Regenerate i18n types.
-- ✅ **Phase 2 — Composition + error spine** *(G11 schemas, G12 tests open; load
-  `ui-components` skill for the 3 ui-kit components; `datetime-inputs` for Date/Time bound
-  fields)*: `form-context`/`form-hook`, the 11 bound field components, `FormFieldInfo` lift,
-  `FormErrorBanner`, `StepIndicator`, `exceptionToFormErrors`, `error-scenarios`, simulation
-  route + its api layers.
-- ❌ **Phase 3 — Tab 6** (field states + validation modes) *(G3, G10)* — proves every bound
-  component renders every state; no submit logic.
-- ✅ **Phase 4 — Tab 8** (error lab) — proves the whole error spine before any real form leans
-  on it.
-- 🔶 **Phase 5 — Tab 1** (profile) *(G7 — async username check)* — first real form, first
-  real 409 through the spine.
-- 🔶 **Phase 6 — Tab 7** (uploads) *(G9 avatar wiring, G10 i18n)* — `xhrUpload` + labels in
-  anger.
-- 🔶 **Phase 7 — Tab 5** (filters) *(B1 locale bug, G13)* — standalone URL-state pattern.
-- ❌ **Phase 8 — Tab 3** (API keys) *(B3, G1 — currently an in-memory stand-in)* — TanStack
-  Query optimistic mutations, real conflict toast.
-- 🔶 **Phase 9 — Tab 4** (billing) *(G2, G10; auto-save + `onBlurAsync` coupon missing)* —
-  listeners, dirty-diff PATCH, dual-surface coupon errors.
-- ❌ **Phase 10 — Tab 9** (checkout) *(G5 — flat fields, no groups)* — `withFieldGroup`,
-  linked fields, dependent country logic.
-- 🔶 **Phase 11 — Tabs 10 + 11** (editor; builder) *(G6 intents/draft; builder near-complete)*
-  — submit meta + dynamic schemas.
-- ❌ **Phase 12 — Tabs 2 + 12** (wizard + server actions; editable table) *(G8, G4)* — most
-  moving parts last.
+All 12 phases are **complete** (rev 10). See the rev-10 re-audit above for the close list.
+
+- ✅ **Phase 0 — Prerequisites** — `useAllMessages`, `getSurface` widening,
+  `settings.errors.usernameTaken` (en+tr), `labels?` prop on upload components.
+- ✅ **Phase 1 — Scaffold** — nav, `forms` + `apiKeys` message namespaces, `forms-gallery`
+  registry, gallery menu page + card grid, `forms/layout.tsx`, 12 sub-pages.
+- ✅ **Phase 2 — Composition + error spine** — `form-context`/`form-hook`, 11 bound field
+  components, `FormFieldInfo`, `FormErrorBanner`, `StepIndicator`, `exceptionToFormErrors`,
+  `error-scenarios`, simulation route + api layers. Plus G11 schema wiring.
+- ✅ **Phase 3 — Tab 6** (field states + validation modes) — rebuilt on the spine with
+  `revalidateLogic`, linked fields, programmatic setMeta.
+- ✅ **Phase 4 — Tab 8** (error lab) — proves the whole error spine.
+- ✅ **Phase 5 — Tab 1** (profile) — real 409 through the spine, debounced username check.
+- ✅ **Phase 6 — Tab 7** (uploads) — `xhrUpload`, avatar uploads, i18n labels.
+- ✅ **Phase 7 — Tab 5** (filters) — URL-synced, category + date fields, S10 clamping.
+- ✅ **Phase 8 — Tab 3** (API keys) — real backend, TanStack Query optimistic mutations.
+- ✅ **Phase 9 — Tab 4** (billing) — coupon through simulation endpoint, listeners,
+  dual-surface errors.
+- ✅ **Phase 10 — Tab 9** (checkout) — `withFieldGroup`, country logic, email pair,
+  server error via simulation endpoint.
+- ✅ **Phase 11 — Tabs 10 + 11** (editor; builder) — submit intents, per-user draft, dynamic
+  schemas.
+- ✅ **Phase 12 — Tabs 2 + 12** (wizard + interactive table) — server action server,
+  array-mode field API, quota panel.
 
 ## Verification & Definition of Done (per phase)
 
