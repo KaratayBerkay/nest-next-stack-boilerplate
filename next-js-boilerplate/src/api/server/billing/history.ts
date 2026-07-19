@@ -10,7 +10,11 @@ export interface BillingHistoryEntry {
   createdAt: string;
 }
 
-export async function fetchBillingHistoryServer(): Promise<BillingHistoryEntry[]> {
-  const data = await apiFetchJson<{ invoices: BillingHistoryEntry[] }>(BILLING_HISTORY_URL);
+export async function fetchBillingHistoryServer(): Promise<
+  BillingHistoryEntry[]
+> {
+  const data = await apiFetchJson<{ invoices: BillingHistoryEntry[] }>(
+    BILLING_HISTORY_URL,
+  );
   return data.invoices;
 }

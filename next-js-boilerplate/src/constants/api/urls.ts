@@ -78,7 +78,8 @@ export const MESSAGES_READ_URL = "/api/messages/read" as const;
 
 export const USERS_SEARCH_PREFIX = "/api/users/search" as const;
 
-export const FORMS_DEMO_SIMULATE_ERROR_URL = "/api/forms-demo/simulate-error" as const;
+export const FORMS_DEMO_SIMULATE_ERROR_URL =
+  "/api/forms-demo/simulate-error" as const;
 
 export const EVENTS_URL = "/api/events" as const;
 export const MESSAGES_CONVERSATIONS_URL =
@@ -89,7 +90,8 @@ export const MESSAGES_ROOM_MESSAGES_PREFIX = "/api/messages/rooms/" as const;
 export const MESSAGES_UNREAD_COUNT_URL = "/api/messages/unread-count" as const;
 export const CSRF_TOKEN_BACKEND_URL = "/csrf/token" as const;
 export const GQL_BACKEND_PATH = "/graphql" as const;
-export const VAULT_SECRET_PATH = "secret/data/secret/production/frontend" as const;
+export const VAULT_SECRET_PATH =
+  "secret/data/secret/production/frontend" as const;
 
 export const NOTIFICATIONS_URL = "/api/notifications" as const;
 export const NOTIFICATIONS_UNREAD_COUNT_URL =

@@ -95,7 +95,11 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function TypographyPage({ initialTab }: { initialTab?: string }) {
+export default function TypographyPage({
+  initialTab,
+}: {
+  initialTab?: string;
+}) {
   return (
     <ExampleTabs
       title="Typography"

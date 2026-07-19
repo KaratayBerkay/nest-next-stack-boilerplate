@@ -122,8 +122,8 @@ function Dots({ total, className }: { total: number; className?: string }) {
             className={cn(
               "h-2 rounded-full transition-all duration-300",
               i === selectedIndex
-                ? "w-5 bg-fg"
-                : "w-2 bg-fg/30 group-hover:bg-fg/50",
+                ? "bg-fg w-5"
+                : "bg-fg/30 group-hover:bg-fg/50 w-2",
             )}
           />
         </button>
@@ -140,10 +140,10 @@ function ProductGallery() {
           {products.map((product, i) => (
             <CarouselItem
               key={i}
-              className="pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
+              className="basis-full pl-4 sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
             >
-              <div className="group relative bg-surface rounded-xl border border-border overflow-hidden transition-shadow hover:shadow-lg h-full">
-                <div className="relative aspect-[4/3] lg:aspect-video overflow-hidden">
+              <div className="group bg-surface border-border relative h-full overflow-hidden rounded-xl border transition-shadow hover:shadow-lg">
+                <div className="relative aspect-[4/3] overflow-hidden lg:aspect-video">
                   <div
                     className={cn(
                       "h-full w-full bg-gradient-to-br transition-transform duration-500 group-hover:scale-105",
@@ -160,19 +160,17 @@ function ProductGallery() {
                   )}
                 </div>
                 <div className="p-4">
-                  <h3 className="font-semibold text-sm leading-tight mb-1">
+                  <h3 className="mb-1 text-sm leading-tight font-semibold">
                     {product.name}
                   </h3>
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="mb-2 flex items-center gap-2">
                     <Stars rating={product.rating} />
                     <span className="text-muted text-xs">
                       {product.rating} ({product.reviews.toLocaleString()})
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold">
-                      ${product.price}
-                    </span>
+                    <span className="text-lg font-bold">${product.price}</span>
                     {product.originalPrice && (
                       <span className="text-muted text-sm line-through">
                         ${product.originalPrice}
@@ -240,14 +238,17 @@ function TestimonialCarousel() {
         <CarouselContent className="-ml-4">
           {testimonials.map((t, i) => (
             <CarouselItem key={i} className="pl-4">
-              <div className="bg-surface rounded-xl border border-border p-8 md:p-12 flex flex-col items-center text-center min-h-[280px] justify-center">
+              <div className="bg-surface border-border flex min-h-[280px] flex-col items-center justify-center rounded-xl border p-8 text-center md:p-12">
                 <Stars rating={t.rating} />
-                <p className="text-fg mt-4 mb-6 max-w-2xl text-base md:text-lg italic leading-relaxed">
+                <p className="text-fg mt-4 mb-6 max-w-2xl text-base leading-relaxed italic md:text-lg">
                   &ldquo;{t.text}&rdquo;
                 </p>
-                <Avatar className="h-12 w-12 mb-3 ring-2 ring-border" fallback={t.avatar} />
+                <Avatar
+                  className="ring-border mb-3 h-12 w-12 ring-2"
+                  fallback={t.avatar}
+                />
                 <div>
-                  <p className="font-semibold text-sm">{t.name}</p>
+                  <p className="text-sm font-semibold">{t.name}</p>
                   <p className="text-muted text-xs">{t.role}</p>
                 </div>
               </div>
@@ -281,12 +282,12 @@ function LogoCarousel() {
       <div className="relative">
         <CarouselContent className="-ml-3">
           {logoPartners.map((logo, i) => (
-            <CarouselItem key={i} className="pl-3 basis-1/3 md:basis-1/5">
-              <div className="bg-surface hover:bg-surface-hover flex h-20 items-center justify-center rounded-lg border border-border transition-colors">
+            <CarouselItem key={i} className="basis-1/3 pl-3 md:basis-1/5">
+              <div className="bg-surface hover:bg-surface-hover border-border flex h-20 items-center justify-center rounded-lg border transition-colors">
                 <span className="text-muted text-xl font-bold tracking-tight">
                   {logo.letter}
                 </span>
-                <span className="text-muted/60 text-xs font-medium ml-1">
+                <span className="text-muted/60 ml-1 text-xs font-medium">
                   {logo.name}
                 </span>
               </div>
@@ -468,7 +469,14 @@ function PureCssCarousel() {
   );
 
   const endDrag = useCallback(
-    () => endDragModuleLevel(dragRef, scrollRef, markInteraction, getStride, restoreSnap),
+    () =>
+      endDragModuleLevel(
+        dragRef,
+        scrollRef,
+        markInteraction,
+        getStride,
+        restoreSnap,
+      ),
     [markInteraction, getStride, restoreSnap],
   );
 
@@ -487,24 +495,21 @@ function PureCssCarousel() {
         onTouchStart={markInteraction}
         onTouchMove={markInteraction}
         onWheel={markInteraction}
-        className="flex w-full overflow-x-auto snap-x snap-mandatory gap-4 rounded-xl scroll-smooth select-none cursor-grab active:cursor-grabbing"
+        className="flex w-full cursor-grab snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth rounded-xl select-none active:cursor-grabbing"
         style={{ scrollbarWidth: "none" }}
       >
         {cssSlides.map((slide, i) => (
-          <div
-            key={i}
-            className="snap-center shrink-0 w-full"
-          >
+          <div key={i} className="w-full shrink-0 snap-center">
             <div
               className={cn(
-                "relative h-64 sm:h-80 lg:h-[min(24rem,55vh)] w-full rounded-xl bg-gradient-to-br flex flex-col items-center justify-center text-center p-8",
+                "relative flex h-64 w-full flex-col items-center justify-center rounded-xl bg-gradient-to-br p-8 text-center sm:h-80 lg:h-[min(24rem,55vh)]",
                 slide.gradient,
               )}
             >
-              <h3 className="text-white text-xl sm:text-2xl font-bold mb-2">
+              <h3 className="mb-2 text-xl font-bold text-white sm:text-2xl">
                 {slide.title}
               </h3>
-              <p className="text-white/70 text-sm sm:text-base">
+              <p className="text-sm text-white/70 sm:text-base">
                 {slide.description}
               </p>
             </div>
@@ -513,7 +518,7 @@ function PureCssCarousel() {
       </div>
 
       {/* Dots */}
-      <div className="flex justify-center mt-2">
+      <div className="mt-2 flex justify-center">
         {cssSlides.map((_, i) => (
           <button
             key={i}
@@ -527,8 +532,8 @@ function PureCssCarousel() {
               className={cn(
                 "h-2 rounded-full transition-all duration-300",
                 i === activeIndex
-                  ? "w-5 bg-fg"
-                  : "w-2 bg-fg/30 group-hover:bg-fg/50",
+                  ? "bg-fg w-5"
+                  : "bg-fg/30 group-hover:bg-fg/50 w-2",
               )}
             />
           </button>
@@ -569,11 +574,7 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function CarouselPage({
-  initialTab,
-}: {
-  initialTab?: string;
-}) {
+export default function CarouselPage({ initialTab }: { initialTab?: string }) {
   return (
     <ExampleTabs
       title="Carousel"

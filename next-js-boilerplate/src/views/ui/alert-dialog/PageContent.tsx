@@ -16,7 +16,8 @@ import { useToast } from "@/components/ui/Toast";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
-const INITIAL_CONTENT = "Draft: Project notes\n\n- Update dependencies\n- Review PR #42\n- Deploy to staging";
+const INITIAL_CONTENT =
+  "Draft: Project notes\n\n- Update dependencies\n- Review PR #42\n- Deploy to staging";
 
 function handleSave(
   setOriginalText: Dispatch<SetStateAction<string>>,
@@ -24,7 +25,11 @@ function handleSave(
   toast: ReturnType<typeof useToast>["toast"],
 ) {
   setOriginalText(text);
-  toast({ title: "Changes saved", description: "Your content has been saved.", variant: "success" });
+  toast({
+    title: "Changes saved",
+    description: "Your content has been saved.",
+    variant: "success",
+  });
 }
 
 function handleDiscard(
@@ -52,7 +57,9 @@ function UnsavedChangesContent() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-2">
         <span className="flex items-center gap-1.5 text-sm font-semibold">
-          {isDirty && <span className="inline-block h-2 w-2 rounded-full bg-warning" />}
+          {isDirty && (
+            <span className="bg-warning inline-block h-2 w-2 rounded-full" />
+          )}
           Editor
         </span>
         <span className="text-muted text-xs">
@@ -65,7 +72,10 @@ function UnsavedChangesContent() {
         onChange={(e) => setText(e.target.value)}
       />
       <div className="flex gap-2">
-        <Button variant="outline" onClick={() => handleCloseClick(isDirty, setDialogOpen)}>
+        <Button
+          variant="outline"
+          onClick={() => handleCloseClick(isDirty, setDialogOpen)}
+        >
           Close
         </Button>
         <Button
@@ -89,13 +99,13 @@ function UnsavedChangesContent() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="rounded bg-error px-4 py-2 text-sm text-error-fg"
+              className="bg-error text-error-fg rounded px-4 py-2 text-sm"
               onClick={() => handleDiscard(setText, originalText)}
             >
               Discard
             </AlertDialogAction>
             <AlertDialogAction
-              className="rounded bg-brand px-4 py-2 text-sm text-white"
+              className="bg-brand rounded px-4 py-2 text-sm text-white"
               onClick={() => handleSave(setOriginalText, text, toast)}
             >
               Save
@@ -129,7 +139,7 @@ function SmallAlertDialogCard() {
             <AlertDialogCancel className="border-border hover:bg-surface-hover rounded border px-4 py-2 text-sm">
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction className="rounded bg-error px-4 py-2 text-sm text-error-fg">
+            <AlertDialogAction className="bg-error text-error-fg rounded px-4 py-2 text-sm">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -144,12 +154,14 @@ function MediumAlertDialogCard() {
 
   return (
     <div className="surface flex flex-col gap-3 rounded-lg p-4">
-      <h3 className="text-sm font-semibold">Medium — Destructive with Checklist</h3>
+      <h3 className="text-sm font-semibold">
+        Medium — Destructive with Checklist
+      </h3>
       <p className="text-muted text-xs">
         A destructive dialog listing the items that will be affected.
       </p>
       <AlertDialog>
-        <AlertDialogTrigger className="bg-error self-start rounded px-4 py-2 text-sm font-medium text-error-fg hover:opacity-90">
+        <AlertDialogTrigger className="bg-error text-error-fg self-start rounded px-4 py-2 text-sm font-medium hover:opacity-90">
           Delete 3 files?
         </AlertDialogTrigger>
         <AlertDialogContent className="max-w-md">
@@ -171,7 +183,7 @@ function MediumAlertDialogCard() {
             <AlertDialogCancel className="border-border hover:bg-surface-hover rounded border px-4 py-2 text-sm">
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction className="rounded bg-error px-4 py-2 text-sm text-error-fg">
+            <AlertDialogAction className="bg-error text-error-fg rounded px-4 py-2 text-sm">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -189,14 +201,14 @@ function LargeAlertDialogCard() {
         A full warning dialog with severity icon and bullet list.
       </p>
       <AlertDialog>
-        <AlertDialogTrigger className="rounded bg-error self-start px-4 py-2 text-sm font-medium text-error-fg hover:opacity-90">
+        <AlertDialogTrigger className="bg-error text-error-fg self-start rounded px-4 py-2 text-sm font-medium hover:opacity-90">
           Delete account
         </AlertDialogTrigger>
         <AlertDialogContent className="max-w-lg">
           <AlertDialogHeader>
-            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-error/10 sm:mx-0">
+            <div className="bg-error/10 mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full sm:mx-0">
               <svg
-                className="h-6 w-6 text-error"
+                className="text-error h-6 w-6"
                 fill="none"
                 viewBox="0 0 24 24"
                 strokeWidth="1.5"
@@ -232,7 +244,7 @@ function LargeAlertDialogCard() {
             <AlertDialogCancel className="border-border hover:bg-surface-hover rounded border px-4 py-2 text-sm">
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction className="rounded bg-error px-4 py-2 text-sm text-error-fg">
+            <AlertDialogAction className="bg-error text-error-fg rounded px-4 py-2 text-sm">
               Delete account
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -276,7 +288,7 @@ const examples: UIExample[] = [
                 <AlertDialogCancel className="border-border hover:bg-surface-hover rounded border px-4 py-2 text-sm">
                   Cancel
                 </AlertDialogCancel>
-                <AlertDialogAction className="rounded bg-error px-4 py-2 text-sm text-error-fg">
+                <AlertDialogAction className="bg-error text-error-fg rounded px-4 py-2 text-sm">
                   Continue
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -301,7 +313,11 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function AlertDialogPage({ initialTab }: { initialTab?: string }) {
+export default function AlertDialogPage({
+  initialTab,
+}: {
+  initialTab?: string;
+}) {
   return (
     <ExampleTabs
       title="Alert Dialog"

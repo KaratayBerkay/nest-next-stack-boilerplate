@@ -26,7 +26,7 @@ export function LocalizedTab() {
           className="max-w-sm"
         />
         {city && (
-          <div className="bg-surface rounded border border-border px-3 py-2">
+          <div className="bg-surface border-border rounded border px-3 py-2">
             <span className="text-sm">
               Selected: <strong>{getLabel(city, cities)}</strong>
             </span>

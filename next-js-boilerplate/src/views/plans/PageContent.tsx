@@ -42,7 +42,11 @@ function buildTierCards(
         current={isCurrent}
         currentLabel={t.currentPlan as string}
         ctaLabel={
-          isCurrent ? (t.currentPlan as string) : hasAccess ? (t.included as string) : (t.upgrade as string)
+          isCurrent
+            ? (t.currentPlan as string)
+            : hasAccess
+              ? (t.included as string)
+              : (t.upgrade as string)
         }
         ctaHref={
           isUpgrade && user

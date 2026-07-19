@@ -6,7 +6,11 @@
   if (!theme) {
     // Migrate legacy componentStyle cookie
     var styleMatch = document.cookie.match(/(?:^|;\s*)componentStyle=([^;]*)/);
-    if (styleMatch && STYLES.indexOf(styleMatch[1]) !== -1 && styleMatch[1] !== "default") {
+    if (
+      styleMatch &&
+      STYLES.indexOf(styleMatch[1]) !== -1 &&
+      styleMatch[1] !== "default"
+    ) {
       theme = styleMatch[1];
     }
   }

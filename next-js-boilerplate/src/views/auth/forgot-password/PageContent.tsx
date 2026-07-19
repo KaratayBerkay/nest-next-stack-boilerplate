@@ -119,7 +119,10 @@ export function ForgotPasswordContent() {
         </Button>
       </form>
 
-      <Link href={LOGIN_PATH} className="text-muted hover:text-brand text-xs underline">
+      <Link
+        href={LOGIN_PATH}
+        className="text-muted hover:text-brand text-xs underline"
+      >
         {t.form.forgotPassword.loginLink}
       </Link>
     </div>

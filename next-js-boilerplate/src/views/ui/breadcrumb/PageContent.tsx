@@ -119,9 +119,7 @@ function FolderExplorer() {
         </Breadcrumb>
         <FolderContent
           currentFolder={currentFolder}
-          onFolderClick={(folder) =>
-            handleFolderClick(folder, setCurrentPath)
-          }
+          onFolderClick={(folder) => handleFolderClick(folder, setCurrentPath)}
         />
       </section>
     </div>
@@ -164,7 +162,11 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function BreadcrumbPage({ initialTab }: { initialTab?: string }) {
+export default function BreadcrumbPage({
+  initialTab,
+}: {
+  initialTab?: string;
+}) {
   return (
     <ExampleTabs
       title="Breadcrumb"

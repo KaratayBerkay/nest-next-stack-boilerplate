@@ -27,7 +27,11 @@ export const validationSchema = Joi.object({
     otherwise: Joi.optional(),
   }),
   TOKEN_DERIVATION_SECRET: Joi.string().min(16).optional(),
-  ENCRYPTION_KEY: Joi.string().min(16).optional(),
+  ENCRYPTION_KEY: Joi.string().min(16).when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+    otherwise: Joi.optional(),
+  }),
 
   // ── Stripe ────────────────────────────────────────────────────────────────
   STRIPE_SECRET_KEY: Joi.string().optional(),
@@ -36,7 +40,7 @@ export const validationSchema = Joi.object({
   // ── VAPID (Web Push) ─────────────────────────────────────────────────────
   VAPID_PUBLIC_KEY: Joi.string().optional(),
   VAPID_PRIVATE_KEY: Joi.string().optional(),
-  VAPID_EMAIL: Joi.string().email().optional(),
+  VAPID_SUBJECT: Joi.string().email().optional(),
 });
 
 // The matching `validationOptions`: tolerate the many unrelated env vars this app uses

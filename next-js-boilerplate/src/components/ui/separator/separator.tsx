@@ -19,11 +19,7 @@ export function Separator({
       <div
         role="separator"
         aria-orientation={orientation}
-        className={cn(
-          "flex items-center gap-3",
-          fonts,
-          className,
-        )}
+        className={cn("flex items-center gap-3", fonts, className)}
         {...props}
       >
         <span className="bg-border h-px flex-1" />

@@ -69,7 +69,7 @@ export function ImageUpload({
         <div className="relative">
           <div
             className={cn(
-              "flex size-20 items-center justify-center overflow-hidden border-2 border-dashed border-border bg-surface",
+              "border-border bg-surface flex size-20 items-center justify-center overflow-hidden border-2 border-dashed",
               "rounded-full",
             )}
           >
@@ -93,7 +93,7 @@ export function ImageUpload({
               </svg>
             )}
           </div>
-          <label className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-bg/60 text-xs font-medium text-fg opacity-0 transition-opacity hover:opacity-100">
+          <label className="bg-bg/60 text-fg absolute inset-0 flex cursor-pointer items-center justify-center rounded-full text-xs font-medium opacity-0 transition-opacity hover:opacity-100">
             <span>{labels.changePhoto}</span>
             <input
               type="file"
@@ -113,7 +113,15 @@ export function ImageUpload({
                   }
                   const preview = URL.createObjectURL(file);
                   revokeRef.current.add(preview);
-                  onChange([{ id: "avatar", file, progress: 0, status: "done", preview } as UploadFile]);
+                  onChange([
+                    {
+                      id: "avatar",
+                      file,
+                      progress: 0,
+                      status: "done",
+                      preview,
+                    } as UploadFile,
+                  ]);
                 }
               }}
             />
@@ -154,7 +162,7 @@ export function ImageUpload({
             <div
               key={f.id}
               className={cn(
-                "group relative overflow-hidden rounded-lg border border-border bg-surface",
+                "group border-border bg-surface relative overflow-hidden rounded-lg border",
                 aspect === "video" ? "aspect-video" : "aspect-square",
               )}
             >
@@ -169,12 +177,21 @@ export function ImageUpload({
               <button
                 type="button"
                 onClick={() => handleRemove(f.id)}
-                className="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-bg/80 text-xs text-fg opacity-0 transition-opacity hover:bg-bg group-hover:opacity-100"
+                className="bg-bg/80 text-fg hover:bg-bg absolute top-1 right-1 flex size-6 items-center justify-center rounded-full text-xs opacity-0 transition-opacity group-hover:opacity-100"
                 aria-label={labels.remove!(f.file.name)}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
               </button>
-              <div className="absolute right-1 bottom-1 left-1 truncate rounded bg-bg/80 px-1 py-0.5 text-xxs text-fg opacity-0 transition-opacity group-hover:opacity-100">
+              <div className="bg-bg/80 text-xxs text-fg absolute right-1 bottom-1 left-1 truncate rounded px-1 py-0.5 opacity-0 transition-opacity group-hover:opacity-100">
                 {f.file.name}
               </div>
             </div>

@@ -20,11 +20,41 @@ interface NotificationItem {
 }
 
 const NOTIFICATIONS: NotificationItem[] = [
-  { id: "1", initials: "A", title: "Alex commented on your post", time: "2m ago", unread: true },
-  { id: "2", initials: "S", title: "Sarah accepted your invitation", time: "1h ago", unread: true },
-  { id: "3", initials: "S", title: "System update completed", time: "3h ago", unread: false },
-  { id: "4", initials: "N", title: "New team member joined", time: "yesterday", unread: false },
-  { id: "5", initials: "P", title: "Payment received", time: "2 days ago", unread: false },
+  {
+    id: "1",
+    initials: "A",
+    title: "Alex commented on your post",
+    time: "2m ago",
+    unread: true,
+  },
+  {
+    id: "2",
+    initials: "S",
+    title: "Sarah accepted your invitation",
+    time: "1h ago",
+    unread: true,
+  },
+  {
+    id: "3",
+    initials: "S",
+    title: "System update completed",
+    time: "3h ago",
+    unread: false,
+  },
+  {
+    id: "4",
+    initials: "N",
+    title: "New team member joined",
+    time: "yesterday",
+    unread: false,
+  },
+  {
+    id: "5",
+    initials: "P",
+    title: "Payment received",
+    time: "2 days ago",
+    unread: false,
+  },
 ];
 
 function handleNotificationClick(
@@ -252,7 +282,9 @@ function NotificationCenterContent() {
   return (
     <div className="mx-auto max-w-md space-y-2">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Notifications ({items.length})</h3>
+        <h3 className="text-lg font-semibold">
+          Notifications ({items.length})
+        </h3>
         <button
           className="text-brand text-sm hover:underline"
           onClick={() => handleMarkAllRead(toast)}
@@ -265,15 +297,23 @@ function NotificationCenterContent() {
         {items.map((item) => (
           <button
             key={item.id}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-surface/50"
+            className="hover:bg-surface/50 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors"
             onClick={() => handleNotificationClick(item, toast)}
           >
-            <Avatar size="sm" fallback={item.initials} variant={item.unread ? "brand" : "default"} />
+            <Avatar
+              size="sm"
+              fallback={item.initials}
+              variant={item.unread ? "brand" : "default"}
+            />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{item.title}</p>
               <p className="text-muted text-xs">{item.time}</p>
             </div>
-            {item.unread && <Badge variant="default" className="shrink-0">New</Badge>}
+            {item.unread && (
+              <Badge variant="default" className="shrink-0">
+                New
+              </Badge>
+            )}
           </button>
         ))}
       </div>
@@ -315,7 +355,8 @@ const examples: UIExample[] = [
   {
     id: "toast-examples",
     title: "Toast Examples",
-    description: "Basic toast variants, undo actions, sticky errors, and hover pause.",
+    description:
+      "Basic toast variants, undo actions, sticky errors, and hover pause.",
     render: () => (
       <div className="flex flex-col gap-8">
         <VariantBasicsContent />
@@ -328,7 +369,8 @@ const examples: UIExample[] = [
   {
     id: "notification-center",
     title: "Notification Center",
-    description: "Inbox-style notification list with avatars, timestamps, and unread badges.",
+    description:
+      "Inbox-style notification list with avatars, timestamps, and unread badges.",
     render: () => <NotificationCenterContent />,
   },
   {

@@ -1,5 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { markNotificationReadServer, markAllNotificationsReadServer } from "@/api/server/notifications/mark-read";
+import {
+  markNotificationReadServer,
+  markAllNotificationsReadServer,
+} from "@/api/server/notifications/mark-read";
 
 export function useMarkNotificationRead() {
   const queryClient = useQueryClient();

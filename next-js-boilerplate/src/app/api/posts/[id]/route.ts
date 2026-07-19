@@ -39,7 +39,7 @@ export async function GET(
     { post: data.post },
     {
       headers: {
-        'Cache-Control': 'public, max-age=60, stale-while-revalidate=120',
+        "Cache-Control": "public, max-age=60, stale-while-revalidate=120",
       },
     },
   );

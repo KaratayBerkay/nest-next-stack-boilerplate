@@ -33,9 +33,7 @@ export function useMessages<P extends keyof I18nMessages>(
 export function useAllMessages(): I18nMessages {
   const all = useContext(MessagesContext);
   if (!all) {
-    throw new Error(
-      "Messages not found. Is MessagesProvider mounted?",
-    );
+    throw new Error("Messages not found. Is MessagesProvider mounted?");
   }
   return all;
 }

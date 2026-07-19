@@ -38,7 +38,10 @@ setup("login and save storageState", async ({ request }) => {
     // (no-auth smoke UI still runs via an empty storage state).
     if (process.env.CI_NO_BACKEND) {
       await fs.mkdir("playwright/.auth", { recursive: true });
-      await fs.writeFile(AUTH_FILE, JSON.stringify({ cookies: [], origins: [] }));
+      await fs.writeFile(
+        AUTH_FILE,
+        JSON.stringify({ cookies: [], origins: [] }),
+      );
       return;
     }
     throw e;

@@ -10,7 +10,10 @@ import { formatPrice } from "@/lib/currency";
 import { useCurrencyCookie } from "@/hooks/useCurrencyCookie";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { plansPath } from "@/constants/routes";
-import { formatDateByPreference, type DateDisplayPreference } from "@/lib/date-time";
+import {
+  formatDateByPreference,
+  type DateDisplayPreference,
+} from "@/lib/date-time";
 import type { CurrencyCode } from "@/constants/currency";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsBillingPageInfo } from "@/constants/page-info";
@@ -177,9 +180,21 @@ export function FreePageView() {
         <PageInfoButton content={settingsBillingPageInfo} />
       </div>
 
-      {renderCurrentPlan(tier, periodEnd, cancelAtPeriodEnd, t as unknown as Record<string, string>, currency, dateDisplay)}
+      {renderCurrentPlan(
+        tier,
+        periodEnd,
+        cancelAtPeriodEnd,
+        t as unknown as Record<string, string>,
+        currency,
+        dateDisplay,
+      )}
 
-      {renderBillingHistory(loadingHistory, transactions, t as unknown as Record<string, string>, dateDisplay)}
+      {renderBillingHistory(
+        loadingHistory,
+        transactions,
+        t as unknown as Record<string, string>,
+        dateDisplay,
+      )}
     </div>
   );
 }

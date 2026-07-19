@@ -1,6 +1,17 @@
-import { useState, useCallback, useMemo, type Dispatch, type SetStateAction } from "react";
+import {
+  useState,
+  useCallback,
+  useMemo,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import { CheckboxChip } from "@/components/ui/Checkbox";
-import { Command, CommandInput, CommandList, CommandItem } from "@/components/ui/Command";
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandItem,
+} from "@/components/ui/Command";
 import { toggleItem } from "./helpers";
 import { multiData } from "./data";
 
@@ -65,7 +76,7 @@ export function MultiSelectTab() {
           <button
             type="button"
             onClick={() => setOpen((prev) => !prev)}
-            className="focus-visible:ring-brand flex h-9 w-full items-center justify-between rounded-md border border-border bg-bg px-3 py-1 text-sm text-fg shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+            className="focus-visible:ring-brand border-border bg-bg text-fg flex h-9 w-full items-center justify-between rounded-md border px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
           >
             <span className="truncate">
               {selected.length > 0
@@ -106,7 +117,7 @@ export function MultiSelectTab() {
                     </CommandItem>
                   ))}
                   {filtered.length === 0 && (
-                    <div className="py-6 text-center text-sm text-muted">
+                    <div className="text-muted py-6 text-center text-sm">
                       No results
                     </div>
                   )}

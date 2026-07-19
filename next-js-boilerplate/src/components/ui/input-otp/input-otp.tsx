@@ -5,7 +5,19 @@ import { useFieldMessages } from "@/components/ui/field-messages";
 import type { InputOTPProps } from "@/types/ui/InputOTP-types";
 
 export const InputOTP = forwardRef<HTMLInputElement, InputOTPProps>(
-  ({ className, value, onChange, maxLength, error, description, autoFocus, ...props }, ref) => {
+  (
+    {
+      className,
+      value,
+      onChange,
+      maxLength,
+      error,
+      description,
+      autoFocus,
+      ...props
+    },
+    ref,
+  ) => {
     const id = useId();
     const inputRef = useRef<HTMLInputElement>(null);
     const { describedBy, messages } = useFieldMessages(error, description);
@@ -57,14 +69,14 @@ export const InputOTP = forwardRef<HTMLInputElement, InputOTPProps>(
                 className={cn(
                   "flex h-10 w-9 items-center justify-center rounded-md border text-sm shadow-sm transition-all",
                   "border-border bg-surface/50",
-                  isFocused && "z-10 border-brand ring-2 ring-brand/40",
+                  isFocused && "border-brand ring-brand/40 z-10 ring-2",
                   char && "border-brand",
                 )}
                 onClick={focusInput}
                 aria-hidden="true"
               >
                 {isFocused && !char ? (
-                  <span className="animate-caret-blink motion-reduce:animate-none h-4 w-0.5 rounded bg-brand" />
+                  <span className="animate-caret-blink bg-brand h-4 w-0.5 rounded motion-reduce:animate-none" />
                 ) : (
                   char || ""
                 )}

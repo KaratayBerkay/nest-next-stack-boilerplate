@@ -14,4 +14,10 @@ export interface SwitchProps extends Omit<
   fontFamily?: string;
 }
 
-export type SwitchVariant = "default" | "outline" | "shiny" | "glass" | "neon" | "gradient";
+export type SwitchVariant =
+  | "default"
+  | "outline"
+  | "shiny"
+  | "glass"
+  | "neon"
+  | "gradient";

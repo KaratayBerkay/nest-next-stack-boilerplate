@@ -1,4 +1,5 @@
 import { RealtimeGateway } from './realtime.gateway';
+import { RealtimePresenceService } from './realtime-presence.service';
 
 interface MockWs {
   readyState: number;
@@ -29,17 +30,28 @@ function makeWs(overrides: Record<string, unknown> = {}): MockWs {
   };
 }
 
+function mockPresenceService(): RealtimePresenceService {
+  return {
+    syncPresenceToRedis: jest.fn(),
+    removePresenceFromRedis: jest.fn(),
+    refreshPresenceTTL: jest.fn(),
+  } as unknown as RealtimePresenceService;
+}
+
 describe('RealtimeGateway — public methods', () => {
   let gateway: RealtimeGateway;
 
   beforeEach(() => {
+    const mockRedis = { publish: jest.fn().mockResolvedValue(0) };
     gateway = new RealtimeGateway(
-      {} as never, // HttpAdapterHost — not needed for unit tests
+      {} as never, // HttpAdapterHost
       {} as never, // JwtService
       {} as never, // TokenStoreService
       {} as never, // TokenDerivationService
       {} as never, // CryptoService
-      {} as never, // Redis
+      mockPresenceService(),
+      mockRedis as never, // REDIS_CLIENT
+      {} as never, // REDIS_SUBSCRIBER
     );
   });
 
@@ -47,7 +59,6 @@ describe('RealtimeGateway — public methods', () => {
     it('sends to all open sockets for a user', () => {
       const ws1 = makeWs();
       const ws2 = makeWs();
-      // Access private userSockets via bracket notation
       (
         gateway as unknown as { userSockets: Map<string, Set<unknown>> }
       ).userSockets.set('u1', new Set([ws1, ws2]));
@@ -82,16 +93,12 @@ describe('RealtimeGateway — public methods', () => {
     it('sends to registered service connections', () => {
       const ws = makeWs();
       const serviceConns = (
-        gateway as unknown as {
-          serviceConnections: Map<string, Set<unknown>>;
-        }
+        gateway as unknown as { serviceConnections: Map<string, Set<unknown>> }
       ).serviceConnections;
       serviceConns.set('NOTIFICATION:u1:hash-1', new Set([ws]));
 
       const deviceIndex = (
-        gateway as unknown as {
-          serviceDeviceIndex: Map<string, Set<string>>;
-        }
+        gateway as unknown as { serviceDeviceIndex: Map<string, Set<string>> }
       ).serviceDeviceIndex;
       deviceIndex.set('NOTIFICATION:u1', new Set(['hash-1']));
 
@@ -116,9 +123,7 @@ describe('RealtimeGateway — public methods', () => {
   describe('hasServiceConnection', () => {
     it('returns true when user has registered the service', () => {
       const deviceIndex = (
-        gateway as unknown as {
-          serviceDeviceIndex: Map<string, Set<string>>;
-        }
+        gateway as unknown as { serviceDeviceIndex: Map<string, Set<string>> }
       ).serviceDeviceIndex;
       deviceIndex.set('NOTIFICATION:u1', new Set(['hash-1']));
 
@@ -132,14 +137,8 @@ describe('RealtimeGateway — public methods', () => {
 
   describe('closeSocketsForSession', () => {
     it('closes open sockets matching the session', () => {
-      const wsMatch = makeWs({
-        sessionId: 'sess-target',
-        readyState: 1,
-      });
-      const wsOther = makeWs({
-        sessionId: 'sess-other',
-        readyState: 1,
-      });
+      const wsMatch = makeWs({ sessionId: 'sess-target', readyState: 1 });
+      const wsOther = makeWs({ sessionId: 'sess-other', readyState: 1 });
       (
         gateway as unknown as { userSockets: Map<string, Set<unknown>> }
       ).userSockets.set('u1', new Set([wsMatch, wsOther]));
@@ -204,7 +203,6 @@ describe('RealtimeGateway — public methods', () => {
       const handler = jest.fn();
       gateway.registerHandler('chat', handler);
 
-      // Verify by checking the handlers map
       const handlers = (
         gateway as unknown as { handlers: Map<string, unknown> }
       ).handlers;

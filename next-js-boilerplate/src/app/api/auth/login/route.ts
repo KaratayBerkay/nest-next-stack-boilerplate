@@ -6,10 +6,7 @@ import {
   sessionUserCookieOptions,
   userTokenCookieOptions,
 } from "@/lib/cookie";
-import {
-  graphqlFetch,
-  graphqlErrorBody,
-} from "@/lib/backend";
+import { graphqlFetch, graphqlErrorBody } from "@/lib/backend";
 import { withLogging } from "@/lib/request-logger";
 
 /**

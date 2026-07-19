@@ -11,11 +11,7 @@ const variants: Record<SkeletonVariant, string> = {
   default: "bg-surface-hover",
 };
 
-export function Skeleton({
-  className,
-  variant,
-  ...props
-}: SkeletonProps) {
+export function Skeleton({ className, variant, ...props }: SkeletonProps) {
   const effectiveVariant = useComponentVariant(variant);
   const variantClass = resolveVariant(variants, effectiveVariant);
 
@@ -28,7 +24,7 @@ export function Skeleton({
       )}
       {...props}
     >
-      <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-bg/60 to-transparent motion-reduce:animate-none" />
+      <div className="animate-shimmer via-bg/60 absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent to-transparent motion-reduce:animate-none" />
     </div>
   );
 }

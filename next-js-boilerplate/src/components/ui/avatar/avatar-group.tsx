@@ -1,6 +1,9 @@
 import React from "react";
 import { cn } from "@/lib/cn";
-import type { AvatarGroupProps, AvatarGroupSize } from "@/types/ui/Avatar-types";
+import type {
+  AvatarGroupProps,
+  AvatarGroupSize,
+} from "@/types/ui/Avatar-types";
 
 const overflowSizes: Record<AvatarGroupSize, string> = {
   xs: "size-6",

@@ -10,8 +10,12 @@ export interface RoomMessage {
   createdAt: string;
 }
 
-export async function fetchRoomMessagesServer(room: string): Promise<RoomMessage[]> {
-  const res = await apiFetch(`${MESSAGES_ROOM_MESSAGES_PREFIX}${room}/messages`);
+export async function fetchRoomMessagesServer(
+  room: string,
+): Promise<RoomMessage[]> {
+  const res = await apiFetch(
+    `${MESSAGES_ROOM_MESSAGES_PREFIX}${room}/messages`,
+  );
   if (!res.ok) throw new Error("Failed to fetch room messages");
   const data = await res.json();
   return Array.isArray(data) ? data : (data.messages ?? []);

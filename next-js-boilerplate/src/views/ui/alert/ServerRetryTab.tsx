@@ -7,7 +7,9 @@ import { Badge } from "@/components/ui/Badge";
 import { Spinner } from "@/components/ui/Spinner";
 import { cn } from "@/lib/cn";
 
-function clearTimer(timerRef: React.MutableRefObject<ReturnType<typeof setInterval> | null>) {
+function clearTimer(
+  timerRef: React.MutableRefObject<ReturnType<typeof setInterval> | null>,
+) {
   if (timerRef.current) {
     clearInterval(timerRef.current);
     timerRef.current = null;
@@ -19,7 +21,9 @@ function tick(
   remainingRef: React.MutableRefObject<number>,
   startTimeRef: React.MutableRefObject<number>,
   setCountdown: React.Dispatch<React.SetStateAction<number>>,
-  setStatus: React.Dispatch<React.SetStateAction<"idle" | "active" | "dismissing" | "dismissed">>,
+  setStatus: React.Dispatch<
+    React.SetStateAction<"idle" | "active" | "dismissing" | "dismissed">
+  >,
 ) {
   const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
   const remaining = Math.max(0, remainingRef.current - elapsed);
@@ -35,7 +39,9 @@ function startTimer(
   remainingRef: React.MutableRefObject<number>,
   startTimeRef: React.MutableRefObject<number>,
   setCountdown: React.Dispatch<React.SetStateAction<number>>,
-  setStatus: React.Dispatch<React.SetStateAction<"idle" | "active" | "dismissing" | "dismissed">>,
+  setStatus: React.Dispatch<
+    React.SetStateAction<"idle" | "active" | "dismissing" | "dismissed">
+  >,
 ) {
   remainingRef.current = 30;
   startTimeRef.current = Date.now();
@@ -51,7 +57,9 @@ function handleSimulate(
   startTimeRef: React.MutableRefObject<number>,
   setCountdown: React.Dispatch<React.SetStateAction<number>>,
   setRetryCount: React.Dispatch<React.SetStateAction<number>>,
-  setStatus: React.Dispatch<React.SetStateAction<"idle" | "active" | "dismissing" | "dismissed">>,
+  setStatus: React.Dispatch<
+    React.SetStateAction<"idle" | "active" | "dismissing" | "dismissed">
+  >,
 ) {
   setStatus("active");
   setCountdown(30);
@@ -77,7 +85,9 @@ function handleMouseLeave(
   remainingRef: React.MutableRefObject<number>,
   startTimeRef: React.MutableRefObject<number>,
   setCountdown: React.Dispatch<React.SetStateAction<number>>,
-  setStatus: React.Dispatch<React.SetStateAction<"idle" | "active" | "dismissing" | "dismissed">>,
+  setStatus: React.Dispatch<
+    React.SetStateAction<"idle" | "active" | "dismissing" | "dismissed">
+  >,
 ) {
   if (timerRef.current === null && remainingRef.current > 0) {
     startTimeRef.current = Date.now();
@@ -94,7 +104,9 @@ function handleRetry(
   startTimeRef: React.MutableRefObject<number>,
   setCountdown: React.Dispatch<React.SetStateAction<number>>,
   setRetryCount: React.Dispatch<React.SetStateAction<number>>,
-  setStatus: React.Dispatch<React.SetStateAction<"idle" | "active" | "dismissing" | "dismissed">>,
+  setStatus: React.Dispatch<
+    React.SetStateAction<"idle" | "active" | "dismissing" | "dismissed">
+  >,
 ) {
   setStatus("active");
   setCountdown(30);
@@ -103,7 +115,9 @@ function handleRetry(
 }
 
 export function ServerRetryTab() {
-  const [status, setStatus] = useState<"idle" | "active" | "dismissing" | "dismissed">("idle");
+  const [status, setStatus] = useState<
+    "idle" | "active" | "dismissing" | "dismissed"
+  >("idle");
   const [countdown, setCountdown] = useState(30);
   const [retryCount, setRetryCount] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -122,19 +136,27 @@ export function ServerRetryTab() {
             <div className="mb-3 flex items-center gap-2">
               <div className="bg-success size-2 rounded-full" />
               <span className="text-sm font-medium">api.example.com</span>
-              <Badge variant="success" size="sm">Healthy</Badge>
+              <Badge variant="success" size="sm">
+                Healthy
+              </Badge>
             </div>
             <div className="text-muted grid grid-cols-3 gap-4 text-xs">
               <div>
-                <div className="mb-0.5 font-medium uppercase tracking-wider opacity-60">Latency</div>
+                <div className="mb-0.5 font-medium tracking-wider uppercase opacity-60">
+                  Latency
+                </div>
                 <div>42ms</div>
               </div>
               <div>
-                <div className="mb-0.5 font-medium uppercase tracking-wider opacity-60">Uptime</div>
+                <div className="mb-0.5 font-medium tracking-wider uppercase opacity-60">
+                  Uptime
+                </div>
                 <div>99.98%</div>
               </div>
               <div>
-                <div className="mb-0.5 font-medium uppercase tracking-wider opacity-60">Last Check</div>
+                <div className="mb-0.5 font-medium tracking-wider uppercase opacity-60">
+                  Last Check
+                </div>
                 <div>Just now</div>
               </div>
             </div>
@@ -145,7 +167,14 @@ export function ServerRetryTab() {
           </p>
           <Button
             onClick={() =>
-              handleSimulate(timerRef, remainingRef, startTimeRef, setCountdown, setRetryCount, setStatus)
+              handleSimulate(
+                timerRef,
+                remainingRef,
+                startTimeRef,
+                setCountdown,
+                setRetryCount,
+                setStatus,
+              )
             }
             variant="destructive"
             className="w-fit"
@@ -174,7 +203,13 @@ export function ServerRetryTab() {
               handleMouseEnter(timerRef, remainingRef, startTimeRef)
             }
             onMouseLeave={() =>
-              handleMouseLeave(timerRef, remainingRef, startTimeRef, setCountdown, setStatus)
+              handleMouseLeave(
+                timerRef,
+                remainingRef,
+                startTimeRef,
+                setCountdown,
+                setStatus,
+              )
             }
           >
             <div className="flex items-start gap-3">
@@ -204,7 +239,9 @@ export function ServerRetryTab() {
                 </div>
                 <div className="text-muted space-y-1 text-xs">
                   <div className="flex items-center gap-1.5">
-                    <span className="font-medium text-error">ERR_CONNECTION_REFUSED</span>
+                    <span className="text-error font-medium">
+                      ERR_CONNECTION_REFUSED
+                    </span>
                     <span>·</span>
                     <span>Attempt {retryCount + 1} of 5</span>
                   </div>
@@ -218,7 +255,7 @@ export function ServerRetryTab() {
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-1.5">
                     <Spinner size="xs" />
-                    <span className="tabular-nums text-sm font-medium">
+                    <span className="text-sm font-medium tabular-nums">
                       Retrying in {countdown}s…
                     </span>
                   </div>
@@ -227,7 +264,14 @@ export function ServerRetryTab() {
                       variant="link"
                       size="sm"
                       onClick={() =>
-                        handleRetry(timerRef, remainingRef, startTimeRef, setCountdown, setRetryCount, setStatus)
+                        handleRetry(
+                          timerRef,
+                          remainingRef,
+                          startTimeRef,
+                          setCountdown,
+                          setRetryCount,
+                          setStatus,
+                        )
                       }
                       className="h-auto p-0 text-xs font-medium"
                     >
@@ -253,19 +297,27 @@ export function ServerRetryTab() {
             <div className="mb-3 flex items-center gap-2">
               <div className="bg-error size-2 rounded-full" />
               <span className="text-sm font-medium">api.example.com</span>
-              <Badge variant="error" size="sm">Down</Badge>
+              <Badge variant="error" size="sm">
+                Down
+              </Badge>
             </div>
             <div className="text-muted grid grid-cols-3 gap-4 text-xs">
               <div>
-                <div className="mb-0.5 font-medium uppercase tracking-wider opacity-60">Attempts</div>
+                <div className="mb-0.5 font-medium tracking-wider uppercase opacity-60">
+                  Attempts
+                </div>
                 <div>{retryCount + 1} failed</div>
               </div>
               <div>
-                <div className="mb-0.5 font-medium uppercase tracking-wider opacity-60">Last Error</div>
+                <div className="mb-0.5 font-medium tracking-wider uppercase opacity-60">
+                  Last Error
+                </div>
                 <div>Connection refused</div>
               </div>
               <div>
-                <div className="mb-0.5 font-medium uppercase tracking-wider opacity-60">Status</div>
+                <div className="mb-0.5 font-medium tracking-wider uppercase opacity-60">
+                  Status
+                </div>
                 <div className="text-error">Exhausted</div>
               </div>
             </div>
@@ -275,7 +327,14 @@ export function ServerRetryTab() {
           </p>
           <Button
             onClick={() =>
-              handleRetry(timerRef, remainingRef, startTimeRef, setCountdown, setRetryCount, setStatus)
+              handleRetry(
+                timerRef,
+                remainingRef,
+                startTimeRef,
+                setCountdown,
+                setRetryCount,
+                setStatus,
+              )
             }
             variant="destructive"
             className="w-fit"

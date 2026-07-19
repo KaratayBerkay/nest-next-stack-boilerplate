@@ -1,6 +1,11 @@
 "use client";
 
-import { useState, type Dispatch, type SetStateAction, type ChangeEvent } from "react";
+import {
+  useState,
+  type Dispatch,
+  type SetStateAction,
+  type ChangeEvent,
+} from "react";
 import { IconBuilding, IconUser, IconUsers } from "@tabler/icons-react";
 import {
   Checkbox,
@@ -43,15 +48,19 @@ function TermsConsentTab() {
   return (
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-3">
-        <h3 className="text-sm font-semibold text-fg">Default</h3>
+        <h3 className="text-fg text-sm font-semibold">Default</h3>
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
           <Checkbox label="Unchecked" data-testid="checkbox-default" />
-          <Checkbox defaultChecked label="Checked" data-testid="checkbox-checked" />
+          <Checkbox
+            defaultChecked
+            label="Checked"
+            data-testid="checkbox-checked"
+          />
         </div>
       </section>
 
       <section className="flex flex-col gap-3">
-        <h3 className="text-sm font-semibold text-fg">Sizes</h3>
+        <h3 className="text-fg text-sm font-semibold">Sizes</h3>
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
           <Checkbox size="sm" label="Small" />
           <Checkbox size="md" label="Medium" defaultChecked />
@@ -60,12 +69,12 @@ function TermsConsentTab() {
       </section>
 
       <section className="flex flex-col gap-3">
-        <h3 className="text-sm font-semibold text-fg">With Label</h3>
+        <h3 className="text-fg text-sm font-semibold">With Label</h3>
         <Checkbox label="Accept terms and conditions" />
       </section>
 
       <section className="flex flex-col gap-3">
-        <h3 className="text-sm font-semibold text-fg">Disabled</h3>
+        <h3 className="text-fg text-sm font-semibold">Disabled</h3>
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
           <Checkbox disabled label="Unchecked" />
           <Checkbox disabled defaultChecked label="Checked" />
@@ -73,7 +82,7 @@ function TermsConsentTab() {
       </section>
 
       <section className="flex flex-col gap-3">
-        <h3 className="text-sm font-semibold text-fg">Checkbox Group</h3>
+        <h3 className="text-fg text-sm font-semibold">Checkbox Group</h3>
         <CheckboxGroup
           label="Favorite frameworks"
           values={groupValues}
@@ -92,7 +101,7 @@ function TermsConsentTab() {
       </section>
 
       <section className="flex flex-col gap-3">
-        <h3 className="text-sm font-semibold text-fg">Indeterminate</h3>
+        <h3 className="text-fg text-sm font-semibold">Indeterminate</h3>
         <div className="flex flex-col gap-2">
           <IndeterminateCheckbox
             checked={allChildren}
@@ -133,7 +142,7 @@ function SelectAllTab() {
   return (
     <div className="flex flex-col gap-4">
       <section className="flex flex-col gap-3">
-        <h3 className="text-sm font-semibold text-fg">To-do List</h3>
+        <h3 className="text-fg text-sm font-semibold">To-do List</h3>
         <div className="surface divide-border max-w-sm divide-y overflow-hidden">
           <div className="px-4 py-2">
             <IndeterminateCheckbox
@@ -155,7 +164,9 @@ function SelectAllTab() {
                 checked={todo.done}
                 onChange={() => toggleTodo(todo.id, setTodos)}
               />
-              <span className={todo.done ? "text-muted line-through" : "text-fg"}>
+              <span
+                className={todo.done ? "text-muted line-through" : "text-fg"}
+              >
                 {todo.label}
               </span>
             </label>
@@ -173,14 +184,31 @@ function PlanCardsTab() {
   const [selected, setSelected] = useState<string>("standard");
 
   const plans = [
-    { value: "basic", title: "Basic", description: "For individuals", Icon: IconUser },
-    { value: "standard", title: "Standard", description: "For teams", Icon: IconUsers },
-    { value: "premium", title: "Premium", description: "For enterprises", Icon: IconBuilding },
+    {
+      value: "basic",
+      title: "Basic",
+      description: "For individuals",
+      Icon: IconUser,
+    },
+    {
+      value: "standard",
+      title: "Standard",
+      description: "For teams",
+      Icon: IconUsers,
+    },
+    {
+      value: "premium",
+      title: "Premium",
+      description: "For enterprises",
+      Icon: IconBuilding,
+    },
   ];
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-muted text-xs">Select a plan (radio-like single select via CheckboxCard).</p>
+      <p className="text-muted text-xs">
+        Select a plan (radio-like single select via CheckboxCard).
+      </p>
       <div className="grid grid-cols-[repeat(auto-fit,minmax(15rem,1fr))] gap-3">
         {plans.map((plan) => (
           <CheckboxCard
@@ -199,7 +227,7 @@ function PlanCardsTab() {
           />
         ))}
       </div>
-      <p className="text-sm text-fg">Selected: {selected}</p>
+      <p className="text-fg text-sm">Selected: {selected}</p>
     </div>
   );
 }
@@ -216,9 +244,7 @@ function InterestChipsTab() {
 
   function toggleChip(value: string) {
     setInterests((prev) =>
-      prev.includes(value)
-        ? prev.filter((v) => v !== value)
-        : [...prev, value],
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
     );
   }
 
@@ -233,11 +259,15 @@ function InterestChipsTab() {
             count={chip.count}
             checked={interests.includes(chip.value)}
             onChange={() => toggleChip(chip.value)}
-            onRemove={interests.includes(chip.value) ? () => toggleChip(chip.value) : undefined}
+            onRemove={
+              interests.includes(chip.value)
+                ? () => toggleChip(chip.value)
+                : undefined
+            }
           />
         ))}
       </div>
-      <p className="text-sm text-fg">
+      <p className="text-fg text-sm">
         Selected: {interests.join(", ") || "none"}
       </p>
     </div>
@@ -278,7 +308,10 @@ const examples: UIExample[] = [
         variants={["default", "shiny", "glass", "neon", "gradient"]}
         sizes={["sm", "md", "lg"]}
         render={(variant, size) => (
-          <Checkbox variant={variant as CheckboxVariant} size={size as CheckboxSize} />
+          <Checkbox
+            variant={variant as CheckboxVariant}
+            size={size as CheckboxSize}
+          />
         )}
       />
     ),

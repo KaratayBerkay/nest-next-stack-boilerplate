@@ -4,7 +4,10 @@ import { cn } from "@/lib/cn";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useBreakpoint, useDeviceType } from "@/hooks";
-import { bottomSheetShellClasses, BottomSheetHandle } from "@/components/ui/bottom-sheet";
+import {
+  bottomSheetShellClasses,
+  BottomSheetHandle,
+} from "@/components/ui/bottom-sheet";
 import { useSelect } from "./select";
 import type { SelectContentProps } from "@/types/ui/Select-types";
 
@@ -19,7 +22,9 @@ function ScrollChevron({
   direction: "up" | "down";
   onScroll: () => void;
 }) {
-  const repeatRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const repeatRef = useRef<ReturnType<typeof setInterval> | undefined>(
+    undefined,
+  );
   const onScrollRef = useRef(onScroll);
   useEffect(() => {
     onScrollRef.current = onScroll;
@@ -27,7 +32,10 @@ function ScrollChevron({
 
   const start = () => {
     onScrollRef.current();
-    repeatRef.current = setInterval(() => onScrollRef.current(), SCROLL_REPEAT_MS);
+    repeatRef.current = setInterval(
+      () => onScrollRef.current(),
+      SCROLL_REPEAT_MS,
+    );
   };
   const stop = () => {
     if (repeatRef.current) clearInterval(repeatRef.current);
@@ -101,7 +109,9 @@ export function SelectContent({
     width: number;
   } | null>(null);
   const typeaheadRef = useRef("");
-  const typeaheadTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const typeaheadTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
   const [canScrollUp, setCanScrollUp] = useState(false);
   const [canScrollDown, setCanScrollDown] = useState(false);
 
@@ -192,7 +202,13 @@ export function SelectContent({
     // scrollIntoView on a descendant would scroll the whole page instead of
     // the list — corrupting every other fixed-position panel on screen that
     // recomputes on window scroll.
-    if (!open || !showChevrons || (isDesktop && !isPositioned) || !contentRef.current) return;
+    if (
+      !open ||
+      !showChevrons ||
+      (isDesktop && !isPositioned) ||
+      !contentRef.current
+    )
+      return;
     const items = contentRef.current.querySelectorAll(ENABLED_OPTION_SELECTOR);
     if (items.length > 0) {
       const selected = contentRef.current.querySelector(
@@ -205,7 +221,15 @@ export function SelectContent({
       // direct call needs — no reason to depend on it firing before paint.
       updateScrollButtons();
     }
-  }, [open, isDesktop, showChevrons, isPositioned, contentRef, focusItem, updateScrollButtons]);
+  }, [
+    open,
+    isDesktop,
+    showChevrons,
+    isPositioned,
+    contentRef,
+    focusItem,
+    updateScrollButtons,
+  ]);
 
   useEffect(() => {
     if (!open || !isDesktop) return;
@@ -239,9 +263,7 @@ export function SelectContent({
     );
     if (!items.length) return;
 
-    const currentIndex = items.findIndex(
-      (el) => el === document.activeElement,
-    );
+    const currentIndex = items.findIndex((el) => el === document.activeElement);
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -281,7 +303,7 @@ export function SelectContent({
     <>
       {!isDesktop && (
         <div
-          className="fixed inset-0 z-40 bg-overlay/50"
+          className="bg-overlay/50 fixed inset-0 z-40"
           onClick={() => setOpen(false)}
           aria-hidden="true"
         />
@@ -327,17 +349,28 @@ export function SelectContent({
         {isDesktop ? (
           <div className="relative">
             {showChevrons && canScrollUp && (
-              <ScrollChevron direction="up" onScroll={() => scrollBy(-SCROLL_STEP)} />
+              <ScrollChevron
+                direction="up"
+                onScroll={() => scrollBy(-SCROLL_STEP)}
+              />
             )}
             <div
               ref={viewportRef}
               onScroll={updateScrollButtons}
-              className={cn("max-h-60 overflow-y-auto p-1", showChevrons && "scroll-py-8")}
+              className={cn(
+                "max-h-60 overflow-y-auto p-1",
+                showChevrons && "scroll-py-8",
+              )}
             >
-              <div ref={listRef} className="pointer-events-auto">{children}</div>
+              <div ref={listRef} className="pointer-events-auto">
+                {children}
+              </div>
             </div>
             {showChevrons && canScrollDown && (
-              <ScrollChevron direction="down" onScroll={() => scrollBy(SCROLL_STEP)} />
+              <ScrollChevron
+                direction="down"
+                onScroll={() => scrollBy(SCROLL_STEP)}
+              />
             )}
           </div>
         ) : (
@@ -366,11 +399,22 @@ export function SelectContent({
             )}
           >
             {showChevrons && canScrollUp && (
-              <ScrollChevron direction="up" onScroll={() => scrollBy(-SCROLL_STEP)} />
+              <ScrollChevron
+                direction="up"
+                onScroll={() => scrollBy(-SCROLL_STEP)}
+              />
             )}
-            <div ref={listRef} className="pointer-events-auto flex flex-col gap-0.5">{children}</div>
+            <div
+              ref={listRef}
+              className="pointer-events-auto flex flex-col gap-0.5"
+            >
+              {children}
+            </div>
             {showChevrons && canScrollDown && (
-              <ScrollChevron direction="down" onScroll={() => scrollBy(SCROLL_STEP)} />
+              <ScrollChevron
+                direction="down"
+                onScroll={() => scrollBy(SCROLL_STEP)}
+              />
             )}
           </div>
         )}

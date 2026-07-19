@@ -37,9 +37,7 @@ async function handleRevokeAllOtherSessionsModule(
 ) {
   try {
     await revokeOtherSessions();
-    setSessions((prev) =>
-      prev.filter((s) => s.sessionId === currentSessionId),
-    );
+    setSessions((prev) => prev.filter((s) => s.sessionId === currentSessionId));
   } catch {
     // silently fail
   }
@@ -57,7 +55,8 @@ export function FreePageView() {
     if (!user) return;
     (async () => {
       try {
-        const { listSessionsServer } = await import("@/api/server/sessions/list");
+        const { listSessionsServer } =
+          await import("@/api/server/sessions/list");
         const data = await listSessionsServer();
         setSessions(data as unknown as SessionInfo[]);
       } catch {
@@ -69,12 +68,18 @@ export function FreePageView() {
   }, [user]);
 
   const handleRevokeSession = useCallback(
-    (sessionId: string) => handleRevokeSessionModule(sessionId, revokeSession, setSessions),
+    (sessionId: string) =>
+      handleRevokeSessionModule(sessionId, revokeSession, setSessions),
     [revokeSession],
   );
 
   const handleRevokeAllOtherSessions = useCallback(
-    () => handleRevokeAllOtherSessionsModule(revokeOtherSessions, user?.sessionId, setSessions),
+    () =>
+      handleRevokeAllOtherSessionsModule(
+        revokeOtherSessions,
+        user?.sessionId,
+        setSessions,
+      ),
     [revokeOtherSessions, user?.sessionId],
   );
 
@@ -164,7 +169,11 @@ export function FreePageView() {
                       )}
                       {session.issuedAt && (
                         <span>
-                          Started: {formatDateTimeByPreference(session.issuedAt, dateDisplay)}
+                          Started:{" "}
+                          {formatDateTimeByPreference(
+                            session.issuedAt,
+                            dateDisplay,
+                          )}
                         </span>
                       )}
                     </div>

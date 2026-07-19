@@ -29,10 +29,23 @@ export function useFieldMessages(
   }
 
   const messages = (
-    <div className="flex flex-col gap-0.5 mt-1.5">
+    <div className="mt-1.5 flex flex-col gap-0.5">
       {error && (
-        <p id={errorId} className="text-error flex items-center gap-1 text-xs" role="alert">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0" aria-hidden="true">
+        <p
+          id={errorId}
+          className="text-error flex items-center gap-1 text-xs"
+          role="alert"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="shrink-0"
+            aria-hidden="true"
+          >
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />

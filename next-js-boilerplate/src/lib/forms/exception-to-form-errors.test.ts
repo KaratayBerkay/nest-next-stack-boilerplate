@@ -53,7 +53,11 @@ describe("exceptionToFormErrors", () => {
       msg: "Validation failed",
       key: "errors.validation",
       fields: [
-        { field: "items.0.name", msg: "Name is required", key: "errors.required" },
+        {
+          field: "items.0.name",
+          msg: "Name is required",
+          key: "errors.required",
+        },
         { field: "items.1.price", msg: "Invalid price", key: "errors.invalid" },
       ],
     } satisfies ExceptionResponse;

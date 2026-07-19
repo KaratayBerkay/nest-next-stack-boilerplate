@@ -11,7 +11,9 @@ export const billingDefaultValues = {
 
 type BillingFormValues = typeof billingDefaultValues;
 
-export function createBillingInitialValues(record?: BillingFormValues): BillingFormValues {
+export function createBillingInitialValues(
+  record?: BillingFormValues,
+): BillingFormValues {
   if (!record) return { ...billingDefaultValues };
   return { ...record };
 }

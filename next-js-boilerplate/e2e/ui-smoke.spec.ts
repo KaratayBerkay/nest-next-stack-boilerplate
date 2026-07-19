@@ -6,7 +6,8 @@ import { UI_COMPONENTS } from "../src/constants/ui-gallery";
 // nothing lands in the console. Content integrity is browser-agnostic, so
 // this runs on desktop chromium only to keep the matrix flat.
 test.skip(
-  ({ browserName, isMobile }) => browserName !== "chromium" || Boolean(isMobile),
+  ({ browserName, isMobile }) =>
+    browserName !== "chromium" || Boolean(isMobile),
   "content smoke is chromium-only",
 );
 
@@ -57,6 +58,8 @@ for (const { name, slug } of UI_COMPONENTS) {
       ).toBe(true);
     }
 
-    expect(errors, `console errors on ${slug}:\n${errors.join("\n")}`).toEqual([]);
+    expect(errors, `console errors on ${slug}:\n${errors.join("\n")}`).toEqual(
+      [],
+    );
   });
 }

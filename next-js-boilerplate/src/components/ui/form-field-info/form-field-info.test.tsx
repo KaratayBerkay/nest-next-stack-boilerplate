@@ -2,15 +2,16 @@ import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { FormFieldInfo } from "./form-field-info";
 
-const createFieldApi = (overrides: Record<string, unknown> = {}) => ({
-  state: {
-    meta: {
-      errors: [] as string[],
-      isValidating: false,
-      ...overrides,
+const createFieldApi = (overrides: Record<string, unknown> = {}) =>
+  ({
+    state: {
+      meta: {
+        errors: [] as string[],
+        isValidating: false,
+        ...overrides,
+      },
     },
-  },
-} as never);
+  }) as never;
 
 describe("FormFieldInfo", () => {
   it("renders error message", () => {

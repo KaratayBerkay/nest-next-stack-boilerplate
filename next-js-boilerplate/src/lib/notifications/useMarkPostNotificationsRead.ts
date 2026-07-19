@@ -22,9 +22,7 @@ export function useMarkPostNotificationsRead(postId: string) {
     let cancelled = false;
 
     Promise.all(
-      unread.map((n) =>
-        markNotificationReadServer(n.id).catch(() => {}),
-      ),
+      unread.map((n) => markNotificationReadServer(n.id).catch(() => {})),
     ).then(() => {
       if (!cancelled) {
         queryClient.invalidateQueries({ queryKey: ["notifications"] });

@@ -62,7 +62,7 @@ export function ProfileSection({ user, logout, lang }: ProfileSectionProps) {
               setOpen(false);
               logout();
             }}
-            className="hover:bg-surface-hover mt-1 flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-error transition-colors"
+            className="hover:bg-surface-hover text-error mt-1 flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors"
           >
             <IconLogout size={16} stroke={1.5} />
             {t.signOut}

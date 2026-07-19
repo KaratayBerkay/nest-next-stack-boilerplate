@@ -37,7 +37,10 @@ function useAutoDismiss(totalSeconds: number) {
   const dismiss = useCallback(() => {
     clearTimers();
     setPhase("closing");
-    closeTimerRef.current = setTimeout(() => setPhase("closed"), CLOSE_ANIMATION_MS);
+    closeTimerRef.current = setTimeout(
+      () => setPhase("closed"),
+      CLOSE_ANIMATION_MS,
+    );
   }, [clearTimers]);
 
   const show = useCallback(() => {
@@ -67,7 +70,10 @@ function CountdownRing({
   remainingMs: number;
   totalSeconds: number;
 }) {
-  const fraction = Math.min(1, Math.max(0, remainingMs / (totalSeconds * 1000)));
+  const fraction = Math.min(
+    1,
+    Math.max(0, remainingMs / (totalSeconds * 1000)),
+  );
   const seconds = Math.ceil(remainingMs / 1000);
 
   return (
@@ -76,7 +82,11 @@ function CountdownRing({
       role="timer"
       aria-label={`Closes in ${seconds} seconds`}
     >
-      <svg viewBox="0 0 48 48" className="size-12 -rotate-90" aria-hidden="true">
+      <svg
+        viewBox="0 0 48 48"
+        className="size-12 -rotate-90"
+        aria-hidden="true"
+      >
         <circle
           cx="24"
           cy="24"
@@ -128,7 +138,8 @@ function handleBackdropClickModuleLevel(
 function TopBannerAlert({ phase, remainingMs, onDismiss }: PopupAlertProps) {
   useEffect(() => {
     if (phase !== "open") return;
-    const handleKeyDown = (e: KeyboardEvent) => handleKeyDownModuleLevel(e, onDismiss);
+    const handleKeyDown = (e: KeyboardEvent) =>
+      handleKeyDownModuleLevel(e, onDismiss);
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [phase, onDismiss]);
@@ -196,7 +207,11 @@ function TopBannerAlert({ phase, remainingMs, onDismiss }: PopupAlertProps) {
   );
 }
 
-function FullWidthModalAlert({ phase, remainingMs, onDismiss }: PopupAlertProps) {
+function FullWidthModalAlert({
+  phase,
+  remainingMs,
+  onDismiss,
+}: PopupAlertProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const seconds = Math.ceil(remainingMs / 1000);
   const fraction = Math.min(
@@ -280,7 +295,7 @@ function FullWidthModalAlert({ phase, remainingMs, onDismiss }: PopupAlertProps)
           phase === "closing" ? "fw-alert-closing" : "fw-alert-open",
         )}
       >
-        <div className="pointer-events-auto bg-warning/10 text-warning flex flex-col">
+        <div className="bg-warning/10 text-warning pointer-events-auto flex flex-col">
           <div className="flex items-start gap-3 px-4 py-5 sm:px-6">
             <svg
               className="mt-0.5 size-6 shrink-0"
@@ -299,8 +314,8 @@ function FullWidthModalAlert({ phase, remainingMs, onDismiss }: PopupAlertProps)
                 Scheduled maintenance tonight
               </h4>
               <p id="popup-fw-alert-desc" className="text-sm opacity-90">
-                The platform will be read-only between 02:00 and 02:30 UTC.
-                Save your work before the window starts.
+                The platform will be read-only between 02:00 and 02:30 UTC. Save
+                your work before the window starts.
               </p>
             </div>
             <button
@@ -355,9 +370,9 @@ export function PopupAlertsExample() {
       <section className="flex flex-col gap-3">
         <h3 className="text-lg font-semibold">Top Banner Alert</h3>
         <p className="text-muted text-sm">
-          Slides down from the top of the page like a top sheet. Dismiss it
-          with the big X button, or let the circular 30-second countdown close
-          it for you.
+          Slides down from the top of the page like a top sheet. Dismiss it with
+          the big X button, or let the circular 30-second countdown close it for
+          you.
         </p>
         <Button onClick={banner.show} className="w-fit">
           Show top banner alert
@@ -367,10 +382,9 @@ export function PopupAlertsExample() {
       <section className="flex flex-col gap-3">
         <h3 className="text-lg font-semibold">Full-Width Modal Alert</h3>
         <p className="text-muted text-sm">
-          A blocking, full-width alert with a backdrop. The horizontal bar
-          under the message drains as the 30-second auto-dismiss approaches.
-          Close it with the X button, the Escape key, or a click on the
-          backdrop.
+          A blocking, full-width alert with a backdrop. The horizontal bar under
+          the message drains as the 30-second auto-dismiss approaches. Close it
+          with the X button, the Escape key, or a click on the backdrop.
         </p>
         <Button onClick={modal.show} className="w-fit">
           Show full-width modal alert

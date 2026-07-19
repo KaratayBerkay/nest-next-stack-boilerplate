@@ -14,7 +14,11 @@ const Calendar = dynamic(
   { ssr: false },
 );
 
-function makeDate(dayOffset: number, hour: number = 0, minute: number = 0): Date {
+function makeDate(
+  dayOffset: number,
+  hour: number = 0,
+  minute: number = 0,
+): Date {
   const d = new Date();
   d.setDate(d.getDate() + dayOffset);
   d.setHours(hour, minute, 0, 0);
@@ -22,13 +26,55 @@ function makeDate(dayOffset: number, hour: number = 0, minute: number = 0): Date
 }
 
 const meetingEvents: CalendarEventType[] = [
-  { id: "m1", title: "Team Standup", date: makeDate(0, 9, 0), time: "09:00", color: "blue" },
-  { id: "m2", title: "Sprint Review", date: makeDate(0, 14, 0), time: "14:00", color: "purple" },
-  { id: "m3", title: "Lunch with Alex", date: makeDate(0, 12, 30), time: "12:30", color: "green" },
-  { id: "m4", title: "Design Review", date: makeDate(1, 10, 0), time: "10:00", color: "orange" },
-  { id: "m5", title: "1:1 with Manager", date: makeDate(2, 15, 30), time: "15:30", color: "blue" },
-  { id: "m6", title: "Product Demo", date: makeDate(3, 11, 0), time: "11:00", color: "purple" },
-  { id: "m7", title: "Team Happy Hour", date: makeDate(4, 17, 0), time: "17:00", color: "green" },
+  {
+    id: "m1",
+    title: "Team Standup",
+    date: makeDate(0, 9, 0),
+    time: "09:00",
+    color: "blue",
+  },
+  {
+    id: "m2",
+    title: "Sprint Review",
+    date: makeDate(0, 14, 0),
+    time: "14:00",
+    color: "purple",
+  },
+  {
+    id: "m3",
+    title: "Lunch with Alex",
+    date: makeDate(0, 12, 30),
+    time: "12:30",
+    color: "green",
+  },
+  {
+    id: "m4",
+    title: "Design Review",
+    date: makeDate(1, 10, 0),
+    time: "10:00",
+    color: "orange",
+  },
+  {
+    id: "m5",
+    title: "1:1 with Manager",
+    date: makeDate(2, 15, 30),
+    time: "15:30",
+    color: "blue",
+  },
+  {
+    id: "m6",
+    title: "Product Demo",
+    date: makeDate(3, 11, 0),
+    time: "11:00",
+    color: "purple",
+  },
+  {
+    id: "m7",
+    title: "Team Happy Hour",
+    date: makeDate(4, 17, 0),
+    time: "17:00",
+    color: "green",
+  },
 ];
 
 const birthdayEvents: CalendarEventType[] = [
@@ -49,7 +95,11 @@ const noteEntries: { date: Date; text: string }[] = [
 
 function formatDate(d: Date | undefined): string {
   if (!d) return "";
-  return d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+  return d.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 function AppointmentRangeTab() {
@@ -72,12 +122,20 @@ function AppointmentRangeTab() {
         />
         <div className="flex gap-4 text-sm">
           <div>
-            <span className="text-muted text-xs uppercase tracking-wider">Check-in</span>
-            <p className="font-medium">{range?.from ? formatDate(range.from) : "—"}</p>
+            <span className="text-muted text-xs tracking-wider uppercase">
+              Check-in
+            </span>
+            <p className="font-medium">
+              {range?.from ? formatDate(range.from) : "—"}
+            </p>
           </div>
           <div>
-            <span className="text-muted text-xs uppercase tracking-wider">Check-out</span>
-            <p className="font-medium">{range?.to ? formatDate(range.to) : "—"}</p>
+            <span className="text-muted text-xs tracking-wider uppercase">
+              Check-out
+            </span>
+            <p className="font-medium">
+              {range?.to ? formatDate(range.to) : "—"}
+            </p>
           </div>
         </div>
       </div>
@@ -110,7 +168,7 @@ function MeetingsTab() {
           className="shrink-0"
         />
         <div className="surface flex-1 rounded-xl border p-4 shadow-sm">
-          <p className="text-sm font-semibold mb-2">
+          <p className="mb-2 text-sm font-semibold">
             {selected ? formatDate(selected) : "Select a day"}
           </p>
           {dayMeetings.length === 0 ? (
@@ -140,7 +198,7 @@ function BirthdaysTab() {
     <div className="flex flex-col gap-4">
       <div className="surface max-w-fit rounded-xl border p-4 shadow-sm">
         <div className="mb-3 flex items-center gap-2">
-          <span className="size-2 rounded-full bg-success" />
+          <span className="bg-success size-2 rounded-full" />
           <span className="text-muted text-xs">Birthdays this month</span>
         </div>
         <Calendar
@@ -197,7 +255,7 @@ function DailyNotesTab() {
           className="shrink-0"
         />
         <div className="surface min-h-[200px] flex-1 rounded-xl border p-4 shadow-sm">
-          <p className="text-sm font-semibold mb-3">
+          <p className="mb-3 text-sm font-semibold">
             {selected ? formatDate(selected) : "Select a day"}
           </p>
           {dayNotes.length === 0 ? (
@@ -206,7 +264,7 @@ function DailyNotesTab() {
             <ul className="space-y-2">
               {dayNotes.map((note, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm">
-                  <span className="mt-1 size-1.5 shrink-0 rounded-full bg-brand" />
+                  <span className="bg-brand mt-1 size-1.5 shrink-0 rounded-full" />
                   {note.text}
                 </li>
               ))}
@@ -240,7 +298,8 @@ const examples: UIExample[] = [
   {
     id: "daily-notes",
     title: "Daily Notes",
-    description: "Calendar left + notes panel right; click a day to show notes.",
+    description:
+      "Calendar left + notes panel right; click a day to show notes.",
     render: () => <DailyNotesTab />,
   },
 ];

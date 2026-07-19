@@ -3,7 +3,11 @@
 import { cn } from "@/lib/cn";
 import type { StepIndicatorProps } from "@/types/ui/StepIndicator-types";
 
-export function StepIndicator({ steps, currentStep, onChange }: StepIndicatorProps) {
+export function StepIndicator({
+  steps,
+  currentStep,
+  onChange,
+}: StepIndicatorProps) {
   return (
     <nav aria-label="Progress" className="flex items-center gap-2">
       {steps.map((label, index) => {
@@ -26,14 +30,21 @@ export function StepIndicator({ steps, currentStep, onChange }: StepIndicatorPro
           >
             <span
               className={cn(
-                "flex size-5 items-center justify-center rounded-full text-xxs font-medium",
+                "text-xxs flex size-5 items-center justify-center rounded-full font-medium",
                 isActive && "bg-brand text-brand-fg",
                 isComplete && "bg-success text-success-fg",
                 !isActive && !isComplete && "bg-surface text-muted",
               )}
             >
               {isComplete ? (
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                >
                   <path d="m5 12 5 5 9-9" />
                 </svg>
               ) : (

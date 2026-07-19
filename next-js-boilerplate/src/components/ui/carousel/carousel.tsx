@@ -9,7 +9,10 @@ import {
 import useEmblaCarousel from "embla-carousel-react";
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
-import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
+import {
+  globalStyleVariants,
+  type GlobalVariant,
+} from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 
 interface CarouselContextValue {
@@ -150,7 +153,7 @@ export function CarouselPrevious({
       disabled={!canScrollPrev}
       onClick={scrollPrev}
       className={cn(
-        "hover:bg-surface-hover absolute top-1/2 left-2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border shadow-sm transition-colors disabled:opacity-50 bg-bg/80 backdrop-blur-sm",
+        "hover:bg-surface-hover bg-bg/80 absolute top-1/2 left-2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border shadow-sm backdrop-blur-sm transition-colors disabled:opacity-50",
         resolveVariant(carouselNavVariants, effectiveVariant),
         className,
       )}
@@ -184,7 +187,7 @@ export function CarouselNext({
       disabled={!canScrollNext}
       onClick={scrollNext}
       className={cn(
-        "hover:bg-surface-hover absolute top-1/2 right-2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border shadow-sm transition-colors disabled:opacity-50 bg-bg/80 backdrop-blur-sm",
+        "hover:bg-surface-hover bg-bg/80 absolute top-1/2 right-2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border shadow-sm backdrop-blur-sm transition-colors disabled:opacity-50",
         resolveVariant(carouselNavVariants, effectiveVariant),
         className,
       )}

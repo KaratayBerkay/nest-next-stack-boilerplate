@@ -54,7 +54,10 @@ export function Toast({
   const resume = useCallback(() => {
     if (remainingRef.current === Infinity || remainingRef.current <= 0) return;
     startTimeRef.current = performance.now();
-    timerRef.current = setTimeout(() => setDismissed(true), remainingRef.current);
+    timerRef.current = setTimeout(
+      () => setDismissed(true),
+      remainingRef.current,
+    );
   }, []);
 
   const handleDismiss = useCallback(() => {
@@ -75,7 +78,10 @@ export function Toast({
 
   useEffect(() => {
     if (dismissed) {
-      const timer = setTimeout(() => dispatch({ type: "DISMISS", id }), EXIT_DURATION);
+      const timer = setTimeout(
+        () => dispatch({ type: "DISMISS", id }),
+        EXIT_DURATION,
+      );
       return () => clearTimeout(timer);
     }
   }, [dismissed, id, dispatch]);
@@ -92,8 +98,8 @@ export function Toast({
       className={cn(
         "group pointer-events-auto relative flex w-full items-start gap-3 rounded-lg border p-4 shadow-xl motion-reduce:transition-none",
         dismissed
-          ? "animate-slide-out-right opacity-0 translate-x-full"
-          : "animate-slide-in-right opacity-100 translate-x-0",
+          ? "animate-slide-out-right translate-x-full opacity-0"
+          : "animate-slide-in-right translate-x-0 opacity-100",
         "bg-bg border-border text-fg",
         toast.variant !== "default" && variantClasses[toast.variant],
         fonts,

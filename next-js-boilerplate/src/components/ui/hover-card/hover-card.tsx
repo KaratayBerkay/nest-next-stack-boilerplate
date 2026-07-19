@@ -3,7 +3,10 @@ import { forwardRef } from "react";
 import { Root, Trigger, Portal, Content } from "@radix-ui/react-hover-card";
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
-import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
+import {
+  globalStyleVariants,
+  type GlobalVariant,
+} from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 
 const hoverCardVariants = {
@@ -28,7 +31,7 @@ export const HoverCardContent = forwardRef<
         ref={ref}
         sideOffset={sideOffset}
         className={cn(
-          "z-50 w-72 rounded-lg border p-4 shadow-lg data-[state=open]:animate-scale-in-breathe motion-reduce:animate-none origin-[--radix-hover-card-content-transform-origin]",
+          "data-[state=open]:animate-scale-in-breathe z-50 w-72 origin-[--radix-hover-card-content-transform-origin] rounded-lg border p-4 shadow-lg motion-reduce:animate-none",
           resolveVariant(hoverCardVariants, effectiveVariant),
           className,
         )}

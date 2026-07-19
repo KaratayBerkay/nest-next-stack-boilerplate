@@ -56,7 +56,7 @@ export function MessageDropdown({ conversations, lang }: MessageDropdownProps) {
                 </p>
                 <p className="text-muted truncate text-xs">{c.lastMessage}</p>
               </div>
-              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-error px-1 text-[10px] font-bold text-white">
+              <span className="bg-error flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white">
                 {c.unread > 99 ? "99+" : c.unread}
               </span>
             </button>
@@ -100,7 +100,7 @@ export function MessageDropdown({ conversations, lang }: MessageDropdownProps) {
             {/* Decorative dismiss backdrop, not a control — the panel's own controls remain
                 keyboard-reachable; this scrim only needs a click target. */}
             <div
-              className="fixed inset-0 z-40 bg-overlay/50"
+              className="bg-overlay/50 fixed inset-0 z-40"
               onClick={() => setOpen(false)}
               aria-hidden="true"
             />

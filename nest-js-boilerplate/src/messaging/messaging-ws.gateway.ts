@@ -3,13 +3,13 @@ import { WebSocket } from 'ws';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   MessagingService,
-  RoomMember,
   isValidRoom,
   VIP_ROOM_PREFIX,
 } from './messaging.service';
+import type { RoomMember } from './messaging.types';
+import { initials } from './messaging.types';
 import { PushNotificationService } from '../push-notification/push-notification.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
-import { displayName } from '../common/utils/display-name';
 import { tierRank, MIN_TIER_FOR_VIP } from '../authorization/tier-rank';
 
 type AuthWs = WebSocket & {
@@ -85,67 +85,7 @@ export class MessagingWsGateway implements OnModuleInit {
       data.recipientId,
       data.text,
     );
-    const sender = message.sender as
-      | { id?: string; name?: string | null; email?: string; avatar?: string }
-      | undefined;
-    const [unread, totalDmUnread] = await Promise.all([
-      this.ms.getUnreadCount(data.recipientId, ws.userId),
-      this.ms.getTotalUnreadCount(data.recipientId),
-    ]);
-    // Chrome: Conversation renew to all recipient MESSAGE sockets
-    this.realtime.emitToService(data.recipientId, 'MESSAGE', {
-      renew: 'Messages',
-      type: 'Conversation',
-      conversation: {
-        user: {
-          id: ws.userId,
-          name: ws.userName ?? 'Unknown',
-          avatar: sender?.avatar ?? '',
-        },
-        lastMessage: message.body,
-        lastTime: message.createdAt,
-        unread: unread + 1,
-      },
-    });
-    // DM unread aggregate to notification bell (T5).
-    this.realtime.emitToService(data.recipientId, 'NOTIFICATION', {
-      renew: 'Notifications',
-      type: 'DmCount',
-      value: totalDmUnread,
-    });
-    // Page content: DM to messages-page viewers only
-    this.realtime.emitToPage(data.recipientId, 'messages', {
-      type: 'direct-message',
-      message,
-    });
-    this.realtime.emitToPage(message.senderId, 'messages', {
-      type: 'direct-message',
-      message,
-    });
-    if (
-      !this.realtime.hasServiceConnection(data.recipientId, 'MESSAGE') &&
-      !this.realtime.hasServiceConnection(data.recipientId, 'NOTIFICATION')
-    ) {
-      const sender = message.sender as
-        { name?: string | null; email?: string } | undefined;
-      const senderName = displayName(sender ?? {});
-      const body = typeof message.body === 'string' ? message.body : '';
-      this.push
-        .sendToUser(
-          data.recipientId,
-          `New message from ${senderName}`,
-          body.length > 120 ? body.slice(0, 117) + '...' : body,
-          undefined,
-          {
-            kind: 'direct-message',
-            senderId: message.senderId,
-            dmCount: totalDmUnread,
-          },
-        )
-        .catch((err: Error) =>
-          this.logger.warn(`Offline push failed: ${err.message}`),
-        );
-    }
+    await this.ms.deliverDirectMessage(message);
   }
 
   private async handleDeliveredAck(ws: AuthWs, data: { messageId: string }) {
@@ -257,7 +197,7 @@ export class MessagingWsGateway implements OnModuleInit {
         id: saved.id,
         senderId: saved.senderId,
         senderName: ws.userName ?? 'Unknown',
-        avatar: this.ms.initials(ws.userName ?? 'Unknown'),
+        avatar: initials(ws.userName ?? 'Unknown'),
         body: saved.body,
         createdAt: saved.createdAt.toISOString(),
       },

@@ -9,7 +9,9 @@ import {
 import type { DateDisplayFormat } from "@/constants/date-display";
 
 function readDateDisplay(): DateDisplayFormat {
-  const match = document.cookie.match(new RegExp(`${DATE_DISPLAY_COOKIE}=([^;]+)`));
+  const match = document.cookie.match(
+    new RegExp(`${DATE_DISPLAY_COOKIE}=([^;]+)`),
+  );
   const val = match?.[1];
   if (val && (DATE_DISPLAY_FORMATS as readonly string[]).includes(val)) {
     return val as DateDisplayFormat;
@@ -24,9 +26,8 @@ export function useDateDisplayCookie() {
   // render for anyone who has already chosen "iso"/"short", producing a
   // hydration warning. The effect below corrects to the real value
   // immediately post-mount instead.
-  const [dateDisplay, setDateDisplay] = useState<DateDisplayFormat>(
-    DEFAULT_DATE_DISPLAY,
-  );
+  const [dateDisplay, setDateDisplay] =
+    useState<DateDisplayFormat>(DEFAULT_DATE_DISPLAY);
 
   useEffect(() => {
     const check = () => setDateDisplay(readDateDisplay());

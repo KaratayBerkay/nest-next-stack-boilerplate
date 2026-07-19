@@ -4,10 +4,16 @@ import { cn } from "@/lib/cn";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useBreakpoint } from "@/hooks";
-import { bottomSheetClasses, BottomSheetHandle } from "@/components/ui/bottom-sheet";
+import {
+  bottomSheetClasses,
+  BottomSheetHandle,
+} from "@/components/ui/bottom-sheet";
 import { useDropdownMenuContext } from "./dropdown-menu";
 import { resolveVariant } from "@/lib/resolve-variant";
-import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
+import {
+  globalStyleVariants,
+  type GlobalVariant,
+} from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { DropdownMenuContentProps } from "@/types/ui/DropdownMenu-types";
 
@@ -103,7 +109,7 @@ export function DropdownMenuContent({
     <>
       {!isDesktop && (
         <div
-          className="fixed inset-0 z-40 bg-overlay/50"
+          className="bg-overlay/50 fixed inset-0 z-40"
           onClick={() => setOpen(false)}
           aria-hidden="true"
         />

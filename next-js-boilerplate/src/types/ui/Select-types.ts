@@ -36,6 +36,12 @@ export interface SelectItemProps extends React.ComponentPropsWithoutRef<"button"
   className?: string;
 }
 
-export type SelectVariant = "default" | "outline" | "shiny" | "glass" | "neon" | "gradient";
+export type SelectVariant =
+  | "default"
+  | "outline"
+  | "shiny"
+  | "glass"
+  | "neon"
+  | "gradient";
 
 export type SelectSize = "sm" | "md";

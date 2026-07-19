@@ -36,23 +36,21 @@ export function Tabs({
   const activeValue = (isControlled ? controlledValue : internalValue) ?? "";
   const baseId = useId();
 
-  const onValueChange = useCallback((value: string) => {
-    if (!isControlled) setInternalValue(value);
-    onControlledChange?.(value);
-  }, [isControlled, onControlledChange]);
+  const onValueChange = useCallback(
+    (value: string) => {
+      if (!isControlled) setInternalValue(value);
+      onControlledChange?.(value);
+    },
+    [isControlled, onControlledChange],
+  );
 
   const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
   return (
-    <TabsContext.Provider value={{ activeValue, onValueChange, baseId, orientation }}>
-      <div
-        className={cn(
-          "w-full",
-          className,
-          fonts,
-        )}
-        {...props}
-      />
+    <TabsContext.Provider
+      value={{ activeValue, onValueChange, baseId, orientation }}
+    >
+      <div className={cn("w-full", className, fonts)} {...props} />
     </TabsContext.Provider>
   );
 }

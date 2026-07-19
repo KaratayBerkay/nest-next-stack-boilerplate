@@ -4,7 +4,8 @@ export function subscriptionQueryOptions(userId?: string) {
   return queryOptions({
     queryKey: ["subscription", userId],
     queryFn: async () => {
-      const { fetchSubscriptionServer } = await import("@/api/server/billing/subscription");
+      const { fetchSubscriptionServer } =
+        await import("@/api/server/billing/subscription");
       return fetchSubscriptionServer();
     },
     enabled: !!userId,
@@ -15,7 +16,8 @@ export function billingHistoryQueryOptions() {
   return queryOptions({
     queryKey: ["billing", "history"],
     queryFn: async () => {
-      const { fetchBillingHistoryServer } = await import("@/api/server/billing/history");
+      const { fetchBillingHistoryServer } =
+        await import("@/api/server/billing/history");
       return fetchBillingHistoryServer();
     },
   });

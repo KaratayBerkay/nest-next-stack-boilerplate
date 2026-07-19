@@ -11,8 +11,22 @@ function makeStubDeps() {
 }
 
 const defaultValue = {
-  shippingAddress: { street: "123 Main", city: "NYC", province: "NY", postalCode: "10001", country: "us" as const, phone: "" },
-  billingAddress: { street: "123 Main", city: "NYC", province: "NY", postalCode: "10001", country: "us" as const, phone: "" },
+  shippingAddress: {
+    street: "123 Main",
+    city: "NYC",
+    province: "NY",
+    postalCode: "10001",
+    country: "us" as const,
+    phone: "",
+  },
+  billingAddress: {
+    street: "123 Main",
+    city: "NYC",
+    province: "NY",
+    postalCode: "10001",
+    country: "us" as const,
+    phone: "",
+  },
   sameAsShipping: true,
   email: "a@b.com",
   confirmEmail: "a@b.com",
@@ -34,12 +48,23 @@ describe("submitCheckout", () => {
         exc: "EX_VALIDATION_FORM",
         msg: "Invalid postal code",
         key: "errors.validation",
-        fields: [{ field: "postalCode", msg: "Invalid format", key: "errors.invalid" }],
+        fields: [
+          { field: "postalCode", msg: "Invalid format", key: "errors.invalid" },
+        ],
       } satisfies ExceptionResponse,
     });
-    const result = await submitCheckout({
-      value: { ...defaultValue, shippingAddress: { ...defaultValue.shippingAddress, postalCode: "00000" } },
-    }, deps);
+    const result = await submitCheckout(
+      {
+        value: {
+          ...defaultValue,
+          shippingAddress: {
+            ...defaultValue.shippingAddress,
+            postalCode: "00000",
+          },
+        },
+      },
+      deps,
+    );
     expect(result).not.toBeNull();
     expect(result!.form).toBeNull();
     expect(result!.fields).toEqual({ postalCode: "Invalid format" });

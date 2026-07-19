@@ -18,18 +18,16 @@ export function useProfileActions() {
   };
 
   const uploadAvatar = async (file: File) => {
-    const { uploadAvatarServer } = await import(
-      "@/api/server/profile/upload-avatar"
-    );
+    const { uploadAvatarServer } =
+      await import("@/api/server/profile/upload-avatar");
     const result = await uploadAvatarServer(file);
     await invalidate();
     return result;
   };
 
   const checkUsername = async (username: string) => {
-    const { checkUsernameAvailableServer } = await import(
-      "@/api/server/profile/username-available"
-    );
+    const { checkUsernameAvailableServer } =
+      await import("@/api/server/profile/username-available");
     return checkUsernameAvailableServer(username);
   };
 

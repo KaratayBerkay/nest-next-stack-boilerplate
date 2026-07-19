@@ -127,7 +127,13 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
           )}
           <button
             onClick={() =>
-              handleDowngrade(targetTier, setError, setSuccess, router, subscribe)
+              handleDowngrade(
+                targetTier,
+                setError,
+                setSuccess,
+                router,
+                subscribe,
+              )
             }
             data-testid="confirm-downgrade"
             className="bg-muted hover:bg-muted/80 w-full rounded px-4 py-2 text-sm font-medium"

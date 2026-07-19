@@ -57,9 +57,7 @@ const examples: UIExample[] = [
               <SheetContent side="top">
                 <SheetHeader>
                   <SheetTitle>Top Sheet</SheetTitle>
-                  <SheetDescription>
-                    Slides in from the top.
-                  </SheetDescription>
+                  <SheetDescription>Slides in from the top.</SheetDescription>
                 </SheetHeader>
               </SheetContent>
             </Sheet>
@@ -96,9 +94,7 @@ const examples: UIExample[] = [
             <SheetContent side="right">
               <SheetHeader>
                 <SheetTitle>Shopping Cart</SheetTitle>
-                <SheetDescription>
-                  3 items in your cart
-                </SheetDescription>
+                <SheetDescription>3 items in your cart</SheetDescription>
               </SheetHeader>
               <div className="flex flex-col gap-4 py-4">
                 {[
@@ -167,9 +163,7 @@ const examples: UIExample[] = [
             <SheetContent side="left">
               <SheetHeader>
                 <SheetTitle>Navigation</SheetTitle>
-                <SheetDescription>
-                  Browse application sections
-                </SheetDescription>
+                <SheetDescription>Browse application sections</SheetDescription>
               </SheetHeader>
               <nav className="flex flex-col gap-2 py-4">
                 {["Dashboard", "Projects", "Team", "Analytics", "Settings"].map(

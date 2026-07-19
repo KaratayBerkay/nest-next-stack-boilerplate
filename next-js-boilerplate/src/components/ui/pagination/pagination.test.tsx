@@ -1,10 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
-import {
-  Pagination,
-  PaginationNext,
-  PaginationPrevious,
-} from "./pagination";
+import { Pagination, PaginationNext, PaginationPrevious } from "./pagination";
 
 vi.mock("@/hooks/useTheme", () => ({
   useTheme: () => ({ componentStyle: "default" as const }),
@@ -33,8 +29,6 @@ describe("Pagination string overrides (A10)", () => {
 
   it("lets a consumer aria-label override the nav default", () => {
     render(<Pagination aria-label="Sayfalama" />);
-    expect(
-      screen.getByRole("navigation", { name: "Sayfalama" }),
-    ).toBeDefined();
+    expect(screen.getByRole("navigation", { name: "Sayfalama" })).toBeDefined();
   });
 });

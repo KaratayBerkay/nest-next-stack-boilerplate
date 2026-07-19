@@ -42,7 +42,10 @@ export function ConfirmDialog({
           <Button variant="ghost" onClick={() => setOpen(false)}>
             {cancelLabel}
           </Button>
-          <Button variant="destructive" onClick={() => handleConfirm(onConfirm, setOpen)}>
+          <Button
+            variant="destructive"
+            onClick={() => handleConfirm(onConfirm, setOpen)}
+          >
             {confirmLabel}
           </Button>
         </DialogFooter>

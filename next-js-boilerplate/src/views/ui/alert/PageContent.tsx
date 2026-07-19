@@ -26,7 +26,8 @@ const examples: UIExample[] = [
   {
     id: "server-retry",
     title: "Server Retry",
-    description: "Error alert with countdown, sticky positioning, and auto-dismiss.",
+    description:
+      "Error alert with countdown, sticky positioning, and auto-dismiss.",
     render: () => <ServerRetryTab />,
   },
   {
@@ -47,7 +48,9 @@ const examples: UIExample[] = [
         render={(variant, _size) => (
           <Alert variant={variant as AlertVariant}>
             <AlertTitle>Alert Title</AlertTitle>
-            <AlertDescription>This is a {variant} variant alert.</AlertDescription>
+            <AlertDescription>
+              This is a {variant} variant alert.
+            </AlertDescription>
           </Alert>
         )}
       />

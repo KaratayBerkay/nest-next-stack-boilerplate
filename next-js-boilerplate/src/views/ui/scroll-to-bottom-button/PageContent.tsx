@@ -47,10 +47,7 @@ function ChatThreadDemo() {
   function addMessage() {
     const user = names[Math.floor(Math.random() * names.length)];
     const text = replies[Math.floor(Math.random() * replies.length)];
-    setMessages((prev) => [
-      ...prev,
-      { id: String(nextId++), user, text },
-    ]);
+    setMessages((prev) => [...prev, { id: String(nextId++), user, text }]);
   }
 
   return (
@@ -58,8 +55,8 @@ function ChatThreadDemo() {
       <div
         ref={scrollContainerRef}
         role="region"
-      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- axe scrollable-region-focusable: keyboard users must be able to scroll this pane
-      tabIndex={0}
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- axe scrollable-region-focusable: keyboard users must be able to scroll this pane
+        tabIndex={0}
         aria-label="Message list"
         className="scroll-fade-y h-72 overflow-y-auto p-4"
       >
@@ -77,7 +74,7 @@ function ChatThreadDemo() {
       <div className="border-border/50 flex items-center justify-between border-t px-4 py-2">
         <button
           onClick={addMessage}
-          className="hover:bg-surface-hover rounded-md px-3 py-1 text-xs text-fg transition-colors"
+          className="hover:bg-surface-hover text-fg rounded-md px-3 py-1 text-xs transition-colors"
         >
           Add message
         </button>
@@ -93,12 +90,17 @@ const examples: UIExample[] = [
   {
     id: "chat-thread",
     title: "Chat Thread",
-    description: "Messages list with auto-scroll. Button appears when scrolled up.",
+    description:
+      "Messages list with auto-scroll. Button appears when scrolled up.",
     render: () => <ChatThreadDemo />,
   },
 ];
 
-export default function ScrollToBottomButtonPage({ initialTab }: { initialTab?: string }) {
+export default function ScrollToBottomButtonPage({
+  initialTab,
+}: {
+  initialTab?: string;
+}) {
   return (
     <ExampleTabs
       title="Scroll To Bottom Button"

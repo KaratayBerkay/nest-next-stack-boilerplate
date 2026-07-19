@@ -3,7 +3,10 @@ import { serverEnv } from "@/lib/env";
 import { getAccessToken } from "@/store/ssr-cookies";
 import { sessionTokenHeaders } from "@/lib/backend";
 import { POST as POST_METHOD } from "@/constants/api/methods";
-import { JSON_CONTENT_TYPE_HEADER, bearerAuthHeader } from "@/constants/api/headers";
+import {
+  JSON_CONTENT_TYPE_HEADER,
+  bearerAuthHeader,
+} from "@/constants/api/headers";
 
 const BACKEND = serverEnv().APP_URL;
 
@@ -11,7 +14,11 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   const token = await getAccessToken();
   const stHeaders = await sessionTokenHeaders();
   if (!token) return { ...JSON_CONTENT_TYPE_HEADER, ...stHeaders };
-  return { ...JSON_CONTENT_TYPE_HEADER, ...bearerAuthHeader(token), ...stHeaders };
+  return {
+    ...JSON_CONTENT_TYPE_HEADER,
+    ...bearerAuthHeader(token),
+    ...stHeaders,
+  };
 }
 
 export async function GET(

@@ -19,7 +19,7 @@ export function ComponentsTab() {
           className="max-w-sm"
         />
         {assignee && (
-          <div className="bg-surface flex items-center justify-between rounded border border-border px-3 py-2">
+          <div className="bg-surface border-border flex items-center justify-between rounded border px-3 py-2">
             <span className="text-sm">
               Assigned to: <strong>{getLabel(assignee, assignees)}</strong>
             </span>

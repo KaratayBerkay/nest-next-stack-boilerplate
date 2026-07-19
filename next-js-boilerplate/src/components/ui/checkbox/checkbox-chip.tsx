@@ -29,7 +29,7 @@ export function CheckboxChip({
     <label
       htmlFor={autoId}
       className={cn(
-        "inline-flex cursor-pointer select-none items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors",
+        "inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors select-none",
         checked
           ? "bg-brand text-brand-fg border-brand"
           : resolveVariant(checkboxChipVariants, effectiveVariant),
@@ -75,7 +75,7 @@ export function CheckboxChip({
             e.stopPropagation();
             onRemove();
           }}
-          className="ml-0.5 inline-flex items-center justify-center rounded-full p-1 hover:bg-brand-fg/20"
+          className="hover:bg-brand-fg/20 ml-0.5 inline-flex items-center justify-center rounded-full p-1"
           aria-label={`Remove ${label}`}
         >
           <svg

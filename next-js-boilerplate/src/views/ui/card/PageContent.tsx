@@ -20,7 +20,10 @@ import { FieldMessages } from "@/components/ui/field-messages";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { cn } from "@/lib/cn";
-import { cardLoginFormSchema, cardRegisterFormSchema } from "@/validators/auth/schema";
+import {
+  cardLoginFormSchema,
+  cardRegisterFormSchema,
+} from "@/validators/auth/schema";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 // ---------- Shared ----------
@@ -206,9 +209,7 @@ function LoginTab() {
             {formError && <FieldMessages error={formError} />}
 
             <div>
-              <form.Subscribe
-                selector={(s) => [s.canSubmit, s.isSubmitting]}
-              >
+              <form.Subscribe selector={(s) => [s.canSubmit, s.isSubmitting]}>
                 {([canSubmit, isSubmitting]) => (
                   <Button
                     type="submit"
@@ -216,7 +217,9 @@ function LoginTab() {
                     loading={isSubmitting}
                     disabled={!canSubmit}
                   >
-                    {isSubmitting ? t.form.login.submitting : t.form.login.submit}
+                    {isSubmitting
+                      ? t.form.login.submitting
+                      : t.form.login.submit}
                   </Button>
                 )}
               </form.Subscribe>
@@ -235,7 +238,7 @@ function LoginTab() {
             <div className="mt-6 grid grid-cols-2 gap-4">
               <button
                 type="button"
-                className="bg-surface hover:bg-surface-hover flex w-full items-center justify-center gap-3 rounded-md px-3 py-2 text-sm font-semibold shadow-xs ring-1 ring-inset ring-border transition-colors"
+                className="bg-surface hover:bg-surface-hover ring-border flex w-full items-center justify-center gap-3 rounded-md px-3 py-2 text-sm font-semibold shadow-xs ring-1 transition-colors ring-inset"
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5">
                   <path
@@ -259,7 +262,7 @@ function LoginTab() {
               </button>
               <button
                 type="button"
-                className="bg-surface hover:bg-surface-hover flex w-full items-center justify-center gap-3 rounded-md px-3 py-2 text-sm font-semibold shadow-xs ring-1 ring-inset ring-border transition-colors"
+                className="bg-surface hover:bg-surface-hover ring-border flex w-full items-center justify-center gap-3 rounded-md px-3 py-2 text-sm font-semibold shadow-xs ring-1 transition-colors ring-inset"
               >
                 <svg
                   viewBox="0 0 20 20"
@@ -352,9 +355,7 @@ function RegisterTab() {
         <h2 className="mt-4 text-2xl font-bold tracking-tight">
           {t.form.register.heading}
         </h2>
-        <p className="text-muted mt-1 text-sm">
-          {t.form.register.subheading}
-        </p>
+        <p className="text-muted mt-1 text-sm">{t.form.register.subheading}</p>
       </div>
 
       <Card className="w-full max-w-[480px]">
@@ -532,9 +533,7 @@ function RegisterTab() {
             {formError && <FieldMessages error={formError} />}
 
             <div>
-              <form.Subscribe
-                selector={(s) => [s.canSubmit, s.isSubmitting]}
-              >
+              <form.Subscribe selector={(s) => [s.canSubmit, s.isSubmitting]}>
                 {([canSubmit, isSubmitting]) => (
                   <Button
                     type="submit"
@@ -563,7 +562,7 @@ function RegisterTab() {
             <div className="mt-6 grid grid-cols-2 gap-4">
               <button
                 type="button"
-                className="bg-surface hover:bg-surface-hover flex w-full items-center justify-center gap-3 rounded-md px-3 py-2 text-sm font-semibold shadow-xs ring-1 ring-inset ring-border transition-colors"
+                className="bg-surface hover:bg-surface-hover ring-border flex w-full items-center justify-center gap-3 rounded-md px-3 py-2 text-sm font-semibold shadow-xs ring-1 transition-colors ring-inset"
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5">
                   <path
@@ -587,7 +586,7 @@ function RegisterTab() {
               </button>
               <button
                 type="button"
-                className="bg-surface hover:bg-surface-hover flex w-full items-center justify-center gap-3 rounded-md px-3 py-2 text-sm font-semibold shadow-xs ring-1 ring-inset ring-border transition-colors"
+                className="bg-surface hover:bg-surface-hover ring-border flex w-full items-center justify-center gap-3 rounded-md px-3 py-2 text-sm font-semibold shadow-xs ring-1 transition-colors ring-inset"
               >
                 <svg
                   viewBox="0 0 20 20"
@@ -653,8 +652,8 @@ function ProfileCardTab() {
           </CardHeader>
           <CardContent>
             <p className="text-muted text-sm">
-              Passionate about building beautiful user interfaces and
-              design systems.
+              Passionate about building beautiful user interfaces and design
+              systems.
             </p>
             <div className="mt-4 flex gap-2">
               <Badge>React</Badge>
@@ -678,17 +677,14 @@ function ProfileCardTab() {
             <div className="flex items-start justify-between">
               <div>
                 <CardTitle>Tailwind CSS</CardTitle>
-                <CardDescription>
-                  A utility-first CSS framework
-                </CardDescription>
+                <CardDescription>A utility-first CSS framework</CardDescription>
               </div>
               <Badge variant="success">Stable</Badge>
             </div>
           </CardHeader>
           <CardContent>
             <p className="text-muted text-sm">
-              Rapidly build modern websites without ever leaving your
-              HTML.
+              Rapidly build modern websites without ever leaving your HTML.
             </p>
           </CardContent>
           <CardFooter className="flex items-center justify-between">
@@ -770,8 +766,8 @@ function FeatureCardsTab() {
           </CardHeader>
           <CardContent>
             <p className="text-muted text-sm">
-              Blazing fast performance with optimized rendering and
-              lazy loading.
+              Blazing fast performance with optimized rendering and lazy
+              loading.
             </p>
           </CardContent>
         </Card>
@@ -781,8 +777,7 @@ function FeatureCardsTab() {
           </CardHeader>
           <CardContent>
             <p className="text-muted text-sm">
-              Enterprise-grade security with encryption at rest and in
-              transit.
+              Enterprise-grade security with encryption at rest and in transit.
             </p>
           </CardContent>
         </Card>
@@ -936,7 +931,7 @@ function PricingTiersTab() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <div className="isolate grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="isolate grid grid-cols-1 gap-6 md:grid-cols-3">
         {tiers.map((tier) => {
           const isSelected = selectedTier === tier.name;
           return (
@@ -945,12 +940,12 @@ function PricingTiersTab() {
               type="button"
               onClick={() => setSelectedTier(isSelected ? null : tier.name)}
               className={cn(
-                "rounded-xl border p-8 flex flex-col text-left transition-all duration-200 cursor-pointer",
+                "flex cursor-pointer flex-col rounded-xl border p-8 text-left transition-all duration-200",
                 "hover:shadow-md",
                 isSelected
-                  ? "border-brand ring-2 ring-brand/50 shadow-lg scale-[1.02]"
+                  ? "border-brand ring-brand/50 scale-[1.02] shadow-lg ring-2"
                   : tier.popular
-                    ? "border-brand/50 bg-surface relative ring-1 ring-brand/20"
+                    ? "border-brand/50 bg-surface ring-brand/20 relative ring-1"
                     : "border-border bg-surface",
               )}
             >
@@ -960,12 +955,15 @@ function PricingTiersTab() {
                 </Badge>
               )}
               {isSelected && (
-                <Badge variant="success" className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <Badge
+                  variant="success"
+                  className="absolute -top-3 left-1/2 -translate-x-1/2"
+                >
                   Selected
                 </Badge>
               )}
 
-              <div className="flex items-center gap-3 mb-4">
+              <div className="mb-4 flex items-center gap-3">
                 {tier.logos.map((logo) => (
                   <span
                     key={logo}
@@ -998,7 +996,7 @@ function PricingTiersTab() {
                     ? "bg-brand text-white"
                     : tier.popular
                       ? "bg-brand text-white"
-                      : "border border-border text-fg",
+                      : "border-border text-fg border",
                 )}
               >
                 {isSelected ? "Selected" : tier.cta}
@@ -1022,7 +1020,7 @@ function PricingTiersTab() {
 
       {/* Feature comparison table */}
       <div className="mt-16">
-        <h3 className="text-xl font-bold text-center mb-8">
+        <h3 className="mb-8 text-center text-xl font-bold">
           Compare features across all tiers
         </h3>
 
@@ -1054,17 +1052,14 @@ function PricingTiersTab() {
                   <tr key={section.name}>
                     <td
                       colSpan={4}
-                      className="text-muted pt-8 pb-2 text-xs font-semibold uppercase tracking-wider"
+                      className="text-muted pt-8 pb-2 text-xs font-semibold tracking-wider uppercase"
                     >
                       {section.name}
                     </td>
                   </tr>
                   {section.features.map((feature) => (
-                    <tr
-                      key={feature.name}
-                      className="border-border border-b"
-                    >
-                      <td className="py-4 pr-4 text-fg font-medium">
+                    <tr key={feature.name} className="border-border border-b">
+                      <td className="text-fg py-4 pr-4 font-medium">
                         {feature.name}
                       </td>
                       {feature.tiers.map((value, i) => (
@@ -1104,11 +1099,12 @@ function VariantGalleryTab() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h3 className="text-lg font-semibold mb-1">Card Variants</h3>
-        <p className="text-muted text-sm mb-4">
-          Six visual styles for different contexts: default for general use, elevated for emphasis,
-          interactive for clickable cards, outline for lightweight separation, surface for
-          content areas, and soft for subtle tinting.
+        <h3 className="mb-1 text-lg font-semibold">Card Variants</h3>
+        <p className="text-muted mb-4 text-sm">
+          Six visual styles for different contexts: default for general use,
+          elevated for emphasis, interactive for clickable cards, outline for
+          lightweight separation, surface for content areas, and soft for subtle
+          tinting.
         </p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {(
@@ -1124,16 +1120,31 @@ function VariantGalleryTab() {
               <CardHeader>
                 <CardTitle className="text-sm capitalize">{variant}</CardTitle>
                 <CardDescription>
-                  {variant === "default" && "Standard card with border and subtle shadow."}
-                  {variant === "elevated" && "Prominent shadow for emphasis and hierarchy."}
-                  {variant === "interactive" && "Hover to lift — perfect for clickable content."}
-                  {variant === "outline" && "Border-only for lightweight visual grouping."}
-                  {variant === "surface" && "Background-tinted for nested content areas."}
+                  {variant === "default" &&
+                    "Standard card with border and subtle shadow."}
+                  {variant === "elevated" &&
+                    "Prominent shadow for emphasis and hierarchy."}
+                  {variant === "interactive" &&
+                    "Hover to lift — perfect for clickable content."}
+                  {variant === "outline" &&
+                    "Border-only for lightweight visual grouping."}
+                  {variant === "surface" &&
+                    "Background-tinted for nested content areas."}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-muted text-xs">
-                  Use this variant when you need to {variant === "default" ? "display neutral content" : variant === "elevated" ? "draw attention to important info" : variant === "interactive" ? "make content clickable and engaging" : variant === "outline" ? "group content without adding weight" : "nest content within sections"}.
+                  Use this variant when you need to{" "}
+                  {variant === "default"
+                    ? "display neutral content"
+                    : variant === "elevated"
+                      ? "draw attention to important info"
+                      : variant === "interactive"
+                        ? "make content clickable and engaging"
+                        : variant === "outline"
+                          ? "group content without adding weight"
+                          : "nest content within sections"}
+                  .
                 </p>
               </CardContent>
             </Card>
@@ -1142,9 +1153,10 @@ function VariantGalleryTab() {
       </div>
 
       <div>
-        <h3 className="text-lg font-semibold mb-1">Sizes</h3>
-        <p className="text-muted text-sm mb-4">
-          Three padding sizes control internal spacing without changing the card&apos;s visual style.
+        <h3 className="mb-1 text-lg font-semibold">Sizes</h3>
+        <p className="text-muted mb-4 text-sm">
+          Three padding sizes control internal spacing without changing the
+          card&apos;s visual style.
         </p>
         <div className="flex flex-wrap items-end gap-4">
           {(["sm", "md", "lg"] as const).map((size) => (
@@ -1155,7 +1167,7 @@ function VariantGalleryTab() {
                   size === "sm" ? "p-3" : size === "lg" ? "p-8" : "p-5",
                 )}
               >
-                <span className="text-muted text-xs font-medium uppercase tracking-wider">
+                <span className="text-muted text-xs font-medium tracking-wider uppercase">
                   {size}
                 </span>
                 <span className="text-muted/60 mt-1 text-[10px]">
@@ -1168,15 +1180,17 @@ function VariantGalleryTab() {
       </div>
 
       <div>
-        <h3 className="text-lg font-semibold mb-1">All Combinations</h3>
-        <p className="text-muted text-sm mb-4">
+        <h3 className="mb-1 text-lg font-semibold">All Combinations</h3>
+        <p className="text-muted mb-4 text-sm">
           Every variant and size pairing in a grid.
         </p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-border border-b">
-                <th className="text-muted px-3 py-2.5 text-left text-xs font-medium">Variant</th>
+                <th className="text-muted px-3 py-2.5 text-left text-xs font-medium">
+                  Variant
+                </th>
                 {["sm", "md", "lg"].map((size) => (
                   <th
                     key={size}
@@ -1197,8 +1211,11 @@ function VariantGalleryTab() {
                   "surface",
                 ] as const
               ).map((variant) => (
-                <tr key={variant} className="border-border border-b last:border-b-0">
-                  <td className="px-3 py-2 text-xs font-medium capitalize whitespace-nowrap">
+                <tr
+                  key={variant}
+                  className="border-border border-b last:border-b-0"
+                >
+                  <td className="px-3 py-2 text-xs font-medium whitespace-nowrap capitalize">
                     {variant}
                   </td>
                   {(["sm", "md", "lg"] as const).map((size) => (
@@ -1207,10 +1224,14 @@ function VariantGalleryTab() {
                         <Card variant={variant} className="min-w-32">
                           <CardContent
                             className={cn(
-                              size === "sm" ? "p-2" : size === "lg" ? "p-5" : "p-3",
+                              size === "sm"
+                                ? "p-2"
+                                : size === "lg"
+                                  ? "p-5"
+                                  : "p-3",
                             )}
                           >
-                            <p className="text-muted text-[10px] text-center">
+                            <p className="text-muted text-center text-[10px]">
                               {variant} / {size}
                             </p>
                           </CardContent>
@@ -1241,7 +1262,8 @@ export default function CardPage({ initialTab }: { initialTab?: string }) {
     {
       id: "stats-dashboard",
       title: "Stats Dashboard",
-      description: "Stats cards showing revenue, subscriptions, and active users.",
+      description:
+        "Stats cards showing revenue, subscriptions, and active users.",
       render: () => <StatsDashboardTab />,
     },
     {
@@ -1253,25 +1275,29 @@ export default function CardPage({ initialTab }: { initialTab?: string }) {
     {
       id: "login",
       title: "Login",
-      description: "Login card with email, password, remember-me, and validation.",
+      description:
+        "Login card with email, password, remember-me, and validation.",
       render: () => <LoginTab />,
     },
     {
       id: "register",
       title: "Register",
-      description: "Registration form with personal information fields and social login.",
+      description:
+        "Registration form with personal information fields and social login.",
       render: () => <RegisterTab />,
     },
     {
       id: "pricing-tiers",
       title: "Pricing Tiers",
-      description: "Three-column pricing grid with a highlighted Professional plan.",
+      description:
+        "Three-column pricing grid with a highlighted Professional plan.",
       render: () => <PricingTiersTab />,
     },
     {
       id: "variant-gallery",
       title: "Variant Gallery",
-      description: "All card variants and sizes in a side-by-side comparison table.",
+      description:
+        "All card variants and sizes in a side-by-side comparison table.",
       render: () => <VariantGalleryTab />,
     },
   ];

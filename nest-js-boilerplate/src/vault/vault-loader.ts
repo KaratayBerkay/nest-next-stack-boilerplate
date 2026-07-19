@@ -14,6 +14,7 @@ export async function loadVaultSecrets(): Promise<void> {
   const url = `${addr}/v1/${VAULT_SECRET_PATH}`;
 
   try {
+    // fallow-ignore-next-line security-sink — VAULT_ADDR is infra config
     const res = await fetch(url, {
       headers: { 'X-Vault-Token': token },
     });

@@ -45,14 +45,11 @@ function ComponentsTab() {
             Italic
           </Toggle>
         </div>
-        <div className="bg-surface flex items-center justify-between rounded border border-border px-3 py-2">
+        <div className="bg-surface border-border flex items-center justify-between rounded border px-3 py-2">
           <span className="text-sm">
             Active:{" "}
             <strong>
-              {[
-                bold && "Bold",
-                italic && "Italic",
-              ]
+              {[bold && "Bold", italic && "Italic"]
                 .filter(Boolean)
                 .join(", ") || "None"}
             </strong>
@@ -122,14 +119,11 @@ function ExamplesTab() {
             Strikethrough
           </Toggle>
         </div>
-        <div className="bg-surface flex items-center justify-between rounded border border-border px-3 py-2">
+        <div className="bg-surface border-border flex items-center justify-between rounded border px-3 py-2">
           <span className="text-sm">
             Active:{" "}
             <strong>
-              {[
-                underline && "Underline",
-                strikethrough && "Strikethrough",
-              ]
+              {[underline && "Underline", strikethrough && "Strikethrough"]
                 .filter(Boolean)
                 .join(", ") || "None"}
             </strong>
@@ -164,7 +158,8 @@ const examples: UIExample[] = [
   {
     id: "usage",
     title: "Formatting Toolbar",
-    description: "Bold, italic, and underline toggle buttons in an editor toolbar.",
+    description:
+      "Bold, italic, and underline toggle buttons in an editor toolbar.",
     render: () => <ComponentsTab />,
   },
   {
@@ -181,7 +176,11 @@ const examples: UIExample[] = [
       <VariantGallery
         variants={["default", "outline", "shiny", "glass", "neon", "gradient"]}
         sizes={["sm", "md", "lg"]}
-        render={(variant, size) => <Toggle variant={variant as ToggleVariant} size={size as ToggleSize}>Toggle</Toggle>}
+        render={(variant, size) => (
+          <Toggle variant={variant as ToggleVariant} size={size as ToggleSize}>
+            Toggle
+          </Toggle>
+        )}
       />
     ),
   },

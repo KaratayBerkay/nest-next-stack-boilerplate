@@ -9,7 +9,8 @@ const examples: UIExample[] = [
   {
     id: "usage",
     title: "Paired Controls",
-    description: "Label with htmlFor connecting to input, switch, and checkbox.",
+    description:
+      "Label with htmlFor connecting to input, switch, and checkbox.",
     render: () => (
       <div className="flex flex-col gap-4">
         <section className="flex flex-col gap-3">
@@ -56,10 +57,7 @@ const examples: UIExample[] = [
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="example-bio">Bio</Label>
-            <Input
-              id="example-bio"
-              placeholder="Tell us about yourself..."
-            />
+            <Input id="example-bio" placeholder="Tell us about yourself..." />
           </div>
         </div>
       </section>

@@ -47,7 +47,13 @@ export {
   CarouselPrevious,
   CarouselNext,
 } from "./carousel";
-export { Checkbox, CheckboxGroup, IndeterminateCheckbox, CheckboxCard, CheckboxChip } from "./checkbox";
+export {
+  Checkbox,
+  CheckboxGroup,
+  IndeterminateCheckbox,
+  CheckboxCard,
+  CheckboxChip,
+} from "./checkbox";
 export {
   Collapsible,
   CollapsibleTrigger,

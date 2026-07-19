@@ -20,7 +20,7 @@ function CountryTab() {
 
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor="country-dropdown" className="text-sm font-medium text-fg">
+      <label htmlFor="country-dropdown" className="text-fg text-sm font-medium">
         Country
       </label>
       <Dropdown
@@ -69,9 +69,7 @@ function RowsPerPageTab() {
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-muted text-xs">
-        Table footer control: rows per page.
-      </p>
+      <p className="text-muted text-xs">Table footer control: rows per page.</p>
       <div className="flex items-center gap-2">
         <Dropdown
           aria-label="Rows per page"

@@ -7,10 +7,16 @@ export interface AuditLogQueryResult {
   total: number;
 }
 
-async function fetchAuditLogs(params: AuditLogParams): Promise<AuditLogQueryResult> {
-  const { fetchAuditLogsServer } = await import("@/api/server/admin/audit-logs");
+async function fetchAuditLogs(
+  params: AuditLogParams,
+): Promise<AuditLogQueryResult> {
+  const { fetchAuditLogsServer } =
+    await import("@/api/server/admin/audit-logs");
   const data = await fetchAuditLogsServer(params);
-  return { items: data.entries as unknown as AuditLogEntry[], total: data.total };
+  return {
+    items: data.entries as unknown as AuditLogEntry[],
+    total: data.total,
+  };
 }
 
 export function auditLogsQueryOptions(params: AuditLogParams) {

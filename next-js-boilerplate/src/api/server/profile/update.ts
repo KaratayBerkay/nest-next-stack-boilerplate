@@ -10,7 +10,9 @@ export interface UpdateProfileParams {
   avatarUrl?: string;
 }
 
-export async function updateProfileServer(params: UpdateProfileParams): Promise<void> {
+export async function updateProfileServer(
+  params: UpdateProfileParams,
+): Promise<void> {
   await apiFetchJson(PROFILE_UPDATE_URL, {
     method: POST,
     headers: JSON_CONTENT_TYPE_HEADER,

@@ -15,7 +15,9 @@ import type { UIExample } from "@/types/ui/ExampleTabs-types";
 function QuickSearchTab() {
   return (
     <div className="mx-auto w-full max-w-sm">
-      <p className="text-muted mb-2 text-xs">Press ↓↑ to navigate, Enter to select</p>
+      <p className="text-muted mb-2 text-xs">
+        Press ↓↑ to navigate, Enter to select
+      </p>
       <Command className="border-border w-full">
         <CommandInput placeholder="Type a command or search…" />
         <CommandList>
@@ -74,7 +76,9 @@ function QuickSearchTab() {
 function CommandPaletteTab() {
   return (
     <div className="mx-auto w-full max-w-sm">
-      <p className="text-muted mb-2 text-xs">Press ↓↑ to navigate, Enter to select</p>
+      <p className="text-muted mb-2 text-xs">
+        Press ↓↑ to navigate, Enter to select
+      </p>
       <Command className="border-border w-full">
         <CommandInput placeholder="Type a command…" />
         <CommandList>
@@ -142,13 +146,15 @@ const examples: UIExample[] = [
   {
     id: "command-examples",
     title: "Command Examples",
-    description: "Searchable command palette with keyboard navigation, filtering, and groups.",
+    description:
+      "Searchable command palette with keyboard navigation, filtering, and groups.",
     render: () => <QuickSearchTab />,
   },
   {
     id: "cmd-k-palette",
     title: "⌘K Palette",
-    description: "A full-featured command palette with navigation, actions, and recent items.",
+    description:
+      "A full-featured command palette with navigation, actions, and recent items.",
     render: () => <CommandPaletteTab />,
   },
   {

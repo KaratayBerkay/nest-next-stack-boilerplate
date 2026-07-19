@@ -12,7 +12,10 @@ import {
 } from "@radix-ui/react-dialog";
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
-import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
+import {
+  globalStyleVariants,
+  type GlobalVariant,
+} from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 
 const sheetVariants = {
@@ -35,7 +38,7 @@ export const SheetContent = forwardRef<
 
   return (
     <Portal>
-      <Overlay className="data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out fixed inset-0 z-40 bg-overlay/50" />
+      <Overlay className="data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out bg-overlay/50 fixed inset-0 z-40" />
       <Content
         ref={ref}
         className={cn(
@@ -54,7 +57,7 @@ export const SheetContent = forwardRef<
         {...props}
       >
         {children}
-        <Close className="text-muted hover:bg-surface-hover absolute top-4 right-4 size-7 rounded-md inline-flex items-center justify-center transition-colors">
+        <Close className="text-muted hover:bg-surface-hover absolute top-4 right-4 inline-flex size-7 items-center justify-center rounded-md transition-colors">
           <svg
             width="16"
             height="16"

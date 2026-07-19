@@ -12,7 +12,7 @@ export class MinioService implements OnModuleInit {
 
   constructor(private readonly config: ConfigService) {}
 
-  onModuleInit() {
+  async onModuleInit() {
     const endPoint = this.config.get<string>('MINIO_ENDPOINT', 'localhost');
     const port = Number(this.config.get('MINIO_PORT', '9000'));
     const useSSL = this.config.get('MINIO_USE_SSL', 'false') === 'true';
@@ -32,7 +32,7 @@ export class MinioService implements OnModuleInit {
       secretKey,
     });
 
-    this.ensureBucket();
+    await this.ensureBucket();
   }
 
   private async ensureBucket() {

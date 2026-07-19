@@ -3,7 +3,11 @@ import { POSTS_PREFIX } from "@/constants/api/urls";
 import { PUT } from "@/constants/api/methods";
 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 
-export async function updatePostServer(id: string, title: string, content: string): Promise<void> {
+export async function updatePostServer(
+  id: string,
+  title: string,
+  content: string,
+): Promise<void> {
   const res = await apiFetch(POSTS_PREFIX + id, {
     method: PUT,
     headers: JSON_CONTENT_TYPE_HEADER,

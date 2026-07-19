@@ -20,7 +20,17 @@ const sizeMap: Record<SwitchSize, { track: string; thumb: string }> = {
   lg: { track: "h-6.5 w-12", thumb: "after:size-5" },
 };
 
-export function Switch({ className, id, label, variant, switchSize = "md", fontSize, fontWeight, fontFamily, ...props }: SwitchProps) {
+export function Switch({
+  className,
+  id,
+  label,
+  variant,
+  switchSize = "md",
+  fontSize,
+  fontWeight,
+  fontFamily,
+  ...props
+}: SwitchProps) {
   const autoId = useId();
   const generatedId = id ?? autoId;
   const effectiveVariant = useComponentVariant(variant);
@@ -34,7 +44,7 @@ export function Switch({ className, id, label, variant, switchSize = "md", fontS
         id={generatedId}
         className={cn(
           "peer focus-visible:ring-brand relative inline-flex shrink-0 cursor-pointer appearance-none items-center rounded-full border-2 border-transparent transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-          "after:rounded-full after:bg-bg after:shadow-xs after:transition-transform after:content-[''] checked:after:translate-x-full",
+          "after:bg-bg after:rounded-full after:shadow-xs after:transition-transform after:content-[''] checked:after:translate-x-full",
           resolveVariant(trackVariants, effectiveVariant),
           sizes.track,
           sizes.thumb,

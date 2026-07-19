@@ -19,10 +19,9 @@ export function ExamplesTab() {
           className="max-w-sm"
         />
         {country && (
-          <div className="bg-surface flex items-center justify-between rounded border border-border px-3 py-2">
+          <div className="bg-surface border-border flex items-center justify-between rounded border px-3 py-2">
             <span className="text-sm">
-              Selected:{" "}
-              <strong>{getLabel(country, countries)}</strong>
+              Selected: <strong>{getLabel(country, countries)}</strong>
             </span>
             <button
               type="button"

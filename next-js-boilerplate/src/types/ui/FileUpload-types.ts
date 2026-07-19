@@ -29,7 +29,10 @@ export interface FileUploadProps {
   maxFiles?: number;
   files: UploadFile[];
   onFilesChange: (files: UploadFile[]) => void;
-  onUpload?: (file: File, reportProgress: (pct: number) => void) => Promise<void>;
+  onUpload?: (
+    file: File,
+    reportProgress: (pct: number) => void,
+  ) => Promise<void>;
   className?: string;
   disabled?: boolean;
   labels?: FileUploadLabels;

@@ -23,7 +23,9 @@ function BasicDrawerDemo() {
   return (
     <section className="flex flex-col gap-3">
       <h3 className="text-lg font-semibold">Snap Points</h3>
-      <p className="text-muted text-sm">Drawer snaps to predefined heights. Drag to peek or expand to full.</p>
+      <p className="text-muted text-sm">
+        Drawer snaps to predefined heights. Drag to peek or expand to full.
+      </p>
       <Drawer
         snapPoints={[0.35, 1]}
         activeSnapPoint={activeSnap}
@@ -36,16 +38,22 @@ function BasicDrawerDemo() {
           <DrawerHeader>
             <DrawerTitle>Snap Points</DrawerTitle>
             <DrawerDescription>
-              Active snap: {typeof activeSnap === "number" ? `${Math.round(activeSnap * 100)}%` : activeSnap}
+              Active snap:{" "}
+              {typeof activeSnap === "number"
+                ? `${Math.round(activeSnap * 100)}%`
+                : activeSnap}
             </DrawerDescription>
           </DrawerHeader>
           <div className="flex flex-1 flex-col gap-3 px-4">
             <p className="text-muted text-sm">
-              This drawer has two snap points: 35% (peek) and 100% (full). Drag the handle or swipe to switch between them.
+              This drawer has two snap points: 35% (peek) and 100% (full). Drag
+              the handle or swipe to switch between them.
             </p>
             <div className="border-border rounded-lg border p-3">
               <p className="text-xs font-medium">Snap Point Debug</p>
-              <p className="text-muted text-xs">Current: {String(activeSnap)}</p>
+              <p className="text-muted text-xs">
+                Current: {String(activeSnap)}
+              </p>
             </div>
           </div>
           <DrawerFooter>
@@ -71,7 +79,9 @@ function CartSummaryDemo() {
         <DrawerContent>
           <DrawerHeader>
             <DrawerTitle>Shopping Cart (3 items)</DrawerTitle>
-            <DrawerDescription>Review your items before checkout</DrawerDescription>
+            <DrawerDescription>
+              Review your items before checkout
+            </DrawerDescription>
           </DrawerHeader>
           <div className="flex flex-col gap-3 px-4">
             <div className="flex items-center justify-between text-sm">
@@ -93,7 +103,9 @@ function CartSummaryDemo() {
                 value={promoCode}
                 onChange={(e) => setPromoCode(e.target.value)}
               />
-              <Button variant="secondary" size="sm">Apply</Button>
+              <Button variant="secondary" size="sm">
+                Apply
+              </Button>
             </div>
             <Separator />
             <div className="flex items-center justify-between text-sm font-bold">
@@ -102,8 +114,10 @@ function CartSummaryDemo() {
             </div>
           </div>
           <DrawerFooter>
-            <Button variant="primary" className="w-full">Checkout</Button>
-            <DrawerClose className="border-border rounded border px-4 py-2 text-sm w-full">
+            <Button variant="primary" className="w-full">
+              Checkout
+            </Button>
+            <DrawerClose className="border-border w-full rounded border px-4 py-2 text-sm">
               Continue Shopping
             </DrawerClose>
           </DrawerFooter>
@@ -127,10 +141,12 @@ function DrawerVariantGallery() {
               </DrawerTrigger>
               <DrawerContent>
                 <DrawerHeader>
-                  <DrawerTitle>{variant} / {size}</DrawerTitle>
+                  <DrawerTitle>
+                    {variant} / {size}
+                  </DrawerTitle>
                   <DrawerDescription>Drawer variant demo</DrawerDescription>
                 </DrawerHeader>
-                <div className="px-4 py-2 text-sm text-muted">
+                <div className="text-muted px-4 py-2 text-sm">
                   Content for {variant} variant at {size} size.
                 </div>
                 <DrawerFooter>

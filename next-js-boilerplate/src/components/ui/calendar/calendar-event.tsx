@@ -34,8 +34,12 @@ export function CalendarEvent({ event, compact }: CalendarEventProps) {
   if (compact) {
     return (
       <span className="flex items-center gap-1 text-[0.65rem] leading-tight">
-        <span className={cn("size-1.5 shrink-0 rounded-full", colorMap[color])} />
-        <span className={cn("truncate", textColorMap[color])}>{event.title}</span>
+        <span
+          className={cn("size-1.5 shrink-0 rounded-full", colorMap[color])}
+        />
+        <span className={cn("truncate", textColorMap[color])}>
+          {event.title}
+        </span>
       </span>
     );
   }
@@ -50,7 +54,9 @@ export function CalendarEvent({ event, compact }: CalendarEventProps) {
     >
       <span className={cn("size-1.5 shrink-0 rounded-full", colorMap[color])} />
       <span className="truncate font-medium">{event.title}</span>
-      {event.time && <span className="ml-auto shrink-0 opacity-70">{event.time}</span>}
+      {event.time && (
+        <span className="ml-auto shrink-0 opacity-70">{event.time}</span>
+      )}
     </div>
   );
 }

@@ -2,7 +2,6 @@
   "$schema": "https://raw.githubusercontent.com/GoogleChrome/lighthouse/main/types/lhr/schema.json",
   "ci": {
     "collect": {
-      "staticDistDir": ".next",
       "startServerCommand": "pnpm start -p 4000",
       "startServerReadyPattern": "Ready in",
       "url": [
@@ -12,7 +11,12 @@
         "http://localhost:4000/v1/en/find-friends"
       ],
       "settings": {
-        "onlyCategories": ["performance", "accessibility", "best-practices", "seo"],
+        "onlyCategories": [
+          "performance",
+          "accessibility",
+          "best-practices",
+          "seo"
+        ],
         "formFactor": "desktop",
         "throttlingMethod": "simulate"
       }

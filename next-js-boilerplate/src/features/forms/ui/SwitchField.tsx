@@ -16,7 +16,11 @@ export function SwitchField({ label, required }: SwitchFieldProps) {
           checked={field.state.value}
           onChange={() => field.handleChange(!field.state.value)}
         />
-        {label && <Label htmlFor={field.name} required={required}>{label}</Label>}
+        {label && (
+          <Label htmlFor={field.name} required={required}>
+            {label}
+          </Label>
+        )}
       </div>
       <FormFieldInfo field={field} />
     </div>

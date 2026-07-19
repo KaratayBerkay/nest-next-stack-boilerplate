@@ -78,9 +78,12 @@ export function Button({
       ref?: React.Ref<unknown>;
       className?: string;
     }>;
-    const childOnClick = child.props.onClick as React.MouseEventHandler<HTMLButtonElement> | undefined;
+    const childOnClick = child.props.onClick as
+      | React.MouseEventHandler<HTMLButtonElement>
+      | undefined;
     const childRef = child.props.ref;
-    const buttonOnClick = (props as React.ComponentPropsWithoutRef<"button">).onClick;
+    const buttonOnClick = (props as React.ComponentPropsWithoutRef<"button">)
+      .onClick;
     return cloneElement(child, {
       ...sharedProps,
       ...props,

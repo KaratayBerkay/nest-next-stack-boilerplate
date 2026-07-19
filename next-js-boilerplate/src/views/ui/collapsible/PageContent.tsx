@@ -45,8 +45,8 @@ function ReadMoreTab() {
       </h3>
       <p className="text-muted mt-2 text-sm">
         Design tokens are named values for color, spacing, and typography that
-        keep a product visually consistent. Instead of hardcoding a hex value
-        in fifty places, components reference a single token.
+        keep a product visually consistent. Instead of hardcoding a hex value in
+        fifty places, components reference a single token.
       </p>
       <Collapsible open={open} onOpenChange={setOpen}>
         <CollapsibleContent className="text-muted flex flex-col gap-2 text-sm">
@@ -57,8 +57,8 @@ function ReadMoreTab() {
           </p>
           <p>
             Tokens also make review easier — a diff that says
-            &quot;surface-hover&quot; communicates intent, while a raw hex
-            value communicates nothing.
+            &quot;surface-hover&quot; communicates intent, while a raw hex value
+            communicates nothing.
           </p>
         </CollapsibleContent>
         <CollapsibleTrigger className="text-brand mt-3 rounded-md text-sm font-medium hover:underline">
@@ -104,9 +104,7 @@ const sidebarSections = [
 
 function SidebarGroupsTab() {
   const [openState, setOpenState] = useState<Record<string, boolean>>(
-    Object.fromEntries(
-      sidebarSections.map((s) => [s.key, s.defaultOpen]),
-    ),
+    Object.fromEntries(sidebarSections.map((s) => [s.key, s.defaultOpen])),
   );
 
   return (
@@ -167,8 +165,8 @@ function OrderSummaryTab() {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-muted text-xs">
-        Checkout summary collapsed by default — the pattern mobile stores use
-        to keep the payment form above the fold.
+        Checkout summary collapsed by default — the pattern mobile stores use to
+        keep the payment form above the fold.
       </p>
       <Collapsible className="bg-surface border-border max-w-sm rounded-lg border">
         <CollapsibleTrigger className="group flex w-full items-center justify-between rounded-lg px-4 py-3">
@@ -223,13 +221,19 @@ function AdvancedSettingsTab() {
       onSubmit={(e) => e.preventDefault()}
     >
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="collapsible-project-name" className="text-fg text-sm font-medium">
+        <label
+          htmlFor="collapsible-project-name"
+          className="text-fg text-sm font-medium"
+        >
           Project name
         </label>
         <Input id="collapsible-project-name" defaultValue="marketing-site" />
       </div>
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="collapsible-project-url" className="text-fg text-sm font-medium">
+        <label
+          htmlFor="collapsible-project-url"
+          className="text-fg text-sm font-medium"
+        >
           Production URL
         </label>
         <Input
@@ -250,7 +254,10 @@ function AdvancedSettingsTab() {
             <Switch label="Enable edge caching" defaultChecked />
             <Switch label="Verbose build logs" />
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="collapsible-webhook" className="text-fg text-sm font-medium">
+              <label
+                htmlFor="collapsible-webhook"
+                className="text-fg text-sm font-medium"
+              >
                 Deploy webhook
               </label>
               <Input
@@ -385,7 +392,11 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function CollapsiblePage({ initialTab }: { initialTab?: string }) {
+export default function CollapsiblePage({
+  initialTab,
+}: {
+  initialTab?: string;
+}) {
   return (
     <ExampleTabs
       title="Collapsible"

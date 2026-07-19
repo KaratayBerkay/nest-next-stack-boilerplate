@@ -1,5 +1,16 @@
-import { useState, useCallback, useMemo, type Dispatch, type SetStateAction } from "react";
-import { Command, CommandInput, CommandList, CommandItem } from "@/components/ui/Command";
+import {
+  useState,
+  useCallback,
+  useMemo,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandItem,
+} from "@/components/ui/Command";
 import { getLabel } from "./helpers";
 import { creatableInitial } from "./data";
 
@@ -45,17 +56,17 @@ export function CreatableTab() {
 
   const showCreate =
     query.length > 0 &&
-    !options.some(
-      (opt) => opt.label.toLowerCase() === query.toLowerCase(),
-    );
+    !options.some((opt) => opt.label.toLowerCase() === query.toLowerCase());
 
   const handleCreate = useCallback(
-    () => handleCreateModuleLevel(query, setOptions, setValue, setOpen, setQuery),
+    () =>
+      handleCreateModuleLevel(query, setOptions, setValue, setOpen, setQuery),
     [query, setOptions, setValue, setOpen, setQuery],
   );
 
   const handleSelect = useCallback(
-    (itemValue: string) => handleSelectModuleLevel(itemValue, setValue, setOpen, setQuery),
+    (itemValue: string) =>
+      handleSelectModuleLevel(itemValue, setValue, setOpen, setQuery),
     [setValue, setOpen, setQuery],
   );
 
@@ -69,7 +80,7 @@ export function CreatableTab() {
           <button
             type="button"
             onClick={() => setOpen((prev) => !prev)}
-            className="focus-visible:ring-brand flex h-9 w-full items-center justify-between rounded-md border border-border bg-bg px-3 py-1 text-sm text-fg shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+            className="focus-visible:ring-brand border-border bg-bg text-fg flex h-9 w-full items-center justify-between rounded-md border px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
           >
             <span className="truncate">
               {selectedLabel || "Choose or create a color..."}
@@ -120,7 +131,7 @@ export function CreatableTab() {
                     </CommandItem>
                   )}
                   {!showCreate && filtered.length === 0 && (
-                    <div className="py-6 text-center text-sm text-muted">
+                    <div className="text-muted py-6 text-center text-sm">
                       No results
                     </div>
                   )}
@@ -130,7 +141,7 @@ export function CreatableTab() {
           )}
         </div>
         {value && (
-          <div className="bg-surface flex items-center justify-between rounded border border-border px-3 py-2">
+          <div className="bg-surface border-border flex items-center justify-between rounded border px-3 py-2">
             <span className="text-sm">
               Selected: <strong>{selectedLabel}</strong>
             </span>

@@ -36,7 +36,12 @@ import { MessagesSidebar } from "./MessagesSidebar";
 import { ChatView } from "./ChatView";
 import { friendsQueryOptions } from "@/api/client/friends/query";
 
-type UserInfo = { id: string; name: string; email: string; avatarUrl: string | null };
+type UserInfo = {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl: string | null;
+};
 
 function debouncedUserSearch(
   val: string,
@@ -126,7 +131,8 @@ function MessagesPageContent({
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const debouncedSearch = useCallback(
-    (val: string) => debouncedUserSearch(val, searchTimerRef, searchAbortRef, setFindResults),
+    (val: string) =>
+      debouncedUserSearch(val, searchTimerRef, searchAbortRef, setFindResults),
     [],
   );
 
@@ -175,7 +181,14 @@ function MessagesPageContent({
   }, [selectedUser]);
 
   const openConversation = useCallback(
-    (u: UserInfo) => openConversationAction(u, markMessagesRead, setSelectedUser, setTab, setSidebarOpen),
+    (u: UserInfo) =>
+      openConversationAction(
+        u,
+        markMessagesRead,
+        setSelectedUser,
+        setTab,
+        setSidebarOpen,
+      ),
     [markMessagesRead],
   );
 
@@ -215,11 +228,11 @@ function MessagesPageContent({
               }
             />
             {connectionState === "online" ? (
-              <span className="border-bg absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 bg-success" />
+              <span className="border-bg bg-success absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2" />
             ) : connectionState === "connecting" ? (
-              <span className="border-bg absolute -right-0.5 -bottom-0.5 h-3 w-3 animate-pulse rounded-full border-2 bg-success" />
+              <span className="border-bg bg-success absolute -right-0.5 -bottom-0.5 h-3 w-3 animate-pulse rounded-full border-2" />
             ) : (
-              <span className="border-bg absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 bg-error" />
+              <span className="border-bg bg-error absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2" />
             )}
           </div>
           <h2 className="text-brand text-lg font-bold">{t.title}</h2>
@@ -232,7 +245,7 @@ function MessagesPageContent({
           // Decorative dismiss backdrop, not a control — the sidebar itself and its own
           // controls remain keyboard-reachable; this scrim only needs a click target.
           <div
-            className="fixed inset-0 z-40 bg-overlay/30 md:hidden"
+            className="bg-overlay/30 fixed inset-0 z-40 md:hidden"
             onClick={() => setSidebarOpen(false)}
             aria-hidden="true"
           />

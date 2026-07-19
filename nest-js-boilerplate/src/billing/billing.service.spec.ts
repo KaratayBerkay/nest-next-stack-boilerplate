@@ -31,6 +31,7 @@ type MockStripeService = {
   createCustomer: jest.Mock;
   createSetupIntent: jest.Mock;
 };
+type MockWallet = { ensureWallet: jest.Mock };
 
 describe('BillingService', () => {
   let service: BillingService;
@@ -40,6 +41,7 @@ describe('BillingService', () => {
   let mockNotification: MockNotification;
   let mockRealtime: MockRealtime;
   let mockStripe: MockStripeService;
+  let mockWallet: MockWallet;
 
   beforeEach(() => {
     const createSubscription = jest.fn();
@@ -83,12 +85,19 @@ describe('BillingService', () => {
       .mockResolvedValue({ client_secret: 'si_secret' });
     mockStripe = { createCustomer, createSetupIntent };
 
+    mockWallet = {
+      ensureWallet: jest
+        .fn()
+        .mockResolvedValue({ id: 'w1', userId: 'u1', currency: 'USD' }),
+    };
+
     service = new BillingService(
       mockPrisma as never,
       mockTokenStore as never,
       mockNotification as never,
       mockRealtime as never,
       mockStripe as never,
+      mockWallet as never,
       mockProvider,
     );
   });

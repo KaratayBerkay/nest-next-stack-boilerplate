@@ -238,14 +238,14 @@ export function CommentSection({
                       <ConfirmDialog
                         title="Delete comment"
                         description="Are you sure you want to delete this comment?"
-                          onConfirm={() =>
-                            handleDeleteComment(
-                              comment.id,
-                              setLocalDeletes,
-                              onCommentAdded,
-                              deleteComment,
-                            )
-                          }
+                        onConfirm={() =>
+                          handleDeleteComment(
+                            comment.id,
+                            setLocalDeletes,
+                            onCommentAdded,
+                            deleteComment,
+                          )
+                        }
                       >
                         {(open) => (
                           <button

@@ -38,7 +38,18 @@ const INTEREST_OPTIONS = [
 
 export async function submitProfile(
   { value }: { value: typeof profileFormOpts.defaultValues },
-  deps: { updateProfile: (data: { name: string; username?: string; bio?: string; avatarUrl?: string }) => Promise<void>; toast: ReturnType<typeof useToast>["toast"]; messages: Record<string, unknown>; unknownError: string; saveSuccess: string },
+  deps: {
+    updateProfile: (data: {
+      name: string;
+      username?: string;
+      bio?: string;
+      avatarUrl?: string;
+    }) => Promise<void>;
+    toast: ReturnType<typeof useToast>["toast"];
+    messages: Record<string, unknown>;
+    unknownError: string;
+    saveSuccess: string;
+  },
 ) {
   try {
     await deps.updateProfile({
@@ -53,7 +64,10 @@ export async function submitProfile(
     const exc = (err as { exception?: ExceptionResponse }).exception;
     if (!exc) return { form: deps.unknownError, fields: {} };
     if (getSurface(exc.exc) === "toast") {
-      deps.toast({ description: exceptionHandler(exc, deps.messages), variant: "destructive" });
+      deps.toast({
+        description: exceptionHandler(exc, deps.messages),
+        variant: "destructive",
+      });
       return null;
     }
     return exceptionToFormErrors(exc, deps.messages);
@@ -71,7 +85,16 @@ export default function ProfilePage() {
     ...profileFormOpts,
     validators: {
       onSubmitAsync: ({ value }) =>
-        submitProfile({ value }, { updateProfile, toast, messages: allMessages, unknownError: t.errors.unknown, saveSuccess: t.profile.saveSuccess }),
+        submitProfile(
+          { value },
+          {
+            updateProfile,
+            toast,
+            messages: allMessages,
+            unknownError: t.errors.unknown,
+            saveSuccess: t.profile.saveSuccess,
+          },
+        ),
     },
   });
 
@@ -93,14 +116,26 @@ export default function ProfilePage() {
         className="flex flex-col gap-4"
       >
         <form.AppField name="avatar">
-          {(field) => <field.UploadField label="Avatar" avatar maxSizeBytes={MAX_UPLOAD_SIZE} />}
+          {(field) => (
+            <field.UploadField
+              label="Avatar"
+              avatar
+              maxSizeBytes={MAX_UPLOAD_SIZE}
+            />
+          )}
         </form.AppField>
 
         <div className="grid grid-cols-2 gap-4">
-          <form.AppField name="firstName" validators={{ onChange: fieldSchemas.firstName }}>
+          <form.AppField
+            name="firstName"
+            validators={{ onChange: fieldSchemas.firstName }}
+          >
             {(field) => <field.TextField label={t.profile.firstName} />}
           </form.AppField>
-          <form.AppField name="lastName" validators={{ onChange: fieldSchemas.lastName }}>
+          <form.AppField
+            name="lastName"
+            validators={{ onChange: fieldSchemas.lastName }}
+          >
             {(field) => <field.TextField label={t.profile.lastName} />}
           </form.AppField>
         </div>
@@ -112,14 +147,19 @@ export default function ProfilePage() {
             onChangeAsyncDebounceMs: 500,
             onChangeAsync: async ({ value }) => {
               if (!value) return undefined;
-              return (await checkUsername(value)) ? undefined : t.profile.usernameTaken;
+              return (await checkUsername(value))
+                ? undefined
+                : t.profile.usernameTaken;
             },
           }}
         >
           {(field) => <field.TextField label={t.profile.username} />}
         </form.AppField>
 
-        <form.AppField name="email" validators={{ onChange: fieldSchemas.email }}>
+        <form.AppField
+          name="email"
+          validators={{ onChange: fieldSchemas.email }}
+        >
           {(field) => <field.TextField label={t.profile.email} />}
         </form.AppField>
 
@@ -133,16 +173,26 @@ export default function ProfilePage() {
 
         <form.AppField name="country">
           {(field) => (
-            <field.ComboboxField label={t.profile.country} options={COUNTRY_OPTIONS.map((o) => ({ value: o.value, label: o.label, group: o.group }))} />
+            <field.ComboboxField
+              label={t.profile.country}
+              options={COUNTRY_OPTIONS.map((o) => ({
+                value: o.value,
+                label: o.label,
+                group: o.group,
+              }))}
+            />
           )}
         </form.AppField>
 
         <form.AppField name="language">
           {(field) => (
-            <field.SelectField label={t.profile.language} options={[
-              { value: "en", label: "English" },
-              { value: "tr", label: "Turkish" },
-            ]} />
+            <field.SelectField
+              label={t.profile.language}
+              options={[
+                { value: "en", label: "English" },
+                { value: "tr", label: "Turkish" },
+              ]}
+            />
           )}
         </form.AppField>
 
@@ -154,18 +204,24 @@ export default function ProfilePage() {
           {(field) => (
             <field.CheckboxField
               label={t.profile.interests}
-              options={INTEREST_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+              options={INTEREST_OPTIONS.map((o) => ({
+                value: o.value,
+                label: o.label,
+              }))}
             />
           )}
         </form.AppField>
 
         <form.AppField name="role">
           {(field) => (
-            <field.RadioGroupField label={t.profile.role} options={[
-              { value: "user", label: "User" },
-              { value: "editor", label: "Editor" },
-              { value: "admin", label: "Admin" },
-            ]} />
+            <field.RadioGroupField
+              label={t.profile.role}
+              options={[
+                { value: "user", label: "User" },
+                { value: "editor", label: "Editor" },
+                { value: "admin", label: "Admin" },
+              ]}
+            />
           )}
         </form.AppField>
 
@@ -178,7 +234,10 @@ export default function ProfilePage() {
         </form.AppField>
 
         <form.AppForm>
-          <form.SubmitButton label={t.profile.save} loadingLabel={t.profile.saving} />
+          <form.SubmitButton
+            label={t.profile.save}
+            loadingLabel={t.profile.saving}
+          />
         </form.AppForm>
       </form>
     </div>

@@ -34,34 +34,40 @@ function ExamplesTab() {
 
       <section className="flex flex-col gap-4">
         <h3 className="text-lg font-semibold">Contact Form</h3>
-        <div className="surface max-w-md p-6 rounded-xl space-y-3">
+        <div className="surface max-w-md space-y-3 rounded-xl p-6">
           <input
             type="text"
             placeholder="Your name"
-            className="w-full rounded border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+            className="border-border placeholder:text-muted focus-visible:ring-primary w-full rounded border bg-transparent px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
           />
           <input
             type="email"
             placeholder="Your email"
-            className="w-full rounded border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+            className="border-border placeholder:text-muted focus-visible:ring-primary w-full rounded border bg-transparent px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
           />
           <Textarea placeholder="Your message..." />
-          <Button size="sm" variant="primary">Send Message</Button>
+          <Button size="sm" variant="primary">
+            Send Message
+          </Button>
         </div>
       </section>
 
       <section className="flex flex-col gap-4">
         <h3 className="text-lg font-semibold">Feedback Form</h3>
-        <div className="surface max-w-md p-6 rounded-xl space-y-3 border">
-          <h4 className="text-sm font-semibold uppercase tracking-wider">Feedback</h4>
+        <div className="surface max-w-md space-y-3 rounded-xl border p-6">
+          <h4 className="text-sm font-semibold tracking-wider uppercase">
+            Feedback
+          </h4>
           <input
             type="text"
             placeholder="Subject"
-            className="w-full rounded border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+            className="border-border placeholder:text-muted focus-visible:ring-primary w-full rounded border bg-transparent px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
           />
           <Textarea placeholder="Tell us what you think..." />
           <div className="flex justify-end">
-            <Button size="sm" variant="primary">Submit</Button>
+            <Button size="sm" variant="primary">
+              Submit
+            </Button>
           </div>
         </div>
       </section>
@@ -78,25 +84,43 @@ const examples: UIExample[] = [
       <>
         <section className="flex flex-col gap-4">
           <h3 className="text-lg font-semibold">Default</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Textarea data-testid="textarea-default" placeholder="Default textarea..." />
-            <Textarea placeholder="Enter your message..." data-testid="textarea-placeholder" />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Textarea
+              data-testid="textarea-default"
+              placeholder="Default textarea..."
+            />
+            <Textarea
+              placeholder="Enter your message..."
+              data-testid="textarea-placeholder"
+            />
           </div>
         </section>
 
         <section className="flex flex-col gap-4">
           <h3 className="text-lg font-semibold">Disabled</h3>
-          <Textarea disabled value="This textarea is disabled" aria-label="Disabled example" data-testid="textarea-disabled" />
+          <Textarea
+            disabled
+            value="This textarea is disabled"
+            aria-label="Disabled example"
+            data-testid="textarea-disabled"
+          />
         </section>
 
         <section className="flex flex-col gap-4">
           <h3 className="text-lg font-semibold">With Error</h3>
-          <Textarea error="This field is required" aria-label="Error example" data-testid="textarea-error" />
+          <Textarea
+            error="This field is required"
+            aria-label="Error example"
+            data-testid="textarea-error"
+          />
         </section>
 
         <section className="flex flex-col gap-4">
           <h3 className="text-lg font-semibold">Auto-Resize</h3>
-          <AutoResizeTextarea placeholder="Type here and it will grow..." data-testid="textarea-auto-resize" />
+          <AutoResizeTextarea
+            placeholder="Type here and it will grow..."
+            data-testid="textarea-auto-resize"
+          />
         </section>
       </>
     ),
@@ -115,7 +139,12 @@ const examples: UIExample[] = [
       <VariantGallery
         variants={["default", "shiny", "glass", "neon", "gradient"]}
         sizes={[]}
-        render={(variant) => <Textarea variant={variant as TextareaVariant} placeholder="Textarea..." />}
+        render={(variant) => (
+          <Textarea
+            variant={variant as TextareaVariant}
+            placeholder="Textarea..."
+          />
+        )}
       />
     ),
   },

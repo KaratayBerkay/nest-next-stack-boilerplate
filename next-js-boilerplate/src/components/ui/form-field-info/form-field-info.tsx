@@ -10,11 +10,15 @@ export function FormFieldInfo(props: FormFieldInfoProps) {
   if (!error && !isValidating) return null;
 
   return (
-    <div role="status" aria-live="polite" className="mt-1 flex items-center gap-1">
+    <div
+      role="status"
+      aria-live="polite"
+      className="mt-1 flex items-center gap-1"
+    >
       {isValidating && (
         <span className="text-muted inline-block size-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
       )}
-      {error && <p className="text-xs text-error">{error}</p>}
+      {error && <p className="text-error text-xs">{error}</p>}
     </div>
   );
 }

@@ -38,7 +38,7 @@ export function DropdownMenuItem({
       }}
       className={cn(
         menuItemStyles,
-        "cursor-pointer hover:bg-surface-hover focus-visible:bg-surface-hover",
+        "hover:bg-surface-hover focus-visible:bg-surface-hover cursor-pointer",
         className,
       )}
       {...props}

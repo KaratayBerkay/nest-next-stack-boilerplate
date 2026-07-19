@@ -9,17 +9,16 @@ export function DropdownMenuSeparator({
   fontFamily,
   ...props
 }: DropdownMenuSeparatorProps) {
-  const fonts = fontClasses({ fontSize, fontWeight, fontFamily }, { fontSize: "text-xs" });
+  const fonts = fontClasses(
+    { fontSize, fontWeight, fontFamily },
+    { fontSize: "text-xs" },
+  );
 
   return (
     <div
       role="separator"
       aria-orientation="horizontal"
-      className={cn(
-        "bg-border -mx-1 my-1 h-px",
-        fonts,
-        className,
-      )}
+      className={cn("bg-border -mx-1 my-1 h-px", fonts, className)}
       {...props}
     />
   );

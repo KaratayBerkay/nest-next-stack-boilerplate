@@ -48,8 +48,7 @@ export function ExamplesTab() {
                     {alertVariant === "warning" && "Warning"}
                   </AlertTitle>
                   <AlertDescription>
-                    {alertVariant === "default" &&
-                      "This is a neutral message."}
+                    {alertVariant === "default" && "This is a neutral message."}
                     {alertVariant === "info" &&
                       "This is an informational message."}
                     {alertVariant === "error" &&

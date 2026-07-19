@@ -15,4 +15,9 @@ export interface DatePickerProps {
   endMonth?: Date;
 }
 
-export type DatePickerVariant = "default" | "shiny" | "glass" | "neon" | "gradient";
+export type DatePickerVariant =
+  | "default"
+  | "shiny"
+  | "glass"
+  | "neon"
+  | "gradient";

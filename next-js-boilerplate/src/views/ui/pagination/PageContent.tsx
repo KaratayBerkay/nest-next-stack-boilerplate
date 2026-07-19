@@ -34,31 +34,106 @@ interface Friend {
 }
 
 const INVOICES: Invoice[] = [
-  { id: "INV-0001", customer: "Alice Johnson", amount: 240.5, date: "2025-01-05" },
+  {
+    id: "INV-0001",
+    customer: "Alice Johnson",
+    amount: 240.5,
+    date: "2025-01-05",
+  },
   { id: "INV-0002", customer: "Bob Smith", amount: 189.99, date: "2025-01-10" },
   { id: "INV-0003", customer: "Carol Davis", amount: 450, date: "2025-01-15" },
-  { id: "INV-0004", customer: "David Wilson", amount: 127.3, date: "2025-01-20" },
-  { id: "INV-0005", customer: "Eva Martinez", amount: 890.75, date: "2025-01-25" },
-  { id: "INV-0006", customer: "Frank Brown", amount: 312.4, date: "2025-01-30" },
+  {
+    id: "INV-0004",
+    customer: "David Wilson",
+    amount: 127.3,
+    date: "2025-01-20",
+  },
+  {
+    id: "INV-0005",
+    customer: "Eva Martinez",
+    amount: 890.75,
+    date: "2025-01-25",
+  },
+  {
+    id: "INV-0006",
+    customer: "Frank Brown",
+    amount: 312.4,
+    date: "2025-01-30",
+  },
   { id: "INV-0007", customer: "Grace Lee", amount: 567.8, date: "2025-02-04" },
-  { id: "INV-0008", customer: "Henry Taylor", amount: 234.1, date: "2025-02-09" },
+  {
+    id: "INV-0008",
+    customer: "Henry Taylor",
+    amount: 234.1,
+    date: "2025-02-09",
+  },
   { id: "INV-0009", customer: "Ivy Chen", amount: 678.25, date: "2025-02-14" },
-  { id: "INV-0010", customer: "Jack Anderson", amount: 345.6, date: "2025-02-19" },
+  {
+    id: "INV-0010",
+    customer: "Jack Anderson",
+    amount: 345.6,
+    date: "2025-02-19",
+  },
   { id: "INV-0011", customer: "Karen White", amount: 789, date: "2025-02-24" },
-  { id: "INV-0012", customer: "Leo Harris", amount: 156.75, date: "2025-03-01" },
+  {
+    id: "INV-0012",
+    customer: "Leo Harris",
+    amount: 156.75,
+    date: "2025-03-01",
+  },
   { id: "INV-0013", customer: "Mia Clark", amount: 423.5, date: "2025-03-06" },
   { id: "INV-0014", customer: "Noah Lewis", amount: 912.3, date: "2025-03-11" },
-  { id: "INV-0015", customer: "Olivia Walker", amount: 278.9, date: "2025-03-16" },
+  {
+    id: "INV-0015",
+    customer: "Olivia Walker",
+    amount: 278.9,
+    date: "2025-03-16",
+  },
   { id: "INV-0016", customer: "Paul Hall", amount: 634.2, date: "2025-03-21" },
-  { id: "INV-0017", customer: "Quinn Young", amount: 501.45, date: "2025-03-26" },
-  { id: "INV-0018", customer: "Rachel King", amount: 187.6, date: "2025-03-31" },
+  {
+    id: "INV-0017",
+    customer: "Quinn Young",
+    amount: 501.45,
+    date: "2025-03-26",
+  },
+  {
+    id: "INV-0018",
+    customer: "Rachel King",
+    amount: 187.6,
+    date: "2025-03-31",
+  },
   { id: "INV-0019", customer: "Sam Wright", amount: 723.8, date: "2025-04-05" },
-  { id: "INV-0020", customer: "Tina Scott", amount: 395.15, date: "2025-04-10" },
+  {
+    id: "INV-0020",
+    customer: "Tina Scott",
+    amount: 395.15,
+    date: "2025-04-10",
+  },
   { id: "INV-0021", customer: "Uma Green", amount: 268.4, date: "2025-04-15" },
-  { id: "INV-0022", customer: "Victor Adams", amount: 847.55, date: "2025-04-20" },
-  { id: "INV-0023", customer: "Wendy Baker", amount: 512.9, date: "2025-04-25" },
-  { id: "INV-0024", customer: "Xander Hill", amount: 179.25, date: "2025-04-30" },
-  { id: "INV-0025", customer: "Yara Nelson", amount: 634.7, date: "2025-05-05" },
+  {
+    id: "INV-0022",
+    customer: "Victor Adams",
+    amount: 847.55,
+    date: "2025-04-20",
+  },
+  {
+    id: "INV-0023",
+    customer: "Wendy Baker",
+    amount: 512.9,
+    date: "2025-04-25",
+  },
+  {
+    id: "INV-0024",
+    customer: "Xander Hill",
+    amount: 179.25,
+    date: "2025-04-30",
+  },
+  {
+    id: "INV-0025",
+    customer: "Yara Nelson",
+    amount: 634.7,
+    date: "2025-05-05",
+  },
 ];
 
 const FRIENDS: Friend[] = [
@@ -107,7 +182,6 @@ function buildPageNumbers(
   return pages;
 }
 
-
 function InteractivePagination({
   currentPage,
   totalPages,
@@ -126,7 +200,9 @@ function InteractivePagination({
           <button
             type="button"
             onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-            className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+            className={
+              currentPage === 1 ? "pointer-events-none opacity-50" : ""
+            }
           >
             <PaginationPrevious href="#" />
           </button>
@@ -155,7 +231,9 @@ function InteractivePagination({
           <button
             type="button"
             onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-            className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+            className={
+              currentPage === totalPages ? "pointer-events-none opacity-50" : ""
+            }
           >
             <PaginationNext href="#" />
           </button>
@@ -215,9 +293,12 @@ function ExamplesTab({
           totalPages={TOTAL_PAGES}
           onPageChange={setPage}
         />
-        <div className="bg-surface flex items-center justify-between rounded border border-border px-3 py-2">
+        <div className="bg-surface border-border flex items-center justify-between rounded border px-3 py-2">
           <span className="text-sm">
-            Current page: <strong>{page} of {TOTAL_PAGES}</strong>
+            Current page:{" "}
+            <strong>
+              {page} of {TOTAL_PAGES}
+            </strong>
           </span>
           <button
             type="button"
@@ -275,8 +356,18 @@ function InvoiceTableTab({
       {filtered.length === 0 ? (
         <Empty
           icon={
-            <svg className="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <svg
+              className="size-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
             </svg>
           }
           title="No invoices found"
@@ -284,7 +375,7 @@ function InvoiceTableTab({
         />
       ) : (
         <>
-          <div className="bg-surface overflow-hidden rounded border border-border">
+          <div className="bg-surface border-border overflow-hidden rounded border">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -297,7 +388,10 @@ function InvoiceTableTab({
                 </thead>
                 <tbody>
                   {items.map((inv) => (
-                    <tr key={inv.id} className="border-border border-b last:border-0">
+                    <tr
+                      key={inv.id}
+                      className="border-border border-b last:border-0"
+                    >
                       <td className="px-4 py-3 font-mono text-xs">{inv.id}</td>
                       <td className="px-4 py-3">{inv.customer}</td>
                       <td className="px-4 py-3 text-right">
@@ -356,9 +450,7 @@ function OnlineFriendsTab({
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            const index = Number(
-              entry.target.getAttribute("data-page-index"),
-            );
+            const index = Number(entry.target.getAttribute("data-page-index"));
             if (!isNaN(index)) {
               setPage(index);
             }
@@ -368,9 +460,7 @@ function OnlineFriendsTab({
       { root: container, threshold: 0.3 },
     );
 
-    const sentinels = sentinelRefs.current.filter(
-      Boolean,
-    ) as HTMLDivElement[];
+    const sentinels = sentinelRefs.current.filter(Boolean) as HTMLDivElement[];
     for (const el of sentinels) observer.observe(el);
 
     return () => observer.disconnect();
@@ -401,7 +491,7 @@ function OnlineFriendsTab({
                 {group.map((friend) => (
                   <div
                     key={friend.name}
-                    className="hover:bg-surface-hover flex items-center gap-3 border-border border-b px-4 py-3"
+                    className="hover:bg-surface-hover border-border flex items-center gap-3 border-b px-4 py-3"
                   >
                     <Avatar
                       fallback={friend.initials}
@@ -423,7 +513,7 @@ function OnlineFriendsTab({
                     </div>
                     <button
                       type="button"
-                      className="bg-brand text-brand-fg hover:opacity-90 shrink-0 rounded-md px-3 py-1.5 text-xs font-medium transition-opacity"
+                      className="bg-brand text-brand-fg shrink-0 rounded-md px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-90"
                     >
                       Message
                     </button>
@@ -513,7 +603,11 @@ function LocalizedTab() {
   );
 }
 
-export default function PaginationPage({ initialTab }: { initialTab?: string }) {
+export default function PaginationPage({
+  initialTab,
+}: {
+  initialTab?: string;
+}) {
   const [page, setPage] = useState(1);
   const [invoicePage, setInvoicePage] = useState(1);
   const [friendPage, setFriendPage] = useState(1);

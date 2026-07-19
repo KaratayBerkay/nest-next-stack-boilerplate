@@ -13,7 +13,10 @@ import {
 } from "@radix-ui/react-alert-dialog";
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
-import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
+import {
+  globalStyleVariants,
+  type GlobalVariant,
+} from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 
 const alertDialogVariants = {
@@ -58,11 +61,11 @@ export const AlertDialogContent = forwardRef<
   const effectiveVariant = useComponentVariant(variant);
   return (
     <Portal>
-      <Overlay className="data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out fixed inset-0 z-50 bg-overlay/50" />
+      <Overlay className="data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out bg-overlay/50 fixed inset-0 z-50" />
       <Content
         ref={ref}
         className={cn(
-          "data-[state=open]:animate-fade-in-up data-[state=closed]:animate-fade-out fixed top-[50%] left-[50%] z-50 grid w-[calc(100%-2rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 overflow-y-auto p-6 duration-200 max-h-[85vh]",
+          "data-[state=open]:animate-fade-in-up data-[state=closed]:animate-fade-out fixed top-[50%] left-[50%] z-50 grid max-h-[85vh] w-[calc(100%-2rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 overflow-y-auto p-6 duration-200",
           resolveVariant(alertDialogVariants, effectiveVariant),
           className,
         )}

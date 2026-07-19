@@ -20,6 +20,7 @@ export class SseController {
         type: 'heartbeat',
       })),
     );
+    // fallow-ignore-next-line security-sink — RxJS merge, not object merge
     return merge(this.events.asObservable(), heartbeat);
   }
 

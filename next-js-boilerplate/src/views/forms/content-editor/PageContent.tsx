@@ -75,7 +75,10 @@ function deriveSlug(title: string): string {
 async function submitContent(
   { value }: { value: typeof editorFormOpts.defaultValues },
   deps: {
-    simulateError: (id: string, opts?: { failRate?: number; delayMs?: number }) => Promise<ExceptionResponse>;
+    simulateError: (
+      id: string,
+      opts?: { failRate?: number; delayMs?: number },
+    ) => Promise<ExceptionResponse>;
     scheduleDateRequired: string;
     failRate: number;
     intent: "publish" | "schedule";
@@ -86,7 +89,10 @@ async function submitContent(
     return { form: deps.scheduleDateRequired, fields: {} };
   }
   try {
-    await deps.simulateError("internal-error", { failRate: deps.failRate, delayMs: 600 });
+    await deps.simulateError("internal-error", {
+      failRate: deps.failRate,
+      delayMs: 600,
+    });
     return null;
   } catch (err) {
     const exc = (err as { exception?: ExceptionResponse }).exception;
@@ -106,7 +112,9 @@ export default function ContentEditorPage() {
   const { simulateError } = useFormsDemoActions();
   const draftKey = DRAFT_KEY_PREFIX + (user?.id ?? "anonymous");
   const [preview, setPreview] = useState(false);
-  const [draftAlert, setDraftAlert] = useState<Draft | null>(() => loadDraft(draftKey));
+  const [draftAlert, setDraftAlert] = useState<Draft | null>(() =>
+    loadDraft(draftKey),
+  );
   const dirtyRef = useRef(false);
   const slugEditedByUser = useRef(false);
   const [schedule, setSchedule] = useState(false);
@@ -122,17 +130,23 @@ export default function ContentEditorPage() {
         return undefined;
       },
       onSubmitAsync: ({ value }) =>
-        submitContent({ value }, {
-          simulateError,
-          scheduleDateRequired: t.contentEditor.scheduleDateRequired,
-          failRate: simulateFailure ? 1 : 0,
-          intent: submitIntentRef.current,
-          unknownError: t.errors.unknown,
-        }),
+        submitContent(
+          { value },
+          {
+            simulateError,
+            scheduleDateRequired: t.contentEditor.scheduleDateRequired,
+            failRate: simulateFailure ? 1 : 0,
+            intent: submitIntentRef.current,
+            unknownError: t.errors.unknown,
+          },
+        ),
     },
     onSubmit: async () => {
       toast({
-        description: submitIntentRef.current === "schedule" ? t.contentEditor.scheduled : t.contentEditor.published,
+        description:
+          submitIntentRef.current === "schedule"
+            ? t.contentEditor.scheduled
+            : t.contentEditor.published,
         variant: "default",
       });
       dirtyRef.current = false;
@@ -187,7 +201,12 @@ export default function ContentEditorPage() {
   }, [draftKey, values]);
 
   const handleSaveDraft = useCallback(() => {
-    saveDraft(draftKey, { title: values.title, slug: values.slug, tags: values.tags, body: values.body });
+    saveDraft(draftKey, {
+      title: values.title,
+      slug: values.slug,
+      tags: values.tags,
+      body: values.body,
+    });
     dirtyRef.current = false;
     toast({ description: t.contentEditor.draftSaved, variant: "default" });
   }, [values, toast, t, draftKey]);
@@ -199,7 +218,10 @@ export default function ContentEditorPage() {
     form.setFieldValue("tags", draftAlert.tags);
     form.setFieldValue("body", draftAlert.body);
     toast({
-      description: t.contentEditor.draftRestored.replace("{time}", new Date(draftAlert.savedAt).toLocaleString()),
+      description: t.contentEditor.draftRestored.replace(
+        "{time}",
+        new Date(draftAlert.savedAt).toLocaleString(),
+      ),
       variant: "default",
     });
     setDraftAlert(null);
@@ -217,17 +239,38 @@ export default function ContentEditorPage() {
           <h2 className="text-sm font-semibold">{t.contentEditor.heading}</h2>
         </div>
         <div className="flex gap-2">
-          <Button size="sm" variant={preview ? "secondary" : "default"} onClick={() => setPreview(false)}>{t.contentEditor.edit}</Button>
-          <Button size="sm" variant={preview ? "default" : "secondary"} onClick={() => setPreview(true)}>{t.contentEditor.preview}</Button>
+          <Button
+            size="sm"
+            variant={preview ? "secondary" : "default"}
+            onClick={() => setPreview(false)}
+          >
+            {t.contentEditor.edit}
+          </Button>
+          <Button
+            size="sm"
+            variant={preview ? "default" : "secondary"}
+            onClick={() => setPreview(true)}
+          >
+            {t.contentEditor.preview}
+          </Button>
         </div>
       </div>
 
       {draftAlert && (
-        <div className="surface flex items-center justify-between rounded-lg border border-border p-3">
-          <span className="text-xs">{t.contentEditor.draftRestored.replace("{time}", new Date(draftAlert.savedAt).toLocaleString())}</span>
+        <div className="surface border-border flex items-center justify-between rounded-lg border p-3">
+          <span className="text-xs">
+            {t.contentEditor.draftRestored.replace(
+              "{time}",
+              new Date(draftAlert.savedAt).toLocaleString(),
+            )}
+          </span>
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={handleDiscard}>{t.contentEditor.draftDiscard}</Button>
-            <Button size="sm" onClick={handleRestore}>{t.contentEditor.draftRestore}</Button>
+            <Button size="sm" variant="outline" onClick={handleDiscard}>
+              {t.contentEditor.draftDiscard}
+            </Button>
+            <Button size="sm" onClick={handleRestore}>
+              {t.contentEditor.draftRestore}
+            </Button>
           </div>
         </div>
       )}
@@ -236,31 +279,57 @@ export default function ContentEditorPage() {
       <form className="flex flex-col gap-4">
         {preview ? (
           <div className="flex flex-col gap-4">
-            <h1 className="text-xl font-semibold">{values.title || t.contentEditor.untitled}</h1>
+            <h1 className="text-xl font-semibold">
+              {values.title || t.contentEditor.untitled}
+            </h1>
             <div className="flex flex-wrap gap-1">
               {values.tags.map((tag, i) => (
-                <span key={i} className="rounded bg-emphasis px-1.5 py-0.5 text-xxs">{tag}</span>
+                <span
+                  key={i}
+                  className="bg-emphasis text-xxs rounded px-1.5 py-0.5"
+                >
+                  {tag}
+                </span>
               ))}
             </div>
-            <p className="whitespace-pre-wrap text-sm">{values.body}</p>
+            <p className="text-sm whitespace-pre-wrap">{values.body}</p>
           </div>
         ) : (
           <>
-            <form.AppField name="title" validators={{ onChange: editorSchemas.shape.title }}>
-              {(field) => <field.TextField label={t.contentEditor.title} placeholder={t.contentEditor.titlePlaceholder} />}
+            <form.AppField
+              name="title"
+              validators={{ onChange: editorSchemas.shape.title }}
+            >
+              {(field) => (
+                <field.TextField
+                  label={t.contentEditor.title}
+                  placeholder={t.contentEditor.titlePlaceholder}
+                />
+              )}
             </form.AppField>
 
-            <form.AppField name="slug" validators={{ onChange: editorSchemas.shape.slug }}>
+            <form.AppField
+              name="slug"
+              validators={{ onChange: editorSchemas.shape.slug }}
+            >
               {(field) => <field.TextField label={t.contentEditor.slug} />}
             </form.AppField>
 
             <form.AppField name="tags">
-              {(field) => <field.ComboboxField label={t.contentEditor.tags} options={[]} />}
+              {(field) => (
+                <field.ComboboxField
+                  label={t.contentEditor.tags}
+                  options={[]}
+                />
+              )}
             </form.AppField>
 
             <form.AppField name="body">
               {(field) => (
-                <field.TextareaField label={t.contentEditor.body} placeholder={t.contentEditor.bodyPlaceholder} />
+                <field.TextareaField
+                  label={t.contentEditor.body}
+                  placeholder={t.contentEditor.bodyPlaceholder}
+                />
               )}
             </form.AppField>
           </>
@@ -270,12 +339,28 @@ export default function ContentEditorPage() {
 
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <input type="checkbox" id="schedule" checked={schedule} onChange={() => setSchedule((s) => !s)} className="h-4 w-4" />
-            <label htmlFor="schedule" className="text-xs">{t.contentEditor.schedule}</label>
+            <input
+              type="checkbox"
+              id="schedule"
+              checked={schedule}
+              onChange={() => setSchedule((s) => !s)}
+              className="h-4 w-4"
+            />
+            <label htmlFor="schedule" className="text-xs">
+              {t.contentEditor.schedule}
+            </label>
           </div>
           <div className="flex items-center gap-2">
-            <input type="checkbox" id="simulate-failure" checked={simulateFailure} onChange={() => setSimulateFailure((s) => !s)} className="h-4 w-4" />
-            <label htmlFor="simulate-failure" className="text-xs">{t.contentEditor.simulateFailure}</label>
+            <input
+              type="checkbox"
+              id="simulate-failure"
+              checked={simulateFailure}
+              onChange={() => setSimulateFailure((s) => !s)}
+              className="h-4 w-4"
+            />
+            <label htmlFor="simulate-failure" className="text-xs">
+              {t.contentEditor.simulateFailure}
+            </label>
           </div>
         </div>
 
@@ -294,10 +379,26 @@ export default function ContentEditorPage() {
 
         <form.AppForm>
           <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={handleSaveDraft}>{t.contentEditor.saveDraft}</Button>
-            <form.SubmitButton label={t.contentEditor.publish} loadingLabel={t.contentEditor.publishing} onClick={() => { submitIntentRef.current = "publish"; form.handleSubmit(); }} />
+            <Button type="button" variant="outline" onClick={handleSaveDraft}>
+              {t.contentEditor.saveDraft}
+            </Button>
+            <form.SubmitButton
+              label={t.contentEditor.publish}
+              loadingLabel={t.contentEditor.publishing}
+              onClick={() => {
+                submitIntentRef.current = "publish";
+                form.handleSubmit();
+              }}
+            />
             {schedule && (
-              <form.SubmitButton label={t.contentEditor.schedule} loadingLabel={t.contentEditor.scheduling} onClick={() => { submitIntentRef.current = "schedule"; form.handleSubmit(); }} />
+              <form.SubmitButton
+                label={t.contentEditor.schedule}
+                loadingLabel={t.contentEditor.scheduling}
+                onClick={() => {
+                  submitIntentRef.current = "schedule";
+                  form.handleSubmit();
+                }}
+              />
             )}
           </div>
         </form.AppForm>

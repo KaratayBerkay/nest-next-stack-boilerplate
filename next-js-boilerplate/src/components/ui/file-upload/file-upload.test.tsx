@@ -28,10 +28,7 @@ function renderFileUpload(
   return { ...utils, onFilesChange, fileInput };
 }
 
-function triggerFileSelect(
-  input: HTMLInputElement,
-  files: File[],
-) {
+function triggerFileSelect(input: HTMLInputElement, files: File[]) {
   fireEvent.change(input, { target: { files } });
 }
 
@@ -42,7 +39,9 @@ describe("FileUpload", () => {
 
   it("adds a valid file on selection", () => {
     const { onFilesChange, fileInput } = renderFileUpload();
-    triggerFileSelect(fileInput, [createMockFile("test.txt", 100, "text/plain")]);
+    triggerFileSelect(fileInput, [
+      createMockFile("test.txt", 100, "text/plain"),
+    ]);
     expect(onFilesChange).toHaveBeenCalledOnce();
     const added = onFilesChange.mock.calls[0][0] as UploadFile[];
     expect(added).toHaveLength(1);

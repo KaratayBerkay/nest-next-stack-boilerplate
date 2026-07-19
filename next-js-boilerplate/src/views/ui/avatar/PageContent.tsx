@@ -7,15 +7,51 @@ import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 const teamMembers = [
-  { name: "Alex Chen", email: "alex.chen@example.com", role: "Admin" as const, initials: "AC", img: "https://i.pravatar.cc/80?img=12", status: "online" as const },
-  { name: "Sarah Kim", email: "sarah.kim@example.com", role: "Editor" as const, initials: "SK", img: "https://i.pravatar.cc/80?img=13", status: "online" as const },
-  { name: "Marcus Johnson", email: "marcus.j@example.com", role: "Viewer" as const, initials: "MJ", img: "", status: "away" as const },
-  { name: "Priya Patel", email: "priya.p@example.com", role: "Editor" as const, initials: "PP", img: "https://i.pravatar.cc/80?img=15", status: "offline" as const },
+  {
+    name: "Alex Chen",
+    email: "alex.chen@example.com",
+    role: "Admin" as const,
+    initials: "AC",
+    img: "https://i.pravatar.cc/80?img=12",
+    status: "online" as const,
+  },
+  {
+    name: "Sarah Kim",
+    email: "sarah.kim@example.com",
+    role: "Editor" as const,
+    initials: "SK",
+    img: "https://i.pravatar.cc/80?img=13",
+    status: "online" as const,
+  },
+  {
+    name: "Marcus Johnson",
+    email: "marcus.j@example.com",
+    role: "Viewer" as const,
+    initials: "MJ",
+    img: "",
+    status: "away" as const,
+  },
+  {
+    name: "Priya Patel",
+    email: "priya.p@example.com",
+    role: "Editor" as const,
+    initials: "PP",
+    img: "https://i.pravatar.cc/80?img=15",
+    status: "offline" as const,
+  },
 ];
 
-const roleBadgeVariant = { Admin: "default", Editor: "soft", Viewer: "secondary" } as const;
+const roleBadgeVariant = {
+  Admin: "default",
+  Editor: "soft",
+  Viewer: "secondary",
+} as const;
 
-const statusColor = { online: "bg-success", away: "bg-warning", offline: "bg-border" } as const;
+const statusColor = {
+  online: "bg-success",
+  away: "bg-warning",
+  offline: "bg-border",
+} as const;
 
 function ComponentsTab() {
   return (
@@ -125,7 +161,7 @@ const examples: UIExample[] = [
     title: "Team Members",
     description: "Team roster with avatars, roles, and status indicators.",
     render: () => (
-      <div className="surface flex flex-col divide-y divide-border rounded-lg border border-border">
+      <div className="surface divide-border border-border flex flex-col divide-y rounded-lg border">
         {teamMembers.map((member) => (
           <div key={member.name} className="flex items-center gap-3 px-4 py-3">
             <div className="relative">
@@ -136,7 +172,7 @@ const examples: UIExample[] = [
                 size="md"
               />
               <span
-                className={`absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-surface ${statusColor[member.status]}`}
+                className={`border-surface absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full border-2 ${statusColor[member.status]}`}
               />
             </div>
             <div className="flex flex-1 items-center justify-between">
@@ -144,7 +180,9 @@ const examples: UIExample[] = [
                 <p className="text-sm font-medium">{member.name}</p>
                 <p className="text-muted text-xs">{member.email}</p>
               </div>
-              <Badge variant={roleBadgeVariant[member.role]}>{member.role}</Badge>
+              <Badge variant={roleBadgeVariant[member.role]}>
+                {member.role}
+              </Badge>
             </div>
           </div>
         ))}

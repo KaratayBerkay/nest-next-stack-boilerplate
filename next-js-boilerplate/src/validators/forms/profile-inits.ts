@@ -3,11 +3,11 @@ import { profileSchema } from "./profile";
 
 export const profileDefaultValues = {
   avatar: [] as {
-    id: string
-    file: File
-    progress: number
-    status: string
-    preview?: string
+    id: string;
+    file: File;
+    progress: number;
+    status: string;
+    preview?: string;
   }[],
   firstName: "",
   lastName: "",
@@ -26,7 +26,9 @@ export const profileDefaultValues = {
 
 type ProfileFormValues = typeof profileDefaultValues;
 
-export function createProfileInitialValues(record?: ProfileFormValues): ProfileFormValues {
+export function createProfileInitialValues(
+  record?: ProfileFormValues,
+): ProfileFormValues {
   if (!record) return { ...profileDefaultValues };
   return {
     ...record,
@@ -34,6 +36,7 @@ export function createProfileInitialValues(record?: ProfileFormValues): ProfileF
     avatar: record.avatar ?? profileDefaultValues.avatar,
     interests: record.interests ?? profileDefaultValues.interests,
     meetingTime: record.meetingTime ?? profileDefaultValues.meetingTime,
-    notificationPrefs: record.notificationPrefs ?? profileDefaultValues.notificationPrefs,
+    notificationPrefs:
+      record.notificationPrefs ?? profileDefaultValues.notificationPrefs,
   };
 }

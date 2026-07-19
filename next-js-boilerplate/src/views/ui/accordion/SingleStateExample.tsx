@@ -17,21 +17,15 @@ export function SingleStateExample() {
       <Accordion type="single" collapsible className="w-full">
         <AccordionItem value="1">
           <AccordionTrigger>{t.accessibleQ}</AccordionTrigger>
-          <AccordionContent>
-            {t.accessibleA}
-          </AccordionContent>
+          <AccordionContent>{t.accessibleA}</AccordionContent>
         </AccordionItem>
         <AccordionItem value="2">
           <AccordionTrigger>{t.styledQ}</AccordionTrigger>
-          <AccordionContent>
-            {t.styledA}
-          </AccordionContent>
+          <AccordionContent>{t.styledA}</AccordionContent>
         </AccordionItem>
         <AccordionItem value="3">
           <AccordionTrigger>{t.animatedQ}</AccordionTrigger>
-          <AccordionContent>
-            {t.animatedA}
-          </AccordionContent>
+          <AccordionContent>{t.animatedA}</AccordionContent>
         </AccordionItem>
       </Accordion>
     </section>

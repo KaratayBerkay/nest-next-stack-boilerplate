@@ -16,7 +16,9 @@ export async function generateMetadata({ params }: PageProps) {
   };
 }
 
-export default async function ScrollToBottomButtonPage({ searchParams }: PageProps) {
+export default async function ScrollToBottomButtonPage({
+  searchParams,
+}: PageProps) {
   const tab = (await searchParams).tab;
   return <PageContent initialTab={tab} />;
 }

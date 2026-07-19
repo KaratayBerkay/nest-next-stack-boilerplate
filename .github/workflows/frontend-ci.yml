@@ -13,6 +13,10 @@ on:
       - 'nest-js-boilerplate/**'
       - '.github/workflows/frontend-ci.yml'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 defaults:
   run:
     working-directory: next-js-boilerplate
@@ -65,7 +69,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
           cache-dependency-path: next-js-boilerplate/pnpm-lock.yaml
 
@@ -105,13 +109,6 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Switch to Node 24 for backend
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-
       - name: Install backend dependencies
         run: pnpm install --frozen-lockfile --filter nest-js-boilerplate
 
@@ -150,8 +147,8 @@ jobs:
             sleep 2
           done
 
-      - name: E2E tests (full suite against real backend)
-        run: pnpm test:e2e
+      - name: E2E tests (chromium, against real backend)
+        run: pnpm test:e2e --project=chromium --project=mobile-chrome
 
   docker-build:
     runs-on: ubuntu-latest

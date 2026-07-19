@@ -1,8 +1,7 @@
 export function useBillingActions() {
   const createSetupIntent = async (tier: string) => {
-    const { createSetupIntentServer } = await import(
-      "@/api/server/billing/stripe"
-    );
+    const { createSetupIntentServer } =
+      await import("@/api/server/billing/stripe");
     return createSetupIntentServer(tier);
   };
 

@@ -36,7 +36,9 @@ const EXC_TO_SURFACE = {
 
 export function getSurface(exc: string): ExceptionSurface {
   if (!(exc in EXC_TO_SURFACE)) {
-    console.warn(`[exception-handler] Unknown exception code "${exc}" — falling back to "toast"`);
+    console.warn(
+      `[exception-handler] Unknown exception code "${exc}" — falling back to "toast"`,
+    );
   }
   return EXC_TO_SURFACE[exc as ExceptionCode] ?? "toast";
 }

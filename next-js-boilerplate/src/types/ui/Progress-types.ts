@@ -12,4 +12,9 @@ export interface ProgressProps extends React.ComponentPropsWithoutRef<"div"> {
   fontFamily?: string;
 }
 
-export type ProgressVariant = "default" | "shiny" | "glass" | "neon" | "gradient";
+export type ProgressVariant =
+  | "default"
+  | "shiny"
+  | "glass"
+  | "neon"
+  | "gradient";

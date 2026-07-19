@@ -33,7 +33,9 @@ export default function UploadsPage() {
     dropzoneIdle: t.uploads.labels.docDropzoneIdle,
     dropzoneActive: t.uploads.labels.docDropzoneActive,
     invalidType: (file: string, accepted: string) =>
-      t.uploads.labels.invalidType.replace("{accepted}", accepted).replace("{file}", file),
+      t.uploads.labels.invalidType
+        .replace("{accepted}", accepted)
+        .replace("{file}", file),
   };
 
   const handleGalleryUpload = useCallback(
@@ -46,7 +48,9 @@ export default function UploadsPage() {
   const handleDocSimulate = useCallback(
     async (_file: File, _reportProgress: (pct: number) => void) => {
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      setError("Document uploads are simulated — the backend only accepts images");
+      setError(
+        "Document uploads are simulated — the backend only accepts images",
+      );
     },
     [],
   );
@@ -58,28 +62,41 @@ export default function UploadsPage() {
         <p className="text-muted text-xs">{t.examples.uploadsDescription}</p>
       </div>
 
-      <section className="surface flex flex-col gap-3 rounded-lg border border-border p-4">
+      <section className="surface border-border flex flex-col gap-3 rounded-lg border p-4">
         <h3 className="text-xs font-medium">{t.uploads.avatar}</h3>
         <p className="text-xxs text-muted">{t.uploads.avatarDescription}</p>
         <ImageUpload
           avatar
           value={avatarFiles}
           onChange={(files) => {
-            const newFile = files.find(f => f.status === "pending" && !avatarFiles.some(af => af.id === f.id));
+            const newFile = files.find(
+              (f) =>
+                f.status === "pending" &&
+                !avatarFiles.some((af) => af.id === f.id),
+            );
             if (newFile) {
-              uploadAvatar(newFile.file).then((result) => {
-                setAvatarFiles((prev) =>
-                  prev.map((f) =>
-                    f.id === newFile.id
-                      ? { ...f, status: "done", progress: 100, preview: result.urls?.full }
-                      : f
-                  )
-                );
-              }).catch(() => {
-                setAvatarFiles((prev) =>
-                  prev.map((f) => (f.id === newFile.id ? { ...f, status: "error" } : f))
-                );
-              });
+              uploadAvatar(newFile.file)
+                .then((result) => {
+                  setAvatarFiles((prev) =>
+                    prev.map((f) =>
+                      f.id === newFile.id
+                        ? {
+                            ...f,
+                            status: "done",
+                            progress: 100,
+                            preview: result.urls?.full,
+                          }
+                        : f,
+                    ),
+                  );
+                })
+                .catch(() => {
+                  setAvatarFiles((prev) =>
+                    prev.map((f) =>
+                      f.id === newFile.id ? { ...f, status: "error" } : f,
+                    ),
+                  );
+                });
             }
             setAvatarFiles(files);
           }}
@@ -87,7 +104,7 @@ export default function UploadsPage() {
         />
       </section>
 
-      <section className="surface flex flex-col gap-3 rounded-lg border border-border p-4">
+      <section className="surface border-border flex flex-col gap-3 rounded-lg border p-4">
         <h3 className="text-xs font-medium">{t.uploads.gallery}</h3>
         <p className="text-xxs text-muted">{t.uploads.galleryDescription}</p>
         <FileUpload
@@ -102,11 +119,9 @@ export default function UploadsPage() {
         />
       </section>
 
-      <section className="surface flex flex-col gap-3 rounded-lg border border-border p-4">
+      <section className="surface border-border flex flex-col gap-3 rounded-lg border p-4">
         <h3 className="text-xs font-medium">{t.uploads.documents}</h3>
-        <p className="text-xxs text-muted">
-          {t.uploads.documentsDescription}
-        </p>
+        <p className="text-xxs text-muted">{t.uploads.documentsDescription}</p>
         <FileUpload
           multiple
           accept=".pdf,.docx"
@@ -119,7 +134,9 @@ export default function UploadsPage() {
         />
       </section>
 
-      {error && <FormErrorBanner message={error} onDismiss={() => setError(null)} />}
+      {error && (
+        <FormErrorBanner message={error} onDismiss={() => setError(null)} />
+      )}
     </div>
   );
 }

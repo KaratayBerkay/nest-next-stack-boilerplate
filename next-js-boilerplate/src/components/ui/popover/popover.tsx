@@ -37,7 +37,9 @@ export function Popover({ children, defaultOpen = false }: PopoverProps) {
   const close = useCallback(() => setOpen(false), []);
 
   return (
-    <PopoverContext.Provider value={{ open, toggle, close, triggerRef, contentId }}>
+    <PopoverContext.Provider
+      value={{ open, toggle, close, triggerRef, contentId }}
+    >
       {children}
     </PopoverContext.Provider>
   );

@@ -43,7 +43,11 @@ async function handleShareSubmit(
   router: ReturnType<typeof useRouter>,
   lang: string,
   failedToCreatePost: string,
-  createPost: (title: string, content: string, imageUrl?: string) => Promise<void>,
+  createPost: (
+    title: string,
+    content: string,
+    imageUrl?: string,
+  ) => Promise<void>,
 ) {
   e.preventDefault();
   if (!title.trim() || !content.trim() || submitting) return;
@@ -170,7 +174,7 @@ export default function PageContent() {
               handleFileChange(e, setFile, setUploadError, setPreview)
             }
             disabled={submitting}
-            className="border-border bg-surface rounded-lg border px-3 py-2 text-sm file:mr-2 file:rounded file:border-0 file:bg-surface file:px-2 file:py-0.5 file:text-xs disabled:opacity-50"
+            className="border-border bg-surface file:bg-surface rounded-lg border px-3 py-2 text-sm file:mr-2 file:rounded file:border-0 file:px-2 file:py-0.5 file:text-xs disabled:opacity-50"
           />
           {preview && (
             <div className="relative mt-2 h-48 w-full">
@@ -182,8 +186,8 @@ export default function PageContent() {
                 unoptimized
               />
               {uploading && (
-                <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-overlay/30">
-                  <div className="flex items-center gap-2 rounded-full bg-overlay/60 px-3 py-1.5 text-xs text-white">
+                <div className="bg-overlay/30 absolute inset-0 flex items-center justify-center rounded-lg">
+                  <div className="bg-overlay/60 flex items-center gap-2 rounded-full px-3 py-1.5 text-xs text-white">
                     <svg
                       className="h-3 w-3 animate-spin"
                       viewBox="0 0 24 24"
@@ -216,7 +220,7 @@ export default function PageContent() {
                     setUploadError(false);
                     if (fileRef.current) fileRef.current.value = "";
                   }}
-                  className="absolute top-1 right-1 rounded-full bg-overlay/50 p-1 text-white"
+                  className="bg-overlay/50 absolute top-1 right-1 rounded-full p-1 text-white"
                 >
                   <svg
                     width="14"
@@ -231,7 +235,7 @@ export default function PageContent() {
                 </button>
               )}
               {uploadError && (
-                <div className="mt-2 flex items-center gap-2 rounded-md bg-error/10 px-3 py-2 text-xs text-error">
+                <div className="bg-error/10 text-error mt-2 flex items-center gap-2 rounded-md px-3 py-2 text-xs">
                   <span>{t.imageUploadFailed}</span>
                   <Button
                     type="button"
@@ -265,7 +269,7 @@ export default function PageContent() {
         </div>
 
         {error && (
-          <p className="text-sm text-error" data-testid="share-error">
+          <p className="text-error text-sm" data-testid="share-error">
             {error}
           </p>
         )}

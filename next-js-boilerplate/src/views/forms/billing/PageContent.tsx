@@ -32,28 +32,49 @@ const VALID_COUPONS: Record<string, { pct: number }> = {
   WELCOME20: { pct: 20 },
 };
 
-function calcPrice(plan: string, period: string): { subtotal: number; discountLabel: string | null; total: number } {
+function calcPrice(
+  plan: string,
+  period: string,
+): { subtotal: number; discountLabel: string | null; total: number } {
   const p = PLANS.find((x) => x.value === plan) ?? PLANS[0];
   const subtotal = period === "yearly" ? p.yearly : p.monthly;
   const discountLabel = period === "yearly" && p.monthly > 0 ? "20% off" : null;
   return { subtotal, discountLabel, total: subtotal };
 }
 
-function CouponStatus({ code, period, t }: { code: string; period: string; t: Record<string, string> }) {
+function CouponStatus({
+  code,
+  period,
+  t,
+}: {
+  code: string;
+  period: string;
+  t: Record<string, string>;
+}) {
   if (!code) return null;
   const upper = code.toUpperCase();
   const coupon = VALID_COUPONS[upper];
   if (!coupon) return null;
   const price = calcPrice("pro", period);
   const discount = Math.round(price.subtotal * (coupon.pct / 100));
-  return <span className="text-success text-xxs">{t.couponApplied} — ${discount} {t.couponOff}</span>;
+  return (
+    <span className="text-success text-xxs">
+      {t.couponApplied} — ${discount} {t.couponOff}
+    </span>
+  );
 }
 
 async function handleCouponBlur(
   value: string,
   deps: {
-    simulateError: (id: string, opts?: { delayMs?: number }) => Promise<ExceptionResponse>;
-    toast: (opts: { description: string; variant?: "destructive" | "default" }) => void;
+    simulateError: (
+      id: string,
+      opts?: { delayMs?: number },
+    ) => Promise<ExceptionResponse>;
+    toast: (opts: {
+      description: string;
+      variant?: "destructive" | "default";
+    }) => void;
     allMessages: Record<string, unknown>;
   },
 ): Promise<string | undefined> {
@@ -61,13 +82,18 @@ async function handleCouponBlur(
   const upper = value.toUpperCase();
   if (VALID_COUPONS[upper]) return undefined;
   try {
-    await deps.simulateError(upper === "EXPIRED10" ? "coupon-expired" : "coupon-invalid");
+    await deps.simulateError(
+      upper === "EXPIRED10" ? "coupon-expired" : "coupon-invalid",
+    );
     return undefined;
   } catch (err) {
     const exc = (err as { exception?: ExceptionResponse }).exception;
     if (!exc) return undefined;
     if (getSurface(exc.exc) === "toast") {
-      deps.toast({ description: exceptionHandler(exc, deps.allMessages), variant: "destructive" });
+      deps.toast({
+        description: exceptionHandler(exc, deps.allMessages),
+        variant: "destructive",
+      });
       return undefined;
     }
     return exceptionToFormErrors(exc, deps.allMessages).fields.couponCode;
@@ -88,14 +114,20 @@ export default function BillingPage() {
     }),
   });
 
-  const { plan, billingPeriod, couponCode, isDirty } = useStore(form.store, (s) => ({
-    plan: s.values.plan,
-    billingPeriod: s.values.billingPeriod,
-    couponCode: s.values.couponCode,
-    isDirty: s.isDirty,
-  }));
+  const { plan, billingPeriod, couponCode, isDirty } = useStore(
+    form.store,
+    (s) => ({
+      plan: s.values.plan,
+      billingPeriod: s.values.billingPeriod,
+      couponCode: s.values.couponCode,
+      isDirty: s.isDirty,
+    }),
+  );
 
-  const price = useMemo(() => calcPrice(plan, billingPeriod), [plan, billingPeriod]);
+  const price = useMemo(
+    () => calcPrice(plan, billingPeriod),
+    [plan, billingPeriod],
+  );
 
   useEffect(() => {
     if (plan !== prevPlan.current) {
@@ -111,21 +143,29 @@ export default function BillingPage() {
           <h2 className="text-sm font-semibold">{t.billing.heading}</h2>
         </div>
         <div className="flex items-center gap-2">
-          {isDirty && <span className="text-xxs text-muted">{t.billing.unsaved}</span>}
+          {isDirty && (
+            <span className="text-xxs text-muted">{t.billing.unsaved}</span>
+          )}
         </div>
       </div>
 
       <form className="flex flex-col gap-4">
         <form.AppField name="plan" validators={{ onChange: fieldSchemas.plan }}>
           {(field) => (
-            <field.RadioGroupField label={t.billing.plan} options={PLANS.map((p) => ({
-              value: p.value,
-              label: `${p.label} — $${p.monthly}/mo${p.yearly > 0 ? ` ($${p.yearly}/yr)` : ""}`,
-            }))} />
+            <field.RadioGroupField
+              label={t.billing.plan}
+              options={PLANS.map((p) => ({
+                value: p.value,
+                label: `${p.label} — $${p.monthly}/mo${p.yearly > 0 ? ` ($${p.yearly}/yr)` : ""}`,
+              }))}
+            />
           )}
         </form.AppField>
 
-        <form.AppField name="billingPeriod" validators={{ onChange: fieldSchemas.billingPeriod }}>
+        <form.AppField
+          name="billingPeriod"
+          validators={{ onChange: fieldSchemas.billingPeriod }}
+        >
           {(field) => (
             <field.RadioGroupField
               label={t.billing.billingPeriod}
@@ -138,7 +178,12 @@ export default function BillingPage() {
         </form.AppField>
 
         <form.AppField name="paymentMethod">
-          {(field) => <field.SelectField label={t.billing.paymentMethod} options={PAYMENT_METHODS} />}
+          {(field) => (
+            <field.SelectField
+              label={t.billing.paymentMethod}
+              options={PAYMENT_METHODS}
+            />
+          )}
         </form.AppField>
 
         <form.AppField
@@ -149,13 +194,23 @@ export default function BillingPage() {
             onBlurAsyncDebounceMs: 300,
           }}
         >
-          {(field) => <field.TextField label={t.billing.couponCode} placeholder={t.billing.couponPlaceholder} />}
+          {(field) => (
+            <field.TextField
+              label={t.billing.couponCode}
+              placeholder={t.billing.couponPlaceholder}
+            />
+          )}
         </form.AppField>
 
         <CouponStatus code={couponCode} period={billingPeriod} t={t.billing} />
 
         <form.AppField name="taxId">
-          {(field) => <field.TextField label={t.billing.taxId} placeholder={t.billing.taxIdPlaceholder} />}
+          {(field) => (
+            <field.TextField
+              label={t.billing.taxId}
+              placeholder={t.billing.taxIdPlaceholder}
+            />
+          )}
         </form.AppField>
 
         <Separator />
@@ -166,7 +221,7 @@ export default function BillingPage() {
             <span>${price.subtotal}</span>
           </div>
           {price.discountLabel && (
-            <div className="flex justify-between text-success">
+            <div className="text-success flex justify-between">
               <span>{t.billing.discount}</span>
               <span>-{price.discountLabel}</span>
             </div>
@@ -177,7 +232,13 @@ export default function BillingPage() {
           </div>
         </div>
 
-        <Button type="submit" onClick={(e) => { e.preventDefault(); toast({ description: t.billing.saveSuccess, variant: "default" }); }}>
+        <Button
+          type="submit"
+          onClick={(e) => {
+            e.preventDefault();
+            toast({ description: t.billing.saveSuccess, variant: "default" });
+          }}
+        >
           {t.billing.updateButton}
         </Button>
       </form>

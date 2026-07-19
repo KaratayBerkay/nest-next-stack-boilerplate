@@ -11,7 +11,8 @@ export const variants = {
     "bg-surface text-fg hover:bg-surface-hover border border-border shadow-xs hover:shadow-md",
   primary: "bg-brand text-brand-fg hover:bg-brand/90 shadow-xs",
   secondary: "bg-muted/15 text-fg hover:bg-muted/25 shadow-xs",
-  outline: "border border-border bg-transparent hover:bg-surface-hover shadow-xs",
+  outline:
+    "border border-border bg-transparent hover:bg-surface-hover shadow-xs",
   ghost: "bg-transparent hover:bg-surface-hover",
   destructive: "bg-error text-error-fg hover:bg-error/90 shadow-xs",
   link: "text-brand underline-offset-4 hover:underline",

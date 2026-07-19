@@ -2,17 +2,20 @@ import { queryOptions } from "@tanstack/react-query";
 import type { NotificationsResult } from "@/api/server/notifications/list";
 
 async function fetchNotifications(): Promise<NotificationsResult> {
-  const { fetchNotificationsServer } = await import("@/api/server/notifications/list");
+  const { fetchNotificationsServer } =
+    await import("@/api/server/notifications/list");
   return fetchNotificationsServer();
 }
 
 async function fetchUnreadCount(): Promise<number> {
-  const { fetchUnreadNotificationCountServer } = await import("@/api/server/notifications/unread-count");
+  const { fetchUnreadNotificationCountServer } =
+    await import("@/api/server/notifications/unread-count");
   return fetchUnreadNotificationCountServer();
 }
 
 async function fetchDmUnreadCount(): Promise<number> {
-  const { fetchDmUnreadCountServer } = await import("@/api/server/notifications/dm-unread-count");
+  const { fetchDmUnreadCountServer } =
+    await import("@/api/server/notifications/dm-unread-count");
   return fetchDmUnreadCountServer();
 }
 

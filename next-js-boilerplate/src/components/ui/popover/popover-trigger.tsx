@@ -41,7 +41,5 @@ export function PopoverTrigger({
     } as Record<string, unknown>);
   }
 
-  return (
-    <button {...sharedProps} {...props} />
-  );
+  return <button {...sharedProps} {...props} />;
 }

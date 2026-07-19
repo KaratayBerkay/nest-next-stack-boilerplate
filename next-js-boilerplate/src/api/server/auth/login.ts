@@ -1,7 +1,5 @@
 import { apiFetch } from "@/lib/api-client";
-import {
-  AUTH_LOGIN_URL,
-} from "@/constants/api/urls";
+import { AUTH_LOGIN_URL } from "@/constants/api/urls";
 import { POST } from "@/constants/api/methods";
 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 import type { User } from "@/types/auth/User";
@@ -42,7 +40,9 @@ export async function loginServer(
   }
 
   if (!res.ok) {
-    throw new Error((data as unknown as { msg?: string }).msg ?? "Login failed");
+    throw new Error(
+      (data as unknown as { msg?: string }).msg ?? "Login failed",
+    );
   }
 
   return data;

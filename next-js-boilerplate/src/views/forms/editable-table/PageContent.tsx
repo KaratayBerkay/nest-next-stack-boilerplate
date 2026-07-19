@@ -38,9 +38,24 @@ const EMPTY_ROW: InvoiceRow = {
 };
 
 const INITIAL_ROWS: InvoiceRow[] = [
-  { description: "Web Development", quantity: 1, unitPrice: 1500, taxClass: "standard" },
-  { description: "UI Design", quantity: 2, unitPrice: 750, taxClass: "reduced" },
-  { description: "Hosting (monthly)", quantity: 12, unitPrice: 25, taxClass: "standard" },
+  {
+    description: "Web Development",
+    quantity: 1,
+    unitPrice: 1500,
+    taxClass: "standard",
+  },
+  {
+    description: "UI Design",
+    quantity: 2,
+    unitPrice: 750,
+    taxClass: "reduced",
+  },
+  {
+    description: "Hosting (monthly)",
+    quantity: 12,
+    unitPrice: 25,
+    taxClass: "standard",
+  },
 ];
 
 const tableFormOpts = formOptions({
@@ -55,7 +70,10 @@ export default function EditableTablePage() {
   const { simulateError } = useFormsDemoActions();
   const [rowStatus, setRowStatus] = useState<Record<number, RowStatus>>({});
   const [savingAll, setSavingAll] = useState(false);
-  const rowSchemas = useMemo(() => createTableRowFieldSchemas(t.editableTable), [t]);
+  const rowSchemas = useMemo(
+    () => createTableRowFieldSchemas(t.editableTable),
+    [t],
+  );
 
   const form = useAppForm(tableFormOpts);
 
@@ -105,11 +123,19 @@ export default function EditableTablePage() {
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-border text-muted text-xxs">
-              <th className="px-2 py-1 text-left font-medium">{t.editableTable.description}</th>
-              <th className="px-2 py-1 text-right font-medium">{t.editableTable.quantity}</th>
-              <th className="px-2 py-1 text-right font-medium">{t.editableTable.unitPrice}</th>
-              <th className="px-2 py-1 font-medium">{t.editableTable.taxClass}</th>
+            <tr className="border-border text-muted text-xxs border-b">
+              <th className="px-2 py-1 text-left font-medium">
+                {t.editableTable.description}
+              </th>
+              <th className="px-2 py-1 text-right font-medium">
+                {t.editableTable.quantity}
+              </th>
+              <th className="px-2 py-1 text-right font-medium">
+                {t.editableTable.unitPrice}
+              </th>
+              <th className="px-2 py-1 font-medium">
+                {t.editableTable.taxClass}
+              </th>
               <th className="px-2 py-1 text-right font-medium">Net</th>
               <th className="px-2 py-1" />
             </tr>
@@ -124,7 +150,7 @@ export default function EditableTablePage() {
                     const status: RowStatus =
                       i in rowStatus ? rowStatus[i] : "idle";
                     return (
-                      <tr key={i} className="border-b border-border">
+                      <tr key={i} className="border-border border-b">
                         <td className="px-2 py-1">
                           <form.AppField
                             name={`rows[${i}].description`}
@@ -133,7 +159,7 @@ export default function EditableTablePage() {
                             {(subField) => (
                               <div className="flex flex-col">
                                 <input
-                                  className="w-32 rounded border border-border bg-field px-1.5 py-1 text-xs"
+                                  className="border-border bg-field w-32 rounded border px-1.5 py-1 text-xs"
                                   value={subField.state.value}
                                   onChange={(e) =>
                                     subField.handleChange(e.target.value)
@@ -157,7 +183,7 @@ export default function EditableTablePage() {
                               <div className="flex flex-col items-end">
                                 <input
                                   type="number"
-                                  className="w-16 rounded border border-border bg-field px-1.5 py-1 text-xs text-right"
+                                  className="border-border bg-field w-16 rounded border px-1.5 py-1 text-right text-xs"
                                   value={subField.state.value}
                                   min={0}
                                   onChange={(e) =>
@@ -185,7 +211,7 @@ export default function EditableTablePage() {
                                 <input
                                   type="number"
                                   step="0.01"
-                                  className="w-20 rounded border border-border bg-field px-1.5 py-1 text-xs text-right"
+                                  className="border-border bg-field w-20 rounded border px-1.5 py-1 text-right text-xs"
                                   value={subField.state.value}
                                   min={0}
                                   onChange={(e) =>
@@ -210,7 +236,7 @@ export default function EditableTablePage() {
                           >
                             {(subField) => (
                               <select
-                                className="rounded border border-border bg-field px-1.5 py-1 text-xs"
+                                className="border-border bg-field rounded border px-1.5 py-1 text-xs"
                                 value={subField.state.value}
                                 onChange={(e) =>
                                   subField.handleChange(e.target.value)
@@ -253,9 +279,7 @@ export default function EditableTablePage() {
                             </button>
                             <button
                               className="text-muted hover:text-fg"
-                              disabled={
-                                i >= field.state.value.length - 1
-                              }
+                              disabled={i >= field.state.value.length - 1}
                               onClick={() => field.moveValue(i, i + 1)}
                               title={t.editableTable.moveDown}
                             >
@@ -296,9 +320,7 @@ export default function EditableTablePage() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() =>
-            form.pushFieldValue("rows", { ...EMPTY_ROW })
-          }
+          onClick={() => form.pushFieldValue("rows", { ...EMPTY_ROW })}
         >
           {t.editableTable.addRow}
         </Button>

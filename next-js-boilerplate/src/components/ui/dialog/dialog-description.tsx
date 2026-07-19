@@ -12,13 +12,6 @@ export function DialogDescription({
   const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
   return (
-    <p
-      className={cn(
-        "text-muted text-sm",
-        fonts,
-        className,
-      )}
-      {...props}
-    />
+    <p className={cn("text-muted text-sm", fonts, className)} {...props} />
   );
 }

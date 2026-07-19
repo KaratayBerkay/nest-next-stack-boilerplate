@@ -29,7 +29,10 @@ export function TabsContent({
       data-state="active"
       className={cn(
         "focus-visible:ring-brand focus-visible:ring-2 focus-visible:outline-none",
-        fontClasses({ fontSize, fontWeight, fontFamily }, { fontWeight: "font-normal" }),
+        fontClasses(
+          { fontSize, fontWeight, fontFamily },
+          { fontWeight: "font-normal" },
+        ),
         className,
       )}
       {...props}

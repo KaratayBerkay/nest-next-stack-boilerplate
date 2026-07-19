@@ -78,7 +78,15 @@ export function ChatView({
   const { sendMessage } = useMessageActions();
 
   const handleSend = useCallback(
-    () => chatViewHandleSend(selectedUser, input, sendMessage, setInput, setMessageError, scrollToBottom),
+    () =>
+      chatViewHandleSend(
+        selectedUser,
+        input,
+        sendMessage,
+        setInput,
+        setMessageError,
+        scrollToBottom,
+      ),
     [selectedUser, input, sendMessage, scrollToBottom],
   );
 
@@ -118,7 +126,7 @@ export function ChatView({
             className="bg-brand h-8 w-8 shrink-0 text-xs text-white"
           />
           {onlineUsers.has(selectedUser.id) && (
-            <span className="border-bg absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2 bg-success" />
+            <span className="border-bg bg-success absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2" />
           )}
         </div>
         <span className="text-sm font-semibold">{selectedUser.name}</span>
@@ -129,7 +137,7 @@ export function ChatView({
       >
         {msgsError && (
           <div className="flex flex-1 items-center justify-center">
-            <p className="text-sm text-error">{t.failedToLoad}</p>
+            <p className="text-error text-sm">{t.failedToLoad}</p>
           </div>
         )}
         {!msgsError && conversationMessages.length === 0 && (
@@ -200,7 +208,7 @@ export function ChatView({
             className="bg-surface text-fg focus:border-fg rounded-xl px-4 py-2.5"
           />
           {messageError && (
-            <p className="mt-1.5 text-xs text-error">{messageError}</p>
+            <p className="text-error mt-1.5 text-xs">{messageError}</p>
           )}
         </div>
         <Button

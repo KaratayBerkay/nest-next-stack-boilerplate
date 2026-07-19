@@ -2,7 +2,13 @@ import { cn } from "@/lib/cn";
 import { fontClasses } from "@/lib/font-classes";
 import type { DialogFooterProps } from "@/types/ui/Dialog-types";
 
-export function DialogFooter({ className, fontSize, fontWeight, fontFamily, ...props }: DialogFooterProps) {
+export function DialogFooter({
+  className,
+  fontSize,
+  fontWeight,
+  fontFamily,
+  ...props
+}: DialogFooterProps) {
   const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
   return (

@@ -53,9 +53,7 @@ describe("useFieldMessages", () => {
   });
 
   it("both error and description ids resolve to real elements", () => {
-    render(
-      <TestComponent error="Invalid" description="Try again" />,
-    );
+    render(<TestComponent error="Invalid" description="Try again" />);
     const input = screen.getByTestId("input");
     const describedBy = input.getAttribute("aria-describedby")!;
     expect(describedBy).toContain("-error");
@@ -68,9 +66,7 @@ describe("useFieldMessages", () => {
   });
 
   it("error and description are both visible", () => {
-    render(
-      <TestComponent error="Too short" description="Min 8 chars" />,
-    );
+    render(<TestComponent error="Too short" description="Min 8 chars" />);
     expect(screen.getByText("Too short")).not.toBeNull();
     expect(screen.getByText("Min 8 chars")).not.toBeNull();
   });

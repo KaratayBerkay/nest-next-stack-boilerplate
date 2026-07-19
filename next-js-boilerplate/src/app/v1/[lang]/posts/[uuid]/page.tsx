@@ -46,9 +46,7 @@ export async function generateMetadata({
   }
 }
 
-export default async function PostPage({
-  params,
-}: PostPageProps) {
+export default async function PostPage({ params }: PostPageProps) {
   const { uuid } = await params;
   const [user, postRes] = await Promise.all([
     getSessionUser(),

@@ -8,7 +8,10 @@ export interface SetTierResult {
   error?: string;
 }
 
-export async function setTierServer(userId: string, tier: string): Promise<SetTierResult> {
+export async function setTierServer(
+  userId: string,
+  tier: string,
+): Promise<SetTierResult> {
   try {
     const res = await apiFetch(ADMIN_SET_TIER_URL, {
       method: POST,

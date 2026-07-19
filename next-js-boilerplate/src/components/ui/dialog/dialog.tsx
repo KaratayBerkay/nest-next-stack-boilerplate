@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useCallback,
-  useState,
-} from "react";
+import { createContext, useContext, useCallback, useState } from "react";
 import type { DialogProps } from "@/types/ui/Dialog-types";
 
 interface DialogContextType {

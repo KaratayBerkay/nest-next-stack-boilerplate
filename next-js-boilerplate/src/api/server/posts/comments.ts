@@ -19,7 +19,10 @@ export async function createCommentServer(
   }
 }
 
-export async function updateCommentServer(commentId: string, body: string): Promise<void> {
+export async function updateCommentServer(
+  commentId: string,
+  body: string,
+): Promise<void> {
   const res = await apiFetch(COMMENTS_PREFIX + commentId, {
     method: PUT,
     headers: JSON_CONTENT_TYPE_HEADER,

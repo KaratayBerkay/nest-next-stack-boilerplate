@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import { DATE_DISPLAY_COOKIE, DEFAULT_DATE_DISPLAY } from "@/constants/date-display";
+import {
+  DATE_DISPLAY_COOKIE,
+  DEFAULT_DATE_DISPLAY,
+} from "@/constants/date-display";
 import type { DateDisplayProviderProps } from "@/types/components/DateDisplayProvider-types";
 
 export function DateDisplayProvider({ children }: DateDisplayProviderProps) {

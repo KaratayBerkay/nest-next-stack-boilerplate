@@ -31,8 +31,8 @@ describe("Button", () => {
         /* eslint-disable jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */
         <Button asChild onClick={buttonOnClick}>
           <span onClick={childOnClick}>Click me</span>
-        </Button>
-        /* eslint-enable jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */,
+        </Button>,
+        /* eslint-enable jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */
       );
       const rendered = screen.getByText("Click me");
       fireEvent.click(rendered);
@@ -49,8 +49,8 @@ describe("Button", () => {
         /* eslint-disable jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */
         <Button asChild onClick={buttonOnClick}>
           <span onClick={childOnClick}>Click me</span>
-        </Button>
-        /* eslint-enable jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */,
+        </Button>,
+        /* eslint-enable jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */
       );
       fireEvent.click(screen.getByText("Click me"));
       expect(childOnClick).toHaveBeenCalledOnce();

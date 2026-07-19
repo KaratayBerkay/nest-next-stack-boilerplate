@@ -1,6 +1,17 @@
-import { useState, useEffect, useCallback, type Dispatch, type SetStateAction } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import { Spinner } from "@/components/ui/Spinner";
-import { Command, CommandInput, CommandList, CommandItem } from "@/components/ui/Command";
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandItem,
+} from "@/components/ui/Command";
 import { getLabel } from "./helpers";
 import { asyncData } from "./data";
 import { useDebounce } from "@/hooks/ui/useDebounce";
@@ -19,7 +30,9 @@ function handleSelectModuleLevel(
 export function AsyncTab() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<{ value: string; label: string }[]>([]);
+  const [results, setResults] = useState<{ value: string; label: string }[]>(
+    [],
+  );
   const [value, setValue] = useState("");
   const debouncedQuery = useDebounce(query, 300);
 
@@ -41,7 +54,8 @@ export function AsyncTab() {
   const selectedLabel = getLabel(value, asyncData);
 
   const handleSelect = useCallback(
-    (itemValue: string) => handleSelectModuleLevel(itemValue, setValue, setOpen, setQuery),
+    (itemValue: string) =>
+      handleSelectModuleLevel(itemValue, setValue, setOpen, setQuery),
     [setValue, setOpen, setQuery],
   );
 
@@ -53,7 +67,7 @@ export function AsyncTab() {
           <button
             type="button"
             onClick={() => setOpen((prev) => !prev)}
-            className="focus-visible:ring-brand flex h-9 w-full items-center justify-between rounded-md border border-border bg-bg px-3 py-1 text-sm text-fg shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+            className="focus-visible:ring-brand border-border bg-bg text-fg flex h-9 w-full items-center justify-between rounded-md border px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
           >
             <span className="truncate">
               {selectedLabel || "Search users..."}
@@ -84,22 +98,24 @@ export function AsyncTab() {
                       <Spinner size="sm" />
                     </div>
                   )}
-                  {!loading && results.length > 0 && results.map((item) => (
-                    <CommandItem
-                      key={item.value}
-                      value={item.value}
-                      onSelect={() => handleSelect(item.value)}
-                    >
-                      {item.label}
-                    </CommandItem>
-                  ))}
+                  {!loading &&
+                    results.length > 0 &&
+                    results.map((item) => (
+                      <CommandItem
+                        key={item.value}
+                        value={item.value}
+                        onSelect={() => handleSelect(item.value)}
+                      >
+                        {item.label}
+                      </CommandItem>
+                    ))}
                   {!loading && debouncedQuery && results.length === 0 && (
-                    <div className="py-6 text-center text-sm text-muted">
+                    <div className="text-muted py-6 text-center text-sm">
                       No results
                     </div>
                   )}
                   {!loading && !debouncedQuery && (
-                    <div className="py-6 text-center text-sm text-muted">
+                    <div className="text-muted py-6 text-center text-sm">
                       Start typing to search...
                     </div>
                   )}
@@ -109,7 +125,7 @@ export function AsyncTab() {
           )}
         </div>
         {value && (
-          <div className="bg-surface flex items-center justify-between rounded border border-border px-3 py-2">
+          <div className="bg-surface border-border flex items-center justify-between rounded border px-3 py-2">
             <span className="text-sm">
               Selected: <strong>{selectedLabel}</strong>
             </span>

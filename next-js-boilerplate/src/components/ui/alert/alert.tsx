@@ -41,7 +41,11 @@ export function Alert({
       )}
       {...props}
     >
-      {upper && <div className="mb-2 text-xs font-bold uppercase tracking-wider opacity-75">{upper}</div>}
+      {upper && (
+        <div className="mb-2 text-xs font-bold tracking-wider uppercase opacity-75">
+          {upper}
+        </div>
+      )}
       {header && <div className="mb-2 font-semibold">{header}</div>}
       {props.children}
     </div>

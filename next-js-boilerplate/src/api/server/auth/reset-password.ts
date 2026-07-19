@@ -1,7 +1,5 @@
 import { apiFetchJson } from "@/lib/api-client";
-import {
-  AUTH_RESET_PASSWORD_URL,
-} from "@/constants/api/urls";
+import { AUTH_RESET_PASSWORD_URL } from "@/constants/api/urls";
 import { POST } from "@/constants/api/methods";
 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 

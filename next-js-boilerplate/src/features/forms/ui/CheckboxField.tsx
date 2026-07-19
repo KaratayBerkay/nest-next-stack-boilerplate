@@ -6,7 +6,11 @@ import { Label } from "@/components/ui/Label";
 import { FormFieldInfo } from "@/components/ui/FormFieldInfo";
 import type { CheckboxFieldProps } from "@/types/forms/CheckboxField-types";
 
-export function CheckboxField({ label, required, options }: CheckboxFieldProps) {
+export function CheckboxField({
+  label,
+  required,
+  options,
+}: CheckboxFieldProps) {
   const field = useFieldContext<string[]>();
   const values = field.state.value ?? [];
   return (

@@ -22,7 +22,9 @@ export function filterGroups(
     .filter((g) => g.items.length > 0);
 }
 
-export function getAllItems(data: GroupedOption[]): { value: string; label: string }[] {
+export function getAllItems(
+  data: GroupedOption[],
+): { value: string; label: string }[] {
   return data.flatMap((g) => g.items);
 }
 
@@ -40,7 +42,7 @@ export function renderGroupedItems(
   const filtered = filterGroups(data, query);
   if (filtered.length === 0) {
     return (
-      <div className="py-6 text-center text-sm text-muted">No results</div>
+      <div className="text-muted py-6 text-center text-sm">No results</div>
     );
   }
   return filtered.map((group) => (

@@ -17,4 +17,9 @@ export interface ComboboxProps {
   description?: string;
 }
 
-export type ComboboxVariant = "default" | "shiny" | "glass" | "neon" | "gradient";
+export type ComboboxVariant =
+  | "default"
+  | "shiny"
+  | "glass"
+  | "neon"
+  | "gradient";

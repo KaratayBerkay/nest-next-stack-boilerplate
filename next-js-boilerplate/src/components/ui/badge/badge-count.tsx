@@ -23,9 +23,7 @@ function ruleStyles(rule: string, hasCount: boolean): string {
     case "negative":
       return "bg-error text-error-fg";
     case "icon":
-      return hasCount
-        ? "bg-error text-error-fg"
-        : "bg-muted text-fg";
+      return hasCount ? "bg-error text-error-fg" : "bg-muted text-fg";
     case "string":
     default:
       return "bg-brand text-brand-fg";
@@ -53,7 +51,7 @@ export function BadgeCount({
       {shouldShow && (
         <span
           className={cn(
-            "absolute flex size-6 items-center justify-center rounded-full text-[11px] font-semibold leading-none shadow-sm",
+            "absolute flex size-6 items-center justify-center rounded-full text-[11px] leading-none font-semibold shadow-sm",
             directionStyles[direction],
             ruleStyles(rule, hasCount),
             dot && "size-2",

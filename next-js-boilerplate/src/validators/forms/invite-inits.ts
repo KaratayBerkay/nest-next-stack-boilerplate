@@ -10,7 +10,9 @@ export const inviteDefaultValues = {
 
 type InviteFormValues = typeof inviteDefaultValues;
 
-export function createInviteInitialValues(record?: InviteFormValues): InviteFormValues {
+export function createInviteInitialValues(
+  record?: InviteFormValues,
+): InviteFormValues {
   if (!record) return { ...inviteDefaultValues };
   return { ...record };
 }

@@ -3,7 +3,10 @@ import { serverEnv } from "@/lib/env";
 import { getAccessToken } from "@/store/ssr-cookies";
 import { sessionTokenHeaders } from "@/lib/backend";
 import { POST as POST_METHOD } from "@/constants/api/methods";
-import { JSON_CONTENT_TYPE_HEADER, bearerAuthHeader } from "@/constants/api/headers";
+import {
+  JSON_CONTENT_TYPE_HEADER,
+  bearerAuthHeader,
+} from "@/constants/api/headers";
 
 const BACKEND = serverEnv().APP_URL;
 

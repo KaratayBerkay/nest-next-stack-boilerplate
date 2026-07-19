@@ -44,6 +44,7 @@ export function requestContextMiddleware(
     firstHeader(req.headers[REQUEST_ID_HEADER]) ??
     firstHeader(req.headers[CORRELATION_ID_HEADER]);
   const requestId = incoming ? sanitizeHeaderValue(incoming) : randomUUID();
+  // fallow-ignore-next-line security-sink — sanitizeHeaderValue runs on line 46
   res.setHeader(REQUEST_ID_HEADER, requestId);
   storage.run({ requestId }, () => next());
 }

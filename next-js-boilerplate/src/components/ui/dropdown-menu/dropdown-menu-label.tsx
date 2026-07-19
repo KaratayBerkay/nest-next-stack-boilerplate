@@ -9,7 +9,10 @@ export function DropdownMenuLabel({
   fontFamily,
   ...props
 }: DropdownMenuLabelProps) {
-  const fonts = fontClasses({ fontSize, fontWeight, fontFamily }, { fontSize: "text-xs" });
+  const fonts = fontClasses(
+    { fontSize, fontWeight, fontFamily },
+    { fontSize: "text-xs" },
+  );
 
   return (
     <div

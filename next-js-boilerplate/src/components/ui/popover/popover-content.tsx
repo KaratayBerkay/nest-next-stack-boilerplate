@@ -4,7 +4,10 @@ import { cn } from "@/lib/cn";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useBreakpoint } from "@/hooks";
-import { bottomSheetClasses, BottomSheetHandle } from "@/components/ui/bottom-sheet";
+import {
+  bottomSheetClasses,
+  BottomSheetHandle,
+} from "@/components/ui/bottom-sheet";
 import { usePopover } from "./popover";
 import { resolveVariant } from "@/lib/resolve-variant";
 import { globalStyleVariants } from "@/components/ui/global-style-variants";
@@ -140,7 +143,7 @@ export function PopoverContent({
     <>
       {!isDesktop && (
         <div
-          className="fixed inset-0 z-40 bg-overlay/50"
+          className="bg-overlay/50 fixed inset-0 z-40"
           onClick={close}
           aria-hidden="true"
         />
@@ -164,7 +167,7 @@ export function PopoverContent({
                 // is known) — otherwise the panel briefly sits in normal
                 // document flow at the end of <body>, and focus()'s default
                 // scroll-into-view during that frame scrolls the whole page.
-                "fixed z-50 min-w-[8rem] origin-top-right rounded-lg border p-4 shadow-lg animate-scale-in",
+                "animate-scale-in fixed z-50 min-w-[8rem] origin-top-right rounded-lg border p-4 shadow-lg",
                 !position && "invisible",
               )
             : bottomSheetClasses,

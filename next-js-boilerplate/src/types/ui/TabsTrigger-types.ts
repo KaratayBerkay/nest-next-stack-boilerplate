@@ -11,4 +11,11 @@ export interface TabsTriggerProps extends Omit<
   fontFamily?: string;
 }
 
-export type TabsTriggerVariant = "default" | "underline" | "pills" | "shiny" | "glass" | "neon" | "gradient";
+export type TabsTriggerVariant =
+  | "default"
+  | "underline"
+  | "pills"
+  | "shiny"
+  | "glass"
+  | "neon"
+  | "gradient";

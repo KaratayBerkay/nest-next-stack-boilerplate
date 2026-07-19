@@ -8,7 +8,8 @@ async function fetchFriends(): Promise<FriendUser[]> {
 }
 
 async function fetchFriendRequests(): Promise<FriendRequest[]> {
-  const { fetchFriendRequestsServer } = await import("@/api/server/messages/friend-requests");
+  const { fetchFriendRequestsServer } =
+    await import("@/api/server/messages/friend-requests");
   return fetchFriendRequestsServer();
 }
 

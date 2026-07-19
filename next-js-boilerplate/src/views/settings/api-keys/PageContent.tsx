@@ -26,13 +26,19 @@ async function handleCreateApiKey(
   setNewExpiry: Dispatch<SetStateAction<string>>,
   loadKeys: () => Promise<void>,
   newExpiry: string,
-  createApiKey: (name: string, expiresInDays: number | null) => Promise<CreateApiKeyResult>,
+  createApiKey: (
+    name: string,
+    expiresInDays: number | null,
+  ) => Promise<CreateApiKeyResult>,
 ) {
   if (!newName.trim()) return;
   setCreating(true);
   setNewKeyResult(null);
   try {
-    const result = await createApiKey(newName.trim(), newExpiry ? parseInt(newExpiry, 10) : null);
+    const result = await createApiKey(
+      newName.trim(),
+      newExpiry ? parseInt(newExpiry, 10) : null,
+    );
     setNewKeyResult(result.fullKey);
     toast({ title: "API key created" });
     setNewName("");
@@ -109,8 +115,7 @@ export default function PageContent() {
   );
 
   useEffect(() => {
-    if (user)
-      loadKeys();  
+    if (user) loadKeys();
     else setLoadingKeys(false); // eslint-disable-line react-hooks/set-state-in-effect
   }, [user, loadKeys]);
 
@@ -255,12 +260,20 @@ export default function PageContent() {
                   {key.keyPrefix}...
                 </code>
                 <div className="text-muted flex gap-4 text-xs">
-                  <span>Created {formatDateByPreference(key.createdAt, dateDisplay)}</span>
+                  <span>
+                    Created {formatDateByPreference(key.createdAt, dateDisplay)}
+                  </span>
                   {key.lastUsedAt && (
-                    <span>Last used {formatDateByPreference(key.lastUsedAt, dateDisplay)}</span>
+                    <span>
+                      Last used{" "}
+                      {formatDateByPreference(key.lastUsedAt, dateDisplay)}
+                    </span>
                   )}
                   {key.expiresAt && (
-                    <span>Expires {formatDateByPreference(key.expiresAt, dateDisplay)}</span>
+                    <span>
+                      Expires{" "}
+                      {formatDateByPreference(key.expiresAt, dateDisplay)}
+                    </span>
                   )}
                   {!key.expiresAt && <span>No expiry</span>}
                 </div>
@@ -269,7 +282,13 @@ export default function PageContent() {
                 variant="destructive"
                 size="sm"
                 onClick={() =>
-                  handleRevokeApiKey(key.id, key.name, toast, loadKeys, revokeApiKey)
+                  handleRevokeApiKey(
+                    key.id,
+                    key.name,
+                    toast,
+                    loadKeys,
+                    revokeApiKey,
+                  )
                 }
               >
                 Revoke

@@ -34,7 +34,7 @@ export async function GET(request: Request) {
     { posts, hasMore, nextCursor },
     {
       headers: {
-        'Cache-Control': 'public, max-age=30, stale-while-revalidate=60',
+        "Cache-Control": "public, max-age=30, stale-while-revalidate=60",
       },
     },
   );

@@ -31,10 +31,13 @@ export function Textarea({
     <div className="flex flex-col gap-1">
       <textarea
         className={cn(
-          "placeholder:text-muted/70 selection:bg-brand/20 focus-visible:ring-brand field-sizing-content flex min-h-20 max-h-80 w-full rounded-md border bg-transparent px-3 py-2 shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 resize-none",
+          "placeholder:text-muted/70 selection:bg-brand/20 focus-visible:ring-brand flex field-sizing-content max-h-80 min-h-20 w-full resize-none rounded-md border bg-transparent px-3 py-2 shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
           resolveVariant(variants, effectiveVariant),
           error && "border-error focus-visible:ring-error",
-          fontClasses({ fontSize, fontWeight, fontFamily }, { fontWeight: "font-normal" }),
+          fontClasses(
+            { fontSize, fontWeight, fontFamily },
+            { fontWeight: "font-normal" },
+          ),
           className,
         )}
         aria-invalid={!!error}

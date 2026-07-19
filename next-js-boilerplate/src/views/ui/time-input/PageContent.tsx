@@ -17,9 +17,19 @@ function formatTime(t: Time, showSeconds?: boolean): string {
 }
 
 function ComponentsTab() {
-  const [defaultTime, setDefaultTime] = useState<Time>({ hours: 10, minutes: 30 });
-  const [secondsTime, setSecondsTime] = useState<Time>({ hours: 12, minutes: 0, seconds: 30 });
-  const [twelveTime, setTwelveTime] = useState<Time>({ hours: 14, minutes: 30 });
+  const [defaultTime, setDefaultTime] = useState<Time>({
+    hours: 10,
+    minutes: 30,
+  });
+  const [secondsTime, setSecondsTime] = useState<Time>({
+    hours: 12,
+    minutes: 0,
+    seconds: 30,
+  });
+  const [twelveTime, setTwelveTime] = useState<Time>({
+    hours: 14,
+    minutes: 30,
+  });
 
   return (
     <>
@@ -30,9 +40,7 @@ function ComponentsTab() {
           onChange={setDefaultTime}
           label="Select time"
         />
-        <p className="text-muted text-xs">
-          Value: {formatTime(defaultTime)}
-        </p>
+        <p className="text-muted text-xs">Value: {formatTime(defaultTime)}</p>
       </section>
 
       <section className="flex flex-col gap-3">
@@ -56,24 +64,29 @@ function ComponentsTab() {
           use24Hour={false}
           label="12-hour with AM/PM"
         />
-        <p className="text-muted text-xs">
-          Value: {formatTime(twelveTime)}
-        </p>
+        <p className="text-muted text-xs">Value: {formatTime(twelveTime)}</p>
       </section>
     </>
   );
 }
 
 function ExamplesTab() {
-  const [meetingTime, setMeetingTime] = useState<Time>({ hours: 9, minutes: 0 });
+  const [meetingTime, setMeetingTime] = useState<Time>({
+    hours: 9,
+    minutes: 0,
+  });
   const [eventTime, setEventTime] = useState<Time>({ hours: 18, minutes: 30 });
-  const [timerTime, setTimerTime] = useState<Time>({ hours: 0, minutes: 5, seconds: 0 });
+  const [timerTime, setTimerTime] = useState<Time>({
+    hours: 0,
+    minutes: 5,
+    seconds: 0,
+  });
 
   return (
     <>
       <section className="flex flex-col gap-3">
         <h3 className="text-lg font-semibold">Meeting Scheduler</h3>
-        <div className="surface p-6 rounded-xl">
+        <div className="surface rounded-xl p-6">
           <div className="mb-4">
             <p className="text-sm font-semibold">Schedule a Meeting</p>
             <p className="text-muted text-xs">Pick a time for your meeting</p>
@@ -84,10 +97,10 @@ function ExamplesTab() {
             label="Meeting time"
           />
           <div className="mt-4 flex items-center justify-between border-t pt-4">
-            <p className="text-xs text-muted">
+            <p className="text-muted text-xs">
               Meeting at {formatTime(meetingTime)}
             </p>
-            <button className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90">
+            <button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-3 py-1.5 text-xs font-medium">
               Confirm
             </button>
           </div>
@@ -96,7 +109,7 @@ function ExamplesTab() {
 
       <section className="flex flex-col gap-3">
         <h3 className="text-lg font-semibold">Event Time Picker</h3>
-        <div className="surface p-6 rounded-xl">
+        <div className="surface rounded-xl p-6">
           <div className="mb-4">
             <p className="text-sm font-semibold">Event Start Time</p>
             <p className="text-muted text-xs">When does the event begin?</p>
@@ -107,7 +120,7 @@ function ExamplesTab() {
             label="Start time"
           />
           <div className="mt-4 border-t pt-4">
-            <p className="text-xs text-muted">
+            <p className="text-muted text-xs">
               Event starts at {formatTime(eventTime)}
             </p>
           </div>
@@ -116,10 +129,12 @@ function ExamplesTab() {
 
       <section className="flex flex-col gap-3">
         <h3 className="text-lg font-semibold">Timer Settings</h3>
-        <div className="surface p-6 rounded-xl">
+        <div className="surface rounded-xl p-6">
           <div className="mb-4">
             <p className="text-sm font-semibold">Countdown Timer</p>
-            <p className="text-muted text-xs">Set timer duration with precision</p>
+            <p className="text-muted text-xs">
+              Set timer duration with precision
+            </p>
           </div>
           <TimeInput
             value={timerTime}
@@ -128,10 +143,8 @@ function ExamplesTab() {
             label="Duration"
           />
           <div className="mt-4 flex items-center justify-between border-t pt-4">
-            <p className="text-xs text-muted">
-              {formatTime(timerTime, true)}
-            </p>
-            <button className="rounded-md bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground hover:bg-secondary/80">
+            <p className="text-muted text-xs">{formatTime(timerTime, true)}</p>
+            <button className="bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md px-3 py-1.5 text-xs font-medium">
               Start Timer
             </button>
           </div>
@@ -162,7 +175,9 @@ const examples: UIExample[] = [
       <VariantGallery
         variants={["default", "shiny", "glass", "neon", "gradient"]}
         sizes={[]}
-        render={(variant) => <TimeInput variant={variant as TimeInputVariant} />}
+        render={(variant) => (
+          <TimeInput variant={variant as TimeInputVariant} />
+        )}
       />
     ),
   },

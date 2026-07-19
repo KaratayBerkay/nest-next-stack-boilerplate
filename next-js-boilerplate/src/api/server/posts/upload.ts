@@ -2,7 +2,9 @@ import { apiFetch } from "@/lib/api-client";
 import { UPLOAD_URL } from "@/constants/api/urls";
 import { POST } from "@/constants/api/methods";
 
-export async function uploadImageServer(file: File): Promise<string | undefined> {
+export async function uploadImageServer(
+  file: File,
+): Promise<string | undefined> {
   const formData = new FormData();
   formData.set("file", file);
   const res = await apiFetch(UPLOAD_URL, {

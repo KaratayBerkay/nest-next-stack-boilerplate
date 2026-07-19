@@ -24,7 +24,11 @@ async function handleReactionInline(
   commentId: string | undefined,
   onReactionChange: (() => void) | undefined,
   toast: ReturnType<typeof useToast>["toast"],
-  toggleReaction: (params: { type: string; postId?: string; commentId?: string }) => Promise<void>,
+  toggleReaction: (params: {
+    type: string;
+    postId?: string;
+    commentId?: string;
+  }) => Promise<void>,
 ) {
   if (submitting) return;
   setSubmitting(true);
@@ -105,5 +109,3 @@ export function ReactionInline({
     </div>
   );
 }
-
-

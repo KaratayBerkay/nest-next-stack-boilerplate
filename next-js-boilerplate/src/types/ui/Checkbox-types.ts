@@ -68,7 +68,12 @@ export interface CheckboxChipProps {
   className?: string;
 }
 
-export type CheckboxVariant = "default" | "shiny" | "glass" | "neon" | "gradient";
+export type CheckboxVariant =
+  | "default"
+  | "shiny"
+  | "glass"
+  | "neon"
+  | "gradient";
 
 export type CheckboxGroupShinyProps = React.ComponentPropsWithoutRef<"div">;
 

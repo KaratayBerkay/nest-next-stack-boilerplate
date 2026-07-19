@@ -35,7 +35,10 @@ const examples: UIExample[] = [
         variants={["default", "shiny", "glass", "neon", "gradient"]}
         sizes={[]}
         render={(variant, _size) => (
-          <Combobox variant={variant as ComboboxVariant} options={[{ value: "opt", label: "Option" }]} />
+          <Combobox
+            variant={variant as ComboboxVariant}
+            options={[{ value: "opt", label: "Option" }]}
+          />
         )}
       />
     ),

@@ -11,16 +11,24 @@ export async function POST(request: Request) {
     const files = formData.getAll("files");
 
     if (!files.length) {
-      return NextResponse.json({ error: "At least one file is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "At least one file is required" },
+        { status: 400 },
+      );
     }
 
     for (const file of files) {
       if (!(file instanceof File)) {
-        return NextResponse.json({ error: "Invalid file entry" }, { status: 400 });
+        return NextResponse.json(
+          { error: "Invalid file entry" },
+          { status: 400 },
+        );
       }
       if (!ALLOWED_TYPES.includes(file.type)) {
         return NextResponse.json(
-          { error: `File "${file.name}" has unsupported type. Only JPEG, PNG, WebP, and GIF images are allowed` },
+          {
+            error: `File "${file.name}" has unsupported type. Only JPEG, PNG, WebP, and GIF images are allowed`,
+          },
           { status: 400 },
         );
       }

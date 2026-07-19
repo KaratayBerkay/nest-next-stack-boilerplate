@@ -39,7 +39,11 @@ describe("DatePicker month grid", () => {
 
   it("marks the selected month as pressed and shows it in the trigger", () => {
     render(
-      <DatePicker picker="month" value={new Date(2026, 2, 1)} onChange={vi.fn()} />,
+      <DatePicker
+        picker="month"
+        value={new Date(2026, 2, 1)}
+        onChange={vi.fn()}
+      />,
     );
     expect(screen.getByText("Mar 2026")).toBeDefined();
   });
@@ -73,7 +77,9 @@ describe("DatePicker year grid", () => {
     render(<DatePicker picker="year" onChange={vi.fn()} />);
     openPicker();
     const decadeStart = Math.floor(new Date().getFullYear() / 12) * 12;
-    expect(screen.getByText(`${decadeStart}–${decadeStart + 11}`)).toBeDefined();
+    expect(
+      screen.getByText(`${decadeStart}–${decadeStart + 11}`),
+    ).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "Next page" }));
     expect(
       screen.getByText(`${decadeStart + 12}–${decadeStart + 23}`),
@@ -99,7 +105,11 @@ describe("DatePicker clear", () => {
   it("clears the value from the trigger affordance", () => {
     const onChange = vi.fn();
     render(
-      <DatePicker picker="month" value={new Date(2026, 2, 1)} onChange={onChange} />,
+      <DatePicker
+        picker="month"
+        value={new Date(2026, 2, 1)}
+        onChange={onChange}
+      />,
     );
     fireEvent.click(screen.getByRole("button", { name: "Clear date" }));
     expect(onChange).toHaveBeenCalledWith(undefined);

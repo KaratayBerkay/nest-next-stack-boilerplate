@@ -9,7 +9,10 @@ import {
 } from "@radix-ui/react-scroll-area";
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
-import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
+import {
+  globalStyleVariants,
+  type GlobalVariant,
+} from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 
 const scrollAreaVariants = {
@@ -25,7 +28,11 @@ export const ScrollArea = forwardRef<
   return (
     <Root
       ref={ref}
-      className={cn("relative overflow-hidden", resolveVariant(scrollAreaVariants, effectiveVariant), className)}
+      className={cn(
+        "relative overflow-hidden",
+        resolveVariant(scrollAreaVariants, effectiveVariant),
+        className,
+      )}
       {...props}
     >
       <Viewport className="size-full rounded-[inherit]">{children}</Viewport>

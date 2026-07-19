@@ -1,14 +1,20 @@
 "use client";
 
 import { useRef } from "react";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/Popover";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/Popover";
 import { Button } from "@/components/ui/Button";
 import { Label } from "@/components/ui/Label";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
 
 function InlineFormTab() {
-  const inputRef = useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
+  const inputRef = useRef<HTMLInputElement>(
+    null,
+  ) as React.RefObject<HTMLInputElement>;
 
   return (
     <Popover>
@@ -19,11 +25,21 @@ function InlineFormTab() {
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="name">Name</Label>
-            <input id="name" ref={inputRef} placeholder="Enter name" className="border-border bg-bg rounded-md border px-3 py-2 text-sm focus-visible:ring-brand focus-visible:border-brand focus-visible:ring-2 focus-visible:outline-none" />
+            <input
+              id="name"
+              ref={inputRef}
+              placeholder="Enter name"
+              className="border-border bg-bg focus-visible:ring-brand focus-visible:border-brand rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
+            />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="email">Email</Label>
-            <input id="email" type="email" placeholder="Enter email" className="border-border bg-bg rounded-md border px-3 py-2 text-sm focus-visible:ring-brand focus-visible:border-brand focus-visible:ring-2 focus-visible:outline-none" />
+            <input
+              id="email"
+              type="email"
+              placeholder="Enter email"
+              className="border-border bg-bg focus-visible:ring-brand focus-visible:border-brand rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
+            />
           </div>
           <Button variant="primary" type="submit">
             Submit
@@ -58,13 +74,15 @@ const examples: UIExample[] = [
   {
     id: "inline-form",
     title: "Inline Form",
-    description: "Popover with a simple form and initialFocus on the first input.",
+    description:
+      "Popover with a simple form and initialFocus on the first input.",
     render: () => <InlineFormTab />,
   },
   {
     id: "with-title",
     title: "With Title",
-    description: "Popover with the title prop displayed as a mobile sheet header.",
+    description:
+      "Popover with the title prop displayed as a mobile sheet header.",
     render: () => <WithTitleTab />,
   },
 ];

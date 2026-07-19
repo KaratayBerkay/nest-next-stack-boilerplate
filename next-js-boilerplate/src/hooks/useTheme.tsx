@@ -53,10 +53,13 @@ function getInitialTheme(): ThemeName {
   if (root.classList.contains("style-dark")) return "dark";
   if (root.classList.contains("style-light")) return "light";
   // Check legacy componentStyle cookie
-  const legacyStyleMatch = document.cookie.match(/(?:^|;\s*)componentStyle=([^;]*)/);
+  const legacyStyleMatch = document.cookie.match(
+    /(?:^|;\s*)componentStyle=([^;]*)/,
+  );
   if (legacyStyleMatch) {
     const v = legacyStyleMatch[1];
-    if (["shiny", "glass", "neon", "gradient"].includes(v)) return v as ThemeName;
+    if (["shiny", "glass", "neon", "gradient"].includes(v))
+      return v as ThemeName;
   }
   const fromCookie = getThemeCookie();
   if (fromCookie) return fromCookie;
@@ -68,7 +71,15 @@ function getInitialTheme(): ThemeName {
 function applyTheme(theme: ThemeName) {
   const root = document.documentElement;
   // Remove all style classes
-  for (const s of ["light", "dark", "default", "shiny", "glass", "neon", "gradient"] as const) {
+  for (const s of [
+    "light",
+    "dark",
+    "default",
+    "shiny",
+    "glass",
+    "neon",
+    "gradient",
+  ] as const) {
     root.classList.remove(`style-${s}`);
   }
   root.classList.remove("dark");
@@ -89,7 +100,9 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     applyTheme(initial);
 
     // Migrate legacy componentStyle cookie
-    const legacyStyleMatch = document.cookie.match(/(?:^|;\s*)componentStyle=([^;]*)/);
+    const legacyStyleMatch = document.cookie.match(
+      /(?:^|;\s*)componentStyle=([^;]*)/,
+    );
     if (legacyStyleMatch) {
       document.cookie = "componentStyle=;path=/;max-age=0;samesite=lax";
     }
@@ -104,9 +117,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const componentStyle = themeToComponentStyle(theme);
 
   return (
-    <ThemeContext.Provider
-      value={{ theme, setTheme, componentStyle }}
-    >
+    <ThemeContext.Provider value={{ theme, setTheme, componentStyle }}>
       {children}
     </ThemeContext.Provider>
   );

@@ -9,7 +9,9 @@ export interface ToggleReactionParams {
   commentId?: string;
 }
 
-export async function toggleReactionServer(params: ToggleReactionParams): Promise<void> {
+export async function toggleReactionServer(
+  params: ToggleReactionParams,
+): Promise<void> {
   const res = await apiFetch(REACTIONS_URL, {
     method: POST,
     headers: JSON_CONTENT_TYPE_HEADER,

@@ -7,12 +7,18 @@ import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { fontClasses } from "@/lib/font-classes";
 import type { CardProps } from "@/types/ui/Card-types";
 
-export function Card({ className, variant, fontSize, fontWeight, fontFamily, ...props }: CardProps) {
+export function Card({
+  className,
+  variant,
+  fontSize,
+  fontWeight,
+  fontFamily,
+  ...props
+}: CardProps) {
   const effectiveVariant = useComponentVariant(variant);
   const variants = {
     ...globalStyleVariants,
-    default:
-      "border-border bg-bg text-fg rounded-xl border shadow-xs",
+    default: "border-border bg-bg text-fg rounded-xl border shadow-xs",
     elevated: "border-border bg-bg text-fg rounded-xl border shadow-md",
     interactive:
       "border-border bg-bg text-fg rounded-xl border shadow-xs transition-[box-shadow,transform] hover:shadow-md hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-brand cursor-pointer",
@@ -20,7 +26,10 @@ export function Card({ className, variant, fontSize, fontWeight, fontFamily, ...
     surface: "surface rounded-xl",
   };
 
-  const fonts = fontClasses({ fontSize, fontWeight, fontFamily }, { fontSize: "text-base", fontWeight: "font-normal" });
+  const fonts = fontClasses(
+    { fontSize, fontWeight, fontFamily },
+    { fontSize: "text-base", fontWeight: "font-normal" },
+  );
 
   return (
     <div

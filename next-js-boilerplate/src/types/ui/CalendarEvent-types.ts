@@ -1,4 +1,10 @@
-export type CalendarEventColor = "blue" | "green" | "red" | "purple" | "orange" | "cyan";
+export type CalendarEventColor =
+  | "blue"
+  | "green"
+  | "red"
+  | "purple"
+  | "orange"
+  | "cyan";
 
 export interface CalendarEvent {
   id: string;

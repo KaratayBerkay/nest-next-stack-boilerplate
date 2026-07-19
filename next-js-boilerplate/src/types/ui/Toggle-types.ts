@@ -9,4 +9,10 @@ export interface ToggleProps extends React.ComponentPropsWithoutRef<"button"> {
 
 export type ToggleSize = "sm" | "md" | "lg";
 
-export type ToggleVariant = "default" | "outline" | "shiny" | "glass" | "neon" | "gradient";
+export type ToggleVariant =
+  | "default"
+  | "outline"
+  | "shiny"
+  | "glass"
+  | "neon"
+  | "gradient";

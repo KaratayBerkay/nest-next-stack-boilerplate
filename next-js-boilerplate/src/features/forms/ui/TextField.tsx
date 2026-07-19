@@ -10,7 +10,11 @@ export function TextField({ label, required }: TextFieldProps) {
   const field = useFieldContext<string>();
   return (
     <div className="flex flex-col gap-1">
-      {label && <Label htmlFor={field.name} required={required}>{label}</Label>}
+      {label && (
+        <Label htmlFor={field.name} required={required}>
+          {label}
+        </Label>
+      )}
       <Input
         id={field.name}
         value={field.state.value}

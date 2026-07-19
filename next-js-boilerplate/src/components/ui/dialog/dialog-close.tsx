@@ -5,7 +5,14 @@ import { useDialog } from "./dialog";
 import { fontClasses } from "@/lib/font-classes";
 import type { DialogCloseProps } from "@/types/ui/Dialog-types";
 
-export function DialogClose({ className, fontSize, fontWeight, fontFamily, onClick, ...props }: DialogCloseProps) {
+export function DialogClose({
+  className,
+  fontSize,
+  fontWeight,
+  fontFamily,
+  onClick,
+  ...props
+}: DialogCloseProps) {
   const { onOpenChange } = useDialog();
   const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 

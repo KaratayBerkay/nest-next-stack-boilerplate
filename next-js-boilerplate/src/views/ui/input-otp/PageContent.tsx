@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, useCallback, useEffect, type Dispatch, type SetStateAction } from "react";
+import {
+  useState,
+  useCallback,
+  useEffect,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import { InputOTP } from "@/components/ui/InputOTP";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
@@ -59,15 +65,26 @@ function TwoFactorVerification() {
   if (status === "success") {
     return (
       <div className="flex flex-col items-center gap-3 py-8 text-center">
-        <div className="flex size-12 items-center justify-center rounded-full bg-success/20">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-success">
+        <div className="bg-success/20 flex size-12 items-center justify-center rounded-full">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="text-success"
+          >
             <path d="M20 6 9 17l-5-5" />
           </svg>
         </div>
         <p className="text-fg text-sm font-semibold">Verified successfully</p>
         <p className="text-muted text-xs">Your identity has been confirmed.</p>
         <button
-          onClick={() => { setCode(""); setStatus("idle"); }}
+          onClick={() => {
+            setCode("");
+            setStatus("idle");
+          }}
           className="text-brand mt-2 text-xs underline"
         >
           Reset demo
@@ -81,7 +98,8 @@ function TwoFactorVerification() {
       <div className="flex flex-col items-center gap-1 text-center">
         <p className="text-fg text-sm font-medium">Two-factor authentication</p>
         <p className="text-muted text-xs">
-          Enter the 6-digit code sent to ****-****-<span className="tabular-nums">4321</span>
+          Enter the 6-digit code sent to ****-****-
+          <span className="tabular-nums">4321</span>
         </p>
       </div>
       <div className="flex justify-center">
@@ -91,8 +109,14 @@ function TwoFactorVerification() {
           maxLength={6}
           /* eslint-disable-next-line jsx-a11y/no-autofocus */
           autoFocus
-          description={code.length > 0 && code !== MOCK_CODE ? "Incorrect code — try 123456" : undefined}
-          error={code.length > 0 && code !== MOCK_CODE ? "Invalid code" : undefined}
+          description={
+            code.length > 0 && code !== MOCK_CODE
+              ? "Incorrect code — try 123456"
+              : undefined
+          }
+          error={
+            code.length > 0 && code !== MOCK_CODE ? "Invalid code" : undefined
+          }
         />
       </div>
       <div className="flex items-center gap-2 text-xs">
@@ -101,10 +125,7 @@ function TwoFactorVerification() {
             Resend in <span className="tabular-nums">{countdown}s</span>
           </span>
         ) : (
-          <button
-            onClick={handleResend}
-            className="text-brand hover:underline"
-          >
+          <button onClick={handleResend} className="text-brand hover:underline">
             Resend code
           </button>
         )}
@@ -127,7 +148,8 @@ const examples: UIExample[] = [
   {
     id: "two-factor",
     title: "2FA Verification",
-    description: "Real-life 2FA flow with masked phone, countdown, and success state. Use code 123456.",
+    description:
+      "Real-life 2FA flow with masked phone, countdown, and success state. Use code 123456.",
     render: () => <TwoFactorVerification />,
   },
 ];

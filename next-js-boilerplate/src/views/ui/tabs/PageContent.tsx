@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger, useTabsContext } from "@/components/ui/Tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  useTabsContext,
+} from "@/components/ui/Tabs";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
 import type { TabsTriggerVariant } from "@/types/ui/TabsTrigger-types";
@@ -16,8 +22,10 @@ import type { UIExample } from "@/types/ui/ExampleTabs-types";
 function ActiveTabDisplay() {
   const { activeValue } = useTabsContext();
   return (
-    <div className="bg-surface flex items-center justify-between rounded border border-border px-3 py-2">
-      <span className="text-sm">Active tab: <strong>{activeValue}</strong></span>
+    <div className="bg-surface border-border flex items-center justify-between rounded border px-3 py-2">
+      <span className="text-sm">
+        Active tab: <strong>{activeValue}</strong>
+      </span>
     </div>
   );
 }
@@ -29,18 +37,30 @@ function UnderlineNavTab() {
         <h3 className="text-lg font-semibold">Default</h3>
         <Tabs defaultValue="account" data-testid="tabs-root">
           <TabsList>
-            <TabsTrigger value="account" data-testid="tab-account">Account</TabsTrigger>
-            <TabsTrigger value="password" data-testid="tab-password">Password</TabsTrigger>
-            <TabsTrigger value="settings" data-testid="tab-settings">Settings</TabsTrigger>
+            <TabsTrigger value="account" data-testid="tab-account">
+              Account
+            </TabsTrigger>
+            <TabsTrigger value="password" data-testid="tab-password">
+              Password
+            </TabsTrigger>
+            <TabsTrigger value="settings" data-testid="tab-settings">
+              Settings
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="account" data-testid="tabpanel-account">
-            <p className="text-muted text-xs">Account settings content goes here.</p>
+            <p className="text-muted text-xs">
+              Account settings content goes here.
+            </p>
           </TabsContent>
           <TabsContent value="password" data-testid="tabpanel-password">
-            <p className="text-muted text-xs">Password change form goes here.</p>
+            <p className="text-muted text-xs">
+              Password change form goes here.
+            </p>
           </TabsContent>
           <TabsContent value="settings" data-testid="tabpanel-settings">
-            <p className="text-muted text-xs">General settings content goes here.</p>
+            <p className="text-muted text-xs">
+              General settings content goes here.
+            </p>
           </TabsContent>
           <ActiveTabDisplay />
         </Tabs>
@@ -58,7 +78,8 @@ function UnderlineNavTab() {
             <div className="space-y-2">
               <p className="text-sm font-medium">Documentation</p>
               <p className="text-muted text-xs">
-                Tabs can display any type of content including text, forms, tables, and custom components.
+                Tabs can display any type of content including text, forms,
+                tables, and custom components.
               </p>
             </div>
           </TabsContent>
@@ -77,10 +98,18 @@ function UnderlineNavTab() {
           </TabsContent>
           <TabsContent value="grid">
             <div className="grid grid-cols-2 gap-2">
-              <div className="bg-surface rounded p-2 text-center text-xs">Cell 1</div>
-              <div className="bg-surface rounded p-2 text-center text-xs">Cell 2</div>
-              <div className="bg-surface rounded p-2 text-center text-xs">Cell 3</div>
-              <div className="bg-surface rounded p-2 text-center text-xs">Cell 4</div>
+              <div className="bg-surface rounded p-2 text-center text-xs">
+                Cell 1
+              </div>
+              <div className="bg-surface rounded p-2 text-center text-xs">
+                Cell 2
+              </div>
+              <div className="bg-surface rounded p-2 text-center text-xs">
+                Cell 3
+              </div>
+              <div className="bg-surface rounded p-2 text-center text-xs">
+                Cell 4
+              </div>
             </div>
           </TabsContent>
           <ActiveTabDisplay />
@@ -95,40 +124,60 @@ function PillFiltersTab() {
     <div className="flex flex-col gap-4">
       <Tabs defaultValue="all">
         <TabsList>
-          <TabsTrigger value="all" variant="pills">All</TabsTrigger>
-          <TabsTrigger value="design" variant="pills">Design</TabsTrigger>
-          <TabsTrigger value="dev" variant="pills">Development</TabsTrigger>
-          <TabsTrigger value="marketing" variant="pills">Marketing</TabsTrigger>
-          <TabsTrigger value="writing" variant="pills">Writing</TabsTrigger>
+          <TabsTrigger value="all" variant="pills">
+            All
+          </TabsTrigger>
+          <TabsTrigger value="design" variant="pills">
+            Design
+          </TabsTrigger>
+          <TabsTrigger value="dev" variant="pills">
+            Development
+          </TabsTrigger>
+          <TabsTrigger value="marketing" variant="pills">
+            Marketing
+          </TabsTrigger>
+          <TabsTrigger value="writing" variant="pills">
+            Writing
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="all">
           <div className="space-y-2 py-2">
             <p className="text-sm font-medium">All Articles</p>
-            <p className="text-muted text-xs">Showing content from all categories.</p>
+            <p className="text-muted text-xs">
+              Showing content from all categories.
+            </p>
           </div>
         </TabsContent>
         <TabsContent value="design">
           <div className="space-y-2 py-2">
             <p className="text-sm font-medium">Design</p>
-            <p className="text-muted text-xs">UI/UX, graphic design, and prototyping articles.</p>
+            <p className="text-muted text-xs">
+              UI/UX, graphic design, and prototyping articles.
+            </p>
           </div>
         </TabsContent>
         <TabsContent value="dev">
           <div className="space-y-2 py-2">
             <p className="text-sm font-medium">Development</p>
-            <p className="text-muted text-xs">Frontend, backend, and DevOps articles.</p>
+            <p className="text-muted text-xs">
+              Frontend, backend, and DevOps articles.
+            </p>
           </div>
         </TabsContent>
         <TabsContent value="marketing">
           <div className="space-y-2 py-2">
             <p className="text-sm font-medium">Marketing</p>
-            <p className="text-muted text-xs">Growth, SEO, and content strategy articles.</p>
+            <p className="text-muted text-xs">
+              Growth, SEO, and content strategy articles.
+            </p>
           </div>
         </TabsContent>
         <TabsContent value="writing">
           <div className="space-y-2 py-2">
             <p className="text-sm font-medium">Technical Writing</p>
-            <p className="text-muted text-xs">Technical writing and documentation articles.</p>
+            <p className="text-muted text-xs">
+              Technical writing and documentation articles.
+            </p>
           </div>
         </TabsContent>
       </Tabs>
@@ -145,7 +194,11 @@ function ProfilePanel() {
       </div>
       <div className="space-y-2">
         <Label htmlFor="settings-email">Email</Label>
-        <Input id="settings-email" type="email" defaultValue="jane@example.com" />
+        <Input
+          id="settings-email"
+          type="email"
+          defaultValue="jane@example.com"
+        />
       </div>
       <div className="space-y-2">
         <Label htmlFor="settings-avatar">Avatar</Label>
@@ -253,7 +306,8 @@ function CodePreviewTab() {
           <div className="space-y-2">
             <p className="text-lg font-semibold">Styled Card Component</p>
             <p className="text-muted text-sm">
-              This is a preview of the rendered component. Toggle to Code to see the source.
+              This is a preview of the rendered component. Toggle to Code to see
+              the source.
             </p>
             <div className="bg-surface-hover inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm">
               <span className="text-success">●</span> Live preview
@@ -261,7 +315,7 @@ function CodePreviewTab() {
           </div>
         </Card>
       ) : (
-        <pre className="bg-surface-hover font-mono rounded-md p-4 text-sm overflow-x-auto">
+        <pre className="bg-surface-hover overflow-x-auto rounded-md p-4 font-mono text-sm">
           {codeString}
         </pre>
       )}
@@ -351,7 +405,8 @@ const examples: UIExample[] = [
   {
     id: "settings-sections",
     title: "Settings Sections",
-    description: "Profile, security, and notifications settings with real form controls.",
+    description:
+      "Profile, security, and notifications settings with real form controls.",
     render: () => <SettingsSectionsTab />,
   },
   {
@@ -372,13 +427,25 @@ const examples: UIExample[] = [
     description: "All trigger variants including the global styles.",
     render: () => (
       <VariantGallery
-        variants={["default", "underline", "pills", "shiny", "glass", "neon", "gradient"]}
+        variants={[
+          "default",
+          "underline",
+          "pills",
+          "shiny",
+          "glass",
+          "neon",
+          "gradient",
+        ]}
         sizes={[]}
         render={(variant) => (
           <Tabs defaultValue="tab1">
             <TabsList>
-              <TabsTrigger value="tab1" variant={variant as TabsTriggerVariant}>Tab 1</TabsTrigger>
-              <TabsTrigger value="tab2" variant={variant as TabsTriggerVariant}>Tab 2</TabsTrigger>
+              <TabsTrigger value="tab1" variant={variant as TabsTriggerVariant}>
+                Tab 1
+              </TabsTrigger>
+              <TabsTrigger value="tab2" variant={variant as TabsTriggerVariant}>
+                Tab 2
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="tab1">
               <p className="text-muted text-xs">Panel content</p>

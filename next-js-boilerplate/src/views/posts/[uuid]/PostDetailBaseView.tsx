@@ -180,7 +180,11 @@ function PostDetailContent({
               <button
                 onClick={async () => {
                   if (!editTitle.trim() || !editContent.trim()) return;
-                  await updatePost(post.id, editTitle.trim(), editContent.trim());
+                  await updatePost(
+                    post.id,
+                    editTitle.trim(),
+                    editContent.trim(),
+                  );
                   setEditing(false);
                 }}
                 className="bg-brand rounded-lg px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"

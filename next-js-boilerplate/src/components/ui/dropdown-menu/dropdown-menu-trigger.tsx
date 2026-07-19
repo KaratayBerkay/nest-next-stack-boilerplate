@@ -26,7 +26,9 @@ export function DropdownMenuTrigger({
       ref?: React.Ref<unknown>;
       className?: string;
     }>;
-    const childOnClick = child.props.onClick as React.MouseEventHandler<HTMLButtonElement> | undefined;
+    const childOnClick = child.props.onClick as
+      | React.MouseEventHandler<HTMLButtonElement>
+      | undefined;
     const mergedOnClick = (e: React.MouseEvent<HTMLButtonElement>) => {
       childOnClick?.(e);
       if (!e.defaultPrevented) onClick?.(e);
@@ -43,7 +45,13 @@ export function DropdownMenuTrigger({
           // role-less wrapper span (aria-allowed-attr).
           "aria-haspopup": "menu",
           "aria-expanded": open,
-          className: cn("inline-flex items-center justify-center", defaultStyles, fonts, className, child.props.className),
+          className: cn(
+            "inline-flex items-center justify-center",
+            defaultStyles,
+            fonts,
+            className,
+            child.props.className,
+          ),
         } as React.HTMLAttributes<HTMLElement>)}
       </span>
     );

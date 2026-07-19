@@ -1,6 +1,11 @@
 import type { Dispatch, SetStateAction } from "react";
 
-type UserInfo = { id: string; name: string; email: string; avatarUrl: string | null };
+type UserInfo = {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl: string | null;
+};
 
 export interface MessagesSidebarProps {
   user: UserInfo;

@@ -6,11 +6,20 @@ import { Label } from "@/components/ui/Label";
 import { FormFieldInfo } from "@/components/ui/FormFieldInfo";
 import type { SelectFieldProps } from "@/types/forms/SelectField-types";
 
-export function SelectField({ label, required, placeholder, options }: SelectFieldProps) {
+export function SelectField({
+  label,
+  required,
+  placeholder,
+  options,
+}: SelectFieldProps) {
   const field = useFieldContext<string>();
   return (
     <div className="flex flex-col gap-1">
-      {label && <Label htmlFor={field.name} required={required}>{label}</Label>}
+      {label && (
+        <Label htmlFor={field.name} required={required}>
+          {label}
+        </Label>
+      )}
       <NativeSelect
         id={field.name}
         value={field.state.value}
@@ -19,7 +28,9 @@ export function SelectField({ label, required, placeholder, options }: SelectFie
       >
         {placeholder && <option value="">{placeholder}</option>}
         {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>{opt.label}</option>
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
         ))}
       </NativeSelect>
       <FormFieldInfo field={field} />

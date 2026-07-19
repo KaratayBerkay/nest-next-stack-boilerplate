@@ -17,17 +17,46 @@ interface KpiItem {
 }
 
 const KPIS: KpiItem[] = [
-  { id: "revenue", title: "Revenue", value: "$128,430", trend: "+12%", trendUp: true, progress: 78 },
-  { id: "users", title: "Users", value: "2,847", trend: "+8%", trendUp: true, progress: 65 },
-  { id: "conversion", title: "Conversion Rate", value: "3.2%", trend: "-3%", trendUp: false, progress: 45 },
-  { id: "session", title: "Avg. Session", value: "4m 32s", trend: "+5%", trendUp: true, progress: 82 },
+  {
+    id: "revenue",
+    title: "Revenue",
+    value: "$128,430",
+    trend: "+12%",
+    trendUp: true,
+    progress: 78,
+  },
+  {
+    id: "users",
+    title: "Users",
+    value: "2,847",
+    trend: "+8%",
+    trendUp: true,
+    progress: 65,
+  },
+  {
+    id: "conversion",
+    title: "Conversion Rate",
+    value: "3.2%",
+    trend: "-3%",
+    trendUp: false,
+    progress: 45,
+  },
+  {
+    id: "session",
+    title: "Avg. Session",
+    value: "4m 32s",
+    trend: "+5%",
+    trendUp: true,
+    progress: 82,
+  },
 ];
 
 const examples: UIExample[] = [
   {
     id: "progress-examples",
     title: "Progress Examples",
-    description: "Progress bar with percentage label, indeterminate animation, and size scale.",
+    description:
+      "Progress bar with percentage label, indeterminate animation, and size scale.",
     render: () => (
       <div className="flex flex-col gap-8">
         <section className="flex flex-col gap-3">
@@ -52,15 +81,23 @@ const examples: UIExample[] = [
   {
     id: "kpi-dashboard",
     title: "KPI Dashboard",
-    description: "Four KPI cards with trend badges and progress bars in a 2x2 grid.",
+    description:
+      "Four KPI cards with trend badges and progress bars in a 2x2 grid.",
     render: () => (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {KPIS.map((kpi) => (
           <Card key={kpi.id} variant="default" className="p-4">
-            <CardTitle className="text-muted mb-1 text-sm font-medium">{kpi.title}</CardTitle>
+            <CardTitle className="text-muted mb-1 text-sm font-medium">
+              {kpi.title}
+            </CardTitle>
             <div className="mb-3 flex items-baseline gap-3">
-              <span className="tabular-nums text-2xl font-bold">{kpi.value}</span>
-              <Badge variant={kpi.trendUp ? "success" : "error"} className="text-xs">
+              <span className="text-2xl font-bold tabular-nums">
+                {kpi.value}
+              </span>
+              <Badge
+                variant={kpi.trendUp ? "success" : "error"}
+                className="text-xs"
+              >
                 {kpi.trendUp ? "▲" : "▼"} {kpi.trend}
               </Badge>
             </div>

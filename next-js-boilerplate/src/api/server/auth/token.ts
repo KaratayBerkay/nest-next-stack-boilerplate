@@ -1,7 +1,5 @@
 import { apiFetch } from "@/lib/api-client";
-import {
-  AUTH_TOKEN_URL,
-} from "@/constants/api/urls";
+import { AUTH_TOKEN_URL } from "@/constants/api/urls";
 
 export interface RefreshTokenResult {
   accessToken?: string;

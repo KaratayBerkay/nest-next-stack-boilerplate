@@ -23,9 +23,7 @@ const examples: UIExample[] = [
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
-                <NavigationMenuTrigger>
-                  Getting Started
-                </NavigationMenuTrigger>
+                <NavigationMenuTrigger>Getting Started</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid w-48 gap-1 p-2">
                     <li>
@@ -64,22 +62,34 @@ const examples: UIExample[] = [
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
-                <NavigationMenuLink className="hover:bg-surface-hover rounded-md px-3 py-1.5 text-sm transition-colors" href="/docs">
+                <NavigationMenuLink
+                  className="hover:bg-surface-hover rounded-md px-3 py-1.5 text-sm transition-colors"
+                  href="/docs"
+                >
                   Docs
                 </NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <NavigationMenuLink className="hover:bg-surface-hover rounded-md px-3 py-1.5 text-sm transition-colors" href="/api">
+                <NavigationMenuLink
+                  className="hover:bg-surface-hover rounded-md px-3 py-1.5 text-sm transition-colors"
+                  href="/api"
+                >
                   API
                 </NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <NavigationMenuLink className="hover:bg-surface-hover rounded-md px-3 py-1.5 text-sm transition-colors" href="/blog">
+                <NavigationMenuLink
+                  className="hover:bg-surface-hover rounded-md px-3 py-1.5 text-sm transition-colors"
+                  href="/blog"
+                >
                   Blog
                 </NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <NavigationMenuLink className="hover:bg-surface-hover rounded-md px-3 py-1.5 text-sm transition-colors" href="/pricing">
+                <NavigationMenuLink
+                  className="hover:bg-surface-hover rounded-md px-3 py-1.5 text-sm transition-colors"
+                  href="/pricing"
+                >
                   Pricing
                 </NavigationMenuLink>
               </NavigationMenuItem>
@@ -91,7 +101,11 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function NavigationMenuPage({ initialTab }: { initialTab?: string }) {
+export default function NavigationMenuPage({
+  initialTab,
+}: {
+  initialTab?: string;
+}) {
   return (
     <ExampleTabs
       title="Navigation Menu"

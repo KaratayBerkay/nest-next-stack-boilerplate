@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { serverEnv } from "@/lib/env";
-import { GET as GET_METHOD, POST as POST_METHOD } from "@/constants/api/methods";
+import {
+  GET as GET_METHOD,
+  POST as POST_METHOD,
+} from "@/constants/api/methods";
 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 
 export async function GET(

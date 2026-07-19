@@ -22,6 +22,7 @@ export class VaultService {
 
     this.logger.debug(`Reading vault path: ${cleanPath}`);
 
+    // fallow-ignore-next-line security-sink — VAULT_ADDR is infra config
     const res = await fetch(url, {
       headers: { 'X-Vault-Token': this.token },
     });

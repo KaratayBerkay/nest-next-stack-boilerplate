@@ -50,7 +50,14 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
 };
 
-const THEME_NAMES = ["light", "dark", "shiny", "glass", "neon", "gradient"] as const;
+const THEME_NAMES = [
+  "light",
+  "dark",
+  "shiny",
+  "glass",
+  "neon",
+  "gradient",
+] as const;
 
 export default async function RootLayout({
   children,
@@ -61,9 +68,11 @@ export default async function RootLayout({
 
   const cookieStore = await cookies();
   const themeCookie = cookieStore.get("theme")?.value;
-  const activeTheme = themeCookie && THEME_NAMES.includes(themeCookie as typeof THEME_NAMES[number])
-    ? themeCookie as typeof THEME_NAMES[number]
-    : null;
+  const activeTheme =
+    themeCookie &&
+    THEME_NAMES.includes(themeCookie as (typeof THEME_NAMES)[number])
+      ? (themeCookie as (typeof THEME_NAMES)[number])
+      : null;
 
   const classes = [
     geistSans.variable,
@@ -76,11 +85,7 @@ export default async function RootLayout({
   }
 
   return (
-    <html
-      lang="en"
-      className={classes.join(" ")}
-      suppressHydrationWarning
-    >
+    <html lang="en" className={classes.join(" ")} suppressHydrationWarning>
       <head>
         <Script src="/scripts/theme-init.js" strategy="beforeInteractive" />
         <JsonLd
@@ -96,7 +101,7 @@ export default async function RootLayout({
       <body className="flex min-h-full flex-col">
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-md focus:bg-bg focus:px-4 focus:py-2 focus:text-fg focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-brand"
+          className="focus:bg-bg focus:text-fg focus:ring-brand sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-md focus:px-4 focus:py-2 focus:shadow-lg focus:ring-2 focus:outline-none"
         >
           Skip to content
         </a>

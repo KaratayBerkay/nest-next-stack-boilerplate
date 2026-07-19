@@ -35,13 +35,13 @@ export function useConnectionState(): ConnectionState {
         clearTimeout(graceRef.current);
         graceRef.current = null;
       }
-      setState("unstable");  
+      setState("unstable");
     } else {
       if (graceRef.current) {
         clearTimeout(graceRef.current);
         graceRef.current = null;
       }
-      setState("connecting");  
+      setState("connecting");
     }
 
     return () => {

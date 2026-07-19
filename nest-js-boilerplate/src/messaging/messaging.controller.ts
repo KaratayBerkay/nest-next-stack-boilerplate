@@ -25,8 +25,6 @@ import { SendMessageRestDto } from './dto/send-message-rest.dto';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { JwtUser } from '../auth/auth.types';
-import { displayName } from '../common/utils/display-name';
-
 @ApiTags('Messaging')
 @ApiBearerAuth()
 @Controller('api')
@@ -173,7 +171,7 @@ export class MessagingController {
       user.userId,
       otherUserId,
       before,
-      take ? parseInt(take, 10) : 30,
+      take ? Math.min(parseInt(take, 10), 100) : 30,
     );
   }
 
@@ -190,68 +188,7 @@ export class MessagingController {
       recipientId,
       body.text,
     );
-    // Page content: DM to messages-page viewers only
-    this.realtime.emitToPage(recipientId, 'messages', {
-      type: 'direct-message',
-      message,
-    });
-    this.realtime.emitToPage(message.senderId, 'messages', {
-      type: 'direct-message',
-      message,
-    });
-    // Chrome: Conversation renew to all recipient MESSAGE sockets
-    const sender = message.sender as
-      | { id?: string; name?: string | null; email?: string; avatar?: string }
-      | undefined;
-    const unread = await this.ms.getUnreadCount(recipientId, user.userId);
-    this.realtime.emitToService(recipientId, 'MESSAGE', {
-      renew: 'Messages',
-      type: 'Conversation',
-      conversation: {
-        user: {
-          id: user.userId,
-          email: user.email,
-          name: displayName(user),
-          avatar: sender?.avatar ?? '',
-        },
-        lastMessage: message.body,
-        lastTime: message.createdAt,
-        unread: unread + 1,
-      },
-    });
-    // DM unread aggregate to notification bell (T5).
-    const totalDmUnread = await this.ms.getTotalUnreadCount(recipientId);
-    this.realtime.emitToService(recipientId, 'NOTIFICATION', {
-      renew: 'Notifications',
-      type: 'DmCount',
-      value: totalDmUnread,
-    });
-    if (
-      !this.realtime.hasServiceConnection(recipientId, 'MESSAGE') &&
-      !this.realtime.hasServiceConnection(recipientId, 'NOTIFICATION')
-    ) {
-      const senderName = displayName(sender ?? { name: null });
-      const body = typeof message.body === 'string' ? message.body : '';
-      this.push
-        .sendToUser(
-          recipientId,
-          `New message from ${senderName}`,
-          body.length > 120 ? body.slice(0, 117) + '...' : body,
-          undefined,
-          {
-            kind: 'direct-message',
-            senderId: message.senderId,
-            dmCount: totalDmUnread,
-          },
-        )
-        .catch((err: Error) =>
-          this.logger.warn(`Offline push failed: ${err.message}`),
-        );
-    }
-    this.logger.log(
-      `Message ${message.id} sent to ${recipientId}`,
-      'MessagingController',
-    );
+    await this.ms.deliverDirectMessage(message);
     return message;
   }
 
@@ -316,7 +253,7 @@ export class MessagingController {
     return this.ms.getRoomMessages(
       roomId,
       before,
-      take ? parseInt(take, 10) : 30,
+      take ? Math.min(parseInt(take, 10), 100) : 30,
     );
   }
 }

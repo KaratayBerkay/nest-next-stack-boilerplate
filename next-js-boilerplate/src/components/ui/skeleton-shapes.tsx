@@ -24,10 +24,7 @@ export function SkeletonMessage({
 }: React.ComponentPropsWithoutRef<"div">) {
   return (
     <div
-      className={cn(
-        "flex flex-col gap-2 animate-pulse",
-        className,
-      )}
+      className={cn("flex animate-pulse flex-col gap-2", className)}
       {...props}
     >
       <div className="bg-surface-hover h-4 w-3/4 rounded" />
@@ -44,7 +41,7 @@ export function SkeletonChatMessage({
   return (
     <div
       className={cn(
-        "flex gap-3 animate-pulse",
+        "flex animate-pulse gap-3",
         isMe && "flex-row-reverse",
         className,
       )}
@@ -65,10 +62,7 @@ export function SkeletonConversationSidebar({
 }: React.ComponentPropsWithoutRef<"div">) {
   return (
     <div
-      className={cn(
-        "flex flex-col gap-3 animate-pulse",
-        className,
-      )}
+      className={cn("flex animate-pulse flex-col gap-3", className)}
       {...props}
     >
       <div className="bg-surface-hover h-10 w-full rounded" />
@@ -84,10 +78,7 @@ export function SkeletonFeedList({
 }: React.ComponentPropsWithoutRef<"div">) {
   return (
     <div
-      className={cn(
-        "flex flex-col gap-4 animate-pulse",
-        className,
-      )}
+      className={cn("flex animate-pulse flex-col gap-4", className)}
       {...props}
     >
       <div className="bg-surface-hover h-32 w-full rounded" />

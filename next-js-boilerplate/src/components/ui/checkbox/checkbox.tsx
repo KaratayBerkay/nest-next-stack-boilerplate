@@ -6,7 +6,11 @@ import { resolveVariant } from "@/lib/resolve-variant";
 import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { fontClasses } from "@/lib/font-classes";
-import type { CheckboxProps, CheckboxVariant, CheckboxSize } from "@/types/ui/Checkbox-types";
+import type {
+  CheckboxProps,
+  CheckboxVariant,
+  CheckboxSize,
+} from "@/types/ui/Checkbox-types";
 
 // Global styles carry no checked: state, so each variant appends one —
 // otherwise clicking gives no visual feedback (white check on light bg).
@@ -76,7 +80,7 @@ export function Checkbox({
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="inline-flex items-center gap-2 has-[:disabled]:opacity-50 has-[:disabled]:cursor-not-allowed">
+    <div className="inline-flex items-center gap-2 has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50">
       <span className="relative inline-flex shrink-0">
         <input
           ref={inputRef}
@@ -84,7 +88,7 @@ export function Checkbox({
           id={generatedId}
           checked={checked}
           className={cn(
-            "peer appearance-none cursor-pointer border bg-bg transition-colors focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1 focus-visible:outline-none disabled:cursor-not-allowed",
+            "peer bg-bg focus-visible:ring-brand cursor-pointer appearance-none border transition-colors focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none disabled:cursor-not-allowed",
             resolveVariant(checkVariants, effectiveVariant),
             sizeMap[size],
             className,
@@ -92,7 +96,7 @@ export function Checkbox({
           {...props}
         />
         <span
-          className="pointer-events-none absolute inset-0 flex scale-50 items-center justify-center opacity-0 transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none peer-checked:scale-100 peer-checked:opacity-100"
+          className="pointer-events-none absolute inset-0 flex scale-50 items-center justify-center opacity-0 transition-[opacity,transform] duration-150 ease-out peer-checked:scale-100 peer-checked:opacity-100 motion-reduce:transition-none"
           aria-hidden="true"
         >
           <CheckIcon className={iconSizeMap[size]} />
@@ -101,10 +105,7 @@ export function Checkbox({
       {label && (
         <label
           htmlFor={generatedId}
-          className={cn(
-            "text-fg cursor-pointer",
-            fonts,
-          )}
+          className={cn("text-fg cursor-pointer", fonts)}
         >
           {label}
         </label>

@@ -58,7 +58,10 @@ const examples: UIExample[] = [
       <div className="flex flex-col gap-4">
         <section className="flex flex-col gap-3">
           <h3 className="text-lg font-semibold">16:9</h3>
-          <AspectRatio ratio={16 / 9} className="bg-surface relative rounded-md">
+          <AspectRatio
+            ratio={16 / 9}
+            className="bg-surface relative rounded-md"
+          >
             <ImageWithSkeleton
               src="https://picsum.photos/id/1040/800/450"
               alt="Mountain landscape"
@@ -78,7 +81,11 @@ const examples: UIExample[] = [
           <h3 className="text-lg font-semibold">Square Grid</h3>
           <div className="grid grid-cols-3 gap-2">
             {GRID_IMAGES.map((img) => (
-              <AspectRatio key={img.id} ratio={1} className="bg-surface relative rounded-md">
+              <AspectRatio
+                key={img.id}
+                ratio={1}
+                className="bg-surface relative rounded-md"
+              >
                 <ImageWithSkeleton
                   src={`https://picsum.photos/id/${img.id}/400/400`}
                   alt={img.alt}
@@ -92,7 +99,11 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function AspectRatioPage({ initialTab }: { initialTab?: string }) {
+export default function AspectRatioPage({
+  initialTab,
+}: {
+  initialTab?: string;
+}) {
   return (
     <ExampleTabs
       title="Aspect Ratio"

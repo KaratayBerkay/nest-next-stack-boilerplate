@@ -4,7 +4,11 @@ import { useRef, useState, useCallback, useId, useMemo } from "react";
 import { cn } from "@/lib/cn";
 import { Progress } from "@/components/ui/Progress";
 import { useToast } from "@/components/ui/toast/use-toast";
-import type { FileUploadProps, UploadFile, FileUploadLabels } from "@/types/ui/FileUpload-types";
+import type {
+  FileUploadProps,
+  UploadFile,
+  FileUploadLabels,
+} from "@/types/ui/FileUpload-types";
 
 function humanSize(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -29,8 +33,7 @@ const DEFAULT_LABELS: FileUploadLabels = {
   uploaded: "Uploaded",
   uploadFailed: "Upload failed",
   remove: (file: string) => `Remove ${file}`,
-  uploadButton: (count: number) =>
-    `Upload ${count} file(s)`,
+  uploadButton: (count: number) => `Upload ${count} file(s)`,
   uploading: "Uploading...",
   changePhoto: "Change",
   removePhoto: "Remove photo",
@@ -48,7 +51,10 @@ export function FileUpload({
   disabled,
   labels: labelsProp,
 }: FileUploadProps) {
-  const labels = useMemo(() => ({ ...DEFAULT_LABELS, ...labelsProp }), [labelsProp]);
+  const labels = useMemo(
+    () => ({ ...DEFAULT_LABELS, ...labelsProp }),
+    [labelsProp],
+  );
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const dragCounter = useRef(0);
@@ -71,7 +77,10 @@ export function FileUpload({
             file,
             progress: 0,
             status: "error",
-            error: labels.tooLarge!(humanSize(file.size), humanSize(maxSizeBytes)),
+            error: labels.tooLarge!(
+              humanSize(file.size),
+              humanSize(maxSizeBytes),
+            ),
           });
           continue;
         }
@@ -89,12 +98,16 @@ export function FileUpload({
             const acceptLabels = accept.split(",").map((t) => {
               const trimmed = t.trim();
               if (trimmed.endsWith("/*")) return trimmed.replace("/*", "s");
-              if (trimmed.startsWith(".")) return trimmed.slice(1).toUpperCase();
+              if (trimmed.startsWith("."))
+                return trimmed.slice(1).toUpperCase();
               return trimmed;
             });
             toast({
               title: "Invalid file type",
-              description: labels.invalidType!(file.name, acceptLabels.join(", ")),
+              description: labels.invalidType!(
+                file.name,
+                acceptLabels.join(", "),
+              ),
               variant: "destructive",
             });
             continue;
@@ -112,7 +125,16 @@ export function FileUpload({
       const updated = [...files, ...newFiles];
       onFilesChange(updated);
     },
-    [disabled, files, maxFiles, maxSizeBytes, onFilesChange, accept, toast, labels],
+    [
+      disabled,
+      files,
+      maxFiles,
+      maxSizeBytes,
+      onFilesChange,
+      accept,
+      toast,
+      labels,
+    ],
   );
 
   const handleClick = useCallback(() => {
@@ -189,13 +211,17 @@ export function FileUpload({
         });
         onFilesChange(
           uploadingFiles.map((x) =>
-            x.id === f.id ? { ...x, status: "done" as const, progress: 100 } : x,
+            x.id === f.id
+              ? { ...x, status: "done" as const, progress: 100 }
+              : x,
           ),
         );
       } catch {
         onFilesChange(
           uploadingFiles.map((x) =>
-            x.id === f.id ? { ...x, status: "error" as const, error: labels.uploadFailed } : x,
+            x.id === f.id
+              ? { ...x, status: "error" as const, error: labels.uploadFailed }
+              : x,
           ),
         );
       }
@@ -239,7 +265,7 @@ export function FileUpload({
         onDragOver={(e) => e.preventDefault()}
         onDrop={handleDrop}
         className={cn(
-          "flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
+          "focus-visible:ring-brand flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 text-center transition-colors focus-visible:ring-2 focus-visible:outline-none",
           dragOver
             ? "border-brand bg-brand/5"
             : "border-border hover:bg-surface-hover",
@@ -257,13 +283,13 @@ export function FileUpload({
           <polyline points="17 8 12 3 7 8" />
           <line x1="12" y1="3" x2="12" y2="15" />
         </svg>
-        <p className="text-sm text-fg">
-          {dragOver
-            ? labels.dropzoneActive
-            : labels.dropzoneIdle}
+        <p className="text-fg text-sm">
+          {dragOver ? labels.dropzoneActive : labels.dropzoneIdle}
         </p>
         {accept && (
-          <p className="text-muted mt-1 text-xs">{labels.acceptedLabel}: {accept}</p>
+          <p className="text-muted mt-1 text-xs">
+            {labels.acceptedLabel}: {accept}
+          </p>
         )}
       </div>
 
@@ -272,11 +298,11 @@ export function FileUpload({
           {files.map((f) => (
             <div
               key={f.id}
-              className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3"
+              className="border-border bg-surface flex items-center gap-3 rounded-lg border p-3"
             >
               <div className="flex-1 space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="truncate text-sm text-fg">
+                  <span className="text-fg truncate text-sm">
                     {f.file.name}
                   </span>
                   <span className="text-muted shrink-0 text-xs">
@@ -287,10 +313,10 @@ export function FileUpload({
                   <Progress value={f.progress} className="h-1.5" />
                 )}
                 {f.status === "error" && f.error && (
-                  <p className="text-xs text-error">{f.error}</p>
+                  <p className="text-error text-xs">{f.error}</p>
                 )}
                 {f.status === "done" && (
-                  <p className="text-xs text-success">{labels.uploaded}</p>
+                  <p className="text-success text-xs">{labels.uploaded}</p>
                 )}
               </div>
               <button
@@ -322,7 +348,11 @@ export function FileUpload({
           disabled={uploading}
           className="bg-brand text-brand-fg hover:bg-brand/90 inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
         >
-          {uploading ? labels.uploading : labels.uploadButton!(files.filter((f) => f.status === "pending").length)}
+          {uploading
+            ? labels.uploading
+            : labels.uploadButton!(
+                files.filter((f) => f.status === "pending").length,
+              )}
         </button>
       )}
     </div>

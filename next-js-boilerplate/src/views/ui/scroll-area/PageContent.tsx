@@ -16,24 +16,88 @@ interface Message {
 }
 
 const SECTIONS = [
-  { color: "from-sky-500 to-cyan-400", title: "Section A", body: "Drag this pane vertically to scroll. No visible scrollbar — the drag-pan gesture drives scrolling." },
-  { color: "from-violet-500 to-purple-600", title: "Section B", body: "Each section is roughly viewport-height. The scroll-fade-y mask softens the top and bottom edges." },
-  { color: "from-rose-500 to-pink-500", title: "Section C", body: "Built with the same useYSwipeGesture pattern used across the app." },
+  {
+    color: "from-sky-500 to-cyan-400",
+    title: "Section A",
+    body: "Drag this pane vertically to scroll. No visible scrollbar — the drag-pan gesture drives scrolling.",
+  },
+  {
+    color: "from-violet-500 to-purple-600",
+    title: "Section B",
+    body: "Each section is roughly viewport-height. The scroll-fade-y mask softens the top and bottom edges.",
+  },
+  {
+    color: "from-rose-500 to-pink-500",
+    title: "Section C",
+    body: "Built with the same useYSwipeGesture pattern used across the app.",
+  },
 ];
 
-const TAGS = ["React", "TypeScript", "Tailwind", "Next.js", "Radix UI", "Zustand", "React Query", "Vitest", "Playwright", "Storybook", "tRPC", "Prisma", "Docker", "ESLint", "Prettier"];
+const TAGS = [
+  "React",
+  "TypeScript",
+  "Tailwind",
+  "Next.js",
+  "Radix UI",
+  "Zustand",
+  "React Query",
+  "Vitest",
+  "Playwright",
+  "Storybook",
+  "tRPC",
+  "Prisma",
+  "Docker",
+  "ESLint",
+  "Prettier",
+];
 
 const INITIAL_MESSAGES: Message[] = [
   { id: "1", user: "Alice", time: "10:28", text: "Hey, how's it going?" },
-  { id: "2", user: "Bob", time: "10:30", text: "Pretty good! Just shipped the new feature." },
-  { id: "3", user: "Alice", time: "10:32", text: "Nice! I'll review the PR now." },
-  { id: "4", user: "Bob", time: "10:35", text: "Thanks, let me know if you need anything." },
-  { id: "5", user: "Alice", time: "10:38", text: "Will do. Looks clean so far." },
-  { id: "6", user: "Bob", time: "10:40", text: "I also added the tests we discussed." },
+  {
+    id: "2",
+    user: "Bob",
+    time: "10:30",
+    text: "Pretty good! Just shipped the new feature.",
+  },
+  {
+    id: "3",
+    user: "Alice",
+    time: "10:32",
+    text: "Nice! I'll review the PR now.",
+  },
+  {
+    id: "4",
+    user: "Bob",
+    time: "10:35",
+    text: "Thanks, let me know if you need anything.",
+  },
+  {
+    id: "5",
+    user: "Alice",
+    time: "10:38",
+    text: "Will do. Looks clean so far.",
+  },
+  {
+    id: "6",
+    user: "Bob",
+    time: "10:40",
+    text: "I also added the tests we discussed.",
+  },
 ];
 
 const NAMES = ["Alice", "Bob", "Charlie", "Diana"];
-const REPLIES = ["Sounds good!", "Let me check.", "On it.", "Done!", "Will do.", "LGTM 👍", "Pushed a fix.", "Can you review?", "Merged to main.", "Deployed to staging."];
+const REPLIES = [
+  "Sounds good!",
+  "Let me check.",
+  "On it.",
+  "Done!",
+  "Will do.",
+  "LGTM 👍",
+  "Pushed a fix.",
+  "Can you review?",
+  "Merged to main.",
+  "Deployed to staging.",
+];
 
 let nextMessageId = 7;
 
@@ -45,7 +109,8 @@ function setupXPanGesture(el: HTMLElement): () => void {
   const onDown = (e: MouseEvent | TouchEvent) => {
     if (dragging) return;
     const target = e.target as HTMLElement | null;
-    if (target?.closest("button, a, input, textarea, [contenteditable]")) return;
+    if (target?.closest("button, a, input, textarea, [contenteditable]"))
+      return;
     if ("touches" in e) e.preventDefault();
 
     dragging = true;
@@ -89,7 +154,9 @@ function setupXPanGesture(el: HTMLElement): () => void {
 
 function useScrollFadeX<T extends HTMLElement>() {
   const ref = useRef<T | null>(null);
-  const [scrollPos, setScrollPos] = useState<"start" | "end" | "middle">("start");
+  const [scrollPos, setScrollPos] = useState<"start" | "end" | "middle">(
+    "start",
+  );
 
   useLayoutEffect(() => {
     const el = ref.current;
@@ -116,10 +183,15 @@ function useScrollFadeX<T extends HTMLElement>() {
   return { setRef, scrollPos };
 }
 
-function addChatMessage(setMessages: React.Dispatch<React.SetStateAction<Message[]>>) {
+function addChatMessage(
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
+) {
   const user = NAMES[Math.floor(Math.random() * NAMES.length)];
   const text = REPLIES[Math.floor(Math.random() * REPLIES.length)];
-  setMessages((prev) => [...prev, { id: String(nextMessageId++), user, time: "12:00", text }]);
+  setMessages((prev) => [
+    ...prev,
+    { id: String(nextMessageId++), user, time: "12:00", text },
+  ]);
 }
 
 function VerticalSwipeDemo() {
@@ -188,8 +260,8 @@ function ChatPaneDemo() {
     <div className="border-border bg-surface relative flex flex-col rounded-lg border">
       <div
         role="region"
-      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- axe scrollable-region-focusable: keyboard users must be able to scroll this pane
-      tabIndex={0}
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- axe scrollable-region-focusable: keyboard users must be able to scroll this pane
+        tabIndex={0}
         aria-label="Chat messages"
         className="scroll-fade-y flex flex-col gap-3 overflow-y-auto p-4"
         style={{ height: "400px" }}
@@ -209,7 +281,7 @@ function ChatPaneDemo() {
       <div className="border-border/50 flex items-center justify-between border-t px-4 py-2">
         <button
           onClick={() => addChatMessage(setMessages)}
-          className="hover:bg-surface-hover rounded-md px-3 py-1 text-xs text-fg transition-colors"
+          className="hover:bg-surface-hover text-fg rounded-md px-3 py-1 text-xs transition-colors"
         >
           New message
         </button>
@@ -237,8 +309,7 @@ const examples: UIExample[] = [
   {
     id: "horizontal-tags",
     title: "Horizontal Tags",
-    description:
-      "Draggable X-axis tag strip with scroll-fade-x edge masking.",
+    description: "Draggable X-axis tag strip with scroll-fade-x edge masking.",
     render: () => <HorizontalTagsDemo />,
   },
   {
@@ -250,7 +321,11 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function ScrollAreaPage({ initialTab }: { initialTab?: string }) {
+export default function ScrollAreaPage({
+  initialTab,
+}: {
+  initialTab?: string;
+}) {
   return (
     <ExampleTabs
       title="Scroll Area"

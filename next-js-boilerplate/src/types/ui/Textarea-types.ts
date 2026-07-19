@@ -9,4 +9,9 @@ export interface TextareaProps extends React.ComponentPropsWithoutRef<"textarea"
   fontFamily?: string;
 }
 
-export type TextareaVariant = "default" | "shiny" | "glass" | "neon" | "gradient";
+export type TextareaVariant =
+  | "default"
+  | "shiny"
+  | "glass"
+  | "neon"
+  | "gradient";

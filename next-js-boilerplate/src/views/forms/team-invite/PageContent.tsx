@@ -61,7 +61,10 @@ async function submitTeamInvite(
     const exc = await deps.simulateError("invite-email-member");
     const surface = getSurface(exc.exc);
     if (surface === "toast") {
-      deps.toast({ description: exceptionHandler(exc, deps.allMessages), variant: "destructive" });
+      deps.toast({
+        description: exceptionHandler(exc, deps.allMessages),
+        variant: "destructive",
+      });
       return null;
     }
     if (surface === "full-page") {
@@ -74,7 +77,10 @@ async function submitTeamInvite(
     if (exc) {
       const surface = getSurface(exc.exc);
       if (surface === "toast") {
-        deps.toast({ description: exceptionHandler(exc, deps.allMessages), variant: "destructive" });
+        deps.toast({
+          description: exceptionHandler(exc, deps.allMessages),
+          variant: "destructive",
+        });
         return null;
       }
       if (surface === "full-page") {
@@ -102,7 +108,16 @@ export default function TeamInvitePage() {
     transform: useTransform((baseForm) => mergeForm(baseForm, state!), [state]),
     validators: {
       onSubmitAsync: ({ value }) =>
-        submitTeamInvite({ value }, { simulateError, toast, allMessages, setQuotaExceeded, unknownError: t.errors.unknown }),
+        submitTeamInvite(
+          { value },
+          {
+            simulateError,
+            toast,
+            allMessages,
+            setQuotaExceeded,
+            unknownError: t.errors.unknown,
+          },
+        ),
     },
     onSubmit: async () => {
       toast({ description: t.teamInvite.inviteSent, variant: "default" });
@@ -121,7 +136,7 @@ export default function TeamInvitePage() {
     return (
       <div className="flex flex-col gap-6">
         <h2 className="text-sm font-semibold">{t.teamInvite.heading}</h2>
-        <div className="surface flex flex-col items-center gap-4 rounded-lg border border-border p-8 text-center">
+        <div className="surface border-border flex flex-col items-center gap-4 rounded-lg border p-8 text-center">
           <h3 className="text-base font-semibold">{t.teamInvite.quotaTitle}</h3>
           <p className="text-muted text-xs">{t.teamInvite.quotaBody}</p>
           <Button
@@ -204,10 +219,11 @@ export default function TeamInvitePage() {
             </form.AppField>
             <div className="flex flex-wrap gap-1.5">
               {emails.map((email, index) => {
-                const chipError = form.getFieldMeta(`emails[${index}]` as never)?.errors?.[0];
+                const chipError = form.getFieldMeta(`emails[${index}]` as never)
+                  ?.errors?.[0];
                 return (
                   <div key={email} className="flex flex-col gap-0.5">
-                    <span className="flex items-center gap-1 rounded bg-emphasis px-2 py-1 text-xxs">
+                    <span className="bg-emphasis text-xxs flex items-center gap-1 rounded px-2 py-1">
                       {email}
                       <button
                         type="button"
@@ -218,7 +234,9 @@ export default function TeamInvitePage() {
                       </button>
                     </span>
                     {chipError && (
-                      <p className="text-xxs text-error">{chipError as string}</p>
+                      <p className="text-xxs text-error">
+                        {chipError as string}
+                      </p>
                     )}
                   </div>
                 );
@@ -230,9 +248,15 @@ export default function TeamInvitePage() {
         {step === 1 && (
           <div className="flex flex-col gap-3">
             <p className="text-xs font-medium">{t.teamInvite.stepRole}</p>
-            <form.AppField name="role" validators={{ onChange: inviteSchemas.shape.role }}>
+            <form.AppField
+              name="role"
+              validators={{ onChange: inviteSchemas.shape.role }}
+            >
               {(field) => (
-                <field.RadioGroupField label={t.teamInvite.roleLabel} options={ROLE_OPTIONS} />
+                <field.RadioGroupField
+                  label={t.teamInvite.roleLabel}
+                  options={ROLE_OPTIONS}
+                />
               )}
             </form.AppField>
           </div>
@@ -243,19 +267,31 @@ export default function TeamInvitePage() {
             <p className="text-xs font-medium">{t.teamInvite.stepMessage}</p>
             <form.AppField name="message">
               {(field) => (
-                <field.TextareaField label={t.teamInvite.messageLabel} placeholder={t.teamInvite.messagePlaceholder} />
+                <field.TextareaField
+                  label={t.teamInvite.messageLabel}
+                  placeholder={t.teamInvite.messagePlaceholder}
+                />
               )}
             </form.AppField>
           </div>
         )}
 
         {step === 3 && (
-          <div className="surface flex flex-col gap-2 rounded-lg border border-border p-4">
+          <div className="surface border-border flex flex-col gap-2 rounded-lg border p-4">
             <p className="text-xs font-semibold">{t.teamInvite.stepReview}</p>
             <div className="flex flex-col gap-1 text-xs">
-              <span>{t.teamInvite.emails}: {emails.join(", ")}</span>
-              <span>{t.teamInvite.role}: {ROLE_OPTIONS.find((r) => r.value === role)?.label ?? role}</span>
-              {message && <span>{t.teamInvite.message}: {message}</span>}
+              <span>
+                {t.teamInvite.emails}: {emails.join(", ")}
+              </span>
+              <span>
+                {t.teamInvite.role}:{" "}
+                {ROLE_OPTIONS.find((r) => r.value === role)?.label ?? role}
+              </span>
+              {message && (
+                <span>
+                  {t.teamInvite.message}: {message}
+                </span>
+              )}
             </div>
           </div>
         )}
@@ -270,12 +306,19 @@ export default function TeamInvitePage() {
             {t.teamInvite.back}
           </Button>
           {step < 3 ? (
-            <Button type="button" disabled={!canNext} onClick={() => setStep((s) => Math.min(3, s + 1))}>
+            <Button
+              type="button"
+              disabled={!canNext}
+              onClick={() => setStep((s) => Math.min(3, s + 1))}
+            >
               {t.teamInvite.next}
             </Button>
           ) : (
             <form.AppForm>
-              <form.SubmitButton label={t.teamInvite.send} loadingLabel={t.teamInvite.sending} />
+              <form.SubmitButton
+                label={t.teamInvite.send}
+                loadingLabel={t.teamInvite.sending}
+              />
             </form.AppForm>
           )}
         </div>

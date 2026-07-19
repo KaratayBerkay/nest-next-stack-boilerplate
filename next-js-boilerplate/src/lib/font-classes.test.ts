@@ -8,9 +8,11 @@ describe("fontClasses", () => {
 
   it("uses provided props over defaults", () => {
     expect(
-      fontClasses(
-        { fontSize: "text-lg", fontWeight: "font-bold", fontFamily: "font-mono" },
-      ),
+      fontClasses({
+        fontSize: "text-lg",
+        fontWeight: "font-bold",
+        fontFamily: "font-mono",
+      }),
     ).toBe("text-lg font-bold font-mono");
   });
 
@@ -18,7 +20,11 @@ describe("fontClasses", () => {
     expect(
       fontClasses(
         {},
-        { fontSize: "text-xs", fontWeight: "font-normal", fontFamily: "font-mono" },
+        {
+          fontSize: "text-xs",
+          fontWeight: "font-normal",
+          fontFamily: "font-mono",
+        },
       ),
     ).toBe("text-xs font-normal font-mono");
   });

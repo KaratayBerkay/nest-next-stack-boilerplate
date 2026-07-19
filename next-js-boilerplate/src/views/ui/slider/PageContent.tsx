@@ -18,7 +18,7 @@ function ComponentsTab() {
           step={1}
           className="max-w-sm"
         />
-        <div className="bg-surface flex items-center justify-between rounded border border-border px-3 py-2">
+        <div className="bg-surface border-border flex items-center justify-between rounded border px-3 py-2">
           <span className="text-sm">
             Value: <strong>{volume[0]}</strong>
           </span>
@@ -60,7 +60,7 @@ function ExamplesTab() {
           step={5}
           className="max-w-sm"
         />
-        <div className="bg-surface flex items-center justify-between rounded border border-border px-3 py-2">
+        <div className="bg-surface border-border flex items-center justify-between rounded border px-3 py-2">
           <span className="text-sm">
             Max price: <strong>${price[0]}</strong>
           </span>
@@ -92,7 +92,7 @@ function ExamplesTab() {
           step={10}
           className="max-w-sm"
         />
-        <div className="bg-surface flex items-center justify-between rounded border border-border px-3 py-2">
+        <div className="bg-surface border-border flex items-center justify-between rounded border px-3 py-2">
           <span className="text-sm">
             Brightness: <strong>{brightness[0]}%</strong>
           </span>

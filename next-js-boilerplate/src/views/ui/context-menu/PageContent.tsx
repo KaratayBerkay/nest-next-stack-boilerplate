@@ -32,10 +32,7 @@ const files = [
   { name: "notes.txt", size: "12 KB", date: "2026-07-08" },
 ];
 
-function handleCopy(
-  text: string,
-  toast: ReturnType<typeof useToast>["toast"],
-) {
+function handleCopy(text: string, toast: ReturnType<typeof useToast>["toast"]) {
   navigator.clipboard.writeText(text);
   toast({ title: "Copied", description: "Text copied to clipboard." });
 }
@@ -60,7 +57,7 @@ function TextSelectionScenario() {
     <section className="flex flex-col gap-3">
       <h3 className="text-lg font-semibold">Text Selection</h3>
       <ContextMenu>
-        <ContextMenuTrigger className="border-border bg-surface cursor-pointer select-text rounded-md border p-4 text-sm">
+        <ContextMenuTrigger className="border-border bg-surface cursor-pointer rounded-md border p-4 text-sm select-text">
           {SAMPLE_TEXT}
         </ContextMenuTrigger>
         <ContextMenuContent>
@@ -116,7 +113,7 @@ function FileTableScenario() {
         {files.map((file) => (
           <ContextMenu key={file.name}>
             <ContextMenuTrigger asChild>
-              <div className="grid cursor-pointer grid-cols-3 border-t border-border px-3 py-2 hover:bg-surface-hover">
+              <div className="border-border hover:bg-surface-hover grid cursor-pointer grid-cols-3 border-t px-3 py-2">
                 <span>{file.name}</span>
                 <span className="text-muted">{file.size}</span>
                 <span className="text-muted">{file.date}</span>
@@ -247,7 +244,11 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function ContextMenuPage({ initialTab }: { initialTab?: string }) {
+export default function ContextMenuPage({
+  initialTab,
+}: {
+  initialTab?: string;
+}) {
   return (
     <ExampleTabs
       title="Context Menu"

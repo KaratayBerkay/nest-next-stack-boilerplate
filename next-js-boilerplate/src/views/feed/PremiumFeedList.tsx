@@ -58,7 +58,11 @@ async function handleLoadMore(
   loadingRef.current = true;
   setLoadingMore(true);
   try {
-    const result = await fetchFeedListServer(PAGE_SIZE, cursorRef.current, search);
+    const result = await fetchFeedListServer(
+      PAGE_SIZE,
+      cursorRef.current,
+      search,
+    );
     setExtraPosts((prev) => [...prev, ...result.posts]);
     setExtraHasMore(result.hasMore);
     cursorRef.current = result.nextCursor;
@@ -82,7 +86,11 @@ function refreshFeedList(
   queryClient.invalidateQueries({ queryKey: ["feed", "list", search] });
 }
 
-export function FeedList({ search, initialFeedData, currentUserId }: FeedListPremiumProps) {
+export function FeedList({
+  search,
+  initialFeedData,
+  currentUserId,
+}: FeedListPremiumProps) {
   const t = useMessages("feed");
   const params = useParams<{ lang: string }>();
   const lang = params?.lang ?? "en";
@@ -107,11 +115,13 @@ export function FeedList({ search, initialFeedData, currentUserId }: FeedListPre
 
   const { data } = useSuspenseQuery({
     ...feedListQueryOptions(PAGE_SIZE, null, search),
-    initialData: !search ? (initialFeedData as {
-      posts: Post[];
-      hasMore: boolean;
-      nextCursor: string | null;
-    }) : undefined,
+    initialData: !search
+      ? (initialFeedData as {
+          posts: Post[];
+          hasMore: boolean;
+          nextCursor: string | null;
+        })
+      : undefined,
   });
 
   const posts = useMemo(
@@ -122,7 +132,16 @@ export function FeedList({ search, initialFeedData, currentUserId }: FeedListPre
     extraPosts.length > 0 ? extraHasMore : (data?.hasMore ?? false);
 
   const loadMore = useCallback(
-    () => handleLoadMore(loadingRef, hasMore, cursorRef, search, setLoadingMore, setExtraPosts, setExtraHasMore),
+    () =>
+      handleLoadMore(
+        loadingRef,
+        hasMore,
+        cursorRef,
+        search,
+        setLoadingMore,
+        setExtraPosts,
+        setExtraHasMore,
+      ),
     [hasMore, search],
   );
 

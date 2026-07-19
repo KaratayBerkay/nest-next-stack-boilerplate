@@ -9,16 +9,12 @@ export function ToastTitle({
   fontFamily,
   ...props
 }: ToastTitleProps) {
-  const fonts = fontClasses({ fontSize, fontWeight, fontFamily }, { fontWeight: "font-semibold" });
+  const fonts = fontClasses(
+    { fontSize, fontWeight, fontFamily },
+    { fontWeight: "font-semibold" },
+  );
 
   return (
-    <div
-      className={cn(
-        "text-sm font-semibold",
-        fonts,
-        className,
-      )}
-      {...props}
-    />
+    <div className={cn("text-sm font-semibold", fonts, className)} {...props} />
   );
 }

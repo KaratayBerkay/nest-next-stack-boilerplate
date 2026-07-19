@@ -10,7 +10,10 @@ import { Switch } from "@/components/ui/Switch";
 import { Label } from "@/components/ui/Label";
 import { FormLevelError } from "@/components/ui/FormLevelError";
 import { checkoutSchema } from "@/validators/forms/checkout";
-import { checkoutDefaultValues, addressDefaults } from "@/validators/forms/checkout-inits";
+import {
+  checkoutDefaultValues,
+  addressDefaults,
+} from "@/validators/forms/checkout-inits";
 import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
 import { getSurface, exceptionHandler } from "@/lib/exception-handler";
 import { exceptionToFormErrors } from "@/lib/forms/exception-to-form-errors";
@@ -78,7 +81,10 @@ const checkoutFormOpts = formOptions({
 export async function submitCheckout(
   { value }: { value: typeof checkoutFormOpts.defaultValues },
   deps: {
-    simulateError: (id: string, opts?: { failRate?: number }) => Promise<ExceptionResponse>;
+    simulateError: (
+      id: string,
+      opts?: { failRate?: number },
+    ) => Promise<ExceptionResponse>;
     toast: ReturnType<typeof useToast>["toast"];
     allMessages: Record<string, unknown>;
   },
@@ -94,7 +100,10 @@ export async function submitCheckout(
     const exc = (err as { exception?: ExceptionResponse }).exception;
     if (!exc) return { form: "Order failed", fields: {} };
     if (getSurface(exc.exc) === "toast") {
-      deps.toast({ description: exceptionHandler(exc, deps.allMessages), variant: "destructive" });
+      deps.toast({
+        description: exceptionHandler(exc, deps.allMessages),
+        variant: "destructive",
+      });
       return null;
     }
     return exceptionToFormErrors(exc, deps.allMessages);
@@ -111,7 +120,11 @@ export default function CheckoutPage() {
     ...checkoutFormOpts,
     validators: {
       onChange: ({ value }) => {
-        if (value.email && value.confirmEmail && value.email !== value.confirmEmail) {
+        if (
+          value.email &&
+          value.confirmEmail &&
+          value.email !== value.confirmEmail
+        ) {
           return {
             form: t.checkoutTab.emailMismatch,
             fields: { confirmEmail: t.checkoutTab.emailMismatch },
@@ -148,10 +161,16 @@ export default function CheckoutPage() {
 
       <form.AppForm>
         <form
-          onSubmit={(e) => { e.preventDefault(); e.stopPropagation(); form.handleSubmit(); }}
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            form.handleSubmit();
+          }}
           className="flex flex-col gap-4"
         >
-          <h3 className="text-xs font-medium">{t.checkoutTab.shippingAddress}</h3>
+          <h3 className="text-xs font-medium">
+            {t.checkoutTab.shippingAddress}
+          </h3>
           <AddressGroup form={form} fields="shippingAddress" />
 
           <Separator />
@@ -164,7 +183,9 @@ export default function CheckoutPage() {
                   checked={field.state.value}
                   onChange={handleToggleSame}
                 />
-                <Label htmlFor={field.name}>{t.checkoutTab.billingSameAsShipping}</Label>
+                <Label htmlFor={field.name}>
+                  {t.checkoutTab.billingSameAsShipping}
+                </Label>
               </div>
             )}
           </form.AppField>
@@ -172,7 +193,9 @@ export default function CheckoutPage() {
           {!sameAsShipping && (
             <>
               <Separator />
-              <h3 className="text-xs font-medium">{t.checkoutTab.billingAddress}</h3>
+              <h3 className="text-xs font-medium">
+                {t.checkoutTab.billingAddress}
+              </h3>
               <AddressGroup form={form} fields="billingAddress" />
             </>
           )}
@@ -196,20 +219,28 @@ export default function CheckoutPage() {
                 },
               }}
             >
-              {(field) => <field.TextField label={t.checkoutTab.confirmEmail} />}
+              {(field) => (
+                <field.TextField label={t.checkoutTab.confirmEmail} />
+              )}
             </form.AppField>
           </div>
 
           <form.AppField name="paymentMethod">
             {(field) => (
-              <field.RadioGroupField label={t.checkoutTab.paymentMethod} options={[
-                { value: "stripe", label: "Credit Card (Stripe)" },
-                { value: "paypal", label: "PayPal" },
-              ]} />
+              <field.RadioGroupField
+                label={t.checkoutTab.paymentMethod}
+                options={[
+                  { value: "stripe", label: "Credit Card (Stripe)" },
+                  { value: "paypal", label: "PayPal" },
+                ]}
+              />
             )}
           </form.AppField>
 
-          <form.SubmitButton label={t.checkoutTab.placeOrder} loadingLabel={t.checkoutTab.placing} />
+          <form.SubmitButton
+            label={t.checkoutTab.placeOrder}
+            loadingLabel={t.checkoutTab.placing}
+          />
         </form>
       </form.AppForm>
     </div>

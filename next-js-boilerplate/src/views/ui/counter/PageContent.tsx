@@ -26,17 +26,41 @@ function setQtyModuleLevel(
   qty: number,
   setItems: Dispatch<SetStateAction<CartItem[]>>,
 ) {
-  setItems((prev) => prev.map((item) => (item.id === id ? { ...item, qty } : item)));
+  setItems((prev) =>
+    prev.map((item) => (item.id === id ? { ...item, qty } : item)),
+  );
 }
 
 function CartTab() {
   const [items, setItems] = useState<CartItem[]>([
-    { id: "tee", name: "Organic Cotton Tee", detail: "Size M · Sage", price: 24, stock: 10, qty: 1 },
-    { id: "socks", name: "Wool Running Socks", detail: "3-pack", price: 16, stock: 4, qty: 2 },
-    { id: "cap", name: "Corduroy Cap", detail: "One size", price: 19, stock: 2, qty: 1 },
+    {
+      id: "tee",
+      name: "Organic Cotton Tee",
+      detail: "Size M · Sage",
+      price: 24,
+      stock: 10,
+      qty: 1,
+    },
+    {
+      id: "socks",
+      name: "Wool Running Socks",
+      detail: "3-pack",
+      price: 16,
+      stock: 4,
+      qty: 2,
+    },
+    {
+      id: "cap",
+      name: "Corduroy Cap",
+      detail: "One size",
+      price: 19,
+      stock: 2,
+      qty: 1,
+    },
   ]);
 
-  const setQty = (id: string, qty: number) => setQtyModuleLevel(id, qty, setItems);
+  const setQty = (id: string, qty: number) =>
+    setQtyModuleLevel(id, qty, setItems);
 
   const itemCount = items.reduce((sum, item) => sum + item.qty, 0);
   const subtotal = items.reduce((sum, item) => sum + item.qty * item.price, 0);
@@ -47,7 +71,13 @@ function CartTab() {
       {items.map((item) => (
         <div key={item.id} className="flex items-center gap-4 px-4 py-3">
           <div className="min-w-0 flex-1">
-            <p className={item.qty === 0 ? "text-muted text-sm line-through" : "text-fg text-sm font-medium"}>
+            <p
+              className={
+                item.qty === 0
+                  ? "text-muted text-sm line-through"
+                  : "text-fg text-sm font-medium"
+              }
+            >
               {item.name}
             </p>
             <p className="text-muted text-xs">
@@ -82,7 +112,9 @@ function CartTab() {
             )}
           </p>
         </div>
-        <span className="text-fg text-base font-semibold tabular-nums">{usd(subtotal)}</span>
+        <span className="text-fg text-base font-semibold tabular-nums">
+          {usd(subtotal)}
+        </span>
       </div>
     </div>
   );
@@ -106,7 +138,8 @@ function PassengersTab() {
 
   const travellers = adults + children + infants;
 
-  const handleAdults = (v: number) => handleAdultsModuleLevel(v, setAdults, setInfants);
+  const handleAdults = (v: number) =>
+    handleAdultsModuleLevel(v, setAdults, setInfants);
 
   const rows = [
     {
@@ -142,7 +175,10 @@ function PassengersTab() {
     <div className="flex max-w-sm flex-col gap-3">
       <div className="surface divide-border divide-y overflow-hidden">
         {rows.map((row) => (
-          <div key={row.id} className="flex items-center justify-between gap-4 px-4 py-3">
+          <div
+            key={row.id}
+            className="flex items-center justify-between gap-4 px-4 py-3"
+          >
             <div>
               <p className="text-fg text-sm font-medium">{row.label}</p>
               <p className="text-muted text-xs">{row.sublabel}</p>
@@ -237,7 +273,9 @@ function TicketsTab() {
         </div>
       ))}
       <div className="flex items-center justify-between px-4 py-3">
-        <span className="text-fg text-base font-semibold tabular-nums">{usd(total)}</span>
+        <span className="text-fg text-base font-semibold tabular-nums">
+          {usd(total)}
+        </span>
         <Button variant="primary" disabled={total === 0}>
           Checkout
         </Button>

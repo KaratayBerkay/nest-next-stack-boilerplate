@@ -27,7 +27,10 @@ export function calculatePopoverPosition(
   } = input;
 
   const left = Math.min(
-    Math.max(8, align === "end" ? triggerRect.right - contentWidth : triggerRect.left),
+    Math.max(
+      8,
+      align === "end" ? triggerRect.right - contentWidth : triggerRect.left,
+    ),
     viewportWidth - contentWidth - 8,
   );
 

@@ -7,7 +7,7 @@ export function ScrollToBottomButton({ onClick }: ScrollToBottomButtonProps) {
   return (
     <button
       onClick={onClick}
-      className="bg-bg hover:bg-surface-hover text-muted absolute right-4 bottom-20 z-10 flex size-10 items-center justify-center rounded-full border border-border shadow-lg transition-all animate-fade-in-up"
+      className="bg-bg hover:bg-surface-hover text-muted border-border animate-fade-in-up absolute right-4 bottom-20 z-10 flex size-10 items-center justify-center rounded-full border shadow-lg transition-all"
       aria-label="Scroll to bottom"
     >
       <IconChevronDown className="size-5" />

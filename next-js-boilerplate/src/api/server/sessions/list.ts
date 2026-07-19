@@ -11,6 +11,8 @@ export interface SessionInfo {
 }
 
 export async function listSessionsServer(): Promise<SessionInfo[]> {
-  const data = await apiFetchJson<{ sessions: SessionInfo[] }>(SESSIONS_LIST_URL);
+  const data = await apiFetchJson<{ sessions: SessionInfo[] }>(
+    SESSIONS_LIST_URL,
+  );
   return data.sessions;
 }

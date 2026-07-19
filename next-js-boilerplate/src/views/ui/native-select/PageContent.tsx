@@ -23,7 +23,7 @@ function ComponentsTab() {
           <option value="cherry">Cherry</option>
         </NativeSelect>
         {fruit && (
-          <div className="bg-surface flex items-center justify-between rounded border border-border px-3 py-2">
+          <div className="bg-surface border-border flex items-center justify-between rounded border px-3 py-2">
             <span className="text-sm">
               Selected: <strong>{fruit}</strong>
             </span>
@@ -71,7 +71,7 @@ function ExamplesTab() {
           <option value="tr">Turkey</option>
         </NativeSelect>
         {country && (
-          <div className="bg-surface flex items-center justify-between rounded border border-border px-3 py-2">
+          <div className="bg-surface border-border flex items-center justify-between rounded border px-3 py-2">
             <span className="text-sm">
               Selected: <strong>{country.toUpperCase()}</strong>
             </span>
@@ -103,7 +103,8 @@ const examples: UIExample[] = [
   {
     id: "usage",
     title: "Country Picker",
-    description: "Native select with a long list, chevron indicator, and RTL check.",
+    description:
+      "Native select with a long list, chevron indicator, and RTL check.",
     render: () => <ComponentsTab />,
   },
   {
@@ -114,7 +115,11 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function NativeSelectPage({ initialTab }: { initialTab?: string }) {
+export default function NativeSelectPage({
+  initialTab,
+}: {
+  initialTab?: string;
+}) {
   return (
     <ExampleTabs
       title="Native Select"

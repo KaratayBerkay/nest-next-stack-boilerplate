@@ -255,7 +255,9 @@ function chatRoomHandleSend(
 function selectChatRoom(
   r: string,
   setRoom: Dispatch<SetStateAction<string>>,
-  setRoomMembers: Dispatch<SetStateAction<{ id: string; name: string; avatar?: string }[]>>,
+  setRoomMembers: Dispatch<
+    SetStateAction<{ id: string; name: string; avatar?: string }[]>
+  >,
   setSidebarOpen: Dispatch<SetStateAction<boolean>>,
   router: ReturnType<typeof useRouter>,
 ) {
@@ -346,7 +348,8 @@ function ChatRoomContent({
   const rooms = useMemo(() => [...CHAT_ROOMS, ...vipRooms], [vipRooms]);
 
   const selectRoom = useCallback(
-    (r: string) => selectChatRoom(r, setRoom, setRoomMembers, setSidebarOpen, router),
+    (r: string) =>
+      selectChatRoom(r, setRoom, setRoomMembers, setSidebarOpen, router),
     [router],
   );
 
@@ -369,11 +372,11 @@ function ChatRoomContent({
               }
             />
             {connectionState === "online" ? (
-              <span className="border-bg absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 bg-success" />
+              <span className="border-bg bg-success absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2" />
             ) : connectionState === "connecting" ? (
-              <span className="border-bg absolute -right-0.5 -bottom-0.5 h-3 w-3 animate-pulse rounded-full border-2 bg-success" />
+              <span className="border-bg bg-success absolute -right-0.5 -bottom-0.5 h-3 w-3 animate-pulse rounded-full border-2" />
             ) : (
-              <span className="border-bg absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 bg-error" />
+              <span className="border-bg bg-error absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2" />
             )}
           </div>
           <h2 className="text-brand text-lg font-bold">{t.title}</h2>
@@ -386,7 +389,7 @@ function ChatRoomContent({
           // Decorative dismiss backdrop, not a control — the sidebar's own controls remain
           // keyboard-reachable; this scrim only needs a click target.
           <div
-            className="fixed inset-0 z-40 bg-overlay/30 md:hidden"
+            className="bg-overlay/30 fixed inset-0 z-40 md:hidden"
             onClick={() => setSidebarOpen(false)}
             aria-hidden="true"
           />
@@ -504,9 +507,7 @@ function ChatRoomContent({
             >
               {msgsError && (
                 <div className="flex flex-1 items-center justify-center">
-                  <p className="text-xs text-error">
-                    Failed to load messages
-                  </p>
+                  <p className="text-error text-xs">Failed to load messages</p>
                 </div>
               )}
               {msgsLoading && !msgsError && (
@@ -537,7 +538,7 @@ function ChatRoomContent({
                           className="bg-brand mt-0.5 h-6 w-6 text-[9px] text-white"
                         />
                         {onlineUserIds.has(msg.senderId) && (
-                      <span className="border-bg absolute right-0 bottom-0 h-2 w-2 rounded-full border-2 bg-success" />
+                          <span className="border-bg bg-success absolute right-0 bottom-0 h-2 w-2 rounded-full border-2" />
                         )}
                       </div>
                     )}

@@ -4,11 +4,17 @@ describe('ProfileService', () => {
   let service: ProfileService;
   let mockPrisma: { user: { findUnique: jest.Mock; update: jest.Mock } };
   let mockTokenStore: { rewriteFieldsForUser: jest.Mock };
+  let mockCache: { invalidate: jest.Mock };
 
   beforeEach(() => {
     mockPrisma = { user: { findUnique: jest.fn(), update: jest.fn() } };
     mockTokenStore = { rewriteFieldsForUser: jest.fn() };
-    service = new ProfileService(mockPrisma as never, mockTokenStore as never);
+    mockCache = { invalidate: jest.fn().mockResolvedValue(undefined) };
+    service = new ProfileService(
+      mockPrisma as never,
+      mockTokenStore as never,
+      mockCache as never,
+    );
   });
 
   describe('updateProfile', () => {

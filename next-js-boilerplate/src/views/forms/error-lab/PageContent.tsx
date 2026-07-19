@@ -35,11 +35,16 @@ async function handleTriggerErrorLab(deps: {
   selectedScenario: string;
   locale: string;
   network: string;
-  simulateError: (id: string, opts?: { delayMs?: number; failRate?: number }) => Promise<ExceptionResponse>;
+  simulateError: (
+    id: string,
+    opts?: { delayMs?: number; failRate?: number },
+  ) => Promise<ExceptionResponse>;
   toast: ReturnType<typeof useToast>["toast"];
   allMessages: Record<string, unknown>;
   errorMessagesByLocale: Record<string, Record<string, unknown>>;
-  setResult: React.Dispatch<React.SetStateAction<ExceptionResponse | ClientException | null>>;
+  setResult: React.Dispatch<
+    React.SetStateAction<ExceptionResponse | ClientException | null>
+  >;
   setFormError: React.Dispatch<React.SetStateAction<string | null>>;
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
@@ -48,11 +53,18 @@ async function handleTriggerErrorLab(deps: {
 
   if (deps.network === "offline") {
     const { clientException } = await import("@/lib/exception-handler");
-    const exc = clientException("EX_WS_UNSTABLE", "You are offline", "forms.errors.connectionUnstable");
+    const exc = clientException(
+      "EX_WS_UNSTABLE",
+      "You are offline",
+      "forms.errors.connectionUnstable",
+    );
     deps.setResult(exc);
     const surface = getSurface(exc.exc);
     if (surface === "toast") {
-      deps.toast({ description: exceptionHandler(exc, deps.allMessages), variant: "destructive" });
+      deps.toast({
+        description: exceptionHandler(exc, deps.allMessages),
+        variant: "destructive",
+      });
     } else if (surface === "form-field") {
       const t = deps.errorMessagesByLocale[deps.locale];
       deps.setFormError(exceptionHandler(exc, t));
@@ -69,7 +81,11 @@ async function handleTriggerErrorLab(deps: {
       clearTimeout(timeoutId);
     } catch {
       const { clientException } = await import("@/lib/exception-handler");
-      const exc = clientException("EX_INTERNAL", "Request timed out", "forms.errors.unknown");
+      const exc = clientException(
+        "EX_INTERNAL",
+        "Request timed out",
+        "forms.errors.unknown",
+      );
       deps.setResult(exc);
       deps.toast({ description: "Request timed out", variant: "destructive" });
     } finally {
@@ -88,7 +104,10 @@ async function handleTriggerErrorLab(deps: {
     const surface = getSurface(res.exc);
     const t = deps.errorMessagesByLocale[deps.locale] ?? deps.allMessages;
     if (surface === "toast") {
-      deps.toast({ description: exceptionHandler(res, t), variant: "destructive" });
+      deps.toast({
+        description: exceptionHandler(res, t),
+        variant: "destructive",
+      });
     } else if (surface === "form-field") {
       const { form } = exceptionToFormErrors(res, t);
       deps.setFormError(form);
@@ -100,18 +119,27 @@ async function handleTriggerErrorLab(deps: {
     if (exc) {
       deps.setResult(exc);
       const t = deps.errorMessagesByLocale[deps.locale] ?? deps.allMessages;
-      deps.toast({ description: exceptionHandler(exc, t), variant: "destructive" });
+      deps.toast({
+        description: exceptionHandler(exc, t),
+        variant: "destructive",
+      });
     }
   } finally {
     deps.setLoading(false);
   }
 }
 
-export default function ErrorLabPage({ errorMessagesByLocale }: ErrorLabPageProps) {
-  const [selectedScenario, setSelectedScenario] = useState(ERROR_SCENARIOS[0].id);
+export default function ErrorLabPage({
+  errorMessagesByLocale,
+}: ErrorLabPageProps) {
+  const [selectedScenario, setSelectedScenario] = useState(
+    ERROR_SCENARIOS[0].id,
+  );
   const [locale, setLocale] = useState<"en" | "tr">("en");
   const [network, setNetwork] = useState("instant");
-  const [result, setResult] = useState<ExceptionResponse | ClientException | null>(null);
+  const [result, setResult] = useState<
+    ExceptionResponse | ClientException | null
+  >(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -120,11 +148,28 @@ export default function ErrorLabPage({ errorMessagesByLocale }: ErrorLabPageProp
   const allMessages = useAllMessages();
 
   const handleTrigger = useCallback(
-    () => handleTriggerErrorLab({
-      selectedScenario, locale, network, simulateError, toast, allMessages, errorMessagesByLocale,
-      setResult, setFormError, setLoading,
-    }),
-    [selectedScenario, locale, network, simulateError, toast, allMessages, errorMessagesByLocale],
+    () =>
+      handleTriggerErrorLab({
+        selectedScenario,
+        locale,
+        network,
+        simulateError,
+        toast,
+        allMessages,
+        errorMessagesByLocale,
+        setResult,
+        setFormError,
+        setLoading,
+      }),
+    [
+      selectedScenario,
+      locale,
+      network,
+      simulateError,
+      toast,
+      allMessages,
+      errorMessagesByLocale,
+    ],
   );
 
   const surfaceGroups = GROUPS.map((g) => ({
@@ -136,12 +181,19 @@ export default function ErrorLabPage({ errorMessagesByLocale }: ErrorLabPageProp
     <div className="flex flex-col gap-6">
       <div>
         <h2 className="text-sm font-semibold">Error & Async States Lab</h2>
-        <p className="text-muted text-xs">Test every error surface and locale combination</p>
+        <p className="text-muted text-xs">
+          Test every error surface and locale combination
+        </p>
       </div>
 
-      <div className="surface grid grid-cols-1 gap-4 rounded-lg border border-border p-4 sm:grid-cols-3">
+      <div className="surface border-border grid grid-cols-1 gap-4 rounded-lg border p-4 sm:grid-cols-3">
         <div className="flex flex-col gap-1">
-          <label htmlFor="error-scenario-select" className="text-xs font-medium">Error Scenario</label>
+          <label
+            htmlFor="error-scenario-select"
+            className="text-xs font-medium"
+          >
+            Error Scenario
+          </label>
           <NativeSelect
             id="error-scenario-select"
             value={selectedScenario}
@@ -159,32 +211,55 @@ export default function ErrorLabPage({ errorMessagesByLocale }: ErrorLabPageProp
           </NativeSelect>
         </div>
         <div className="flex flex-col gap-1">
-          <label htmlFor="locale-select" className="text-xs font-medium">Locale</label>
-          <NativeSelect id="locale-select" value={locale} onChange={(e) => setLocale(e.target.value as "en" | "tr")}>
+          <label htmlFor="locale-select" className="text-xs font-medium">
+            Locale
+          </label>
+          <NativeSelect
+            id="locale-select"
+            value={locale}
+            onChange={(e) => setLocale(e.target.value as "en" | "tr")}
+          >
             <option value="en">English</option>
             <option value="tr">Turkish</option>
           </NativeSelect>
         </div>
         <div className="flex flex-col gap-1">
-          <label htmlFor="network-select" className="text-xs font-medium">Network Condition</label>
-          <NativeSelect id="network-select" value={network} onChange={(e) => setNetwork(e.target.value)}>
+          <label htmlFor="network-select" className="text-xs font-medium">
+            Network Condition
+          </label>
+          <NativeSelect
+            id="network-select"
+            value={network}
+            onChange={(e) => setNetwork(e.target.value)}
+          >
             {NETWORK_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
             ))}
           </NativeSelect>
         </div>
       </div>
 
-      <Button onClick={handleTrigger} disabled={loading || !user} className="self-start">
+      <Button
+        onClick={handleTrigger}
+        disabled={loading || !user}
+        className="self-start"
+      >
         {loading ? "Triggering..." : "Trigger Error"}
       </Button>
 
-      {formError && <FormErrorBanner message={formError} onDismiss={() => setFormError(null)} />}
+      {formError && (
+        <FormErrorBanner
+          message={formError}
+          onDismiss={() => setFormError(null)}
+        />
+      )}
 
       {result && (
         <div className="flex flex-col gap-2">
           <p className="text-xs font-medium">Raw Payload</p>
-          <pre className="surface overflow-auto rounded-lg border border-border p-4 text-xxs">
+          <pre className="surface border-border text-xxs overflow-auto rounded-lg border p-4">
             {JSON.stringify(result, null, 2)}
           </pre>
         </div>

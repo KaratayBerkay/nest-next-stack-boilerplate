@@ -4,7 +4,9 @@ import { FormErrorBanner } from "./form-error-banner";
 
 describe("FormErrorBanner", () => {
   it("renders error message with role='alert'", () => {
-    render(<FormErrorBanner message="Something went wrong" onDismiss={() => {}} />);
+    render(
+      <FormErrorBanner message="Something went wrong" onDismiss={() => {}} />,
+    );
     const alert = screen.getByRole("alert");
     expect(alert).toBeDefined();
     expect(screen.getByText("Something went wrong")).toBeDefined();

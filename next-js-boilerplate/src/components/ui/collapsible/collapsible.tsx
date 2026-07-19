@@ -3,7 +3,10 @@ import { forwardRef } from "react";
 import { Root, Trigger, Content } from "@radix-ui/react-collapsible";
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
-import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
+import {
+  globalStyleVariants,
+  type GlobalVariant,
+} from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 
 const collapsibleVariants = {

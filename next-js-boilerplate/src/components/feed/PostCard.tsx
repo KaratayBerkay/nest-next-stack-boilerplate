@@ -93,13 +93,17 @@ export function PostCard({
         postData={postData}
         isOwn={!!isOwn}
         editing={editing}
-        onRefresh={() => refreshPostData(postData.id, toast, setPostData, refreshPost)}
+        onRefresh={() =>
+          refreshPostData(postData.id, toast, setPostData, refreshPost)
+        }
         onEditStart={() => {
           setEditTitle(postData.title);
           setEditContent(postData.content);
           setEditing(true);
         }}
-        onDeleteConfirm={() => handleDeletePost(postData.id, onDelete, deletePost)}
+        onDeleteConfirm={() =>
+          handleDeletePost(postData.id, onDelete, deletePost)
+        }
       />
 
       <PostContent
@@ -142,10 +146,19 @@ export function PostCard({
         isExpanded={isExpanded}
         postData={postData}
         onToggle={() =>
-          handleToggle(isExpanded, onToggle, postData.id, toast, setPostData, refreshPost)
+          handleToggle(
+            isExpanded,
+            onToggle,
+            postData.id,
+            toast,
+            setPostData,
+            refreshPost,
+          )
         }
         currentUserId={user?.id}
-        onCommentAdded={() => refreshPostData(postData.id, toast, setPostData, refreshPost)}
+        onCommentAdded={() =>
+          refreshPostData(postData.id, toast, setPostData, refreshPost)
+        }
       />
     </div>
   );

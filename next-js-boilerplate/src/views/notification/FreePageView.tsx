@@ -24,10 +24,7 @@ import { notificationTarget } from "@/lib/notifications/target";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useNotificationActions } from "@/api/client/notifications/actions";
 
-function navigateToFeed(
-  router: ReturnType<typeof useRouter>,
-  lang: string,
-) {
+function navigateToFeed(router: ReturnType<typeof useRouter>, lang: string) {
   router.push(`/v1/${lang}/feed`);
 }
 
@@ -119,7 +116,7 @@ function NotificationPageContent() {
               <IconBell size={16} stroke={1.5} />
             </button>
           )}
-            {unread.length > 0 && (
+          {unread.length > 0 && (
             <button
               onClick={markAllRead}
               className="text-brand text-xs font-medium hover:underline"
@@ -192,7 +189,7 @@ function NotificationPageContent() {
                 </p>
               </div>
               {!n.readAt && (
-                <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-info" />
+                <span className="bg-info mt-2 h-2 w-2 shrink-0 rounded-full" />
               )}
             </button>
           ))

@@ -1,6 +1,7 @@
 import { Controller, Post, Req, Res, Logger } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { StripeService } from './stripe/stripe.service';
+import { WalletService } from './wallet.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { TokenStoreService } from '../auth/token-store.service';
 import { ConfigService } from '@nestjs/config';
@@ -13,6 +14,7 @@ export class StripeWebhookController {
 
   constructor(
     private readonly stripeService: StripeService,
+    private readonly wallet: WalletService,
     private readonly prisma: PrismaService,
     private readonly tokenStore: TokenStoreService,
     private readonly config: ConfigService,
@@ -119,7 +121,7 @@ export class StripeWebhookController {
     });
     if (existing) return;
 
-    const wallet = await this.ensureWallet(user.id);
+    const wallet = await this.wallet.ensureWallet(user.id);
 
     await this.prisma.walletTransaction.create({
       data: {
@@ -231,16 +233,6 @@ export class StripeWebhookController {
         cancelAtPeriodEnd,
         subscriptionPeriodEnd: periodEnd,
       },
-    });
-  }
-
-  private async ensureWallet(userId: string) {
-    const existing = await this.prisma.wallet.findUnique({
-      where: { userId_currency: { userId, currency: 'USD' } },
-    });
-    if (existing) return existing;
-    return this.prisma.wallet.create({
-      data: { userId, currency: 'USD', isPrimary: true },
     });
   }
 }

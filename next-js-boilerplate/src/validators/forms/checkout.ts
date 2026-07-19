@@ -17,7 +17,9 @@ export function createCheckoutSchema(t: Record<string, string>) {
       street: z.string().min(1, t.streetRequired ?? "Street required"),
       city: z.string().min(1, t.cityRequired ?? "City required"),
       province: z.string().min(1, t.provinceRequired ?? "Province required"),
-      postalCode: z.string().min(3, t.postalCodeInvalid ?? "Invalid postal code"),
+      postalCode: z
+        .string()
+        .min(3, t.postalCodeInvalid ?? "Invalid postal code"),
       country: z.string().min(1, "Country required"),
       phone: z.string().optional(),
     }),
@@ -25,13 +27,17 @@ export function createCheckoutSchema(t: Record<string, string>) {
       street: z.string().min(1, t.streetRequired ?? "Street required"),
       city: z.string().min(1, t.cityRequired ?? "City required"),
       province: z.string().min(1, t.provinceRequired ?? "Province required"),
-      postalCode: z.string().min(3, t.postalCodeInvalid ?? "Invalid postal code"),
+      postalCode: z
+        .string()
+        .min(3, t.postalCodeInvalid ?? "Invalid postal code"),
       country: z.string().min(1, "Country required"),
       phone: z.string().optional(),
     }),
     sameAsShipping: z.boolean(),
     email: z.string().email(t.emailInvalid ?? "Invalid email"),
     confirmEmail: z.string().email(t.emailInvalid ?? "Invalid email"),
-    paymentMethod: z.string().min(1, t.paymentMethodRequired ?? "Payment method required"),
+    paymentMethod: z
+      .string()
+      .min(1, t.paymentMethodRequired ?? "Payment method required"),
   });
 }

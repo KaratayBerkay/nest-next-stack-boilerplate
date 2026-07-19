@@ -30,15 +30,18 @@ describe('CommentService', () => {
   let prisma: MockPrisma;
   let mockNotifications: { create: jest.Mock };
   let mockRealtime: { emitToTopic: jest.Mock };
+  let mockCache: { invalidate: jest.Mock };
 
   beforeEach(() => {
     prisma = mockPrisma();
     mockNotifications = { create: jest.fn().mockResolvedValue(undefined) };
     mockRealtime = { emitToTopic: jest.fn().mockReturnValue(0) };
+    mockCache = { invalidate: jest.fn().mockResolvedValue(undefined) };
     service = new CommentService(
       prisma as never,
       mockNotifications as never,
       mockRealtime as never,
+      mockCache as never,
     );
   });
 

@@ -6,7 +6,8 @@ import { UI_COMPONENTS } from "../src/constants/ui-gallery";
 // critical/serious violations — same bar as e2e/a11y.spec.ts. Axe results
 // don't vary by engine, so chromium-only keeps the matrix flat.
 test.skip(
-  ({ browserName, isMobile }) => browserName !== "chromium" || Boolean(isMobile),
+  ({ browserName, isMobile }) =>
+    browserName !== "chromium" || Boolean(isMobile),
   "axe pass is chromium-only",
 );
 

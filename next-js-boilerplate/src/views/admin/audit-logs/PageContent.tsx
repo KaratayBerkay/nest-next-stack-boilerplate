@@ -14,7 +14,6 @@ import { AccessDeniedPage } from "@/features/statics";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { auditLogsQueryOptions } from "@/api/client/admin/query";
 
-
 const LEVEL_COLORS: Record<string, string> = {
   ERROR: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   WARN: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
@@ -69,7 +68,9 @@ export default function PageContent() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <IconEye size={18} className="text-brand" />
-          <h2 className="text-brand text-sm font-semibold">{t.auditLogTitle}</h2>
+          <h2 className="text-brand text-sm font-semibold">
+            {t.auditLogTitle}
+          </h2>
         </div>
         <PageInfoButton content={adminAuditLogsPageInfo} />
       </div>
@@ -145,9 +146,7 @@ export default function PageContent() {
       )}
 
       {!loadingLogs && entries.length === 0 && (
-        <p className="text-muted text-center text-xs">
-          {t.noEntriesFound}
-        </p>
+        <p className="text-muted text-center text-xs">{t.noEntriesFound}</p>
       )}
 
       {!loadingLogs && entries.length > 0 && (
@@ -229,7 +228,9 @@ export default function PageContent() {
 
           {/* Pagination */}
           <div className="flex items-center justify-between">
-            <p className="text-muted text-[10px]">{t.totalEntries.replace("{total}", String(total))}</p>
+            <p className="text-muted text-[10px]">
+              {t.totalEntries.replace("{total}", String(total))}
+            </p>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -240,7 +241,9 @@ export default function PageContent() {
                 {t.prev}
               </Button>
               <span className="text-muted text-[10px]">
-                {t.pageOf.replace("{page}", String(page + 1)).replace("{totalPages}", String(totalPages || 1))}
+                {t.pageOf
+                  .replace("{page}", String(page + 1))
+                  .replace("{totalPages}", String(totalPages || 1))}
               </span>
               <Button
                 variant="outline"

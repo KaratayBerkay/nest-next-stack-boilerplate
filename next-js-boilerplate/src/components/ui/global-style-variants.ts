@@ -16,12 +16,9 @@
 export const globalStyleVariants = {
   shiny:
     "bg-gradient-to-b from-surface to-surface-hover border border-border shadow-sm",
-  glass:
-    "bg-surface/60 backdrop-blur-md border border-border/50",
-  neon:
-    "bg-transparent border border-info text-info shadow-[0_0_12px_var(--info)]",
-  gradient:
-    "bg-gradient-to-r from-brand to-info text-brand-fg",
+  glass: "bg-surface/60 backdrop-blur-md border border-border/50",
+  neon: "bg-transparent border border-info text-info shadow-[0_0_12px_var(--info)]",
+  gradient: "bg-gradient-to-r from-brand to-info text-brand-fg",
 } as const;
 
 export type GlobalVariant = keyof typeof globalStyleVariants;

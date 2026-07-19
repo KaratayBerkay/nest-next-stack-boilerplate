@@ -98,7 +98,14 @@ async function save(
   saveSuccess: string,
   saveFailed: string,
   refreshUser: () => Promise<void>,
-  updateProfile: (data: { name: string; username?: string; bio?: string; avatarUrl?: string; locale?: string; timezone?: string }) => Promise<void>,
+  updateProfile: (data: {
+    name: string;
+    username?: string;
+    bio?: string;
+    avatarUrl?: string;
+    locale?: string;
+    timezone?: string;
+  }) => Promise<void>,
 ) {
   setSaving(true);
   try {
@@ -124,8 +131,9 @@ export function FreePageView() {
   const [timezone, setTimezone] = useState("UTC");
   const [currency, setCurrencyState] =
     useState<CurrencyCode>(readCurrencyCookie);
-  const [dateDisplay, setDateDisplayState] =
-    useState<DateDisplayFormat>(readDateDisplayCookie);
+  const [dateDisplay, setDateDisplayState] = useState<DateDisplayFormat>(
+    readDateDisplayCookie,
+  );
   const [saving, setSaving] = useState(false);
   const loadedRef = useRef(false);
   const now = new Date();

@@ -9,7 +9,10 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Input } from "@/components/ui/Input";
 import { initials } from "@/lib/initials";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { friendsQueryOptions, friendRequestsQueryOptions } from "@/api/client/friends/query";
+import {
+  friendsQueryOptions,
+  friendRequestsQueryOptions,
+} from "@/api/client/friends/query";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { findFriendsPageInfo } from "@/constants/page-info";
 import type { FriendRequest } from "./search-utils";
@@ -23,7 +26,9 @@ export function FreeFindFriendsContent({
   const t = useMessages("find-friends");
   const pathname = usePathname();
   const { data: _friends = [] } = useSuspenseQuery(friendsQueryOptions());
-  const { data: friendRequests = [] } = useSuspenseQuery(friendRequestsQueryOptions());
+  const { data: friendRequests = [] } = useSuspenseQuery(
+    friendRequestsQueryOptions(),
+  );
 
   const {
     items,
@@ -57,7 +62,7 @@ export function FreeFindFriendsContent({
           <TabsTrigger value="pending" className="flex-1">
             {t.pendingRequests}
             {friendRequests.length > 0 && (
-              <span className="ml-1.5 rounded-full bg-warning px-1.5 py-0.5 text-[10px] font-semibold text-white">
+              <span className="bg-warning ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold text-white">
                 {friendRequests.length}
               </span>
             )}
@@ -80,13 +85,11 @@ export function FreeFindFriendsContent({
                 {t.searching}
               </p>
             )}
-            {!searching &&
-              query.trim().length >= 3 &&
-              items.length === 0 && (
-                <p className="text-muted py-8 text-center text-sm">
-                  {t.noUsersFound}
-                </p>
-              )}
+            {!searching && query.trim().length >= 3 && items.length === 0 && (
+              <p className="text-muted py-8 text-center text-sm">
+                {t.noUsersFound}
+              </p>
+            )}
             {!searching &&
               items.map((u) => {
                 const isPending = pendingIds.has(u.id) || sentIds.has(u.id);
@@ -161,7 +164,7 @@ export function FreeFindFriendsContent({
                   <>
                     <button
                       onClick={() => acceptRequest(r.user.id)}
-                      className="rounded bg-success px-3 py-1 text-xs text-white hover:brightness-90"
+                      className="bg-success rounded px-3 py-1 text-xs text-white hover:brightness-90"
                     >
                       {t.accept}
                     </button>

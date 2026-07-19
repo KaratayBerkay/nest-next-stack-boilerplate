@@ -143,6 +143,7 @@ export class OAuthService {
       tokenBody.set('code_verifier', pending.codeVerifier);
     }
 
+    // fallow-ignore-next-line security-sink — provider.tokenUrl is hardcoded config
     const tokenRes = await fetch(provider.tokenUrl, {
       method: 'POST',
       headers: tokenHeaders,
@@ -213,6 +214,7 @@ export class OAuthService {
       headers['Client-Id'] = clientId;
     }
 
+    // fallow-ignore-next-line security-sink — provider.userinfoUrl is hardcoded config
     const res = await fetch(provider.userinfoUrl, { headers });
     if (!res.ok) {
       throw new UnauthorizedException(`Profile fetch failed: ${res.status}`);

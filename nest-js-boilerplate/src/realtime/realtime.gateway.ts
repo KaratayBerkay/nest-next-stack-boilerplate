@@ -19,81 +19,29 @@ import { CryptoService } from '../common/crypto/crypto.service';
 import { displayName } from '../common/utils/display-name';
 import { parseDeviceType } from '../common/utils/device-type';
 import type { ExceptionCode } from '../common/exceptions/exception-code';
-
-type AuthWs = WebSocket & {
-  userId?: string;
-  sessionId?: string;
-  userName?: string;
-  tier?: string;
-  socketId?: string;
-  room?: string;
-  authenticated: boolean;
-  isAlive: boolean;
-  deviceTokenHash?: string;
-  userToken?: string;
-  registeredServices?: string[];
-  watchedTopics?: string[];
-  pendingIp?: string;
-  page?: string | null;
-  pageParams?: Record<string, string>;
-};
-
-interface AuthTokens {
-  accessToken: string;
-  rbacToken: string;
-  deviceToken: string;
-  userToken: string;
-}
-
-export type FrameHandler = (
-  ws: WebSocket,
-  data: Record<string, unknown>,
-) => void | Promise<void>;
-
-const TOPIC_ALLOWLIST = /^(feed|post:[a-z0-9]+)$/;
-
-interface PageAllowlistEntry {
-  allowed: string[];
-  key: string[];
-}
-
-const PAGE_ALLOWLIST: Record<string, PageAllowlistEntry> = {
-  messages: { allowed: ['peer'], key: [] },
-  'friend-request': { allowed: [], key: [] },
-  notification: { allowed: [], key: [] },
-  feed: { allowed: [], key: [] },
-  post: { allowed: ['id'], key: ['id'] },
-  'chat-room': { allowed: ['room'], key: ['room'] },
-};
+import type { AuthWs, AuthTokens, FrameHandler } from './realtime.types';
+import { RealtimePresenceService } from './realtime-presence.service';
+import { RealtimePageManager } from './realtime-page.manager';
 
 @Injectable()
 export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
   private static readonly MAX_SOCKETS_PER_USER = 20;
   private static readonly MAX_PENDING_PER_IP = 50;
   private static readonly AUTH_TIMEOUT_MS = 15_000;
+  private static readonly WS_CHANNEL = 'ws:broadcast';
 
   private readonly logger = new Logger(RealtimeGateway.name);
   private wss!: WebSocketServer;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private forwardingFromRedis = false;
-  private onlineCount = new Map<string, number>();
+  readonly onlineCount = new Map<string, number>();
+  readonly pageManager = new RealtimePageManager();
   private serviceConnections = new Map<string, Set<WebSocket>>();
   private serviceDeviceIndex = new Map<string, Set<string>>();
   private userSockets = new Map<string, Set<AuthWs>>();
   private pendingByIp = new Map<string, number>();
-  private topicWatchers = new Map<string, Set<AuthWs>>();
   private handlers = new Map<string, FrameHandler>();
-  private pageClaims = new Map<string, Set<AuthWs>>();
-  private pageJoinCallbacks = new Map<
-    string,
-    (ws: WebSocket, params: Record<string, string>) => void
-  >();
-  private pageLeaveCallbacks = new Map<
-    string,
-    (ws: WebSocket, params: Record<string, string>) => void
-  >();
-
-  private static readonly WS_CHANNEL = 'ws:broadcast';
+  private redisFailureCount = 0;
 
   constructor(
     private readonly adapterHost: HttpAdapterHost,
@@ -101,9 +49,29 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     private readonly tokenStore: TokenStoreService,
     private readonly derivation: TokenDerivationService,
     private readonly crypto: CryptoService,
+    private readonly presence: RealtimePresenceService,
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
     @Inject(REDIS_SUBSCRIBER) private readonly subscriber: Redis,
   ) {}
+
+  private safeRedis<T>(
+    label: string,
+    fn: () => Promise<T>,
+  ): Promise<T | undefined> {
+    return fn().catch((err: Error) => {
+      this.redisFailureCount++;
+      this.logger.warn(
+        {
+          event: 'redis_failure',
+          label,
+          error: err.message,
+          failureCount: this.redisFailureCount,
+        },
+        `Redis ${label} failed: ${err.message}`,
+      );
+      return undefined;
+    });
+  }
 
   onModuleInit() {
     const httpServer = this.adapterHost.httpAdapter.getHttpServer() as Server;
@@ -128,20 +96,19 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       authWs.pendingIp = ip;
       this.pendingByIp.set(ip, pending + 1);
 
-      const userAgent = req.headers['user-agent'];
       this.logger.log({
         category: 'session',
         event: 'ws.connect',
         ip,
-        userAgent,
-        deviceType: parseDeviceType(userAgent),
+        userAgent: req.headers['user-agent'],
+        deviceType: parseDeviceType(req.headers['user-agent']),
       });
 
       ws.on('pong', () => {
         authWs.isAlive = true;
       });
 
-      const authTimer: ReturnType<typeof setTimeout> = setTimeout(() => {
+      const authTimer = setTimeout(() => {
         if (!authWs.authenticated) {
           this.logger.warn('WS auth timeout, closing');
           ws.close();
@@ -156,7 +123,6 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
 
       ws.on('close', (code?: number, reason?: Buffer) => {
         const uid = authWs.userId;
-
         if (code !== undefined && code !== 1000 && code !== 1001) {
           this.logger.log({
             category: 'websocket-exception',
@@ -167,7 +133,6 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
             reason: reason?.toString() ?? '',
           });
         }
-
         this.logger.log({
           category: 'session',
           event: 'ws.disconnect',
@@ -175,13 +140,10 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
           userId: uid,
           socketId: authWs.socketId,
         });
-
         this.releasePending(authWs);
         this.cleanupServiceConnections(authWs);
-        this.cleanupPageClaim(authWs);
-        this.cleanupTopicWatches(authWs);
-        // leaveAllRooms not needed here — page-claim leave callback already
-        // removes socket from chat-room tracking via cleanupPageClaim above.
+        this.pageManager.cleanupPageClaim(authWs);
+        this.pageManager.cleanupTopicWatches(authWs);
         if (uid) {
           const sockets = this.userSockets.get(uid);
           if (sockets) {
@@ -217,10 +179,11 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         client.isAlive = false;
         ws.ping();
       });
-      // Refresh Redis presence TTL every 4th heartbeat (~2 min)
       heartbeatCount++;
       if (heartbeatCount % 4 === 0) {
-        this.refreshPresenceTTL().catch(() => {});
+        this.safeRedis('refreshPresenceTTL', () =>
+          this.presence.refreshPresenceTTL(this.pageManager.pageClaims),
+        );
       }
     }, 30000);
 
@@ -231,6 +194,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         );
       }
     });
+
     this.subscriber.on('message', (_channel, raw) => {
       try {
         const { target, userId, service, room, topic, page, frame } =
@@ -275,14 +239,16 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
           this.forwardingFromRedis = false;
         }
       } catch {
-        // malformed frame — ignore
+        /* malformed frame */
       }
     });
   }
 
   onModuleDestroy() {
     if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
-    this.subscriber.unsubscribe(RealtimeGateway.WS_CHANNEL).catch(() => {});
+    this.safeRedis('unsubscribe', () =>
+      this.subscriber.unsubscribe(RealtimeGateway.WS_CHANNEL),
+    );
     this.wss?.close();
   }
 
@@ -292,6 +258,8 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     }
     this.handlers.set(type, handler);
   }
+
+  // ==================== Message routing ====================
 
   private async handleMessage(
     authWs: AuthWs,
@@ -325,28 +293,39 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     }
 
     if (data.type === 'watch') {
-      this.handleWatch(authWs, data as { topic: string });
+      const error = this.pageManager.handleWatch(
+        authWs,
+        data as { topic: string },
+      );
+      if (error) this.sendWsError(authWs, 'EX_VALIDATION_FORM', error);
       return;
     }
 
     if (data.type === 'unwatch') {
-      this.handleUnwatch(authWs, data as { topic: string });
+      this.pageManager.handleUnwatch(authWs, data as { topic: string });
       return;
     }
 
     if (data.type === 'page') {
-      this.handlePage(
+      const error = this.pageManager.handlePage(
         authWs,
         data as { page: string | null; params?: Record<string, string> },
       );
+      if (error) {
+        this.sendWsError(authWs, 'EX_VALIDATION_FORM', error);
+      } else {
+        this.safeRedis('syncPresenceToRedis', () =>
+          this.presence.syncPresenceToRedis(authWs),
+        );
+      }
       return;
     }
 
     const handler = this.handlers.get(data.type as string);
-    if (handler) {
-      await handler(authWs, data);
-    }
+    if (handler) await handler(authWs, data);
   }
+
+  // ==================== Auth ====================
 
   private async handleAuth(
     ws: AuthWs,
@@ -432,10 +411,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     ws.registeredServices = [];
     ws.watchedTopics = [];
     ws.socketId =
-      hash.userId +
-      ':' +
-      Date.now().toString(36) +
-      Math.random().toString(36).slice(2, 7);
+      hash.userId + ':' + Date.now().toString(36) + this.crypto.randomToken(5);
     ws.authenticated = true;
     this.releasePending(ws);
     clearTimeout(authTimer);
@@ -464,24 +440,15 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     }
 
     ws.send(JSON.stringify({ type: 'authenticated' }));
-    // Send initial state snapshot after auth (P1-7).
-    ws.send(
-      JSON.stringify({
-        type: 'room-counts',
-        rooms: {},
-      }),
-    );
+    ws.send(JSON.stringify({ type: 'room-counts', rooms: {} }));
     const onlineUsers = Array.from(this.onlineCount.keys())
       .filter((id) => id !== hash.userId)
       .map((id) => ({ id }));
-    ws.send(
-      JSON.stringify({
-        type: 'online-users',
-        users: onlineUsers,
-      }),
-    );
+    ws.send(JSON.stringify({ type: 'online-users', users: onlineUsers }));
     this.handleOnline(ws);
   }
+
+  // ==================== Register, Online, Cleanup ====================
 
   private handleRegister(ws: AuthWs, data: { services: string[] }) {
     if (!Array.isArray(data.services) || !ws.userId || !ws.deviceTokenHash)
@@ -501,37 +468,8 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       this.serviceDeviceIndex.get(indexKey)!.add(ws.deviceTokenHash);
     }
     ws.send(
-      JSON.stringify({
-        type: 'registered',
-        services: ws.registeredServices,
-      }),
+      JSON.stringify({ type: 'registered', services: ws.registeredServices }),
     );
-  }
-
-  private handleWatch(ws: AuthWs, data: { topic: string }) {
-    if (!ws.userId) return;
-    if (!TOPIC_ALLOWLIST.test(data.topic)) {
-      this.sendWsError(ws, 'EX_VALIDATION_FORM', 'Invalid topic pattern');
-      return;
-    }
-    if (!this.topicWatchers.has(data.topic))
-      this.topicWatchers.set(data.topic, new Set());
-    this.topicWatchers.get(data.topic)!.add(ws);
-    if (!ws.watchedTopics) ws.watchedTopics = [];
-    if (!ws.watchedTopics.includes(data.topic))
-      ws.watchedTopics.push(data.topic);
-  }
-
-  private handleUnwatch(ws: AuthWs, data: { topic: string }) {
-    if (!ws.userId) return;
-    const watchers = this.topicWatchers.get(data.topic);
-    if (watchers) {
-      watchers.delete(ws);
-      if (watchers.size === 0) this.topicWatchers.delete(data.topic);
-    }
-    if (ws.watchedTopics) {
-      ws.watchedTopics = ws.watchedTopics.filter((t) => t !== data.topic);
-    }
   }
 
   private handleOnline(ws: AuthWs) {
@@ -546,12 +484,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     const onlineUsers = Array.from(this.onlineCount.keys())
       .filter((id) => id !== ws.userId)
       .map((id) => ({ id }));
-    ws.send(
-      JSON.stringify({
-        type: 'online-users',
-        users: onlineUsers,
-      }),
-    );
+    ws.send(JSON.stringify({ type: 'online-users', users: onlineUsers }));
   }
 
   private cleanupServiceConnections(ws: AuthWs) {
@@ -577,294 +510,6 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private cleanupTopicWatches(ws: AuthWs) {
-    const topics = ws.watchedTopics;
-    if (!topics) return;
-    for (const topic of topics) {
-      const watchers = this.topicWatchers.get(topic);
-      if (watchers) {
-        watchers.delete(ws);
-        if (watchers.size === 0) this.topicWatchers.delete(topic);
-      }
-    }
-  }
-
-  // ==================== Page-claim system (Phase 7) ====================
-
-  registerPageCallbacks(
-    page: string,
-    onJoin: (ws: WebSocket, params: Record<string, string>) => void,
-    onLeave: (ws: WebSocket, params: Record<string, string>) => void,
-  ): void {
-    this.pageJoinCallbacks.set(page, onJoin);
-    this.pageLeaveCallbacks.set(page, onLeave);
-  }
-
-  private handlePage(
-    ws: AuthWs,
-    data: { page: string | null; params?: Record<string, string> },
-  ) {
-    if (!ws.userId) return;
-
-    const newPage = data.page;
-    const newParams = data.params;
-
-    // Validate page and params
-    if (newPage !== null) {
-      const entry = PAGE_ALLOWLIST[newPage];
-      if (!entry) {
-        this.sendWsError(ws, 'EX_VALIDATION_FORM', `Invalid page "${newPage}"`);
-        return;
-      }
-      const paramKeys = newParams ? Object.keys(newParams) : [];
-      for (const key of paramKeys) {
-        if (!entry.allowed.includes(key)) {
-          this.sendWsError(
-            ws,
-            'EX_VALIDATION_FORM',
-            `Invalid param "${key}" for page "${newPage}"`,
-          );
-          return;
-        }
-      }
-      for (const required of entry.key) {
-        if (!paramKeys.includes(required)) {
-          this.sendWsError(
-            ws,
-            'EX_VALIDATION_FORM',
-            `Missing required param "${required}" for page "${newPage}"`,
-          );
-          return;
-        }
-      }
-    }
-
-    // Clean up old claim (topic/room + index)
-    if (ws.page === 'feed') {
-      this.removeFromTopicWatch(ws, 'feed');
-    } else if (ws.page === 'post' && ws.pageParams?.id) {
-      this.removeFromTopicWatch(ws, `post:${ws.pageParams.id}`);
-    } else if (ws.page === 'chat-room' && ws.pageParams?.room) {
-      const cb = this.pageLeaveCallbacks.get('chat-room');
-      if (cb) cb(ws, ws.pageParams);
-    }
-    // Remove from old page index
-    if (ws.page && ws.page) {
-      const oldKey = `page:${this.buildPageKey(ws.page, ws.pageParams)}:${ws.userId}`;
-      const oldSockets = this.pageClaims.get(oldKey);
-      if (oldSockets) {
-        oldSockets.delete(ws);
-        if (oldSockets.size === 0) this.pageClaims.delete(oldKey);
-      }
-    }
-
-    // Set new claim
-    ws.page = newPage;
-    ws.pageParams = newParams;
-
-    if (newPage === null) return;
-
-    // Add to new page index — uses only key params for routing
-    const newKey = `page:${this.buildPageKey(newPage, newParams)}:${ws.userId}`;
-    if (!this.pageClaims.has(newKey)) {
-      this.pageClaims.set(newKey, new Set());
-    }
-    this.pageClaims.get(newKey)!.add(ws);
-
-    // Translate claim → topic/room membership
-    if (newPage === 'feed') {
-      this.addToTopicWatch(ws, 'feed');
-    } else if (newPage === 'post' && newParams?.id) {
-      this.addToTopicWatch(ws, `post:${newParams.id}`);
-    } else if (newPage === 'chat-room' && newParams?.room) {
-      const cb = this.pageJoinCallbacks.get('chat-room');
-      if (cb) cb(ws, newParams);
-    }
-
-    // Mirror to Redis (fire-and-forget)
-    this.syncPresenceToRedis(ws).catch(() => {});
-  }
-
-  private cleanupPageClaim(ws: AuthWs) {
-    if (!ws.userId) return;
-    // Leave room if applicable
-    if (ws.page === 'chat-room' && ws.pageParams?.room) {
-      const cb = this.pageLeaveCallbacks.get('chat-room');
-      if (cb) cb(ws, ws.pageParams);
-    }
-    // Remove from page index
-    if (ws.page) {
-      const key = `page:${this.buildPageKey(ws.page, ws.pageParams)}:${ws.userId}`;
-      const sockets = this.pageClaims.get(key);
-      if (sockets) {
-        sockets.delete(ws);
-        if (sockets.size === 0) this.pageClaims.delete(key);
-      }
-    }
-    // Remove from Redis presence (fire-and-forget)
-    this.removePresenceFromRedis(ws).catch(() => {});
-  }
-
-  emitToPage(
-    userId: string,
-    pageKey: string,
-    frame: Record<string, unknown>,
-  ): number {
-    const key = `page:${pageKey}:${userId}`;
-    const sockets = this.pageClaims.get(key);
-    if (!sockets) return 0;
-    const msg = JSON.stringify(frame);
-    let sent = 0;
-    for (const ws of sockets) {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(msg);
-        sent++;
-      }
-    }
-    if (!this.forwardingFromRedis) {
-      const payload = JSON.stringify({
-        target: 'emitToPage',
-        userId,
-        page: pageKey,
-        frame,
-      });
-      this.redis.publish(RealtimeGateway.WS_CHANNEL, payload).catch(() => {});
-    }
-    return sent;
-  }
-
-  private buildPageKey(page: string, params?: Record<string, string>): string {
-    const entry = PAGE_ALLOWLIST[page];
-    const keyParams = entry?.key ?? [];
-    if (!params || keyParams.length === 0) return page;
-    const relevant = keyParams
-      .filter((k) => params[k] !== undefined)
-      .sort((a, b) => a.localeCompare(b))
-      .map((k) => `${k}:${params[k]}`);
-    if (relevant.length === 0) return page;
-    return `${page}:${relevant.join(':')}`;
-  }
-
-  private addToTopicWatch(ws: AuthWs, topic: string) {
-    if (!this.topicWatchers.has(topic))
-      this.topicWatchers.set(topic, new Set());
-    this.topicWatchers.get(topic)!.add(ws);
-    if (!ws.watchedTopics) ws.watchedTopics = [];
-    if (!ws.watchedTopics.includes(topic)) ws.watchedTopics.push(topic);
-  }
-
-  private removeFromTopicWatch(ws: AuthWs, topic: string) {
-    const watchers = this.topicWatchers.get(topic);
-    if (watchers) {
-      watchers.delete(ws);
-      if (watchers.size === 0) this.topicWatchers.delete(topic);
-    }
-    if (ws.watchedTopics) {
-      ws.watchedTopics = ws.watchedTopics.filter((t) => t !== topic);
-    }
-  }
-
-  // ==================== Redis presence mirror (Phase 7 T2) ====================
-
-  private static readonly PRESENCE_TTL = 120; // seconds — safety-net expiry
-
-  private presenceKey(userId: string): string {
-    return `presence:${userId}`;
-  }
-
-  private async syncPresenceToRedis(ws: AuthWs): Promise<void> {
-    if (!ws.userId || !ws.deviceTokenHash || !ws.page) return;
-    const field = ws.deviceTokenHash;
-    const value = JSON.stringify({
-      page: ws.page,
-      params: ws.pageParams ?? {},
-      at: Date.now(),
-    });
-    try {
-      const key = this.presenceKey(ws.userId);
-      const pipe = this.redis.pipeline();
-      pipe.hset(key, field, value);
-      pipe.expire(key, RealtimeGateway.PRESENCE_TTL);
-      await pipe.exec();
-    } catch {
-      /* Redis write failure — non-critical */
-    }
-  }
-
-  private async removePresenceFromRedis(ws: AuthWs): Promise<void> {
-    if (!ws.userId || !ws.deviceTokenHash) return;
-    try {
-      await this.redis.hdel(this.presenceKey(ws.userId), ws.deviceTokenHash);
-    } catch {
-      /* Redis delete failure — non-critical */
-    }
-  }
-
-  private async refreshPresenceTTL(): Promise<void> {
-    const now = Date.now();
-    for (const [, sockets] of this.pageClaims) {
-      for (const ws of sockets) {
-        if (
-          ws.readyState !== WebSocket.OPEN ||
-          !ws.userId ||
-          !ws.deviceTokenHash
-        )
-          continue;
-        try {
-          const key = this.presenceKey(ws.userId);
-          const field = ws.deviceTokenHash;
-          const value = JSON.stringify({
-            page: ws.page,
-            params: ws.pageParams ?? {},
-            at: now,
-          });
-          const pipe = this.redis.pipeline();
-          pipe.hset(key, field, value);
-          pipe.expire(key, RealtimeGateway.PRESENCE_TTL);
-          await pipe.exec();
-        } catch {
-          /* non-critical */
-        }
-      }
-    }
-  }
-
-  private clientIp(req: IncomingMessage): string {
-    const xff = req.headers['x-forwarded-for'];
-    const raw = Array.isArray(xff) ? xff[xff.length - 1] : xff;
-    if (raw) {
-      const parts = raw.split(',');
-      const last = parts[parts.length - 1].trim();
-      if (last) return last;
-    }
-    return req.socket.remoteAddress ?? 'unknown';
-  }
-
-  private sendWsError(
-    ws: WebSocket,
-    exc: ExceptionCode,
-    msg: string,
-    key?: string,
-  ): void {
-    ws.send(
-      JSON.stringify({
-        type: 'error',
-        exc,
-        msg,
-        key: key ?? 'error.ws',
-      }),
-    );
-  }
-
-  private releasePending(ws: AuthWs) {
-    const ip = ws.pendingIp;
-    if (!ip) return;
-    ws.pendingIp = undefined;
-    const count = this.pendingByIp.get(ip) || 0;
-    if (count <= 1) this.pendingByIp.delete(ip);
-    else this.pendingByIp.set(ip, count - 1);
-  }
-
   // ==================== Emit primitives ====================
 
   emitToUser(userId: string, frame: Record<string, unknown>): number {
@@ -879,8 +524,12 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       }
     }
     if (!this.forwardingFromRedis) {
-      const payload = JSON.stringify({ target: 'emitToUser', userId, frame });
-      this.redis.publish(RealtimeGateway.WS_CHANNEL, payload).catch(() => {});
+      this.safeRedis('publish', () =>
+        this.redis.publish(
+          RealtimeGateway.WS_CHANNEL,
+          JSON.stringify({ target: 'emitToUser', userId, frame }),
+        ),
+      );
     }
     return sent;
   }
@@ -909,19 +558,18 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       }
     }
     if (!this.forwardingFromRedis) {
-      const payload = JSON.stringify({
-        target: 'emitToService',
-        userId,
-        service,
-        frame,
-      });
-      this.redis.publish(RealtimeGateway.WS_CHANNEL, payload).catch(() => {});
+      this.safeRedis('publish', () =>
+        this.redis.publish(
+          RealtimeGateway.WS_CHANNEL,
+          JSON.stringify({ target: 'emitToService', userId, service, frame }),
+        ),
+      );
     }
     return sent;
   }
 
   emitToTopic(topic: string, frame: Record<string, unknown>): number {
-    const watchers = this.topicWatchers.get(topic);
+    const watchers = this.pageManager.topicWatchers.get(topic);
     if (!watchers) return 0;
     const msg = JSON.stringify(frame);
     let sent = 0;
@@ -932,10 +580,36 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       }
     }
     if (!this.forwardingFromRedis) {
-      const payload = JSON.stringify({ target: 'emitToTopic', topic, frame });
-      this.redis.publish(RealtimeGateway.WS_CHANNEL, payload).catch(() => {});
+      this.safeRedis('publish', () =>
+        this.redis.publish(
+          RealtimeGateway.WS_CHANNEL,
+          JSON.stringify({ target: 'emitToTopic', topic, frame }),
+        ),
+      );
     }
     return sent;
+  }
+
+  emitToPage(
+    userId: string,
+    pageKey: string,
+    frame: Record<string, unknown>,
+  ): number {
+    const local = this.pageManager.emitToPage(userId, pageKey, frame);
+    if (!this.forwardingFromRedis) {
+      this.safeRedis('publish', () =>
+        this.redis.publish(
+          RealtimeGateway.WS_CHANNEL,
+          JSON.stringify({
+            target: 'emitToPage',
+            userId,
+            page: pageKey,
+            frame,
+          }),
+        ),
+      );
+    }
+    return local;
   }
 
   hasServiceConnection(userId: string, service: string): boolean {
@@ -949,8 +623,12 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       if (c.readyState === WebSocket.OPEN) c.send(msg);
     });
     if (!this.forwardingFromRedis) {
-      const payload = JSON.stringify({ target: 'broadcastAll', frame });
-      this.redis.publish(RealtimeGateway.WS_CHANNEL, payload).catch(() => {});
+      this.safeRedis('publish', () =>
+        this.redis.publish(
+          RealtimeGateway.WS_CHANNEL,
+          JSON.stringify({ target: 'broadcastAll', frame }),
+        ),
+      );
     }
   }
 
@@ -958,25 +636,31 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     const msg = JSON.stringify(payload);
     this.wss.clients.forEach((c) => {
       const client = c as AuthWs;
-      if (client.room === room && client.readyState === WebSocket.OPEN) {
+      if (client.room === room && client.readyState === WebSocket.OPEN)
         client.send(msg);
-      }
     });
     if (!this.forwardingFromRedis) {
-      const frame = JSON.stringify({
-        target: 'broadcastToRoom',
-        room,
-        frame: payload,
-      });
-      this.redis.publish(RealtimeGateway.WS_CHANNEL, frame).catch(() => {});
+      this.safeRedis('publish', () =>
+        this.redis.publish(
+          RealtimeGateway.WS_CHANNEL,
+          JSON.stringify({ target: 'broadcastToRoom', room, frame: payload }),
+        ),
+      );
     }
+  }
+
+  registerPageCallbacks(
+    page: string,
+    onJoin: (ws: WebSocket, params: Record<string, string>) => void,
+    onLeave: (ws: WebSocket, params: Record<string, string>) => void,
+  ): void {
+    this.pageManager.registerPageCallbacks(page, onJoin, onLeave);
   }
 
   getOnlineUserIds(): string[] {
     return Array.from(this.onlineCount.keys());
   }
 
-  /** Push a tier change to every live socket belonging to `userId`. */
   updateUserTier(userId: string, tier: string): void {
     const sockets = this.userSockets.get(userId);
     if (!sockets) return;
@@ -987,7 +671,6 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  /** Close all live WebSocket connections belonging to a specific session. */
   closeSocketsForSession(userId: string, sessionId: string): number {
     const sockets = this.userSockets.get(userId);
     if (!sockets) return 0;
@@ -1001,7 +684,6 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     return closed;
   }
 
-  /** Close all live WebSocket connections for a user (e.g. on ban/suspend). */
   closeAllSocketsForUser(userId: string): number {
     const sockets = this.userSockets.get(userId);
     if (!sockets) return 0;
@@ -1014,5 +696,38 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     }
     this.userSockets.delete(userId);
     return closed;
+  }
+
+  // ==================== Helpers ====================
+
+  private clientIp(req: IncomingMessage): string {
+    const xff = req.headers['x-forwarded-for'];
+    const raw = Array.isArray(xff) ? xff[xff.length - 1] : xff;
+    if (raw) {
+      const parts = raw.split(',');
+      const last = parts[parts.length - 1].trim();
+      if (last) return last;
+    }
+    return req.socket.remoteAddress ?? 'unknown';
+  }
+
+  private sendWsError(
+    ws: WebSocket,
+    exc: ExceptionCode,
+    msg: string,
+    key?: string,
+  ): void {
+    ws.send(
+      JSON.stringify({ type: 'error', exc, msg, key: key ?? 'error.ws' }),
+    );
+  }
+
+  private releasePending(ws: AuthWs) {
+    const ip = ws.pendingIp;
+    if (!ip) return;
+    ws.pendingIp = undefined;
+    const count = this.pendingByIp.get(ip) || 0;
+    if (count <= 1) this.pendingByIp.delete(ip);
+    else this.pendingByIp.set(ip, count - 1);
   }
 }

@@ -36,7 +36,11 @@ const tooltipVariants = {
   default: "bg-fg text-bg",
 };
 
-export function TooltipContent({ children, className, variant }: TooltipContentProps) {
+export function TooltipContent({
+  children,
+  className,
+  variant,
+}: TooltipContentProps) {
   const effectiveVariant = useComponentVariant(variant);
   const { open, side, triggerRect, hide, isDesktop, tooltipId } = useTooltip();
   const mounted = useSyncExternalStore(
@@ -126,7 +130,7 @@ export function TooltipContent({ children, className, variant }: TooltipContentP
   const mobileTooltip = (
     <>
       <div
-        className="animate-fade-in fixed inset-0 z-40 bg-overlay/50"
+        className="animate-fade-in bg-overlay/50 fixed inset-0 z-40"
         onClick={hide}
         aria-hidden="true"
       />

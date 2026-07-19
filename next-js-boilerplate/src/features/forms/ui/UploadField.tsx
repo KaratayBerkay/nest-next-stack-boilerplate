@@ -9,7 +9,15 @@ import type { UploadFieldProps } from "@/types/forms/UploadField-types";
 import type { UploadFile } from "@/types/ui/FileUpload-types";
 import { MAX_UPLOAD_SIZE } from "@/constants/upload";
 
-export function UploadField({ label, required, avatar, maxSizeBytes, maxFiles, accept, labels }: UploadFieldProps) {
+export function UploadField({
+  label,
+  required,
+  avatar,
+  maxSizeBytes,
+  maxFiles,
+  accept,
+  labels,
+}: UploadFieldProps) {
   const field = useFieldContext<UploadFile[]>();
   const files = field.state.value ?? [];
 

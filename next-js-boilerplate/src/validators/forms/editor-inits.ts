@@ -12,7 +12,9 @@ export const editorDefaultValues = {
 
 type EditorFormValues = typeof editorDefaultValues;
 
-export function createEditorInitialValues(record?: EditorFormValues): EditorFormValues {
+export function createEditorInitialValues(
+  record?: EditorFormValues,
+): EditorFormValues {
   if (!record) return { ...editorDefaultValues };
   return {
     ...record,

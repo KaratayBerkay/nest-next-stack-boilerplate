@@ -10,7 +10,8 @@ class ResizeObserverMock {
   unobserve() {}
   disconnect() {}
 }
-globalThis.ResizeObserver ??= ResizeObserverMock as unknown as typeof ResizeObserver;
+globalThis.ResizeObserver ??=
+  ResizeObserverMock as unknown as typeof ResizeObserver;
 
 // jsdom doesn't implement matchMedia; useDeviceType and other hooks depend on it.
 Object.defineProperty(window, "matchMedia", {

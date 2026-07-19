@@ -26,7 +26,9 @@ export interface AuditLogParams {
   entityFilter?: string;
 }
 
-export async function fetchAuditLogsServer(params: AuditLogParams): Promise<AuditLogResponse> {
+export async function fetchAuditLogsServer(
+  params: AuditLogParams,
+): Promise<AuditLogResponse> {
   const searchParams = new URLSearchParams();
   searchParams.set("take", String(params.take));
   searchParams.set("skip", String(params.skip));

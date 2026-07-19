@@ -51,9 +51,7 @@ function ComponentsTab() {
       </section>
 
       <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">
-          Skeleton Conversation Sidebar
-        </h3>
+        <h3 className="text-lg font-semibold">Skeleton Conversation Sidebar</h3>
         <SkeletonConversationSidebar
           className="max-w-sm"
           data-testid="skeleton-sidebar"
@@ -63,7 +61,13 @@ function ComponentsTab() {
   );
 }
 
-function ExamplesTab({ loading, setLoading }: { loading: boolean; setLoading: React.Dispatch<React.SetStateAction<boolean>> }) {
+function ExamplesTab({
+  loading,
+  setLoading,
+}: {
+  loading: boolean;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
   return (
     <section className="flex flex-col gap-3">
       <h3 className="text-lg font-semibold">Profile Card Loading</h3>
@@ -130,7 +134,12 @@ export default function SkeletonPage({ initialTab }: { initialTab?: string }) {
         <VariantGallery
           variants={["default", "shiny", "glass", "neon", "gradient"]}
           sizes={[]}
-          render={(variant) => <Skeleton variant={variant as SkeletonVariant} className="h-4 w-20" />}
+          render={(variant) => (
+            <Skeleton
+              variant={variant as SkeletonVariant}
+              className="h-4 w-20"
+            />
+          )}
         />
       ),
     },

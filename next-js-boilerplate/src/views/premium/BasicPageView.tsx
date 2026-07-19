@@ -27,7 +27,9 @@ async function loadStats(
 ) {
   setLoadingStats(true);
   try {
-    const data = await fetchPremiumStatsServer() as unknown as { stats: { totalUsers: number; activeUsers: number; revenue: number } };
+    const data = (await fetchPremiumStatsServer()) as unknown as {
+      stats: { totalUsers: number; activeUsers: number; revenue: number };
+    };
     setStats(data.stats);
   } catch {
     toast({ description: t.networkError, variant: "destructive" });

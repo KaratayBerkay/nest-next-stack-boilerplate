@@ -5,7 +5,13 @@ import { FormLevelError } from "./form-level-error";
 function createMockForm() {
   let errorMap = { onSubmit: undefined as unknown };
   return {
-    Subscribe: ({ selector, children }: { selector: (state: { errorMap: typeof errorMap }) => unknown; children: (error: unknown) => React.ReactNode }) => {
+    Subscribe: ({
+      selector,
+      children,
+    }: {
+      selector: (state: { errorMap: typeof errorMap }) => unknown;
+      children: (error: unknown) => React.ReactNode;
+    }) => {
       const val = selector({ errorMap });
       return <>{children(val)}</>;
     },
@@ -24,8 +30,16 @@ describe("FormLevelError", () => {
 
   it("renders error banner with role='alert' when onSubmit error exists", () => {
     const form = createMockForm();
-    form.Subscribe = function Subscribe({ selector, children }: { selector: (state: { errorMap: { onSubmit: string } }) => unknown; children: (error: unknown) => React.ReactNode }) {
-      return <>{children(selector({ errorMap: { onSubmit: "Server error" } }))}</>;
+    form.Subscribe = function Subscribe({
+      selector,
+      children,
+    }: {
+      selector: (state: { errorMap: { onSubmit: string } }) => unknown;
+      children: (error: unknown) => React.ReactNode;
+    }) {
+      return (
+        <>{children(selector({ errorMap: { onSubmit: "Server error" } }))}</>
+      );
     };
     render(<FormLevelError form={form} />);
     expect(screen.getByRole("alert")).toBeDefined();
@@ -34,7 +48,13 @@ describe("FormLevelError", () => {
 
   it("calls setErrorMap when dismiss is clicked", () => {
     const form = createMockForm();
-    form.Subscribe = function Subscribe({ selector, children }: { selector: (state: { errorMap: { onSubmit: string } }) => unknown; children: (error: unknown) => React.ReactNode }) {
+    form.Subscribe = function Subscribe({
+      selector,
+      children,
+    }: {
+      selector: (state: { errorMap: { onSubmit: string } }) => unknown;
+      children: (error: unknown) => React.ReactNode;
+    }) {
       return <>{children(selector({ errorMap: { onSubmit: "Error" } }))}</>;
     };
     render(<FormLevelError form={form} />);

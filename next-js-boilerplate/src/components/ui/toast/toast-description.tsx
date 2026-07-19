@@ -12,13 +12,6 @@ export function ToastDescription({
   const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
   return (
-    <div
-      className={cn(
-        "text-sm opacity-90",
-        fonts,
-        className,
-      )}
-      {...props}
-    />
+    <div className={cn("text-sm opacity-90", fonts, className)} {...props} />
   );
 }

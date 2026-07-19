@@ -11,11 +11,7 @@ function EventDateTab() {
 
   return (
     <div className="flex flex-col gap-3">
-      <DatePicker
-        value={date}
-        onChange={setDate}
-        className="max-w-sm"
-      />
+      <DatePicker value={date} onChange={setDate} className="max-w-sm" />
     </div>
   );
 }
@@ -36,8 +32,12 @@ function CardExpiryTab() {
         className="max-w-sm"
       />
       {expiry && (
-        <p className="text-sm text-fg">
-          Selected: {expiry.toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+        <p className="text-fg text-sm">
+          Selected:{" "}
+          {expiry.toLocaleDateString("en-US", {
+            month: "short",
+            year: "numeric",
+          })}
         </p>
       )}
     </div>
@@ -80,9 +80,7 @@ function YearOnlyTab() {
         className="max-w-sm"
       />
       {gradYear && (
-        <p className="text-sm text-fg">
-          Selected: {gradYear.getFullYear()}
-        </p>
+        <p className="text-fg text-sm">Selected: {gradYear.getFullYear()}</p>
       )}
     </div>
   );
@@ -91,7 +89,11 @@ function YearOnlyTab() {
 function CompactFormatTab() {
   const [compactDate, setCompactDate] = useState<Date | undefined>();
   const formatTime = (d: Date) =>
-    d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
+    d.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
 
   return (
     <div className="flex flex-col gap-3">
@@ -105,7 +107,7 @@ function CompactFormatTab() {
         className="max-w-sm"
       />
       {compactDate && (
-        <p className="text-sm text-fg">
+        <p className="text-fg text-sm">
           <span className="text-muted">DD/MM/YY: </span>
           {compactDate.toLocaleDateString("en-GB")}
           <span className="text-muted ml-3">Time: </span>
@@ -132,7 +134,8 @@ const examples: UIExample[] = [
   {
     id: "birthdate",
     title: "Birthdate",
-    description: "Date picker with dropdown year navigation from 1900 to present.",
+    description:
+      "Date picker with dropdown year navigation from 1900 to present.",
     render: () => <BirthdateTab />,
   },
   {
@@ -163,7 +166,11 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function DatePickerPage({ initialTab }: { initialTab?: string }) {
+export default function DatePickerPage({
+  initialTab,
+}: {
+  initialTab?: string;
+}) {
   return (
     <ExampleTabs
       title="Date Picker"

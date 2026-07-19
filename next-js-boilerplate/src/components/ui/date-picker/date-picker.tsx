@@ -1,7 +1,11 @@
 "use client";
 import { useState, useCallback } from "react";
 import { Calendar } from "@/components/ui/Calendar";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/Popover";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/Popover";
 import { usePopover } from "@/components/ui/popover/popover";
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
@@ -11,7 +15,11 @@ import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { useFieldMessages } from "@/components/ui/field-messages";
 import { useLang } from "@/hooks/useLang";
 import type { Lang } from "@/constants/i18n";
-import { formatDateByPreference, formatMonthYear, getMonthNames } from "@/lib/date-time";
+import {
+  formatDateByPreference,
+  formatMonthYear,
+  getMonthNames,
+} from "@/lib/date-time";
 import type { DateDisplayPreference } from "@/lib/date-time";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import type { DatePickerProps } from "@/types/ui/DatePicker-types";
@@ -79,8 +87,7 @@ function formatPickerValue(
 ): string {
   if (!value) return "";
   if (picker === "year") return value.getFullYear().toString();
-  if (picker === "month")
-    return formatMonthYear(value, locale);
+  if (picker === "month") return formatMonthYear(value, locale);
   return formatDateByPreference(value, dateDisplay, locale);
 }
 
@@ -197,14 +204,23 @@ function DatePickerCalendar({
   if (view === "months") {
     return (
       <div className="flex flex-col">
-        <div className="flex items-center justify-between border-b border-border px-3 py-2">
+        <div className="border-border flex items-center justify-between border-b px-3 py-2">
           <button
             type="button"
             onClick={() => setYearOffset((o) => o - 1)}
             className="text-muted hover:text-fg rounded-md p-1 transition-colors"
             aria-label={labels.prevYear}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
           </button>
           <span className="text-sm font-medium">{displayYear}</span>
           <button
@@ -213,7 +229,16 @@ function DatePickerCalendar({
             className="text-muted hover:text-fg rounded-md p-1 transition-colors"
             aria-label={labels.nextYear}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M9 18l6-6-6-6" />
+            </svg>
           </button>
         </div>
         <MonthGrid
@@ -221,7 +246,7 @@ function DatePickerCalendar({
           selectedMonth={picker === "month" ? selectedMonth : undefined}
           onSelect={handleSelectMonth}
         />
-        <div className="border-t border-border p-1">
+        <div className="border-border border-t p-1">
           <button
             type="button"
             onClick={() => setView("years")}
@@ -238,23 +263,43 @@ function DatePickerCalendar({
     const decadeStart = Math.floor(displayYear / 12) * 12;
     return (
       <div className="flex flex-col">
-        <div className="flex items-center justify-between border-b border-border px-3 py-2">
+        <div className="border-border flex items-center justify-between border-b px-3 py-2">
           <button
             type="button"
             onClick={() => setYearOffset((o) => o - 12)}
             className="text-muted hover:text-fg rounded-md p-1 transition-colors"
             aria-label={labels.prevPage}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
           </button>
-          <span className="text-sm font-medium">{decadeStart}–{decadeStart + 11}</span>
+          <span className="text-sm font-medium">
+            {decadeStart}–{decadeStart + 11}
+          </span>
           <button
             type="button"
             onClick={() => setYearOffset((o) => o + 12)}
             className="text-muted hover:text-fg rounded-md p-1 transition-colors"
             aria-label={labels.nextPage}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M9 18l6-6-6-6" />
+            </svg>
           </button>
         </div>
         <YearGrid
@@ -262,7 +307,7 @@ function DatePickerCalendar({
           selectedYear={selectedYear}
           onSelect={handleSelectYear}
         />
-        <div className="border-t border-border p-1">
+        <div className="border-border border-t p-1">
           <button
             type="button"
             onClick={() => setView(picker === "year" ? "months" : "months")}

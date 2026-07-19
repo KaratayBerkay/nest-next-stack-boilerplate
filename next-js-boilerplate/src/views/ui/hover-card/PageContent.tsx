@@ -36,7 +36,7 @@ const examples: UIExample[] = [
         <section className="flex flex-col gap-3">
           <h3 className="text-lg font-semibold">GitHub Profile Preview</h3>
           <HoverCard>
-            <HoverCardTrigger className="cursor-pointer text-sm font-medium text-accent underline">
+            <HoverCardTrigger className="text-accent cursor-pointer text-sm font-medium underline">
               @janedoe
             </HoverCardTrigger>
             <HoverCardContent className="w-80">
@@ -65,7 +65,7 @@ const examples: UIExample[] = [
         <section className="flex flex-col gap-3">
           <h3 className="text-lg font-semibold">Link Preview</h3>
           <HoverCard>
-            <HoverCardTrigger className="cursor-pointer text-sm text-accent underline">
+            <HoverCardTrigger className="text-accent cursor-pointer text-sm underline">
               https://nextjs.org/docs
             </HoverCardTrigger>
             <HoverCardContent className="flex w-80 flex-col gap-2">
@@ -89,7 +89,7 @@ const examples: UIExample[] = [
         <section className="flex flex-col gap-3">
           <h3 className="text-lg font-semibold">Code Repository</h3>
           <HoverCard>
-            <HoverCardTrigger className="cursor-pointer text-sm text-accent underline">
+            <HoverCardTrigger className="text-accent cursor-pointer text-sm underline">
               vercel/next.js
             </HoverCardTrigger>
             <HoverCardContent className="w-80">

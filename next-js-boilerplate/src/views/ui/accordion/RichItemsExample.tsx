@@ -1,10 +1,7 @@
 "use client";
 
 import { useMessages } from "@/lib/i18n/MessagesProvider";
-import {
-  Accordion,
-  AccordionItemComplex,
-} from "@/components/ui/Accordion";
+import { Accordion, AccordionItemComplex } from "@/components/ui/Accordion";
 import {
   IconInfoCircle,
   IconSettings,
@@ -23,17 +20,17 @@ export function RichItemsExample() {
             value="faq1"
             centerSlot={
               <div>
-                <div className="font-semibold text-base">{t.faq1Title}</div>
-                <div className="text-muted text-sm mt-1">{t.faq1Desc}</div>
+                <div className="text-base font-semibold">{t.faq1Title}</div>
+                <div className="text-muted mt-1 text-sm">{t.faq1Desc}</div>
               </div>
             }
             leftSlot={
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand text-brand-fg">
+              <div className="bg-brand text-brand-fg flex h-10 w-10 items-center justify-center rounded-full">
                 <IconInfoCircle size={18} stroke={2.5} />
               </div>
             }
             rightSlot={
-              <span className="inline-flex items-center rounded-full bg-brand/15 px-2.5 py-0.5 text-xs font-medium text-brand">
+              <span className="bg-brand/15 text-brand inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium">
                 {t.categoryGeneral}
               </span>
             }
@@ -48,17 +45,17 @@ export function RichItemsExample() {
             value="faq2"
             centerSlot={
               <div>
-                <div className="font-semibold text-base">{t.faq2Title}</div>
-                <div className="text-muted text-sm mt-1">{t.faq2Desc}</div>
+                <div className="text-base font-semibold">{t.faq2Title}</div>
+                <div className="text-muted mt-1 text-sm">{t.faq2Desc}</div>
               </div>
             }
             leftSlot={
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-info text-info-fg">
+              <div className="bg-info text-info-fg flex h-10 w-10 items-center justify-center rounded-full">
                 <IconSettings size={18} stroke={2.5} />
               </div>
             }
             rightSlot={
-              <span className="inline-flex items-center rounded-full bg-info/15 px-2.5 py-0.5 text-xs font-medium text-info">
+              <span className="bg-info/15 text-info inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium">
                 {t.categoryCustomization}
               </span>
             }
@@ -73,17 +70,17 @@ export function RichItemsExample() {
             value="faq3"
             centerSlot={
               <div>
-                <div className="font-semibold text-base">{t.faq3Title}</div>
-                <div className="text-muted text-sm mt-1">{t.faq3Desc}</div>
+                <div className="text-base font-semibold">{t.faq3Title}</div>
+                <div className="text-muted mt-1 text-sm">{t.faq3Desc}</div>
               </div>
             }
             leftSlot={
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success text-success-fg">
+              <div className="bg-success text-success-fg flex h-10 w-10 items-center justify-center rounded-full">
                 <IconCircleCheck size={18} stroke={2.5} />
               </div>
             }
             rightSlot={
-              <span className="inline-flex items-center rounded-full bg-success/15 px-2.5 py-0.5 text-xs font-medium text-success">
+              <span className="bg-success/15 text-success inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium">
                 {t.categoryBehavior}
               </span>
             }
@@ -104,8 +101,8 @@ export function RichItemsExample() {
             value="user1"
             centerSlot={
               <div>
-                <div className="font-semibold text-base">{t.sarahName}</div>
-                <div className="text-muted text-sm mt-1">{t.sarahRole}</div>
+                <div className="text-base font-semibold">{t.sarahName}</div>
+                <div className="text-muted mt-1 text-sm">{t.sarahRole}</div>
               </div>
             }
             leftSlot={
@@ -118,7 +115,7 @@ export function RichItemsExample() {
             }
             rightSlot={
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center rounded-full bg-success/10 px-2.5 py-0.5 text-xs font-medium text-success">
+                <span className="bg-success/10 text-success inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium">
                   {t.statusActive}
                 </span>
               </div>
@@ -127,9 +124,15 @@ export function RichItemsExample() {
               <div className="space-y-3">
                 <p>{t.sarahBio}</p>
                 <div className="flex gap-2">
-                  <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium">{t.skillFigma}</span>
-                  <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium">{t.skillPrototyping}</span>
-                  <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium">{t.skillUserResearch}</span>
+                  <span className="bg-muted inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium">
+                    {t.skillFigma}
+                  </span>
+                  <span className="bg-muted inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium">
+                    {t.skillPrototyping}
+                  </span>
+                  <span className="bg-muted inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium">
+                    {t.skillUserResearch}
+                  </span>
                 </div>
               </div>
             }
@@ -138,8 +141,8 @@ export function RichItemsExample() {
             value="user2"
             centerSlot={
               <div>
-                <div className="font-semibold text-base">{t.mikeName}</div>
-                <div className="text-muted text-sm mt-1">{t.mikeRole}</div>
+                <div className="text-base font-semibold">{t.mikeName}</div>
+                <div className="text-muted mt-1 text-sm">{t.mikeRole}</div>
               </div>
             }
             leftSlot={
@@ -152,7 +155,7 @@ export function RichItemsExample() {
             }
             rightSlot={
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center rounded-full bg-success/10 px-2.5 py-0.5 text-xs font-medium text-success">
+                <span className="bg-success/10 text-success inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium">
                   {t.statusActive}
                 </span>
               </div>
@@ -161,9 +164,15 @@ export function RichItemsExample() {
               <div className="space-y-3">
                 <p>{t.mikeBio}</p>
                 <div className="flex gap-2">
-                  <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium">{t.skillReact}</span>
-                  <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium">{t.skillTypeScript}</span>
-                  <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium">{t.skillAWS}</span>
+                  <span className="bg-muted inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium">
+                    {t.skillReact}
+                  </span>
+                  <span className="bg-muted inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium">
+                    {t.skillTypeScript}
+                  </span>
+                  <span className="bg-muted inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium">
+                    {t.skillAWS}
+                  </span>
                 </div>
               </div>
             }

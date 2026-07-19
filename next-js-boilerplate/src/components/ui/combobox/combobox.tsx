@@ -62,17 +62,20 @@ export function Combobox({
 
   useClickOutside(wrapperRef, close);
 
-  const toggleValue = useCallback((val: string) => {
-    if (!multiple || !isMultiValue(value)) {
-      onValueChange?.(val);
-      close();
-      return;
-    }
-    const next = value.includes(val)
-      ? value.filter((v: string) => v !== val)
-      : [...value, val];
-    onValueChange?.(next);
-  }, [multiple, value, onValueChange, close]);
+  const toggleValue = useCallback(
+    (val: string) => {
+      if (!multiple || !isMultiValue(value)) {
+        onValueChange?.(val);
+        close();
+        return;
+      }
+      const next = value.includes(val)
+        ? value.filter((v: string) => v !== val)
+        : [...value, val];
+      onValueChange?.(next);
+    },
+    [multiple, value, onValueChange, close],
+  );
 
   const triggerLabel = (() => {
     if (!multiple || !isMultiValue(value) || value.length === 0) {
@@ -82,16 +85,15 @@ export function Combobox({
       return undefined;
     }
     if (value.length <= 2) {
-      return value.map((v: string) => options.find((o) => o.value === v)?.label ?? v).join(", ");
+      return value
+        .map((v: string) => options.find((o) => o.value === v)?.label ?? v)
+        .join(", ");
     }
     return `${value.length} selected`;
   })();
 
   return (
-    <div
-      ref={wrapperRef}
-      className={cn("relative", className)}
-    >
+    <div ref={wrapperRef} className={cn("relative", className)}>
       <button
         ref={triggerRef}
         type="button"
@@ -110,7 +112,12 @@ export function Combobox({
         aria-controls={listId}
         aria-describedby={describedBy}
       >
-        <span className={cn("truncate", fontClasses({ fontSize, fontWeight, fontFamily }))}>
+        <span
+          className={cn(
+            "truncate",
+            fontClasses({ fontSize, fontWeight, fontFamily }),
+          )}
+        >
           {triggerLabel || placeholder}
         </span>
         <svg
@@ -141,21 +148,38 @@ export function Combobox({
                     o.label.toLowerCase().includes(query.toLowerCase()),
                   )
                   .map((opt) => {
-                    const isSelected = multiple && selectedValues.includes(opt.value);
+                    const isSelected =
+                      multiple && selectedValues.includes(opt.value);
                     return (
                       <CommandItem
                         key={opt.value}
                         value={opt.value}
                         onSelect={() => toggleValue(opt.value)}
                       >
-                        <span className={cn("flex items-center gap-2", fontClasses({ fontSize, fontWeight, fontFamily }))}>
+                        <span
+                          className={cn(
+                            "flex items-center gap-2",
+                            fontClasses({ fontSize, fontWeight, fontFamily }),
+                          )}
+                        >
                           {multiple && (
-                            <span className={cn(
-                              "flex size-4 items-center justify-center rounded-[2px] border",
-                              isSelected ? "bg-brand border-brand" : "border-border",
-                            )}>
+                            <span
+                              className={cn(
+                                "flex size-4 items-center justify-center rounded-[2px] border",
+                                isSelected
+                                  ? "bg-brand border-brand"
+                                  : "border-border",
+                              )}
+                            >
                               {isSelected && (
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+                                <svg
+                                  width="10"
+                                  height="10"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="white"
+                                  strokeWidth="3"
+                                >
                                   <path d="M20 6L9 17l-5-5" />
                                 </svg>
                               )}
@@ -172,8 +196,18 @@ export function Combobox({
               ).length === 0 && (
                 <Empty
                   icon={
-                    <svg className="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    <svg
+                      className="size-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
                     </svg>
                   }
                   title={emptyTitle}

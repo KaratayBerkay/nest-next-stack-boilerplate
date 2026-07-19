@@ -10,7 +10,13 @@ export function useToast() {
   const { dispatch } = useToastContext();
 
   const toast = useCallback(
-    ({ title, description, variant = "default", action, duration }: ToastOptions) => {
+    ({
+      title,
+      description,
+      variant = "default",
+      action,
+      duration,
+    }: ToastOptions) => {
       const id = Math.random().toString(36).slice(2, 11);
       const resolvedDuration =
         duration ?? (variant === "destructive" ? Infinity : DEFAULT_DURATION);

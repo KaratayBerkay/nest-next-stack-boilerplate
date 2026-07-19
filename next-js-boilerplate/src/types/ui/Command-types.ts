@@ -5,7 +5,12 @@ export interface CommandProps extends React.ComponentPropsWithoutRef<"div"> {
   className?: string;
 }
 
-export type CommandVariant = "default" | "shiny" | "glass" | "neon" | "gradient";
+export type CommandVariant =
+  | "default"
+  | "shiny"
+  | "glass"
+  | "neon"
+  | "gradient";
 
 export interface CommandInputProps extends React.ComponentPropsWithoutRef<"input"> {
   className?: string;

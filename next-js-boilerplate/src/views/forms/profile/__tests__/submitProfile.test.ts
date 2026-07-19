@@ -26,7 +26,13 @@ const defaultValue = {
   birthDate: undefined,
   meetingTime: { hours: 0, minutes: 0, seconds: 0 },
   notificationPrefs: { email: true, push: false, sms: false },
-  avatar: [] as { id: string; file: File; progress: number; status: string; preview?: string }[],
+  avatar: [] as {
+    id: string;
+    file: File;
+    progress: number;
+    status: string;
+    preview?: string;
+  }[],
 } as unknown as Parameters<typeof submitProfile>[0]["value"];
 
 describe("submitProfile", () => {
@@ -47,7 +53,9 @@ describe("submitProfile", () => {
         exc: "EX_VALIDATION_FORM",
         msg: "Name is required",
         key: "errors.missing",
-        fields: [{ field: "name", msg: "Name is required", key: "errors.missing" }],
+        fields: [
+          { field: "name", msg: "Name is required", key: "errors.missing" },
+        ],
       } satisfies ExceptionResponse,
     });
     const result = await submitProfile({ value: defaultValue }, deps);

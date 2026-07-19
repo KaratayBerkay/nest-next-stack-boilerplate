@@ -101,15 +101,19 @@ function ToggleExamplesTab() {
     <div className="flex flex-col gap-8">
       <section className="flex flex-col gap-4">
         <h3 className="text-lg font-semibold">Default</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Switch aria-label="Off example" data-testid="switch-default" />
-          <Switch defaultChecked aria-label="On example" data-testid="switch-checked" />
+          <Switch
+            defaultChecked
+            aria-label="On example"
+            data-testid="switch-checked"
+          />
         </div>
       </section>
 
       <section className="flex flex-col gap-4">
         <h3 className="text-lg font-semibold">Disabled</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Switch disabled data-testid="switch-disabled" />
           <Switch disabled defaultChecked />
         </div>
@@ -139,7 +143,9 @@ function NotificationSettingsTab() {
         <div className="flex items-center justify-between px-5 py-4">
           <div className="space-y-0.5">
             <Label htmlFor="push">Push Notifications</Label>
-            <p className="text-muted text-xs">Get instant alerts for important updates and mentions</p>
+            <p className="text-muted text-xs">
+              Get instant alerts for important updates and mentions
+            </p>
           </div>
           <Switch
             id="push"
@@ -152,7 +158,9 @@ function NotificationSettingsTab() {
         <div className="flex items-center justify-between px-5 py-4">
           <div className="space-y-0.5">
             <Label htmlFor="emailDigest">Email Digest</Label>
-            <p className="text-muted text-xs">Receive a weekly summary of your activity and top stories</p>
+            <p className="text-muted text-xs">
+              Receive a weekly summary of your activity and top stories
+            </p>
           </div>
           <Switch
             id="emailDigest"
@@ -165,20 +173,22 @@ function NotificationSettingsTab() {
         <div className="flex items-center justify-between px-5 py-4">
           <div className="space-y-0.5">
             <Label htmlFor="sms">SMS Alerts</Label>
-            <p className="text-muted text-xs">Get text messages for critical system alerts and outages</p>
+            <p className="text-muted text-xs">
+              Get text messages for critical system alerts and outages
+            </p>
           </div>
           <Switch
             id="sms"
             checked={prefs.sms}
-            onChange={(e) =>
-              setPrefs((s) => ({ ...s, sms: e.target.checked }))
-            }
+            onChange={(e) => setPrefs((s) => ({ ...s, sms: e.target.checked }))}
           />
         </div>
         <div className="flex items-center justify-between px-5 py-4">
           <div className="space-y-0.5">
             <Label htmlFor="marketing">Marketing Emails</Label>
-            <p className="text-muted text-xs">Stay informed about new features, tips, and promotions</p>
+            <p className="text-muted text-xs">
+              Stay informed about new features, tips, and promotions
+            </p>
           </div>
           <Switch
             id="marketing"
@@ -203,7 +213,11 @@ function VariantGalleryTab() {
       variants={["default", "shiny", "glass", "neon", "gradient"]}
       sizes={["sm", "md", "lg"]}
       render={(variant, size) => (
-        <Switch variant={variant as SwitchVariant} switchSize={size as SwitchSize} defaultChecked />
+        <Switch
+          variant={variant as SwitchVariant}
+          switchSize={size as SwitchSize}
+          defaultChecked
+        />
       )}
     />
   );
@@ -213,19 +227,22 @@ const examples: UIExample[] = [
   {
     id: "toggle-examples",
     title: "Toggle Examples",
-    description: "Basic switch examples across states and a quick-settings panel demo.",
+    description:
+      "Basic switch examples across states and a quick-settings panel demo.",
     render: () => <ToggleExamplesTab />,
   },
   {
     id: "notification-settings",
     title: "Notification Settings",
-    description: "A grouped notification-preferences panel with individual toggle controls.",
+    description:
+      "A grouped notification-preferences panel with individual toggle controls.",
     render: () => <NotificationSettingsTab />,
   },
   {
     id: "variant-gallery",
     title: "Variant Gallery",
-    description: "All switch variants and sizes in a side-by-side comparison table.",
+    description:
+      "All switch variants and sizes in a side-by-side comparison table.",
     render: () => <VariantGalleryTab />,
   },
 ];

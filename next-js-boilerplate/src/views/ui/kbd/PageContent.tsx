@@ -53,7 +53,7 @@ const examples: UIExample[] = [
 
         <section className="flex flex-col gap-3">
           <h3 className="text-lg font-semibold">Hotkey Reference</h3>
-          <div className="surface p-6 rounded-xl space-y-3">
+          <div className="surface space-y-3 rounded-xl p-6">
             {[
               { keys: "⌘ + N", action: "New file" },
               { keys: "⌘ + O", action: "Open file" },

@@ -9,13 +9,7 @@ export function SelectValue({ placeholder, className }: SelectValueProps) {
   const displayText = value ? labelMap.current.get(value) : undefined;
 
   return (
-    <span
-      className={cn(
-        "truncate",
-        !displayText && "text-muted",
-        className,
-      )}
-    >
+    <span className={cn("truncate", !displayText && "text-muted", className)}>
       {displayText ?? placeholder ?? ""}
     </span>
   );

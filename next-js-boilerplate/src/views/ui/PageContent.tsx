@@ -23,7 +23,7 @@ export default function UIPage() {
           <Link
             key={c.slug}
             href={`/v1/${lang}/ui/${c.slug}`}
-            className="surface flex items-center justify-center p-4 text-center text-sm font-medium hover:bg-surface-hover"
+            className="surface hover:bg-surface-hover flex items-center justify-center p-4 text-center text-sm font-medium"
           >
             {c.name}
           </Link>

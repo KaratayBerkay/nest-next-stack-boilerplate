@@ -1,11 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import {
-  useTheme,
-  THEMES,
-  type ThemeName,
-} from "@/hooks/useTheme";
+import { useTheme, THEMES, type ThemeName } from "@/hooks/useTheme";
 import {
   IconSun,
   IconMoon,
@@ -61,9 +57,7 @@ export function ThemeToggle() {
               >
                 <ItemIcon size={16} stroke={1.5} />
                 <span className="flex-1">{t.label}</span>
-                {active && (
-                  <span className="bg-brand h-2 w-2 rounded-full" />
-                )}
+                {active && <span className="bg-brand h-2 w-2 rounded-full" />}
               </button>
             );
           })}

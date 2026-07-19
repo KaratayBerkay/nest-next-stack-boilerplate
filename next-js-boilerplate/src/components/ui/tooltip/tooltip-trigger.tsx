@@ -17,7 +17,8 @@ export function TooltipTrigger({
   ...props
 }: TooltipTriggerProps) {
   const ref = useRef<HTMLElement>(null);
-  const { show, hide, toggle, setTriggerRect, isDesktop, open, tooltipId } = useTooltip();
+  const { show, hide, toggle, setTriggerRect, isDesktop, open, tooltipId } =
+    useTooltip();
 
   const updateRect = useCallback(() => {
     if (ref.current) {

@@ -98,7 +98,15 @@ export function FreePageView() {
       </div>
 
       <Button
-        onClick={() => handleSave(toast, hideProfilePicture, useNickname, nickname, enable2FA)}
+        onClick={() =>
+          handleSave(
+            toast,
+            hideProfilePicture,
+            useNickname,
+            nickname,
+            enable2FA,
+          )
+        }
         variant="primary"
         className="self-start"
       >

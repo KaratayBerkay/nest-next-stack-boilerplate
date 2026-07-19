@@ -8,5 +8,3 @@ export type Breakpoint = keyof typeof breakpoints;
 export function useBreakpoint(breakpoint: Breakpoint): boolean {
   return useMediaQuery(breakpoints[breakpoint]);
 }
-
-

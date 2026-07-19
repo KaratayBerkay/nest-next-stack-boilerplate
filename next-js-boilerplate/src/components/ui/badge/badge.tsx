@@ -37,14 +37,17 @@ export function Badge({
   ...props
 }: BadgeProps) {
   const effectiveVariant = useComponentVariant(variant);
-  const fonts = fontClasses({ fontSize, fontWeight, fontFamily }, { fontSize: "text-xs" });
+  const fonts = fontClasses(
+    { fontSize, fontWeight, fontFamily },
+    { fontSize: "text-xs" },
+  );
 
   return (
     <span
       className={cn(
         "inline-flex items-center justify-center",
         pill ? "rounded-full" : "rounded-md",
-        dot && "p-0 size-3.5 rounded-full border-2 border-border",
+        dot && "border-border size-3.5 rounded-full border-2 p-0",
         !dot && resolveVariant(variants, effectiveVariant),
         !dot && sizeMap[size],
         fonts,

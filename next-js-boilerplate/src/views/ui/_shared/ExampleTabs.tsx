@@ -1,6 +1,11 @@
 "use client";
 
-import { useCallback, useState, type Dispatch, type SetStateAction } from "react";
+import {
+  useCallback,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 import type { ExampleTabsProps, UIExample } from "@/types/ui/ExampleTabs-types";
@@ -34,7 +39,10 @@ export function ExampleTabs({
   const pathname = usePathname();
 
   const validIds = examples.map((e) => e.id);
-  const defaultTab = initialTab && validIds.includes(initialTab) ? initialTab : examples[0]?.id ?? "";
+  const defaultTab =
+    initialTab && validIds.includes(initialTab)
+      ? initialTab
+      : (examples[0]?.id ?? "");
 
   const [internalValue, setInternalValue] = useState(defaultTab);
   const isControlled = controlledValue !== undefined;
@@ -56,7 +64,7 @@ export function ExampleTabs({
   );
 
   return (
-    <div className="flex flex-col gap-6 w-full">
+    <div className="flex w-full flex-col gap-6">
       <div className="space-y-2">
         <h2 className="text-2xl font-bold">{title}</h2>
         <p className="text-muted text-sm">{intro}</p>
@@ -107,10 +115,20 @@ export function ExampleTabs({
         >
           {examples.find((e) => e.id === currentValue)?.title ?? "Select"}
           <svg
-            className={cn("h-4 w-4 transition-transform duration-200", accordionOpen && "rotate-180")}
-            fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            className={cn(
+              "h-4 w-4 transition-transform duration-200",
+              accordionOpen && "rotate-180",
+            )}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+            />
           </svg>
         </button>
         {accordionOpen && (
@@ -126,7 +144,7 @@ export function ExampleTabs({
                     setAccordionOpen(false);
                   }}
                   className={cn(
-                    "rounded-md px-4 py-2.5 text-sm font-medium text-left transition-colors",
+                    "rounded-md px-4 py-2.5 text-left text-sm font-medium transition-colors",
                     isActive
                       ? "bg-surface-hover text-fg"
                       : "text-muted hover:bg-surface-hover/50 hover:text-fg",

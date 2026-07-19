@@ -2,7 +2,8 @@ import { queryOptions } from "@tanstack/react-query";
 import type { PremiumStats } from "@/api/server/premium/stats";
 
 async function fetchPremiumStats(): Promise<PremiumStats> {
-  const { fetchPremiumStatsServer } = await import("@/api/server/premium/stats");
+  const { fetchPremiumStatsServer } =
+    await import("@/api/server/premium/stats");
   return fetchPremiumStatsServer();
 }
 

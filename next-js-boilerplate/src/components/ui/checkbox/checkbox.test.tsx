@@ -40,7 +40,9 @@ describe("IndeterminateCheckbox", () => {
 describe("CheckboxCard", () => {
   it("toggles via clicking the checkbox input (Space/Enter in jsdom)", () => {
     const onChange = vi.fn();
-    render(<CheckboxCard title="Option A" checked={false} onChange={onChange} />);
+    render(
+      <CheckboxCard title="Option A" checked={false} onChange={onChange} />,
+    );
     const checkbox = screen.getByRole("checkbox") as HTMLInputElement;
     fireEvent.click(checkbox);
     expect(onChange).toHaveBeenCalledWith(true);
@@ -48,7 +50,9 @@ describe("CheckboxCard", () => {
 
   it("toggles via label click", () => {
     const onChange = vi.fn();
-    render(<CheckboxCard title="Option B" checked={false} onChange={onChange} />);
+    render(
+      <CheckboxCard title="Option B" checked={false} onChange={onChange} />,
+    );
     const label = screen.getByText("Option B").closest("label")!;
     fireEvent.click(label);
     expect(onChange).toHaveBeenCalledWith(true);

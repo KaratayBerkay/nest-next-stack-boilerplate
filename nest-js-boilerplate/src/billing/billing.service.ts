@@ -6,6 +6,7 @@ import { TokenStoreService } from '../auth/token-store.service';
 import { NotificationService } from '../notification/notification.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { StripeService } from './stripe/stripe.service';
+import { WalletService } from './wallet.service';
 import {
   PAYMENT_PROVIDER,
   type PaymentProvider,
@@ -22,6 +23,7 @@ export class BillingService {
     private readonly notification: NotificationService,
     private readonly realtime: RealtimeGateway,
     private readonly stripeService: StripeService,
+    private readonly wallet: WalletService,
     @Inject(PAYMENT_PROVIDER) private readonly provider: PaymentProvider,
   ) {}
 
@@ -94,7 +96,7 @@ export class BillingService {
       }
 
       // Create initial WalletTransaction for the first invoice
-      const wallet = await this.ensureWallet(userId);
+      const wallet = await this.wallet.ensureWallet(userId);
 
       await this.prisma.$transaction([
         this.prisma.user.update({
@@ -154,7 +156,7 @@ export class BillingService {
 
     // Downgrade
     const idempotencyKey = this.generateIdempotencyKey(userId, targetTier);
-    const wallet = await this.ensureWallet(userId);
+    const wallet = await this.wallet.ensureWallet(userId);
 
     // Cancel Stripe subscription at period end
     if (user.stripeCustomerId) {
@@ -288,16 +290,6 @@ export class BillingService {
     const setupIntent =
       await this.stripeService.createSetupIntent(stripeCustomerId);
     return { clientSecret: setupIntent.client_secret };
-  }
-
-  private async ensureWallet(userId: string) {
-    const existing = await this.prisma.wallet.findUnique({
-      where: { userId_currency: { userId, currency: 'USD' } },
-    });
-    if (existing) return existing;
-    return this.prisma.wallet.create({
-      data: { userId, currency: 'USD', isPrimary: true },
-    });
   }
 
   private generateIdempotencyKey(

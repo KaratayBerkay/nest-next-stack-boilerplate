@@ -7,7 +7,9 @@ export interface AdminUserResult {
   email: string;
 }
 
-export async function searchAdminUsersServer(q: string): Promise<AdminUserResult[]> {
+export async function searchAdminUsersServer(
+  q: string,
+): Promise<AdminUserResult[]> {
   const res = await apiFetch(
     `${USERS_SEARCH_PREFIX}?q=${encodeURIComponent(q)}&take=20`,
   );

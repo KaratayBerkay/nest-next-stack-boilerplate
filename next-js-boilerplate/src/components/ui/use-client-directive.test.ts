@@ -36,9 +36,7 @@ describe('"use client" directive canary', () => {
     "%s has use client as line 1",
     (relativePath) => {
       const fullPath = join(uiDir, relativePath);
-      const firstLine = readFileSync(fullPath, "utf-8")
-        .split("\n")[0]
-        .trim();
+      const firstLine = readFileSync(fullPath, "utf-8").split("\n")[0].trim();
       expect(firstLine.replace(/;$/, "")).toBe('"use client"');
     },
   );

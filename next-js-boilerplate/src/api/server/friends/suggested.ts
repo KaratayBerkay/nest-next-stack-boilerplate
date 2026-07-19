@@ -10,7 +10,9 @@ export interface SuggestedFriend {
   mutualFriends: number;
 }
 
-export async function fetchSuggestedFriendsServer(): Promise<SuggestedFriend[]> {
+export async function fetchSuggestedFriendsServer(): Promise<
+  SuggestedFriend[]
+> {
   const res = await apiFetch(GQL_URL, {
     method: POST,
     headers: JSON_CONTENT_TYPE_HEADER,

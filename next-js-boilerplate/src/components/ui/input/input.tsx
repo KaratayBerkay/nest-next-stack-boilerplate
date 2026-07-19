@@ -28,7 +28,10 @@ export function Input({
   const effectiveVariant = useComponentVariant(variant);
   const variantClass = resolveVariant(inputVariants, effectiveVariant);
   const sizeClass = inputSizes.md;
-  const fonts = fontClasses({ fontSize, fontWeight, fontFamily }, { fontSize: sizeClass.split(" ")[1], fontWeight: "font-normal" });
+  const fonts = fontClasses(
+    { fontSize, fontWeight, fontFamily },
+    { fontSize: sizeClass.split(" ")[1], fontWeight: "font-normal" },
+  );
 
   const errorStr = typeof error === "string" ? error : undefined;
   const { describedBy, messages } = useFieldMessages(errorStr, description);
@@ -38,9 +41,9 @@ export function Input({
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="relative flex items-center w-full">
+      <div className="relative flex w-full items-center">
         {leftIcon && (
-          <div className="absolute left-3 text-muted">{leftIcon}</div>
+          <div className="text-muted absolute left-3">{leftIcon}</div>
         )}
         <input
           className={cn(
@@ -57,7 +60,7 @@ export function Input({
           {...props}
         />
         {rightIcon && (
-          <div className="absolute right-3 text-muted">{rightIcon}</div>
+          <div className="text-muted absolute right-3">{rightIcon}</div>
         )}
       </div>
       {messages}

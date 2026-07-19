@@ -67,7 +67,10 @@ function TypedConfirmationDemo() {
           />
         </DialogBody>
         <DialogFooter>
-          <Button variant="ghost" onClick={() => handleTypedCancel(setOpen, setInputValue)}>
+          <Button
+            variant="ghost"
+            onClick={() => handleTypedCancel(setOpen, setInputValue)}
+          >
             Cancel
           </Button>
           <Button
@@ -96,9 +99,7 @@ function handleAsyncConfirm(
   }, 2000);
 }
 
-function handleAsyncCancel(
-  setOpen: Dispatch<SetStateAction<boolean>>,
-) {
+function handleAsyncCancel(setOpen: Dispatch<SetStateAction<boolean>>) {
   setOpen(false);
 }
 
@@ -147,7 +148,8 @@ const examples: UIExample[] = [
   {
     id: "destructive-delete",
     title: "Destructive Delete",
-    description: "Confirm dialog with destructive variant for permanent actions.",
+    description:
+      "Confirm dialog with destructive variant for permanent actions.",
     render: () => (
       <ConfirmDialog
         title="Delete Account"
@@ -158,7 +160,7 @@ const examples: UIExample[] = [
         {(open) => (
           <button
             onClick={open}
-            className="rounded-lg bg-error px-3 py-1.5 text-sm font-medium text-error-fg hover:opacity-90"
+            className="bg-error text-error-fg rounded-lg px-3 py-1.5 text-sm font-medium hover:opacity-90"
           >
             Delete Account
           </button>
@@ -198,12 +200,17 @@ const examples: UIExample[] = [
   {
     id: "async-confirm",
     title: "Async Confirm",
-    description: "Simulates an async operation with a loading spinner on the confirm button.",
+    description:
+      "Simulates an async operation with a loading spinner on the confirm button.",
     render: () => <AsyncConfirmDemo />,
   },
 ];
 
-export default function ConfirmDialogPage({ initialTab }: { initialTab?: string }) {
+export default function ConfirmDialogPage({
+  initialTab,
+}: {
+  initialTab?: string;
+}) {
   return (
     <ExampleTabs
       title="Confirm Dialog"

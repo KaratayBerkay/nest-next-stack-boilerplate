@@ -11,10 +11,7 @@ import {
   X_FORWARDED_FOR_HEADER,
   bearerAuthHeader,
 } from "@/constants";
-import {
-  CSRF_TOKEN_BACKEND_URL,
-  GQL_BACKEND_PATH,
-} from "@/constants/api/urls";
+import { CSRF_TOKEN_BACKEND_URL, GQL_BACKEND_PATH } from "@/constants/api/urls";
 import {
   DEVICE_TOKEN_COOKIE,
   RBAC_TOKEN_COOKIE,

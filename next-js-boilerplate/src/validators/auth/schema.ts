@@ -70,7 +70,10 @@ function generateCardLoginSchema(errors: {
 }) {
   return z.object({
     email: z.string().min(1, errors.emailRequired).email(errors.emailInvalid),
-    password: z.string().min(1, errors.passwordRequired).min(6, errors.passwordMin6),
+    password: z
+      .string()
+      .min(1, errors.passwordRequired)
+      .min(6, errors.passwordMin6),
   });
 }
 
@@ -89,7 +92,10 @@ function generateCardRegisterSchema(errors: {
       firstName: z.string().min(1, errors.firstNameRequired),
       lastName: z.string().min(1, errors.lastNameRequired),
       email: z.string().min(1, errors.emailRequired).email(errors.emailInvalid),
-      password: z.string().min(1, errors.passwordRequired).min(6, errors.passwordMin6),
+      password: z
+        .string()
+        .min(1, errors.passwordRequired)
+        .min(6, errors.passwordMin6),
       confirmPassword: z.string().min(1, errors.confirmPasswordRequired),
     })
     .refine((data) => data.password === data.confirmPassword, {

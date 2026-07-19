@@ -6,17 +6,16 @@ import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
-import {
-  TIER_PRICES_CENTS,
-  tierLabel,
-  type Tier,
-} from "@/lib/tier";
+import { TIER_PRICES_CENTS, tierLabel, type Tier } from "@/lib/tier";
 import { formatPrice } from "@/lib/currency";
 import { useCurrencyCookie } from "@/hooks/useCurrencyCookie";
 import type { CurrencyCode } from "@/constants/currency";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { plansPath } from "@/constants/routes";
-import { formatDateByPreference, type DateDisplayPreference } from "@/lib/date-time";
+import {
+  formatDateByPreference,
+  type DateDisplayPreference,
+} from "@/lib/date-time";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsPageInfo } from "@/constants/page-info";
 import { subscriptionQueryOptions } from "@/api/client/billing/query";
@@ -59,10 +58,7 @@ function renderPlanInfo(
   );
 }
 
-function renderPlanAdvantages(
-  tier: Tier,
-  FEATURES: Record<Tier, string[]>,
-) {
+function renderPlanAdvantages(tier: Tier, FEATURES: Record<Tier, string[]>) {
   return (
     <div className="flex flex-col gap-3">
       <h3 className="text-sm font-medium">Plan Advantages</h3>
@@ -141,9 +137,21 @@ export default function PageContent({ params }: SettingsIndexPageProps) {
       </div>
 
       <div className="flex flex-col gap-4">
-        {renderPlanInfo(tier, periodEnd, cancelAtPeriodEnd, t as unknown as Record<string, string>, currency, dateDisplay, lang)}
+        {renderPlanInfo(
+          tier,
+          periodEnd,
+          cancelAtPeriodEnd,
+          t as unknown as Record<string, string>,
+          currency,
+          dateDisplay,
+          lang,
+        )}
         {renderPlanAdvantages(tier, FEATURES)}
-        {renderUpgradeActions(tier, t as unknown as Record<string, string>, lang)}
+        {renderUpgradeActions(
+          tier,
+          t as unknown as Record<string, string>,
+          lang,
+        )}
       </div>
     </div>
   );

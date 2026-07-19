@@ -43,7 +43,11 @@ export function CheckboxGroup({
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      {label && <span className={cn("text-muted text-xs font-medium", fonts)}>{label}</span>}
+      {label && (
+        <span className={cn("text-muted text-xs font-medium", fonts)}>
+          {label}
+        </span>
+      )}
       <div
         className={cn(
           "flex gap-3",

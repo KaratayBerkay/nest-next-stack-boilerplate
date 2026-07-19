@@ -126,9 +126,7 @@ function MonthNavButton({
       onClickRef.current?.(e);
 
       timerRef.current = setInterval(() => {
-        onClickRef.current?.(
-          {} as React.MouseEvent<HTMLButtonElement>,
-        );
+        onClickRef.current?.({} as React.MouseEvent<HTMLButtonElement>);
       }, REPEAT_RATE_MS);
 
       const onWindowMouseUp = () => {
@@ -156,7 +154,10 @@ function MonthNavButton({
   );
 }
 
-function getEventsForDate(events: NonNullable<CalendarProps["events"]>, date: Date) {
+function getEventsForDate(
+  events: NonNullable<CalendarProps["events"]>,
+  date: Date,
+) {
   return events.filter((e) => {
     if (!e.date) return false;
     return (
@@ -180,8 +181,8 @@ export function Calendar({
   const deviceType = useDeviceType();
   const isTouch = deviceType === "touch";
 
-  const [currentMonth, setCurrentMonth] = useState(() =>
-    props.defaultMonth ?? props.month ?? new Date(),
+  const [currentMonth, setCurrentMonth] = useState(
+    () => props.defaultMonth ?? props.month ?? new Date(),
   );
 
   const handleSwipeLeft = useCallback(() => {
@@ -258,7 +259,8 @@ export function Calendar({
         // Month and year stack vertically (rather than side by side) so each
         // dropdown gets the full caption width — a narrow half-width year
         // select truncates 4-digit years.
-        month_caption: "col-span-full row-start-1 flex flex-col items-stretch justify-center gap-1",
+        month_caption:
+          "col-span-full row-start-1 flex flex-col items-stretch justify-center gap-1",
         caption_label: "text-sm font-medium",
         nav: "flex items-center gap-1",
         button_previous: cn("col-start-1 row-start-2", navButtonClasses),
@@ -324,7 +326,7 @@ export function Calendar({
           if (dayButtonProps.modifiers.outside) {
             return (
               <span
-                className="inline-flex w-full h-12 items-center justify-center px-0 text-sm font-normal"
+                className="inline-flex h-12 w-full items-center justify-center px-0 text-sm font-normal"
                 aria-hidden="true"
               >
                 {dayDate.getDate()}
@@ -332,19 +334,21 @@ export function Calendar({
             );
           }
 
-          const dayEvents = events
-            ? getEventsForDate(events, dayDate)
-            : [];
+          const dayEvents = events ? getEventsForDate(events, dayDate) : [];
           const hasEvents = dayEvents.length > 0;
 
           return (
             <button
               className={cn(
-                "hover:bg-surface-hover inline-flex w-full h-12 items-center justify-center rounded-md px-0 text-sm font-normal transition-colors",
+                "hover:bg-surface-hover inline-flex h-12 w-full items-center justify-center rounded-md px-0 text-sm font-normal transition-colors",
                 dayButtonProps.modifiers.selected && "bg-brand text-brand-fg",
-                dayButtonProps.modifiers.today && !dayButtonProps.modifiers.selected && "bg-surface text-fg font-semibold",
+                dayButtonProps.modifiers.today &&
+                  !dayButtonProps.modifiers.selected &&
+                  "bg-surface text-fg font-semibold",
                 "relative",
-                hasEvents && !dayButtonProps.modifiers.selected && "font-semibold",
+                hasEvents &&
+                  !dayButtonProps.modifiers.selected &&
+                  "font-semibold",
               )}
               data-day-button
               onClick={() => handleDayClick(dayDate)}
@@ -363,7 +367,8 @@ export function Calendar({
                           event.color === "purple" && "bg-brand",
                           event.color === "orange" && "bg-warning",
                           event.color === "cyan" && "bg-info",
-                          (!event.color || event.color === "blue") && "bg-brand",
+                          (!event.color || event.color === "blue") &&
+                            "bg-brand",
                         )}
                       />
                     ))}

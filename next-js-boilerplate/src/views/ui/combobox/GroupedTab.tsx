@@ -1,4 +1,10 @@
-import { useState, useCallback, useMemo, type Dispatch, type SetStateAction } from "react";
+import {
+  useState,
+  useCallback,
+  useMemo,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import { getLabel, getAllItems, renderGroupedItems } from "./helpers";
 import { groupedData } from "./data";
 import { Command, CommandInput, CommandList } from "@/components/ui/Command";
@@ -23,7 +29,8 @@ export function GroupedTab() {
   const selectedLabel = value ? getLabel(value, allItems) : "";
 
   const handleSelect = useCallback(
-    (itemValue: string) => handleSelectModuleLevel(itemValue, setValue, setOpen, setQuery),
+    (itemValue: string) =>
+      handleSelectModuleLevel(itemValue, setValue, setOpen, setQuery),
     [setValue, setOpen, setQuery],
   );
 
@@ -35,7 +42,7 @@ export function GroupedTab() {
           <button
             type="button"
             onClick={() => setOpen((prev) => !prev)}
-            className="focus-visible:ring-brand flex h-9 w-full items-center justify-between rounded-md border border-border bg-bg px-3 py-1 text-sm text-fg shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+            className="focus-visible:ring-brand border-border bg-bg text-fg flex h-9 w-full items-center justify-between rounded-md border px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
           >
             <span className="truncate">
               {selectedLabel || "Choose a food item..."}
@@ -68,7 +75,7 @@ export function GroupedTab() {
           )}
         </div>
         {value && (
-          <div className="bg-surface flex items-center justify-between rounded border border-border px-3 py-2">
+          <div className="bg-surface border-border flex items-center justify-between rounded border px-3 py-2">
             <span className="text-sm">
               Selected: <strong>{selectedLabel}</strong>
             </span>

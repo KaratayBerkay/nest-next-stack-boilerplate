@@ -30,9 +30,7 @@ function handleLoadData(
 }
 
 function handleShowSplash(
-  setSplashState: Dispatch<
-    SetStateAction<"idle" | "showing" | "fading">
-  >,
+  setSplashState: Dispatch<SetStateAction<"idle" | "showing" | "fading">>,
 ) {
   setSplashState("showing");
   setTimeout(() => setSplashState("fading"), 2000);
@@ -40,9 +38,7 @@ function handleShowSplash(
 }
 
 function handleDismissSplash(
-  setSplashState: Dispatch<
-    SetStateAction<"idle" | "showing" | "fading">
-  >,
+  setSplashState: Dispatch<SetStateAction<"idle" | "showing" | "fading">>,
 ) {
   setSplashState("fading");
   setTimeout(() => setSplashState("idle"), 500);
@@ -71,7 +67,7 @@ function RouteTransitionTab() {
         </div>
       </div>
       {isNavigating && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80">
+        <div className="bg-bg/80 fixed inset-0 z-50 flex items-center justify-center">
           <LogoSpinner />
         </div>
       )}
@@ -133,9 +129,9 @@ function DataPaneTab() {
 }
 
 function SplashTab() {
-  const [splashState, setSplashState] = useState<
-    "idle" | "showing" | "fading"
-  >("idle");
+  const [splashState, setSplashState] = useState<"idle" | "showing" | "fading">(
+    "idle",
+  );
 
   return (
     <div className="border-border bg-surface relative h-72 overflow-hidden rounded-lg border">
@@ -151,7 +147,7 @@ function SplashTab() {
       )}
       {splashState !== "idle" && (
         <div
-          className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-4 bg-bg transition-opacity duration-700"
+          className="bg-bg absolute inset-0 z-40 flex flex-col items-center justify-center gap-4 transition-opacity duration-700"
           style={{
             opacity: splashState === "showing" ? 1 : 0,
           }}
@@ -180,8 +176,7 @@ const examples: UIExample[] = [
   {
     id: "data-pane",
     title: "Data Pane",
-    description:
-      "Skeleton rows → LogoSpinner → loaded list sequence.",
+    description: "Skeleton rows → LogoSpinner → loaded list sequence.",
     render: () => <DataPaneTab />,
   },
   {
@@ -192,7 +187,11 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function LogoSpinnerPage({ initialTab }: { initialTab?: string }) {
+export default function LogoSpinnerPage({
+  initialTab,
+}: {
+  initialTab?: string;
+}) {
   return (
     <ExampleTabs
       title="Logo Spinner"

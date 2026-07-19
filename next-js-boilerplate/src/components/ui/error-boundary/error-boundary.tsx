@@ -27,10 +27,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, State> {
     if (this.state.hasError) {
       return (
         fallback || (
-          <div className={cn(
-            "text-fg flex flex-col items-center justify-center gap-2 py-12",
-            fonts,
-          )}>
+          <div
+            className={cn(
+              "text-fg flex flex-col items-center justify-center gap-2 py-12",
+              fonts,
+            )}
+          >
             <p>Something went wrong</p>
             <button
               onClick={() => this.setState({ hasError: false, error: null })}

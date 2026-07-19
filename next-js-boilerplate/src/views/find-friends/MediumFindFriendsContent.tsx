@@ -8,7 +8,10 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { Avatar } from "@/components/ui/Avatar";
 import { initials } from "@/lib/initials";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { friendsQueryOptions, friendRequestsQueryOptions } from "@/api/client/friends/query";
+import {
+  friendsQueryOptions,
+  friendRequestsQueryOptions,
+} from "@/api/client/friends/query";
 import type { FriendRequest } from "./search-utils";
 import { PaginationBar } from "./PaginationBar";
 import { useToast } from "@/components/ui/Toast";
@@ -22,7 +25,9 @@ export function MediumFindFriendsContent({
   const t = useMessages("find-friends");
   const pathname = usePathname();
   const { data: _friends = [] } = useSuspenseQuery(friendsQueryOptions());
-  const { data: friendRequests = [] } = useSuspenseQuery(friendRequestsQueryOptions());
+  const { data: friendRequests = [] } = useSuspenseQuery(
+    friendRequestsQueryOptions(),
+  );
 
   const {
     items,
@@ -54,7 +59,7 @@ export function MediumFindFriendsContent({
             <TabsTrigger value="pending" className="flex-1">
               {t.pendingRequests}
               {friendRequests.length > 0 && (
-                <span className="ml-1.5 rounded-full bg-warning px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                <span className="bg-warning ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold text-white">
                   {friendRequests.length}
                 </span>
               )}
@@ -78,13 +83,11 @@ export function MediumFindFriendsContent({
                   {t.searching}
                 </p>
               )}
-              {!searching &&
-                query.trim().length >= 3 &&
-                items.length === 0 && (
-                  <p className="text-muted py-8 text-center text-sm">
-                    {t.noUsersFound}
-                  </p>
-                )}
+              {!searching && query.trim().length >= 3 && items.length === 0 && (
+                <p className="text-muted py-8 text-center text-sm">
+                  {t.noUsersFound}
+                </p>
+              )}
               {!searching &&
                 items.map((u) => {
                   const isPending = pendingIds.has(u.id) || sentIds.has(u.id);
@@ -162,7 +165,7 @@ export function MediumFindFriendsContent({
                     <>
                       <button
                         onClick={() => acceptRequest(r.user.id)}
-                        className="rounded bg-success px-3 py-1 text-xs text-white hover:brightness-90"
+                        className="bg-success rounded px-3 py-1 text-xs text-white hover:brightness-90"
                       >
                         {t.accept}
                       </button>
@@ -193,12 +196,14 @@ export function MediumFindFriendsContent({
 
 async function loadSuggested(
   setLoading: (v: boolean) => void,
-  setSuggested: (v: Array<{
-    id: string;
-    name?: string;
-    email: string;
-    mutualFriends: number;
-  }>) => void,
+  setSuggested: (
+    v: Array<{
+      id: string;
+      name?: string;
+      email: string;
+      mutualFriends: number;
+    }>,
+  ) => void,
   toast: (opts: {
     description?: string;
     variant?: "default" | "destructive" | "success";
@@ -234,7 +239,14 @@ function SuggestedFriendsPanel() {
       </h3>
       {!suggested.length && (
         <button
-          onClick={() => loadSuggested(setLoading, setSuggested, toast, t.failedToLoadSuggestions)}
+          onClick={() =>
+            loadSuggested(
+              setLoading,
+              setSuggested,
+              toast,
+              t.failedToLoadSuggestions,
+            )
+          }
           disabled={loading}
           className="bg-brand/10 text-brand hover:bg-brand/20 w-full rounded-lg px-3 py-2 text-xs font-medium transition-colors disabled:opacity-50"
         >

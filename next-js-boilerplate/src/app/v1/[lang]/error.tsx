@@ -10,7 +10,10 @@ export default function V1Error({ error, reset }: V1ErrorProps) {
   }, [error]);
 
   return (
-    <div data-testid="error-boundary" className="surface flex flex-col gap-2 p-5">
+    <div
+      data-testid="error-boundary"
+      className="surface flex flex-col gap-2 p-5"
+    >
       <ErrorPage error={error} reset={reset} />
     </div>
   );

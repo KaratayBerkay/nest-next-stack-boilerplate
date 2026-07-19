@@ -1,5 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { notificationsQueryOptions, unreadCountQueryOptions, dmUnreadCountQueryOptions } from "@/api/client/notifications/query";
+import {
+  notificationsQueryOptions,
+  unreadCountQueryOptions,
+  dmUnreadCountQueryOptions,
+} from "@/api/client/notifications/query";
 
 export interface NotificationItem {
   id: string;

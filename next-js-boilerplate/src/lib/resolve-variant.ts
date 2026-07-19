@@ -6,8 +6,9 @@
  * when the global component style (shiny/glass/neon/gradient) doesn't match
  * any key in the map.
  */
-export function resolveVariant<
-  M extends Record<string, string>,
->(map: M, key: string | undefined): string {
+export function resolveVariant<M extends Record<string, string>>(
+  map: M,
+  key: string | undefined,
+): string {
   return (key && map[key]) || map.default;
 }

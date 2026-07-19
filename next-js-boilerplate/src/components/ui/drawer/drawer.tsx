@@ -5,7 +5,10 @@ import { forwardRef } from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
-import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
+import {
+  globalStyleVariants,
+  type GlobalVariant,
+} from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 
 const drawerVariants = {
@@ -19,12 +22,14 @@ export const DrawerClose = DrawerPrimitive.Close;
 
 export const DrawerContent = forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content> & { variant?: GlobalVariant }
+  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content> & {
+    variant?: GlobalVariant;
+  }
 >(({ className, children, variant, ...props }, ref) => {
   const effectiveVariant = useComponentVariant(variant);
   return (
     <DrawerPrimitive.Portal>
-      <DrawerPrimitive.Overlay className="fixed inset-0 z-40 bg-overlay/50" />
+      <DrawerPrimitive.Overlay className="bg-overlay/50 fixed inset-0 z-40" />
       <DrawerPrimitive.Content
         ref={ref}
         className={cn(
@@ -34,7 +39,7 @@ export const DrawerContent = forwardRef<
         )}
         {...props}
       >
-        <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-border" />
+        <div className="bg-border mx-auto mb-4 h-1.5 w-10 rounded-full" />
         <div className="pointer-events-auto">{children}</div>
       </DrawerPrimitive.Content>
     </DrawerPrimitive.Portal>
@@ -60,10 +65,7 @@ export const DrawerFooter = forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn(
-      "flex flex-col gap-2 sm:flex-row sm:justify-end",
-      className,
-    )}
+    className={cn("flex flex-col gap-2 sm:flex-row sm:justify-end", className)}
     {...props}
   />
 ));

@@ -1,7 +1,5 @@
 import { apiFetch } from "@/lib/api-client";
-import {
-  AUTH_ME_URL,
-} from "@/constants/api/urls";
+import { AUTH_ME_URL } from "@/constants/api/urls";
 import type { User } from "@/types/auth/User";
 
 export interface GetMeResult {

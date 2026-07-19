@@ -39,15 +39,22 @@ export default function ApiKeyPage() {
   const { createApiKey, revokeApiKey } = useApiKeyActions();
   const [showForm, setShowForm] = useState(false);
   const [newKeySecret, setNewKeySecret] = useState<string | null>(null);
-  const [revealedSecrets, setRevealedSecrets] = useState<Set<string>>(new Set());
+  const [revealedSecrets, setRevealedSecrets] = useState<Set<string>>(
+    new Set(),
+  );
   const [ipInput, setIpInput] = useState("");
   const [ipWhitelist, setIpWhitelist] = useState<string[]>([]);
 
   const { data: keys, isLoading } = useQuery(apiKeyListQueryOptions());
 
   const createMutation = useMutation({
-    mutationFn: async (data: { name: string; expiresIn: string; permissions: string[] }) => {
-      const expiresInDays = data.expiresIn === "never" ? null : Number(data.expiresIn);
+    mutationFn: async (data: {
+      name: string;
+      expiresIn: string;
+      permissions: string[];
+    }) => {
+      const expiresInDays =
+        data.expiresIn === "never" ? null : Number(data.expiresIn);
       return createApiKey(data.name, expiresInDays);
     },
     onSuccess: (result) => {
@@ -65,12 +72,18 @@ export default function ApiKeyPage() {
     },
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ["api-keys", "list"] });
-      const previous = queryClient.getQueryData<ApiKeyInfo[]>(["api-keys", "list"]);
-      queryClient.setQueryData<ApiKeyInfo[]>(["api-keys", "list"], (old) => old?.filter((k) => k.id !== id));
+      const previous = queryClient.getQueryData<ApiKeyInfo[]>([
+        "api-keys",
+        "list",
+      ]);
+      queryClient.setQueryData<ApiKeyInfo[]>(["api-keys", "list"], (old) =>
+        old?.filter((k) => k.id !== id),
+      );
       return { previous };
     },
     onError: (_err, _id, context) => {
-      if (context?.previous) queryClient.setQueryData(["api-keys", "list"], context.previous);
+      if (context?.previous)
+        queryClient.setQueryData(["api-keys", "list"], context.previous);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["api-keys", "list"] });
@@ -90,11 +103,16 @@ export default function ApiKeyPage() {
             await createMutation.mutateAsync(value);
             return null;
           } catch (err) {
-            const exc = (err as { exception?: { exc: string; key: string; msg: string } }).exception;
+            const exc = (
+              err as { exception?: { exc: string; key: string; msg: string } }
+            ).exception;
             if (!exc) return { form: t.errors.unknown, fields: {} };
             const surface = getSurface(exc.exc);
             if (surface === "toast") {
-              toast({ description: exceptionHandler(exc, messages), variant: "destructive" });
+              toast({
+                description: exceptionHandler(exc, messages),
+                variant: "destructive",
+              });
               return null;
             }
             return { form: exceptionHandler(exc, messages), fields: {} };
@@ -104,15 +122,21 @@ export default function ApiKeyPage() {
     }),
   });
 
-  const handleCopy = useCallback(async (secret: string) => {
-    await navigator.clipboard.writeText(secret);
-    toast({ description: t.apiKey.copied, variant: "default" });
-  }, [toast, t]);
+  const handleCopy = useCallback(
+    async (secret: string) => {
+      await navigator.clipboard.writeText(secret);
+      toast({ description: t.apiKey.copied, variant: "default" });
+    },
+    [toast, t],
+  );
 
-  const handleRevoke = useCallback((id: string) => {
-    revokeMutation.mutate(id);
-    toast({ description: t.apiKey.revoked, variant: "default" });
-  }, [revokeMutation, toast, t]);
+  const handleRevoke = useCallback(
+    (id: string) => {
+      revokeMutation.mutate(id);
+      toast({ description: t.apiKey.revoked, variant: "default" });
+    },
+    [revokeMutation, toast, t],
+  );
 
   const handleAddIp = useCallback(() => {
     const ip = ipInput.trim();
@@ -127,7 +151,11 @@ export default function ApiKeyPage() {
   }, []);
 
   if (isLoading) {
-    return <div className="text-muted flex items-center justify-center py-12 text-sm">Loading...</div>;
+    return (
+      <div className="text-muted flex items-center justify-center py-12 text-sm">
+        Loading...
+      </div>
+    );
   }
 
   return (
@@ -136,63 +164,129 @@ export default function ApiKeyPage() {
         <div>
           <h2 className="text-sm font-semibold">{t.apiKey.heading}</h2>
         </div>
-        <Button size="sm" onClick={() => { setShowForm((p) => !p); }}>
+        <Button
+          size="sm"
+          onClick={() => {
+            setShowForm((p) => !p);
+          }}
+        >
           {showForm ? t.apiKey.cancel : t.apiKey.newKey}
         </Button>
       </div>
 
       {newKeySecret && (
-        <div className="surface rounded-lg border border-border p-4">
+        <div className="surface border-border rounded-lg border p-4">
           <p className="text-xxs font-semibold">{t.apiKey.revealSecret}</p>
-          <code className="mt-1 block break-all rounded bg-emphasis p-2 text-xs">{newKeySecret}</code>
-          <p className="text-xxs text-destructive mt-1">{t.apiKey.secretNote}</p>
+          <code className="bg-emphasis mt-1 block rounded p-2 text-xs break-all">
+            {newKeySecret}
+          </code>
+          <p className="text-xxs text-destructive mt-1">
+            {t.apiKey.secretNote}
+          </p>
           <div className="mt-2 flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => handleCopy(newKeySecret)}>{t.apiKey.copy}</Button>
-            <Button size="sm" variant="outline" onClick={() => setNewKeySecret(null)}>{t.apiKey.dismiss}</Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleCopy(newKeySecret)}
+            >
+              {t.apiKey.copy}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setNewKeySecret(null)}
+            >
+              {t.apiKey.dismiss}
+            </Button>
           </div>
         </div>
       )}
 
       {showForm && (
         <form
-          onSubmit={(e) => { e.preventDefault(); e.stopPropagation(); form.handleSubmit(); }}
-          className="surface flex flex-col gap-3 rounded-lg border border-border p-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            form.handleSubmit();
+          }}
+          className="surface border-border flex flex-col gap-3 rounded-lg border p-4"
         >
           <FormLevelError form={form} />
           <form.AppField name="name">
-            {(field) => <field.TextField label={t.apiKey.nameLabel} placeholder={t.apiKey.namePlaceholder} />}
+            {(field) => (
+              <field.TextField
+                label={t.apiKey.nameLabel}
+                placeholder={t.apiKey.namePlaceholder}
+              />
+            )}
           </form.AppField>
           <form.AppField name="expiresIn">
-            {(field) => <field.SelectField label={t.apiKey.expiresLabel} options={EXPIRY_OPTIONS} />}
+            {(field) => (
+              <field.SelectField
+                label={t.apiKey.expiresLabel}
+                options={EXPIRY_OPTIONS}
+              />
+            )}
           </form.AppField>
           <form.AppField name="permissions">
-            {(field) => <field.CheckboxField label={t.apiKey.permissionsLabel} options={PERMISSION_OPTIONS} />}
+            {(field) => (
+              <field.CheckboxField
+                label={t.apiKey.permissionsLabel}
+                options={PERMISSION_OPTIONS}
+              />
+            )}
           </form.AppField>
 
           <div className="flex flex-col gap-1">
-            <span className="text-xxs text-muted font-medium">IP Whitelist (optional)</span>
+            <span className="text-xxs text-muted font-medium">
+              IP Whitelist (optional)
+            </span>
             <div className="flex gap-2">
               <input
-                className="flex-1 rounded border border-border bg-field px-2 py-1.5 text-xs"
+                className="border-border bg-field flex-1 rounded border px-2 py-1.5 text-xs"
                 placeholder="Enter IP and press Enter"
                 value={ipInput}
                 onChange={(e) => setIpInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddIp(); } }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddIp();
+                  }
+                }}
               />
-              <Button size="sm" variant="outline" type="button" onClick={handleAddIp}>Add</Button>
+              <Button
+                size="sm"
+                variant="outline"
+                type="button"
+                onClick={handleAddIp}
+              >
+                Add
+              </Button>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {ipWhitelist.map((ip) => (
-                <span key={ip} className="flex items-center gap-1 rounded bg-emphasis px-2 py-1 text-xxs">
+                <span
+                  key={ip}
+                  className="bg-emphasis text-xxs flex items-center gap-1 rounded px-2 py-1"
+                >
                   {ip}
-                  <button type="button" onClick={() => handleRemoveIp(ip)} className="text-destructive">&times;</button>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveIp(ip)}
+                    className="text-destructive"
+                  >
+                    &times;
+                  </button>
                 </span>
               ))}
             </div>
           </div>
 
           <form.AppForm>
-            <form.SubmitButton label={t.apiKey.create} loadingLabel={t.apiKey.creating} />
+            <form.SubmitButton
+              label={t.apiKey.create}
+              loadingLabel={t.apiKey.creating}
+            />
           </form.AppForm>
         </form>
       )}
@@ -204,18 +298,37 @@ export default function ApiKeyPage() {
       ) : (
         <div className="flex flex-col gap-2">
           {keys?.map((key) => (
-            <div key={key.id} className="surface flex flex-col gap-2 rounded-lg border border-border p-3">
+            <div
+              key={key.id}
+              className="surface border-border flex flex-col gap-2 rounded-lg border p-3"
+            >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium">{key.name}</span>
                 <div className="flex gap-1.5">
                   {!revealedSecrets.has(key.id) ? (
-                    <Button size="sm" variant="ghost" onClick={() => setRevealedSecrets((prev) => new Set(prev).add(key.id))}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() =>
+                        setRevealedSecrets((prev) => new Set(prev).add(key.id))
+                      }
+                    >
                       {t.apiKey.reveal}
                     </Button>
                   ) : (
-                    <Button size="sm" variant="ghost" onClick={() => handleCopy(key.keyPrefix)}>{t.apiKey.copy}</Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleCopy(key.keyPrefix)}
+                    >
+                      {t.apiKey.copy}
+                    </Button>
                   )}
-                  <Button size="sm" variant="destructive" onClick={() => handleRevoke(key.id)}>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => handleRevoke(key.id)}
+                  >
                     {t.apiKey.revoke}
                   </Button>
                 </div>
@@ -226,7 +339,9 @@ export default function ApiKeyPage() {
                 {key.lastUsedAt && <span>Last used {key.lastUsedAt}</span>}
               </div>
               {revealedSecrets.has(key.id) && (
-                <code className="block break-all rounded bg-emphasis p-2 text-xxs">{key.keyPrefix}_****</code>
+                <code className="bg-emphasis text-xxs block rounded p-2 break-all">
+                  {key.keyPrefix}_****
+                </code>
               )}
             </div>
           ))}

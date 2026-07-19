@@ -26,18 +26,14 @@ export function IconButton({
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       className={cn(
-        "ring-offset-bg inline-flex shrink-0 items-center justify-center rounded-md font-medium transition-all duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1 focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50",
+        "ring-offset-bg focus-visible:ring-brand inline-flex shrink-0 items-center justify-center rounded-md font-medium transition-all duration-150 focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50",
         resolveVariant(variants, effectiveVariant),
         sizes[size],
         className,
       )}
       {...props}
     >
-      {loading ? (
-        <Spinner size="sm" />
-      ) : (
-        icon
-      )}
+      {loading ? <Spinner size="sm" /> : icon}
     </button>
   );
 }

@@ -15,7 +15,9 @@ function ScrollChevron({
   direction: "up" | "down";
   onScroll: () => void;
 }) {
-  const repeatRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const repeatRef = useRef<ReturnType<typeof setInterval> | undefined>(
+    undefined,
+  );
   const onScrollRef = useRef(onScroll);
   useEffect(() => {
     onScrollRef.current = onScroll;
@@ -23,7 +25,10 @@ function ScrollChevron({
 
   const start = () => {
     onScrollRef.current();
-    repeatRef.current = setInterval(() => onScrollRef.current(), SCROLL_REPEAT_MS);
+    repeatRef.current = setInterval(
+      () => onScrollRef.current(),
+      SCROLL_REPEAT_MS,
+    );
   };
   const stop = () => {
     if (repeatRef.current) clearInterval(repeatRef.current);
@@ -159,7 +164,10 @@ export function CommandList({
         <div ref={listRef}>{children}</div>
       </div>
       {showChevrons && canScrollDown && (
-        <ScrollChevron direction="down" onScroll={() => scrollBy(SCROLL_STEP)} />
+        <ScrollChevron
+          direction="down"
+          onScroll={() => scrollBy(SCROLL_STEP)}
+        />
       )}
     </div>
   );

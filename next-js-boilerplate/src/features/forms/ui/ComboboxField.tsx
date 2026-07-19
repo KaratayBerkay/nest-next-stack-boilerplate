@@ -6,7 +6,13 @@ import { Label } from "@/components/ui/Label";
 import { FormFieldInfo } from "@/components/ui/FormFieldInfo";
 import type { ComboboxFieldProps } from "@/types/forms/ComboboxField-types";
 
-export function ComboboxField({ label, required, placeholder, options, multiple }: ComboboxFieldProps) {
+export function ComboboxField({
+  label,
+  required,
+  placeholder,
+  options,
+  multiple,
+}: ComboboxFieldProps) {
   const field = useFieldContext<string | string[]>();
   return (
     <div className="flex flex-col gap-1">

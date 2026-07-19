@@ -50,6 +50,7 @@ import { useFriendActions } from "@/api/client/friends/actions";
 ```
 
 **Directory structure mirrors the feature domain:**
+
 - `src/api/server/messages/friends.ts` → `src/api/client/friends/query.ts`
 - `src/api/server/auth/login.ts` → `src/api/client/auth/actions.ts`
 
@@ -88,6 +89,7 @@ import { loginFormSchema } from "@/validators/auth/schema";
 ```
 
 **Directory structure mirrors feature domain:**
+
 - `src/validators/auth/schema.ts` — auth forms
 - `src/validators/messages/schema.ts` — chat messages
 - `src/validators/billing/schema.ts` — payment forms

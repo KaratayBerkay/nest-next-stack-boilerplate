@@ -191,19 +191,27 @@ describe("Toast", () => {
     renderToast();
     fireEvent.click(screen.getByTestId("trigger"));
 
-    act(() => { vi.advanceTimersByTime(2500); });
+    act(() => {
+      vi.advanceTimersByTime(2500);
+    });
     expect(screen.getByText("Hello")).toBeTruthy();
 
     const toastEl = screen.getByText("Hello").closest("[role='status']")!;
     fireEvent.mouseEnter(toastEl);
 
-    act(() => { vi.advanceTimersByTime(3000); });
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
     expect(screen.getByText("Hello")).toBeTruthy();
 
     fireEvent.mouseLeave(toastEl);
-    act(() => { vi.advanceTimersByTime(2500); });
+    act(() => {
+      vi.advanceTimersByTime(2500);
+    });
 
-    act(() => { vi.advanceTimersByTime(200); });
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
     expect(screen.queryByText("Hello")).toBeNull();
   });
 

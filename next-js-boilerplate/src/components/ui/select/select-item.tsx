@@ -47,7 +47,7 @@ export function SelectItem({
       data-disabled={disabled ? "" : undefined}
       className={cn(
         menuItemStyles,
-        "w-full hover:bg-surface-hover focus-visible:bg-surface-hover",
+        "hover:bg-surface-hover focus-visible:bg-surface-hover w-full",
         isSelected && "bg-surface-hover text-brand",
         !isSelected && "text-fg",
         disabled && "cursor-not-allowed opacity-50",

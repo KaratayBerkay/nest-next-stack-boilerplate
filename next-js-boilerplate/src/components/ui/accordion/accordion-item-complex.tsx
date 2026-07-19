@@ -18,11 +18,7 @@ export const AccordionUpperSection = forwardRef<
   HTMLDivElement,
   AccordionUpperSectionProps
 >(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn("pt-2 pb-3 px-4", className)}
-    {...props}
-  />
+  <div ref={ref} className={cn("px-4 pt-2 pb-3", className)} {...props} />
 ));
 AccordionUpperSection.displayName = "AccordionUpperSection";
 
@@ -79,7 +75,7 @@ export const AccordionItemComplex = forwardRef<
           <Header className="flex">
             <Trigger
               className={cn(
-                "flex flex-1 items-center py-4 px-4 transition-all",
+                "flex flex-1 items-center px-4 py-4 transition-all",
                 "hover:text-brand",
                 resolveVariant(accordionComplexVariants, effectiveVariant),
                 triggerClasses,
@@ -87,10 +83,8 @@ export const AccordionItemComplex = forwardRef<
             >
               {hasFlexibleSlots ? (
                 <div className="flex flex-1 items-center gap-4">
-                  {leftSlot && (
-                    <div className="flex-shrink-0">{leftSlot}</div>
-                  )}
-                  <div className="flex-1 min-w-0">{centerSlot}</div>
+                  {leftSlot && <div className="flex-shrink-0">{leftSlot}</div>}
+                  <div className="min-w-0 flex-1">{centerSlot}</div>
                   {rightSlot && (
                     <div className="flex-shrink-0">{rightSlot}</div>
                   )}
@@ -109,7 +103,7 @@ export const AccordionItemComplex = forwardRef<
               contentClasses,
             )}
           >
-            <div className="px-4 pb-4 pt-2">{content}</div>
+            <div className="px-4 pt-2 pb-4">{content}</div>
           </Content>
         </div>
       </Item>

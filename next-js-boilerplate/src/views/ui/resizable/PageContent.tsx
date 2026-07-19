@@ -45,17 +45,26 @@ const examples: UIExample[] = [
       <div className="flex flex-col gap-4">
         <section className="flex flex-col gap-3">
           <h3 className="text-lg font-semibold">Triple Pane</h3>
-          <ResizablePanelGroup direction="horizontal" className="border-border max-w-md rounded-lg border">
+          <ResizablePanelGroup
+            direction="horizontal"
+            className="border-border max-w-md rounded-lg border"
+          >
             <ResizablePanel defaultSize={34}>
-              <div className="flex h-32 items-center justify-center text-sm">Sidebar</div>
+              <div className="flex h-32 items-center justify-center text-sm">
+                Sidebar
+              </div>
             </ResizablePanel>
             <ResizableHandle />
             <ResizablePanel defaultSize={33}>
-              <div className="flex h-32 items-center justify-center text-sm">Content</div>
+              <div className="flex h-32 items-center justify-center text-sm">
+                Content
+              </div>
             </ResizablePanel>
             <ResizableHandle />
             <ResizablePanel defaultSize={33}>
-              <div className="flex h-32 items-center justify-center text-sm">Details</div>
+              <div className="flex h-32 items-center justify-center text-sm">
+                Details
+              </div>
             </ResizablePanel>
           </ResizablePanelGroup>
         </section>

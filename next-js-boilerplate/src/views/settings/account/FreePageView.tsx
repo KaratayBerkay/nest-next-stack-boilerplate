@@ -73,7 +73,10 @@ async function handleSaveProfile(deps: {
   } catch (err) {
     const exception = (err as Error & { exception?: { msg?: string } })
       .exception;
-    deps.toast({ title: exception?.msg ?? deps.t.saveFailed, variant: "destructive" });
+    deps.toast({
+      title: exception?.msg ?? deps.t.saveFailed,
+      variant: "destructive",
+    });
   } finally {
     deps.setSaving(false);
   }
@@ -136,15 +139,30 @@ export function FreePageView() {
   }, [username, user?.username, checkUsername]);
 
   const handleAvatarFile = useCallback(
-    (file: File) => uploadAvatarFile(file, toast, t as unknown as Record<string, string>, setAvatarUrl, uploadAvatar),
+    (file: File) =>
+      uploadAvatarFile(
+        file,
+        toast,
+        t as unknown as Record<string, string>,
+        setAvatarUrl,
+        uploadAvatar,
+      ),
     [toast, t, uploadAvatar],
   );
 
   const saveProfile = useCallback(
-    () => handleSaveProfile({
-      name, username: username || undefined, bio, avatarUrl: avatarUrl || undefined,
-      toast, t, refreshUser, updateProfile, setSaving,
-    }),
+    () =>
+      handleSaveProfile({
+        name,
+        username: username || undefined,
+        bio,
+        avatarUrl: avatarUrl || undefined,
+        toast,
+        t,
+        refreshUser,
+        updateProfile,
+        setSaving,
+      }),
     [name, username, bio, avatarUrl, toast, t, refreshUser, updateProfile],
   );
 

@@ -6,7 +6,11 @@ import { resolveVariant } from "@/lib/resolve-variant";
 import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { useFieldMessages } from "@/components/ui/field-messages";
-import type { TimeInputProps, TimeInputVariant, TimeUnitSelectProps } from "@/types/ui/TimeInput-types";
+import type {
+  TimeInputProps,
+  TimeInputVariant,
+  TimeUnitSelectProps,
+} from "@/types/ui/TimeInput-types";
 
 function pad(n: number): string {
   return n.toString().padStart(2, "0");
@@ -126,11 +130,14 @@ export function TimeInput({
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      {label && (
-        <label className="text-sm font-medium text-fg">{label}</label>
-      )}
+      {label && <label className="text-fg text-sm font-medium">{label}</label>}
       <div className="flex items-center gap-3">
-        <div className={cn("flex items-center gap-2 p-2", resolveVariant(variantStyles, effectiveVariant))}>
+        <div
+          className={cn(
+            "flex items-center gap-2 p-2",
+            resolveVariant(variantStyles, effectiveVariant),
+          )}
+        >
           <TimeUnitSelect
             value={displayHour}
             max={hourMax}
@@ -165,13 +172,16 @@ export function TimeInput({
 
           {showSeconds && (
             <>
-          <span className="text-muted text-sm font-medium">:</span>
+              <span className="text-muted text-sm font-medium">:</span>
               <TimeUnitSelect
                 value={value.seconds ?? 0}
                 max={59}
                 onChange={(val) => update("seconds", val)}
                 disabled={disabled}
-                selectClassName={resolveVariant(selectClasses, effectiveVariant)}
+                selectClassName={resolveVariant(
+                  selectClasses,
+                  effectiveVariant,
+                )}
                 describedBy={describedBy}
                 ariaLabel="Seconds"
               />

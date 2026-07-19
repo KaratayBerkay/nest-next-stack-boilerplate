@@ -3,7 +3,10 @@
 import { useId, useRef, useEffect } from "react";
 import { cn } from "@/lib/cn";
 import { fontClasses } from "@/lib/font-classes";
-import type { IndeterminateCheckboxProps, CheckboxSize } from "@/types/ui/Checkbox-types";
+import type {
+  IndeterminateCheckboxProps,
+  CheckboxSize,
+} from "@/types/ui/Checkbox-types";
 
 const sizeMap: Record<CheckboxSize, string> = {
   sm: "size-4 rounded-[4px]",
@@ -75,7 +78,7 @@ export function IndeterminateCheckbox({
   const showMinus = indeterminate;
 
   return (
-    <div className="inline-flex items-center gap-2 has-[:disabled]:opacity-50 has-[:disabled]:cursor-not-allowed">
+    <div className="inline-flex items-center gap-2 has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50">
       <span className="relative inline-flex shrink-0">
         <input
           ref={ref}
@@ -83,7 +86,7 @@ export function IndeterminateCheckbox({
           id={generatedId}
           checked={checked}
           className={cn(
-            "peer appearance-none cursor-pointer border bg-bg transition-colors focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1 focus-visible:outline-none disabled:cursor-not-allowed",
+            "peer bg-bg focus-visible:ring-brand cursor-pointer appearance-none border transition-colors focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none disabled:cursor-not-allowed",
             "border-border hover:border-brand/60 checked:bg-brand checked:border-brand indeterminate:bg-brand indeterminate:border-brand",
             sizeMap[size],
             className,
@@ -106,10 +109,7 @@ export function IndeterminateCheckbox({
       {label && (
         <label
           htmlFor={generatedId}
-          className={cn(
-            "text-fg cursor-pointer",
-            fonts,
-          )}
+          className={cn("text-fg cursor-pointer", fonts)}
         >
           {label}
         </label>

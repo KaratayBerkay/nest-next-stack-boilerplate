@@ -24,7 +24,8 @@ export function singlePostQueryOptions(uuid: string) {
   return queryOptions({
     queryKey: ["posts", uuid],
     queryFn: async () => {
-      const { fetchSinglePostServer } = await import("@/api/server/posts/single");
+      const { fetchSinglePostServer } =
+        await import("@/api/server/posts/single");
       return fetchSinglePostServer(uuid);
     },
   });

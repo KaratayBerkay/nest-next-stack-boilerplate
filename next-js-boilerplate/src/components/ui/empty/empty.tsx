@@ -13,7 +13,10 @@ export function Empty({
   fontFamily,
   ...props
 }: EmptyProps) {
-  const fonts = fontClasses({ fontSize, fontWeight, fontFamily }, { fontWeight: "font-semibold" });
+  const fonts = fontClasses(
+    { fontSize, fontWeight, fontFamily },
+    { fontWeight: "font-semibold" },
+  );
 
   return (
     <div

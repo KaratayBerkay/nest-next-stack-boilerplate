@@ -30,9 +30,36 @@ export class CacheAsideService {
     }
   }
 
+  private async scanKeys(pattern: string): Promise<string[]> {
+    const keys: string[] = [];
+    let cursor = '0';
+    do {
+      const result = await this.redis.scan(
+        cursor,
+        'MATCH',
+        pattern,
+        'COUNT',
+        100,
+      );
+      cursor = result[0];
+      keys.push(...result[1]);
+    } while (cursor !== '0');
+    return keys;
+  }
+
+  async del(key: string): Promise<void> {
+    try {
+      await this.redis.del(key);
+    } catch (err) {
+      this.logger.warn(
+        `Cache delete failed for ${key}: ${(err as Error).message}`,
+      );
+    }
+  }
+
   async invalidate(pattern: string): Promise<void> {
     try {
-      const keys = await this.redis.keys(pattern);
+      const keys = await this.scanKeys(pattern);
       if (keys.length > 0) await this.redis.del(...keys);
     } catch (err) {
       this.logger.warn(
