@@ -2,8 +2,7 @@
 
 > **Rev 2 — enriched 2026-07-19.** Original analysis 2026-07-19. Compares the
 > NestJS+NextJS boilerplate form patterns (rev-11/12, committed `32ca551`+`e2ab2a6`)
-> against the Evyos management frontend at
-> `/home/berkay/repos/git-evyos/production-ready-evyos-applications-v2/management/frontend/src`.
+> against the Evyos management frontend (the target project).
 > Identifies gaps, similarities, and a recommended migration path for aligning
 > the target project with production-ready create/update mechanics.
 >
@@ -19,6 +18,14 @@
 > its failure modes per zod version, the at-least-one guard (incl. flag-only
 > updates), `errorMap.onSubmit` as the form-level error slot, and the HT-4/HT-7
 > audit scripts. Corrections from testing are marked **[tested]** inline.
+>
+> **Rev 2.2 — boilerplate-side application audited 2026-07-19.** Commit `9044098`
+> applied the playbooks to the boilerplate itself. §13 records the audit result:
+> per-playbook status, **four open fixes (F-1…F-4)** with ready-to-apply code,
+> and the intentional deviations. All F-fix code was applied to a scratch working
+> tree on this machine and verified (`pnpm typecheck` clean, `pnpm lint` 0 errors)
+> before being written down, then reverted — the fixes are **documented, not yet
+> applied**.
 >
 > **Scope:** schema layer, form view layer, API client layer, error handling.
 > Does not cover auth, routing, or deployment.
@@ -45,6 +52,7 @@
 10. [Verification Protocol](#10-verification-protocol)
 11. [Summary of Recommendations](#11-summary-of-recommendations)
 12. [Appendix — Verified Boilerplate Source Map](#12-appendix--verified-boilerplate-source-map)
+13. [Boilerplate Application Status — Rev 2.2 Audit & Open Fixes](#13-boilerplate-application-status--rev-22-audit--open-fixes)
 
 ---
 
@@ -1400,3 +1408,241 @@ Target-side shapes (`EntityClientResponse`, `ApiErrorBucket`,
 `createApiMessageWithLang`, building domain schemas) are from the rev-1 analysis;
 the target repo is not mounted on this machine — re-verify the `ASSUMPTION`
 blocks in HT-3 before implementing.
+
+---
+
+## 13. Boilerplate Application Status — Rev 2.2 Audit & Open Fixes
+
+Commit `9044098` ("feat(forms): apply HT-1 through HT-8 playbooks to boilerplate")
+applied the playbooks to the boilerplate itself. This section is the audit of that
+commit, run 2026-07-19: static review of every view under `src/views/forms/`, git
+history checks, `pnpm typecheck`, `pnpm lint`.
+
+All paths below are relative to `next-js-boilerplate/`. Every fix marked
+**[tested]** was applied to the working tree, verified with
+`pnpm typecheck` (clean) + `pnpm lint` (0 errors, 92 pre-existing warnings), and
+then reverted — copy the code as-is.
+
+### 13.1 Status by playbook
+
+| Playbook | Status | Evidence |
+|---|---|---|
+| HT-1 module-level submit handlers | ✅ Done | `submitProfile`, `submitCheckout`, `submitContent`, `submitTeamInvite`, `handleCouponBlur` all module-level with deps objects; no multi-statement inline closures remain (api-key's single delegation call → §13.3 N-1) |
+| HT-2 schemas out of views | ✅ Done | `grep -rn "z.object" src/views/forms` → empty |
+| HT-3 error mapper | ✅ Pre-existing | `lib/forms/exception-to-form-errors.ts` — **no unit tests yet** (§13.3 N-4) |
+| HT-4 inits rollout | ⚠️ One gap | All 5 domains have `validators/forms/<domain>-inits.ts` + `create<X>InitialValues(record?)`; profile defaults untyped → **F-4** |
+| HT-5 new-domain recipe | ✅ Done | `docs/recipes/new-form-domain.md` |
+| HT-6 onSubmitAsync everywhere | ⚠️ One gap | profile / checkout / content-editor / team-invite wired with surface routing; checkout has no form-level render → **F-2** |
+| HT-7 domain audit | ✅ Done | billing / checkout / editor / invite / profile each have schema + inits pair; `field-states.ts`, `filters.ts`, `table.ts`, `simulate-error.ts` are demo/util schemas — intentional gaps |
+| HT-8 form-level surface | ⚠️ Three gaps | `FormLevelError` created + used in profile / content-editor / team-invite; lint error in its types → **F-1**, missing in checkout → **F-2**, `SubmitButton` not subscribed → **F-3** |
+
+Verification snapshot at `9044098`: `pnpm typecheck` ✅ · `pnpm lint` ❌
+(1 error, 93 warnings). With F-1…F-4 applied **[tested]**: typecheck ✅ · lint
+0 errors, 92 warnings.
+
+### 13.2 Open fixes
+
+#### F-1 — `pnpm lint` red: `any`-typed `FormLevelError` prop + misplaced disable comment
+
+**Files:** `src/types/ui/FormLevelError-types.ts` (whole file),
+`src/components/ui/form-level-error/form-level-error.tsx`.
+
+**Symptom:** `pnpm lint` exits 1 with
+`FormLevelError-types.ts 3:9 error Unexpected any`. The
+`eslint-disable-next-line` comment sits on line 1, so it suppresses line 2 (the
+`interface` declaration) — the `any` it was meant to cover is on line **3**. This
+is the only lint *error* in the repo; it makes the §10 verification protocol red.
+
+**Fix (recommended) [tested]** — type the prop structurally instead of `any`.
+This also deletes the `(form as any)` cast inside the component. Replace
+`src/types/ui/FormLevelError-types.ts` entirely:
+
+```ts
+import type { ReactNode } from "react";
+
+type FormLevelErrorState = { errorMap: { onSubmit?: unknown } };
+
+export interface FormLevelErrorProps {
+  form: {
+    Subscribe: (props: {
+      selector: (state: FormLevelErrorState) => unknown;
+      children: (error: unknown) => ReactNode;
+    }) => ReactNode | Promise<ReactNode>;
+    setErrorMap: (errorMap: { onSubmit: undefined }) => void;
+  };
+}
+```
+
+⚠️ The `| Promise<ReactNode>` on `Subscribe`'s return is **load-bearing
+[tested]**: form-core's `Subscribe` returns `ReactNode | Promise<ReactNode>`, and
+declaring plain `ReactNode` fails TS2322 at every `<FormLevelError form={form} />`
+call site. Every view's differently-generic `useAppForm` instance is assignable to
+this structural type — that is the whole point of not using
+`ReturnType<typeof useAppForm>` (HT-1 pitfall: generic-erased and circular).
+
+Replace `src/components/ui/form-level-error/form-level-error.tsx` entirely:
+
+```tsx
+"use client";
+
+import { FormErrorBanner } from "@/components/ui/FormErrorBanner";
+import type { FormLevelErrorProps } from "@/types/ui/FormLevelError-types";
+
+export function FormLevelError({ form }: FormLevelErrorProps) {
+  return (
+    <form.Subscribe selector={(state) => state.errorMap.onSubmit}>
+      {(onSubmitError) =>
+        onSubmitError ? (
+          <FormErrorBanner
+            message={String(onSubmitError)}
+            onDismiss={() => form.setErrorMap({ onSubmit: undefined })}
+          />
+        ) : null
+      }
+    </form.Subscribe>
+  );
+}
+```
+
+**Fix (minimal fallback):** if for some reason the typed version must wait, move
+the disable comment from line 1 to directly above `form: any;` — that alone turns
+lint green. Do not ship this as the end state.
+
+**Verify:** `pnpm lint` → 0 errors; `pnpm typecheck` clean.
+
+#### F-2 — Checkout renders no form-level error surface (HT-6 step 2)
+
+**File:** `src/views/forms/checkout/PageContent.tsx`.
+
+**Symptom:** `submitCheckout` returns `{ form: "Order failed", fields: {} }` when
+the caught error carries no `.exception` (network/unknown failure, line ~95), and
+`exceptionToFormErrors` can also return a form-level-only map. Those land in
+`form.state.errorMap.onSubmit` — and **nothing in the checkout view subscribes to
+it**. The user sees a form that silently does nothing. Git history confirms
+checkout never had a banner; `9044098` added `FormLevelError` to profile /
+content-editor / team-invite but missed checkout.
+
+**Fix [tested]** — two edits:
+
+1. Add the import after the `Label` import (line 11):
+
+   ```tsx
+   import { FormLevelError } from "@/components/ui/FormLevelError";
+   ```
+
+2. Insert the surface between the heading block and `<form.AppForm>`
+   (between lines 143 and 145):
+
+   ```tsx
+         <div>
+           <h2 className="text-sm font-semibold">{t.checkoutTab.heading}</h2>
+         </div>
+
+         <FormLevelError form={form} />
+
+         <form.AppForm>
+   ```
+
+**Non-issue, recorded so nobody "fixes" it:** checkout's `onChange` validator
+returns a `{ form }` half for the email-mismatch case — that lands in
+`errorMap.onChange`, which `FormLevelError` deliberately does not read. The
+`confirmEmail` field error renders the same message, so nothing is lost.
+
+**Verify:** temporarily make `submitCheckout` return
+`{ form: "test banner", fields: {} }` unconditionally → banner appears above the
+form with `role="alert"`, dismiss works; restore. Then postal code `00000` →
+errors still land under the address fields, no banner (fields-over-form
+priority, §3.3).
+
+#### F-3 — `SubmitButton` never shows its submitting state (HT-8 step 3)
+
+**File:** `src/features/forms/ui/SubmitButton.tsx` (line 9).
+
+**Symptom:** the component reads `form.state.isSubmitting` directly during
+render. `form.state` is a plain snapshot getter — no subscription — and the form
+context value is stable, so the component **never re-renders** when submission
+starts or ends. The disable + "Saving..." state is dead code today. Affects the
+views using `SubmitButton`: profile and api-key. HT-8 step 3 ("ensure it
+subscribes to `isSubmitting`") was not done in `9044098`.
+
+**Fix [tested]** — subscribe via `useStore` (re-exported by
+`@tanstack/react-form`). Replace the file:
+
+```tsx
+"use client";
+
+import { useStore } from "@tanstack/react-form";
+import { useFormContext } from "@/lib/forms/form-context";
+import { Button } from "@/components/ui/Button";
+import type { SubmitButtonProps } from "@/types/forms/SubmitButton-types";
+
+export function SubmitButton({ label, loadingLabel }: SubmitButtonProps) {
+  const form = useFormContext();
+  const isSubmitting = useStore(form.store, (state) => state.isSubmitting);
+  return (
+    <Button type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
+      {isSubmitting ? loadingLabel ?? "Saving..." : label ?? "Submit"}
+    </Button>
+  );
+}
+```
+
+**Optional follow-up:** checkout, team-invite and content-editor submit via plain
+`<Button type="submit">` — swapping those to `SubmitButton` extends the spinner
+behavior everywhere, which is HT-8 step 3's actual intent.
+
+**Verify:** throttle the network (DevTools) or add latency to the demo API,
+submit the profile form → button disabled + loading label for the duration of
+`onSubmitAsync`, re-enabled after.
+
+#### F-4 — Profile defaults not guarded against schema drift (G7)
+
+**File:** `src/validators/forms/profile-inits.ts`.
+
+**Symptom:** billing / editor / invite inits carry `satisfies z.input<…>`;
+checkout applies it at its `formOptions` site. Profile has it **nowhere** — its
+type is self-referential (`type ProfileFormValues = typeof profileDefaultValues`),
+so a renamed or retyped schema field surfaces at runtime, not compile time.
+
+**Fix [tested]** — add two imports and the `satisfies` clause:
+
+```ts
+import { z } from "zod";
+import { profileSchema } from "./profile";
+
+export const profileDefaultValues = {
+  // … existing fields unchanged …
+  notificationPrefs: { email: true, push: false, sms: false },
+} satisfies z.input<typeof profileSchema>;
+```
+
+(Everything else in the file, including `createProfileInitialValues`, stays as
+is.)
+
+**Caveat:** `profileSchema` types `avatar` as `z.array(z.any()).optional()` and
+`meetingTime` as `z.any().optional()`, so the guard is soft on those two fields.
+It still catches rename/removal/retype of every strict field, which is what G7
+is about. Tightening those two `z.any()`s is a separate, optional improvement.
+
+**Verify:** `pnpm typecheck` clean; temporarily rename `firstName` in
+`profileSchema` → the inits file must now fail to compile; revert.
+
+### 13.3 Deviations & intentional gaps (no action planned)
+
+| # | Where | What | Verdict |
+|---|---|---|---|
+| N-1 | `views/forms/api-key/PageContent.tsx` | Inline `onSubmitAsync` is a single fire-and-forget delegation (`createMutation.mutate(value)` — not awaited); errors surface via react-query callbacks + local `formError` state, bypassing `errorMap.onSubmit`, and `isSubmitting` never turns true | Accepted — it deliberately demos the react-query-callback pattern. If ever aligned: `await mutateAsync`, return the mapper output, swap local banner for `FormLevelError` |
+| N-2 | `views/forms/error-lab/PageContent.tsx` | Local `formError` + `FormErrorBanner` | Intentional — the lab demonstrates the surfaces manually |
+| N-3 | `FormLevelError` dismiss | Clears the *authoritative* error (`form.setErrorMap({ onSubmit: undefined })`) instead of display-only state (HT-8 step 2 as written) | Accepted deviation — simpler, and the error legitimately reappears on the next failing submit |
+| N-4 | §10 unit tests | Mapper 5-case suite, per-domain submit-handler tests, `createInitialValues` tests — none written | Open; Berkay runs/writes tests separately. Blocks the §10 definition of done, not the fixes above |
+
+### 13.4 Definition-of-done delta
+
+Outstanding for the boilerplate-side application to be truly complete:
+
+1. Apply **F-1…F-4** (all code above is copy-ready and compile-verified).
+2. Re-run §10 automated checks — expected: typecheck clean, lint 0 errors.
+3. N-4 unit tests.
+4. Manual QA matrix (§10) on checkout + profile — specifically the two
+   just-fixed behaviors: form-level banner on unknown failure, submit-button
+   spinner on slow submit.
