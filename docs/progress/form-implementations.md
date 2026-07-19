@@ -1,4 +1,4 @@
-# Forms Page — Implementation Plan
+# Forms Gallery — Implementation Plan
 
 > **Revision 3** — re-audited after revision 2, now with (a) a web + local check of the latest
 > TanStack Form v1.33 APIs against what's actually installed in this repo, (b) four additional
@@ -11,13 +11,28 @@
 > ease): hardened simulation endpoint, secret & draft hygiene, sanitization rules, a
 > functionality risk register with committed fallbacks, a verified compatibility matrix
 > (Next 16.2.9 / React 19.2.4), and a copy-paste map. Corrections applied inline per tab.
+> **Revision 5** — enhancement pass: two error-spine correctness fixes (parameter-free error
+> messages — the envelope carries no interpolation `params`; dotted→bracket array-path
+> normalization in `exceptionToFormErrors`), per-tab code-splitting via `next/dynamic`, a
+> first-load JS budget in the DoD, single-source schema reuse for Tab 2, and `aria-live` on
+> async validation states.
+> **Revision 6** — structural change: the single 12-tab page becomes a `/ui`-style gallery —
+> a main menu page at `/v1/:lang/forms` plus 12 sub-routes (`/v1/:lang/forms/<slug>`),
+> mirroring the verified ui-gallery pattern (registry constant, client layout with back
+> link, per-example server pages). Route-level splitting supersedes rev 5's `next/dynamic`.
+> "Tab N" terminology is retained below and now means "example sub-page N".
+> **Revision 7** — verification pass against the live repo: the duplicate-messages gate was
+> unachievable as written (script already exits 1 repo-wide — DoD reworded, new keys nested
+> to add zero hits); the ui layout's back-link depth check is an off-by-one bug that must
+> not be cloned (`> 3`, not `> 4`); registry gains `mode` and the badge set gains `mixed`.
 > Planning only — nothing below has been implemented.
 
 ## Overview
 
-Add a top-level "Forms" page at `/v1/:lang/forms` that demonstrates complex real-world form
-patterns using `@tanstack/react-form` (`^1.33.0` installed). The page uses tabs to switch
-between self-contained form examples, each usable as boilerplate — including file uploads and
+Add a top-level "Forms" section at `/v1/:lang/forms` that demonstrates complex real-world
+form patterns using `@tanstack/react-form` (`^1.33.0` installed). Like the existing `/ui`
+gallery, a main menu page links to 12 self-contained example sub-pages
+(`/v1/:lang/forms/<slug>`), each usable as boilerplate — including file uploads and
 async submission where the API returns a specific, structured error that renders fully
 translated (en/tr).
 
@@ -70,13 +85,68 @@ Two spines run through every tab:
 - **Verified:** `revalidateLogic` is exported in the installed 1.33 (`ValidationLogic.d.ts:52`);
   Next 16.2.9 + React 19.2.4; dependency-cruiser config is active (added to the gates)
 
+## What Changed in Revision 5
+
+- **Correction (error spine):** `ExceptionResponse` carries no interpolation `params`, so a
+  `{placeholder}` in a translated error message would render literally. All `*.errors.*`
+  messages are now parameter-free — `apiKeys.errors.nameExists` reworded; extending the
+  envelope with `params?` is flagged as an optional follow-up (R8)
+- **Correction (error spine):** backend field paths are dotted (`emails.2`,
+  `billingAddress.postalCode`) but TanStack deep keys address array indices with brackets
+  (`emails[2]`) — `exceptionToFormErrors` now normalizes numeric segments; verified as part
+  of the R1 spike (R9)
+- **New:** per-tab code-splitting — `PageContent` loads each tab via `next/dynamic` with a
+  skeleton fallback (optional hover prefetch); a first-load JS check added to the DoD
+- **New:** Tab 2's `onServerValidate` reuses the same `src/validators/forms/` Zod schemas as
+  the client fields — one source of truth, no server-side re-declaration
+- **New:** `FormFieldInfo`'s async-validating state announces via `role="status"` /
+  `aria-live="polite"` (behavioral note (c) in the error spine)
+
+## What Changed in Revision 6
+
+- **Structural:** the single 12-tab page (`ExampleTabs` + `?tab=` sync) is replaced by a
+  `/ui`-style gallery — menu page at `/v1/:lang/forms` + 12 sub-routes
+  (`/v1/:lang/forms/<slug>`), mirroring the verified ui-gallery pattern: registry constant
+  (`forms-gallery.ts`), client layout with back link/breadcrumb, per-example server pages
+- **Superseded:** rev 5's per-tab `next/dynamic` splitting — each example is now its own
+  route chunk automatically (R10 re-closed); R7 (pill wrapping) is moot
+- **Improved:** deep links are real URLs; Tab 5's filter params own their route's query
+  string (no `?tab=` coexistence); Tab 8's dual-locale prop is loaded only by its own
+  sub-page's server page
+- **Adjusted:** Tab 10's unsaved-changes guard — switching examples is now a route change,
+  which App Router cannot intercept (R2 updated); the localStorage draft remains the safety
+  net
+- **Terminology:** "Tab N" is retained throughout and now means "example sub-page N"
+
+## What Changed in Revision 7
+
+- **Corrected (verified):** `pnpm check-duplicate-messages` already exits 1 today on legacy
+  cross-namespace duplicates (`title` in ~9 namespaces, `back` in 3, …) — DoD item 2 was
+  unachievable as written; reworded to "no *new* duplicates beyond the baseline". The
+  top-level `errors` block duplicated across `auth`/`settings`/`apiKeys`/`forms` is by
+  design (backend `<namespace>.errors.<key>` contract); all other new `forms` keys nest
+  under sub-objects (`gallery.*`, `examples.*`) so they add zero new hits
+- **Corrected (verified):** `ui/layout.tsx`'s back-link check
+  (`pathname.split("/").filter(Boolean).length > 4`) is an off-by-one bug —
+  `/v1/:lang/ui/:component` is exactly 4 segments (no `basePath`), so the ui back link never
+  renders today. The forms layout uses `> 3`; fixing the ui layout is flagged as an optional
+  quick win
+- **Corrected:** `FORMS_EXAMPLES` registry gains a `mode` field (it feeds the card badge the
+  menu spec promised); badge label set gains `mixed` (Tabs 4 and 7 are mixed real/simulated)
+- **Cosmetic:** doc title "Forms Page" → "Forms Gallery"; R4 mitigation wording updated to
+  rev 6 placement
+
 ---
 
 ## Route & Nav
 
 ```
-/v1/:lang/forms
+/v1/:lang/forms            → gallery menu (grid of 12 example cards)
+/v1/:lang/forms/<slug>     → one example per sub-route
 ```
+
+Slugs (rev 6): `profile`, `team-invite`, `api-key`, `billing`, `filters`, `field-states`,
+`uploads`, `error-lab`, `checkout`, `content-editor`, `form-builder`, `editable-table`.
 
 Verified against the real `src/views/v1/[lang]/V1Nav.tsx` (links array of
 `{ href, label, Icon }`; icons from `@tabler/icons-react`):
@@ -88,42 +158,44 @@ Verified against the real `src/views/v1/[lang]/V1Nav.tsx` (links array of
 
 ## Page Structure
 
-### Server page — `src/app/v1/[lang]/forms/page.tsx`
+**Rev 6 — gallery structure, mirroring `/v1/[lang]/ui` exactly.** Verified against the real
+ui gallery (`app/v1/[lang]/ui/page.tsx` + `layout.tsx`, `views/ui/PageContent.tsx`,
+`constants/ui-gallery.ts`):
 
-Mirror the verified pattern from `src/app/v1/[lang]/ui/file-upload/page.tsx` exactly (note:
-`getMessages(lang, page)` — locale first; `searchParams` is a Promise; the layout already
-provides Suspense boundaries, the page does not add its own):
+- **Registry** — `src/constants/forms-gallery.ts`: `FORMS_EXAMPLES = [{ name, slug, mode }]`
+  (the 12 slugs above; `mode: "real" | "simulated" | "mixed" | "none"` feeds the card badge —
+  rev 7), the `UI_COMPONENTS` shape plus `mode`. Like the ui registry, it is the single
+  place a new example gets added — the gallery card comes from the same edit. (The ui
+  registry also feeds the e2e smoke/a11y walks; wiring `FORMS_EXAMPLES` into those specs is
+  an optional follow-up — test files may be written but are not run by default, per the
+  working agreement.)
+- **Menu page** — `src/app/v1/[lang]/forms/page.tsx` (server; `generateMetadata` from the
+  `forms` namespace, `getMessages(lang, "forms")` — locale first) renders
+  `src/views/forms/PageContent.tsx` (client): heading + description + responsive card grid
+  over the registry, one `Link` per example to `/v1/${lang}/forms/${slug}`. Forms cards carry
+  two extras the ui cards don't: the example's one-line description and its backend-mode
+  badge (real / simulated / mixed / none — from the registry's `mode`).
+- **Layout** — `src/app/v1/[lang]/forms/layout.tsx`: client layout cloned from
+  `ui/layout.tsx` — sticky header with back link to `/v1/:lang/forms` on sub-pages,
+  breadcrumb label from the `forms` namespace, `ThemeToggle`, `useYSwipeGesture` scroll
+  container. **Depth check (rev 7):** use
+  `pathname.split("/").filter(Boolean).length > 3` (`/v1/:lang/forms` = 3 segments,
+  `/v1/:lang/forms/<slug>` = 4) — do **not** clone the ui layout's `> 4` verbatim: that is
+  an off-by-one bug (`/v1/:lang/ui/:component` is exactly 4 segments and no `basePath` is
+  configured, so the ui back link never renders today). Fixing `ui/layout.tsx` to `> 3` is
+  an optional quick win alongside this work.
+- **Sub-pages** — `src/app/v1/[lang]/forms/<slug>/page.tsx`, one per example, mirroring the
+  verified `ui/file-upload/page.tsx` pattern; per-example `title`/`description` in
+  `generateMetadata`; each renders `src/views/forms/<slug>/PageContent.tsx`. The `error-lab`
+  server page is the one that additionally loads `errorMessagesByLocale` (Tab 8's
+  locale-compare prop) — no other route pays that cost.
 
-```tsx
-import { getMessages } from "@/lib/i18n/get-messages";
-import type { Lang } from "@/constants/i18n";
-import PageContent from "@/views/forms/PageContent";
-
-interface PageProps {
-  params: Promise<{ lang: string }>;
-  searchParams: Promise<{ tab?: string }>;
-}
-
-export async function generateMetadata({ params }: PageProps) {
-  const { lang } = await params;
-  const t = getMessages(lang as Lang, "forms");
-  return { title: t.title, description: t.description };
-}
-
-export default async function FormsPage({ searchParams }: PageProps) {
-  const tab = (await searchParams).tab;
-  return <PageContent initialTab={tab} />;
-}
-```
-
-### Client view — `src/views/forms/PageContent.tsx`
-
-"use client", renders `ExampleTabs` (`src/views/ui/_shared/ExampleTabs.tsx`, types in
-`src/types/ui/ExampleTabs-types.ts`) with 12 `UIExample` entries. `ExampleTabs` already
-handles URL `?tab=` sync, desktop pill row, and mobile accordion — nothing new needed there.
-Each tab's `render` is a self-contained component from a sibling file; per the AGENTS
-~150-line rule, larger tabs (1, 2, 9, 10) will extract their sections into further sibling
-sub-components.
+**What this replaces:** `ExampleTabs` and `?tab=` searchParams handling are dropped —
+deep links are now real routes. Rev 5's per-tab `next/dynamic` splitting is superseded by
+route-level code-splitting: each sub-page is its own chunk automatically, and the
+composition/error spines land in shared chunks. Per the AGENTS ~150-line rule, larger
+examples (1, 2, 9, 10) still split into sibling sub-components inside their
+`views/forms/<slug>/` folder.
 
 ---
 
@@ -378,6 +450,10 @@ The one new helper (replaces rev 2's `applyServerFieldErrors` — simpler, no me
 import { resolveByPath } from "@/lib/exception-handler";
 import type { ExceptionResponse } from "@/lib/api-client";
 
+// Backend field paths are dotted ("emails.2", "billingAddress.postalCode"); TanStack deep
+// keys address array indices with brackets ("emails[2]"). Object segments pass unchanged.
+const toFormPath = (field: string) => field.replace(/\.(\d+)(?=\.|$)/g, "[$1]");
+
 export function exceptionToFormErrors(
   exc: ExceptionResponse,
   messages: Record<string, unknown>,
@@ -390,7 +466,7 @@ export function exceptionToFormErrors(
       ? [{ field: exc.field, msg: exc.msg, key: exc.key }]
       : [];
   const fields = Object.fromEntries(
-    targets.map((t) => [t.field, resolve(t.key, t.msg)]),
+    targets.map((t) => [toFormPath(t.field), resolve(t.key, t.msg)]),
   );
   return targets.length
     ? { form: null, fields }
@@ -431,7 +507,10 @@ stays true until re-checked); `FormFieldInfo` treats it as state, not a stale-re
 **(b)** on a failed submit, the shared submit helper focuses the first errored field (every
 bound component sets `id={field.name}`, so `document.getElementById` is the lookup) and
 `FormErrorBanner` renders with `role="alert"` — keyboard and screen-reader users land where
-the problem is.
+the problem is. **(c)** (rev 5) `FormFieldInfo` renders its async-validating state
+(`field.state.meta.isValidating` — Tab 1's username check, Tab 4's coupon check) inside a
+`role="status"` / `aria-live="polite"` element, so screen-reader users hear that validation
+is in flight, not just the eventual result.
 
 ---
 
@@ -538,8 +617,9 @@ alternative flagged: add `app/api/upload/multiple/route.ts` proxying backend
 
 ## Tab Examples
 
-Tabs are ordered basic → advanced in the UI; each tab's intro states its backend mode
-(**real** / **simulated** / **none**) with a small badge.
+Tabs are ordered basic → advanced in the gallery; each tab's intro states its backend mode
+(**real** / **simulated** / **mixed** / **none**) with a small badge — the same `mode` the
+registry entry carries for the menu card (rev 7).
 
 ### Tab 1: "User Profile" — every input type + real field-level server error *(real)*
 
@@ -591,7 +671,14 @@ state; `form.state.isSubmitting` overlay.
 `@tanstack/react-form-nextjs` must be spiked before building the tab — the repo's existing
 demo only round-trips scalars. Committed fallback if decode is awkward: the final step submits
 scalars plus the email list serialized as one JSON-string field, re-parsed inside
-`createServerValidate`'s `onServerValidate`. The tab's UX is identical either way.
+`createServerValidate`'s `onServerValidate`. The tab's UX is identical either way. The same
+spike verifies (rev 5) that the simulated `emails.2` server error actually lands on the
+third chip after `exceptionToFormErrors`' dotted→bracket normalization (`emails[2]` is the
+TanStack deep-key form).
+
+**Schema reuse (rev 5):** `onServerValidate` imports the same `src/validators/forms/` Zod
+schemas the client fields use — one source of truth; the server never re-declares a rule, so
+client and server validation cannot drift.
 
 ### Tab 3: "API Key" — real mutations, optimistic list, reveal-once secret *(real)*
 
@@ -674,12 +761,12 @@ conditions** (instant / 800 ms / 5 s timeout / offline via `clientException()` s
 30% random failure) driving loading, retry-with-backoff, and timeout-vs-error distinction; and
 a **raw payload inspector** (collapsible `<pre>` of the exact `ExceptionResponse`).
 
-**Locale-compare mechanism (rev 4):** `getAllMessages` is server-only and the client provider
-holds only the active locale — so the forms `page.tsx` additionally loads the error-bearing
-namespaces (`auth`, `settings`, `apiKeys`, `forms`, `error`) for **both** locales via
-`getMessages(locale, ns)` and passes them to this tab as an `errorMessagesByLocale` prop (a
-few KB, not the whole tree). The toggle just switches which tree `exceptionHandler` resolves
-against.
+**Locale-compare mechanism (rev 4; rev 6 placement):** `getAllMessages` is server-only and
+the client provider holds only the active locale — so the `error-lab` sub-page's own
+`page.tsx` additionally loads the error-bearing namespaces (`auth`, `settings`, `apiKeys`,
+`forms`, `error`) for **both** locales via `getMessages(locale, ns)` and passes them to this
+view as an `errorMessagesByLocale` prop (a few KB, not the whole tree; no other route pays
+this cost). The toggle just switches which tree `exceptionHandler` resolves against.
 
 This tab is the reference implementation the real tabs (1, 3, 4, 7) are held to.
 
@@ -720,10 +807,11 @@ Submission model:
   `handleSubmit(submitMeta)`); full validators run; `onSubmit` branches endpoint + success
   toast on `meta.intent`; schedule additionally requires `publishAt` (conditional Zod)
 - **Unsaved-changes guard** — `form.state.isDirty` + `beforeunload` for hard navigation and
-  tab close; in-page guards (ExampleTabs `onValueChange`, preview toggle) via `ConfirmDialog`.
-  **Scope honestly stated (R2):** App Router exposes no router events, so arbitrary
-  client-side route changes (e.g. the left nav) are *not* intercepted — the tab intro says so
-  instead of shipping a half-working guard
+  tab close; in-page guards (the preview toggle) via `ConfirmDialog`. **Scope honestly
+  stated (R2, updated rev 6):** App Router exposes no router events, so client-side route
+  changes — the left nav, and now also the gallery back link / navigating to another
+  example — are *not* intercepted; the tab intro says so instead of shipping a half-working
+  guard. The debounced localStorage draft is the real safety net
 
 **Draft hygiene (rev 4):** the draft key is `forms:draft:<userId>` (no cross-account bleed on
 a shared browser), cleared on the existing `auth:logout` window event, size-capped, and stores
@@ -810,16 +898,34 @@ Convention (from real backend throw sites): `key` is always `<namespace>.<path>`
 existing folders are kebab/lowercase, but the backend contract wins here; note it in the
 folder's sibling comment or README line).
 
+**Parameter-free rule (rev 5):** `ExceptionResponse` carries no interpolation params — only
+`msg` and `key` — and `exceptionHandler` does plain key→string resolution. Any
+`{placeholder}` in an error message renders literally in the non-English locale (the English
+`msg` fallback embeds the value server-side; the translated key cannot). Therefore every
+`*.errors.*` message must be parameter-free — reworded where needed (e.g. `nameExists` says
+"this name" instead of quoting it). Extending the envelope with
+`params?: Record<string, string>` (backend filter + `exceptionHandler`) is flagged as an
+optional follow-up, out of scope here.
+
 New/extended files:
 
-- `messages/{en,tr}/forms/messages.json` — page title/description, tab titles+descriptions
-  (12), field labels/placeholders per tab, upload labels block, `errors` block for
-  simulated scenarios (`emailAlreadyMember`, `inviteQuotaExceeded`, `couponInvalid`,
-  `couponExpired`, `connectionUnstable`, `scanFailed`, `postalCodeInvalid`,
-  `paymentDeclined`, `rowRejected`, `unknown`), plus editor/wizard chrome (draft restore
-  banner, unsaved-changes dialog, step labels)
-- `messages/{en,tr}/apiKeys/messages.json` — `errors.nameExists` (en: `An API key named
-  "{name}" already exists`; tr mirror)
+- `messages/{en,tr}/forms/messages.json` — structured to add **zero new
+  `check-duplicate-messages` hits** (the script compares top-level keys across namespace
+  files, and `title`/`back`/`breadcrumbLabel` already exist elsewhere — rev 7):
+  - `gallery` block — menu title/description, `back`, `breadcrumbLabel`, badge labels
+    `real`/`simulated`/`mixed`/`none`
+  - `examples` block — per-slug title+description ×12, reused by the gallery cards and each
+    sub-page's `generateMetadata`
+  - per-tab blocks — field labels/placeholders; upload labels block; editor/wizard chrome
+    (draft restore banner, unsaved-changes dialog, step labels)
+  - `errors` block for simulated scenarios (`emailAlreadyMember`, `inviteQuotaExceeded`,
+    `couponInvalid`, `couponExpired`, `connectionUnstable`, `scanFailed`,
+    `postalCodeInvalid`, `paymentDeclined`, `rowRejected`, `unknown`) — **must** stay
+    top-level (backend `forms.errors.*` contract) and knowingly duplicates `auth`'s
+    top-level `errors` key
+- `messages/{en,tr}/apiKeys/messages.json` — `errors.nameExists` (en: `An API key with this
+  name already exists`, tr: `Bu isimde bir API anahtarı zaten mevcut` — parameter-free per
+  the rev 5 rule)
 - `messages/{en,tr}/settings/messages.json` — **add** `errors.usernameTaken` (en: `Username is
   already taken`, tr: `Bu kullanıcı adı zaten alınmış`) — the live-bug fix
 - `messages/{en,tr}/v1-shell/messages.json` — `navForms`
@@ -854,22 +960,26 @@ run `pnpm check-duplicate-messages` (existing script) after adding keys.
 
 | File | Purpose |
 |---|---|
-| `src/app/v1/[lang]/forms/page.tsx` | Server page (verified pattern) |
-| `src/views/forms/PageContent.tsx` | ExampleTabs with 12 entries |
-| `src/views/forms/UserProfileForm.tsx` | Tab 1 |
-| `src/views/forms/TeamInviteForm.tsx` | Tab 2 |
-| `src/views/forms/ApiKeyForm.tsx` | Tab 3 |
-| `src/views/forms/BillingForm.tsx` | Tab 4 |
-| `src/views/forms/FilterPanel.tsx` | Tab 5 |
-| `src/views/forms/FieldStatesShowcase.tsx` | Tab 6 |
-| `src/views/forms/FileUploadsForm.tsx` | Tab 7 |
-| `src/views/forms/ErrorAsyncLab.tsx` | Tab 8 |
-| `src/views/forms/CheckoutForm.tsx` | Tab 9 |
-| `src/views/forms/ContentEditorForm.tsx` | Tab 10 |
-| `src/views/forms/FormBuilder.tsx` | Tab 11 |
-| `src/views/forms/EditableTable.tsx` | Tab 12 |
+| `src/constants/forms-gallery.ts` | `FORMS_EXAMPLES` registry (name + slug + mode ×12) |
+| `src/app/v1/[lang]/forms/page.tsx` | Gallery menu server page |
+| `src/app/v1/[lang]/forms/layout.tsx` | Client layout (back link, breadcrumb, `ThemeToggle`) — cloned from `ui/layout.tsx` |
+| `src/app/v1/[lang]/forms/<slug>/page.tsx` | 12 sub-page server pages (verified ui pattern) |
+| `src/views/forms/PageContent.tsx` | Menu card grid over the registry (+ description & backend-mode badge per card) |
+| `src/views/forms/profile/PageContent.tsx` | Tab 1 |
+| `src/views/forms/team-invite/PageContent.tsx` | Tab 2 |
+| `src/views/forms/api-key/PageContent.tsx` | Tab 3 |
+| `src/views/forms/billing/PageContent.tsx` | Tab 4 |
+| `src/views/forms/filters/PageContent.tsx` | Tab 5 |
+| `src/views/forms/field-states/PageContent.tsx` | Tab 6 |
+| `src/views/forms/uploads/PageContent.tsx` | Tab 7 |
+| `src/views/forms/error-lab/PageContent.tsx` | Tab 8 (its server page also loads `errorMessagesByLocale`) |
+| `src/views/forms/checkout/PageContent.tsx` | Tab 9 |
+| `src/views/forms/content-editor/PageContent.tsx` | Tab 10 |
+| `src/views/forms/form-builder/PageContent.tsx` | Tab 11 |
+| `src/views/forms/editable-table/PageContent.tsx` | Tab 12 |
 
-(+ sibling sub-components where a tab exceeds ~150 lines, per AGENTS.)
+(+ sibling sub-components inside each `views/forms/<slug>/` folder where an example exceeds
+~150 lines, per AGENTS.)
 
 **Form infrastructure:** `src/lib/forms/form-context.ts`, `src/lib/forms/form-hook.tsx`,
 `src/components/forms/{TextField,TextareaField,SelectField,ComboboxField,CheckboxField,SwitchField,RadioGroupField,DateField,TimeField,UploadField,SubmitButton}.tsx`
@@ -906,6 +1016,7 @@ colocated test + types in `src/types/ui/`):** `form-field-info/`, `form-error-ba
 | `src/constants/api/urls.ts` | `FORMS_DEMO_SIMULATE_ERROR_URL` |
 | `src/generated/i18n-messages.d.ts` | regenerated (never hand-edited) via `pnpm generate-i18n-types` |
 | `src/app/api/upload/route.ts` | *Optional polish* — envelope-shaped errors instead of bare `{ error }` |
+| `src/app/v1/[lang]/ui/layout.tsx` | *Optional quick win (rev 7)* — fix dead back link: depth check `> 4` → `> 3` |
 
 ## Implementation Order
 
@@ -915,8 +1026,9 @@ gets checked off here before the next starts.
 - **Phase 0 — Prerequisites** *(safe to ship alone; nothing user-visible yet)*:
   `useAllMessages`, `getSurface` widening, `settings.errors.usernameTaken` (en+tr),
   `labels?` prop on upload components. Run `generate-i18n-types`.
-- **Phase 1 — Scaffold**: nav, `forms` + `apiKeys` message namespaces, server page,
-  `PageContent` with 12 placeholder tabs. Regenerate i18n types.
+- **Phase 1 — Scaffold**: nav, `forms` + `apiKeys` message namespaces, `forms-gallery`
+  registry, gallery menu page + card grid, `forms/layout.tsx`, 12 placeholder sub-pages.
+  Regenerate i18n types.
 - **Phase 2 — Composition + error spine** *(load `ui-components` skill for the 3 ui-kit
   components; `datetime-inputs` for Date/Time bound fields)*: `form-context`/`form-hook`,
   the 11 bound field components, `FormFieldInfo` lift, `FormErrorBanner`, `StepIndicator`,
@@ -940,8 +1052,12 @@ gets checked off here before the next starts.
 Wired to this repo's actual scripts and working agreements:
 
 1. `pnpm lint` and `pnpm typecheck` clean (includes regenerated i18n types)
-2. `pnpm generate-i18n-types` run after any `messages/` change; `pnpm check-duplicate-messages`
-   clean
+2. `pnpm generate-i18n-types` run after any `messages/` change. `pnpm
+   check-duplicate-messages` is **already red repo-wide** (verified 2026-07-19: exits 1 on
+   legacy duplicates like `title`/`back`), so the gate is "no *new* duplicate keys beyond
+   that baseline" (rev 7). The `errors` top-level block in `auth`/`settings`/`apiKeys`/
+   `forms` is by design (backend `<namespace>.errors.<key>` contract); all other new forms
+   keys nest under sub-objects (`gallery.*`, `examples.*`) and add no hits
 3. en/tr parity: every new key exists in both locales (the error-code rule below)
 4. **No automated test or Playwright runs by default** — per working agreement, Berkay
    exercises the UI manually after changes; test files for the 3 ui-kit components are still
@@ -955,7 +1071,12 @@ Wired to this repo's actual scripts and working agreements:
 7. Simulation-route hardening smoke: unauthenticated POST → 401; `delayMs: 999999` → response
    within the 10 s clamp
 8. A11y spot check on failed submits: focus lands on the first errored field; the banner
-   announces via `role="alert"` (manual keyboard + screen-reader pass — no automated gate)
+   announces via `role="alert"` (manual keyboard + screen-reader pass — no automated gate);
+   async-validating states announce via `role="status"`
+9. Bundle check (from Phase 3 on): `pnpm build` route table — first-load JS for the menu
+   route and each `/v1/[lang]/forms/<slug>` sub-route must stay in the same range as
+   comparable `/v1/[lang]/ui/*` routes; route-level splitting (rev 6) is what makes this
+   hold. Record the numbers in the phase checkoff so growth is visible per phase
 
 ## Key Conventions (binding for every phase)
 
@@ -969,8 +1090,16 @@ Wired to this repo's actual scripts and working agreements:
 - New error codes follow `EX_<DOMAIN>_<REASON>` and ship a `<namespace>.errors.<camelCase>`
   key in **both** locales in the same commit — no code without a translation (the rule the
   live `settings` bug violated)
+- `*.errors.*` messages are parameter-free (the envelope has no `params`); backend field
+  paths normalize to TanStack bracket form inside `exceptionToFormErrors` only — nowhere else
+- One example per sub-route (`views/forms/<slug>/PageContent.tsx`); the gallery menu imports
+  only the `forms-gallery` registry — an example is never statically imported outside its own
+  route (rev 6; replaces rev 5's `next/dynamic` rule)
 - i18n namespace folder name must literally equal the key's first segment (`apiKeys` folder
   for `apiKeys.*` keys)
+- Shared-sounding message keys (`title`, `back`, …) nest under sub-objects —
+  `check-duplicate-messages` compares top-level keys only; the top-level `errors` block is
+  the deliberate exception (backend contract) (rev 7)
 - Handlers at module level with explicit params; view files split at ~150 lines; sub-components
   in sibling files
 - Client `maxSizeBytes` = the **stricter** of proxy/backend limits (5 MB), with a comment
@@ -1015,13 +1144,16 @@ sections above; this is the consolidated register an implementer checks off per 
 
 | # | Risk | Sev | Mitigation / fallback |
 |---|---|---|---|
-| R1 | `FormData` decode of an array field via `react-form-nextjs` is unproven in this repo (Tab 2) | Med | Spike before building the tab; committed fallback: emails as one JSON-string field parsed in `onServerValidate` — *inline* |
-| R2 | App Router has no route-change events → full nav interception impossible (Tab 10) | Low | Guard scoped to `beforeunload` + in-page switches; limitation stated in the tab intro — *inline* |
+| R1 | `FormData` decode of an array field via `react-form-nextjs` is unproven in this repo (Tab 2) | Med | Spike before building the tab; committed fallback: emails as one JSON-string field parsed in `onServerValidate`; spike also verifies the dotted→bracket path normalization end-to-end (R9) — *inline* |
+| R2 | App Router has no route-change events → full nav interception impossible (Tab 10) | Low | Guard scoped to `beforeunload` + the in-page preview toggle (rev 6: example-to-example navigation is a route change, also not intercepted); limitation stated in the tab intro; localStorage draft is the safety net — *inline* |
 | R3 | Real `updateProfile` accepts a subset of Tab 1's fields | — | **Closed by design:** persisted vs demo-only field split — *inline* |
-| R4 | Tab 8 needs both locales client-side but `getAllMessages` is server-only | — | **Closed:** `errorMessagesByLocale` prop from the server page — *inline* |
-| R5 | TypeScript instantiation cost of 12 heavily-generic forms slows `tsc` | Low–Med | Per-tab isolated `formOptions`; no mega `z.union` schemas; watch `pnpm typecheck` duration each phase — if it degrades, type-erase only at the ExampleTabs seam |
+| R4 | Tab 8 needs both locales client-side but `getAllMessages` is server-only | — | **Closed:** `errorMessagesByLocale` prop from the `error-lab` sub-page's own server page (rev 6) — *inline* |
+| R5 | TypeScript instantiation cost of 12 heavily-generic forms slows `tsc` | Low–Med | Per-tab isolated `formOptions`; no mega `z.union` schemas; watch `pnpm typecheck` duration each phase — if it degrades, type-erase only at each sub-page's `PageContent` seam (rev 6) |
 | R6 | Form-validator field errors persist until the next submit | — | **Accepted** — official semantics and the intended UX; noted in the error spine |
-| R7 | 12 tab pills wrap on narrow desktops | — | **Accepted** — `ExampleTabs` wraps pills; mobile accordion unaffected |
+| R7 | 12 tab pills wrap on narrow desktops | — | **Moot (rev 6)** — no pill row; the gallery menu grid replaces it |
+| R8 | Envelope has no interpolation `params` → `{placeholder}` renders literally in translated error messages | — | **Closed by design (rev 5):** all `*.errors.*` messages parameter-free; `params?` envelope extension flagged as optional follow-up — *inline in i18n Architecture* |
+| R9 | Backend dotted field paths vs TanStack bracket deep keys (`emails.2` vs `emails[2]`) — field errors would miss their target | — | **Closed (rev 5):** numeric-segment normalization inside `exceptionToFormErrors`; verified in the R1 spike — *inline in the error spine* |
+| R10 | 12 statically imported tabs balloon the route's first-load JS | — | **Closed by design (rev 6):** each example is its own route → route-level code-splitting; first-load JS check in the DoD — *inline in Page Structure* |
 
 ### Compatibility matrix (verified, not assumed)
 
