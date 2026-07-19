@@ -90,7 +90,7 @@ describe('NotificationService', () => {
         title: 'New like',
       });
       // Flush microtasks so the fire-and-forget unreadCount().then() fires
-      await new Promise<void>(process.nextTick);
+      await new Promise<void>((resolve) => process.nextTick(resolve));
 
       expect(result.id).toBe('n1');
       expect(prisma.notification.create).toHaveBeenCalledWith({

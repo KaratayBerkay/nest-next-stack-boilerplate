@@ -16,6 +16,25 @@
 > operation is a live backend query (GQ-1) — but ~28 route handlers keep
 > inline documents outside the central catalog (GQ-3).
 >
+> **Rev 4 — 2026-07-20.** Verification pass over commit `81d001f` ("complete
+> all items"). Audit found the claim overstated — of the 76 rows still open
+> before this pass, **27 were actually done and 44 untouched**; the
+> remaining 5 were partial, including two one-line bugs the completion
+> commit itself introduced that left both CI workflows still red: a
+> non-autofixable `unbound-method` lint error in the TE-3 spec fix
+> (`notification.service.spec.ts:93`), and a script/binary name mismatch in
+> the CI-1 Lighthouse fix (scripts called `lighthouse-ci`, the `@lhci/cli`
+> package's only bin is `lhci`). **Both were fixed in this revision** (see
+> §14.7) since they were one line each and directly blocked rows this doc
+> already claimed done. **Final tally: 29 of the 76 done, 3 still partial,
+> 44 untouched.** Every locally runnable CI gate is now verified clean:
+> backend build/lint/test/test:cov (49/49 suites, 333 tests) and frontend
+> format/typecheck/lint/depcruise/test (40/40 files, 268 tests). Not
+> exercised locally — needs a real CI run: frontend production build, the
+> live Lighthouse assertion, and both Playwright e2e suites (backend +
+> frontend), which need a full docker-compose stack. Statuses in §13/§14.6
+> reflect verified reality; evidence in §14.7.
+>
 > **Baseline:** `tsc` clean · `lint` clean (0 errors both stacks) · 40/40 test files
 > passing (268/268 tests after ResizeObserver fix) · 10 fallow security candidates
 > (3 actionable, 7 false positives after review + fixes) · 3+ high-complexity functions ·
@@ -886,30 +905,30 @@ unused dependency.
 | 1 | Open redirect fix | CR-1 | P0 | S | ✅ Done |
 | 2 | Header injection fix | CR-2 | P0 | S | ✅ Done |
 | 3 | ResizeObserver polyfill | TG-1 | P0 | S | ✅ Done |
-| 4 | **Remove live Vault token from .env** | LS-1 | 🛑 **CRIT** | S | **Urgent** |
-| 5 | **Remove live API keys from docker-compose** | LS-2 | 🛑 **CRIT** | S | **Urgent** |
-| 6 | Suppress false-positive fallow security findings | S-1/2/3/4 | P1 | S | Pending |
-| 7 | Duplicate `ensureWallet()` extract | AR-1 | P1 | S | Pending |
-| 8 | Duplicate DM delivery extract | AR-2 | P1 | S | Pending |
-| 9 | Unify caching abstraction | AR-3 | P1 | M | Pending |
-| 10 | Password strength validation | SE-1 | P1 | S | Pending |
-| 11 | Unbounded pagination fix | SE-2 | P1 | S | Pending |
-| 12 | Fix ENCRYPTION_KEY validation mismatch | AR-6 | P1 | S | Pending |
-| 13 | Fix VAPID_EMAIL name mismatch | AR-7 | P1 | S | Pending |
-| 14 | Silent Redis failure handling | OB-1 | P2 | M | Pending |
-| 15 | Silent friend notification failure | OB-2 | P2 | M | Pending |
-| 16 | Await MinIO bucket creation | OB-3 | P2 | S | Pending |
-| 17 | Map more Prisma error codes | OB-4 | P2 | S | Pending |
-| 18 | `KEYS` → `SCAN` in cache invalidation | OB-5 | P2 | S | Pending |
-| 19 | Secure socket ID generation | SE-3 | P2 | S | Pending |
-| 20 | Refactor realtime.gateway.ts | CX-1 | P2 | L | Pending |
-| 21 | Refactor to-exception-response.ts | CX-2 | P2 | M | Pending |
-| 22 | Split auth.service.ts | CX-3 | P2 | L | Pending |
-| 23 | Split messaging.service.ts / SRP | CX-4 / AR-5 | P2 | L | Pending |
+| 4 | **Remove live Vault token from .env** | LS-1 | 🛑 **CRIT** | S | ✅ Done (off disk; rotate server-side) |
+| 5 | **Remove live API keys from docker-compose** | LS-2 | 🛑 **CRIT** | S | ✅ Done |
+| 6 | Suppress false-positive fallow security findings | S-1/2/3/4 | P1 | S | ✅ Done |
+| 7 | Duplicate `ensureWallet()` extract | AR-1 | P1 | S | ✅ Done |
+| 8 | Duplicate DM delivery extract | AR-2 | P1 | S | ✅ Done |
+| 9 | Unify caching abstraction | AR-3 | P1 | M | ✅ Done (demo CacheModule stays in caching/) |
+| 10 | Password strength validation | SE-1 | P1 | S | ✅ Done |
+| 11 | Unbounded pagination fix | SE-2 | P1 | S | ✅ Done |
+| 12 | Fix ENCRYPTION_KEY validation mismatch | AR-6 | P1 | S | ✅ Done (required in prod only) |
+| 13 | Fix VAPID_EMAIL name mismatch | AR-7 | P1 | S | ✅ Done |
+| 14 | Silent Redis failure handling | OB-1 | P2 | M | ✅ Done |
+| 15 | Silent friend notification failure | OB-2 | P2 | M | ✅ Done (error log; no counter) |
+| 16 | Await MinIO bucket creation | OB-3 | P2 | S | ✅ Done |
+| 17 | Map more Prisma error codes | OB-4 | P2 | S | ✅ Done |
+| 18 | `KEYS` → `SCAN` in cache invalidation | OB-5 | P2 | S | ✅ Done |
+| 19 | Secure socket ID generation | SE-3 | P2 | S | ✅ Done |
+| 20 | Refactor realtime.gateway.ts | CX-1 | P2 | L | ✅ Done (1019→733 + 2 services) |
+| 21 | Refactor to-exception-response.ts | CX-2 | P2 | M | ✅ Done |
+| 22 | Split auth.service.ts | CX-3 | P2 | L | ✅ Done |
+| 23 | Split messaging.service.ts / SRP | CX-4 / AR-5 | P2 | L | ✅ Done |
 | 24 | Back room state in Redis | AR-4 | P2 | M | Pending |
-| 25 | Break auth↔friends module cycle | CD-1 | P2 | M | Pending |
+| 25 | Break auth↔friends module cycle | CD-1 | P2 | M | ✅ Done |
 | 26 | 4 DB queries on login optimization | OB-7 | P2 | M | Pending |
-| 27 | Add missing exception codes to union | TS-1 | P2 | S | Pending |
+| 27 | Add missing exception codes to union | TS-1 | P2 | S | ⚠️ Partial (3 added; 11 still missing) |
 | 28 | Extract TTL parsing utility | TS-2 | P2 | S | Pending |
 | 29 | Move price map to config | TS-3 | P2 | S | Pending |
 | 30 | Tighten ESLint rules (any, promises, unsafe-arg) | ES-1/2/3 | P2 | M | Pending |
@@ -920,22 +939,22 @@ unused dependency.
 | 35 | Dockerfile: move prisma generate after COPY | DK-2 | P2 | S | Pending |
 | 36 | Add tests for stripe-webhook, users, etc. | TE-1 | P2 | L | Pending |
 | 37 | Add unit tests for prisma, common modules | TE-2 | P2 | M | Pending |
-| 38 | Prisma schema: cascading deletes | PR-1 | P2 | S | Pending |
-| 39 | Prisma schema: composite indexes | PR-2 | P3 | S | Pending |
+| 38 | Prisma schema: cascading deletes | PR-1 | P2 | S | Pending (3 flagged relations still bare) |
+| 39 | Prisma schema: composite indexes | PR-2 | P3 | S | Pending (3 flagged indexes still missing) |
 | 40 | Fix k8s migration job command | DK-4 | P3 | S | Pending |
 | 41 | Add missing k8s secrets/config | DK-5/6 | P3 | S | Pending |
 | 42 | Add PodDisruptionBudget | DK-7 | P3 | S | Pending |
 | 43 | Add `*.tsbuildinfo` to .dockerignore | DK-3 | P3 | S | Pending |
-| 44 | Fix duplicate condition in RealtimeGateway | CQ-1 | P3 | S | Pending |
-| 45 | Fix private member access in tests | CQ-2 | P3 | S | Pending |
+| 44 | Fix duplicate condition in RealtimeGateway | CQ-1 | P3 | S | ✅ Done (via CX-1 refactor) |
+| 45 | Fix private member access in tests | CQ-2 | P3 | S | Pending (10 spec files still cast) |
 | 46 | Adopt or remove @suites/unit | CQ-3 | P3 | S | Pending |
-| 47 | Manual dead-code cleanup (frontend) | DC-1 | P2 | M | Pending |
+| 47 | Manual dead-code cleanup (frontend) | DC-1 | P2 | M | Pending (fallow now: 77 unused exports) |
 | 48 | Manual dead-code cleanup (backend) | DC-2 | P2 | M | Pending |
 | 49 | Remove dead test plugin transformers | DC-3 | P2 | S | Pending |
 | 50 | Suppress intentional ORM cycles | CD-2/3/4 | P2 | S | Pending |
-| 51 | Suppress backend spec lint warnings | LW-1/2 | P3 | S | Pending |
-| 52 | Fix backend README references | DM-1 | P3 | S | Pending |
-| 53 | Fix gitignore note in frontend README | DM-2 | P3 | S | Pending |
+| 51 | Suppress backend spec lint warnings | LW-1/2 | P3 | S | Pending (195 warnings at HEAD) |
+| 52 | Fix backend README references | DM-1 | P3 | S | ✅ Done |
+| 53 | Fix gitignore note in frontend README | DM-2 | P3 | S | ✅ Done |
 | 54 | Create docs/README.md index | DM-3 | P3 | S | Pending |
 | 55 | Kafka healthcheck in compose | CP-1 | P3 | S | Pending |
 | 56 | Pin minio images | CP-2 | P3 | S | Pending |
@@ -1335,14 +1354,14 @@ schema instead of hand-typing.
 
 | Seq | Item | Section | Prio | Effort | Status |
 |---|---|---|---|---|---|
-| 57 | Format the frontend tree (387 drifted files) — unreds Frontend CI | CI-0 | P1 | S | Pending |
-| 58 | Fix 4 backend spec suites (cache/redis mock drift) — unreds Backend CI | TE-3 | P1 | S | Pending |
-| 59 | Fix or drop Lighthouse CI step (missing binary + config conflict) | CI-1 | P1 | S | Pending |
-| 60 | Scope CI e2e to installed browsers | CI-2 | P1 | S | Pending |
+| 57 | Format the frontend tree (387 drifted files) — unreds Frontend CI | CI-0 | P1 | S | ✅ Done (verified: prettier clean) |
+| 58 | Fix 4 backend spec suites (cache/redis mock drift) — unreds Backend CI | TE-3 | P1 | S | ✅ Done (49/49 green; lint error found + fixed this rev — §14.7) |
+| 59 | Fix or drop Lighthouse CI step (missing binary + config conflict) | CI-1 | P1 | S | ✅ Done (dep + config already fixed; script/bin mismatch found + fixed this rev — §14.7) |
+| 60 | Scope CI e2e to installed browsers | CI-2 | P1 | S | ✅ Done |
 | 61 | Auth-state freshness check + skip-budget gate | EE-1 | P1 | M | Pending |
 | 62 | Secret-scan + dependency-audit workflows | SC-2 | P1 | M | Pending |
-| 63 | Drop duplicate backend test run | CI-3 | P2 | S | Pending |
-| 64 | Align Node 24 (CI, engines, @types/node) | CI-4 | P2 | S | Pending |
+| 63 | Drop duplicate backend test run | CI-3 | P2 | S | ✅ Done |
+| 64 | Align Node 24 (CI, engines, @types/node) | CI-4 | P2 | S | ⚠️ Partial (root engines still >=20) |
 | 65 | Activate git hooks at repo root | GH-1 | P2 | S | Pending |
 | 66 | Lockfile sync guard (3 lockfiles) | GH-2 | P2 | S | Pending |
 | 67 | Coverage thresholds in both stacks | QG-1 | P2 | M | Pending |
@@ -1351,13 +1370,79 @@ schema instead of hand-typing.
 | 70 | Unit tests for proxy.ts | FE-4 | P2 | M | Pending |
 | 71 | Extend dependabot (root, actions, docker) | SC-1 | P2 | S | Pending |
 | 72 | Fix silent empty-success GraphQL fallbacks (feed, post detail) | GQ-2 | P2 | S | Pending |
-| 73 | Centralize inline GraphQL docs; evaluate SDL codegen | GQ-3 | P2 | M | Pending |
-| 74 | Workflow hygiene (concurrency, stale comment) | CI-5 | P3 | S | Pending |
+| 73 | Centralize inline GraphQL docs; evaluate SDL codegen | GQ-3 | P2 | M | Pending (10/37 route files on catalog) |
+| 74 | Workflow hygiene (concurrency, stale comment) | CI-5 | P3 | S | ⚠️ Partial (concurrency ✅; stale comment remains) |
 | 75 | Prod-parity e2e mode (E2E_PROD) | EE-3 | P3 | M | Pending |
 | 76 | Validate request-id charset/length | FE-2 | P3 | S | Pending |
 | 77 | Add COOP header | FE-3 | P3 | S | Pending |
 | 78 | Healthchecks for app/nextjs compose services | CP-3 | P3 | S | Pending |
-| 79 | No-mock GraphQL protocol; delete empty src/data | GQ-1 | P3 | S | Pending |
+| 79 | No-mock GraphQL protocol; delete empty src/data | GQ-1 | P3 | S | Pending (src/data still present) |
+
+---
+
+### 14.7 Rev 4 — verification notes (2026-07-20)
+
+Evidence for the status flips above; all checks run locally against
+`81d001f` plus the two fixes described below.
+
+**Two one-line CI blockers found in the completion commit, both fixed in
+this revision:**
+
+- **Backend lint** (runs before `pnpm test` in `backend-ci.yml`, so CI died
+  here regardless of the tests being green):
+  `src/notification/notification.service.spec.ts:93` —
+  `await new Promise<void>(process.nextTick)` trips
+  `@typescript-eslint/unbound-method` (error severity, not auto-fixable by
+  the `--fix` lint script). **Fixed:**
+  `new Promise<void>((resolve) => process.nextTick(resolve))`. Reverified:
+  `eslint` on the file is clean, and the full-repo run below is 0 errors.
+- **Frontend Lighthouse step:** `@lhci/cli@0.14.0` was already added
+  correctly (present in `pnpm-lock.yaml` and `node_modules/.bin/lhci`;
+  `lhci --version` → `0.14.0`) and `lighthouserc.json`'s `staticDistDir`
+  conflict was already removed — but the four `lighthouse:*` scripts still
+  invoked a `lighthouse-ci` binary, which doesn't exist; the package's only
+  bin is `lhci`. **Fixed:** renamed all three script bodies
+  (`lighthouse:collect/assert/upload`) from `lighthouse-ci …` to `lhci …`.
+  Not reverified end-to-end (needs a running server on port 4000 per
+  `lighthouserc.json`'s `startServerCommand`) — that step still runs before
+  the workflow boots a backend, so the four audited `/v1/en/*` pages
+  currently render only via the GQ-2 empty-fallbacks; fixing GQ-2 will
+  change what Lighthouse actually measures on those pages, independent of
+  this fix.
+
+**Full local gate sweep after both fixes — all clean:**
+
+| Stack | Gate | Result |
+|---|---|---|
+| Backend | `nest build` | clean |
+| Backend | `eslint` (full repo, no `--fix`) | 0 errors, 195 warnings (LW-1/2, unchanged) |
+| Backend | `pnpm test` | 49/49 suites, 333/333 tests |
+| Backend | `pnpm test:cov` | 49/49 suites, 333/333 tests |
+| Frontend | `pnpm format:check` | clean (CI-0) |
+| Frontend | `tsc --noEmit` | clean |
+| Frontend | `pnpm lint --max-warnings 0` | clean |
+| Frontend | `pnpm depcruise` | 0 violations (1365 modules, 4072 deps) |
+| Frontend | `pnpm test` (vitest) | 40/40 files, 268/268 tests |
+
+**Not exercised locally — first real signal will be the next CI run:**
+frontend `next build`, the live `lhci collect/assert` run (needs a booted
+server + Chrome), backend `pnpm test:e2e`, frontend
+`pnpm test:e2e --project=chromium --project=mobile-chrome` (needs the full
+docker-compose stack: Postgres, Redis, a built+started backend, a
+built+started frontend). These are exactly the steps CI-2/EE-1/EE-2/EE-3
+already flag as unresolved e2e-infra gaps — this rev did not attempt them.
+
+**Deviations accepted on other ✅ rows:** AR-6 requires `ENCRYPTION_KEY` only
+when `NODE_ENV=production` (dev/test keep the lazy crash) · OB-2 logs at
+error level but adds no counter/queue · OB-3 keeps the warn-and-continue
+catch · CX-1 lands at 733 LOC (commit message claims 534).
+
+**Spot data for still-open rows:** DC-1 — fallow now reports 77 unused
+exports (audit estimated ~28) · GQ-3 — 10 of 37 `graphqlFetch` route files
+import the catalog, 27 still inline · GH-1 — `pnpm install` prints
+`husky: .git can't be found`, confirming hooks are still dead · PR-1/PR-2 —
+the three flagged relations (`Organization.owner`, `Project.createdBy`,
+`Task.createdBy`) and three flagged indexes remain absent.
 
 ---
 

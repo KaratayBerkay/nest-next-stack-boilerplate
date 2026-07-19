@@ -22,9 +22,9 @@
     "fallow-check": "fallow audit --ci --fail-on-issues",
     "fallow-fix": "fallow fix --yes",
     "prepare": "husky",
-    "lighthouse:collect": "lighthouse-ci collect --config lighthouserc.json",
-    "lighthouse:assert": "lighthouse-ci assert --config lighthouserc.json",
-    "lighthouse:upload": "lighthouse-ci upload --config lighthouserc.json",
+    "lighthouse:collect": "lhci collect --config lighthouserc.json",
+    "lighthouse:assert": "lhci assert --config lighthouserc.json",
+    "lighthouse:upload": "lhci upload --config lighthouserc.json",
     "lighthouse:ci": "pnpm lighthouse:collect && pnpm lighthouse:assert",
     "analyze": "ANALYZE=true next build"
   },
