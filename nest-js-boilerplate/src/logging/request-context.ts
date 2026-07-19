@@ -25,6 +25,10 @@ function firstHeader(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
+function sanitizeHeaderValue(value: string): string {
+  return value.replace(/[\r\n]/g, '');
+}
+
 /**
  * Express middleware (mounted first, before any logging) that establishes the request id:
  * honor an inbound `x-request-id` / `x-correlation-id` so an upstream gateway's id flows
@@ -39,7 +43,7 @@ export function requestContextMiddleware(
   const incoming =
     firstHeader(req.headers[REQUEST_ID_HEADER]) ??
     firstHeader(req.headers[CORRELATION_ID_HEADER]);
-  const requestId = incoming ?? randomUUID();
+  const requestId = incoming ? sanitizeHeaderValue(incoming) : randomUUID();
   res.setHeader(REQUEST_ID_HEADER, requestId);
   storage.run({ requestId }, () => next());
 }

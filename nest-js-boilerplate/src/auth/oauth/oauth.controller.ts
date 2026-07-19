@@ -15,6 +15,15 @@ import type { Response } from 'express';
 import { AuthService } from '../auth.service';
 import { OAuthService } from './oauth.service';
 
+function isSafeRedirect(target: string, allowedOrigin: string): boolean {
+  try {
+    const parsed = new URL(target, allowedOrigin);
+    return parsed.origin === allowedOrigin;
+  } catch {
+    return false;
+  }
+}
+
 @Controller('auth/oauth')
 export class OAuthController {
   private readonly logger = new Logger(OAuthController.name);
@@ -24,6 +33,12 @@ export class OAuthController {
     private readonly auth: AuthService,
     private readonly config: ConfigService,
   ) {}
+
+  private get frontendOrigin(): string {
+    return this.config
+      .get<string>('FRONTEND_URL', 'http://localhost:3000')
+      .replace(/\/+$/, '');
+  }
 
   /** GET /auth/oauth/providers — returns list of configured provider names */
   @Get('providers')
@@ -52,6 +67,13 @@ export class OAuthController {
         key: 'error.missingOAuthParams',
       });
     }
+    if (!isSafeRedirect(redirectUri, this.frontendOrigin)) {
+      throw new BadRequestException({
+        exc: 'EX_VALIDATION_FORM',
+        msg: 'Invalid redirect_uri origin',
+        key: 'error.invalidRedirectUri',
+      });
+    }
     const url = await this.oauth.buildAuthUrl(provider, state, redirectUri);
     return { url, statusCode: HttpStatus.FOUND };
   }
@@ -70,37 +92,43 @@ export class OAuthController {
     @Query('error') error: string,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const frontendOrigin = this.config
-      .get<string>('FRONTEND_URL', 'http://localhost:3000')
-      .replace(/\/+$/, '');
     const redirectUriForState = state
       ? await this.oauth.getRedirectUri(state)
       : null;
-    const loginErrorUrl = (err: string) => {
+    const safeLoginErrorUrl = (err: string) => {
       const origin = redirectUriForState
         ? new URL(redirectUriForState).origin
-        : frontendOrigin;
-      return `${origin}/auth/login?error=${encodeURIComponent(err)}`;
+        : this.frontendOrigin;
+      const safeOrigin = isSafeRedirect(origin, this.frontendOrigin)
+        ? origin
+        : this.frontendOrigin;
+      return `${safeOrigin}/auth/login?error=${encodeURIComponent(err)}`;
     };
 
     if (error) {
-      return res.redirect(HttpStatus.FOUND, loginErrorUrl(error));
+      return res.redirect(HttpStatus.FOUND, safeLoginErrorUrl(error));
     }
     if (!code || !state) {
-      return res.redirect(HttpStatus.FOUND, loginErrorUrl('missing_params'));
+      return res.redirect(
+        HttpStatus.FOUND,
+        safeLoginErrorUrl('missing_params'),
+      );
     }
 
     try {
       const redirectUri = await this.oauth.handleCallback(code, state);
-      const separator = redirectUri.includes('?') ? '&' : '?';
+      const safeTarget = isSafeRedirect(redirectUri, this.frontendOrigin)
+        ? redirectUri
+        : this.frontendOrigin;
+      const separator = safeTarget.includes('?') ? '&' : '?';
       return res.redirect(
         HttpStatus.FOUND,
-        `${redirectUri}${separator}state=${encodeURIComponent(state)}`,
+        `${safeTarget}${separator}state=${encodeURIComponent(state)}`,
       );
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'unknown';
       this.logger.error(`OAuth callback failed for ${provider}: ${msg}`);
-      return res.redirect(HttpStatus.FOUND, loginErrorUrl(msg));
+      return res.redirect(HttpStatus.FOUND, safeLoginErrorUrl(msg));
     }
   }
 
