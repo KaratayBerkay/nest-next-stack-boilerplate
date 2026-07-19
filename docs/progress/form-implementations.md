@@ -50,6 +50,12 @@
 > quota never triggered; O6/G11: `table.ts` unimported; O7/G5: checkout swallows the
 > exception so the group-prefixed field error never renders). Gates remain green. See the
 > rev-11 open register + fix guide below — it supersedes rev 10's closed markers.
+> **Revision 12** — fix commit `32ca551` re-audited at source: **O1, O2, O4–O7 verified
+> closed** (gates green; lint warning count dropped by one). O3's endpoint wiring landed but
+> both coupon failure surfaces are broken (`EXPIRED10` is a silent no-op; an invalid coupon
+> renders the wrong message in hardcoded English), and four hardcoded strings remain. New
+> register **Q1–Q5** with fix guide — the last items before the gallery is genuinely
+> feature-complete.
 
 ## Implementation Status & Issue Register (rev 8, verified 2026-07-19)
 
@@ -59,7 +65,110 @@ clean · `pnpm depcruise` 0 errors (6 pre-existing warnings) · `pnpm build` gre
 routes in the manifest · `pnpm generate-i18n-types` produces no diff · full en/tr key parity
 in the new `forms` and `apiKeys` namespaces.
 
+### Rev-12 re-audit — `32ca551` verified; coupon surfaces + string leftovers (2026-07-19)
+
+Source-verified audit of fix commit `32ca551` against the rev-11 register. Gates green:
+`pnpm typecheck` clean · `pnpm lint` 0 errors (92 warnings, one fewer than rev 11) ·
+`pnpm generate-i18n-types` no diff · duplicate-messages at baseline (the two `forms` hits
+are the deliberate top-level `errors` block).
+
+**Closed by `32ca551` (all verified in source):** O1 (badge `"real"`) · O2 (per-user
+`draftKey` threaded through every helper call site, `auth:logout` effect lists it in deps) ·
+O4 (`simulateError("internal-error")` behind a translated toggle; failure toasts via
+`exceptionHandler` and keeps the draft; success clears it) · O5 (`useActionState` +
+`mergeForm`/`useTransform`, hidden JSON `emails` input re-parsed in the action, `> 5` →
+`invite-quota` → full-page → blocking upsell panel) · O6 (`createTableRowFieldSchemas`
+wired on all four cell subfields; `taxClassRequired` en+tr) · O7 (the exact canonical
+`onSubmitAsync` — group-prefix proof path now reachable).
+
+**O3 is wired but its two failure surfaces are broken**, plus four hardcoded-string
+leftovers. New register Q1–Q5 (Q chosen to avoid colliding with the rev-4 risk register
+R1–R10).
+
+#### Open register (rev 12)
+
+| # | Where | Defect |
+|---|---|---|
+| Q1 | `billing/PageContent.tsx:50–81` | `EXPIRED10` is a **silent no-op**: `failRate` defaults to 1 (`validators/forms/simulate-error.ts:6`) so `simulateError` always throws — the non-throwing branch (lines 62–67) is dead code; the catch's toast-surface branch `return undefined`s without showing anything (no `toast` dep is passed in) |
+| Q2 | same handler, line 79 | invalid coupon renders `deps.t.couponExpired ?? "Coupon expired"` — no `couponExpired` key exists in the `billing` block (only `couponApplied` was added), so it falls back to hardcoded English, and it's semantically the wrong message (an *invalid* code reports "expired"); `allMessages` is passed but never used |
+| Q3 | `team-invite/PageContent.tsx:~127–136, 93` | upsell panel strings hardcoded ("Upgrade Required", "You can invite up to 5 team members…") and the catch-all `"An unexpected error occurred"` — `forms.errors.unknown` already exists for the latter, and the panel's Back button can reuse the existing `t.teamInvite.back` |
+| Q4 | `content-editor/PageContent.tsx:113` | `"Schedule date is required"` hardcoded in the schedule-intent guard |
+| Q5 | `billing/PageContent.tsx:47` | discount line ends with hardcoded `" off"` (`{t.couponApplied} — ${discount} off`) |
+
+#### Q1 + Q2 — rewrite `handleCouponBlur` (one edit)
+
+Delete the dead non-throwing branch and drive both surfaces from the catch. Type the
+`toast` dep the way the team-invite handler already does; drop the unused `t` dep.
+
+```ts
+async function handleCouponBlur(
+  value: string,
+  deps: {
+    simulateError: (id: string, opts?: { delayMs?: number }) => Promise<ExceptionResponse>;
+    toast: (opts: { description: string; variant?: "destructive" | "default" }) => void;
+    allMessages: Record<string, unknown>;
+  },
+): Promise<string | undefined> {
+  if (!value) return undefined;
+  const upper = value.toUpperCase();
+  if (VALID_COUPONS[upper]) return undefined;
+  try {
+    await deps.simulateError(upper === "EXPIRED10" ? "coupon-expired" : "coupon-invalid");
+    return undefined; // reachable only when experimenting with failRate < 1
+  } catch (err) {
+    const exc = (err as { exception?: ExceptionResponse }).exception;
+    if (!exc) return undefined;
+    if (getSurface(exc.exc) === "toast") {
+      deps.toast({ description: exceptionHandler(exc, deps.allMessages), variant: "destructive" });
+      return undefined;
+    }
+    return exceptionToFormErrors(exc, deps.allMessages).fields.couponCode;
+  }
+}
+```
+
+Call site (the `onBlurAsync` at line ~153): pass `{ simulateError, toast, allMessages }`.
+Imports: add `exceptionHandler` (from `@/lib/exception-handler`, alongside the existing
+`getSurface`) and `exceptionToFormErrors` (`@/lib/forms/exception-to-form-errors`). The
+translated text comes from the envelope's `key` (`forms.errors.couponExpired` /
+`couponInvalid`) — no new `billing` keys needed.
+
+**Verify:** blur `EXPIRED10` → destructive toast "This coupon has expired" (tr text on
+`/v1/tr/forms/billing`); blur an unknown code → translated field error "Invalid coupon
+code" under the field; `SAVE20` → discount line, no request failure.
+
+#### Q3 — team-invite strings
+
+1. Add nested keys (en+tr) under `teamInvite`: `quotaTitle` ("Upgrade Required" / tr) and
+   `quotaBody` ("You can invite up to 5 team members on your current plan." / tr).
+2. Panel: `{t.teamInvite.quotaTitle}` / `{t.teamInvite.quotaBody}`; Button label →
+   `{t.teamInvite.back}` (key already exists).
+3. Line 93: the module-level handler can't call `useMessages` — add an `unknownError:
+   string` dep (passed as `t.errors.unknown` from the component) and return
+   `{ form: deps.unknownError, fields: {} }`.
+
+#### Q4 — editor schedule guard
+
+Add nested key `contentEditor.scheduleDateRequired` (en "Schedule date is required" / tr)
+and return `{ form: t.contentEditor.scheduleDateRequired, fields: {} }` at line 113.
+
+#### Q5 — discount suffix
+
+Add nested key `billing.couponOff` (en "off" / tr "indirim") and render
+`${discount} {t.couponOff}` — reads "$12 off" / "$12 indirim". Keeping the amount outside
+the translated string preserves the rev-5 parameter-free rule.
+
+#### After Q1–Q5
+
+`pnpm generate-i18n-types && pnpm typecheck && pnpm lint` (new keys:
+`teamInvite.quotaTitle`/`quotaBody`, `contentEditor.scheduleDateRequired`,
+`billing.couponOff`), then rebuild + redeploy (compose build — `NEXT_PUBLIC` baking rule).
+DoD manual items (5, 8) remain with Berkay.
+
 ### Rev-11 re-audit — rev 10 corrected + fix guide (verified against source, 2026-07-19)
+
+> ✅ **Mostly closed by `32ca551`** (verified rev 12): O1, O2, O4–O7 closed; O3's endpoint
+> wiring landed but its failure surfaces are broken — see the rev-12 register (Q1–Q5) above.
 
 Independent re-verification of every rev-10 claim by grep/read against the clean tree at
 `210370c` (the deployed commit — so this also describes app.eys.gen.tr). Gates re-run and
@@ -669,7 +778,7 @@ Written as convention — **not** run as a gate (working agreement).
    parsed-or-dropped, tags/categories filtered to known values. A crafted URL must never
    inject arbitrary strings into form state.
 
-### Per-phase checkoff (updated rev 11)
+### Per-phase checkoff (updated rev 12)
 
 | Phase | Scope | Status |
 |---|---|---|---|
@@ -682,10 +791,10 @@ Written as convention — **not** run as a gate (working agreement).
 | 6 | Tab 7 uploads | ✅ complete |
 | 7 | Tab 5 filters | ✅ complete |
 | 8 | Tab 3 API keys | ✅ complete (real backend) |
-| 9 | Tab 4 billing | ⚠️ partial (rev 11: O3 — coupon endpoint + coupon i18n never landed) |
-| 10 | Tab 9 checkout | ⚠️ mostly (rev 11: O7 — server field error swallowed, group proof missing) |
-| 11 | Tab 10 editor + Tab 11 builder | ⚠️ partial (rev 11: O2 global draft key, O4 fake submit; builder ✅) |
-| 12 | Tab 2 wizard + Tab 12 table | ⚠️ partial (rev 11: O5 action is dead code + quota untriggered, O6 table schemas unwired) |
+| 9 | Tab 4 billing | ⚠️ nearly (rev 12: Q1/Q2 coupon failure surfaces, Q5 suffix — endpoint wiring itself ✅) |
+| 10 | Tab 9 checkout | ✅ complete (rev 12: O7 verified — canonical `onSubmitAsync`, group proof reachable) |
+| 11 | Tab 10 editor + Tab 11 builder | ✅ complete except Q4 string (rev 12: O2 + O4 verified) |
+| 12 | Tab 2 wizard + Tab 12 table | ✅ complete except Q3 strings (rev 12: O5 + O6 verified) |
 
 ### DoD status (updated rev 10)
 
@@ -697,9 +806,9 @@ written — ✅ (G12) · 5. manual 409 smoke both locales — ⏳ pending (Berka
 — ✅ green and deployed; all 13 routes 200 authenticated on app.eys.gen.tr (first-load JS
 numbers still unrecorded)
 
-~~All feature items from the issue register are closed.~~ **Rev-11 correction:** items 2/3
-above hold except the O3 coupon strings (hardcoded English in billing); O1–O7 in the rev-11
-register remain open, so the gallery is feature-complete *except those seven items*.
+**Rev-12 status:** O1–O7 closed except O3's failure surfaces. Remaining: Q1/Q2 (coupon
+surfaces — the only functional defects left) and Q3–Q5 (hardcoded strings). The gallery is
+feature-complete *except those five items*; gates all green as of `32ca551`.
 
 ## Overview
 
