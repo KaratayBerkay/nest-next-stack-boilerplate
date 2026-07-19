@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
 import { Badge } from "@/components/ui/Badge";
 import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
+import { createTableRowFieldSchemas } from "@/validators/forms/table";
 
 interface InvoiceRow {
   description: string;
@@ -54,6 +55,7 @@ export default function EditableTablePage() {
   const { simulateError } = useFormsDemoActions();
   const [rowStatus, setRowStatus] = useState<Record<number, RowStatus>>({});
   const [savingAll, setSavingAll] = useState(false);
+  const rowSchemas = useMemo(() => createTableRowFieldSchemas(t.editableTable), [t]);
 
   const form = useAppForm(tableFormOpts);
 
@@ -124,7 +126,10 @@ export default function EditableTablePage() {
                     return (
                       <tr key={i} className="border-b border-border">
                         <td className="px-2 py-1">
-                          <form.AppField name={`rows[${i}].description`}>
+                          <form.AppField
+                            name={`rows[${i}].description`}
+                            validators={{ onChange: rowSchemas.description }}
+                          >
                             {(subField) => (
                               <div className="flex flex-col">
                                 <input
@@ -146,10 +151,7 @@ export default function EditableTablePage() {
                         <td className="px-2 py-1">
                           <form.AppField
                             name={`rows[${i}].quantity`}
-                            validators={{
-                              onChange: ({ value }) =>
-                                value < 1 ? "Min 1" : undefined,
-                            }}
+                            validators={{ onChange: rowSchemas.quantity }}
                           >
                             {(subField) => (
                               <div className="flex flex-col items-end">
@@ -176,10 +178,7 @@ export default function EditableTablePage() {
                         <td className="px-2 py-1">
                           <form.AppField
                             name={`rows[${i}].unitPrice`}
-                            validators={{
-                              onChange: ({ value }) =>
-                                value < 0 ? "Must be positive" : undefined,
-                            }}
+                            validators={{ onChange: rowSchemas.unitPrice }}
                           >
                             {(subField) => (
                               <div className="flex flex-col items-end">
@@ -205,7 +204,10 @@ export default function EditableTablePage() {
                           </form.AppField>
                         </td>
                         <td className="px-2 py-1">
-                          <form.AppField name={`rows[${i}].taxClass`}>
+                          <form.AppField
+                            name={`rows[${i}].taxClass`}
+                            validators={{ onChange: rowSchemas.taxClass }}
+                          >
                             {(subField) => (
                               <select
                                 className="rounded border border-border bg-field px-1.5 py-1 text-xs"

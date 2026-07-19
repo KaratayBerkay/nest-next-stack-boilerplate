@@ -429,6 +429,7 @@ export type I18nMessages = {
         "couponCode": string;
         "couponPlaceholder": string;
         "couponChecking": string;
+        "couponApplied": string;
         "taxId": string;
         "taxIdPlaceholder": string;
         "priceSummary": string;
@@ -569,6 +570,7 @@ export type I18nMessages = {
         "draftRestored": string;
         "draftRestore": string;
         "draftDiscard": string;
+        "simulateFailure": string;
         "unsavedChanges": string;
         "unsavedDescription": string;
         "stay": string;
@@ -617,6 +619,7 @@ export type I18nMessages = {
         "descRequired": string;
         "qtyMin": string;
         "pricePositive": string;
+        "taxClassRequired": string;
       };
       "errors": {
         "emailAlreadyMember": string;

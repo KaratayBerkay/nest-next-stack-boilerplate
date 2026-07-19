@@ -126,6 +126,7 @@
     "couponCode": "Coupon Code",
     "couponPlaceholder": "Enter coupon code",
     "couponChecking": "Checking coupon...",
+    "couponApplied": "Coupon applied",
     "taxId": "Tax ID (VAT only)",
     "taxIdPlaceholder": "Enter tax ID",
     "priceSummary": "Price Summary",
@@ -266,6 +267,7 @@
     "draftRestored": "Draft restored from {time}",
     "draftRestore": "Restore",
     "draftDiscard": "Discard",
+    "simulateFailure": "Simulate failure",
     "unsavedChanges": "You have unsaved changes",
     "unsavedDescription": "Your changes may not be saved",
     "stay": "Stay",
@@ -313,7 +315,8 @@
     "saveFailed": "Some rows failed",
     "descRequired": "Description is required",
     "qtyMin": "Minimum quantity is 1",
-    "pricePositive": "Price must be positive"
+    "pricePositive": "Price must be positive",
+    "taxClassRequired": "Select a tax class"
   },
   "errors": {
     "emailAlreadyMember": "This email is already a member",

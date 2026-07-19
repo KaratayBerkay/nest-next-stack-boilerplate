@@ -1,13 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { useMessages, useAllMessages } from "@/lib/i18n/MessagesProvider";
 import { formOptions } from "@tanstack/react-form";
 import { useAppForm } from "@/features/forms/form-hook";
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
 import { useToast } from "@/components/ui/Toast";
+import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
+import { getSurface } from "@/lib/exception-handler";
 import { createBillingFieldSchemas } from "@/validators/forms/billing";
+import type { ExceptionResponse } from "@/lib/api-client";
 
 const PLANS = [
   { value: "free", label: "Free", monthly: 0, yearly: 0 },
@@ -22,6 +25,11 @@ const PAYMENT_METHODS = [
   { value: "paypal", label: "PayPal (user@example.com)" },
 ];
 
+const VALID_COUPONS: Record<string, { pct: number }> = {
+  SAVE10: { pct: 10 },
+  WELCOME20: { pct: 20 },
+};
+
 function calcPrice(plan: string, period: string): { subtotal: number; discountLabel: string | null; total: number } {
   const p = PLANS.find((x) => x.value === plan) ?? PLANS[0];
   const subtotal = period === "yearly" ? p.yearly : p.monthly;
@@ -29,23 +37,55 @@ function calcPrice(plan: string, period: string): { subtotal: number; discountLa
   return { subtotal, discountLabel, total: subtotal };
 }
 
-function CouponStatus({ code, period }: { code: string; period: string }) {
+function CouponStatus({ code, period, t }: { code: string; period: string; t: Record<string, string> }) {
   if (!code) return null;
-  const validCoupons: Record<string, { pct: number; label: string }> = {
-    SAVE10: { pct: 10, label: "SAVE10" },
-    WELCOME20: { pct: 20, label: "WELCOME20" },
-  };
-  const coupon = validCoupons[code.toUpperCase()];
-  if (!coupon) return <span className="text-destructive text-xxs">Invalid coupon code</span>;
+  const upper = code.toUpperCase();
+  const coupon = VALID_COUPONS[upper];
+  if (!coupon) return null;
   const price = calcPrice("pro", period);
   const discount = Math.round(price.subtotal * (coupon.pct / 100));
-  return <span className="text-success text-xxs">{coupon.label} — ${discount} off</span>;
+  return <span className="text-success text-xxs">{t.couponApplied} — ${discount} off</span>;
+}
+
+async function handleCouponBlur(
+  value: string,
+  deps: {
+    simulateError: (id: string, opts?: { delayMs?: number }) => Promise<ExceptionResponse>;
+    allMessages: Record<string, unknown>;
+    t: Record<string, string>;
+  },
+): Promise<string | undefined> {
+  if (!value) return undefined;
+  const upper = value.toUpperCase();
+  try {
+    if (upper === "EXPIRED10") {
+      const exc = await deps.simulateError("coupon-expired");
+      const surface = getSurface(exc.exc);
+      if (surface === "toast") {
+        throw exc;
+      }
+      return deps.t.couponExpired ?? "Coupon expired";
+    }
+    if (!VALID_COUPONS[upper]) {
+      await deps.simulateError("coupon-invalid");
+      return undefined;
+    }
+    return undefined;
+  } catch (err) {
+    const exc = (err as { exception?: ExceptionResponse }).exception;
+    if (exc && getSurface(exc.exc) === "toast") {
+      return undefined;
+    }
+    return deps.t.couponExpired ?? "Coupon expired";
+  }
 }
 
 export default function BillingPage() {
   const t = useMessages("forms");
+  const allMessages = useAllMessages();
   const fieldSchemas = useMemo(() => createBillingFieldSchemas(t.billing), [t]);
   const { toast } = useToast();
+  const { simulateError } = useFormsDemoActions();
   const prevPlan = useRef("pro");
 
   const form = useAppForm({
@@ -106,11 +146,18 @@ export default function BillingPage() {
           {(field) => <field.SelectField label={t.billing.paymentMethod} options={PAYMENT_METHODS} />}
         </form.AppField>
 
-        <form.AppField name="couponCode">
+        <form.AppField
+          name="couponCode"
+          validators={{
+            onBlurAsync: async ({ value }) =>
+              handleCouponBlur(value, { simulateError, allMessages, t: t.billing }),
+            onBlurAsyncDebounceMs: 300,
+          }}
+        >
           {(field) => <field.TextField label={t.billing.couponCode} placeholder={t.billing.couponPlaceholder} />}
         </form.AppField>
 
-        <CouponStatus code={form.state.values.couponCode} period={form.state.values.billingPeriod} />
+        <CouponStatus code={form.state.values.couponCode} period={form.state.values.billingPeriod} t={t.billing} />
 
         <form.AppField name="taxId">
           {(field) => <field.TextField label={t.billing.taxId} placeholder={t.billing.taxIdPlaceholder} />}

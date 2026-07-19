@@ -126,6 +126,7 @@
     "couponCode": "Kupon Kodu",
     "couponPlaceholder": "Kupon kodu girin",
     "couponChecking": "Kupon kontrol ediliyor...",
+    "couponApplied": "Kupon uygulandı",
     "taxId": "Vergi No (yalnızca KDV)",
     "taxIdPlaceholder": "Vergi no girin",
     "priceSummary": "Fiyat Özeti",
@@ -266,6 +267,7 @@
     "draftRestored": "{time} tarihli taslak geri yüklendi",
     "draftRestore": "Geri Yükle",
     "draftDiscard": "At",
+    "simulateFailure": "Hata simulasyonu",
     "unsavedChanges": "Kaydedilmemiş değişiklikleriniz var",
     "unsavedDescription": "Değişiklikleriniz kaydedilmeyebilir",
     "stay": "Kal",
@@ -313,7 +315,8 @@
     "saveFailed": "Bazı satırlar kaydedilemedi",
     "descRequired": "Açıklama gereklidir",
     "qtyMin": "Minimum adet 1'dir",
-    "pricePositive": "Fiyat pozitif olmalıdır"
+    "pricePositive": "Fiyat pozitif olmalıdır",
+    "taxClassRequired": "Vergi sınıfı seçin"
   },
   "errors": {
     "emailAlreadyMember": "Bu e-posta zaten bir üye",

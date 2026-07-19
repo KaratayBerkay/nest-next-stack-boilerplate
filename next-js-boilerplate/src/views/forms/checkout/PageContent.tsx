@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { useMessages, useAllMessages } from "@/lib/i18n/MessagesProvider";
 import { useAppForm, withFieldGroup } from "@/features/forms/form-hook";
 import { formOptions } from "@tanstack/react-form";
 import { useToast } from "@/components/ui/Toast";
@@ -11,6 +11,9 @@ import { Switch } from "@/components/ui/Switch";
 import { Label } from "@/components/ui/Label";
 import { checkoutSchema } from "@/validators/forms/checkout";
 import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
+import { getSurface, exceptionHandler } from "@/lib/exception-handler";
+import { exceptionToFormErrors } from "@/lib/forms/exception-to-form-errors";
+import type { ExceptionResponse } from "@/lib/api-client";
 import { z } from "zod";
 
 const ADDRESS_OPTIONS = [
@@ -89,6 +92,7 @@ const checkoutFormOpts = formOptions({
 
 export default function CheckoutPage() {
   const t = useMessages("forms");
+  const allMessages = useAllMessages();
   const { toast } = useToast();
   const { simulateError } = useFormsDemoActions();
 
@@ -104,19 +108,27 @@ export default function CheckoutPage() {
         }
         return undefined;
       },
-    },
-    onSubmit: async ({ value }) => {
-      const postal = value.shippingAddress.postalCode;
-      try {
-        if (postal === "00000") {
-          await simulateError("postal-code-group", { failRate: 1 });
-        } else {
-          await simulateError("payment-declined", { failRate: 0 });
+      onSubmitAsync: async ({ value }) => {
+        try {
+          if (value.shippingAddress.postalCode === "00000") {
+            await simulateError("postal-code-group", { failRate: 1 });
+          } else {
+            await simulateError("payment-declined", { failRate: 0 });
+          }
+          return null;
+        } catch (err) {
+          const exc = (err as { exception?: ExceptionResponse }).exception;
+          if (!exc) return { form: t.checkoutTab.orderFailed, fields: {} };
+          if (getSurface(exc.exc) === "toast") {
+            toast({ description: exceptionHandler(exc, allMessages), variant: "destructive" });
+            return null;
+          }
+          return exceptionToFormErrors(exc, allMessages);
         }
-        toast({ description: t.checkoutTab.orderPlaced, variant: "default" });
-      } catch {
-        toast({ description: t.checkoutTab.orderFailed, variant: "destructive" });
-      }
+      },
+    },
+    onSubmit: async () => {
+      toast({ description: t.checkoutTab.orderPlaced, variant: "default" });
     },
   });
 

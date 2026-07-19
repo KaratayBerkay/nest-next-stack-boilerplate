@@ -1,15 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { useMessages, useAllMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
 import { formOptions } from "@tanstack/react-form";
 import { useAppForm } from "@/features/forms/form-hook";
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
 import { FormErrorBanner } from "@/components/ui/FormErrorBanner";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
+import { exceptionHandler } from "@/lib/exception-handler";
 import { z } from "zod";
 import { editorSchema, createEditorSchema } from "@/validators/forms/editor";
+import type { ExceptionResponse } from "@/lib/api-client";
 
 interface Draft {
   title: string;
@@ -26,16 +30,16 @@ interface DraftValues {
   body: string;
 }
 
-const DRAFT_KEY = "forms:draft";
+const DRAFT_KEY_PREFIX = "forms:draft:";
 const DRAFT_SIZE_CAP = 50_000;
 
-function loadDraft(): Draft | null {
+function loadDraft(key: string): Draft | null {
   try {
-    const raw = localStorage.getItem(DRAFT_KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Draft;
     if (new Date(parsed.savedAt).getTime() < Date.now() - 86400000) {
-      localStorage.removeItem(DRAFT_KEY);
+      localStorage.removeItem(key);
       return null;
     }
     return parsed;
@@ -44,18 +48,18 @@ function loadDraft(): Draft | null {
   }
 }
 
-function saveDraft(values: DraftValues) {
+function saveDraft(key: string, values: DraftValues) {
   try {
     const data = JSON.stringify({ ...values, savedAt: Date.now() });
     if (data.length > DRAFT_SIZE_CAP) return;
-    localStorage.setItem(DRAFT_KEY, data);
+    localStorage.setItem(key, data);
   } catch {
     /* quota exceeded */
   }
 }
 
-function clearDraft() {
-  localStorage.removeItem(DRAFT_KEY);
+function clearDraft(key: string) {
+  localStorage.removeItem(key);
 }
 
 function deriveSlug(title: string): string {
@@ -81,13 +85,18 @@ const editorFormOpts = formOptions({
 
 export default function ContentEditorPage() {
   const t = useMessages("forms");
+  const allMessages = useAllMessages();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { simulateError } = useFormsDemoActions();
+  const draftKey = DRAFT_KEY_PREFIX + (user?.id ?? "anonymous");
   const [preview, setPreview] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [draftAlert, setDraftAlert] = useState<Draft | null>(() => loadDraft());
+  const [draftAlert, setDraftAlert] = useState<Draft | null>(() => loadDraft(draftKey));
   const dirtyRef = useRef(false);
   const slugEditedByUser = useRef(false);
   const [schedule, setSchedule] = useState(false);
+  const [simulateFailure, setSimulateFailure] = useState(false);
   const editorSchemas = useMemo(() => createEditorSchema(t.contentEditor), [t]);
 
   const form = useAppForm({
@@ -103,13 +112,22 @@ export default function ContentEditorPage() {
       if (meta?.intent === "schedule" && !value.publishAt) {
         return { form: "Schedule date is required", fields: {} };
       }
-      await new Promise((r) => setTimeout(r, 1000));
-      toast({
-        description: meta?.intent === "schedule" ? t.contentEditor.scheduled : t.contentEditor.published,
-        variant: "default",
-      });
-      dirtyRef.current = false;
-      return null;
+      try {
+        await simulateError("internal-error", { failRate: simulateFailure ? 1 : 0, delayMs: 600 });
+        toast({
+          description: meta?.intent === "schedule" ? t.contentEditor.scheduled : t.contentEditor.published,
+          variant: "default",
+        });
+        dirtyRef.current = false;
+        clearDraft(draftKey);
+        return null;
+      } catch (err) {
+        const exc = (err as { exception?: ExceptionResponse }).exception;
+        if (exc) {
+          toast({ description: exceptionHandler(exc, allMessages), variant: "destructive" });
+        }
+        return null;
+      }
     },
   });
 
@@ -132,17 +150,32 @@ export default function ContentEditorPage() {
   }, [form]);
 
   useEffect(() => {
-    const handler = () => clearDraft();
+    const handler = () => clearDraft(draftKey);
     window.addEventListener("auth:logout", handler);
     return () => window.removeEventListener("auth:logout", handler);
-  }, []);
+  }, [draftKey]);
+
+  useEffect(() => {
+    const handler = () => {
+      if (draftKey && form.state.values.title) {
+        saveDraft(draftKey, {
+          title: form.state.values.title,
+          slug: form.state.values.slug,
+          tags: form.state.values.tags,
+          body: form.state.values.body,
+        });
+      }
+    };
+    const interval = setInterval(handler, 30000);
+    return () => clearInterval(interval);
+  }, [draftKey, form.state.values]);
 
   const handleSaveDraft = useCallback(() => {
     const { title, slug, tags, body } = form.state.values;
-    saveDraft({ title, slug, tags, body });
+    saveDraft(draftKey, { title, slug, tags, body });
     dirtyRef.current = false;
     toast({ description: t.contentEditor.draftSaved, variant: "default" });
-  }, [form.state.values, toast, t]);
+  }, [form.state.values, toast, t, draftKey]);
 
   const handleRestore = useCallback(() => {
     if (!draftAlert) return;
@@ -158,9 +191,9 @@ export default function ContentEditorPage() {
   }, [draftAlert, form, toast, t]);
 
   const handleDiscard = useCallback(() => {
-    clearDraft();
+    clearDraft(draftKey);
     setDraftAlert(null);
-  }, []);
+  }, [draftKey]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -221,9 +254,15 @@ export default function ContentEditorPage() {
 
         <Separator />
 
-        <div className="flex items-center gap-2">
-          <input type="checkbox" id="schedule" checked={schedule} onChange={() => setSchedule((s) => !s)} className="h-4 w-4" />
-          <label htmlFor="schedule" className="text-xs">{t.contentEditor.schedule}</label>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <input type="checkbox" id="schedule" checked={schedule} onChange={() => setSchedule((s) => !s)} className="h-4 w-4" />
+            <label htmlFor="schedule" className="text-xs">{t.contentEditor.schedule}</label>
+          </div>
+          <div className="flex items-center gap-2">
+            <input type="checkbox" id="simulate-failure" checked={simulateFailure} onChange={() => setSimulateFailure((s) => !s)} className="h-4 w-4" />
+            <label htmlFor="simulate-failure" className="text-xs">{t.contentEditor.simulateFailure}</label>
+          </div>
         </div>
 
         {schedule && (

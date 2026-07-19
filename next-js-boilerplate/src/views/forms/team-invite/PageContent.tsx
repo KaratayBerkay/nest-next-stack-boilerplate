@@ -1,10 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { useMessages, useAllMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
 import { formOptions } from "@tanstack/react-form";
 import { useAppForm } from "@/features/forms/form-hook";
+import {
+  initialFormState,
+  mergeForm,
+  useTransform,
+} from "@tanstack/react-form-nextjs";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { StepIndicator } from "@/components/ui/StepIndicator";
@@ -15,6 +20,7 @@ import { exceptionToFormErrors } from "@/lib/forms/exception-to-form-errors";
 import type { ExceptionResponse } from "@/lib/api-client";
 import { z } from "zod";
 import { createInviteSchema, inviteSchema } from "@/validators/forms/invite";
+import { inviteAction } from "@/features/forms/actions/invite";
 
 const STEPS = ["Emails", "Role", "Message", "Review"];
 
@@ -42,8 +48,20 @@ async function submitTeamInvite(
     toast: ReturnType<typeof useToast>["toast"];
     allMessages: Record<string, unknown>;
     setFormError: (err: string | null) => void;
+    setQuotaExceeded: (v: boolean) => void;
   },
 ) {
+  if (value.emails.length > 5) {
+    try {
+      await deps.simulateError("invite-quota");
+    } catch (err) {
+      const exc = (err as { exception?: ExceptionResponse }).exception;
+      if (exc && getSurface(exc.exc) === "full-page") {
+        deps.setQuotaExceeded(true);
+        return null;
+      }
+    }
+  }
   try {
     const exc = await deps.simulateError("invite-email-member");
     const surface = getSurface(exc.exc);
@@ -83,17 +101,43 @@ export default function TeamInvitePage() {
   const { simulateError } = useFormsDemoActions();
   const [step, setStep] = useState(0);
   const [formError, setFormError] = useState<string | null>(null);
+  const [quotaExceeded, setQuotaExceeded] = useState(false);
+  const [state, action] = useActionState(inviteAction, initialFormState);
   const inviteSchemas = useMemo(() => createInviteSchema(t.teamInvite), [t]);
 
   const form = useAppForm({
     ...teamFormOpts,
+    transform: useTransform((baseForm) => mergeForm(baseForm, state!), [state]),
     validators: {
       onSubmitAsync: ({ value }) =>
-        submitTeamInvite({ value }, { simulateError, toast, allMessages, setFormError }),
+        submitTeamInvite({ value }, { simulateError, toast, allMessages, setFormError, setQuotaExceeded }),
+    },
+    onSubmit: async () => {
+      toast({ description: t.teamInvite.inviteSent, variant: "default" });
     },
   });
 
   const canNext = step === 0 ? form.state.values.emails.length > 0 : true;
+
+  if (quotaExceeded) {
+    return (
+      <div className="flex flex-col gap-6">
+        <h2 className="text-sm font-semibold">{t.teamInvite.heading}</h2>
+        <div className="surface flex flex-col items-center gap-4 rounded-lg border border-border p-8 text-center">
+          <h3 className="text-base font-semibold">Upgrade Required</h3>
+          <p className="text-muted text-xs">You can invite up to 5 team members on your current plan.</p>
+          <Button
+            onClick={() => {
+              setQuotaExceeded(false);
+              setStep(0);
+            }}
+          >
+            Back
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -106,6 +150,7 @@ export default function TeamInvitePage() {
       {formError && <FormErrorBanner message={formError} onDismiss={() => setFormError(null)} />}
 
       <form
+        action={action as never}
         onSubmit={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -114,6 +159,10 @@ export default function TeamInvitePage() {
         }}
         className="flex flex-col gap-4"
       >
+        <input type="hidden" name="emails" value={JSON.stringify(form.state.values.emails)} />
+        <input type="hidden" name="role" value={form.state.values.role} />
+        <input type="hidden" name="message" value={form.state.values.message} />
+
         {step === 0 && (
           <div className="flex flex-col gap-3">
             <p className="text-xs font-medium">{t.teamInvite.stepEmails}</p>

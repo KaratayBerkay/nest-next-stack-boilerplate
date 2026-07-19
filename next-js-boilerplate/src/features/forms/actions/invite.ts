@@ -29,7 +29,15 @@ const serverValidate = createServerValidate({
 
 export async function inviteAction(prev: unknown, formData: FormData) {
   try {
-    await serverValidate(formData);
+    const emailsRaw = formData.get("emails");
+    const emails: string[] = emailsRaw ? JSON.parse(emailsRaw as string) : [];
+    const role = formData.get("role") as string;
+    const message = formData.get("message") as string;
+    const merged = new FormData();
+    merged.set("role", role ?? "member");
+    merged.set("message", message ?? "");
+    emails.forEach((email: string) => merged.append("emails", email));
+    await serverValidate(merged);
     return initialFormState;
   } catch (e) {
     if (e instanceof ServerValidateError) {
