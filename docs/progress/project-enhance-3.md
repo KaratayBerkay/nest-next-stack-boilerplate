@@ -380,6 +380,547 @@ image: minio/mc:RELEASE.2025-01-18T00-21-00Z
 
 ---
 
+## 12. Backend code audit — deep-dive findings
+
+> This section captures items surfaced by manual code review — not from static
+> analysis — organized by priority.
+
+### 12.1 Critical: live secrets on filesystem
+
+#### 🔴 LS-1 — Live Vault token in `.env`
+
+**File:** `nest-js-boilerplate/.env`
+
+**What:** Contains a live `VAULT_TOKEN` for `vault.eys.gen.tr`. Despite `.gitignore`
+coverage, the file exists on disk and could leak through Docker build context,
+CI artifacts, or `rsync`/`tar` operations during deployment.
+
+**Next:** Rotate the token immediately. Remove it from the `.env` file and
+retrieve at runtime only from the secrets manager.
+
+#### 🔴 LS-2 — Hardcoded Stripe/VAPID keys in docker-compose
+
+**File:** `docker-compose.yml`
+
+**What:** Live-looking Stripe publishable key (`pk_test_...`), VAPID keys, and
+`app.eys.gen.tr` URLs are hardcoded in the compose file. These should reference
+environment variables.
+
+**How to fix:** Replace with `${STRIPE_PUBLISHABLE_KEY}` style variables and
+document which env vars are required.
+
+---
+
+### 12.2 Architecture & DRY violations (P1)
+
+#### AR-1 — Duplicate `ensureWallet()` implementation
+
+**Files:**
+- `src/billing/billing.service.ts:293-301`
+- `src/billing/stripe-webhook.controller.ts:237-245`
+
+**What:** Identical `ensureWallet()` private method appears in two places.
+Extract to a `WalletService`.
+
+#### AR-2 — Duplicate DM delivery logic
+
+**Files:**
+- `src/messaging/messaging.controller.ts:180-256`
+- `src/messaging/messaging-ws.gateway.ts:78-148`
+
+**What:** The REST POST and WebSocket handler both send DMs with nearly
+identical post-send logic (emitToPage, emitToService, push fallback).
+Extract to `MessagingService.deliverDirectMessage()`.
+
+#### AR-3 — Two caching abstractions
+
+**Files:**
+- `src/caching/cache-aside.service.ts` — custom Redis-based
+- `src/messaging/messaging.service.ts:51` — `@nestjs/cache-manager`
+
+**What:** Two different caching strategies with different APIs and error
+behavior. The cache-manager wrapper may throw; `CacheAsideService` silently
+swallows errors.
+
+**How to fix:** Pick one. `CacheAsideService` is more full-featured
+(getOrFetch, invalidation) — deprecate `@nestjs/cache-manager`.
+
+#### AR-4 — In-memory room state lost on restart
+
+**File:** `src/messaging/messaging.service.ts:47`
+
+**What:** `private rooms = new Map<string, Map<string, RoomMember>>()` — a
+plain JS Map. On process restart, all chat room memberships reset to empty.
+The `RealtimeGateway` has Redis presence mirroring, but `MessagingService`
+rooms have no such backup.
+
+**How to fix:** Back room state in Redis with `SADD room:{room}:members`.
+At minimum, store member counts for survivability.
+
+#### AR-5 — `MessagingService` violates SRP
+
+**File:** `src/messaging/messaging.service.ts` (722 LOC)
+
+**What:** Mixes chat rooms, friendships, DMs, and user search in one class.
+The in-memory `rooms` Map (line 47) is mutable global state.
+
+**How to fix:** Split into `MessagingDmService`, `MessagingRoomService`
+(Redis-backed), `MessagingFriendService`. Already noted in CX-4 but the scope
+is larger than captured there.
+
+#### AR-6 — `EncryptionKey` validation mismatch
+
+**Files:**
+- `src/config/env.validation.ts:30` — marks `ENCRYPTION_KEY` as optional
+- `src/common/crypto/crypto.service.ts:23` — calls `getOrThrow` at init
+
+**What:** App starts successfully, then crashes at `CryptoService` init time —
+confusing 500 on the first encrypted request rather than a clear boot failure.
+
+**How to fix:** Make `ENCRYPTION_KEY` required in the Joi schema.
+
+#### AR-7 — `VAPID_EMAIL` vs `VAPID_SUBJECT` mismatch
+
+**Files:**
+- `src/config/env.validation.ts:39` — validates `VAPID_EMAIL`
+- `src/push-notification/push-notification.service.ts:19` — reads `VAPID_SUBJECT`
+
+**What:** Two different env var names for the same configuration. Setting
+`VAPID_EMAIL` does nothing.
+
+**How to fix:** Align the names in validation and service.
+
+---
+
+### 12.3 Security hardening (P1)
+
+#### SE-1 — No password strength validation
+
+**File:** `src/auth/auth.service.ts:74`
+
+**What:** `register()` calls `hash(input.password)` with zero validation.
+No minimum length, no complexity check.
+
+**How to fix:** Add validation (min 8 chars, reject common passwords) in both
+`register()` and `resetPassword()`.
+
+#### SE-2 — Unbounded pagination
+
+**File:** `src/messaging/messaging.controller.ts:169-177`
+
+**What:** `take ? parseInt(take, 10) : 30` without upper bound — a client can
+request `take=999999`, causing massive DB queries.
+
+**How to fix:** `const parsedTake = take ? Math.min(parseInt(take, 10), 100) : 30`
+
+#### SE-3 — `Math.random()` for socket IDs
+
+**File:** `src/realtime/realtime.gateway.ts:434-438`
+
+**What:** Socket ID uses `Math.random()` instead of a cryptographically secure
+source. `CryptoService` already provides `randomToken()`.
+
+**How to fix:** Replace with `this.crypto.randomToken(8)`.
+
+#### SE-4 — `ASYNC_PROVIDER_TOKEN` exposed in barrel
+
+**File:** `src/async-providers/index.ts`
+
+**What:** Exports `ASYNC_PROVIDER_TOKEN = 'ASYNC_PROVIDER'` as a public symbol.
+Not security-critical but unnecessary API surface exposure.
+
+---
+
+### 12.4 Observability & reliability (P2)
+
+#### OB-1 — Silent Redis failures in RealtimeGateway
+
+**File:** `src/realtime/realtime.gateway.ts` — multiple locations
+
+**What:** Redis pub/sub/subscribe/expire calls use `.catch(() => {})` in at
+least 12 locations. Every Redis failure is silently swallowed.
+
+**How to fix:** Create `safeRedisPublish()` that increments a failure counter
+and logs errors. Expose via health check.
+
+#### OB-2 — Silent async failure in friend notifications
+
+**File:** `src/messaging/messaging.service.ts:58-80`
+
+**What:** `notifyFriendEvent()` is a void async IIFE with `logger.warn()`
+in its catch block. No monitoring or alerting when notifications fail.
+
+**How to fix:** Replace with BullMQ queue-based delivery. At minimum, log as
+`error` level and increment a counter.
+
+#### OB-3 — Un-awaited bucket creation in MinioService
+
+**File:** `src/upload/minio.service.ts:35`
+
+**What:** `this.ensureBucket()` called without `await` in `onModuleInit()`.
+If a file upload arrives before the bucket is created, it fails. The method
+also silently catches all errors (line 59).
+
+**How to fix:** `await this.ensureBucket()` and remove the bare catch.
+
+#### OB-4 — Only 2/6 Prisma error codes mapped
+
+**File:** `src/common/exceptions/to-exception-response.ts:85-101`
+
+**What:** Only `P2002` (unique) and `P2025` (not found) are handled. `P2003`
+(foreign key), `P2014` (relation violation), `P2023` (inconsistent data) fall
+to generic 500.
+
+**How to fix:** Add mappings for `P2003`, `P2014`, `P2023`.
+
+#### OB-5 — `KEYS` pattern in cache invalidation
+
+**File:** `src/caching/cache-aside.service.ts:35`
+
+**What:** `this.redis.keys(pattern)` is O(N) and blocks Redis. On production
+with many keys, this is a Redis anti-pattern.
+
+**How to fix:** Use `SCAN` or Redis Sets as cache tags.
+
+#### OB-6 — Unvalidated Redis pub/sub frames
+
+**File:** `src/realtime/realtime.gateway.ts:235-251`
+
+**What:** `JSON.parse(raw)` destructures with an inline type but never validates
+the shape. Malformed messages silently fail in `catch {}`.
+
+**How to fix:** Add Zod validation for the pub/sub frame schema.
+
+#### OB-7 — 4 DB queries on every login
+
+**File:** `src/auth/session-hydration.service.ts:25-38`
+
+**What:** `hydrate()` runs friends, notifications, memberships, and team
+queries sequentially (parallelized with `Promise.all` but still 4 separate
+round-trips).
+
+**How to fix:** Use Prisma `include` to fetch related counts in one query,
+or lazy-load expensive hydration fields.
+
+---
+
+### 12.5 Testing gaps beyond TG-3 (P2)
+
+#### TE-1 — No tests for 10+ critical services
+
+| Critical untested service | Risk |
+|---|---|
+| `billing/stripe-webhook.controller.ts` | **HIGH** — payment webhook, revenue-critical |
+| `billing/stripe-payment.provider.ts` | **HIGH** — subscription creation |
+| `messaging/messaging.controller.ts` | **HIGH** — 50% of messaging surface |
+| `messaging/messaging-ws.gateway.ts` | **HIGH** — WebSocket messaging handlers |
+| `users/users.service.ts` | **HIGH** — core domain |
+| `project-tasks/project-tasks.service.ts` | MEDIUM |
+| `team-members/team-members.service.ts` | MEDIUM |
+| `upload/minio.service.ts` | MEDIUM |
+| `upload/image.service.ts` | MEDIUM |
+| `profile/profile.service.ts` | MEDIUM |
+
+#### TE-2 — Missing unit tests for internal modules
+
+| Module | Source files | Risk |
+|---|---|---|
+| `prisma/` | 2 files | **HIGH** — core data layer |
+| `common/exceptions/` | 2+ files | **HIGH** — shared error handling |
+| `users/` | 3 files | **HIGH** — core domain |
+| `caching/` | 5 files | MEDIUM |
+| `broker-transports/` | 6 files | MEDIUM |
+| `cqrs/` | 9 files | MEDIUM |
+| `vault/` | 3 files | MEDIUM |
+
+---
+
+### 12.6 Type system & config (P2)
+
+#### TS-1 — Missing exception codes in union type
+
+**File:** `src/common/exceptions/exception-code.ts`
+
+**What:** The `ExceptionCode` union defines 11 codes, but 7+ more are used at
+runtime (`EX_AUTH_INVALID_TOKEN`, `EX_AUTH_ACCOUNT_INACTIVE`,
+`EX_AUTH_MFA_EXPIRED`, `EX_PROFILE_USERNAME_TAKEN`, etc.).
+
+**How to fix:** Audit the codebase for all thrown exception codes and add to
+the union.
+
+#### TS-2 — Fragile inline TTL parsing
+
+**File:** `src/auth/token-store.service.ts:33-46`
+
+**What:** TTL parsing regex `^(\d+)([smhd])$` is done inline. No unit test,
+no edge-case handling for `0s`, empty string, overflow.
+
+**How to fix:** Extract to `parseDurationToSeconds()` utility with tests.
+
+#### TS-3 — Hardcoded price map
+
+**File:** `src/billing/billing.service.ts:252-257`
+
+**What:** `priceCents` map from tier to cents is hardcoded. Changing prices
+requires a code deployment.
+
+**How to fix:** Move to env vars or database: `PRICE_BASIC=999`.
+
+---
+
+### 12.7 ESLint & TypeScript strictness (P2)
+
+#### ES-1 — `no-explicit-any` is completely disabled
+
+**File:** `eslint.config.mjs`
+
+**What:** `'@typescript-eslint/no-explicit-any': 'off'`. Any-typed parameters,
+return values, and variables are never flagged.
+
+**How to fix:** Change to `['warn', { ignoreRestArgs: true }]`.
+
+#### ES-2 — `no-floating-promises` is warn, should be error
+
+**File:** `eslint.config.mjs`
+
+**How to fix:** Change to `'error'`.
+
+#### ES-3 — `no-unsafe-argument` is warn, should be error
+
+**File:** `eslint.config.mjs`
+
+**How to fix:** Change to `'error'`.
+
+#### ES-4 — Wrong `sourceType` in eslint config
+
+**File:** `eslint.config.mjs:20`
+
+**What:** `sourceType: 'commonjs'` for a project using ESM `import`/`export`.
+
+**How to fix:** Change to `'module'`.
+
+#### ES-5 — Missing lint rules
+
+**File:** `eslint.config.mjs`
+
+**Missing rules:**
+- `@typescript-eslint/no-misused-promises` — catches `if (promise)` bugs
+- `@typescript-eslint/no-throw-literal` — catches `throw 'string'`
+- `@typescript-eslint/no-unused-expressions` — prevents dead code
+- `@typescript-eslint/prefer-nullish-coalescing` — modernizes `||` → `??`
+- `@typescript-eslint/prefer-optional-chain` — modernizes `&&` → `?.`
+
+#### ES-6 — `strict: true` not used in tsconfig
+
+**File:** `tsconfig.json`
+
+**What:** Uses individual strict flags (`strictNullChecks: true`) instead of
+the `"strict": true` umbrella. Missing: `noUnusedLocals`, `noUnusedParameters`,
+`exactOptionalPropertyTypes`, `noPropertyAccessFromIndexSignature`.
+
+**How to fix:** Enable `"strict": true` and fix new errors.
+
+---
+
+### 12.8 Docker & deployment (P2)
+
+#### DK-1 — Unnecessary build deps in Dockerfile
+
+**File:** `Dockerfile:12`
+
+**What:** `python3 make g++` installed for native module compilation. No
+dependency in `package.json` requires native compilation — Prisma provides
+prebuilt binaries, argon2 uses `@node-rs/argon2`.
+
+**How to fix:** Remove the native build dependencies. Saves ~150MB per layer.
+
+#### DK-2 — `prisma generate` before `COPY . .`
+
+**File:** `Dockerfile:17`
+
+**What:** `RUN mkdir -p src` exists as a workaround because `prisma generate`
+runs before the source is copied. Move generation after copy.
+
+#### DK-3 — Missing `*.tsbuildinfo` in `.dockerignore`
+
+**File:** `.dockerignore`
+
+**How to fix:** Add `*.tsbuildinfo`.
+
+#### DK-4 — k8s migration job uses `pnpm exec prisma`
+
+**File:** `k8s/migrate-job.yaml`
+
+**What:** The migration image's `CMD` uses `node_modules/.bin/prisma`, but the
+Job overrides with `pnpm exec prisma` — `pnpm` may not be available in the
+runtime image.
+
+**How to fix:** Align command with Dockerfile's `CMD`.
+
+#### DK-5 — Missing k8s secrets in example
+
+**File:** `k8s/secret.example.yaml`
+
+**Missing entries:** `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`,
+`RESEND_API_KEY`, `VAULT_TOKEN`, `VAULT_ADDR`.
+
+**How to fix:** Add placeholder entries for all required runtime secrets.
+
+#### DK-6 — Missing k8s config entries
+
+**File:** `k8s/configmap.yaml`
+
+**Missing:** `CORS_ORIGIN`, `OTEL_ENABLED`.
+
+#### DK-7 — No PodDisruptionBudget in k8s
+
+**File:** `k8s/deployment.yaml`
+
+**What:** With 2 replicas and no PDB, voluntary disruptions (node drains) can
+take all pods down simultaneously.
+
+**How to fix:** Add `PodDisruptionBudget` with `minAvailable: 1`.
+
+---
+
+### 12.9 Prisma schema issues (P3)
+
+#### PR-1 — Missing cascading deletes
+
+**File:** `prisma/schema.prisma`
+
+**What:** `Organization.owner`, `Project.createdBy`, `Task.createdBy` have no
+`onDelete` — defaults to `NoAction`, which prevents deleting users who own
+resources.
+
+**How to fix:** Add `onDelete: SetNull` or `onDelete: Cascade` depending on
+business logic.
+
+#### PR-2 — Missing composite indexes
+
+**File:** `prisma/schema.prisma`
+
+**Missing:**
+- `@@index([userId, type])` on `Reaction`
+- `@@index([followerId, createdAt])` on `Follow`
+- `@@index([createdAt])` on `OutboxEvent`
+
+#### PR-3 — No `@@map` / `@map` for snake_case conventions
+
+**File:** `prisma/schema.prisma`
+
+**What:** Defaults to camelCase in Postgres. Raw SQL queries against the DB
+require quoting or camelCase column names.
+
+#### PR-4 — `Post.coverImage` stores raw bytes
+
+**File:** `prisma/schema.prisma`
+
+**What:** `coverImage Bytes?` stores image data in the database. S3/MinIO
+pattern is preferred — `imageUrl` field already exists.
+
+#### PR-5 — No updatedAt on Device, Notification, Friendship
+
+**File:** `prisma/schema.prisma`
+
+**What:** Inconsistent with the schema convention that most models have
+`updatedAt`.
+
+---
+
+### 12.10 Code quality (P3)
+
+#### CQ-1 — Duplicate condition in `RealtimeGateway`
+
+**File:** `src/realtime/realtime.gateway.ts:652-653`
+
+**What:** `if (ws.page && ws.page)` — duplicate check, copy-paste artifact.
+
+#### CQ-2 — Tests access private members via type casts
+
+**File:** `src/realtime/realtime.gateway.spec.ts` and others
+
+**What:** Multiple spec files cast to `unknown as { ... }` to access private
+members. These break if the private member is renamed.
+
+**How to fix:** Extract tested logic to public/internal methods or use the
+`@suites/unit` library (already in devDeps) for proper dependency mocking.
+
+#### CQ-3 — `@suites/unit` not used despite being installed
+
+**File:** `package.json` devDependencies
+
+**What:** `@suites/unit` is installed but no spec file imports it. The
+deprecated `automock/` directory exists as an alternative.
+
+**How to fix:** Either adopt `@suites/unit` across new tests or remove the
+unused dependency.
+
+---
+
+## 13. Roadmap (updated)
+
+| Seq | Item | Section | Prio | Effort | Status |
+|---|---|---|---|---|---|
+| 1 | Open redirect fix | CR-1 | P0 | S | ✅ Done |
+| 2 | Header injection fix | CR-2 | P0 | S | ✅ Done |
+| 3 | ResizeObserver polyfill | TG-1 | P0 | S | ✅ Done |
+| 4 | **Remove live Vault token from .env** | LS-1 | 🛑 **CRIT** | S | **Urgent** |
+| 5 | **Remove live API keys from docker-compose** | LS-2 | 🛑 **CRIT** | S | **Urgent** |
+| 6 | Suppress false-positive fallow security findings | S-1/2/3/4 | P1 | S | Pending |
+| 7 | Duplicate `ensureWallet()` extract | AR-1 | P1 | S | Pending |
+| 8 | Duplicate DM delivery extract | AR-2 | P1 | S | Pending |
+| 9 | Unify caching abstraction | AR-3 | P1 | M | Pending |
+| 10 | Password strength validation | SE-1 | P1 | S | Pending |
+| 11 | Unbounded pagination fix | SE-2 | P1 | S | Pending |
+| 12 | Fix ENCRYPTION_KEY validation mismatch | AR-6 | P1 | S | Pending |
+| 13 | Fix VAPID_EMAIL name mismatch | AR-7 | P1 | S | Pending |
+| 14 | Silent Redis failure handling | OB-1 | P2 | M | Pending |
+| 15 | Silent friend notification failure | OB-2 | P2 | M | Pending |
+| 16 | Await MinIO bucket creation | OB-3 | P2 | S | Pending |
+| 17 | Map more Prisma error codes | OB-4 | P2 | S | Pending |
+| 18 | `KEYS` → `SCAN` in cache invalidation | OB-5 | P2 | S | Pending |
+| 19 | Secure socket ID generation | SE-3 | P2 | S | Pending |
+| 20 | Refactor realtime.gateway.ts | CX-1 | P2 | L | Pending |
+| 21 | Refactor to-exception-response.ts | CX-2 | P2 | M | Pending |
+| 22 | Split auth.service.ts | CX-3 | P2 | L | Pending |
+| 23 | Split messaging.service.ts / SRP | CX-4 / AR-5 | P2 | L | Pending |
+| 24 | Back room state in Redis | AR-4 | P2 | M | Pending |
+| 25 | Break auth↔friends module cycle | CD-1 | P2 | M | Pending |
+| 26 | 4 DB queries on login optimization | OB-7 | P2 | M | Pending |
+| 27 | Add missing exception codes to union | TS-1 | P2 | S | Pending |
+| 28 | Extract TTL parsing utility | TS-2 | P2 | S | Pending |
+| 29 | Move price map to config | TS-3 | P2 | S | Pending |
+| 30 | Tighten ESLint rules (any, promises, unsafe-arg) | ES-1/2/3 | P2 | M | Pending |
+| 31 | Fix eslint sourceType | ES-4 | P2 | S | Pending |
+| 32 | Add missing ESLint rules | ES-5 | P2 | M | Pending |
+| 33 | Enable tsconfig strict | ES-6 | P2 | M | Pending |
+| 34 | Dockerfile: remove unnecessary build deps | DK-1 | P2 | S | Pending |
+| 35 | Dockerfile: move prisma generate after COPY | DK-2 | P2 | S | Pending |
+| 36 | Add tests for stripe-webhook, users, etc. | TE-1 | P2 | L | Pending |
+| 37 | Add unit tests for prisma, common modules | TE-2 | P2 | M | Pending |
+| 38 | Prisma schema: cascading deletes | PR-1 | P2 | S | Pending |
+| 39 | Prisma schema: composite indexes | PR-2 | P3 | S | Pending |
+| 40 | Fix k8s migration job command | DK-4 | P3 | S | Pending |
+| 41 | Add missing k8s secrets/config | DK-5/6 | P3 | S | Pending |
+| 42 | Add PodDisruptionBudget | DK-7 | P3 | S | Pending |
+| 43 | Add `*.tsbuildinfo` to .dockerignore | DK-3 | P3 | S | Pending |
+| 44 | Fix duplicate condition in RealtimeGateway | CQ-1 | P3 | S | Pending |
+| 45 | Fix private member access in tests | CQ-2 | P3 | S | Pending |
+| 46 | Adopt or remove @suites/unit | CQ-3 | P3 | S | Pending |
+| 47 | Manual dead-code cleanup (frontend) | DC-1 | P2 | M | Pending |
+| 48 | Manual dead-code cleanup (backend) | DC-2 | P2 | M | Pending |
+| 49 | Remove dead test plugin transformers | DC-3 | P2 | S | Pending |
+| 50 | Suppress intentional ORM cycles | CD-2/3/4 | P2 | S | Pending |
+| 51 | Suppress backend spec lint warnings | LW-1/2 | P3 | S | Pending |
+| 52 | Fix backend README references | DM-1 | P3 | S | Pending |
+| 53 | Fix gitignore note in frontend README | DM-2 | P3 | S | Pending |
+| 54 | Create docs/README.md index | DM-3 | P3 | S | Pending |
+| 55 | Kafka healthcheck in compose | CP-1 | P3 | S | Pending |
+| 56 | Pin minio images | CP-2 | P3 | S | Pending |
+
+---
+
 ## Appendix: Fallow auto-fix lessons
 
 The `fallow fix --yes` command was used but **reverted entirely** because it
