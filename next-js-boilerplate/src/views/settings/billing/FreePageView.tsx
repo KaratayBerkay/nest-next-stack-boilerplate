@@ -177,9 +177,9 @@ export function FreePageView() {
         <PageInfoButton content={settingsBillingPageInfo} />
       </div>
 
-      {renderCurrentPlan(tier, periodEnd, cancelAtPeriodEnd, t, currency, dateDisplay)}
+      {renderCurrentPlan(tier, periodEnd, cancelAtPeriodEnd, t as unknown as Record<string, string>, currency, dateDisplay)}
 
-      {renderBillingHistory(loadingHistory, transactions, t, dateDisplay)}
+      {renderBillingHistory(loadingHistory, transactions, t as unknown as Record<string, string>, dateDisplay)}
     </div>
   );
 }

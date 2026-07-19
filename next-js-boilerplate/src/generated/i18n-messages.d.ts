@@ -82,6 +82,12 @@ export type I18nMessages = {
       "accessDenied": string;
     }
 
+  "apiKeys": {
+      "errors": {
+        "nameExists": string;
+      };
+    }
+
   "auth": {
       "form": {
         "login": {
@@ -295,6 +301,292 @@ export type I18nMessages = {
       "signInRequired": string;
     }
 
+  "forms": {
+      "pageTitle": string;
+      "pageDescription": string;
+      "back": string;
+      "breadcrumbLabel": string;
+      "gallery": {
+        "title": string;
+        "description": string;
+      };
+      "badge": {
+        "real": string;
+        "simulated": string;
+        "mixed": string;
+        "none": string;
+      };
+      "examples": {
+        "profileTitle": string;
+        "profileDescription": string;
+        "teamInviteTitle": string;
+        "teamInviteDescription": string;
+        "apiKeyTitle": string;
+        "apiKeyDescription": string;
+        "billingTitle": string;
+        "billingDescription": string;
+        "filtersTitle": string;
+        "filtersDescription": string;
+        "fieldStatesTitle": string;
+        "fieldStatesDescription": string;
+        "uploadsTitle": string;
+        "uploadsDescription": string;
+        "errorLabTitle": string;
+        "errorLabDescription": string;
+        "checkoutTitle": string;
+        "checkoutDescription": string;
+        "contentEditorTitle": string;
+        "contentEditorDescription": string;
+        "formBuilderTitle": string;
+        "formBuilderDescription": string;
+        "editableTableTitle": string;
+        "editableTableDescription": string;
+      };
+      "profile": {
+        "heading": string;
+        "firstName": string;
+        "lastName": string;
+        "username": string;
+        "email": string;
+        "bio": string;
+        "country": string;
+        "language": string;
+        "newsletter": string;
+        "interests": string;
+        "role": string;
+        "birthDate": string;
+        "meetingTime": string;
+        "notificationPrefs": string;
+        "save": string;
+        "saving": string;
+        "saveSuccess": string;
+        "demoOnlyFields": string;
+        "usernameChecking": string;
+        "usernameAvailable": string;
+        "usernameTaken": string;
+      };
+      "teamInvite": {
+        "heading": string;
+        "stepEmails": string;
+        "stepRole": string;
+        "stepMessage": string;
+        "stepReview": string;
+        "next": string;
+        "back": string;
+        "send": string;
+        "emailPlaceholder": string;
+        "emailDuplicate": string;
+        "roleLabel": string;
+        "messageLabel": string;
+        "messagePlaceholder": string;
+        "inviteSent": string;
+        "inviteFailed": string;
+      };
+      "apiKey": {
+        "heading": string;
+        "nameLabel": string;
+        "namePlaceholder": string;
+        "expiresLabel": string;
+        "expires30": string;
+        "expires60": string;
+        "expires90": string;
+        "expiresNever": string;
+        "permissionsLabel": string;
+        "selectAll": string;
+        "ipWhitelistLabel": string;
+        "ipPlaceholder": string;
+        "create": string;
+        "creating": string;
+        "created": string;
+        "copied": string;
+        "revoke": string;
+        "revokeConfirm": string;
+        "revoked": string;
+        "revealSecret": string;
+        "secretNote": string;
+        "empty": string;
+        "loadFailed": string;
+      };
+      "billing": {
+        "heading": string;
+        "plan": string;
+        "billingPeriod": string;
+        "monthly": string;
+        "yearly": string;
+        "paymentMethod": string;
+        "couponCode": string;
+        "couponPlaceholder": string;
+        "couponChecking": string;
+        "taxId": string;
+        "taxIdPlaceholder": string;
+        "priceSummary": string;
+        "subtotal": string;
+        "discount": string;
+        "total": string;
+        "autoSave": string;
+        "autoSaveFailed": string;
+        "saveSuccess": string;
+        "unsaved": string;
+      };
+      "filters": {
+        "heading": string;
+        "search": string;
+        "searchPlaceholder": string;
+        "category": string;
+        "categoryPlaceholder": string;
+        "tags": string;
+        "tagsPlaceholder": string;
+        "dateRange": string;
+        "sortBy": string;
+        "sortOrder": string;
+        "asc": string;
+        "desc": string;
+        "pageSize": string;
+        "status": string;
+        "reset": string;
+        "results": string;
+      };
+      "fieldStates": {
+        "heading": string;
+        "default": string;
+        "filled": string;
+        "error": string;
+        "warning": string;
+        "disabled": string;
+        "loading": string;
+        "readOnly": string;
+        "required": string;
+        "validationModes": string;
+        "eager": string;
+        "classic": string;
+        "dynamic": string;
+        "linkedFields": string;
+        "confirmPassword": string;
+        "password": string;
+      };
+      "uploads": {
+        "heading": string;
+        "avatar": string;
+        "gallery": string;
+        "documents": string;
+        "uploadLabel": string;
+        "simulatedNote": string;
+      };
+      "errorLab": {
+        "heading": string;
+        "scenario": string;
+        "locale": string;
+        "network": string;
+        "instant": string;
+        "delayed": string;
+        "timeout": string;
+        "offline": string;
+        "randomFail": string;
+        "trigger": string;
+        "payloadInspector": string;
+        "en": string;
+        "tr": string;
+      };
+      "checkout": {
+        "heading": string;
+        "shippingAddress": string;
+        "billingAddress": string;
+        "billingSameAsShipping": string;
+        "street": string;
+        "city": string;
+        "province": string;
+        "postalCode": string;
+        "country": string;
+        "phone": string;
+        "email": string;
+        "confirmEmail": string;
+        "orderSummary": string;
+        "placeOrder": string;
+        "paymentMethod": string;
+        "addPaymentMethod": string;
+        "stripeSetup": string;
+        "paymentDeclined": string;
+        "orderPlaced": string;
+      };
+      "contentEditor": {
+        "heading": string;
+        "title": string;
+        "titlePlaceholder": string;
+        "slug": string;
+        "tags": string;
+        "tagsPlaceholder": string;
+        "coverImage": string;
+        "body": string;
+        "bodyPlaceholder": string;
+        "preview": string;
+        "edit": string;
+        "saveDraft": string;
+        "publish": string;
+        "schedule": string;
+        "published": string;
+        "scheduled": string;
+        "draftSaved": string;
+        "draftRestored": string;
+        "draftRestore": string;
+        "draftDiscard": string;
+        "unsavedChanges": string;
+        "unsavedDescription": string;
+        "stay": string;
+        "leave": string;
+      };
+      "formBuilder": {
+        "heading": string;
+        "builder": string;
+        "preview": string;
+        "addField": string;
+        "fieldType": string;
+        "fieldLabel": string;
+        "fieldRequired": string;
+        "fieldOptions": string;
+        "text": string;
+        "select": string;
+        "checkbox": string;
+        "date": string;
+        "moveUp": string;
+        "moveDown": string;
+        "removeField": string;
+        "exportConfig": string;
+        "submitPreview": string;
+      };
+      "editableTable": {
+        "heading": string;
+        "description": string;
+        "quantity": string;
+        "unitPrice": string;
+        "taxClass": string;
+        "addRow": string;
+        "duplicateRow": string;
+        "removeRow": string;
+        "moveUp": string;
+        "moveDown": string;
+        "total": string;
+        "subtotal": string;
+        "tax": string;
+        "saveAll": string;
+        "saving": string;
+        "rowError": string;
+        "saveSuccess": string;
+        "saveFailed": string;
+      };
+      "errors": {
+        "emailAlreadyMember": string;
+        "inviteQuotaExceeded": string;
+        "couponInvalid": string;
+        "couponExpired": string;
+        "connectionUnstable": string;
+        "scanFailed": string;
+        "postalCodeInvalid": string;
+        "paymentDeclined": string;
+        "rowRejected": string;
+        "unknown": string;
+      };
+    }
+
   "home": {
       "signIn": string;
       "register": string;
@@ -472,6 +764,9 @@ export type I18nMessages = {
       "deviceId": string;
       "userAgent": string;
       "revoke": string;
+      "errors": {
+        "usernameTaken": string;
+      };
     }
 
   "share": {
@@ -624,6 +919,12 @@ export type I18nMessages = {
       "tooltipDescription": string;
       "typographyTitle": string;
       "typographyDescription": string;
+      "formFieldInfoTitle": string;
+      "formFieldInfoDescription": string;
+      "formErrorBannerTitle": string;
+      "formErrorBannerDescription": string;
+      "stepIndicatorTitle": string;
+      "stepIndicatorDescription": string;
     }
 
   "users": {
@@ -650,6 +951,7 @@ export type I18nMessages = {
       "navMessages": string;
       "navFindFriends": string;
       "navUiComponents": string;
+      "navForms": string;
       "navErrorTest": string;
       "navNotFound": string;
       "swipeLeftToClose": string;

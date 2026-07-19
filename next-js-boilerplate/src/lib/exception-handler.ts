@@ -34,8 +34,8 @@ const EXC_TO_SURFACE: Record<ExceptionCode, ExceptionSurface> = {
   EX_INTERNAL: "toast",
 };
 
-export function getSurface(exc: ExceptionCode): ExceptionSurface {
-  return EXC_TO_SURFACE[exc] ?? "toast";
+export function getSurface(exc: string): ExceptionSurface {
+  return EXC_TO_SURFACE[exc as ExceptionCode] ?? "toast";
 }
 
 export function resolveByPath(

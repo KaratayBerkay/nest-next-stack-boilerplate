@@ -13,6 +13,7 @@ import {
   IconMail,
   IconUserPlus,
   IconComponents,
+  IconForms,
   IconAlertTriangle,
   IconQuestionMark,
   IconRss,
@@ -57,6 +58,7 @@ export function V1Nav({ onNav }: V1NavProps) {
       auth: true,
     },
     { href: "/ui", label: t.navUiComponents, Icon: IconComponents },
+    { href: "/forms", label: t.navForms, Icon: IconForms },
     { href: "/boom", label: t.navErrorTest, Icon: IconAlertTriangle },
     { href: "/missing", label: t.navNotFound, Icon: IconQuestionMark },
   ];

@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useState, useCallback, useId } from "react";
+import { useRef, useState, useCallback, useId, useMemo } from "react";
 import { cn } from "@/lib/cn";
 import { Progress } from "@/components/ui/Progress";
 import { useToast } from "@/components/ui/toast/use-toast";
-import type { FileUploadProps, UploadFile } from "@/types/ui/FileUpload-types";
+import type { FileUploadProps, UploadFile, FileUploadLabels } from "@/types/ui/FileUpload-types";
 
 function humanSize(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -18,6 +18,24 @@ function nextId() {
   return `upload-${++uploadIdCounter}`;
 }
 
+const DEFAULT_LABELS: FileUploadLabels = {
+  dropzoneIdle: "Drag & drop files or click to browse",
+  dropzoneActive: "Drop files here",
+  acceptedLabel: "Accepted",
+  invalidType: (file: string, accepted: string) =>
+    `Only ${accepted} can be uploaded — got ${file}`,
+  tooLarge: (file: string, max: string) =>
+    `File too large (${file}). Max: ${max}`,
+  uploaded: "Uploaded",
+  uploadFailed: "Upload failed",
+  remove: (file: string) => `Remove ${file}`,
+  uploadButton: (count: number) =>
+    `Upload ${count} file(s)`,
+  uploading: "Uploading...",
+  changePhoto: "Change",
+  removePhoto: "Remove photo",
+};
+
 export function FileUpload({
   multiple,
   accept,
@@ -28,7 +46,9 @@ export function FileUpload({
   onUpload,
   className,
   disabled,
+  labels: labelsProp,
 }: FileUploadProps) {
+  const labels = useMemo(() => ({ ...DEFAULT_LABELS, ...labelsProp }), [labelsProp]);
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const dragCounter = useRef(0);
@@ -51,7 +71,7 @@ export function FileUpload({
             file,
             progress: 0,
             status: "error",
-            error: `File too large (${humanSize(file.size)}). Max: ${humanSize(maxSizeBytes)}`,
+            error: labels.tooLarge!(humanSize(file.size), humanSize(maxSizeBytes)),
           });
           continue;
         }
@@ -74,7 +94,7 @@ export function FileUpload({
             });
             toast({
               title: "Invalid file type",
-              description: `Only ${acceptLabels.join(", ")} can be uploaded — got ${file.name}`,
+              description: labels.invalidType!(file.name, acceptLabels.join(", ")),
               variant: "destructive",
             });
             continue;
@@ -92,7 +112,7 @@ export function FileUpload({
       const updated = [...files, ...newFiles];
       onFilesChange(updated);
     },
-    [disabled, files, maxFiles, maxSizeBytes, onFilesChange, accept, toast],
+    [disabled, files, maxFiles, maxSizeBytes, onFilesChange, accept, toast, labels],
   );
 
   const handleClick = useCallback(() => {
@@ -175,13 +195,13 @@ export function FileUpload({
       } catch {
         onFilesChange(
           uploadingFiles.map((x) =>
-            x.id === f.id ? { ...x, status: "error" as const, error: "Upload failed" } : x,
+            x.id === f.id ? { ...x, status: "error" as const, error: labels.uploadFailed } : x,
           ),
         );
       }
     }
     setUploading(false);
-  }, [onUpload, uploading, files, onFilesChange]);
+  }, [onUpload, uploading, files, onFilesChange, labels]);
 
   const handleRemove = useCallback(
     (id: string) => {
@@ -211,7 +231,7 @@ export function FileUpload({
         role="button"
         tabIndex={disabled ? -1 : 0}
         aria-disabled={disabled}
-        aria-label="Upload files"
+        aria-label={labels.dropzoneIdle}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         onDragEnter={handleDragEnter}
@@ -239,11 +259,11 @@ export function FileUpload({
         </svg>
         <p className="text-sm text-fg">
           {dragOver
-            ? "Drop files here"
-            : "Drag & drop files or click to browse"}
+            ? labels.dropzoneActive
+            : labels.dropzoneIdle}
         </p>
         {accept && (
-          <p className="text-muted mt-1 text-xs">Accepted: {accept}</p>
+          <p className="text-muted mt-1 text-xs">{labels.acceptedLabel}: {accept}</p>
         )}
       </div>
 
@@ -270,14 +290,14 @@ export function FileUpload({
                   <p className="text-xs text-error">{f.error}</p>
                 )}
                 {f.status === "done" && (
-                  <p className="text-xs text-success">Uploaded</p>
+                  <p className="text-xs text-success">{labels.uploaded}</p>
                 )}
               </div>
               <button
                 type="button"
                 onClick={() => handleRemove(f.id)}
                 className="text-muted hover:text-fg shrink-0 rounded-md p-1 transition-colors"
-                aria-label={`Remove ${f.file.name}`}
+                aria-label={labels.remove!(f.file.name)}
               >
                 <svg
                   width="16"
@@ -302,7 +322,7 @@ export function FileUpload({
           disabled={uploading}
           className="bg-brand text-brand-fg hover:bg-brand/90 inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
         >
-          {uploading ? "Uploading..." : `Upload ${files.filter((f) => f.status === "pending").length} file(s)`}
+          {uploading ? labels.uploading : labels.uploadButton!(files.filter((f) => f.status === "pending").length)}
         </button>
       )}
     </div>

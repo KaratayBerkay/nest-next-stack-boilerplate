@@ -143,9 +143,9 @@ export default function PageContent({ params }: SettingsIndexPageProps) {
       </div>
 
       <div className="flex flex-col gap-4">
-        {renderPlanInfo(tier, periodEnd, cancelAtPeriodEnd, t, currency, dateDisplay, lang)}
+        {renderPlanInfo(tier, periodEnd, cancelAtPeriodEnd, t as unknown as Record<string, string>, currency, dateDisplay, lang)}
         {renderPlanAdvantages(tier, FEATURES)}
-        {renderUpgradeActions(tier, t, lang)}
+        {renderUpgradeActions(tier, t as unknown as Record<string, string>, lang)}
       </div>
     </div>
   );

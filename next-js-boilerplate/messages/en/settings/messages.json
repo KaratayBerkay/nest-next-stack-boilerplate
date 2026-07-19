@@ -81,5 +81,8 @@
   "moreDeviceInfo": "More Device Info",
   "deviceId": "Device ID:",
   "userAgent": "User-Agent:",
-  "revoke": "Revoke"
+  "revoke": "Revoke",
+  "errors": {
+    "usernameTaken": "Username is already taken"
+  }
 }

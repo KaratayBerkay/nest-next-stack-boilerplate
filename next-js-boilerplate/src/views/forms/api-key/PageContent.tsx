@@ -1,0 +1,279 @@
+"use client";
+
+import { useState, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMessages, useAllMessages } from "@/lib/i18n/MessagesProvider";
+import { useToast } from "@/components/ui/Toast";
+import { useAppForm } from "@/features/forms/form-hook";
+import { formOptions } from "@tanstack/react-form";
+import { Button } from "@/components/ui/Button";
+import { Separator } from "@/components/ui/Separator";
+import { FormErrorBanner } from "@/components/ui/FormErrorBanner";
+import { exceptionHandler, getSurface } from "@/lib/exception-handler";
+
+interface ApiKey {
+  id: string;
+  name: string;
+  prefix: string;
+  createdAt: string;
+  expiresAt: string | null;
+  permissions: string[];
+  lastUsed: string | null;
+  revoked: boolean;
+  ipWhitelist: string[];
+}
+
+let nextId = 3;
+const STORE: ApiKey[] = [
+  { id: "1", name: "CI/CD Pipeline", prefix: "eys_abc", createdAt: "2026-06-01", expiresAt: null, permissions: ["read:users", "read:posts"], lastUsed: "2026-07-18", revoked: false, ipWhitelist: [] },
+  { id: "2", name: "Development", prefix: "eys_def", createdAt: "2026-07-01", expiresAt: "2026-09-30", permissions: ["read:users", "write:posts"], lastUsed: null, revoked: false, ipWhitelist: ["192.168.1.0/24"] },
+];
+
+const PERMISSION_OPTIONS = [
+  { value: "read:users", label: "Read Users" },
+  { value: "write:users", label: "Write Users" },
+  { value: "read:posts", label: "Read Posts" },
+  { value: "write:posts", label: "Write Posts" },
+  { value: "read:billing", label: "Read Billing" },
+  { value: "write:billing", label: "Write Billing" },
+  { value: "admin", label: "Admin (all)" },
+];
+
+const EXPIRY_OPTIONS = [
+  { value: "30", label: "30 Days" },
+  { value: "60", label: "60 Days" },
+  { value: "90", label: "90 Days" },
+  { value: "never", label: "No Expiry" },
+];
+
+function queryKeys() {
+  return { queryKey: ["api-keys"], queryFn: async () => { await new Promise((r) => setTimeout(r, 400)); return [...STORE.filter((k) => !k.revoked)]; } };
+}
+
+export default function ApiKeyPage() {
+  const t = useMessages("forms");
+  const messages = useAllMessages();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [showForm, setShowForm] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [newKeySecret, setNewKeySecret] = useState<string | null>(null);
+  const [revealedSecrets, setRevealedSecrets] = useState<Set<string>>(new Set());
+  const [ipInput, setIpInput] = useState("");
+  const [ipWhitelist, setIpWhitelist] = useState<string[]>([]);
+
+  const { data: keys, isLoading } = useQuery(queryKeys());
+
+  const createMutation = useMutation({
+    mutationFn: async (data: { name: string; expiresIn: string; permissions: string[] }) => {
+      await new Promise((r) => setTimeout(r, 1200));
+      if (STORE.some((k) => k.name === data.name && !k.revoked)) {
+        const err = new Error(`An API key named "${data.name}" already exists`);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (err as any).exception = {
+          exc: "EX_API_KEY_NAME_EXISTS",
+          msg: `An API key named "${data.name}" already exists`,
+          key: "apiKeys.errors.nameExists",
+        };
+        throw err;
+      }
+      const id = String(++nextId);
+      const prefix = `eys_${Math.random().toString(36).slice(2, 8)}`;
+      const secret = `${prefix}_${Math.random().toString(36).slice(2, 20)}`;
+      const now = new Date().toISOString().split("T")[0];
+      const expiresAt = data.expiresIn === "never" ? null : new Date(Date.now() + Number(data.expiresIn) * 86400000).toISOString().split("T")[0];
+      STORE.push({ id, name: data.name, prefix, createdAt: now, expiresAt, permissions: data.permissions, lastUsed: null, revoked: false, ipWhitelist: [...ipWhitelist] });
+      setIpWhitelist([]);
+      return { id, secret };
+    },
+    onSuccess: (result) => {
+      setNewKeySecret(result.secret);
+      setShowForm(false);
+      form.reset();
+      queryClient.invalidateQueries({ queryKey: ["api-keys"] });
+    },
+    onError: (err) => {
+      const exc = (err as { exception?: { exc: string; key: string; msg: string } }).exception;
+      if (exc) {
+        const surface = getSurface(exc.exc);
+        if (surface === "toast") {
+          toast({ description: exceptionHandler(exc, messages), variant: "destructive" });
+        } else {
+          setFormError(exceptionHandler(exc, messages));
+        }
+      }
+    },
+  });
+
+  const revokeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await new Promise((r) => setTimeout(r, 600));
+      const key = STORE.find((k) => k.id === id);
+      if (key) key.revoked = true;
+    },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["api-keys"] });
+      const previous = queryClient.getQueryData<ApiKey[]>(["api-keys"]);
+      queryClient.setQueryData<ApiKey[]>(["api-keys"], (old) => old?.filter((k) => k.id !== id));
+      return { previous };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previous) queryClient.setQueryData(["api-keys"], context.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["api-keys"] });
+    },
+  });
+
+  const form = useAppForm({
+    ...formOptions({
+      defaultValues: {
+        name: "",
+        expiresIn: "30",
+        permissions: [] as string[],
+      },
+      validators: {
+        onSubmitAsync: async ({ value }) => {
+          createMutation.mutate(value);
+        },
+      },
+    }),
+  });
+
+  const handleCopy = useCallback(async (secret: string) => {
+    await navigator.clipboard.writeText(secret);
+    toast({ description: t.apiKey.copied, variant: "default" });
+  }, [toast, t]);
+
+  const handleRevoke = useCallback((id: string) => {
+    revokeMutation.mutate(id);
+    toast({ description: t.apiKey.revoked, variant: "default" });
+  }, [revokeMutation, toast, t]);
+
+  const handleAddIp = useCallback(() => {
+    const ip = ipInput.trim();
+    if (!ip) return;
+    if (ipWhitelist.includes(ip)) return;
+    setIpWhitelist((prev) => [...prev, ip]);
+    setIpInput("");
+  }, [ipInput, ipWhitelist]);
+
+  const handleRemoveIp = useCallback((ip: string) => {
+    setIpWhitelist((prev) => prev.filter((v) => v !== ip));
+  }, []);
+
+  if (isLoading) {
+    return <div className="text-muted flex items-center justify-center py-12 text-sm">Loading...</div>;
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-semibold">{t.apiKey.heading}</h2>
+        </div>
+        <Button size="sm" onClick={() => { setShowForm((p) => !p); setFormError(null); }}>
+          {showForm ? "Cancel" : "New Key"}
+        </Button>
+      </div>
+
+      {formError && <FormErrorBanner message={formError} onDismiss={() => setFormError(null)} />}
+
+      {newKeySecret && (
+        <div className="surface rounded-lg border border-border p-4">
+          <p className="text-xxs font-semibold">{t.apiKey.revealSecret}</p>
+          <code className="mt-1 block break-all rounded bg-emphasis p-2 text-xs">{newKeySecret}</code>
+          <p className="text-xxs text-destructive mt-1">{t.apiKey.secretNote}</p>
+          <div className="mt-2 flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => handleCopy(newKeySecret)}>Copy</Button>
+            <Button size="sm" variant="outline" onClick={() => setNewKeySecret(null)}>Dismiss</Button>
+          </div>
+        </div>
+      )}
+
+      {showForm && (
+        <form
+          onSubmit={(e) => { e.preventDefault(); e.stopPropagation(); form.handleSubmit(); }}
+          className="surface flex flex-col gap-3 rounded-lg border border-border p-4"
+        >
+          <form.AppField name="name">
+            {(field) => <field.TextField label={t.apiKey.nameLabel} placeholder={t.apiKey.namePlaceholder} />}
+          </form.AppField>
+          <form.AppField name="expiresIn">
+            {(field) => <field.SelectField label={t.apiKey.expiresLabel} options={EXPIRY_OPTIONS} />}
+          </form.AppField>
+          <form.AppField name="permissions">
+            {(field) => <field.CheckboxField label={t.apiKey.permissionsLabel} options={PERMISSION_OPTIONS} />}
+          </form.AppField>
+
+          <div className="flex flex-col gap-1">
+            <span className="text-xxs text-muted font-medium">IP Whitelist (optional)</span>
+            <div className="flex gap-2">
+              <input
+                className="flex-1 rounded border border-border bg-field px-2 py-1.5 text-xs"
+                placeholder="Enter IP and press Enter"
+                value={ipInput}
+                onChange={(e) => setIpInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddIp(); } }}
+              />
+              <Button size="sm" variant="outline" type="button" onClick={handleAddIp}>Add</Button>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {ipWhitelist.map((ip) => (
+                <span key={ip} className="flex items-center gap-1 rounded bg-emphasis px-2 py-1 text-xxs">
+                  {ip}
+                  <button type="button" onClick={() => handleRemoveIp(ip)} className="text-destructive">&times;</button>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <form.AppForm>
+            <form.SubmitButton label={t.apiKey.create} loadingLabel={t.apiKey.creating} />
+          </form.AppForm>
+        </form>
+      )}
+
+      <Separator />
+
+      {keys?.length === 0 ? (
+        <p className="text-muted py-8 text-center text-xs">{t.apiKey.empty}</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {keys?.map((key) => (
+            <div key={key.id} className="surface flex flex-col gap-2 rounded-lg border border-border p-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium">{key.name}</span>
+                <div className="flex gap-1.5">
+                  {!revealedSecrets.has(key.id) ? (
+                    <Button size="sm" variant="ghost" onClick={() => setRevealedSecrets((prev) => new Set(prev).add(key.id))}>
+                      Reveal
+                    </Button>
+                  ) : (
+                    <Button size="sm" variant="ghost" onClick={() => handleCopy(key.prefix)}>Copy</Button>
+                  )}
+                  <Button size="sm" variant="destructive" onClick={() => handleRevoke(key.id)}>
+                    {t.apiKey.revoke}
+                  </Button>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {key.permissions.map((p) => (
+                  <span key={p} className="rounded bg-emphasis px-1.5 py-0.5 text-xxs">{p}</span>
+                ))}
+              </div>
+              <div className="text-xxs text-muted flex items-center gap-3">
+                <span>Created {key.createdAt}</span>
+                {key.expiresAt && <span>Expires {key.expiresAt}</span>}
+                {key.lastUsed && <span>Last used {key.lastUsed}</span>}
+              </div>
+              {revealedSecrets.has(key.id) && (
+                <code className="block break-all rounded bg-emphasis p-2 text-xxs">{key.prefix}_****</code>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

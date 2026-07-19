@@ -224,3 +224,6 @@ export {
   Code,
   Quote,
 } from "./typography";
+export { FormFieldInfo } from "./form-field-info";
+export { FormErrorBanner } from "./form-error-banner";
+export { StepIndicator } from "./step-indicator";

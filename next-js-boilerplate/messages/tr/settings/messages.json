@@ -81,5 +81,8 @@
   "moreDeviceInfo": "Daha Fazla Cihaz Bilgisi",
   "deviceId": "Cihaz ID:",
   "userAgent": "User-Agent:",
-  "revoke": "İptal Et"
+  "revoke": "İptal Et",
+  "errors": {
+    "usernameTaken": "Bu kullanıcı adı zaten alınmış"
+  }
 }

@@ -127,5 +127,11 @@
   "tooltipTitle": "Araç İpucu",
   "tooltipDescription": "Araç İpucu bileşeni gösterimi",
   "typographyTitle": "Tipografi",
-  "typographyDescription": "Tipografi bileşeni gösterimi"
+  "typographyDescription": "Tipografi bileşeni gösterimi",
+  "formFieldInfoTitle": "Form Alan Bilgisi",
+  "formFieldInfoDescription": "Form alanları için hata metni ve doğrulama animasyonu",
+  "formErrorBannerTitle": "Form Hata Bildirimi",
+  "formErrorBannerDescription": "Form düzeyindeki hatalar için kapatılabilir uyarı",
+  "stepIndicatorTitle": "Adım Göstergesi",
+  "stepIndicatorDescription": "Çok adımlı sihirbaz ilerleme göstergesi"
 }

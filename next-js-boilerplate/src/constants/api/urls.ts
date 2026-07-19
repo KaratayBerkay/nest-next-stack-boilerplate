@@ -78,6 +78,8 @@ export const MESSAGES_READ_URL = "/api/messages/read" as const;
 
 export const USERS_SEARCH_PREFIX = "/api/users/search" as const;
 
+export const FORMS_DEMO_SIMULATE_ERROR_URL = "/api/forms-demo/simulate-error" as const;
+
 export const EVENTS_URL = "/api/events" as const;
 export const MESSAGES_CONVERSATIONS_URL =
   "/api/messages/conversations" as const;

@@ -5,7 +5,15 @@ import { cn } from "@/lib/cn";
 import { FileUpload } from "@/components/ui/FileUpload";
 import { useToast } from "@/components/ui/toast/use-toast";
 import type { ImageUploadProps } from "@/types/ui/ImageUpload-types";
-import type { UploadFile } from "@/types/ui/FileUpload-types";
+import type { UploadFile, FileUploadLabels } from "@/types/ui/FileUpload-types";
+
+const DEFAULT_LABELS: FileUploadLabels = {
+  invalidType: (file: string, accepted: string) =>
+    `Only ${accepted} can be uploaded — got ${file}`,
+  changePhoto: "Change",
+  removePhoto: "Remove photo",
+  remove: (file: string) => `Remove ${file}`,
+};
 
 export function ImageUpload({
   value,
@@ -16,7 +24,9 @@ export function ImageUpload({
   avatar,
   aspect = "square",
   className,
+  labels: labelsProp,
 }: ImageUploadProps) {
+  const labels = { ...DEFAULT_LABELS, ...labelsProp };
   const { toast } = useToast();
   const revokeRef = useRef<Set<string>>(new Set());
 
@@ -83,7 +93,7 @@ export function ImageUpload({
             )}
           </div>
           <label className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-bg/60 text-xs font-medium text-fg opacity-0 transition-opacity hover:opacity-100">
-            <span>Change</span>
+            <span>{labels.changePhoto}</span>
             <input
               type="file"
               accept="image/*"
@@ -94,7 +104,7 @@ export function ImageUpload({
                   if (!file.type.startsWith("image/")) {
                     toast({
                       title: "Invalid file type",
-                      description: `Only images can be uploaded — got ${file.name}`,
+                      description: labels.invalidType!(file.name, "images"),
                       variant: "destructive",
                     });
                     e.target.value = "";
@@ -114,7 +124,7 @@ export function ImageUpload({
             onClick={() => handleRemove(current.id)}
             className="text-muted hover:text-fg text-xs transition-colors"
           >
-            Remove photo
+            {labels.removePhoto}
           </button>
         )}
       </div>
@@ -130,6 +140,7 @@ export function ImageUpload({
         maxFiles={maxFiles}
         files={value}
         onFilesChange={handleFilesChange}
+        labels={labelsProp}
       />
       {value.length > 0 && (
         <div
@@ -157,7 +168,7 @@ export function ImageUpload({
                 type="button"
                 onClick={() => handleRemove(f.id)}
                 className="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-bg/80 text-xs text-fg opacity-0 transition-opacity hover:bg-bg group-hover:opacity-100"
-                aria-label={`Remove ${f.file.name}`}
+                aria-label={labels.remove!(f.file.name)}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12" /></svg>
               </button>

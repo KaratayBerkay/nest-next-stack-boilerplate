@@ -127,5 +127,11 @@
   "tooltipTitle": "Tooltip",
   "tooltipDescription": "Tooltip component demo",
   "typographyTitle": "Typography",
-  "typographyDescription": "Typography component demo"
+  "typographyDescription": "Typography component demo",
+  "formFieldInfoTitle": "Form Field Info",
+  "formFieldInfoDescription": "Error text and validating spinner for form fields",
+  "formErrorBannerTitle": "Form Error Banner",
+  "formErrorBannerDescription": "Dismissable inline error alert for form-level errors",
+  "stepIndicatorTitle": "Step Indicator",
+  "stepIndicatorDescription": "Multi-step wizard progress indicator"
 }

@@ -100,7 +100,7 @@ export function FreePageView() {
   }, [username, user?.username, checkUsername]);
 
   const handleAvatarFile = useCallback(
-    (file: File) => uploadAvatarFile(file, toast, t, setAvatarUrl, uploadAvatar),
+    (file: File) => uploadAvatarFile(file, toast, t as unknown as Record<string, string>, setAvatarUrl, uploadAvatar),
     [toast, t, uploadAvatar],
   );
 

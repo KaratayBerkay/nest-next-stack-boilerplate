@@ -1,4 +1,4 @@
-import type { UploadFile } from "./FileUpload-types";
+import type { UploadFile, FileUploadLabels } from "./FileUpload-types";
 
 export interface ImageUploadProps {
   value: UploadFile[];
@@ -9,4 +9,5 @@ export interface ImageUploadProps {
   avatar?: boolean;
   aspect?: "square" | "video";
   className?: string;
+  labels?: FileUploadLabels;
 }
