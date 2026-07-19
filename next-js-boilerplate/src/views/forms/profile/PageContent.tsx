@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useMessages, useAllMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
 import { useProfileActions } from "@/api/client/profile/actions";
@@ -8,28 +8,14 @@ import { getSurface, exceptionHandler } from "@/lib/exception-handler";
 import { exceptionToFormErrors } from "@/lib/forms/exception-to-form-errors";
 import { formOptions } from "@tanstack/react-form";
 import { useAppForm } from "@/features/forms/form-hook";
-import { FormErrorBanner } from "@/components/ui/FormErrorBanner";
+import { FormLevelError } from "@/components/ui/FormLevelError";
 import { Separator } from "@/components/ui/Separator";
 import type { ExceptionResponse } from "@/lib/api-client";
 import { createProfileFieldSchemas } from "@/validators/forms/profile";
+import { profileDefaultValues } from "@/validators/forms/profile-inits";
 
 const profileFormOpts = formOptions({
-  defaultValues: {
-    avatar: [] as { id: string; file: File; progress: number; status: string; preview?: string }[],
-    firstName: "",
-    lastName: "",
-    username: "",
-    email: "",
-    bio: "",
-    country: "",
-    language: "",
-    newsletter: false,
-    interests: [] as string[],
-    role: "",
-    birthDate: undefined as Date | undefined,
-    meetingTime: { hours: 0, minutes: 0, seconds: 0 },
-    notificationPrefs: { email: true, push: false, sms: false },
-  },
+  defaultValues: profileDefaultValues,
 });
 
 const COUNTRY_OPTIONS = [
@@ -78,7 +64,6 @@ export default function ProfilePage() {
   const allMessages = useAllMessages();
   const { toast } = useToast();
   const { updateProfile, checkUsername } = useProfileActions();
-  const [formError, setFormError] = useState<string | null>(null);
   const fieldSchemas = useMemo(() => createProfileFieldSchemas(t.profile), [t]);
 
   const form = useAppForm({
@@ -96,7 +81,7 @@ export default function ProfilePage() {
         <p className="text-muted text-xs">{t.profile.demoOnlyFields}</p>
       </div>
 
-      {formError && <FormErrorBanner message={formError} onDismiss={() => setFormError(null)} />}
+      <FormLevelError form={form} />
 
       <form
         onSubmit={(e) => {

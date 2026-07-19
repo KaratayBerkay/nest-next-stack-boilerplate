@@ -1,18 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useMessages, useAllMessages } from "@/lib/i18n/MessagesProvider";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
 import { formOptions } from "@tanstack/react-form";
 import { useAppForm } from "@/features/forms/form-hook";
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
-import { FormErrorBanner } from "@/components/ui/FormErrorBanner";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
 import { exceptionHandler } from "@/lib/exception-handler";
-import { z } from "zod";
-import { editorSchema, createEditorSchema } from "@/validators/forms/editor";
+import { createEditorSchema } from "@/validators/forms/editor";
+import { FormLevelError } from "@/components/ui/FormLevelError";
+import { editorDefaultValues } from "@/validators/forms/editor-inits";
 import type { ExceptionResponse } from "@/lib/api-client";
 
 interface Draft {
@@ -72,62 +72,69 @@ function deriveSlug(title: string): string {
     .slice(0, 80);
 }
 
+async function submitContent(
+  { value }: { value: typeof editorFormOpts.defaultValues },
+  deps: {
+    simulateError: (id: string, opts?: { failRate?: number; delayMs?: number }) => Promise<ExceptionResponse>;
+    scheduleDateRequired: string;
+    failRate: number;
+    intent: "publish" | "schedule";
+  },
+) {
+  if (deps.intent === "schedule" && !value.publishAt) {
+    return { form: deps.scheduleDateRequired, fields: {} };
+  }
+  try {
+    await deps.simulateError("internal-error", { failRate: deps.failRate, delayMs: 600 });
+    return null;
+  } catch (err) {
+    const exc = (err as { exception?: ExceptionResponse }).exception;
+    if (exc) return { form: exceptionHandler(exc, {}), fields: {} };
+    return { form: "An unexpected error occurred", fields: {} };
+  }
+}
+
 const editorFormOpts = formOptions({
-  defaultValues: {
-    title: "",
-    slug: "",
-    tags: [] as string[],
-    body: "",
-    publishAt: undefined as Date | undefined,
-    publishTime: { hours: 0, minutes: 0, seconds: 0 },
-  } satisfies z.input<typeof editorSchema>,
+  defaultValues: editorDefaultValues,
 });
 
 export default function ContentEditorPage() {
   const t = useMessages("forms");
-  const allMessages = useAllMessages();
   const { toast } = useToast();
   const { user } = useAuth();
   const { simulateError } = useFormsDemoActions();
   const draftKey = DRAFT_KEY_PREFIX + (user?.id ?? "anonymous");
   const [preview, setPreview] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
   const [draftAlert, setDraftAlert] = useState<Draft | null>(() => loadDraft(draftKey));
   const dirtyRef = useRef(false);
   const slugEditedByUser = useRef(false);
   const [schedule, setSchedule] = useState(false);
   const [simulateFailure, setSimulateFailure] = useState(false);
+  const submitIntentRef = useRef<"publish" | "schedule">("publish");
   const editorSchemas = useMemo(() => createEditorSchema(t.contentEditor), [t]);
 
   const form = useAppForm({
     ...editorFormOpts,
-    onSubmitMeta: {} as { intent: "publish" | "schedule" },
     validators: {
       onChange: () => {
         dirtyRef.current = true;
         return undefined;
       },
+      onSubmitAsync: ({ value }) =>
+        submitContent({ value }, {
+          simulateError,
+          scheduleDateRequired: t.contentEditor.scheduleDateRequired,
+          failRate: simulateFailure ? 1 : 0,
+          intent: submitIntentRef.current,
+        }),
     },
-    onSubmit: async ({ value, meta }) => {
-      if (meta?.intent === "schedule" && !value.publishAt) {
-        return { form: t.contentEditor.scheduleDateRequired, fields: {} };
-      }
-      try {
-        await simulateError("internal-error", { failRate: simulateFailure ? 1 : 0, delayMs: 600 });
-        toast({
-          description: meta?.intent === "schedule" ? t.contentEditor.scheduled : t.contentEditor.published,
-          variant: "default",
-        });
-        dirtyRef.current = false;
-        clearDraft(draftKey);
-        return null;
-      } catch (err) {
-        const exc = (err as { exception?: ExceptionResponse }).exception;
-        if (exc) {
-          toast({ description: exceptionHandler(exc, allMessages), variant: "destructive" });
-        }
-        return null;
-      }
+    onSubmit: async () => {
+      toast({
+        description: submitIntentRef.current === "schedule" ? t.contentEditor.scheduled : t.contentEditor.published,
+        variant: "default",
+      });
+      dirtyRef.current = false;
+      clearDraft(draftKey);
     },
   });
 
@@ -207,8 +214,6 @@ export default function ContentEditorPage() {
         </div>
       </div>
 
-      {formError && <FormErrorBanner message={formError} onDismiss={() => setFormError(null)} />}
-
       {draftAlert && (
         <div className="surface flex items-center justify-between rounded-lg border border-border p-3">
           <span className="text-xs">{t.contentEditor.draftRestored.replace("{time}", new Date(draftAlert.savedAt).toLocaleString())}</span>
@@ -219,6 +224,7 @@ export default function ContentEditorPage() {
         </div>
       )}
 
+      <FormLevelError form={form} />
       <form className="flex flex-col gap-4">
         {preview ? (
           <div className="flex flex-col gap-4">
@@ -280,9 +286,9 @@ export default function ContentEditorPage() {
 
         <div className="flex gap-2">
           <Button type="button" variant="outline" onClick={handleSaveDraft}>{t.contentEditor.saveDraft}</Button>
-          <Button type="button" onClick={() => form.handleSubmit({ intent: "publish" })}>{t.contentEditor.publish}</Button>
+          <Button type="button" onClick={() => { submitIntentRef.current = "publish"; form.handleSubmit(); }}>{t.contentEditor.publish}</Button>
           {schedule && (
-            <Button type="button" onClick={() => form.handleSubmit({ intent: "schedule" })}>{t.contentEditor.schedule}</Button>
+            <Button type="button" onClick={() => { submitIntentRef.current = "schedule"; form.handleSubmit(); }}>{t.contentEditor.schedule}</Button>
           )}
         </div>
       </form>

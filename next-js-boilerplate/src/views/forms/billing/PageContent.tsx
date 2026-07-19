@@ -11,6 +11,7 @@ import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
 import { getSurface, exceptionHandler } from "@/lib/exception-handler";
 import { exceptionToFormErrors } from "@/lib/forms/exception-to-form-errors";
 import { createBillingFieldSchemas } from "@/validators/forms/billing";
+import { billingDefaultValues } from "@/validators/forms/billing-inits";
 import type { ExceptionResponse } from "@/lib/api-client";
 
 const PLANS = [
@@ -83,13 +84,7 @@ export default function BillingPage() {
 
   const form = useAppForm({
     ...formOptions({
-      defaultValues: {
-        plan: "pro",
-        billingPeriod: "monthly",
-        paymentMethod: "visa",
-        couponCode: "",
-        taxId: "",
-      },
+      defaultValues: billingDefaultValues,
     }),
   });
 

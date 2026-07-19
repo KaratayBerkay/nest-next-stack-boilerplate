@@ -13,13 +13,13 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { StepIndicator } from "@/components/ui/StepIndicator";
-import { FormErrorBanner } from "@/components/ui/FormErrorBanner";
+import { FormLevelError } from "@/components/ui/FormLevelError";
 import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
 import { getSurface, exceptionHandler } from "@/lib/exception-handler";
 import { exceptionToFormErrors } from "@/lib/forms/exception-to-form-errors";
 import type { ExceptionResponse } from "@/lib/api-client";
-import { z } from "zod";
-import { createInviteSchema, inviteSchema } from "@/validators/forms/invite";
+import { createInviteSchema } from "@/validators/forms/invite";
+import { inviteDefaultValues } from "@/validators/forms/invite-inits";
 import { inviteAction } from "@/features/forms/actions/invite";
 
 const STEPS = ["Emails", "Role", "Message", "Review"];
@@ -33,12 +33,7 @@ const ROLE_OPTIONS = [
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const teamFormOpts = formOptions({
-  defaultValues: {
-    emails: [] as string[],
-    emailInput: "",
-    role: "member" as "member" | "admin" | "owner",
-    message: "",
-  } satisfies z.input<typeof inviteSchema> & { emailInput: string },
+  defaultValues: inviteDefaultValues,
 });
 
 async function submitTeamInvite(
@@ -47,7 +42,6 @@ async function submitTeamInvite(
     simulateError: (scenarioId: string) => Promise<ExceptionResponse>;
     toast: ReturnType<typeof useToast>["toast"];
     allMessages: Record<string, unknown>;
-    setFormError: (err: string | null) => void;
     setQuotaExceeded: (v: boolean) => void;
     unknownError: string;
   },
@@ -71,8 +65,7 @@ async function submitTeamInvite(
       return null;
     }
     if (surface === "full-page") {
-      deps.setFormError(exceptionHandler(exc, deps.allMessages));
-      return null;
+      return { form: exceptionHandler(exc, deps.allMessages), fields: {} };
     }
     const result = exceptionToFormErrors(exc, deps.allMessages);
     return { form: result.form ?? undefined, fields: result.fields };
@@ -85,8 +78,7 @@ async function submitTeamInvite(
         return null;
       }
       if (surface === "full-page") {
-        deps.setFormError(exceptionHandler(exc, deps.allMessages));
-        return null;
+        return { form: exceptionHandler(exc, deps.allMessages), fields: {} };
       }
       const result = exceptionToFormErrors(exc, deps.allMessages);
       return { form: result.form ?? undefined, fields: result.fields };
@@ -101,7 +93,6 @@ export default function TeamInvitePage() {
   const { toast } = useToast();
   const { simulateError } = useFormsDemoActions();
   const [step, setStep] = useState(0);
-  const [formError, setFormError] = useState<string | null>(null);
   const [quotaExceeded, setQuotaExceeded] = useState(false);
   const [state, action] = useActionState(inviteAction, initialFormState);
   const inviteSchemas = useMemo(() => createInviteSchema(t.teamInvite), [t]);
@@ -111,7 +102,7 @@ export default function TeamInvitePage() {
     transform: useTransform((baseForm) => mergeForm(baseForm, state!), [state]),
     validators: {
       onSubmitAsync: ({ value }) =>
-        submitTeamInvite({ value }, { simulateError, toast, allMessages, setFormError, setQuotaExceeded, unknownError: t.errors.unknown }),
+        submitTeamInvite({ value }, { simulateError, toast, allMessages, setQuotaExceeded, unknownError: t.errors.unknown }),
     },
     onSubmit: async () => {
       toast({ description: t.teamInvite.inviteSent, variant: "default" });
@@ -148,7 +139,7 @@ export default function TeamInvitePage() {
 
       <StepIndicator steps={STEPS} currentStep={step} />
 
-      {formError && <FormErrorBanner message={formError} onDismiss={() => setFormError(null)} />}
+      <FormLevelError form={form} />
 
       <form
         action={action as never}

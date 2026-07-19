@@ -5,7 +5,6 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
-import { FormErrorBanner } from "@/components/ui/FormErrorBanner";
 import { formOptions } from "@tanstack/react-form";
 import { useAppForm } from "@/features/forms/form-hook";
 
@@ -52,7 +51,6 @@ export default function FormBuilderPage() {
   const { toast } = useToast();
   const [fields, setFields] = useState<BuilderField[]>(INITIAL_FIELDS);
   const [preview, setPreview] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
 
   const handleAddField = useCallback(() => {
     const label = "New Field";
@@ -127,8 +125,6 @@ export default function FormBuilderPage() {
           <Button size="sm" variant={preview ? "default" : "secondary"} onClick={() => setPreview(true)}>{t.formBuilder.preview}</Button>
         </div>
       </div>
-
-      {formError && <FormErrorBanner message={formError} onDismiss={() => setFormError(null)} />}
 
       {preview ? (
         <div className="flex flex-col gap-4">

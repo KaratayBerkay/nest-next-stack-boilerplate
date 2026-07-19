@@ -226,4 +226,5 @@ export {
 } from "./typography";
 export { FormFieldInfo } from "./form-field-info";
 export { FormErrorBanner } from "./form-error-banner";
+export { FormLevelError } from "./form-level-error";
 export { StepIndicator } from "./step-indicator";
