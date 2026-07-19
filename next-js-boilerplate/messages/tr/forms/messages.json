@@ -84,7 +84,9 @@
     "inviteFailed": "Davetler gönderilemedi",
     "emailRequired": "En az bir e-posta gereklidir",
     "emailInvalid": "Geçersiz e-posta formatı",
-    "roleRequired": "Lütfen bir rol seçin"
+    "roleRequired": "Lütfen bir rol seçin",
+    "quotaTitle": "Yükseltme Gerekli",
+    "quotaBody": "Mevcut planınızda en fazla 5 ekip üyesi davet edebilirsiniz."
   },
   "apiKey": {
     "heading": "API Anahtarı Yöneticisi",
@@ -127,6 +129,7 @@
     "couponPlaceholder": "Kupon kodu girin",
     "couponChecking": "Kupon kontrol ediliyor...",
     "couponApplied": "Kupon uygulandı",
+    "couponOff": "indirim",
     "taxId": "Vergi No (yalnızca KDV)",
     "taxIdPlaceholder": "Vergi no girin",
     "priceSummary": "Fiyat Özeti",
@@ -273,7 +276,8 @@
     "stay": "Kal",
     "leave": "Ayrıl",
     "titleRequired": "Başlık gereklidir",
-    "slugInvalid": "Yalnızca küçük harf, sayı ve tire kullanılabilir"
+    "slugInvalid": "Yalnızca küçük harf, sayı ve tire kullanılabilir",
+    "scheduleDateRequired": "Zamanlama tarihi gereklidir"
   },
   "formBuilder": {
     "heading": "Form Oluşturucu",

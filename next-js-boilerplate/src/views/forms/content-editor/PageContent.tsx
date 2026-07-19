@@ -110,7 +110,7 @@ export default function ContentEditorPage() {
     },
     onSubmit: async ({ value, meta }) => {
       if (meta?.intent === "schedule" && !value.publishAt) {
-        return { form: "Schedule date is required", fields: {} };
+        return { form: t.contentEditor.scheduleDateRequired, fields: {} };
       }
       try {
         await simulateError("internal-error", { failRate: simulateFailure ? 1 : 0, delayMs: 600 });

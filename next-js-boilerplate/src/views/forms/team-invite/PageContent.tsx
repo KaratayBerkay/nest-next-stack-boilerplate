@@ -49,6 +49,7 @@ async function submitTeamInvite(
     allMessages: Record<string, unknown>;
     setFormError: (err: string | null) => void;
     setQuotaExceeded: (v: boolean) => void;
+    unknownError: string;
   },
 ) {
   if (value.emails.length > 5) {
@@ -90,7 +91,7 @@ async function submitTeamInvite(
       const result = exceptionToFormErrors(exc, deps.allMessages);
       return { form: result.form ?? undefined, fields: result.fields };
     }
-    return { form: "An unexpected error occurred", fields: {} };
+    return { form: deps.unknownError, fields: {} };
   }
 }
 
@@ -110,7 +111,7 @@ export default function TeamInvitePage() {
     transform: useTransform((baseForm) => mergeForm(baseForm, state!), [state]),
     validators: {
       onSubmitAsync: ({ value }) =>
-        submitTeamInvite({ value }, { simulateError, toast, allMessages, setFormError, setQuotaExceeded }),
+        submitTeamInvite({ value }, { simulateError, toast, allMessages, setFormError, setQuotaExceeded, unknownError: t.errors.unknown }),
     },
     onSubmit: async () => {
       toast({ description: t.teamInvite.inviteSent, variant: "default" });
@@ -124,8 +125,8 @@ export default function TeamInvitePage() {
       <div className="flex flex-col gap-6">
         <h2 className="text-sm font-semibold">{t.teamInvite.heading}</h2>
         <div className="surface flex flex-col items-center gap-4 rounded-lg border border-border p-8 text-center">
-          <h3 className="text-base font-semibold">Upgrade Required</h3>
-          <p className="text-muted text-xs">You can invite up to 5 team members on your current plan.</p>
+          <h3 className="text-base font-semibold">{t.teamInvite.quotaTitle}</h3>
+          <p className="text-muted text-xs">{t.teamInvite.quotaBody}</p>
           <Button
             onClick={() => {
               setQuotaExceeded(false);

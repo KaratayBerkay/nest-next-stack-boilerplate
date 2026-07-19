@@ -84,7 +84,9 @@
     "inviteFailed": "Failed to send invites",
     "emailRequired": "At least one email is required",
     "emailInvalid": "Invalid email format",
-    "roleRequired": "Please select a role"
+    "roleRequired": "Please select a role",
+    "quotaTitle": "Upgrade Required",
+    "quotaBody": "You can invite up to 5 team members on your current plan."
   },
   "apiKey": {
     "heading": "API Key Manager",
@@ -127,6 +129,7 @@
     "couponPlaceholder": "Enter coupon code",
     "couponChecking": "Checking coupon...",
     "couponApplied": "Coupon applied",
+    "couponOff": "off",
     "taxId": "Tax ID (VAT only)",
     "taxIdPlaceholder": "Enter tax ID",
     "priceSummary": "Price Summary",
@@ -273,7 +276,8 @@
     "stay": "Stay",
     "leave": "Leave",
     "titleRequired": "Title is required",
-    "slugInvalid": "Only lowercase letters, numbers, and hyphens allowed"
+    "slugInvalid": "Only lowercase letters, numbers, and hyphens allowed",
+    "scheduleDateRequired": "Schedule date is required"
   },
   "formBuilder": {
     "heading": "Form Builder",

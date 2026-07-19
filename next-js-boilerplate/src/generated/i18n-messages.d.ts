@@ -388,6 +388,8 @@ export type I18nMessages = {
         "emailRequired": string;
         "emailInvalid": string;
         "roleRequired": string;
+        "quotaTitle": string;
+        "quotaBody": string;
       };
       "apiKey": {
         "heading": string;
@@ -430,6 +432,7 @@ export type I18nMessages = {
         "couponPlaceholder": string;
         "couponChecking": string;
         "couponApplied": string;
+        "couponOff": string;
         "taxId": string;
         "taxIdPlaceholder": string;
         "priceSummary": string;
@@ -577,6 +580,7 @@ export type I18nMessages = {
         "leave": string;
         "titleRequired": string;
         "slugInvalid": string;
+        "scheduleDateRequired": string;
       };
       "formBuilder": {
         "heading": string;

@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
 import { useToast } from "@/components/ui/Toast";
 import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
-import { getSurface } from "@/lib/exception-handler";
+import { getSurface, exceptionHandler } from "@/lib/exception-handler";
+import { exceptionToFormErrors } from "@/lib/forms/exception-to-form-errors";
 import { createBillingFieldSchemas } from "@/validators/forms/billing";
 import type { ExceptionResponse } from "@/lib/api-client";
 
@@ -44,39 +45,31 @@ function CouponStatus({ code, period, t }: { code: string; period: string; t: Re
   if (!coupon) return null;
   const price = calcPrice("pro", period);
   const discount = Math.round(price.subtotal * (coupon.pct / 100));
-  return <span className="text-success text-xxs">{t.couponApplied} — ${discount} off</span>;
+  return <span className="text-success text-xxs">{t.couponApplied} — ${discount} {t.couponOff}</span>;
 }
 
 async function handleCouponBlur(
   value: string,
   deps: {
     simulateError: (id: string, opts?: { delayMs?: number }) => Promise<ExceptionResponse>;
+    toast: (opts: { description: string; variant?: "destructive" | "default" }) => void;
     allMessages: Record<string, unknown>;
-    t: Record<string, string>;
   },
 ): Promise<string | undefined> {
   if (!value) return undefined;
   const upper = value.toUpperCase();
+  if (VALID_COUPONS[upper]) return undefined;
   try {
-    if (upper === "EXPIRED10") {
-      const exc = await deps.simulateError("coupon-expired");
-      const surface = getSurface(exc.exc);
-      if (surface === "toast") {
-        throw exc;
-      }
-      return deps.t.couponExpired ?? "Coupon expired";
-    }
-    if (!VALID_COUPONS[upper]) {
-      await deps.simulateError("coupon-invalid");
-      return undefined;
-    }
+    await deps.simulateError(upper === "EXPIRED10" ? "coupon-expired" : "coupon-invalid");
     return undefined;
   } catch (err) {
     const exc = (err as { exception?: ExceptionResponse }).exception;
-    if (exc && getSurface(exc.exc) === "toast") {
+    if (!exc) return undefined;
+    if (getSurface(exc.exc) === "toast") {
+      deps.toast({ description: exceptionHandler(exc, deps.allMessages), variant: "destructive" });
       return undefined;
     }
-    return deps.t.couponExpired ?? "Coupon expired";
+    return exceptionToFormErrors(exc, deps.allMessages).fields.couponCode;
   }
 }
 
@@ -150,7 +143,7 @@ export default function BillingPage() {
           name="couponCode"
           validators={{
             onBlurAsync: async ({ value }) =>
-              handleCouponBlur(value, { simulateError, allMessages, t: t.billing }),
+              handleCouponBlur(value, { simulateError, toast, allMessages }),
             onBlurAsyncDebounceMs: 300,
           }}
         >
