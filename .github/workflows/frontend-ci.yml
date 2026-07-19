@@ -5,10 +5,12 @@ on:
     branches: [main]
     paths:
       - 'next-js-boilerplate/**'
+      - 'nest-js-boilerplate/**'
       - '.github/workflows/frontend-ci.yml'
   pull_request:
     paths:
       - 'next-js-boilerplate/**'
+      - 'nest-js-boilerplate/**'
       - '.github/workflows/frontend-ci.yml'
 
 defaults:
@@ -18,6 +20,44 @@ defaults:
 jobs:
   verify:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: nest
+          POSTGRES_PASSWORD: nest
+          POSTGRES_DB: nest
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U nest -d nest"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://nest:nest@localhost:5433/nest?schema=public
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      JWT_SECRET: ci-jwt-secret
+      JWT_ACCESS_TTL: 900s
+      JWT_REFRESH_TTL: 30d
+      ENCRYPTION_KEY: '0000000000000000000000000000000000000000000000000000000000000000'
+      COOKIE_SECRET: ci-cookie-secret
+      CSRF_SECRET: ci-csrf-secret
+      APP_URL: http://localhost:3000
+      GRPC_URL: 0.0.0.0:5050
+      OUTBOX_POLL_MS: '0'
+      NEXT_PUBLIC_APP_URL: http://localhost:3100
+      NEXT_PUBLIC_REALTIME_WS_URL: ws://localhost:3000/ws
+      FRONTEND_EVENTS_CONSUMER_ENABLED: "false"
+
     steps:
       - uses: actions/checkout@v4
 
@@ -36,7 +76,7 @@ jobs:
         run: pnpm typecheck
 
       - name: Lint
-        run: pnpm lint
+        run: pnpm lint --max-warnings 0
 
       - name: Dependency graph (circular deps, import-direction rules)
         run: pnpm depcruise
@@ -61,10 +101,43 @@ jobs:
 
       - name: Lighthouse CI (performance budgets)
         run: pnpm lighthouse:ci
-        continue-on-error: true
 
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
+
+      - name: Switch to Node 24 for backend
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install backend dependencies
+        run: pnpm install --frozen-lockfile --filter nest-js-boilerplate
+
+      - name: Deploy backend database migrations
+        working-directory: nest-js-boilerplate
+        run: pnpm db:deploy
+
+      - name: Build backend
+        working-directory: nest-js-boilerplate
+        run: pnpm run build
+
+      - name: Start backend server
+        working-directory: nest-js-boilerplate
+        run: |
+          node dist/src/main.js &
+          for attempt in $(seq 1 30); do
+            if curl -sf http://localhost:3000/health -o /dev/null; then
+              echo "Backend is healthy on port 3000"
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              echo "Backend failed to start" >&2
+              exit 1
+            fi
+            sleep 2
+          done
 
       - name: Start production server
         run: |
@@ -77,18 +150,8 @@ jobs:
             sleep 2
           done
 
-      # TODO: this job has no backend to talk to — no Postgres/Redis services and no
-      # compiled nest-js-boilerplate process, unlike backend-ci.yml's `test` job. The BFF
-      # routes this suite drives (login/register/dev-activate) all proxy to APP_URL, which
-      # points at nothing here, so this step cannot pass against a real backend as currently
-      # configured. Needs: Postgres+Redis services, build+migrate+boot the backend with
-      # ALLOW_DEV_ACTIVATE=true, a health-check wait, then run Playwright against it.
-      # The UI smoke/a11y specs (C8) and the full e2e suite need this backend to authenticate.
-      # Without it, auth-dependent tests are skipped and only no-auth checks run.
-      - name: E2E tests (no-auth UI smoke + axe when backend is unavailable)
+      - name: E2E tests (full suite against real backend)
         run: pnpm test:e2e
-        env:
-          CI_NO_BACKEND: "1"
 
   docker-build:
     runs-on: ubuntu-latest

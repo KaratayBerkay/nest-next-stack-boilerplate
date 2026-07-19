@@ -63,8 +63,7 @@ function NotificationPageContent() {
     requestPermission,
     unsubscribe,
   } = usePushNotifications();
-  const pointer = useDeviceType();
-  const isTouch = pointer === "touch";
+  const _pointer = useDeviceType();
 
   const goToFeed = useCallback(
     () => navigateToFeed(router, lang),

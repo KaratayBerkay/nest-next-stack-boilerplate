@@ -7,7 +7,6 @@ import {
   type ReactNode,
 } from "react";
 import { useToast } from "@/components/ui/Toast";
-import { exceptionHandler } from "@/lib/exception-handler";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { fetchPremiumStatsServer } from "@/api/server/premium/stats";
 

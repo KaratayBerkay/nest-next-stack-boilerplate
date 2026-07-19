@@ -1,3 +1,3 @@
-export interface FormFieldInfoProps<TParentData> {
+export interface FormFieldInfoProps {
   field: { state: { meta: { errors: string[]; isValidating?: boolean } } };
 }

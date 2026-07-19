@@ -8,6 +8,15 @@ import prettier from "eslint-config-prettier";
 
 const eslintConfig = defineConfig([
   ...nextVitals,
+  {
+    rules: {
+      "@typescript-eslint/no-unused-vars": ["error", {
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^_",
+        destructuredArrayIgnorePattern: "^_",
+      }],
+    },
+  },
   ...nextTs,
   // eslint-config-next only wires a handful of jsx-a11y rules at "warn" as a side effect of
   // core-web-vitals (and already registers the "jsx-a11y" plugin instance, so re-declaring

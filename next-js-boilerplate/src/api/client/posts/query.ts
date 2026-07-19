@@ -1,7 +1,4 @@
 import { queryOptions } from "@tanstack/react-query";
-import { apiFetchJson } from "@/lib/api-client";
-import { POSTS_URL } from "@/constants/api/urls";
-import type { FeedListResult, FeedPost } from "@/api/server/posts/list";
 
 export function feedListQueryOptions(
   take: number,

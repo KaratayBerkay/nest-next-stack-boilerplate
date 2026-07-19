@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { locales } from "@/lib/i18n/config";
-import type { Lang } from "@/constants/i18n";
 import type { LocaleSwitcherProps } from "@/types/i18n/LocaleSwitcher-types";
 
 // Plain server component: the active locale is already known from the route's

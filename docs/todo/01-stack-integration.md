@@ -19,29 +19,24 @@ provides:
 with `STACK=1` env gate) that assumes `docker compose up` is running; wire it into root
 CI (see below). Reuse the existing Playwright config — don't build a new harness.
 
-## P0 — Root README + root `.env.example` (S)
+## P0 — Root README + root `.env.example` (S)  ✅ Done
 
-- `README.md` at the repo root is a single line. Write: what this stack is, quickstart
-  (`docker compose --profile all up -d --build`), service/port table — note **Kafka is
-  `localhost:29092` from the host, `kafka:9092` in-network** — profile matrix
-  (`brokers`/`kafka`/`mongo`/`all`), and links into `docs/`.
-- No `.env.example` at the root, yet compose reads ~20 `${VAR:-default}`s. Create one
-  listing at minimum: `JWT_SECRET`, `ENCRYPTION_KEY` (64 hex chars), `POSTGRES_*`,
-  `MINIO_ROOT_*`, `KAFKA_PORT`, port overrides. Mark which defaults are dev-only
-  (`prod/backend/.env.production.example` already documents the full backend set —
-  link to it rather than duplicating).
+- `README.md` at the repo root was already expanded (108 lines, full service/port
+  table, profile matrix, project structure). Fixed the "Messaging WS" entry —
+  messaging/WS is served by the NestJS app, not a standalone container.
+- Created `.env.example` at root with `JWT_SECRET`, `ENCRYPTION_KEY`, `POSTGRES_*`,
+  `MINIO_ROOT_*`, `KAFKA_PORT`, frontend `NEXT_PUBLIC_*` vars, and Vault settings.
 
-## P0 — Messaging + WS servers as compose services (S/M)
+## P0 — Messaging + WS servers as compose services (S/M)  ✅ Resolved
 
-`nextjs` ships `NEXT_PUBLIC_MSG_WS_URL=ws://localhost:3003`, but nothing in compose runs
-`nest-js-boilerplate/messaging-server.mjs` (`MSG_PORT=3003`). Same for
-`ws-server.mjs` (`WS_PORT=3002`). In Docker these features silently fail.
+Investigated: `messaging-server.mjs` and `ws-server.mjs` no longer exist in the
+repo (deleted in earlier phases). The NestJS app's built-in WebSocket gateway
+(`messaging-ws.gateway.ts` on `/ws`) handles chat messaging and realtime
+communication. No separate compose service is needed.
 
-- [ ] Add `messaging-ws` (and if still used, `ws-demo`) services — a slim `node:24`
-      image running the `.mjs` directly is enough; or fold them into the backend image
-      as alternate commands.
-- [ ] Decide whether `ws-server.mjs` is still needed at all, or the NestJS WS gateway
-      supersedes it — delete if dead.
+`NEXT_PUBLIC_MSG_WS_URL` is not present in the frontend — the frontend uses
+`NEXT_PUBLIC_REALTIME_WS_URL=ws://localhost:3000/ws` which points to the NestJS
+app's gateway.
 
 ## P1 — Root CI workflow (M)
 

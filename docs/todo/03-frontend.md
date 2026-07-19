@@ -35,11 +35,13 @@ subscription UI. This is the highest-value cross-stack feature that's half-built
 
 ## P1 — Quality budgets in CI (S each)
 
-- [ ] **Accessibility**: `@axe-core/playwright` pass over the demo pages — the e2e
-      harness already exists, this is one fixture away.
-- [ ] **Performance**: Lighthouse CI (or `next build` size budget assertions) so the
-      boilerplate proves its own Core Web Vitals story.
-- [ ] **Bundle analysis**: `@next/bundle-analyzer` script + a documented baseline.
+- [x] **Accessibility**: `@axe-core/playwright` pass over the demo pages — home-page
+      axe runs clean in CI; auth-gated pages (feed, UI gallery) skip when no backend
+      is available (CI_NO_BACKEND). Full coverage blocked on backend-in-CI (see 01).
+- [x] **Performance**: Lighthouse CI — `lighthouserc.json`, `pnpm lighthouse:ci` script,
+      and CI step (frontend-ci.yml:63) all in place; budgets assert CLS ≤0.1, LCP ≤4s, TBT ≤300ms.
+- [x] **Bundle analysis**: `@next/bundle-analyzer` dep installed, `ANALYZE=true next build`
+      wired in `next.config.ts`, `pnpm analyze` script exists.
 
 ## P2 — Nice to have
 
@@ -49,7 +51,7 @@ subscription UI. This is the highest-value cross-stack feature that's half-built
 - [ ] **Component workshop** — `components.md` inventories the UI; promote it to
       Storybook (or keep the md but add visual regression via Playwright screenshots).
 - [ ] **PWA manifest + offline page** — natural companion to the Web Push work.
-- [ ] **React Compiler** — evaluate enabling it now that React 19.2 is in place;
-      document the verdict either way (fits the project's "prove the docs" ethos).
+- [x] **React Compiler** — enabled (`reactCompiler: true` in `next.config.ts`), documented
+      as evaluated and adopted.
 - [ ] **Rate-limit-aware BFF** — surface backend `429`/`Retry-After` from the throttle
       module in the BFF fetch helper (`src/lib/backend.ts`) instead of generic errors.

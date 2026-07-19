@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, type Dispatch, type SetStateAction } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Pagination,
   PaginationContent,

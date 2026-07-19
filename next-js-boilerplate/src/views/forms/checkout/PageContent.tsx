@@ -3,9 +3,8 @@
 import { useCallback } from "react";
 import { useMessages, useAllMessages } from "@/lib/i18n/MessagesProvider";
 import { useAppForm, withFieldGroup } from "@/features/forms/form-hook";
-import { formOptions } from "@tanstack/react-form";
+import { formOptions, useStore } from "@tanstack/react-form";
 import { useToast } from "@/components/ui/Toast";
-import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
 import { Switch } from "@/components/ui/Switch";
 import { Label } from "@/components/ui/Label";
@@ -76,7 +75,7 @@ const checkoutFormOpts = formOptions({
   defaultValues: checkoutDefaultValues satisfies z.input<typeof checkoutSchema>,
 });
 
-async function submitCheckout(
+export async function submitCheckout(
   { value }: { value: typeof checkoutFormOpts.defaultValues },
   deps: {
     simulateError: (id: string, opts?: { failRate?: number }) => Promise<ExceptionResponse>;
@@ -128,6 +127,8 @@ export default function CheckoutPage() {
     },
   });
 
+  const sameAsShipping = useStore(form.store, (s) => s.values.sameAsShipping);
+
   const handleToggleSame = useCallback(() => {
     const next = !form.state.values.sameAsShipping;
     form.setFieldValue("sameAsShipping", next as false);
@@ -168,7 +169,7 @@ export default function CheckoutPage() {
             )}
           </form.AppField>
 
-          {!form.state.values.sameAsShipping && (
+          {!sameAsShipping && (
             <>
               <Separator />
               <h3 className="text-xs font-medium">{t.checkoutTab.billingAddress}</h3>
@@ -208,7 +209,7 @@ export default function CheckoutPage() {
             )}
           </form.AppField>
 
-          <Button type="submit">{t.checkoutTab.placeOrder}</Button>
+          <form.SubmitButton label={t.checkoutTab.placeOrder} loadingLabel={t.checkoutTab.placing} />
         </form>
       </form.AppForm>
     </div>

@@ -1,7 +1,13 @@
 import { z } from "zod";
 
 export const profileSchema = z.object({
-  avatar: z.array(z.any()).optional(),
+  avatar: z.array(z.object({
+    id: z.string(),
+    file: z.instanceof(File),
+    progress: z.number(),
+    status: z.string(),
+    preview: z.string().optional(),
+  })).optional(),
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   username: z.string().min(2, "Username must be at least 2 characters").max(30).optional(),
@@ -13,7 +19,11 @@ export const profileSchema = z.object({
   interests: z.array(z.string()).optional(),
   role: z.string().optional(),
   birthDate: z.date().optional(),
-  meetingTime: z.any().optional(),
+  meetingTime: z.object({
+    hours: z.number(),
+    minutes: z.number(),
+    seconds: z.number(),
+  }).optional(),
   notificationPrefs: z.object({
     email: z.boolean(),
     push: z.boolean(),

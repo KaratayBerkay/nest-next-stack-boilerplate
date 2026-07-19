@@ -28,7 +28,7 @@ describe('TasksService (scheduling)', () => {
     await app.close();
   });
 
-  it('runs an @Interval repeatedly and fires an @Timeout once', async () => {
+  it('runs @Interval jobs repeatedly and fires an @Timeout once', async () => {
     await sleep(350);
     expect(service.getIntervalTicks()).toBeGreaterThanOrEqual(2);
     expect(service.hasTimedOut()).toBe(true);
@@ -36,7 +36,7 @@ describe('TasksService (scheduling)', () => {
 
   it('registers the declarative jobs in the SchedulerRegistry', () => {
     expect(registry.getIntervals()).toContain('demo-interval');
-    expect(service.listCronJobs()).toContain('demo-cron');
+    expect(registry.getIntervals()).toContain('demo-cron');
   });
 
   it('supports dynamic interval add/list/delete via the registry', () => {

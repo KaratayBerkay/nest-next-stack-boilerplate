@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
-import { formOptions } from "@tanstack/react-form";
+import { formOptions, useStore } from "@tanstack/react-form";
 import { useAppForm } from "@/features/forms/form-hook";
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
@@ -59,7 +59,7 @@ export default function EditableTablePage() {
 
   const form = useAppForm(tableFormOpts);
 
-  const rows = form.state.values.rows;
+  const rows = useStore(form.store, (s) => s.values.rows);
 
   const totals = useMemo(() => {
     const subtotal = rows.reduce(

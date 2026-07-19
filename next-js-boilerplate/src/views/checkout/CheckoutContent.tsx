@@ -1,6 +1,6 @@
 "use client";
 
-import { use, Suspense } from "react";
+import { use } from "react";
 import type { CheckoutPageProps } from "@/types/checkout/CheckoutPage-types";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
@@ -54,7 +54,7 @@ function onUpgradeSuccess(
 }
 
 export default function CheckoutPage({ params }: CheckoutPageProps) {
-  const { lang, tier: targetTier } = use(params);
+  const { lang: _lang, tier: targetTier } = use(params);
   const { user } = useAuth();
   const router = useRouter();
   const t = useMessages("checkout");

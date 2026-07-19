@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { searchUsersQueryOptions } from "@/api/client/users/search";
-import { PAGE_SIZE, type User } from "./search-utils";
+import { PAGE_SIZE } from "./search-utils";
 
 export function useFriendSearch(currentUserId?: string) {
   const [query, setQuery] = useState("");

@@ -35,13 +35,13 @@ export function useConnectionState(): ConnectionState {
         clearTimeout(graceRef.current);
         graceRef.current = null;
       }
-      setState("unstable"); // eslint-disable-line react-hooks/set-state-in-effect
+      setState("unstable");  
     } else {
       if (graceRef.current) {
         clearTimeout(graceRef.current);
         graceRef.current = null;
       }
-      setState("connecting"); // eslint-disable-line react-hooks/set-state-in-effect
+      setState("connecting");  
     }
 
     return () => {

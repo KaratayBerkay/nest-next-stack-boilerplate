@@ -4,7 +4,7 @@ import { useState } from "react";
 import { FormErrorBanner } from "@/components/ui/FormErrorBanner";
 
 export default function FormErrorBannerPage() {
-  const [visible, setVisible] = useState(true);
+  const [_visible, setVisible] = useState(true);
   return (
     <div className="flex flex-col gap-6">
       <div>

@@ -4,7 +4,7 @@ import { forwardRef } from "react";
 import { Item, Header, Trigger, Content } from "@radix-ui/react-accordion";
 import { cn } from "@/lib/cn";
 import { resolveVariant } from "@/lib/resolve-variant";
-import { globalStyleVariants, type GlobalVariant } from "@/components/ui/global-style-variants";
+import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import type { AccordionItemComplexProps } from "@/types/ui/Accordion-types";
 import type { AccordionUpperSectionProps } from "@/types/ui/AccordionUpperSection-types";

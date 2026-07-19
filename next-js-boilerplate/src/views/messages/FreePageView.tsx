@@ -132,7 +132,7 @@ function MessagesPageContent({
 
   const {
     data: conversationsData,
-    refetch: refetchConversations,
+    refetch: _refetchConversations,
     isError: convsError,
   } = useConversations();
   const conversations = useMemo(

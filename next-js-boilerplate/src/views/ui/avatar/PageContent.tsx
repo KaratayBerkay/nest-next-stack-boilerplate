@@ -113,52 +113,6 @@ function ComponentsTab() {
   );
 }
 
-function ExamplesTab() {
-  return (
-    <section className="flex flex-col gap-3">
-      <h3 className="text-lg font-semibold">Team Members</h3>
-      <div className="flex flex-col gap-3">
-        {[
-          {
-            name: "Alice Johnson",
-            role: "Designer",
-            img: "https://i.pravatar.cc/80?img=9",
-          },
-          {
-            name: "Bob Martinez",
-            role: "Developer",
-            img: "https://i.pravatar.cc/80?img=10",
-          },
-          {
-            name: "Carol Smith",
-            role: "Product Manager",
-            img: "https://i.pravatar.cc/80?img=11",
-          },
-        ].map((member) => (
-          <div
-            key={member.name}
-            className="surface flex items-center gap-3 px-3 py-2"
-          >
-            <Avatar
-              src={member.img}
-              alt={member.name}
-              fallback={member.name
-                .split(" ")
-                .map((n) => n[0])
-                .join("")}
-              size="md"
-            />
-            <div>
-              <p className="text-sm font-medium">{member.name}</p>
-              <p className="text-muted text-xs">{member.role}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 const examples: UIExample[] = [
   {
     id: "usage",

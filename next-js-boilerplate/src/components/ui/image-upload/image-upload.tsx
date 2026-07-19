@@ -74,6 +74,7 @@ export function ImageUpload({
             )}
           >
             {current?.preview ? (
+              // eslint-disable-next-line @next/next/no-img-element -- blob:// URL from file input, next/image doesn't support
               <img
                 src={current.preview}
                 alt="Avatar"
@@ -158,6 +159,7 @@ export function ImageUpload({
               )}
             >
               {f.preview && (
+                // eslint-disable-next-line @next/next/no-img-element -- blob:// URL from file input, next/image doesn't support
                 <img
                   src={f.preview}
                   alt={f.file.name}

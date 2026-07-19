@@ -90,7 +90,7 @@ async function handleRevokeApiKey(
 
 export default function PageContent() {
   const { user } = useAuth();
-  const t = useMessages("settings");
+  const _t = useMessages("settings");
   const { toast } = useToast();
   const { createApiKey, revokeApiKey } = useApiKeyActions();
 
@@ -110,7 +110,7 @@ export default function PageContent() {
 
   useEffect(() => {
     if (user)
-      loadKeys(); // eslint-disable-line react-hooks/set-state-in-effect
+      loadKeys();  
     else setLoadingKeys(false); // eslint-disable-line react-hooks/set-state-in-effect
   }, [user, loadKeys]);
 

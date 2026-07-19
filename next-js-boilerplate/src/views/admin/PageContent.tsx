@@ -5,7 +5,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { IconSearch } from "@tabler/icons-react";
 import { UserTierRow } from "./UserTierRow";
 import {
-  doSearch,
   onQueryChange,
   setTier,
   type UserResult,

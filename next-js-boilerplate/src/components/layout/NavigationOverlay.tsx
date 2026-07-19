@@ -27,7 +27,7 @@ export function NavigationOverlay() {
     suggestNavigation,
     commitNavigation,
     cancelSuggestion,
-    currentPage,
+    currentPage: _currentPage,
     backPage,
     forwardPage,
   } = usePageNavigation();

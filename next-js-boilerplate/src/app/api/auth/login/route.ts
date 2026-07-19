@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import {
   accessTokenCookieOptions,
   deviceTokenCookieOptions,
@@ -9,7 +9,6 @@ import {
 import {
   graphqlFetch,
   graphqlErrorBody,
-  graphqlErrorStatus,
 } from "@/lib/backend";
 import { withLogging } from "@/lib/request-logger";
 

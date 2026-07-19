@@ -40,7 +40,7 @@ export async function DELETE(
   }
 
   const { id } = await params;
-  const { data, errors } = await graphqlFetch(
+  const { data: _data, errors } = await graphqlFetch(
     REVOKE_API_KEY_MUTATION,
     { id },
     accessToken,

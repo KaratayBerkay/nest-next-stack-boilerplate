@@ -43,8 +43,42 @@ export class FrontendEventConsumer implements OnModuleInit, OnModuleDestroy {
       groupId: CONSUMER_GROUP,
     });
 
+    // Retry connect with exponential backoff — Kafka may not be ready on first boot
+    // (e.g. broker still electing controller / auto-creating topics).
+    const MAX_RETRIES = 10;
+    const BASE_DELAY_MS = 500;
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        await this.consumer.connect();
+        lastError = undefined;
+        break;
+      } catch (err) {
+        lastError = err;
+        if (attempt < MAX_RETRIES) {
+          const delay = BASE_DELAY_MS * 2 ** (attempt - 1);
+          this.logger.warn(
+            `Kafka connect attempt ${attempt}/${MAX_RETRIES} failed, retrying in ${delay}ms`,
+            err as Error,
+          );
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+      }
+    }
+
+    if (lastError) {
+      this.logger.error(
+        {
+          error:
+            lastError instanceof Error ? lastError.message : 'Unknown error',
+        },
+        'Failed to connect Kafka consumer after retries — frontend events will not be indexed',
+      );
+      return;
+    }
+
     try {
-      await this.consumer.connect();
       await this.consumer.subscribe({ topic: TOPIC, fromBeginning: false });
       await this.consumer.run({
         eachMessage: async ({ message, partition }: EachMessagePayload) => {
@@ -77,7 +111,7 @@ export class FrontendEventConsumer implements OnModuleInit, OnModuleDestroy {
     } catch (error) {
       this.logger.error(
         { error: String(error) },
-        'Failed to connect Kafka consumer — frontend events will not be indexed',
+        'Failed to subscribe Kafka consumer',
       );
     }
   }

@@ -8,7 +8,7 @@ import { useAppForm } from "@/features/forms/form-hook";
 import { formOptions } from "@tanstack/react-form";
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
-import { FormErrorBanner } from "@/components/ui/FormErrorBanner";
+import { FormLevelError } from "@/components/ui/FormLevelError";
 import { exceptionHandler, getSurface } from "@/lib/exception-handler";
 import { useApiKeyActions } from "@/api/client/api-keys/actions";
 import { apiKeyListQueryOptions } from "@/api/client/api-keys/query";
@@ -38,7 +38,6 @@ export default function ApiKeyPage() {
   const queryClient = useQueryClient();
   const { createApiKey, revokeApiKey } = useApiKeyActions();
   const [showForm, setShowForm] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
   const [newKeySecret, setNewKeySecret] = useState<string | null>(null);
   const [revealedSecrets, setRevealedSecrets] = useState<Set<string>>(new Set());
   const [ipInput, setIpInput] = useState("");
@@ -57,17 +56,6 @@ export default function ApiKeyPage() {
       setIpWhitelist([]);
       form.reset();
       queryClient.invalidateQueries({ queryKey: ["api-keys", "list"] });
-    },
-    onError: (err) => {
-      const exc = (err as { exception?: { exc: string; key: string; msg: string } }).exception;
-      if (exc) {
-        const surface = getSurface(exc.exc);
-        if (surface === "toast") {
-          toast({ description: exceptionHandler(exc, messages), variant: "destructive" });
-        } else {
-          setFormError(exceptionHandler(exc, messages));
-        }
-      }
     },
   });
 
@@ -98,7 +86,19 @@ export default function ApiKeyPage() {
       },
       validators: {
         onSubmitAsync: async ({ value }) => {
-          createMutation.mutate(value);
+          try {
+            await createMutation.mutateAsync(value);
+            return null;
+          } catch (err) {
+            const exc = (err as { exception?: { exc: string; key: string; msg: string } }).exception;
+            if (!exc) return { form: t.errors.unknown, fields: {} };
+            const surface = getSurface(exc.exc);
+            if (surface === "toast") {
+              toast({ description: exceptionHandler(exc, messages), variant: "destructive" });
+              return null;
+            }
+            return { form: exceptionHandler(exc, messages), fields: {} };
+          }
         },
       },
     }),
@@ -136,12 +136,10 @@ export default function ApiKeyPage() {
         <div>
           <h2 className="text-sm font-semibold">{t.apiKey.heading}</h2>
         </div>
-        <Button size="sm" onClick={() => { setShowForm((p) => !p); setFormError(null); }}>
+        <Button size="sm" onClick={() => { setShowForm((p) => !p); }}>
           {showForm ? t.apiKey.cancel : t.apiKey.newKey}
         </Button>
       </div>
-
-      {formError && <FormErrorBanner message={formError} onDismiss={() => setFormError(null)} />}
 
       {newKeySecret && (
         <div className="surface rounded-lg border border-border p-4">
@@ -160,6 +158,7 @@ export default function ApiKeyPage() {
           onSubmit={(e) => { e.preventDefault(); e.stopPropagation(); form.handleSubmit(); }}
           className="surface flex flex-col gap-3 rounded-lg border border-border p-4"
         >
+          <FormLevelError form={form} />
           <form.AppField name="name">
             {(field) => <field.TextField label={t.apiKey.nameLabel} placeholder={t.apiKey.namePlaceholder} />}
           </form.AppField>

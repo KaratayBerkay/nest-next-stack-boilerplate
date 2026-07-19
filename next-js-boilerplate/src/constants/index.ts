@@ -8,4 +8,5 @@ export * from "./observability";
 export * from "./routes";
 export * from "./site";
 export * from "./theme";
+export * from "./upload";
 export * from "./ui";

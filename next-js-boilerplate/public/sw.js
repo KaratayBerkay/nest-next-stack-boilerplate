@@ -1,3 +1,4 @@
+/* eslint-disable */
 self.addEventListener("install", () => {
   self.skipWaiting();
 });

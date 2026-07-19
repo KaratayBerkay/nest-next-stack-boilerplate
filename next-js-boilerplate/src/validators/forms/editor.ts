@@ -14,6 +14,10 @@ export function createEditorSchema(t: Record<string, string>) {
     tags: z.array(z.string()),
     body: z.string().optional(),
     publishAt: z.date().optional(),
-    publishTime: z.any().optional(),
+    publishTime: z.object({
+      hours: z.number(),
+      minutes: z.number(),
+      seconds: z.number(),
+    }).optional(),
   });
 }

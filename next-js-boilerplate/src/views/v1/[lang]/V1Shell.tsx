@@ -10,7 +10,6 @@ import { useConversations } from "@/lib/realtime/useConversations";
 import { useDeviceType } from "@/hooks";
 import { useEdgeSwipe } from "@/hooks/useEdgeSwipe";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
-import { createPortal } from "react-dom";
 import { V1Header } from "./V1Header";
 import { V1Sidebar } from "./V1Sidebar";
 import {
@@ -76,8 +75,8 @@ function onServiceWorkerMessage(
 export function V1Shell({ children }: V1ShellProps) {
   const params = useParams<{ lang: string }>();
   const lang = params?.lang ?? "";
-  const { user, token, loading, logout } = useAuth();
-  const t = useMessages("v1-shell");
+  const { user, token: _token, loading, logout } = useAuth();
+  const _t = useMessages("v1-shell");
   const { data: conversations = [] } = useConversations();
   const pointer = useDeviceType();
   const isTouch = pointer === "touch";

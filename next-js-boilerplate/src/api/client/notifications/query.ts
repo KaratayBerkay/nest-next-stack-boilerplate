@@ -1,8 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import type {
-  NotificationsResult,
-  NotificationItem,
-} from "@/api/server/notifications/list";
+import type { NotificationsResult } from "@/api/server/notifications/list";
 
 async function fetchNotifications(): Promise<NotificationsResult> {
   const { fetchNotificationsServer } = await import("@/api/server/notifications/list");

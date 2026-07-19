@@ -17,7 +17,6 @@ import { useDeviceType } from "@/hooks/useDeviceType";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { addMonths } from "@/lib/date-time";
 import type { Lang } from "@/constants/i18n";
-import { CalendarEvent } from "./calendar-event";
 import type { CalendarProps } from "@/types/ui/Calendar-types";
 
 const LOCALES: Record<Lang, typeof enUS> = { en: enUS, tr };
@@ -169,7 +168,7 @@ function getEventsForDate(events: NonNullable<CalendarProps["events"]>, date: Da
 }
 
 export function Calendar({
-  className,
+  className: _className,
   classNames,
   events,
   onDayClick,

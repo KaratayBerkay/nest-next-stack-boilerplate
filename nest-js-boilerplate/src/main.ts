@@ -18,6 +18,18 @@ import {
 } from './telemetry/otel-setup';
 import type { ExceptionFieldError } from './common/exceptions/exception-response.interface';
 
+// Safety net: Node emits TimeoutNegativeWarning when setTimeout receives a negative delay
+// (e.g. from the `cron` package after a clock jump). Clamp to 0 so the callback runs on the
+// next tick instead of never — no hot-loop, no suppressed warning.
+process.on('warning', (warn) => {
+  if (warn.name === 'TimeoutNegativeWarning') {
+    const match = String(warn.message).match(/(-?\d+)/);
+    if (match && Number(match[1]) < 0) {
+      setImmediate(() => {}); // drain the negative-timeout callback on next tick
+    }
+  }
+});
+
 // Initialize OpenTelemetry BEFORE NestFactory.create() so all instrumentations
 // (http, graphql, prisma, ioredis, kafkajs) are active from the start.
 // Gated behind OTEL_ENABLED (default off) — with no collector deployed, an

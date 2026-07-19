@@ -6,7 +6,7 @@ import {
   DELETE_COMMENT_MUTATION,
 } from "@/lib/graphql/queries";
 
-async function withCsrf(token: string | undefined) {
+async function withCsrf(_token: string | undefined) {
   const extraHeaders = await csrfEchoHeaders();
   if (!extraHeaders) {
     return {

@@ -2,7 +2,6 @@
 
 import { useRef } from "react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/Popover";
-import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Label } from "@/components/ui/Label";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";

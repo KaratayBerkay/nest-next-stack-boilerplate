@@ -1,6 +1,12 @@
 # Infra services for local dev — secrets fetched from Vault by vault-init.
 name: boilers
 
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   # ──────────────────────────────────────────────────────
   # Vault init — fetches secrets for every infra service

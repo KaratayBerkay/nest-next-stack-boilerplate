@@ -8,24 +8,35 @@ const AUTH_FILE = "playwright/.auth/user.json";
  * APIRequestContext captures Set-Cookie headers from responses, so
  * storageState includes all httpOnly auth cookies.
  *
- * Skips if storageState already exists with valid cookies (avoids rate-limit
- * when multiple projects depend on this setup).
+ * Skips if storageState already exists with valid cookies and the file
+ * is less than 1 hour old. Re-authenticates if stale (older than 1h) or
+ * if a probe request to a protected endpoint returns 401, preventing
+ * green-but-skipped runs.
  */
 setup("login and save storageState", async ({ request }) => {
   const fs = await import("node:fs/promises");
-  try {
-    const existing = JSON.parse(await fs.readFile(AUTH_FILE, "utf-8"));
-    if (existing.cookies?.length > 0) return;
-  } catch {
-    // File doesn't exist or is invalid — proceed with login.
+  const stat = await fs.stat(AUTH_FILE).catch(() => null);
+  // If the file exists and is fresh (< 1h), check via probe that cookies
+  // are still valid before reusing them.
+  if (stat && Date.now() - stat.mtimeMs < 3_600_000) {
+    try {
+      const existing = JSON.parse(await fs.readFile(AUTH_FILE, "utf-8"));
+      if (existing.cookies?.length > 0) {
+        const probe = await request.get("/api/auth/me");
+        if (probe.ok()) return;
+      }
+    } catch {
+      // File is corrupt — proceed with login.
+    }
   }
 
   try {
     await ensureTestUser(request);
   } catch (e) {
-    // CI has no backend — write an empty storageState so the UI smoke/a11y
-    // specs can run (they handle auth redirect themselves).
-    if (process.env.CI && !process.env.CI_NO_BACKEND) {
+    // Backend unavailable or registration failed.
+    // CI_NO_BACKEND=1 means we deliberately skip auth-dependent tests
+    // (no-auth smoke UI still runs via an empty storage state).
+    if (process.env.CI_NO_BACKEND) {
       await fs.mkdir("playwright/.auth", { recursive: true });
       await fs.writeFile(AUTH_FILE, JSON.stringify({ cookies: [], origins: [] }));
       return;
@@ -36,8 +47,9 @@ setup("login and save storageState", async ({ request }) => {
   const loginRes = await request.post("/api/auth/login", {
     data: { email: E2E_EMAIL, password: E2E_PASSWORD },
   });
-  if (!loginRes.ok() && process.env.CI) {
-    // Backend unavailable in CI — write empty storageState and move on.
+  if (!loginRes.ok() && process.env.CI_NO_BACKEND) {
+    // Backend unavailable — write empty storageState so no-auth smoke tests
+    // can still run (they handle auth redirect themselves).
     await fs.mkdir("playwright/.auth", { recursive: true });
     await fs.writeFile(AUTH_FILE, JSON.stringify({ cookies: [], origins: [] }));
     return;

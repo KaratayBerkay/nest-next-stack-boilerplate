@@ -378,6 +378,7 @@ export type I18nMessages = {
         "next": string;
         "back": string;
         "send": string;
+        "sending": string;
         "emailPlaceholder": string;
         "emailDuplicate": string;
         "roleLabel": string;
@@ -390,6 +391,9 @@ export type I18nMessages = {
         "roleRequired": string;
         "quotaTitle": string;
         "quotaBody": string;
+        "emails": string;
+        "role": string;
+        "message": string;
       };
       "apiKey": {
         "heading": string;
@@ -551,6 +555,7 @@ export type I18nMessages = {
         "emailMismatch": string;
         "paymentMethodRequired": string;
         "orderFailed": string;
+        "placing": string;
       };
       "contentEditor": {
         "heading": string;
@@ -581,6 +586,10 @@ export type I18nMessages = {
         "titleRequired": string;
         "slugInvalid": string;
         "scheduleDateRequired": string;
+        "publishing": string;
+        "scheduling": string;
+        "untitled": string;
+        "time": string;
       };
       "formBuilder": {
         "heading": string;

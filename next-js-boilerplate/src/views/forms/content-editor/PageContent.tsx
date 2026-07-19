@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
-import { formOptions } from "@tanstack/react-form";
+import { formOptions, useStore } from "@tanstack/react-form";
 import { useAppForm } from "@/features/forms/form-hook";
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
@@ -79,6 +79,7 @@ async function submitContent(
     scheduleDateRequired: string;
     failRate: number;
     intent: "publish" | "schedule";
+    unknownError: string;
   },
 ) {
   if (deps.intent === "schedule" && !value.publishAt) {
@@ -90,7 +91,7 @@ async function submitContent(
   } catch (err) {
     const exc = (err as { exception?: ExceptionResponse }).exception;
     if (exc) return { form: exceptionHandler(exc, {}), fields: {} };
-    return { form: "An unexpected error occurred", fields: {} };
+    return { form: deps.unknownError, fields: {} };
   }
 }
 
@@ -126,6 +127,7 @@ export default function ContentEditorPage() {
           scheduleDateRequired: t.contentEditor.scheduleDateRequired,
           failRate: simulateFailure ? 1 : 0,
           intent: submitIntentRef.current,
+          unknownError: t.errors.unknown,
         }),
     },
     onSubmit: async () => {
@@ -138,12 +140,19 @@ export default function ContentEditorPage() {
     },
   });
 
+  const values = useStore(form.store, (s) => ({
+    title: s.values.title,
+    slug: s.values.slug,
+    tags: s.values.tags,
+    body: s.values.body,
+  }));
+
   useEffect(() => {
-    if (form.state.values.title && !slugEditedByUser.current) {
-      const derived = deriveSlug(form.state.values.title);
+    if (values.title && !slugEditedByUser.current) {
+      const derived = deriveSlug(values.title);
       form.setFieldValue("slug", derived);
     }
-  }, [form.state.values.title, form]);
+  }, [values.title, form]);
 
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
@@ -164,25 +173,24 @@ export default function ContentEditorPage() {
 
   useEffect(() => {
     const handler = () => {
-      if (draftKey && form.state.values.title) {
+      if (draftKey && values.title) {
         saveDraft(draftKey, {
-          title: form.state.values.title,
-          slug: form.state.values.slug,
-          tags: form.state.values.tags,
-          body: form.state.values.body,
+          title: values.title,
+          slug: values.slug,
+          tags: values.tags,
+          body: values.body,
         });
       }
     };
     const interval = setInterval(handler, 30000);
     return () => clearInterval(interval);
-  }, [draftKey, form.state.values]);
+  }, [draftKey, values]);
 
   const handleSaveDraft = useCallback(() => {
-    const { title, slug, tags, body } = form.state.values;
-    saveDraft(draftKey, { title, slug, tags, body });
+    saveDraft(draftKey, { title: values.title, slug: values.slug, tags: values.tags, body: values.body });
     dirtyRef.current = false;
     toast({ description: t.contentEditor.draftSaved, variant: "default" });
-  }, [form.state.values, toast, t, draftKey]);
+  }, [values, toast, t, draftKey]);
 
   const handleRestore = useCallback(() => {
     if (!draftAlert) return;
@@ -228,13 +236,13 @@ export default function ContentEditorPage() {
       <form className="flex flex-col gap-4">
         {preview ? (
           <div className="flex flex-col gap-4">
-            <h1 className="text-xl font-semibold">{form.state.values.title || "Untitled"}</h1>
+            <h1 className="text-xl font-semibold">{values.title || t.contentEditor.untitled}</h1>
             <div className="flex flex-wrap gap-1">
-              {form.state.values.tags.map((tag, i) => (
+              {values.tags.map((tag, i) => (
                 <span key={i} className="rounded bg-emphasis px-1.5 py-0.5 text-xxs">{tag}</span>
               ))}
             </div>
-            <p className="whitespace-pre-wrap text-sm">{form.state.values.body}</p>
+            <p className="whitespace-pre-wrap text-sm">{values.body}</p>
           </div>
         ) : (
           <>
@@ -277,20 +285,22 @@ export default function ContentEditorPage() {
               {(field) => <field.DateField label={t.contentEditor.schedule} />}
             </form.AppField>
             <form.AppField name="publishTime">
-              {(field) => <field.TimeField label="Time" />}
+              {(field) => <field.TimeField label={t.contentEditor.time} />}
             </form.AppField>
           </div>
         )}
 
         <Separator />
 
-        <div className="flex gap-2">
-          <Button type="button" variant="outline" onClick={handleSaveDraft}>{t.contentEditor.saveDraft}</Button>
-          <Button type="button" onClick={() => { submitIntentRef.current = "publish"; form.handleSubmit(); }}>{t.contentEditor.publish}</Button>
-          {schedule && (
-            <Button type="button" onClick={() => { submitIntentRef.current = "schedule"; form.handleSubmit(); }}>{t.contentEditor.schedule}</Button>
-          )}
-        </div>
+        <form.AppForm>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" onClick={handleSaveDraft}>{t.contentEditor.saveDraft}</Button>
+            <form.SubmitButton label={t.contentEditor.publish} loadingLabel={t.contentEditor.publishing} onClick={() => { submitIntentRef.current = "publish"; form.handleSubmit(); }} />
+            {schedule && (
+              <form.SubmitButton label={t.contentEditor.schedule} loadingLabel={t.contentEditor.scheduling} onClick={() => { submitIntentRef.current = "schedule"; form.handleSubmit(); }} />
+            )}
+          </div>
+        </form.AppForm>
       </form>
     </div>
   );

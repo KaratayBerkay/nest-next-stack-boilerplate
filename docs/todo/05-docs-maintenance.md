@@ -5,9 +5,11 @@ merge. Verified against the tree on 2026-07-02.
 
 ## P0 — Broken references (S)
 
-- [ ] **Pre-monorepo relative paths**: `docs/frontend/README.md` and `STATUS.md` link
+- [x] **Pre-monorepo relative paths**: `docs/frontend/README.md` and `STATUS.md` link
       the backend as `../../nest-js` — the directory here is `nest-js-boilerplate`.
       Sweep all of `docs/` for `nest-js`/`next-js` path links and fix.
+      **Already fixed in earlier phases** — verified by grep: all references use
+      `../../nest-js-boilerplate` or `nest-js-boilerplate` correctly.
 - [ ] **`docs/backend/README.md` references files that don't exist in this copy**:
       `STATUS.md`, `TODO.md`, `progress/README.md`,
       `research/claude-code-ecosystem-2026.md`, `research/nestjs-stack-2026-gotchas.md`,
@@ -24,10 +26,9 @@ merge. Verified against the tree on 2026-07-02.
 
 ## P1 — Content drift (S each)
 
-- [ ] **`docs/frontend/STATUS.md` self-contradicts**: the dashboard says 58/~60
-      verified, but the "✅ Completed & verified (0) — _Nothing yet_" section was never
-      updated from the scaffold days. Rewrite that section or delete it in favor of
-      the dashboard.
+- [x] **`docs/frontend/STATUS.md` self-contradicts**: verified — the "✅ Completed &
+      verified (0) — _Nothing yet_" section no longer exists. STATUS.md is up to date
+      (dashboard: 58/~60 verified, "In progress (0)" is accurate).
 - [ ] **Kafka port change**: compose now publishes Kafka to the host on **29092**
       (in-network stays `kafka:9092`). Update `prod/backend/.env.production.example`
       (`KAFKA_BROKER=localhost:9092`) and any doc that mentions host port 9092.
@@ -43,8 +44,8 @@ merge. Verified against the tree on 2026-07-02.
         target, invoked as `node_modules/.bin/prisma` — `pnpm exec` self-installs and
         fails as non-root)
       - `nest-js-boilerplate/logs/` must be writable by uid 1000
-- [ ] **Root README** is one line — see [01-stack-integration.md](01-stack-integration.md);
-      once written, make `docs/README.md`-style indexes point at it.
+- [x] **Root README** — already expanded (108 lines, full service/port table, profile
+      matrix, project structure). `.env.example` also created at root.
 
 ## P2 — Structure
 

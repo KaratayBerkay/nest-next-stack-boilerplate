@@ -5,7 +5,7 @@ import { resolveVariant } from "@/lib/resolve-variant";
 import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { fontClasses } from "@/lib/font-classes";
-import type { BadgeProps, BadgeSize } from "@/types/ui/Badge-types";
+import type { BadgeProps } from "@/types/ui/Badge-types";
 
 const variants = {
   ...globalStyleVariants,

@@ -1,15 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  Cron,
-  CronExpression,
-  Interval,
-  SchedulerRegistry,
-  Timeout,
-} from '@nestjs/schedule';
+import { Interval, SchedulerRegistry, Timeout } from '@nestjs/schedule';
 
-// Demonstrates @nestjs/schedule: declarative @Cron/@Interval/@Timeout jobs plus dynamic
+// Demonstrates @nestjs/schedule: declarative @Interval/@Timeout jobs plus dynamic
 // job management through SchedulerRegistry. ScheduleModule.forRoot() must be imported by the
 // hosting application (AppModule / the test module) for these decorators to be discovered.
+//
+// NOTE: @Cron deliberately omitted. The `cron` package can compute a negative setTimeout delay
+// when the system clock jumps (e.g. DST, NTP sync), producing a `TimeoutNegativeWarning` and
+// causing immediate re-fires. @Interval uses a fixed ms value — no date math, no negative delay.
 @Injectable()
 export class TasksService {
   private readonly logger = new Logger(TasksService.name);
@@ -28,7 +26,7 @@ export class TasksService {
     this.timedOut = true;
   }
 
-  @Cron(CronExpression.EVERY_30_MINUTES, { name: 'demo-cron' })
+  @Interval('demo-cron', 30 * 60 * 1000)
   handleCron(): void {
     this.logger.debug('demo-cron fired');
   }

@@ -1,5 +1,5 @@
 import { cn } from "@/lib/cn";
-import type { BadgeCountProps, BadgeCountDirection } from "@/types/ui/BadgeCount-types";
+import type { BadgeCountProps } from "@/types/ui/BadgeCount-types";
 
 const directionStyles = {
   "left-top": "-top-1 -left-1",

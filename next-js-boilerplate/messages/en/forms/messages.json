@@ -75,6 +75,7 @@
     "next": "Next",
     "back": "Back",
     "send": "Send Invites",
+    "sending": "Sending...",
     "emailPlaceholder": "Enter email and press Enter",
     "emailDuplicate": "Duplicate email address",
     "roleLabel": "Role",
@@ -86,7 +87,10 @@
     "emailInvalid": "Invalid email format",
     "roleRequired": "Please select a role",
     "quotaTitle": "Upgrade Required",
-    "quotaBody": "You can invite up to 5 team members on your current plan."
+    "quotaBody": "You can invite up to 5 team members on your current plan.",
+    "emails": "Emails",
+    "role": "Role",
+    "message": "Message"
   },
   "apiKey": {
     "heading": "API Key Manager",
@@ -247,7 +251,8 @@
     "emailInvalid": "Invalid email",
     "emailMismatch": "Emails must match",
     "paymentMethodRequired": "Payment method is required",
-    "orderFailed": "Order failed. Please try again."
+    "orderFailed": "Order failed. Please try again.",
+    "placing": "Placing Order..."
   },
   "contentEditor": {
     "heading": "Content Editor",
@@ -277,7 +282,11 @@
     "leave": "Leave",
     "titleRequired": "Title is required",
     "slugInvalid": "Only lowercase letters, numbers, and hyphens allowed",
-    "scheduleDateRequired": "Schedule date is required"
+    "scheduleDateRequired": "Schedule date is required",
+    "publishing": "Publishing...",
+    "scheduling": "Scheduling...",
+    "untitled": "Untitled",
+    "time": "Time"
   },
   "formBuilder": {
     "heading": "Form Builder",

@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/Button";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsAccountPageInfo } from "@/constants/page-info";
 import { useProfileActions } from "@/api/client/profile/actions";
+import { MAX_UPLOAD_SIZE } from "@/constants/upload";
 
 async function uploadAvatarFile(
   file: File,
@@ -29,7 +30,7 @@ async function uploadAvatarFile(
     toast({ title: t.invalidFileType, variant: "destructive" });
     return;
   }
-  if (file.size > 5 * 1024 * 1024) {
+  if (file.size > MAX_UPLOAD_SIZE) {
     toast({ title: t.fileTooLarge, variant: "destructive" });
     return;
   }

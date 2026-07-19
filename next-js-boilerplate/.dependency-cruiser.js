@@ -46,6 +46,8 @@ module.exports = {
           "[.]d[.]ts$", // TypeScript declaration files
           "(^|/)tsconfig[.]json$", // TypeScript config
           "(^|/)(?:babel|webpack)[.]config[.](?:js|cjs|mjs|ts|cts|mts|json)$", // other configs
+          "(^|/)app/.+/default[.]tsx$", // Next.js parallel-route defaults (not imported)
+          "^src/app/api/", // API routes consumed externally, not imported locally
         ],
       },
       to: {},
@@ -56,7 +58,11 @@ module.exports = {
         "A module depends on a node core module that has been deprecated. Find an alternative - these are " +
         "bound to exist - node doesn't deprecate lightly.",
       severity: "warn",
-      from: {},
+      from: {
+        pathNot: [
+          "^src/lib/request-context[.]ts$", // AsyncLocalStorage is the only legitimate async_hooks consumer
+        ],
+      },
       to: {
         dependencyTypes: ["core"],
         path: [

@@ -1,7 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { QUERY_DEFAULTS } from "@/constants/ui";
 import type { QueryProviderProps } from "@/types/integrations/QueryProvider-types";
 

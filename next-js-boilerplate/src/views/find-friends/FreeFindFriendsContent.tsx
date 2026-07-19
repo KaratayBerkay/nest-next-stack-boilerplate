@@ -12,8 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { friendsQueryOptions, friendRequestsQueryOptions } from "@/api/client/friends/query";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { findFriendsPageInfo } from "@/constants/page-info";
-import { FindFriendsFallback } from "@/fallbacks";
-import type { User, FriendRequest } from "./search-utils";
+import type { FriendRequest } from "./search-utils";
 import { PaginationBar } from "./PaginationBar";
 import { useFriendSearch } from "./useFriendSearch";
 import { useFriendActions } from "./useFriendActions";
@@ -23,7 +22,7 @@ export function FreeFindFriendsContent({
 }: FindFriendsContentProps) {
   const t = useMessages("find-friends");
   const pathname = usePathname();
-  const { data: friends = [] } = useSuspenseQuery(friendsQueryOptions());
+  const { data: _friends = [] } = useSuspenseQuery(friendsQueryOptions());
   const { data: friendRequests = [] } = useSuspenseQuery(friendRequestsQueryOptions());
 
   const {

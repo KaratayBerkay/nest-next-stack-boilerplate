@@ -25,6 +25,7 @@ function ImageWithSkeleton({
           loaded && "hidden",
         )}
       />
+      {/* eslint-disable-next-line @next/next/no-img-element -- external demo URL, next/image doesn't work with dynamic external hosts without config */}
       <img
         src={src}
         alt={alt}

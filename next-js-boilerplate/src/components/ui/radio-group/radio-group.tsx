@@ -29,7 +29,7 @@ export const RadioGroupItem = forwardRef<
   React.ElementRef<typeof Item>,
   RadioGroupItemProps
 >(({ className, fontSize, fontWeight, fontFamily, ...props }, ref) => {
-  const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
+  const _fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
   return (
     <Item

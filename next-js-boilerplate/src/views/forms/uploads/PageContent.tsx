@@ -8,6 +8,7 @@ import { ImageUpload } from "@/components/ui/ImageUpload";
 import { FileUpload } from "@/components/ui/FileUpload";
 import { FormErrorBanner } from "@/components/ui/FormErrorBanner";
 import type { UploadFile } from "@/types/ui/FileUpload-types";
+import { MAX_UPLOAD_SIZE } from "@/constants/upload";
 
 export default function UploadsPage() {
   const t = useMessages("forms");
@@ -82,7 +83,7 @@ export default function UploadsPage() {
             }
             setAvatarFiles(files);
           }}
-          maxSizeBytes={5 * 1024 * 1024}
+          maxSizeBytes={MAX_UPLOAD_SIZE}
         />
       </section>
 
@@ -93,7 +94,7 @@ export default function UploadsPage() {
           multiple
           accept="image/*"
           maxFiles={6}
-          maxSizeBytes={5 * 1024 * 1024}
+          maxSizeBytes={MAX_UPLOAD_SIZE}
           files={galleryFiles}
           onFilesChange={setGalleryFiles}
           onUpload={handleGalleryUpload}
@@ -110,7 +111,7 @@ export default function UploadsPage() {
           multiple
           accept=".pdf,.docx"
           maxFiles={3}
-          maxSizeBytes={5 * 1024 * 1024}
+          maxSizeBytes={MAX_UPLOAD_SIZE}
           files={docFiles}
           onFilesChange={setDocFiles}
           onUpload={handleDocSimulate}

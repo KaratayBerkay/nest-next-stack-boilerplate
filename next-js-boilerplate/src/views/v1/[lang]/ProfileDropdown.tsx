@@ -6,9 +6,7 @@ import Link from "next/link";
 import { useBreakpoint } from "@/hooks";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
-import { Avatar } from "@/components/ui/Avatar";
 import { Badge as UiBadge } from "@/components/ui/Badge";
-import { initials } from "@/lib/initials";
 import { createPortal } from "react-dom";
 import { IconLogout, IconSettings } from "@tabler/icons-react";
 

@@ -75,6 +75,7 @@
     "next": "İleri",
     "back": "Geri",
     "send": "Davetleri Gönder",
+    "sending": "Gönderiliyor...",
     "emailPlaceholder": "E-posta girin ve Enter'a basın",
     "emailDuplicate": "Bu e-posta zaten eklendi",
     "roleLabel": "Rol",
@@ -86,7 +87,10 @@
     "emailInvalid": "Geçersiz e-posta formatı",
     "roleRequired": "Lütfen bir rol seçin",
     "quotaTitle": "Yükseltme Gerekli",
-    "quotaBody": "Mevcut planınızda en fazla 5 ekip üyesi davet edebilirsiniz."
+    "quotaBody": "Mevcut planınızda en fazla 5 ekip üyesi davet edebilirsiniz.",
+    "emails": "E-postalar",
+    "role": "Rol",
+    "message": "Mesaj"
   },
   "apiKey": {
     "heading": "API Anahtarı Yöneticisi",
@@ -247,7 +251,8 @@
     "emailInvalid": "Geçersiz e-posta",
     "emailMismatch": "E-postalar eşleşmelidir",
     "paymentMethodRequired": "Ödeme yöntemi gereklidir",
-    "orderFailed": "Sipariş başarısız oldu. Lütfen tekrar deneyin."
+    "orderFailed": "Sipariş başarısız oldu. Lütfen tekrar deneyin.",
+    "placing": "Sipariş Veriliyor..."
   },
   "contentEditor": {
     "heading": "İçerik Düzenleyici",
@@ -277,7 +282,11 @@
     "leave": "Ayrıl",
     "titleRequired": "Başlık gereklidir",
     "slugInvalid": "Yalnızca küçük harf, sayı ve tire kullanılabilir",
-    "scheduleDateRequired": "Zamanlama tarihi gereklidir"
+    "scheduleDateRequired": "Zamanlama tarihi gereklidir",
+    "publishing": "Yayınlanıyor...",
+    "scheduling": "Zamanlanıyor...",
+    "untitled": "Başlıksız",
+    "time": "Saat"
   },
   "formBuilder": {
     "heading": "Form Oluşturucu",

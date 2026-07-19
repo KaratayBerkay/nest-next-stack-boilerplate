@@ -1,5 +1,4 @@
 import { queryOptions } from "@tanstack/react-query";
-import type { SubscriptionInfo } from "@/api/server/billing/subscription";
 
 export function subscriptionQueryOptions(userId?: string) {
   return queryOptions({

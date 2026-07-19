@@ -109,6 +109,7 @@ export function RichItemsExample() {
               </div>
             }
             leftSlot={
+              // eslint-disable-next-line @next/next/no-img-element -- external demo avatar URL, next/image requires host config
               <img
                 src="https://i.pravatar.cc/150?u=sarah"
                 alt={t.sarahName}
@@ -142,6 +143,7 @@ export function RichItemsExample() {
               </div>
             }
             leftSlot={
+              // eslint-disable-next-line @next/next/no-img-element -- external demo avatar URL, next/image requires host config
               <img
                 src="https://i.pravatar.cc/150?u=mike"
                 alt={t.mikeName}

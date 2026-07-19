@@ -1,5 +1,5 @@
 import "server-only";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { eventsBatchSchema } from "@/validators/events/schema";
 import { publishEvent } from "@/lib/kafka";
 import { getAccessToken } from "@/store/ssr-cookies";

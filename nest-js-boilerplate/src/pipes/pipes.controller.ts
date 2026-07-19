@@ -13,7 +13,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { CreateCatDto } from './create-cat.dto';
+import { PipesCreateCatDto } from './create-cat.dto';
 import { CustomValidationPipe } from './custom-validation.pipe';
 import { Sort } from './sort.enum';
 
@@ -81,8 +81,8 @@ export class PipesController {
 
   // Custom PipeTransform on the body: validates the DTO via class-validator, 400 on failure.
   @Post('cats')
-  createCat(@Body(CustomValidationPipe) dto: CreateCatDto): {
-    received: CreateCatDto;
+  createCat(@Body(CustomValidationPipe) dto: PipesCreateCatDto): {
+    received: PipesCreateCatDto;
   } {
     return { received: dto };
   }

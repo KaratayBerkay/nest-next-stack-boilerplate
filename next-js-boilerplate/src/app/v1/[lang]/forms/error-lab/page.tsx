@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function ErrorLabPage({ params }: PageProps) {
-  const { lang } = await params;
+  const { lang: _lang } = await params;
   const errorMessagesByLocale = {
     en: loadErrorMessages("en"),
     tr: loadErrorMessages("tr"),

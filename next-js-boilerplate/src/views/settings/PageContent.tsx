@@ -1,16 +1,14 @@
 "use client";
 
-import { use, useState } from "react";
+import { use } from "react";
 import type { SettingsIndexPageProps } from "@/types/settings/SettingsIndexPage-types";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import {
-  TIERS,
   TIER_PRICES_CENTS,
   tierLabel,
-  tierAtLeast,
   type Tier,
 } from "@/lib/tier";
 import { formatPrice } from "@/lib/currency";

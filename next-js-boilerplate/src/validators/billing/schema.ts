@@ -70,11 +70,6 @@ export function mockCardFormSchema(errors: {
 
 export type MockCardFormData = z.infer<ReturnType<typeof mockCardFormSchema>>;
 
-function formatCardNumber(value: string): string {
-  const digits = value.replace(/\D/g, "").slice(0, 16);
-  return digits.replace(/(\d{4})(?=\d)/g, "$1 ");
-}
-
 export function getLast4(cardNumber: string): string {
   return cardNumber.replace(/\s/g, "").slice(-4);
 }

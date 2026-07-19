@@ -21,7 +21,7 @@ export type ExceptionSurface =
   | "form-field"
   | "full-page";
 
-const EXC_TO_SURFACE: Record<ExceptionCode, ExceptionSurface> = {
+const EXC_TO_SURFACE = {
   EX_VALIDATION_FORM: "form-field",
   EX_AUTH_INVALID_CREDENTIALS: "toast",
   EX_AUTH_EMAIL_TAKEN: "form-field",
@@ -32,9 +32,12 @@ const EXC_TO_SURFACE: Record<ExceptionCode, ExceptionSurface> = {
   EX_WS_UNSTABLE: "badge",
   EX_TIER_INSUFFICIENT: "full-page",
   EX_INTERNAL: "toast",
-};
+} satisfies Record<ExceptionCode, ExceptionSurface>;
 
 export function getSurface(exc: string): ExceptionSurface {
+  if (!(exc in EXC_TO_SURFACE)) {
+    console.warn(`[exception-handler] Unknown exception code "${exc}" — falling back to "toast"`);
+  }
   return EXC_TO_SURFACE[exc as ExceptionCode] ?? "toast";
 }
 

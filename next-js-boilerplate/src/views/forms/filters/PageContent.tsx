@@ -4,7 +4,7 @@ import { useCallback, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useAppForm } from "@/features/forms/form-hook";
-import { formOptions } from "@tanstack/react-form";
+import { formOptions, useStore } from "@tanstack/react-form";
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
 import type { ReactNode } from "react";
@@ -81,6 +81,11 @@ export default function FiltersPage({ initialSearchParams }: FiltersPageProps) {
 
   const form = useAppForm(formOpts);
 
+  const { dateFrom, dateTo } = useStore(form.store, (s) => ({
+    dateFrom: s.values.dateFrom,
+    dateTo: s.values.dateTo,
+  }));
+
   const handleReset = useCallback(() => {
     form.reset();
     window.history.replaceState(null, "", pathname);
@@ -110,13 +115,13 @@ export default function FiltersPage({ initialSearchParams }: FiltersPageProps) {
             <div className="grid grid-cols-2 gap-2">
               <input
                 type="date"
-                value={form.state.values.dateFrom}
+                value={dateFrom}
                 onChange={(e) => form.setFieldValue("dateFrom", e.target.value)}
                 className="border-border bg-bg text-fg focus-visible:ring-brand flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
               />
               <input
                 type="date"
-                value={form.state.values.dateTo}
+                value={dateTo}
                 onChange={(e) => form.setFieldValue("dateTo", e.target.value)}
                 className="border-border bg-bg text-fg focus-visible:ring-brand flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
               />

@@ -6,7 +6,6 @@ import {
   useContext,
   useEffect,
   useState,
-  type ReactNode,
 } from "react";
 
 import {

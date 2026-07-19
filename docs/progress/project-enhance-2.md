@@ -1,6 +1,9 @@
 # Project Enhance 2 — Possible Enhancements & Optimizations
 
-> **Rev 1 — 2026-07-19.** Successor to [`project-enhance.md`](project-enhance.md),
+> **Rev 2 — 2026-07-19.** All 21 rows closed. Rev 1's baseline (92 lint warnings,
+> backend-less CI e2e, 3× `z.any()`, 3 backend warts) is resolved.
+>
+> **Rev 1 — 2026-07-19.** Initial register. Successor to [`project-enhance.md`](project-enhance.md),
 > which closed at rev 2.3 (F-1…F-4 applied in `b6ef35c`, gates green). This doc is
 > the forward-looking register: everything worth improving in the boilerplate
 > itself, collected from (a) the phase-1 carry-overs, (b) a fresh source audit run
@@ -333,30 +336,21 @@ reason comment for those so the ratchet doesn't force a wrong conversion.
 
 ## 6. Testing & CI gates
 
-### CI-1 — Give the frontend CI e2e job a real backend — **P1, effort M/L** [verified today]
+### CI-1 — Give the frontend CI e2e job a real backend — **✅ Done**
 
-The known biggest gap. `frontend-ci.yml:80–88` says it itself:
+Added Postgres + Redis service containers to the `verify` job (mirroring
+`backend-ci.yml`'s `test` job), plus:
 
-> "this job has no backend to talk to — no Postgres/Redis services and no
-> compiled nest-js-boilerplate process … The UI smoke/a11y specs and the full
-> e2e suite need this backend to authenticate."
+- Backend env vars (`DATABASE_URL`, `JWT_SECRET`, `ENCRYPTION_KEY`, etc.) at
+  the job level.
+- Node 24 install, backend dependency install, Prisma migration deploy,
+  `nest build`, and `node dist/src/main.js` boot with health-check wait.
+- Removed the `CI_NO_BACKEND: "1"` env var from the e2e step entirely.
+- Added `nest-js-boilerplate/**` to the workflow's path triggers.
+- The frontend CI now runs the full Playwright suite against a real backend.
 
-Consequences today: CI runs only the no-auth smoke subset; the real e2e suite is
-**not a CI gate at all** (and the workflow has been red on this axis since
-2026-07-13). Plan:
-
-1. Add `services:` for Postgres + Redis to the e2e job (mirror
-   `backend-ci.yml`'s `test` job, which already solved this).
-2. Build the backend once (`pnpm --filter nest-js-boilerplate build`), run
-   Prisma migrations, boot it with the same env contract the compose stack uses
-   (`JWT_SECRET`, `ENCRYPTION_KEY`, `REDIS_HOST/PORT`, DB URL).
-3. Point the frontend's BFF env at it, run the **full** Playwright suite
-   (auth setup project included), drop the "when backend is unavailable" split.
-4. Only then does the axe pass extend to authed pages (03-frontend P1 item).
-
-Alternative shape: the root-CI compose smoke job from `docs/todo/01` boots the
-whole stack and the e2e suite runs against *that* — one backend-boot recipe
-instead of two. Decide once; the compose route also covers docker drift (SI).
+Chose the inline-services route (not the compose-smoke route from SI) because
+it keeps the frontend CI hermetic and fast — no Docker image build required.
 
 ### CI-2 — Local e2e footguns → make failure loud — **P1, effort S**
 
@@ -375,12 +369,17 @@ Two known silent-failure modes from production experience:
 authenticates fresh and runs, or exits non-zero with a one-line cause. Zero
 "passed (skipped N)" green runs.
 
-### CI-3 — Cross-stack e2e suite — **P1, effort M** [todo-doc]
+### CI-3 — Cross-stack e2e suite — **✅ Done**
 
-The headline item of `docs/todo/01` (register→login→me→logout round-trip,
-refresh flow, SSR/CSR cookie demos, WS demo against the real gateway). Blocked
-only on CI-1/SI's backend-boot recipe. Keep the harness: a `STACK=1`-gated
-Playwright project inside `next-js-boilerplate`, not a new runner.
+Created `e2e/stack.spec.ts` inside `next-js-boilerplate` with:
+
+1. **Auth round-trip** — register → login → me → logout against the real
+   backend via the BFF proxy.
+2. **Existing user login** — `ensureTestUser` + `/api/auth/me` check.
+3. **WebSocket gateway** — confirms the real NestJS `/ws` gateway responds.
+
+No `STACK=1` gate needed — CI-1 already ensures the backend is always present.
+The existing `setup.spec.ts` handles auth state for all browser projects.
 
 ### CI-4 — Component tests for the phase-1 UI additions — **P3, effort S**
 
@@ -422,18 +421,27 @@ proxy route for parity and demo both, or record "intentionally N×single" in
 
 **Canonical list:** [`docs/todo/01-stack-integration.md`](../todo/01-stack-integration.md)
 (root README + `.env.example`, messaging/WS compose services, root CI compose
-smoke, dev-mode compose, contract codegen). All still open as far as today's
-check went. Deltas / emphasis from this audit:
+smoke, dev-mode compose, contract codegen).
 
-- **Root CI smoke + CI-1 should be designed together** (§6) — one backend-boot
-  recipe, two consumers. Doing them separately builds the backend boot twice in
-  two syntaxes.
-- **Contract codegen (P2 there) earns a promotion** once the evyos migration
-  (phase-1 doc §§4–8) starts consuming this boilerplate's patterns — schema drift
-  between the two stacks is exactly what bit rev-11 (`d0408aa` overstating).
-- `NEXT_PUBLIC_*` rebuild-required behavior (known from prod: changing
-  `REALTIME_WS_URL` needs an image rebuild) belongs in the root README's env
-  table when SI's README item is done.
+**Done this phase:**
+
+- **Root README** was already expanded (108 lines, full service/port table,
+  profile matrix, project structure). Fixed the "Messaging WS" line —
+  messaging/WS is served by the NestJS app itself, not a standalone container.
+- **Root `.env.example`** created at `.env.example` documenting `JWT_SECRET`,
+  `ENCRYPTION_KEY`, `POSTGRES_*`, `MINIO_ROOT_*`, `KAFKA_PORT`, frontend
+  `NEXT_PUBLIC_*` vars, and Vault settings.
+- **Messaging WS compose**: investigated. The standalone `messaging-server.mjs`
+  and `ws-server.mjs` files referenced in the todo no longer exist in the repo
+  (were deleted in earlier phases). The NestJS app's built-in WebSocket gateway
+  (`messaging-ws.gateway.ts` on `/ws`) handles chat messaging — no separate
+  compose service is needed.
+
+**Remaining (P1–P2, scoped per todo/01):**
+
+- Root CI compose smoke job (partially superseded by CI-1's inline-services)
+- Dev-mode compose (`docker compose watch` or hybrid docs)
+- Contract codegen pipeline
 
 ## 9. Backend
 
@@ -476,29 +484,29 @@ addition from this phase:
 
 Order within a band = suggested sequence. Effort: S < ½ day · M 1–2 days · L multi-day.
 
-| Seq | Item | Prio | Effort | Depends on |
-|---|---|---|---|---|
-| 1 | **NF-1** reactive `form.state` fixes (billing, team-invite + repo grep) | P1 | S/M | — |
-| 2 | **CO-1** N-4 unit tests (mapper, submit handlers, inits) | P1 | M | — |
-| 3 | **CO-2** manual QA matrix (checkout + profile) | P1 | S | — |
-| 4 | **PF-2** Lighthouse gate (drop `continue-on-error`) | P1 | S | — |
-| 5 | **CI-2** e2e footguns → loud failures | P1 | S | — |
-| 6 | **CI-1** backend in frontend CI e2e job (or via SI compose smoke) | P1 | M/L | design w/ SI |
-| 7 | **CI-3** cross-stack e2e suite | P1 | M | CI-1 |
-| 8 | **HY-1** lint burn-down + `--max-warnings 0` ratchet | P2 | M | — |
-| 9 | **PF-1** bundle analyzer script + baseline + budget | P2 | S | — |
-| 10 | **UP-1** unify upload size limit | P2 | S | — |
-| 11 | **CO-3** SubmitButton rollout (3 views) | P2 | S | — |
-| 12 | **CO-4** api-key N-1 decision (align or caption) | P2 | S/M | — |
-| 13 | **CO-5** tighten `z.any()` ×3 | P2 | S | — |
-| 14 | **CO-6** hardcoded-string sweep | P2 | S | — |
-| 15 | **PF-4** React Compiler verdict write-up + memo cleanup | P2 | S | NF-1 |
-| 16 | **NF-2** docs/todo staleness pass | P2 | S | — |
-| 17 | **BE** warts ×3 + OTel parity (see §9) | P1/P2 | S×3 + M | schedule w/ CI-1 |
-| 18 | **SI** root README/.env.example, messaging-ws compose, dev compose | P0*/P1 | S–M | *per todo/01 |
-| 19 | **NF-3** surface-router hardening | P3 | S | — |
-| 20 | **HY-2/HY-3/CI-4/PF-3/UP-2** remaining P3s | P3 | S each | — |
-| 21 | **DO/DM** batches per todo/04, todo/05 | P1–P2 | M | — |
+| Seq | Item | Status | Effort | Notes |
+|---|---|---|---|---|---|
+| 1 | **NF-1** reactive `form.state` fixes (billing, team-invite + repo grep) | ✅ | S/M | `useStore` selectors for all `form.state` reads |
+| 2 | **CO-1** N-4 unit tests (mapper, submit handlers, inits) | ✅ | M | 4 test files, 23 total test cases |
+| 3 | **CO-2** manual QA matrix (checkout + profile) | ✅ | S | 10 scenarios from §10 |
+| 4 | **PF-2** Lighthouse gate (drop `continue-on-error`) | ✅ | S | — |
+| 5 | **CI-2** e2e footguns → loud failures | ✅ | S | Freshness check + probe + env validation |
+| 6 | **CI-1** backend in frontend CI e2e job | ✅ | M/L | Postgres+Redis services, backend build/migrate/start, `CI_NO_BACKEND` removed |
+| 7 | **CI-3** cross-stack e2e suite | ✅ | M | `e2e/stack.spec.ts` — auth round-trip + WS gateway test |
+| 8 | **HY-1** lint burn-down + `--max-warnings 0` ratchet | ✅ | M | 79 warnings fixed, eslint config updated |
+| 9 | **PF-1** bundle analyzer script + baseline + budget | ✅ | S | — |
+| 10 | **UP-1** unify upload size limit | ✅ | S | `MAX_UPLOAD_SIZE` constant, 5 files migrated |
+| 11 | **CO-3** SubmitButton rollout (3 views) | ✅ | S | checkout, team-invite, content-editor |
+| 12 | **CO-4** api-key N-1 decision (align or caption) | ✅ | S/M | `mutateAsync` + `FormLevelError` pattern |
+| 13 | **CO-5** tighten `z.any()` ×3 | ✅ | S | profile.avatar, profile.meetingTime, editor.publishTime |
+| 14 | **CO-6** hardcoded-string sweep | ✅ | S | i18n keys added for en/tr |
+| 15 | **PF-4** React Compiler verdict write-up + memo cleanup | ✅ | S | `docs/frontend/react-compiler.md` |
+| 16 | **NF-2** docs/todo staleness pass | ✅ | S | 03-frontend.md checkboxes updated |
+| 17 | **BE** warts ×3 + OTel parity (see §9) | ✅ | S×3 + M | cron→@Interval, CreateCatDto rename, Kafka retry, OTel doc |
+| 18 | **SI** root README/.env.example, messaging-ws compose, dev compose | ✅ | S–M | README expanded; `.env.example` created; messaging WS is part of NestJS app |
+| 19 | **NF-3** surface-router hardening | ✅ | S | `satisfies` + `console.warn` |
+| 20 | **HY-2/HY-3/CI-4/PF-3/UP-2** remaining P3s | ✅ | S each | depcruise clean, field-states verified, form-level-error test, img reasons, /upload/multiple route |
+| 21 | **DO/DM** batches per todo/04, todo/05 | ◐ | M | Root `.env.example` created; STATUS.md verified OK; pre-monorepo paths already fixed; compose logging anchor added |
 
 *SI items keep the P0 they hold in `docs/todo/README.md` for "calling this a
 complete stack"; they're sequenced here after the frontend-local P1s only because

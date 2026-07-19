@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/Separator";
 import type { ExceptionResponse } from "@/lib/api-client";
 import { createProfileFieldSchemas } from "@/validators/forms/profile";
 import { profileDefaultValues } from "@/validators/forms/profile-inits";
+import { MAX_UPLOAD_SIZE } from "@/constants/upload";
 
 const profileFormOpts = formOptions({
   defaultValues: profileDefaultValues,
@@ -35,9 +36,9 @@ const INTEREST_OPTIONS = [
   { value: "gaming", label: "Gaming" },
 ];
 
-async function submitProfile(
+export async function submitProfile(
   { value }: { value: typeof profileFormOpts.defaultValues },
-  deps: { updateProfile: (data: { name: string; username?: string; bio?: string; avatarUrl?: string }) => Promise<void>; toast: ReturnType<typeof useToast>["toast"]; messages: Record<string, unknown> },
+  deps: { updateProfile: (data: { name: string; username?: string; bio?: string; avatarUrl?: string }) => Promise<void>; toast: ReturnType<typeof useToast>["toast"]; messages: Record<string, unknown>; unknownError: string; saveSuccess: string },
 ) {
   try {
     await deps.updateProfile({
@@ -46,11 +47,11 @@ async function submitProfile(
       bio: value.bio || undefined,
       avatarUrl: value.avatar[0]?.preview || undefined,
     });
-    deps.toast({ description: "Profile updated successfully", variant: "default" });
+    deps.toast({ description: deps.saveSuccess, variant: "default" });
     return null;
   } catch (err) {
     const exc = (err as { exception?: ExceptionResponse }).exception;
-    if (!exc) return { form: "An unexpected error occurred", fields: {} };
+    if (!exc) return { form: deps.unknownError, fields: {} };
     if (getSurface(exc.exc) === "toast") {
       deps.toast({ description: exceptionHandler(exc, deps.messages), variant: "destructive" });
       return null;
@@ -70,7 +71,7 @@ export default function ProfilePage() {
     ...profileFormOpts,
     validators: {
       onSubmitAsync: ({ value }) =>
-        submitProfile({ value }, { updateProfile, toast, messages: allMessages }),
+        submitProfile({ value }, { updateProfile, toast, messages: allMessages, unknownError: t.errors.unknown, saveSuccess: t.profile.saveSuccess }),
     },
   });
 
@@ -92,7 +93,7 @@ export default function ProfilePage() {
         className="flex flex-col gap-4"
       >
         <form.AppField name="avatar">
-          {(field) => <field.UploadField label="Avatar" avatar maxSizeBytes={5 * 1024 * 1024} />}
+          {(field) => <field.UploadField label="Avatar" avatar maxSizeBytes={MAX_UPLOAD_SIZE} />}
         </form.AppField>
 
         <div className="grid grid-cols-2 gap-4">

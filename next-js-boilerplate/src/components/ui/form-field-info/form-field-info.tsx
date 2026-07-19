@@ -1,8 +1,8 @@
 "use client";
 
-export function FormFieldInfo<TParentData>(
-  props: { field: { state: { meta: { errors: string[]; isValidating?: boolean } } } },
-) {
+import type { FormFieldInfoProps } from "@/types/ui/FormFieldInfo-types";
+
+export function FormFieldInfo(props: FormFieldInfoProps) {
   const { field } = props;
   const error = field.state.meta.errors[0];
   const isValidating = field.state.meta.isValidating;

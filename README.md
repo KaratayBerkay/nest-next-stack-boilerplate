@@ -51,10 +51,9 @@ call `docker compose` directly — both work identically now.
 
 | Service | Host port | In-network | Notes |
 |---|---|---|---|
-| **Backend (NestJS)** | `3000` | `app:3000` | HTTP + GraphQL + REST |
+| **Backend (NestJS)** | `3000` | `app:3000` | HTTP + GraphQL + REST, WebSocket gateway on `/ws` |
 | **gRPC** | `5050` | `app:5050` | |
-| **Frontend (Next.js)** | `3200` | `nextjs:3100` | BFF proxy, WS gateway |
-| **Messaging WS** | `3003` | `messaging-ws:3003` | Chat WebSocket server |
+| **Frontend (Next.js)** | `3200` | `nextjs:3100` | BFF proxy, WS client |
 | Postgres | `5432` | `postgres:5432` | |
 | Redis | `6379` | `redis:6379` | |
 | **Kafka** (profile) | `29092` | `kafka:9092` | Host uses `localhost:29092` |

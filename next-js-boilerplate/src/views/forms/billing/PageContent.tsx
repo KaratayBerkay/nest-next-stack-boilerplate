@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import { useMessages, useAllMessages } from "@/lib/i18n/MessagesProvider";
-import { formOptions } from "@tanstack/react-form";
+import { formOptions, useStore } from "@tanstack/react-form";
 import { useAppForm } from "@/features/forms/form-hook";
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
@@ -88,14 +88,21 @@ export default function BillingPage() {
     }),
   });
 
-  const price = useMemo(() => calcPrice(form.state.values.plan, form.state.values.billingPeriod), [form.state.values.plan, form.state.values.billingPeriod]);
+  const { plan, billingPeriod, couponCode, isDirty } = useStore(form.store, (s) => ({
+    plan: s.values.plan,
+    billingPeriod: s.values.billingPeriod,
+    couponCode: s.values.couponCode,
+    isDirty: s.isDirty,
+  }));
+
+  const price = useMemo(() => calcPrice(plan, billingPeriod), [plan, billingPeriod]);
 
   useEffect(() => {
-    if (form.state.values.plan !== prevPlan.current) {
-      prevPlan.current = form.state.values.plan;
+    if (plan !== prevPlan.current) {
+      prevPlan.current = plan;
       form.setFieldValue("couponCode", "");
     }
-  }, [form.state.values.plan, form]);
+  }, [plan, form]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -104,7 +111,7 @@ export default function BillingPage() {
           <h2 className="text-sm font-semibold">{t.billing.heading}</h2>
         </div>
         <div className="flex items-center gap-2">
-          {form.state.isDirty && <span className="text-xxs text-muted">{t.billing.unsaved}</span>}
+          {isDirty && <span className="text-xxs text-muted">{t.billing.unsaved}</span>}
         </div>
       </div>
 
@@ -145,7 +152,7 @@ export default function BillingPage() {
           {(field) => <field.TextField label={t.billing.couponCode} placeholder={t.billing.couponPlaceholder} />}
         </form.AppField>
 
-        <CouponStatus code={form.state.values.couponCode} period={form.state.values.billingPeriod} t={t.billing} />
+        <CouponStatus code={couponCode} period={billingPeriod} t={t.billing} />
 
         <form.AppField name="taxId">
           {(field) => <field.TextField label={t.billing.taxId} placeholder={t.billing.taxIdPlaceholder} />}

@@ -1,5 +1,3 @@
-import type React from "react";
-
 export interface ComboboxProps {
   options: { value: string; label: string }[];
   value?: string | string[];

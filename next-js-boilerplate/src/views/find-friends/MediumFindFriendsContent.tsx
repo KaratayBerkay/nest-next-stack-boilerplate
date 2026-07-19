@@ -9,7 +9,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { initials } from "@/lib/initials";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { friendsQueryOptions, friendRequestsQueryOptions } from "@/api/client/friends/query";
-import type { User, FriendRequest } from "./search-utils";
+import type { FriendRequest } from "./search-utils";
 import { PaginationBar } from "./PaginationBar";
 import { useToast } from "@/components/ui/Toast";
 import { useFriendSearch } from "./useFriendSearch";
@@ -21,7 +21,7 @@ export function MediumFindFriendsContent({
 }: FindFriendsContentProps) {
   const t = useMessages("find-friends");
   const pathname = usePathname();
-  const { data: friends = [] } = useSuspenseQuery(friendsQueryOptions());
+  const { data: _friends = [] } = useSuspenseQuery(friendsQueryOptions());
   const { data: friendRequests = [] } = useSuspenseQuery(friendRequestsQueryOptions());
 
   const {

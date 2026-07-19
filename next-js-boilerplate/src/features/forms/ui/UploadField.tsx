@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/Label";
 import { FormFieldInfo } from "@/components/ui/FormFieldInfo";
 import type { UploadFieldProps } from "@/types/forms/UploadField-types";
 import type { UploadFile } from "@/types/ui/FileUpload-types";
+import { MAX_UPLOAD_SIZE } from "@/constants/upload";
 
 export function UploadField({ label, required, avatar, maxSizeBytes, maxFiles, accept, labels }: UploadFieldProps) {
   const field = useFieldContext<UploadFile[]>();
@@ -20,7 +21,7 @@ export function UploadField({ label, required, avatar, maxSizeBytes, maxFiles, a
           value={files}
           onChange={(val) => field.handleChange(val)}
           avatar
-          maxSizeBytes={maxSizeBytes ?? 5 * 1024 * 1024}
+          maxSizeBytes={maxSizeBytes ?? MAX_UPLOAD_SIZE}
           labels={labels}
         />
       ) : (

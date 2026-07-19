@@ -9,7 +9,6 @@ import {
   useStore,
   useTransform,
 } from "@tanstack/react-form-nextjs";
-import type { AnyFieldApi } from "@tanstack/react-form";
 import { fieldSchemas } from "@/validators/demos/form-schema";
 import { signupFormOpts } from "@/lib/forms/signup-options";
 import { signupAction } from "@/features/auth/actions/signup";

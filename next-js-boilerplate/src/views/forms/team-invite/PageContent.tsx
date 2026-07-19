@@ -3,7 +3,7 @@
 import { useActionState, useMemo, useState } from "react";
 import { useMessages, useAllMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
-import { formOptions } from "@tanstack/react-form";
+import { formOptions, useStore } from "@tanstack/react-form";
 import { useAppForm } from "@/features/forms/form-hook";
 import {
   initialFormState,
@@ -109,7 +109,13 @@ export default function TeamInvitePage() {
     },
   });
 
-  const canNext = step === 0 ? form.state.values.emails.length > 0 : true;
+  const { emails, role, message } = useStore(form.store, (s) => ({
+    emails: s.values.emails,
+    role: s.values.role,
+    message: s.values.message,
+  }));
+
+  const canNext = step === 0 ? emails.length > 0 : true;
 
   if (quotaExceeded) {
     return (
@@ -151,9 +157,9 @@ export default function TeamInvitePage() {
         }}
         className="flex flex-col gap-4"
       >
-        <input type="hidden" name="emails" value={JSON.stringify(form.state.values.emails)} />
-        <input type="hidden" name="role" value={form.state.values.role} />
-        <input type="hidden" name="message" value={form.state.values.message} />
+        <input type="hidden" name="emails" value={JSON.stringify(emails)} />
+        <input type="hidden" name="role" value={role} />
+        <input type="hidden" name="message" value={message} />
 
         {step === 0 && (
           <div className="flex flex-col gap-3">
@@ -197,7 +203,7 @@ export default function TeamInvitePage() {
               )}
             </form.AppField>
             <div className="flex flex-wrap gap-1.5">
-              {form.state.values.emails.map((email, index) => {
+              {emails.map((email, index) => {
                 const chipError = form.getFieldMeta(`emails[${index}]` as never)?.errors?.[0];
                 return (
                   <div key={email} className="flex flex-col gap-0.5">
@@ -247,9 +253,9 @@ export default function TeamInvitePage() {
           <div className="surface flex flex-col gap-2 rounded-lg border border-border p-4">
             <p className="text-xs font-semibold">{t.teamInvite.stepReview}</p>
             <div className="flex flex-col gap-1 text-xs">
-              <span>Emails: {form.state.values.emails.join(", ")}</span>
-              <span>Role: {ROLE_OPTIONS.find((r) => r.value === form.state.values.role)?.label ?? form.state.values.role}</span>
-              {form.state.values.message && <span>Message: {form.state.values.message}</span>}
+              <span>{t.teamInvite.emails}: {emails.join(", ")}</span>
+              <span>{t.teamInvite.role}: {ROLE_OPTIONS.find((r) => r.value === role)?.label ?? role}</span>
+              {message && <span>{t.teamInvite.message}: {message}</span>}
             </div>
           </div>
         )}
@@ -268,7 +274,9 @@ export default function TeamInvitePage() {
               {t.teamInvite.next}
             </Button>
           ) : (
-            <Button type="submit">{t.teamInvite.send}</Button>
+            <form.AppForm>
+              <form.SubmitButton label={t.teamInvite.send} loadingLabel={t.teamInvite.sending} />
+            </form.AppForm>
           )}
         </div>
       </form>

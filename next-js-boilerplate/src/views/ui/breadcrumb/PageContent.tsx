@@ -7,7 +7,6 @@ import {
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbSeparator,
-  BreadcrumbEllipsis,
   BreadcrumbPage as ShadBreadcrumbPage,
 } from "@/components/ui/Breadcrumb";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";

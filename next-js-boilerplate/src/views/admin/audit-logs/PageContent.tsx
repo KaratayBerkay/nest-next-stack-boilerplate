@@ -13,9 +13,7 @@ import { adminAuditLogsPageInfo } from "@/constants/page-info";
 import { AccessDeniedPage } from "@/features/statics";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { auditLogsQueryOptions } from "@/api/client/admin/query";
-import type {
-  AuditLogEntry,
-} from "@/types/admin/AuditLog-types";
+
 
 const LEVEL_COLORS: Record<string, string> = {
   ERROR: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",

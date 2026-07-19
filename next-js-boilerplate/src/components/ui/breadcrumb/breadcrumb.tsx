@@ -55,7 +55,7 @@ BreadcrumbItem.displayName = "BreadcrumbItem";
 export const BreadcrumbLink = forwardRef<
   HTMLAnchorElement,
   React.ComponentPropsWithoutRef<"a"> & { asChild?: boolean }
->(({ className, asChild, ...props }, ref) => (
+>(({ className, asChild: _asChild, ...props }, ref) => (
   // eslint-disable-next-line jsx-a11y/anchor-has-content
   <a
     ref={ref}

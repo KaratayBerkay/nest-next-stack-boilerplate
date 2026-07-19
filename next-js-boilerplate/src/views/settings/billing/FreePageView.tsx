@@ -151,7 +151,7 @@ export function FreePageView() {
   const currency = useCurrencyCookie();
   const dateDisplay = useDateDisplayCookie();
 
-  const { data: subData, isLoading: loadingSub } = useQuery(
+  const { data: subData, isLoading: _loadingSub } = useQuery(
     subscriptionQueryOptions(user?.id),
   );
   const subscription = (subData as unknown as SubscriptionInfo | null) ?? null;
