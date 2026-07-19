@@ -43,6 +43,41 @@ async function uploadAvatarFile(
   }
 }
 
+async function handleSaveProfile(deps: {
+  name: string;
+  username: string | undefined;
+  bio: string;
+  avatarUrl: string | undefined;
+  toast: ReturnType<typeof useToast>["toast"];
+  t: { saveSuccess: string; saveFailed: string };
+  refreshUser: () => Promise<void>;
+  updateProfile: (data: {
+    name: string;
+    username?: string;
+    bio?: string;
+    avatarUrl?: string;
+  }) => Promise<void>;
+  setSaving: Dispatch<SetStateAction<boolean>>;
+}) {
+  deps.setSaving(true);
+  try {
+    await deps.updateProfile({
+      name: deps.name,
+      username: deps.username,
+      bio: deps.bio,
+      avatarUrl: deps.avatarUrl,
+    });
+    deps.toast({ title: deps.t.saveSuccess, variant: "success" });
+    await deps.refreshUser();
+  } catch (err) {
+    const exception = (err as Error & { exception?: { msg?: string } })
+      .exception;
+    deps.toast({ title: exception?.msg ?? deps.t.saveFailed, variant: "destructive" });
+  } finally {
+    deps.setSaving(false);
+  }
+}
+
 export function FreePageView() {
   const { user, loading, refreshUser } = useAuth();
   const t = useMessages("settings");
@@ -104,35 +139,13 @@ export function FreePageView() {
     [toast, t, uploadAvatar],
   );
 
-  const saveProfile = useCallback(async () => {
-    setSaving(true);
-    try {
-      await updateProfile({
-        name,
-        username: username || undefined,
-        bio,
-        avatarUrl: avatarUrl || undefined,
-      });
-      toast({ title: t.saveSuccess, variant: "success" });
-      await refreshUser();
-    } catch (err) {
-      const exception = (err as Error & { exception?: { msg?: string } })
-        .exception;
-      toast({ title: exception?.msg ?? t.saveFailed, variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
-  }, [
-    name,
-    username,
-    bio,
-    avatarUrl,
-    toast,
-    t.saveSuccess,
-    t.saveFailed,
-    refreshUser,
-    updateProfile,
-  ]);
+  const saveProfile = useCallback(
+    () => handleSaveProfile({
+      name, username: username || undefined, bio, avatarUrl: avatarUrl || undefined,
+      toast, t, refreshUser, updateProfile, setSaving,
+    }),
+    [name, username, bio, avatarUrl, toast, t, refreshUser, updateProfile],
+  );
 
   if (loading) return <LoadingAuth />;
   if (!user)

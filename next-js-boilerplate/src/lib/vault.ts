@@ -1,6 +1,7 @@
-export type VaultSecrets = Record<string, string>;
+import { VAULT_TOKEN_HEADER } from "@/constants/api/headers";
+import { VAULT_SECRET_PATH } from "@/constants/api/urls";
 
-const VAULT_SECRET_PATH = "secret/data/secret/production/frontend";
+export type VaultSecrets = Record<string, string>;
 
 function vaultConfig(): { addr: string; token: string } | null {
   const addr = (process.env.VAULT_ADDR ?? "").replace(/\/+$/, "");
@@ -17,7 +18,7 @@ export async function readVaultSecrets(
   const url = `${cfg.addr}/v1/${path.replace(/^\/+/, "")}`;
 
   const res = await fetch(url, {
-    headers: { "X-Vault-Token": cfg.token },
+    headers: { [VAULT_TOKEN_HEADER]: cfg.token },
   });
 
   if (!res.ok) return {};

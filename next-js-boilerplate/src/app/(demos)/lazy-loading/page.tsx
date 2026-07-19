@@ -1,6 +1,7 @@
 import dynamic from "next/dynamic";
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { LazyLoadingFallback } from "@/fallbacks";
 
 export const metadata: Metadata = {
   title: "Lazy Loading",
@@ -9,16 +10,7 @@ export const metadata: Metadata = {
 
 const HeavyComponent = dynamic(
   () => import("@/views/(demos)/lazy-loading/HeavyComponent"),
-  {
-    loading: () => (
-      <div
-        className="rounded border border-zinc-300 p-3 text-sm text-zinc-400"
-        data-testid="lazy-loading"
-      >
-        Loading heavy component...
-      </div>
-    ),
-  },
+  { loading: () => <LazyLoadingFallback /> },
 );
 
 export default function LazyLoadingPage() {

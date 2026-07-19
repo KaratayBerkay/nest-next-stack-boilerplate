@@ -17,6 +17,34 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useSessionActions } from "@/api/client/sessions/actions";
 import type { SessionInfo } from "@/types/settings/SessionInfo-types";
 
+async function handleRevokeSessionModule(
+  sessionId: string,
+  revokeSession: (sessionId: string) => Promise<void>,
+  setSessions: React.Dispatch<React.SetStateAction<SessionInfo[]>>,
+) {
+  try {
+    await revokeSession(sessionId);
+    setSessions((prev) => prev.filter((s) => s.sessionId !== sessionId));
+  } catch {
+    // silently fail
+  }
+}
+
+async function handleRevokeAllOtherSessionsModule(
+  revokeOtherSessions: () => Promise<void>,
+  currentSessionId: string | undefined,
+  setSessions: React.Dispatch<React.SetStateAction<SessionInfo[]>>,
+) {
+  try {
+    await revokeOtherSessions();
+    setSessions((prev) =>
+      prev.filter((s) => s.sessionId === currentSessionId),
+    );
+  } catch {
+    // silently fail
+  }
+}
+
 export function FreePageView() {
   const { user, loading } = useAuth();
   const t = useMessages("settings");
@@ -40,25 +68,15 @@ export function FreePageView() {
     })();
   }, [user]);
 
-  const handleRevokeSession = useCallback(async (sessionId: string) => {
-    try {
-      await revokeSession(sessionId);
-      setSessions((prev) => prev.filter((s) => s.sessionId !== sessionId));
-    } catch {
-      // silently fail
-    }
-  }, [revokeSession]);
+  const handleRevokeSession = useCallback(
+    (sessionId: string) => handleRevokeSessionModule(sessionId, revokeSession, setSessions),
+    [revokeSession],
+  );
 
-  const handleRevokeAllOtherSessions = useCallback(async () => {
-    try {
-      await revokeOtherSessions();
-      setSessions((prev) =>
-        prev.filter((s) => s.sessionId === user?.sessionId),
-      );
-    } catch {
-      // silently fail
-    }
-  }, [revokeOtherSessions, user?.sessionId]);
+  const handleRevokeAllOtherSessions = useCallback(
+    () => handleRevokeAllOtherSessionsModule(revokeOtherSessions, user?.sessionId, setSessions),
+    [revokeOtherSessions, user?.sessionId],
+  );
 
   if (loading) return <LoadingAuth />;
   if (!user)

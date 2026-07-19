@@ -87,6 +87,10 @@ export const MESSAGES_CONVERSATION_MESSAGES_PREFIX =
   "/api/messages/conversations/" as const;
 export const MESSAGES_ROOM_MESSAGES_PREFIX = "/api/messages/rooms/" as const;
 export const MESSAGES_UNREAD_COUNT_URL = "/api/messages/unread-count" as const;
+export const CSRF_TOKEN_BACKEND_URL = "/csrf/token" as const;
+export const GQL_BACKEND_PATH = "/graphql" as const;
+export const VAULT_SECRET_PATH = "secret/data/secret/production/frontend" as const;
+
 export const NOTIFICATIONS_URL = "/api/notifications" as const;
 export const NOTIFICATIONS_UNREAD_COUNT_URL =
   "/api/notifications/unread-count" as const;

@@ -34,6 +34,7 @@ export { I18nPageFallback } from "./app/i18n/[lang]/I18nPageFallback";
 export { RequestMemoizationFallback } from "./app/(demos)/request-memoization/RequestMemoizationFallback";
 export { SearchParamsServerFallback } from "./app/(demos)/search-params/SearchParamsServerFallback";
 export { SearchParamsClientFallback } from "./app/(demos)/search-params/SearchParamsClientFallback";
+export { LazyLoadingFallback } from "./app/(demos)/lazy-loading/LazyLoadingFallback";
 export { CookieStatusFallback } from "./app/(demos)/ssr-cookies/CookieStatusFallback";
 export { DynamicLoadingFallback } from "./app/(demos)/dynamic/DynamicLoadingFallback";
 export { FeedLoadingFallback } from "./app/v1/[lang]/feed/FeedLoadingFallback";

@@ -1,3 +1,6 @@
+import { z } from "zod";
+import { profileSchema } from "./profile";
+
 export const profileDefaultValues = {
   avatar: [] as {
     id: string
@@ -19,7 +22,7 @@ export const profileDefaultValues = {
   birthDate: undefined as Date | undefined,
   meetingTime: { hours: 0, minutes: 0, seconds: 0 },
   notificationPrefs: { email: true, push: false, sms: false },
-}
+} satisfies z.input<typeof profileSchema>;
 
 type ProfileFormValues = typeof profileDefaultValues;
 

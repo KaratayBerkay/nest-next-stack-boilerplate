@@ -8,7 +8,7 @@ import { formOptions } from "@tanstack/react-form";
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
 import type { ReactNode } from "react";
-import { z } from "zod";
+import type { z } from "zod";
 import { filtersSchema } from "@/validators/forms/filters";
 
 function FilterSection({ label, children }: { label: string; children: ReactNode }) {
@@ -38,9 +38,7 @@ const ALLOWED_SORT = ["relevance", "date", "name"];
 const ALLOWED_PAGE_SIZES = ["10", "25", "50"];
 const ALLOWED_STATUSES = ["", "active", "pending", "archived"];
 
-interface FiltersPageProps {
-  initialSearchParams: Record<string, string | string[] | undefined>;
-}
+import type { FiltersPageProps } from "@/types/forms/FiltersPage-types";
 
 export default function FiltersPage({ initialSearchParams }: FiltersPageProps) {
   const t = useMessages("forms");

@@ -1,6 +1,4 @@
-import type React from "react";
+import type { GlobalVariant } from "@/components/ui/global-style-variants";
+import type { PopoverContentProps } from "@/types/ui/Popover-types";
 
-export interface PopoverContentProps extends React.ComponentPropsWithoutRef<"div"> {
-  align?: "start" | "end";
-  sideOffset?: number;
-}
+export type PopoverContentLocalProps = Omit<PopoverContentProps, "variant"> & { variant?: GlobalVariant };

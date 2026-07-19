@@ -6,7 +6,7 @@ import { resolveVariant } from "@/lib/resolve-variant";
 import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { useFieldMessages } from "@/components/ui/field-messages";
-import type { TimeInputProps, TimeInputVariant } from "@/types/ui/TimeInput-types";
+import type { TimeInputProps, TimeInputVariant, TimeUnitSelectProps } from "@/types/ui/TimeInput-types";
 
 function pad(n: number): string {
   return n.toString().padStart(2, "0");
@@ -27,18 +27,6 @@ function formatHour(h: number, use24Hour: boolean): string {
   const period = h >= 12 ? "PM" : "AM";
   const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
   return `${pad(h12)} ${period}`;
-}
-
-interface TimeUnitSelectProps {
-  value: number;
-  max: number;
-  onChange: (val: number) => void;
-  disabled?: boolean;
-  selectClassName?: string;
-  use24Hour?: boolean;
-  isHour?: boolean;
-  describedBy?: string;
-  ariaLabel: string;
 }
 
 function TimeUnitSelect({

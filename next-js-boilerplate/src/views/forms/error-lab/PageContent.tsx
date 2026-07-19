@@ -29,11 +29,85 @@ const NETWORK_OPTIONS = [
   { value: "random", label: "Random (30% fail)" },
 ];
 
-interface Props {
+import type { ErrorLabPageProps } from "@/types/forms/ErrorLabPage-types";
+
+async function handleTriggerErrorLab(deps: {
+  selectedScenario: string;
+  locale: string;
+  network: string;
+  simulateError: (id: string, opts?: { delayMs?: number; failRate?: number }) => Promise<ExceptionResponse>;
+  toast: ReturnType<typeof useToast>["toast"];
+  allMessages: Record<string, unknown>;
   errorMessagesByLocale: Record<string, Record<string, unknown>>;
+  setResult: React.Dispatch<React.SetStateAction<ExceptionResponse | ClientException | null>>;
+  setFormError: React.Dispatch<React.SetStateAction<string | null>>;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
+  deps.setResult(null);
+  deps.setFormError(null);
+
+  if (deps.network === "offline") {
+    const { clientException } = await import("@/lib/exception-handler");
+    const exc = clientException("EX_WS_UNSTABLE", "You are offline", "forms.errors.connectionUnstable");
+    deps.setResult(exc);
+    const surface = getSurface(exc.exc);
+    if (surface === "toast") {
+      deps.toast({ description: exceptionHandler(exc, deps.allMessages), variant: "destructive" });
+    } else if (surface === "form-field") {
+      const t = deps.errorMessagesByLocale[deps.locale];
+      deps.setFormError(exceptionHandler(exc, t));
+    }
+    return;
+  }
+
+  if (deps.network === "timeout") {
+    deps.setLoading(true);
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      await deps.simulateError(deps.selectedScenario, { delayMs: 6000 });
+      clearTimeout(timeoutId);
+    } catch {
+      const { clientException } = await import("@/lib/exception-handler");
+      const exc = clientException("EX_INTERNAL", "Request timed out", "forms.errors.unknown");
+      deps.setResult(exc);
+      deps.toast({ description: "Request timed out", variant: "destructive" });
+    } finally {
+      deps.setLoading(false);
+    }
+    return;
+  }
+
+  deps.setLoading(true);
+  try {
+    const parsed = ERROR_SCENARIOS.find((s) => s.id === deps.selectedScenario)!;
+    const delayMs = deps.network === "delayed" ? 800 : 0;
+    const failRate = deps.network === "random" ? 0.3 : 1;
+    const res = await deps.simulateError(parsed.id, { delayMs, failRate });
+    deps.setResult(res);
+    const surface = getSurface(res.exc);
+    const t = deps.errorMessagesByLocale[deps.locale] ?? deps.allMessages;
+    if (surface === "toast") {
+      deps.toast({ description: exceptionHandler(res, t), variant: "destructive" });
+    } else if (surface === "form-field") {
+      const { form } = exceptionToFormErrors(res, t);
+      deps.setFormError(form);
+    } else {
+      deps.setFormError(exceptionHandler(res, t));
+    }
+  } catch (err) {
+    const exc = (err as { exception?: ExceptionResponse }).exception;
+    if (exc) {
+      deps.setResult(exc);
+      const t = deps.errorMessagesByLocale[deps.locale] ?? deps.allMessages;
+      deps.toast({ description: exceptionHandler(exc, t), variant: "destructive" });
+    }
+  } finally {
+    deps.setLoading(false);
+  }
 }
 
-export default function ErrorLabPage({ errorMessagesByLocale }: Props) {
+export default function ErrorLabPage({ errorMessagesByLocale }: ErrorLabPageProps) {
   const [selectedScenario, setSelectedScenario] = useState(ERROR_SCENARIOS[0].id);
   const [locale, setLocale] = useState<"en" | "tr">("en");
   const [network, setNetwork] = useState("instant");
@@ -45,70 +119,13 @@ export default function ErrorLabPage({ errorMessagesByLocale }: Props) {
   const { simulateError } = useFormsDemoActions();
   const allMessages = useAllMessages();
 
-  const handleTrigger = useCallback(async () => {
-    setResult(null);
-    setFormError(null);
-
-    if (network === "offline") {
-      const { clientException } = await import("@/lib/exception-handler");
-      const exc = clientException("EX_WS_UNSTABLE", "You are offline", "forms.errors.connectionUnstable");
-      setResult(exc);
-      const surface = getSurface(exc.exc);
-      if (surface === "toast") {
-        toast({ description: exceptionHandler(exc, allMessages), variant: "destructive" });
-      } else if (surface === "form-field") {
-        const t = errorMessagesByLocale[locale];
-        setFormError(exceptionHandler(exc, t));
-      }
-      return;
-    }
-
-    if (network === "timeout") {
-      setLoading(true);
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        await simulateError(selectedScenario, { delayMs: 6000 });
-        clearTimeout(timeoutId);
-      } catch {
-        const { clientException } = await import("@/lib/exception-handler");
-        const exc = clientException("EX_INTERNAL", "Request timed out", "forms.errors.unknown");
-        setResult(exc);
-        toast({ description: "Request timed out", variant: "destructive" });
-      } finally {
-        setLoading(false);
-      }
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const parsed = ERROR_SCENARIOS.find((s) => s.id === selectedScenario)!;
-      const delayMs = network === "delayed" ? 800 : 0;
-      const failRate = network === "random" ? 0.3 : 1;
-      const res = await simulateError(parsed.id, { delayMs, failRate });
-      setResult(res);
-      const surface = getSurface(res.exc);
-      const t = errorMessagesByLocale[locale] ?? allMessages;
-      if (surface === "toast") {
-        toast({ description: exceptionHandler(res, t), variant: "destructive" });
-      } else if (surface === "form-field") {
-        const { form } = exceptionToFormErrors(res, t);
-        setFormError(form);
-      } else {
-        setFormError(exceptionHandler(res, t));
-      }
-    } catch (err) {
-      const exc = (err as { exception?: ExceptionResponse }).exception;
-      if (exc) {
-        setResult(exc);
-        const t = errorMessagesByLocale[locale] ?? allMessages;
-        toast({ description: exceptionHandler(exc, t), variant: "destructive" });
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedScenario, locale, network, simulateError, toast, allMessages, errorMessagesByLocale]);
+  const handleTrigger = useCallback(
+    () => handleTriggerErrorLab({
+      selectedScenario, locale, network, simulateError, toast, allMessages, errorMessagesByLocale,
+      setResult, setFormError, setLoading,
+    }),
+    [selectedScenario, locale, network, simulateError, toast, allMessages, errorMessagesByLocale],
+  );
 
   const surfaceGroups = GROUPS.map((g) => ({
     ...g,

@@ -12,6 +12,10 @@ import {
   bearerAuthHeader,
 } from "@/constants";
 import {
+  CSRF_TOKEN_BACKEND_URL,
+  GQL_BACKEND_PATH,
+} from "@/constants/api/urls";
+import {
   DEVICE_TOKEN_COOKIE,
   RBAC_TOKEN_COOKIE,
   USER_TOKEN_COOKIE,
@@ -173,7 +177,7 @@ export async function csrfEchoHeaders(): Promise<Record<
     };
   }
 
-  const csrfRes = await backendFetch<{ token: string }>("/csrf/token");
+  const csrfRes = await backendFetch<{ token: string }>(CSRF_TOKEN_BACKEND_URL);
   const csrfToken = csrfRes.data?.token;
   if (!csrfToken) {
     return null;
@@ -249,7 +253,7 @@ export async function graphqlFetch<T>(
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
 
-  const url = `${backendBaseUrl()}/graphql`;
+  const url = `${backendBaseUrl()}${GQL_BACKEND_PATH}`;
   const res = await fetch(url, {
     method: POST,
     next: { revalidate: 60 },

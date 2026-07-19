@@ -1,4 +1,13 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+import type { ReactNode } from "react";
+
+type FormLevelErrorState = { errorMap: { onSubmit?: unknown } };
+
 export interface FormLevelErrorProps {
-  form: any;
+  form: {
+    Subscribe: (props: {
+      selector: (state: FormLevelErrorState) => unknown;
+      children: (error: unknown) => ReactNode;
+    }) => ReactNode | Promise<ReactNode>;
+    setErrorMap: (errorMap: { onSubmit: undefined }) => void;
+  };
 }

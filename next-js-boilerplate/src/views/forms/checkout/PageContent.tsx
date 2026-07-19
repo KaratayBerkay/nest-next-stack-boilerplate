@@ -9,13 +9,14 @@ import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
 import { Switch } from "@/components/ui/Switch";
 import { Label } from "@/components/ui/Label";
+import { FormLevelError } from "@/components/ui/FormLevelError";
 import { checkoutSchema } from "@/validators/forms/checkout";
 import { checkoutDefaultValues, addressDefaults } from "@/validators/forms/checkout-inits";
 import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
 import { getSurface, exceptionHandler } from "@/lib/exception-handler";
 import { exceptionToFormErrors } from "@/lib/forms/exception-to-form-errors";
 import type { ExceptionResponse } from "@/lib/api-client";
-import { z } from "zod";
+import type { z } from "zod";
 
 const ADDRESS_OPTIONS = [
   { value: "us", label: "United States" },
@@ -141,6 +142,8 @@ export default function CheckoutPage() {
       <div>
         <h2 className="text-sm font-semibold">{t.checkoutTab.heading}</h2>
       </div>
+
+      <FormLevelError form={form} />
 
       <form.AppForm>
         <form

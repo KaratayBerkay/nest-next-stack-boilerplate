@@ -1,4 +1,5 @@
 import type { ExceptionResponse } from "@/lib/api-client";
+import { POST } from "@/constants/api/methods";
 
 export interface XhrUploadResult {
   urls?: { badge: string; medium: string; full: string };
@@ -15,7 +16,7 @@ export function xhrUpload(
 ): Promise<XhrUploadResult> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", url);
+    xhr.open(POST, url);
 
     xhr.upload.addEventListener("progress", (e) => {
       if (e.lengthComputable && onProgress) {
