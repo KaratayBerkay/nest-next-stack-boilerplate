@@ -43,7 +43,7 @@
     "load:test": "pnpm load:setup && pnpm load:run"
   },
   "dependencies": {
-    "@apollo/gateway": "^2.14.1",
+    "@apollo/gateway": "^2.14.2",
     "@apollo/server": "^5.5.1",
     "@apollo/subgraph": "^2.14.1",
     "@as-integrations/express5": "^1.1.2",
