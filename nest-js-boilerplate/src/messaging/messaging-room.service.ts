@@ -1,7 +1,10 @@
 import { NotFoundException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
+import Redis from 'ioredis';
 import { PrismaService } from '../prisma/prisma.service';
 import { type RoomMember, initials } from './messaging.types';
+
+const ROOM_MEMBERS_PREFIX = 'room:';
 
 export const CHAT_ROOMS = [
   'general',
@@ -22,11 +25,19 @@ export function isValidRoom(room: string): boolean {
 export class MessagingRoomService {
   private rooms = new Map<string, Map<string, RoomMember>>();
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redis: Redis | null,
+  ) {}
+
+  private redisRoomKey(room: string): string {
+    return `${ROOM_MEMBERS_PREFIX}${room}:members`;
+  }
 
   joinRoom(room: string, member: RoomMember) {
     if (!this.rooms.has(room)) this.rooms.set(room, new Map());
     this.rooms.get(room)!.set(member.socketId, member);
+    void this.redis?.sadd(this.redisRoomKey(room), member.socketId);
     return this.getRoomMembers(room);
   }
 
@@ -36,6 +47,7 @@ export class MessagingRoomService {
       roomMap.delete(socketId);
       if (roomMap.size === 0) this.rooms.delete(room);
     }
+    void this.redis?.srem(this.redisRoomKey(room), socketId);
     return this.getRoomMembers(room);
   }
 
@@ -45,6 +57,7 @@ export class MessagingRoomService {
       if (members.has(socketId)) {
         members.delete(socketId);
         affected.push(room);
+        void this.redis?.srem(this.redisRoomKey(room), socketId);
         if (members.size === 0) this.rooms.delete(room);
       }
     }

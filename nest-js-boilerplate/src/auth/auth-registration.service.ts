@@ -130,8 +130,7 @@ export class AuthRegistrationService {
     });
 
     if (
-      !token ||
-      token.type !== 'EMAIL_VERIFICATION' ||
+      token?.type !== 'EMAIL_VERIFICATION' ||
       token.consumedAt ||
       token.expiresAt < new Date() ||
       !token.userId
@@ -221,8 +220,7 @@ export class AuthRegistrationService {
         where: { tokenHash },
       });
       if (
-        !token ||
-        token.type !== 'PASSWORD_RESET' ||
+        token?.type !== 'PASSWORD_RESET' ||
         token.consumedAt ||
         token.expiresAt < new Date() ||
         !token.userId

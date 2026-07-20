@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nest-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nest-backend
+  template:
+    metadata:
+      labels:
+        app: nest-backend
+    spec:
+      containers:
+        - name: app
+          image: nest-backend:latest
+          ports:
+            - containerPort: 3000
+            - containerPort: 5050
+          envFrom:
+            - configMapRef:
+                name: backend-config
+            - secretRef:
+                name: backend-secrets
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: nest-backend-pdb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: nest-backend

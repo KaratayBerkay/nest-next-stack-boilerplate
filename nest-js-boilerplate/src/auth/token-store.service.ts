@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { CryptoService } from '../common/crypto/crypto.service';
+import { parseDurationToSeconds } from '../common/utils/parse-duration';
 import { REDIS_CLIENT } from '../redis/redis.module';
 import type { SessionUser, SessionUserInput } from './auth.types';
 
@@ -30,20 +31,7 @@ export class TokenStoreService {
     private readonly config: ConfigService,
   ) {
     const raw = this.config.get<string>('SESSION_TTL', '900s');
-    const match = raw.match(/^(\d+)([smhd])$/);
-    if (!match) {
-      this.ttl = 900;
-    } else {
-      const num = Number(match[1]);
-      const unit = match[2];
-      const multipliers: Record<string, number> = {
-        s: 1,
-        m: 60,
-        h: 3600,
-        d: 86400,
-      };
-      this.ttl = num * (multipliers[unit] ?? 1);
-    }
+    this.ttl = parseDurationToSeconds(raw);
   }
 
   buildKey(

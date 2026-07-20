@@ -487,7 +487,7 @@ model Organization {
   name              String
   slug              String       @unique
   ownerId           String       @db.Uuid
-  owner             User         @relation("OrgOwner", fields: [ownerId], references: [id])
+  owner             User         @relation("OrgOwner", fields: [ownerId], references: [id], onDelete: Restrict)
   plan              String       @default("free")
   seatLimit         Int          @default(5)
   storageQuotaBytes BigInt       @default(1073741824)
@@ -566,7 +566,7 @@ model Project {
   leadId         String?       @db.Uuid
   lead           User?         @relation("ProjectLead", fields: [leadId], references: [id], onDelete: SetNull)
   createdById    String        @db.Uuid
-  createdBy      User          @relation("ProjectCreator", fields: [createdById], references: [id])
+  createdBy      User          @relation("ProjectCreator", fields: [createdById], references: [id], onDelete: Restrict)
   budget         Decimal?      @db.Decimal(14, 2)
   startDate      DateTime?     @db.Date
   dueDate        DateTime?     @db.Date
@@ -598,7 +598,7 @@ model Task {
   reporterId  String? @db.Uuid
   reporter    User?   @relation("TaskReporter", fields: [reporterId], references: [id], onDelete: SetNull)
   createdById String  @db.Uuid
-  createdBy   User    @relation("TaskCreator", fields: [createdById], references: [id])
+  createdBy   User    @relation("TaskCreator", fields: [createdById], references: [id], onDelete: Restrict)
 
   // self-relation: subtasks
   parentTaskId String? @db.Uuid
@@ -713,6 +713,7 @@ model Reaction {
   @@unique([userId, postId, commentId])
   @@index([postId])
   @@index([commentId])
+  @@index([userId, type])
 }
 
 // ---------------------------------------------------------------------------
@@ -728,6 +729,7 @@ model Follow {
 
   @@unique([followerId, followingId])
   @@index([followingId])
+  @@index([followerId, createdAt])
 }
 
 model Friendship {
@@ -903,4 +905,5 @@ model OutboxEvent {
   @@index([status, availableAt])
   @@index([aggregateType, aggregateId])
   @@index([status, updatedAt])
+  @@index([createdAt])
 }

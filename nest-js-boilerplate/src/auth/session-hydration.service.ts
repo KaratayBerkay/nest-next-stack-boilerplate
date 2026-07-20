@@ -12,7 +12,8 @@ export class SessionHydrationService {
 
   /**
    * Gather runtime snapshot data for a user at token-issue time (cold path).
-   * These fields serve the zero-PG hot path from the Redis value.
+   * Fetches related counts in a single user query + friends query to minimize
+   * round-trips.
    */
   async hydrate(user: {
     id: string;
@@ -22,21 +23,20 @@ export class SessionHydrationService {
     locale: string;
     timezone: string;
   }): Promise<Partial<SessionUserInput>> {
-    const [friendIds, unreadCount, memberships, teamMemberships] =
-      await Promise.all([
-        this.friends.getFriendIds(user.id),
-        this.prisma.notification.count({
-          where: { userId: user.id, readAt: null },
-        }),
-        this.prisma.membership.findMany({
-          where: { userId: user.id, status: 'ACTIVE' },
-          select: { organizationId: true },
-        }),
-        this.prisma.teamMember.findMany({
-          where: { userId: user.id },
-          select: { teamId: true },
-        }),
-      ]);
+    const [friendIds, userAgg] = await Promise.all([
+      this.friends.getFriendIds(user.id),
+      this.prisma.user.findUnique({
+        where: { id: user.id },
+        select: {
+          _count: { select: { notifications: { where: { readAt: null } } } },
+          memberships: {
+            where: { status: 'ACTIVE' },
+            select: { organizationId: true },
+          },
+          teamMemberships: { select: { teamId: true } },
+        },
+      }),
+    ]);
 
     return {
       name: user.name ?? '',
@@ -45,9 +45,9 @@ export class SessionHydrationService {
       locale: user.locale ?? 'en',
       timezone: user.timezone ?? 'UTC',
       friends: friendIds,
-      unread: unreadCount,
-      orgIds: memberships.map((m) => m.organizationId),
-      teamIds: teamMemberships.map((tm) => tm.teamId),
+      unread: userAgg?._count.notifications ?? 0,
+      orgIds: userAgg?.memberships.map((m) => m.organizationId) ?? [],
+      teamIds: userAgg?.teamMemberships.map((tm) => tm.teamId) ?? [],
     };
   }
 }

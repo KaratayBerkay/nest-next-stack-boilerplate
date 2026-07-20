@@ -250,13 +250,16 @@ export class BillingService {
     });
     if (!user) return null;
 
-    const priceCents =
-      {
-        FREE: 0,
-        BASIC: 999,
-        MEDIUM: 1999,
-        PREMIUM: 4999,
-      }[user.subscriptionTier] ?? 0;
+    const priceCents = Number(
+      process.env[`PRICE_${user.subscriptionTier}`] ??
+        {
+          FREE: '0',
+          BASIC: '999',
+          MEDIUM: '1999',
+          PREMIUM: '4999',
+        }[user.subscriptionTier] ??
+        0,
+    );
 
     return {
       tier: user.subscriptionTier as SubscriptionTier,

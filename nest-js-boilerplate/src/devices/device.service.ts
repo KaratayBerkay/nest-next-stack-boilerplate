@@ -88,7 +88,7 @@ export class DeviceService {
 
     let device: { id: string; token: string };
 
-    if (existing && existing.userId === userId) {
+    if (existing?.userId === userId) {
       // Reuse — do NOT rotate the token, just update metadata.
       device = await this.prisma.device.update({
         where: { id: existing.id },

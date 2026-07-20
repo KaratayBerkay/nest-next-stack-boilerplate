@@ -29,11 +29,7 @@ export default async function FeedPage() {
       cursor: undefined,
       take: PAGE_SIZE,
       search: undefined,
-    }).catch(() => ({
-      data: undefined,
-      errors: undefined,
-      headers: new Headers(),
-    })),
+    }),
   ]);
 
   const all = feedRes.data?.postList ?? [];

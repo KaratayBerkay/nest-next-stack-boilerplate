@@ -126,7 +126,7 @@ export class ApiKeysService {
 
   async revoke(id: string, userId: string): Promise<void> {
     const key = await this.prisma.apiKey.findUnique({ where: { id } });
-    if (!key || key.userId !== userId) {
+    if (key?.userId !== userId) {
       throw new NotFoundException({
         exc: 'EX_API_KEY_NOT_FOUND',
         msg: 'API key not found',
@@ -148,7 +148,7 @@ export class ApiKeysService {
     data: { name?: string; enabled?: boolean },
   ): Promise<ApiKeyData> {
     const key = await this.prisma.apiKey.findUnique({ where: { id } });
-    if (!key || key.userId !== userId) {
+    if (key?.userId !== userId) {
       throw new NotFoundException({
         exc: 'EX_API_KEY_NOT_FOUND',
         msg: 'API key not found',

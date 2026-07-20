@@ -88,6 +88,18 @@ jobs:
       - name: Format check
         run: pnpm format:check
 
+      - name: Lockfile consistency check
+        run: |
+          for lockfile in pnpm-lock.yaml ../nest-js-boilerplate/pnpm-lock.yaml; do
+            if [ -f "$lockfile" ]; then
+              echo "Checking $lockfile exists and is valid"
+              if ! grep -q "lockfileVersion" "$lockfile" 2>/dev/null; then
+                echo "ERROR: $lockfile appears invalid" >&2
+                exit 1
+              fi
+            fi
+          done
+
       - name: Unit tests
         run: pnpm test
 
@@ -159,8 +171,7 @@ jobs:
       # e2e/standalone.spec.ts's execSync("docker build ...") — that Playwright test fails
       # immediately in any sandbox without a Docker daemon, so this step gives Dockerfile
       # build failures their own signal regardless of whether the Playwright job's runner
-      # has Docker (GitHub-hosted ubuntu-latest runners do) or whether the e2e job's
-      # backend-less setup can even reach the "verify" job's later steps.
+      # has Docker (GitHub-hosted ubuntu-latest runners do).
       - name: Build frontend Docker image
         working-directory: next-js-boilerplate
         run: docker build -t nextjs-frontend-ci .

@@ -22,6 +22,8 @@ describe('MockPaymentProvider', () => {
   });
 
   it('cancelSubscription resolves without error', () => {
-    expect(provider.cancelSubscription('sub_test')).resolves.toBeUndefined();
+    void expect(
+      provider.cancelSubscription('sub_test'),
+    ).resolves.toBeUndefined();
   });
 });

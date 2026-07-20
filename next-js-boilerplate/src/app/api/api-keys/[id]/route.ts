@@ -2,20 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
 import { csrfEchoHeaders, graphqlFetch, graphqlErrorBody } from "@/lib/backend";
-
-const REVOKE_API_KEY_MUTATION = `
-  mutation RevokeApiKey($id: String!) {
-    revokeApiKey(id: $id)
-  }
-`;
-
-const UPDATE_API_KEY_MUTATION = `
-  mutation UpdateApiKey($id: String!, $name: String, $enabled: Boolean) {
-    updateApiKey(id: $id, name: $name, enabled: $enabled) {
-      id  name  keyPrefix  createdAt  lastUsedAt  expiresAt  enabled  role  tier
-    }
-  }
-`;
+import { REVOKE_API_KEY_MUTATION, UPDATE_API_KEY_MUTATION } from "@/lib/graphql/api-keys";
 
 export async function DELETE(
   _req: Request,

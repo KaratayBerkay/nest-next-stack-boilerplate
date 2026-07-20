@@ -13,7 +13,7 @@ export class PassportAuthService {
   // `Promise<any>`; under strict mode we return a concrete `PassportUser | null` instead.
   validateUser(username: string, pass: string): PassportUser | null {
     const user = this.usersService.findOne(username);
-    if (user && user.password === pass) {
+    if (user?.password === pass) {
       const { password: _password, ...result } = user;
       return result;
     }

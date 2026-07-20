@@ -240,8 +240,8 @@ export class MessagingFriendService {
           where: { id: existing.id },
           data: { status: 'ACCEPTED' },
         });
-        this.refreshFriendIds(requesterId);
-        this.refreshFriendIds(addresseeId);
+        void this.refreshFriendIds(requesterId);
+        void this.refreshFriendIds(addresseeId);
         this.notifyFriendEvent(
           addresseeId,
           requesterId,
@@ -301,18 +301,18 @@ export class MessagingFriendService {
         },
       },
     });
-    if (reverseReq && reverseReq.status === 'PENDING')
+    if (reverseReq?.status === 'PENDING')
       await this.prisma.friendship.update({
         where: { id: reverseReq.id },
         data: { status: 'ACCEPTED' },
       });
 
-    this.refreshFriendIds(requesterId);
-    this.refreshFriendIds(userId);
-    this.cache.del(`friends:${requesterId}:`);
-    this.cache.del(`friends:${userId}:`);
-    this.cache.del(`conversations:${requesterId}`);
-    this.cache.del(`conversations:${userId}`);
+    void this.refreshFriendIds(requesterId);
+    void this.refreshFriendIds(userId);
+    void this.cache.del(`friends:${requesterId}:`);
+    void this.cache.del(`friends:${userId}:`);
+    void this.cache.del(`conversations:${requesterId}`);
+    void this.cache.del(`conversations:${userId}`);
     this.notifyFriendEvent(
       requesterId,
       userId,
@@ -341,7 +341,7 @@ export class MessagingFriendService {
         },
       },
     });
-    if (reverseReq && reverseReq.status === 'PENDING')
+    if (reverseReq?.status === 'PENDING')
       await this.prisma.friendship.update({
         where: { id: reverseReq.id },
         data: { status: 'DECLINED' },

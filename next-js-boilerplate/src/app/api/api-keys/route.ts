@@ -2,23 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
 import { csrfEchoHeaders, graphqlFetch, graphqlErrorBody } from "@/lib/backend";
-
-const MY_API_KEYS_QUERY = `
-  query MyApiKeys {
-    myApiKeys {
-      id  name  keyPrefix  createdAt  lastUsedAt  expiresAt  enabled  role  tier
-    }
-  }
-`;
-
-const CREATE_API_KEY_MUTATION = `
-  mutation CreateApiKey($name: String!, $expiresInDays: Int) {
-    createApiKey(name: $name, expiresInDays: $expiresInDays) {
-      fullKey
-      key { id  name  keyPrefix  createdAt  expiresAt  enabled  role  tier }
-    }
-  }
-`;
+import { MY_API_KEYS_QUERY, CREATE_API_KEY_MUTATION } from "@/lib/graphql/api-keys";
 
 export async function GET() {
   const accessToken = (await cookies()).get(ACCESS_TOKEN_COOKIE)?.value;

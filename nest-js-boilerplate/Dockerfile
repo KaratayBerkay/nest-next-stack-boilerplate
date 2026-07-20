@@ -8,13 +8,9 @@ RUN corepack enable
 WORKDIR /app
 
 FROM base AS builder
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends python3 make g++ \
-  && rm -rf /var/lib/apt/lists/*
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY prisma ./prisma
 COPY prisma.config.ts ./
-RUN mkdir -p src
 ARG DATABASE_URL=postgresql://build:build@localhost:5432/build?schema=public
 ENV CI=true
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile

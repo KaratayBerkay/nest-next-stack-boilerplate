@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import Redis from 'ioredis';
 import { PrismaService } from '../prisma/prisma.service';
 import { FriendsService } from '../friends/friends.service';
 import { TokenStoreService } from '../auth/token-store.service';
@@ -6,6 +7,7 @@ import { NotificationService } from '../notification/notification.service';
 import { CacheAsideService } from '../caching/cache-aside.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { PushNotificationService } from '../push-notification/push-notification.service';
+import { REDIS_CLIENT } from '../redis/redis.tokens';
 import { MessagingRoomService } from './messaging-room.service';
 import { MessagingDmService } from './messaging-dm.service';
 import { MessagingFriendService } from './messaging-friend.service';
@@ -25,8 +27,9 @@ export class MessagingService {
     notifications: NotificationService,
     realtime: RealtimeGateway,
     push: PushNotificationService,
+    @Inject(REDIS_CLIENT) redis: Redis,
   ) {
-    this.rooms = new MessagingRoomService(prisma);
+    this.rooms = new MessagingRoomService(prisma, redis);
     this.dm = new MessagingDmService(prisma, cache, realtime, push);
     this.friends = new MessagingFriendService(
       prisma,

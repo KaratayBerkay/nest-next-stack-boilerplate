@@ -5,7 +5,7 @@
   "description": "NestJS + Next.js production boilerplate stack",
   "packageManager": "pnpm@11.10.0+sha512.0b7f8b98060031904c017e3a41eb187a16d40eeb829b95c4f8cb03681761fc4ab53dd219115b9b447f4dce1a05a214764461e7d3703392a9f32f9511ce8c86c8",
   "engines": {
-    "node": ">=20",
+    "node": ">=24",
     "pnpm": ">=11"
   },
   "scripts": {
@@ -19,9 +19,20 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,json,css,md}\"",
     "docker:up": "docker compose --profile all up -d --build",
     "docker:down": "docker compose down",
+    "prepare": "husky",
     "docker:logs": "docker compose logs -f"
   },
   "devDependencies": {
+    "husky": "^9.1.7",
     "prettier": "^3.4.2"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,mjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,css,md}": [
+      "prettier --write"
+    ]
   }
 }

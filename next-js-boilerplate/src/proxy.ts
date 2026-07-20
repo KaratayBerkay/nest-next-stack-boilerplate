@@ -17,6 +17,9 @@ const LANG_COOKIE_OPTS = {
   sameSite: "lax" as const,
 };
 
+const ASSET_HOST =
+  process.env.NEXT_PUBLIC_ASSET_HOST ?? "https://minio.eys.gen.tr";
+
 /**
  * Builds a strict, nonce-based Content-Security-Policy (per the Next.js CSP guide).
  * `'strict-dynamic'` + a per-request nonce means only the scripts Next.js tags with
@@ -28,7 +31,7 @@ function buildCsp(nonce: string): string {
     default-src 'self';
     script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""};
     style-src 'self' ${isDev ? "'unsafe-inline'" : `'nonce-${nonce}'`};
-    img-src 'self' blob: data: https://minio.eys.gen.tr;
+    img-src 'self' blob: data: ${ASSET_HOST};
     font-src 'self';
     object-src 'none';
     base-uri 'self';
@@ -53,12 +56,19 @@ function withRequestId(res: NextResponse, requestId: string): NextResponse {
   return res;
 }
 
+const REQUEST_ID_RE = /^[A-Za-z0-9._-]{1,128}$/;
+
+function parseRequestId(request: NextRequest): string {
+  const raw =
+    request.headers.get(REQUEST_ID_HEADER) ??
+    request.headers.get(CORRELATION_ID_HEADER);
+  if (raw && REQUEST_ID_RE.test(raw)) return raw;
+  return crypto.randomUUID();
+}
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const requestId =
-    request.headers.get(REQUEST_ID_HEADER) ??
-    request.headers.get(CORRELATION_ID_HEADER) ??
-    crypto.randomUUID();
+  const requestId = parseRequestId(request);
 
   // Legacy redirect: /old-about → /about
   if (pathname === "/old-about") {

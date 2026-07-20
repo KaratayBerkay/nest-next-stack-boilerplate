@@ -1,3 +1,4 @@
+// fallow-ignore-next-line circular-dependency — GraphQL interface/implementation cycle
 import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { Media } from './media.model';
 

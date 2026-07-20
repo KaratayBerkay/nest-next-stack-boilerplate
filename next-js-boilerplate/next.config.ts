@@ -1,3 +1,8 @@
+const HOSTNAMES = (process.env.NEXT_PUBLIC_IMAGE_HOSTNAMES ?? "picsum.photos,localhost")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -23,6 +28,7 @@ const nextConfig: NextConfig = {
           key: "Permissions-Policy",
           value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
         },
+        { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
       ],
     },
   ],
@@ -32,22 +38,13 @@ const nextConfig: NextConfig = {
     },
   },
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "picsum.photos",
-      },
-      {
-        protocol: "https",
-        hostname: "app.eys.gen.tr",
-      },
-      {
-        protocol: "https",
-        hostname: "minio.eys.gen.tr",
-      },
-    ],
+    remotePatterns: HOSTNAMES.map((hostname) => ({
+      protocol: "https",
+      hostname,
+    })),
   },
 };
+
 
 export default (() => {
   if (process.env.ANALYZE === "true") {

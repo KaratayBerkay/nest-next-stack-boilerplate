@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { UsernameService } from './username.service';
 
 const mockFindUnique = jest.fn();

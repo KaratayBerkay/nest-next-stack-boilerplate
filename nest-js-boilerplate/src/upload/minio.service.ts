@@ -58,7 +58,7 @@ export class MinioService implements OnModuleInit {
       }
     } catch (err) {
       this.logger.warn(
-        `Failed to ensure bucket "${this.bucket}": ${err}. Files will not be uploaded to MinIO.`,
+        `Failed to ensure bucket "${this.bucket}": ${String(err)}. Files will not be uploaded to MinIO.`,
       );
     }
   }

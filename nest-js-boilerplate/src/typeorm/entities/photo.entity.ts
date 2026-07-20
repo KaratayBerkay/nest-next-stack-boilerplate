@@ -1,3 +1,4 @@
+// fallow-ignore-next-line circular-dependency — TypeORM bidirectional relation
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { User } from './user.entity';
 

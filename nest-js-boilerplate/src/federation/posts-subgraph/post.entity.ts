@@ -1,3 +1,4 @@
+// fallow-ignore-next-line circular-dependency — Federation subgraph bidirectional ref
 import { Directive, Field, ID, Int, ObjectType } from '@nestjs/graphql';
 import { User } from './user.entity';
 

@@ -181,13 +181,13 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       });
       heartbeatCount++;
       if (heartbeatCount % 4 === 0) {
-        this.safeRedis('refreshPresenceTTL', () =>
+        void this.safeRedis('refreshPresenceTTL', () =>
           this.presence.refreshPresenceTTL(this.pageManager.pageClaims),
         );
       }
     }, 30000);
 
-    this.subscriber.subscribe(RealtimeGateway.WS_CHANNEL, (err) => {
+    void this.subscriber.subscribe(RealtimeGateway.WS_CHANNEL, (err) => {
       if (err) {
         this.logger.warn(
           'Redis pub/sub subscribe failed (multi-replica WS unavailable)',
@@ -246,7 +246,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
 
   onModuleDestroy() {
     if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
-    this.safeRedis('unsubscribe', () =>
+    void this.safeRedis('unsubscribe', () =>
       this.subscriber.unsubscribe(RealtimeGateway.WS_CHANNEL),
     );
     this.wss?.close();
@@ -314,7 +314,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       if (error) {
         this.sendWsError(authWs, 'EX_VALIDATION_FORM', error);
       } else {
-        this.safeRedis('syncPresenceToRedis', () =>
+        void this.safeRedis('syncPresenceToRedis', () =>
           this.presence.syncPresenceToRedis(authWs),
         );
       }
@@ -524,7 +524,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       }
     }
     if (!this.forwardingFromRedis) {
-      this.safeRedis('publish', () =>
+      void this.safeRedis('publish', () =>
         this.redis.publish(
           RealtimeGateway.WS_CHANNEL,
           JSON.stringify({ target: 'emitToUser', userId, frame }),
@@ -558,7 +558,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       }
     }
     if (!this.forwardingFromRedis) {
-      this.safeRedis('publish', () =>
+      void this.safeRedis('publish', () =>
         this.redis.publish(
           RealtimeGateway.WS_CHANNEL,
           JSON.stringify({ target: 'emitToService', userId, service, frame }),
@@ -580,7 +580,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       }
     }
     if (!this.forwardingFromRedis) {
-      this.safeRedis('publish', () =>
+      void this.safeRedis('publish', () =>
         this.redis.publish(
           RealtimeGateway.WS_CHANNEL,
           JSON.stringify({ target: 'emitToTopic', topic, frame }),
@@ -597,7 +597,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
   ): number {
     const local = this.pageManager.emitToPage(userId, pageKey, frame);
     if (!this.forwardingFromRedis) {
-      this.safeRedis('publish', () =>
+      void this.safeRedis('publish', () =>
         this.redis.publish(
           RealtimeGateway.WS_CHANNEL,
           JSON.stringify({
@@ -623,7 +623,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       if (c.readyState === WebSocket.OPEN) c.send(msg);
     });
     if (!this.forwardingFromRedis) {
-      this.safeRedis('publish', () =>
+      void this.safeRedis('publish', () =>
         this.redis.publish(
           RealtimeGateway.WS_CHANNEL,
           JSON.stringify({ target: 'broadcastAll', frame }),
@@ -640,7 +640,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         client.send(msg);
     });
     if (!this.forwardingFromRedis) {
-      this.safeRedis('publish', () =>
+      void this.safeRedis('publish', () =>
         this.redis.publish(
           RealtimeGateway.WS_CHANNEL,
           JSON.stringify({ target: 'broadcastToRoom', room, frame: payload }),

@@ -47,7 +47,7 @@ export class AuthLoginService {
     const email = input.email.toLowerCase();
     const user = await this.prisma.user.findUnique({ where: { email } });
 
-    if (!user || !user.passwordHash) {
+    if (!user?.passwordHash) {
       await verify(this.dummyHash, input.password);
       throw new UnauthorizedException({
         exc: 'EX_AUTH_INVALID_CREDENTIALS',
@@ -150,7 +150,7 @@ export class AuthLoginService {
     const user = await this.prisma.user.findUnique({
       where: { id: challenge.userId },
     });
-    if (!user || !user.mfaEnabled) {
+    if (!user?.mfaEnabled) {
       throw new UnauthorizedException({
         exc: 'EX_AUTH_MFA_NOT_ENABLED',
         msg: 'MFA is not enabled for this account',

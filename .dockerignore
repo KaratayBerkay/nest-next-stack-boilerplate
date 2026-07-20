@@ -7,3 +7,4 @@ next-js-boilerplate/.next
 next-js-boilerplate/coverage
 next-js-boilerplate/e2e
 next-js-boilerplate/.git
+*.tsbuildinfo

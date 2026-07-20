@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { ConfigService } from '@nestjs/config';
 import { CryptoService } from '../common/crypto/crypto.service';
 import { TokenStoreService } from './token-store.service';

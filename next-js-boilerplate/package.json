@@ -21,7 +21,6 @@
     "check-duplicate-messages": "tsx scripts/check-duplicate-messages.ts",
     "fallow-check": "fallow audit --ci --fail-on-issues",
     "fallow-fix": "fallow fix --yes",
-    "prepare": "husky",
     "lighthouse:collect": "lhci collect --config lighthouserc.json",
     "lighthouse:assert": "lhci assert --config lighthouserc.json",
     "lighthouse:upload": "lhci upload --config lighthouserc.json",

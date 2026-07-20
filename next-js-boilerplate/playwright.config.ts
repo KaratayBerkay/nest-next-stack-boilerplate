@@ -5,6 +5,11 @@ import { defineConfig, devices } from "@playwright/test";
 const PORT = Number(process.env.E2E_PORT ?? 3100);
 const baseURL = `http://localhost:${PORT}`;
 const AUTH_STATE = "playwright/.auth/user.json";
+const IS_PROD = process.env.E2E_PROD === "1";
+
+const webServerCommand = IS_PROD
+  ? `node scripts/check-e2e-env.mjs && pnpm exec next build && pnpm exec next start --port ${PORT}`
+  : `node scripts/check-e2e-env.mjs && pnpm exec next dev --port ${PORT}`;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -46,9 +51,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `node scripts/check-e2e-env.mjs && pnpm exec next dev --port ${PORT}`,
+    command: webServerCommand,
     url: baseURL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    reuseExistingServer: !process.env.CI && !IS_PROD,
+    timeout: IS_PROD ? 300_000 : 120_000,
   },
 });
