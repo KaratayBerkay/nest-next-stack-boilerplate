@@ -2,7 +2,8 @@ FROM node:24-bookworm-slim AS base
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && apt-get install -y --no-install-recommends \
+    openssl ca-certificates python3 build-essential \
   && rm -rf /var/lib/apt/lists/*
 RUN corepack enable
 WORKDIR /app

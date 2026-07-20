@@ -10,7 +10,7 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import type { ExceptionCode } from './exception-code';
 import type { ExceptionResponse } from './exception-response.interface';
 
-type ExceptionClass = new (...args: unknown[]) => HttpException;
+type ExceptionClass = new (...args: never[]) => HttpException;
 
 const CLASS_MAP = new Map<ExceptionClass, { exc: ExceptionCode; key: string }>([
   [ConflictException, { exc: 'EX_CONFLICT_DUPLICATE', key: 'error.conflict' }],

@@ -1,5 +1,5 @@
 import { Args, Int, Query, Resolver } from '@nestjs/graphql';
-import { ComplexityEstimatorArgs } from 'graphql-query-complexity';
+import type { ComplexityEstimatorArgs } from '@nestjs/graphql';
 import { Item } from './models/item.model';
 
 @Resolver()

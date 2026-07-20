@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { hash } from '@node-rs/argon2';
-import { User } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CryptoService } from '../common/crypto/crypto.service';
 import { OutboxService } from '../outbox/outbox.service';
@@ -170,7 +170,7 @@ export class AuthRegistrationService {
   private async issuePasswordResetToken(
     userId: string,
     email: string,
-    tx: { verificationToken: { create: (data: unknown) => Promise<unknown> } },
+    tx: Prisma.TransactionClient,
   ): Promise<string> {
     const rawToken = this.crypto.randomToken();
     const tokenHash = this.crypto.sha256(rawToken);
