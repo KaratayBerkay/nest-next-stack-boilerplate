@@ -15,12 +15,10 @@ export class SseController {
   @Sse('stream')
   stream(): Observable<MessageEvent> {
     const heartbeat = interval(15_000).pipe(
-      map(
-        (): MessageEvent => ({
-          data: { ping: Date.now() },
-          type: 'heartbeat',
-        }),
-      ),
+      map((): MessageEvent => ({
+        data: { ping: Date.now() },
+        type: 'heartbeat',
+      })),
     );
     // fallow-ignore-next-line security-sink — RxJS merge, not object merge
     return merge(this.events.asObservable(), heartbeat);

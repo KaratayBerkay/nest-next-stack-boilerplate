@@ -183,13 +183,7 @@ export class MessagingController {
     @Body(new ValidationPipe({ transform: true, whitelist: true }))
     body: SendMessageRestDto,
   ) {
-    const message = await this.ms.sendMessage(
-      user.userId,
-      recipientId,
-      body.text,
-    );
-    await this.ms.deliverDirectMessage(message);
-    return message;
+    return this.ms.sendAndDeliverMessage(user.userId, recipientId, body.text);
   }
 
   @Post('messages/read')
@@ -199,40 +193,7 @@ export class MessagingController {
     @Body(new ValidationPipe({ transform: true, whitelist: true }))
     body: MarkReadInput,
   ) {
-    const result = await this.ms.markRead(user.userId, body.userId);
-    // Page content: message-read to sender's messages-page viewers
-    this.realtime.emitToPage(body.userId, 'messages', {
-      type: 'message-read',
-      readerId: user.userId,
-      senderId: body.userId,
-      readAt: result.readAt,
-      peerId: user.userId,
-    });
-    // Chrome: message-read to sender's MESSAGE sockets (tick update).
-    this.realtime.emitToService(body.userId, 'MESSAGE', {
-      type: 'message-read',
-      readerId: user.userId,
-      senderId: body.userId,
-      readAt: result.readAt,
-      peerId: user.userId,
-    });
-    // Chrome: Conversation renew to reader's MESSAGE sockets
-    const peer = await this.ms.getUserDisplay(body.userId);
-    this.realtime.emitToService(user.userId, 'MESSAGE', {
-      renew: 'Messages',
-      type: 'Conversation',
-      conversation: {
-        user: peer,
-        unread: 0,
-      },
-    });
-    // Decrement bell aggregate (T6).
-    const totalDmUnread = await this.ms.getTotalUnreadCount(user.userId);
-    this.realtime.emitToService(user.userId, 'NOTIFICATION', {
-      renew: 'Notifications',
-      type: 'DmCount',
-      value: totalDmUnread,
-    });
+    const result = await this.ms.markConversationRead(user.userId, body.userId);
     this.logger.log(
       `Messages from ${body.userId} marked as read`,
       'MessagingController',

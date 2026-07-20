@@ -69,9 +69,7 @@ export class AuthSessionService {
       });
     }
 
-    const session = await this.tokenStore.findByRefreshSessionId(
-      refreshToken,
-    );
+    const session = await this.tokenStore.findByRefreshSessionId(refreshToken);
     if (!session) {
       throw new UnauthorizedException({
         exc: 'EX_AUTH_INVALID_TOKEN',

@@ -164,6 +164,10 @@ export class AuthService {
 
   async refresh(ctx: RequestContext): Promise<AuthPayload> {
     const result = await this.authSession.refresh(ctx);
-    return { accessToken: result.accessToken, refreshToken: result.refreshToken, user: result.user as AuthPayload['user'] };
+    return {
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+      user: result.user as AuthPayload['user'],
+    };
   }
 }

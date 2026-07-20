@@ -78,6 +78,18 @@ export class MessagingService {
     );
   }
 
+  sendAndDeliverMessage(senderId: string, recipientId: string, text: string) {
+    return this.dm.sendAndDeliverMessage(senderId, recipientId, text, (a, b) =>
+      this.friends.areFriends(a, b),
+    );
+  }
+
+  markConversationRead(readerId: string, peerId: string) {
+    return this.dm.markConversationRead(readerId, peerId, (id) =>
+      this.friends.getUserDisplay(id),
+    );
+  }
+
   deliverDirectMessage(
     message: Parameters<MessagingDmService['deliverDirectMessage']>[0],
   ) {

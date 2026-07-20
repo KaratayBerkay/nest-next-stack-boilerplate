@@ -3,7 +3,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { clientEnv } from "@/lib/env";
-import { markMessagesReadServer } from "@/api/server/messages/mark-read";
 import { RealtimeClient, type RealtimeStatus } from "./realtime-client";
 import { cachedFetchTokens, bustTokenCache } from "./token-cache";
 import { openBc, type Cmd } from "./tab-coordinator";
@@ -23,6 +22,8 @@ export function useRealtimeCoordination() {
   const subsRef = useRef<Map<string, Set<FrameHandler>>>(new Map());
   const clientRef = useRef<RealtimeClient | null>(null);
   const channelRef = useRef<BroadcastChannel | null>(null);
+  const tabIdRef = useRef<string>("");
+  if (tabIdRef.current == null) tabIdRef.current = crypto.randomUUID();
   const claimRef = useRef<{
     page: string | null;
     params?: Record<string, string>;
@@ -52,29 +53,6 @@ export function useRealtimeCoordination() {
           } satisfies Cmd);
         }
       });
-      if (frame.type === "direct-message" && userIdRef.current) {
-        const msg = frame.message as Record<string, unknown> & {
-          senderId: string;
-          recipientId: string;
-        };
-        if (
-          msg?.recipientId === userIdRef.current &&
-          msg?.senderId &&
-          queryClient.getQueryData(["messages", msg.senderId])
-        ) {
-          queryClient.setQueryData(["conversations"], (old: unknown) => {
-            const list = (old ?? []) as Record<string, unknown>[];
-            return list.map((c) => {
-              const user = c.user as Record<string, unknown> | undefined;
-              if (user?.id === msg.senderId) {
-                return { ...c, unread: 0 };
-              }
-              return c;
-            });
-          });
-          markMessagesReadServer(msg.senderId).catch(() => {});
-        }
-      }
       const t = frame.type as string;
       const subs = subsRef.current.get(t);
       if (subs) for (const h of subs) h(frame);
@@ -110,7 +88,11 @@ export function useRealtimeCoordination() {
         );
         c.registerServices(["MESSAGE", "NOTIFICATION"]);
         if (claimRef.current) {
-          c.claimPage(claimRef.current.page, claimRef.current.params);
+          c.claimPage(
+            claimRef.current.page,
+            claimRef.current.params,
+            tabIdRef.current,
+          );
         }
         c.connect();
         return c;
@@ -171,8 +153,11 @@ export function useRealtimeCoordination() {
                   const p = m.payload as {
                     page: string | null;
                     params?: Record<string, string>;
+                    tabId?: string;
                   };
-                  client.claimPage(p.page, p.params);
+                  client.claimPage(p.page, p.params, p.tabId);
+                } else if (m.act === "unclaim") {
+                  client.unclaimPage(m.payload as string);
                 }
               }
               break;
@@ -183,7 +168,10 @@ export function useRealtimeCoordination() {
         return () => {
           alive = false;
           bc.removeEventListener("message", onMsg);
-          client?.disconnect();
+          if (client) {
+            client.unclaimPage(tabIdRef.current);
+            client.disconnect();
+          }
           clientRef.current = null;
           bc.close();
           channelRef.current = null;
@@ -197,7 +185,10 @@ export function useRealtimeCoordination() {
 
       return () => {
         alive = false;
-        client?.disconnect();
+        if (client) {
+          client.unclaimPage(tabIdRef.current);
+          client.disconnect();
+        }
         clientRef.current = null;
         if (lockResolveRef.current) {
           lockResolveRef.current();
@@ -222,13 +213,18 @@ export function useRealtimeCoordination() {
     );
     client.registerServices(["MESSAGE", "NOTIFICATION"]);
     if (claimRef.current?.page) {
-      client.claimPage(claimRef.current.page, claimRef.current.params);
+      client.claimPage(
+        claimRef.current.page,
+        claimRef.current.params,
+        tabIdRef.current,
+      );
     }
     clientRef.current = client;
     client.connect();
 
     return () => {
       alive = false;
+      client.unclaimPage(tabIdRef.current);
       client.disconnect();
       clientRef.current = null;
     };
@@ -238,15 +234,14 @@ export function useRealtimeCoordination() {
     if (!token) return;
     const claim = routeToPageClaim(pathname, searchParams);
     claimRef.current = claim;
-    if (!claim.page) return;
 
     if (clientRef.current) {
-      clientRef.current.claimPage(claim.page, claim.params);
+      clientRef.current.claimPage(claim.page, claim.params, tabIdRef.current);
     } else {
       channelRef.current?.postMessage({
         type: "cmd",
         act: "claim",
-        payload: claim,
+        payload: { ...claim, tabId: tabIdRef.current },
       } satisfies Cmd);
     }
   }, [pathname, searchParams, token]);
@@ -328,13 +323,14 @@ export function useRealtimeCoordination() {
   const claimPage = useCallback(
     (page: string | null, params?: Record<string, string>) => {
       claimRef.current = { page, params };
+      const tabId = tabIdRef.current;
       if (clientRef.current) {
-        clientRef.current.claimPage(page, params);
+        clientRef.current.claimPage(page, params, tabId);
       } else {
         channelRef.current?.postMessage({
           type: "cmd",
           act: "claim",
-          payload: { page, params },
+          payload: { page, params, tabId },
         } satisfies Cmd);
       }
     },

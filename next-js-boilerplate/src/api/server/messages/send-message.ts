@@ -6,10 +6,14 @@ import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 export async function sendMessageServer(
   recipientId: string,
   text: string,
-): Promise<void> {
-  await apiFetch(`${MESSAGES_CONVERSATIONS_PREFIX}${recipientId}/messages`, {
-    method: POST,
-    headers: JSON_CONTENT_TYPE_HEADER,
-    body: JSON.stringify({ text }),
-  });
+): Promise<Record<string, unknown>> {
+  const res = await apiFetch(
+    `${MESSAGES_CONVERSATIONS_PREFIX}${recipientId}/messages`,
+    {
+      method: POST,
+      headers: JSON_CONTENT_TYPE_HEADER,
+      body: JSON.stringify({ text }),
+    },
+  );
+  return res.json();
 }

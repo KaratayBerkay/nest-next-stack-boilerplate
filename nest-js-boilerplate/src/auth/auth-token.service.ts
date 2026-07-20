@@ -171,10 +171,7 @@ export class AuthTokenService {
     ctx.req.res?.clearCookie(userCookieName(this.config), clearOpts);
   }
 
-  setRefreshCookie(
-    ctx: RequestContext | undefined,
-    sessionId: string,
-  ): void {
+  setRefreshCookie(ctx: RequestContext | undefined, sessionId: string): void {
     ctx?.req.res?.cookie(
       refreshCookieName(this.config),
       sessionId,
@@ -183,9 +180,7 @@ export class AuthTokenService {
   }
 
   clearRefreshCookie(ctx: RequestContext): void {
-    const { maxAge: _maxAge, ...clearOpts } = refreshCookieOptions(
-      this.config,
-    );
+    const { maxAge: _maxAge, ...clearOpts } = refreshCookieOptions(this.config);
     ctx.req.res?.clearCookie(refreshCookieName(this.config), clearOpts);
   }
 }

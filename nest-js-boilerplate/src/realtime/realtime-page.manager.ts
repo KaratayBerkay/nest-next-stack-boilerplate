@@ -97,10 +97,16 @@ export class RealtimePageManager {
 
   handlePage(
     ws: AuthWs,
-    data: { page: string | null; params?: Record<string, string> },
+    data: {
+      page: string | null;
+      params?: Record<string, string>;
+      tabId?: string;
+    },
   ): string | null {
     if (!ws.userId) return null;
+    if (!ws.tabClaims) ws.tabClaims = new Map();
 
+    const tabId = data.tabId ?? '_default';
     const newPage = data.page;
     const newParams = data.params;
 
@@ -118,18 +124,24 @@ export class RealtimePageManager {
       }
     }
 
-    // Clean up old claim
-    if (ws.page === 'feed') {
+    // Get the previous claim for this tab (if any)
+    const prevClaim = ws.tabClaims.get(tabId);
+    const prevPage = prevClaim?.page ?? null;
+    const prevParams = prevClaim?.params;
+
+    // Clean up old claim's side effects (topic watches, chat-room membership)
+    if (prevPage === 'feed') {
       this.removeFromTopicWatch(ws, 'feed');
-    } else if (ws.page === 'post' && ws.pageParams?.id) {
-      this.removeFromTopicWatch(ws, `post:${ws.pageParams.id}`);
-    } else if (ws.page === 'chat-room' && ws.pageParams?.room) {
+    } else if (prevPage === 'post' && prevParams?.id) {
+      this.removeFromTopicWatch(ws, `post:${prevParams.id}`);
+    } else if (prevPage === 'chat-room' && prevParams?.room) {
       const cb = this.pageLeaveCallbacks.get('chat-room');
-      if (cb) cb(ws, ws.pageParams);
+      if (cb) cb(ws, prevParams);
     }
 
-    if (ws.page) {
-      const oldKey = `page:${this.buildPageKey(ws.page, ws.pageParams)}:${ws.userId}`;
+    // Remove old claim from pageClaims registry
+    if (prevPage) {
+      const oldKey = `page:${this.buildPageKey(prevPage, prevParams)}:${ws.userId}:${tabId}`;
       const oldSockets = this.pageClaims.get(oldKey);
       if (oldSockets) {
         oldSockets.delete(ws);
@@ -137,15 +149,19 @@ export class RealtimePageManager {
       }
     }
 
+    // Update tab claim
+    ws.tabClaims.set(tabId, { page: newPage, params: newParams });
     ws.page = newPage;
     ws.pageParams = newParams;
 
     if (newPage === null) return null;
 
-    const newKey = `page:${this.buildPageKey(newPage, newParams)}:${ws.userId}`;
+    // Register new claim in pageClaims
+    const newKey = `page:${this.buildPageKey(newPage, newParams)}:${ws.userId}:${tabId}`;
     if (!this.pageClaims.has(newKey)) this.pageClaims.set(newKey, new Set());
     this.pageClaims.get(newKey)!.add(ws);
 
+    // Side effects for the new claim
     if (newPage === 'feed') {
       this.addToTopicWatch(ws, 'feed');
     } else if (newPage === 'post' && newParams?.id) {
@@ -158,19 +174,43 @@ export class RealtimePageManager {
     return null;
   }
 
-  cleanupPageClaim(ws: AuthWs): void {
-    if (!ws.userId) return;
-    if (ws.page === 'chat-room' && ws.pageParams?.room) {
-      const cb = this.pageLeaveCallbacks.get('chat-room');
-      if (cb) cb(ws, ws.pageParams);
-    }
-    if (ws.page) {
-      const key = `page:${this.buildPageKey(ws.page, ws.pageParams)}:${ws.userId}`;
-      const sockets = this.pageClaims.get(key);
-      if (sockets) {
-        sockets.delete(ws);
-        if (sockets.size === 0) this.pageClaims.delete(key);
+  cleanupPageClaim(ws: AuthWs, tabId?: string): void {
+    if (!ws.userId || !ws.tabClaims) return;
+
+    if (tabId) {
+      // Remove claim for a specific tab
+      const claim = ws.tabClaims.get(tabId);
+      if (!claim) return;
+      if (claim.page === 'chat-room' && claim.params?.room) {
+        const cb = this.pageLeaveCallbacks.get('chat-room');
+        if (cb) cb(ws, claim.params);
       }
+      if (claim.page) {
+        const key = `page:${this.buildPageKey(claim.page, claim.params)}:${ws.userId}:${tabId}`;
+        const sockets = this.pageClaims.get(key);
+        if (sockets) {
+          sockets.delete(ws);
+          if (sockets.size === 0) this.pageClaims.delete(key);
+        }
+      }
+      ws.tabClaims.delete(tabId);
+    } else {
+      // Remove all claims (connection closing)
+      for (const [tId, claim] of ws.tabClaims) {
+        if (claim.page === 'chat-room' && claim.params?.room) {
+          const cb = this.pageLeaveCallbacks.get('chat-room');
+          if (cb) cb(ws, claim.params);
+        }
+        if (claim.page) {
+          const key = `page:${this.buildPageKey(claim.page, claim.params)}:${ws.userId}:${tId}`;
+          const sockets = this.pageClaims.get(key);
+          if (sockets) {
+            sockets.delete(ws);
+            if (sockets.size === 0) this.pageClaims.delete(key);
+          }
+        }
+      }
+      ws.tabClaims.clear();
     }
   }
 
@@ -179,15 +219,16 @@ export class RealtimePageManager {
     pageKey: string,
     frame: Record<string, unknown>,
   ): number {
-    const key = `page:${pageKey}:${userId}`;
-    const sockets = this.pageClaims.get(key);
-    if (!sockets) return 0;
+    const prefix = `page:${pageKey}:${userId}:`;
     const msg = JSON.stringify(frame);
     let sent = 0;
-    for (const ws of sockets) {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(msg);
-        sent++;
+    for (const [key, sockets] of this.pageClaims) {
+      if (!key.startsWith(prefix)) continue;
+      for (const ws of sockets) {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(msg);
+          sent++;
+        }
       }
     }
     return sent;

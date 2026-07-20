@@ -16,10 +16,8 @@ export { REDIS_CLIENT, REDIS_SUBSCRIBER } from './redis.tokens';
       useFactory: (config: ConfigService) => {
         const host = config.get<string>('REDIS_HOST', 'localhost');
         const port = Number(config.get('REDIS_PORT') ?? 6379);
-        const password =
-          config.get<string>('REDIS_PASSWORD') || undefined;
-        const tls =
-          config.get<string>('REDIS_TLS') === 'true' ? {} : undefined;
+        const password = config.get<string>('REDIS_PASSWORD') || undefined;
+        const tls = config.get<string>('REDIS_TLS') === 'true' ? {} : undefined;
         return new Redis({ host, port, password, tls, lazyConnect: true });
       },
     },
@@ -29,10 +27,8 @@ export { REDIS_CLIENT, REDIS_SUBSCRIBER } from './redis.tokens';
       useFactory: (config: ConfigService, _client: Redis) => {
         const host = config.get<string>('REDIS_HOST', 'localhost');
         const port = Number(config.get('REDIS_PORT') ?? 6379);
-        const password =
-          config.get<string>('REDIS_PASSWORD') || undefined;
-        const tls =
-          config.get<string>('REDIS_TLS') === 'true' ? {} : undefined;
+        const password = config.get<string>('REDIS_PASSWORD') || undefined;
+        const tls = config.get<string>('REDIS_TLS') === 'true' ? {} : undefined;
         const sub = new Redis({ host, port, password, tls, lazyConnect: true });
         return sub;
       },

@@ -16,6 +16,10 @@ export type AuthWs = WebSocket & {
   pendingIp?: string;
   page?: string | null;
   pageParams?: Record<string, string>;
+  tabClaims: Map<
+    string,
+    { page: string | null; params?: Record<string, string> }
+  >;
 };
 
 export interface AuthTokens {

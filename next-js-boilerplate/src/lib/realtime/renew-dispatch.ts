@@ -31,6 +31,9 @@ export function dispatchRenew(
       break;
     }
     case "Messages": {
+      // Sidebar conversation-list updates (lastMessage, lastTime, unread).
+      // Companion to event-dispatch.ts's direct-message handler which patches
+      // the open thread's cache and auto-marks-read for the active conversation.
       if (frame.type === "Conversation") {
         qc.setQueryData(["conversations"], (old: unknown[] | undefined) => {
           const list = (old ?? []) as Record<string, unknown>[];

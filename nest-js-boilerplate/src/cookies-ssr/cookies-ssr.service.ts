@@ -13,7 +13,10 @@ import { TokenStoreService } from '../auth/token-store.service';
 import { accessCookieName, accessCookieOptions } from '../auth/access-cookie';
 import { rbacCookieName, rbacCookieOptions } from '../auth/rbac-cookie';
 import { userCookieName, userCookieOptions } from '../auth/user-cookie';
-import { refreshCookieName, refreshCookieOptions } from '../auth/refresh-cookie';
+import {
+  refreshCookieName,
+  refreshCookieOptions,
+} from '../auth/refresh-cookie';
 import {
   deviceCookieName,
   deviceCookieOptions,

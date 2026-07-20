@@ -85,6 +85,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       const authWs = ws as AuthWs;
       authWs.authenticated = false;
       authWs.isAlive = true;
+      authWs.tabClaims = new Map();
 
       const ip = this.clientIp(req);
       const pending = this.pendingByIp.get(ip) || 0;

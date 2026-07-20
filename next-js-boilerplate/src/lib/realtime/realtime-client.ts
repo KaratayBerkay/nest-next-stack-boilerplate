@@ -1,10 +1,5 @@
 export type RealtimeStatus =
-  | "idle"
-  | "connecting"
-  | "authenticating"
-  | "open"
-  | "backoff"
-  | "down";
+  "idle" | "connecting" | "authenticating" | "open" | "backoff" | "down";
 
 import { AUTH_TOKEN_URL } from "@/constants/api/urls";
 import { GET } from "@/constants/api/methods";
@@ -17,16 +12,17 @@ export class RealtimeClient {
   private sendQueue: Record<string, unknown>[] = [];
   private topicWatches = new Set<string>();
   private registeredServices: string[] = [];
-  private currentClaim: {
-    page: string | null;
-    params?: Record<string, string>;
-  } | null = null;
+  private currentClaims: Map<
+    string,
+    { page: string | null; params?: Record<string, string> }
+  > = new Map();
   private authFailRetries = 0;
   private pendingAuthFail = false;
   private static readonly MAX_AUTH_FAIL_RETRIES = 3;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private backoffTimer: ReturnType<typeof setTimeout> | null = null;
   private destroyed = false;
+  private hasConnectedBefore = false;
   private onlineHandler: (() => void) | null = null;
   private static readonly BACKOFF_BASE_MS = 1000;
   private static readonly BACKOFF_CAP_MS = 30_000;
@@ -136,9 +132,19 @@ export class RealtimeClient {
     this.send({ type: "register", services });
   }
 
-  claimPage(page: string | null, params?: Record<string, string>): void {
-    this.currentClaim = { page, params };
-    this.send({ type: "page", page, params });
+  claimPage(
+    page: string | null,
+    params?: Record<string, string>,
+    tabId?: string,
+  ): void {
+    const id = tabId ?? "_default";
+    this.currentClaims.set(id, { page, params });
+    this.send({ type: "page", page, params, tabId: id });
+  }
+
+  unclaimPage(tabId: string): void {
+    this.currentClaims.delete(tabId);
+    this.send({ type: "page", page: null, tabId });
   }
 
   getStatus(): RealtimeStatus {
@@ -162,20 +168,22 @@ export class RealtimeClient {
   }
 
   private replaySubscriptions(): void {
-    if (this.registeredServices.length > 0) {
+    if (this.hasConnectedBefore && this.registeredServices.length > 0) {
       this.send({ type: "register", services: this.registeredServices });
     }
+    this.hasConnectedBefore = true;
     for (const topic of this.topicWatches) {
       this.send({ type: "watch", topic });
     }
   }
 
   private replayClaim(): void {
-    if (this.currentClaim) {
+    for (const [tabId, claim] of this.currentClaims) {
       this.send({
         type: "page",
-        page: this.currentClaim.page,
-        params: this.currentClaim.params,
+        page: claim.page,
+        params: claim.params,
+        tabId,
       });
     }
   }

@@ -24,8 +24,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/cn";
 import { initials } from "@/lib/initials";
 import { IconX, IconMenu2, IconCrown } from "@tabler/icons-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRoom } from "@/lib/realtime/useRoom";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
+import { trackTempId } from "@/lib/realtime/event-dispatch";
 import { useConnectionState } from "@/hooks/useConnectionState";
 import { ConnectionUnstable } from "@/components/ConnectionUnstable";
 import { ScrollToBottomButton } from "@/components/ui/ScrollToBottomButton";
@@ -87,7 +89,9 @@ function RoomButton({
       <button
         onClick={onSelect}
         className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-          isActive ? "bg-brand text-brand-fg" : "text-muted hover:bg-surface-hover"
+          isActive
+            ? "bg-brand text-brand-fg"
+            : "text-muted hover:bg-surface-hover"
         }`}
       >
         <span className="flex items-center gap-1">
@@ -213,7 +217,7 @@ function SendButton({
       <button
         onClick={onClick}
         disabled={disabled}
-        className="bg-brand rounded-lg px-4 py-2 text-sm text-brand-fg disabled:opacity-50"
+        className="bg-brand text-brand-fg rounded-lg px-4 py-2 text-sm disabled:opacity-50"
       >
         {label}
       </button>
@@ -236,11 +240,37 @@ function chatRoomHandleSend(
   input: string,
   realtime: ReturnType<typeof useRealtime> | null,
   room: string,
+  queryClient: ReturnType<typeof useQueryClient>,
+  user: { id: string; name?: string | null } | null,
   setInput: Dispatch<SetStateAction<string>>,
   scrollToBottom: () => void,
 ) {
   if (!input.trim() || !realtime) return;
   const tempId = `temp-${nowMs()}`;
+
+  if (user?.id) {
+    trackTempId(tempId);
+    queryClient.setQueryData(
+      ["room", room],
+      (old: Record<string, unknown>[] | undefined) => {
+        const msgs = old ?? [];
+        if (msgs.some((m) => (m as Record<string, unknown>).id === tempId))
+          return old;
+        return [
+          ...msgs,
+          {
+            id: tempId,
+            senderId: user.id,
+            senderName: user.name ?? "Unknown",
+            body: input.trim(),
+            createdAt: new Date().toISOString(),
+            pending: true,
+          },
+        ];
+      },
+    );
+  }
+
   realtime.send({
     type: "room-message",
     room,
@@ -275,6 +305,7 @@ function ChatRoomContent({
 }: ChatRoomBaseViewProps) {
   const t = useMessages("chat-room");
   const { user, loading } = useAuth();
+  const queryClient = useQueryClient();
   const router = useRouter();
   const [room, setRoom] = useState<string>(initialRoom);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -295,8 +326,11 @@ function ChatRoomContent({
 
   useEffect(() => {
     if (!realtime) return;
-
     realtime.send({ type: "get-room-counts" });
+  }, [realtime]);
+
+  useEffect(() => {
+    if (!realtime) return;
 
     const unsubCounts = realtime.subscribe(
       "room-counts",
@@ -335,8 +369,17 @@ function ChatRoomContent({
   }, [realtime, room]);
 
   const handleSend = useCallback(
-    () => chatRoomHandleSend(input, realtime, room, setInput, scrollToBottom),
-    [input, realtime, room, scrollToBottom],
+    () =>
+      chatRoomHandleSend(
+        input,
+        realtime,
+        room,
+        queryClient,
+        user,
+        setInput,
+        scrollToBottom,
+      ),
+    [input, realtime, room, queryClient, user, scrollToBottom],
   );
 
   const connectionState = useConnectionState();
@@ -456,7 +499,7 @@ function ChatRoomContent({
                     <div className="relative shrink-0">
                       <Avatar
                         fallback={initials(m.name)}
-                        className="bg-brand h-7 w-7 text-[9px] text-brand-fg"
+                        className="bg-brand text-brand-fg h-7 w-7 text-[9px]"
                       />
                       <span className="border-bg absolute right-0 bottom-0 h-2 w-2 rounded-full border-2 bg-green-500" />
                     </div>
@@ -534,7 +577,7 @@ function ChatRoomContent({
                       <div className="relative shrink-0">
                         <Avatar
                           fallback={initials(msg.senderName)}
-                          className="bg-brand mt-0.5 h-6 w-6 text-[9px] text-brand-fg"
+                          className="bg-brand text-brand-fg mt-0.5 h-6 w-6 text-[9px]"
                         />
                         {onlineUserIds.has(msg.senderId) && (
                           <span className="border-bg bg-success absolute right-0 bottom-0 h-2 w-2 rounded-full border-2" />

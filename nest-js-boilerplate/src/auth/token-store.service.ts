@@ -161,9 +161,7 @@ export class TokenStoreService {
     await pipe.exec();
   }
 
-  async findByRefreshSessionId(
-    sessionId: string,
-  ): Promise<SessionUser | null> {
+  async findByRefreshSessionId(sessionId: string): Promise<SessionUser | null> {
     const refreshKey = `${REFRESH_INDEX_PREFIX}${sessionId}`;
     const key = await this.redis.get(refreshKey);
     if (!key) return null;

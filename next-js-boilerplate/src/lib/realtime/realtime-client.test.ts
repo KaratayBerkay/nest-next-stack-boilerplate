@@ -290,6 +290,7 @@ describe("RealtimeClient", () => {
         type: "page",
         page: "feed",
         params: { tab: "latest" },
+        tabId: "_default",
       });
     });
 
@@ -315,6 +316,7 @@ describe("RealtimeClient", () => {
         type: "page",
         page: "feed",
         params: { tab: "latest" },
+        tabId: "_default",
       });
       vi.useRealTimers();
     });
@@ -333,6 +335,19 @@ describe("RealtimeClient", () => {
             JSON.parse(s).services.includes("notifications"),
         ),
       ).toBe(true);
+    });
+
+    it("does not duplicate register on first connect", () => {
+      const { client } = createClient();
+      client.connect();
+      client.registerServices(["notifications", "chat"]);
+      const ws = MockWebSocket.instances[0];
+      ws.simulateOpen();
+      ws.simulateMessage({ type: "authenticated" });
+      const registers = ws.sent.filter(
+        (s) => JSON.parse(s).type === "register",
+      );
+      expect(registers).toHaveLength(1);
     });
   });
 

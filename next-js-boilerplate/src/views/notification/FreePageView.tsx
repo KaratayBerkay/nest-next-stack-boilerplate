@@ -29,6 +29,7 @@ function navigateToFeed(router: ReturnType<typeof useRouter>, lang: string) {
   router.push(`/v1/${lang}/feed`);
 }
 
+// Notification list kept live by lib/realtime/renew-dispatch.ts (Notifications/Item) — no direct realtime subscription in this file
 function NotificationPageContent() {
   const params = useParams<{ lang: string }>();
   const lang = params?.lang ?? "en";
@@ -169,7 +170,7 @@ function NotificationPageContent() {
                 !n.readAt ? "bg-brand/5" : ""
               }`}
             >
-              <div className="bg-brand flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-brand-fg">
+              <div className="bg-brand text-brand-fg flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold">
                 {n.actor?.name?.charAt(0).toUpperCase() ?? "?"}
               </div>
               <div className="min-w-0 flex-1">

@@ -1,4 +1,11 @@
 import type { useQueryClient } from "@tanstack/react-query";
+import { markMessagesReadServer } from "@/api/server/messages/mark-read";
+
+const sentTempIds = new Set<string>();
+
+export function trackTempId(tempId: string): void {
+  sentTempIds.add(tempId);
+}
 
 export function dispatchEvent(
   qc: ReturnType<typeof useQueryClient>,
@@ -16,11 +23,13 @@ export function dispatchEvent(
     };
     if (!msg?.id) return;
     const peerId = msg.senderId === ownUserId ? msg.recipientId : msg.senderId;
-    if (!qc.getQueryData(["messages", peerId])) return;
+    if (!qc.getQueryData(["messages", peerId])) {
+      qc.invalidateQueries({ queryKey: ["messages", peerId] });
+      return;
+    }
     qc.setQueryData(["messages", peerId], (old: unknown) => {
       const data = old as
-        | { pages: { messages: Record<string, unknown>[] }[] }
-        | undefined;
+        { pages: { messages: Record<string, unknown>[] }[] } | undefined;
       if (!data?.pages?.length) return old;
       const pages = [...data.pages];
       const first = { ...pages[0] };
@@ -32,15 +41,31 @@ export function dispatchEvent(
     if (msg.recipientId === ownUserId && sendFrame) {
       sendFrame({ type: "delivered-ack", messageId: msg.id });
     }
+    // Auto-zero unread + mark read when receiving a DM for the active conversation
+    if (msg.recipientId === ownUserId && msg.senderId) {
+      qc.setQueryData(["conversations"], (old: unknown) => {
+        const list = (old ?? []) as Record<string, unknown>[];
+        return list.map((c) => {
+          const u = c.user as Record<string, unknown> | undefined;
+          if (u?.id === msg.senderId) {
+            return { ...c, unread: 0 };
+          }
+          return c;
+        });
+      });
+      markMessagesReadServer(msg.senderId).catch(() => {});
+    }
   }
 
   if (t === "message-read" && ownUserId) {
     const peerId = (frame.peerId as string) ?? "";
-    if (!qc.getQueryData(["messages", peerId])) return;
+    if (!qc.getQueryData(["messages", peerId])) {
+      qc.invalidateQueries({ queryKey: ["messages", peerId] });
+      return;
+    }
     qc.setQueryData(["messages", peerId], (old: unknown) => {
       const data = old as
-        | { pages: { messages: Record<string, unknown>[] }[] }
-        | undefined;
+        { pages: { messages: Record<string, unknown>[] }[] } | undefined;
       if (!data?.pages?.length) return old;
       const pages = data.pages.map((page) => ({
         ...page,
@@ -56,11 +81,13 @@ export function dispatchEvent(
 
   if (t === "message-delivered" && ownUserId) {
     const peerId = (frame.peerId as string) ?? "";
-    if (!qc.getQueryData(["messages", peerId])) return;
+    if (!qc.getQueryData(["messages", peerId])) {
+      qc.invalidateQueries({ queryKey: ["messages", peerId] });
+      return;
+    }
     qc.setQueryData(["messages", peerId], (old: unknown) => {
       const data = old as
-        | { pages: { messages: Record<string, unknown>[] }[] }
-        | undefined;
+        { pages: { messages: Record<string, unknown>[] }[] } | undefined;
       if (!data?.pages?.length) return old;
       const pages = data.pages.map((page) => ({
         ...page,
@@ -77,14 +104,24 @@ export function dispatchEvent(
   if (t === "room-message") {
     const room = frame.room as string;
     const msg = frame.message as Record<string, unknown>;
+    const tempId = frame.tempId as string | undefined;
     if (!room || !msg) return;
-    const existing = qc.getQueryData(["room", room]);
-    if (!existing) return;
+    if (!qc.getQueryData(["room", room])) {
+      qc.invalidateQueries({ queryKey: ["room", room] });
+      return;
+    }
     qc.setQueryData(
       ["room", room],
       (old: Record<string, unknown>[] | undefined) => {
         const msgs = old ?? [];
         if (msgs.some((m) => m.id === msg.id)) return old;
+        // Replace temp entry if this is the server's response to our send
+        if (tempId && sentTempIds.has(tempId)) {
+          sentTempIds.delete(tempId);
+          return msgs.map((m) =>
+            m.id === tempId ? { ...msg, pending: false } : m,
+          );
+        }
         return [...msgs, msg];
       },
     );

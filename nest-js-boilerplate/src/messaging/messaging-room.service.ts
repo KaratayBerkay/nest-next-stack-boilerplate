@@ -23,6 +23,13 @@ export function isValidRoom(room: string): boolean {
 }
 
 export class MessagingRoomService {
+  /**
+   * Chat-room membership is in-memory only (not replica-safe).
+   * Running multiple backend instances will produce inconsistent
+   * member lists and counts. To scale horizontally, make Redis
+   * Sets the authoritative source (read back from SISMEMBER/SMEMBERS
+   * in getRoomMembers/getRoomCounts instead of only writing via SADD).
+   */
   private rooms = new Map<string, Map<string, RoomMember>>();
 
   constructor(

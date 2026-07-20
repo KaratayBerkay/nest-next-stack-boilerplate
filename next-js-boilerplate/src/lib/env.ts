@@ -16,7 +16,7 @@ export const serverEnvSchema = z.object({
   APP_URL: z.string().url(),
   NEXT_PUBLIC_APP_URL: z.string().url(),
   COOKIE_DOMAIN: z.string().optional(),
-  COOKIE_SAMESITE: z.enum(["lax", "strict", "none"]).default("lax"),
+  COOKIE_SAMESITE: z.enum(["lax", "strict", "none"]),
   KAFKA_BROKER: z.string(),
 });
 

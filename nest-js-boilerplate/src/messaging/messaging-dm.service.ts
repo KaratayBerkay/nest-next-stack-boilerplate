@@ -261,6 +261,66 @@ export class MessagingDmService {
     });
   }
 
+  async sendAndDeliverMessage(
+    senderId: string,
+    recipientId: string,
+    text: string,
+    areFriends: (a: string, b: string) => Promise<boolean>,
+    friends?: string[],
+  ) {
+    const message = await this.sendMessage(
+      senderId,
+      recipientId,
+      text,
+      areFriends,
+      friends,
+    );
+    await this.deliverDirectMessage(message);
+    return message;
+  }
+
+  async markConversationRead(
+    readerId: string,
+    peerId: string,
+    getPeerDisplay?: (userId: string) => Promise<{
+      id: string;
+      email: string;
+      name: string | null;
+      avatar: string;
+    }>,
+  ) {
+    const result = await this.markRead(readerId, peerId);
+    this.realtime.emitToPage(peerId, 'messages', {
+      type: 'message-read',
+      readerId,
+      senderId: peerId,
+      readAt: result.readAt,
+      peerId: readerId,
+    });
+    this.realtime.emitToService(peerId, 'MESSAGE', {
+      type: 'message-read',
+      readerId,
+      senderId: peerId,
+      readAt: result.readAt,
+      peerId: readerId,
+    });
+    if (getPeerDisplay) {
+      const peer = await getPeerDisplay(peerId);
+      this.realtime.emitToService(readerId, 'MESSAGE', {
+        renew: 'Messages',
+        type: 'Conversation',
+        conversation: { user: peer, unread: 0 },
+      });
+    }
+    const totalDmUnread = await this.getTotalUnreadCount(readerId);
+    this.realtime.emitToService(readerId, 'NOTIFICATION', {
+      renew: 'Notifications',
+      type: 'DmCount',
+      value: totalDmUnread,
+    });
+    return result;
+  }
+
   async markRead(userId: string, otherUserId: string) {
     const now = new Date();
     const result = await this.prisma.message.updateMany({

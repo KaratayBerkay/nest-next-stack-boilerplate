@@ -24,6 +24,7 @@ export function notificationsQueryOptions() {
     queryKey: ["notifications", "list"],
     queryFn: fetchNotifications,
     staleTime: 30_000,
+    refetchInterval: 60_000,
   });
 }
 
