@@ -38,7 +38,7 @@ export function PaginationBar({
             onClick={() => onPageChange(p)}
             className={`flex h-7 w-7 items-center justify-center rounded text-xs font-medium ${
               p === page
-                ? "bg-brand text-white"
+                ? "bg-brand text-brand-fg"
                 : "text-muted hover:bg-surface-hover"
             }`}
           >

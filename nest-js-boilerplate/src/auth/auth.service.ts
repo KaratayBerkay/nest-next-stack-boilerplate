@@ -40,7 +40,7 @@ export class AuthService {
   private readonly authSession: AuthSessionService;
 
   constructor(
-    prisma: PrismaService,
+    private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     private readonly crypto: CryptoService,
@@ -78,7 +78,11 @@ export class AuthService {
       usernames,
       devices,
     );
-    this.authSession = new AuthSessionService(tokenStore, this.authTokens);
+    this.authSession = new AuthSessionService(
+      prisma,
+      tokenStore,
+      this.authTokens,
+    );
   }
 
   private readonly boundIssueTokens = (
@@ -156,5 +160,10 @@ export class AuthService {
 
   async logout(ctx: RequestContext): Promise<boolean> {
     return this.authSession.logout(ctx);
+  }
+
+  async refresh(ctx: RequestContext): Promise<AuthPayload> {
+    const result = await this.authSession.refresh(ctx);
+    return { accessToken: result.accessToken, refreshToken: result.refreshToken, user: result.user as AuthPayload['user'] };
   }
 }

@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsAccountPageInfo } from "@/constants/page-info";
 import { useProfileActions } from "@/api/client/profile/actions";
@@ -175,17 +176,17 @@ export function FreePageView() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">{t.accountHeading}</h2>
-        <PageInfoButton content={settingsAccountPageInfo} />
-      </div>
+      <PageHeader
+        title={t.accountHeading}
+        actions={<PageInfoButton content={settingsAccountPageInfo} />}
+      />
 
       <div className="flex items-center gap-4">
         <Avatar
           src={avatarUrl}
           fallback={initials(name || user.email)}
           size="xl"
-          className="bg-brand text-white"
+          className="bg-brand text-brand-fg"
         />
         <div className="flex flex-col gap-2">
           <Button

@@ -6,36 +6,52 @@
 
 ---
 
-## Theming
+## Theme System
 
-Two independent theme dimensions via CSS custom properties on `<html>` class (managed by `useTheme`):
+Six unified themes selected from `ThemeToggle` and managed by `useTheme` (`src/hooks/useTheme.tsx`). The active `style-<name>` class is applied to `<html>` by `theme-init.js` (pre-paint) and kept in sync by `ThemeProvider`. All themes except `light` also add a `.dark` class for `dark:` variant support.
 
-### Color Themes
+### Available Themes
 
-| Token | Light | Dark | Ocean |
-|---|---|---|---|
-| `--bg` | `#ffffff` | `#0a0a0a` | `#f0f9ff` |
-| `--fg` | `#171717` | `#ededed` | `#0c4a6e` |
-| `--brand` | `#4f46e5` | `#818cf8` | `#0284c7` |
-| `--muted` | `#71717a` | `#a1a1aa` | `#64748b` |
-| `--border` | `#e4e4e7` | `#27272a` | `#bae6fd` |
-| `--surface` | `#fafafa` | `#18181b` | `#e0f2fe` |
+| Theme | Description | Dark class |
+|---|---|---|
+| `light` | Light background, dark text | no |
+| `dark` | Pure black background, light text | yes |
+| `shiny` | Dark navy, gradient backgrounds, glow | yes |
+| `glass` | Dark with translucent surfaces and backdrop blur | yes |
+| `neon` | Dark with cyan accents and glow effects | yes |
+| `gradient` | Dark purple with gradient surfaces and buttons | yes |
 
-### Component Styles (Visual Themes)
+### Semantic Tokens
 
-Applied via `style-*` class on `<html>`. These override CSS custom properties to change visual appearance globally:
+Every theme defines all tokens below — components consume only these:
 
-| Style | Description |
+| Token | Role |
 |---|---|
-| `default` | Base CSS variables from current color theme |
-| `shiny` | Gradient backgrounds, white text, shadows |
-| `glass` | Translucent with backdrop blur |
-| `neon` | Dark with cyan accents and glow |
-| `gradient` | Gradient text with dark backgrounds |
+| `bg` / `fg` | Page background / primary text |
+| `surface` / `surface-hover` | Card/input backgrounds / hover state |
+| `border` | Hairlines, input borders |
+| `muted` / `muted-fg` | Secondary text / tertiary |
+| `brand` / `brand-fg` | Accent (buttons, links, focus rings) / text on accent |
+| `success` / `success-fg` | Green status pair |
+| `warning` / `warning-fg` | Amber status pair |
+| `error` / `error-fg` | Red status pair |
+| `info` / `info-fg` | Blue status pair |
+| `overlay` | Dialog/drawer/sheet backdrops (use as `bg-overlay/50`) |
 
-Tailwind utilities: `bg-bg`, `text-fg`, `bg-brand`, `text-muted`, `border-border`, `bg-surface`, `bg-surface-hover`.
+Component-level tokens (`--comp-*`) control card backgrounds, button gradients, input backgrounds per style — defined only in shiny/glass/neon/gradient.
 
-Dark mode uses `dark:` variant (`@custom-variant dark (&:where(.dark, .dark *));`).
+Tailwind utilities: `bg-bg`, `text-fg`, `bg-brand`, `text-muted`, `border-border`, `bg-surface`, `bg-surface-hover`, `bg-overlay/50`, `text-success`, etc.
+
+Dark variant: `@custom-variant dark (&:where(.dark, .dark *));`
+
+### Token Pipeline (CSS → Tailwind)
+
+```
+globals.css:
+  1. .style-light { --bg: #ffffff; --fg: #171717; ... }
+  2. @theme inline { --color-bg: var(--bg); --color-fg: var(--fg); ... }
+  3. Components use bg-bg, text-fg, border-border, etc.
+```
 
 ---
 

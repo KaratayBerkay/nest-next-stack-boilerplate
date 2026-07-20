@@ -20,21 +20,26 @@ export function V1Header({
   logout,
   lang,
   conversations,
+  sidebarOpen,
+  toggleRef,
 }: V1HeaderProps) {
   const t = useMessages("v1-shell");
 
   return (
     <header className="border-border bg-bg z-50 flex h-14 shrink-0 items-center border-b">
       <button
+        ref={toggleRef}
         onClick={toggle}
         className="text-muted hover:bg-surface-hover ml-3 rounded-lg p-1.5"
         aria-label={t.toggleSidebar}
+        aria-expanded={sidebarOpen}
+        aria-controls="v1-sidebar"
       >
         <IconMenu2 size={20} />
       </button>
 
       <button onClick={open} className="flex h-full items-center gap-2 px-4">
-        <div className="bg-brand flex h-7 w-7 items-center justify-center rounded-lg text-[11px] font-bold text-white">
+        <div className="bg-brand flex h-7 w-7 items-center justify-center rounded-lg text-[11px] font-bold text-brand-fg">
           V
         </div>
         <span className="text-sm font-semibold">{t.brand}</span>
@@ -59,14 +64,14 @@ export function V1Header({
                 <Avatar
                   src={user.avatarUrl}
                   fallback={initials(user.name || user.email)}
-                  className="bg-brand ring-border h-8 w-8 shrink-0 text-[11px] text-white ring-2"
+                  className="bg-brand ring-border h-8 w-8 shrink-0 text-[11px] text-brand-fg ring-2"
                 />
               </ProfileDropdown>
             </>
           ) : (
             <a
               href={LOGIN_PATH}
-              className="bg-brand rounded-lg px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
+              className="bg-brand rounded-lg px-3 py-1.5 text-xs font-medium text-brand-fg hover:opacity-90"
             >
               {t.signIn}
             </a>

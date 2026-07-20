@@ -100,7 +100,7 @@ export function FreeFindFriendsContent({
                   >
                     <Avatar
                       fallback={initials(u.name)}
-                      className="bg-brand h-10 w-10 shrink-0 text-xs text-white"
+                      className="bg-brand h-10 w-10 shrink-0 text-xs text-brand-fg"
                     />
                     <span className="flex-1 text-sm font-medium">{u.name}</span>
                     {isPending ? (
@@ -113,7 +113,7 @@ export function FreeFindFriendsContent({
                           const ok = await sendRequest(u.id);
                           if (ok) setSentIds((prev) => new Set(prev).add(u.id));
                         }}
-                        className="bg-brand rounded-lg px-3 py-1 text-sm text-white hover:opacity-80"
+                        className="bg-brand rounded-lg px-3 py-1 text-sm text-brand-fg hover:opacity-80"
                       >
                         {t.addFriend}
                       </button>
@@ -150,7 +150,7 @@ export function FreeFindFriendsContent({
               >
                 <Avatar
                   fallback={initials(r.user.name)}
-                  className="bg-brand h-10 w-10 shrink-0 text-xs text-white"
+                  className="bg-brand h-10 w-10 shrink-0 text-xs text-brand-fg"
                 />
                 <span className="flex-1 text-sm font-medium">
                   {r.user.name}

@@ -10,6 +10,9 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { DirectiveLocation, GraphQLDirective } from 'graphql';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { Redis } from 'ioredis';
+import { RedisThrottlerStorage } from './throttle/redis-throttler-storage';
+import { REDIS_CLIENT } from './redis/redis.tokens';
 import { AlsModule } from './als/als.module';
 import { AuthModule } from './auth/auth.module';
 import { VaultModule } from './vault/vault.module';
@@ -86,6 +89,8 @@ const CORE_MODULES = [
       connection: {
         host: config.get<string>('REDIS_HOST', 'localhost'),
         port: Number(config.get('REDIS_PORT') ?? 6379),
+        password: config.get<string>('REDIS_PASSWORD') || undefined,
+        tls: config.get<string>('REDIS_TLS') === 'true' ? {} : undefined,
       },
     }),
   }),
@@ -126,7 +131,13 @@ const CORE_MODULES = [
       };
     },
   }),
-  ThrottlerModule.forRoot({ throttlers: [{ ttl: 60000, limit: 120 }] }),
+  ThrottlerModule.forRootAsync({
+    inject: [REDIS_CLIENT],
+    useFactory: (redis: Redis) => ({
+      throttlers: [{ ttl: 60000, limit: 120 }],
+      storage: new RedisThrottlerStorage(redis),
+    }),
+  }),
   ScheduleModule.forRoot(),
   LoggingModule,
   PrismaModule,

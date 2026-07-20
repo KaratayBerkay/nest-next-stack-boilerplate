@@ -93,9 +93,9 @@ export class MfaService {
     });
     if (!user.mfaEnabled) {
       throw new BadRequestException({
-        exc: 'EX_MFA_NOT_ENABLED',
+        exc: 'EX_AUTH_MFA_NOT_ENABLED',
         msg: 'MFA is not enabled for this account',
-        key: 'mfa.errors.notEnabled',
+        key: 'auth.errors.mfaNotEnabled',
       });
     }
 

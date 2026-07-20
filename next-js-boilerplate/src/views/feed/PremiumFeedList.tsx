@@ -223,7 +223,7 @@ export function FeedList({
           <p className="text-muted text-sm">{t.noPostsYet}</p>
           <Link
             href={`/v1/${lang}/share`}
-            className="bg-brand rounded-lg px-4 py-2 text-sm font-medium text-white"
+            className="bg-brand rounded-lg px-4 py-2 text-sm font-medium text-brand-fg"
           >
             {t.beFirstToShare}
           </Link>
@@ -233,7 +233,7 @@ export function FeedList({
       {posts.map((post) => (
         <div key={post.id} className="relative">
           {post.author.id === currentUserId && (
-            <span className="bg-brand absolute -top-1 -right-1 z-10 flex h-5 w-5 items-center justify-center rounded-full text-white">
+            <span className="bg-brand absolute -top-1 -right-1 z-10 flex h-5 w-5 items-center justify-center rounded-full text-brand-fg">
               <IconCrown size={12} stroke={2} />
             </span>
           )}

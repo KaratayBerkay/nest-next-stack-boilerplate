@@ -7,6 +7,7 @@ import { NotificationService } from '../notification/notification.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { StripeService } from './stripe/stripe.service';
 import { WalletService } from './wallet.service';
+import { OutboxService } from '../outbox/outbox.service';
 import {
   PAYMENT_PROVIDER,
   type PaymentProvider,
@@ -24,6 +25,7 @@ export class BillingService {
     private readonly realtime: RealtimeGateway,
     private readonly stripeService: StripeService,
     private readonly wallet: WalletService,
+    private readonly outbox: OutboxService,
     @Inject(PAYMENT_PROVIDER) private readonly provider: PaymentProvider,
   ) {}
 
@@ -98,8 +100,8 @@ export class BillingService {
       // Create initial WalletTransaction for the first invoice
       const wallet = await this.wallet.ensureWallet(userId);
 
-      await this.prisma.$transaction([
-        this.prisma.user.update({
+      await this.prisma.$transaction(async (tx) => {
+        await tx.user.update({
           where: { id: userId },
           data: {
             subscriptionTier: targetTier,
@@ -107,8 +109,8 @@ export class BillingService {
             subscriptionPeriodStart: chargeResult.periodStart,
             subscriptionPeriodEnd: chargeResult.periodEnd,
           },
-        }),
-        this.prisma.walletTransaction.create({
+        });
+        await tx.walletTransaction.create({
           data: {
             type: 'FEE',
             status: 'COMPLETED',
@@ -125,8 +127,20 @@ export class BillingService {
               latestInvoiceId: chargeResult.latestInvoiceId,
             },
           },
-        }),
-      ]);
+        });
+        await this.outbox.emit(
+          {
+            aggregateType: 'User',
+            aggregateId: userId,
+            eventType: 'billing.tier_upgraded',
+            action: 'UPDATE',
+            actorId: userId,
+            summary: `Subscription upgraded to ${targetTier}`,
+            after: { tier: targetTier },
+          },
+          tx,
+        );
+      });
 
       await this.tokenStore.rewriteFieldsForUser(userId, {
         tier: targetTier,
@@ -180,15 +194,15 @@ export class BillingService {
       }
     }
 
-    await this.prisma.$transaction([
-      this.prisma.user.update({
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
         where: { id: userId },
         data: {
           subscriptionTier: targetTier,
           cancelAtPeriodEnd: true,
         },
-      }),
-      this.prisma.walletTransaction.create({
+      });
+      await tx.walletTransaction.create({
         data: {
           type: 'ADJUSTMENT',
           status: 'COMPLETED',
@@ -202,8 +216,20 @@ export class BillingService {
             provider: 'stripe',
           },
         },
-      }),
-    ]);
+      });
+      await this.outbox.emit(
+        {
+          aggregateType: 'User',
+          aggregateId: userId,
+          eventType: 'billing.tier_downgraded',
+          action: 'UPDATE',
+          actorId: userId,
+          summary: `Subscription downgraded to ${targetTier}`,
+          after: { tier: targetTier },
+        },
+        tx,
+      );
+    });
 
     await this.tokenStore.rewriteFieldsForUser(userId, { tier: targetTier });
     this.realtime.updateUserTier(userId, targetTier);

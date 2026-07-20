@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { IconEye, IconPencil, IconTrash } from "@tabler/icons-react";
+import { IconButton } from "@/components/ui/button/icon-button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ReactionInline } from "./ReactionButtons";
 import { formatDateByPreference } from "@/lib/date-time";
@@ -25,7 +26,7 @@ export function PostHeader({
   return (
     <div className="flex items-start justify-between gap-2">
       <div className="flex items-center gap-1.5">
-        <div className="bg-brand flex h-6 w-6 items-center justify-center rounded-full text-[9px] font-bold text-white">
+        <div className="bg-brand flex h-6 w-6 items-center justify-center rounded-full text-[9px] font-bold text-brand-fg">
           {(postData.author.name || postData.author.email)
             .charAt(0)
             .toUpperCase()}
@@ -54,24 +55,24 @@ export function PostHeader({
         </Link>
         {isOwn && !editing && (
           <>
-            <button
+            <IconButton
+              icon={<IconPencil size={12} />}
+              label="Edit post"
+              size="icon-xs"
               onClick={onEditStart}
-              className="text-muted hover:text-fg p-0.5"
-            >
-              <IconPencil size={12} stroke={1.5} />
-            </button>
+            />
             <ConfirmDialog
               title="Delete post"
               description="Are you sure you want to delete this post?"
               onConfirm={onDeleteConfirm}
             >
               {(open) => (
-                <button
+                <IconButton
+                  icon={<IconTrash size={12} />}
+                  label="Delete post"
+                  size="icon-xs"
                   onClick={open}
-                  className="text-muted p-0.5 hover:text-red-500"
-                >
-                  <IconTrash size={12} stroke={1.5} />
-                </button>
+                />
               )}
             </ConfirmDialog>
           </>

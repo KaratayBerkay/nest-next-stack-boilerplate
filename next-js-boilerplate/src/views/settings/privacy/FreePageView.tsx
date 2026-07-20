@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/Toast";
 import { Switch } from "@/components/ui/Switch";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsPrivacyPageInfo } from "@/constants/page-info";
 
@@ -41,10 +42,10 @@ export function FreePageView() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">{t.privacyHeading}</h2>
-        <PageInfoButton content={settingsPrivacyPageInfo} />
-      </div>
+      <PageHeader
+        title={t.privacyHeading}
+        actions={<PageInfoButton content={settingsPrivacyPageInfo} />}
+      />
 
       <div className="flex flex-col gap-4">
         <div className="border-border flex items-center justify-between rounded-lg border p-4">

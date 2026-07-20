@@ -8,6 +8,7 @@ import type { SessionUser, SessionUserInput } from './auth.types';
 
 const SESS_PREFIX = 'sess:';
 const USER_SESS_PREFIX = 'user:';
+const REFRESH_INDEX_PREFIX = 'refresh_sess:';
 const MFA_CHALLENGE_PREFIX = 'mfa:challenge:';
 const MFA_CHALLENGE_TTL = 300; // 5 minutes
 
@@ -77,6 +78,10 @@ export class TokenStoreService {
     });
     pipe.expire(key, this.ttl);
     pipe.sadd(this.reverseIndexKey(userId), key);
+    if (data.sessionId) {
+      const refreshKey = `${REFRESH_INDEX_PREFIX}${data.sessionId}`;
+      pipe.set(refreshKey, key, 'EX', this.ttl);
+    }
     await pipe.exec();
   }
 
@@ -150,7 +155,19 @@ export class TokenStoreService {
     const pipe = this.redis.multi();
     pipe.del(key);
     pipe.srem(this.reverseIndexKey(userId), key);
+    if (data.sessionId) {
+      pipe.del(`${REFRESH_INDEX_PREFIX}${data.sessionId}`);
+    }
     await pipe.exec();
+  }
+
+  async findByRefreshSessionId(
+    sessionId: string,
+  ): Promise<SessionUser | null> {
+    const refreshKey = `${REFRESH_INDEX_PREFIX}${sessionId}`;
+    const key = await this.redis.get(refreshKey);
+    if (!key) return null;
+    return this.read(key);
   }
 
   async listSessionsForUser(userId: string): Promise<SessionUser[]> {

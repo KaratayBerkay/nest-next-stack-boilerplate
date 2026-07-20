@@ -3365,57 +3365,61 @@ back to its full write-up; this list intentionally does not re-explain
 anything already detailed above.
 
 **Phase A — Stop the bleeding (both P0s; nothing below is fully trustworthy until these land)**
-1. Backend: implement the `refresh` mutation + BFF `/api/auth/refresh`
+1. [✅] Backend: implement the `refresh` mutation + BFF `/api/auth/refresh`
    route (§16, §17 Enhancement). Highest-leverage single fix in this
    document — unblocks the e2e suite, fixes the daily-logout/tier-change/
    idle-timeout bugs, and matches a contract three separate docs already
    describe.
-2. Backend: attach the four missing fields in `SessionAuthGuard` so `me`
+2. [✅] Backend: attach the four missing fields in `SessionAuthGuard` so `me`
    works (§16 P1) — small, mechanical, touches the same guard as #1.
-3. Backend: fix the e2e `refreshToken`/`refresh` schema drift (§16 P1) —
+3. [✅] Backend: fix the e2e `refreshToken`/`refresh` schema drift (§16 P1) —
    depends on #1's exact design (cookie-only vs body field).
-4. Backend: scope `collectCoverageFrom` / set an honest coverage threshold
+4. [✅] Backend: scope `collectCoverageFrom` / set an honest coverage threshold
    so CI stops being red at HEAD on every run (§25, §26).
 
 **Phase B — Security & production-readiness gaps**
-5. Frontend: add a baseline app-wide CSP (§10 P1).
-6. Backend: add `ENCRYPTION_KEY`/`TOKEN_DERIVATION_SECRET` to the k8s
+5. [✅] Frontend: add a baseline app-wide CSP (§10 P1).
+6. [✅] Backend: add `ENCRYPTION_KEY`/`TOKEN_DERIVATION_SECRET` to the k8s
    secret example and prod-require the latter (§18).
-7. Backend: wire shared-Redis throttler storage for cluster-wide rate
+7. [✅] Backend: wire shared-Redis throttler storage for cluster-wide rate
    limiting (§19, §29 Enhancement).
-8. Backend: wire Redis AUTH/TLS in both ioredis clients and BullMQ (§20).
-9. Backend: switch compose `migrate` to `prisma migrate deploy` (§22) —
+8. [✅] Backend: wire Redis AUTH/TLS in both ioredis clients and BullMQ (§20).
+9. [✅] Backend: switch compose `migrate` to `prisma migrate deploy` (§22) —
    unblocks the pg_trgm/GIN indexes matching what prod actually runs.
 
 **Phase C — Correctness & data-integrity**
-10. Fix the exception-code system on both sides in one pass: backend's
-    `EX_MFA_NOT_ENABLED` typo + its wrong-asserting test (§16 P2), then
-    generate/parity-test the frontend mirror (§10 P1, §13 Enhancement,
-    §31).
-11. Frontend: fix the `views/messages/FreePageView.tsx` two-layer
+10. [⚠️ Partial] Fix the exception-code system on both sides in one pass:
+    backend's `EX_MFA_NOT_ENABLED` typo + its wrong-asserting test (§16 P2)
+    — **done**. Generate/parity-test the frontend mirror (§10 P1, §13
+    Enhancement, §31) — **not yet done**.
+11. [✅] Frontend: fix the `views/messages/FreePageView.tsx` two-layer
     violation (§10 P1).
-12. Backend: route tier changes and durable notifications through the
+12. [✅] Backend: route tier changes and durable notifications through the
     transactional outbox consistently (§16 P2).
-13. Backend: wire the fluentd log driver so the logging pipeline actually
-    reaches Elasticsearch (§27 P1).
+13. [✅] Backend: wire the fluentd log driver + change healthcheck to
+    `/health/ready` so the logging pipeline reaches Elasticsearch (§27 P1,
+    §23 P2).
 
 **Phase D — Accessibility (one focused pass, high real-user impact)**
-14. Frontend: `text-white` → `text-brand-fg` sweep, 36 files (§6 P1).
-15. Frontend: migrate the 26 hand-rolled icon `<button>` files to
-    `IconButton` (§6 P1).
-16. Frontend: mobile sidebar `inert`/focus-trap/Escape/focus-return (§6
-    P1).
-17. Frontend: `<main>` landmark + skip-link + a `<PageHeader>` rollout for
-    the missing `<h1>`s (§6 P1).
+14. [✅] Frontend: `text-white` → `text-brand-fg` sweep, 40 files (§6 P1).
+15. [⚠️ Partial] Frontend: migrate 19 of the 26 hand-rolled icon `<button>`
+    files to `IconButton` (§6 P1). Remaining: `NotificationDropdown.tsx`
+    (bell+Badge, inline SVG close), `V1Header.tsx` (needs `forwardRef`),
+    `MessagesSidebar.tsx`/`ChatView.tsx`/`ChatRoomBaseView.tsx` (use
+    `Button` with `size="icon-sm"` — lower priority).
+16. [✅] Frontend: mobile sidebar `inert`/`aria-expanded`/Escape/focus-return
+    (§6 P1).
+17. [✅] Frontend: `<main>` landmark + skip-link + `<PageHeader>` component
+    rolled out to 7 settings pages (§6 P1).
 
-**Phase E — Documentation truth pass (cheap, prevents future misdirection; do as one batch since it's the same kind of edit four times)**
-18. Rewrite `DESIGN_GUIDE.md` + `CSS-IMPROVEMENTS.md` to the real
+**Phase E — Documentation truth pass**
+18. [🔲] Rewrite `DESIGN_GUIDE.md` + `CSS-IMPROVEMENTS.md` to the real
     `.style-*` system (§6 P3, high-impact).
-19. Fix `AUTH.md`'s "five values" claim and `REALTIME.md`'s `auth-ok` vs
+19. [✅] Fix `AUTH.md`'s "five values" claim and `REALTIME.md`'s `auth-ok` vs
     `authenticated` mismatch (§16 P3).
-20. Regenerate `docs/logging.md`'s category/index table; correct or
+20. [🔲] Regenerate `docs/logging.md`'s category/index table; correct or
     implement the OTel traces claim (§27 P2).
-21. Add `docs/backend/STATUS.md` (§28, §29 Enhancement) alongside the
+21. [✅] Add `docs/backend/STATUS.md` (§28, §29 Enhancement) alongside the
     frontend's demo-isolation fix (§11 P2, §13 Enhancement) as a matched
     pair.
 

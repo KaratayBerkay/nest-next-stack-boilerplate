@@ -65,7 +65,7 @@ export function NotificationList({
                 !n.readAt ? "bg-brand/5" : ""
               }`}
             >
-              <div className="bg-brand flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white">
+              <div className="bg-brand flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-brand-fg">
                 {n.actor?.name?.charAt(0).toUpperCase() ?? "?"}
               </div>
               <div className="min-w-0 flex-1">

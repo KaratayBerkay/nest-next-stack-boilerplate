@@ -285,7 +285,7 @@ curl -s 'http://10.10.2.175:9200/http-exception-logs/_search?size=0' \
 ## Quick CLI Queries (copy-paste)
 
 | Log type | Command |
-|---|---|
+|---|---|---|
 | Session | `curl -s 'http://10.10.2.175:9200/session-logs/_search?size=20' \| python3 -m json.tool` |
 | Page | `curl -s 'http://10.10.2.175:9200/page-logs/_search?size=20' \| python3 -m json.tool` |
 | Network | `curl -s 'http://10.10.2.175:9200/network-logs/_search?size=20' \| python3 -m json.tool` |
@@ -294,5 +294,7 @@ curl -s 'http://10.10.2.175:9200/http-exception-logs/_search?size=0' \
 | HTTP Exception | `curl -s 'http://10.10.2.175:9200/http-exception-logs/_search?size=20' \| python3 -m json.tool` |
 | WS Exception | `curl -s 'http://10.10.2.175:9200/websocket-exception-logs/_search?size=20' \| python3 -m json.tool` |
 | App Exception | `curl -s 'http://10.10.2.175:9200/application-exception-logs/_search?size=20' \| python3 -m json.tool` |
+| Payment | `curl -s 'http://10.10.2.175:9200/payment-logs/_search?size=20' \| python3 -m json.tool` |
+| Billing | `curl -s 'http://10.10.2.175:9200/billing-logs/_search?size=20' \| python3 -m json.tool` |
 | All backend | `curl -s 'http://10.10.2.175:9200/app-logs/_search?size=20' \| python3 -m json.tool` |
 | All frontend | `curl -s 'http://10.10.2.175:9200/frontend-logs/_search?size=20' \| python3 -m json.tool` |

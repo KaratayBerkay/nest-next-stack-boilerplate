@@ -31,6 +31,7 @@ import { ConnectionUnstable } from "@/components/ConnectionUnstable";
 import { ScrollToBottomButton } from "@/components/ui/ScrollToBottomButton";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/button/icon-button";
 import { SkeletonChatMessage } from "@/components/ui/skeleton-shapes";
 import { useRouter } from "next/navigation";
 import { PageInfoButton } from "@/components/ui/page-info";
@@ -47,13 +48,11 @@ function SidebarCloseButton({
 }) {
   if (useNativeControls) {
     return (
-      <button
+      <IconButton
+        icon={<IconX size={18} />}
+        label="Close rooms sidebar"
         onClick={onClick}
-        className="hover:bg-surface-hover rounded p-1"
-        aria-label="Close rooms sidebar"
-      >
-        <IconX size={18} className="text-muted" />
-      </button>
+      />
     );
   }
   return (
@@ -88,7 +87,7 @@ function RoomButton({
       <button
         onClick={onSelect}
         className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-          isActive ? "bg-brand text-white" : "text-muted hover:bg-surface-hover"
+          isActive ? "bg-brand text-brand-fg" : "text-muted hover:bg-surface-hover"
         }`}
       >
         <span className="flex items-center gap-1">
@@ -106,7 +105,7 @@ function RoomButton({
       onClick={onSelect}
       className={cn(
         "w-full justify-between gap-2 rounded-lg px-3 py-2",
-        isActive ? "bg-brand hover:bg-brand/90 text-white" : "text-muted",
+        isActive ? "bg-brand hover:bg-brand/90 text-brand-fg" : "text-muted",
       )}
     >
       <span># {room}</span>
@@ -214,7 +213,7 @@ function SendButton({
       <button
         onClick={onClick}
         disabled={disabled}
-        className="bg-brand rounded-lg px-4 py-2 text-sm text-white disabled:opacity-50"
+        className="bg-brand rounded-lg px-4 py-2 text-sm text-brand-fg disabled:opacity-50"
       >
         {label}
       </button>
@@ -457,7 +456,7 @@ function ChatRoomContent({
                     <div className="relative shrink-0">
                       <Avatar
                         fallback={initials(m.name)}
-                        className="bg-brand h-7 w-7 text-[9px] text-white"
+                        className="bg-brand h-7 w-7 text-[9px] text-brand-fg"
                       />
                       <span className="border-bg absolute right-0 bottom-0 h-2 w-2 rounded-full border-2 bg-green-500" />
                     </div>
@@ -535,7 +534,7 @@ function ChatRoomContent({
                       <div className="relative shrink-0">
                         <Avatar
                           fallback={initials(msg.senderName)}
-                          className="bg-brand mt-0.5 h-6 w-6 text-[9px] text-white"
+                          className="bg-brand mt-0.5 h-6 w-6 text-[9px] text-brand-fg"
                         />
                         {onlineUserIds.has(msg.senderId) && (
                           <span className="border-bg bg-success absolute right-0 bottom-0 h-2 w-2 rounded-full border-2" />
@@ -550,7 +549,7 @@ function ChatRoomContent({
                       )}
                       <span
                         className={`inline-block rounded-xl px-3 py-1.5 text-sm ${
-                          isMe ? "bg-brand text-white" : "bg-surface text-fg"
+                          isMe ? "bg-brand text-brand-fg" : "bg-surface text-fg"
                         }`}
                       >
                         {msg.body}

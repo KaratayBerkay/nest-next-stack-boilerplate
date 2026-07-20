@@ -993,9 +993,9 @@ function PricingTiersTab() {
                 className={cn(
                   "mt-8 w-full rounded-lg py-2.5 text-center text-sm font-medium transition-colors",
                   isSelected
-                    ? "bg-brand text-white"
+                    ? "bg-brand text-brand-fg"
                     : tier.popular
-                      ? "bg-brand text-white"
+                      ? "bg-brand text-brand-fg"
                       : "border-border text-fg border",
                 )}
               >

@@ -160,12 +160,15 @@ services:
       postgres:
         condition: service_healthy
     env_file: ./.vault-envs/backend.env
-    # NEVER add --force-reset here: it drops the whole schema (all data) on every
-    # `compose up`, since app depends_on this service. It silently wiped the live
-    # DB on each deploy between 2026-06-19 (686741f) and 2026-07-17.
-    command: ["node_modules/.bin/prisma", "db", "push", "--accept-data-loss"]
+    # Uses the same migration workflow as CI and prod (`prisma migrate deploy`) so local/compose
+    # environments exercise the migration files (including raw-SQL pg_trgm/GIN trigram indexes)
+    # instead of mindlessly syncing schema.prisma. The old `db push --accept-data-loss` path
+    # silently wiped data and never applied the raw-SQL migrations — see project-enhance-5 §22.
+    # For prototyping, override via: docker compose run migrate ... db push
+    command: ["node_modules/.bin/prisma", "migrate", "deploy"]
 
   app:
+    <<: *default-logging
     build:
       context: ./nest-js-boilerplate
     restart: unless-stopped
@@ -181,7 +184,7 @@ services:
         condition: service_healthy
     env_file: ./.vault-envs/backend.env
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:3000/health"]
+      test: ["CMD", "curl", "-sf", "http://localhost:3000/health/ready"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -191,6 +194,7 @@ services:
       - "5050:5050"
 
   nextjs:
+    <<: *default-logging
     build:
       context: ./next-js-boilerplate
       network: host

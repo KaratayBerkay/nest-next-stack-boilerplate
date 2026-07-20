@@ -58,11 +58,15 @@ function dragOnMove(
 function dragOnEnd(
   dragStateRef: MutableRefObject<DragState>,
   close: () => void,
+  toggleRef: MutableRefObject<HTMLButtonElement | null>,
 ) {
   if (!dragStateRef.current.dragging) return;
   const dx = dragStateRef.current.currentX - dragStateRef.current.startX;
   dragStateRef.current.dragging = false;
-  if (dx < -50) close();
+  if (dx < -50) {
+    close();
+    toggleRef.current?.focus();
+  }
 }
 
 function onServiceWorkerMessage(
@@ -76,12 +80,13 @@ export function V1Shell({ children }: V1ShellProps) {
   const params = useParams<{ lang: string }>();
   const lang = params?.lang ?? "";
   const { user, token: _token, loading, logout } = useAuth();
-  const _t = useMessages("v1-shell");
+  const t = useMessages("v1-shell");
   const { data: conversations = [] } = useConversations();
   const pointer = useDeviceType();
   const isTouch = pointer === "touch";
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
   const dragStateRef = useRef<{
     dragging: boolean;
     startX: number;
@@ -91,6 +96,17 @@ export function V1Shell({ children }: V1ShellProps) {
   const open = useCallback(() => openSidebar(setSidebarOpen), []);
   const close = useCallback(() => closeSidebar(setSidebarOpen), []);
   const toggle = useCallback(() => toggleSidebar(setSidebarOpen), []);
+
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      close();
+      toggleRef.current?.focus();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [sidebarOpen, close]);
 
   useEdgeSwipe({
     onSwipeRight: open,
@@ -106,12 +122,12 @@ export function V1Shell({ children }: V1ShellProps) {
       handleTouchStart(e, (cx) => dragOnStart(cx, dragStateRef));
     const touchMove = (e: TouchEvent) =>
       handleTouchMove(e, (cx) => dragOnMove(cx, dragStateRef));
-    const touchEnd = () => handleTouchEnd(() => dragOnEnd(dragStateRef, close));
+    const touchEnd = () => handleTouchEnd(() => dragOnEnd(dragStateRef, close, toggleRef));
     const mouseDown = (e: MouseEvent) =>
       handleMouseDown(e, (cx) => dragOnStart(cx, dragStateRef));
     const mouseMove = (e: MouseEvent) =>
       handleMouseMove(e, (cx) => dragOnMove(cx, dragStateRef));
-    const mouseUp = () => handleMouseUp(() => dragOnEnd(dragStateRef, close));
+    const mouseUp = () => handleMouseUp(() => dragOnEnd(dragStateRef, close, toggleRef));
 
     el.addEventListener("touchstart", touchStart, { passive: true });
     el.addEventListener("touchmove", touchMove, { passive: true });
@@ -146,6 +162,12 @@ export function V1Shell({ children }: V1ShellProps) {
   return (
     <RealtimeProvider>
       <div className="flex h-dvh flex-col">
+        <a
+          href="#main-content"
+          className="bg-brand text-brand-fg sr-only rounded-md px-3 py-2 focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100]"
+        >
+          {t.skipToContent}
+        </a>
         <V1Header
           toggle={toggle}
           open={open}
@@ -154,6 +176,8 @@ export function V1Shell({ children }: V1ShellProps) {
           logout={logout}
           lang={lang}
           conversations={conversations}
+          sidebarOpen={sidebarOpen}
+          toggleRef={toggleRef}
         />
 
         <div className="relative flex min-h-0 flex-1">
@@ -162,7 +186,7 @@ export function V1Shell({ children }: V1ShellProps) {
             // keyboard-reachable; this scrim only needs a click target.
             <div
               className="animate-fade-in bg-overlay/30 fixed inset-0 z-30 md:hidden"
-              onClick={close}
+              onClick={() => { close(); toggleRef.current?.focus(); }}
               aria-hidden="true"
             />
           )}
@@ -177,9 +201,9 @@ export function V1Shell({ children }: V1ShellProps) {
           />
 
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 md:p-6">
-            <section className="surface flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-4 @sm:p-5">
+            <main id="main-content" className="surface flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-4 @sm:p-5">
               {children}
-            </section>
+            </main>
           </div>
         </div>
       </div>

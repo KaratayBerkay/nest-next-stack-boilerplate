@@ -19,14 +19,14 @@ Related: [AUTH.md](AUTH.md) (token handshake), `docs/progress/archive/phase7.md`
 
 ```
 Client → Server:  { type: "auth", tokens: { accessToken, rbacToken, deviceToken, userToken } }
-Server → Client:  { type: "auth-ok" }  |  { type: "error", message: "..." } → close
+Server → Client:  { type: "authenticated" }  |  { type: "error", message: "..." } → close
 ```
 
 Tokens are derived from session cookies via `TokenStoreService`. The `userToken` is
 HMAC-derived from the `userId` and verified with timing-safe comparison.
 See [AUTH.md](AUTH.md) for the full four-token flow.
 
-After `auth-ok`, the client may send:
+After `authenticated`, the client may send:
 
 ```
 { type: "register",  services: ["MESSAGE", "NOTIFICATION"] }

@@ -15,6 +15,7 @@ import {
   type DateDisplayPreference,
 } from "@/lib/date-time";
 import type { CurrencyCode } from "@/constants/currency";
+import { PageHeader } from "@/components/ui";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsBillingPageInfo } from "@/constants/page-info";
 import { useQuery } from "@tanstack/react-query";
@@ -70,7 +71,7 @@ function renderCurrentPlan(
       {tier === "FREE" ? (
         <Link
           href={plansPath()}
-          className="bg-brand rounded-lg px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+          className="bg-brand rounded-lg px-4 py-2 text-sm font-medium text-brand-fg hover:opacity-90"
         >
           {t.upgradePlan}
         </Link>
@@ -175,10 +176,10 @@ export function FreePageView() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">{t.billingHeading}</h2>
-        <PageInfoButton content={settingsBillingPageInfo} />
-      </div>
+      <PageHeader
+        title={t.billingHeading}
+        actions={<PageInfoButton content={settingsBillingPageInfo} />}
+      />
 
       {renderCurrentPlan(
         tier,

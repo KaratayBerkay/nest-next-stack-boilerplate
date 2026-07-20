@@ -14,7 +14,7 @@ export function AccessDenied({
       <p className="text-muted max-w-md text-center text-sm">{message}</p>
       <Link
         href={ctaHref}
-        className="bg-brand rounded-lg px-4 py-2 text-sm text-white"
+        className="bg-brand rounded-lg px-4 py-2 text-sm text-brand-fg"
       >
         {ctaLabel}
       </Link>

@@ -15,7 +15,7 @@ const examples: UIExample[] = [
           <h3 className="text-lg font-semibold">Default</h3>
           <InputGroup>
             <Input placeholder="Search..." />
-            <button className="bg-brand rounded px-4 py-2 text-sm text-white">
+            <button className="bg-brand rounded px-4 py-2 text-sm text-brand-fg">
               Go
             </button>
           </InputGroup>

@@ -85,7 +85,7 @@ export default function WsPage() {
         <button
           onClick={handleSend}
           disabled={realtime.status !== "open"}
-          className="bg-brand rounded px-3 py-1 text-xs text-white disabled:opacity-50"
+          className="bg-brand rounded px-3 py-1 text-xs text-brand-fg disabled:opacity-50"
           data-testid="ws-send"
         >
           Send

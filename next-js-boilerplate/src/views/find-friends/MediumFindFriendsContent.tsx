@@ -98,7 +98,7 @@ export function MediumFindFriendsContent({
                     >
                       <Avatar
                         fallback={initials(u.name)}
-                        className="bg-brand h-10 w-10 shrink-0 text-xs text-white"
+                        className="bg-brand h-10 w-10 shrink-0 text-xs text-brand-fg"
                       />
                       <span className="flex-1 text-sm font-medium">
                         {u.name}
@@ -114,7 +114,7 @@ export function MediumFindFriendsContent({
                             if (ok)
                               setSentIds((prev) => new Set(prev).add(u.id));
                           }}
-                          className="bg-brand rounded-lg px-3 py-1 text-sm text-white hover:opacity-80"
+                          className="bg-brand rounded-lg px-3 py-1 text-sm text-brand-fg hover:opacity-80"
                         >
                           {t.addFriend}
                         </button>
@@ -151,7 +151,7 @@ export function MediumFindFriendsContent({
                 >
                   <Avatar
                     fallback={initials(r.user.name)}
-                    className="bg-brand h-10 w-10 shrink-0 text-xs text-white"
+                    className="bg-brand h-10 w-10 shrink-0 text-xs text-brand-fg"
                   />
                   <span className="flex-1 text-sm font-medium">
                     {r.user.name}
@@ -259,7 +259,7 @@ function SuggestedFriendsPanel() {
             <div key={s.id} className="flex items-center gap-2">
               <Avatar
                 fallback={initials(s.name ?? "?")}
-                className="bg-brand h-8 w-8 shrink-0 text-[10px] text-white"
+                className="bg-brand h-8 w-8 shrink-0 text-[10px] text-brand-fg"
               />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">

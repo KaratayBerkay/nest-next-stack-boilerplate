@@ -16,9 +16,10 @@ Every login/register issues four tokens:
 | `deviceToken` | opaque random (≥90 chars) | 1y | httpOnly cookie `device_token` / `__Secure-device_token`, or `x-device-token` header | No (httpOnly) |
 | `userToken` | opaque random | 15m (mirrors access) | **non-httpOnly** cookie `user_token` / `__Secure-user_token` | **Yes** |
 
-All five values are also returned in the GraphQL `AuthPayload` body so API-only clients
-(and the Next.js BFF, which re-issues them as its own cookies) can use the header
-fallbacks. Cookie names get the `__Secure-` prefix when `NODE_ENV=production`.
+All four token values (`accessToken`, `rbacToken`, `deviceToken`, `userToken`) are returned
+in the GraphQL `AuthPayload` body. The opaque `refreshToken` is delivered as an httpOnly
+cookie only (and stored in the Postgres `Session` row) — it is not returned in the body.
+Cookie names get the `__Secure-` prefix when `NODE_ENV=production`.
 
 `user_token` is deliberately **not** httpOnly — the client-side messaging hook reads it
 from `document.cookie` to authenticate the WebSocket channel (see [Messaging WS](#messaging-ws-auth)).

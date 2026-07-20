@@ -225,7 +225,12 @@
       "/node_modules/(?!.*(prisma-graphql-type-decimal|otplib|@otplib|@scure|@noble))"
     ],
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "**/*.(t|j)s",
+      "!**/@generated/**",
+      "!**/*.module.ts",
+      "!**/main.ts",
+      "!**/*.e2e-spec.ts",
+      "!**/test/**"
     ],
     "coverageDirectory": "../coverage",
     "coverageThreshold": {

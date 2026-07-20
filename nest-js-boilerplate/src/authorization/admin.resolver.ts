@@ -21,6 +21,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { MfaService } from '../mfa/mfa.service';
+import { OutboxService } from '../outbox/outbox.service';
 import { MinTier } from './min-tier.decorator';
 import { Roles } from './roles.decorator';
 import { RolesGuard } from './roles.guard';
@@ -86,6 +87,7 @@ export class AdminResolver {
     private readonly tokenStore: TokenStoreService,
     private readonly realtime: RealtimeGateway,
     private readonly mfa: MfaService,
+    private readonly outbox: OutboxService,
   ) {}
 
   /** Look up the target user and reject if missing or role >= actor. Returns target role or null. */
@@ -141,21 +143,32 @@ export class AdminResolver {
   ): Promise<boolean> {
     if (!(await this.findTargetOrReject(userId, admin.role))) return false;
 
-    await this.prisma.user.update({
+    const prev = await this.prisma.user.findUnique({
       where: { id: userId },
-      data: { subscriptionTier: tier },
+      select: { subscriptionTier: true },
+    });
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
+        data: { subscriptionTier: tier },
+      });
+      await this.outbox.emit(
+        {
+          aggregateType: 'User',
+          aggregateId: userId,
+          eventType: 'admin.tier_changed',
+          action: 'UPDATE',
+          actorId: admin.userId,
+          summary: `User tier changed to ${tier}`,
+          before: { tier: prev?.subscriptionTier },
+          after: { tier },
+        },
+        tx,
+      );
     });
     await this.tokenStore.rewriteFieldsForUser(userId, { tier });
     this.realtime.updateUserTier(userId, tier);
-    await this.prisma.auditLog.create({
-      data: {
-        actorId: admin.userId,
-        action: AuditAction.UPDATE,
-        entityType: 'User',
-        entityId: userId,
-        summary: `User tier changed to ${tier}`,
-      },
-    });
     return true;
   }
 
@@ -169,21 +182,25 @@ export class AdminResolver {
   ): Promise<boolean> {
     if (!(await this.findTargetOrReject(userId, admin.role))) return false;
 
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { status },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
+        data: { status },
+      });
+      await this.outbox.emit(
+        {
+          aggregateType: 'User',
+          aggregateId: userId,
+          eventType: 'admin.status_changed',
+          action: 'UPDATE',
+          actorId: admin.userId,
+          summary: `User status changed to ${status}${reason ? `: ${reason}` : ''}`,
+        },
+        tx,
+      );
     });
     await this.tokenStore.revokeAllForUser(userId);
     this.realtime.closeAllSocketsForUser(userId);
-    await this.prisma.auditLog.create({
-      data: {
-        actorId: admin.userId,
-        action: AuditAction.UPDATE,
-        entityType: 'User',
-        entityId: userId,
-        summary: `User status changed to ${status}${reason ? `: ${reason}` : ''}`,
-      },
-    });
     return true;
   }
 
@@ -228,14 +245,18 @@ export class AdminResolver {
     if (!changed) return false;
 
     await this.tokenStore.revokeAllForUser(userId);
-    await this.prisma.auditLog.create({
-      data: {
-        actorId: admin.userId,
-        action: AuditAction.UPDATE,
-        entityType: 'User',
-        entityId: userId,
-        summary: 'MFA reset by administrator',
-      },
+    await this.prisma.$transaction(async (tx) => {
+      await this.outbox.emit(
+        {
+          aggregateType: 'User',
+          aggregateId: userId,
+          eventType: 'admin.mfa_reset',
+          action: 'UPDATE',
+          actorId: admin.userId,
+          summary: 'MFA reset by administrator',
+        },
+        tx,
+      );
     });
     return true;
   }

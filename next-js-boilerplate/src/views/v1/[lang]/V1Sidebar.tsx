@@ -15,6 +15,8 @@ export const V1Sidebar = forwardRef<HTMLElement, V1SidebarProps>(
     return (
       <aside
         ref={ref}
+        id="v1-sidebar"
+        inert={!sidebarOpen}
         className={cn(
           "bg-bg border-border flex-col overflow-hidden border-r shadow-lg transition-all duration-300 ease-out motion-reduce:transition-none",
           "fixed top-14 left-0 z-50 h-[calc(100dvh-3.5rem)] w-full",
@@ -43,7 +45,7 @@ export const V1Sidebar = forwardRef<HTMLElement, V1SidebarProps>(
           <div className="border-border border-t px-4 py-3">
             <a
               href={LOGIN_PATH}
-              className="bg-brand block rounded-lg px-4 py-2.5 text-center text-sm font-medium text-white hover:opacity-90"
+              className="bg-brand block rounded-lg px-4 py-2.5 text-center text-sm font-medium text-brand-fg hover:opacity-90"
             >
               {t.signIn}
             </a>

@@ -127,4 +127,8 @@ export class AuthPayload {
   /** Opaque one-time token the client passes back to verifyLoginMfa. Only set when mfaRequired is true. */
   @Field(() => String, { nullable: true })
   mfaToken?: string;
+
+  /** Opaque refresh token (sessionId) delivered as both a body field and an httpOnly cookie. */
+  @Field(() => String, { nullable: true })
+  refreshToken?: string;
 }

@@ -29,6 +29,20 @@ const nextConfig: NextConfig = {
           value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
         },
         { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+        {
+          key: "Content-Security-Policy",
+          value:
+            "default-src 'self'; " +
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+            "style-src 'self' 'unsafe-inline'; " +
+            "img-src 'self' blob: data: https:; " +
+            "font-src 'self' data:; " +
+            "connect-src 'self' ws: wss: https:; " +
+            "object-src 'none'; " +
+            "base-uri 'self'; " +
+            "frame-ancestors 'none'; " +
+            "upgrade-insecure-requests",
+        },
       ],
     },
   ],

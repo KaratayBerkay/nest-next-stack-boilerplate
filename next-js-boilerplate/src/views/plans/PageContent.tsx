@@ -92,7 +92,7 @@ function TierCard({
         ) : ctaHref ? (
           <Link
             href={ctaHref}
-            className="bg-brand hover:bg-brand/90 block rounded-lg px-4 py-2 text-center text-sm font-medium text-white"
+            className="bg-brand hover:bg-brand/90 block rounded-lg px-4 py-2 text-center text-sm font-medium text-brand-fg"
           >
             {ctaLabel}
           </Link>

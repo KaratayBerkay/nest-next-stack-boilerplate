@@ -143,6 +143,7 @@ export {
   NavigationMenuContent,
   NavigationMenuLink,
 } from "./navigation-menu";
+export { PageHeader } from "./page-header";
 export { PageInfoButton } from "./page-info";
 export {
   Pagination,

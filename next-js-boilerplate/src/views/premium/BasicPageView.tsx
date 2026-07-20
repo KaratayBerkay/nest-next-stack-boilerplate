@@ -56,7 +56,7 @@ export function BasicPageView() {
         <button
           onClick={() => loadStats(setLoadingStats, setStats, toast, t)}
           disabled={loadingStats}
-          className="bg-brand self-start rounded-lg px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="bg-brand self-start rounded-lg px-4 py-2 text-sm font-medium text-brand-fg transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {loadingStats ? t.loading : t.loadStats}
         </button>

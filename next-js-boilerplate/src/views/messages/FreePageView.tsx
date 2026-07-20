@@ -9,11 +9,9 @@ import {
   startTransition,
   Suspense,
   type Dispatch,
-  type MutableRefObject,
   type SetStateAction,
 } from "react";
-import { apiFetch } from "@/lib/api-client";
-import { USERS_SEARCH_PREFIX } from "@/constants/api/urls";
+import { searchUsersQueryOptions } from "@/api/client/users/search";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
@@ -42,36 +40,6 @@ type UserInfo = {
   email: string;
   avatarUrl: string | null;
 };
-
-function debouncedUserSearch(
-  val: string,
-  searchTimerRef: MutableRefObject<ReturnType<typeof setTimeout> | null>,
-  searchAbortRef: MutableRefObject<AbortController | null>,
-  setFindResults: Dispatch<SetStateAction<UserInfo[]>>,
-) {
-  if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-  searchTimerRef.current = setTimeout(async () => {
-    if (searchAbortRef.current) searchAbortRef.current.abort();
-    if (val.length < 1) {
-      setFindResults([]);
-      return;
-    }
-    const ac = new AbortController();
-    searchAbortRef.current = ac;
-    try {
-      const res = await apiFetch(
-        `${USERS_SEARCH_PREFIX}?q=${encodeURIComponent(val)}`,
-        { signal: ac.signal },
-      );
-      if (res.ok) {
-        const data = await res.json();
-        if (!ac.signal.aborted) setFindResults(data.items ?? []);
-      } else setFindResults([]);
-    } catch {
-      if (!ac.signal.aborted) setFindResults([]);
-    }
-  }, 300);
-}
 
 function openConversationAction(
   u: UserInfo,
@@ -125,15 +93,22 @@ function MessagesPageContent({
 
   const [search, setSearch] = useState("");
   const [findInput, setFindInput] = useState("");
-  const [findResults, setFindResults] = useState<UserInfo[]>([]);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [sentRequestIds, setSentRequestIds] = useState<Set<string>>(new Set());
-  const searchAbortRef = useRef<AbortController | null>(null);
-  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const debouncedSearch = useCallback(
-    (val: string) =>
-      debouncedUserSearch(val, searchTimerRef, searchAbortRef, setFindResults),
-    [],
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debouncedSearch = useCallback((val: string) => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => setDebouncedQuery(val), 300);
+  }, []);
+
+  const { data: searchData } = useQuery({
+    ...searchUsersQueryOptions(debouncedQuery, 20, 0),
+    enabled: debouncedQuery.trim().length >= 1 && !!user,
+  });
+  const findResults = useMemo(
+    () => (searchData?.items ?? []) as UserInfo[],
+    [searchData],
   );
 
   const {
@@ -265,7 +240,6 @@ function MessagesPageContent({
           findResults={findResults}
           sentRequestIds={sentRequestIds}
           setSentRequestIds={setSentRequestIds}
-          setFindResults={setFindResults}
           openConversation={openConversation}
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}

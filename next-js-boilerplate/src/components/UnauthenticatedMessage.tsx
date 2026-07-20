@@ -12,7 +12,7 @@ export function UnauthenticatedMessage({
       <p className="text-muted text-sm">{message}</p>
       <a
         href={LOGIN_PATH}
-        className="bg-brand rounded-lg px-4 py-2 text-sm text-white"
+        className="bg-brand rounded-lg px-4 py-2 text-sm text-brand-fg"
       >
         {label ?? t.signIn}
       </a>

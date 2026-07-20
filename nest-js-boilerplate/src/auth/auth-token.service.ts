@@ -7,6 +7,7 @@ import { parseDeviceType } from '../common/utils/device-type';
 import { accessCookieName } from './access-cookie';
 import { rbacCookieName, rbacCookieOptions } from './rbac-cookie';
 import { userCookieName, userCookieOptions } from './user-cookie';
+import { refreshCookieName, refreshCookieOptions } from './refresh-cookie';
 import { deviceCookieName } from '../devices/device-cookie';
 import { SessionHydrationService } from './session-hydration.service';
 import { TokenDerivationService } from './token-derivation.service';
@@ -76,6 +77,7 @@ export class AuthTokenService {
 
     this.setRbacCookie(ctx, rbacToken);
     this.setUserCookie(ctx, userToken);
+    this.setRefreshCookie(ctx, sessionId);
 
     return {
       accessToken,
@@ -84,6 +86,7 @@ export class AuthTokenService {
       deviceId: device?.deviceId,
       deviceToken: device?.deviceToken,
       user,
+      refreshToken: sessionId,
     };
   }
 
@@ -117,6 +120,10 @@ export class AuthTokenService {
       userCookieName(this.config),
       'x-user-token',
     );
+  }
+
+  extractRefreshToken(ctx: RequestContext): string | null {
+    return this.extractCookie(ctx, refreshCookieName(this.config));
   }
 
   private extractCookie(ctx: RequestContext, name: string): string | null {
@@ -162,5 +169,23 @@ export class AuthTokenService {
   clearUserCookie(ctx: RequestContext): void {
     const { maxAge: _maxAge, ...clearOpts } = userCookieOptions(this.config);
     ctx.req.res?.clearCookie(userCookieName(this.config), clearOpts);
+  }
+
+  setRefreshCookie(
+    ctx: RequestContext | undefined,
+    sessionId: string,
+  ): void {
+    ctx?.req.res?.cookie(
+      refreshCookieName(this.config),
+      sessionId,
+      refreshCookieOptions(this.config),
+    );
+  }
+
+  clearRefreshCookie(ctx: RequestContext): void {
+    const { maxAge: _maxAge, ...clearOpts } = refreshCookieOptions(
+      this.config,
+    );
+    ctx.req.res?.clearCookie(refreshCookieName(this.config), clearOpts);
   }
 }

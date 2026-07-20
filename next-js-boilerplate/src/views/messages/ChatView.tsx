@@ -20,6 +20,7 @@ import { MessageTick } from "@/components/MessageTick";
 import { initials } from "@/lib/initials";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { IconChevronLeft } from "@tabler/icons-react";
+import { IconButton } from "@/components/ui/button/icon-button";
 import type { ChatViewProps, Message } from "@/types/messages/ChatView-types";
 import { useMessageActions } from "@/api/client/messages/actions";
 
@@ -108,22 +109,21 @@ export function ChatView({
   return (
     <div className="border-border bg-bg relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border">
       <div className="flex items-center gap-3 border-b px-4 py-3">
-        <Button
+        <IconButton
+          icon={<IconChevronLeft size={18} />}
+          label="Back to conversations"
           variant="ghost"
           size="icon-sm"
           onClick={() => {
             setSelectedUser(null);
             setSidebarOpen(true);
           }}
-          className="mr-1 rounded-lg md:hidden"
-          aria-label="Back to conversations"
-        >
-          <IconChevronLeft size={18} />
-        </Button>
+          className="mr-1 md:hidden"
+        />
         <div className="relative shrink-0">
           <Avatar
             fallback={initials(selectedUser.name ?? selectedUser.email ?? "?")}
-            className="bg-brand h-8 w-8 shrink-0 text-xs text-white"
+            className="bg-brand h-8 w-8 shrink-0 text-xs text-brand-fg"
           />
           {onlineUsers.has(selectedUser.id) && (
             <span className="border-bg bg-success absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2" />
@@ -160,12 +160,12 @@ export function ChatView({
                     fallback={initials(
                       selectedUser.name ?? selectedUser.email ?? "?",
                     )}
-                    className="bg-brand mb-0.5 h-6 w-6 shrink-0 text-[9px] text-white"
+                    className="bg-brand mb-0.5 h-6 w-6 shrink-0 text-[9px] text-brand-fg"
                   />
                 )}
                 <span
                   className={`rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${
-                    isMe ? "bg-brand text-white" : "bg-surface text-fg"
+                    isMe ? "bg-brand text-brand-fg" : "bg-surface text-fg"
                   }`}
                 >
                   {msg.body}

@@ -11,6 +11,7 @@ import {
 } from "@tabler/icons-react";
 import { formatDateTimeByPreference } from "@/lib/date-time";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
+import { PageHeader } from "@/components/ui";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsSessionsPageInfo } from "@/constants/page-info";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
@@ -91,20 +92,23 @@ export function FreePageView() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-brand text-sm font-semibold">Sessions & Devices</h2>
-        <div className="flex items-center gap-2">
-          {sessions.length > 1 && (
-            <button
-              onClick={handleRevokeAllOtherSessions}
-              className="text-xs text-red-600 transition-colors hover:text-red-700"
-            >
-              Log out all other sessions
-            </button>
-          )}
-          <PageInfoButton content={settingsSessionsPageInfo} />
-        </div>
-      </div>
+      <PageHeader
+        title="Sessions & Devices"
+        titleClassName="text-brand text-sm"
+        actions={
+          <>
+            {sessions.length > 1 && (
+              <button
+                onClick={handleRevokeAllOtherSessions}
+                className="text-xs text-red-600 transition-colors hover:text-red-700"
+              >
+                Log out all other sessions
+              </button>
+            )}
+            <PageInfoButton content={settingsSessionsPageInfo} />
+          </>
+        }
+      />
 
       {loadingSessions ? (
         <div className="text-muted flex items-center justify-center py-12 text-sm">

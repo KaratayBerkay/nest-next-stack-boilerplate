@@ -105,7 +105,7 @@ function UnsavedChangesContent() {
               Discard
             </AlertDialogAction>
             <AlertDialogAction
-              className="bg-brand rounded px-4 py-2 text-sm text-white"
+              className="bg-brand rounded px-4 py-2 text-sm text-brand-fg"
               onClick={() => handleSave(setOriginalText, text, toast)}
             >
               Save
@@ -125,7 +125,7 @@ function SmallAlertDialogCard() {
         A compact confirmation dialog for quick actions.
       </p>
       <AlertDialog>
-        <AlertDialogTrigger className="bg-brand self-start rounded px-4 py-2 text-sm font-medium text-white hover:opacity-90">
+        <AlertDialogTrigger className="bg-brand self-start rounded px-4 py-2 text-sm font-medium text-brand-fg hover:opacity-90">
           Delete comment?
         </AlertDialogTrigger>
         <AlertDialogContent className="max-w-sm">
@@ -274,7 +274,7 @@ const examples: UIExample[] = [
         <section className="flex flex-col gap-3">
           <h3 className="text-lg font-semibold">Default</h3>
           <AlertDialog>
-            <AlertDialogTrigger className="bg-brand rounded px-4 py-2 text-sm font-medium text-white hover:opacity-90">
+            <AlertDialogTrigger className="bg-brand rounded px-4 py-2 text-sm font-medium text-brand-fg hover:opacity-90">
               Open Alert Dialog
             </AlertDialogTrigger>
             <AlertDialogContent>

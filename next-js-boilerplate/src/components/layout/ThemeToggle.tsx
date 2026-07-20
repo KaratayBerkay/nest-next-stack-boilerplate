@@ -10,6 +10,7 @@ import {
   IconBolt,
   IconFlame,
 } from "@tabler/icons-react";
+import { IconButton } from "@/components/ui/button/icon-button";
 import { useClickOutside } from "@/hooks/useClickOutside";
 
 const THEME_ICONS: Record<ThemeName, typeof IconSun> = {
@@ -31,14 +32,12 @@ export function ThemeToggle() {
 
   return (
     <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen((p) => !p)}
+      <IconButton
+        icon={<Icon size={20} />}
+        label={`Theme: ${theme}. Click to switch.`}
         data-testid="theme-toggle"
-        className="text-muted hover:bg-surface-hover relative rounded-lg p-1.5"
-        aria-label={`Theme: ${theme}. Click to switch.`}
-      >
-        <Icon size={20} stroke={1.5} />
-      </button>
+        onClick={() => setOpen((p) => !p)}
+      />
       {open && (
         <div className="bg-bg border-border absolute top-full right-0 mt-1 flex min-w-[180px] flex-col rounded-lg border p-1 shadow-sm">
           {THEMES.map((t) => {

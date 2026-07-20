@@ -16,6 +16,7 @@ import {
   formatDateByPreference,
   type DateDisplayPreference,
 } from "@/lib/date-time";
+import { PageHeader } from "@/components/ui";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsPageInfo } from "@/constants/page-info";
 import { subscriptionQueryOptions } from "@/api/client/billing/query";
@@ -100,7 +101,7 @@ function renderUpgradeActions(
       {tier === "FREE" && (
         <Link
           href={plansPath(lang)}
-          className="bg-brand mt-2 block rounded-lg px-4 py-2 text-center text-sm font-medium text-white hover:opacity-90"
+          className="bg-brand mt-2 block rounded-lg px-4 py-2 text-center text-sm font-medium text-brand-fg hover:opacity-90"
         >
           {t.upgradePlan}
         </Link>
@@ -131,10 +132,10 @@ export default function PageContent({ params }: SettingsIndexPageProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">{t.currentPlan}</h2>
-        <PageInfoButton content={settingsPageInfo} />
-      </div>
+      <PageHeader
+        title={t.currentPlan}
+        actions={<PageInfoButton content={settingsPageInfo} />}
+      />
 
       <div className="flex flex-col gap-4">
         {renderPlanInfo(

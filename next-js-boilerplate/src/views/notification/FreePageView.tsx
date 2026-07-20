@@ -8,6 +8,7 @@ import {
   IconChevronLeft,
   IconArrowLeft,
 } from "@tabler/icons-react";
+import { IconButton } from "@/components/ui/button/icon-button";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
@@ -88,33 +89,27 @@ function NotificationPageContent() {
     <div className="flex h-full w-full flex-col gap-4 overflow-hidden">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <button
+          <IconButton
+            icon={<IconArrowLeft size={20} stroke={1.5} />}
+            label="Back"
             onClick={() => navigateToFeed(router, lang)}
-            className="text-muted hover:bg-surface-hover rounded-lg p-1.5"
-            aria-label="Back"
-          >
-            <IconArrowLeft size={20} stroke={1.5} />
-          </button>
+          />
           <h2 className="text-fg text-sm font-semibold">{t.title}</h2>
         </div>
         <div className="flex items-center gap-2">
           {supported && permission !== "granted" && (
-            <button
+            <IconButton
+              icon={<IconBellOff size={16} stroke={1.5} />}
+              label={t.enablePush}
               onClick={requestPermission}
-              className="text-muted hover:text-fg p-1"
-              aria-label={t.enablePush}
-            >
-              <IconBellOff size={16} stroke={1.5} />
-            </button>
+            />
           )}
           {subscription && (
-            <button
+            <IconButton
+              icon={<IconBell size={16} stroke={1.5} />}
+              label={t.disablePush}
               onClick={unsubscribe}
-              className="text-brand hover:text-fg p-1"
-              aria-label={t.disablePush}
-            >
-              <IconBell size={16} stroke={1.5} />
-            </button>
+            />
           )}
           {unread.length > 0 && (
             <button
@@ -174,7 +169,7 @@ function NotificationPageContent() {
                 !n.readAt ? "bg-brand/5" : ""
               }`}
             >
-              <div className="bg-brand flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white">
+              <div className="bg-brand flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-brand-fg">
                 {n.actor?.name?.charAt(0).toUpperCase() ?? "?"}
               </div>
               <div className="min-w-0 flex-1">

@@ -1,12 +1,13 @@
 # CSS & UI Improvements
 
-This document describes the enhanced CSS and UI system implemented in the Next.js Boilerplate.
+This document describes the CSS and UI system in the Next.js Boilerplate — Tailwind v4, multi-theme tokens, component class utilities, and design conventions.
 
 ## Table of Contents
 
-- [Color System](#color-system)
+- [Token Pipeline](#token-pipeline)
 - [Theme System](#theme-system)
-- [Component Style System](#component-style-system)
+- [Component-Level Tokens](#component-level-tokens)
+- [V0 Design Language](#v0-design-language)
 - [Typography System](#typography-system)
 - [Component Variants](#component-variants)
 - [Animations](#animations)
@@ -15,147 +16,132 @@ This document describes the enhanced CSS and UI system implemented in the Next.j
 
 ---
 
-## Color System
+## Token Pipeline
 
-### Semantic Colors
-
-The color system now includes semantic color tokens for consistent theming:
+Three layers, all in `src/app/globals.css`:
 
 ```css
---success: #16a34a; /* Green */
---success-fg: #ffffff;
---warning: #d97706; /* Amber */
---warning-fg: #ffffff;
---error: #dc2626; /* Red */
---error-fg: #ffffff;
---info: #0ea5e9; /* Blue */
---info-fg: #ffffff;
+/* 1. Each theme defines raw palette vars via .style-* class */
+.style-light { --bg: #ffffff; --fg: #171717; --brand: #4f46e5; ... }
+
+/* 2. @theme inline maps raw vars to Tailwind color tokens */
+@theme inline { --color-bg: var(--bg); --color-brand: var(--brand); ... }
+
+/* 3. Components consume semantic utilities */
+/* bg-bg  text-fg  bg-brand  text-brand-fg  border-border ... */
 ```
 
-### Brand Colors
-
-```css
---brand: #4f46e5; /* Indigo */
---brand-fg: #ffffff;
-```
-
-### Surface Colors
-
-```css
---surface: #fafafa; /* Light gray */
---surface-hover: #f4f4f5;
-```
-
-### Muted Colors
-
-```css
---muted: #71717a; /* Gray */
---muted-fg: #52525b;
-```
+The active `style-<name>` class is set on `<html>` by `useTheme` (via `ThemeProvider`) and pre-paint by `theme-init.js`. All themes except `light` also add `.dark` for the `dark:` variant.
 
 ---
 
 ## Theme System
 
+Six themes in a single dropdown (`ThemeToggle`), persisted as a `theme` cookie. Internally `themeToComponentStyle()` maps light/dark → `"default"` for `useComponentVariant()`; shiny/glass/neon/gradient keep their name.
+
 ### Available Themes
 
-1. **Light** (default) - Bright, clean interface
-2. **Dark** - Dark background with light text
-3. **Ocean** - Light blue theme with ocean-inspired colors
-4. **Violet** - Deep purple dark theme
+| Theme | CSS class | Description |
+|---|---|---|
+| `light` | `.style-light` | Light bg, dark text (default browser palette) |
+| `dark` | `.style-dark` | Pure black bg, light text |
+| `shiny` | `.style-shiny` | Dark navy, gradient surfaces + buttons |
+| `glass` | `.style-glass` | Translucent surfaces with backdrop blur |
+| `neon` | `.style-neon` | Dark with cyan accents and glow |
+| `gradient` | `.style-gradient` | Dark purple with gradient surfaces + text |
+
+### Semantic Token Reference (all themes)
+
+| Token | Light (#ffffff) | Dark (#000000) |
+|---|---|---|
+| `--bg` | `#ffffff` | `#000000` |
+| `--fg` | `#171717` | `#e5e5e5` |
+| `--brand` | `#4f46e5` | `#818cf8` |
+| `--brand-fg` | `#ffffff` | `#0b0b1a` |
+| `--surface` | `#f5f5f5` | `#171717` |
+| `--surface-hover` | `#e5e5e5` | `#262626` |
+| `--border` | `#d4d4d4` | `#262626` |
+| `--muted` | `#737373` | `#a3a3a3` |
+| `--muted-fg` | `#52525b` | `#a3a3a3` |
+| `--success` | `#15803d` | `#22c55e` |
+| `--success-fg` | `#ffffff` | `#052e16` |
+| `--warning` | `#b45309` | `#f59e0b` |
+| `--warning-fg` | `#ffffff` | `#451a03` |
+| `--error` | `#dc2626` | `#ef4444` |
+| `--error-fg` | `#ffffff` | `#2a0808` |
+| `--info` | `#0369a1` | `#38bdf8` |
+| `--info-fg` | `#ffffff` | `#082f49` |
+| `--overlay` | `#000000` | `#000000` |
+
+Shiny/glass/neon/gradient override all tokens above — their exact values are in `globals.css`.
 
 ### Adding a New Theme
 
-Add a new `.theme-*` block in `globals.css`:
+1. Add a `.style-newname` block in `globals.css` defining all tokens (copy an existing block as template).
+2. Register it in `THEMES` in `src/constants/theme.ts`:
+   ```ts
+   { name: "newname", label: "New Name" }
+   ```
+3. If the background is dark, the `dark` class will be applied automatically (themes other than `light` get it).
+4. No component changes needed — components consume semantic tokens only.
 
-```css
-.theme-mytheme {
-  --bg: #ffffff;
-  --fg: #171717;
-  --brand: #4f46e5;
-  --brand-fg: #ffffff;
-  --muted: #71717a;
-  --muted-fg: #52525b;
-  --border: #e4e4e7;
-  --surface: #fafafa;
-  --surface-hover: #f4f4f5;
-  --success: #16a34a;
-  --success-fg: #ffffff;
-  --warning: #d97706;
-  --warning-fg: #ffffff;
-  --error: #dc2626;
-  --error-fg: #ffffff;
-  --info: #0ea5e9;
-  --info-fg: #ffffff;
-}
-```
+### Flash Prevention
 
-Then apply the class to `<html>`:
+`public/scripts/theme-init.js` reads the `theme` cookie and applies the `style-<name>` + `dark` classes to `<html>` before the first paint.
+
+### Explicit Variant Override
+
+Components accept an explicit `variant` prop that overrides the global component style:
 
 ```tsx
-<html className="theme-mytheme">
+<Button variant="primary">Always primary, regardless of component style</Button>
 ```
 
 ---
 
-## Component Style System
+## Component-Level Tokens
 
-The component style system is an independent dimension from the color theme. Users can switch between 5 visual styles from the header dropdown. The selected style applies a `style-*` class to `<html>`, which overrides CSS custom properties to change the visual appearance of all components globally.
+Shiny, glass, neon, and gradient themes define `--comp-*` tokens for component-specific overrides:
 
-### Available Styles
+| Token | Purpose |
+|---|---|
+| `--comp-card-bg` | Card background (solid or gradient) |
+| `--comp-card-border` | Card border color |
+| `--comp-card-shadow` | Card box-shadow |
+| `--comp-btn-bg` | Button primary background (solid or gradient) |
+| `--comp-btn-text` | Button primary text |
+| `--comp-btn-border` | Button primary border |
+| `--comp-btn-shadow` | Button primary shadow |
+| `--comp-input-bg` | Input background |
+| `--comp-input-border` | Input border color |
+| `--comp-badge-bg` | Badge background (solid or gradient) |
+| `--comp-badge-text` | Badge text color |
+| `--comp-alert-bg` | Alert background |
+| `--comp-alert-border` | Alert border color |
 
-1. **Default** — Uses the base CSS variables from the current color theme
-2. **Shiny** — Gradient backgrounds, white text, subtle shadows
-3. **Glass** — Translucent backgrounds with backdrop blur
-4. **Neon** — Dark backgrounds with cyan accents and glow effects
-5. **Gradient** — Gradient text with dark backgrounds
+These are consumed by component CSS classes (`.card`, `.btn-primary`, `.badge`, etc.) or inline in component code. `light` and `dark` themes don't define `--comp-*` tokens — components fall back to their base styles.
 
-### How It Works
+---
 
-1. `ThemeToggle` dropdown lets users pick a style
-2. Selection is persisted in a `componentStyle` cookie
-3. `style-*` class is applied to `<html>` element
-4. CSS variables are overridden in `globals.css` via `.style-shiny`, `.style-glass`, `.style-neon`, `.style-gradient`
-5. Components using semantic tokens (`bg-bg`, `text-fg`, `border-border`, etc.) automatically adapt
+## V0 Design Language
 
-### Adding a New Style
+Embedded in `globals.css` as a reference block. Enforced across all components:
 
-Add a new `.style-*` block in `globals.css`:
+**Radius:** controls → `rounded-md`; floating panels → `rounded-lg`; modals → `rounded-xl`; pills → `rounded-full`
 
-```css
-.style-mytheme {
-  --bg: #1a1a2e;
-  --fg: #e0e0e0;
-  --brand: #6c63ff;
-  --brand-fg: #ffffff;
-  /* ... override other tokens */
-}
-```
+**Elevation:** controls → `shadow-xs`; inline bars → `shadow-xs`; small floats → `shadow-md`; menus/popovers → `shadow-lg`; modals/toasts → `shadow-xl`
 
-Then register it in `src/constants/theme.ts`:
+**Control heights:** `sm h-8` / `md h-9` / `lg h-10`; touch targets ≥ 36px
 
-```ts
-export const COMPONENT_STYLES = [
-  { value: "default", label: "Default", icon: "IconDefault" },
-  { value: "shiny", label: "Shiny", icon: "IconSparkles" },
-  { value: "glass", label: "Glass", icon: "IconGlass" },
-  { value: "neon", label: "Neon", icon: "IconBolt" },
-  { value: "gradient", label: "Gradient", icon: "IconFlame" },
-  { value: "mytheme", label: "My Theme", icon: "IconMyTheme" },
-] as const;
-```
+**Focus:** `focus-visible:ring-2 focus-visible:ring-brand` + `ring-offset-1 ring-offset-bg` on solid controls; inputs add `focus-visible:border-brand`
 
-### Explicit Variant Override
+**Disabled:** `disabled:opacity-50 disabled:pointer-events-none`
 
-Components still accept an explicit `variant` prop that overrides the global style:
+**Status tinting (soft):** `bg-<status>/10  border-<status>/30  text-<status>`; solid: `bg-<status> text-<status>-fg`
 
-```tsx
-<Button variant="primary">Always primary, regardless of style</Button>
-```
+**Motion:** menus/popovers/tooltips → `animate-scale-in` (~120ms) + useExitAnimation; modals → fade + rise; `motion-reduce:animate-none`
 
-### Flash Prevention
-
-`public/scripts/theme-init.js` reads the `componentStyle` cookie and applies the `style-*` class to `<html>` before paint, preventing a flash of default styles.
+**Palette:** semantic tokens ONLY — `bg-error`, `text-success`, `border-warning`, etc. Hardcoded palette colors are forbidden in component files.
 
 ---
 
@@ -311,6 +297,7 @@ import { Avatar } from "@/components/ui/Avatar";
 
 ```css
 fade-in
+fade-out
 fade-in-up
 fade-in-down
 fade-in-left
@@ -319,13 +306,23 @@ fade-out-left
 fade-out-right
 scale-in
 scale-out
+scale-in-breathe
 slide-in-right
 slide-in-left
 slide-out-right
 slide-out-left
+slide-in-up
+spin
 pulse
 shimmer
 stagger
+accordion-down
+accordion-up
+dialog-fade-in
+dialog-fade-out
+backdrop-fade-in
+backdrop-fade-out
+progress-indeterminate
 ```
 
 ### Using Animations
@@ -364,6 +361,34 @@ import { getContainerClass } from "@/lib/container";
 <div className={getContainerClass("xl")}>Content</div>
 <div className={getContainerClass("2xl")}>Content</div>
 ```
+
+### Surface Classes
+
+```html
+<div class="surface">Default surface (border + rounded-xl + shadow-sm)</div>
+<div class="surface-elevated">Elevated surface (larger shadow)</div>
+<div class="surface-interactive">Interactive surface (hover lift)</div>
+<div class="surface-outline">Outline surface (2px border, no bg)</div>
+```
+
+### Card Classes
+
+```html
+<div class="card">Default card (rounded-xl, hover lift)</div>
+<div class="card-elevated">Elevated card (shadow-elevated, no hover)</div>
+<div class="card-interactive">Interactive card (pointer cursor, hover lift + translateY)</div>
+```
+
+### Scroll-Fade Affordance
+
+No visible scrollbars (hidden via CSS). Use fade-mask gradients on overflow containers:
+
+```html
+<div class="scroll-fade-y">Content fades at top and bottom</div>
+<div class="scroll-fade-x">Content fades at left and right</div>
+```
+
+Complementary classes (`scrolled-to-top`, `scrolled-to-bottom`, `scrolled-to-left`, `scrolled-to-right`) let JS toggle the fade at scrolled edges.
 
 ### Border Styles
 
@@ -476,6 +501,16 @@ All interactive elements are at least 44px:
   min-height: 44px;
 }
 ```
+
+### Input Modality Utilities
+
+```html
+<div class="touch-only">Visible only on touch devices</div>
+<div class="mouse-only">Visible only on mouse devices</div>
+```
+
+Set by `DeviceTypeInit` component adding `.touch-device` or `.mouse-device` to `<html>`.
+Custom variants `touch:` and `mouse:` are also available for conditional styling.
 
 ---
 

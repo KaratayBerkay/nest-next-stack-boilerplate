@@ -13,7 +13,7 @@ export function UserTierRow({ user: u, onSetTier }: UserTierRowProps) {
     <div className="border-border flex items-center gap-3 rounded-lg border p-3">
       <Avatar
         fallback={initials(u.name)}
-        className="bg-brand h-8 w-8 shrink-0 text-[10px] text-white"
+        className="bg-brand h-8 w-8 shrink-0 text-[10px] text-brand-fg"
       />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{u.name}</p>
@@ -32,7 +32,7 @@ export function UserTierRow({ user: u, onSetTier }: UserTierRowProps) {
       </select>
       <button
         onClick={() => onSetTier(u.id, selectedTier)}
-        className="bg-brand rounded-lg px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
+        className="bg-brand rounded-lg px-3 py-1.5 text-xs font-medium text-brand-fg hover:opacity-90"
       >
         Set tier
       </button>

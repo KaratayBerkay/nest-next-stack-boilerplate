@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { LANGS, LANG_COOKIE, type Lang } from "@/constants/i18n";
 import { IconLanguage } from "@tabler/icons-react";
+import { IconButton } from "@/components/ui/button/icon-button";
 import { useClickOutside } from "@/hooks/useClickOutside";
 
 function setLangCookie(locale: Lang): void {
@@ -63,13 +64,11 @@ export function LangSwitcher() {
 
   return (
     <div className="relative" ref={ref}>
-      <button
+      <IconButton
+        icon={<IconLanguage size={20} />}
+        label="Switch language"
         onClick={() => setOpen((p) => !p)}
-        className="text-muted hover:bg-surface-hover relative rounded-lg p-1.5"
-        aria-label="Switch language"
-      >
-        <IconLanguage size={20} stroke={1.5} />
-      </button>
+      />
       {open && (
         <div className="bg-bg border-border absolute top-full right-0 mt-1 flex min-w-[80px] flex-col rounded-lg border p-1 shadow-sm">
           {LANGS.map((locale) => (

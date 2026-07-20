@@ -28,6 +28,7 @@ import {
 } from "@/constants/date-display";
 import type { DateDisplayFormat } from "@/constants/date-display";
 import { formatDateLong, formatDateShort, toISOString } from "@/lib/date-time";
+import { PageHeader } from "@/components/ui";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsGeneralPageInfo } from "@/constants/page-info";
 import { useProfileActions } from "@/api/client/profile/actions";
@@ -151,10 +152,10 @@ export function FreePageView() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">{t.generalHeading}</h2>
-        <PageInfoButton content={settingsGeneralPageInfo} />
-      </div>
+      <PageHeader
+        title={t.generalHeading}
+        actions={<PageInfoButton content={settingsGeneralPageInfo} />}
+      />
 
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">

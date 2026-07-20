@@ -31,7 +31,7 @@ function BasicDrawerDemo() {
         activeSnapPoint={activeSnap}
         setActiveSnapPoint={setActiveSnap}
       >
-        <DrawerTrigger className="bg-brand rounded px-4 py-2 text-sm font-medium text-white">
+        <DrawerTrigger className="bg-brand rounded px-4 py-2 text-sm font-medium text-brand-fg">
           Open Drawer
         </DrawerTrigger>
         <DrawerContent>
@@ -73,7 +73,7 @@ function CartSummaryDemo() {
   return (
     <section className="flex flex-col gap-3">
       <Drawer>
-        <DrawerTrigger className="bg-brand rounded px-4 py-2 text-sm font-medium text-white">
+        <DrawerTrigger className="bg-brand rounded px-4 py-2 text-sm font-medium text-brand-fg">
           View Cart (3 items)
         </DrawerTrigger>
         <DrawerContent>
@@ -136,7 +136,7 @@ function DrawerVariantGallery() {
         render={(variant, size) => (
           <div className="flex items-center gap-2">
             <Drawer>
-              <DrawerTrigger className="bg-brand rounded px-3 py-1.5 text-xs font-medium text-white">
+              <DrawerTrigger className="bg-brand rounded px-3 py-1.5 text-xs font-medium text-brand-fg">
                 Open
               </DrawerTrigger>
               <DrawerContent>

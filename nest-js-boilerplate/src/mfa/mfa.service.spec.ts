@@ -239,14 +239,14 @@ describe('MfaService', () => {
       );
     });
 
-    it('throws EX_MFA_NOT_ENABLED and does nothing when MFA is already off', async () => {
+    it('throws EX_AUTH_MFA_NOT_ENABLED and does nothing when MFA is already off', async () => {
       prisma.user.findUniqueOrThrow.mockResolvedValue({
         id: 'u1',
         mfaEnabled: false,
       });
 
       await expect(service.disable('u1', '123456')).rejects.toMatchObject({
-        response: { exc: 'EX_MFA_NOT_ENABLED' },
+        response: { exc: 'EX_AUTH_MFA_NOT_ENABLED' },
       });
       expect(prisma.mfaFactor.findFirst).not.toHaveBeenCalled();
       expect(prisma.$transaction).not.toHaveBeenCalled();

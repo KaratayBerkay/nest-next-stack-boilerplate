@@ -5,6 +5,7 @@ import { WalletService } from './wallet.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { TokenStoreService } from '../auth/token-store.service';
 import { ConfigService } from '@nestjs/config';
+import { OutboxService } from '../outbox/outbox.service';
 
 const MAX_WEBHOOK_BODY_BYTES = 1024 * 1024; // 1 MB
 
@@ -18,6 +19,7 @@ export class StripeWebhookController {
     private readonly prisma: PrismaService,
     private readonly tokenStore: TokenStoreService,
     private readonly config: ConfigService,
+    private readonly outbox: OutboxService,
   ) {}
 
   @Post('webhook')
@@ -193,15 +195,29 @@ export class StripeWebhookController {
     });
     if (!user) return;
 
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        subscriptionTier: 'FREE',
-        stripeSubscriptionId: null,
-        subscriptionPeriodStart: null,
-        subscriptionPeriodEnd: null,
-        cancelAtPeriodEnd: false,
-      },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: user.id },
+        data: {
+          subscriptionTier: 'FREE',
+          stripeSubscriptionId: null,
+          subscriptionPeriodStart: null,
+          subscriptionPeriodEnd: null,
+          cancelAtPeriodEnd: false,
+        },
+      });
+      await this.outbox.emit(
+        {
+          aggregateType: 'User',
+          aggregateId: user.id,
+          eventType: 'billing.subscription_deleted',
+          action: 'UPDATE',
+          actorId: user.id,
+          summary: 'Subscription deleted, reverted to FREE',
+          after: { tier: 'FREE' },
+        },
+        tx,
+      );
     });
 
     await this.tokenStore.rewriteFieldsForUser(user.id, {

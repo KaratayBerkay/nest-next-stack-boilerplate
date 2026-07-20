@@ -21,7 +21,7 @@ export default function Home() {
         <div className="flex flex-wrap gap-3">
           <Link
             href={LOGIN_PATH}
-            className="bg-brand rounded-lg px-5 py-2 text-sm font-semibold text-white hover:opacity-90"
+            className="bg-brand rounded-lg px-5 py-2 text-sm font-semibold text-brand-fg hover:opacity-90"
           >
             {t.signIn}
           </Link>

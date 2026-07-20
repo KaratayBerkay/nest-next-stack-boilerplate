@@ -1,9 +1,23 @@
 # Structured Event Logging (Phase 14 / Phase 16)
 
-Six Kibana log categories — `session`, `exception`, `page`, `network`, `database`, `performance` — each routed to a dedicated
-Elasticsearch index via Fluent Bit `rewrite_tag`. Events flow Pino → stdout → Fluent Bit → ES
-from both the backend (NestJS) and frontend (Next.js). Kafka/`frontend-events` remains only
-for events with no `category`.
+## Index Reference
+
+| ES index | category / source | description |
+|---|---|---|
+| `session-logs` | `session` | Backend session lifecycle, WebSocket connect/auth/disconnect |
+| `http-exception-logs` | `http-exception` | HTTP error responses (4xx, 5xx) |
+| `websocket-exception-logs` | `websocket-exception` | WebSocket errors, connection losses, device IP changes |
+| `application-exception-logs` | `application-exception` | Browser-side exceptions |
+| `page-logs` | `page` | Frontend page navigation (view, exit) |
+| `network-logs` | `network` | Rate limits, CSRF failures, connectivity changes |
+| `database-logs` | `database` | Slow queries, query errors |
+| `performance-logs` | `performance` | Backend slow requests, frontend Core Web Vitals |
+| `payment-logs` | `payment` | Payment events (Pino stdout → Fluent Bit → ES) |
+| `billing-logs` | `billing` | Billing events (Pino stdout → Fluent Bit → ES) |
+| `app-logs` | (no category — backend fallback) | All backend records without a matching category |
+| `frontend-logs` | (no category — frontend fallback) | All frontend records without a matching category |
+
+Events flow Pino → stdout → Fluent Bit → ES from both the backend (NestJS) and frontend (Next.js). Kafka/`frontend-events` remains only for events with no `category`.
 
 ## Architecture
 

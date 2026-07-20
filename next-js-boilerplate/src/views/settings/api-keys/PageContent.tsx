@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { formatDateByPreference } from "@/lib/date-time";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
+import { PageHeader } from "@/components/ui";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsApiKeysPageInfo } from "@/constants/page-info";
 import { useApiKeyActions } from "@/api/client/api-keys/actions";
@@ -121,16 +122,11 @@ export default function PageContent() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">API Keys</h2>
-          <p className="text-muted text-sm">
-            API keys allow programmatic access to your account. Treat them like
-            passwords.
-          </p>
-        </div>
-        <PageInfoButton content={settingsApiKeysPageInfo} />
-      </div>
+      <PageHeader
+        title="API Keys"
+        description="API keys allow programmatic access to your account. Treat them like passwords."
+        actions={<PageInfoButton content={settingsApiKeysPageInfo} />}
+      />
 
       {newKeyResult && (
         <div className="surface border-brand/30 rounded-lg border p-4">

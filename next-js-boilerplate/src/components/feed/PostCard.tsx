@@ -129,7 +129,7 @@ export function PostCard({
                 refreshPost,
               )
             }
-            className="bg-brand rounded-lg px-3 py-1 text-xs font-medium text-white"
+            className="bg-brand rounded-lg px-3 py-1 text-xs font-medium text-brand-fg"
           >
             Save
           </button>

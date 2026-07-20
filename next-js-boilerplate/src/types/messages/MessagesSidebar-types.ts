@@ -21,7 +21,7 @@ export interface MessagesSidebarProps {
   findResults: UserInfo[];
   sentRequestIds: Set<string>;
   setSentRequestIds: Dispatch<SetStateAction<Set<string>>>;
-  setFindResults: Dispatch<SetStateAction<UserInfo[]>>;
+
   openConversation: (u: UserInfo) => void;
   sidebarOpen: boolean;
   setSidebarOpen: Dispatch<SetStateAction<boolean>>;

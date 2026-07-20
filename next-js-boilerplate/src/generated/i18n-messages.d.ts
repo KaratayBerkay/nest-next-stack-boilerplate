@@ -1072,5 +1072,6 @@ export type I18nMessages = {
       "navPremium": string;
       "navAdmin": string;
       "navAuditLog": string;
+      "skipToContent": string;
     }
 };

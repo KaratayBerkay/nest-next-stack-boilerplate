@@ -6,6 +6,7 @@ import { ReactionInline } from "./ReactionButtons";
 import { toISOString, formatDateByPreference } from "@/lib/date-time";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { IconPencil, IconTrash } from "@tabler/icons-react";
+import { IconButton } from "@/components/ui/button/icon-button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { usePostActions } from "@/api/client/posts/actions";
 import type {
@@ -178,7 +179,7 @@ export function CommentSection({
         <button
           type="submit"
           disabled={!body.trim() || submitting}
-          className="bg-brand rounded-lg px-4 py-2 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+          className="bg-brand rounded-lg px-4 py-2 text-xs font-medium text-brand-fg transition-opacity hover:opacity-90 disabled:opacity-40"
         >
           {replyTo ? "Reply" : "Send"}
         </button>
@@ -226,15 +227,15 @@ export function CommentSection({
                   )}
                   {isOwn(comment) && editingId !== comment.id && (
                     <>
-                      <button
+                      <IconButton
+                        icon={<IconPencil size={12} />}
+                        label="Edit comment"
+                        size="icon-xs"
                         onClick={() => {
                           setEditingId(comment.id);
                           setEditingBody(comment.body);
                         }}
-                        className="text-muted hover:text-fg rounded p-1"
-                      >
-                        <IconPencil size={12} stroke={1.5} />
-                      </button>
+                      />
                       <ConfirmDialog
                         title="Delete comment"
                         description="Are you sure you want to delete this comment?"
@@ -248,12 +249,12 @@ export function CommentSection({
                         }
                       >
                         {(open) => (
-                          <button
+                          <IconButton
+                            icon={<IconTrash size={12} />}
+                            label="Delete comment"
+                            size="icon-xs"
                             onClick={open}
-                            className="text-muted rounded p-1 hover:text-red-500"
-                          >
-                            <IconTrash size={12} stroke={1.5} />
-                          </button>
+                          />
                         )}
                       </ConfirmDialog>
                     </>
@@ -296,7 +297,7 @@ export function CommentSection({
                         updateComment,
                       )
                     }
-                    className="bg-brand rounded-lg px-3 py-1.5 text-xs font-medium text-white"
+                    className="bg-brand rounded-lg px-3 py-1.5 text-xs font-medium text-brand-fg"
                   >
                     Save
                   </button>
@@ -335,15 +336,15 @@ export function CommentSection({
                       />
                       {isOwn(reply) && editingId !== reply.id && (
                         <>
-                          <button
+                          <IconButton
+                            icon={<IconPencil size={12} />}
+                            label="Edit reply"
+                            size="icon-xs"
                             onClick={() => {
                               setEditingId(reply.id);
                               setEditingBody(reply.body);
                             }}
-                            className="text-muted hover:text-fg rounded p-1"
-                          >
-                            <IconPencil size={12} stroke={1.5} />
-                          </button>
+                          />
                           <ConfirmDialog
                             title="Delete reply"
                             description="Are you sure you want to delete this reply?"
@@ -357,12 +358,12 @@ export function CommentSection({
                             }
                           >
                             {(open) => (
-                              <button
+                              <IconButton
+                                icon={<IconTrash size={12} />}
+                                label="Delete reply"
+                                size="icon-xs"
                                 onClick={open}
-                                className="text-muted rounded p-1 hover:text-red-500"
-                              >
-                                <IconTrash size={12} stroke={1.5} />
-                              </button>
+                              />
                             )}
                           </ConfirmDialog>
                         </>
@@ -405,7 +406,7 @@ export function CommentSection({
                             updateComment,
                           )
                         }
-                        className="bg-brand rounded-lg px-3 py-1.5 text-xs font-medium text-white"
+                        className="bg-brand rounded-lg px-3 py-1.5 text-xs font-medium text-brand-fg"
                       >
                         Save
                       </button>

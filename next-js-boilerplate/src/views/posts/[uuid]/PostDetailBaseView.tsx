@@ -18,6 +18,7 @@ import { ReactionInline } from "@/components/feed/ReactionButtons";
 import { CommentSection } from "@/components/feed/CommentSection";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { IconButton } from "@/components/ui/button/icon-button";
 import { formatDateByPreference } from "@/lib/date-time";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { Avatar } from "@/components/ui/Avatar";
@@ -104,7 +105,7 @@ function PostDetailContent({
       <div className="surface flex flex-col gap-4 p-5">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2.5">
-            <div className="bg-brand flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold text-white shadow-sm">
+            <div className="bg-brand flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold text-brand-fg shadow-sm">
               {(post.author.name || post.author.email).charAt(0).toUpperCase()}
             </div>
             <div>
@@ -127,17 +128,15 @@ function PostDetailContent({
             />
             {user && post.author.id === user.id && !editing && (
               <>
-                <button
+                <IconButton
+                  icon={<IconPencil size={14} stroke={1.5} />}
+                  label="Edit post"
                   onClick={() => {
                     setEditTitle(post.title);
                     setEditContent(post.content);
                     setEditing(true);
                   }}
-                  className="text-muted hover:bg-surface-hover hover:text-fg rounded-lg p-1.5 transition-colors"
-                  aria-label="Edit post"
-                >
-                  <IconPencil size={14} stroke={1.5} />
-                </button>
+                />
                 <ConfirmDialog
                   title={t.deletePost}
                   description={t.deletePostConfirm}
@@ -147,13 +146,12 @@ function PostDetailContent({
                   }}
                 >
                   {(open) => (
-                    <button
+                    <IconButton
+                      icon={<IconTrash size={14} stroke={1.5} />}
+                      label="Delete post"
                       onClick={open}
-                      className="text-muted hover:bg-surface-hover rounded-lg p-1.5 transition-colors hover:text-red-500"
-                      aria-label="Delete post"
-                    >
-                      <IconTrash size={14} stroke={1.5} />
-                    </button>
+                      className="hover:text-red-500"
+                    />
                   )}
                 </ConfirmDialog>
               </>
@@ -187,7 +185,7 @@ function PostDetailContent({
                   );
                   setEditing(false);
                 }}
-                className="bg-brand rounded-lg px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+                className="bg-brand rounded-lg px-4 py-2 text-sm font-medium text-brand-fg transition-opacity hover:opacity-90"
               >
                 {t.save}
               </button>
@@ -266,7 +264,7 @@ function PostDetailContent({
               >
                 <Avatar
                   fallback={initials(r.name ?? "?")}
-                  className="bg-brand h-6 w-6 text-[9px] text-white"
+                  className="bg-brand h-6 w-6 text-[9px] text-brand-fg"
                 />
                 <span className="text-fg text-sm">{r.name ?? t.unknown}</span>
                 <span className="text-sm">{r.type}</span>

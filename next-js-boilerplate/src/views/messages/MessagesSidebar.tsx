@@ -10,8 +10,10 @@ import { initials } from "@/lib/initials";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useParams } from "next/navigation";
 import { IconX, IconPlus } from "@tabler/icons-react";
+import { IconButton } from "@/components/ui/button/icon-button";
 import type { MessagesSidebarProps } from "@/types/messages/MessagesSidebar-types";
 import { useFriendActions } from "@/api/client/friends/actions";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function MessagesSidebar({
   user,
@@ -27,7 +29,6 @@ export function MessagesSidebar({
   findResults,
   sentRequestIds,
   setSentRequestIds,
-  setFindResults,
   openConversation,
   sidebarOpen,
   setSidebarOpen,
@@ -42,6 +43,7 @@ export function MessagesSidebar({
   const params = useParams<{ lang: string }>();
 
   const { sendRequest: sendFriendRequest } = useFriendActions();
+  const queryClient = useQueryClient();
 
   return (
     <div
@@ -54,14 +56,13 @@ export function MessagesSidebar({
     >
       <div className="flex items-center justify-between pb-3 md:hidden">
         <span className="text-sm font-semibold">{t.title}</span>
-        <Button
+        <IconButton
+          icon={<IconX size={18} />}
+          label="Close sidebar"
           variant="ghost"
           size="icon-sm"
           onClick={() => setSidebarOpen(false)}
-          aria-label="Close sidebar"
-        >
-          <IconX size={18} />
-        </Button>
+        />
       </div>
 
       <div className="bg-surface flex shrink-0 gap-1 rounded-lg p-1.5">
@@ -125,7 +126,7 @@ export function MessagesSidebar({
                   >
                     <Avatar
                       fallback={initials(u.name ?? u.email ?? "?")}
-                      className="bg-brand h-8 w-8 shrink-0 text-[10px] text-white"
+                      className="bg-brand h-8 w-8 shrink-0 text-[10px] text-brand-fg"
                     />
                     <span className="min-w-0 flex-1 truncate text-sm">
                       {u.name || u.email}
@@ -136,9 +137,7 @@ export function MessagesSidebar({
                       onClick={async () => {
                         setSentRequestIds((prev) => new Set(prev).add(u.id));
                         await sendFriendRequest(u.id);
-                        setFindResults((prev) =>
-                          prev.filter((r) => r.id !== u.id),
-                        );
+                        queryClient.invalidateQueries({ queryKey: ["users", "search"] });
                       }}
                       className="rounded-lg text-xs"
                     >
@@ -203,7 +202,7 @@ export function MessagesSidebar({
                 <div className="relative shrink-0">
                   <Avatar
                     fallback={initials(c.user.name ?? c.user.email ?? "?")}
-                    className="bg-brand h-10 w-10 text-white"
+                    className="bg-brand h-10 w-10 text-brand-fg"
                   />
                   {onlineUsers.has(c.user.id) && (
                     <span className="border-bg bg-success absolute right-0 bottom-0 h-3 w-3 rounded-full border-2" />
@@ -253,7 +252,7 @@ export function MessagesSidebar({
                     <div className="relative shrink-0">
                       <Avatar
                         fallback={initials(u.name ?? u.email ?? "?")}
-                        className="bg-brand h-9 w-9 text-white"
+                        className="bg-brand h-9 w-9 text-brand-fg"
                       />
                       {onlineUsers.has(u.id) && (
                         <span className="border-bg bg-success absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2" />

@@ -55,7 +55,7 @@ export function FeedBaseView({
           <div className="flex items-center gap-2">
             <Link
               href={`/v1/${lang}/share`}
-              className="bg-brand rounded-lg px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
+              className="bg-brand rounded-lg px-3 py-1.5 text-xs font-medium text-brand-fg hover:opacity-90"
             >
               {t.share}
             </Link>
@@ -64,7 +64,7 @@ export function FeedBaseView({
         ) : (
           <Link
             href={`/v1/${lang}/share`}
-            className="bg-brand rounded-lg px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
+            className="bg-brand rounded-lg px-3 py-1.5 text-xs font-medium text-brand-fg hover:opacity-90"
           >
             {t.share}
           </Link>

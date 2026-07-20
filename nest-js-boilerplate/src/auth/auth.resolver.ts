@@ -48,6 +48,12 @@ export class AuthResolver {
   }
 
   @UseGuards(CsrfGuard)
+  @Mutation(() => AuthPayload)
+  refresh(@Context() ctx: { req: Request }): Promise<AuthPayload> {
+    return this.auth.refresh({ req: ctx.req });
+  }
+
+  @UseGuards(CsrfGuard)
   @Mutation(() => Boolean)
   logout(@Context() ctx: { req: Request }): Promise<boolean> {
     return this.auth.logout({ req: ctx.req });

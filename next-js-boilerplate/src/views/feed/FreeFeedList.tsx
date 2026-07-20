@@ -218,7 +218,7 @@ export function FeedList({ search, initialFeedData }: FeedListProps) {
           <p className="text-muted text-sm">{t.noPostsYet}</p>
           <Link
             href={`/v1/${lang}/share`}
-            className="bg-brand rounded-lg px-4 py-2 text-sm font-medium text-white"
+            className="bg-brand rounded-lg px-4 py-2 text-sm font-medium text-brand-fg"
           >
             {t.beFirstToShare}
           </Link>

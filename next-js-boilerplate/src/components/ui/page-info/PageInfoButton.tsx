@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { IconInfoCircle } from "@tabler/icons-react";
 import { cn } from "@/lib/cn";
+import { IconButton } from "@/components/ui/button/icon-button";
 import {
   Dialog,
   DialogContent,
@@ -17,19 +18,13 @@ export function PageInfoButton({ content, className }: PageInfoButtonProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <button
-        type="button"
+      <IconButton
+        icon={<IconInfoCircle size={16} />}
+        label={`About ${content.title}`}
+        size="icon-xs"
+        className={cn("rounded-full", className)}
         onClick={() => setOpen(true)}
-        className={cn(
-          "text-muted inline-flex size-7 items-center justify-center rounded-full transition-colors",
-          "hover:bg-surface-hover hover:text-fg",
-          "focus-visible:ring-brand focus-visible:ring-2 focus-visible:outline-none",
-          className,
-        )}
-        aria-label={`About ${content.title}`}
-      >
-        <IconInfoCircle size={16} stroke={1.5} />
-      </button>
+      />
 
       <DialogContent>
         <DialogHeader>

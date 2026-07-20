@@ -129,7 +129,7 @@ function StripeCardFormInner({
       <button
         type="submit"
         disabled={!stripe || submitting}
-        className="bg-brand mt-2 w-full rounded-lg px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+        className="bg-brand mt-2 w-full rounded-lg px-4 py-2 text-sm font-medium text-brand-fg hover:opacity-90 disabled:opacity-50"
       >
         {submitting ? "Processing..." : "Subscribe"}
       </button>

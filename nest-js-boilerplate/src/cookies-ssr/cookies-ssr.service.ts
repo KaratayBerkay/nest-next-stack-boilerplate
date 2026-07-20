@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
 import type { JwtPayload, SessionUserInput } from '../auth/auth.types';
+import { CryptoService } from '../common/crypto/crypto.service';
 import { DeviceService } from '../devices/device.service';
 import type { RequestContext } from '../devices/device.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -12,6 +13,7 @@ import { TokenStoreService } from '../auth/token-store.service';
 import { accessCookieName, accessCookieOptions } from '../auth/access-cookie';
 import { rbacCookieName, rbacCookieOptions } from '../auth/rbac-cookie';
 import { userCookieName, userCookieOptions } from '../auth/user-cookie';
+import { refreshCookieName, refreshCookieOptions } from '../auth/refresh-cookie';
 import {
   deviceCookieName,
   deviceCookieOptions,
@@ -29,6 +31,7 @@ export class CookiesSsrService {
     private readonly tokenStore: TokenStoreService,
     private readonly derivation: TokenDerivationService,
     private readonly hydration: SessionHydrationService,
+    private readonly crypto: CryptoService,
   ) {}
 
   async login(
@@ -51,13 +54,13 @@ export class CookiesSsrService {
     );
     const userToken = this.derivation.deriveUserToken(user.id);
     const snapshot = await this.hydration.hydrate(user);
+    const sessionId = this.crypto.randomToken();
     const compoundKey = this.tokenStore.buildKey(
       accessToken,
       rbacToken,
       device.deviceToken,
       userToken,
     );
-    const sessionId = compoundKey;
     await this.tokenStore.write(compoundKey, {
       userId: user.id,
       email: user.email,
@@ -74,6 +77,7 @@ export class CookiesSsrService {
     this.setAccessCookie(ctx, accessToken);
     this.setRbacCookie(ctx, rbacToken);
     this.setUserCookie(ctx, userToken);
+    this.setRefreshCookie(ctx, sessionId);
 
     return { user: { id: user.id, email: user.email } };
   }
@@ -114,6 +118,10 @@ export class CookiesSsrService {
       accessCookieName(this.config),
       accessCookieOptions(this.config),
     );
+    req.res?.clearCookie(
+      refreshCookieName(this.config),
+      refreshCookieOptions(this.config),
+    );
   }
 
   private setDeviceCookie(ctx: RequestContext, value: string): void {
@@ -137,6 +145,14 @@ export class CookiesSsrService {
       rbacCookieName(this.config),
       value,
       rbacCookieOptions(this.config),
+    );
+  }
+
+  private setRefreshCookie(ctx: RequestContext, value: string): void {
+    ctx.req.res?.cookie(
+      refreshCookieName(this.config),
+      value,
+      refreshCookieOptions(this.config),
     );
   }
 

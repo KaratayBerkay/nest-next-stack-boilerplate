@@ -24,7 +24,7 @@ export function ProfileSection({ user, logout, lang }: ProfileSectionProps) {
         <Avatar
           src={user.avatarUrl}
           fallback={initials(user.name || user.email)}
-          className="bg-brand h-8 w-8 shrink-0 text-[11px] text-white"
+          className="bg-brand h-8 w-8 shrink-0 text-[11px] text-brand-fg"
         />
         <div className="flex min-w-0 flex-1 flex-col text-sm leading-tight">
           <span className="text-fg truncate font-medium">
