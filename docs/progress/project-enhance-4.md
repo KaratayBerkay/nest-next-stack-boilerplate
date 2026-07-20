@@ -84,6 +84,26 @@
 > identical "doesn't forward `required` to the underlying element" bug
 > `TextField` had before Rev 4 — never caught before because no `bio`-shaped
 > field was in scope until now.
+>
+> **Rev 6 — 2026-07-20, §23 verified closed.** Commit `c849895` implemented
+> §23's guide. Re-verified the same way as every prior round — read every
+> diffed file, checked it against the exact fix instructions rather than
+> just the presence of new code. **All 3 pieces match almost line-for-line**:
+> `TextareaField` got `hint`/`required`/`aria-required` exactly as specced
+> (§23.2), `editable-table`'s `quantity`/`unitPrice` cells got the
+> error-gated hint `<span>`s exactly as specced (§23.3), and UX-0f
+> (§23.1) landed in full — `humanSize` exported from `file-upload.tsx`,
+> `FileUploadLabels` extended with the 3 proposed fields, both hardcoded
+> `"Invalid file type"` toast titles now read from `labels.invalidTypeTitle`,
+> `FileUpload`'s dropzone gained the human-readable accepted-types line +
+> proactive max-size line, `ImageUpload`'s avatar branch gained the same
+> two lines plus the `focus-within:opacity-100` fix for the "Change Photo"
+> trigger, and `views/forms/uploads/PageContent.tsx` wires all of it
+> end-to-end including the previously-missing `labels` prop on the avatar
+> `<ImageUpload>` call. `pnpm typecheck`, `pnpm lint`, and a re-run of
+> `pnpm generate-i18n-types` (to rule out drift) are all clean; i18n parity
+> holds at 350/350. **Every item raised across Rev 1–5 is now closed** —
+> this register has no more open findings.
 
 ---
 
