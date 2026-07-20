@@ -109,7 +109,7 @@
     "graphql-subscriptions": "^3.0.0",
     "graphql-type-json": "^0.3.2",
     "hbs": "^4.2.1",
-    "helmet": "^8.2.0",
+    "helmet": "^8.3.0",
     "identity-type": "^1.0.0",
     "ioredis": "^5.11.1",
     "joi": "^18.2.3",
