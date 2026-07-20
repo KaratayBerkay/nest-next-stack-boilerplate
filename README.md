@@ -11,13 +11,14 @@ committed (they hold credentials), so create them from their `.example`
 counterparts first:
 
 ```bash
-docker compose run --rm vault-init
-docker compose up -d --build --profile all
+make up
+# or with a profile: make up PROFILE=all
+# or plain compose: docker compose run --rm vault-init && docker compose up -d --build
 ```
 
 No `--env-file` flag is ever needed, for any command — including builds.
-`Makefile` is just an optional convenience wrapper (`PROFILE=`/`SERVICE=`
-shortcuts); everything also works with plain `docker compose`.
+`Makefile` handles vault-init automatically on `make up` and `make rebuild`;
+everything also works with plain `docker compose`.
 
 First-run notes:
 - `nest-js-boilerplate/logs/` must be writable by uid 1000 (`chmod 777 nest-js-boilerplate/logs` or `chown 1000`).
