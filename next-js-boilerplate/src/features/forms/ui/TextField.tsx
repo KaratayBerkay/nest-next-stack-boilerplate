@@ -21,6 +21,7 @@ export function TextField({ label, required, hint }: TextFieldProps) {
         onBlur={field.handleBlur}
         onChange={(e) => field.handleChange(e.target.value)}
         required={required}
+        aria-required={required}
       />
       <FormFieldInfo field={field} hint={hint} />
     </div>

@@ -136,13 +136,13 @@ export default function ProfilePage() {
             name="firstName"
             validators={{ onChange: fieldSchemas.firstName }}
           >
-            {(field) => <field.TextField label={t.profile.firstName} />}
+            {(field) => <field.TextField label={t.profile.firstName} required />}
           </form.AppField>
           <form.AppField
             name="lastName"
             validators={{ onChange: fieldSchemas.lastName }}
           >
-            {(field) => <field.TextField label={t.profile.lastName} />}
+            {(field) => <field.TextField label={t.profile.lastName} required />}
           </form.AppField>
         </div>
 
@@ -164,7 +164,7 @@ export default function ProfilePage() {
         >
           {(field) => (
             <div className="flex flex-col gap-0.5">
-              <field.TextField label={t.profile.username} hint={t.profile.usernameHint} />
+              <field.TextField label={t.profile.username} hint={t.profile.usernameHint} required />
               {usernameAvailable && (
                 <span className="text-xxs text-green-600">
                   {t.profile.usernameAvailable}
@@ -190,7 +190,7 @@ export default function ProfilePage() {
             },
           }}
         >
-          {(field) => <field.TextField label={t.profile.email} />}
+          {(field) => <field.TextField label={t.profile.email} required />}
         </form.AppField>
 
         <form.AppField name="bio">

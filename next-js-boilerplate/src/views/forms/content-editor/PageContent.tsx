@@ -272,7 +272,7 @@ export default function ContentEditorPage() {
           <div className="flex gap-2">
             <ConfirmDialog
               title={t.contentEditor.draftDiscard}
-              description=""
+              description={t.contentEditor.draftDiscardConfirm}
               confirmLabel={t.contentEditor.draftDiscard}
               onConfirm={handleDiscard}
             >

@@ -233,6 +233,7 @@ export default function ApiKeyPage() {
               <field.TextField
                 label={t.apiKey.nameLabel}
                 placeholder={t.apiKey.namePlaceholder}
+                required
               />
             )}
           </form.AppField>
@@ -343,7 +344,7 @@ export default function ApiKeyPage() {
                   )}
                   <ConfirmDialog
                     title={t.apiKey.revokeConfirm}
-                    description=""
+                    description={t.apiKey.revokeConfirmDescription}
                     confirmLabel={t.apiKey.revoke}
                     onConfirm={() => handleRevoke(key.id)}
                   >

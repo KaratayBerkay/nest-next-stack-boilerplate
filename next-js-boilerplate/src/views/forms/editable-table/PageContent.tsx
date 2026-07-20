@@ -308,7 +308,7 @@ export default function EditableTablePage() {
                             </button>
                             <ConfirmDialog
                               title={t.editableTable.removeRow}
-                              description=""
+                              description={t.editableTable.removeRowConfirm}
                               confirmLabel={t.editableTable.removeRow}
                               onConfirm={() => field.removeValue(i)}
                             >

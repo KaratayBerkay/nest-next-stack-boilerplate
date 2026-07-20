@@ -40,15 +40,15 @@ const AddressGroup = withFieldGroup({
       <div className="flex flex-col gap-3">
         <div className="grid grid-cols-2 gap-3">
           <group.AppField name="street" validators={{ onBlur: schemas.street }}>
-            {(field) => <field.TextField label={t.checkoutTab.street} />}
+            {(field) => <field.TextField label={t.checkoutTab.street} required />}
           </group.AppField>
           <group.AppField name="city" validators={{ onBlur: schemas.city }}>
-            {(field) => <field.TextField label={t.checkoutTab.city} />}
+            {(field) => <field.TextField label={t.checkoutTab.city} required />}
           </group.AppField>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <group.AppField name="province" validators={{ onBlur: schemas.province }}>
-            {(field) => <field.TextField label={t.checkoutTab.province} />}
+            {(field) => <field.TextField label={t.checkoutTab.province} required />}
           </group.AppField>
           <group.AppField name="postalCode" validators={{
             onBlur: schemas.postalCode,
@@ -60,7 +60,7 @@ const AddressGroup = withFieldGroup({
               });
             },
           }}>
-            {(field) => <field.TextField label={t.checkoutTab.postalCode} hint={t.checkoutTab.postalCodeHint} />}
+            {(field) => <field.TextField label={t.checkoutTab.postalCode} hint={t.checkoutTab.postalCodeHint} required />}
           </group.AppField>
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -212,7 +212,7 @@ export default function CheckoutPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <form.AppField name="email">
-              {(field) => <field.TextField label={t.checkoutTab.email} />}
+              {(field) => <field.TextField label={t.checkoutTab.email} required />}
             </form.AppField>
             <form.AppField
               name="confirmEmail"
@@ -228,7 +228,7 @@ export default function CheckoutPage() {
               }}
             >
               {(field) => (
-                <field.TextField label={t.checkoutTab.confirmEmail} />
+                <field.TextField label={t.checkoutTab.confirmEmail} required />
               )}
             </form.AppField>
           </div>

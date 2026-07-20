@@ -417,6 +417,7 @@ export type I18nMessages = {
         "copied": string;
         "revoke": string;
         "revokeConfirm": string;
+        "revokeConfirmDescription": string;
         "revoked": string;
         "revealSecret": string;
         "secretNote": string;
@@ -601,6 +602,7 @@ export type I18nMessages = {
         "draftRestored": string;
         "draftRestore": string;
         "draftDiscard": string;
+        "draftDiscardConfirm": string;
         "simulateFailure": string;
         "unsavedChanges": string;
         "unsavedDescription": string;
@@ -647,6 +649,7 @@ export type I18nMessages = {
         "addRow": string;
         "duplicateRow": string;
         "removeRow": string;
+        "removeRowConfirm": string;
         "moveUp": string;
         "moveDown": string;
         "total": string;
