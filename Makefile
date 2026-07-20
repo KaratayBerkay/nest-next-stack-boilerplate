@@ -1,7 +1,7 @@
 # Thin convenience wrapper around `docker compose` with PROFILE=/SERVICE=
 # shortcuts. `make up` and `make rebuild` automatically run vault-init first.
 #
-# Usage: make up | make build | make rebuild | make down | make logs | make ps
+# Usage: make up | make build | make rebuild | make down | make logs | make ps | make clean
 # Add a profile: make up PROFILE=all
 # Target one service: make rebuild SERVICE=nextjs
 
@@ -10,7 +10,7 @@ SERVICE ?=
 PROFILE_FLAG := $(if $(PROFILE),--profile $(PROFILE),)
 COMPOSE := docker compose $(PROFILE_FLAG)
 
-.PHONY: up down build rebuild restart logs ps vault
+.PHONY: up down build rebuild restart logs ps vault clean
 
 vault: ## Fetch secrets from Vault
 	$(COMPOSE) run --rm vault-init
@@ -29,6 +29,9 @@ rebuild: vault ## Rebuild images and recreate containers (or one: make rebuild S
 
 restart: ## Recreate containers without rebuilding (or one: make restart SERVICE=app)
 	$(COMPOSE) up -d --force-recreate $(SERVICE)
+
+clean: ## Remove stopped one-shot containers (migrate, vault-init, minio-setup)
+	$(COMPOSE) rm -f -s migrate vault-init minio-setup
 
 logs: ## Follow logs
 	$(COMPOSE) logs -f
