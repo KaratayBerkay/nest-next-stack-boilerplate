@@ -267,6 +267,7 @@ export class MessagingDmService {
     text: string,
     areFriends: (a: string, b: string) => Promise<boolean>,
     friends?: string[],
+    tempId?: string,
   ) {
     const message = await this.sendMessage(
       senderId,
@@ -275,6 +276,7 @@ export class MessagingDmService {
       areFriends,
       friends,
     );
+    if (tempId) (message as Record<string, unknown>)._tempId = tempId;
     await this.deliverDirectMessage(message);
     return message;
   }

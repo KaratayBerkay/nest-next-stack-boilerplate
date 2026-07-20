@@ -23,7 +23,7 @@ export function useRealtimeCoordination() {
   const clientRef = useRef<RealtimeClient | null>(null);
   const channelRef = useRef<BroadcastChannel | null>(null);
   const tabIdRef = useRef<string>("");
-  if (tabIdRef.current == null) tabIdRef.current = crypto.randomUUID();
+  tabIdRef.current ||= crypto.randomUUID();
   const claimRef = useRef<{
     page: string | null;
     params?: Record<string, string>;

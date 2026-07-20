@@ -34,7 +34,17 @@ export function dispatchEvent(
       const pages = [...data.pages];
       const first = { ...pages[0] };
       if (first.messages.some((m) => m.id === msg.id)) return old;
-      first.messages = [...first.messages, msg];
+      // Replace temp entry if this is the server's echo of our own send
+      const echoTempId = (msg as Record<string, unknown>)._tempId as
+        string | undefined;
+      if (echoTempId && sentTempIds.has(echoTempId)) {
+        sentTempIds.delete(echoTempId);
+        first.messages = first.messages.map((m) =>
+          m.id === echoTempId ? { ...msg, pending: false } : m,
+        );
+      } else {
+        first.messages = [...first.messages, msg];
+      }
       pages[0] = first;
       return { ...data, pages };
     });

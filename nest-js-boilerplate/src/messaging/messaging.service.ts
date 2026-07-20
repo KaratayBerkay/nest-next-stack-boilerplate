@@ -78,9 +78,11 @@ export class MessagingService {
     );
   }
 
-  sendAndDeliverMessage(senderId: string, recipientId: string, text: string) {
+  sendAndDeliverMessage(senderId: string, recipientId: string, text: string, tempId?: string) {
     return this.dm.sendAndDeliverMessage(senderId, recipientId, text, (a, b) =>
       this.friends.areFriends(a, b),
+      undefined,
+      tempId,
     );
   }
 

@@ -183,7 +183,7 @@ export class MessagingController {
     @Body(new ValidationPipe({ transform: true, whitelist: true }))
     body: SendMessageRestDto,
   ) {
-    return this.ms.sendAndDeliverMessage(user.userId, recipientId, body.text);
+    return this.ms.sendAndDeliverMessage(user.userId, recipientId, body.text, body._tempId);
   }
 
   @Post('messages/read')

@@ -1,5 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { trackTempId } from "@/lib/realtime/event-dispatch";
 
 export function useMessageActions() {
   const queryClient = useQueryClient();
@@ -9,6 +10,7 @@ export function useMessageActions() {
     const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     if (user?.id) {
+      trackTempId(tempId);
       queryClient.setQueryData(["messages", recipientId], (old: unknown) => {
         const data = old as
           { pages: { messages: Record<string, unknown>[] }[] } | undefined;
@@ -36,7 +38,7 @@ export function useMessageActions() {
     try {
       const { sendMessageServer } =
         await import("@/api/server/messages/send-message");
-      message = await sendMessageServer(recipientId, text);
+      message = await sendMessageServer(recipientId, text, tempId);
     } catch {
       if (user?.id) {
         queryClient.setQueryData(["messages", recipientId], (old: unknown) => {

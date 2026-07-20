@@ -12,6 +12,8 @@ export function dispatchRenew(
       } else if (frame.type === "DmCount") {
         qc.setQueryData(["notifications", "dm-count"], frame.value);
       } else if (frame.type === "Item") {
+        // Notification list kept live here; companion to FreePageView.tsx
+        // which has no realtime subscription of its own.
         if (!qc.getQueryData(["notifications", "list"])) {
           qc.invalidateQueries({ queryKey: ["notifications", "list"] });
         } else {
