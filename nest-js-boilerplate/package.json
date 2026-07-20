@@ -48,7 +48,7 @@
     "@apollo/subgraph": "^2.14.1",
     "@as-integrations/express5": "^1.1.2",
     "@elastic/elasticsearch": "^9.4.2",
-    "@graphql-tools/utils": "^11.1.0",
+    "@graphql-tools/utils": "^11.2.2",
     "@grpc/grpc-js": "^1.14.4",
     "@grpc/proto-loader": "^0.8.1",
     "@mikro-orm/better-sqlite": "^6.6.15",

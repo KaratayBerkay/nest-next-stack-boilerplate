@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      husky:
+        specifier: ^9.1.7
+        version: 9.1.7
       prettier:
         specifier: ^3.4.2
         version: 3.9.4
@@ -30,8 +33,8 @@ importers:
         specifier: ^9.4.2
         version: 9.4.2
       '@graphql-tools/utils':
-        specifier: ^11.1.0
-        version: 11.1.1(graphql@16.14.2)
+        specifier: ^11.2.2
+        version: 11.2.2(graphql@16.14.2)
       '@grpc/grpc-js':
         specifier: ^1.14.4
         version: 1.14.4
@@ -339,15 +342,6 @@ importers:
       '@prisma/generator-helper':
         specifier: ^7.8.0
         version: 7.8.0
-      '@suites/di.nestjs':
-        specifier: ^3.1.0
-        version: 3.1.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)
-      '@suites/doubles.jest':
-        specifier: ^3.1.0
-        version: 3.1.0(jest@30.4.2(@types/node@22.20.0)(ts-node@10.9.2(@swc/core@1.15.43)(@types/node@22.20.0)(typescript@5.9.3)))
-      '@suites/unit':
-        specifier: ^3.1.1
-        version: 3.1.1
       '@swc/cli':
         specifier: ^0.8.1
         version: 0.8.1(@swc/core@1.15.43)(chokidar@4.0.3)
@@ -1647,8 +1641,8 @@ packages:
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
 
-  '@graphql-tools/utils@11.1.1':
-    resolution: {integrity: sha512-MuWwacINZZV6mX1ZSk6CcV4XVQLsbKBG/hLd0QPhe4GHxjqr2ATjKsnnwlB0TKI+QQvj2U8ewu8WeAzz9kC2Xg==}
+  '@graphql-tools/utils@11.2.2':
+    resolution: {integrity: sha512-Do2A/t6ayqOma8m7PvpYMsCBswL+NB35BQSng4GWSBqafL2/BnfAZy/NSENPwV721Rm2fG0BHETFC0+FJJZmLw==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
@@ -4554,38 +4548,6 @@ packages:
   '@stripe/stripe-js@9.9.0':
     resolution: {integrity: sha512-Vwqe6Q5cU4i82tPyAv2BpaW/fQSNdOSO4/J8EeDLPp5/oIZiMmdB+Hgh863zFH+rtoxpuWGvD1L7QPh8k1Rdvw==}
     engines: {node: '>=12.16'}
-
-  '@suites/core.unit@3.1.0':
-    resolution: {integrity: sha512-2aG83BiIuOOVwu8Joisi4soSMI2isYBR8wJXWq+jInWOFCtQq+6cFwhXmpqRheMX0aKk7kb14HpclclMvpK3nQ==}
-    engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
-
-  '@suites/di.nestjs@3.1.0':
-    resolution: {integrity: sha512-SKPdfqZRqjDKRfte8Id1xvmhCNOSSnDSFS68Qcw04IirnUEAAm/wjJBv3Bo8tH/YjzlZkAjzpapZTiWePSM9qg==}
-    engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
-    peerDependencies:
-      '@nestjs/common': '>= 8.0'
-      reflect-metadata: <1.0.0
-
-  '@suites/doubles.jest@3.1.0':
-    resolution: {integrity: sha512-Im4lTiotwGkZHR2LcimgCMrqYBtHuU6lp+JCKJM1SiW3mBRxLskjpo/dTptgPu5O/Q/QMhBaGzU5QfpMLcg91w==}
-    engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
-    peerDependencies:
-      jest: '> 26.0'
-
-  '@suites/types.common@3.1.0':
-    resolution: {integrity: sha512-4OW/FKP78HZiUjSeAq6ix/lj2s4vEU4IqFr09LLmQC77v1Rv5vEW1LZLxrRVlP2jeWsxuVka6WX2k7k3HJDu9A==}
-    engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
-
-  '@suites/types.di@3.1.0':
-    resolution: {integrity: sha512-ng/so6i2dbvSUyCAN/UhLO0N/72B08XycXBCUGmE6CK2OgzNGPjTjcIN1moljyUzZQBYHvYSdUju2aZ6Fh2tOA==}
-    engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
-
-  '@suites/types.doubles@3.1.0':
-    resolution: {integrity: sha512-VhEtcgUPYe1L0xLie2VrqO8b+EPCdVnU30qS//nQA9UtRYA3dRqENNGI6ktmfKAvUKC9ToJdwE/B/TohZt290A==}
-
-  '@suites/unit@3.1.1':
-    resolution: {integrity: sha512-gHnAj4Xx5ckFjpo8jhHyriiqdpDXjFmwBTDht1T/czhTv1P3U2rZdEtwyWQISkgJFvxQjC6hfS7GftAKYgehjA==}
-    engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
 
   '@swc/cli@0.8.1':
     resolution: {integrity: sha512-L+ACCGHCiS0VqHVep/INLVnvRvJ2XooQFLZq4L8snhxw1jsqz+XRcY313UsyPVturPPE1shW3jic7rt3qEQTSQ==}
@@ -12576,27 +12538,27 @@ snapshots:
 
   '@graphql-tools/merge@9.1.10(graphql@16.14.2)':
     dependencies:
-      '@graphql-tools/utils': 11.1.1(graphql@16.14.2)
+      '@graphql-tools/utils': 11.2.2(graphql@16.14.2)
       graphql: 16.14.2
       tslib: 2.8.1
 
   '@graphql-tools/merge@9.1.9(graphql@16.14.2)':
     dependencies:
-      '@graphql-tools/utils': 11.1.1(graphql@16.14.2)
+      '@graphql-tools/utils': 11.2.2(graphql@16.14.2)
       graphql: 16.14.2
       tslib: 2.8.1
 
   '@graphql-tools/schema@10.0.33(graphql@16.14.2)':
     dependencies:
       '@graphql-tools/merge': 9.1.9(graphql@16.14.2)
-      '@graphql-tools/utils': 11.1.1(graphql@16.14.2)
+      '@graphql-tools/utils': 11.2.2(graphql@16.14.2)
       graphql: 16.14.2
       tslib: 2.8.1
 
   '@graphql-tools/schema@10.0.34(graphql@16.14.2)':
     dependencies:
       '@graphql-tools/merge': 9.1.10(graphql@16.14.2)
-      '@graphql-tools/utils': 11.1.1(graphql@16.14.2)
+      '@graphql-tools/utils': 11.2.2(graphql@16.14.2)
       graphql: 16.14.2
       tslib: 2.8.1
 
@@ -12608,7 +12570,7 @@ snapshots:
       graphql: 16.14.2
       tslib: 2.8.1
 
-  '@graphql-tools/utils@11.1.1(graphql@16.14.2)':
+  '@graphql-tools/utils@11.2.2(graphql@16.14.2)':
     dependencies:
       '@graphql-typed-document-node/core': 3.2.0(graphql@16.14.2)
       '@whatwg-node/promise-helpers': 1.3.2
@@ -13126,7 +13088,7 @@ snapshots:
 
   '@jest/pattern@30.4.0':
     dependencies:
-      '@types/node': 22.20.0
+      '@types/node': 24.13.3
       jest-regex-util: 30.4.0
 
   '@jest/reporters@30.4.1':
@@ -13217,7 +13179,7 @@ snapshots:
       '@jest/schemas': 30.4.1
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
-      '@types/node': 22.20.0
+      '@types/node': 24.13.3
       '@types/yargs': 17.0.35
       chalk: 4.1.2
 
@@ -15666,44 +15628,6 @@ snapshots:
 
   '@stripe/stripe-js@9.9.0': {}
 
-  '@suites/core.unit@3.1.0':
-    dependencies:
-      '@suites/types.common': 3.1.0
-      '@suites/types.di': 3.1.0
-      '@suites/types.doubles': 3.1.0
-
-  '@suites/di.nestjs@3.1.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)':
-    dependencies:
-      '@nestjs/common': 11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@suites/types.common': 3.1.0
-      '@suites/types.di': 3.1.0
-      reflect-metadata: 0.2.2
-
-  '@suites/doubles.jest@3.1.0(jest@30.4.2(@types/node@22.20.0)(ts-node@10.9.2(@swc/core@1.15.43)(@types/node@22.20.0)(typescript@5.9.3)))':
-    dependencies:
-      '@suites/core.unit': 3.1.0
-      '@suites/types.common': 3.1.0
-      '@suites/types.di': 3.1.0
-      '@suites/types.doubles': 3.1.0
-      jest: 30.4.2(@types/node@22.20.0)(ts-node@10.9.2(@swc/core@1.15.43)(@types/node@22.20.0)(typescript@5.9.3))
-
-  '@suites/types.common@3.1.0': {}
-
-  '@suites/types.di@3.1.0':
-    dependencies:
-      '@suites/types.common': 3.1.0
-
-  '@suites/types.doubles@3.1.0':
-    dependencies:
-      '@suites/types.common': 3.1.0
-
-  '@suites/unit@3.1.1':
-    dependencies:
-      '@suites/core.unit': 3.1.0
-      '@suites/types.common': 3.1.0
-      '@suites/types.di': 3.1.0
-      '@suites/types.doubles': 3.1.0
-
   '@swc/cli@0.8.1(@swc/core@1.15.43)(chokidar@4.0.3)':
     dependencies:
       '@swc/core': 1.15.43
@@ -16226,7 +16150,7 @@ snapshots:
 
   '@types/through@0.0.33':
     dependencies:
-      '@types/node': 22.20.0
+      '@types/node': 24.13.3
 
   '@types/uuid@9.0.8': {}
 
@@ -19870,7 +19794,7 @@ snapshots:
   jest-haste-map@30.4.1:
     dependencies:
       '@jest/types': 30.4.1
-      '@types/node': 22.20.0
+      '@types/node': 24.13.3
       anymatch: 3.1.3
       fb-watchman: 2.0.2
       graceful-fs: 4.2.11
@@ -20020,7 +19944,7 @@ snapshots:
   jest-util@30.4.1:
     dependencies:
       '@jest/types': 30.4.1
-      '@types/node': 22.20.0
+      '@types/node': 24.13.3
       chalk: 4.1.2
       ci-info: 4.4.0
       graceful-fs: 4.2.11
@@ -20048,13 +19972,13 @@ snapshots:
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 22.20.0
+      '@types/node': 24.13.3
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
   jest-worker@30.4.1:
     dependencies:
-      '@types/node': 22.20.0
+      '@types/node': 24.13.3
       '@ungap/structured-clone': 1.3.2
       jest-util: 30.4.1
       merge-stream: 2.0.0
