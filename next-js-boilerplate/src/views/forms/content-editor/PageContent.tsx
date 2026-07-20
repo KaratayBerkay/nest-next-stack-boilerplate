@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/Toast";
 import { formOptions, useStore } from "@tanstack/react-form";
 import { useAppForm } from "@/features/forms/form-hook";
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Separator } from "@/components/ui/Separator";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
@@ -62,6 +63,8 @@ function saveDraft(key: string, values: DraftValues) {
 function clearDraft(key: string) {
   localStorage.removeItem(key);
 }
+
+const TAKEN_SLUGS = new Set(["getting-started", "hello-world"]);
 
 function deriveSlug(title: string): string {
   return title
@@ -267,9 +270,18 @@ export default function ContentEditorPage() {
             )}
           </span>
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={handleDiscard}>
-              {t.contentEditor.draftDiscard}
-            </Button>
+            <ConfirmDialog
+              title={t.contentEditor.draftDiscard}
+              description=""
+              confirmLabel={t.contentEditor.draftDiscard}
+              onConfirm={handleDiscard}
+            >
+              {(open) => (
+                <Button size="sm" variant="outline" onClick={open}>
+                  {t.contentEditor.draftDiscard}
+                </Button>
+              )}
+            </ConfirmDialog>
             <Button size="sm" onClick={handleRestore}>
               {t.contentEditor.draftRestore}
             </Button>
@@ -317,11 +329,12 @@ export default function ContentEditorPage() {
                 onBlurAsyncDebounceMs: 300,
                 onBlurAsync: async ({ value }) => {
                   if (!value || !slugEditedByUser.current) return undefined;
+                  if (!TAKEN_SLUGS.has(value.toLowerCase())) return undefined;
                   return blurAsyncCheck(value, "content-slug-taken", { simulateError, toast, allMessages });
                 },
               }}
             >
-              {(field) => <field.TextField label={t.contentEditor.slug} />}
+              {(field) => <field.TextField label={t.contentEditor.slug} hint={t.contentEditor.slugHint} />}
             </form.AppField>
 
             <form.AppField name="tags">

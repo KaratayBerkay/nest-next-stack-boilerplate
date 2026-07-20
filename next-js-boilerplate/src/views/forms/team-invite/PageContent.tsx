@@ -15,8 +15,7 @@ import { Input } from "@/components/ui/Input";
 import { StepIndicator } from "@/components/ui/StepIndicator";
 import { FormLevelError } from "@/components/ui/FormLevelError";
 import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
-import { getSurface, exceptionHandler } from "@/lib/exception-handler";
-import { exceptionToFormErrors } from "@/lib/forms/exception-to-form-errors";
+import { getSurface } from "@/lib/exception-handler";
 import type { ExceptionResponse } from "@/lib/api-client";
 import { createInviteSchema } from "@/validators/forms/invite";
 import { inviteDefaultValues } from "@/validators/forms/invite-inits";
@@ -31,6 +30,8 @@ const ROLE_OPTIONS = [
 ];
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const MEMBER_EMAILS = new Set(["alice@example.com", "bob@example.com"]);
 
 const teamFormOpts = formOptions({
   defaultValues: inviteDefaultValues,
@@ -57,40 +58,7 @@ async function submitTeamInvite(
       }
     }
   }
-  try {
-    const exc = await deps.simulateError("invite-email-member");
-    const surface = getSurface(exc.exc);
-    if (surface === "toast") {
-      deps.toast({
-        description: exceptionHandler(exc, deps.allMessages),
-        variant: "destructive",
-      });
-      return null;
-    }
-    if (surface === "full-page") {
-      return { form: exceptionHandler(exc, deps.allMessages), fields: {} };
-    }
-    const result = exceptionToFormErrors(exc, deps.allMessages);
-    return { form: result.form ?? undefined, fields: result.fields };
-  } catch (err) {
-    const exc = (err as { exception?: ExceptionResponse }).exception;
-    if (exc) {
-      const surface = getSurface(exc.exc);
-      if (surface === "toast") {
-        deps.toast({
-          description: exceptionHandler(exc, deps.allMessages),
-          variant: "destructive",
-        });
-        return null;
-      }
-      if (surface === "full-page") {
-        return { form: exceptionHandler(exc, deps.allMessages), fields: {} };
-      }
-      const result = exceptionToFormErrors(exc, deps.allMessages);
-      return { form: result.form ?? undefined, fields: result.fields };
-    }
-    return { form: deps.unknownError, fields: {} };
-  }
+  return null;
 }
 
 export default function TeamInvitePage() {
@@ -205,6 +173,10 @@ export default function TeamInvitePage() {
                             setEmailInputError(t.teamInvite.emailDuplicate);
                             return;
                           }
+                          if (MEMBER_EMAILS.has(trimmed)) {
+                            setEmailInputError(t.errors.emailAlreadyMember);
+                            return;
+                          }
                           setEmailInputError(null);
                           form.pushFieldValue("emails", trimmed);
                           field.handleChange("");
@@ -224,6 +196,10 @@ export default function TeamInvitePage() {
                         }
                         if (form.state.values.emails.includes(trimmed)) {
                           setEmailInputError(t.teamInvite.emailDuplicate);
+                          return;
+                        }
+                        if (MEMBER_EMAILS.has(trimmed)) {
+                          setEmailInputError(t.errors.emailAlreadyMember);
                           return;
                         }
                         setEmailInputError(null);
@@ -252,6 +228,7 @@ export default function TeamInvitePage() {
                         type="button"
                         onClick={() => form.removeFieldValue("emails", index)}
                         className="text-destructive"
+                        aria-label={`${t.teamInvite.emailChipRemove} ${email}`}
                       >
                         &times;
                       </button>

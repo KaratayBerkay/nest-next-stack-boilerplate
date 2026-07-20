@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useMessages, useAllMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
 import { useProfileActions } from "@/api/client/profile/actions";
@@ -37,6 +37,8 @@ const INTEREST_OPTIONS = [
   { value: "sports", label: "Sports" },
   { value: "gaming", label: "Gaming" },
 ];
+
+const TAKEN_EMAILS = new Set(["taken@example.com", "admin@example.com"]);
 
 export async function submitProfile(
   { value }: { value: typeof profileFormOpts.defaultValues },
@@ -82,6 +84,7 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const { updateProfile, checkUsername } = useProfileActions();
   const { simulateError } = useFormsDemoActions();
+  const [usernameAvailable, setUsernameAvailable] = useState(false);
   const fieldSchemas = useMemo(() => createProfileFieldSchemas(t.profile), [t]);
 
   const form = useAppForm({
@@ -145,18 +148,30 @@ export default function ProfilePage() {
 
         <form.AppField
           name="username"
+          listeners={{
+            onChange: () => setUsernameAvailable(false),
+          }}
           validators={{
             onChange: fieldSchemas.username,
             onBlurAsyncDebounceMs: 150,
             onBlurAsync: async ({ value }) => {
               if (!value) return undefined;
-              return (await checkUsername(value))
-                ? undefined
-                : t.profile.usernameTaken;
+              const available = await checkUsername(value);
+              setUsernameAvailable(available);
+              return available ? undefined : t.profile.usernameTaken;
             },
           }}
         >
-          {(field) => <field.TextField label={t.profile.username} />}
+          {(field) => (
+            <div className="flex flex-col gap-0.5">
+              <field.TextField label={t.profile.username} hint={t.profile.usernameHint} />
+              {usernameAvailable && (
+                <span className="text-xxs text-green-600">
+                  {t.profile.usernameAvailable}
+                </span>
+              )}
+            </div>
+          )}
         </form.AppField>
 
         <form.AppField
@@ -166,6 +181,7 @@ export default function ProfilePage() {
             onBlurAsyncDebounceMs: 300,
             onBlurAsync: async ({ value }) => {
               if (!value || !fieldSchemas.email.safeParse(value).success) return undefined;
+              if (!TAKEN_EMAILS.has(value.toLowerCase())) return undefined;
               return blurAsyncCheck(value, "profile-email-taken", {
                 simulateError,
                 toast,

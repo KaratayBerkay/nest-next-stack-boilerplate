@@ -17,6 +17,7 @@ import {
 import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
 import { getSurface, exceptionHandler } from "@/lib/exception-handler";
 import { exceptionToFormErrors } from "@/lib/forms/exception-to-form-errors";
+import { blurAsyncCheck } from "@/lib/forms/blur-async-check";
 import type { ExceptionResponse } from "@/lib/api-client";
 import type { z } from "zod";
 
@@ -32,6 +33,9 @@ const AddressGroup = withFieldGroup({
   render: function AddressGroupInner({ group }) {
     const t = useMessages("forms");
     const schemas = useMemo(() => createCheckoutFieldSchemas(t.checkoutTab), [t]);
+    const { simulateError } = useFormsDemoActions();
+    const { toast } = useToast();
+    const allMessages = useAllMessages();
     return (
       <div className="flex flex-col gap-3">
         <div className="grid grid-cols-2 gap-3">
@@ -46,8 +50,17 @@ const AddressGroup = withFieldGroup({
           <group.AppField name="province" validators={{ onBlur: schemas.province }}>
             {(field) => <field.TextField label={t.checkoutTab.province} />}
           </group.AppField>
-          <group.AppField name="postalCode" validators={{ onBlur: schemas.postalCode }}>
-            {(field) => <field.TextField label={t.checkoutTab.postalCode} />}
+          <group.AppField name="postalCode" validators={{
+            onBlur: schemas.postalCode,
+            onBlurAsyncDebounceMs: 300,
+            onBlurAsync: async ({ value }) => {
+              if (value !== "00000") return undefined;
+              return blurAsyncCheck(String(value), "postal-code-group", {
+                simulateError, toast, allMessages,
+              });
+            },
+          }}>
+            {(field) => <field.TextField label={t.checkoutTab.postalCode} hint={t.checkoutTab.postalCodeHint} />}
           </group.AppField>
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -74,7 +87,7 @@ const AddressGroup = withFieldGroup({
                 : t.checkoutTab.phoneInvalid;
             },
           }}>
-            {(field) => <field.TextField label={t.checkoutTab.phone} />}
+            {(field) => <field.TextField label={t.checkoutTab.phone} hint={t.checkoutTab.phoneHint} />}
           </group.AppField>
         </div>
       </div>

@@ -198,6 +198,7 @@ export default function BillingPage() {
             <field.TextField
               label={t.billing.couponCode}
               placeholder={t.billing.couponPlaceholder}
+              hint={t.billing.couponHint}
             />
           )}
         </form.AppField>
@@ -219,6 +220,7 @@ export default function BillingPage() {
             <field.TextField
               label={t.billing.taxId}
               placeholder={t.billing.taxIdPlaceholder}
+              hint={t.billing.taxIdHint}
             />
           )}
         </form.AppField>

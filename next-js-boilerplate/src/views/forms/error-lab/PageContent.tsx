@@ -10,7 +10,7 @@ import { ERROR_SCENARIOS } from "@/lib/forms/error-scenarios";
 import { getSurface, exceptionHandler } from "@/lib/exception-handler";
 import { exceptionToFormErrors } from "@/lib/forms/exception-to-form-errors";
 import { FormErrorBanner } from "@/components/ui/FormErrorBanner";
-import { useAllMessages } from "@/lib/i18n/MessagesProvider";
+import { useAllMessages, useMessages } from "@/lib/i18n/MessagesProvider";
 import type { ExceptionResponse } from "@/lib/api-client";
 import type { ClientException } from "@/lib/exception-handler";
 
@@ -142,6 +142,7 @@ export default function ErrorLabPage({
   >(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const t = useMessages("forms");
   const { toast } = useToast();
   const { user } = useAuth();
   const { simulateError } = useFormsDemoActions();
@@ -180,9 +181,9 @@ export default function ErrorLabPage({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-sm font-semibold">Error & Async States Lab</h2>
+        <h2 className="text-sm font-semibold">{t.errorLab.heading}</h2>
         <p className="text-muted text-xs">
-          Test every error surface and locale combination
+          {t.errorLab.subheading}
         </p>
       </div>
 
@@ -192,7 +193,7 @@ export default function ErrorLabPage({
             htmlFor="error-scenario-select"
             className="text-xs font-medium"
           >
-            Error Scenario
+            {t.errorLab.scenarioLabel}
           </label>
           <NativeSelect
             id="error-scenario-select"
@@ -212,7 +213,7 @@ export default function ErrorLabPage({
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor="locale-select" className="text-xs font-medium">
-            Locale
+            {t.errorLab.localeLabel}
           </label>
           <NativeSelect
             id="locale-select"
@@ -225,7 +226,7 @@ export default function ErrorLabPage({
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor="network-select" className="text-xs font-medium">
-            Network Condition
+            {t.errorLab.networkLabel}
           </label>
           <NativeSelect
             id="network-select"
@@ -246,7 +247,7 @@ export default function ErrorLabPage({
         disabled={loading || !user}
         className="self-start"
       >
-        {loading ? "Triggering..." : "Trigger Error"}
+        {loading ? t.errorLab.triggering : t.errorLab.trigger}
       </Button>
 
       {formError && (
@@ -258,7 +259,7 @@ export default function ErrorLabPage({
 
       {result && (
         <div className="flex flex-col gap-2">
-          <p className="text-xs font-medium">Raw Payload</p>
+          <p className="text-xs font-medium">{t.errorLab.rawPayload}</p>
           <pre className="surface border-border text-xxs overflow-auto rounded-lg border p-4">
             {JSON.stringify(result, null, 2)}
           </pre>

@@ -3,11 +3,11 @@
 import type { FormFieldInfoProps } from "@/types/ui/FormFieldInfo-types";
 
 export function FormFieldInfo(props: FormFieldInfoProps) {
-  const { field } = props;
+  const { field, hint } = props;
   const error = field.state.meta.errors[0];
   const isValidating = field.state.meta.isValidating;
 
-  if (!error && !isValidating) return null;
+  if (!error && !isValidating && !hint) return null;
 
   return (
     <div
@@ -19,6 +19,9 @@ export function FormFieldInfo(props: FormFieldInfoProps) {
         <span className="text-muted inline-block size-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
       )}
       {error && <p className="text-error text-xs">{error}</p>}
+      {!error && !isValidating && hint && (
+        <p className="text-muted text-xs">{hint}</p>
+      )}
     </div>
   );
 }

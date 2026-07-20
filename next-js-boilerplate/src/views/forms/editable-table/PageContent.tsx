@@ -1,15 +1,17 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { useMessages, useAllMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
 import { formOptions, useStore } from "@tanstack/react-form";
 import { useAppForm } from "@/features/forms/form-hook";
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Separator } from "@/components/ui/Separator";
 import { Badge } from "@/components/ui/Badge";
 import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
 import { exceptionHandler } from "@/lib/exception-handler";
+import { blurAsyncCheck } from "@/lib/forms/blur-async-check";
 import { createTableRowFieldSchemas } from "@/validators/forms/table";
 import type { ExceptionResponse } from "@/lib/api-client";
 
@@ -68,6 +70,7 @@ type RowStatus = "idle" | "saved";
 
 export default function EditableTablePage() {
   const t = useMessages("forms");
+  const allMessages = useAllMessages();
   const { toast } = useToast();
   const { simulateError } = useFormsDemoActions();
   const [rowStatus, setRowStatus] = useState<Record<number, RowStatus>>({});
@@ -142,7 +145,7 @@ export default function EditableTablePage() {
               <th className="px-2 py-1 font-medium">
                 {t.editableTable.taxClass}
               </th>
-              <th className="px-2 py-1 text-right font-medium">Net</th>
+              <th className="px-2 py-1 text-right font-medium">{t.editableTable.net}</th>
               <th className="px-2 py-1" />
             </tr>
           </thead>
@@ -186,13 +189,11 @@ export default function EditableTablePage() {
                             validators={{
                               onChange: rowSchemas.quantity,
                               onBlurAsyncDebounceMs: 300,
-                              onBlurAsync: async () => {
-                                try {
-                                  await simulateError("row-rejected");
-                                  return undefined;
-                                } catch {
-                                  return t.editableTable.saveFailed;
-                                }
+                              onBlurAsync: async ({ value }) => {
+                                if (!value || Number(value) <= 100) return undefined;
+                                return blurAsyncCheck(String(value), "row-rejected", {
+                                  simulateError, toast, allMessages,
+                                });
                               },
                             }}
                           >
@@ -283,6 +284,7 @@ export default function EditableTablePage() {
                                 });
                               }}
                               title={t.editableTable.duplicateRow}
+                              aria-label={t.editableTable.duplicateRow}
                             >
                               ⧉
                             </button>
@@ -291,6 +293,7 @@ export default function EditableTablePage() {
                               disabled={i === 0}
                               onClick={() => field.moveValue(i, i - 1)}
                               title={t.editableTable.moveUp}
+                              aria-label={t.editableTable.moveUp}
                             >
                               ↑
                             </button>
@@ -299,26 +302,38 @@ export default function EditableTablePage() {
                               disabled={i >= field.state.value.length - 1}
                               onClick={() => field.moveValue(i, i + 1)}
                               title={t.editableTable.moveDown}
+                              aria-label={t.editableTable.moveDown}
                             >
                               ↓
                             </button>
-                            <button
-                              className="text-destructive"
-                              onClick={() => field.removeValue(i)}
+                            <ConfirmDialog
                               title={t.editableTable.removeRow}
+                              description=""
+                              confirmLabel={t.editableTable.removeRow}
+                              onConfirm={() => field.removeValue(i)}
                             >
-                              ×
-                            </button>
+                              {(open) => (
+                                <button
+                                  className="text-destructive"
+                                  onClick={open}
+                                  title={t.editableTable.removeRow}
+                                  aria-label={t.editableTable.removeRow}
+                                >
+                                  ×
+                                </button>
+                              )}
+                            </ConfirmDialog>
                             <button
                               className="text-muted hover:text-success"
                               onClick={() => handleSaveRow(i)}
-                              title="Save row"
+                              title={t.editableTable.saveRow}
+                              aria-label={t.editableTable.saveRow}
                             >
                               ✓
                             </button>
                             {status === "saved" && (
                               <Badge variant="success" className="text-xxs">
-                                Saved
+                                {t.editableTable.savedBadge}
                               </Badge>
                             )}
                           </div>

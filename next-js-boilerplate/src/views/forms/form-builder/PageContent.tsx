@@ -140,9 +140,9 @@ export default function FormBuilderPage() {
   const handleExport = useCallback(() => {
     const config = JSON.stringify(fields, null, 2);
     navigator.clipboard.writeText(config).then(() => {
-      toast({ description: "Config copied to clipboard", variant: "default" });
+      toast({ description: t.formBuilder.configCopied, variant: "default" });
     });
-  }, [fields, toast]);
+  }, [fields, toast, t]);
 
   const dynamicDefaultValues = useMemo(
     () =>
@@ -196,7 +196,7 @@ export default function FormBuilderPage() {
       {preview ? (
         <div className="flex flex-col gap-4">
           <p className="text-xxs text-muted">
-            Field names: {fields.map((f) => f.name).join(", ")}
+            {t.formBuilder.fieldNamesLabel} {fields.map((f) => f.name).join(", ")}
           </p>
           {fields.map((field) => (
             <dynamicForm.AppField key={field.id} name={field.name}>
@@ -236,7 +236,7 @@ export default function FormBuilderPage() {
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium">
-                  {field.label || "Untitled"}
+                  {field.label || t.formBuilder.untitledField}
                 </span>
                 <div className="flex gap-1">
                   <Button
@@ -305,7 +305,7 @@ export default function FormBuilderPage() {
                   </span>
                   <input
                     className="border-border bg-field rounded border px-2 py-1 text-xs"
-                    placeholder="Comma-separated"
+                    placeholder={t.formBuilder.optionsPlaceholder}
                     value={field.options.join(", ")}
                     onChange={(e) =>
                       handleUpdateField(field.id, {

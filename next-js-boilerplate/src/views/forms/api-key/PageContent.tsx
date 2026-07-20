@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/Toast";
 import { useAppForm } from "@/features/forms/form-hook";
 import { formOptions } from "@tanstack/react-form";
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Separator } from "@/components/ui/Separator";
 import { FormLevelError } from "@/components/ui/FormLevelError";
 import { exceptionHandler, getSurface } from "@/lib/exception-handler";
@@ -153,7 +154,7 @@ export default function ApiKeyPage() {
   if (isLoading) {
     return (
       <div className="text-muted flex items-center justify-center py-12 text-sm">
-        Loading...
+        {t.fieldStates.loading}
       </div>
     );
   }
@@ -254,12 +255,12 @@ export default function ApiKeyPage() {
 
           <div className="flex flex-col gap-1">
             <span className="text-xxs text-muted font-medium">
-              IP Whitelist (optional)
+              {t.apiKey.ipWhitelistLabel}
             </span>
             <div className="flex gap-2">
               <input
                 className="border-border bg-field flex-1 rounded border px-2 py-1.5 text-xs"
-                placeholder="Enter IP and press Enter"
+                placeholder={t.apiKey.ipPlaceholder}
                 value={ipInput}
                 onChange={(e) => setIpInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -275,7 +276,7 @@ export default function ApiKeyPage() {
                 type="button"
                 onClick={handleAddIp}
               >
-                Add
+                {t.apiKey.addIp}
               </Button>
             </div>
             <div className="flex flex-wrap gap-1.5">
@@ -289,6 +290,7 @@ export default function ApiKeyPage() {
                     type="button"
                     onClick={() => handleRemoveIp(ip)}
                     className="text-destructive"
+                    aria-label={`${t.apiKey.removeIp} ${ip}`}
                   >
                     &times;
                   </button>
@@ -339,13 +341,22 @@ export default function ApiKeyPage() {
                       {t.apiKey.copy}
                     </Button>
                   )}
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => handleRevoke(key.id)}
+                  <ConfirmDialog
+                    title={t.apiKey.revokeConfirm}
+                    description=""
+                    confirmLabel={t.apiKey.revoke}
+                    onConfirm={() => handleRevoke(key.id)}
                   >
-                    {t.apiKey.revoke}
-                  </Button>
+                    {(open) => (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={open}
+                      >
+                        {t.apiKey.revoke}
+                      </Button>
+                    )}
+                  </ConfirmDialog>
                 </div>
               </div>
               <div className="text-xxs text-muted flex items-center gap-3">

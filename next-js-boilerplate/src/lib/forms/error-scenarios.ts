@@ -140,7 +140,7 @@ export const ERROR_SCENARIOS: ErrorScenario[] = [
   {
     id: "content-slug-taken",
     status: 409,
-    exc: "EX_CONFLICT_DUPLICATE",
+    exc: "EX_VALIDATION_FORM",
     key: "forms.errors.slugTaken",
     msg: "This slug is already in use",
     field: "slug",
