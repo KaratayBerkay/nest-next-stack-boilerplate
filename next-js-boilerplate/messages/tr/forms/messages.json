@@ -64,7 +64,9 @@
     "firstNameRequired": "Ad gereklidir",
     "lastNameRequired": "Soyad gereklidir",
     "usernameMin": "Kullanıcı adı en az 2 karakter olmalıdır",
-    "emailInvalid": "Geçersiz e-posta"
+    "emailInvalid": "Geçersiz e-posta",
+    "usernameHint": "3–30 karakter: küçük harf, rakam ve _",
+    "bioHint": "En fazla 500 karakter"
   },
   "teamInvite": {
     "heading": "Ekip Üyesi Davet Et",
@@ -90,7 +92,8 @@
     "quotaBody": "Mevcut planınızda en fazla 5 ekip üyesi davet edebilirsiniz.",
     "emails": "E-postalar",
     "role": "Rol",
-    "message": "Mesaj"
+    "message": "Mesaj",
+    "emailChipRemove": "E-postayı kaldır"
   },
   "apiKey": {
     "heading": "API Anahtarı Yöneticisi",
@@ -104,7 +107,7 @@
     "permissionsLabel": "İzinler",
     "selectAll": "Tümünü Seç",
     "ipWhitelistLabel": "IP Beyaz Liste (isteğe bağlı)",
-    "ipPlaceholder": "IP girin ve Enter'a basın",
+    "ipPlaceholder": "örn. 203.0.113.42 — satır başına bir adres",
     "create": "API Anahtarı Oluştur",
     "creating": "Oluşturuluyor...",
     "created": "API anahtarı oluşturuldu — şimdi kopyalayın",
@@ -120,7 +123,13 @@
     "copy": "Kopyala",
     "dismiss": "Kapat",
     "cancel": "İptal",
-    "newKey": "Yeni Anahtar"
+    "newKey": "Yeni Anahtar",
+    "nameRequired": "Anahtar adı gerekli",
+    "nameTooLong": "Anahtar adı en fazla 60 karakter olabilir",
+    "nameExists": "Bu ada sahip bir anahtarınız zaten var",
+    "addIp": "Ekle",
+    "ipInvalid": "Geçerli bir IPv4 adresi girin, örn. 203.0.113.42",
+    "removeIp": "IP adresini kaldır"
   },
   "billing": {
     "heading": "Fatura & Plan",
@@ -146,7 +155,10 @@
     "unsaved": "Kaydedilmemiş değişiklikler",
     "updateButton": "Faturalandırmayı Güncelle",
     "planRequired": "Lütfen bir plan seçin",
-    "periodRequired": "Lütfen bir fatura dönemi seçin"
+    "periodRequired": "Lütfen bir fatura dönemi seçin",
+    "taxIdInvalid": "Vergi numarası formatı hatalı görünüyor — 2 harfli ülke kodu ve ardından 2–13 rakam/harf bekleniyor",
+    "couponHint": "Büyük/küçük harf duyarsız — SAVE10 veya WELCOME20 deneyin",
+    "taxIdHint": "2 harfli ülke kodu + 2–13 rakam/harf, örn. GB123456789"
   },
   "filters": {
     "heading": "Filtreler",
@@ -185,7 +197,8 @@
     "password": "Şifre",
     "nameMin": "Ad en az 2 karakter olmalıdır",
     "emailInvalid": "Geçersiz e-posta adresi",
-    "roleRequired": "Lütfen bir rol seçin"
+    "roleRequired": "Lütfen bir rol seçin",
+    "asyncChecked": "Eşzamansız (onBlur + sunucu)"
   },
   "uploads": {
     "heading": "Dosya Yüklemeleri & Ekler",
@@ -207,7 +220,8 @@
       "docDropzoneIdle": "PDF/DOCX dosyasını buraya sürükleyin",
       "docDropzoneActive": "Dosyaları buraya sürükleyin",
       "invalidType": "Yalnızca {accepted} dosyalarına izin verilir — {file} yüklendi"
-    }
+    },
+    "invalidFileType": "Geçersiz dosya türü"
   },
   "errorLab": {
     "heading": "Hata & Async Durum Laboratuvarı",
@@ -222,7 +236,13 @@
     "trigger": "Hatayı Tetikle",
     "payloadInspector": "Ham JSON",
     "en": "İngilizce",
-    "tr": "Türkçe"
+    "tr": "Türkçe",
+    "subheading": "Her hata yüzeyini ve dil kombinasyonunu test edin",
+    "scenarioLabel": "Hata Senaryosu",
+    "localeLabel": "Dil",
+    "networkLabel": "Ağ Durumu",
+    "triggering": "Tetikleniyor...",
+    "rawPayload": "Ham Veri"
   },
   "checkoutTab": {
     "heading": "Ödeme",
@@ -252,7 +272,10 @@
     "emailMismatch": "E-postalar eşleşmelidir",
     "paymentMethodRequired": "Ödeme yöntemi gereklidir",
     "orderFailed": "Sipariş başarısız oldu. Lütfen tekrar deneyin.",
-    "placing": "Sipariş Veriliyor..."
+    "placing": "Sipariş Veriliyor...",
+    "phoneInvalid": "Geçerli bir telefon numarası girin",
+    "phoneHint": "Ülke kodunu ekleyin, örn. +90 555 123 4567",
+    "postalCodeHint": "Format, yukarıda seçilen ülkeye göre değişir"
   },
   "contentEditor": {
     "heading": "İçerik Düzenleyici",
@@ -286,7 +309,8 @@
     "publishing": "Yayınlanıyor...",
     "scheduling": "Zamanlanıyor...",
     "untitled": "Başlıksız",
-    "time": "Saat"
+    "time": "Saat",
+    "slugHint": "Başlıktan otomatik oluşturulur — URL'yi özelleştirmek için buradan düzenleyin"
   },
   "formBuilder": {
     "heading": "Form Oluşturucu",
@@ -305,7 +329,11 @@
     "moveDown": "Aşağı Taşı",
     "removeField": "Kaldır",
     "exportConfig": "Dışa Aktar",
-    "submitPreview": "Gönder"
+    "submitPreview": "Gönder",
+    "configCopied": "Yapılandırma panoya kopyalandı",
+    "fieldNamesLabel": "Alan adları:",
+    "untitledField": "Başlıksız",
+    "optionsPlaceholder": "Virgülle ayrılmış"
   },
   "editableTable": {
     "heading": "Düzenlenebilir Tablo",
@@ -329,7 +357,12 @@
     "descRequired": "Açıklama gereklidir",
     "qtyMin": "Minimum adet 1'dir",
     "pricePositive": "Fiyat pozitif olmalıdır",
-    "taxClassRequired": "Vergi sınıfı seçin"
+    "taxClassRequired": "Vergi sınıfı seçin",
+    "net": "Net",
+    "savedBadge": "Kaydedildi",
+    "saveRow": "Satırı kaydet",
+    "quantityHint": "Tam sayı, 1 veya daha fazla",
+    "unitPriceHint": "Ondalık girin, örn. 19.99"
   },
   "errors": {
     "emailAlreadyMember": "Bu e-posta zaten bir üye",
@@ -341,6 +374,7 @@
     "postalCodeInvalid": "Posta kodu seçilen ülkeyle eşleşmiyor",
     "paymentDeclined": "Ödeme reddedildi",
     "rowRejected": "Bu satır sunucu tarafından reddedildi",
-    "unknown": "Beklenmeyen bir hata oluştu"
+    "unknown": "Beklenmeyen bir hata oluştu",
+    "slugTaken": "Bu kısa bağlantı zaten kullanılıyor — başka bir tane deneyin"
   }
 }

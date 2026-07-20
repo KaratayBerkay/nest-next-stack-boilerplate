@@ -10,6 +10,10 @@ export type ExceptionCode =
   | "EX_FORBIDDEN"
   | "EX_WS_UNSTABLE"
   | "EX_TIER_INSUFFICIENT"
+  | "EX_PROFILE_USERNAME_TAKEN"
+  | "EX_API_KEY_NAME_EXISTS"
+  | "EX_API_KEY_NOT_FOUND"
+  | "EX_API_KEY_INVALID"
   | "EX_INTERNAL";
 
 export type ClientException = Omit<ExceptionResponse, "statusCode">;
@@ -31,6 +35,10 @@ const EXC_TO_SURFACE = {
   EX_FORBIDDEN: "full-page",
   EX_WS_UNSTABLE: "badge",
   EX_TIER_INSUFFICIENT: "full-page",
+  EX_PROFILE_USERNAME_TAKEN: "form-field",
+  EX_API_KEY_NAME_EXISTS: "form-field",
+  EX_API_KEY_NOT_FOUND: "toast",
+  EX_API_KEY_INVALID: "toast",
   EX_INTERNAL: "toast",
 } satisfies Record<ExceptionCode, ExceptionSurface>;
 

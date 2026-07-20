@@ -204,7 +204,17 @@ export default function BillingPage() {
 
         <CouponStatus code={couponCode} period={billingPeriod} t={t.billing} />
 
-        <form.AppField name="taxId">
+        <form.AppField
+          name="taxId"
+          validators={{
+            onBlur: ({ value }) => {
+              if (!value) return undefined;
+              return /^[A-Z]{2}[A-Z0-9]{2,13}$/.test(value)
+                ? undefined
+                : t.billing.taxIdInvalid;
+            },
+          }}
+        >
           {(field) => (
             <field.TextField
               label={t.billing.taxId}

@@ -11,6 +11,19 @@ import { FormFieldInfo } from "@/components/ui/FormFieldInfo";
 import { createFieldStateSchemas } from "@/validators/forms/field-states";
 import { z } from "zod";
 
+const RESERVED_WORDS = new Set([
+  "admin", "root", "superuser", "test", "demo",
+]);
+
+async function checkReservedWord(value: string): Promise<string | undefined> {
+  if (!value) return undefined;
+  await new Promise((r) => setTimeout(r, 400));
+  if (RESERVED_WORDS.has(value.toLowerCase())) {
+    return `"${value}" is a reserved word`;
+  }
+  return undefined;
+}
+
 const ROLE_OPTIONS = [
   { value: "admin", label: "Admin" },
   { value: "editor", label: "Editor" },
@@ -239,6 +252,40 @@ function DynamicForm() {
   );
 }
 
+function AsyncCheckedForm() {
+  const form = useAppForm({
+    ...validationFormOpts,
+  });
+
+  return (
+    <form className="flex flex-col gap-3">
+      <form.AppField
+        name="name"
+        validators={{
+          onBlurAsyncDebounceMs: 300,
+          onBlurAsync: async ({ value }) => {
+            return checkReservedWord(value);
+          },
+        }}
+      >
+        {(field) => <field.TextField label="Name" />}
+      </form.AppField>
+      <form.AppField name="email">
+        {(field) => <field.TextField label="Email" />}
+      </form.AppField>
+      <form.AppField name="role">
+        {(field) => (
+          <field.SelectField
+            label="Role"
+            options={ROLE_OPTIONS}
+            placeholder="Select a role..."
+          />
+        )}
+      </form.AppField>
+    </form>
+  );
+}
+
 function ValidationModesSection() {
   const t = useMessages("forms");
 
@@ -248,7 +295,7 @@ function ValidationModesSection() {
         The same 3-field form mounted with three different validation
         strategies.
       </p>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
         <StateCard label={t.fieldStates.eager}>
           <p className="text-xxs text-muted mb-2">
             Validates on every keystroke
@@ -264,6 +311,12 @@ function ValidationModesSection() {
             Quiet until first blur, then live
           </p>
           <DynamicForm />
+        </StateCard>
+        <StateCard label={t.fieldStates.asyncChecked}>
+          <p className="text-xxs text-muted mb-2">
+            Checked against the server on blur
+          </p>
+          <AsyncCheckedForm />
         </StateCard>
       </div>
     </div>

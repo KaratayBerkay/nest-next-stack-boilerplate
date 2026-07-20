@@ -9,7 +9,9 @@ import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
 import { Badge } from "@/components/ui/Badge";
 import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
+import { exceptionHandler } from "@/lib/exception-handler";
 import { createTableRowFieldSchemas } from "@/validators/forms/table";
+import type { ExceptionResponse } from "@/lib/api-client";
 
 interface InvoiceRow {
   description: string;
@@ -108,8 +110,12 @@ export default function EditableTablePage() {
     try {
       await simulateError("row-rejected");
       toast({ description: t.editableTable.saveSuccess, variant: "default" });
-    } catch {
-      toast({ description: t.editableTable.saveSuccess, variant: "default" });
+    } catch (err) {
+      const exc = (err as { exception?: ExceptionResponse }).exception;
+      toast({
+        description: exc ? exceptionHandler(exc, {}) : t.editableTable.saveFailed,
+        variant: "destructive",
+      });
     }
     setSavingAll(false);
   }, [simulateError, toast, t]);
@@ -177,7 +183,18 @@ export default function EditableTablePage() {
                         <td className="px-2 py-1">
                           <form.AppField
                             name={`rows[${i}].quantity`}
-                            validators={{ onChange: rowSchemas.quantity }}
+                            validators={{
+                              onChange: rowSchemas.quantity,
+                              onBlurAsyncDebounceMs: 300,
+                              onBlurAsync: async () => {
+                                try {
+                                  await simulateError("row-rejected");
+                                  return undefined;
+                                } catch {
+                                  return t.editableTable.saveFailed;
+                                }
+                              },
+                            }}
                           >
                             {(subField) => (
                               <div className="flex flex-col items-end">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useMessages, useAllMessages } from "@/lib/i18n/MessagesProvider";
 import { useAppForm, withFieldGroup } from "@/features/forms/form-hook";
 import { formOptions, useStore } from "@tanstack/react-form";
@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/Separator";
 import { Switch } from "@/components/ui/Switch";
 import { Label } from "@/components/ui/Label";
 import { FormLevelError } from "@/components/ui/FormLevelError";
-import { checkoutSchema } from "@/validators/forms/checkout";
+import { checkoutSchema, createCheckoutFieldSchemas } from "@/validators/forms/checkout";
 import {
   checkoutDefaultValues,
   addressDefaults,
@@ -31,21 +31,22 @@ const AddressGroup = withFieldGroup({
   defaultValues: addressDefaults,
   render: function AddressGroupInner({ group }) {
     const t = useMessages("forms");
+    const schemas = useMemo(() => createCheckoutFieldSchemas(t.checkoutTab), [t]);
     return (
       <div className="flex flex-col gap-3">
         <div className="grid grid-cols-2 gap-3">
-          <group.AppField name="street">
+          <group.AppField name="street" validators={{ onBlur: schemas.street }}>
             {(field) => <field.TextField label={t.checkoutTab.street} />}
           </group.AppField>
-          <group.AppField name="city">
+          <group.AppField name="city" validators={{ onBlur: schemas.city }}>
             {(field) => <field.TextField label={t.checkoutTab.city} />}
           </group.AppField>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <group.AppField name="province">
+          <group.AppField name="province" validators={{ onBlur: schemas.province }}>
             {(field) => <field.TextField label={t.checkoutTab.province} />}
           </group.AppField>
-          <group.AppField name="postalCode">
+          <group.AppField name="postalCode" validators={{ onBlur: schemas.postalCode }}>
             {(field) => <field.TextField label={t.checkoutTab.postalCode} />}
           </group.AppField>
         </div>
@@ -65,7 +66,14 @@ const AddressGroup = withFieldGroup({
               />
             )}
           </group.AppField>
-          <group.AppField name="phone">
+          <group.AppField name="phone" validators={{
+            onBlur: ({ value }) => {
+              if (!value) return undefined;
+              return /^\+?[0-9()\-.\s]{7,20}$/.test(value)
+                ? undefined
+                : t.checkoutTab.phoneInvalid;
+            },
+          }}>
             {(field) => <field.TextField label={t.checkoutTab.phone} />}
           </group.AppField>
         </div>
@@ -119,19 +127,6 @@ export default function CheckoutPage() {
   const form = useAppForm({
     ...checkoutFormOpts,
     validators: {
-      onChange: ({ value }) => {
-        if (
-          value.email &&
-          value.confirmEmail &&
-          value.email !== value.confirmEmail
-        ) {
-          return {
-            form: t.checkoutTab.emailMismatch,
-            fields: { confirmEmail: t.checkoutTab.emailMismatch },
-          };
-        }
-        return undefined;
-      },
       onSubmitAsync: ({ value }) =>
         submitCheckout({ value }, { simulateError, toast, allMessages }),
     },
@@ -209,8 +204,8 @@ export default function CheckoutPage() {
             <form.AppField
               name="confirmEmail"
               validators={{
-                onChangeListenTo: ["email"],
-                onChange: ({ value, fieldApi }) => {
+                onBlurListenTo: ["email"],
+                onBlur: ({ value, fieldApi }) => {
                   const email = fieldApi.form.getFieldValue("email");
                   if (value && email && value !== email) {
                     return t.checkoutTab.emailMismatch;

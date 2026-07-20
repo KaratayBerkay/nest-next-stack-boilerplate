@@ -11,6 +11,18 @@ const DEFAULT_CHECKOUT_T: Record<string, string> = {
 
 export const checkoutSchema = createCheckoutSchema(DEFAULT_CHECKOUT_T);
 
+export function createCheckoutFieldSchemas(t: Record<string, string>) {
+  return {
+    street: z.string().min(1, t.streetRequired ?? "Street required"),
+    city: z.string().min(1, t.cityRequired ?? "City required"),
+    province: z.string().min(1, t.provinceRequired ?? "Province required"),
+    postalCode: z.string().min(3, t.postalCodeInvalid ?? "Invalid postal code"),
+    phone: z.string().optional(),
+    email: z.string().email(t.emailInvalid ?? "Invalid email"),
+    paymentMethod: z.string().min(1, t.paymentMethodRequired ?? "Payment method required"),
+  };
+}
+
 export function createCheckoutSchema(t: Record<string, string>) {
   return z.object({
     shippingAddress: z.object({
@@ -21,7 +33,7 @@ export function createCheckoutSchema(t: Record<string, string>) {
         .string()
         .min(3, t.postalCodeInvalid ?? "Invalid postal code"),
       country: z.string().min(1, "Country required"),
-      phone: z.string().optional(),
+      phone: z.string().regex(/^\+?[0-9()\-.\s]{7,20}$/, t.phoneInvalid ?? "Invalid phone number").optional().or(z.literal("")),
     }),
     billingAddress: z.object({
       street: z.string().min(1, t.streetRequired ?? "Street required"),
@@ -31,7 +43,7 @@ export function createCheckoutSchema(t: Record<string, string>) {
         .string()
         .min(3, t.postalCodeInvalid ?? "Invalid postal code"),
       country: z.string().min(1, "Country required"),
-      phone: z.string().optional(),
+      phone: z.string().regex(/^\+?[0-9()\-.\s]{7,20}$/, t.phoneInvalid ?? "Invalid phone number").optional().or(z.literal("")),
     }),
     sameAsShipping: z.boolean(),
     email: z.string().email(t.emailInvalid ?? "Invalid email"),

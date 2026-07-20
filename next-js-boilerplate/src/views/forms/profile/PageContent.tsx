@@ -6,6 +6,8 @@ import { useToast } from "@/components/ui/Toast";
 import { useProfileActions } from "@/api/client/profile/actions";
 import { getSurface, exceptionHandler } from "@/lib/exception-handler";
 import { exceptionToFormErrors } from "@/lib/forms/exception-to-form-errors";
+import { blurAsyncCheck } from "@/lib/forms/blur-async-check";
+import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
 import { formOptions } from "@tanstack/react-form";
 import { useAppForm } from "@/features/forms/form-hook";
 import { FormLevelError } from "@/components/ui/FormLevelError";
@@ -79,6 +81,7 @@ export default function ProfilePage() {
   const allMessages = useAllMessages();
   const { toast } = useToast();
   const { updateProfile, checkUsername } = useProfileActions();
+  const { simulateError } = useFormsDemoActions();
   const fieldSchemas = useMemo(() => createProfileFieldSchemas(t.profile), [t]);
 
   const form = useAppForm({
@@ -144,8 +147,8 @@ export default function ProfilePage() {
           name="username"
           validators={{
             onChange: fieldSchemas.username,
-            onChangeAsyncDebounceMs: 500,
-            onChangeAsync: async ({ value }) => {
+            onBlurAsyncDebounceMs: 150,
+            onBlurAsync: async ({ value }) => {
               if (!value) return undefined;
               return (await checkUsername(value))
                 ? undefined
@@ -158,7 +161,18 @@ export default function ProfilePage() {
 
         <form.AppField
           name="email"
-          validators={{ onChange: fieldSchemas.email }}
+          validators={{
+            onChange: fieldSchemas.email,
+            onBlurAsyncDebounceMs: 300,
+            onBlurAsync: async ({ value }) => {
+              if (!value || !fieldSchemas.email.safeParse(value).success) return undefined;
+              return blurAsyncCheck(value, "profile-email-taken", {
+                simulateError,
+                toast,
+                allMessages,
+              });
+            },
+          }}
         >
           {(field) => <field.TextField label={t.profile.email} />}
         </form.AppField>

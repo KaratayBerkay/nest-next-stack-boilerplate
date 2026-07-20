@@ -14,5 +14,6 @@ export function createBillingFieldSchemas(t: Record<string, string>) {
     billingPeriod: z.enum(["monthly", "yearly"], {
       message: t.periodRequired ?? "Billing period is required",
     }),
+    taxId: z.string().optional(),
   };
 }

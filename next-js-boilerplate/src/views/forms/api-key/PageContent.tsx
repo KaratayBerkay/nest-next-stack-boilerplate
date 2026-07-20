@@ -212,7 +212,22 @@ export default function ApiKeyPage() {
           className="surface border-border flex flex-col gap-3 rounded-lg border p-4"
         >
           <FormLevelError form={form} />
-          <form.AppField name="name">
+          <form.AppField
+            name="name"
+            validators={{
+              onChange: ({ value }) => {
+                if (!value?.trim()) return t.apiKey.nameRequired ?? "Key name is required";
+                if (value.length > 60) return t.apiKey.nameTooLong ?? "Key name must be 60 characters or fewer";
+                return undefined;
+              },
+              onBlur: ({ value }) => {
+                if (!value?.trim()) return undefined;
+                return keys?.some((k) => k.name === value.trim())
+                  ? t.apiKey.nameExists ?? "You already have a key with this name"
+                  : undefined;
+              },
+            }}
+          >
             {(field) => (
               <field.TextField
                 label={t.apiKey.nameLabel}

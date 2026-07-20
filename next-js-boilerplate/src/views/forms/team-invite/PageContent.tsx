@@ -100,6 +100,7 @@ export default function TeamInvitePage() {
   const { simulateError } = useFormsDemoActions();
   const [step, setStep] = useState(0);
   const [quotaExceeded, setQuotaExceeded] = useState(false);
+  const [emailInputError, setEmailInputError] = useState<string | null>(null);
   const [state, action] = useActionState(inviteAction, initialFormState);
   const inviteSchemas = useMemo(() => createInviteSchema(t.teamInvite), [t]);
 
@@ -181,39 +182,61 @@ export default function TeamInvitePage() {
             <p className="text-xs font-medium">{t.teamInvite.stepEmails}</p>
             <form.AppField name="emailInput">
               {(field) => (
-                <div className="flex gap-2">
-                  <Input
-                    className="flex-1"
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    onBlur={field.handleBlur}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
+                <div className="flex flex-col gap-1">
+                  <div className="flex gap-2">
+                    <Input
+                      className="flex-1"
+                      value={field.state.value}
+                      onChange={(e) => {
+                        field.handleChange(e.target.value);
+                        if (emailInputError) setEmailInputError(null);
+                      }}
+                      onBlur={field.handleBlur}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          const trimmed = field.state.value.trim().toLowerCase();
+                          if (!trimmed) return;
+                          if (!EMAIL_RE.test(trimmed)) {
+                            setEmailInputError(t.teamInvite.emailInvalid);
+                            return;
+                          }
+                          if (form.state.values.emails.includes(trimmed)) {
+                            setEmailInputError(t.teamInvite.emailDuplicate);
+                            return;
+                          }
+                          setEmailInputError(null);
+                          form.pushFieldValue("emails", trimmed);
+                          field.handleChange("");
+                        }
+                      }}
+                      placeholder={t.teamInvite.emailPlaceholder}
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
                         const trimmed = field.state.value.trim().toLowerCase();
                         if (!trimmed) return;
-                        if (!EMAIL_RE.test(trimmed)) return;
-                        if (form.state.values.emails.includes(trimmed)) return;
+                        if (!EMAIL_RE.test(trimmed)) {
+                          setEmailInputError(t.teamInvite.emailInvalid);
+                          return;
+                        }
+                        if (form.state.values.emails.includes(trimmed)) {
+                          setEmailInputError(t.teamInvite.emailDuplicate);
+                          return;
+                        }
+                        setEmailInputError(null);
                         form.pushFieldValue("emails", trimmed);
                         field.handleChange("");
-                      }
-                    }}
-                    placeholder={t.teamInvite.emailPlaceholder}
-                  />
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      const trimmed = field.state.value.trim().toLowerCase();
-                      if (!trimmed) return;
-                      if (!EMAIL_RE.test(trimmed)) return;
-                      if (form.state.values.emails.includes(trimmed)) return;
-                      form.pushFieldValue("emails", trimmed);
-                      field.handleChange("");
-                    }}
-                  >
-                    Add
-                  </Button>
+                      }}
+                    >
+                      Add
+                    </Button>
+                  </div>
+                  {emailInputError && (
+                    <p className="text-xxs text-error">{emailInputError}</p>
+                  )}
                 </div>
               )}
             </form.AppField>

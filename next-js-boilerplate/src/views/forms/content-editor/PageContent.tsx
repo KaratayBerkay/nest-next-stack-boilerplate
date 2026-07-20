@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { useMessages, useAllMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
 import { formOptions, useStore } from "@tanstack/react-form";
 import { useAppForm } from "@/features/forms/form-hook";
@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/Separator";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
 import { exceptionHandler } from "@/lib/exception-handler";
+import { blurAsyncCheck } from "@/lib/forms/blur-async-check";
 import { createEditorSchema } from "@/validators/forms/editor";
 import { FormLevelError } from "@/components/ui/FormLevelError";
 import { editorDefaultValues } from "@/validators/forms/editor-inits";
@@ -107,6 +108,7 @@ const editorFormOpts = formOptions({
 
 export default function ContentEditorPage() {
   const t = useMessages("forms");
+  const allMessages = useAllMessages();
   const { toast } = useToast();
   const { user } = useAuth();
   const { simulateError } = useFormsDemoActions();
@@ -310,7 +312,14 @@ export default function ContentEditorPage() {
 
             <form.AppField
               name="slug"
-              validators={{ onChange: editorSchemas.shape.slug }}
+              validators={{
+                onChange: editorSchemas.shape.slug,
+                onBlurAsyncDebounceMs: 300,
+                onBlurAsync: async ({ value }) => {
+                  if (!value || !slugEditedByUser.current) return undefined;
+                  return blurAsyncCheck(value, "content-slug-taken", { simulateError, toast, allMessages });
+                },
+              }}
             >
               {(field) => <field.TextField label={t.contentEditor.slug} />}
             </form.AppField>

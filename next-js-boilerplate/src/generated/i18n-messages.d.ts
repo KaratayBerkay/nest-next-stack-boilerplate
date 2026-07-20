@@ -368,6 +368,8 @@ export type I18nMessages = {
         "lastNameRequired": string;
         "usernameMin": string;
         "emailInvalid": string;
+        "usernameHint": string;
+        "bioHint": string;
       };
       "teamInvite": {
         "heading": string;
@@ -394,6 +396,7 @@ export type I18nMessages = {
         "emails": string;
         "role": string;
         "message": string;
+        "emailChipRemove": string;
       };
       "apiKey": {
         "heading": string;
@@ -424,6 +427,12 @@ export type I18nMessages = {
         "dismiss": string;
         "cancel": string;
         "newKey": string;
+        "nameRequired": string;
+        "nameTooLong": string;
+        "nameExists": string;
+        "addIp": string;
+        "ipInvalid": string;
+        "removeIp": string;
       };
       "billing": {
         "heading": string;
@@ -450,6 +459,9 @@ export type I18nMessages = {
         "updateButton": string;
         "planRequired": string;
         "periodRequired": string;
+        "taxIdInvalid": string;
+        "couponHint": string;
+        "taxIdHint": string;
       };
       "filters": {
         "heading": string;
@@ -489,6 +501,7 @@ export type I18nMessages = {
         "nameMin": string;
         "emailInvalid": string;
         "roleRequired": string;
+        "asyncChecked": string;
       };
       "uploads": {
         "heading": string;
@@ -511,6 +524,7 @@ export type I18nMessages = {
           "docDropzoneActive": string;
           "invalidType": string;
         };
+        "invalidFileType": string;
       };
       "errorLab": {
         "heading": string;
@@ -526,6 +540,12 @@ export type I18nMessages = {
         "payloadInspector": string;
         "en": string;
         "tr": string;
+        "subheading": string;
+        "scenarioLabel": string;
+        "localeLabel": string;
+        "networkLabel": string;
+        "triggering": string;
+        "rawPayload": string;
       };
       "checkoutTab": {
         "heading": string;
@@ -556,6 +576,9 @@ export type I18nMessages = {
         "paymentMethodRequired": string;
         "orderFailed": string;
         "placing": string;
+        "phoneInvalid": string;
+        "phoneHint": string;
+        "postalCodeHint": string;
       };
       "contentEditor": {
         "heading": string;
@@ -590,6 +613,7 @@ export type I18nMessages = {
         "scheduling": string;
         "untitled": string;
         "time": string;
+        "slugHint": string;
       };
       "formBuilder": {
         "heading": string;
@@ -609,6 +633,10 @@ export type I18nMessages = {
         "removeField": string;
         "exportConfig": string;
         "submitPreview": string;
+        "configCopied": string;
+        "fieldNamesLabel": string;
+        "untitledField": string;
+        "optionsPlaceholder": string;
       };
       "editableTable": {
         "heading": string;
@@ -633,6 +661,11 @@ export type I18nMessages = {
         "qtyMin": string;
         "pricePositive": string;
         "taxClassRequired": string;
+        "net": string;
+        "savedBadge": string;
+        "saveRow": string;
+        "quantityHint": string;
+        "unitPriceHint": string;
       };
       "errors": {
         "emailAlreadyMember": string;
@@ -645,6 +678,7 @@ export type I18nMessages = {
         "paymentDeclined": string;
         "rowRejected": string;
         "unknown": string;
+        "slugTaken": string;
       };
     }
 
