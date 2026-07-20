@@ -74,6 +74,16 @@
 > remainder of §19/20's hint keys (`bioHint`, `quantityHint`,
 > `unitPriceHint`) — flagged in Rev 2/3 as a distinct follow-up pass, not
 > part of any commit's claimed scope so far.
+>
+> **Rev 5 — 2026-07-20, detailed fix guide for what's still open.** Berkay
+> asked for a detailed how-to-fix writeup for anything still open. Nothing
+> implemented in this revision — [§23](#23-rev-5--detailed-fix-guide-for-ux-0f--the-3-unwired-hint-keys)
+> has exact file:line instructions for UX-0f (`FileUpload`/`ImageUpload`
+> proactive hints) and the 3 unwired hint keys, plus one **new** gap found
+> while researching the fix: `TextareaField` (used by `profile.bio`) has the
+> identical "doesn't forward `required` to the underlying element" bug
+> `TextField` had before Rev 4 — never caught before because no `bio`-shaped
+> field was in scope until now.
 
 ---
 
@@ -101,6 +111,7 @@
 20. [UX-2 — i18n additions for this pass](#20-ux-2--i18n-additions-for-this-pass)
 21. [Rev 2 — Verification & fix guide](#21-rev-2--verification--fix-guide)
 22. [Rev 3 — Re-verification of 056531b](#22-rev-3--re-verification-of-056531b)
+23. [Rev 5 — Detailed fix guide for UX-0f + the 3 unwired hint keys](#23-rev-5--detailed-fix-guide-for-ux-0f--the-3-unwired-hint-keys)
 
 ---
 
@@ -1379,3 +1390,340 @@ gaps in an otherwise-accurate commit:
 Everything else from §21's fix guide is closed. §§18–20's remaining scope
 (UX-0f, the rest of §19/20's hint keys) is still open exactly as Rev 2 left
 it.
+
+---
+
+## 23. Rev 5 — Detailed fix guide for UX-0f + the 3 unwired hint keys
+
+**2026-07-20.** Berkay asked for a detailed how-to-fix writeup for whatever
+is still open. As of Rev 4, that's exactly two things: UX-0f (file/image
+upload proactive hints) and 3 dead i18n keys (`bioHint`, `quantityHint`,
+`unitPriceHint`) that were added back in `60acca2` but never rendered
+anywhere. **Nothing in this section has been implemented — same
+findings/fix-guide convention as §21.** Re-checked the current source
+before writing this (not relying on the Rev 1 audit, which is now several
+commits stale) — all line numbers below are current as of `121c1ed`.
+
+### 23.1 UX-0f — `FileUpload` / `ImageUpload` proactive hints
+
+**Current state, re-verified:**
+- `components/ui/file-upload/file-upload.tsx:289-293` already shows an
+  *accepted-types* line proactively (`{labels.acceptedLabel}: {accept}`) —
+  but `accept` is printed raw (`image/*`, `.pdf,.docx`), not a
+  human-readable list.
+- The *size* cap only ever appears reactively, inside
+  `labels.tooLarge!(...)` (`file-upload.tsx:80-83`), after a file is
+  already rejected.
+- `image-upload.tsx`'s avatar branch (`:65-140`, used by
+  `views/forms/uploads/PageContent.tsx:68-104`, the component-showcase page
+  `views/ui/image-upload/PageContent.tsx`, and indirectly via
+  `features/forms/ui/UploadField.tsx`) has **no proactive hint of any
+  kind** — no accepted-types line, no size line. Its only feedback is a
+  toast on wrong file type. (Checked: `views/settings/account/FreePageView.tsx`
+  does *not* use this component — it has its own hand-rolled avatar UI — so
+  that page is unaffected by this fix either way.)
+- The avatar "Change Photo" trigger is only visible on `:hover`
+  (`image-upload.tsx:96`, `opacity-0 ... hover:opacity-100`) — no
+  `:focus-visible` fallback, so it's undiscoverable via keyboard and
+  invisible by default on touch.
+- Both components hardcode the toast title `"Invalid file type"` as a
+  string literal (`file-upload.tsx:106`, `image-upload.tsx:107`) —
+  **bypassing the `labels` prop entirely**, even though `uploads.invalidFileType`
+  already exists in both locale files (added in `60acca2`, still unused).
+  This isn't just a missed key swap — `FileUploadLabels` (`types/ui/FileUpload-types.ts:10-23`)
+  has no field for a toast *title* at all, only `invalidType` for the toast
+  *body*, so there's nowhere to plug a localized title in without extending
+  the type.
+- `views/forms/uploads/PageContent.tsx:68` passes no `labels` prop to the
+  avatar `<ImageUpload avatar .../>` call at all — so even after the fix
+  below, the avatar section needs its own labels object wired in, same as
+  `galleryLabels`/`docLabels` already are for the two `<FileUpload>` calls
+  a few lines down.
+
+**Fix — 5 pieces:**
+
+**(1) Extend `FileUploadLabels`** (`types/ui/FileUpload-types.ts`) with 3
+new optional fields:
+
+```ts
+export type FileUploadLabels = {
+  // ...existing fields...
+  acceptedTypesText?: (accept: string) => string; // human-readable, e.g. "Images" / "PDF, Word"
+  maxSizeLabel?: (max: string) => string;          // e.g. "Max 5 MB per file"
+  invalidTypeTitle?: string;                        // toast title, currently hardcoded
+};
+```
+
+**(2) `file-upload.tsx` — human-readable accept label + proactive size
+line + wire the toast title.** Add a small formatter near `humanSize`
+(`:13-18`):
+
+```ts
+function humanizeAccept(accept: string): string {
+  const parts = accept.split(",").map((p) => p.trim());
+  return parts
+    .map((p) => {
+      if (p === "image/*") return "Images";
+      if (p.endsWith("/*")) return p.slice(0, -2) + "s";
+      if (p.startsWith(".")) return p.slice(1).toUpperCase();
+      return p;
+    })
+    .join(", ");
+}
+```
+
+Then at `:289-293`, add a proactive max-size line and use the formatter
+(falling back to the raw string if the caller didn't localize it, so
+existing callers that don't pass the new labels don't regress):
+
+```diff
+         {accept && (
+           <p className="text-muted mt-1 text-xs">
+-            {labels.acceptedLabel}: {accept}
++            {labels.acceptedLabel}: {labels.acceptedTypesText?.(accept) ?? humanizeAccept(accept)}
+           </p>
+         )}
++        {maxSizeBytes && (
++          <p className="text-muted text-xs">
++            {labels.maxSizeLabel?.(humanSize(maxSizeBytes)) ?? `Max ${humanSize(maxSizeBytes)} per file`}
++          </p>
++        )}
+```
+
+And at `:105-112` (the invalid-type toast), swap the hardcoded title:
+
+```diff
+             toast({
+-              title: "Invalid file type",
++              title: labels.invalidTypeTitle ?? "Invalid file type",
+               description: labels.invalidType!(file.name, acceptLabels.join(", ")),
+               variant: "destructive",
+             });
+```
+
+**(3) `image-upload.tsx` — same two proactive lines under the avatar
+circle, focus-visible fix, toast title wire-up.** In the `avatar` branch
+(`:65-140`), inside the `<div className="relative">` block, add a caption
+below the circle (after the closing `</div>` of the circle+label wrapper,
+`:129`, before the `{current && (...)}` remove button):
+
+```tsx
+{!current && (
+  <p className="text-muted text-center text-xxs">
+    {labels.acceptedTypesText?.("image/*") ?? "Images"}
+    {maxSizeBytes && ` · ${labels.maxSizeLabel?.(humanSize(maxSizeBytes)) ?? `max ${humanSize(maxSizeBytes)}`}`}
+  </p>
+)}
+```
+
+(`humanSize` currently lives only in `file-upload.tsx` — export it from
+there and import it in `image-upload.tsx`, or duplicate the 5-line
+function; exporting is cleaner since `image-upload.tsx` already imports
+`FileUpload` from the same module family.) For the focus-visible gap, change
+`:96`'s class list:
+
+```diff
+-          <label className="bg-bg/60 text-fg absolute inset-0 flex cursor-pointer items-center justify-center rounded-full text-xs font-medium opacity-0 transition-opacity hover:opacity-100">
++          <label className="bg-bg/60 text-fg absolute inset-0 flex cursor-pointer items-center justify-center rounded-full text-xs font-medium opacity-0 transition-opacity hover:opacity-100 focus-within:opacity-100">
+```
+
+(`focus-within` on the label catches the nested `<input>` receiving focus,
+since the visible trigger is the `<label>` wrapping a `sr-only`-style file
+input — no `tabIndex`/`:focus-visible` plumbing needed on the input
+itself.) And at `:105-110`, same toast-title swap as file-upload.tsx:
+
+```diff
+                     toast({
+-                      title: "Invalid file type",
++                      title: labels.invalidTypeTitle ?? "Invalid file type",
+                       description: labels.invalidType!(file.name, "images"),
+```
+
+**(4) i18n** — `uploads.invalidFileType` already exists and is exactly the
+right copy for the new `invalidTypeTitle` field; no new key needed there.
+Add 2 new keys (both locales):
+
+| Key | EN | TR |
+|---|---|---|
+| `uploads.labels.acceptedImages` | Images | Görseller |
+| `uploads.labels.acceptedPdfWord` | PDF, Word | PDF, Word |
+| `uploads.labels.maxSize` | Max {max} per file | Dosya başına en fazla {max} |
+
+**(5) Wire it all in `views/forms/uploads/PageContent.tsx`.** Add
+`invalidTypeTitle: t.uploads.invalidFileType` to both `galleryLabels`
+(`:22-30`) and `docLabels` (`:32-39`), add `acceptedTypesText: () =>
+t.uploads.labels.acceptedPdfWord` to `docLabels` (gallery's accept is
+`image/*`, so its `acceptedTypesText` can default to the component's own
+"Images" fallback, or be made explicit the same way for consistency), and
+— the one currently-missing wire-up — pass a `labels` prop to the avatar
+`<ImageUpload avatar .../>` call at `:68`, e.g.:
+
+```tsx
+<ImageUpload
+  avatar
+  value={avatarFiles}
+  onChange={...}
+  maxSizeBytes={MAX_UPLOAD_SIZE}
+  labels={{
+    invalidTypeTitle: t.uploads.invalidFileType,
+    acceptedTypesText: () => t.uploads.labels.acceptedImages,
+    maxSizeLabel: (max) => t.uploads.labels.maxSize.replace("{max}", max),
+  }}
+/>
+```
+
+### 23.2 `bioHint` — `profile.bio`, blocked on a `TextareaField` gap
+
+**Current state:** `profile/PageContent.tsx:196-198`:
+
+```tsx
+<form.AppField name="bio">
+  {(field) => <field.TextareaField label={t.profile.bio} />}
+</form.AppField>
+```
+
+`TextareaField` (`features/forms/ui/TextareaField.tsx`) doesn't have a
+`hint` prop at all — Rev 4 only added `hint`/`aria-required` to
+`TextField`/`TextFieldProps`, since every field named in scope at the time
+was a `TextField`. `bio` is the first hint-key candidate that's actually a
+`TextareaField`, which is why this was never caught before now.
+
+**New related finding (same bug class Rev 4 already fixed once, just on
+the sibling component):** `TextareaField` also never forwards `required` to
+the underlying `<Textarea>` — `TextareaField.tsx:9-23` takes a `required`
+prop, passes it to `<Label required={required}>` (line 14), but never adds
+`required`/`aria-required` to the `<Textarea>` itself. Nothing in this
+gallery currently passes `required` to a `TextareaField` (bio and
+team-invite's `message` are both optional fields), so this has zero
+visible effect today, but it's worth fixing in the same pass since it's
+the identical 1-line omission Rev 4 already fixed for `TextField` — leaving
+it unfixed on `TextareaField` means the next optional-vs-required
+`Textarea`-backed field silently reintroduces a bug that's already been
+found and fixed once.
+
+**Fix:**
+
+`types/forms/TextareaField-types.ts`:
+```diff
+ export interface TextareaFieldProps {
+   label?: string;
+   required?: boolean;
+   placeholder?: string;
++  hint?: string;
+ }
+```
+
+`features/forms/ui/TextareaField.tsx`:
+```diff
+-export function TextareaField({ label, required }: TextareaFieldProps) {
++export function TextareaField({ label, required, hint }: TextareaFieldProps) {
+   const field = useFieldContext<string>();
+   return (
+     <div className="flex flex-col gap-1">
+       {label && (
+         <Label htmlFor={field.name} required={required}>
+           {label}
+         </Label>
+       )}
+       <Textarea
+         id={field.name}
+         value={field.state.value}
+         onBlur={field.handleBlur}
+         onChange={(e) => field.handleChange(e.target.value)}
++        required={required}
++        aria-required={required}
+       />
+-      <FormFieldInfo field={field} />
++      <FormFieldInfo field={field} hint={hint} />
+     </div>
+   );
+ }
+```
+
+(`FormFieldInfo` already accepts `hint` since Rev 4 — no change needed
+there.) Then wire it at the call site:
+
+```diff
+ <form.AppField name="bio">
+-  {(field) => <field.TextareaField label={t.profile.bio} />}
++  {(field) => <field.TextareaField label={t.profile.bio} hint={t.profile.bioHint} />}
+ </form.AppField>
+```
+
+**Optional follow-on, not required to close this item:** §19's "bounded
+fields with no counter" note suggested a live `123/500` character counter
+for `bio` (max 500) once typing starts, swapping out the static hint —
+that's a materially bigger change (state + conditional render swapping
+hint↔counter) and should be its own follow-up if wanted, not bundled into
+this fix.
+
+### 23.3 `quantityHint` / `unitPriceHint` — raw `<input>`s, not `TextField`
+
+**Current state:** unlike every other hint-bearing field, editable-table's
+`quantity` (`editable-table/PageContent.tsx:186-221`) and `unitPrice`
+(`:222-`) are hand-rolled `<input type="number">` elements inside `<td>`
+cells — not routed through `field.TextField`/`TextareaField` at all (kept
+raw deliberately, almost certainly for the compact table-cell layout). So
+"pass `hint=`" doesn't apply here; the hint text needs to be rendered
+manually, matching the existing manual error-rendering pattern already in
+this file (`:213-217`) rather than reusing `FormFieldInfo`.
+
+**Fix — add a hint `<span>`, shown only when there's no error (mirrors
+`FormFieldInfo`'s own `!error && hint` condition):**
+
+```diff
+                             {(subField) => (
+                               <div className="flex flex-col items-end">
+                                 <input
+                                   type="number"
+                                   className="border-border bg-field w-16 rounded border px-1.5 py-1 text-right text-xs"
+                                   value={subField.state.value}
+                                   min={0}
+                                   onChange={(e) =>
+                                     subField.handleChange(
+                                       Math.max(0, Number(e.target.value)),
+                                     )
+                                   }
+                                 />
+                                 {subField.state.meta.errors.length > 0 && (
+                                   <span className="text-destructive text-xxs">
+                                     {String(subField.state.meta.errors[0])}
+                                   </span>
+                                 )}
++                                {subField.state.meta.errors.length === 0 && (
++                                  <span className="text-muted text-xxs">
++                                    {t.editableTable.quantityHint}
++                                  </span>
++                                )}
+                               </div>
+                             )}
+```
+
+(same shape for `unitPrice`'s block a little further down, swapping in
+`t.editableTable.unitPriceHint`). This will make every row's cells a touch
+taller (hint text is always present when there's no error, not just on
+focus) — if that reads as too busy in a dense table, an alternative is to
+only show the hint on `subField.state.meta.isTouched === false` (i.e. hide
+it forever once the user has interacted with that specific cell at all,
+rather than keeping it up between blurs) — a one-line condition change from
+`errors.length === 0` to `errors.length === 0 && !subField.state.meta.isTouched`
+if the always-visible version looks wrong once rendered.
+
+### 23.4 Suggested order
+
+1. §23.2 (`bioHint` + the `TextareaField` `required` fix) — smallest,
+   isolated, no shared-component risk beyond `TextareaField` itself (only
+   `profile.bio` uses it today, so blast radius is one field).
+2. §23.3 (`quantityHint`/`unitPriceHint`) — isolated to one file, no shared
+   component changes.
+3. §23.1 (UX-0f) — touches 2 shared components (`FileUpload`/`ImageUpload`)
+   with 3 other call sites beyond the forms gallery
+   (`views/ui/image-upload/PageContent.tsx` — a component showcase page,
+   none of its 4 calls pass `labels` at all; `features/forms/ui/UploadField.tsx`
+   — does pass `labels` through) — worth doing last and spot-checking those
+   afterward. The new fields are additive/optional so existing callers keep
+   compiling and working either way, but the *visual* layout gains 1-2 new
+   lines under the avatar circle and under every dropzone everywhere
+   `avatar`/`accept` are used, not just in the forms gallery — worth a quick
+   look at `views/ui/image-upload` after the change since that page exists
+   specifically to showcase this component's variants.
