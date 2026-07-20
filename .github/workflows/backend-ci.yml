@@ -62,7 +62,7 @@ jobs:
 
       # No `version:` — it's read from package.json's "packageManager" pin (specifying both
       # errors with ERR_PNPM_BAD_PM_VERSION).
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
       - uses: actions/setup-node@v4
         with:
