@@ -54,6 +54,26 @@
 > revoke, draft discard, row delete) all pass `description=""`, so the
 > confirm step is title-only with no "this is irreversible"-style copy.
 > Full detail in [§22](#22-rev-3--re-verification-of-056531b).
+>
+> **Rev 4 — 2026-07-20, final close-out.** Commit `0069fee` closed both of
+> §22.3's remaining gaps: `aria-required={required}` now sits next to
+> `required={required}` on `<Input>`, and `required` is now passed on all 9
+> `TextField`-backed required fields the doc named (profile
+> firstName/lastName/username/email; checkout street/city/province/
+> postalCode/email/confirmEmail; api-key name) — the 3 doc-named fields that
+> didn't get it (`billing.plan`, `team-invite.role`, `checkout.paymentMethod`)
+> use `RadioGroupField`, not `TextField`, so the boolean prop doesn't apply
+> to them; correctly out of scope, not a miss. All 3 `ConfirmDialog`s got
+> real `description` copy in both locales instead of `""`. `pnpm typecheck`,
+> `pnpm lint`, and `pnpm generate-i18n-types` (re-run to confirm the
+> generated files aren't drifted) are all clean; i18n parity holds at
+> 347/347. **This closes every item raised across Rev 1–3 — §§1–17 (the
+> onBlur-check scope this doc's title names) and §18's UX-0a/b/c/d/e audit
+> are now fully implemented and verified.** Still open, unchanged, and out
+> of this doc's original title scope: UX-0f (upload hints) and the unwired
+> remainder of §19/20's hint keys (`bioHint`, `quantityHint`,
+> `unitPriceHint`) — flagged in Rev 2/3 as a distinct follow-up pass, not
+> part of any commit's claimed scope so far.
 
 ---
 
