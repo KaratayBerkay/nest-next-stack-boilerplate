@@ -10,11 +10,23 @@ import type {
   FileUploadLabels,
 } from "@/types/ui/FileUpload-types";
 
-function humanSize(bytes: number): string {
+export function humanSize(bytes: number): string {
   if (bytes === 0) return "0 B";
   const units = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
   return `${(bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+}
+
+function humanizeAccept(accept: string): string {
+  const parts = accept.split(",").map((p) => p.trim());
+  return parts
+    .map((p) => {
+      if (p === "image/*") return "Images";
+      if (p.endsWith("/*")) return p.slice(0, -2) + "s";
+      if (p.startsWith(".")) return p.slice(1).toUpperCase();
+      return p;
+    })
+    .join(", ");
 }
 
 let uploadIdCounter = 0;
@@ -103,7 +115,7 @@ export function FileUpload({
               return trimmed;
             });
             toast({
-              title: "Invalid file type",
+              title: labels.invalidTypeTitle ?? "Invalid file type",
               description: labels.invalidType!(
                 file.name,
                 acceptLabels.join(", "),
@@ -288,7 +300,14 @@ export function FileUpload({
         </p>
         {accept && (
           <p className="text-muted mt-1 text-xs">
-            {labels.acceptedLabel}: {accept}
+            {labels.acceptedLabel}:{" "}
+            {labels.acceptedTypesText?.(accept) ?? humanizeAccept(accept)}
+          </p>
+        )}
+        {maxSizeBytes && (
+          <p className="text-muted text-xs">
+            {labels.maxSizeLabel?.(humanSize(maxSizeBytes)) ??
+              `Max ${humanSize(maxSizeBytes)} per file`}
           </p>
         )}
       </div>

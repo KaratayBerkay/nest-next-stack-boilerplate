@@ -6,7 +6,11 @@ import { Label } from "@/components/ui/Label";
 import { FormFieldInfo } from "@/components/ui/FormFieldInfo";
 import type { TextareaFieldProps } from "@/types/forms/TextareaField-types";
 
-export function TextareaField({ label, required }: TextareaFieldProps) {
+export function TextareaField({
+  label,
+  required,
+  hint,
+}: TextareaFieldProps) {
   const field = useFieldContext<string>();
   return (
     <div className="flex flex-col gap-1">
@@ -20,8 +24,10 @@ export function TextareaField({ label, required }: TextareaFieldProps) {
         value={field.state.value}
         onBlur={field.handleBlur}
         onChange={(e) => field.handleChange(e.target.value)}
+        required={required}
+        aria-required={required}
       />
-      <FormFieldInfo field={field} />
+      <FormFieldInfo field={field} hint={hint} />
     </div>
   );
 }

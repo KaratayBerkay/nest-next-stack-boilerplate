@@ -27,6 +27,9 @@ export default function UploadsPage() {
     uploading: t.uploads.labels.uploading,
     uploadButton: (count: number) => `Upload ${count} image(s)`,
     remove: (file: string) => t.uploads.labels.remove.replace("{file}", file),
+    invalidTypeTitle: t.uploads.invalidFileType,
+    maxSizeLabel: (max: string) =>
+      t.uploads.labels.maxSize.replace("{max}", max),
   };
 
   const docLabels = {
@@ -36,6 +39,10 @@ export default function UploadsPage() {
       t.uploads.labels.invalidType
         .replace("{accepted}", accepted)
         .replace("{file}", file),
+    invalidTypeTitle: t.uploads.invalidFileType,
+    acceptedTypesText: () => t.uploads.labels.acceptedPdfWord,
+    maxSizeLabel: (max: string) =>
+      t.uploads.labels.maxSize.replace("{max}", max),
   };
 
   const handleGalleryUpload = useCallback(
@@ -101,6 +108,12 @@ export default function UploadsPage() {
             setAvatarFiles(files);
           }}
           maxSizeBytes={MAX_UPLOAD_SIZE}
+          labels={{
+            invalidTypeTitle: t.uploads.invalidFileType,
+            acceptedTypesText: () => t.uploads.labels.acceptedImages,
+            maxSizeLabel: (max: string) =>
+              t.uploads.labels.maxSize.replace("{max}", max),
+          }}
         />
       </section>
 

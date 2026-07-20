@@ -524,6 +524,9 @@ export type I18nMessages = {
           "docDropzoneIdle": string;
           "docDropzoneActive": string;
           "invalidType": string;
+          "acceptedImages": string;
+          "acceptedPdfWord": string;
+          "maxSize": string;
         };
         "invalidFileType": string;
       };

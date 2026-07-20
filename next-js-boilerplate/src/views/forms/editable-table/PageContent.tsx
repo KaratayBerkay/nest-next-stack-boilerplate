@@ -179,6 +179,11 @@ export default function EditableTablePage() {
                                     {String(subField.state.meta.errors[0])}
                                   </span>
                                 )}
+                                {subField.state.meta.errors.length === 0 && (
+                                  <span className="text-muted text-xxs">
+                                    {t.editableTable.quantityHint}
+                                  </span>
+                                )}
                               </div>
                             )}
                           </form.AppField>
@@ -241,6 +246,11 @@ export default function EditableTablePage() {
                                 {subField.state.meta.errors.length > 0 && (
                                   <span className="text-destructive text-xxs">
                                     {String(subField.state.meta.errors[0])}
+                                  </span>
+                                )}
+                                {subField.state.meta.errors.length === 0 && (
+                                  <span className="text-muted text-xxs">
+                                    {t.editableTable.unitPriceHint}
                                   </span>
                                 )}
                               </div>

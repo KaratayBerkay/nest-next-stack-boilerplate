@@ -20,6 +20,9 @@ export type FileUploadLabels = {
   uploading?: string;
   changePhoto?: string;
   removePhoto?: string;
+  acceptedTypesText?: (accept: string) => string;
+  maxSizeLabel?: (max: string) => string;
+  invalidTypeTitle?: string;
 };
 
 export interface FileUploadProps {

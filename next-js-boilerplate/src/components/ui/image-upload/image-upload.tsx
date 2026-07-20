@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/cn";
-import { FileUpload } from "@/components/ui/FileUpload";
+import { FileUpload, humanSize } from "@/components/ui/FileUpload";
 import { useToast } from "@/components/ui/toast/use-toast";
 import type { ImageUploadProps } from "@/types/ui/ImageUpload-types";
 import type { UploadFile, FileUploadLabels } from "@/types/ui/FileUpload-types";
@@ -93,7 +93,7 @@ export function ImageUpload({
               </svg>
             )}
           </div>
-          <label className="bg-bg/60 text-fg absolute inset-0 flex cursor-pointer items-center justify-center rounded-full text-xs font-medium opacity-0 transition-opacity hover:opacity-100">
+          <label className="bg-bg/60 text-fg absolute inset-0 flex cursor-pointer items-center justify-center rounded-full text-xs font-medium opacity-0 transition-opacity hover:opacity-100 focus-within:opacity-100">
             <span>{labels.changePhoto}</span>
             <input
               type="file"
@@ -104,7 +104,7 @@ export function ImageUpload({
                 if (file) {
                   if (!file.type.startsWith("image/")) {
                     toast({
-                      title: "Invalid file type",
+                      title: labels.invalidTypeTitle ?? "Invalid file type",
                       description: labels.invalidType!(file.name, "images"),
                       variant: "destructive",
                     });
@@ -127,6 +127,13 @@ export function ImageUpload({
             />
           </label>
         </div>
+        {!current && (
+          <p className="text-muted text-center text-xxs">
+            {labels.acceptedTypesText?.("image/*") ?? "Images"}
+            {maxSizeBytes &&
+              ` · ${labels.maxSizeLabel?.(humanSize(maxSizeBytes)) ?? `max ${humanSize(maxSizeBytes)}`}`}
+          </p>
+        )}
         {current && (
           <button
             type="button"

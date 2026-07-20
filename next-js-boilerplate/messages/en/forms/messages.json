@@ -220,7 +220,10 @@
       "remove": "Remove {file}",
       "docDropzoneIdle": "Drag PDF/DOCX here",
       "docDropzoneActive": "Drop files here",
-      "invalidType": "Only {accepted} files are allowed — got {file}"
+      "invalidType": "Only {accepted} files are allowed — got {file}",
+      "acceptedImages": "Images",
+      "acceptedPdfWord": "PDF, Word",
+      "maxSize": "Max {max} per file"
     },
     "invalidFileType": "Invalid file type"
   },

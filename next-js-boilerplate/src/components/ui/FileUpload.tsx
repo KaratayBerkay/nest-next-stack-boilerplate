@@ -1,1 +1,1 @@
-export { FileUpload } from "./file-upload";
+export { FileUpload, humanSize } from "./file-upload";

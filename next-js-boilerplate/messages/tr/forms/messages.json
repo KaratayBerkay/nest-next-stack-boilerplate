@@ -220,7 +220,10 @@
       "remove": "{file} dosyasını kaldır",
       "docDropzoneIdle": "PDF/DOCX dosyasını buraya sürükleyin",
       "docDropzoneActive": "Dosyaları buraya sürükleyin",
-      "invalidType": "Yalnızca {accepted} dosyalarına izin verilir — {file} yüklendi"
+      "invalidType": "Yalnızca {accepted} dosyalarına izin verilir — {file} yüklendi",
+      "acceptedImages": "Görseller",
+      "acceptedPdfWord": "PDF, Word",
+      "maxSize": "Dosya başına en fazla {max}"
     },
     "invalidFileType": "Geçersiz dosya türü"
   },

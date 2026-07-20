@@ -194,7 +194,12 @@ export default function ProfilePage() {
         </form.AppField>
 
         <form.AppField name="bio">
-          {(field) => <field.TextareaField label={t.profile.bio} />}
+          {(field) => (
+            <field.TextareaField
+              label={t.profile.bio}
+              hint={t.profile.bioHint}
+            />
+          )}
         </form.AppField>
 
         <Separator />
