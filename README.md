@@ -11,14 +11,13 @@ committed (they hold credentials), so create them from their `.example`
 counterparts first:
 
 ```bash
-make setup
+docker compose run --rm vault-init
 docker compose up -d --build --profile all
 ```
 
 No `--env-file` flag is ever needed, for any command — including builds.
-`Makefile` is just an optional convenience wrapper (`make setup` for the copy
-step above, `PROFILE=`/`SERVICE=` shortcuts); everything also works with
-plain `docker compose`.
+`Makefile` is just an optional convenience wrapper (`PROFILE=`/`SERVICE=`
+shortcuts); everything also works with plain `docker compose`.
 
 First-run notes:
 - `nest-js-boilerplate/logs/` must be writable by uid 1000 (`chmod 777 nest-js-boilerplate/logs` or `chown 1000`).
@@ -28,18 +27,13 @@ First-run notes:
 ## How the frontend build gets its public env vars
 
 `NEXT_PUBLIC_*` values are inlined into the browser bundle at `next build`
-time. Rather than pass these as `--build-arg` (which would need Compose to
-interpolate `${VAR}` before any container exists, requiring an explicit
-`--env-file` on every build), the `nextjs` service's build `context:` is the
-repo root, and `prod/docker/frontend/Dockerfile` `COPY`s `prod/nextjs.env` in
-directly — Next.js's own env loading (`@next/env`) reads it natively during
-the build, the same way it would read a local `.env.production`. Zero
-Compose-level interpolation, so zero `--env-file` requirement anywhere.
+time. The `nextjs` Dockerfile uses `ARG`/`ENV` for these values; the compose
+`args:` section picks them from the root `.env` file (automatically read by
+Compose). Vault-init populates root `.env` with `NEXT_PUBLIC_*` vars from the
+frontend vault entry before each build.
 
-If `prod/nextjs.env` doesn't exist or is missing a required value, the build
-fails fast with a clear error from the Dockerfile itself (a `COPY` failure or
-a custom `grep` check) — not a Compose error, and not a buried Zod validation
-error deep inside `next build`.
+If a required `NEXT_PUBLIC_*` var is missing, the build fails with a clear
+Compose error: `Run vault-init first: docker compose run --rm vault-init`.
 
 `Makefile` targets (`make up` / `make build` / `make rebuild` / `make down` /
 `make logs` / `make ps`) are plain `docker compose` underneath, plus
@@ -94,14 +88,12 @@ call `docker compose` directly — both work identically now.
 ├── .dockerignore                     # Scopes the nextjs build's repo-root context
 ├── nest-js-boilerplate/        # NestJS backend
 ├── next-js-boilerplate/        # Next.js frontend
-├── prod/
-│   ├── app.env(.example)              # Backend (NestJS) env — env_file: for `app`/`migrate`
-│   ├── nextjs.env(.example)           # Frontend (Next.js) env — env_file: (runtime) + COPY'd into the build
-│   ├── docker/
-│   │   ├── backend/Dockerfile.prod
-│   │   └── frontend/Dockerfile               # Build context is the repo root — see its comments
-│   └── services/                     # One env file per infra service (postgres, redis, kafka, ...)
-│       ├── postgres.env(.example)    # gitignored real file + tracked example
-│       └── redis.env, kafka.env, ...  # no secrets — tracked directly
+├── .vault-envs/                # Secrets fetched by vault-init (gitignored)
+│   ├── backend.env, frontend.env, postgres.env, ...
+├── docker/
+│   ├── vault-init/
+│   │   └── entrypoint.sh             # Fetches secrets from Vault, merges NEXT_PUBLIC_* into .env
+├── scripts/
+│   └── setup.mjs               # Quickstart: prerequisites → vault-init → compose up → migrations
 └── docs/                       # Documentation
 ```

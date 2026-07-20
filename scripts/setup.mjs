@@ -4,15 +4,14 @@
  * Quickstart script for the boilers monorepo.
  * Run: node scripts/setup.mjs
  *
- * Checks prerequisites, installs deps, copies env files, generates secrets,
+ * Checks prerequisites, installs deps, fetches secrets from Vault,
  * boots Docker compose, runs migrations, and prints a summary.
  */
 
 import { execSync } from "child_process";
-import { existsSync, copyFileSync, mkdirSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
-import crypto from "crypto";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
@@ -65,37 +64,6 @@ function checkCommand(name, versionFlag = "--version", minVersion = null) {
   }
 }
 
-function generateHex(length) {
-  return crypto.randomBytes(length).toString("hex");
-}
-
-function ensureEnvFile(src, dest, generateSecrets = false) {
-  if (existsSync(dest)) {
-    ok(`${dest} already exists`);
-    return;
-  }
-  copyFileSync(src, dest);
-  ok(`Created ${dest} from ${src}`);
-
-  if (generateSecrets) {
-    let content = require("fs").readFileSync(dest, "utf-8");
-    const replacements = {
-      "dev-only-jwt-secret-change-me": generateHex(32),
-      "change-me-dev-only-jwt-secret": generateHex(32),
-      "change-me-dev-only-cookie-secret": generateHex(32),
-      "change-me-dev-only-csrf-secret": generateHex(32),
-      "0".repeat(64): generateHex(32),
-    };
-    for (const [placeholder, value] of Object.entries(replacements)) {
-      if (content.includes(placeholder)) {
-        content = content.replaceAll(placeholder, value);
-        info(`Replaced ${placeholder} in ${dest}`);
-      }
-    }
-    require("fs").writeFileSync(dest, content);
-  }
-}
-
 // ── Prerequisites ──────────────────────────────────────────────────────────
 
 console.log(`\n${BOLD}${CYAN}═══ boilers quickstart ═══${RESET}\n`);
@@ -123,32 +91,21 @@ console.log(`\n${BOLD}Installing dependencies...${RESET}`);
 run("pnpm install", { cwd: ROOT, stdio: "inherit" });
 ok("Dependencies installed");
 
-// ── Create env files ───────────────────────────────────────────────────────
+// ── Fetch secrets from Vault ────────────────────────────────────────────────
 
-console.log(`\n${BOLD}Setting up environment files...${RESET}`);
+console.log(`\n${BOLD}Fetching secrets from Vault...${RESET}`);
 
-const envPairs = [
-  ["prod/app.env.example", "prod/app.env"],
-  ["prod/nextjs.env.example", "prod/nextjs.env"],
-  ["prod/services/postgres.env.example", "prod/services/postgres.env"],
-  ["prod/services/minio.env.example", "prod/services/minio.env"],
-  ["prod/services/rabbitmq.env.example", "prod/services/rabbitmq.env"],
-  ["prod/services/mongo.env.example", "prod/services/mongo.env"],
-];
-
-for (const [src, dest] of envPairs) {
-  ensureEnvFile(resolve(ROOT, src), resolve(ROOT, dest), src === "prod/app.env.example");
-}
-
-// Symlink nextjs.env → .env.local for local pnpm dev
-const localEnvLink = resolve(ROOT, "next-js-boilerplate", ".env.local");
-if (!existsSync(localEnvLink)) {
+if (dockerOk && composeOk) {
   try {
-    run(`ln -sf ../prod/nextjs.env ${localEnvLink}`);
-    ok(`Symlinked next-js-boilerplate/.env.local → prod/nextjs.env`);
+    run("docker compose run --rm vault-init", { cwd: ROOT, stdio: "inherit" });
+    ok("Secrets fetched from Vault → .vault-envs/");
   } catch {
-    warn("Could not create symlink for .env.local (may need manual setup)");
+    warn("vault-init failed. Check VAULT_TOKEN in .env and Vault connectivity.");
+    info("Secrets can also be placed manually in .vault-envs/*.env files.");
   }
+} else {
+  warn("Docker not available — skipping vault-init.");
+  info("Place secrets manually: one file per service in .vault-envs/<service>.env");
 }
 
 // Ensure logs directories exist
@@ -160,14 +117,18 @@ for (const dir of ["logs/back", "logs/front"]) {
   }
 }
 
-// Generate VAPID keys if missing
-const nextjsEnv = resolve(ROOT, "prod/nextjs.env");
-const vapidCheck = run(`grep -c "VAPID_PUBLIC_KEY=" "${nextjsEnv}" 2>/dev/null || true`, { ignoreError: true });
-if (!vapidCheck || vapidCheck === "0") {
-  warn("VAPID_PUBLIC_KEY not set. To generate, run: npx web-push generate-vapid-keys");
-  info("Web Push features will be disabled until keys are configured.");
+// Check VAPID keys in vault frontend env
+const frontendEnv = resolve(ROOT, ".vault-envs/frontend.env");
+if (existsSync(frontendEnv)) {
+  const vapidCheck = run(`grep -c "VAPID_PUBLIC_KEY=" "${frontendEnv}" 2>/dev/null || true`, { ignoreError: true });
+  if (!vapidCheck || vapidCheck === "0") {
+    warn("VAPID_PUBLIC_KEY not set in vault frontend secrets. Add it via Vault UI.");
+    info("Web Push features will be disabled until keys are configured.");
+  } else {
+    ok("VAPID keys are configured");
+  }
 } else {
-  ok("VAPID keys are configured");
+  warn("frontend.env not found — VAPID keys not checked");
 }
 
 // ── Docker compose ─────────────────────────────────────────────────────────
@@ -181,7 +142,8 @@ if (dockerOk && composeOk) {
     ok("Docker stack is running (core services: postgres, redis, app, nextjs, ELK, MinIO)");
   } catch (e) {
     warn(`Docker stack failed to start: ${e.message}`);
-    info("Check docker-compose.yml and prod/*.env files for configuration issues.");
+    info("Check docker-compose.yml and .vault-envs/*.env files for configuration issues.");
+    info("Ensure vault-init ran: docker compose run --rm vault-init");
     info("Known footgun: logs/ directories must be writable by uid 1000.");
     info("Fix: chmod 777 logs/back logs/front");
   }

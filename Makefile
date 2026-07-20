@@ -1,8 +1,6 @@
-# Thin convenience wrapper around `docker compose` — mainly for the
-# PROFILE=/SERVICE= shortcuts and `make setup`. No --env-file is needed here
-# (or for any raw `docker compose` command): the frontend build copies
-# prod/nextjs.env in directly rather than taking it as --build-arg, so there
-# is no Compose-level ${VAR} interpolation left anywhere in this project.
+# Thin convenience wrapper around `docker compose` with PROFILE=/SERVICE=
+# shortcuts. Before the first build, run vault-init to populate secrets:
+#   docker compose run --rm vault-init
 #
 # Usage: make up | make build | make rebuild | make down | make logs | make ps
 # Add a profile: make up PROFILE=all
@@ -13,15 +11,9 @@ SERVICE ?=
 PROFILE_FLAG := $(if $(PROFILE),--profile $(PROFILE),)
 COMPOSE := docker compose $(PROFILE_FLAG)
 
-.PHONY: setup up down build rebuild restart logs ps
+.PHONY: up down build rebuild restart logs ps
 
-setup: ## Copy every *.env.example to its real name + symlink prod/nextjs.env for local `pnpm dev` (first run only; won't overwrite existing files)
-	test -f prod/app.env || cp prod/app.env.example prod/app.env
-	test -f prod/nextjs.env || cp prod/nextjs.env.example prod/nextjs.env
-	for f in prod/services/*.env.example; do t="$${f%.example}"; test -f "$$t" || cp "$$f" "$$t"; done
-	ln -sf ../prod/nextjs.env next-js-boilerplate/.env.local
-
-up: ## Start the stack (or one service: make up SERVICE=app)
+up: ## Start the stack (remember to run vault-init first)
 	$(COMPOSE) up -d $(SERVICE)
 
 down: ## Stop the stack
