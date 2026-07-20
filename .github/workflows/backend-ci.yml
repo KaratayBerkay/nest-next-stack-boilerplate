@@ -58,7 +58,7 @@ jobs:
       OUTBOX_POLL_MS: '0'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # No `version:` — it's read from package.json's "packageManager" pin (specifying both
       # errors with ERR_PNPM_BAD_PM_VERSION).
@@ -91,7 +91,7 @@ jobs:
   docker-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Build backend Docker image
         working-directory: nest-js-boilerplate
