@@ -15,8 +15,10 @@ COMPOSE := docker compose $(PROFILE_FLAG)
 vault: ## Fetch secrets from Vault
 	$(COMPOSE) run --rm vault-init
 
-up: vault ## Start the stack (build + run)
+up: vault ## Start the stack (build + run), auto-remove one-shot containers
 	$(COMPOSE) up -d --build $(SERVICE)
+	$(COMPOSE) wait migrate minio-setup 2>/dev/null || true
+	$(COMPOSE) rm -f migrate minio-setup 2>/dev/null || true
 
 down: ## Stop the stack
 	$(COMPOSE) down
@@ -24,8 +26,10 @@ down: ## Stop the stack
 build: ## Build images (or one: make build SERVICE=nextjs)
 	$(COMPOSE) build $(SERVICE)
 
-rebuild: vault ## Rebuild images and recreate containers (or one: make rebuild SERVICE=nextjs)
+rebuild: vault ## Rebuild images and recreate containers, auto-remove one-shot containers
 	$(COMPOSE) up -d --build $(SERVICE)
+	$(COMPOSE) wait migrate minio-setup 2>/dev/null || true
+	$(COMPOSE) rm -f migrate minio-setup 2>/dev/null || true
 
 restart: ## Recreate containers without rebuilding (or one: make restart SERVICE=app)
 	$(COMPOSE) up -d --force-recreate $(SERVICE)
