@@ -31,6 +31,22 @@
 > different realtime page. None of this requires bad luck to reproduce; it's
 > the designed behavior of gates that were built to fail silently.
 
+> **Rev 2 — 2026-07-20 (control run).** Berkay landed commit `ac55fb7`
+> ("implement project-enhance-6 all 7 phases") and asked for a completion
+> check. Verdict: **NOT gate-clean.** Most of the 7 phases are genuinely,
+> correctly implemented (see §17 for the full breakdown), but the single
+> highest-value fix in this whole doc — the multi-tab page-claim redesign
+> (§8, §16 #2) — **does not work**: a one-line JS bug
+> (`useRealtimeCoordination.ts:25-26`, `useRef<string>("")` guarded by
+> `== null`, which never matches `""`) means `crypto.randomUUID()` never
+> runs, every tab still shares one constant tab id, and the Map-based
+> redesign collapses back to exactly the original last-claimed-tab-wins bug
+> it was built to fix — meaning Berkay's original reported symptom is
+> **likely still not resolved**. The commit also silently reverts an
+> unrelated same-day fix (`2b59ab5`, `COOKIE_SAMESITE` default) with zero
+> mention. Full findings in §17. Nothing was fixed during this control run —
+> findings only, per this project's convention.
+
 ---
 
 ## Table of Contents
@@ -51,6 +67,7 @@
 14. [Enhancement proposals](#14-enhancement-proposals)
 15. [Suggested implementation order](#15-suggested-implementation-order)
 16. [Top 10](#16-top-10)
+17. [Control run — commit `ac55fb7` vs. this audit](#17-control-run--commit-ac55fb7-vs-this-audit)
 
 ---
 
@@ -916,3 +933,256 @@ the higher-priority fixes.
 10. Dedupe the double `register` frame and single-shot chat-room's
     `get-room-counts` fetch (§7, §10) — cheap, do while touching those files
     for the above.
+
+---
+
+## 17. Control run — commit `ac55fb7` vs. this audit
+
+**2026-07-20.** Berkay reported all 7 phases complete and asked for a check.
+Method: 3 parallel static-review passes (frontend transport/multi-tab/DM,
+backend fan-out/room-membership, test-backfill/hygiene) plus direct
+`tsc --noEmit`/`eslint`/`jest`/`vitest` runs on both apps, cross-checking
+every claim against `git show ac55fb7 -- <file>` and the current file state,
+not the commit message. **Findings only — nothing was fixed.**
+
+**Overall verdict: NOT gate-clean.** Phases 1, 2 (production code), 5b, 6a,
+and 7 are solid. Phase 4 — the doc's own highest-priority structural fix —
+does not work. Test suites are green (351/361 backend — 10 pre-existing
+failures unrelated to this commit, see below; 306/306 frontend) and no
+build is broken, but that's a low bar this doc has always cleared; the
+point of a control run is the gap between "tests pass" and "the reported
+symptom is actually fixed."
+
+### 🔴 A. [P0 — regression] Multi-tab page-claim fix is dead code in practice
+
+**Where:** `next-js-boilerplate/src/lib/realtime/useRealtimeCoordination.ts:25-26`:
+```ts
+const tabIdRef = useRef<string>("");
+if (tabIdRef.current == null) tabIdRef.current = crypto.randomUUID();
+```
+`useRef<string>("")` initializes `.current` to `""`, not `null`/`undefined`.
+`"" == null` is `false` in JS (loose-equality-null only matches
+`null`/`undefined`), so this guard **never fires**. `crypto.randomUUID()`
+is unreachable — `tabIdRef.current` stays the literal empty string for the
+lifetime of every tab, in every session.
+
+**What's wrong:** everything downstream of this line was built correctly —
+`AuthWs.tabClaims: Map<string,{page,params}>` (`realtime.types.ts:19-22`),
+`handlePage`/`cleanupPageClaim` keyed by `tabId` instead of overwriting a
+scalar (`realtime-page.manager.ts:98-175`), `emitToPage` scanning by
+key-prefix (`:217-235`), `RealtimeClient.claimPage(page,params,tabId)`
+(`realtime-client.ts:135-147`) — but since every tab threads the same
+constant `""` through all of it, `ws.tabClaims` never holds more than one
+live entry per socket. **This is the exact bug §8 describes, unchanged in
+practice**, just hidden one layer deeper inside a Map that in practice only
+ever has one key. Given §8/§16 rated this fix "the best explanation for an
+intermittent 'sometimes it just doesn't show up' pattern" — Berkay's
+original reported symptom — there is no evidence that symptom is actually
+resolved by this commit.
+
+**Why the new test didn't catch it:** `realtime-page.manager.spec.ts:117-142`
+("allows different tabIds to claim different pages simultaneously") passes
+2 hardcoded, already-distinct tab ids directly into `handlePage`, bypassing
+the frontend's (broken) id-generation entirely. It correctly proves the
+backend Map logic works; it proves nothing about whether the frontend ever
+produces more than one id. `useRealtimeCoordination.ts` itself — the file
+with the actual bug, and the file this commit modified by 64 lines to
+implement Phase 4's frontend half — has **zero test coverage**.
+
+**How to fix:** `tabIdRef.current ||= crypto.randomUUID()` (or check
+`=== ""` instead of `== null`), then add a test that actually exercises
+`useRealtimeCoordination` (or at minimum a unit test on whatever the tab-id
+minting gets extracted into) proving two mounts produce two different ids.
+
+### 🔴 B. [P0 — unrelated regression] `COOKIE_SAMESITE` default silently reverted
+
+**Where:** `next-js-boilerplate/src/lib/env.ts:19`. This commit changes
+`COOKIE_SAMESITE: z.enum(["lax","strict","none"]).default("lax")` back to
+the same enum **without** `.default("lax")` — reverting commit `2b59ab5`
+("COOKIE_SAMESITE default lax (not a secret, safe fallback)"), landed the
+same day only ~2h18m earlier. Confirmed via `git show` on both commits.
+
+**What's wrong:** this file isn't named anywhere in this audit or in the
+commit's own 7-phase description — it's an incidental, unflagged behavior
+change riding along in a commit whose message claims pure WS-audit scope.
+Every tracked env file (`next-js-boilerplate/.env.example`, `.env.local`,
+`.vault-envs/frontend.env`, `k8s/configmap.yaml`) happens to set this var
+explicitly today, so nothing currently breaks — but that's incidental, not
+by design, and it silently re-introduces the exact fragility `2b59ab5` was
+written to close (a deployment omitting this var now hard-crashes server
+startup instead of defaulting safely).
+
+**How to fix:** restore `.default("lax")`; if there's a real reason to make
+it required now, that belongs in its own commit with its own rationale, not
+an unflagged drive-by inside an unrelated feature commit.
+
+### ⚠ C. [P1 — contradicts own Phase-3 claim] Test backfill skipped exactly the file that broke
+
+Despite "Phase 3 — 68 new tests," these files named in §13 as 0-coverage
+remain at 0 coverage after this commit:
+- **`useRealtimeCoordination.ts`** — modified 64 lines *by this very commit*
+  to implement finding A's frontend half, still zero tests. This is the
+  same "write tests alongside the fix, not after" anti-pattern §14/§15
+  warned about, inside the commit that claims to have followed that advice.
+- **`messaging-ws.gateway.ts`**'s `handleDirectMessage`/`handleDeliveredAck`/
+  `handleRoomMessage` — untouched by this commit, still only the 5
+  VIP-tier-gating tests §13 originally described.
+- **`resync.ts`/`route-mapping.ts`** — no test files exist anywhere in the repo.
+- **`messaging-room.service.ts`** — got a doc-only change (finding H below)
+  but still no spec file.
+
+Also: the commit message's "68 new tests" is overstated — actual count by
+`it(`/`test(` block is **61** (event-dispatch.test.ts 17, renew-dispatch.test.ts
+12, realtime-page.manager.spec.ts 25, messaging.resolver.spec.ts 2,
+messaging-dm.service.spec.ts 4, realtime-client.test.ts +1).
+
+### ⚠ D. [P1 — shallow regression test] GraphQL resolver test doesn't assert the thing it needs to
+
+**Where:** `messaging.resolver.spec.ts` (56 lines, new). Mocks
+`MessagingService` entirely; only asserts the resolver calls
+`sendAndDeliverMessage`/`markConversationRead` with the right args. It would
+**not** catch a regression back to §12's original P0 (GraphQL silently not
+delivering) if `sendAndDeliverMessage` itself ever stopped calling
+`deliverDirectMessage` — that assertion lives one layer down, in
+`messaging-dm.service.spec.ts`, which tests `MessagingDmService` directly
+and never goes through the resolver. `messaging.service.ts` (the actual
+glue both controller and resolver call) has **no dedicated spec file at
+all** — the one link in the chain with zero direct coverage.
+
+**The production fix itself is real, though** — traced end to end:
+`messaging.controller.ts:186` and `messaging.resolver.ts:43-47` both now
+call the same `MessagingService.sendAndDeliverMessage`
+(`messaging.service.ts:81-85`) → `MessagingDmService.sendAndDeliverMessage`
+(`messaging-dm.service.ts:264-280`) → persists, then `deliverDirectMessage`.
+`markConversationRead` similarly unifies all 4 REST-side frames
+(`messaging-dm.service.ts:282-322`) behind one shared method, confirmed
+byte-for-byte against the pre-commit REST behavior. §12's P0 and P2 are
+genuinely fixed in production code — just not provably regression-tested
+at the layer that would matter.
+
+One structural gap the unification didn't reach: `messaging-ws.gateway.ts:83-88`
+(`handleDirectMessage`, the WS frame handler) still hand-rolls
+`sendMessage` + `deliverDirectMessage` inline instead of calling the new
+shared method — not broken (it was already correct), but a **third**
+copy of the same sequence now exists, undermining "exactly one
+implementation."
+
+### ⚠ E. [P1 — real race, untested] DM optimistic send can transiently duplicate
+
+**Where:** `next-js-boilerplate/src/api/client/messages/actions.ts`. The
+mechanics are genuinely right: optimistic insert before the POST is awaited
+(`:11-33`), reconciliation replaces (not duplicates) the temp row by id
+match on success (`:64-77`), failure marks `{failed:true}` instead of
+removing (`:40-61`), and the old broad `invalidateQueries(["messages"])`
+was removed outright rather than just narrowed.
+
+**What's wrong:** `messaging-dm.service.ts:225-228` echoes the sent DM back
+to the **sender's own** page-claimed socket (pre-existing behavior,
+unrelated to this commit). `event-dispatch.ts`'s `direct-message` branch has
+no `tempId` awareness (unlike its own `room-message` branch, which does
+this correctly — finding below). If that self-echo frame arrives before
+`actions.ts`'s own POST-response reconciliation runs — plausible, not a
+rare corner case — the real message gets appended as a second row while
+the temp row is still present, then reconciliation later produces a second
+copy. No test file exists for `actions.ts` at all. Separately: `pending`/
+`failed` markers are set but `ChatView.tsx` never reads them — a failed
+send renders identically to a successful one today, with no retry action.
+
+**How to fix:** give the `direct-message` branch the same `tempId`-tracking
+`event-dispatch.ts`'s `room-message` branch already has (see next finding),
+and wire `pending`/`failed` into `ChatView.tsx`'s render.
+
+### ✅ F. [Pass] Chat-room `tempId` reconciliation — finished correctly
+
+`ChatRoomBaseView.tsx:249-272` inserts a pending row and tracks the tempId;
+`event-dispatch.ts:104-128`'s `room-message` branch reads `frame.tempId`
+back and **replaces** (not appends) the matching pending row; backed by a
+real test (`event-dispatch.test.ts:283-304`). One narrow, doc-acknowledged-
+elsewhere race: if the cache gets invalidated/refetched in the split second
+between optimistic insert and broadcast echo, `.map()` no-ops and the
+incoming message is silently dropped rather than shown — same risk class
+§9 P2 already accepts, not a new failure mode.
+
+### ✅ G. [Pass] Fail-open gates and 3-handler consolidation
+
+All 4 `event-dispatch.ts` gates (`direct-message`, `message-read`,
+`message-delivered`, `room-message`) now `invalidateQueries` with the
+correctly-scoped key instead of silently returning, each with a real test
+asserting the exact queryKey. The inline 3rd DM handler
+(`useRealtimeCoordination.ts:55-77` pre-commit) is fully removed and its
+logic correctly moved into `event-dispatch.ts`'s `direct-message` case,
+preserving the original 3-condition gate. Both exactly as prescribed.
+
+### ⚠ H. [P2 — scope choice, confirm it's deliberate] Room membership: documented, not fixed
+
+**Where:** `messaging-room.service.ts:26-32`. The +7 line diff is a JSDoc
+comment above `private rooms = new Map(...)` explaining the in-memory-only,
+not-replica-safe nature — accurate on the core point, though it says "read
+back from SISMEMBER/SMEMBERS" where the audit's own fix specified
+`smembers`/`scard` (SISMEMBER is the wrong primitive for a count/list). The
+dead `redis?.sadd`/`srem` fire-and-forget writes were **left in place, not
+removed**, and `getRoomCounts`/`getRoomMembers` still read only the
+in-process `Map`. This is a valid choice per §10's own two options, but the
+service is now "explained," not "replica-safe" — worth confirming this was
+the deliberate call rather than an assumption.
+
+### ✅ I. [Pass] Phase 7 hygiene — mostly clean
+
+Register-frame dedupe (`realtime-client.ts`'s `hasConnectedBefore` flag),
+`frames.ts` deletion (confirmed zero remaining imports repo-wide), chat-room
+room-counts fetched once per `[realtime]`-only effect, and the notification
+discoverability comment on `FreePageView.tsx` are all correctly implemented
+per §7/§10/§11's prescribed fixes. One miss: the reciprocal cross-reference
+comment was supposed to land on `renew-dispatch.ts`'s `Notifications/Item`
+case; the actual +3 lines instead cross-reference `event-dispatch.ts` from
+the unrelated `Messages/Conversation` case (a legitimate but different
+Phase-7 cross-ref) — the `Notifications/Item` case still has no comment
+pointing back to `FreePageView.tsx`.
+
+### Latent gaps worth knowing about (not blocking, not yet manifesting)
+
+- Once finding A is fixed, `emitToPage`'s per-key fanout
+  (`realtime-page.manager.ts:217-235`) sends once per matching *key*, not
+  per matching *connection* — two tabs genuinely on the same page (e.g.
+  both on `/messages`, the audit's own example) would double-deliver to the
+  one shared leader socket, since `PAGE_ALLOWLIST.messages` still has
+  `key: []`. Worth fixing in the same pass as finding A.
+- No follower-tab unclaim on individual tab close — only leader teardown
+  clears claims (`useRealtimeCoordination.ts:172,189,227`); a minor leak,
+  not a delivery bug.
+- 2 new lint **errors** (not warnings) from this commit's own new test
+  files: `messaging-dm.service.spec.ts:123` (`no-unsafe-assignment`),
+  `realtime-page.manager.spec.ts:198` (`unbound-method`) — `pnpm lint`
+  currently exits 1 partly because of this. `messaging.resolver.spec.ts`'s
+  mock `user` objects also fail strict `tsc --noEmit` (missing `role`/`tier`
+  on `JwtUser`) — harmless under this project's ts-jest config today, but
+  confirms the gates weren't run clean before declaring the work done.
+- Temp-id minting format is duplicated (`event-dispatch.ts`/`actions.ts` vs
+  `ChatRoomBaseView.tsx` use different formats, no shared helper) — small,
+  but it's the same "same rule implemented twice" pattern §12 is about.
+- ~10 files under `nest-js-boilerplate/src/{auth,cookies-ssr,csrf,
+  interceptors,redis,sse,throttle}` plus `pnpm-lock.yaml` are touched by
+  this commit but never mentioned anywhere in this doc; verified line-by-
+  line as pure prettier reflow (no logic change) or, for the lockfile,
+  mechanical catch-up to a manifest change already committed 2 commits
+  earlier (`9ceb284`). Benign, but should have been a separate `chore:`
+  commit for a cleaner history.
+
+### Pre-existing, unrelated to this commit (confirmed, not counted above)
+
+`pnpm test` on `nest-js-boilerplate`: 351/361 pass. The 10 failures are in
+`token-store.service.spec.ts` (`pipe.set is not a function`) and
+`billing.service.spec.ts` (undefined payment provider mock) — neither file
+was touched by `ac55fb7`, and `token-store.service.ts`'s own one-line diff
+in this commit is a pure formatting no-op unrelated to the failing method.
+`next-js-boilerplate`: `tsc --noEmit` and `eslint` both clean; full test run
+306/306 pass. Root `pnpm format:check` fails on a missing
+`prettier-plugin-tailwindcss` package — looks like a local environment gap,
+not something this commit caused.
+
+**Next session should:** fix finding A first (it's a one-line guard fix
+plus the double-delivery follow-on in the "latent gaps" note above) — that's
+the one thing standing between this commit and actually resolving Berkay's
+original complaint. B is also a one-line restore. D/E/H are real but
+narrower. Add the regression test for A alongside the fix, targeting
+`useRealtimeCoordination.ts` itself, not just the backend manager.
