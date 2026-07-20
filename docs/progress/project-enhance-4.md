@@ -24,6 +24,19 @@
 > fires, it shows a generic toast instead of the field-level message the user
 > is looking straight at — the gallery's own Error Lab has a scenario
 > (`real-unmapped-field`) that demonstrates this exact gap on purpose.
+>
+> **Rev 2 — 2026-07-20 verification.** Commit `60acca2` implemented most of
+> §§1–17 (OB-0 through OB-8), but a code-level trace (not just a presence
+> check) found **3 new fields that always report a false-positive error on
+> every blur, regardless of the value typed** — `profile.email`,
+> `content-editor.slug`, and `editable-table` row `quantity`. Root cause and
+> exact fixes are in [§21](#21-rev-2--verification--fix-guide). OB-4c and
+> OB-5b were skipped (not implemented, not mentioned in the commit). §§18–20
+> (UX-0 through UX-2) are **0% implemented in the UI** — ~25 i18n keys were
+> added to both message files but never wired into any component (dead
+> keys). See §21 for the full status table and detailed fix instructions.
+> Nothing has been fixed yet — like Rev 1, this revision is findings +
+> fix-guide only.
 
 ---
 
@@ -49,6 +62,7 @@
 18. [UX-0 — Cross-cutting "even a child can fill this" fixes](#18-ux-0--cross-cutting-even-a-child-can-fill-this-fixes)
 19. [UX-1 — Per-field guidance copy, example by example](#19-ux-1--per-field-guidance-copy-example-by-example)
 20. [UX-2 — i18n additions for this pass](#20-ux-2--i18n-additions-for-this-pass)
+21. [Rev 2 — Verification & fix guide](#21-rev-2--verification--fix-guide)
 
 ---
 
@@ -1024,3 +1038,248 @@ Note the TR value for `checkoutTab.phoneHint` uses a `+90` example instead
 of `+1` — a small deliberate localization choice (Turkish country code)
 rather than a literal translation of the English example, consistent with
 how this gallery already localizes rather than transliterates elsewhere.
+
+---
+
+## 21. Rev 2 — Verification & fix guide
+
+**2026-07-20.** Berkay reported this doc "finished" and asked for it to be
+checked. Verified commit `60acca2` ("project-enhance-4: onBlur backend
+checks & complex field validation") against every claim in §§1–20 by reading
+each diffed file and **tracing the actual runtime logic** (schema defaults,
+the `simulate-error` route handler, the `EXC_TO_SURFACE` map) rather than
+only confirming a function with the right name exists — same standard as
+`project-enhance-3.md`'s Rev 4 pass. Like Rev 1, this section is
+**documentation only — nothing below has been fixed yet.** `pnpm typecheck`
+and `pnpm lint` are both clean at `60acca2`; every issue below is a logic
+bug or a missing wire-up, not something either gate catches.
+
+### 21.1 Status table
+
+| Item | Status | Detail |
+|---|---|---|
+| OB-0a (`EXC_TO_SURFACE` gap) | ✅ Done | Matches doc exactly; `real-unmapped-*` scenarios renamed as proposed. |
+| OB-0b (`blurAsyncCheck` helper) | ⚠️ Partial | Helper extracted correctly (`lib/forms/blur-async-check.ts`), **no co-located test** was added despite the doc asking for one. |
+| OB-1a (`profile.email` onBlurAsync) | 🐛 **Broken** | Wired, but see [BUG-1](#bug-1--profileemail-always-reports-already-registered). |
+| OB-1b (`profile.username` trigger) | ⚠️ Partial | Trigger changed `onChangeAsync`→`onBlurAsync` correctly (500ms→150ms debounce). The "surface the Available state" half of the same fix (extend `FormFieldInfo` or render a success span, so `t.profile.usernameAvailable` finally gets used) was **not done**. |
+| OB-1c (dependency on OB-0a) | ✅ Done | No separate code needed once OB-0a landed; confirmed. |
+| OB-2 (`api-key.name` validators) | ✅ Done | Matches doc almost verbatim. |
+| OB-3a (`billing.couponCode` reference) | ✅ Untouched | Correct — no change was proposed. |
+| OB-3b (`billing.taxId` regex) | ✅ Done | Implemented as an inline field-level `onBlur` regex instead of inside the Zod schema — functionally equivalent to the doc's proposal. |
+| OB-4a (`checkout.phone` regex) | ✅ Done | Both in `createCheckoutFieldSchemas`/`checkoutSchema` and the field's inline `onBlur` — slightly redundant (same regex twice) but harmless. |
+| OB-4b (email/confirmEmail mismatch timing) | ✅ Done | `onChangeListenTo`→`onBlurListenTo`, form-level `onChange` guard removed in favor of the field's own `onBlur`, exactly as proposed. |
+| OB-4c (`checkout.postalCode` onBlurAsync) | ❌ **Not done** | Still submit-time only (`checkout/PageContent.tsx:101-104`). Not mentioned in the commit message. Original fix plan in §7c is still valid — see [21.3](#213-ob-4c--wire-postal-code-onblurasync). |
+| OB-4d (`AddressGroup` sync validators) | ✅ Done | `street`/`city`/`province`/`postalCode` all wired to `onBlur` schemas inside `AddressGroup`. |
+| OB-5a (team-invite silent-failure bug) | ✅ Done | Inline `emailInputError` state added, `emailInvalid`/`emailDuplicate` copy now actually renders. Good fix, matches doc. |
+| OB-5b ("already a member" check) | ❌ **Not done** | Still fixed to `field: "emails.2"` and checked only at submit (`team-invite/PageContent.tsx:61`). Not mentioned in the commit message. Original fix plan in §8b is still valid — see [21.4](#214-ob-5b--per-email-already-a-member-check). |
+| OB-5c (`role` uses `onChange`) | ✅ Confirmed no-op | Correctly left alone, as the doc said to. |
+| OB-6 (`content-editor.slug` onBlurAsync) | 🐛 **Broken** | Wired, gated on `slugEditedByUser.current`, but see [BUG-2](#bug-2--content-editorslug-always-toasts-already-in-use). |
+| OB-7a (`handleSaveAll` catch-block fix) | ✅ Done | Now surfaces the real failure (`exceptionHandler` + destructive toast) instead of always showing the success toast. |
+| OB-7b (per-row `quantity` onBlurAsync) | 🐛 **Broken** | Wired, but see [BUG-3](#bug-3--editable-table-quantity-always-reports-row-rejected). |
+| OB-8 (Field States 4th demo card) | ✅ Done, and correct | The one new onBlurAsync example that's actually gated properly (`RESERVED_WORDS` client-side set) — use this file as the reference pattern when fixing BUG-1/2/3, not `handleCouponBlur` (coupon's "reject unless in the known-good list" semantics are inverted from what email/slug/quantity need). |
+| OB-9 / OB-10 / OB-11 / OB-12 | ✅ N/A, confirmed | Correctly untouched. |
+| §16 i18n table (6 keys) | ✅ Done | All 6 present, both locales. Locale parity verified programmatically: 344/344 keys match between `en` and `tr` after this commit (up from 310/310 pre-Rev-1). |
+| §18 UX-0a (`required`→`<Input>`) | ❌ Not done | `features/forms/ui/TextField.tsx:9-24` still never forwards `required`/`aria-required` to the `<Input>`. |
+| §18 UX-0b (`aria-label` on icon buttons) | ❌ Not done | Zero `aria-label` attributes anywhere under `views/forms/**` (grep-confirmed). |
+| §18 UX-0c (confirm step on destructive actions) | ❌ Not done | No confirmation added to API-key revoke, table row delete, or draft discard. |
+| §18 UX-0d (`hint` prop + display) | ❌ Not done | No `hint` prop exists on `TextField`. The i18n keys this fix needs (`usernameHint`, `taxIdHint`, `phoneHint`, `slugHint`, `couponHint`, `bioHint`, `quantityHint`, `unitPriceHint`, `postalCodeHint`) **were added to both message files but are never referenced in any component** — dead keys, 0 usages confirmed by grep. |
+| §18 UX-0e (hardcoded-string swaps) | ❌ Not done | Every literal the doc listed is still hardcoded: `"IP Whitelist (optional)"`, `"Enter IP and press Enter"` (`api-key/PageContent.tsx:257,262`), `"Loading..."` (`:156`), `"Config copied to clipboard"`, `"Field names: "`, `"Untitled"`, `"Comma-separated"` (`form-builder/PageContent.tsx:143,199,239,308`), `title="Save row"` (`editable-table/PageContent.tsx:315`), etc. Corresponding i18n keys (`ipWhitelistLabel`... wait, that one pre-existed; `addIp`, `removeIp`, `configCopied`, `fieldNamesLabel`, `untitledField`, `optionsPlaceholder`, `net`, `savedBadge`, `saveRow`, `common.loading`) were added to the message JSON but never wired in — same dead-key pattern as UX-0d. `error-lab/PageContent.tsx` still never calls `useMessages("forms")`, despite `errorLab.*` keys being added. |
+| §18 UX-0f (upload size/type hints) | ❌ Not done | Not spot-checked line-by-line in this pass, but given the pattern above (i18n added, nothing wired), treat as not done until verified. |
+| §19–20 UX-1/UX-2 (per-field hint copy + i18n) | ⚠️ i18n only | Every string in the §20 table was added to both locale files. None of it is rendered anywhere — it's inert until UX-0d's `hint` prop exists and each field passes one. |
+
+### 21.2 The 3 critical bugs — root cause and fix
+
+**Shared root cause:** `useFormsDemoActions().simulateError(scenarioId, opts)`
+defaults `failRate` to **1** (always fail) whenever the caller doesn't pass
+one — confirmed in `validators/forms/simulate-error.ts:6`
+(`failRate: z.number().min(0).max(1).default(1)`) and
+`app/api/forms-demo/simulate-error/route.ts:41`
+(`if (Math.random() > failRate) return <success>`, which is never true when
+`failRate` is 1). The two existing call sites that behave correctly both
+gate the call behind a client-side condition first, so `simulateError` is
+only reached for values that are *supposed* to fail:
+- `handleCouponBlur` (`billing/PageContent.tsx:81-83`): `if
+  (VALID_COUPONS[upper]) return undefined;` before calling `simulateError`.
+- OB-8's new `checkReservedWord` (`field-states/PageContent.tsx:19-27`):
+  only returns an error if `RESERVED_WORDS.has(value.toLowerCase())`.
+
+The three new OB-1a/OB-6/OB-7b call sites skip that gate, so they call
+`simulateError` unconditionally on every blur — which, given the failRate-1
+default, means **every blur always fails**, for every value, on every field.
+
+#### BUG-1 — `profile.email` always reports "already registered"
+
+**File:** `views/forms/profile/PageContent.tsx:161-176`. Current code:
+
+```ts
+onBlurAsync: async ({ value }) => {
+  if (!value || !fieldSchemas.email.safeParse(value).success) return undefined;
+  return blurAsyncCheck(value, "profile-email-taken", {
+    simulateError, toast, allMessages,
+  });
+},
+```
+
+Any syntactically-valid email — including one nobody has ever registered —
+shows `t.profile... "Email is already registered"` on every blur. This is
+the exact field the whole doc was written to fix; right now it's worse than
+before the fix (before: no check at all; now: a check that's always wrong).
+
+**Fix — add a demo "already taken" allowlist, mirroring `VALID_COUPONS`:**
+
+```ts
+const TAKEN_EMAILS = new Set(["taken@example.com", "admin@example.com"]);
+
+// inside the component:
+onBlurAsync: async ({ value }) => {
+  if (!value || !fieldSchemas.email.safeParse(value).success) return undefined;
+  if (!TAKEN_EMAILS.has(value.toLowerCase())) return undefined;
+  return blurAsyncCheck(value, "profile-email-taken", {
+    simulateError, toast, allMessages,
+  });
+},
+```
+
+Place `TAKEN_EMAILS` at module scope near the top of the file (same spot
+`VALID_COUPONS` lives in `billing/PageContent.tsx`). No scenario/i18n change
+needed — `profile-email-taken` and `auth.errors.emailTaken` are already
+correct.
+
+#### BUG-2 — `content-editor.slug` always toasts "already in use"
+
+**File:** `views/forms/content-editor/PageContent.tsx:315-322`. Two
+compounding bugs:
+
+1. **Same missing-gate bug as BUG-1** — no known-bad list, so
+   `simulateError("content-slug-taken")` is called unconditionally and
+   always fails.
+2. **Wrong surface** — the `content-slug-taken` scenario
+   (`lib/forms/error-scenarios.ts:140-147`) uses `exc:
+   "EX_CONFLICT_DUPLICATE"`, which maps to `"toast"` in `EXC_TO_SURFACE`
+   (`exception-handler.ts:33`), not `"form-field"`. `blurAsyncCheck` checks
+   `getSurface(exc.exc) === "toast"` and, when true, shows a toast and
+   returns `undefined` — so **even after fixing bug 1, this would never
+   actually attach to the slug field**, it would just toast repeatedly.
+
+**Fix, part A — gate the call:**
+
+```ts
+const TAKEN_SLUGS = new Set(["getting-started", "hello-world"]);
+
+// inside the onBlurAsync:
+onBlurAsync: async ({ value }) => {
+  if (!value || !slugEditedByUser.current) return undefined;
+  if (!TAKEN_SLUGS.has(value.toLowerCase())) return undefined;
+  return blurAsyncCheck(value, "content-slug-taken", { simulateError, toast, allMessages });
+},
+```
+
+**Fix, part B — change the scenario's `exc` to one that surfaces on the
+field.** Reuse `EX_VALIDATION_FORM` (already `"form-field"`-mapped, and
+already the pattern every other field-targeted scenario in this file uses —
+`validation-form-field`, `coupon-invalid`, `postal-code-group`,
+`row-rejected` all use it) rather than inventing a new exception code:
+
+```diff
+   {
+     id: "content-slug-taken",
+     status: 409,
+-    exc: "EX_CONFLICT_DUPLICATE",
++    exc: "EX_VALIDATION_FORM",
+     key: "forms.errors.slugTaken",
+     msg: "This slug is already in use",
+     field: "slug",
+   },
+```
+
+(`lib/forms/error-scenarios.ts:140-147`.) No `EXC_TO_SURFACE` change needed
+— `EX_VALIDATION_FORM` is already `"form-field"`.
+
+#### BUG-3 — editable-table `quantity` always reports row rejected
+
+**File:** `views/forms/editable-table/PageContent.tsx:184-203`. Current
+code hand-rolls its own try/catch instead of reusing the OB-0b
+`blurAsyncCheck` helper, ignores the field's `value` entirely, and calls
+`simulateError("row-rejected")` unconditionally on every blur of every row:
+
+```ts
+onBlurAsyncDebounceMs: 300,
+onBlurAsync: async () => {
+  try {
+    await simulateError("row-rejected");
+    return undefined;
+  } catch {
+    return t.editableTable.saveFailed;
+  }
+},
+```
+
+Every row's quantity field shows an error the instant you blur off it,
+regardless of the number typed — the demo table becomes unusable.
+
+**Fix — gate on a real-looking condition (the doc's own suggestion, "e.g.
+exceeds available stock") and reuse `blurAsyncCheck` for consistent
+i18n/surface handling instead of the hand-rolled try/catch:**
+
+```ts
+onBlurAsyncDebounceMs: 300,
+onBlurAsync: async ({ value }) => {
+  if (!value || Number(value) <= 100) return undefined;
+  return blurAsyncCheck(String(value), "row-rejected", {
+    simulateError, toast, allMessages,
+  });
+},
+```
+
+(`100` is an arbitrary demo "in stock" ceiling — pick whatever reads well
+next to the existing `min(1)` rule.) This needs `allMessages` in scope
+(`useAllMessages()`) — not currently imported in this file, add it next to
+the existing `useMessages("forms")` call. Using `blurAsyncCheck` also fixes
+a secondary issue for free: it resolves the message via
+`exceptionToFormErrors`/`allMessages` (proper i18n, `forms.errors.rowRejected`
+→ "This row was rejected by the server") instead of the hardcoded
+`t.editableTable.saveFailed` ("Some rows failed") the current code returns,
+which is both non-localized-per-scenario and the wrong copy for a
+per-field validator. The scenario's hardcoded `field: "rows.3.quantity"`
+does **not** need to change — `exceptionToFormErrors` produces a
+`{field: message}` map and `blurAsyncCheck` always takes
+`Object.values(result.fields)[0]`, so the literal field-path string is
+never actually matched against the row index; whichever row's validator
+called it gets the message back regardless.
+
+### 21.3 OB-4c — wire postal code `onBlurAsync`
+
+Not touched by `60acca2`. §7c's original plan is unchanged and still
+correct: add `onBlurAsync`/`onBlurAsyncDebounceMs: 300` to both
+`shippingAddress.postalCode` and `billingAddress.postalCode` inside
+`AddressGroup` (`checkout/PageContent.tsx:37-50`), calling `simulateError`
+when `value === "00000"` (gate condition already exists as a literal
+comparison — reuse it, don't add a new demo list). Keep the existing
+submit-time check in `submitCheckout` too (defense in depth, not a
+replacement).
+
+### 21.4 OB-5b — per-email "already a member" check
+
+Not touched by `60acca2`. §8b's original plan is unchanged and still
+correct: move the check from `submitTeamInvite`'s unconditional
+`simulateError("invite-email-member")` (currently hardcoded to
+`field: "emails.2"`, `team-invite/PageContent.tsx:61`) to the moment an
+email is added (the `onKeyDown`/`Add`-button handlers touched by OB-5a,
+`PageContent.tsx:196-231`), gated on a small demo list (e.g.
+`"taken@example.com"` always conflicts) rather than a fixed array index.
+
+### 21.5 Suggested order for closing this out
+
+1. **BUG-1, BUG-2, BUG-3** first — these are regressions a live demo user
+   would hit immediately, worse than the pre-Rev-1 baseline of "no check at
+   all."
+2. **OB-4c, OB-5b** — the two remaining genuine onBlur-check items from the
+   original scope, isolated, no shared dependency.
+3. **OB-0b test, OB-1b Available-state** — small polish items, do whenever
+   convenient.
+4. **§18–20 (UX-0..UX-2)** — a distinct, larger audit (accessibility +
+   proactive hint copy + i18n hygiene), not part of the "onBlur backend
+   checks" scope this doc's title names. Treat as its own follow-up pass
+   rather than folding into the same commit as 1–3 above; the i18n keys are
+   already sitting in both locale files ready to be wired up whenever that
+   pass happens.
