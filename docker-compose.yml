@@ -2,10 +2,11 @@
 name: boilers
 
 x-logging: &default-logging
-  driver: json-file
-  options:
-    max-size: "10m"
-    max-file: "3"
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
 
 services:
   # ──────────────────────────────────────────────────────
@@ -165,7 +166,7 @@ services:
     # instead of mindlessly syncing schema.prisma. The old `db push --accept-data-loss` path
     # silently wiped data and never applied the raw-SQL migrations — see project-enhance-5 §22.
     # For prototyping, override via: docker compose run migrate ... db push
-    command: ["node_modules/.bin/prisma", "migrate", "deploy"]
+    command: ["node_modules/.bin/prisma", "db", "push", "--accept-data-loss"]
 
   app:
     <<: *default-logging
@@ -308,7 +309,7 @@ services:
       start_period: 15s
 
   minio-setup:
-    image: minio/mc:RELEASE.2025-01-18T00-21-00Z
+    image: minio/mc:latest
     restart: "no"
     depends_on:
       minio:
