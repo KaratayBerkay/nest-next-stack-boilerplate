@@ -19,6 +19,7 @@ services:
       VAULT_TOKEN: ${VAULT_TOKEN:?set VAULT_TOKEN in .env or shell}
     volumes:
       - ./.vault-envs:/secrets
+      - ./:/project
       - ./docker/vault-init/entrypoint.sh:/entrypoint.sh:ro
     command: /entrypoint.sh
 
@@ -200,10 +201,10 @@ services:
       context: ./next-js-boilerplate
       network: host
       args:
-        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:?Use scripts/up.sh — sources vault frontend envs before build}
-        NEXT_PUBLIC_REALTIME_WS_URL: ${NEXT_PUBLIC_REALTIME_WS_URL:?Use scripts/up.sh}
-        NEXT_PUBLIC_STRIPE_KEY: ${NEXT_PUBLIC_STRIPE_KEY:?Use scripts/up.sh}
-        NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${NEXT_PUBLIC_VAPID_PUBLIC_KEY:?Use scripts/up.sh}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:?Run vault-init first: docker compose run --rm vault-init}
+        NEXT_PUBLIC_REALTIME_WS_URL: ${NEXT_PUBLIC_REALTIME_WS_URL:?Run vault-init first}
+        NEXT_PUBLIC_STRIPE_KEY: ${NEXT_PUBLIC_STRIPE_KEY:?Run vault-init first}
+        NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${NEXT_PUBLIC_VAPID_PUBLIC_KEY:?Run vault-init first}
     restart: unless-stopped
     init: true
     depends_on:

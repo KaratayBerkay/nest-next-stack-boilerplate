@@ -39,4 +39,19 @@ for svc in $SERVICES; do
   rm -f /tmp/vault_response.json
 done
 
+# Merge NEXT_PUBLIC_* from frontend vault into project .env for compose build
+if [ -f /secrets/frontend.env ]; then
+  project_env="/project/.env"
+  build_vars=$(grep '^NEXT_PUBLIC_' /secrets/frontend.env || true)
+  if [ -n "$build_vars" ]; then
+    if [ -f "$project_env" ]; then
+      # Strip stale NEXT_PUBLIC_* lines
+      grep -v '^NEXT_PUBLIC_' "$project_env" > /tmp/clean.env || true
+      cp /tmp/clean.env "$project_env"
+    fi
+    echo "$build_vars" >> "$project_env"
+    echo "vault-init: $(echo "$build_vars" | wc -l) NEXT_PUBLIC_* vars merged into .env"
+  fi
+fi
+
 echo "vault-init: done"
