@@ -201,10 +201,10 @@ services:
       context: ./next-js-boilerplate
       network: host
       args:
-        NEXT_PUBLIC_APP_URL: "${NEXT_PUBLIC_APP_URL:?Run vault-init first — docker compose run --rm vault-init}"
-        NEXT_PUBLIC_REALTIME_WS_URL: "${NEXT_PUBLIC_REALTIME_WS_URL:?Run vault-init first}"
-        NEXT_PUBLIC_STRIPE_KEY: "${NEXT_PUBLIC_STRIPE_KEY:?Run vault-init first}"
-        NEXT_PUBLIC_VAPID_PUBLIC_KEY: "${NEXT_PUBLIC_VAPID_PUBLIC_KEY:?Run vault-init first}"
+        NEXT_PUBLIC_APP_URL: "${NEXT_PUBLIC_APP_URL:-}"
+        NEXT_PUBLIC_REALTIME_WS_URL: "${NEXT_PUBLIC_REALTIME_WS_URL:-}"
+        NEXT_PUBLIC_STRIPE_KEY: "${NEXT_PUBLIC_STRIPE_KEY:-}"
+        NEXT_PUBLIC_VAPID_PUBLIC_KEY: "${NEXT_PUBLIC_VAPID_PUBLIC_KEY:-}"
     restart: unless-stopped
     init: true
     depends_on:
