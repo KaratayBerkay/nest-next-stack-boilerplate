@@ -22,6 +22,9 @@ describe('Configuration (namespaces + validation)', () => {
         'postgresql://user:pass@db.example.com:6543/mydb';
       process.env.JWT_SECRET = 'test-jwt-secret-1234';
       process.env.CSRF_SECRET = 'test-csrf-secret-1234';
+      process.env.REDIS_HOST = 'localhost';
+      process.env.REDIS_PORT = '6379';
+      process.env.PORT = '3000';
 
       const moduleRef = await Test.createTestingModule({
         imports: [

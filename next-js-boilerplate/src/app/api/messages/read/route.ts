@@ -8,8 +8,6 @@ import {
   bearerAuthHeader,
 } from "@/constants/api/headers";
 
-const BACKEND = serverEnv().APP_URL;
-
 export async function POST(request: NextRequest) {
   const token = await getAccessToken();
   if (!token) {
@@ -17,7 +15,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.text();
-  const url = `${BACKEND}/api/messages/read`;
+  const url = `${serverEnv().APP_URL}/api/messages/read`;
   const stHeaders = await sessionTokenHeaders();
   const res = await fetch(url, {
     method: POST_METHOD,

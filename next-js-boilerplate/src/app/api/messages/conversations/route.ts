@@ -5,15 +5,13 @@ import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
 import { forwardedForHeader, sessionTokenHeaders } from "@/lib/backend";
 import { bearerAuthHeader } from "@/constants/api/headers";
 
-const BACKEND = serverEnv().APP_URL;
-
 export async function GET() {
   const accessToken = (await cookies()).get(ACCESS_TOKEN_COOKIE)?.value;
   if (!accessToken) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const url = `${BACKEND}/api/conversations`;
+  const url = `${serverEnv().APP_URL}/api/conversations`;
   const res = await fetch(url, {
     headers: {
       ...bearerAuthHeader(accessToken),

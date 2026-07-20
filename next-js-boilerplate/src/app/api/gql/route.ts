@@ -9,8 +9,6 @@ import {
   bearerAuthHeader,
 } from "@/constants/api/headers";
 
-const BACKEND = serverEnv().APP_URL;
-
 export async function POST(request: NextRequest) {
   const accessToken = (await cookies()).get(ACCESS_TOKEN_COOKIE)?.value;
   if (!accessToken) {
@@ -18,7 +16,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.text();
-  const url = `${BACKEND}/graphql`;
+  const url = `${serverEnv().APP_URL}/graphql`;
   const res = await fetch(url, {
     method: POST_METHOD,
     headers: {

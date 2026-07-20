@@ -8,8 +8,6 @@ import {
   bearerAuthHeader,
 } from "@/constants/api/headers";
 
-const BACKEND = serverEnv().APP_URL;
-
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const token = await getAccessToken();
   const stHeaders = await sessionTokenHeaders();
@@ -27,7 +25,7 @@ export async function GET(
 ) {
   const { path } = await params;
   const qs = request.nextUrl.searchParams.toString();
-  const url = `${BACKEND}/api/${path.join("/")}${qs ? "?" + qs : ""}`;
+  const url = `${serverEnv().APP_URL}/api/${path.join("/")}${qs ? "?" + qs : ""}`;
   const headers = await getAuthHeaders();
   const res = await fetch(url, { headers });
   const text = await res.text();
@@ -47,7 +45,7 @@ export async function POST(
 ) {
   const { path } = await params;
   const body = await request.text();
-  const url = `${BACKEND}/api/${path.join("/")}`;
+  const url = `${serverEnv().APP_URL}/api/${path.join("/")}`;
   const headers = await getAuthHeaders();
   const res = await fetch(url, {
     method: POST_METHOD,

@@ -200,12 +200,10 @@ services:
       context: ./next-js-boilerplate
       network: host
       args:
-        APP_URL: ${APP_URL:-http://app:3000}
-        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3100}
-        NEXT_PUBLIC_REALTIME_WS_URL: ${NEXT_PUBLIC_REALTIME_WS_URL:-/ws}
-        NEXT_PUBLIC_STRIPE_KEY: ${NEXT_PUBLIC_STRIPE_KEY:-pk_test_000000000000000000000000000000000000000000}
-        NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${NEXT_PUBLIC_VAPID_PUBLIC_KEY:-}
-        KAFKA_BROKER: ${KAFKA_BROKER:-disabled}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:?required}
+        NEXT_PUBLIC_REALTIME_WS_URL: ${NEXT_PUBLIC_REALTIME_WS_URL:?required}
+        NEXT_PUBLIC_STRIPE_KEY: ${NEXT_PUBLIC_STRIPE_KEY:?required}
+        NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${NEXT_PUBLIC_VAPID_PUBLIC_KEY:?required}
     restart: unless-stopped
     init: true
     depends_on:

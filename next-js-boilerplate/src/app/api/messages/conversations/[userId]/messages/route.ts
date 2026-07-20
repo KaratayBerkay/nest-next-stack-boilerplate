@@ -8,8 +8,6 @@ import {
   bearerAuthHeader,
 } from "@/constants/api/headers";
 
-const BACKEND = serverEnv().APP_URL;
-
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ userId: string }> },
@@ -20,7 +18,7 @@ export async function GET(
   }
 
   const { userId } = await params;
-  const url = new URL(`${BACKEND}/api/conversations/${userId}/messages`);
+  const url = new URL(`${serverEnv().APP_URL}/api/conversations/${userId}/messages`);
   url.search = _request.nextUrl.search;
 
   const res = await fetch(url.toString(), {
@@ -53,7 +51,7 @@ export async function POST(
   const { userId } = await params;
   const body = await request.text();
 
-  const res = await fetch(`${BACKEND}/api/conversations/${userId}/messages`, {
+  const res = await fetch(`${serverEnv().APP_URL}/api/conversations/${userId}/messages`, {
     method: POST_METHOD,
     headers: {
       ...JSON_CONTENT_TYPE_HEADER,

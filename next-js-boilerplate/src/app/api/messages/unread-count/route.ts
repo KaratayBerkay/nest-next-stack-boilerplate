@@ -7,8 +7,6 @@ import {
   bearerAuthHeader,
 } from "@/constants/api/headers";
 
-const BACKEND = serverEnv().APP_URL;
-
 export async function GET(_request: NextRequest) {
   const token = await getAccessToken();
   const stHeaders = await sessionTokenHeaders();
@@ -18,7 +16,7 @@ export async function GET(_request: NextRequest) {
     ...(token ? bearerAuthHeader(token) : {}),
   };
 
-  const res = await fetch(`${BACKEND}/api/messages/unread-count`, { headers });
+  const res = await fetch(`${serverEnv().APP_URL}/api/messages/unread-count`, { headers });
   const text = await res.text();
   try {
     return NextResponse.json(JSON.parse(text), { status: res.status });
