@@ -37,6 +37,23 @@
 > keys). See §21 for the full status table and detailed fix instructions.
 > Nothing has been fixed yet — like Rev 1, this revision is findings +
 > fix-guide only.
+>
+> **Rev 3 — 2026-07-20 re-verification.** Commit `056531b` implemented §21's
+> fix guide. Re-verified by reading every diffed file and re-tracing the same
+> logic paths that exposed the Rev 2 bugs. **All 3 critical bugs are fixed
+> correctly** — `profile.email`/`content-editor.slug`/editable-table
+> `quantity` no longer false-positive on every blur, confirmed via the exact
+> gating conditions proposed in §21.2. OB-4c and OB-5b are both wired
+> correctly. `pnpm typecheck`, `pnpm lint`, and the 5 new
+> `blur-async-check.test.ts` cases are all green. i18n parity holds
+> (344/344). Two minor loose ends, neither blocking: (1) `aria-required` was
+> never forwarded to `<Input>` (only `required` was), and — more
+> significantly — **no field in any of the 12 examples actually passes
+> `required=` to `field.TextField`**, so the forwarding fix is currently
+> inert in the running app; (2) the 3 new `ConfirmDialog` usages (API-key
+> revoke, draft discard, row delete) all pass `description=""`, so the
+> confirm step is title-only with no "this is irreversible"-style copy.
+> Full detail in [§22](#22-rev-3--re-verification-of-056531b).
 
 ---
 
@@ -63,6 +80,7 @@
 19. [UX-1 — Per-field guidance copy, example by example](#19-ux-1--per-field-guidance-copy-example-by-example)
 20. [UX-2 — i18n additions for this pass](#20-ux-2--i18n-additions-for-this-pass)
 21. [Rev 2 — Verification & fix guide](#21-rev-2--verification--fix-guide)
+22. [Rev 3 — Re-verification of 056531b](#22-rev-3--re-verification-of-056531b)
 
 ---
 
@@ -1283,3 +1301,61 @@ email is added (the `onKeyDown`/`Add`-button handlers touched by OB-5a,
    rather than folding into the same commit as 1–3 above; the i18n keys are
    already sitting in both locale files ready to be wired up whenever that
    pass happens.
+
+---
+
+## 22. Rev 3 — Re-verification of 056531b
+
+**2026-07-20.** Berkay said "check again I have completed changes." Commit
+`056531b4` ("project-enhance-4: Rev 2 fixes — gate onBlurAsync false
+positives, OB-4c/OB-5b, UX audit") claims to close §21's entire fix guide
+plus a meaningful slice of §18's UX-0 audit in one pass. Re-verified the
+same way as Rev 2 — read every diffed file, re-traced the exact runtime
+paths (gating conditions, `EXC_TO_SURFACE`, `simulateError` default
+`failRate`) that exposed the original bugs, rather than trusting that a
+matching variable/function name means the logic is right.
+
+### 22.1 Status table
+
+| Item | Status | Detail |
+|---|---|---|
+| BUG-1 (`profile.email`) | ✅ **Fixed** | `TAKEN_EMAILS` set (`taken@example.com`, `admin@example.com`) gates the call exactly as proposed — any other syntactically-valid email now correctly shows no error. |
+| BUG-2 (`content-editor.slug`) | ✅ **Fixed** | Both halves done: `TAKEN_SLUGS` gate added, **and** `content-slug-taken`'s `exc` changed `EX_CONFLICT_DUPLICATE` → `EX_VALIDATION_FORM` (`error-scenarios.ts:143`) so it now actually surfaces on the field instead of toasting. |
+| BUG-3 (editable-table `quantity`) | ✅ **Fixed** | Gated on `Number(value) <= 100`, hand-rolled try/catch replaced with `blurAsyncCheck` (`allMessages` newly imported) — matches §21.2's proposal exactly, including the "field-path doesn't need to match" reasoning. |
+| OB-4c (postal code `onBlurAsync`) | ✅ Done | Wired inside `AddressGroup`, gated on `value !== "00000"`, uses `blurAsyncCheck`. Works for both shipping/billing groups since `AddressGroup` is shared and `blurAsyncCheck` doesn't key off the scenario's static `field` path. |
+| OB-5b (per-email "already a member") | ✅ Done | `MEMBER_EMAILS` set (`alice@example.com`, `bob@example.com`) checked at add-time in both the Enter-key and Add-button handlers. The old fixed-index submit-time branch in `submitTeamInvite` was cleanly removed (not left dangling) — `simulateError`/`getSurface`/`exceptionToFormErrors` imports pruned to just what's still used. |
+| OB-0b (co-located test) | ✅ Done | `blur-async-check.test.ts`, 5 cases (success / toast-surface / form-field-surface / non-exception rejection / no-fields exception). Ran live: **5/5 pass.** |
+| OB-1b (Available state) | ✅ Done | `usernameAvailable` state + green `<span>` under the username field, reset on every keystroke via a `listeners.onChange`. Uses `text-green-600 text-xxs` — checked against the reference page the original doc pointed to (`views/settings/account/FreePageView.tsx:231`) and it's an exact match, not a deviation. |
+| UX-0a (`required`/`aria-required`) | ⚠️ **Half done, currently inert** | `required={required}` now reaches `<Input>` — but `aria-required` was never added despite the commit message claiming both, **and no field in any of the 12 examples passes `required=` to `field.TextField`** (grep-confirmed 0 usages). The plumbing works; nothing exercises it yet, so this fix has zero visible effect on the app today. |
+| UX-0b (`aria-label`) | ✅ Done | Added to all 4 `editable-table` icon buttons, the 2 chip-remove buttons (api-key IP, team-invite email — both parameterized with the specific value being removed, a nice touch beyond what the doc asked for), and the new `ConfirmDialog`-wrapped buttons. |
+| UX-0c (confirm step) | ✅ Done, minor gap | Reuses the pre-existing `components/ui/ConfirmDialog` (correctly checked for one before building a new one, per the doc's own note) for API-key revoke, draft discard, and row delete. Gap: all three pass `description=""` — the dialog shows a title and Confirm/Cancel buttons but no explanatory "this cannot be undone" copy, so it's a real extra-click gate but a shallower version of what §18 asked for. |
+| UX-0d (`hint` prop) | ✅ Done, scoped as claimed | `TextField`/`FormFieldInfo`/both type files updated correctly (`FormFieldInfo` now renders the hint only when there's no error/isValidating, so it doesn't fight with error text). Wired to exactly the 6 fields the commit message claims (`username`, `slug`, `couponCode`, `taxId`, `postalCode`, `phone`) — verified by grep, not overstated. `bio`/`quantity`/`unitPrice` hints from §19 remain unwired (never claimed as done). |
+| UX-0e (hardcoded strings) | ✅ Done, scoped as claimed | The 4 named views (`api-key`, `editable-table`, `error-lab`, `form-builder`) had every literal §18 listed for them swapped to `t.*` calls; `error-lab` now calls `useMessages("forms")`. Interesting detail: `"Loading..."` and the API-key revoke-confirm copy were wired to **pre-existing, previously-unused keys** (`t.fieldStates.loading`, `t.apiKey.revokeConfirm`) rather than the `common.loading`/new key the original doc suggested — pragmatic, avoids adding more dead keys, though borrowing `fieldStates.loading` for an unrelated view is a minor cross-namespace smell, not a bug. |
+| §18 items not in this commit (UX-0f, remaining §19/20 hint keys, team-invite's other hardcoded strings) | ❌ Still open | Not claimed as done this round; unchanged from Rev 2's assessment. |
+
+### 22.2 Gates
+
+`pnpm typecheck` — clean. `pnpm lint` — clean. `blur-async-check.test.ts` —
+5/5 pass. i18n parity — 344/344 keys match between `en`/`tr` (messages.json
+wasn't touched this commit; all new copy reused pre-existing keys from
+`60acca2`'s additions).
+
+### 22.3 What's left, if this gets picked up again
+
+Neither item below is a regression or a broken promise — both are honest
+gaps in an otherwise-accurate commit:
+
+1. Add `aria-required={required}` next to the existing `required={required}`
+   on `<Input>` in `TextField.tsx`, then actually pass `required` on the
+   ~15 fields §18 named (`profile.firstName/lastName/username/email`,
+   `checkout` address fields + `paymentMethod`, `billing.plan`,
+   `teamInvite.role`, etc.) — otherwise the red asterisk/native browser
+   affordance still never appears anywhere in the gallery.
+2. Give the 3 `ConfirmDialog` usages real `description` copy (e.g. API-key
+   revoke: reuse `t.apiKey.secretNote`-adjacent wording about the key being
+   irrecoverable; row delete/draft discard: a short "this can't be undone"
+   line) instead of `""`.
+
+Everything else from §21's fix guide is closed. §§18–20's remaining scope
+(UX-0f, the rest of §19/20's hint keys) is still open exactly as Rev 2 left
+it.
