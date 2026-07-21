@@ -7,6 +7,7 @@ import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
 import { exceptionToFormErrors } from "@/lib/forms/exception-to-form-errors";
 import { FormLevelError } from "@/components/ui/FormLevelError";
 import { Separator } from "@/components/ui/Separator";
+import { FieldInfoButton } from "@/components/ui/FieldInfoButton";
 import { Button } from "@/components/ui/Button";
 import { useStore } from "@tanstack/react-form";
 import { useAppForm } from "@/features/forms/form-hook";
@@ -16,20 +17,20 @@ import type { ExceptionResponse } from "@/lib/api-client";
 
 const EMPTY_MEMBER = { name: "", email: "", role: "" };
 
-const ROLE_OPTIONS = [
-  { value: "developer", label: "Developer" },
-  { value: "designer", label: "Designer" },
-  { value: "manager", label: "Manager" },
-  { value: "viewer", label: "Viewer" },
+const ROLE_OPTIONS = (t: Record<string, string>) => [
+  { value: "developer", label: t.roleDeveloper },
+  { value: "designer", label: t.roleDesigner },
+  { value: "manager", label: t.roleManager },
+  { value: "viewer", label: t.roleViewer },
 ];
 
-const INDUSTRY_OPTIONS = [
-  { value: "technology", label: "Technology" },
-  { value: "finance", label: "Finance" },
-  { value: "healthcare", label: "Healthcare" },
-  { value: "education", label: "Education" },
-  { value: "ecommerce", label: "E-Commerce" },
-  { value: "other", label: "Other" },
+const INDUSTRY_OPTIONS = (t: Record<string, string>) => [
+  { value: "technology", label: t.industryTechnology },
+  { value: "finance", label: t.industryFinance },
+  { value: "healthcare", label: t.industryHealthcare },
+  { value: "education", label: t.industryEducation },
+  { value: "ecommerce", label: t.industryEcommerce },
+  { value: "other", label: t.industryOther },
 ];
 
 async function handleAdvancedSubmit(
@@ -107,8 +108,9 @@ export default function AdvancedPage() {
         className="flex flex-col gap-4"
       >
         <fieldset>
-          <legend className="mb-2 text-xs font-semibold">
+          <legend className="mb-2 flex items-center gap-1 text-xs font-semibold">
             {t.advanced.accountType}
+            <FieldInfoButton description={t.advanced.accountTypeInfo} />
           </legend>
           <form.AppField name="accountType">
             {(field) => (
@@ -129,21 +131,48 @@ export default function AdvancedPage() {
           name="fullName"
           validators={{ onChange: fieldSchemas.fullName }}
         >
-          {(field) => <field.TextField label={t.advanced.fullName} required />}
+          {(field) => (
+            <div className="flex items-center gap-1">
+              <field.TextField
+                label={t.advanced.fullName}
+                placeholder={t.advanced.fullNamePlaceholder}
+                required
+              />
+              <FieldInfoButton description={t.advanced.fullNameInfo} />
+            </div>
+          )}
         </form.AppField>
 
         <form.AppField
           name="email"
           validators={{ onChange: fieldSchemas.email }}
         >
-          {(field) => <field.TextField label={t.advanced.email} required />}
+          {(field) => (
+            <div className="flex items-center gap-1">
+              <field.TextField
+                label={t.advanced.email}
+                placeholder={t.advanced.emailPlaceholder}
+                required
+              />
+              <FieldInfoButton description={t.advanced.emailInfo} />
+            </div>
+          )}
         </form.AppField>
 
         <form.AppField
           name="password"
           validators={{ onChange: fieldSchemas.password }}
         >
-          {(field) => <field.TextField label={t.advanced.password} required />}
+          {(field) => (
+            <div className="flex items-center gap-1">
+              <field.TextField
+                label={t.advanced.password}
+                placeholder={t.advanced.passwordPlaceholder}
+                required
+              />
+              <FieldInfoButton description={t.advanced.passwordInfo} />
+            </div>
+          )}
         </form.AppField>
 
         <div
@@ -164,7 +193,14 @@ export default function AdvancedPage() {
                 validators={{ onChange: fieldSchemas.companyName }}
               >
                 {(field) => (
-                  <field.TextField label={t.advanced.companyName} required />
+                  <div className="flex items-center gap-1">
+                    <field.TextField
+                      label={t.advanced.companyName}
+                      placeholder={t.advanced.companyNamePlaceholder}
+                      required
+                    />
+                    <FieldInfoButton description={t.advanced.companyNameInfo} />
+                  </div>
                 )}
               </form.AppField>
 
@@ -173,7 +209,14 @@ export default function AdvancedPage() {
                 validators={{ onChange: fieldSchemas.taxId }}
               >
                 {(field) => (
-                  <field.TextField label={t.advanced.taxId} required />
+                  <div className="flex items-center gap-1">
+                    <field.TextField
+                      label={t.advanced.taxId}
+                      placeholder={t.advanced.taxIdPlaceholder}
+                      required
+                    />
+                    <FieldInfoButton description={t.advanced.taxIdInfo} />
+                  </div>
                 )}
               </form.AppField>
 
@@ -185,7 +228,7 @@ export default function AdvancedPage() {
                   <field.SelectField
                     label={t.advanced.industry}
                     placeholder={t.advanced.industry}
-                    options={INDUSTRY_OPTIONS}
+                    options={INDUSTRY_OPTIONS(t.advanced)}
                   />
                 )}
               </form.AppField>
@@ -196,7 +239,10 @@ export default function AdvancedPage() {
         <Separator />
 
         <div className="flex flex-col gap-3">
-          <p className="text-xs font-semibold">{t.advanced.teamMembers}</p>
+          <div className="flex items-center gap-1">
+            <p className="text-xs font-semibold">{t.advanced.teamMembers}</p>
+            <FieldInfoButton description={t.advanced.teamMembersInfo} />
+          </div>
 
           {members.map((_, i) => (
             <div
@@ -221,7 +267,14 @@ export default function AdvancedPage() {
                 validators={{ onChange: fieldSchemas.memberName }}
               >
                 {(field) => (
-                  <field.TextField label={t.advanced.memberName} required />
+                  <div className="flex items-center gap-1">
+                    <field.TextField
+                      label={t.advanced.memberName}
+                      placeholder={t.advanced.memberNamePlaceholder}
+                      required
+                    />
+                    <FieldInfoButton description={t.advanced.memberNameInfo} />
+                  </div>
                 )}
               </form.AppField>
 
@@ -230,7 +283,14 @@ export default function AdvancedPage() {
                 validators={{ onChange: fieldSchemas.memberEmail }}
               >
                 {(field) => (
-                  <field.TextField label={t.advanced.memberEmail} required />
+                  <div className="flex items-center gap-1">
+                    <field.TextField
+                      label={t.advanced.memberEmail}
+                      placeholder={t.advanced.memberEmailPlaceholder}
+                      required
+                    />
+                    <FieldInfoButton description={t.advanced.memberEmailInfo} />
+                  </div>
                 )}
               </form.AppField>
 
@@ -242,7 +302,7 @@ export default function AdvancedPage() {
                   <field.SelectField
                     label={t.advanced.memberRole}
                     placeholder={t.advanced.memberRole}
-                    options={ROLE_OPTIONS}
+                    options={ROLE_OPTIONS(t.advanced)}
                   />
                 )}
               </form.AppField>
