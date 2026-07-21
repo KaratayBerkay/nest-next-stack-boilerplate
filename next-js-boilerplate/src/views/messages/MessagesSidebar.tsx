@@ -14,6 +14,8 @@ import { IconButton } from "@/components/ui/button/icon-button";
 import type { MessagesSidebarProps } from "@/types/messages/MessagesSidebar-types";
 import { useFriendActions } from "@/api/client/friends/actions";
 import { useQueryClient } from "@tanstack/react-query";
+import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
+import { formatDateByPreference } from "@/lib/date-time";
 
 export function MessagesSidebar({
   user,
@@ -44,6 +46,7 @@ export function MessagesSidebar({
 
   const { sendRequest: sendFriendRequest } = useFriendActions();
   const queryClient = useQueryClient();
+  const dateDisplay = useDateDisplayCookie();
 
   return (
     <div
@@ -201,29 +204,35 @@ export function MessagesSidebar({
                 )}
                 style={{ animationDelay: `${i * 20}ms` }}
               >
-                <div className="relative shrink-0">
+                <div className="relative h-11 w-11 shrink-0">
                   <Avatar
                     fallback={initials(c.user.name ?? c.user.email ?? "?")}
-                    className="bg-brand text-brand-fg h-10 w-10"
+                    className={cn(
+                      "bg-brand text-brand-fg h-11 w-11 text-xs",
+                      onlineUsers.has(c.user.id) &&
+                        "ring-success ring-offset-bg ring-2 ring-offset-2",
+                    )}
                   />
-                  {onlineUsers.has(c.user.id) && (
-                    <span className="border-bg bg-success absolute right-0 bottom-0 h-3 w-3 rounded-full border-2" />
-                  )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-sm font-medium">
+                    <span className="truncate text-sm font-semibold">
                       {c.user.name || c.user.email}
                     </span>
+                    <span className="text-muted shrink-0 text-[10px]">
+                      {formatDateByPreference(c.lastTime, dateDisplay)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-muted min-w-0 truncate text-xs">
+                      {c.lastMessage}
+                    </p>
                     {c.unread > 0 && (
                       <span className="bg-error flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white">
                         {c.unread > 99 ? "99+" : c.unread}
                       </span>
                     )}
                   </div>
-                  <p className="text-muted mt-0.5 truncate text-sm">
-                    {c.lastMessage}
-                  </p>
                 </div>
               </Button>
             ))}
@@ -251,14 +260,15 @@ export function MessagesSidebar({
                     className="animate-fade-in-up w-full justify-start gap-3 rounded-lg px-3 py-2.5 text-left"
                     style={{ animationDelay: `${i * 15}ms` }}
                   >
-                    <div className="relative shrink-0">
+                    <div className="relative h-10 w-10 shrink-0">
                       <Avatar
                         fallback={initials(u.name ?? u.email ?? "?")}
-                        className="bg-brand text-brand-fg h-9 w-9"
+                        className={cn(
+                          "bg-brand text-brand-fg h-10 w-10 text-[10px]",
+                          onlineUsers.has(u.id) &&
+                            "ring-success ring-offset-bg ring-2 ring-offset-2",
+                        )}
                       />
-                      {onlineUsers.has(u.id) && (
-                        <span className="border-bg bg-success absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2" />
-                      )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <span className="truncate text-sm font-medium">

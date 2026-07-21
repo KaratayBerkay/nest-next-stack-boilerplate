@@ -9,7 +9,12 @@ type UserInfo = {
 
 export interface MessagesSidebarProps {
   user: UserInfo;
-  conversations: Array<{ user: UserInfo; lastMessage: string; unread: number }>;
+  conversations: Array<{
+    user: UserInfo;
+    lastMessage: string;
+    lastTime: string;
+    unread: number;
+  }>;
   friends: UserInfo[];
   selectedUser: UserInfo | null;
   tab: "conversations" | "friends";

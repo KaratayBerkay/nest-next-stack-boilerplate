@@ -494,18 +494,25 @@ function ChatRoomContent({
                 roomMembers.map((m) => (
                   <div
                     key={m.id}
-                    className="flex items-center gap-2 rounded-lg px-3 py-2"
+                    className="flex items-center gap-3 rounded-lg px-3 py-2"
                   >
-                    <div className="relative shrink-0">
+                    <div className="relative h-10 w-10 shrink-0">
                       <Avatar
                         fallback={initials(m.name)}
-                        className="bg-brand text-brand-fg h-7 w-7 text-[9px]"
+                        className="bg-brand text-brand-fg ring-success ring-offset-bg h-10 w-10 text-[10px] ring-2 ring-offset-2"
                       />
-                      <span className="border-bg absolute right-0 bottom-0 h-2 w-2 rounded-full border-2 bg-green-500" />
                     </div>
-                    <span className="text-fg text-sm">{m.name}</span>
+                    <div className="min-w-0 flex-1">
+                      <span className="text-fg truncate text-sm font-medium">
+                        {m.name}
+                      </span>
+                    </div>
                     {showSelfCrown && m.id === user.id && (
-                      <IconCrown size={12} stroke={2} className="text-brand" />
+                      <IconCrown
+                        size={12}
+                        stroke={2}
+                        className="text-brand shrink-0"
+                      />
                     )}
                   </div>
                 ))
