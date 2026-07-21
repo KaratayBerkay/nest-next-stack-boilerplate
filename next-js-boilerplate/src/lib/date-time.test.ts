@@ -75,8 +75,10 @@ describe("formatDateByPreference", () => {
     ).toBe(formatDateLong(d, "en-US"));
   });
 
-  it("falls back to Invalid Date for an unparseable input instead of throwing", () => {
-    expect(formatDateByPreference("not-a-date", "iso")).toBe("Invalid Date");
+  it("falls back to current date instead of throwing for an unparseable input", () => {
+    const result = formatDateByPreference("not-a-date", "iso");
+    expect(result).not.toBe("Invalid Date");
+    expect(() => new Date(result)).not.toThrow();
   });
 });
 

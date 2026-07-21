@@ -119,7 +119,8 @@ export function ChatView({
   const groupedMessages = useMemo(() => {
     const groups: { date: string; messages: Message[] }[] = [];
     for (const msg of conversationMessages) {
-      const date = new Date(msg.createdAt).toLocaleDateString();
+      const d = new Date(msg.createdAt);
+      const date = isNaN(d.getTime()) ? "Unknown" : d.toLocaleDateString();
       const last = groups[groups.length - 1];
       if (last && last.date === date) {
         last.messages.push(msg);

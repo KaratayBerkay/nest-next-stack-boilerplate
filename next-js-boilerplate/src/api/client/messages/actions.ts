@@ -82,9 +82,13 @@ export function useMessageActions() {
   };
 
   const markRead = async (userId: string) => {
-    const { markMessagesReadServer } =
-      await import("@/api/server/messages/mark-read");
-    await markMessagesReadServer(userId);
+    try {
+      const { markMessagesReadServer } =
+        await import("@/api/server/messages/mark-read");
+      await markMessagesReadServer(userId);
+    } catch {
+      // Server error — still invalidate so optimistic UI can refetch
+    }
     await queryClient.invalidateQueries({
       queryKey: ["notifications", "dm-count"],
     });

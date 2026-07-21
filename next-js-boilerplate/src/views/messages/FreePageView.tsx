@@ -20,6 +20,7 @@ import { useMessageActions } from "@/api/client/messages/actions";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { useConnectionState } from "@/hooks/useConnectionState";
 import { usePresence } from "@/hooks/usePresence";
+import { setActivePeerId } from "@/lib/realtime/event-dispatch";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { MessagesViewFallback } from "@/fallbacks";
 import { LoadingAuth } from "@/components/LoadingAuth";
@@ -149,6 +150,10 @@ function MessagesPageContent({
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!selectedUser) setSidebarOpen(true);
+  }, [selectedUser]);
+
+  useEffect(() => {
+    setActivePeerId(selectedUser?.id ?? null);
   }, [selectedUser]);
 
   const openConversation = useCallback(

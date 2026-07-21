@@ -2,9 +2,14 @@ import type { useQueryClient } from "@tanstack/react-query";
 import { markMessagesReadServer } from "@/api/server/messages/mark-read";
 
 const sentTempIds = new Set<string>();
+let activePeerId: string | null = null;
 
 export function trackTempId(tempId: string): void {
   sentTempIds.add(tempId);
+}
+
+export function setActivePeerId(peerId: string | null): void {
+  activePeerId = peerId;
 }
 
 export function dispatchEvent(
@@ -51,8 +56,12 @@ export function dispatchEvent(
     if (msg.recipientId === ownUserId && sendFrame) {
       sendFrame({ type: "delivered-ack", messageId: msg.id });
     }
-    // Auto-zero unread + mark read when receiving a DM for the active conversation
-    if (msg.recipientId === ownUserId && msg.senderId) {
+    // Auto-zero unread + mark read only when actively viewing the sender's conversation
+    if (
+      msg.recipientId === ownUserId &&
+      msg.senderId &&
+      msg.senderId === activePeerId
+    ) {
       qc.setQueryData(["conversations"], (old: unknown) => {
         const list = (old ?? []) as Record<string, unknown>[];
         return list.map((c) => {

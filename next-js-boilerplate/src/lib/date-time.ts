@@ -1,19 +1,19 @@
 export type DateInput = string | number | Date;
 
 export type TodayFormat =
-  | "ISO"
-  | "only_date"
-  | "year"
-  | "month"
-  | "day"
-  | "weekday";
+  "ISO" | "only_date" | "year" | "month" | "day" | "weekday";
 
 export type DateField<T> = (item: T) => DateInput;
 
 function toDate(input?: DateInput): Date {
   if (!input) return new Date();
-  if (input instanceof Date) return input;
-  return new Date(input);
+  if (input instanceof Date) {
+    if (isNaN(input.getTime())) return new Date();
+    return input;
+  }
+  const d = new Date(input);
+  if (isNaN(d.getTime())) return new Date();
+  return d;
 }
 
 export function getNow(): Date {
