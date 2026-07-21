@@ -100,6 +100,20 @@ export const FORMS_EXAMPLES = [
     titleKey: "advancedTitle",
     descKey: "advancedDescription",
   },
+  {
+    name: "Form Elements",
+    slug: "elements",
+    mode: "none",
+    titleKey: "elementsTitle",
+    descKey: "elementsDescription",
+  },
+  {
+    name: "Form Layouts",
+    slug: "layouts",
+    mode: "none",
+    titleKey: "layoutsTitle",
+    descKey: "layoutsDescription",
+  },
 ] as const satisfies readonly FormsExample[];
 
 export type FormsExampleSlug = (typeof FORMS_EXAMPLES)[number]["slug"];

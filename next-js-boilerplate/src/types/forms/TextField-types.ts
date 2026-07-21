@@ -3,4 +3,6 @@ export interface TextFieldProps {
   required?: boolean;
   placeholder?: string;
   hint?: string;
+  type?: string;
+  showPasswordToggle?: boolean;
 }

@@ -343,6 +343,10 @@ export type I18nMessages = {
         "editableTableDescription": string;
         "advancedTitle": string;
         "advancedDescription": string;
+        "elementsTitle": string;
+        "elementsDescription": string;
+        "layoutsTitle": string;
+        "layoutsDescription": string;
       };
       "profile": {
         "heading": string;

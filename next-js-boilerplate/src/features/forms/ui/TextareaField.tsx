@@ -10,8 +10,12 @@ export function TextareaField({
   label,
   required,
   hint,
+  maxLength,
 }: TextareaFieldProps) {
   const field = useFieldContext<string>();
+  const value = field.state.value ?? "";
+  const charCount = value.length;
+
   return (
     <div className="flex flex-col gap-1">
       {label && (
@@ -21,13 +25,23 @@ export function TextareaField({
       )}
       <Textarea
         id={field.name}
-        value={field.state.value}
+        value={value}
         onBlur={field.handleBlur}
-        onChange={(e) => field.handleChange(e.target.value)}
+        onChange={(e) => {
+          if (maxLength && e.target.value.length > maxLength) return;
+          field.handleChange(e.target.value);
+        }}
         required={required}
         aria-required={required}
       />
-      <FormFieldInfo field={field} hint={hint} />
+      <div className="flex items-center justify-between gap-2">
+        <FormFieldInfo field={field} hint={hint} />
+        {maxLength && (
+          <span className="text-muted ml-auto text-xs tabular-nums">
+            {charCount}/{maxLength}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

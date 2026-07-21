@@ -39,7 +39,11 @@
     "editableTableTitle": "Editable Table",
     "editableTableDescription": "Inline row editing with per-row persistence",
     "advancedTitle": "Advanced Patterns",
-    "advancedDescription": "Conditional fields, server error mapping, array sub-forms"
+    "advancedDescription": "Conditional fields, server error mapping, array sub-forms",
+    "elementsTitle": "Form Elements",
+    "elementsDescription": "Input groups, selects, textareas, checkboxes, radios, toggles, and validation states",
+    "layoutsTitle": "Form Layouts",
+    "layoutsDescription": "Basic stacked, grid, icon-prefixed, and sectioned card form patterns"
   },
   "profile": {
     "heading": "User Profile",

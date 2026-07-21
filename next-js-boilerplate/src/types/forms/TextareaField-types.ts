@@ -3,4 +3,5 @@ export interface TextareaFieldProps {
   required?: boolean;
   placeholder?: string;
   hint?: string;
+  maxLength?: number;
 }

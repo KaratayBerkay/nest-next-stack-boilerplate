@@ -39,7 +39,11 @@
     "editableTableTitle": "Düzenlenebilir Tablo",
     "editableTableDescription": "Satır içi düzenleme ve satır bazında kaydetme",
     "advancedTitle": "Gelişmiş Desenler",
-    "advancedDescription": "Koşullu alanlar, sunucu hata yönetimi, dizi alt formlar"
+    "advancedDescription": "Koşullu alanlar, sunucu hata yönetimi, dizi alt formlar",
+    "elementsTitle": "Form Elemanları",
+    "elementsDescription": "Giriş grupları, seçimler, metin alanı, onay kutuları, radyo düğmeleri, anahtarlar ve doğrulama durumları",
+    "layoutsTitle": "Form Düzenleri",
+    "layoutsDescription": "Temel istiflenmiş, ızgara, ikon ön ekli ve bölümlere ayrılmış kart form desenleri"
   },
   "profile": {
     "heading": "Kullanıcı Profili",
