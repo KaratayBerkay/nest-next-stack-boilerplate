@@ -1,5 +1,7 @@
 "use client";
 
+import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { FieldInfoButton } from "@/components/ui/FieldInfoButton";
 import { useStore } from "@tanstack/react-form";
 import { useAppForm } from "@/features/forms/form-hook";
 import {
@@ -44,6 +46,7 @@ function LayoutCard({
 }
 
 function ContactForm() {
+  const t = useMessages("forms");
   const form = useAppForm({
     ...basicFormOpts,
   });
@@ -51,8 +54,8 @@ function ContactForm() {
 
   return (
     <LayoutCard
-      label="Contact Form"
-      description="Basic single-column form with name, email, subject, and message"
+      label={t.layouts.contact_label}
+      description={t.layouts.contact_description}
     >
       <form.AppForm>
         <form className="flex flex-col gap-3">
@@ -61,7 +64,13 @@ function ContactForm() {
             validators={{ onChange: contactFieldSchemas.fullName }}
           >
             {(field) => (
-              <field.TextField label="Full Name" placeholder="John Doe" />
+              <div className="flex items-center gap-1">
+                <field.TextField
+                  label={t.layouts.contactFullName_label}
+                  placeholder={t.layouts.contactFullName_placeholder}
+                />
+                <FieldInfoButton description={t.layouts.contactFullName_info} />
+              </div>
             )}
           </form.AppField>
           <form.AppField
@@ -69,30 +78,53 @@ function ContactForm() {
             validators={{ onChange: contactFieldSchemas.email }}
           >
             {(field) => (
-              <field.TextField label="Email" placeholder="john@example.com" />
+              <div className="flex items-center gap-1">
+                <field.TextField
+                  label={t.layouts.contactEmail_label}
+                  placeholder={t.layouts.contactEmail_placeholder}
+                />
+                <FieldInfoButton description={t.layouts.contactEmail_info} />
+              </div>
             )}
           </form.AppField>
           <div className="flex flex-col gap-1">
-            <Label>Subject</Label>
+            <div className="flex items-center gap-1">
+              <Label>{t.layouts.contactSubject_label}</Label>
+              <FieldInfoButton description={t.layouts.contactSubject_info} />
+            </div>
             <NativeSelect
               value={form.getFieldValue("subject")}
               onChange={(e) => form.setFieldValue("subject", e.target.value)}
             >
-              <option value="">Select Subject</option>
-              <option value="general">General Inquiry</option>
-              <option value="support">Support</option>
-              <option value="feedback">Feedback</option>
-              <option value="other">Other</option>
+              <option value="">{t.layouts.contactSubject_placeholder}</option>
+              <option value="general">
+                {t.layouts.contactSubject_general}
+              </option>
+              <option value="support">
+                {t.layouts.contactSubject_support}
+              </option>
+              <option value="feedback">
+                {t.layouts.contactSubject_feedback}
+              </option>
+              <option value="other">{t.layouts.contactSubject_other}</option>
             </NativeSelect>
           </div>
           <form.AppField
             name="message"
             validators={{ onChange: contactFieldSchemas.message }}
           >
-            {(field) => <field.TextareaField label="Message" />}
+            {(field) => (
+              <div className="flex items-center gap-1">
+                <field.TextareaField label={t.layouts.contactMessage_label} />
+                <FieldInfoButton description={t.layouts.contactMessage_info} />
+              </div>
+            )}
           </form.AppField>
           <div className="flex items-center justify-between">
-            <form.SubmitButton label="Submit" loadingLabel="Submitting..." />
+            <form.SubmitButton
+              label={t.layouts.contactSubmit}
+              loadingLabel={t.layouts.contactSubmitting}
+            />
             {isDirty && (
               <span className="text-warning text-xxs flex items-center gap-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-current" />
@@ -107,6 +139,7 @@ function ContactForm() {
 }
 
 function TwoColumnGridForm() {
+  const t = useMessages("forms");
   const form = useAppForm({
     ...twoColumnFormOpts,
   });
@@ -114,8 +147,8 @@ function TwoColumnGridForm() {
 
   return (
     <LayoutCard
-      label="Two-Column Grid Form"
-      description="Side-by-side name fields with full-width email, subject, and message"
+      label={t.layouts.twoColumn_label}
+      description={t.layouts.twoColumn_description}
     >
       <form.AppForm>
         <form className="flex flex-col gap-3">
@@ -125,7 +158,15 @@ function TwoColumnGridForm() {
               validators={{ onChange: twoColumnFieldSchemas.firstName }}
             >
               {(field) => (
-                <field.TextField label="First Name" placeholder="John" />
+                <div className="flex items-center gap-1">
+                  <field.TextField
+                    label={t.layouts.twoColumnFirstName_label}
+                    placeholder={t.layouts.twoColumnFirstName_placeholder}
+                  />
+                  <FieldInfoButton
+                    description={t.layouts.twoColumnFirstName_info}
+                  />
+                </div>
               )}
             </form.AppField>
             <form.AppField
@@ -133,7 +174,15 @@ function TwoColumnGridForm() {
               validators={{ onChange: twoColumnFieldSchemas.lastName }}
             >
               {(field) => (
-                <field.TextField label="Last Name" placeholder="Doe" />
+                <div className="flex items-center gap-1">
+                  <field.TextField
+                    label={t.layouts.twoColumnLastName_label}
+                    placeholder={t.layouts.twoColumnLastName_placeholder}
+                  />
+                  <FieldInfoButton
+                    description={t.layouts.twoColumnLastName_info}
+                  />
+                </div>
               )}
             </form.AppField>
           </div>
@@ -142,30 +191,60 @@ function TwoColumnGridForm() {
             validators={{ onChange: twoColumnFieldSchemas.email }}
           >
             {(field) => (
-              <field.TextField label="Email" placeholder="john@example.com" />
+              <div className="flex items-center gap-1">
+                <field.TextField
+                  label={t.layouts.contactEmail_label}
+                  placeholder={t.layouts.contactEmail_placeholder}
+                />
+                <FieldInfoButton description={t.layouts.contactEmail_info} />
+              </div>
             )}
           </form.AppField>
           <div className="flex flex-col gap-1">
-            <Label>Select Subject</Label>
+            <div className="flex items-center gap-1">
+              <Label>{t.layouts.twoColumnSubject_label}</Label>
+              <FieldInfoButton description={t.layouts.twoColumnSubject_info} />
+            </div>
             <NativeSelect
               value={form.getFieldValue("subject")}
               onChange={(e) => form.setFieldValue("subject", e.target.value)}
             >
-              <option value="">Choose an option</option>
-              <option value="option1">Option 1</option>
-              <option value="option2">Option 2</option>
-              <option value="option3">Option 3</option>
-              <option value="option4">Option 4</option>
+              <option value="">{t.layouts.twoColumnSubject_placeholder}</option>
+              <option value="option1">
+                {t.layouts.twoColumnSubject_option1}
+              </option>
+              <option value="option2">
+                {t.layouts.twoColumnSubject_option2}
+              </option>
+              <option value="option3">
+                {t.layouts.twoColumnSubject_option3}
+              </option>
+              <option value="option4">
+                {t.layouts.twoColumnSubject_option4}
+              </option>
             </NativeSelect>
           </div>
           <form.AppField
             name="message"
             validators={{ onChange: twoColumnFieldSchemas.message }}
           >
-            {(field) => <field.TextareaField label="Message" maxLength={200} />}
+            {(field) => (
+              <div className="flex items-center gap-1">
+                <field.TextareaField
+                  label={t.layouts.twoColumnMessage_label}
+                  maxLength={200}
+                />
+                <FieldInfoButton
+                  description={t.layouts.twoColumnMessage_info}
+                />
+              </div>
+            )}
           </form.AppField>
           <div className="flex items-center justify-between">
-            <form.SubmitButton label="Send Message" loadingLabel="Sending..." />
+            <form.SubmitButton
+              label={t.layouts.twoColumnSubmit}
+              loadingLabel={t.layouts.twoColumnSubmitting}
+            />
             {isDirty && (
               <span className="text-warning text-xxs flex items-center gap-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-current" />
@@ -180,6 +259,7 @@ function TwoColumnGridForm() {
 }
 
 function IconPrefixedForm() {
+  const t = useMessages("forms");
   const form = useAppForm({
     ...iconFormOpts,
   });
@@ -187,8 +267,8 @@ function IconPrefixedForm() {
 
   return (
     <LayoutCard
-      label="Icon-Prefixed Inputs"
-      description="Inputs with leading SVG icons and a remember-me checkbox"
+      label={t.layouts.icon_label}
+      description={t.layouts.icon_description}
     >
       <form.AppForm>
         <form className="flex flex-col gap-3">
@@ -198,13 +278,16 @@ function IconPrefixedForm() {
           >
             {(field) => (
               <div className="flex flex-col gap-1">
-                <Label htmlFor={field.name}>Name</Label>
+                <div className="flex items-center gap-1">
+                  <Label htmlFor={field.name}>{t.layouts.iconName_label}</Label>
+                  <FieldInfoButton description={t.layouts.iconName_info} />
+                </div>
                 <Input
                   id={field.name}
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder="Your name"
+                  placeholder={t.layouts.iconName_placeholder}
                   leftIcon={
                     <svg
                       width="15"
@@ -230,13 +313,18 @@ function IconPrefixedForm() {
           >
             {(field) => (
               <div className="flex flex-col gap-1">
-                <Label htmlFor={field.name}>Email</Label>
+                <div className="flex items-center gap-1">
+                  <Label htmlFor={field.name}>
+                    {t.layouts.iconEmail_label}
+                  </Label>
+                  <FieldInfoButton description={t.layouts.iconEmail_info} />
+                </div>
                 <Input
                   id={field.name}
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder="your@email.com"
+                  placeholder={t.layouts.iconEmail_placeholder}
                   leftIcon={
                     <svg
                       width="15"
@@ -262,14 +350,19 @@ function IconPrefixedForm() {
           >
             {(field) => (
               <div className="flex flex-col gap-1">
-                <Label htmlFor={field.name}>Password</Label>
+                <div className="flex items-center gap-1">
+                  <Label htmlFor={field.name}>
+                    {t.layouts.iconPassword_label}
+                  </Label>
+                  <FieldInfoButton description={t.layouts.iconPassword_info} />
+                </div>
                 <Input
                   id={field.name}
                   type="password"
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder={t.layouts.iconPassword_placeholder}
                   leftIcon={
                     <svg
                       width="15"
@@ -297,12 +390,22 @@ function IconPrefixedForm() {
                   checked={field.state.value}
                   onChange={(e) => field.handleChange(e.target.checked)}
                 />
-                <Label htmlFor={field.name}>Remember me</Label>
+                <div className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    id={field.name}
+                    checked={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.checked)}
+                  />
+                  <Label htmlFor={field.name}>
+                    {t.layouts.iconRemember_label}
+                  </Label>
+                  <FieldInfoButton description={t.layouts.iconRemember_info} />
+                </div>
               </div>
             )}
           </form.AppField>
           <div className="flex items-center justify-between">
-            <form.SubmitButton label="Create Account" />
+            <form.SubmitButton label={t.layouts.iconSubmit} />
             {isDirty && (
               <span className="text-warning text-xxs flex items-center gap-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-current" />
@@ -317,6 +420,7 @@ function IconPrefixedForm() {
 }
 
 function SectionedCardForm() {
+  const t = useMessages("forms");
   const form = useAppForm({
     ...sectionedFormOpts,
   });
@@ -324,8 +428,8 @@ function SectionedCardForm() {
 
   return (
     <LayoutCard
-      label="Sectioned Card Form"
-      description="Multiple card sections for complex data entry"
+      label={t.layouts.sectioned_label}
+      description={t.layouts.sectioned_description}
       fullWidth
     >
       <form.AppForm>
@@ -339,13 +443,33 @@ function SectionedCardForm() {
                 name="firstName"
                 validators={{ onChange: sectionedFieldSchemas.firstName }}
               >
-                {(field) => <field.TextField label="First Name" />}
+                {(field) => (
+                  <div className="flex items-center gap-1">
+                    <field.TextField
+                      label={t.layouts.sectionedFirstName_label}
+                      placeholder={t.layouts.sectionedFirstName_placeholder}
+                    />
+                    <FieldInfoButton
+                      description={t.layouts.sectionedFirstName_info}
+                    />
+                  </div>
+                )}
               </form.AppField>
               <form.AppField
                 name="lastName"
                 validators={{ onChange: sectionedFieldSchemas.lastName }}
               >
-                {(field) => <field.TextField label="Last Name" />}
+                {(field) => (
+                  <div className="flex items-center gap-1">
+                    <field.TextField
+                      label={t.layouts.sectionedLastName_label}
+                      placeholder={t.layouts.sectionedLastName_placeholder}
+                    />
+                    <FieldInfoButton
+                      description={t.layouts.sectionedLastName_info}
+                    />
+                  </div>
+                )}
               </form.AppField>
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -367,11 +491,14 @@ function SectionedCardForm() {
               </div>
             </div>
             <div className="flex flex-col gap-1">
-              <Label>Gender</Label>
+              <div className="flex items-center gap-1">
+                <Label>{t.layouts.sectionedGender_label}</Label>
+                <FieldInfoButton description={t.layouts.sectionedGender_info} />
+              </div>
               <div className="flex gap-4">
                 <label className="flex items-center gap-2 text-sm">
                   <input type="radio" name="gender" className="accent-brand" />
-                  Male
+                  {t.layouts.sectionedGender_male}
                 </label>
                 <label className="flex items-center gap-2 text-sm">
                   <input
@@ -380,16 +507,21 @@ function SectionedCardForm() {
                     defaultChecked
                     className="accent-brand"
                   />
-                  Female
+                  {t.layouts.sectionedGender_female}
                 </label>
                 <label className="flex items-center gap-2 text-sm">
                   <input type="radio" name="gender" className="accent-brand" />
-                  Other
+                  {t.layouts.sectionedGender_other}
                 </label>
               </div>
             </div>
             <div className="flex flex-col gap-1">
-              <Label>Category</Label>
+              <div className="flex items-center gap-1">
+                <Label>{t.layouts.sectionedCategory_label}</Label>
+                <FieldInfoButton
+                  description={t.layouts.sectionedCategory_info}
+                />
+              </div>
               <div className="flex gap-4">
                 {[
                   { value: "tech" as const, label: "Technology" },
@@ -425,39 +557,86 @@ function SectionedCardForm() {
               name="street"
               validators={{ onChange: sectionedFieldSchemas.street }}
             >
-              {(field) => <field.TextField label="Street" />}
+              {(field) => (
+                <div className="flex items-center gap-1">
+                  <field.TextField
+                    label={t.layouts.sectionedStreet_label}
+                    placeholder={t.layouts.sectionedStreet_placeholder}
+                  />
+                  <FieldInfoButton
+                    description={t.layouts.sectionedStreet_info}
+                  />
+                </div>
+              )}
             </form.AppField>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <form.AppField
                 name="city"
                 validators={{ onChange: sectionedFieldSchemas.city }}
               >
-                {(field) => <field.TextField label="City" />}
+                {(field) => (
+                  <div className="flex items-center gap-1">
+                    <field.TextField
+                      label={t.layouts.sectionedCity_label}
+                      placeholder={t.layouts.sectionedCity_placeholder}
+                    />
+                    <FieldInfoButton
+                      description={t.layouts.sectionedCity_info}
+                    />
+                  </div>
+                )}
               </form.AppField>
               <form.AppField
                 name="state"
                 validators={{ onChange: sectionedFieldSchemas.state }}
               >
-                {(field) => <field.TextField label="State" />}
+                {(field) => (
+                  <div className="flex items-center gap-1">
+                    <field.TextField
+                      label={t.layouts.sectionedState_label}
+                      placeholder={t.layouts.sectionedState_placeholder}
+                    />
+                    <FieldInfoButton
+                      description={t.layouts.sectionedState_info}
+                    />
+                  </div>
+                )}
               </form.AppField>
               <form.AppField
                 name="zip"
                 validators={{ onChange: sectionedFieldSchemas.zip }}
               >
-                {(field) => <field.TextField label="Post Code" />}
+                {(field) => (
+                  <div className="flex items-center gap-1">
+                    <field.TextField
+                      label={t.layouts.sectionedZip_label}
+                      placeholder={t.layouts.sectionedZip_placeholder}
+                    />
+                    <FieldInfoButton
+                      description={t.layouts.sectionedZip_info}
+                    />
+                  </div>
+                )}
               </form.AppField>
             </div>
             <div className="flex flex-col gap-1">
-              <Label>Country</Label>
+              <div className="flex items-center gap-1">
+                <Label>{t.layouts.sectionedCountry_label}</Label>
+                <FieldInfoButton
+                  description={t.layouts.sectionedCountry_info}
+                />
+              </div>
               <NativeSelect
                 value={form.getFieldValue("country")}
                 onChange={(e) => form.setFieldValue("country", e.target.value)}
               >
-                <option value="">-- Select Country --</option>
-                <option value="us">USA</option>
-                <option value="ca">Canada</option>
-                <option value="uk">United Kingdom</option>
-                <option value="tr">Turkey</option>
+                <option value="">
+                  {t.layouts.sectionedCountry_placeholder}
+                </option>
+                <option value="us">{t.layouts.sectionedCountry_us}</option>
+                <option value="ca">{t.layouts.sectionedCountry_ca}</option>
+                <option value="uk">{t.layouts.sectionedCountry_uk}</option>
+                <option value="tr">{t.layouts.sectionedCountry_tr}</option>
               </NativeSelect>
             </div>
           </div>
@@ -469,7 +648,10 @@ function SectionedCardForm() {
               Membership
             </p>
             <div className="flex flex-col gap-2">
-              <Label>Plan</Label>
+              <div className="flex items-center gap-1">
+                <Label>{t.layouts.sectionedPlan_label}</Label>
+                <FieldInfoButton description={t.layouts.sectionedPlan_info} />
+              </div>
               <div className="flex gap-4">
                 {[
                   { value: "free" as const, label: "Free" },
@@ -500,15 +682,18 @@ function SectionedCardForm() {
                   form.setFieldValue("agree", !form.getFieldValue("agree"))
                 }
               />
-              <Label>I agree to the terms and conditions</Label>
+              <div className="flex items-center gap-1">
+                <Label>{t.layouts.sectionedAgree_label}</Label>
+                <FieldInfoButton description={t.layouts.sectionedAgree_info} />
+              </div>
             </div>
           </div>
 
           <div className="flex items-center justify-between">
             <div className="flex gap-3">
-              <form.SubmitButton label="Save Changes" />
+              <form.SubmitButton label={t.layouts.sectionedSubmit} />
               <Button type="button" variant="outline">
-                Cancel
+                {t.layouts.sectionedCancel}
               </Button>
             </div>
             {isDirty && (
@@ -525,14 +710,12 @@ function SectionedCardForm() {
 }
 
 export default function FormLayoutsPage() {
+  const t = useMessages("forms");
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-sm font-semibold">Form Layouts</h2>
-        <p className="text-muted text-xs">
-          Basic stacked, two-column grid, icon-prefixed, and sectioned card form
-          patterns.
-        </p>
+        <h2 className="text-sm font-semibold">{t.layouts.heading}</h2>
+        <p className="text-muted text-xs">{t.layouts.description}</p>
       </div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <ContactForm />

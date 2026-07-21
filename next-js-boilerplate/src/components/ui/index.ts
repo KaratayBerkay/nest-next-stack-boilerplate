@@ -110,6 +110,7 @@ export {
 } from "./dropdown-menu";
 export { Empty } from "./empty";
 export { ErrorBoundary } from "./error-boundary";
+export { FieldInfoButton } from "./field-info-button";
 export { FileUpload } from "./file-upload";
 export { HoverCard, HoverCardTrigger, HoverCardContent } from "./hover-card";
 export { ImageUpload } from "./image-upload";
