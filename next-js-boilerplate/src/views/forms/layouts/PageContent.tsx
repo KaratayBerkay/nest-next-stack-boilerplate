@@ -1,7 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
-import { z } from "zod";
 import { useAppForm } from "@/features/forms/form-hook";
 import {
   basicFormOpts,
@@ -9,22 +7,21 @@ import {
   iconFormOpts,
   sectionedFormOpts,
 } from "@/validators/forms/layouts-inits";
+import {
+  contactFieldSchemas,
+  twoColumnFieldSchemas,
+  iconFieldSchemas,
+  sectionedFieldSchemas,
+} from "@/validators/forms/layouts-validation";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Switch } from "@/components/ui/Switch";
 import { NativeSelect } from "@/components/ui/NativeSelect";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Label } from "@/components/ui/Label";
+import type { LayoutCardProps } from "@/types/forms/LayoutCard-types";
 
-function LayoutCard({
-  label,
-  description,
-  children,
-}: {
-  label: string;
-  description?: string;
-  children: React.ReactNode;
-}) {
+function LayoutCard({ label, description, children }: LayoutCardProps) {
   return (
     <div className="surface border-border flex flex-col gap-4 rounded-lg border p-5">
       <div>
@@ -37,14 +34,6 @@ function LayoutCard({
 }
 
 function ContactForm() {
-  const fieldSchemas = useMemo(
-    () => ({
-      fullName: z.string().min(2, "Name must be at least 2 characters"),
-      email: z.string().email("Invalid email address"),
-      message: z.string().min(1, "Message is required"),
-    }),
-    [],
-  );
   const form = useAppForm({
     ...basicFormOpts,
   });
@@ -58,7 +47,7 @@ function ContactForm() {
         <form className="flex flex-col gap-3">
           <form.AppField
             name="fullName"
-            validators={{ onChange: fieldSchemas.fullName }}
+            validators={{ onChange: contactFieldSchemas.fullName }}
           >
             {(field) => (
               <field.TextField label="Full Name" placeholder="John Doe" />
@@ -66,7 +55,7 @@ function ContactForm() {
           </form.AppField>
           <form.AppField
             name="email"
-            validators={{ onChange: fieldSchemas.email }}
+            validators={{ onChange: contactFieldSchemas.email }}
           >
             {(field) => (
               <field.TextField label="Email" placeholder="john@example.com" />
@@ -87,7 +76,7 @@ function ContactForm() {
           </div>
           <form.AppField
             name="message"
-            validators={{ onChange: fieldSchemas.message }}
+            validators={{ onChange: contactFieldSchemas.message }}
           >
             {(field) => <field.TextareaField label="Message" />}
           </form.AppField>
@@ -99,15 +88,6 @@ function ContactForm() {
 }
 
 function TwoColumnGridForm() {
-  const fieldSchemas = useMemo(
-    () => ({
-      firstName: z.string().min(2, "First name is required"),
-      lastName: z.string().min(2, "Last name is required"),
-      email: z.string().email("Invalid email address"),
-      message: z.string().min(1, "Message is required"),
-    }),
-    [],
-  );
   const form = useAppForm({
     ...twoColumnFormOpts,
   });
@@ -122,7 +102,7 @@ function TwoColumnGridForm() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <form.AppField
               name="firstName"
-              validators={{ onChange: fieldSchemas.firstName }}
+              validators={{ onChange: twoColumnFieldSchemas.firstName }}
             >
               {(field) => (
                 <field.TextField label="First Name" placeholder="John" />
@@ -130,7 +110,7 @@ function TwoColumnGridForm() {
             </form.AppField>
             <form.AppField
               name="lastName"
-              validators={{ onChange: fieldSchemas.lastName }}
+              validators={{ onChange: twoColumnFieldSchemas.lastName }}
             >
               {(field) => (
                 <field.TextField label="Last Name" placeholder="Doe" />
@@ -139,7 +119,7 @@ function TwoColumnGridForm() {
           </div>
           <form.AppField
             name="email"
-            validators={{ onChange: fieldSchemas.email }}
+            validators={{ onChange: twoColumnFieldSchemas.email }}
           >
             {(field) => (
               <field.TextField label="Email" placeholder="john@example.com" />
@@ -160,7 +140,7 @@ function TwoColumnGridForm() {
           </div>
           <form.AppField
             name="message"
-            validators={{ onChange: fieldSchemas.message }}
+            validators={{ onChange: twoColumnFieldSchemas.message }}
           >
             {(field) => <field.TextareaField label="Message" maxLength={200} />}
           </form.AppField>
@@ -172,14 +152,6 @@ function TwoColumnGridForm() {
 }
 
 function IconPrefixedForm() {
-  const fieldSchemas = useMemo(
-    () => ({
-      name: z.string().min(2, "Name is required"),
-      mail: z.string().email("Invalid email"),
-      lock: z.string().min(6, "Password must be at least 6 characters"),
-    }),
-    [],
-  );
   const form = useAppForm({
     ...iconFormOpts,
   });
@@ -193,7 +165,7 @@ function IconPrefixedForm() {
         <form className="flex flex-col gap-3">
           <form.AppField
             name="name"
-            validators={{ onChange: fieldSchemas.name }}
+            validators={{ onChange: iconFieldSchemas.name }}
           >
             {(field) => (
               <div className="flex flex-col gap-1">
@@ -225,7 +197,7 @@ function IconPrefixedForm() {
           </form.AppField>
           <form.AppField
             name="mail"
-            validators={{ onChange: fieldSchemas.mail }}
+            validators={{ onChange: iconFieldSchemas.mail }}
           >
             {(field) => (
               <div className="flex flex-col gap-1">
@@ -257,7 +229,7 @@ function IconPrefixedForm() {
           </form.AppField>
           <form.AppField
             name="lock"
-            validators={{ onChange: fieldSchemas.lock }}
+            validators={{ onChange: iconFieldSchemas.lock }}
           >
             {(field) => (
               <div className="flex flex-col gap-1">
@@ -308,18 +280,6 @@ function IconPrefixedForm() {
 }
 
 function SectionedCardForm() {
-  const fieldSchemas = useMemo(
-    () => ({
-      firstName: z.string().min(2, "First name is required"),
-      lastName: z.string().min(2, "Last name is required"),
-      email: z.string().email("Invalid email"),
-      street: z.string().min(3, "Street is required"),
-      city: z.string().min(2, "City is required"),
-      state: z.string().min(2, "State is required"),
-      zip: z.string().min(3, "ZIP code is required"),
-    }),
-    [],
-  );
   const form = useAppForm({
     ...sectionedFormOpts,
   });
@@ -338,13 +298,13 @@ function SectionedCardForm() {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <form.AppField
                 name="firstName"
-                validators={{ onChange: fieldSchemas.firstName }}
+                validators={{ onChange: sectionedFieldSchemas.firstName }}
               >
                 {(field) => <field.TextField label="First Name" />}
               </form.AppField>
               <form.AppField
                 name="lastName"
-                validators={{ onChange: fieldSchemas.lastName }}
+                validators={{ onChange: sectionedFieldSchemas.lastName }}
               >
                 {(field) => <field.TextField label="Last Name" />}
               </form.AppField>
@@ -352,7 +312,7 @@ function SectionedCardForm() {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <form.AppField
                 name="email"
-                validators={{ onChange: fieldSchemas.email }}
+                validators={{ onChange: sectionedFieldSchemas.email }}
               >
                 {(field) => <field.TextField label="Email" />}
               </form.AppField>
@@ -424,26 +384,26 @@ function SectionedCardForm() {
             </p>
             <form.AppField
               name="street"
-              validators={{ onChange: fieldSchemas.street }}
+              validators={{ onChange: sectionedFieldSchemas.street }}
             >
               {(field) => <field.TextField label="Street" />}
             </form.AppField>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <form.AppField
                 name="city"
-                validators={{ onChange: fieldSchemas.city }}
+                validators={{ onChange: sectionedFieldSchemas.city }}
               >
                 {(field) => <field.TextField label="City" />}
               </form.AppField>
               <form.AppField
                 name="state"
-                validators={{ onChange: fieldSchemas.state }}
+                validators={{ onChange: sectionedFieldSchemas.state }}
               >
                 {(field) => <field.TextField label="State" />}
               </form.AppField>
               <form.AppField
                 name="zip"
-                validators={{ onChange: fieldSchemas.zip }}
+                validators={{ onChange: sectionedFieldSchemas.zip }}
               >
                 {(field) => <field.TextField label="Post Code" />}
               </form.AppField>

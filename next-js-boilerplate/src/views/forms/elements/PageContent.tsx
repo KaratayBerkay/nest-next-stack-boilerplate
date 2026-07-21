@@ -1,8 +1,7 @@
 "use client";
 
 import { useAppForm } from "@/features/forms/form-hook";
-import { useMemo, useState } from "react";
-import { z } from "zod";
+import { useState } from "react";
 import { InputGroup } from "@/features/forms/ui/InputGroup";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
@@ -10,7 +9,9 @@ import { Checkbox } from "@/components/ui/Checkbox";
 import { Switch } from "@/components/ui/Switch";
 import { NativeSelect } from "@/components/ui/NativeSelect";
 import { FileUpload } from "@/components/ui/FileUpload";
+import { elementsFieldSchemas } from "@/validators/forms/elements-validation";
 import type { UploadFile } from "@/types/ui/FileUpload-types";
+import type { SectionCardProps } from "@/types/forms/SectionCard-types";
 
 const COUNTRY_OPTIONS = [
   { value: "us", label: "US +1" },
@@ -20,13 +21,7 @@ const COUNTRY_OPTIONS = [
   { value: "tr", label: "TR +90" },
 ];
 
-function SectionCard({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function SectionCard({ label, children }: SectionCardProps) {
   return (
     <div className="surface border-border flex flex-col gap-3 rounded-lg border p-4">
       <p className="text-xxs text-muted tracking-wider uppercase">{label}</p>
@@ -465,14 +460,6 @@ function DateTimeSection() {
 }
 
 function FormValidationSection() {
-  const fieldSchemas = useMemo(
-    () => ({
-      email: z.string().email("Invalid email address"),
-      password: z.string().min(6, "Password must be at least 6 characters"),
-      bio: z.string().max(200, "Bio must be 200 characters or fewer"),
-    }),
-    [],
-  );
   const form = useAppForm({
     defaultValues: { email: "", password: "", bio: "" },
   });
@@ -487,8 +474,8 @@ function FormValidationSection() {
         <form.AppForm>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <form.AppField
-              name="email"
-              validators={{ onChange: fieldSchemas.email }}
+              name="bio"
+              validators={{ onChange: elementsFieldSchemas.bio }}
             >
               {(field) => (
                 <field.TextField label="Email" placeholder="your@email.com" />
@@ -496,7 +483,7 @@ function FormValidationSection() {
             </form.AppField>
             <form.AppField
               name="password"
-              validators={{ onChange: fieldSchemas.password }}
+              validators={{ onChange: elementsFieldSchemas.password }}
             >
               {(field) => (
                 <field.TextField
@@ -507,7 +494,10 @@ function FormValidationSection() {
               )}
             </form.AppField>
           </div>
-          <form.AppField name="bio" validators={{ onChange: fieldSchemas.bio }}>
+          <form.AppField
+            name="bio"
+            validators={{ onChange: elementsFieldSchemas.bio }}
+          >
             {(field) => (
               <field.TextareaField
                 label="Bio"
