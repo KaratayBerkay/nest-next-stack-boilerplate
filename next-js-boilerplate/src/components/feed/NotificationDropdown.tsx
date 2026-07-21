@@ -61,6 +61,7 @@ export function NotificationDropdown({
       onMarkRead={(id) => markRead(id)}
       onMarkAllRead={() => markAllRead()}
       onNavigate={(n) => handleNavigate(n, lang, setOpen, router)}
+      onSeeMore={() => setOpen(false)}
       lang={lang}
     />
   );

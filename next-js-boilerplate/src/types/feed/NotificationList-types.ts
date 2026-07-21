@@ -5,5 +5,6 @@ export interface NotificationListProps {
   onMarkRead: (id: string) => void;
   onMarkAllRead: () => void;
   onNavigate: (n: NotificationItem) => void;
+  onSeeMore?: () => void;
   lang?: string;
 }

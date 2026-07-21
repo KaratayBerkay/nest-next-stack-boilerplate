@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import type { NotificationListProps } from "@/types/feed/NotificationList-types";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { IconChevronRight } from "@tabler/icons-react";
 import { formatDateByPreference } from "@/lib/date-time";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
@@ -12,8 +12,10 @@ export function NotificationList({
   onMarkRead,
   onMarkAllRead,
   onNavigate,
+  onSeeMore,
   lang = "en",
 }: NotificationListProps) {
+  const router = useRouter();
   const unread = notifications.filter((n) => !n.readAt);
   const dateDisplay = useDateDisplayCookie();
 
@@ -65,7 +67,7 @@ export function NotificationList({
                 !n.readAt ? "bg-brand/5" : ""
               }`}
             >
-              <div className="bg-brand flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-brand-fg">
+              <div className="bg-brand text-brand-fg flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold">
                 {n.actor?.name?.charAt(0).toUpperCase() ?? "?"}
               </div>
               <div className="min-w-0 flex-1">
@@ -90,13 +92,16 @@ export function NotificationList({
       )}
 
       <div className="border-border border-t">
-        <Link
-          href={`/v1/${lang}/notification`}
-          className="text-muted hover:bg-surface-hover flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium"
+        <button
+          onClick={() => {
+            onSeeMore?.();
+            router.push(`/v1/${lang}/notification`);
+          }}
+          className="text-muted hover:bg-surface-hover flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-medium"
         >
           See more
           <IconChevronRight size={14} stroke={1.5} />
-        </Link>
+        </button>
       </div>
     </div>
   );
