@@ -401,7 +401,7 @@ function ChatRoomContent({
   return (
     <div
       className={cn(
-        "flex h-full w-full flex-col gap-6 overflow-hidden",
+        "flex min-h-0 w-full flex-1 flex-col gap-6 overflow-hidden",
         className,
       )}
     >

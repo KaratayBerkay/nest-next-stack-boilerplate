@@ -47,7 +47,7 @@ export function MediumFindFriendsContent({
   const pendingIds = new Set(friendRequests.map((r) => r.user.id));
 
   return (
-    <div className={cn("flex h-full w-full flex-col gap-6", className)}>
+    <div className={cn("flex min-h-0 flex-1 gap-6", className)}>
       <div className="flex min-h-0 flex-1 flex-col gap-6">
         <h2 className="text-brand text-sm font-semibold">{t.title}</h2>
         <Tabs

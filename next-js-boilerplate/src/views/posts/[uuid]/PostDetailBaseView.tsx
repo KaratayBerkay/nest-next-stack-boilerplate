@@ -95,7 +95,7 @@ function PostDetailContent({
     <div
       ref={swipeRef}
       className={cn(
-        "flex h-full w-full flex-col gap-6 overflow-y-auto",
+        "flex max-h-full min-h-0 w-full flex-col gap-6 overflow-y-auto py-6 max-md:px-1",
         className,
       )}
     >

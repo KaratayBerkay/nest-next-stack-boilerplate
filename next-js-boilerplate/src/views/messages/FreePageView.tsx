@@ -193,10 +193,7 @@ function MessagesPageContent({
 
   return (
     <div
-      className={cn(
-        "flex h-full w-full flex-col gap-6 overflow-hidden",
-        className,
-      )}
+      className={cn("flex min-h-0 w-full flex-1 overflow-hidden", className)}
     >
       {sidebarOpen && (
         <div

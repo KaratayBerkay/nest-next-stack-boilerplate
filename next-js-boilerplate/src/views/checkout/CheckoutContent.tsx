@@ -87,7 +87,7 @@ export default function CheckoutPage({ params, className }: CheckoutPageProps) {
   }
 
   return (
-    <div className={cn("flex h-full w-full flex-col gap-6", className)}>
+    <div className={cn("flex h-full w-full flex-col gap-6 py-8", className)}>
       <div>
         <h1 className="text-xl font-bold">
           {isUpgrade ? t.upgrade : isDowngrade ? t.changePlan : t.checkout} to{" "}
