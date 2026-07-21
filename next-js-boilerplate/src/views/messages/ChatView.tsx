@@ -123,7 +123,7 @@ export function ChatView({
         <div className="relative shrink-0">
           <Avatar
             fallback={initials(selectedUser.name ?? selectedUser.email ?? "?")}
-            className="bg-brand h-8 w-8 shrink-0 text-xs text-brand-fg"
+            className="bg-brand text-brand-fg h-8 w-8 shrink-0 text-xs"
           />
           {onlineUsers.has(selectedUser.id) && (
             <span className="border-bg bg-success absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2" />
@@ -160,7 +160,7 @@ export function ChatView({
                     fallback={initials(
                       selectedUser.name ?? selectedUser.email ?? "?",
                     )}
-                    className="bg-brand mb-0.5 h-6 w-6 shrink-0 text-[9px] text-brand-fg"
+                    className="bg-brand text-brand-fg mb-0.5 h-6 w-6 shrink-0 text-[9px]"
                   />
                 )}
                 <span
@@ -171,7 +171,7 @@ export function ChatView({
                   {msg.body}
                 </span>
                 {isMe && (
-                  <span className="self-end pb-1">
+                  <span className="shrink-0 self-end pb-1">
                     {msg.readAt ? (
                       <MessageTick status="read" />
                     ) : msg.deliveredAt ? (

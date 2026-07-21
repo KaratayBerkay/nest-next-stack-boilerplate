@@ -5,8 +5,8 @@ export function MessageTick({ status }: MessageTickProps) {
     return (
       <svg
         viewBox="0 0 20 11"
-        width="17"
-        height="11"
+        width="12"
+        height="7"
         className="fill-current text-blue-400 drop-shadow-sm"
         data-testid="tick-read"
       >
@@ -19,8 +19,8 @@ export function MessageTick({ status }: MessageTickProps) {
     return (
       <svg
         viewBox="0 0 20 11"
-        width="17"
-        height="11"
+        width="12"
+        height="7"
         className="fill-current text-white/80"
         data-testid="tick-delivered"
       >
@@ -32,8 +32,8 @@ export function MessageTick({ status }: MessageTickProps) {
   return (
     <svg
       viewBox="0 0 12 11"
-      width="15"
-      height="11"
+      width="10"
+      height="7"
       className="fill-current text-white/40"
       data-testid="tick-sent"
     >
