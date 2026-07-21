@@ -10,12 +10,14 @@ import { PageInfoButton } from "@/components/ui/page-info";
 import { feedPageInfo } from "@/constants/page-info";
 import { FeedLoadingFallback } from "@/fallbacks";
 import { PostStatsSidebar } from "@/components/feed/PostStatsSidebar";
+import { cn } from "@/lib/cn";
 import type { FeedBaseViewProps } from "@/types/feed/FeedBaseView-types";
 
 export function FeedBaseView({
   renderFeedList,
   showPageInfo = false,
   showSidebar = false,
+  className,
 }: FeedBaseViewProps) {
   const t = useMessages("feed");
   const params = useParams<{ lang: string }>();
@@ -48,14 +50,19 @@ export function FeedBaseView({
   );
 
   return (
-    <div className="flex h-full w-full flex-col gap-4 overflow-hidden">
+    <div
+      className={cn(
+        "flex h-full w-full flex-col gap-6 overflow-hidden",
+        className,
+      )}
+    >
       <div className="flex items-center justify-between">
         <h2 className="text-brand text-sm font-semibold">{t.feed}</h2>
         {showPageInfo ? (
           <div className="flex items-center gap-2">
             <Link
               href={`/v1/${lang}/share`}
-              className="bg-brand rounded-lg px-3 py-1.5 text-xs font-medium text-brand-fg hover:opacity-90"
+              className="bg-brand text-brand-fg rounded-lg px-3 py-1.5 text-xs font-medium hover:opacity-90"
             >
               {t.share}
             </Link>
@@ -64,7 +71,7 @@ export function FeedBaseView({
         ) : (
           <Link
             href={`/v1/${lang}/share`}
-            className="bg-brand rounded-lg px-3 py-1.5 text-xs font-medium text-brand-fg hover:opacity-90"
+            className="bg-brand text-brand-fg rounded-lg px-3 py-1.5 text-xs font-medium hover:opacity-90"
           >
             {t.share}
           </Link>

@@ -6,4 +6,5 @@ export interface MessagesViewProps {
     email: string;
     avatarUrl: string | null;
   }>;
+  className?: string;
 }

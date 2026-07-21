@@ -13,6 +13,7 @@ import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsApiKeysPageInfo } from "@/constants/page-info";
 import { useApiKeyActions } from "@/api/client/api-keys/actions";
 import type { ApiKeyInfo } from "@/api/server/api-keys/list";
+import { cn } from "@/lib/cn";
 import type { CreateApiKeyResult } from "@/api/server/api-keys/create";
 import type { Dispatch, SetStateAction } from "react";
 
@@ -95,7 +96,7 @@ async function handleRevokeApiKey(
   }
 }
 
-export default function PageContent() {
+export default function PageContent({ className }: { className?: string }) {
   const { user } = useAuth();
   const _t = useMessages("settings");
   const { toast } = useToast();
@@ -121,7 +122,7 @@ export default function PageContent() {
   }, [user, loadKeys]);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className={cn("flex h-full w-full flex-col gap-6", className)}>
       <PageHeader
         title="API Keys"
         description="API keys allow programmatic access to your account. Treat them like passwords."

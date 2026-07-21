@@ -30,6 +30,7 @@ import { postsPageInfo } from "@/constants/page-info";
 import { PostDetailFallback } from "@/fallbacks";
 import { singlePostQueryOptions } from "@/api/client/posts/query";
 import { usePostActions } from "@/api/client/posts/actions";
+import { cn } from "@/lib/cn";
 import type { PostDetailBaseViewProps } from "@/types/posts/PostDetailBaseView-types";
 
 interface Post {
@@ -60,6 +61,7 @@ function PostDetailContent({
   showReactionBreakdown = false,
   showWhoReacted = false,
   initialPostData,
+  className,
 }: PostDetailBaseViewProps) {
   const t = useMessages("posts");
   const params = useParams<{ lang: string; uuid: string }>();
@@ -92,7 +94,10 @@ function PostDetailContent({
   return (
     <div
       ref={swipeRef}
-      className="flex max-h-full min-h-0 w-full flex-col gap-4 overflow-y-auto py-6 max-md:px-1"
+      className={cn(
+        "flex h-full w-full flex-col gap-6 overflow-y-auto",
+        className,
+      )}
     >
       <button
         onClick={() => router.push(`/v1/${params?.lang ?? "en"}/feed`)}
@@ -105,7 +110,7 @@ function PostDetailContent({
       <div className="surface flex flex-col gap-4 p-5">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2.5">
-            <div className="bg-brand flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold text-brand-fg shadow-sm">
+            <div className="bg-brand text-brand-fg flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold shadow-sm">
               {(post.author.name || post.author.email).charAt(0).toUpperCase()}
             </div>
             <div>
@@ -185,7 +190,7 @@ function PostDetailContent({
                   );
                   setEditing(false);
                 }}
-                className="bg-brand rounded-lg px-4 py-2 text-sm font-medium text-brand-fg transition-opacity hover:opacity-90"
+                className="bg-brand text-brand-fg rounded-lg px-4 py-2 text-sm font-medium transition-opacity hover:opacity-90"
               >
                 {t.save}
               </button>
@@ -264,7 +269,7 @@ function PostDetailContent({
               >
                 <Avatar
                   fallback={initials(r.name ?? "?")}
-                  className="bg-brand h-6 w-6 text-[9px] text-brand-fg"
+                  className="bg-brand text-brand-fg h-6 w-6 text-[9px]"
                 />
                 <span className="text-fg text-sm">{r.name ?? t.unknown}</span>
                 <span className="text-sm">{r.type}</span>

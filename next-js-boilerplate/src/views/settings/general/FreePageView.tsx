@@ -32,6 +32,7 @@ import { PageHeader } from "@/components/ui";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsGeneralPageInfo } from "@/constants/page-info";
 import { useProfileActions } from "@/api/client/profile/actions";
+import { cn } from "@/lib/cn";
 
 function readCurrencyCookie(): CurrencyCode {
   if (typeof document === "undefined") return DEFAULT_CURRENCY;
@@ -122,7 +123,7 @@ async function save(
   }
 }
 
-export function FreePageView() {
+export function FreePageView({ className }: { className?: string }) {
   const { user, loading, refreshUser } = useAuth();
   const t = useMessages("settings");
   const { toast } = useToast();
@@ -151,7 +152,7 @@ export function FreePageView() {
     return <UnauthenticatedMessage message={t.signInToManageSettings} />;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className={cn("flex h-full w-full flex-col gap-6", className)}>
       <PageHeader
         title={t.generalHeading}
         actions={<PageInfoButton content={settingsGeneralPageInfo} />}

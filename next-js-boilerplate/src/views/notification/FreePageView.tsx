@@ -24,13 +24,14 @@ import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { notificationTarget } from "@/lib/notifications/target";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useNotificationActions } from "@/api/client/notifications/actions";
+import { cn } from "@/lib/cn";
 
 function navigateToFeed(router: ReturnType<typeof useRouter>, lang: string) {
   router.push(`/v1/${lang}/feed`);
 }
 
 // Notification list kept live by lib/realtime/renew-dispatch.ts (Notifications/Item) — no direct realtime subscription in this file
-function NotificationPageContent() {
+function NotificationPageContent({ className }: { className?: string }) {
   const params = useParams<{ lang: string }>();
   const lang = params?.lang ?? "en";
   const router = useRouter();
@@ -87,7 +88,12 @@ function NotificationPageContent() {
   const opacity = isSwiping && direction === "left" ? 1 - progress * 0.3 : 1;
 
   return (
-    <div className="flex h-full w-full flex-col gap-4 overflow-hidden">
+    <div
+      className={cn(
+        "flex h-full w-full flex-col gap-6 overflow-hidden",
+        className,
+      )}
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <IconButton
@@ -195,11 +201,11 @@ function NotificationPageContent() {
   );
 }
 
-export function FreePageView() {
+export function FreePageView({ className }: { className?: string }) {
   return (
     <Suspense fallback={<NotificationFallback />}>
       <ErrorBoundary>
-        <NotificationPageContent />
+        <NotificationPageContent className={className} />
       </ErrorBoundary>
     </Suspense>
   );

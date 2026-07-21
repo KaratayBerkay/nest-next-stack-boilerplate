@@ -26,6 +26,7 @@ import { MessagesViewFallback } from "@/fallbacks";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
 import { IconMenu2 } from "@tabler/icons-react";
+import { cn } from "@/lib/cn";
 import type { MessagesViewProps } from "@/types/messages/MessagesView-types";
 import { MessagesSidebar } from "./MessagesSidebar";
 import { ChatView } from "./ChatView";
@@ -54,6 +55,7 @@ function openConversationAction(
 export function FreePageView({
   initialUser,
   initialFriends,
+  className,
 }: MessagesViewProps) {
   return (
     <Suspense fallback={<MessagesViewFallback />}>
@@ -61,6 +63,7 @@ export function FreePageView({
         <MessagesPageContent
           initialUser={initialUser}
           initialFriends={initialFriends}
+          className={className}
         />
       </ErrorBoundary>
     </Suspense>
@@ -70,6 +73,7 @@ export function FreePageView({
 function MessagesPageContent({
   initialUser,
   initialFriends,
+  className,
 }: MessagesViewProps) {
   const t = useMessages("messages");
   const { user, loading } = useAuth();
@@ -188,7 +192,12 @@ function MessagesPageContent({
   };
 
   return (
-    <div className="flex min-h-0 w-full flex-1 overflow-hidden">
+    <div
+      className={cn(
+        "flex h-full w-full flex-col gap-6 overflow-hidden",
+        className,
+      )}
+    >
       {sidebarOpen && (
         <div
           className="bg-overlay/30 fixed inset-0 z-40 md:hidden"

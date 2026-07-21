@@ -5,4 +5,5 @@ export interface ChatRoomBaseViewProps extends ChatRoomViewProps {
   vipRooms?: string[];
   useNativeControls?: boolean;
   showSelfCrown?: boolean;
+  className?: string;
 }

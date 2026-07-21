@@ -18,9 +18,11 @@ import { useToast } from "@/components/ui/Toast";
 import { useFriendSearch } from "./useFriendSearch";
 import { useFriendActions } from "./useFriendActions";
 import { fetchSuggestedFriendsServer } from "@/api/server/friends/suggested";
+import { cn } from "@/lib/cn";
 
 export function MediumFindFriendsContent({
   user: _user,
+  className,
 }: FindFriendsContentProps) {
   const t = useMessages("find-friends");
   const pathname = usePathname();
@@ -45,7 +47,7 @@ export function MediumFindFriendsContent({
   const pendingIds = new Set(friendRequests.map((r) => r.user.id));
 
   return (
-    <div className="flex min-h-0 flex-1 gap-6">
+    <div className={cn("flex h-full w-full flex-col gap-6", className)}>
       <div className="flex min-h-0 flex-1 flex-col gap-6">
         <h2 className="text-brand text-sm font-semibold">{t.title}</h2>
         <Tabs
@@ -98,7 +100,7 @@ export function MediumFindFriendsContent({
                     >
                       <Avatar
                         fallback={initials(u.name)}
-                        className="bg-brand h-10 w-10 shrink-0 text-xs text-brand-fg"
+                        className="bg-brand text-brand-fg h-10 w-10 shrink-0 text-xs"
                       />
                       <span className="flex-1 text-sm font-medium">
                         {u.name}
@@ -114,7 +116,7 @@ export function MediumFindFriendsContent({
                             if (ok)
                               setSentIds((prev) => new Set(prev).add(u.id));
                           }}
-                          className="bg-brand rounded-lg px-3 py-1 text-sm text-brand-fg hover:opacity-80"
+                          className="bg-brand text-brand-fg rounded-lg px-3 py-1 text-sm hover:opacity-80"
                         >
                           {t.addFriend}
                         </button>
@@ -151,7 +153,7 @@ export function MediumFindFriendsContent({
                 >
                   <Avatar
                     fallback={initials(r.user.name)}
-                    className="bg-brand h-10 w-10 shrink-0 text-xs text-brand-fg"
+                    className="bg-brand text-brand-fg h-10 w-10 shrink-0 text-xs"
                   />
                   <span className="flex-1 text-sm font-medium">
                     {r.user.name}
@@ -259,7 +261,7 @@ function SuggestedFriendsPanel() {
             <div key={s.id} className="flex items-center gap-2">
               <Avatar
                 fallback={initials(s.name ?? "?")}
-                className="bg-brand h-8 w-8 shrink-0 text-[10px] text-brand-fg"
+                className="bg-brand text-brand-fg h-8 w-8 shrink-0 text-[10px]"
               />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">

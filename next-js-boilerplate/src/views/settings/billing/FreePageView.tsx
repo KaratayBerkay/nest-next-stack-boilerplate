@@ -10,6 +10,7 @@ import { formatPrice } from "@/lib/currency";
 import { useCurrencyCookie } from "@/hooks/useCurrencyCookie";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { plansPath } from "@/constants/routes";
+import { cn } from "@/lib/cn";
 import {
   formatDateByPreference,
   type DateDisplayPreference,
@@ -71,7 +72,7 @@ function renderCurrentPlan(
       {tier === "FREE" ? (
         <Link
           href={plansPath()}
-          className="bg-brand rounded-lg px-4 py-2 text-sm font-medium text-brand-fg hover:opacity-90"
+          className="bg-brand text-brand-fg rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90"
         >
           {t.upgradePlan}
         </Link>
@@ -149,7 +150,7 @@ function renderBillingHistory(
   );
 }
 
-export function FreePageView() {
+export function FreePageView({ className }: { className?: string }) {
   const { user, loading } = useAuth();
   const t = useMessages("settings");
   const currency = useCurrencyCookie();
@@ -175,7 +176,7 @@ export function FreePageView() {
   const cancelAtPeriodEnd = subscription?.cancelAtPeriodEnd ?? false;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className={cn("flex h-full w-full flex-col gap-6", className)}>
       <PageHeader
         title={t.billingHeading}
         actions={<PageInfoButton content={settingsBillingPageInfo} />}

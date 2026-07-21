@@ -14,7 +14,7 @@ import { adminPageInfo } from "@/constants/page-info";
 import { AccessDeniedPage } from "@/features/statics";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 
-export default function PageContent() {
+export default function PageContent({ className }: { className?: string }) {
   const { user } = useAuth();
   const t = useMessages("admin");
   const [query, setQuery] = useState("");
@@ -30,7 +30,7 @@ export default function PageContent() {
 
   if (!isAdmin) {
     return (
-      <div className="flex flex-col gap-4">
+      <div className={`flex flex-col gap-4${className ? ` ${className}` : ""}`}>
         <h2 className="text-brand text-sm font-semibold">{t.title}</h2>
         <AccessDeniedPage message={t.accessDenied} />
       </div>
@@ -38,7 +38,7 @@ export default function PageContent() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className={`flex flex-col gap-6${className ? ` ${className}` : ""}`}>
       <div className="flex items-center justify-between">
         <h2 className="text-brand text-sm font-semibold">{t.title}</h2>
         <PageInfoButton content={adminPageInfo} />

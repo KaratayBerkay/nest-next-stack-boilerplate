@@ -19,6 +19,7 @@ import { useCurrencyCookie } from "@/hooks/useCurrencyCookie";
 import type { CurrencyCode } from "@/constants/currency";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { plansPageInfo } from "@/constants/page-info";
+import { cn } from "@/lib/cn";
 import Link from "next/link";
 
 function buildTierCards(
@@ -92,7 +93,7 @@ function TierCard({
         ) : ctaHref ? (
           <Link
             href={ctaHref}
-            className="bg-brand hover:bg-brand/90 block rounded-lg px-4 py-2 text-center text-sm font-medium text-brand-fg"
+            className="bg-brand hover:bg-brand/90 text-brand-fg block rounded-lg px-4 py-2 text-center text-sm font-medium"
           >
             {ctaLabel}
           </Link>
@@ -106,7 +107,7 @@ function TierCard({
   );
 }
 
-export default function PageContent({ params }: PlansPageProps) {
+export default function PageContent({ params, className }: PlansPageProps) {
   const { lang } = use(params);
   const { user } = useAuth();
   const t = useMessages("pricing");
@@ -122,7 +123,7 @@ export default function PageContent({ params }: PlansPageProps) {
   const tierCards = buildTierCards(user, currency, lang, FEATURES, t);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className={cn("flex h-full w-full flex-col gap-6", className)}>
       <div className="flex items-center justify-between">
         <div className="flex flex-col gap-2">
           <h1 className="text-2xl font-semibold tracking-tight">{t.heading}</h1>

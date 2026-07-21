@@ -25,6 +25,7 @@ import { PRICING_PATH } from "@/constants/routes";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { useBillingActions } from "@/api/client/billing/actions";
+import { cn } from "@/lib/cn";
 
 import { TIER_FEATURES } from "@/lib/checkout/tier-features";
 
@@ -53,7 +54,7 @@ function onUpgradeSuccess(
   setTimeout(() => router.push(PRICING_PATH), 2000);
 }
 
-export default function CheckoutPage({ params }: CheckoutPageProps) {
+export default function CheckoutPage({ params, className }: CheckoutPageProps) {
   const { lang: _lang, tier: targetTier } = use(params);
   const { user } = useAuth();
   const router = useRouter();
@@ -71,7 +72,12 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
 
   if (success) {
     return (
-      <div className="flex flex-col items-center gap-4 py-20">
+      <div
+        className={cn(
+          "flex h-full w-full flex-col items-center gap-6 py-20",
+          className,
+        )}
+      >
         <p className="text-lg font-medium text-green-600">
           {isDowngrade ? t.planChanged : t.upgradeSuccess}
         </p>
@@ -81,7 +87,7 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
   }
 
   return (
-    <div className="w-full space-y-6 py-8">
+    <div className={cn("flex h-full w-full flex-col gap-6", className)}>
       <div>
         <h1 className="text-xl font-bold">
           {isUpgrade ? t.upgrade : isDowngrade ? t.changePlan : t.checkout} to{" "}

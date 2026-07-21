@@ -13,7 +13,7 @@ export default function UIPage() {
   const t = useMessages("ui");
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <div>
         <h2 className="text-sm font-semibold">{t.pageTitle}</h2>
         <p className="text-muted text-xs">{t.pageDescription}</p>

@@ -1,3 +1,4 @@
+import { cn } from "@/lib/cn";
 import Link from "next/link";
 import type { FreePageViewDetailProps } from "@/types/users/FreePageViewDetail-types";
 
@@ -19,7 +20,11 @@ const USERS: Record<string, { name: string; email: string; role: string }> = {
   },
 };
 
-export async function FreePageView({ t, params }: FreePageViewDetailProps) {
+export async function FreePageView({
+  t,
+  params,
+  className,
+}: FreePageViewDetailProps) {
   const { lang, uuid } = await params;
   const user = USERS[uuid];
 
@@ -38,7 +43,7 @@ export async function FreePageView({ t, params }: FreePageViewDetailProps) {
   }
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className={cn("flex h-full w-full flex-col gap-6", className)}>
       <div className="space-y-1">
         <h2 className="text-lg font-bold">{user.name}</h2>
         <p className="text-muted text-xs" data-testid="user-uuid">

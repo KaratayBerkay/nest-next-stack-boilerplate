@@ -16,6 +16,7 @@ import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsSessionsPageInfo } from "@/constants/page-info";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useSessionActions } from "@/api/client/sessions/actions";
+import { cn } from "@/lib/cn";
 import type { SessionInfo } from "@/types/settings/SessionInfo-types";
 
 async function handleRevokeSessionModule(
@@ -44,7 +45,7 @@ async function handleRevokeAllOtherSessionsModule(
   }
 }
 
-export function FreePageView() {
+export function FreePageView({ className }: { className?: string }) {
   const { user, loading } = useAuth();
   const t = useMessages("settings");
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
@@ -91,7 +92,7 @@ export function FreePageView() {
   const currentSessionId = user.sessionId;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className={cn("flex h-full w-full flex-col gap-6", className)}>
       <PageHeader
         title="Sessions & Devices"
         titleClassName="text-brand text-sm"

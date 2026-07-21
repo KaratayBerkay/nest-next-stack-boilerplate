@@ -17,6 +17,7 @@ import { PageHeader } from "@/components/ui";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsAccountPageInfo } from "@/constants/page-info";
 import { useProfileActions } from "@/api/client/profile/actions";
+import { cn } from "@/lib/cn";
 import { MAX_UPLOAD_SIZE } from "@/constants/upload";
 
 async function uploadAvatarFile(
@@ -83,7 +84,7 @@ async function handleSaveProfile(deps: {
   }
 }
 
-export function FreePageView() {
+export function FreePageView({ className }: { className?: string }) {
   const { user, loading, refreshUser } = useAuth();
   const t = useMessages("settings");
   const { toast } = useToast();
@@ -175,7 +176,7 @@ export function FreePageView() {
     !saving && availability !== "checking" && availability !== "taken";
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className={cn("flex h-full w-full flex-col gap-6", className)}>
       <PageHeader
         title={t.accountHeading}
         actions={<PageInfoButton content={settingsAccountPageInfo} />}

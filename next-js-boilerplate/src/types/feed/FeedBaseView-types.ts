@@ -4,4 +4,5 @@ export interface FeedBaseViewProps {
   renderFeedList: (search: string) => ReactNode;
   showPageInfo?: boolean;
   showSidebar?: boolean;
+  className?: string;
 }

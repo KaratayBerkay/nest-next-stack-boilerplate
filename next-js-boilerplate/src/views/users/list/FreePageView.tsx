@@ -1,3 +1,4 @@
+import { cn } from "@/lib/cn";
 import Link from "next/link";
 import type { FreePageViewProps } from "@/types/users/FreePageView-types";
 
@@ -7,9 +8,9 @@ const USERS = [
   { uuid: "g7h8i9", name: "Charlie Brown", email: "charlie@example.com" },
 ];
 
-export async function FreePageView({ t, lang }: FreePageViewProps) {
+export async function FreePageView({ t, lang, className }: FreePageViewProps) {
   return (
-    <div className="flex flex-col gap-5">
+    <div className={cn("flex h-full w-full flex-col gap-6", className)}>
       <div className="space-y-1">
         <h2 className="text-lg font-bold">{t.title}</h2>
         <p className="text-muted text-sm">{t.tapToView}</p>

@@ -15,6 +15,7 @@ import {
 } from "@/api/client/friends/query";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { findFriendsPageInfo } from "@/constants/page-info";
+import { cn } from "@/lib/cn";
 import type { FriendRequest } from "./search-utils";
 import { PaginationBar } from "./PaginationBar";
 import { useFriendSearch } from "./useFriendSearch";
@@ -22,6 +23,7 @@ import { useFriendActions } from "./useFriendActions";
 
 export function FreeFindFriendsContent({
   user: _user,
+  className,
 }: FindFriendsContentProps) {
   const t = useMessages("find-friends");
   const pathname = usePathname();
@@ -46,7 +48,7 @@ export function FreeFindFriendsContent({
   const pendingIds = new Set(friendRequests.map((r) => r.user.id));
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className={cn("flex h-full w-full flex-col gap-6", className)}>
       <div className="flex items-center justify-between">
         <h2 className="text-brand text-sm font-semibold">{t.title}</h2>
         <PageInfoButton content={findFriendsPageInfo} />
@@ -100,7 +102,7 @@ export function FreeFindFriendsContent({
                   >
                     <Avatar
                       fallback={initials(u.name)}
-                      className="bg-brand h-10 w-10 shrink-0 text-xs text-brand-fg"
+                      className="bg-brand text-brand-fg h-10 w-10 shrink-0 text-xs"
                     />
                     <span className="flex-1 text-sm font-medium">{u.name}</span>
                     {isPending ? (
@@ -113,7 +115,7 @@ export function FreeFindFriendsContent({
                           const ok = await sendRequest(u.id);
                           if (ok) setSentIds((prev) => new Set(prev).add(u.id));
                         }}
-                        className="bg-brand rounded-lg px-3 py-1 text-sm text-brand-fg hover:opacity-80"
+                        className="bg-brand text-brand-fg rounded-lg px-3 py-1 text-sm hover:opacity-80"
                       >
                         {t.addFriend}
                       </button>
@@ -150,7 +152,7 @@ export function FreeFindFriendsContent({
               >
                 <Avatar
                   fallback={initials(r.user.name)}
-                  className="bg-brand h-10 w-10 shrink-0 text-xs text-brand-fg"
+                  className="bg-brand text-brand-fg h-10 w-10 shrink-0 text-xs"
                 />
                 <span className="flex-1 text-sm font-medium">
                   {r.user.name}

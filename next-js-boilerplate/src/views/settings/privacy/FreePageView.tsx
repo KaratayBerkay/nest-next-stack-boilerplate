@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/Toast";
 import { Switch } from "@/components/ui/Switch";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib/cn";
 import { PageHeader } from "@/components/ui";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsPrivacyPageInfo } from "@/constants/page-info";
@@ -30,7 +31,7 @@ async function handleSave(
   toast({ title: "Preferences saved", variant: "success" });
 }
 
-export function FreePageView() {
+export function FreePageView({ className }: { className?: string }) {
   const params = useParams<{ lang: string }>();
   const t = useMessages("settings");
   const { toast } = useToast();
@@ -41,7 +42,7 @@ export function FreePageView() {
   const [enable2FA, setEnable2FA] = useState(false);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className={cn("flex h-full w-full flex-col gap-6", className)}>
       <PageHeader
         title={t.privacyHeading}
         actions={<PageInfoButton content={settingsPrivacyPageInfo} />}

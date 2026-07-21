@@ -302,6 +302,7 @@ function ChatRoomContent({
   vipRooms = [],
   useNativeControls = false,
   showSelfCrown = false,
+  className,
 }: ChatRoomBaseViewProps) {
   const t = useMessages("chat-room");
   const { user, loading } = useAuth();
@@ -398,7 +399,12 @@ function ChatRoomContent({
   if (loading) return <LoadingAuth />;
   if (!user) return <UnauthenticatedMessage message={t.signInRequired} />;
   return (
-    <div className="flex min-h-0 w-full flex-1 flex-col gap-4 overflow-hidden">
+    <div
+      className={cn(
+        "flex h-full w-full flex-col gap-6 overflow-hidden",
+        className,
+      )}
+    >
       <div className="flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="relative shrink-0">

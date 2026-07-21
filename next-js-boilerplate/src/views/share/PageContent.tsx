@@ -12,6 +12,7 @@ import { sharePageInfo } from "@/constants/page-info";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { uploadImageServer } from "@/api/server/posts/upload";
 import { usePostActions } from "@/api/client/posts/actions";
+import { cn } from "@/lib/cn";
 
 function handleFileChange(
   e: React.ChangeEvent<HTMLInputElement>,
@@ -87,7 +88,7 @@ async function handleShareSubmit(
   }
 }
 
-export default function PageContent() {
+export default function PageContent({ className }: { className?: string }) {
   const params = useParams<{ lang: string }>();
   const lang = params?.lang ?? "en";
   const router = useRouter();
@@ -108,7 +109,7 @@ export default function PageContent() {
     !title.trim() || !content.trim() || submitting || uploadError;
 
   return (
-    <div className="flex w-full flex-col gap-4">
+    <div className={cn("flex h-full w-full flex-col gap-6", className)}>
       <div className="flex items-center justify-between">
         <h2 className="text-brand text-sm font-semibold">{t.shareSomething}</h2>
         <PageInfoButton content={sharePageInfo} />

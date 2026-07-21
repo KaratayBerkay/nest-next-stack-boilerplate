@@ -22,7 +22,7 @@ export default function FormsGalleryPage() {
   const t = useMessages("forms");
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <div>
         <h2 className="text-sm font-semibold">{t.gallery.title}</h2>
         <p className="text-muted text-xs">{t.gallery.description}</p>

@@ -51,7 +51,7 @@ export default function UILayout({ children }: UILayoutProps) {
         </div>
         <ThemeToggle />
       </div>
-      <div className="flex flex-col gap-4 pb-6">{children}</div>
+      <div className="flex flex-col gap-6 pb-6">{children}</div>
     </div>
   );
 }

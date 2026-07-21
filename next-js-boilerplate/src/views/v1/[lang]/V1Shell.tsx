@@ -122,12 +122,14 @@ export function V1Shell({ children }: V1ShellProps) {
       handleTouchStart(e, (cx) => dragOnStart(cx, dragStateRef));
     const touchMove = (e: TouchEvent) =>
       handleTouchMove(e, (cx) => dragOnMove(cx, dragStateRef));
-    const touchEnd = () => handleTouchEnd(() => dragOnEnd(dragStateRef, close, toggleRef));
+    const touchEnd = () =>
+      handleTouchEnd(() => dragOnEnd(dragStateRef, close, toggleRef));
     const mouseDown = (e: MouseEvent) =>
       handleMouseDown(e, (cx) => dragOnStart(cx, dragStateRef));
     const mouseMove = (e: MouseEvent) =>
       handleMouseMove(e, (cx) => dragOnMove(cx, dragStateRef));
-    const mouseUp = () => handleMouseUp(() => dragOnEnd(dragStateRef, close, toggleRef));
+    const mouseUp = () =>
+      handleMouseUp(() => dragOnEnd(dragStateRef, close, toggleRef));
 
     el.addEventListener("touchstart", touchStart, { passive: true });
     el.addEventListener("touchmove", touchMove, { passive: true });
@@ -186,7 +188,10 @@ export function V1Shell({ children }: V1ShellProps) {
             // keyboard-reachable; this scrim only needs a click target.
             <div
               className="animate-fade-in bg-overlay/30 fixed inset-0 z-30 md:hidden"
-              onClick={() => { close(); toggleRef.current?.focus(); }}
+              onClick={() => {
+                close();
+                toggleRef.current?.focus();
+              }}
               aria-hidden="true"
             />
           )}
@@ -200,8 +205,8 @@ export function V1Shell({ children }: V1ShellProps) {
             onNav={close}
           />
 
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 md:p-6">
-            <main id="main-content" className="surface flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-4 @sm:p-5">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <main className="surface flex min-h-0 flex-1 flex-col overflow-y-auto p-4 @sm:p-5">
               {children}
             </main>
           </div>

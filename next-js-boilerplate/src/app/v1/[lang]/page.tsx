@@ -17,14 +17,15 @@ export async function generateMetadata({
 
 // Reads the `[lang]` param (runtime data) inside <Suspense> so the page builds
 // cleanly under `cacheComponents` — same pattern as i18n/[lang] and items/[id].
-async function V1Content({ params }: V1ContentProps) {
+async function V1Content({ params, className }: V1ContentProps) {
   const { lang } = await params;
-  // proxy.ts guarantees a supported locale reaches this page; the messages
-  // give us a localized greeting to prove version + lang are wired together.
   const t = isLocale(lang) ? await getMessages(lang, "v1") : null;
 
   return (
-    <div className="flex flex-col gap-5" lang={lang}>
+    <div
+      className={`flex flex-col gap-6${className ? ` ${className}` : ""}`}
+      lang={lang}
+    >
       <div className="space-y-1">
         <p className="text-brand text-xs font-semibold tracking-wide uppercase">
           Version v1 · locale <span data-testid="active-locale">{lang}</span>

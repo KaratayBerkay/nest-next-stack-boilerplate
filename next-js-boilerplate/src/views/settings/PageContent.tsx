@@ -1,6 +1,7 @@
 "use client";
 
 import { use } from "react";
+import { cn } from "@/lib/cn";
 import type { SettingsIndexPageProps } from "@/types/settings/SettingsIndexPage-types";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
@@ -101,7 +102,7 @@ function renderUpgradeActions(
       {tier === "FREE" && (
         <Link
           href={plansPath(lang)}
-          className="bg-brand mt-2 block rounded-lg px-4 py-2 text-center text-sm font-medium text-brand-fg hover:opacity-90"
+          className="bg-brand text-brand-fg mt-2 block rounded-lg px-4 py-2 text-center text-sm font-medium hover:opacity-90"
         >
           {t.upgradePlan}
         </Link>
@@ -110,7 +111,10 @@ function renderUpgradeActions(
   );
 }
 
-export default function PageContent({ params }: SettingsIndexPageProps) {
+export default function PageContent({
+  params,
+  className,
+}: SettingsIndexPageProps) {
   const { lang } = use(params);
   const { user } = useAuth();
   const t = useMessages("settings");
@@ -131,7 +135,7 @@ export default function PageContent({ params }: SettingsIndexPageProps) {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className={cn("flex h-full w-full flex-col gap-6", className)}>
       <PageHeader
         title={t.currentPlan}
         actions={<PageInfoButton content={settingsPageInfo} />}

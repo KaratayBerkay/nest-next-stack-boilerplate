@@ -3,4 +3,5 @@ export interface PostDetailBaseViewProps {
   showReactionBreakdown?: boolean;
   showWhoReacted?: boolean;
   initialPostData?: unknown;
+  className?: string;
 }
