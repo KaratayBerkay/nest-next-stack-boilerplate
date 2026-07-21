@@ -15,7 +15,8 @@ COMPOSE := docker compose $(PROFILE_FLAG)
 vault: ## Fetch secrets from Vault
 	$(COMPOSE) run --rm vault-init
 
-up: vault ## Start the stack (build + run), auto-remove one-shot containers
+up: vault ## Pull latest, start the stack (build + run), auto-remove one-shot containers
+	git pull
 	$(COMPOSE) up -d --build $(SERVICE)
 	$(COMPOSE) wait migrate minio-setup 2>/dev/null || true
 	$(COMPOSE) rm -f migrate minio-setup 2>/dev/null || true

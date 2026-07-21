@@ -20,11 +20,7 @@ import { useMessageActions } from "@/api/client/messages/actions";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { useConnectionState } from "@/hooks/useConnectionState";
 import { usePresence } from "@/hooks/usePresence";
-import { Avatar } from "@/components/ui/Avatar";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
-import { PageInfoButton } from "@/components/ui/page-info";
-import { messagesPageInfo } from "@/constants/page-info";
-import { initials } from "@/lib/initials";
 import { MessagesViewFallback } from "@/fallbacks";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
@@ -187,70 +183,41 @@ function MessagesPageContent({
   };
 
   return (
-    <div className="flex min-h-0 w-full flex-1 flex-col gap-5 overflow-hidden">
-      <div className="flex shrink-0 items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="relative shrink-0">
-            <Avatar
-              fallback={initials(user?.name ?? user?.email ?? "?")}
-              className="h-8 w-8 text-[10px]"
-              title={
-                connectionState === "online"
-                  ? t.connected
-                  : connectionState === "connecting"
-                    ? t.connecting
-                    : t.disconnected
-              }
-            />
-            {connectionState === "online" ? (
-              <span className="border-bg bg-success absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2" />
-            ) : connectionState === "connecting" ? (
-              <span className="border-bg bg-success absolute -right-0.5 -bottom-0.5 h-3 w-3 animate-pulse rounded-full border-2" />
-            ) : (
-              <span className="border-bg bg-error absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2" />
-            )}
-          </div>
-          <h2 className="text-brand text-lg font-bold">{t.title}</h2>
-        </div>
-        <PageInfoButton content={messagesPageInfo} />
-      </div>
-
-      <div className="relative flex min-h-0 flex-1 gap-4">
-        {sidebarOpen && (
-          // Decorative dismiss backdrop, not a control — the sidebar itself and its own
-          // controls remain keyboard-reachable; this scrim only needs a click target.
-          <div
-            className="bg-overlay/30 fixed inset-0 z-40 md:hidden"
-            onClick={() => setSidebarOpen(false)}
-            aria-hidden="true"
-          />
-        )}
-
-        <MessagesSidebar
-          user={messagesUser}
-          conversations={conversations}
-          friends={friends}
-          selectedUser={selectedUser}
-          tab={tab}
-          setTab={setTab}
-          search={search}
-          setSearch={setSearch}
-          findInput={findInput}
-          setFindInput={setFindInput}
-          findResults={findResults}
-          sentRequestIds={sentRequestIds}
-          setSentRequestIds={setSentRequestIds}
-          openConversation={openConversation}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-          debouncedSearch={debouncedSearch}
-          onlineUsers={onlineUsers}
-          convsError={convsError}
-          progress={progress}
-          direction={direction ?? "right"}
-          isSwiping={isSwiping}
+    <div className="flex min-h-0 w-full flex-1 overflow-hidden">
+      {sidebarOpen && (
+        <div
+          className="bg-overlay/30 fixed inset-0 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
         />
+      )}
 
+      <MessagesSidebar
+        user={messagesUser}
+        conversations={conversations}
+        friends={friends}
+        selectedUser={selectedUser}
+        tab={tab}
+        setTab={setTab}
+        search={search}
+        setSearch={setSearch}
+        findInput={findInput}
+        setFindInput={setFindInput}
+        findResults={findResults}
+        sentRequestIds={sentRequestIds}
+        setSentRequestIds={setSentRequestIds}
+        openConversation={openConversation}
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        debouncedSearch={debouncedSearch}
+        onlineUsers={onlineUsers}
+        convsError={convsError}
+        progress={progress}
+        direction={direction ?? "right"}
+        isSwiping={isSwiping}
+      />
+
+      <div className="hidden min-h-0 flex-1 md:flex">
         {selectedUser ? (
           <ChatView
             selectedUser={selectedUser}
@@ -261,13 +228,26 @@ function MessagesPageContent({
             connectionState={connectionState}
           />
         ) : (
-          <div className="border-border bg-bg flex min-h-0 flex-1 items-center justify-center rounded-xl border max-md:hidden">
+          <div className="flex min-h-0 flex-1 items-center justify-center">
             <div className="flex flex-col items-center gap-2">
               <IconMenu2 size={32} className="text-muted" />
               <p className="text-muted text-sm">{t.selectConversation}</p>
             </div>
           </div>
         )}
+      </div>
+
+      <div className="flex min-h-0 flex-1 md:hidden">
+        {selectedUser ? (
+          <ChatView
+            selectedUser={selectedUser}
+            user={messagesUser}
+            setSelectedUser={setSelectedUser}
+            setSidebarOpen={setSidebarOpen}
+            onlineUsers={onlineUsers}
+            connectionState={connectionState}
+          />
+        ) : null}
       </div>
     </div>
   );

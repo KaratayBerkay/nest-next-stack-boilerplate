@@ -3,6 +3,7 @@
 import {
   useState,
   useCallback,
+  useMemo,
   type Dispatch,
   type SetStateAction,
 } from "react";
@@ -12,16 +13,19 @@ import { useConversation } from "@/lib/realtime/useConversation";
 import { sendMessageSchema } from "@/validators/messages/schema";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { ScrollToBottomButton } from "@/components/ui/ScrollToBottomButton";
 import { LoadEarlierButton } from "@/components/LoadEarlierButton";
 import { ConnectionUnstable } from "@/components/ConnectionUnstable";
 import { MessageTick } from "@/components/MessageTick";
 import { initials } from "@/lib/initials";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
-import { IconChevronLeft } from "@tabler/icons-react";
+import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
+import { formatDateByPreference } from "@/lib/date-time";
+import { IconChevronLeft, IconPaperclip, IconSend } from "@tabler/icons-react";
 import { IconButton } from "@/components/ui/button/icon-button";
+import { cn } from "@/lib/cn";
 import type { ChatViewProps, Message } from "@/types/messages/ChatView-types";
+import type { DateDisplayFormat } from "@/constants/date-display";
 import { useMessageActions } from "@/api/client/messages/actions";
 
 async function chatViewHandleSend(
@@ -48,6 +52,22 @@ async function chatViewHandleSend(
   }
 }
 
+function formatMessageTime(
+  dateStr: string,
+  dateDisplay: DateDisplayFormat,
+): string {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const isToday =
+    d.getDate() === now.getDate() &&
+    d.getMonth() === now.getMonth() &&
+    d.getFullYear() === now.getFullYear();
+  if (isToday) {
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+  return formatDateByPreference(dateStr, dateDisplay);
+}
+
 export function ChatView({
   selectedUser,
   user,
@@ -57,6 +77,7 @@ export function ChatView({
   connectionState,
 }: ChatViewProps) {
   const t = useMessages("messages");
+  const dateDisplay = useDateDisplayCookie();
   const messagesRef = useYSwipeGesture<HTMLDivElement>();
   const [input, setInput] = useState("");
   const [messageError, setMessageError] = useState<string | null>(null);
@@ -67,9 +88,13 @@ export function ChatView({
     hasNextPage,
     isError: msgsError,
   } = useConversation(selectedUser?.id ?? null);
-  const conversationMessages =
-    [...(conversationData?.pages ?? [])].reverse().flatMap((p) => p.messages) ??
-    [];
+  const conversationMessages = useMemo(
+    () =>
+      [...(conversationData?.pages ?? [])]
+        .reverse()
+        .flatMap((p) => p.messages) ?? [],
+    [conversationData],
+  );
 
   const { bottomRef, scrollToBottom, isAtBottom } = useAutoScroll(
     conversationMessages,
@@ -91,6 +116,20 @@ export function ChatView({
     [selectedUser, input, sendMessage, scrollToBottom],
   );
 
+  const groupedMessages = useMemo(() => {
+    const groups: { date: string; messages: Message[] }[] = [];
+    for (const msg of conversationMessages) {
+      const date = new Date(msg.createdAt).toLocaleDateString();
+      const last = groups[groups.length - 1];
+      if (last && last.date === date) {
+        last.messages.push(msg);
+      } else {
+        groups.push({ date, messages: [msg] });
+      }
+    }
+    return groups;
+  }, [conversationMessages]);
+
   if (connectionState === "unstable") {
     return (
       <ConnectionUnstable title={t.disconnected} description={t.connecting} />
@@ -108,9 +147,9 @@ export function ChatView({
 
   return (
     <div className="border-border bg-bg relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border">
-      <div className="flex items-center gap-3 border-b px-4 py-3">
+      <div className="flex items-center gap-3 border-b px-5 py-3">
         <IconButton
-          icon={<IconChevronLeft size={18} />}
+          icon={<IconChevronLeft size={20} />}
           label="Back to conversations"
           variant="ghost"
           size="icon-sm"
@@ -120,20 +159,32 @@ export function ChatView({
           }}
           className="mr-1 md:hidden"
         />
-        <div className="relative shrink-0">
-          <Avatar
-            fallback={initials(selectedUser.name ?? selectedUser.email ?? "?")}
-            className="bg-brand text-brand-fg h-8 w-8 shrink-0 text-xs"
-          />
-          {onlineUsers.has(selectedUser.id) && (
-            <span className="border-bg bg-success absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2" />
+        <Avatar
+          fallback={initials(selectedUser.name ?? selectedUser.email ?? "?")}
+          className={cn(
+            "bg-brand text-brand-fg h-10 w-10 shrink-0 text-xs",
+            onlineUsers.has(selectedUser.id) &&
+              "ring-success ring-offset-bg ring-2 ring-offset-2",
           )}
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="truncate text-sm font-semibold">
+              {selectedUser.name}
+            </span>
+            {onlineUsers.has(selectedUser.id) && (
+              <span className="bg-success h-2 w-2 shrink-0 rounded-full" />
+            )}
+          </div>
+          <p className="text-muted text-xs">
+            {onlineUsers.has(selectedUser.id) ? "Active Now" : "Offline"}
+          </p>
         </div>
-        <span className="text-sm font-semibold">{selectedUser.name}</span>
       </div>
+
       <div
         ref={messagesRef}
-        className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4 select-text"
+        className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-5 select-text"
       >
         {msgsError && (
           <div className="flex flex-1 items-center justify-center">
@@ -146,53 +197,85 @@ export function ChatView({
           </div>
         )}
         {hasNextPage && <LoadEarlierButton onClick={() => fetchNextPage()} />}
-        {conversationMessages.map((msg: Message, i) => {
-          const isMe = msg.senderId === user.id;
-          return (
-            <div
-              key={msg.id}
-              className={`animate-fade-in-up flex ${isMe ? "justify-end" : "justify-start"}`}
-              style={{ animationDelay: `${i * 15}ms` }}
-            >
-              <div className="flex max-w-[75%] items-end gap-1.5">
-                {!isMe && (
-                  <Avatar
-                    fallback={initials(
-                      selectedUser.name ?? selectedUser.email ?? "?",
-                    )}
-                    className="bg-brand text-brand-fg mb-0.5 h-6 w-6 shrink-0 text-[9px]"
-                  />
-                )}
-                <span
-                  className={`rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${
-                    isMe ? "bg-brand text-brand-fg" : "bg-surface text-fg"
-                  }`}
-                >
-                  {msg.body}
-                </span>
-                {isMe && (
-                  <span className="shrink-0 self-end pb-1">
-                    {msg.readAt ? (
-                      <MessageTick status="read" />
-                    ) : msg.deliveredAt ? (
-                      <MessageTick status="delivered" />
-                    ) : (
-                      <MessageTick status="sent" />
-                    )}
-                  </span>
-                )}
-              </div>
+        {groupedMessages.map((group) => (
+          <div key={group.date} className="flex flex-col gap-1">
+            <div className="flex justify-center py-2">
+              <span className="bg-surface text-muted rounded-full px-3 py-1 text-[10px]">
+                {group.date === new Date().toLocaleDateString()
+                  ? "Today"
+                  : group.date}
+              </span>
             </div>
-          );
-        })}
+            {group.messages.map((msg: Message) => {
+              const isMe = msg.senderId === user.id;
+              return (
+                <div
+                  key={msg.id}
+                  className={`animate-fade-in-up flex items-end gap-2 ${isMe ? "flex-row-reverse" : ""}`}
+                  style={{ animationDelay: "0ms" }}
+                >
+                  {!isMe && (
+                    <div className="relative mb-5 shrink-0">
+                      <Avatar
+                        fallback={initials(
+                          selectedUser.name ?? selectedUser.email ?? "?",
+                        )}
+                        className="bg-brand text-brand-fg h-7 w-7 text-[9px]"
+                      />
+                    </div>
+                  )}
+                  <div
+                    className={`flex max-w-[70%] flex-col gap-0.5 ${isMe ? "items-end" : ""}`}
+                  >
+                    <span
+                      className={`inline-block rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                        isMe ? "bg-brand text-brand-fg" : "bg-surface text-fg"
+                      }`}
+                    >
+                      {msg.body}
+                    </span>
+                    <div
+                      className={`flex items-center gap-1 px-1 ${isMe ? "flex-row-reverse" : ""}`}
+                    >
+                      <span className="text-muted text-[10px]">
+                        {formatMessageTime(msg.createdAt, dateDisplay)}
+                      </span>
+                      {isMe && (
+                        <MessageTick
+                          status={
+                            msg.readAt
+                              ? "read"
+                              : msg.deliveredAt
+                                ? "delivered"
+                                : "sent"
+                          }
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ))}
         <div ref={bottomRef} className="h-px" />
       </div>
+
       {!isAtBottom && !input && conversationMessages.length > 0 && (
         <ScrollToBottomButton onClick={scrollToBottom} />
       )}
-      <div className="flex gap-3 border-t px-4 py-3">
+
+      <div className="flex items-end gap-3 border-t px-5 py-4">
+        <IconButton
+          icon={<IconPaperclip size={20} />}
+          label="Attach file"
+          variant="ghost"
+          size="icon-sm"
+          disabled
+          className="text-muted shrink-0"
+        />
         <div className="flex flex-1 flex-col">
-          <Input
+          <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
@@ -205,7 +288,7 @@ export function ChatView({
               connectionState === "online" ? t.inputPlaceholder : t.connecting
             }
             disabled={connectionState !== "online"}
-            className="bg-surface text-fg focus:border-fg rounded-xl px-4 py-2.5"
+            className="bg-surface text-fg placeholder:text-muted focus:ring-brand/30 w-full rounded-lg border-0 px-4 py-3 text-sm focus:ring-1 focus:outline-none"
           />
           {messageError && (
             <p className="text-error mt-1.5 text-xs">{messageError}</p>
@@ -216,9 +299,10 @@ export function ChatView({
           size="md"
           onClick={handleSend}
           disabled={connectionState !== "online" || !input.trim()}
-          className="self-end rounded-xl px-5 py-2.5"
+          className="flex shrink-0 items-center gap-2 rounded-lg px-4 py-3"
         >
-          Send
+          <span className="hidden sm:inline">Send</span>
+          <IconSend size={16} />
         </Button>
       </div>
     </div>
