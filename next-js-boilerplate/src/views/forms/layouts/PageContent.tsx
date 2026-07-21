@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Switch } from "@/components/ui/Switch";
 import { NativeSelect } from "@/components/ui/NativeSelect";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { Label } from "@/components/ui/Label";
 
 function LayoutCard({
@@ -35,12 +36,12 @@ function LayoutCard({
   );
 }
 
-function BasicStackedForm() {
+function ContactForm() {
   const fieldSchemas = useMemo(
     () => ({
       fullName: z.string().min(2, "Name must be at least 2 characters"),
       email: z.string().email("Invalid email address"),
-      password: z.string().min(6, "Password must be at least 6 characters"),
+      message: z.string().min(1, "Message is required"),
     }),
     [],
   );
@@ -50,8 +51,8 @@ function BasicStackedForm() {
 
   return (
     <LayoutCard
-      label="Basic Stacked Form"
-      description="Simple single-column form with full-width inputs"
+      label="Contact Form"
+      description="Basic single-column form with name, email, subject, and message"
     >
       <form.AppForm>
         <form className="flex flex-col gap-3">
@@ -71,22 +72,24 @@ function BasicStackedForm() {
               <field.TextField label="Email" placeholder="john@example.com" />
             )}
           </form.AppField>
+          <div className="flex flex-col gap-1">
+            <Label>Subject</Label>
+            <NativeSelect
+              value={form.getFieldValue("subject")}
+              onChange={(e) => form.setFieldValue("subject", e.target.value)}
+            >
+              <option value="">Select Subject</option>
+              <option value="general">General Inquiry</option>
+              <option value="support">Support</option>
+              <option value="feedback">Feedback</option>
+              <option value="other">Other</option>
+            </NativeSelect>
+          </div>
           <form.AppField
-            name="password"
-            validators={{ onChange: fieldSchemas.password }}
+            name="message"
+            validators={{ onChange: fieldSchemas.message }}
           >
-            {(field) => (
-              <field.TextField
-                label="Password"
-                type="password"
-                showPasswordToggle
-              />
-            )}
-          </form.AppField>
-          <form.AppField name="confirmPassword">
-            {(field) => (
-              <field.TextField label="Confirm Password" type="password" />
-            )}
+            {(field) => <field.TextareaField label="Message" />}
           </form.AppField>
           <form.SubmitButton label="Submit" />
         </form>
@@ -101,7 +104,7 @@ function TwoColumnGridForm() {
       firstName: z.string().min(2, "First name is required"),
       lastName: z.string().min(2, "Last name is required"),
       email: z.string().email("Invalid email address"),
-      phone: z.string().min(6, "Phone is required"),
+      message: z.string().min(1, "Message is required"),
     }),
     [],
   );
@@ -112,7 +115,7 @@ function TwoColumnGridForm() {
   return (
     <LayoutCard
       label="Two-Column Grid Form"
-      description="Side-by-side fields on a responsive 2-column grid"
+      description="Side-by-side name fields with full-width email, subject, and message"
     >
       <form.AppForm>
         <form className="flex flex-col gap-3">
@@ -134,25 +137,34 @@ function TwoColumnGridForm() {
               )}
             </form.AppField>
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <form.AppField
-              name="email"
-              validators={{ onChange: fieldSchemas.email }}
+          <form.AppField
+            name="email"
+            validators={{ onChange: fieldSchemas.email }}
+          >
+            {(field) => (
+              <field.TextField label="Email" placeholder="john@example.com" />
+            )}
+          </form.AppField>
+          <div className="flex flex-col gap-1">
+            <Label>Select Subject</Label>
+            <NativeSelect
+              value={form.getFieldValue("subject")}
+              onChange={(e) => form.setFieldValue("subject", e.target.value)}
             >
-              {(field) => (
-                <field.TextField label="Email" placeholder="john@example.com" />
-              )}
-            </form.AppField>
-            <form.AppField
-              name="phone"
-              validators={{ onChange: fieldSchemas.phone }}
-            >
-              {(field) => (
-                <field.TextField label="Phone" placeholder="+1 555 0123" />
-              )}
-            </form.AppField>
+              <option value="">Choose an option</option>
+              <option value="option1">Option 1</option>
+              <option value="option2">Option 2</option>
+              <option value="option3">Option 3</option>
+              <option value="option4">Option 4</option>
+            </NativeSelect>
           </div>
-          <form.SubmitButton label="Save" />
+          <form.AppField
+            name="message"
+            validators={{ onChange: fieldSchemas.message }}
+          >
+            {(field) => <field.TextareaField label="Message" maxLength={200} />}
+          </form.AppField>
+          <form.SubmitButton label="Send Message" />
         </form>
       </form.AppForm>
     </LayoutCard>
@@ -175,7 +187,7 @@ function IconPrefixedForm() {
   return (
     <LayoutCard
       label="Icon-Prefixed Inputs"
-      description="Inputs with leading SVG icons for a polished look"
+      description="Inputs with leading SVG icons and a remember-me checkbox"
     >
       <form.AppForm>
         <form className="flex flex-col gap-3">
@@ -276,6 +288,18 @@ function IconPrefixedForm() {
               </div>
             )}
           </form.AppField>
+          <form.AppField name="rememberMe">
+            {(field) => (
+              <div className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  id={field.name}
+                  checked={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.checked)}
+                />
+                <Label htmlFor={field.name}>Remember me</Label>
+              </div>
+            )}
+          </form.AppField>
           <form.SubmitButton label="Create Account" />
         </form>
       </form.AppForm>
@@ -289,7 +313,6 @@ function SectionedCardForm() {
       firstName: z.string().min(2, "First name is required"),
       lastName: z.string().min(2, "Last name is required"),
       email: z.string().email("Invalid email"),
-      phone: z.string().min(6, "Phone is required"),
       street: z.string().min(3, "Street is required"),
       city: z.string().min(2, "City is required"),
       state: z.string().min(2, "State is required"),
@@ -333,12 +356,16 @@ function SectionedCardForm() {
               >
                 {(field) => <field.TextField label="Email" />}
               </form.AppField>
-              <form.AppField
-                name="phone"
-                validators={{ onChange: fieldSchemas.phone }}
-              >
-                {(field) => <field.TextField label="Phone" />}
-              </form.AppField>
+              <div className="flex flex-col gap-1">
+                <Label>Date of Birth</Label>
+                <Input
+                  type="date"
+                  value={form.getFieldValue("dateOfBirth")}
+                  onChange={(e) =>
+                    form.setFieldValue("dateOfBirth", e.target.value)
+                  }
+                />
+              </div>
             </div>
             <div className="flex flex-col gap-1">
               <Label>Gender</Label>
@@ -360,6 +387,31 @@ function SectionedCardForm() {
                   <input type="radio" name="gender" className="accent-brand" />
                   Other
                 </label>
+              </div>
+            </div>
+            <div className="flex flex-col gap-1">
+              <Label>Category</Label>
+              <div className="flex gap-4">
+                {[
+                  { value: "tech" as const, label: "Technology" },
+                  { value: "design" as const, label: "Design" },
+                  { value: "business" as const, label: "Business" },
+                ].map((c) => (
+                  <label
+                    key={c.value}
+                    className="flex items-center gap-2 text-sm"
+                  >
+                    <input
+                      type="radio"
+                      name="category"
+                      value={c.value}
+                      className="accent-brand"
+                      checked={form.getFieldValue("category") === c.value}
+                      onChange={() => form.setFieldValue("category", c.value)}
+                    />
+                    {c.label}
+                  </label>
+                ))}
               </div>
             </div>
           </div>
@@ -476,7 +528,7 @@ export default function FormLayoutsPage() {
         </p>
       </div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <BasicStackedForm />
+        <ContactForm />
         <TwoColumnGridForm />
         <IconPrefixedForm />
       </div>

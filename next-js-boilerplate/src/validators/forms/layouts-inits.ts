@@ -4,8 +4,8 @@ export const basicFormOpts = formOptions({
   defaultValues: {
     fullName: "",
     email: "",
-    password: "",
-    confirmPassword: "",
+    subject: "",
+    message: "",
   },
 });
 
@@ -14,7 +14,8 @@ export const twoColumnFormOpts = formOptions({
     firstName: "",
     lastName: "",
     email: "",
-    phone: "",
+    subject: "",
+    message: "",
   },
 });
 
@@ -23,6 +24,7 @@ export const iconFormOpts = formOptions({
     name: "",
     mail: "",
     lock: "",
+    rememberMe: false,
   },
 });
 
@@ -31,7 +33,8 @@ export const sectionedFormOpts = formOptions({
     firstName: "",
     lastName: "",
     email: "",
-    phone: "",
+    dateOfBirth: "",
+    category: "tech" as "tech" | "design" | "business",
     street: "",
     city: "",
     state: "",

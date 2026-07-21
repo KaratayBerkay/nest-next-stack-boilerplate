@@ -1,7 +1,7 @@
 "use client";
 
 import { useAppForm } from "@/features/forms/form-hook";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { z } from "zod";
 import { InputGroup } from "@/features/forms/ui/InputGroup";
 import { Input } from "@/components/ui/Input";
@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/Label";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Switch } from "@/components/ui/Switch";
 import { NativeSelect } from "@/components/ui/NativeSelect";
+import { FileUpload } from "@/components/ui/FileUpload";
+import type { UploadFile } from "@/types/ui/FileUpload-types";
 
 const COUNTRY_OPTIONS = [
   { value: "us", label: "US +1" },
@@ -30,6 +32,48 @@ function SectionCard({
       <p className="text-xxs text-muted tracking-wider uppercase">{label}</p>
       {children}
     </div>
+  );
+}
+
+function DefaultInputsSection() {
+  return (
+    <SectionCard label="Default Inputs">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="flex flex-col gap-1">
+          <Label>Input</Label>
+          <Input placeholder="Simple input field" />
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label>With Placeholder</Label>
+          <Input placeholder="Placeholder text" />
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label>Select Input</Label>
+          <NativeSelect>
+            <option value="">Select Option</option>
+            <option value="marketing">Marketing</option>
+            <option value="template">Template</option>
+            <option value="development">Development</option>
+          </NativeSelect>
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label>Password Input</Label>
+          <Input
+            type="password"
+            defaultValue="secret123"
+            placeholder="••••••••"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label>Date Picker</Label>
+          <Input type="date" />
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label>Time Select</Label>
+          <Input type="time" />
+        </div>
+      </div>
+    </SectionCard>
   );
 }
 
@@ -66,6 +110,30 @@ function InputGroupsSection() {
           </InputGroup>
         </div>
         <div className="flex flex-col gap-1">
+          <Label>Card Number</Label>
+          <InputGroup>
+            <InputGroup.Prefix>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                <line x1="1" y1="10" x2="23" y2="10" />
+              </svg>
+            </InputGroup.Prefix>
+            <Input
+              placeholder="4242 4242 4242 4242"
+              className="rounded-none rounded-r-md"
+            />
+          </InputGroup>
+        </div>
+        <div className="flex flex-col gap-1">
           <Label>Website</Label>
           <InputGroup>
             <InputGroup.Prefix className="text-xxs">http://</InputGroup.Prefix>
@@ -91,6 +159,20 @@ function InputGroupsSection() {
                 Copy
               </button>
             </InputGroup.Suffix>
+          </InputGroup>
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label>Amount</Label>
+          <InputGroup>
+            <InputGroup.Prefix className="text-xs font-medium">
+              $
+            </InputGroup.Prefix>
+            <Input
+              type="number"
+              placeholder="0.00"
+              className="rounded-none rounded-r-md"
+            />
+            <InputGroup.Suffix className="text-xs">USD</InputGroup.Suffix>
           </InputGroup>
         </div>
       </div>
@@ -151,19 +233,19 @@ function SelectsSection() {
 
 function TextareaSection() {
   return (
-    <SectionCard label="Textarea">
+    <SectionCard label="Textarea Input Field">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="flex flex-col gap-1">
           <Label>Default</Label>
           <textarea
-            className="border-border placeholder:text-muted/70 focus-visible:ring-brand min-h-20 w-full resize-none rounded-md border bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:ring-2 focus-visible:outline-none"
+            className="border-border placeholder:text-muted/70 focus-visible:ring-brand text-fg min-h-20 w-full resize-none rounded-md border bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:ring-2 focus-visible:outline-none"
             placeholder="Write a message..."
           />
         </div>
         <div className="flex flex-col gap-1">
           <Label>With Char Count</Label>
           <textarea
-            className="border-border placeholder:text-muted/70 focus-visible:ring-brand min-h-20 w-full resize-none rounded-md border bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:ring-2 focus-visible:outline-none"
+            className="border-border placeholder:text-muted/70 focus-visible:ring-brand text-fg min-h-20 w-full resize-none rounded-md border bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:ring-2 focus-visible:outline-none"
             placeholder="Max 100 chars..."
             maxLength={100}
             defaultValue=""
@@ -208,6 +290,53 @@ function InputStatesSection() {
           <Input placeholder="Cannot edit" disabled />
         </div>
       </div>
+    </SectionCard>
+  );
+}
+
+function FileInputSection() {
+  return (
+    <SectionCard label="File Input">
+      <div className="flex flex-col gap-1">
+        <Label>Upload File</Label>
+        <label className="border-border text-muted hover:bg-surface-hover hover:text-fg inline-flex cursor-pointer items-center gap-2 rounded-md border px-4 py-2 text-sm transition-colors">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+          </svg>
+          Choose File
+          <input type="file" className="sr-only" />
+        </label>
+      </div>
+    </SectionCard>
+  );
+}
+
+function DropzoneSection() {
+  const [files, setFiles] = useState<UploadFile[]>([]);
+
+  return (
+    <SectionCard label="Dropzone">
+      <FileUpload
+        accept="image/*,.pdf"
+        maxSizeBytes={5 * 1024 * 1024}
+        files={files}
+        onFilesChange={setFiles}
+        labels={{
+          dropzoneIdle: "Drag & drop your files here or click to browse",
+          acceptedLabel: "Accepted formats",
+        }}
+      />
     </SectionCard>
   );
 }
@@ -292,6 +421,49 @@ function ToggleSection() {
   );
 }
 
+function DateTimeSection() {
+  const form = useAppForm({
+    defaultValues: { date: "", time: "" },
+  });
+
+  return (
+    <SectionCard label="Date & Time Pickers">
+      <form className="flex flex-col gap-4">
+        <form.AppForm>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <form.AppField name="date">
+              {(field) => (
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor={field.name}>Date Picker</Label>
+                  <Input
+                    id={field.name}
+                    type="date"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                  />
+                </div>
+              )}
+            </form.AppField>
+            <form.AppField name="time">
+              {(field) => (
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor={field.name}>Time Picker</Label>
+                  <Input
+                    id={field.name}
+                    type="time"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                  />
+                </div>
+              )}
+            </form.AppField>
+          </div>
+        </form.AppForm>
+      </form>
+    </SectionCard>
+  );
+}
+
 function FormValidationSection() {
   const fieldSchemas = useMemo(
     () => ({
@@ -312,37 +484,39 @@ function FormValidationSection() {
         example.
       </p>
       <form className="flex flex-col gap-3">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <form.AppField
-            name="email"
-            validators={{ onChange: fieldSchemas.email }}
-          >
+        <form.AppForm>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <form.AppField
+              name="email"
+              validators={{ onChange: fieldSchemas.email }}
+            >
+              {(field) => (
+                <field.TextField label="Email" placeholder="your@email.com" />
+              )}
+            </form.AppField>
+            <form.AppField
+              name="password"
+              validators={{ onChange: fieldSchemas.password }}
+            >
+              {(field) => (
+                <field.TextField
+                  label="Password"
+                  type="password"
+                  showPasswordToggle
+                />
+              )}
+            </form.AppField>
+          </div>
+          <form.AppField name="bio" validators={{ onChange: fieldSchemas.bio }}>
             {(field) => (
-              <field.TextField label="Email" placeholder="your@email.com" />
-            )}
-          </form.AppField>
-          <form.AppField
-            name="password"
-            validators={{ onChange: fieldSchemas.password }}
-          >
-            {(field) => (
-              <field.TextField
-                label="Password"
-                type="password"
-                showPasswordToggle
+              <field.TextareaField
+                label="Bio"
+                hint="Tell us about yourself"
+                maxLength={200}
               />
             )}
           </form.AppField>
-        </div>
-        <form.AppField name="bio" validators={{ onChange: fieldSchemas.bio }}>
-          {(field) => (
-            <field.TextareaField
-              label="Bio"
-              hint="Tell us about yourself"
-              maxLength={200}
-            />
-          )}
-        </form.AppField>
+        </form.AppForm>
       </form>
     </SectionCard>
   );
@@ -354,14 +528,18 @@ export default function FormElementsPage() {
       <div>
         <h2 className="text-sm font-semibold">Form Elements</h2>
         <p className="text-muted text-xs">
-          Input groups, selects, textareas, checkboxes, radios, toggles, and
-          validation states.
+          Input groups, selects, textareas, file uploads, date pickers,
+          checkboxes, radios, toggles, and validation states.
         </p>
       </div>
+      <DefaultInputsSection />
       <InputGroupsSection />
       <SelectsSection />
       <TextareaSection />
       <InputStatesSection />
+      <FileInputSection />
+      <DropzoneSection />
+      <DateTimeSection />
       <CheckboxSection />
       <RadioSection />
       <ToggleSection />
