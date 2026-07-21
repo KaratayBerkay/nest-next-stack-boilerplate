@@ -341,6 +341,8 @@ export type I18nMessages = {
         "formBuilderDescription": string;
         "editableTableTitle": string;
         "editableTableDescription": string;
+        "advancedTitle": string;
+        "advancedDescription": string;
       };
       "profile": {
         "heading": string;
@@ -672,6 +674,39 @@ export type I18nMessages = {
         "saveRow": string;
         "quantityHint": string;
         "unitPriceHint": string;
+      };
+      "advanced": {
+        "heading": string;
+        "accountType": string;
+        "personal": string;
+        "business": string;
+        "fullName": string;
+        "email": string;
+        "password": string;
+        "companyName": string;
+        "taxId": string;
+        "industry": string;
+        "teamMembers": string;
+        "addMember": string;
+        "removeMember": string;
+        "memberName": string;
+        "memberEmail": string;
+        "memberRole": string;
+        "submit": string;
+        "submitting": string;
+        "submitSuccess": string;
+        "submitFailed": string;
+        "fullNameMin": string;
+        "emailInvalid": string;
+        "passwordMin": string;
+        "companyNameRequired": string;
+        "taxIdInvalid": string;
+        "industryRequired": string;
+        "memberNameRequired": string;
+        "memberEmailInvalid": string;
+        "memberRoleRequired": string;
+        "emailAlreadyMember": string;
+        "formErrors": string;
       };
       "errors": {
         "emailAlreadyMember": string;

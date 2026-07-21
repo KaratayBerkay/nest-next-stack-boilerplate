@@ -93,6 +93,13 @@ export const FORMS_EXAMPLES = [
     titleKey: "editableTableTitle",
     descKey: "editableTableDescription",
   },
+  {
+    name: "Advanced Patterns",
+    slug: "advanced",
+    mode: "simulated",
+    titleKey: "advancedTitle",
+    descKey: "advancedDescription",
+  },
 ] as const satisfies readonly FormsExample[];
 
 export type FormsExampleSlug = (typeof FORMS_EXAMPLES)[number]["slug"];
