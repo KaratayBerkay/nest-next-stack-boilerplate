@@ -98,7 +98,7 @@ export function MessagesSidebar({
       </div>
 
       {tab === "conversations" && (
-        <div className="shrink-0">
+        <div className="mb-3 shrink-0">
           <Input
             value={findInput}
             onChange={(e) => {
@@ -126,7 +126,7 @@ export function MessagesSidebar({
                   >
                     <Avatar
                       fallback={initials(u.name ?? u.email ?? "?")}
-                      className="bg-brand h-8 w-8 shrink-0 text-[10px] text-brand-fg"
+                      className="bg-brand text-brand-fg h-8 w-8 shrink-0 text-[10px]"
                     />
                     <span className="min-w-0 flex-1 truncate text-sm">
                       {u.name || u.email}
@@ -137,7 +137,9 @@ export function MessagesSidebar({
                       onClick={async () => {
                         setSentRequestIds((prev) => new Set(prev).add(u.id));
                         await sendFriendRequest(u.id);
-                        queryClient.invalidateQueries({ queryKey: ["users", "search"] });
+                        queryClient.invalidateQueries({
+                          queryKey: ["users", "search"],
+                        });
                       }}
                       className="rounded-lg text-xs"
                     >
@@ -155,7 +157,7 @@ export function MessagesSidebar({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t.searchFriends}
-          className="bg-surface focus:border-border focus:bg-surface mt-2 shrink-0 rounded-lg px-4 py-2.5"
+          className="bg-surface focus:border-border focus:bg-surface mt-2 mb-3 shrink-0 rounded-lg px-4 py-2.5"
         />
       )}
 
@@ -202,7 +204,7 @@ export function MessagesSidebar({
                 <div className="relative shrink-0">
                   <Avatar
                     fallback={initials(c.user.name ?? c.user.email ?? "?")}
-                    className="bg-brand h-10 w-10 text-brand-fg"
+                    className="bg-brand text-brand-fg h-10 w-10"
                   />
                   {onlineUsers.has(c.user.id) && (
                     <span className="border-bg bg-success absolute right-0 bottom-0 h-3 w-3 rounded-full border-2" />
@@ -252,7 +254,7 @@ export function MessagesSidebar({
                     <div className="relative shrink-0">
                       <Avatar
                         fallback={initials(u.name ?? u.email ?? "?")}
-                        className="bg-brand h-9 w-9 text-brand-fg"
+                        className="bg-brand text-brand-fg h-9 w-9"
                       />
                       {onlineUsers.has(u.id) && (
                         <span className="border-bg bg-success absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2" />

@@ -465,7 +465,7 @@ function ChatRoomContent({
 
             <TabsContent
               value="rooms"
-              className="mt-2 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto"
+              className="mt-3 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto"
             >
               {rooms.map((r) => {
                 const count = roomCounts[r] ?? 0;
@@ -486,7 +486,7 @@ function ChatRoomContent({
 
             <TabsContent
               value="online"
-              className="mt-2 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto"
+              className="mt-3 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto"
             >
               {roomMembers.length === 0 ? (
                 <p className="text-muted px-0.5 text-xs">{t.noOneHere}</p>

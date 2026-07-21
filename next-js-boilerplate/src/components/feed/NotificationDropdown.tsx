@@ -8,10 +8,10 @@ import { useRouter } from "next/navigation";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import { useBreakpoint } from "@/hooks";
 import { IconBell } from "@tabler/icons-react";
+import { IconButton } from "@/components/ui/button/icon-button";
 import {
   useNotifications,
   useUnreadNotificationCount,
-  useDmUnreadCount,
 } from "@/lib/realtime/useNotifications";
 import { notificationTarget } from "@/lib/notifications/target";
 import { Badge } from "@/components/feed/Badge";
@@ -43,7 +43,6 @@ export function NotificationDropdown({
 }: NotificationDropdownProps) {
   const { data: notifData } = useNotifications();
   const { data: unreadCount = 0 } = useUnreadNotificationCount();
-  const { data: dmCount = 0 } = useDmUnreadCount();
   const notifications = notifData?.items ?? [];
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -68,14 +67,16 @@ export function NotificationDropdown({
 
   return (
     <div ref={ref} className="relative">
-      <button
+      <IconButton
+        icon={
+          <>
+            <IconBell size={20} stroke={1.5} />
+            <Badge count={unreadCount} />
+          </>
+        }
+        label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
         onClick={() => handleToggle(setOpen)}
-        className="text-muted hover:bg-surface-hover relative rounded-lg p-1.5"
-        aria-label={`Notifications${unreadCount + dmCount > 0 ? ` (${unreadCount + dmCount} unread)` : ""}`}
-      >
-        <IconBell size={20} stroke={1.5} />
-        <Badge count={unreadCount + dmCount} />
-      </button>
+      />
 
       {open && isDesktop && (
         <div className="border-border bg-bg absolute top-full right-0 z-50 mt-3 w-80 rounded-xl border p-1 shadow-lg">
