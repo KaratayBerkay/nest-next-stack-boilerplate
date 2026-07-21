@@ -291,35 +291,76 @@ After the initial TailAdmin-inspired implementation, a second iteration brought 
 
 ---
 
-## Enhancement Opportunities
+## Senior Review: UI/UX Enhancement Opportunities
 
-### Form Elements (`/v1/en/forms/elements`) — 539 lines
+A production-quality audit across all form pages, ordered by practical impact.
 
-| Opportunity | Effort | Impact |
+### Level 1 — Micro-Polish (low effort, high polish)
+
+These fix minor roughness that a user notices unconsciously:
+
+| # | Issue | Location | Fix |
+|---|---|---|---|
+| 1 | **No `max-width` on form cards** | All layout forms stretch to card width on 1920px+ — hard to read | Add `max-w-xl mx-auto` to single-column forms, `max-w-4xl` to sectioned forms |
+| 2 | **SubmitButton missing `loadingLabel`** | `ContactForm` (layouts) uses `<form.SubmitButton label="Submit" />` with no loading text | Add `loadingLabel="Submitting..."` so the button shows feedback during async submit |
+| 3 | **Character counter has no color threshold** | Textarea char count is plain `text-muted` regardless of proximity to limit | Green ≤70%, amber 70-90%, red ≥90% — user needs to know when they're close |
+| 4 | **Password eye icon no transition** | Show/hide toggle snaps instantly | Add `transition-opacity duration-150` to the eye icon swap |
+| 5 | **Multi-select chip remove has no feedback** | Chips vanish instantly on `×` click | Fade-out animation (opacity 1→0, scale 1→0.95) over 150ms |
+| 6 | **Input group adornments blend in** | Prefix/Suffix `bg-transparent` has no visual separation from the input | Add `bg-surface-hover` or `bg-muted/10` + right border to distinguish adornment zone |
+| 7 | **Placeholder contrast varies** | Some inputs use `placeholder:text-muted/70`, others get the browser default | Unify all to `placeholder:text-muted` (the /70 opacity can look too faint in dark themes) |
+| 8 | **Section header left-accent missing** | Personal Info / Address headers are plain uppercase text | Add a `border-l-2 border-brand pl-3` left accent to section headers for visual hierarchy |
+
+### Level 2 — Interaction Design (medium effort, high impact)
+
+These make the forms feel responsive and alive:
+
+| # | Pattern | Location | Implementation |
+|---|---|---|---|
+| 1 | **Conditional field enter/exit animation** | `advanced` page — account type toggle hides/shows company fields instantly | Wrap revealable fields in a `<div className="grid transition-all duration-300" style={{ gridTemplateRows: visible ? '1fr' : '0fr' }}>` — height animates. Add `overflow-hidden opacity-[visible ? 1 : 0] transition-opacity duration-200` for the inner content |
+| 2 | **Array sub-form row animation** | `advanced` page — team members add/remove snaps instantly | Use `layout` animations via a keyed list: add `animate-in fade-in slide-in-from-top-2 duration-200` on mount, `animate-out fade-out` on unmount. TanStack Form re-renders on push/remove — the animation wrapper must be in the render function, not conditional on mount state |
+| 3 | **Submit button success state** | After successful submit, the button briefly shows a checkmark before returning to idle | After toast fires, set a local `showSuccess` state for 2s: button shows `<CheckIcon /> + "Saved!"` in green, then resets to idle. This gives the user visual confirmation beyond the toast |
+| 4 | **Field validation debounce** | All onChange validators fire on every keystroke | TanStack Form's built-in `onChangeDebounceMs` option — set to 300ms. Without it, fast typists see error text flickering on every keystroke before the value settles |
+| 5 | **Form dirty state indicator** | None of the demo forms show when values differ from initial | Add a small `<span className="text-warning text-xxs flex items-center gap-1">● Unsaved changes</span>` when `form.state.isDirty` is true. Key for educational value — boilerplate consumers learn the pattern exists |
+| 6 | **Keyboard shortcut hint on submit** | No "Ctrl+Enter to submit" indication | Add a `title` attribute or subtle `text-xxs text-muted` hint near submit buttons: `form.SubmitButton` already handles `Enter`, but a visible hint teaches the user |
+
+### Level 3 — Accessibility & UX Foundations
+
+Senior-requirement items that prevent usability barriers:
+
+| # | Issue | Location | Fix |
+|---|---|---|---|
+| 1 | **No `aria-live` on error summaries** | Error messages render without a live region for screen readers | Wrap each `FormFieldInfo` error in an element with `role="alert"` + `aria-live="polite"`. Currently the field re-renders and ATs may not announce the change |
+| 2 | **Touch targets on mobile** | NativeSelect and some inline buttons may be < 44px on mobile | Verify all interactive controls meet `min-h-[44px]` on touch devices. The existing `h-9` (36px) is below the 44px WCAG minimum for touch |
+| 3 | **Focus order in multi-column grids** | Two-column grid reads left-to-right per row — correct for LTR, but needs verification | Add a visible `focus-visible:ring` on NativeSelect (currently it may inherit no focus style when used outside a form hook) |
+| 4 | **Date input cross-browser** | `<input type="date">` renders differently on Chrome (dropdown), Firefox (text), Safari (native picker) | The current approach is correct for a demo — native inputs are the most accessible. Enhancement would be a custom `Calendar` + `Popover` overlay for consistent styling |
+| 5 | **Error message association** | Each field label/input/error needs proper `aria-describedby` | `FieldMessages` from `@/components/ui/field-messages` exists exactly for this — the form field components (`TextField`, etc.) should use it. Verify they do |
+
+### Level 4 — Visual Design Polish
+
+Refinements that separate a demo from a production UI:
+
+| # | Opportunity | Rationale |
 |---|---|---|
-| **Keyboard date picker** (react-day-picker v10 like `Calendar` component) | Medium | Better UX than native `<input type="date">` |
-| **Phone input with flag + formatting** (country flag, auto-format) | High | Real-world pattern many apps need |
-| **Range slider** (min/max with tooltip) | Medium | Common in filters/pricing |
-| **Color picker** (native or custom swatches) | Low | Quick win for theme builders |
-| **Split section sub-components** into separate files (currently all in PageContent.tsx) | Medium | Convention compliance, readability |
-| **Tests for InputGroup, MultiSelectField, TextField password toggle, TextareaField char count** | Medium | Already noted as "future" in scope |
+| 1 | **Card subtle border + shadow layering** | Currently all form cards use `border border-border` + no shadow. TailAdmin uses `shadow-xs` on its form cards for subtle elevation. Add `shadow-xs` to `SectionCard` and `LayoutCard` |
+| 2 | **Form header description hierarchy** | The page-level `<h2>` + `<p>` combo under it uses `text-xs text-muted` — readable but could use tighter tracking (`tracking-tight`) and a `max-w-prose` constraint |
+| 3 | **Button alignment in sectioned forms** | Save + Cancel are left-aligned. Standard dialog pattern is right-aligned actions. Move `flex gap-3` to `flex justify-end gap-3` for Save/Cancel in the sectioned form |
+| 4 | **Skeleton loading placeholders** | For a production boilerplate, forms should demonstrate `<Suspense>` with skeleton placeholders. Not critical for demo pages since they're client-side only, but worth a mention |
+| 5 | **Consistent gap between sections in SectionedCardForm** | The `border-t` separators between Personal Info → Address → Membership have `gap-6` on the parent form, but each section uses `gap-3`. Feel consistent but the `border-t` could use `my-4` margin for breathing room |
 
-### Form Layouts (`/v1/en/forms/layouts`) — 498 lines
+### Summary — Highest ROI Items
 
-| Opportunity | Effort | Impact |
-|---|---|---|
-| **Floating label pattern** (label animates to top on focus) | Medium | Polished UX, TailAdmin reference |
-| **Wizard / Multi-step layout** (step indicator + prev/next + conditional sections) | High | Complex flow reference pattern |
-| **Inline form layout** (label beside field on same row) | Low | Quick variant of basic form |
-| **Form with sidebar** (field categories in left nav, content on right) | High | Enterprise admin pattern |
-| **Split 4 layout sub-components** into separate files | Medium | Convention compliance |
-
-### Field States (`/v1/en/forms/field-states`) — 502 lines
-
-| Opportunity | Effort | Impact |
-|---|---|---|
-| **Extract `StateCard` inline prop types** | Low | Convention compliance |
-| **Extract inline Zod schema** | Low | Convention compliance |
+| # | Enhancement | File(s) | Est. effort |
+|---|---|---|---|
+| 1 | Conditional field animation (height + opacity) | `advanced/PageContent.tsx` | ~15 lines |
+| 2 | Char count color thresholds | `TextareaField.tsx` + elements page | ~10 lines |
+| 3 | Form dirty state indicator | All layout forms | ~5 lines each |
+| 4 | Submit button loading feedback | `ContactForm` + `TwoColumnGridForm` | ~2 lines each |
+| 5 | Max-width constraints on form cards | `layouts/PageContent.tsx` SectionCard/LayoutCard | ~4 lines |
+| 6 | Input group adornment styling | `InputGroup.tsx` | ~5 lines |
+| 7 | Array row add/remove animation | `advanced/PageContent.tsx` | ~20 lines |
+| 8 | Card shadow polish | `SectionCard` + `LayoutCard` | 2 lines per card |
+| 9 | Focus style on NativeSelect | `NativeSelect.tsx` or layouts page | ~3 lines |
+| 10 | Submit button success state | `SubmitButton.tsx` | ~15 lines |
 
 ---
 

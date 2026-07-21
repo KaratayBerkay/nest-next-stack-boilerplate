@@ -146,42 +146,52 @@ export default function AdvancedPage() {
           {(field) => <field.TextField label={t.advanced.password} required />}
         </form.AppField>
 
-        {accountType === "business" && (
-          <>
-            <Separator />
+        <div
+          className={`overflow-hidden transition-all duration-300 ease-in-out ${
+            accountType === "business"
+              ? "max-h-96 opacity-100"
+              : "max-h-0 opacity-0"
+          }`}
+        >
+          {accountType === "business" && (
+            <div className="flex flex-col gap-4">
+              <Separator />
 
-            <p className="text-xxs text-muted">{t.advanced.business}</p>
+              <p className="text-xxs text-muted">{t.advanced.business}</p>
 
-            <form.AppField
-              name="companyName"
-              validators={{ onChange: fieldSchemas.companyName }}
-            >
-              {(field) => (
-                <field.TextField label={t.advanced.companyName} required />
-              )}
-            </form.AppField>
+              <form.AppField
+                name="companyName"
+                validators={{ onChange: fieldSchemas.companyName }}
+              >
+                {(field) => (
+                  <field.TextField label={t.advanced.companyName} required />
+                )}
+              </form.AppField>
 
-            <form.AppField
-              name="taxId"
-              validators={{ onChange: fieldSchemas.taxId }}
-            >
-              {(field) => <field.TextField label={t.advanced.taxId} required />}
-            </form.AppField>
+              <form.AppField
+                name="taxId"
+                validators={{ onChange: fieldSchemas.taxId }}
+              >
+                {(field) => (
+                  <field.TextField label={t.advanced.taxId} required />
+                )}
+              </form.AppField>
 
-            <form.AppField
-              name="industry"
-              validators={{ onChange: fieldSchemas.industry }}
-            >
-              {(field) => (
-                <field.SelectField
-                  label={t.advanced.industry}
-                  placeholder={t.advanced.industry}
-                  options={INDUSTRY_OPTIONS}
-                />
-              )}
-            </form.AppField>
-          </>
-        )}
+              <form.AppField
+                name="industry"
+                validators={{ onChange: fieldSchemas.industry }}
+              >
+                {(field) => (
+                  <field.SelectField
+                    label={t.advanced.industry}
+                    placeholder={t.advanced.industry}
+                    options={INDUSTRY_OPTIONS}
+                  />
+                )}
+              </form.AppField>
+            </div>
+          )}
+        </div>
 
         <Separator />
 
@@ -191,7 +201,7 @@ export default function AdvancedPage() {
           {members.map((_, i) => (
             <div
               key={i}
-              className="border-border surface flex flex-col gap-3 rounded-lg border p-3"
+              className="animate-fade-in border-border surface flex flex-col gap-3 rounded-lg border p-3"
             >
               <div className="flex items-center justify-between">
                 <span className="text-xxs text-muted">

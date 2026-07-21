@@ -1,5 +1,6 @@
 "use client";
 
+import { useStore } from "@tanstack/react-form";
 import { useAppForm } from "@/features/forms/form-hook";
 import {
   basicFormOpts,
@@ -21,9 +22,18 @@ import { Checkbox } from "@/components/ui/Checkbox";
 import { Label } from "@/components/ui/Label";
 import type { LayoutCardProps } from "@/types/forms/LayoutCard-types";
 
-function LayoutCard({ label, description, children }: LayoutCardProps) {
+function LayoutCard({
+  label,
+  description,
+  fullWidth,
+  children,
+}: LayoutCardProps) {
   return (
-    <div className="surface border-border flex flex-col gap-4 rounded-lg border p-5">
+    <div
+      className={`surface border-border flex flex-col gap-4 rounded-lg border p-5 shadow-xs ${
+        fullWidth ? "max-w-4xl" : "max-w-2xl"
+      }`}
+    >
       <div>
         <p className="text-xs font-semibold">{label}</p>
         {description && <p className="text-muted text-xs">{description}</p>}
@@ -37,6 +47,7 @@ function ContactForm() {
   const form = useAppForm({
     ...basicFormOpts,
   });
+  const isDirty = useStore(form.store, (s) => s.isDirty);
 
   return (
     <LayoutCard
@@ -80,7 +91,15 @@ function ContactForm() {
           >
             {(field) => <field.TextareaField label="Message" />}
           </form.AppField>
-          <form.SubmitButton label="Submit" />
+          <div className="flex items-center justify-between">
+            <form.SubmitButton label="Submit" loadingLabel="Submitting..." />
+            {isDirty && (
+              <span className="text-warning text-xxs flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                Unsaved changes
+              </span>
+            )}
+          </div>
         </form>
       </form.AppForm>
     </LayoutCard>
@@ -91,6 +110,7 @@ function TwoColumnGridForm() {
   const form = useAppForm({
     ...twoColumnFormOpts,
   });
+  const isDirty = useStore(form.store, (s) => s.isDirty);
 
   return (
     <LayoutCard
@@ -144,7 +164,15 @@ function TwoColumnGridForm() {
           >
             {(field) => <field.TextareaField label="Message" maxLength={200} />}
           </form.AppField>
-          <form.SubmitButton label="Send Message" />
+          <div className="flex items-center justify-between">
+            <form.SubmitButton label="Send Message" loadingLabel="Sending..." />
+            {isDirty && (
+              <span className="text-warning text-xxs flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                Unsaved changes
+              </span>
+            )}
+          </div>
         </form>
       </form.AppForm>
     </LayoutCard>
@@ -155,6 +183,7 @@ function IconPrefixedForm() {
   const form = useAppForm({
     ...iconFormOpts,
   });
+  const isDirty = useStore(form.store, (s) => s.isDirty);
 
   return (
     <LayoutCard
@@ -272,7 +301,15 @@ function IconPrefixedForm() {
               </div>
             )}
           </form.AppField>
-          <form.SubmitButton label="Create Account" />
+          <div className="flex items-center justify-between">
+            <form.SubmitButton label="Create Account" />
+            {isDirty && (
+              <span className="text-warning text-xxs flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                Unsaved changes
+              </span>
+            )}
+          </div>
         </form>
       </form.AppForm>
     </LayoutCard>
@@ -283,16 +320,18 @@ function SectionedCardForm() {
   const form = useAppForm({
     ...sectionedFormOpts,
   });
+  const isDirty = useStore(form.store, (s) => s.isDirty);
 
   return (
     <LayoutCard
       label="Sectioned Card Form"
       description="Multiple card sections for complex data entry"
+      fullWidth
     >
       <form.AppForm>
         <form className="flex flex-col gap-6">
           <div className="flex flex-col gap-3">
-            <p className="text-xxs text-muted tracking-wider uppercase">
+            <p className="text-xxs text-muted border-brand border-l-2 pl-3 tracking-wider uppercase">
               Personal Info
             </p>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -379,7 +418,7 @@ function SectionedCardForm() {
           <div className="border-border border-t" />
 
           <div className="flex flex-col gap-3">
-            <p className="text-xxs text-muted tracking-wider uppercase">
+            <p className="text-xxs text-muted border-brand border-l-2 pl-3 tracking-wider uppercase">
               Address
             </p>
             <form.AppField
@@ -426,7 +465,7 @@ function SectionedCardForm() {
           <div className="border-border border-t" />
 
           <div className="flex flex-col gap-3">
-            <p className="text-xxs text-muted tracking-wider uppercase">
+            <p className="text-xxs text-muted border-brand border-l-2 pl-3 tracking-wider uppercase">
               Membership
             </p>
             <div className="flex flex-col gap-2">
@@ -465,11 +504,19 @@ function SectionedCardForm() {
             </div>
           </div>
 
-          <div className="flex gap-3">
-            <form.SubmitButton label="Save Changes" />
-            <Button type="button" variant="outline">
-              Cancel
-            </Button>
+          <div className="flex items-center justify-between">
+            <div className="flex gap-3">
+              <form.SubmitButton label="Save Changes" />
+              <Button type="button" variant="outline">
+                Cancel
+              </Button>
+            </div>
+            {isDirty && (
+              <span className="text-warning text-xxs flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                Unsaved changes
+              </span>
+            )}
           </div>
         </form>
       </form.AppForm>

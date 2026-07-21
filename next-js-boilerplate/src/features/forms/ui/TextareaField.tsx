@@ -15,6 +15,13 @@ export function TextareaField({
   const field = useFieldContext<string>();
   const value = field.state.value ?? "";
   const charCount = value.length;
+  const ratio = maxLength ? charCount / maxLength : 0;
+  const countColor =
+    ratio >= 0.9
+      ? "text-destructive"
+      : ratio >= 0.7
+        ? "text-warning"
+        : "text-muted";
 
   return (
     <div className="flex flex-col gap-1">
@@ -37,7 +44,7 @@ export function TextareaField({
       <div className="flex items-center justify-between gap-2">
         <FormFieldInfo field={field} hint={hint} />
         {maxLength && (
-          <span className="text-muted ml-auto text-xs tabular-nums">
+          <span className={`ml-auto text-xs tabular-nums ${countColor}`}>
             {charCount}/{maxLength}
           </span>
         )}
