@@ -2,9 +2,16 @@
 
 import type { FormFieldInfoProps } from "@/types/ui/FormFieldInfo-types";
 
+function toErrorString(err: unknown): string | undefined {
+  if (typeof err === "string") return err;
+  if (err && typeof err === "object" && "message" in err)
+    return String(err.message);
+  return undefined;
+}
+
 export function FormFieldInfo(props: FormFieldInfoProps) {
   const { field, hint } = props;
-  const error = field.state.meta.errors[0];
+  const error = toErrorString(field.state.meta.errors[0]);
   const isValidating = field.state.meta.isValidating;
 
   if (!error && !isValidating && !hint) return null;

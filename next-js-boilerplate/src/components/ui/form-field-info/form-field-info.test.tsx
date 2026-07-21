@@ -14,10 +14,18 @@ const createFieldApi = (overrides: Record<string, unknown> = {}) =>
   }) as never;
 
 describe("FormFieldInfo", () => {
-  it("renders error message", () => {
+  it("renders string error message", () => {
     const field = createFieldApi({ errors: ["This field is required"] });
     render(<FormFieldInfo field={field} />);
     expect(screen.getByText("This field is required")).toBeDefined();
+  });
+
+  it("renders object error with message property", () => {
+    const field = createFieldApi({
+      errors: [{ message: "At least 2 characters", code: "too_small" }],
+    });
+    render(<FormFieldInfo field={field} />);
+    expect(screen.getByText("At least 2 characters")).toBeDefined();
   });
 
   it("shows validating state with aria-live", () => {
