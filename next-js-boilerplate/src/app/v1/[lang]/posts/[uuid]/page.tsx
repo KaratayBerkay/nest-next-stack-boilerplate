@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { getTierView } from "@/lib/tier-view";
 import { getSessionUser } from "@/lib/auth-ssr";
 import { graphqlFetch } from "@/lib/backend";
@@ -59,7 +60,11 @@ export default async function PostPage({ params }: PostPageProps) {
     ),
   ]);
 
-  const initialPostData = postRes.data?.post ?? null;
+  if (postRes.errors || !postRes.data?.post) {
+    notFound();
+  }
 
-  return getTierView(user!.tier, VIEWS, { initialPostData });
+  return getTierView(user!.tier, VIEWS, {
+    initialPostData: postRes.data.post,
+  });
 }
