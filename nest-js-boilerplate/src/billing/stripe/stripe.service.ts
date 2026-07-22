@@ -68,4 +68,37 @@ export class StripeService {
     const key = `STRIPE_PRICE_${tier}`;
     return this.config.get<string>(key) ?? null;
   }
+
+  async listPaymentMethods(
+    customerId: string,
+  ): Promise<Stripe.PaymentMethod[]> {
+    const result = await this.stripe.paymentMethods.list({
+      customer: customerId,
+      type: 'card',
+    });
+    return result.data;
+  }
+
+  async detachPaymentMethod(
+    paymentMethodId: string,
+  ): Promise<Stripe.PaymentMethod> {
+    return this.stripe.paymentMethods.detach(paymentMethodId);
+  }
+
+  async setDefaultPaymentMethod(
+    customerId: string,
+    paymentMethodId: string,
+  ): Promise<void> {
+    await this.stripe.customers.update(customerId, {
+      invoice_settings: {
+        default_payment_method: paymentMethodId,
+      },
+    });
+  }
+
+  async retrieveCustomer(customerId: string): Promise<Stripe.Customer | null> {
+    const customer = await this.stripe.customers.retrieve(customerId);
+    if (customer.deleted) return null;
+    return customer;
+  }
 }

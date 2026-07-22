@@ -321,6 +321,94 @@ export class BillingService {
     return { clientSecret: setupIntent.client_secret };
   }
 
+  async getPaymentMethods(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { stripeCustomerId: true },
+    });
+
+    if (!user?.stripeCustomerId) {
+      return [];
+    }
+
+    const methods = await this.stripeService.listPaymentMethods(
+      user.stripeCustomerId,
+    );
+
+    const customer = await this.stripeService.retrieveCustomer(
+      user.stripeCustomerId,
+    );
+    const defaultPaymentMethodId =
+      typeof customer?.invoice_settings?.default_payment_method === 'string'
+        ? customer.invoice_settings.default_payment_method
+        : typeof customer?.invoice_settings?.default_payment_method === 'object'
+          ? customer.invoice_settings.default_payment_method?.id
+          : null;
+
+    return methods.map((m) => ({
+      id: m.id,
+      brand: m.card?.brand ?? 'unknown',
+      last4: m.card?.last4 ?? '0000',
+      expMonth: m.card?.exp_month ?? 0,
+      expYear: m.card?.exp_year ?? 0,
+      isDefault: m.id === defaultPaymentMethodId,
+    }));
+  }
+
+  async removePaymentMethod(userId: string, paymentMethodId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { stripeCustomerId: true },
+    });
+
+    if (!user?.stripeCustomerId) {
+      throw new BadRequestException('No Stripe customer');
+    }
+
+    await this.stripeService.detachPaymentMethod(paymentMethodId);
+  }
+
+  async setDefaultPaymentMethod(userId: string, paymentMethodId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { stripeCustomerId: true },
+    });
+
+    if (!user?.stripeCustomerId) {
+      throw new BadRequestException('No Stripe customer');
+    }
+
+    await this.stripeService.setDefaultPaymentMethod(
+      user.stripeCustomerId,
+      paymentMethodId,
+    );
+  }
+
+  async getBillingAddress(userId: string) {
+    return this.prisma.billingAddress.findUnique({
+      where: { userId },
+    });
+  }
+
+  async upsertBillingAddress(
+    userId: string,
+    data: {
+      name?: string;
+      street?: string;
+      city?: string;
+      state?: string;
+      country?: string;
+      zipCode?: string;
+      vatNumber?: string;
+    },
+  ) {
+    return this.prisma.billingAddress.upsert({
+      where: { userId },
+      create: { userId, ...data },
+      update: data,
+    });
+  }
+
   private generateIdempotencyKey(
     userId: string,
     tier: SubscriptionTier,

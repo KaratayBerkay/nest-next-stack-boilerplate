@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingAuth } from "@/components/LoadingAuth";
@@ -7,15 +8,8 @@ import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { TIER_PRICES_CENTS, tierLabel, type Tier } from "@/lib/tier";
 import { formatPrice } from "@/lib/currency";
-import { useCurrencyCookie } from "@/hooks/useCurrencyCookie";
-import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { plansPath } from "@/constants/routes";
 import { cn } from "@/lib/cn";
-import {
-  formatDateByPreference,
-  type DateDisplayPreference,
-} from "@/lib/date-time";
-import type { CurrencyCode } from "@/constants/currency";
 import { PageHeader } from "@/components/ui";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsBillingPageInfo } from "@/constants/page-info";
@@ -24,8 +18,14 @@ import {
   subscriptionQueryOptions,
   billingHistoryQueryOptions,
 } from "@/api/client/billing/query";
+import { billingAddressQueryOptions } from "@/api/client/billing/address";
+import { PlanBenefits } from "./PlanBenefits";
+import { PaymentMethods } from "./PaymentMethods";
+import { InvoiceTable } from "./InvoiceTable";
+import { BillingAddressForm } from "./BillingAddressForm";
+import type { BillingAddress } from "@/api/server/billing/address";
 
-interface Transaction {
+export interface Transaction {
   id: string;
   type: string;
   status: string;
@@ -45,116 +45,149 @@ interface SubscriptionInfo {
   cancelAtPeriodEnd: boolean;
 }
 
-function renderCurrentPlan(
+function renderPlanDetails(
   tier: Tier,
   periodEnd: string | undefined,
   cancelAtPeriodEnd: boolean,
   t: Record<string, string>,
-  currency: CurrencyCode,
-  dateDisplay: DateDisplayPreference,
 ) {
   return (
-    <div className="border-border bg-surface flex items-center justify-between rounded-lg border p-4">
-      <div>
-        <p className="text-muted text-sm">{t.currentPlan}</p>
-        <p className="text-lg font-bold">{tierLabel(tier)}</p>
-        <p className="text-muted text-sm">
-          {formatPrice(TIER_PRICES_CENTS[tier] ?? 0, currency)}
-        </p>
+    <div className="flex flex-col gap-3">
+      <h3 className="text-sm font-medium">Plan Details</h3>
+      <ul className="divide-border flex flex-col divide-y">
+        <li className="flex items-center justify-between py-2.5">
+          <span className="text-muted text-sm">Current Plan</span>
+          <span className="text-sm font-medium">{tierLabel(tier)}</span>
+        </li>
+        <li className="flex items-center justify-between py-2.5">
+          <span className="text-muted text-sm">Price</span>
+          <span className="text-sm font-medium">
+            {formatPrice(TIER_PRICES_CENTS[tier] ?? 0, "USD")}
+          </span>
+        </li>
         {tier !== "FREE" && periodEnd && (
-          <p className="text-muted mt-1 text-xs">
-            {cancelAtPeriodEnd
-              ? `Cancels on ${formatDateByPreference(periodEnd, dateDisplay)}`
-              : `Next payment: ${formatDateByPreference(periodEnd, dateDisplay)}`}
-          </p>
+          <li className="flex items-center justify-between py-2.5">
+            <span className="text-muted text-sm">
+              {cancelAtPeriodEnd ? "Cancels on" : "Renewal Date"}
+            </span>
+            <span className="text-sm font-medium">{periodEnd}</span>
+          </li>
+        )}
+      </ul>
+
+      <div className="mt-4 flex items-center gap-2">
+        {tier === "FREE" ? (
+          <Link
+            href={plansPath()}
+            className="bg-brand text-brand-fg rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90"
+          >
+            {t.upgradePlan}
+          </Link>
+        ) : (
+          <>
+            <Link
+              href={plansPath()}
+              className="bg-brand text-brand-fg rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90"
+            >
+              {t.upgradePlan}
+            </Link>
+            {!cancelAtPeriodEnd && (
+              <button
+                type="button"
+                className="border-border hover:bg-surface-hover rounded-lg border px-4 py-2 text-sm font-medium"
+              >
+                Cancel Subscription
+              </button>
+            )}
+          </>
         )}
       </div>
-      {tier === "FREE" ? (
-        <Link
-          href={plansPath()}
-          className="bg-brand text-brand-fg rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90"
+    </div>
+  );
+}
+
+function renderBillingInfo(
+  address: BillingAddress | null,
+  isEditing: boolean,
+  onEdit: () => void,
+) {
+  if (isEditing) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-medium">Billing Info</h3>
+        <button
+          type="button"
+          onClick={onEdit}
+          className="text-brand text-xs font-medium hover:underline"
         >
-          {t.upgradePlan}
-        </Link>
+          Edit
+        </button>
+      </div>
+
+      {!address ? (
+        <p className="text-muted text-sm">No billing address saved.</p>
       ) : (
-        <Link
-          href={plansPath()}
-          className="border-border hover:bg-surface-hover rounded-lg border px-4 py-2 text-sm font-medium"
-        >
-          {t.upgradePlan}
-        </Link>
+        <ul className="divide-border flex flex-col divide-y">
+          {address.name && (
+            <li className="flex items-center justify-between py-2.5">
+              <span className="text-muted text-sm">Name</span>
+              <span className="text-sm font-medium">{address.name}</span>
+            </li>
+          )}
+          {address.street && (
+            <li className="flex items-center justify-between py-2.5">
+              <span className="text-muted text-sm">Street</span>
+              <span className="text-sm font-medium">{address.street}</span>
+            </li>
+          )}
+          {address.city && (
+            <li className="flex items-center justify-between py-2.5">
+              <span className="text-muted text-sm">City</span>
+              <span className="text-sm font-medium">{address.city}</span>
+            </li>
+          )}
+          {address.state && (
+            <li className="flex items-center justify-between py-2.5">
+              <span className="text-muted text-sm">State</span>
+              <span className="text-sm font-medium">{address.state}</span>
+            </li>
+          )}
+          {address.country && (
+            <li className="flex items-center justify-between py-2.5">
+              <span className="text-muted text-sm">Country</span>
+              <span className="text-sm font-medium">{address.country}</span>
+            </li>
+          )}
+          {address.zipCode && (
+            <li className="flex items-center justify-between py-2.5">
+              <span className="text-muted text-sm">Zip / Postal Code</span>
+              <span className="text-sm font-medium">{address.zipCode}</span>
+            </li>
+          )}
+          {address.vatNumber && (
+            <li className="flex items-center justify-between py-2.5">
+              <span className="text-muted text-sm">VAT Number</span>
+              <span className="text-sm font-medium">{address.vatNumber}</span>
+            </li>
+          )}
+        </ul>
       )}
     </div>
   );
 }
 
-function renderBillingHistory(
-  loadingHistory: boolean,
-  transactions: Transaction[],
-  t: Record<string, string>,
-  dateDisplay: DateDisplayPreference,
-) {
-  return (
-    <div className="flex flex-col gap-3">
-      <h3 className="text-sm font-medium">{t.billingHistory}</h3>
-      {loadingHistory ? (
-        <p className="text-muted text-sm">{t.loading}</p>
-      ) : transactions.length === 0 ? (
-        <p className="text-muted text-sm">{t.billingHistoryEmpty}</p>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {transactions.map((tx) => (
-            <div
-              key={tx.id}
-              className="border-border bg-surface flex items-center justify-between rounded-lg border p-3"
-            >
-              <div>
-                <p className="text-muted text-xs">
-                  {formatDateByPreference(tx.createdAt, dateDisplay)}
-                </p>
-                <p className="text-sm font-medium">
-                  {tx.reference.replace("subscription:", "")}
-                  {tx.amount > 0 && (
-                    <span className="text-muted ml-1 text-xs">
-                      — ${(tx.amount / 100).toFixed(2)}
-                    </span>
-                  )}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span
-                  className={`text-xs font-medium ${
-                    tx.status === "COMPLETED"
-                      ? "text-green-600"
-                      : "text-red-600"
-                  }`}
-                >
-                  {tx.status}
-                </span>
-                {tx.stripeInvoiceUrl && (
-                  <a
-                    href={tx.stripeInvoiceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-blue-600 underline hover:text-blue-800"
-                  >
-                    Invoice
-                  </a>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+function useBillingAddress() {
+  return useQuery(billingAddressQueryOptions());
 }
 
 export function FreePageView({ className }: { className?: string }) {
   const { user, loading } = useAuth();
   const t = useMessages("settings");
-  const currency = useCurrencyCookie();
-  const dateDisplay = useDateDisplayCookie();
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
 
   const { data: subData, isLoading: _loadingSub } = useQuery(
     subscriptionQueryOptions(user?.id),
@@ -167,13 +200,14 @@ export function FreePageView({ className }: { className?: string }) {
   });
   const transactions = (historyData as Transaction[] | undefined) ?? [];
 
+  const { data: addressData } = useBillingAddress();
+  const address = (addressData as BillingAddress | null) ?? null;
+
   if (loading) return <LoadingAuth />;
   if (!user)
     return <UnauthenticatedMessage message={t.signInToManageBilling} />;
 
   const tier = (subscription?.tier as Tier) ?? (user.tier as Tier) ?? "FREE";
-  const periodEnd = subscription?.periodEnd;
-  const cancelAtPeriodEnd = subscription?.cancelAtPeriodEnd ?? false;
 
   return (
     <div className={cn("flex h-full w-full flex-col gap-6", className)}>
@@ -182,21 +216,46 @@ export function FreePageView({ className }: { className?: string }) {
         actions={<PageInfoButton content={settingsBillingPageInfo} />}
       />
 
-      {renderCurrentPlan(
-        tier,
-        periodEnd,
-        cancelAtPeriodEnd,
-        t as unknown as Record<string, string>,
-        currency,
-        dateDisplay,
-      )}
+      <div className="flex flex-col gap-6 xl:flex-row">
+        <div className="flex flex-1 flex-col gap-6">
+          <div className="border-border bg-surface rounded-xl border p-5">
+            {renderPlanDetails(
+              tier,
+              subscription?.periodEnd,
+              subscription?.cancelAtPeriodEnd ?? false,
+              t as unknown as Record<string, string>,
+            )}
+          </div>
 
-      {renderBillingHistory(
-        loadingHistory,
-        transactions,
-        t as unknown as Record<string, string>,
-        dateDisplay,
-      )}
+          <div className="border-border bg-surface rounded-xl border p-5">
+            <PlanBenefits currentTier={tier} />
+          </div>
+
+          <div className="border-border bg-surface rounded-xl border p-5">
+            <PaymentMethods />
+          </div>
+        </div>
+
+        <div className="flex w-full flex-col gap-6 xl:w-80">
+          <div className="border-border bg-surface rounded-xl border p-5">
+            {isEditingAddress ? (
+              <BillingAddressForm
+                address={address}
+                onSave={() => setIsEditingAddress(false)}
+                onCancel={() => setIsEditingAddress(false)}
+              />
+            ) : (
+              renderBillingInfo(address, isEditingAddress, () =>
+                setIsEditingAddress(true),
+              )
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="border-border bg-surface rounded-xl border p-5">
+        <InvoiceTable transactions={transactions} isLoading={loadingHistory} />
+      </div>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { UseGuards } from '@nestjs/common';
 import {
   Args,
   Field,
+  InputType,
   Mutation,
   ObjectType,
   Query,
@@ -82,6 +83,75 @@ export class SetupIntentResult {
   clientSecret!: string;
 }
 
+@ObjectType()
+export class PaymentMethodInfo {
+  @Field()
+  id!: string;
+
+  @Field()
+  brand!: string;
+
+  @Field()
+  last4!: string;
+
+  @Field()
+  expMonth!: number;
+
+  @Field()
+  expYear!: number;
+
+  @Field()
+  isDefault!: boolean;
+}
+
+@ObjectType()
+export class BillingAddressInfo {
+  @Field({ nullable: true })
+  name?: string;
+
+  @Field({ nullable: true })
+  street?: string;
+
+  @Field({ nullable: true })
+  city?: string;
+
+  @Field({ nullable: true })
+  state?: string;
+
+  @Field({ nullable: true })
+  country?: string;
+
+  @Field({ nullable: true })
+  zipCode?: string;
+
+  @Field({ nullable: true })
+  vatNumber?: string;
+}
+
+@InputType()
+export class BillingAddressInput {
+  @Field({ nullable: true })
+  name?: string;
+
+  @Field({ nullable: true })
+  street?: string;
+
+  @Field({ nullable: true })
+  city?: string;
+
+  @Field({ nullable: true })
+  state?: string;
+
+  @Field({ nullable: true })
+  country?: string;
+
+  @Field({ nullable: true })
+  zipCode?: string;
+
+  @Field({ nullable: true })
+  vatNumber?: string;
+}
+
 @UseGuards(SessionAuthGuard)
 @Resolver()
 export class BillingResolver {
@@ -142,5 +212,45 @@ export class BillingResolver {
   ): Promise<SetupIntentResult> {
     const result = await this.billing.createSetupIntent(user.userId);
     return { clientSecret: result.clientSecret! };
+  }
+
+  @Query(() => [PaymentMethodInfo])
+  async myPaymentMethods(
+    @CurrentUser() user: JwtUser,
+  ): Promise<PaymentMethodInfo[]> {
+    return this.billing.getPaymentMethods(user.userId);
+  }
+
+  @Mutation(() => Boolean)
+  async removePaymentMethod(
+    @CurrentUser() user: JwtUser,
+    @Args('paymentMethodId') paymentMethodId: string,
+  ): Promise<boolean> {
+    await this.billing.removePaymentMethod(user.userId, paymentMethodId);
+    return true;
+  }
+
+  @Mutation(() => Boolean)
+  async setDefaultPaymentMethod(
+    @CurrentUser() user: JwtUser,
+    @Args('paymentMethodId') paymentMethodId: string,
+  ): Promise<boolean> {
+    await this.billing.setDefaultPaymentMethod(user.userId, paymentMethodId);
+    return true;
+  }
+
+  @Query(() => BillingAddressInfo, { nullable: true })
+  async myBillingAddress(
+    @CurrentUser() user: JwtUser,
+  ): Promise<BillingAddressInfo | null> {
+    return this.billing.getBillingAddress(user.userId);
+  }
+
+  @Mutation(() => BillingAddressInfo)
+  async upsertBillingAddress(
+    @CurrentUser() user: JwtUser,
+    @Args('input') input: BillingAddressInput,
+  ): Promise<BillingAddressInfo> {
+    return this.billing.upsertBillingAddress(user.userId, input);
   }
 }

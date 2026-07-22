@@ -51,6 +51,9 @@ export const PROFILE_USERNAME_AVAILABLE_PREFIX =
 
 export const BILLING_SUBSCRIPTION_URL = "/api/billing/subscription" as const;
 export const BILLING_HISTORY_URL = "/api/billing/history" as const;
+export const BILLING_PAYMENT_METHODS_URL =
+  "/api/billing/payment-methods" as const;
+export const BILLING_ADDRESS_URL = "/api/billing/address" as const;
 
 export const API_KEYS_URL = "/api/api-keys" as const;
 export const API_KEYS_PREFIX = "/api/api-keys/" as const;

@@ -10,6 +10,9 @@ export class SendMessageRestDto {
 
   @IsString()
   @IsOptional()
-  @ApiProperty({ description: 'Client-generated temp ID for optimistic reconciliation', required: false })
+  @ApiProperty({
+    description: 'Client-generated temp ID for optimistic reconciliation',
+    required: false,
+  })
   _tempId?: string;
 }
