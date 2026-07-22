@@ -1,4 +1,6 @@
-const HOSTNAMES = (process.env.NEXT_PUBLIC_IMAGE_HOSTNAMES ?? "picsum.photos,localhost")
+const HOSTNAMES = (
+  process.env.NEXT_PUBLIC_IMAGE_HOSTNAMES ?? "picsum.photos,localhost"
+)
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
@@ -33,11 +35,12 @@ const nextConfig: NextConfig = {
           key: "Content-Security-Policy",
           value:
             "default-src 'self'; " +
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com; " +
             "style-src 'self' 'unsafe-inline'; " +
             "img-src 'self' blob: data: https:; " +
             "font-src 'self' data:; " +
-            "connect-src 'self' ws: wss: https:; " +
+            "connect-src 'self' ws: wss: https: https://*.stripe.com; " +
+            "frame-src https://*.stripe.com; " +
             "object-src 'none'; " +
             "base-uri 'self'; " +
             "frame-ancestors 'none'; " +
@@ -58,7 +61,6 @@ const nextConfig: NextConfig = {
     })),
   },
 };
-
 
 export default (() => {
   if (process.env.ANALYZE === "true") {
