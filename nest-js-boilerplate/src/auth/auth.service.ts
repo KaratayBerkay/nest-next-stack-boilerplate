@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AuthProviderType, User } from '@prisma/client';
@@ -11,6 +11,7 @@ import {
 import { MailService } from '../mail/mail.service';
 import { OutboxService } from '../outbox/outbox.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { AuthTokenService } from './auth-token.service';
 import { AuthLoginService } from './auth-login.service';
 import { AuthRegistrationService } from './auth-registration.service';
@@ -51,6 +52,8 @@ export class AuthService {
     hydration: SessionHydrationService,
     derivation: TokenDerivationService,
     usernames: UsernameService,
+    @Inject(forwardRef(() => RealtimeGateway))
+    private readonly realtime: RealtimeGateway,
   ) {
     this.authTokens = new AuthTokenService(
       jwt,
@@ -68,6 +71,7 @@ export class AuthService {
       tokenStore,
       usernames,
       mail,
+      realtime,
     );
     this.authRegistration = new AuthRegistrationService(
       prisma,

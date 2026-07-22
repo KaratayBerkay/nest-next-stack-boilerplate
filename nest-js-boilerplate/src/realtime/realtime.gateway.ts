@@ -4,6 +4,7 @@ import {
   OnModuleInit,
   Logger,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { HttpAdapterHost } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { WebSocketServer, WebSocket } from 'ws';
@@ -42,6 +43,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
   private pendingByIp = new Map<string, number>();
   private handlers = new Map<string, FrameHandler>();
   private redisFailureCount = 0;
+  private userIps = new Map<string, Map<string, number>>();
 
   constructor(
     private readonly adapterHost: HttpAdapterHost,
@@ -50,6 +52,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     private readonly derivation: TokenDerivationService,
     private readonly crypto: CryptoService,
     private readonly presence: RealtimePresenceService,
+    private readonly config: ConfigService,
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
     @Inject(REDIS_SUBSCRIBER) private readonly subscriber: Redis,
   ) {}
@@ -88,6 +91,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       authWs.tabClaims = new Map();
 
       const ip = this.clientIp(req);
+      authWs.clientIp = ip;
       const pending = this.pendingByIp.get(ip) || 0;
       if (pending >= RealtimeGateway.MAX_PENDING_PER_IP) {
         this.logger.warn(`WS pending-connection limit for ${ip}, closing`);
@@ -158,6 +162,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
           } else {
             this.onlineCount.set(uid, prev - 1);
           }
+          this.untrackUserIp(uid, authWs.clientIp);
         }
       });
     });
@@ -439,6 +444,8 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       );
       oldest.close(1013, 'Connection limit reached');
     }
+
+    this.trackUserIp(hash.userId, ws.clientIp);
 
     ws.send(JSON.stringify({ type: 'authenticated' }));
     ws.send(JSON.stringify({ type: 'room-counts', rooms: {} }));
@@ -730,5 +737,46 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     const count = this.pendingByIp.get(ip) || 0;
     if (count <= 1) this.pendingByIp.delete(ip);
     else this.pendingByIp.set(ip, count - 1);
+  }
+
+  private trackUserIp(userId: string, ip?: string): void {
+    if (!ip) return;
+    let ipMap = this.userIps.get(userId);
+    if (!ipMap) {
+      ipMap = new Map();
+      this.userIps.set(userId, ipMap);
+    }
+
+    const isNewIp = !ipMap.has(ip);
+    ipMap.set(ip, (ipMap.get(ip) || 0) + 1);
+
+    if (isNewIp) {
+      this.emitToUser(userId, {
+        type: 'new-ip-detected',
+        ip,
+        activeIpCount: ipMap.size,
+      });
+    }
+
+    const maxIps = this.config.get<number>('MAX_SAME_IP_SESSIONS', 5);
+    if (ipMap.size > maxIps) {
+      this.logger.warn({
+        event: 'ws.same_ip_limit_exceeded',
+        userId,
+        ipCount: ipMap.size,
+        maxIps,
+        ips: Array.from(ipMap.keys()),
+      });
+    }
+  }
+
+  private untrackUserIp(userId: string, ip?: string): void {
+    if (!ip) return;
+    const ipMap = this.userIps.get(userId);
+    if (!ipMap) return;
+    const count = ipMap.get(ip) || 1;
+    if (count <= 1) ipMap.delete(ip);
+    else ipMap.set(ip, count - 1);
+    if (ipMap.size === 0) this.userIps.delete(userId);
   }
 }

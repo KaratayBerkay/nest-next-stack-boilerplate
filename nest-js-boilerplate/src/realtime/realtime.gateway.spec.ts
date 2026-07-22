@@ -50,6 +50,7 @@ describe('RealtimeGateway — public methods', () => {
       {} as never, // TokenDerivationService
       {} as never, // CryptoService
       mockPresenceService(),
+      { get: jest.fn().mockReturnValue(5) } as never, // ConfigService
       mockRedis as never, // REDIS_CLIENT
       {} as never, // REDIS_SUBSCRIBER
     );

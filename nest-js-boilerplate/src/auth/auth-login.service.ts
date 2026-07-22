@@ -9,6 +9,7 @@ import {
   type DeviceContext,
   type RequestContext,
 } from '../devices/device.service';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { TokenStoreService } from './token-store.service';
 import { UsernameService } from './username.service';
 import { MailService } from '../mail/mail.service';
@@ -33,6 +34,7 @@ export class AuthLoginService {
     private readonly tokenStore: TokenStoreService,
     private readonly usernames: UsernameService,
     private readonly mail: MailService,
+    private readonly realtime: RealtimeGateway,
   ) {}
 
   async login(
@@ -358,6 +360,15 @@ export class AuthLoginService {
       summary: 'Sign-in from a new device',
       ip: device.ip,
       userAgent: device.userAgent,
+    });
+
+    this.realtime.emitToUser(userId, {
+      type: 'device-logged-in',
+      device: {
+        id: device.deviceId,
+        ip: device.ip,
+        userAgent: device.userAgent,
+      },
     });
   }
 }

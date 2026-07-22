@@ -14,6 +14,7 @@ export type AuthWs = WebSocket & {
   registeredServices?: string[];
   watchedTopics?: string[];
   pendingIp?: string;
+  clientIp?: string;
   page?: string | null;
   pageParams?: Record<string, string>;
   tabClaims: Map<

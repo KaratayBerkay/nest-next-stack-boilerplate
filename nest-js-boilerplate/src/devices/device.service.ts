@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import type { Request } from 'express';
@@ -31,6 +31,8 @@ interface CookieCarrier {
 
 @Injectable()
 export class DeviceService {
+  private readonly logger = new Logger(DeviceService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly crypto: CryptoService,
@@ -150,15 +152,46 @@ export class DeviceService {
       });
     }
 
+    const isNew = !(existing?.userId === userId);
+    if (isNew) {
+      await this.enforceDeviceLimit(userId);
+    }
+
     this.writeCookie(req, cookieName, device.token);
 
     return {
       deviceId: device.id,
       deviceToken: device.token,
-      changed: !(existing?.userId === userId),
+      changed: isNew,
       ip,
       userAgent,
     };
+  }
+
+  private async enforceDeviceLimit(userId: string): Promise<void> {
+    const maxDevices = this.config.get<number>('MAX_DEVICES_PER_USER', 10);
+    const count = await this.prisma.device.count({ where: { userId } });
+    if (count <= maxDevices) return;
+
+    const excess = count - maxDevices;
+    const oldest = await this.prisma.device.findMany({
+      where: { userId },
+      orderBy: { lastSeenAt: 'asc' },
+      take: excess,
+      select: { id: true, type: true },
+    });
+
+    await this.prisma.device.deleteMany({
+      where: { id: { in: oldest.map((d) => d.id) } },
+    });
+
+    this.logger.log({
+      event: 'device_limit_enforced',
+      userId,
+      maxDevices,
+      removedCount: excess,
+      removedTypes: oldest.map((d) => d.type),
+    });
   }
 
   private readCookie(req: Request, name: string): string | null {

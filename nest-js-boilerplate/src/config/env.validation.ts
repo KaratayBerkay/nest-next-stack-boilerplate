@@ -41,6 +41,10 @@ export const validationSchema = Joi.object({
   VAPID_PUBLIC_KEY: Joi.string().optional(),
   VAPID_PRIVATE_KEY: Joi.string().optional(),
   VAPID_SUBJECT: Joi.string().optional(),
+
+  // ── Multi-device ─────────────────────────────────────────────────────────
+  MAX_DEVICES_PER_USER: Joi.number().min(1).default(10),
+  MAX_SAME_IP_SESSIONS: Joi.number().min(1).default(5),
 });
 
 // The matching `validationOptions`: tolerate the many unrelated env vars this app uses
