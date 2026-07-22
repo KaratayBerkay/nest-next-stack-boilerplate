@@ -55,6 +55,11 @@ export class PostService {
     const ids = friendIds ?? (await this.friends.getFriendIds(authorId));
 
     this.cache.invalidate('cache:feed:*').catch(() => {});
+    this.realtime.emitToTopic('feed', {
+      renew: 'Feed',
+      type: 'Post',
+      id: post.id,
+    });
     this.notificationQueue
       .enqueueFriendPostNotification(authorId, ids, data.title, post.id)
       .catch(() => {});
@@ -156,7 +161,9 @@ export class PostService {
             title: true,
             content: true,
             imageUrl: true,
+            coverImage: true,
             createdAt: true,
+            authorId: true,
             status: true,
             reactions: {
               take: 50,
