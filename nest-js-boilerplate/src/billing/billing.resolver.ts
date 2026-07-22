@@ -243,7 +243,17 @@ export class BillingResolver {
   async myBillingAddress(
     @CurrentUser() user: JwtUser,
   ): Promise<BillingAddressInfo | null> {
-    return this.billing.getBillingAddress(user.userId);
+    const addr = await this.billing.getBillingAddress(user.userId);
+    if (!addr) return null;
+    return {
+      name: addr.name ?? undefined,
+      street: addr.street ?? undefined,
+      city: addr.city ?? undefined,
+      state: addr.state ?? undefined,
+      country: addr.country ?? undefined,
+      zipCode: addr.zipCode ?? undefined,
+      vatNumber: addr.vatNumber ?? undefined,
+    };
   }
 
   @Mutation(() => BillingAddressInfo)
@@ -251,6 +261,15 @@ export class BillingResolver {
     @CurrentUser() user: JwtUser,
     @Args('input') input: BillingAddressInput,
   ): Promise<BillingAddressInfo> {
-    return this.billing.upsertBillingAddress(user.userId, input);
+    const addr = await this.billing.upsertBillingAddress(user.userId, input);
+    return {
+      name: addr.name ?? undefined,
+      street: addr.street ?? undefined,
+      city: addr.city ?? undefined,
+      state: addr.state ?? undefined,
+      country: addr.country ?? undefined,
+      zipCode: addr.zipCode ?? undefined,
+      vatNumber: addr.vatNumber ?? undefined,
+    };
   }
 }
