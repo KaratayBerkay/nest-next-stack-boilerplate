@@ -11,8 +11,9 @@ import {
 import { Checkbox } from "@/components/ui/Checkbox";
 import { cn } from "@/lib/cn";
 import type { MultiSelectFieldProps } from "@/types/forms/MultiSelectField-types";
+import type { ChipProps } from "@/types/forms/Chip-types";
 
-function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
+function Chip({ label, onRemove }: ChipProps) {
   return (
     <span className="bg-muted/20 text-muted inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs">
       {label}

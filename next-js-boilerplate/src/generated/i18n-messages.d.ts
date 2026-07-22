@@ -1129,6 +1129,9 @@ export type I18nMessages = {
       "billingInfo": string;
       "billingAddressEmpty": string;
       "cancelSubscription": string;
+      "cancelSubscriptionConfirm": string;
+      "cancelSubscriptionSuccess": string;
+      "cancelSubscriptionFailed": string;
       "invoices": string;
       "invoiceNumber": string;
       "downloadInvoice": string;

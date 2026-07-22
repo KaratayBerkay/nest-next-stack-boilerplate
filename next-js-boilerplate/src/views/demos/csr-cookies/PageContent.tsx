@@ -1,17 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AUTH_ME_URL } from "@/constants/api/urls";
+import { getMeRawServer } from "@/api/server/auth/me-raw";
 
 export default function CsrCookiesPage() {
   const [session, setSession] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(AUTH_ME_URL)
-      .then((r) => r.json())
+    getMeRawServer()
       .then((data) => {
-        setSession(data.authed ? data.session : null);
+        setSession(data.authed ? data.session ?? null : null);
+        setLoading(false);
+      })
+      .catch(() => {
+        setSession(null);
         setLoading(false);
       });
   }, []);

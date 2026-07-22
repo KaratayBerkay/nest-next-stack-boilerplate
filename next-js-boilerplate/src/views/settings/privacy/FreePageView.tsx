@@ -5,13 +5,14 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
-import { Switch } from "@/components/ui/Switch";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
+import type { ClassNameProps } from "@/types/ui/ClassName-types";
 import { PageHeader } from "@/components/ui";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsPrivacyPageInfo } from "@/constants/page-info";
+import { PrivacyToggleRow } from "./PrivacyToggleRow";
 
 async function handleSave(
   toast: ReturnType<typeof useToast>["toast"],
@@ -21,17 +22,11 @@ async function handleSave(
   enable2FA: boolean,
 ) {
   const payload = { hideProfilePicture, useNickname, nickname, enable2FA };
-  // TODO: Add real API endpoint when backend privacy settings endpoint exists
-  // await apiFetchJson("/api/profile/privacy", {
-  //   method: "POST",
-  //   headers: JSON_CONTENT_TYPE_HEADER,
-  //   body: JSON.stringify(payload),
-  // });
   console.log("Saving privacy preferences:", payload);
   toast({ title: "Preferences saved", variant: "success" });
 }
 
-export function FreePageView({ className }: { className?: string }) {
+export function FreePageView({ className }: ClassNameProps) {
   const params = useParams<{ lang: string }>();
   const t = useMessages("settings");
   const { toast } = useToast();
@@ -49,34 +44,19 @@ export function FreePageView({ className }: { className?: string }) {
       />
 
       <div className="flex flex-col gap-4">
-        <div className="border-border flex items-center justify-between rounded-lg border p-4">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-sm font-medium">
-              {t.privacyHideProfilePicture}
-            </span>
-            <span className="text-muted text-xs">
-              {t.privacyHideProfilePictureDesc}
-            </span>
-          </div>
-          <Switch
-            checked={hideProfilePicture}
-            onChange={(e) => setHideProfilePicture(e.target.checked)}
-          />
-        </div>
+        <PrivacyToggleRow
+          title={t.privacyHideProfilePicture}
+          description={t.privacyHideProfilePictureDesc}
+          checked={hideProfilePicture}
+          onChange={setHideProfilePicture}
+        />
 
-        <div className="border-border flex flex-col justify-between rounded-lg border p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex flex-col gap-0.5">
-              <span className="text-sm font-medium">{t.privacyNickname}</span>
-              <span className="text-muted text-xs">
-                {t.privacyNicknameDesc}
-              </span>
-            </div>
-            <Switch
-              checked={useNickname}
-              onChange={(e) => setUseNickname(e.target.checked)}
-            />
-          </div>
+        <PrivacyToggleRow
+          title={t.privacyNickname}
+          description={t.privacyNicknameDesc}
+          checked={useNickname}
+          onChange={setUseNickname}
+        >
           {useNickname && (
             <Input
               value={nickname}
@@ -85,30 +65,18 @@ export function FreePageView({ className }: { className?: string }) {
               className="mt-3"
             />
           )}
-        </div>
+        </PrivacyToggleRow>
 
-        <div className="border-border flex items-center justify-between rounded-lg border p-4">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-sm font-medium">{t.privacyTwoFactor}</span>
-            <span className="text-muted text-xs">{t.privacyTwoFactorDesc}</span>
-          </div>
-          <Switch
-            checked={enable2FA}
-            onChange={(e) => setEnable2FA(e.target.checked)}
-          />
-        </div>
+        <PrivacyToggleRow
+          title={t.privacyTwoFactor}
+          description={t.privacyTwoFactorDesc}
+          checked={enable2FA}
+          onChange={setEnable2FA}
+        />
       </div>
 
       <Button
-        onClick={() =>
-          handleSave(
-            toast,
-            hideProfilePicture,
-            useNickname,
-            nickname,
-            enable2FA,
-          )
-        }
+        onClick={() => handleSave(toast, hideProfilePicture, useNickname, nickname, enable2FA)}
         variant="primary"
         className="self-start"
       >

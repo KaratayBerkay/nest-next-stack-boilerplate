@@ -1,129 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { Textarea, AutoResizeTextarea } from "@/components/ui/Textarea";
-import { Button } from "@/components/ui/Button";
+import { Textarea } from "@/components/ui/Textarea";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
+import { UsageTab } from "./UsageTab";
+import { ExamplesTab } from "./ExamplesTab";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/ui/PageContent-types";
 import type { TextareaVariant } from "@/types/ui/Textarea-types";
-
-function ExamplesTab() {
-  const [comment, setComment] = useState("");
-
-  return (
-    <>
-      <section className="flex flex-col gap-4">
-        <h3 className="text-lg font-semibold">Comment Form</h3>
-        <div className="surface max-w-md space-y-3 p-4">
-          <AutoResizeTextarea
-            placeholder="Write a comment..."
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-          />
-          <div className="flex items-center justify-between">
-            <span className="text-muted text-xs">
-              {comment.length} characters
-            </span>
-            <Button size="sm" variant="primary" disabled={!comment.trim()}>
-              Post Comment
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-4">
-        <h3 className="text-lg font-semibold">Contact Form</h3>
-        <div className="surface max-w-md space-y-3 rounded-xl p-6">
-          <input
-            type="text"
-            placeholder="Your name"
-            className="border-border placeholder:text-muted focus-visible:ring-primary w-full rounded border bg-transparent px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
-          />
-          <input
-            type="email"
-            placeholder="Your email"
-            className="border-border placeholder:text-muted focus-visible:ring-primary w-full rounded border bg-transparent px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
-          />
-          <Textarea placeholder="Your message..." />
-          <Button size="sm" variant="primary">
-            Send Message
-          </Button>
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-4">
-        <h3 className="text-lg font-semibold">Feedback Form</h3>
-        <div className="surface max-w-md space-y-3 rounded-xl border p-6">
-          <h4 className="text-sm font-semibold tracking-wider uppercase">
-            Feedback
-          </h4>
-          <input
-            type="text"
-            placeholder="Subject"
-            className="border-border placeholder:text-muted focus-visible:ring-primary w-full rounded border bg-transparent px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
-          />
-          <Textarea placeholder="Tell us what you think..." />
-          <div className="flex justify-end">
-            <Button size="sm" variant="primary">
-              Submit
-            </Button>
-          </div>
-        </div>
-      </section>
-    </>
-  );
-}
 
 const examples: UIExample[] = [
   {
     id: "usage",
     title: "Support Ticket",
     description: "Textarea with error state and helper description.",
-    render: () => (
-      <>
-        <section className="flex flex-col gap-4">
-          <h3 className="text-lg font-semibold">Default</h3>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Textarea
-              data-testid="textarea-default"
-              placeholder="Default textarea..."
-            />
-            <Textarea
-              placeholder="Enter your message..."
-              data-testid="textarea-placeholder"
-            />
-          </div>
-        </section>
-
-        <section className="flex flex-col gap-4">
-          <h3 className="text-lg font-semibold">Disabled</h3>
-          <Textarea
-            disabled
-            value="This textarea is disabled"
-            aria-label="Disabled example"
-            data-testid="textarea-disabled"
-          />
-        </section>
-
-        <section className="flex flex-col gap-4">
-          <h3 className="text-lg font-semibold">With Error</h3>
-          <Textarea
-            error="This field is required"
-            aria-label="Error example"
-            data-testid="textarea-error"
-          />
-        </section>
-
-        <section className="flex flex-col gap-4">
-          <h3 className="text-lg font-semibold">Auto-Resize</h3>
-          <AutoResizeTextarea
-            placeholder="Type here and it will grow..."
-            data-testid="textarea-auto-resize"
-          />
-        </section>
-      </>
-    ),
+    render: () => <UsageTab />,
   },
   {
     id: "variants",
@@ -150,7 +41,7 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function TextareaPage({ initialTab }: { initialTab?: string }) {
+export default function TextareaPage({ initialTab }: InitialTabProps) {
   return (
     <ExampleTabs
       title="Textarea"

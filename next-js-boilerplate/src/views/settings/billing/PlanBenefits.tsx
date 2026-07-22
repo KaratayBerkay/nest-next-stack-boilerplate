@@ -5,8 +5,9 @@ import { TIERS } from "@/lib/tier";
 import { cn } from "@/lib/cn";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { PlanBenefitsProps } from "@/types/billing/PlanBenefits-types";
+import type { ClassNameProps } from "@/types/ui/ClassName-types";
 
-function CheckIcon({ className }: { className?: string }) {
+function CheckIcon({ className }: ClassNameProps) {
   return (
     <svg
       className={cn("h-5 w-5 shrink-0 text-green-500", className)}
@@ -24,7 +25,7 @@ function CheckIcon({ className }: { className?: string }) {
   );
 }
 
-function XIcon({ className }: { className?: string }) {
+function XIcon({ className }: ClassNameProps) {
   return (
     <svg
       className={cn("text-muted h-5 w-5 shrink-0", className)}

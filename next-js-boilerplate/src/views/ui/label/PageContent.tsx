@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/Label";
 import { Input } from "@/components/ui/Input";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/ui/PageContent-types";
 
 const examples: UIExample[] = [
   {
@@ -65,7 +66,7 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function LabelPage({ initialTab }: { initialTab?: string }) {
+export default function LabelPage({ initialTab }: InitialTabProps) {
   return (
     <ExampleTabs
       title="Label"

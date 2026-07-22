@@ -1,94 +1,20 @@
 "use client";
 
-import {
-  useEffect,
-  useState,
-  useCallback,
-  useRef,
-  useMemo,
-  type Dispatch,
-  type MutableRefObject,
-  type SetStateAction,
-} from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import type { FeedListProps } from "@/types/feed/FeedList-types";
 import type { Post } from "@/types/feed/PostCard-types";
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import {
-  useSuspenseQuery,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useSuspenseQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PostCard } from "@/components/feed/PostCard";
 import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { feedListQueryOptions } from "@/api/client/posts/query";
-import { fetchFeedListServer } from "@/api/server/posts/list";
-
-const PAGE_SIZE = 5;
-
-function handleToggleComments(
-  postId: string,
-  setExpandedPostId: Dispatch<SetStateAction<string | null>>,
-) {
-  setExpandedPostId((prev) => (prev === postId ? null : postId));
-}
-
-function handleDeletePost(
-  postId: string,
-  setExtraPosts: Dispatch<SetStateAction<Post[]>>,
-  setExpandedPostId: Dispatch<SetStateAction<string | null>>,
-) {
-  setExtraPosts((prev) => prev.filter((p) => p.id !== postId));
-  setExpandedPostId((prev) => (prev === postId ? null : prev));
-}
-
-async function handleLoadMore(
-  loadingRef: MutableRefObject<boolean>,
-  hasMore: boolean,
-  cursorRef: MutableRefObject<string | null>,
-  search: string,
-  setLoadingMore: Dispatch<SetStateAction<boolean>>,
-  setExtraPosts: Dispatch<SetStateAction<Post[]>>,
-  setExtraHasMore: Dispatch<SetStateAction<boolean>>,
-) {
-  if (loadingRef.current || !hasMore || !cursorRef.current) return;
-  loadingRef.current = true;
-  setLoadingMore(true);
-  try {
-    const result = await fetchFeedListServer(
-      PAGE_SIZE,
-      cursorRef.current,
-      search,
-    );
-    setExtraPosts((prev) => [...prev, ...result.posts]);
-    setExtraHasMore(result.hasMore);
-    cursorRef.current = result.nextCursor;
-  } catch {
-    // silent
-  } finally {
-    setLoadingMore(false);
-    loadingRef.current = false;
-  }
-}
-
-function refreshFeedList(
-  queryClient: ReturnType<typeof useQueryClient>,
-  setExtraPosts: Dispatch<SetStateAction<Post[]>>,
-  setExtraHasMore: Dispatch<SetStateAction<boolean>>,
-  search: string,
-) {
-  queryClient.setQueryData(["feed", "new-flag"], false);
-  setExtraPosts([]);
-  setExtraHasMore(true);
-  queryClient.invalidateQueries({ queryKey: ["feed", "list", search] });
-}
+import { PAGE_SIZE, handleLoadMore, handleToggleComments, handleDeletePost, refreshFeedList } from "@/lib/feed/feed-list-actions";
+import { usePostHashScroll } from "@/hooks/usePostHashScroll";
+import { FeedListEmptyState } from "@/components/feed/FeedListEmptyState";
 
 export function FeedList({ search, initialFeedData }: FeedListProps) {
   const t = useMessages("feed");
-  const params = useParams<{ lang: string }>();
-  const lang = params?.lang ?? "en";
   const queryClient = useQueryClient();
   const realtime = useRealtime();
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
@@ -159,36 +85,7 @@ export function FeedList({ search, initialFeedData }: FeedListProps) {
     return () => observer.disconnect();
   }, [loadMore, hasMore]);
 
-  const hash = typeof window !== "undefined" ? window.location.hash : "";
-  useEffect(() => {
-    if (!hash.startsWith("#post-")) return;
-    const id = hash.replace("#post-", "");
-    let timer: ReturnType<typeof setInterval> | null = null;
-    let timeout: ReturnType<typeof setTimeout> | null = null;
-    const tryScroll = () => {
-      const el = document.getElementById(`post-${id}`);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-        return true;
-      }
-      return false;
-    };
-    if (!tryScroll()) {
-      timer = setInterval(() => {
-        if (tryScroll()) {
-          if (timer) clearInterval(timer);
-          if (timeout) clearTimeout(timeout);
-        }
-      }, 200);
-      timeout = setTimeout(() => {
-        if (timer) clearInterval(timer);
-      }, 5000);
-      return () => {
-        if (timer) clearInterval(timer);
-        if (timeout) clearTimeout(timeout);
-      };
-    }
-  }, [hash]);
+  usePostHashScroll();
 
   const newFlag = useQuery<boolean>({
     queryKey: ["feed", "new-flag"],
@@ -213,29 +110,21 @@ export function FeedList({ search, initialFeedData }: FeedListProps) {
       ref={scrollRef}
       className="flex max-h-[calc(100dvh-8rem)] flex-col gap-3 overflow-y-auto px-1 pb-4"
     >
-      {posts.length === 0 && (
-        <div className="flex flex-col items-center justify-center gap-3 py-12">
-          <p className="text-muted text-sm">{t.noPostsYet}</p>
-          <Link
-            href={`/v1/${lang}/share`}
-            className="bg-brand rounded-lg px-4 py-2 text-sm font-medium text-brand-fg"
-          >
-            {t.beFirstToShare}
-          </Link>
-        </div>
+      {posts.length === 0 ? (
+        <FeedListEmptyState />
+      ) : (
+        posts.map((post) => (
+          <PostCard
+            key={post.id}
+            post={post}
+            isExpanded={expandedPostId === post.id}
+            onToggle={() => handleToggleComments(post.id, setExpandedPostId)}
+            onDelete={(postId) =>
+              handleDeletePost(postId, setExtraPosts, setExpandedPostId)
+            }
+          />
+        ))
       )}
-
-      {posts.map((post) => (
-        <PostCard
-          key={post.id}
-          post={post}
-          isExpanded={expandedPostId === post.id}
-          onToggle={() => handleToggleComments(post.id, setExpandedPostId)}
-          onDelete={(postId) =>
-            handleDeletePost(postId, setExtraPosts, setExpandedPostId)
-          }
-        />
-      ))}
 
       {hasMore && <div ref={sentinelRef} className="h-4" />}
 

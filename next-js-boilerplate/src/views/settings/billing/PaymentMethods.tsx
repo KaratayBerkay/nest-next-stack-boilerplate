@@ -5,8 +5,9 @@ import { paymentMethodsQueryOptions } from "@/api/client/billing/payment-methods
 import { cn } from "@/lib/cn";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { PaymentMethodsProps } from "@/types/billing/PaymentMethods-types";
+import type { CardIconProps } from "@/types/billing/CardIcon-types";
 
-function CardIcon({ brand }: { brand: string }) {
+function CardIcon({ brand }: CardIconProps) {
   const brandLower = brand.toLowerCase();
   return (
     <div className="border-border flex h-10 w-10 items-center justify-center rounded-lg border">

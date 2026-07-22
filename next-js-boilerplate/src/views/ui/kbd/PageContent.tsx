@@ -5,6 +5,7 @@ import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
 import type { KbdVariant } from "@/types/ui/Kbd-types";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/ui/PageContent-types";
 
 const examples: UIExample[] = [
   {
@@ -90,7 +91,7 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function KbdPage({ initialTab }: { initialTab?: string }) {
+export default function KbdPage({ initialTab }: InitialTabProps) {
   return (
     <ExampleTabs
       title="Kbd"

@@ -2,6 +2,7 @@
 import { Spinner } from "@/components/ui/Spinner";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/ui/PageContent-types";
 
 const examples: UIExample[] = [
   {
@@ -53,7 +54,7 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function SpinnerPage({ initialTab }: { initialTab?: string }) {
+export default function SpinnerPage({ initialTab }: InitialTabProps) {
   return (
     <ExampleTabs
       title="Spinner"

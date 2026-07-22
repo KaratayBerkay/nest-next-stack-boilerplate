@@ -6,99 +6,15 @@ import { formOptions, useStore } from "@tanstack/react-form";
 import { useAppForm } from "@/features/forms/form-hook";
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
+import { BillingSummary } from "./BillingSummary";
 import { useToast } from "@/components/ui/Toast";
 import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
-import { getSurface, exceptionHandler } from "@/lib/exception-handler";
-import { exceptionToFormErrors } from "@/lib/forms/exception-to-form-errors";
 import { createBillingFieldSchemas } from "@/validators/forms/billing";
 import { billingDefaultValues } from "@/validators/forms/billing-inits";
-import type { ExceptionResponse } from "@/lib/api-client";
-
-const PLANS = [
-  { value: "free", label: "Free", monthly: 0, yearly: 0 },
-  { value: "basic", label: "Basic", monthly: 9, yearly: 86 },
-  { value: "pro", label: "Pro", monthly: 29, yearly: 278 },
-  { value: "enterprise", label: "Enterprise", monthly: 99, yearly: 950 },
-];
-
-const PAYMENT_METHODS = [
-  { value: "visa", label: "Visa **** 4242" },
-  { value: "mastercard", label: "Mastercard **** 5555" },
-  { value: "paypal", label: "PayPal (user@example.com)" },
-];
-
-const VALID_COUPONS: Record<string, { pct: number }> = {
-  SAVE10: { pct: 10 },
-  WELCOME20: { pct: 20 },
-};
-
-function calcPrice(
-  plan: string,
-  period: string,
-): { subtotal: number; discountLabel: string | null; total: number } {
-  const p = PLANS.find((x) => x.value === plan) ?? PLANS[0];
-  const subtotal = period === "yearly" ? p.yearly : p.monthly;
-  const discountLabel = period === "yearly" && p.monthly > 0 ? "20% off" : null;
-  return { subtotal, discountLabel, total: subtotal };
-}
-
-function CouponStatus({
-  code,
-  period,
-  t,
-}: {
-  code: string;
-  period: string;
-  t: Record<string, string>;
-}) {
-  if (!code) return null;
-  const upper = code.toUpperCase();
-  const coupon = VALID_COUPONS[upper];
-  if (!coupon) return null;
-  const price = calcPrice("pro", period);
-  const discount = Math.round(price.subtotal * (coupon.pct / 100));
-  return (
-    <span className="text-success text-xxs">
-      {t.couponApplied} — ${discount} {t.couponOff}
-    </span>
-  );
-}
-
-async function handleCouponBlur(
-  value: string,
-  deps: {
-    simulateError: (
-      id: string,
-      opts?: { delayMs?: number },
-    ) => Promise<ExceptionResponse>;
-    toast: (opts: {
-      description: string;
-      variant?: "destructive" | "default";
-    }) => void;
-    allMessages: Record<string, unknown>;
-  },
-): Promise<string | undefined> {
-  if (!value) return undefined;
-  const upper = value.toUpperCase();
-  if (VALID_COUPONS[upper]) return undefined;
-  try {
-    await deps.simulateError(
-      upper === "EXPIRED10" ? "coupon-expired" : "coupon-invalid",
-    );
-    return undefined;
-  } catch (err) {
-    const exc = (err as { exception?: ExceptionResponse }).exception;
-    if (!exc) return undefined;
-    if (getSurface(exc.exc) === "toast") {
-      deps.toast({
-        description: exceptionHandler(exc, deps.allMessages),
-        variant: "destructive",
-      });
-      return undefined;
-    }
-    return exceptionToFormErrors(exc, deps.allMessages).fields.couponCode;
-  }
-}
+import { PLANS, PAYMENT_METHODS } from "./billing-constants";
+import { calcPrice, validateTaxId } from "./billing-utils";
+import { CouponStatus } from "./CouponStatus";
+import { handleCouponBlur } from "./billing-handlers";
 
 export default function BillingPage() {
   const t = useMessages("forms");
@@ -139,13 +55,9 @@ export default function BillingPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-sm font-semibold">{t.billing.heading}</h2>
-        </div>
+        <h2 className="text-sm font-semibold">{t.billing.heading}</h2>
         <div className="flex items-center gap-2">
-          {isDirty && (
-            <span className="text-xxs text-muted">{t.billing.unsaved}</span>
-          )}
+          {isDirty && <span className="text-xxs text-muted">{t.billing.unsaved}</span>}
         </div>
       </div>
 
@@ -189,8 +101,7 @@ export default function BillingPage() {
         <form.AppField
           name="couponCode"
           validators={{
-            onBlurAsync: async ({ value }) =>
-              handleCouponBlur(value, { simulateError, toast, allMessages }),
+            onBlurAsync: async ({ value }) => handleCouponBlur(value, { simulateError, toast, allMessages }),
             onBlurAsyncDebounceMs: 300,
           }}
         >
@@ -208,12 +119,7 @@ export default function BillingPage() {
         <form.AppField
           name="taxId"
           validators={{
-            onBlur: ({ value }) => {
-              if (!value) return undefined;
-              return /^[A-Z]{2}[A-Z0-9]{2,13}$/.test(value)
-                ? undefined
-                : t.billing.taxIdInvalid;
-            },
+            onBlur: ({ value }) => validateTaxId(value, t.billing.taxIdInvalid),
           }}
         >
           {(field) => (
@@ -227,22 +133,7 @@ export default function BillingPage() {
 
         <Separator />
 
-        <div className="flex flex-col gap-1 text-xs">
-          <div className="flex justify-between">
-            <span>{t.billing.subtotal}</span>
-            <span>${price.subtotal}</span>
-          </div>
-          {price.discountLabel && (
-            <div className="text-success flex justify-between">
-              <span>{t.billing.discount}</span>
-              <span>-{price.discountLabel}</span>
-            </div>
-          )}
-          <div className="flex justify-between font-semibold">
-            <span>{t.billing.total}</span>
-            <span>${price.total}</span>
-          </div>
-        </div>
+        <BillingSummary price={price} t={t.billing} />
 
         <Button
           type="submit"

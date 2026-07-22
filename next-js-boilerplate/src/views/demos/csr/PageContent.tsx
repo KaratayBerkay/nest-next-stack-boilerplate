@@ -1,17 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ECHO_URL } from "@/constants/api/urls";
+import { echoServer, type EchoResponse } from "@/api/server/echo";
 
 export default function CsrPage() {
-  const [data, setData] = useState<{ method: string; hello: string } | null>(
-    null,
-  );
+  const [data, setData] = useState<EchoResponse | null>(null);
 
   useEffect(() => {
-    fetch(`${ECHO_URL}?name=CSR`)
-      .then((r) => r.json())
-      .then(setData);
+    echoServer("CSR").then(setData);
   }, []);
 
   return (

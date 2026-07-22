@@ -10,5 +10,10 @@ export function useBillingActions() {
     await subscribeServer(tier, paymentMethodId);
   };
 
-  return { createSetupIntent, subscribe };
+  const cancelSubscription = async () => {
+    const { cancelSubscriptionServer } = await import("@/api/server/billing/cancel");
+    await cancelSubscriptionServer();
+  };
+
+  return { createSetupIntent, subscribe, cancelSubscription };
 }

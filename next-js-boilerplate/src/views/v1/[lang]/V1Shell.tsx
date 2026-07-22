@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, useEffect, useCallback } from "react";
-import type { Dispatch, SetStateAction, MutableRefObject } from "react";
 import type { V1ShellProps } from "@/types/v1/V1Shell-types";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,62 +18,10 @@ import {
   handleMouseDown,
   handleMouseMove,
   handleMouseUp,
-  handleServiceWorkerMessage,
 } from "@/lib/v1/touch-handlers";
-
-interface DragState {
-  dragging: boolean;
-  startX: number;
-  currentX: number;
-}
-
-function openSidebar(setSidebarOpen: Dispatch<SetStateAction<boolean>>) {
-  setSidebarOpen(true);
-}
-
-function closeSidebar(setSidebarOpen: Dispatch<SetStateAction<boolean>>) {
-  setSidebarOpen(false);
-}
-
-function toggleSidebar(setSidebarOpen: Dispatch<SetStateAction<boolean>>) {
-  setSidebarOpen((p) => !p);
-}
-
-function dragOnStart(
-  clientX: number,
-  dragStateRef: MutableRefObject<DragState>,
-) {
-  dragStateRef.current = { dragging: true, startX: clientX, currentX: clientX };
-}
-
-function dragOnMove(
-  clientX: number,
-  dragStateRef: MutableRefObject<DragState>,
-) {
-  if (!dragStateRef.current.dragging) return;
-  dragStateRef.current.currentX = clientX;
-}
-
-function dragOnEnd(
-  dragStateRef: MutableRefObject<DragState>,
-  close: () => void,
-  toggleRef: MutableRefObject<HTMLButtonElement | null>,
-) {
-  if (!dragStateRef.current.dragging) return;
-  const dx = dragStateRef.current.currentX - dragStateRef.current.startX;
-  dragStateRef.current.dragging = false;
-  if (dx < -50) {
-    close();
-    toggleRef.current?.focus();
-  }
-}
-
-function onServiceWorkerMessage(
-  e: MessageEvent,
-  router: ReturnType<typeof useRouter>,
-) {
-  handleServiceWorkerMessage(e, router);
-}
+import { dragOnStart, dragOnMove, dragOnEnd } from "./V1ShellDrag";
+import type { DragState } from "./V1ShellDrag";
+import { onServiceWorkerMessage } from "./V1ShellSW";
 
 export function V1Shell({ children }: V1ShellProps) {
   const params = useParams<{ lang: string }>();
@@ -87,15 +34,11 @@ export function V1Shell({ children }: V1ShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
-  const dragStateRef = useRef<{
-    dragging: boolean;
-    startX: number;
-    currentX: number;
-  }>({ dragging: false, startX: 0, currentX: 0 });
+  const dragStateRef = useRef<DragState>({ dragging: false, startX: 0, currentX: 0 });
 
-  const open = useCallback(() => openSidebar(setSidebarOpen), []);
-  const close = useCallback(() => closeSidebar(setSidebarOpen), []);
-  const toggle = useCallback(() => toggleSidebar(setSidebarOpen), []);
+  const open = useCallback(() => setSidebarOpen(true), []);
+  const close = useCallback(() => setSidebarOpen(false), []);
+  const toggle = useCallback(() => setSidebarOpen((p) => !p), []);
 
   useEffect(() => {
     if (!sidebarOpen) return;
@@ -184,8 +127,6 @@ export function V1Shell({ children }: V1ShellProps) {
 
         <div className="relative flex min-h-0 flex-1">
           {sidebarOpen && (
-            // Decorative dismiss backdrop, not a control — the sidebar's own controls remain
-            // keyboard-reachable; this scrim only needs a click target.
             <div
               className="animate-fade-in bg-overlay/30 fixed inset-0 z-30 md:hidden"
               onClick={() => {

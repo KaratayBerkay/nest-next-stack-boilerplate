@@ -1,135 +1,22 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { useMessages, useAllMessages } from "@/lib/i18n/MessagesProvider";
-import { useAppForm, withFieldGroup } from "@/features/forms/form-hook";
-import { formOptions, useStore } from "@tanstack/react-form";
+import { useAppForm } from "@/features/forms/form-hook";
+import { useStore } from "@tanstack/react-form";
 import { useToast } from "@/components/ui/Toast";
 import { Separator } from "@/components/ui/Separator";
 import { Switch } from "@/components/ui/Switch";
 import { Label } from "@/components/ui/Label";
 import { FormLevelError } from "@/components/ui/FormLevelError";
-import { checkoutSchema, createCheckoutFieldSchemas } from "@/validators/forms/checkout";
-import {
-  checkoutDefaultValues,
-  addressDefaults,
-} from "@/validators/forms/checkout-inits";
 import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
-import { getSurface, exceptionHandler } from "@/lib/exception-handler";
-import { exceptionToFormErrors } from "@/lib/forms/exception-to-form-errors";
-import { blurAsyncCheck } from "@/lib/forms/blur-async-check";
-import type { ExceptionResponse } from "@/lib/api-client";
-import type { z } from "zod";
+import { AddressGroup } from "@/views/forms/checkout/AddressGroup";
+import {
+  checkoutFormOpts,
+  submitCheckout,
+} from "@/views/forms/checkout/submitCheckout";
 
-const ADDRESS_OPTIONS = [
-  { value: "us", label: "United States" },
-  { value: "ca", label: "Canada" },
-  { value: "gb", label: "United Kingdom" },
-  { value: "tr", label: "Turkey" },
-];
-
-const AddressGroup = withFieldGroup({
-  defaultValues: addressDefaults,
-  render: function AddressGroupInner({ group }) {
-    const t = useMessages("forms");
-    const schemas = useMemo(() => createCheckoutFieldSchemas(t.checkoutTab), [t]);
-    const { simulateError } = useFormsDemoActions();
-    const { toast } = useToast();
-    const allMessages = useAllMessages();
-    return (
-      <div className="flex flex-col gap-3">
-        <div className="grid grid-cols-2 gap-3">
-          <group.AppField name="street" validators={{ onBlur: schemas.street }}>
-            {(field) => <field.TextField label={t.checkoutTab.street} required />}
-          </group.AppField>
-          <group.AppField name="city" validators={{ onBlur: schemas.city }}>
-            {(field) => <field.TextField label={t.checkoutTab.city} required />}
-          </group.AppField>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <group.AppField name="province" validators={{ onBlur: schemas.province }}>
-            {(field) => <field.TextField label={t.checkoutTab.province} required />}
-          </group.AppField>
-          <group.AppField name="postalCode" validators={{
-            onBlur: schemas.postalCode,
-            onBlurAsyncDebounceMs: 300,
-            onBlurAsync: async ({ value }) => {
-              if (value !== "00000") return undefined;
-              return blurAsyncCheck(String(value), "postal-code-group", {
-                simulateError, toast, allMessages,
-              });
-            },
-          }}>
-            {(field) => <field.TextField label={t.checkoutTab.postalCode} hint={t.checkoutTab.postalCodeHint} required />}
-          </group.AppField>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <group.AppField
-            name="country"
-            listeners={{
-              onChange: () => {
-                group.form.setFieldValue("province", "");
-              },
-            }}
-          >
-            {(field) => (
-              <field.SelectField
-                label={t.checkoutTab.country}
-                options={ADDRESS_OPTIONS}
-              />
-            )}
-          </group.AppField>
-          <group.AppField name="phone" validators={{
-            onBlur: ({ value }) => {
-              if (!value) return undefined;
-              return /^\+?[0-9()\-.\s]{7,20}$/.test(value)
-                ? undefined
-                : t.checkoutTab.phoneInvalid;
-            },
-          }}>
-            {(field) => <field.TextField label={t.checkoutTab.phone} hint={t.checkoutTab.phoneHint} />}
-          </group.AppField>
-        </div>
-      </div>
-    );
-  },
-});
-
-const checkoutFormOpts = formOptions({
-  defaultValues: checkoutDefaultValues satisfies z.input<typeof checkoutSchema>,
-});
-
-export async function submitCheckout(
-  { value }: { value: typeof checkoutFormOpts.defaultValues },
-  deps: {
-    simulateError: (
-      id: string,
-      opts?: { failRate?: number },
-    ) => Promise<ExceptionResponse>;
-    toast: ReturnType<typeof useToast>["toast"];
-    allMessages: Record<string, unknown>;
-  },
-) {
-  try {
-    if (value.shippingAddress.postalCode === "00000") {
-      await deps.simulateError("postal-code-group", { failRate: 1 });
-    } else {
-      await deps.simulateError("payment-declined", { failRate: 0 });
-    }
-    return null;
-  } catch (err) {
-    const exc = (err as { exception?: ExceptionResponse }).exception;
-    if (!exc) return { form: "Order failed", fields: {} };
-    if (getSurface(exc.exc) === "toast") {
-      deps.toast({
-        description: exceptionHandler(exc, deps.allMessages),
-        variant: "destructive",
-      });
-      return null;
-    }
-    return exceptionToFormErrors(exc, deps.allMessages);
-  }
-}
+export { submitCheckout };
 
 export default function CheckoutPage() {
   const t = useMessages("forms");

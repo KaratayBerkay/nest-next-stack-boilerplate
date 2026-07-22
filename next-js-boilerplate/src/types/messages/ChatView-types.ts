@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from "react";
 
-type UserInfo = {
+export type UserInfo = {
   id: string;
   name: string;
   email: string;

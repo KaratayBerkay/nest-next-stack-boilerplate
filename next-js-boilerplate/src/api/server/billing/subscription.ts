@@ -3,11 +3,18 @@ import { BILLING_SUBSCRIPTION_URL } from "@/constants/api/urls";
 
 export interface SubscriptionInfo {
   tier: string;
-  status: string;
-  currentPeriodEnd?: string;
-  cancelAtPeriodEnd?: boolean;
+  priceCents: number;
+  currency: string;
+  periodStart?: string;
+  periodEnd?: string;
+  cancelAtPeriodEnd: boolean;
 }
 
-export async function fetchSubscriptionServer(): Promise<SubscriptionInfo> {
-  return apiFetchJson<SubscriptionInfo>(BILLING_SUBSCRIPTION_URL);
+type SubscriptionResponse = {
+  subscription: SubscriptionInfo | null;
+};
+
+export async function fetchSubscriptionServer(): Promise<SubscriptionInfo | null> {
+  const data = await apiFetchJson<SubscriptionResponse>(BILLING_SUBSCRIPTION_URL);
+  return data.subscription;
 }

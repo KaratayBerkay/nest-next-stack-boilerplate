@@ -6,6 +6,7 @@ import { Card, CardTitle, CardContent } from "@/components/ui/Card";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/ui/PageContent-types";
 
 interface KpiItem {
   id: string;
@@ -130,7 +131,7 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function ProgressPage({ initialTab }: { initialTab?: string }) {
+export default function ProgressPage({ initialTab }: InitialTabProps) {
   return (
     <ExampleTabs
       title="Progress"

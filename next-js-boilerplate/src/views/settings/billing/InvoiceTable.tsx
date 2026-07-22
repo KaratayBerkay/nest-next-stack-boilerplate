@@ -6,30 +6,10 @@ import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { cn } from "@/lib/cn";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { InvoiceTableProps } from "@/types/billing/InvoiceTable-types";
+import { StatusBadge } from "./StatusBadge";
+import { InvoicePagination } from "./InvoicePagination";
 
 const PAGE_SIZE = 5;
-
-function StatusBadge({
-  status,
-  paidLabel,
-  unpaidLabel,
-}: {
-  status: string;
-  paidLabel: string;
-  unpaidLabel: string;
-}) {
-  const isPaid = status === "COMPLETED";
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-        isPaid ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700",
-      )}
-    >
-      {isPaid ? paidLabel : unpaidLabel}
-    </span>
-  );
-}
 
 function extractInvoiceNumber(reference: string): string {
   const match = reference.match(/#?(\d+)/);
@@ -115,7 +95,7 @@ export function InvoiceTable({
                   {formatDateByPreference(tx.createdAt, dateDisplay)}
                 </td>
                 <td className="px-4 py-3 text-sm">
-                  {tx.amount > 0 ? `$${(tx.amount / 100).toFixed(2)}` : "—"}
+                  {tx.amount > 0 ? `$${(tx.amount / 100).toFixed(2)}` : "\u2014"}
                 </td>
                 <td className="px-4 py-3">
                   <StatusBadge
@@ -135,7 +115,7 @@ export function InvoiceTable({
                       {t.viewInvoice}
                     </a>
                   ) : (
-                    <span className="text-muted text-sm">—</span>
+                    <span className="text-muted text-sm">\u2014</span>
                   )}
                 </td>
               </tr>
@@ -145,36 +125,13 @@ export function InvoiceTable({
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-1">
-          <button
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            className="border-border hover:bg-surface-hover disabled:text-muted rounded-lg border px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {t.previous}
-          </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <button
-              key={page}
-              onClick={() => setCurrentPage(page)}
-              className={cn(
-                "rounded-lg px-3 py-1.5 text-sm font-medium",
-                page === currentPage
-                  ? "bg-brand text-brand-fg"
-                  : "hover:bg-surface-hover",
-              )}
-            >
-              {page}
-            </button>
-          ))}
-          <button
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
-            className="border-border hover:bg-surface-hover disabled:text-muted rounded-lg border px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {t.next}
-          </button>
-        </div>
+        <InvoicePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          previousLabel={t.previous}
+          nextLabel={t.next}
+        />
       )}
     </div>
   );

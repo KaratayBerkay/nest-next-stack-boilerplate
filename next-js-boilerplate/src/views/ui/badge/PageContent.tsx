@@ -7,6 +7,7 @@ import { NotificationPatternsTab } from "@/views/ui/badge/NotificationPatternsTa
 import { StatusLabelsTab } from "@/views/ui/badge/StatusLabelsTab";
 import type { BadgeSize, BadgeVariant } from "@/types/ui/Badge-types";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/ui/PageContent-types";
 
 const examples: UIExample[] = [
   {
@@ -48,7 +49,7 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function BadgePage({ initialTab }: { initialTab?: string }) {
+export default function BadgePage({ initialTab }: InitialTabProps) {
   return (
     <ExampleTabs
       title="Badge"

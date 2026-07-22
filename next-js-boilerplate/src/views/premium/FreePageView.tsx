@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { PRICING_PATH } from "@/constants/routes";
 import { cn } from "@/lib/cn";
+import type { ClassNameProps } from "@/types/ui/ClassName-types";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 
-export function FreePageView({ className }: { className?: string }) {
+export function FreePageView({ className }: ClassNameProps) {
   const t = useMessages("premium");
 
   return (

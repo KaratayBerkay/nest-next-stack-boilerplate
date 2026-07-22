@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Label } from "@/components/ui/Label";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/ui/PageContent-types";
 
 function InlineFormTab() {
   const inputRef = useRef<HTMLInputElement>(
@@ -87,7 +88,7 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function Page({ initialTab }: { initialTab?: string }) {
+export default function Page({ initialTab }: InitialTabProps) {
   return (
     <ExampleTabs
       title="Popover"

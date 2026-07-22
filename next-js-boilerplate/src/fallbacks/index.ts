@@ -40,3 +40,4 @@ export { DynamicLoadingFallback } from "./app/(demos)/dynamic/DynamicLoadingFall
 export { FeedLoadingFallback } from "./app/v1/[lang]/feed/FeedLoadingFallback";
 export { FindFriendsLoadingFallback } from "./app/v1/[lang]/find-friends/FindFriendsLoadingFallback";
 export { PprFallback } from "./app/(demos)/ppr/PprFallback";
+export { ErrorBoundaryCustomFallback } from "./views/error-boundary/ErrorBoundaryCustomFallback";

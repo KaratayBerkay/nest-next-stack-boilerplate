@@ -6,67 +6,22 @@ import { useToast } from "@/components/ui/Toast";
 import { formOptions, useStore } from "@tanstack/react-form";
 import { useAppForm } from "@/features/forms/form-hook";
 import { Button } from "@/components/ui/Button";
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Separator } from "@/components/ui/Separator";
-import { Badge } from "@/components/ui/Badge";
 import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
 import { exceptionHandler } from "@/lib/exception-handler";
-import { blurAsyncCheck } from "@/lib/forms/blur-async-check";
 import { createTableRowFieldSchemas } from "@/validators/forms/table";
 import type { ExceptionResponse } from "@/lib/api-client";
-
-interface InvoiceRow {
-  description: string;
-  quantity: number;
-  unitPrice: number;
-  taxClass: string;
-}
-
-const TAX_RATES: Record<string, number> = {
-  standard: 0.2,
-  reduced: 0.08,
-  zero: 0,
-};
-
-const TAX_OPTIONS = [
-  { value: "standard", label: "Standard (20%)" },
-  { value: "reduced", label: "Reduced (8%)" },
-  { value: "zero", label: "Zero (0%)" },
-];
-
-const EMPTY_ROW: InvoiceRow = {
-  description: "",
-  quantity: 1,
-  unitPrice: 0,
-  taxClass: "standard",
-};
-
-const INITIAL_ROWS: InvoiceRow[] = [
-  {
-    description: "Web Development",
-    quantity: 1,
-    unitPrice: 1500,
-    taxClass: "standard",
-  },
-  {
-    description: "UI Design",
-    quantity: 2,
-    unitPrice: 750,
-    taxClass: "reduced",
-  },
-  {
-    description: "Hosting (monthly)",
-    quantity: 12,
-    unitPrice: 25,
-    taxClass: "standard",
-  },
-];
-
+import {
+  EMPTY_ROW,
+  INITIAL_ROWS,
+  TAX_RATES,
+} from "./EditableTable-constants";
+import type { InvoiceRow, RowStatus } from "./EditableTable-constants";
+import { EditableTableRow } from "./EditableTableRow";
+import { EditableTableTotals } from "./EditableTableTotals";
 const tableFormOpts = formOptions({
   defaultValues: { rows: structuredClone(INITIAL_ROWS) },
 });
-
-type RowStatus = "idle" | "saved";
 
 export default function EditableTablePage() {
   const t = useMessages("forms");
@@ -81,9 +36,7 @@ export default function EditableTablePage() {
   );
 
   const form = useAppForm(tableFormOpts);
-
   const rows = useStore(form.store, (s) => s.values.rows);
-
   const totals = useMemo(() => {
     const subtotal = rows.reduce(
       (sum: number, r: InvoiceRow) => sum + r.quantity * r.unitPrice,
@@ -128,7 +81,6 @@ export default function EditableTablePage() {
       <div>
         <h2 className="text-sm font-semibold">{t.editableTable.heading}</h2>
       </div>
-
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
@@ -153,204 +105,21 @@ export default function EditableTablePage() {
             <form.AppField name="rows" mode="array">
               {(field) => (
                 <>
-                  {field.state.value.map((_: InvoiceRow, i: number) => {
-                    const row = field.state.value[i];
-                    const net = row.quantity * row.unitPrice;
-                    const status: RowStatus =
-                      i in rowStatus ? rowStatus[i] : "idle";
-                    return (
-                      <tr key={i} className="border-border border-b">
-                        <td className="px-2 py-1">
-                          <form.AppField
-                            name={`rows[${i}].description`}
-                            validators={{ onChange: rowSchemas.description }}
-                          >
-                            {(subField) => (
-                              <div className="flex flex-col">
-                                <input
-                                  className="border-border bg-field w-32 rounded border px-1.5 py-1 text-xs"
-                                  value={subField.state.value}
-                                  onChange={(e) =>
-                                    subField.handleChange(e.target.value)
-                                  }
-                                />
-                                {subField.state.meta.errors.length > 0 && (
-                                  <span className="text-destructive text-xxs">
-                                    {String(subField.state.meta.errors[0])}
-                                  </span>
-                                )}
-                                {subField.state.meta.errors.length === 0 && (
-                                  <span className="text-muted text-xxs">
-                                    {t.editableTable.quantityHint}
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </form.AppField>
-                        </td>
-                        <td className="px-2 py-1">
-                          <form.AppField
-                            name={`rows[${i}].quantity`}
-                            validators={{
-                              onChange: rowSchemas.quantity,
-                              onBlurAsyncDebounceMs: 300,
-                              onBlurAsync: async ({ value }) => {
-                                if (!value || Number(value) <= 100) return undefined;
-                                return blurAsyncCheck(String(value), "row-rejected", {
-                                  simulateError, toast, allMessages,
-                                });
-                              },
-                            }}
-                          >
-                            {(subField) => (
-                              <div className="flex flex-col items-end">
-                                <input
-                                  type="number"
-                                  className="border-border bg-field w-16 rounded border px-1.5 py-1 text-right text-xs"
-                                  value={subField.state.value}
-                                  min={0}
-                                  onChange={(e) =>
-                                    subField.handleChange(
-                                      Math.max(0, Number(e.target.value)),
-                                    )
-                                  }
-                                />
-                                {subField.state.meta.errors.length > 0 && (
-                                  <span className="text-destructive text-xxs">
-                                    {String(subField.state.meta.errors[0])}
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </form.AppField>
-                        </td>
-                        <td className="px-2 py-1">
-                          <form.AppField
-                            name={`rows[${i}].unitPrice`}
-                            validators={{ onChange: rowSchemas.unitPrice }}
-                          >
-                            {(subField) => (
-                              <div className="flex flex-col items-end">
-                                <input
-                                  type="number"
-                                  step="0.01"
-                                  className="border-border bg-field w-20 rounded border px-1.5 py-1 text-right text-xs"
-                                  value={subField.state.value}
-                                  min={0}
-                                  onChange={(e) =>
-                                    subField.handleChange(
-                                      Math.max(0, Number(e.target.value)),
-                                    )
-                                  }
-                                />
-                                {subField.state.meta.errors.length > 0 && (
-                                  <span className="text-destructive text-xxs">
-                                    {String(subField.state.meta.errors[0])}
-                                  </span>
-                                )}
-                                {subField.state.meta.errors.length === 0 && (
-                                  <span className="text-muted text-xxs">
-                                    {t.editableTable.unitPriceHint}
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </form.AppField>
-                        </td>
-                        <td className="px-2 py-1">
-                          <form.AppField
-                            name={`rows[${i}].taxClass`}
-                            validators={{ onChange: rowSchemas.taxClass }}
-                          >
-                            {(subField) => (
-                              <select
-                                className="border-border bg-field rounded border px-1.5 py-1 text-xs"
-                                value={subField.state.value}
-                                onChange={(e) =>
-                                  subField.handleChange(e.target.value)
-                                }
-                              >
-                                {TAX_OPTIONS.map((opt) => (
-                                  <option key={opt.value} value={opt.value}>
-                                    {opt.label}
-                                  </option>
-                                ))}
-                              </select>
-                            )}
-                          </form.AppField>
-                        </td>
-                        <td className="px-2 py-1 text-right">
-                          ${net.toFixed(2)}
-                        </td>
-                        <td className="px-2 py-1">
-                          <div className="flex items-center gap-1">
-                            <button
-                              className="text-muted hover:text-fg"
-                              onClick={() => {
-                                const r = field.state.value[i];
-                                field.insertValue(i + 1, {
-                                  ...r,
-                                  description: `${r.description} (copy)`,
-                                });
-                              }}
-                              title={t.editableTable.duplicateRow}
-                              aria-label={t.editableTable.duplicateRow}
-                            >
-                              ⧉
-                            </button>
-                            <button
-                              className="text-muted hover:text-fg"
-                              disabled={i === 0}
-                              onClick={() => field.moveValue(i, i - 1)}
-                              title={t.editableTable.moveUp}
-                              aria-label={t.editableTable.moveUp}
-                            >
-                              ↑
-                            </button>
-                            <button
-                              className="text-muted hover:text-fg"
-                              disabled={i >= field.state.value.length - 1}
-                              onClick={() => field.moveValue(i, i + 1)}
-                              title={t.editableTable.moveDown}
-                              aria-label={t.editableTable.moveDown}
-                            >
-                              ↓
-                            </button>
-                            <ConfirmDialog
-                              title={t.editableTable.removeRow}
-                              description={t.editableTable.removeRowConfirm}
-                              confirmLabel={t.editableTable.removeRow}
-                              onConfirm={() => field.removeValue(i)}
-                            >
-                              {(open) => (
-                                <button
-                                  className="text-destructive"
-                                  onClick={open}
-                                  title={t.editableTable.removeRow}
-                                  aria-label={t.editableTable.removeRow}
-                                >
-                                  ×
-                                </button>
-                              )}
-                            </ConfirmDialog>
-                            <button
-                              className="text-muted hover:text-success"
-                              onClick={() => handleSaveRow(i)}
-                              title={t.editableTable.saveRow}
-                              aria-label={t.editableTable.saveRow}
-                            >
-                              ✓
-                            </button>
-                            {status === "saved" && (
-                              <Badge variant="success" className="text-xxs">
-                                {t.editableTable.savedBadge}
-                              </Badge>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {field.state.value.map((_: InvoiceRow, i: number) => (
+                    <EditableTableRow
+                      key={i}
+                      form={form}
+                      field={field}
+                      index={i}
+                      status={i in rowStatus ? rowStatus[i] : "idle"}
+                      rowSchemas={rowSchemas}
+                      onSaveRow={handleSaveRow}
+                      t={t}
+                      simulateError={simulateError}
+                      toast={toast}
+                      allMessages={allMessages}
+                    />
+                  ))}
                 </>
               )}
             </form.AppField>
@@ -367,23 +136,9 @@ export default function EditableTablePage() {
           {t.editableTable.addRow}
         </Button>
       </div>
-
       <Separator />
 
-      <div className="flex flex-col gap-1 self-end text-xs">
-        <div className="flex justify-between gap-8">
-          <span>{t.editableTable.subtotal}</span>
-          <span>${totals.subtotal.toFixed(2)}</span>
-        </div>
-        <div className="flex justify-between gap-8">
-          <span>{t.editableTable.tax}</span>
-          <span>${totals.tax.toFixed(2)}</span>
-        </div>
-        <div className="flex justify-between gap-8 font-semibold">
-          <span>{t.editableTable.total}</span>
-          <span>${totals.total.toFixed(2)}</span>
-        </div>
-      </div>
+      <EditableTableTotals totals={totals} t={t} />
 
       <div>
         <Button onClick={handleSaveAll} loading={savingAll}>

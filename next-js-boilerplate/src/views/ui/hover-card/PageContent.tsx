@@ -7,6 +7,7 @@ import {
 import { Avatar } from "@/components/ui/avatar";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/ui/PageContent-types";
 
 const examples: UIExample[] = [
   {
@@ -125,7 +126,7 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function HoverCardPage({ initialTab }: { initialTab?: string }) {
+export default function HoverCardPage({ initialTab }: InitialTabProps) {
   return (
     <ExampleTabs
       title="Hover Card"

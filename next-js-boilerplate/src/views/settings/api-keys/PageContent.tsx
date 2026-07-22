@@ -5,98 +5,20 @@ import { useAuth } from "@/hooks/useAuth";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { formatDateByPreference } from "@/lib/date-time";
-import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { PageHeader } from "@/components/ui";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsApiKeysPageInfo } from "@/constants/page-info";
 import { useApiKeyActions } from "@/api/client/api-keys/actions";
 import type { ApiKeyInfo } from "@/api/server/api-keys/list";
 import { cn } from "@/lib/cn";
-import type { CreateApiKeyResult } from "@/api/server/api-keys/create";
-import type { Dispatch, SetStateAction } from "react";
+import type { ClassNameProps } from "@/types/ui/ClassName-types";
+import { loadApiKeys } from "./api-key-handlers";
+import { CreateApiKeyForm } from "./CreateApiKeyForm";
+import { ApiKeyList } from "./ApiKeyList";
 
 type ApiKey = ApiKeyInfo;
 
-async function handleCreateApiKey(
-  newName: string,
-  setCreating: Dispatch<SetStateAction<boolean>>,
-  setNewKeyResult: Dispatch<SetStateAction<string | null>>,
-  toast: ReturnType<typeof useToast>["toast"],
-  setNewName: Dispatch<SetStateAction<string>>,
-  setNewExpiry: Dispatch<SetStateAction<string>>,
-  loadKeys: () => Promise<void>,
-  newExpiry: string,
-  createApiKey: (
-    name: string,
-    expiresInDays: number | null,
-  ) => Promise<CreateApiKeyResult>,
-) {
-  if (!newName.trim()) return;
-  setCreating(true);
-  setNewKeyResult(null);
-  try {
-    const result = await createApiKey(
-      newName.trim(),
-      newExpiry ? parseInt(newExpiry, 10) : null,
-    );
-    setNewKeyResult(result.fullKey);
-    toast({ title: "API key created" });
-    setNewName("");
-    setNewExpiry("");
-    await loadKeys();
-  } catch (err) {
-    const exception = (err as Error & { exception?: { msg?: string } })
-      .exception;
-    toast({
-      title: exception?.msg ?? "Failed to create API key",
-      variant: "destructive",
-    });
-  } finally {
-    setCreating(false);
-  }
-}
-
-async function loadApiKeys(
-  setKeys: Dispatch<SetStateAction<ApiKey[]>>,
-  toast: ReturnType<typeof useToast>["toast"],
-  setLoadingKeys: Dispatch<SetStateAction<boolean>>,
-) {
-  try {
-    const { listApiKeysServer } = await import("@/api/server/api-keys/list");
-    const data = await listApiKeysServer();
-    setKeys(data);
-  } catch {
-    toast({ title: "Failed to load API keys", variant: "destructive" });
-  } finally {
-    setLoadingKeys(false);
-  }
-}
-
-async function handleRevokeApiKey(
-  id: string,
-  name: string,
-  toast: ReturnType<typeof useToast>["toast"],
-  loadKeys: () => Promise<void>,
-  revokeApiKey: (id: string) => Promise<void>,
-) {
-  if (!confirm(`Revoke API key "${name}"? This cannot be undone.`)) return;
-  try {
-    await revokeApiKey(id);
-    toast({ title: `API key "${name}" revoked` });
-    await loadKeys();
-  } catch (err) {
-    const exception = (err as Error & { exception?: { msg?: string } })
-      .exception;
-    toast({
-      title: exception?.msg ?? "Failed to revoke API key",
-      variant: "destructive",
-    });
-  }
-}
-
-export default function PageContent({ className }: { className?: string }) {
+export default function PageContent({ className }: ClassNameProps) {
   const { user } = useAuth();
   const _t = useMessages("settings");
   const { toast } = useToast();
@@ -109,7 +31,6 @@ export default function PageContent({ className }: { className?: string }) {
   const [newExpiry, setNewExpiry] = useState("");
   const [creating, setCreating] = useState(false);
   const [newKeyResult, setNewKeyResult] = useState<string | null>(null);
-  const dateDisplay = useDateDisplayCookie();
 
   const loadKeys = useCallback(
     () => loadApiKeys(setKeys, toast, setLoadingKeys),
@@ -159,66 +80,19 @@ export default function PageContent({ className }: { className?: string }) {
       )}
 
       {showCreate ? (
-        <div className="surface flex flex-col gap-3 rounded-lg p-4">
-          <h3 className="font-semibold">Create new API key</h3>
-          <Input
-            placeholder="Key name (e.g. 'CI/CD', 'Development')"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            disabled={creating}
-            // Sole field on a freshly-revealed create-key form, not initial page load.
-            // eslint-disable-next-line jsx-a11y/no-autofocus
-            autoFocus
-          />
-          <div className="flex flex-wrap gap-2">
-            {[
-              { value: "", label: "No expiry" },
-              { value: "7", label: "7 days" },
-              { value: "30", label: "30 days" },
-              { value: "90", label: "90 days" },
-              { value: "365", label: "1 year" },
-            ].map((opt) => (
-              <Button
-                key={opt.value}
-                type="button"
-                disabled={creating}
-                variant={newExpiry === opt.value ? "primary" : "outline"}
-                size="xs"
-                onClick={() => setNewExpiry(opt.value)}
-              >
-                {opt.label}
-              </Button>
-            ))}
-          </div>
-          <div className="flex gap-2">
-            <Button
-              onClick={() =>
-                handleCreateApiKey(
-                  newName,
-                  setCreating,
-                  setNewKeyResult,
-                  toast,
-                  setNewName,
-                  setNewExpiry,
-                  loadKeys,
-                  newExpiry,
-                  createApiKey,
-                )
-              }
-              disabled={creating || !newName.trim()}
-              size="sm"
-            >
-              {creating ? "Creating..." : "Create"}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowCreate(false)}
-            >
-              Cancel
-            </Button>
-          </div>
-        </div>
+        <CreateApiKeyForm
+          creating={creating}
+          setCreating={setCreating}
+          newName={newName}
+          setNewName={setNewName}
+          newExpiry={newExpiry}
+          setNewExpiry={setNewExpiry}
+          setNewKeyResult={setNewKeyResult}
+          toast={toast}
+          loadKeys={loadKeys}
+          createApiKey={createApiKey}
+          onCancel={() => setShowCreate(false)}
+        />
       ) : (
         <div>
           <Button size="sm" onClick={() => setShowCreate(true)}>
@@ -227,73 +101,13 @@ export default function PageContent({ className }: { className?: string }) {
         </div>
       )}
 
-      {loadingKeys ? (
-        <p className="text-muted text-sm">Loading...</p>
-      ) : keys.length === 0 ? (
-        <p className="text-muted text-sm">
-          No API keys yet. Create one to get started.
-        </p>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {keys.map((key) => (
-            <div
-              key={key.id}
-              className="surface flex items-center justify-between rounded-lg p-4"
-            >
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{key.name}</span>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      key.enabled
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-500"
-                    }`}
-                  >
-                    {key.enabled ? "Active" : "Disabled"}
-                  </span>
-                </div>
-                <code className="text-muted font-mono text-xs">
-                  {key.keyPrefix}...
-                </code>
-                <div className="text-muted flex gap-4 text-xs">
-                  <span>
-                    Created {formatDateByPreference(key.createdAt, dateDisplay)}
-                  </span>
-                  {key.lastUsedAt && (
-                    <span>
-                      Last used{" "}
-                      {formatDateByPreference(key.lastUsedAt, dateDisplay)}
-                    </span>
-                  )}
-                  {key.expiresAt && (
-                    <span>
-                      Expires{" "}
-                      {formatDateByPreference(key.expiresAt, dateDisplay)}
-                    </span>
-                  )}
-                  {!key.expiresAt && <span>No expiry</span>}
-                </div>
-              </div>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() =>
-                  handleRevokeApiKey(
-                    key.id,
-                    key.name,
-                    toast,
-                    loadKeys,
-                    revokeApiKey,
-                  )
-                }
-              >
-                Revoke
-              </Button>
-            </div>
-          ))}
-        </div>
-      )}
+      <ApiKeyList
+        keys={keys}
+        loadingKeys={loadingKeys}
+        toast={toast}
+        loadKeys={loadKeys}
+        revokeApiKey={revokeApiKey}
+      />
     </div>
   );
 }

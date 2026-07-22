@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/Resizable";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/ui/PageContent-types";
 
 const examples: UIExample[] = [
   {
@@ -73,7 +74,7 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function ResizablePage({ initialTab }: { initialTab?: string }) {
+export default function ResizablePage({ initialTab }: InitialTabProps) {
   return (
     <ExampleTabs
       title="Resizable"

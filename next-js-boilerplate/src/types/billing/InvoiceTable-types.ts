@@ -1,4 +1,4 @@
-import type { Transaction } from "@/views/settings/billing/FreePageView";
+import type { Transaction } from "@/types/billing/FreePageView-types";
 
 export interface InvoiceTableProps {
   transactions: Transaction[];

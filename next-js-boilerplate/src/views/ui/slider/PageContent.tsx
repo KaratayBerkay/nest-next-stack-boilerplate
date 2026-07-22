@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Slider } from "@/components/ui/Slider";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/ui/PageContent-types";
 
 function ComponentsTab() {
   const [volume, setVolume] = useState([50]);
@@ -134,7 +135,7 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function SliderPage({ initialTab }: { initialTab?: string }) {
+export default function SliderPage({ initialTab }: InitialTabProps) {
   return (
     <ExampleTabs
       title="Slider"

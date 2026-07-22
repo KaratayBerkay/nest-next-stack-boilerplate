@@ -4,9 +4,12 @@ import { useState } from "react";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { useToast } from "@/components/ui/Toast";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
+import { ErrorBoundaryCustomFallback } from "@/fallbacks/views/error-boundary/ErrorBoundaryCustomFallback";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { BombProps } from "@/types/ui/Bomb-types";
+import type { InitialTabProps } from "@/types/ui/PageContent-types";
 
-function Bomb({ label = "Throw Error" }: { label?: string }) {
+function Bomb({ label = "Throw Error" }: BombProps) {
   const [shouldThrow, setShouldThrow] = useState(false);
   if (shouldThrow) {
     throw new Error("Boom!");
@@ -68,20 +71,7 @@ const examples: UIExample[] = [
     render: () => (
       <div className="border-border bg-surface rounded-lg border p-4">
         <ErrorBoundary
-          fallback={
-            <div className="flex flex-col items-center gap-3 py-6">
-              <p className="text-fg text-sm font-medium">Custom Error</p>
-              <p className="text-muted text-xs">
-                Something broke, but we handled it gracefully.
-              </p>
-              <button
-                onClick={() => window.location.reload()}
-                className="bg-surface hover:bg-surface-hover rounded-md px-3 py-1 text-xs transition-colors"
-              >
-                Retry
-              </button>
-            </div>
-          }
+          fallback={<ErrorBoundaryCustomFallback />}
         >
           <Bomb label="Throw (Custom)" />
         </ErrorBoundary>
@@ -103,9 +93,7 @@ const examples: UIExample[] = [
 
 export default function ErrorBoundaryPage({
   initialTab,
-}: {
-  initialTab?: string;
-}) {
+}: InitialTabProps) {
   return (
     <ExampleTabs
       title="Error Boundary"

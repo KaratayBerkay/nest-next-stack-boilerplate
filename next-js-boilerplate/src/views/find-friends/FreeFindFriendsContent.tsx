@@ -5,9 +5,7 @@ import type { FindFriendsContentProps } from "@/types/find-friends/FindFriendsCo
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { usePathname } from "next/navigation";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
-import { Avatar } from "@/components/ui/Avatar";
 import { Input } from "@/components/ui/Input";
-import { initials } from "@/lib/initials";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   friendsQueryOptions,
@@ -16,8 +14,9 @@ import {
 import { PageInfoButton } from "@/components/ui/page-info";
 import { findFriendsPageInfo } from "@/constants/page-info";
 import { cn } from "@/lib/cn";
-import type { FriendRequest } from "./search-utils";
 import { PaginationBar } from "./PaginationBar";
+import { UserSearchCard } from "./UserSearchCard";
+import { PendingRequestCard } from "./PendingRequestCard";
 import { useFriendSearch } from "./useFriendSearch";
 import { useFriendActions } from "./useFriendActions";
 
@@ -93,36 +92,20 @@ export function FreeFindFriendsContent({
               </p>
             )}
             {!searching &&
-              items.map((u) => {
-                const isPending = pendingIds.has(u.id) || sentIds.has(u.id);
-                return (
-                  <div
-                    key={u.id}
-                    className="flex items-center gap-3 rounded-lg border p-3"
-                  >
-                    <Avatar
-                      fallback={initials(u.name)}
-                      className="bg-brand text-brand-fg h-10 w-10 shrink-0 text-xs"
-                    />
-                    <span className="flex-1 text-sm font-medium">{u.name}</span>
-                    {isPending ? (
-                      <span className="bg-surface text-muted rounded px-3 py-1 text-xs">
-                        {t.pending}
-                      </span>
-                    ) : (
-                      <button
-                        onClick={async () => {
-                          const ok = await sendRequest(u.id);
-                          if (ok) setSentIds((prev) => new Set(prev).add(u.id));
-                        }}
-                        className="bg-brand text-brand-fg rounded-lg px-3 py-1 text-sm hover:opacity-80"
-                      >
-                        {t.addFriend}
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
+              items.map((u) => (
+                <UserSearchCard
+                  key={u.id}
+                  userId={u.id}
+                  name={u.name}
+                  isPending={pendingIds.has(u.id) || sentIds.has(u.id)}
+                  onSendRequest={async () => {
+                    const ok = await sendRequest(u.id);
+                    if (ok) setSentIds((prev) => new Set(prev).add(u.id));
+                  }}
+                  pendingLabel={t.pending}
+                  addFriendLabel={t.addFriend}
+                />
+              ))}
             {!searching && total > 0 && (
               <PaginationBar
                 page={page + 1}
@@ -145,44 +128,17 @@ export function FreeFindFriendsContent({
               {t.noRequests}
             </p>
           ) : (
-            friendRequests.map((r: FriendRequest) => (
-              <div
+            friendRequests.map((r) => (
+              <PendingRequestCard
                 key={r.id}
-                className="flex items-center gap-3 rounded-lg border p-3"
-              >
-                <Avatar
-                  fallback={initials(r.user.name)}
-                  className="bg-brand text-brand-fg h-10 w-10 shrink-0 text-xs"
-                />
-                <span className="flex-1 text-sm font-medium">
-                  {r.user.name}
-                  {r.direction === "outgoing" && (
-                    <span className="text-muted ml-2 text-xs">
-                      {t.sentByYou}
-                    </span>
-                  )}
-                </span>
-                {r.direction === "incoming" ? (
-                  <>
-                    <button
-                      onClick={() => acceptRequest(r.user.id)}
-                      className="bg-success rounded px-3 py-1 text-xs text-white hover:brightness-90"
-                    >
-                      {t.accept}
-                    </button>
-                    <button
-                      onClick={() => declineRequest(r.user.id)}
-                      className="bg-surface hover:bg-surface-hover rounded px-3 py-1 text-xs"
-                    >
-                      {t.decline}
-                    </button>
-                  </>
-                ) : (
-                  <span className="bg-surface text-muted rounded px-3 py-1 text-xs">
-                    {t.awaiting}
-                  </span>
-                )}
-              </div>
+                request={r}
+                onAccept={acceptRequest}
+                onDecline={declineRequest}
+                sentByYouLabel={t.sentByYou}
+                acceptLabel={t.accept}
+                declineLabel={t.decline}
+                awaitingLabel={t.awaiting}
+              />
             ))
           )}
         </TabsContent>

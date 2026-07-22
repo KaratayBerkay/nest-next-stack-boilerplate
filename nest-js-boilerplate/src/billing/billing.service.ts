@@ -252,6 +252,36 @@ export class BillingService {
     return { success: true };
   }
 
+  async cancelSubscription(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { stripeSubscriptionId: true, subscriptionTier: true },
+    });
+    if (!user) throw new Error('User not found');
+    if (user.subscriptionTier === 'FREE') throw new Error('No active subscription');
+
+    if (user.stripeSubscriptionId) {
+      await this.provider
+        .cancelSubscription(user.stripeSubscriptionId)
+        .catch((err: Error) => {
+          this.logger.warn(
+            { category: 'billing', event: 'billing.cancel_failed', error: err.message },
+            `Failed to cancel Stripe subscription: ${err.message}`,
+          );
+        });
+    }
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { cancelAtPeriodEnd: true },
+    });
+
+    this.logger.log(
+      { category: 'billing', event: 'billing.subscription.canceled', userId },
+      `Subscription cancel scheduled for user ${userId}`,
+    );
+  }
+
   async getBillingHistory(userId: string) {
     return this.prisma.walletTransaction.findMany({
       where: {

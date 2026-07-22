@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useState,
-  useEffect,
-  useRef,
-  type Dispatch,
-  type SetStateAction,
-} from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
@@ -15,115 +9,21 @@ import { useToast } from "@/components/ui/Toast";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
-import {
-  CURRENCIES,
-  CURRENCY_COOKIE,
-  DEFAULT_CURRENCY,
-} from "@/constants/currency";
-import type { CurrencyCode } from "@/constants/currency";
-import {
-  DATE_DISPLAY_FORMATS,
-  DATE_DISPLAY_COOKIE,
-  DEFAULT_DATE_DISPLAY,
-} from "@/constants/date-display";
-import type { DateDisplayFormat } from "@/constants/date-display";
-import { formatDateLong, formatDateShort, toISOString } from "@/lib/date-time";
 import { PageHeader } from "@/components/ui";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsGeneralPageInfo } from "@/constants/page-info";
 import { useProfileActions } from "@/api/client/profile/actions";
 import { cn } from "@/lib/cn";
+import { readCurrencyCookie, readDateDisplayCookie } from "@/lib/settings/cookies";
+import { LOCALES, TIMEZONES, CURRENCY_OPTIONS } from "@/lib/settings/constants";
+import { setCurrency, setDateDisplay, saveSettings } from "@/lib/settings/handlers";
+import { SettingsSelect } from "./SettingsSelect";
+import { formatDateLong, formatDateShort, toISOString } from "@/lib/date-time";
+import type { CurrencyCode } from "@/constants/currency";
+import type { DateDisplayFormat } from "@/constants/date-display";
+import type { ClassNameProps } from "@/types/ui/ClassName-types";
 
-function readCurrencyCookie(): CurrencyCode {
-  if (typeof document === "undefined") return DEFAULT_CURRENCY;
-  const match = document.cookie.match(new RegExp(`${CURRENCY_COOKIE}=([^;]+)`));
-  const val = match?.[1];
-  if (val && (CURRENCIES as readonly string[]).includes(val)) {
-    return val as CurrencyCode;
-  }
-  return DEFAULT_CURRENCY;
-}
-
-function readDateDisplayCookie(): DateDisplayFormat {
-  if (typeof document === "undefined") return DEFAULT_DATE_DISPLAY;
-  const match = document.cookie.match(
-    new RegExp(`${DATE_DISPLAY_COOKIE}=([^;]+)`),
-  );
-  const val = match?.[1];
-  if (val && (DATE_DISPLAY_FORMATS as readonly string[]).includes(val)) {
-    return val as DateDisplayFormat;
-  }
-  return DEFAULT_DATE_DISPLAY;
-}
-
-const LOCALES = [
-  { value: "en", label: "English" },
-  { value: "tr", label: "Türkçe" },
-];
-
-const TIMEZONES = [
-  "UTC",
-  "America/New_York",
-  "America/Chicago",
-  "America/Denver",
-  "America/Los_Angeles",
-  "Europe/London",
-  "Europe/Berlin",
-  "Europe/Istanbul",
-  "Asia/Dubai",
-  "Asia/Tokyo",
-  "Asia/Shanghai",
-  "Australia/Sydney",
-];
-
-function setCurrency(
-  code: CurrencyCode,
-  setCurrencyState: Dispatch<SetStateAction<CurrencyCode>>,
-) {
-  setCurrencyState(code);
-  document.cookie = `${CURRENCY_COOKIE}=${code};path=/;max-age=${60 * 60 * 24 * 365};samesite=lax`;
-}
-
-function setDateDisplay(
-  format: DateDisplayFormat,
-  setDateDisplayState: Dispatch<SetStateAction<DateDisplayFormat>>,
-) {
-  setDateDisplayState(format);
-  document.cookie = `${DATE_DISPLAY_COOKIE}=${format};path=/;max-age=${60 * 60 * 24 * 365};samesite=lax`;
-}
-
-async function save(
-  setSaving: Dispatch<SetStateAction<boolean>>,
-  locale: string,
-  timezone: string,
-  toast: ReturnType<typeof useToast>["toast"],
-  saveSuccess: string,
-  saveFailed: string,
-  refreshUser: () => Promise<void>,
-  updateProfile: (data: {
-    name: string;
-    username?: string;
-    bio?: string;
-    avatarUrl?: string;
-    locale?: string;
-    timezone?: string;
-  }) => Promise<void>,
-) {
-  setSaving(true);
-  try {
-    await updateProfile({ name: "", locale, timezone });
-    toast({ title: saveSuccess, variant: "success" });
-    await refreshUser();
-  } catch (err) {
-    const exception = (err as Error & { exception?: { msg?: string } })
-      .exception;
-    toast({ title: exception?.msg ?? saveFailed, variant: "destructive" });
-  } finally {
-    setSaving(false);
-  }
-}
-
-export function FreePageView({ className }: { className?: string }) {
+export function FreePageView({ className }: ClassNameProps) {
   const { user, loading, refreshUser } = useAuth();
   const t = useMessages("settings");
   const { toast } = useToast();
@@ -159,55 +59,31 @@ export function FreePageView({ className }: { className?: string }) {
       />
 
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <Label>{t.language}</Label>
-          <select
-            value={locale}
-            onChange={(e) => setLocale(e.target.value)}
-            className="border-border bg-bg rounded-lg border px-3 py-2 text-sm"
-          >
-            {LOCALES.map((l) => (
-              <option key={l.value} value={l.value}>
-                {l.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SettingsSelect
+          label={t.language}
+          value={locale}
+          onChange={setLocale}
+          options={LOCALES}
+        />
 
-        <div className="flex flex-col gap-1.5">
-          <Label>{t.timezone}</Label>
-          <select
-            value={timezone}
-            onChange={(e) => setTimezone(e.target.value)}
-            className="border-border bg-bg rounded-lg border px-3 py-2 text-sm"
-          >
-            {TIMEZONES.map((tz) => (
-              <option key={tz} value={tz}>
-                {tz}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SettingsSelect
+          label={t.timezone}
+          value={timezone}
+          onChange={setTimezone}
+          options={TIMEZONES.map((tz) => ({ value: tz, label: tz }))}
+        />
 
         <div className="flex flex-col gap-1.5">
           <Label>{t.theme}</Label>
           <ThemeToggle />
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <Label>{t.currency}</Label>
-          <select
-            value={currency}
-            onChange={(e) =>
-              setCurrency(e.target.value as CurrencyCode, setCurrencyState)
-            }
-            className="border-border bg-bg rounded-lg border px-3 py-2 text-sm"
-          >
-            <option value="USD">US Dollar ($)</option>
-            <option value="EUR">Euro (€)</option>
-            <option value="TRY">Turkish Lira (₺)</option>
-          </select>
-        </div>
+        <SettingsSelect
+          label={t.currency}
+          value={currency}
+          onChange={(v) => setCurrency(v as CurrencyCode, setCurrencyState)}
+          options={CURRENCY_OPTIONS}
+        />
 
         <div className="flex flex-col gap-1.5">
           <Label>{t.dateDisplay}</Label>
@@ -230,7 +106,7 @@ export function FreePageView({ className }: { className?: string }) {
 
       <Button
         onClick={() =>
-          save(
+          saveSettings(
             setSaving,
             locale,
             timezone,

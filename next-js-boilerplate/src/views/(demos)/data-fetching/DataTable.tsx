@@ -1,20 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DATA_URL } from "@/constants/api/urls";
-
-interface ApiData {
-  id: number;
-  name: string;
-  nested: { value: number };
-}
+import { getDataServer, type ApiData } from "@/api/server/data";
 
 export function DataTable() {
   const [data, setData] = useState<ApiData | null>(null);
 
   useEffect(() => {
-    fetch(DATA_URL)
-      .then((res) => res.json())
+    getDataServer()
       .then(setData)
       .catch(() => setData(null));
   }, []);

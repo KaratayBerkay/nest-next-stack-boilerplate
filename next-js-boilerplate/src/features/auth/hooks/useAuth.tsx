@@ -9,18 +9,15 @@ import {
   useRef,
   useState,
 } from "react";
-import { apiFetchJson } from "@/lib/api-client";
 import { TIMEZONE_COOKIE } from "@/constants/i18n";
 import type { AuthProviderProps } from "@/types/auth/AuthProvider-types";
-import { AUTH_LOGIN_MFA_URL } from "@/constants/api/urls";
-import { POST } from "@/constants/api/methods";
-import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 import { loginServer } from "@/api/server/auth/login";
 import { registerServer } from "@/api/server/auth/register";
 import { logoutServer } from "@/api/server/auth/logout";
 import { getMeServer } from "@/api/server/auth/me";
 import { refreshTokenServer } from "@/api/server/auth/token";
 import { deviceHandshakeServer } from "@/api/server/auth/device-handshake";
+import { verifyMfaServer } from "@/api/server/auth/mfa";
 
 // Session snapshot fields arrive via /api/auth/me (Redis, zero-PG).
 // Login/register return a subset from AuthPayload; the snapshot is the
@@ -28,13 +25,6 @@ import { deviceHandshakeServer } from "@/api/server/auth/device-handshake";
 import type { User } from "@/types/auth/User";
 
 export type { User } from "@/types/auth/User";
-
-type AuthResponse = {
-  user: User;
-  accessToken?: string;
-  mfaRequired?: boolean;
-  mfaToken?: string;
-};
 
 type AuthContextValue = {
   user: User | null;
@@ -177,11 +167,7 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
 
   const verifyMfa = useCallback(async (mfaToken: string, code: string) => {
     try {
-      const data = await apiFetchJson<AuthResponse>(AUTH_LOGIN_MFA_URL, {
-        method: POST,
-        headers: JSON_CONTENT_TYPE_HEADER,
-        body: JSON.stringify({ mfaToken, code }),
-      });
+      const data = await verifyMfaServer(mfaToken, code);
       setUser(data.user);
       if (data.accessToken) setToken(data.accessToken);
     } catch (err) {

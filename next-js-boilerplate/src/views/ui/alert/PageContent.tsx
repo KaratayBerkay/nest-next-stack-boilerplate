@@ -9,6 +9,7 @@ import { ExamplesTab } from "@/views/ui/alert/ExamplesTab";
 import { ServerRetryTab } from "@/views/ui/alert/ServerRetryTab";
 import type { AlertVariant } from "@/types/ui/Alert-types";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/ui/PageContent-types";
 
 const examples: UIExample[] = [
   {
@@ -58,7 +59,7 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function AlertPage({ initialTab }: { initialTab?: string }) {
+export default function AlertPage({ initialTab }: InitialTabProps) {
   return (
     <ExampleTabs
       title="Alert"

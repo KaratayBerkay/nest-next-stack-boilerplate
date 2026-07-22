@@ -5,6 +5,16 @@ import { cn } from "@/lib/cn";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { BillingAddressFormProps } from "@/types/billing/BillingAddressForm-types";
 import type { BillingAddress } from "@/api/server/billing/address";
+import { BillingAddressField } from "./BillingAddressField";
+
+function handleFormSubmit(
+  e: React.FormEvent,
+  formData: Partial<BillingAddress>,
+  onSave: (data: Partial<BillingAddress>) => void,
+) {
+  e.preventDefault();
+  onSave(formData);
+}
 
 export function BillingAddressForm({
   address,
@@ -13,7 +23,7 @@ export function BillingAddressForm({
   isSaving,
   className,
 }: BillingAddressFormProps) {
-  const t = useMessages("settings");
+  const t = useMessages("settings") as unknown as Record<string, string>;
   const [formData, setFormData] = useState<Partial<BillingAddress>>({
     name: address?.name ?? "",
     street: address?.street ?? "",
@@ -24,131 +34,65 @@ export function BillingAddressForm({
     vatNumber: address?.vatNumber ?? "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData);
-  };
+  const setField = (field: string) => (value: string) =>
+    setFormData((prev) => ({ ...prev, [field]: value }));
 
   return (
     <form
-      onSubmit={handleSubmit}
+      onSubmit={(e) => handleFormSubmit(e, formData, onSave)}
       className={cn("flex flex-col gap-4", className)}
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="ba-name" className="text-muted text-xs font-medium">
-            {t.nameLabel}
-          </label>
-          <input
-            id="ba-name"
-            type="text"
-            value={formData.name ?? ""}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, name: e.target.value }))
-            }
-            className="border-border bg-surface rounded-lg border px-3 py-2 text-sm"
-            placeholder="John Doe"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="ba-zip" className="text-muted text-xs font-medium">
-            {t.zipCode}
-          </label>
-          <input
-            id="ba-zip"
-            type="text"
-            value={formData.zipCode ?? ""}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, zipCode: e.target.value }))
-            }
-            className="border-border bg-surface rounded-lg border px-3 py-2 text-sm"
-            placeholder="10001"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5 sm:col-span-2">
-          <label htmlFor="ba-street" className="text-muted text-xs font-medium">
-            {t.street}
-          </label>
-          <input
-            id="ba-street"
-            type="text"
-            value={formData.street ?? ""}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, street: e.target.value }))
-            }
-            className="border-border bg-surface rounded-lg border px-3 py-2 text-sm"
-            placeholder="123 Main St, Apt 4B"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="ba-city" className="text-muted text-xs font-medium">
-            {t.city}
-          </label>
-          <input
-            id="ba-city"
-            type="text"
-            value={formData.city ?? ""}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, city: e.target.value }))
-            }
-            className="border-border bg-surface rounded-lg border px-3 py-2 text-sm"
-            placeholder="New York"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="ba-state" className="text-muted text-xs font-medium">
-            {t.state}
-          </label>
-          <input
-            id="ba-state"
-            type="text"
-            value={formData.state ?? ""}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, state: e.target.value }))
-            }
-            className="border-border bg-surface rounded-lg border px-3 py-2 text-sm"
-            placeholder="NY"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="ba-country"
-            className="text-muted text-xs font-medium"
-          >
-            {t.country}
-          </label>
-          <input
-            id="ba-country"
-            type="text"
-            value={formData.country ?? ""}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, country: e.target.value }))
-            }
-            className="border-border bg-surface rounded-lg border px-3 py-2 text-sm"
-            placeholder="United States"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="ba-vat" className="text-muted text-xs font-medium">
-            {t.vatNumber}
-          </label>
-          <input
-            id="ba-vat"
-            type="text"
-            value={formData.vatNumber ?? ""}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, vatNumber: e.target.value }))
-            }
-            className="border-border bg-surface rounded-lg border px-3 py-2 text-sm"
-            placeholder="DE4920348"
-          />
-        </div>
+        <BillingAddressField
+          id="ba-name"
+          label={t.nameLabel}
+          value={formData.name ?? ""}
+          onChange={setField("name")}
+          placeholder="John Doe"
+        />
+        <BillingAddressField
+          id="ba-zip"
+          label={t.zipCode}
+          value={formData.zipCode ?? ""}
+          onChange={setField("zipCode")}
+          placeholder="10001"
+        />
+        <BillingAddressField
+          id="ba-street"
+          label={t.street}
+          value={formData.street ?? ""}
+          onChange={setField("street")}
+          placeholder="123 Main St, Apt 4B"
+          spanCol2
+        />
+        <BillingAddressField
+          id="ba-city"
+          label={t.city}
+          value={formData.city ?? ""}
+          onChange={setField("city")}
+          placeholder="New York"
+        />
+        <BillingAddressField
+          id="ba-state"
+          label={t.state}
+          value={formData.state ?? ""}
+          onChange={setField("state")}
+          placeholder="NY"
+        />
+        <BillingAddressField
+          id="ba-country"
+          label={t.country}
+          value={formData.country ?? ""}
+          onChange={setField("country")}
+          placeholder="United States"
+        />
+        <BillingAddressField
+          id="ba-vat"
+          label={t.vatNumber}
+          value={formData.vatNumber ?? ""}
+          onChange={setField("vatNumber")}
+          placeholder="DE4920348"
+        />
       </div>
 
       <div className="flex items-center gap-2">

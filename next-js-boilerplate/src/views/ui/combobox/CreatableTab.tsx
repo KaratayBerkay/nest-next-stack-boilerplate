@@ -1,44 +1,9 @@
-import {
-  useState,
-  useCallback,
-  useMemo,
-  type Dispatch,
-  type SetStateAction,
-} from "react";
-import {
-  Command,
-  CommandInput,
-  CommandList,
-  CommandItem,
-} from "@/components/ui/Command";
+import { useState, useMemo } from "react";
 import { getLabel } from "./helpers";
 import { creatableInitial } from "./data";
-
-function handleCreateModuleLevel(
-  query: string,
-  setOptions: Dispatch<SetStateAction<typeof creatableInitial>>,
-  setValue: Dispatch<SetStateAction<string>>,
-  setOpen: Dispatch<SetStateAction<boolean>>,
-  setQuery: Dispatch<SetStateAction<string>>,
-) {
-  const newValue = query.toLowerCase().replace(/\s+/g, "-");
-  const newOption = { value: newValue, label: query };
-  setOptions((prev) => [...prev, newOption]);
-  setValue(newValue);
-  setOpen(false);
-  setQuery("");
-}
-
-function handleSelectModuleLevel(
-  itemValue: string,
-  setValue: Dispatch<SetStateAction<string>>,
-  setOpen: Dispatch<SetStateAction<boolean>>,
-  setQuery: Dispatch<SetStateAction<string>>,
-) {
-  setValue(itemValue);
-  setOpen(false);
-  setQuery("");
-}
+import { ComboboxTrigger } from "./ComboboxTrigger";
+import { SelectedItem } from "./SelectedItem";
+import { CreatableDropdown } from "./CreatableDropdown";
 
 export function CreatableTab() {
   const [open, setOpen] = useState(false);
@@ -58,18 +23,6 @@ export function CreatableTab() {
     query.length > 0 &&
     !options.some((opt) => opt.label.toLowerCase() === query.toLowerCase());
 
-  const handleCreate = useCallback(
-    () =>
-      handleCreateModuleLevel(query, setOptions, setValue, setOpen, setQuery),
-    [query, setOptions, setValue, setOpen, setQuery],
-  );
-
-  const handleSelect = useCallback(
-    (itemValue: string) =>
-      handleSelectModuleLevel(itemValue, setValue, setOpen, setQuery),
-    [setValue, setOpen, setQuery],
-  );
-
   const selectedLabel = getLabel(value, options);
 
   return (
@@ -77,92 +30,37 @@ export function CreatableTab() {
       <section className="flex flex-col gap-3">
         <h3 className="text-lg font-semibold">Creatable</h3>
         <div className="relative max-w-sm">
-          <button
-            type="button"
-            onClick={() => setOpen((prev) => !prev)}
-            className="focus-visible:ring-brand border-border bg-bg text-fg flex h-9 w-full items-center justify-between rounded-md border px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
-          >
-            <span className="truncate">
-              {selectedLabel || "Choose or create a color..."}
-            </span>
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              className="ml-2 opacity-50"
-            >
-              <path d="m6 9 6 6 6-6" />
-            </svg>
-          </button>
+          <ComboboxTrigger
+            selectedLabel={selectedLabel}
+            placeholder="Choose or create a color..."
+            onToggle={() => setOpen((prev) => !prev)}
+          />
           {open && (
-            <div className="bg-bg border-border absolute z-50 mt-1 w-full rounded-lg border p-1 shadow-lg">
-              <Command>
-                <CommandInput
-                  placeholder="Type to search or create..."
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && showCreate) {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleCreate();
-                    }
-                  }}
-                />
-                <CommandList>
-                  {filtered.map((item) => (
-                    <CommandItem
-                      key={item.value}
-                      value={item.value}
-                      onSelect={() => handleSelect(item.value)}
-                    >
-                      {item.label}
-                    </CommandItem>
-                  ))}
-                  {showCreate && (
-                    <CommandItem
-                      value={`create:${query}`}
-                      onSelect={handleCreate}
-                    >
-                      Add &apos;{query}&apos;&hellip;
-                    </CommandItem>
-                  )}
-                  {!showCreate && filtered.length === 0 && (
-                    <div className="text-muted py-6 text-center text-sm">
-                      No results
-                    </div>
-                  )}
-                </CommandList>
-              </Command>
-            </div>
+            <CreatableDropdown
+              query={query}
+              onQueryChange={setQuery}
+              filtered={filtered}
+              showCreate={showCreate}
+              onSelect={(itemValue) => {
+                setValue(itemValue);
+                setOpen(false);
+                setQuery("");
+              }}
+              onCreate={() => {
+                const newValue = query.toLowerCase().replace(/\s+/g, "-");
+                setOptions((prev) => [...prev, { value: newValue, label: query }]);
+                setValue(newValue);
+                setOpen(false);
+                setQuery("");
+              }}
+            />
           )}
         </div>
         {value && (
-          <div className="bg-surface border-border flex items-center justify-between rounded border px-3 py-2">
-            <span className="text-sm">
-              Selected: <strong>{selectedLabel}</strong>
-            </span>
-            <button
-              type="button"
-              onClick={() => setValue("")}
-              className="text-muted hover:text-fg p-0.5"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M18 6 6 18" />
-                <path d="m6 6 12 12" />
-              </svg>
-            </button>
-          </div>
+          <SelectedItem
+            selectedLabel={selectedLabel}
+            onClear={() => setValue("")}
+          />
         )}
       </section>
     </div>

@@ -256,6 +256,14 @@ export class BillingResolver {
     };
   }
 
+  @Mutation(() => Boolean)
+  async cancelSubscription(
+    @CurrentUser() user: JwtUser,
+  ): Promise<boolean> {
+    await this.billing.cancelSubscription(user.userId);
+    return true;
+  }
+
   @Mutation(() => BillingAddressInfo)
   async upsertBillingAddress(
     @CurrentUser() user: JwtUser,

@@ -1,90 +1,23 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Dispatch, SetStateAction } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
-import { Avatar } from "@/components/ui/Avatar";
-import { initials } from "@/lib/initials";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
-import { Input } from "@/components/ui/Input";
-import { Label } from "@/components/ui/Label";
-import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsAccountPageInfo } from "@/constants/page-info";
 import { useProfileActions } from "@/api/client/profile/actions";
 import { cn } from "@/lib/cn";
-import { MAX_UPLOAD_SIZE } from "@/constants/upload";
+import type { ClassNameProps } from "@/types/ui/ClassName-types";
+import { uploadAvatarFile, handleSaveProfile } from "./profile-actions";
+import { AccountAvatarSection } from "./AccountAvatarSection";
+import { AccountFormFields } from "./AccountFormFields";
 
-async function uploadAvatarFile(
-  file: File,
-  toast: ReturnType<typeof useToast>["toast"],
-  t: Record<string, string>,
-  setAvatarUrl: Dispatch<SetStateAction<string>>,
-  uploadAvatar: (file: File) => Promise<{ urls: { full: string } }>,
-) {
-  const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-  if (!allowed.includes(file.type)) {
-    toast({ title: t.invalidFileType, variant: "destructive" });
-    return;
-  }
-  if (file.size > MAX_UPLOAD_SIZE) {
-    toast({ title: t.fileTooLarge, variant: "destructive" });
-    return;
-  }
-  try {
-    const uploadRes = await uploadAvatar(file);
-    setAvatarUrl(uploadRes.urls.full);
-  } catch (err) {
-    const exception = (err as Error & { exception?: { msg?: string } })
-      .exception;
-    toast({ title: exception?.msg ?? t.uploadFailed, variant: "destructive" });
-  }
-}
-
-async function handleSaveProfile(deps: {
-  name: string;
-  username: string | undefined;
-  bio: string;
-  avatarUrl: string | undefined;
-  toast: ReturnType<typeof useToast>["toast"];
-  t: { saveSuccess: string; saveFailed: string };
-  refreshUser: () => Promise<void>;
-  updateProfile: (data: {
-    name: string;
-    username?: string;
-    bio?: string;
-    avatarUrl?: string;
-  }) => Promise<void>;
-  setSaving: Dispatch<SetStateAction<boolean>>;
-}) {
-  deps.setSaving(true);
-  try {
-    await deps.updateProfile({
-      name: deps.name,
-      username: deps.username,
-      bio: deps.bio,
-      avatarUrl: deps.avatarUrl,
-    });
-    deps.toast({ title: deps.t.saveSuccess, variant: "success" });
-    await deps.refreshUser();
-  } catch (err) {
-    const exception = (err as Error & { exception?: { msg?: string } })
-      .exception;
-    deps.toast({
-      title: exception?.msg ?? deps.t.saveFailed,
-      variant: "destructive",
-    });
-  } finally {
-    deps.setSaving(false);
-  }
-}
-
-export function FreePageView({ className }: { className?: string }) {
+export function FreePageView({ className }: ClassNameProps) {
   const { user, loading, refreshUser } = useAuth();
   const t = useMessages("settings");
   const { toast } = useToast();
@@ -182,72 +115,25 @@ export function FreePageView({ className }: { className?: string }) {
         actions={<PageInfoButton content={settingsAccountPageInfo} />}
       />
 
-      <div className="flex items-center gap-4">
-        <Avatar
-          src={avatarUrl}
-          fallback={initials(name || user.email)}
-          size="xl"
-          className="bg-brand text-brand-fg"
-        />
-        <div className="flex flex-col gap-2">
-          <Button
-            variant="link"
-            size="sm"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {t.avatarChange}
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleAvatarFile(file);
-            }}
-          />
-        </div>
-      </div>
+      <AccountAvatarSection
+        avatarUrl={avatarUrl}
+        name={name}
+        email={user.email}
+        fileInputRef={fileInputRef}
+        onFileSelect={handleAvatarFile}
+        t={t}
+      />
 
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <Label>{t.name}</Label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <Label>{t.username}</Label>
-          <Input
-            value={username}
-            onChange={(e) =>
-              setUsername(
-                e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""),
-              )
-            }
-          />
-          {availability === "checking" && (
-            <span className="text-muted text-xs">{t.usernameChecking}</span>
-          )}
-          {availability === "available" && (
-            <span className="text-xs text-green-600">
-              {t.usernameAvailable}
-            </span>
-          )}
-          {availability === "taken" && (
-            <span className="text-xs text-red-600">{t.usernameTaken}</span>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <Label>{t.bio}</Label>
-          <Textarea
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            rows={3}
-          />
-        </div>
-      </div>
+      <AccountFormFields
+        name={name}
+        onNameChange={setName}
+        username={username}
+        onUsernameChange={setUsername}
+        bio={bio}
+        onBioChange={setBio}
+        availability={availability}
+        t={t}
+      />
 
       <Button
         onClick={saveProfile}

@@ -7,6 +7,7 @@ import type {
   IndeterminateCheckboxProps,
   CheckboxSize,
 } from "@/types/ui/Checkbox-types";
+import type { ClassNameProps } from "@/types/ui/ClassName-types";
 
 const sizeMap: Record<CheckboxSize, string> = {
   sm: "size-4 rounded-[4px]",
@@ -20,7 +21,7 @@ const iconSizeMap: Record<CheckboxSize, string> = {
   lg: "size-3.5",
 };
 
-function CheckIcon({ className }: { className?: string }) {
+function CheckIcon({ className }: ClassNameProps) {
   return (
     <svg
       className={cn(className, "text-brand-fg")}
@@ -36,7 +37,7 @@ function CheckIcon({ className }: { className?: string }) {
   );
 }
 
-function MinusIcon({ className }: { className?: string }) {
+function MinusIcon({ className }: ClassNameProps) {
   return (
     <svg
       className={cn(className, "text-brand-fg")}

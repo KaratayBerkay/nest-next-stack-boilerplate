@@ -4,6 +4,7 @@ import { Separator } from "@/components/ui/Separator";
 import { Switch } from "@/components/ui/Switch";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/ui/PageContent-types";
 
 const examples: UIExample[] = [
   {
@@ -62,7 +63,7 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function SeparatorPage({ initialTab }: { initialTab?: string }) {
+export default function SeparatorPage({ initialTab }: InitialTabProps) {
   return (
     <ExampleTabs
       title="Separator"

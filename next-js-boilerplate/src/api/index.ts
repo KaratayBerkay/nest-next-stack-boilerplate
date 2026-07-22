@@ -38,6 +38,12 @@ export type { RequestPasswordResetResult } from "./server/auth/request-password-
 export type { ResetPasswordResult } from "./server/auth/reset-password";
 export type { UploadAvatarResult } from "./server/profile/upload-avatar";
 export type { UpdateProfileParams } from "./server/profile/update";
+export type { EchoResponse } from "./server/echo";
+export type { MfaResult } from "./server/auth/mfa";
+export type { NonceResult } from "./server/security/nonce";
+export type { ApiData } from "./server/data";
+export type { ObservabilitySnapshot } from "./server/observability";
+export type { AuthMeResult } from "./server/auth/me-raw";
 
 // client — queries
 export { searchUsersQueryOptions } from "./client/users/search";

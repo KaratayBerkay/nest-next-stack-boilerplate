@@ -11,6 +11,7 @@ import type {
   CheckboxVariant,
   CheckboxSize,
 } from "@/types/ui/Checkbox-types";
+import type { ClassNameProps } from "@/types/ui/ClassName-types";
 
 // Global styles carry no checked: state, so each variant appends one —
 // otherwise clicking gives no visual feedback (white check on light bg).
@@ -45,7 +46,7 @@ const iconSizeMap: Record<CheckboxSize, string> = {
   lg: "size-3.5",
 };
 
-function CheckIcon({ className }: { className?: string }) {
+function CheckIcon({ className }: ClassNameProps) {
   return (
     <svg
       className={cn(className, "text-brand-fg")}

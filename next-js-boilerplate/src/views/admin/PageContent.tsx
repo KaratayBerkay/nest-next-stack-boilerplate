@@ -13,8 +13,9 @@ import { PageInfoButton } from "@/components/ui/page-info";
 import { adminPageInfo } from "@/constants/page-info";
 import { AccessDeniedPage } from "@/features/statics";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import type { ClassNameProps } from "@/types/ui/ClassName-types";
 
-export default function PageContent({ className }: { className?: string }) {
+export default function PageContent({ className }: ClassNameProps) {
   const { user } = useAuth();
   const t = useMessages("admin");
   const [query, setQuery] = useState("");

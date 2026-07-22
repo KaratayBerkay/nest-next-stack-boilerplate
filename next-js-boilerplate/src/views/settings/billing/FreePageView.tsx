@@ -1,15 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
-import { TIER_PRICES_CENTS, tierLabel, type Tier } from "@/lib/tier";
-import { formatPrice } from "@/lib/currency";
-import { plansPath } from "@/constants/routes";
+import { type Tier } from "@/lib/tier";
 import { cn } from "@/lib/cn";
+import type { ClassNameProps } from "@/types/ui/ClassName-types";
 import { PageHeader } from "@/components/ui";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsBillingPageInfo } from "@/constants/page-info";
@@ -19,180 +17,21 @@ import {
   billingHistoryQueryOptions,
 } from "@/api/client/billing/query";
 import { billingAddressQueryOptions } from "@/api/client/billing/address";
+import type { Transaction, SubscriptionInfo } from "@/types/billing/FreePageView-types";
+import type { BillingAddress } from "@/api/server/billing/address";
+import { PlanDetails } from "./PlanDetails";
 import { PlanBenefits } from "./PlanBenefits";
 import { PaymentMethods } from "./PaymentMethods";
 import { InvoiceTable } from "./InvoiceTable";
 import { BillingAddressForm } from "./BillingAddressForm";
-import type { BillingAddress } from "@/api/server/billing/address";
+import { BillingInfoDisplay } from "./BillingInfoDisplay";
 
-export interface Transaction {
-  id: string;
-  type: string;
-  status: string;
-  amount: number;
-  currency: string;
-  reference: string;
-  stripeInvoiceUrl?: string;
-  createdAt: string;
-}
-
-interface SubscriptionInfo {
-  tier: string;
-  priceCents: number;
-  currency: string;
-  periodStart: string;
-  periodEnd: string;
-  cancelAtPeriodEnd: boolean;
-}
-
-function renderPlanDetails(
-  tier: Tier,
-  periodEnd: string | undefined,
-  cancelAtPeriodEnd: boolean,
-  t: Record<string, string>,
-) {
-  return (
-    <div className="flex flex-col gap-3">
-      <h3 className="text-sm font-medium">{t.planDetails}</h3>
-      <ul className="divide-border flex flex-col divide-y">
-        <li className="flex items-center justify-between py-2.5">
-          <span className="text-muted text-sm">{t.currentPlan}</span>
-          <span className="text-sm font-medium">{tierLabel(tier)}</span>
-        </li>
-        <li className="flex items-center justify-between py-2.5">
-          <span className="text-muted text-sm">{t.price}</span>
-          <span className="text-sm font-medium">
-            {formatPrice(TIER_PRICES_CENTS[tier] ?? 0, "USD")}
-          </span>
-        </li>
-        {tier !== "FREE" && periodEnd && (
-          <li className="flex items-center justify-between py-2.5">
-            <span className="text-muted text-sm">
-              {cancelAtPeriodEnd ? t.cancelsOn : t.renewalDate}
-            </span>
-            <span className="text-sm font-medium">{periodEnd}</span>
-          </li>
-        )}
-      </ul>
-
-      <div className="mt-4 flex items-center gap-2">
-        {tier === "FREE" ? (
-          <Link
-            href={plansPath()}
-            className="bg-brand text-brand-fg rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90"
-          >
-            {t.upgradePlan}
-          </Link>
-        ) : (
-          <>
-            <Link
-              href={plansPath()}
-              className="bg-brand text-brand-fg rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90"
-            >
-              {t.upgradePlan}
-            </Link>
-            {!cancelAtPeriodEnd && (
-              <button
-                type="button"
-                className="border-border hover:bg-surface-hover rounded-lg border px-4 py-2 text-sm font-medium"
-              >
-                {t.cancelSubscription}
-              </button>
-            )}
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function renderBillingInfo(
-  address: BillingAddress | null,
-  isEditing: boolean,
-  onEdit: () => void,
-  t: Record<string, string>,
-) {
-  if (isEditing) {
-    return null;
-  }
-
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium">{t.billingInfo}</h3>
-        <button
-          type="button"
-          onClick={onEdit}
-          className="text-brand text-xs font-medium hover:underline"
-        >
-          {t.editAddress}
-        </button>
-      </div>
-
-      {!address ? (
-        <p className="text-muted text-sm">{t.billingAddressEmpty}</p>
-      ) : (
-        <ul className="divide-border flex flex-col divide-y">
-          {address.name && (
-            <li className="flex items-center justify-between py-2.5">
-              <span className="text-muted text-sm">{t.nameLabel}</span>
-              <span className="text-sm font-medium">{address.name}</span>
-            </li>
-          )}
-          {address.street && (
-            <li className="flex items-center justify-between py-2.5">
-              <span className="text-muted text-sm">{t.street}</span>
-              <span className="text-sm font-medium">{address.street}</span>
-            </li>
-          )}
-          {address.city && (
-            <li className="flex items-center justify-between py-2.5">
-              <span className="text-muted text-sm">{t.city}</span>
-              <span className="text-sm font-medium">{address.city}</span>
-            </li>
-          )}
-          {address.state && (
-            <li className="flex items-center justify-between py-2.5">
-              <span className="text-muted text-sm">{t.state}</span>
-              <span className="text-sm font-medium">{address.state}</span>
-            </li>
-          )}
-          {address.country && (
-            <li className="flex items-center justify-between py-2.5">
-              <span className="text-muted text-sm">{t.country}</span>
-              <span className="text-sm font-medium">{address.country}</span>
-            </li>
-          )}
-          {address.zipCode && (
-            <li className="flex items-center justify-between py-2.5">
-              <span className="text-muted text-sm">{t.zipCode}</span>
-              <span className="text-sm font-medium">{address.zipCode}</span>
-            </li>
-          )}
-          {address.vatNumber && (
-            <li className="flex items-center justify-between py-2.5">
-              <span className="text-muted text-sm">{t.vatNumber}</span>
-              <span className="text-sm font-medium">{address.vatNumber}</span>
-            </li>
-          )}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-function useBillingAddress() {
-  return useQuery(billingAddressQueryOptions());
-}
-
-export function FreePageView({ className }: { className?: string }) {
+export function FreePageView({ className }: ClassNameProps) {
   const { user, loading } = useAuth();
   const t = useMessages("settings");
   const [isEditingAddress, setIsEditingAddress] = useState(false);
 
-  const { data: subData, isLoading: _loadingSub } = useQuery(
-    subscriptionQueryOptions(user?.id),
-  );
+  const { data: subData } = useQuery(subscriptionQueryOptions(user?.id));
   const subscription = (subData as unknown as SubscriptionInfo | null) ?? null;
 
   const { data: historyData, isLoading: loadingHistory } = useQuery({
@@ -201,7 +40,7 @@ export function FreePageView({ className }: { className?: string }) {
   });
   const transactions = (historyData as Transaction[] | undefined) ?? [];
 
-  const { data: addressData } = useBillingAddress();
+  const { data: addressData } = useQuery(billingAddressQueryOptions());
   const address = (addressData as BillingAddress | null) ?? null;
 
   if (loading) return <LoadingAuth />;
@@ -220,12 +59,11 @@ export function FreePageView({ className }: { className?: string }) {
       <div className="flex flex-col gap-6 xl:flex-row">
         <div className="flex flex-1 flex-col gap-6">
           <div className="border-border bg-surface rounded-xl border p-5">
-            {renderPlanDetails(
-              tier,
-              subscription?.periodEnd,
-              subscription?.cancelAtPeriodEnd ?? false,
-              t as unknown as Record<string, string>,
-            )}
+            <PlanDetails
+              tier={tier}
+              periodEnd={subscription?.periodEnd}
+              cancelAtPeriodEnd={subscription?.cancelAtPeriodEnd ?? false}
+            />
           </div>
 
           <div className="border-border bg-surface rounded-xl border p-5">
@@ -246,12 +84,10 @@ export function FreePageView({ className }: { className?: string }) {
                 onCancel={() => setIsEditingAddress(false)}
               />
             ) : (
-              renderBillingInfo(
-                address,
-                isEditingAddress,
-                () => setIsEditingAddress(true),
-                t as unknown as Record<string, string>,
-              )
+              <BillingInfoDisplay
+                address={address}
+                onEdit={() => setIsEditingAddress(true)}
+              />
             )}
           </div>
         </div>

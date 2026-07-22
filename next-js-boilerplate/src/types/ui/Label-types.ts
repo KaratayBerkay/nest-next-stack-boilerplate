@@ -1,5 +1,4 @@
-import type React from "react";
-
-export interface LabelProps extends React.ComponentPropsWithoutRef<"label"> {
+import type { LabelHTMLAttributes } from "react";
+export interface LabelProps extends LabelHTMLAttributes<HTMLLabelElement> {
   required?: boolean;
 }

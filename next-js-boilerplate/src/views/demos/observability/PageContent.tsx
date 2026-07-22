@@ -1,23 +1,13 @@
 "use client";
 
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
-
-type ObservabilitySnapshot = {
-  startedAt: number | null;
-  runtime: string | null;
-  uptimeMs: number | null;
-  spanCount: number;
-  recentSpans: string[];
-  customSpanExported: boolean;
-  errors: { message: string; routerKind?: string; route?: string }[];
-};
-
-import { OBSERVABILITY_URL } from "@/constants/api/urls";
+import {
+  getObservabilitySnapshot,
+  type ObservabilitySnapshot,
+} from "@/api/server/observability";
 
 function loadSnapshot(): Promise<ObservabilitySnapshot> {
-  return fetch(OBSERVABILITY_URL, { cache: "no-store" }).then(
-    (r) => r.json() as Promise<ObservabilitySnapshot>,
-  );
+  return getObservabilitySnapshot();
 }
 
 function refresh(

@@ -2,59 +2,26 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
-import {
-  IconArrowLeft,
-  IconMessageCircle,
-  IconPencil,
-  IconTrash,
-} from "@tabler/icons-react";
+import { IconArrowLeft } from "@tabler/icons-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
-import { imageUrl } from "@/lib/image";
-import { ReactionInline } from "@/components/feed/ReactionButtons";
 import { CommentSection } from "@/components/feed/CommentSection";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { IconButton } from "@/components/ui/button/icon-button";
-import { formatDateByPreference } from "@/lib/date-time";
-import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
-import { Avatar } from "@/components/ui/Avatar";
-import { initials } from "@/lib/initials";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useMarkPostNotificationsRead } from "@/lib/notifications/useMarkPostNotificationsRead";
-import { PageInfoButton } from "@/components/ui/page-info";
-import { postsPageInfo } from "@/constants/page-info";
 import { PostDetailFallback } from "@/fallbacks";
 import { singlePostQueryOptions } from "@/api/client/posts/query";
 import { usePostActions } from "@/api/client/posts/actions";
 import { cn } from "@/lib/cn";
+import { PostHeader } from "./PostHeader";
+import { PostEditForm } from "./PostEditForm";
+import { PostContentView } from "./PostContentView";
+import { ReactionBreakdown } from "./ReactionBreakdown";
+import { WhoReacted } from "./WhoReacted";
 import type { PostDetailBaseViewProps } from "@/types/posts/PostDetailBaseView-types";
-
-interface Post {
-  id: string;
-  title: string;
-  content: string;
-  coverImage?: string | null;
-  imageUrl?: string | null;
-  createdAt: string;
-  author: { id: string; name: string; email: string };
-  comments?: Array<{
-    id: string;
-    body: string;
-    createdAt: string;
-    author: { id: string; name: string; email: string };
-    reactions?: Array<{ id: string; type: string; userId: string }>;
-    parentId?: string | null;
-    _count?: { replies: number };
-  }>;
-  reactions?: Array<{ id: string; type: string; userId: string }>;
-  reactionBreakdown?: Array<{ type: string; count: number }>;
-  whoReacted?: Array<{ userId: string; name?: string; type: string }>;
-  _count?: { comments: number; reactions: number };
-}
+import type { Post } from "@/types/posts/Post-types";
 
 function PostDetailContent({
   showPageInfo = false,
@@ -74,7 +41,6 @@ function PostDetailContent({
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
   const swipeRef = useYSwipeGesture<HTMLDivElement>();
-  const dateDisplay = useDateDisplayCookie();
   const { updatePost, deletePost } = usePostActions();
 
   useEffect(() => {
@@ -90,6 +56,23 @@ function PostDetailContent({
     ...singlePostQueryOptions(uuid),
     initialData: initialPostData as Post | undefined,
   });
+
+  async function handleSave() {
+    if (!editTitle.trim() || !editContent.trim()) return;
+    await updatePost(post.id, editTitle.trim(), editContent.trim());
+    setEditing(false);
+  }
+
+  function handleStartEdit() {
+    setEditTitle(post.title);
+    setEditContent(post.content);
+    setEditing(true);
+  }
+
+  async function handleDelete() {
+    await deletePost(post.id);
+    router.push(`/v1/${params?.lang ?? "en"}/feed`);
+  }
 
   return (
     <div
@@ -108,176 +91,33 @@ function PostDetailContent({
       </button>
 
       <div className="surface flex flex-col gap-4 p-5">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2.5">
-            <div className="bg-brand text-brand-fg flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold shadow-sm">
-              {(post.author.name || post.author.email).charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <p className="text-fg text-sm font-semibold">
-                {post.author.name || post.author.email}
-              </p>
-              <p className="text-muted text-[11px]">
-                {formatDateByPreference(post.createdAt, dateDisplay)}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-0.5">
-            <ReactionInline
-              postId={post.id}
-              reactions={post.reactions ?? []}
-              currentUserId={user?.id}
-              onReactionChange={() =>
-                queryClient.invalidateQueries({ queryKey: ["posts", uuid] })
-              }
-            />
-            {user && post.author.id === user.id && !editing && (
-              <>
-                <IconButton
-                  icon={<IconPencil size={14} stroke={1.5} />}
-                  label="Edit post"
-                  onClick={() => {
-                    setEditTitle(post.title);
-                    setEditContent(post.content);
-                    setEditing(true);
-                  }}
-                />
-                <ConfirmDialog
-                  title={t.deletePost}
-                  description={t.deletePostConfirm}
-                  onConfirm={async () => {
-                    await deletePost(post.id);
-                    router.push(`/v1/${params?.lang ?? "en"}/feed`);
-                  }}
-                >
-                  {(open) => (
-                    <IconButton
-                      icon={<IconTrash size={14} stroke={1.5} />}
-                      label="Delete post"
-                      onClick={open}
-                      className="hover:text-red-500"
-                    />
-                  )}
-                </ConfirmDialog>
-              </>
-            )}
-            {showPageInfo && <PageInfoButton content={postsPageInfo} />}
-          </div>
-        </div>
+        <PostHeader
+          post={post}
+          uuid={uuid}
+          editing={editing}
+          currentUserId={user?.id}
+          showPageInfo={showPageInfo}
+          onStartEdit={handleStartEdit}
+          onDelete={handleDelete}
+        />
 
         {editing ? (
-          <div className="flex flex-col gap-3">
-            <input
-              type="text"
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              className="border-border bg-bg text-fg focus:ring-brand/30 w-full rounded-lg border px-3 py-2 text-lg font-bold focus:ring-2 focus:outline-none"
-            />
-            <textarea
-              value={editContent}
-              onChange={(e) => setEditContent(e.target.value)}
-              className="border-border bg-bg text-fg focus:ring-brand/30 w-full rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:outline-none"
-              rows={5}
-            />
-            <div className="flex items-center gap-2">
-              <button
-                onClick={async () => {
-                  if (!editTitle.trim() || !editContent.trim()) return;
-                  await updatePost(
-                    post.id,
-                    editTitle.trim(),
-                    editContent.trim(),
-                  );
-                  setEditing(false);
-                }}
-                className="bg-brand text-brand-fg rounded-lg px-4 py-2 text-sm font-medium transition-opacity hover:opacity-90"
-              >
-                {t.save}
-              </button>
-              <button
-                onClick={() => setEditing(false)}
-                className="text-muted hover:text-fg text-sm underline transition-colors"
-              >
-                {t.cancel}
-              </button>
-            </div>
-          </div>
+          <PostEditForm
+            post={post}
+            editTitle={editTitle}
+            editContent={editContent}
+            onEditTitleChange={setEditTitle}
+            onEditContentChange={setEditContent}
+            onSave={handleSave}
+            onCancel={() => setEditing(false)}
+          />
         ) : (
-          <div className="flex flex-col gap-3">
-            {post.imageUrl && (
-              <div className="relative max-h-96 w-full overflow-hidden rounded-xl shadow-sm">
-                <Image
-                  src={imageUrl(post.imageUrl, "full") ?? ""}
-                  alt=""
-                  fill
-                  priority
-                  sizes="(max-width: 768px) 100vw, 720px"
-                  className="max-h-96 object-cover"
-                />
-              </div>
-            )}
-            <h1 className="text-fg text-xl leading-tight font-bold">
-              {post.title}
-            </h1>
-            <p className="text-muted text-sm leading-relaxed break-words whitespace-pre-wrap">
-              {post.content}
-            </p>
-            <div className="border-border text-muted flex items-center gap-1.5 border-t pt-3 text-xs">
-              <IconMessageCircle size={14} stroke={1.5} />
-              {t.comments.replace(
-                "{count}",
-                String(post._count?.comments ?? post.comments?.length ?? 0),
-              )}
-            </div>
-          </div>
+          <PostContentView post={post} />
         )}
       </div>
 
-      {showReactionBreakdown &&
-        post.reactionBreakdown &&
-        post.reactionBreakdown.length > 0 && (
-          <div className="border-border rounded-xl border p-4">
-            <h3 className="text-muted mb-3 text-xs font-semibold tracking-wide uppercase">
-              {t.reactionBreakdown}
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {post.reactionBreakdown.map((r) => (
-                <div
-                  key={r.type}
-                  className="bg-surface flex items-center gap-1 rounded-full px-3 py-1"
-                >
-                  <span className="text-sm">{r.type}</span>
-                  <span className="text-muted text-xs font-medium">
-                    {r.count}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-      {showWhoReacted && post.whoReacted && post.whoReacted.length > 0 && (
-        <div className="border-border rounded-xl border p-4">
-          <h3 className="text-muted mb-3 text-xs font-semibold tracking-wide uppercase">
-            {t.whoReacted}
-          </h3>
-          <div className="flex flex-col gap-2">
-            {post.whoReacted.map((r) => (
-              <div
-                key={`${r.userId}-${r.type}`}
-                className="flex items-center gap-2"
-              >
-                <Avatar
-                  fallback={initials(r.name ?? "?")}
-                  className="bg-brand text-brand-fg h-6 w-6 text-[9px]"
-                />
-                <span className="text-fg text-sm">{r.name ?? t.unknown}</span>
-                <span className="text-sm">{r.type}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {showReactionBreakdown && <ReactionBreakdown post={post} />}
+      {showWhoReacted && <WhoReacted post={post} />}
 
       <CommentSection
         postId={post.id}

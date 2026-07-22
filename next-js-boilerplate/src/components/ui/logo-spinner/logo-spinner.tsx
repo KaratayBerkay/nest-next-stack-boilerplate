@@ -1,6 +1,7 @@
 import { cn } from "@/lib/cn";
+import type { ClassNameProps } from "@/types/ui/ClassName-types";
 
-export function LogoSpinner({ className }: { className?: string }) {
+export function LogoSpinner({ className }: ClassNameProps) {
   return (
     <div
       className={cn(
