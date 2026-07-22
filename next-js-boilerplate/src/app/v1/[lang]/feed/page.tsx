@@ -25,11 +25,17 @@ const VIEWS = {
 export default async function FeedPage() {
   const [user, feedRes] = await Promise.all([
     getSessionUser(),
-    graphqlFetch<{ postList: Array<{ id: string }> }>(POSTS_QUERY, {
-      cursor: undefined,
-      take: PAGE_SIZE,
-      search: undefined,
-    }),
+    graphqlFetch<{ postList: Array<{ id: string }> }>(
+      POSTS_QUERY,
+      {
+        cursor: undefined,
+        take: PAGE_SIZE,
+        search: undefined,
+      },
+      undefined,
+      undefined,
+      true,
+    ),
   ]);
 
   const all = feedRes.data?.postList ?? [];

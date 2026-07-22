@@ -50,7 +50,13 @@ export default async function PostPage({ params }: PostPageProps) {
   const { uuid } = await params;
   const [user, postRes] = await Promise.all([
     getSessionUser(),
-    graphqlFetch<{ post: unknown }>(POST_QUERY, { id: uuid }),
+    graphqlFetch<{ post: unknown }>(
+      POST_QUERY,
+      { id: uuid },
+      undefined,
+      undefined,
+      true,
+    ),
   ]);
 
   const initialPostData = postRes.data?.post ?? null;

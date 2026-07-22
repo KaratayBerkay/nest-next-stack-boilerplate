@@ -246,6 +246,7 @@ export async function graphqlFetch<T>(
   variables?: Record<string, unknown>,
   bearerToken?: string,
   extraHeaders?: Record<string, string>,
+  noCache?: boolean,
 ): Promise<{ data?: T; errors?: GraphQlError[]; headers: Headers }> {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
@@ -253,7 +254,9 @@ export async function graphqlFetch<T>(
   const url = `${backendBaseUrl()}${GQL_BACKEND_PATH}`;
   const res = await fetch(url, {
     method: POST,
-    next: { revalidate: 60 },
+    ...(noCache
+      ? { cache: "no-store" as const }
+      : { next: { revalidate: 60 } }),
     headers: {
       ...JSON_CONTENT_TYPE_HEADER,
       ...(cookieHeader ? { Cookie: cookieHeader } : {}),
