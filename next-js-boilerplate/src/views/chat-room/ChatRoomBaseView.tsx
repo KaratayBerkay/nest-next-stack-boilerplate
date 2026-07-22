@@ -305,6 +305,7 @@ function ChatRoomContent({
   className,
 }: ChatRoomBaseViewProps) {
   const t = useMessages("chat-room");
+  const tErr = useMessages("error");
   const { user, loading } = useAuth();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -527,7 +528,12 @@ function ChatRoomContent({
           </Tabs>
         </div>
 
-        {connectionState === "unstable" ? (
+        {connectionState === "locked" ? (
+          <ConnectionUnstable
+            title={tErr.tabLocked}
+            description={tErr.tabLockedDescription}
+          />
+        ) : connectionState === "unstable" ? (
           <ConnectionUnstable
             title={t.disconnected}
             description={t.connecting}

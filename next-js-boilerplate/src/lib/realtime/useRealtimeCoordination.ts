@@ -99,6 +99,9 @@ export function useRealtimeCoordination() {
       };
 
       const ac = new AbortController();
+      // Defer to avoid cascading-render lint warning; status will be
+      // overridden by the RealtimeClient once the lock is acquired.
+      setTimeout(() => setStatus("waiting"), 0);
 
       navigator.locks
         .request(

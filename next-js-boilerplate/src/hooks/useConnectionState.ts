@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRealtimeStatus } from "@/lib/realtime/RealtimeProvider";
 
-export type ConnectionState = "online" | "connecting" | "unstable";
+export type ConnectionState = "online" | "connecting" | "unstable" | "locked";
 
 const GRACE_WINDOW_MS = 3_000;
 
@@ -36,6 +36,12 @@ export function useConnectionState(): ConnectionState {
         graceRef.current = null;
       }
       setState("unstable");
+    } else if (status === "waiting") {
+      if (graceRef.current) {
+        clearTimeout(graceRef.current);
+        graceRef.current = null;
+      }
+      setState("locked");
     } else {
       if (graceRef.current) {
         clearTimeout(graceRef.current);

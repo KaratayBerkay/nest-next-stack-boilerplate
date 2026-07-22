@@ -14,5 +14,7 @@
   "accessDenied": "Access denied. Admins only.",
   "loadingTheSlowRoute": "Loading the slow route…",
   "connectionLost": "Connection lost",
-  "tryingToReconnect": "Trying to reconnect. Some features may be unavailable."
+  "tryingToReconnect": "Trying to reconnect. Some features may be unavailable.",
+  "tabLocked": "Already connected in another tab",
+  "tabLockedDescription": "This browser already has an active connection. Close the other tab or this one to continue."
 }

@@ -252,6 +252,8 @@ export type I18nMessages = {
       "loadingTheSlowRoute": string;
       "connectionLost": string;
       "tryingToReconnect": string;
+      "tabLocked": string;
+      "tabLockedDescription": string;
     }
 
   "feed": {

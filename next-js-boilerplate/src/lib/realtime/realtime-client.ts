@@ -1,5 +1,11 @@
 export type RealtimeStatus =
-  "idle" | "connecting" | "authenticating" | "open" | "backoff" | "down";
+  | "idle"
+  | "connecting"
+  | "authenticating"
+  | "open"
+  | "backoff"
+  | "down"
+  | "waiting";
 
 import { AUTH_TOKEN_URL } from "@/constants/api/urls";
 import { GET } from "@/constants/api/methods";

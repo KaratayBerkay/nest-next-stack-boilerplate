@@ -14,5 +14,7 @@
   "accessDenied": "Erişim reddedildi. Yalnızca yöneticiler.",
   "loadingTheSlowRoute": "Yavaş rota yükleniyor…",
   "connectionLost": "Bağlantı kesildi",
-  "tryingToReconnect": "Yeniden bağlanılıyor. Bazı özellikler kullanılamayabilir."
+  "tryingToReconnect": "Yeniden bağlanılıyor. Bazı özellikler kullanılamayabilir.",
+  "tabLocked": "Başka bir sekmede zaten bağlı",
+  "tabLockedDescription": "Bu tarayıcıda aktif bir bağlantı var. Devam etmek için diğer sekmeyi veya bu sekmeyi kapatın."
 }
