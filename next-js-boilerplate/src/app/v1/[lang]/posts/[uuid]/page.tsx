@@ -11,6 +11,8 @@ import { PremiumPageView } from "@/views/posts/[uuid]/PremiumPageView";
 import type { PostPageProps } from "@/types/routing/PostPage-types";
 import { serverEnv } from "@/lib/env";
 import { POST, JSON_CONTENT_TYPE_HEADER } from "@/constants";
+import { getAccessToken } from "@/store/ssr-cookies";
+import { sessionTokenHeaders } from "@/lib/backend";
 
 const VIEWS = {
   FREE: FreePageView,
@@ -49,13 +51,14 @@ export async function generateMetadata({
 
 export default async function PostPage({ params }: PostPageProps) {
   const { uuid } = await params;
+  const token = await getAccessToken();
   const [user, postRes] = await Promise.all([
     getSessionUser(),
     graphqlFetch<{ post: unknown }>(
       POST_QUERY,
       { id: uuid },
-      undefined,
-      undefined,
+      token,
+      await sessionTokenHeaders(),
       true,
     ),
   ]);
