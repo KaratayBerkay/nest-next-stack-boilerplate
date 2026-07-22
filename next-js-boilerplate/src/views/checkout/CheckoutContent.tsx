@@ -35,10 +35,12 @@ async function handleDowngrade(
   setSuccess: Dispatch<SetStateAction<boolean>>,
   router: ReturnType<typeof useRouter>,
   subscribe: (tier: string, paymentMethodId?: string) => Promise<void>,
+  refreshUser: () => Promise<void>,
 ) {
   setError(null);
   try {
     await subscribe(targetTier);
+    await refreshUser();
     setSuccess(true);
     setTimeout(() => router.push(PRICING_PATH), 2000);
   } catch (err) {
@@ -49,14 +51,17 @@ async function handleDowngrade(
 function onUpgradeSuccess(
   setSuccess: Dispatch<SetStateAction<boolean>>,
   router: ReturnType<typeof useRouter>,
+  refreshUser: () => Promise<void>,
 ) {
-  setSuccess(true);
-  setTimeout(() => router.push(PRICING_PATH), 2000);
+  refreshUser().then(() => {
+    setSuccess(true);
+    setTimeout(() => router.push(PRICING_PATH), 2000);
+  });
 }
 
 export default function CheckoutPage({ params, className }: CheckoutPageProps) {
   const { lang: _lang, tier: targetTier } = use(params);
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const router = useRouter();
   const t = useMessages("checkout");
   const currency = useCurrencyCookie();
@@ -119,7 +124,7 @@ export default function CheckoutPage({ params, className }: CheckoutPageProps) {
       {isUpgrade && (
         <StripeCardForm
           tier={targetTier}
-          onSuccess={() => onUpgradeSuccess(setSuccess, router)}
+          onSuccess={() => onUpgradeSuccess(setSuccess, router, refreshUser)}
           onError={setError}
         />
       )}
@@ -139,6 +144,7 @@ export default function CheckoutPage({ params, className }: CheckoutPageProps) {
                 setSuccess,
                 router,
                 subscribe,
+                refreshUser,
               )
             }
             data-testid="confirm-downgrade"

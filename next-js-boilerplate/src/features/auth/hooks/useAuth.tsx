@@ -206,6 +206,21 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
     }
   }, []);
 
+  // Listen for tier-changed events from the realtime WebSocket.
+  // After billing changes, the backend pushes a tier-changed frame which
+  // event-dispatch.ts converts to a CustomEvent. Refreshing the user keeps
+  // the header badge and settings page in sync without a full page reload.
+  useEffect(() => {
+    function onTierChanged() {
+      refreshUser();
+    }
+
+    window.addEventListener("tier-changed", onTierChanged);
+    return () => {
+      window.removeEventListener("tier-changed", onTierChanged);
+    };
+  }, [refreshUser]);
+
   const value = useMemo(
     () => ({
       user,

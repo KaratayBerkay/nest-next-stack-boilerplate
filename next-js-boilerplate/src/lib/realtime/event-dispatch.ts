@@ -120,6 +120,15 @@ export function dispatchEvent(
     });
   }
 
+  if (t === "tier-changed") {
+    const tier = frame.tier as string | undefined;
+    if (tier) {
+      window.dispatchEvent(
+        new CustomEvent("tier-changed", { detail: { tier } }),
+      );
+    }
+  }
+
   if (t === "room-message") {
     const room = frame.room as string;
     const msg = frame.message as Record<string, unknown>;
