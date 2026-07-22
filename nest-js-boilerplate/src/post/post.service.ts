@@ -195,6 +195,7 @@ export class PostService {
             imageUrl: true,
             coverImage: true,
             createdAt: true,
+            authorId: true,
             status: true,
             author: {
               select: { id: true, name: true, email: true },
