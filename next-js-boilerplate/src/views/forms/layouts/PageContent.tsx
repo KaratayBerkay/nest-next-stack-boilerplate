@@ -58,7 +58,14 @@ function ContactForm() {
       description={t.layouts.contact_description}
     >
       <form.AppForm>
-        <form className="flex flex-col gap-3">
+        <form
+          className="flex flex-col gap-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            form.handleSubmit();
+          }}
+        >
           <form.AppField
             name="fullName"
             validators={{ onChange: contactFieldSchemas.fullName }}
@@ -151,7 +158,14 @@ function TwoColumnGridForm() {
       description={t.layouts.twoColumn_description}
     >
       <form.AppForm>
-        <form className="flex flex-col gap-3">
+        <form
+          className="flex flex-col gap-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            form.handleSubmit();
+          }}
+        >
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <form.AppField
               name="firstName"
@@ -271,7 +285,14 @@ function IconPrefixedForm() {
       description={t.layouts.icon_description}
     >
       <form.AppForm>
-        <form className="flex flex-col gap-3">
+        <form
+          className="flex flex-col gap-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            form.handleSubmit();
+          }}
+        >
           <form.AppField
             name="name"
             validators={{ onChange: iconFieldSchemas.name }}
@@ -433,7 +454,14 @@ function SectionedCardForm() {
       fullWidth
     >
       <form.AppForm>
-        <form className="flex flex-col gap-6">
+        <form
+          className="flex flex-col gap-6"
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            form.handleSubmit();
+          }}
+        >
           <div className="flex flex-col gap-3">
             <p className="text-xxs text-muted border-brand border-l-2 pl-3 tracking-wider uppercase">
               Personal Info
