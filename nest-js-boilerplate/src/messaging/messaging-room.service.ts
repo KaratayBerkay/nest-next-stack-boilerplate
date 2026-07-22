@@ -73,13 +73,25 @@ export class MessagingRoomService {
 
   getRoomCounts(): Record<string, number> {
     const counts: Record<string, number> = {};
-    for (const [room, members] of this.rooms) counts[room] = members.size;
+    for (const [room, members] of this.rooms) {
+      const unique = new Set<string>();
+      for (const m of members.values()) unique.add(m.userId);
+      counts[room] = unique.size;
+    }
     return counts;
   }
 
   getRoomMembers(room: string): RoomMember[] {
     const roomMap = this.rooms.get(room);
-    return roomMap ? Array.from(roomMap.values()) : [];
+    if (!roomMap) return [];
+    const seen = new Set<string>();
+    const result: RoomMember[] = [];
+    for (const m of roomMap.values()) {
+      if (seen.has(m.userId)) continue;
+      seen.add(m.userId);
+      result.push(m);
+    }
+    return result;
   }
 
   async saveRoomMessage(roomId: string, senderId: string, body: string) {
