@@ -4,6 +4,7 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { FieldInfoButton } from "@/components/ui/FieldInfoButton";
 import { useStore } from "@tanstack/react-form";
 import { useAppForm } from "@/features/forms/form-hook";
+import { createFormSubmitHandler } from "@/lib/forms/shared";
 import {
   basicFormOpts,
   twoColumnFormOpts,
@@ -51,6 +52,7 @@ function ContactForm() {
     ...basicFormOpts,
   });
   const isDirty = useStore(form.store, (s) => s.isDirty);
+  const onSubmit = createFormSubmitHandler(form);
 
   return (
     <LayoutCard
@@ -58,14 +60,7 @@ function ContactForm() {
       description={t.layouts.contact_description}
     >
       <form.AppForm>
-        <form
-          className="flex flex-col gap-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            form.handleSubmit();
-          }}
-        >
+        <form className="flex flex-col gap-3" onSubmit={onSubmit}>
           <form.AppField
             name="fullName"
             validators={{ onChange: contactFieldSchemas.fullName }}
@@ -151,6 +146,7 @@ function TwoColumnGridForm() {
     ...twoColumnFormOpts,
   });
   const isDirty = useStore(form.store, (s) => s.isDirty);
+  const onSubmit = createFormSubmitHandler(form);
 
   return (
     <LayoutCard
@@ -158,14 +154,7 @@ function TwoColumnGridForm() {
       description={t.layouts.twoColumn_description}
     >
       <form.AppForm>
-        <form
-          className="flex flex-col gap-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            form.handleSubmit();
-          }}
-        >
+        <form className="flex flex-col gap-3" onSubmit={onSubmit}>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <form.AppField
               name="firstName"
@@ -278,6 +267,7 @@ function IconPrefixedForm() {
     ...iconFormOpts,
   });
   const isDirty = useStore(form.store, (s) => s.isDirty);
+  const onSubmit = createFormSubmitHandler(form);
 
   return (
     <LayoutCard
@@ -285,14 +275,7 @@ function IconPrefixedForm() {
       description={t.layouts.icon_description}
     >
       <form.AppForm>
-        <form
-          className="flex flex-col gap-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            form.handleSubmit();
-          }}
-        >
+        <form className="flex flex-col gap-3" onSubmit={onSubmit}>
           <form.AppField
             name="name"
             validators={{ onChange: iconFieldSchemas.name }}
@@ -446,6 +429,7 @@ function SectionedCardForm() {
     ...sectionedFormOpts,
   });
   const isDirty = useStore(form.store, (s) => s.isDirty);
+  const onSubmit = createFormSubmitHandler(form);
 
   return (
     <LayoutCard
@@ -454,14 +438,7 @@ function SectionedCardForm() {
       fullWidth
     >
       <form.AppForm>
-        <form
-          className="flex flex-col gap-6"
-          onSubmit={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            form.handleSubmit();
-          }}
-        >
+        <form className="flex flex-col gap-6" onSubmit={onSubmit}>
           <div className="flex flex-col gap-3">
             <p className="text-xxs text-muted border-brand border-l-2 pl-3 tracking-wider uppercase">
               Personal Info
