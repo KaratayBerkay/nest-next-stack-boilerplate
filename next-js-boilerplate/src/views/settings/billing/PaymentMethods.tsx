@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { paymentMethodsQueryOptions } from "@/api/client/billing/payment-methods";
 import { cn } from "@/lib/cn";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { PaymentMethodsProps } from "@/types/billing/PaymentMethods-types";
 
 function CardIcon({ brand }: { brand: string }) {
@@ -41,6 +42,7 @@ function CardIcon({ brand }: { brand: string }) {
 }
 
 export function PaymentMethods({ className }: PaymentMethodsProps) {
+  const t = useMessages("settings");
   const { data: paymentMethods, isLoading } = useQuery({
     ...paymentMethodsQueryOptions(),
     enabled: true,
@@ -49,8 +51,8 @@ export function PaymentMethods({ className }: PaymentMethodsProps) {
   if (isLoading) {
     return (
       <div className={cn("flex flex-col gap-3", className)}>
-        <h3 className="text-sm font-medium">Payment Methods</h3>
-        <p className="text-muted text-sm">Loading...</p>
+        <h3 className="text-sm font-medium">{t.paymentMethods}</h3>
+        <p className="text-muted text-sm">{t.loading}</p>
       </div>
     );
   }
@@ -60,15 +62,15 @@ export function PaymentMethods({ className }: PaymentMethodsProps) {
   if (methods.length === 0) {
     return (
       <div className={cn("flex flex-col gap-3", className)}>
-        <h3 className="text-sm font-medium">Payment Methods</h3>
-        <p className="text-muted text-sm">No payment methods saved.</p>
+        <h3 className="text-sm font-medium">{t.paymentMethods}</h3>
+        <p className="text-muted text-sm">{t.noPaymentMethods}</p>
       </div>
     );
   }
 
   return (
     <div className={cn("flex flex-col gap-3", className)}>
-      <h3 className="text-sm font-medium">Payment Methods</h3>
+      <h3 className="text-sm font-medium">{t.paymentMethods}</h3>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {methods.map((method) => (
           <div
@@ -81,7 +83,7 @@ export function PaymentMethods({ className }: PaymentMethodsProps) {
                 <p className="text-sm font-medium capitalize">{method.brand}</p>
                 {method.isDefault && (
                   <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
-                    Default
+                    {t.makeDefault}
                   </span>
                 )}
               </div>
@@ -89,7 +91,7 @@ export function PaymentMethods({ className }: PaymentMethodsProps) {
                 **** **** **** {method.last4}
               </p>
               <p className="text-muted text-xs">
-                Expires {method.expMonth}/{method.expYear}
+                {t.expires || "Expires"} {method.expMonth}/{method.expYear}
               </p>
             </div>
           </div>

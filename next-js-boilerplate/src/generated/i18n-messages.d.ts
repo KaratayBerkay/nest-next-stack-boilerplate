@@ -1151,6 +1151,10 @@ export type I18nMessages = {
       "editAddress": string;
       "updateAddress": string;
       "nameLabel": string;
+      "expires": string;
+      "date": string;
+      "status": string;
+      "planBenefitsEmpty": string;
       "privacyHeading": string;
       "privacySessionsNote": string;
       "privacyHideProfilePicture": string;

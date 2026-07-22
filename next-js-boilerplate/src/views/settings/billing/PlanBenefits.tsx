@@ -3,6 +3,7 @@
 import { TIER_FEATURES } from "@/lib/checkout/tier-features";
 import { TIERS } from "@/lib/tier";
 import { cn } from "@/lib/cn";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { PlanBenefitsProps } from "@/types/billing/PlanBenefits-types";
 
 function CheckIcon({ className }: { className?: string }) {
@@ -42,6 +43,7 @@ function XIcon({ className }: { className?: string }) {
 }
 
 export function PlanBenefits({ currentTier, className }: PlanBenefitsProps) {
+  const t = useMessages("settings");
   const currentTierIndex = TIERS.indexOf(currentTier);
 
   const allBenefits: { feature: string; included: boolean }[] = [];
@@ -69,7 +71,7 @@ export function PlanBenefits({ currentTier, className }: PlanBenefitsProps) {
 
   return (
     <div className={cn("flex flex-col gap-3", className)}>
-      <h3 className="text-sm font-medium">Plan Benefits</h3>
+      <h3 className="text-sm font-medium">{t.planBenefits}</h3>
       <ul className="flex flex-col gap-2.5">
         {allBenefits.map(({ feature, included }) => (
           <li key={feature} className="flex items-center gap-2.5">
@@ -83,7 +85,7 @@ export function PlanBenefits({ currentTier, className }: PlanBenefitsProps) {
         ))}
         {allBenefits.length === 0 && (
           <li className="text-muted text-sm">
-            No benefits available for this tier.
+            {t.planBenefitsEmpty || "No benefits available for this tier."}
           </li>
         )}
       </ul>

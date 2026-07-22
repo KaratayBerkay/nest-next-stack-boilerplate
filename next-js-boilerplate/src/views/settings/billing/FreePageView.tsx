@@ -53,14 +53,14 @@ function renderPlanDetails(
 ) {
   return (
     <div className="flex flex-col gap-3">
-      <h3 className="text-sm font-medium">Plan Details</h3>
+      <h3 className="text-sm font-medium">{t.planDetails}</h3>
       <ul className="divide-border flex flex-col divide-y">
         <li className="flex items-center justify-between py-2.5">
-          <span className="text-muted text-sm">Current Plan</span>
+          <span className="text-muted text-sm">{t.currentPlan}</span>
           <span className="text-sm font-medium">{tierLabel(tier)}</span>
         </li>
         <li className="flex items-center justify-between py-2.5">
-          <span className="text-muted text-sm">Price</span>
+          <span className="text-muted text-sm">{t.price}</span>
           <span className="text-sm font-medium">
             {formatPrice(TIER_PRICES_CENTS[tier] ?? 0, "USD")}
           </span>
@@ -68,7 +68,7 @@ function renderPlanDetails(
         {tier !== "FREE" && periodEnd && (
           <li className="flex items-center justify-between py-2.5">
             <span className="text-muted text-sm">
-              {cancelAtPeriodEnd ? "Cancels on" : "Renewal Date"}
+              {cancelAtPeriodEnd ? t.cancelsOn : t.renewalDate}
             </span>
             <span className="text-sm font-medium">{periodEnd}</span>
           </li>
@@ -96,7 +96,7 @@ function renderPlanDetails(
                 type="button"
                 className="border-border hover:bg-surface-hover rounded-lg border px-4 py-2 text-sm font-medium"
               >
-                Cancel Subscription
+                {t.cancelSubscription}
               </button>
             )}
           </>
@@ -110,6 +110,7 @@ function renderBillingInfo(
   address: BillingAddress | null,
   isEditing: boolean,
   onEdit: () => void,
+  t: Record<string, string>,
 ) {
   if (isEditing) {
     return null;
@@ -118,59 +119,59 @@ function renderBillingInfo(
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium">Billing Info</h3>
+        <h3 className="text-sm font-medium">{t.billingInfo}</h3>
         <button
           type="button"
           onClick={onEdit}
           className="text-brand text-xs font-medium hover:underline"
         >
-          Edit
+          {t.editAddress}
         </button>
       </div>
 
       {!address ? (
-        <p className="text-muted text-sm">No billing address saved.</p>
+        <p className="text-muted text-sm">{t.billingAddressEmpty}</p>
       ) : (
         <ul className="divide-border flex flex-col divide-y">
           {address.name && (
             <li className="flex items-center justify-between py-2.5">
-              <span className="text-muted text-sm">Name</span>
+              <span className="text-muted text-sm">{t.nameLabel}</span>
               <span className="text-sm font-medium">{address.name}</span>
             </li>
           )}
           {address.street && (
             <li className="flex items-center justify-between py-2.5">
-              <span className="text-muted text-sm">Street</span>
+              <span className="text-muted text-sm">{t.street}</span>
               <span className="text-sm font-medium">{address.street}</span>
             </li>
           )}
           {address.city && (
             <li className="flex items-center justify-between py-2.5">
-              <span className="text-muted text-sm">City</span>
+              <span className="text-muted text-sm">{t.city}</span>
               <span className="text-sm font-medium">{address.city}</span>
             </li>
           )}
           {address.state && (
             <li className="flex items-center justify-between py-2.5">
-              <span className="text-muted text-sm">State</span>
+              <span className="text-muted text-sm">{t.state}</span>
               <span className="text-sm font-medium">{address.state}</span>
             </li>
           )}
           {address.country && (
             <li className="flex items-center justify-between py-2.5">
-              <span className="text-muted text-sm">Country</span>
+              <span className="text-muted text-sm">{t.country}</span>
               <span className="text-sm font-medium">{address.country}</span>
             </li>
           )}
           {address.zipCode && (
             <li className="flex items-center justify-between py-2.5">
-              <span className="text-muted text-sm">Zip / Postal Code</span>
+              <span className="text-muted text-sm">{t.zipCode}</span>
               <span className="text-sm font-medium">{address.zipCode}</span>
             </li>
           )}
           {address.vatNumber && (
             <li className="flex items-center justify-between py-2.5">
-              <span className="text-muted text-sm">VAT Number</span>
+              <span className="text-muted text-sm">{t.vatNumber}</span>
               <span className="text-sm font-medium">{address.vatNumber}</span>
             </li>
           )}
@@ -245,8 +246,11 @@ export function FreePageView({ className }: { className?: string }) {
                 onCancel={() => setIsEditingAddress(false)}
               />
             ) : (
-              renderBillingInfo(address, isEditingAddress, () =>
-                setIsEditingAddress(true),
+              renderBillingInfo(
+                address,
+                isEditingAddress,
+                () => setIsEditingAddress(true),
+                t as unknown as Record<string, string>,
               )
             )}
           </div>

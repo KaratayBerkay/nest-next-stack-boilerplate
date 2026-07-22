@@ -37,7 +37,7 @@ export function BillingAddressForm({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="ba-name" className="text-muted text-xs font-medium">
-            Name
+            {t.nameLabel}
           </label>
           <input
             id="ba-name"
@@ -53,7 +53,7 @@ export function BillingAddressForm({
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="ba-zip" className="text-muted text-xs font-medium">
-            Zip / Postal Code
+            {t.zipCode}
           </label>
           <input
             id="ba-zip"
@@ -69,7 +69,7 @@ export function BillingAddressForm({
 
         <div className="flex flex-col gap-1.5 sm:col-span-2">
           <label htmlFor="ba-street" className="text-muted text-xs font-medium">
-            Street
+            {t.street}
           </label>
           <input
             id="ba-street"
@@ -85,7 +85,7 @@ export function BillingAddressForm({
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="ba-city" className="text-muted text-xs font-medium">
-            City
+            {t.city}
           </label>
           <input
             id="ba-city"
@@ -101,7 +101,7 @@ export function BillingAddressForm({
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="ba-state" className="text-muted text-xs font-medium">
-            State
+            {t.state}
           </label>
           <input
             id="ba-state"
@@ -120,7 +120,7 @@ export function BillingAddressForm({
             htmlFor="ba-country"
             className="text-muted text-xs font-medium"
           >
-            Country
+            {t.country}
           </label>
           <input
             id="ba-country"
@@ -136,7 +136,7 @@ export function BillingAddressForm({
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="ba-vat" className="text-muted text-xs font-medium">
-            VAT Number
+            {t.vatNumber}
           </label>
           <input
             id="ba-vat"
@@ -164,7 +164,7 @@ export function BillingAddressForm({
           onClick={onCancel}
           className="border-border hover:bg-surface-hover rounded-lg border px-4 py-2 text-sm font-medium"
         >
-          Cancel
+          {t.cancelSubscription || "Cancel"}
         </button>
       </div>
     </form>

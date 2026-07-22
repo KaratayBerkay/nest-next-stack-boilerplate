@@ -4,11 +4,20 @@ import { useState } from "react";
 import { formatDateByPreference } from "@/lib/date-time";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { cn } from "@/lib/cn";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { InvoiceTableProps } from "@/types/billing/InvoiceTable-types";
 
 const PAGE_SIZE = 5;
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({
+  status,
+  paidLabel,
+  unpaidLabel,
+}: {
+  status: string;
+  paidLabel: string;
+  unpaidLabel: string;
+}) {
   const isPaid = status === "COMPLETED";
   return (
     <span
@@ -17,7 +26,7 @@ function StatusBadge({ status }: { status: string }) {
         isPaid ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700",
       )}
     >
-      {isPaid ? "Paid" : "Unpaid"}
+      {isPaid ? paidLabel : unpaidLabel}
     </span>
   );
 }
@@ -32,6 +41,7 @@ export function InvoiceTable({
   isLoading,
   className,
 }: InvoiceTableProps) {
+  const t = useMessages("settings");
   const dateDisplay = useDateDisplayCookie();
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -45,8 +55,8 @@ export function InvoiceTable({
   if (isLoading) {
     return (
       <div className={cn("flex flex-col gap-3", className)}>
-        <h3 className="text-sm font-medium">Invoices</h3>
-        <p className="text-muted text-sm">Loading...</p>
+        <h3 className="text-sm font-medium">{t.invoices}</h3>
+        <p className="text-muted text-sm">{t.loading}</p>
       </div>
     );
   }
@@ -54,8 +64,8 @@ export function InvoiceTable({
   if (transactions.length === 0) {
     return (
       <div className={cn("flex flex-col gap-3", className)}>
-        <h3 className="text-sm font-medium">Invoices</h3>
-        <p className="text-muted text-sm">No invoices yet.</p>
+        <h3 className="text-sm font-medium">{t.invoices}</h3>
+        <p className="text-muted text-sm">{t.billingHistoryEmpty}</p>
       </div>
     );
   }
@@ -63,11 +73,15 @@ export function InvoiceTable({
   return (
     <div className={cn("flex flex-col gap-3", className)}>
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium">Invoices</h3>
+        <h3 className="text-sm font-medium">{t.invoices}</h3>
         <p className="text-muted text-xs">
-          Showing {startIndex + 1}–
-          {Math.min(startIndex + PAGE_SIZE, transactions.length)} of{" "}
-          {transactions.length}
+          {t.showingXofY
+            .replace("{x}", String(startIndex + 1))
+            .replace(
+              "{y}",
+              String(Math.min(startIndex + PAGE_SIZE, transactions.length)),
+            )
+            .replace("{z}", String(transactions.length))}
         </p>
       </div>
 
@@ -75,11 +89,15 @@ export function InvoiceTable({
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-border border-b">
-              <th className="px-4 py-3 font-medium">Invoice</th>
-              <th className="px-4 py-3 font-medium">Date</th>
-              <th className="px-4 py-3 font-medium">Amount</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Action</th>
+              <th className="px-4 py-3 font-medium">
+                {t.invoiceNumber.replace("{number}", "#")}
+              </th>
+              <th className="px-4 py-3 font-medium">
+                {t.dateDisplay || "Date"}
+              </th>
+              <th className="px-4 py-3 font-medium">{t.price}</th>
+              <th className="px-4 py-3 font-medium">{t.status || "Status"}</th>
+              <th className="px-4 py-3 font-medium">{t.viewInvoice}</th>
             </tr>
           </thead>
           <tbody>
@@ -100,7 +118,11 @@ export function InvoiceTable({
                   {tx.amount > 0 ? `$${(tx.amount / 100).toFixed(2)}` : "—"}
                 </td>
                 <td className="px-4 py-3">
-                  <StatusBadge status={tx.status} />
+                  <StatusBadge
+                    status={tx.status}
+                    paidLabel={t.paid}
+                    unpaidLabel={t.unpaid}
+                  />
                 </td>
                 <td className="px-4 py-3">
                   {tx.stripeInvoiceUrl ? (
@@ -110,7 +132,7 @@ export function InvoiceTable({
                       rel="noopener noreferrer"
                       className="text-brand text-sm font-medium hover:underline"
                     >
-                      View
+                      {t.viewInvoice}
                     </a>
                   ) : (
                     <span className="text-muted text-sm">—</span>
@@ -129,7 +151,7 @@ export function InvoiceTable({
             disabled={currentPage === 1}
             className="border-border hover:bg-surface-hover disabled:text-muted rounded-lg border px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Previous
+            {t.previous}
           </button>
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
             <button
@@ -150,7 +172,7 @@ export function InvoiceTable({
             disabled={currentPage === totalPages}
             className="border-border hover:bg-surface-hover disabled:text-muted rounded-lg border px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Next
+            {t.next}
           </button>
         </div>
       )}
