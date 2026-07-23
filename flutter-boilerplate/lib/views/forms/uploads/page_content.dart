@@ -1,0 +1,93 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../constants/theme.dart';
+import '../../../components/ui/button/button.dart';
+import '../../../components/ui/avatar/avatar.dart';
+
+class FormsUploadsPageContent extends ConsumerStatefulWidget {
+  final String lang;
+
+  const FormsUploadsPageContent({super.key, required this.lang});
+
+  @override
+  ConsumerState<FormsUploadsPageContent> createState() => _FormsUploadsPageContentState();
+}
+
+class _FormsUploadsPageContentState extends ConsumerState<FormsUploadsPageContent> {
+  final _uploadedDocs = <String>[];
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('File Uploads')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Avatar Upload', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  Center(
+                    child: Column(
+                      children: [
+                        Avatar(name: 'User', radius: 36),
+                        const SizedBox(height: 8),
+                        Button(variant: ButtonVariant.outline, child: const Text('Upload Photo'), onPressed: () {}),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Document Upload', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: colors.border, style: BorderStyle.solid),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Icon(Icons.cloud_upload_outlined, size: 32, color: colors.fgMuted),
+                          const SizedBox(height: 8),
+                          const Text('Drag & drop files here'),
+                          const SizedBox(height: 8),
+                          Button(variant: ButtonVariant.outline, child: const Text('Browse Files'), onPressed: () {}),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ..._uploadedDocs.map((doc) => ListTile(
+                    leading: Icon(Icons.description, color: colors.brand),
+                    title: Text(doc),
+                    trailing: IconButton(icon: const Icon(Icons.delete_outline), onPressed: () {
+                      setState(() => _uploadedDocs.remove(doc));
+                    }),
+                  )),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
