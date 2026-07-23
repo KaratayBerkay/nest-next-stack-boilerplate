@@ -61,6 +61,29 @@ call `docker compose` directly — both work identically now.
 | MinIO | `9000` | `minio:9000` | console `9001` |
 | fluent-bit forward | `24224` | `fluent-bit:24224` | |
 
+## Flutter (mobile) APK
+
+A Flutter app lives at `flutter-boilerplate/` — a 1:1 mobile conversion of the Next.js frontend.
+
+```bash
+# First build (slow — compiles from source)
+docker compose --profile flutter build flutter
+
+# Run (builds APK + serves on port 8082)
+docker compose --profile flutter up flutter
+
+# Rebuild without Docker image rebuild (faster iteration)
+docker compose --profile flutter up --no-build flutter
+
+# Download from http://localhost:8082/app-release.apk
+```
+
+For fastest iteration, build locally:
+
+```bash
+cd flutter-boilerplate && flutter build apk --release
+```
+
 ## Compose profile matrix
 
 | Profile | Includes |
