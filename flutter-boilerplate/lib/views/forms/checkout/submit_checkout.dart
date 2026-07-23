@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../constants/theme.dart';
-
 Map<String, dynamic> collectCheckoutData({
   required TextEditingController nameCtrl,
   required TextEditingController addressCtrl,

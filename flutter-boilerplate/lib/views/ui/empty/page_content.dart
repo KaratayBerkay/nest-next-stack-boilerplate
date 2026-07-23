@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../components/ui/empty/empty.dart';
+
 import '../../../components/ui/button/button.dart';
+import '../../../components/ui/empty/empty.dart';
 
 class EmptyDemoPage extends StatelessWidget {
   final String lang;
@@ -13,7 +14,7 @@ class EmptyDemoPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const EmptyWidget(title: 'No items', icon: Icons.inbox_outlined),
+          const EmptyWidget(title: 'No items'),
           const SizedBox(height: 24),
           const EmptyWidget(
             title: 'No results',

@@ -5,7 +5,7 @@ class FileUploadSections extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _UploadTile(
@@ -13,25 +13,25 @@ class FileUploadSections extends StatelessWidget {
           label: 'Upload File',
           subtitle: 'PDF, DOC, or TXT up to 10MB',
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         _UploadTile(
           icon: Icons.image_outlined,
           label: 'Upload Image',
           subtitle: 'PNG, JPG, or WebP up to 5MB',
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         _UploadTile(
           icon: Icons.folder_outlined,
           label: 'Upload Folder',
           subtitle: 'Multiple files supported',
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Row(
           children: [
             Expanded(
               child: _FileChip(name: 'report.pdf', size: '2.4 MB'),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Expanded(
               child: _FileChip(name: 'photo.jpg', size: '1.1 MB'),
             ),

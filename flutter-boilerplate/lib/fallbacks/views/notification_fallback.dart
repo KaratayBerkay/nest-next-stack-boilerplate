@@ -28,7 +28,7 @@ class NotificationFallback extends StatelessWidget {
               ),
             ],
           ),
-        )),
+        ),),
       ),
     );
   }

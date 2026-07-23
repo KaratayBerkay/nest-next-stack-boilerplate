@@ -30,7 +30,7 @@ class _BasicSettingsPrivacyPageState extends State<BasicSettingsPrivacyPage> {
                 SwitchListTile(
                   title: const Text('Online Status'),
                   subtitle: Text('Show when you\'re online',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
                   value: _showOnlineStatus,
                   onChanged: (v) => setState(() => _showOnlineStatus = v),
                 ),
@@ -38,7 +38,7 @@ class _BasicSettingsPrivacyPageState extends State<BasicSettingsPrivacyPage> {
                 SwitchListTile(
                   title: const Text('Read Receipts'),
                   subtitle: Text('Let others know you\'ve read their messages',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
                   value: _showReadReceipts,
                   onChanged: (v) => setState(() => _showReadReceipts = v),
                 ),

@@ -46,7 +46,7 @@ class _UsersPageContentState extends ConsumerState<UsersPageContent> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: users.length,
                 itemBuilder: (_, i) => ListTile(
-                  leading: Avatar(name: users[i].name, radius: 20),
+                  leading: Avatar(name: users[i].name),
                   title: Text(users[i].name),
                 ),
               ),

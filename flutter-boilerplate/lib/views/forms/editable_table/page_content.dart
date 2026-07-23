@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/button/button.dart';
+import '../../../constants/theme.dart';
 
 class FormsEditableTablePageContent extends ConsumerStatefulWidget {
   final String lang;
@@ -15,9 +15,9 @@ class FormsEditableTablePageContent extends ConsumerStatefulWidget {
 
 class _FormsEditableTablePageContentState extends ConsumerState<FormsEditableTablePageContent> {
   final _rows = [
-    _TableRowData(item: 'Widget A', quantity: 2, price: 19.99),
-    _TableRowData(item: 'Widget B', quantity: 1, price: 29.99),
-    _TableRowData(item: 'Widget C', quantity: 3, price: 9.99),
+    const _TableRowData(item: 'Widget A', quantity: 2, price: 19.99),
+    const _TableRowData(item: 'Widget B', quantity: 1, price: 29.99),
+    const _TableRowData(item: 'Widget C', quantity: 3, price: 9.99),
   ];
 
   @override
@@ -43,7 +43,7 @@ class _FormsEditableTablePageContentState extends ConsumerState<FormsEditableTab
                 DataCell(Text('${r.quantity}')),
                 DataCell(Text('\$${r.price.toStringAsFixed(2)}')),
                 DataCell(Text('\$${(r.quantity * r.price).toStringAsFixed(2)}')),
-              ])).toList(),
+              ],),).toList(),
             ),
           ),
           const SizedBox(height: 8),
@@ -56,8 +56,8 @@ class _FormsEditableTablePageContentState extends ConsumerState<FormsEditableTab
           ),
           const SizedBox(height: 16),
           Button(child: const Text('Add Row'), onPressed: () {
-            setState(() => _rows.add(_TableRowData(item: 'New Item', quantity: 1, price: 0)));
-          }),
+            setState(() => _rows.add(const _TableRowData(item: 'New Item', quantity: 1, price: 0)));
+          },),
         ],
       ),
     );

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/button/button.dart';
+import '../../../constants/theme.dart';
 
 class DraftAlert extends StatelessWidget {
   final VoidCallback? onSave;
@@ -33,8 +33,8 @@ class DraftAlert extends StatelessWidget {
         ),
         Button(
           size: ButtonSize.sm,
-          child: const Text('Save Draft'),
           onPressed: onSave,
+          child: const Text('Save Draft'),
         ),
       ],
     );

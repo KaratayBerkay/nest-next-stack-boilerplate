@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/components/ui/aspect_ratio/aspect_ratio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_boilerplate/components/ui/aspect_ratio/aspect_ratio.dart';
 import '../../test_helpers.dart';
 
 void main() {

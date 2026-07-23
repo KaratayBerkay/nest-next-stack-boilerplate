@@ -3,42 +3,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../hooks/use_auth.dart';
-import '../views/auth/login/page_content.dart';
-import '../views/auth/register/page_content.dart';
+import '../views/about/page_content.dart';
+import '../views/admin/audit_logs/page_view.dart';
+import '../views/admin/page_view.dart';
 import '../views/auth/forgot_password/page_content.dart';
+import '../views/auth/login/page_content.dart';
+import '../views/auth/mfa/page_content.dart';
+import '../views/auth/register/page_content.dart';
 import '../views/auth/reset_password/page_content.dart';
 import '../views/auth/verify_email/page_content.dart';
-import '../views/auth/mfa/page_content.dart';
-import '../views/home/page_content.dart';
-import '../views/about/page_content.dart';
-import '../views/pricing/page_content.dart';
-import '../views/v1/v1_shell.dart';
-import '../views/v1/home/page_content.dart' as v1_home;
-import '../views/v1/missing_page.dart';
+import '../views/boom/page_content.dart';
+import '../views/chat_room/page_view.dart';
+import '../views/checkout/page_content.dart';
+import '../views/dashboard/dashboard_shell.dart';
+import '../views/demos/page_view.dart';
 import '../views/feed/page_view.dart';
-import '../views/messages/page_view.dart';
-import '../views/notification/page_view.dart';
-import '../views/plans/page_content.dart';
-import '../views/settings/page_view.dart';
-import '../views/settings/account/page_view.dart';
-import '../views/settings/billing/page_view.dart';
-import '../views/settings/general/page_view.dart';
-import '../views/settings/privacy/page_view.dart';
-import '../views/settings/sessions/page_view.dart';
-import '../views/settings/api_keys/page_content.dart';
-import '../views/posts/page_view.dart';
-import '../views/posts/detail_page_view.dart';
-import '../views/posts/create_page_view.dart';
 import '../views/find_friends/page_view.dart';
 import '../views/find_friends/requests_page.dart';
-import '../views/checkout/page_content.dart';
-import '../views/chat_room/page_view.dart';
-import '../views/admin/page_view.dart';
-import '../views/admin/audit_logs/page_view.dart';
-import '../views/users/list/page_view.dart';
-import '../views/users/detail/page_view.dart';
-import '../views/users/page_view.dart';
-import '../views/security/page_view.dart';
 import '../views/forms/advanced/page_content.dart';
 import '../views/forms/api_key/page_content.dart';
 import '../views/forms/billing/page_content.dart';
@@ -55,7 +36,29 @@ import '../views/forms/page_content.dart';
 import '../views/forms/profile/page_content.dart';
 import '../views/forms/team_invite/page_content.dart';
 import '../views/forms/uploads/page_content.dart';
-import '../views/demos/page_view.dart';
+import '../views/gallery/gallery_page.dart';
+import '../views/gallery/photo_detail.dart';
+import '../views/home/page_content.dart';
+import '../views/messages/page_view.dart';
+import '../views/notification/page_view.dart';
+import '../views/plans/page_content.dart';
+import '../views/posts/create_page_view.dart';
+import '../views/posts/detail_page_view.dart';
+import '../views/posts/page_view.dart';
+import '../views/premium/page_view.dart';
+import '../views/pricing/page_content.dart';
+import '../views/routing/item_content.dart';
+import '../views/routing/post_page.dart';
+import '../views/routing/slug_page.dart';
+import '../views/security/page_view.dart';
+import '../views/settings/account/page_view.dart';
+import '../views/settings/api_keys/page_content.dart';
+import '../views/settings/billing/page_view.dart';
+import '../views/settings/general/page_view.dart';
+import '../views/settings/page_view.dart';
+import '../views/settings/privacy/page_view.dart';
+import '../views/settings/sessions/page_view.dart';
+import '../views/share/page_content.dart';
 import '../views/ui/accordion/page_content.dart';
 import '../views/ui/alert/page_content.dart';
 import '../views/ui/alert_dialog/page_content.dart';
@@ -117,15 +120,12 @@ import '../views/ui/toggle/page_content.dart';
 import '../views/ui/toggle_group/page_content.dart';
 import '../views/ui/tooltip/page_content.dart';
 import '../views/ui/typography/page_content.dart';
-import '../views/premium/page_view.dart';
-import '../views/share/page_content.dart';
-import '../views/boom/page_content.dart';
-import '../views/dashboard/dashboard_shell.dart';
-import '../views/gallery/gallery_page.dart';
-import '../views/gallery/photo_detail.dart';
-import '../views/routing/slug_page.dart';
-import '../views/routing/item_content.dart';
-import '../views/routing/post_page.dart';
+import '../views/users/detail/page_view.dart';
+import '../views/users/list/page_view.dart';
+import '../views/users/page_view.dart';
+import '../views/v1/home/page_content.dart' as v1_home;
+import '../views/v1/missing_page.dart';
+import '../views/v1/v1_shell.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -401,7 +401,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             name: 'v1ChatRoom',
             builder: (_, state) => ChatRoomPageContent(
               lang: state.pathParameters['lang'] ?? 'en',
-              conversationId: state.pathParameters['conversationId'],
+              initialRoom: state.pathParameters['conversationId'],
             ),
           ),
           // Admin

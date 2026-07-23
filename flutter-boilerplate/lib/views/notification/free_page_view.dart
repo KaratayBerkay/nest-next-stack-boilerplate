@@ -2,14 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../lib/tier_view.dart';
-import '../../constants/theme.dart';
-import '../../api/client/notifications/query.dart';
 import '../../api/client/notifications/actions.dart';
-import '../../components/ui/avatar/avatar.dart';
-import '../../components/ui/spinner/spinner.dart';
+import '../../api/client/notifications/query.dart';
 import '../../components/ui/empty/empty.dart';
-import '../../lib/date_time.dart';
+import '../../components/ui/spinner/spinner.dart';
+import '../../constants/theme.dart';
 import 'notification_item.dart';
 
 class FreeNotificationPage extends ConsumerWidget {

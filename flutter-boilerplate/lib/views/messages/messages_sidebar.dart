@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../constants/theme.dart';
-import 'messages_sidebar_search.dart';
-import 'messages_sidebar_tab_bar.dart';
 import 'messages_sidebar_conversations.dart';
 import 'messages_sidebar_friends.dart';
+import 'messages_sidebar_search.dart';
+import 'messages_sidebar_tab_bar.dart';
 
 class MessagesSidebar extends ConsumerStatefulWidget {
   final String lang;

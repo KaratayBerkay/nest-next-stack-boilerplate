@@ -56,7 +56,7 @@ class _FormsContentEditorPageContentState extends ConsumerState<FormsContentEdit
                     const SizedBox(width: 12),
                     Expanded(child: Button(child: const Text('Publish'), onPressed: () {
                       if (_formKey.currentState!.validate()) {}
-                    })),
+                    },),),
                   ],
                 ),
               ],

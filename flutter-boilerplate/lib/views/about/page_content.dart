@@ -23,14 +23,14 @@ class AboutPageContent extends StatelessWidget {
             style: TextStyle(fontSize: 16, color: colors.fgMuted),
           ),
           const SizedBox(height: 24),
-          Card(
+          const Card(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Tech Stack', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 12),
+                  Text('Tech Stack', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                  SizedBox(height: 12),
                   _TechItem(label: 'Framework', value: 'Flutter 3.x'),
                   _TechItem(label: 'State Management', value: 'Riverpod 3.x'),
                   _TechItem(label: 'Routing', value: 'GoRouter 17.x'),
@@ -63,14 +63,14 @@ class AboutPageContent extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Card(
+          const Card(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Features', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 12),
+                  Text('Features', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                  SizedBox(height: 12),
                   _FeatureItem(text: 'Auth (login, register, MFA, password reset, email verify)'),
                   _FeatureItem(text: 'Tier-gated views (Free, Basic, Medium, Premium)'),
                   _FeatureItem(text: 'Stripe billing integration with card form'),

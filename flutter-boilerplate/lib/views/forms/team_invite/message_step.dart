@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/form_text_field.dart';
+import '../../../constants/theme.dart';
 
 class MessageStep extends StatelessWidget {
   final TextEditingController messageCtrl;

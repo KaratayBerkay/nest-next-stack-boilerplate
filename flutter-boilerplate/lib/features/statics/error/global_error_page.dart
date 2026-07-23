@@ -1,34 +1,55 @@
 import 'package:flutter/material.dart';
 
 class GlobalErrorPage extends StatelessWidget {
-  final FlutterErrorDetails errorDetails;
+  final String message;
+  final String? digest;
+  final VoidCallback? onRetry;
 
-  const GlobalErrorPage({super.key, required this.errorDetails});
+  const GlobalErrorPage({
+    super.key,
+    this.message = 'Something went wrong',
+    this.digest,
+    this.onRetry,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.error, size: 64, color: Colors.red),
-                const SizedBox(height: 16),
-                const Text(
-                  'An unexpected error occurred',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+    return Material(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Something went wrong',
+                style: TextStyle(
+                  color: Colors.red.shade700,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                message,
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                textAlign: TextAlign.center,
+              ),
+              if (digest != null) ...[
                 const SizedBox(height: 8),
                 Text(
-                  errorDetails.exception.toString(),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.grey),
+                  'Reference: $digest',
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
                 ),
               ],
-            ),
+              if (onRetry != null) ...[
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: onRetry,
+                  child: const Text('Try again'),
+                ),
+              ],
+            ],
           ),
         ),
       ),

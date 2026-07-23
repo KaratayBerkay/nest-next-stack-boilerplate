@@ -41,9 +41,9 @@ class ButtonDemoPage extends StatelessWidget {
           Wrap(
             spacing: 8, runSpacing: 8,
             children: [
-              Button(child: const Text('Disabled'), onPressed: null),
-              Button(child: const Text('Loading'), onPressed: () {}, loading: true),
-              Button(child: const Text('Full Width'), onPressed: () {}, fullWidth: true),
+              const Button(child: Text('Disabled')),
+              Button(onPressed: () {}, loading: true, child: const Text('Loading')),
+              Button(onPressed: () {}, fullWidth: true, child: const Text('Full Width')),
             ],
           ),
         ],

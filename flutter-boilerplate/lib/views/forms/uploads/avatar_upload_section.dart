@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../constants/theme.dart';
-import '../../../components/ui/button/button.dart';
 import '../../../components/ui/avatar/avatar.dart';
+import '../../../components/ui/button/button.dart';
+import '../../../constants/theme.dart';
 
 class AvatarUploadSection extends StatelessWidget {
   final String? imageUrl;
@@ -41,16 +41,16 @@ class AvatarUploadSection extends StatelessWidget {
                       Button(
                         variant: ButtonVariant.outline,
                         size: ButtonSize.sm,
-                        child: const Text('Upload Photo'),
                         onPressed: onUpload,
+                        child: const Text('Upload Photo'),
                       ),
                       if (imageUrl != null && onRemove != null) ...[
                         const SizedBox(width: 8),
                         Button(
                           variant: ButtonVariant.ghost,
                           size: ButtonSize.sm,
-                          child: Text('Remove', style: TextStyle(color: colors.danger)),
                           onPressed: onRemove,
+                          child: Text('Remove', style: TextStyle(color: colors.danger)),
                         ),
                       ],
                     ],

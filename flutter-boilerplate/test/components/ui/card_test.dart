@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/components/ui/card/card.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_boilerplate/components/ui/card/card.dart';
 import '../../test_helpers.dart';
 
 void main() {
@@ -17,7 +17,7 @@ void main() {
   testWidgets('CardWidget supports custom elevation', (tester) async {
     await pumpTestApp(
       tester,
-      const CardWidget(child: Text('Raised'), elevation: 4),
+      const CardWidget(elevation: 4, child: Text('Raised')),
     );
 
     expect(find.text('Raised'), findsOneWidget);

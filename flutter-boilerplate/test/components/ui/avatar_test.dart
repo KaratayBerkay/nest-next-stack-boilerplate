@@ -1,6 +1,6 @@
+import 'package:flutter_boilerplate/components/ui/avatar/avatar.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_boilerplate/components/ui/avatar/avatar.dart';
 import '../../test_helpers.dart';
 
 void main() {

@@ -1,6 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
-
 import 'package:flutter_boilerplate/lib/tier.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Tier.hasAccess', () {

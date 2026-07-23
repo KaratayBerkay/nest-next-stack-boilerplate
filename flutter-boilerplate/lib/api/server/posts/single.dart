@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_boilerplate/lib/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
-import '../../../lib/api_client.dart';
 import '../../../types/feed/post.dart';
 
 final postSingleServerProvider = Provider((ref) => PostSingleServer(ref.read(dioProvider)));

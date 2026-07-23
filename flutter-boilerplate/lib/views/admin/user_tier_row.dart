@@ -36,7 +36,7 @@ class _UserTierRowState extends State<UserTierRow> {
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: colors.brand.withOpacity(0.2),
+            backgroundColor: colors.brand.withValues(alpha: 0.2),
             child: Text(
               widget.user.name[0].toUpperCase(),
               style: TextStyle(color: colors.brand),

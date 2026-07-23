@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../constants/theme.dart';
 import '../../components/ui/empty/empty.dart';
 
 class EmptyChatState extends StatelessWidget {

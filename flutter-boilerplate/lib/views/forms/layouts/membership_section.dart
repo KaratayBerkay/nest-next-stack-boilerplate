@@ -12,17 +12,21 @@ class _MembershipSectionState extends State<MembershipSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Membership Type', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-        const SizedBox(height: 8),
-        _tier(icon: Icons.person_outline, title: 'Free', subtitle: 'Basic access', value: 'free'),
-        const SizedBox(height: 4),
-        _tier(icon: Icons.star_outline, title: 'Basic', subtitle: 'Additional features', value: 'basic'),
-        const SizedBox(height: 4),
-        _tier(icon: Icons.workspace_premium_outlined, title: 'Premium', subtitle: 'All features included', value: 'premium'),
-      ],
+    return RadioGroup<String>(
+      groupValue: _selected,
+      onChanged: (v) => setState(() => _selected = v!),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Membership Type', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          const SizedBox(height: 8),
+          _tier(icon: Icons.person_outline, title: 'Free', subtitle: 'Basic access', value: 'free'),
+          const SizedBox(height: 4),
+          _tier(icon: Icons.star_outline, title: 'Basic', subtitle: 'Additional features', value: 'basic'),
+          const SizedBox(height: 4),
+          _tier(icon: Icons.workspace_premium_outlined, title: 'Premium', subtitle: 'All features included', value: 'premium'),
+        ],
+      ),
     );
   }
 
@@ -50,7 +54,7 @@ class _MembershipSectionState extends State<MembershipSection> {
                 ],
               ),
             ),
-            Radio<String>(value: value, groupValue: _selected, onChanged: (v) => setState(() => _selected = v!)),
+            Radio<String>(value: value),
           ],
         ),
       ),

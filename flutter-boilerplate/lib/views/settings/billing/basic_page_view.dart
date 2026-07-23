@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart' hide Badge;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../constants/theme.dart';
+import '../../../components/ui/badge/badge.dart';
 import '../../../components/ui/card/card.dart';
 import '../../../components/ui/card/card_content.dart';
 import '../../../components/ui/card/card_header.dart';
-import '../../../components/ui/badge/badge.dart';
+import '../../../constants/theme.dart';
 
 class BasicSettingsBillingPage extends ConsumerWidget {
   final String lang;
@@ -30,16 +30,16 @@ class BasicSettingsBillingPage extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      const Row(
                         children: [
-                          const Text('BASIC', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                          const SizedBox(width: 8),
-                          const Badge(text: 'Active', variant: BadgeVariant.success),
+                          Text('BASIC', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          SizedBox(width: 8),
+                          Badge(text: 'Active', variant: BadgeVariant.success),
                         ],
                       ),
                       const SizedBox(height: 8),
                       Text('Your basic plan is active.',
-                          style: TextStyle(color: colors.fgMuted, fontSize: 13)),
+                          style: TextStyle(color: colors.fgMuted, fontSize: 13),),
                     ],
                   ),
                 ),
@@ -56,7 +56,7 @@ class BasicSettingsBillingPage extends ConsumerWidget {
                   child: Column(
                     children: [
                       Text('Unlock payment methods and detailed invoices with a higher tier.',
-                          style: TextStyle(color: colors.fgMuted, fontSize: 13)),
+                          style: TextStyle(color: colors.fgMuted, fontSize: 13),),
                     ],
                   ),
                 ),

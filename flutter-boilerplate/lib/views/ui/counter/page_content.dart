@@ -11,14 +11,14 @@ class CounterDemoPage extends StatelessWidget {
       appBar: AppBar(title: const Text('Counter')),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: [
-          const Text('Basic Counter', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          const CounterWidget(value: 0),
-          const SizedBox(height: 24),
-          const Text('With Custom Range', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          const CounterWidget(value: 5, min: 0, max: 10),
+        children: const [
+          Text('Basic Counter', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
+          CounterWidget(value: 0),
+          SizedBox(height: 24),
+          Text('With Custom Range', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
+          CounterWidget(value: 5, max: 10),
         ],
       ),
     );

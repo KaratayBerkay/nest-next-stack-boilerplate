@@ -11,20 +11,20 @@ class BreadcrumbDemoPage extends StatelessWidget {
       appBar: AppBar(title: const Text('Breadcrumb')),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: [
-          const Text('Basic Breadcrumb', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          const BreadcrumbWidget(
+        children: const [
+          Text('Basic Breadcrumb', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
+          BreadcrumbWidget(
             items: [
               BreadcrumbItem(label: 'Home'),
               BreadcrumbItem(label: 'Products'),
               BreadcrumbItem(label: 'Details'),
             ],
           ),
-          const SizedBox(height: 24),
-          const Text('With Icons', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          const BreadcrumbWidget(
+          SizedBox(height: 24),
+          Text('With Icons', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
+          BreadcrumbWidget(
             items: [
               BreadcrumbItem(label: 'Home'),
               BreadcrumbItem(label: 'Settings'),

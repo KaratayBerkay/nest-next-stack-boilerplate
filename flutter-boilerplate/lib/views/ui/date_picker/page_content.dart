@@ -12,8 +12,8 @@ class DatePickerDemoPage extends StatelessWidget {
       appBar: AppBar(title: const Text('Date Picker')),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: [
-          const Card(
+        children: const [
+          Card(
             child: Padding(
               padding: EdgeInsets.all(16),
               child: Column(

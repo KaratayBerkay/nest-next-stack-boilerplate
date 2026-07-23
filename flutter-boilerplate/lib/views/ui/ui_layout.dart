@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../constants/theme.dart';
-
 class UiLayout extends StatefulWidget {
   final List<UiCategory> categories;
   final int initialIndex;
@@ -37,8 +35,6 @@ class _UiLayoutState extends State<UiLayout> with SingleTickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('UI Components'),

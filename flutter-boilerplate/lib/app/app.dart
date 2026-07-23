@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/i18n/messages_provider.dart';
+import 'package:flutter_boilerplate/lib/riverpod_compat.dart';
+import 'package:flutter_boilerplate/lib/stripe_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../lib/riverpod_compat.dart';
-import '../lib/stripe_provider.dart';
-import '../lib/i18n/messages_provider.dart';
-import '../services/push_notification_service.dart';
 
 import '../app_config.dart';
 import '../constants/theme.dart';
-
 import '../hooks/use_locale.dart';
 import '../hooks/use_realtime.dart';
 import '../hooks/use_theme.dart';
+import '../services/push_notification_service.dart';
 import 'router.dart';
 
 class FlutterBoilerplateApp extends ConsumerStatefulWidget {

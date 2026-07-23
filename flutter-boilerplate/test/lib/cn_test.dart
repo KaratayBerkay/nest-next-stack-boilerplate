@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-
 import 'package:flutter_boilerplate/lib/cn.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('cn', () {
@@ -32,18 +31,18 @@ void main() {
     });
 
     test('returns first when second is null', () {
-      final shadows = [BoxShadow()];
+      final shadows = [const BoxShadow()];
       expect(mergeShadows(shadows, null), shadows);
     });
 
     test('returns second when first is null', () {
-      final shadows = [BoxShadow()];
+      final shadows = [const BoxShadow()];
       expect(mergeShadows(null, shadows), shadows);
     });
 
     test('merges both lists', () {
-      final a = <BoxShadow>[BoxShadow(blurRadius: 1)];
-      final b = <BoxShadow>[BoxShadow(blurRadius: 2)];
+      final a = <BoxShadow>[const BoxShadow(blurRadius: 1)];
+      final b = <BoxShadow>[const BoxShadow(blurRadius: 2)];
       expect(mergeShadows(a, b).length, 2);
     });
   });
@@ -54,18 +53,18 @@ void main() {
     });
 
     test('returns first when second is null', () {
-      final padding = const EdgeInsets.all(8);
+      const padding = EdgeInsets.all(8);
       expect(mergePadding(padding, null), padding);
     });
 
     test('returns second when first is null', () {
-      final padding = const EdgeInsets.all(8);
+      const padding = EdgeInsets.all(8);
       expect(mergePadding(null, padding), padding);
     });
 
     test('adds both paddings', () {
-      final a = const EdgeInsets.all(8);
-      final b = const EdgeInsets.all(4);
+      const a = EdgeInsets.all(8);
+      const b = EdgeInsets.all(4);
       final result = mergePadding(a, b) as EdgeInsets;
       expect(result.left, 12);
       expect(result.top, 12);

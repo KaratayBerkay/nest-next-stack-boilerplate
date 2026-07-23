@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/components/ui/input_group/input_group.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_boilerplate/components/ui/input_group/input_group.dart';
 import '../../test_helpers.dart';
 
 void main() {
@@ -13,7 +13,7 @@ void main() {
         child: InputGroup(children: [
           Text('Input field'),
           Text('Suffix text'),
-        ]),
+        ],),
       ),
     );
 

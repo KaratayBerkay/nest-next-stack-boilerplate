@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/button/button.dart';
 
 class EditableTableRowActions extends StatelessWidget {
@@ -17,8 +16,6 @@ class EditableTableRowActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-
     return Row(
       children: [
         if (canDelete && onDelete != null)
@@ -27,16 +24,16 @@ class EditableTableRowActions extends StatelessWidget {
             child: Button(
               variant: ButtonVariant.danger,
               size: ButtonSize.sm,
-              child: const Text('Delete'),
               onPressed: onDelete,
+              child: const Text('Delete'),
             ),
           ),
         if (onAdd != null)
           Button(
             variant: ButtonVariant.outline,
             size: ButtonSize.sm,
-            child: const Text('Add Row'),
             onPressed: onAdd,
+            child: const Text('Add Row'),
           ),
       ],
     );

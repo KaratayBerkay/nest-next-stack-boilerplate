@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/date_time.dart';
 
-import '../../../constants/theme.dart';
-import '../../../lib/date_time.dart';
-import '../../../types/feed/post.dart';
 import '../../../components/ui/avatar/avatar.dart';
+import '../../../constants/theme.dart';
+import '../../../types/feed/post.dart';
 
 class PostHeader extends StatelessWidget {
   final Post post;
@@ -19,7 +19,6 @@ class PostHeader extends StatelessWidget {
         Avatar(
           imageUrl: post.authorAvatarUrl,
           name: post.authorName,
-          radius: 20,
         ),
         const SizedBox(width: 10),
         Expanded(

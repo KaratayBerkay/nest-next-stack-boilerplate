@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../components/ui/input/input.dart';
+import 'constants.dart';
 import 'filter_section.dart';
 import 'use_filters_form.dart';
-import 'constants.dart';
 
 class FiltersForm extends StatefulWidget {
   const FiltersForm({super.key});
@@ -46,7 +46,7 @@ class _FiltersFormState extends State<FiltersForm> {
             FilterSection(
               title: 'Category',
               child: DropdownButtonFormField<String>(
-                value: state.category,
+                initialValue: state.category,
                 items: categoryItems,
                 onChanged: (v) => _formManager.updateCategory(v!),
                 decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
@@ -56,7 +56,7 @@ class _FiltersFormState extends State<FiltersForm> {
             FilterSection(
               title: 'Sort By',
               child: DropdownButtonFormField<String>(
-                value: state.sort,
+                initialValue: state.sort,
                 items: sortItems,
                 onChanged: (v) => _formManager.updateSort(v!),
                 decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
@@ -66,7 +66,7 @@ class _FiltersFormState extends State<FiltersForm> {
             FilterSection(
               title: 'Status',
               child: DropdownButtonFormField<String>(
-                value: state.status,
+                initialValue: state.status,
                 items: statusItems,
                 onChanged: (v) => _formManager.updateStatus(v!),
                 decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),

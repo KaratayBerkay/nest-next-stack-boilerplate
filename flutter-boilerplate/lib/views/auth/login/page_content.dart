@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../api/client/auth/actions.dart';
 import '../../../api/server/auth/login.dart';
-import '../../../hooks/use_auth.dart';
 import '../../../components/ui/form_text_field.dart';
+import '../../../hooks/use_auth.dart';
 import '../../../validators/auth/schema.dart';
 
 class LoginPageContent extends ConsumerStatefulWidget {

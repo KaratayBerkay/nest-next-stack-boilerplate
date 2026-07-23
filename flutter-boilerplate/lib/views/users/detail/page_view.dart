@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../constants/theme.dart';
-import '../../../api/server/profile/get.dart';
 import '../../../api/client/friends/actions.dart';
+import '../../../api/server/profile/get.dart';
 import '../../../components/ui/avatar/avatar.dart';
 import '../../../components/ui/button/button.dart';
+import '../../../constants/theme.dart';
 
 final _userDetailProvider = FutureProvider.family((ref, String userId) async {
   final server = ref.read(profileGetServerProvider);
@@ -48,7 +48,7 @@ class UserDetailPageContent extends ConsumerWidget {
                     children: [
                       Badge(
                         label: Text(user.tier.toUpperCase(),
-                            style: TextStyle(fontSize: 11, color: colors.surface)),
+                            style: TextStyle(fontSize: 11, color: colors.surface),),
                         backgroundColor: colors.brand,
                       ),
                     ],

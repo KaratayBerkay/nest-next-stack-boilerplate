@@ -1,15 +1,14 @@
 import 'dart:convert';
 
+import 'package:flutter_boilerplate/lib/riverpod_compat.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
-import '../lib/riverpod_compat.dart';
 
 import '../types/auth/user.dart';
 
 const _accessTokenKey = 'access_token';
 const _userKey = 'session_user';
 
-final _storage = FlutterSecureStorage();
+const _storage = FlutterSecureStorage();
 
 final authProvider = StateNotifierProvider<AuthNotifier, AsyncValue<AuthenticatedUser?>>((ref) {
   return AuthNotifier();

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-
 import 'package:flutter_boilerplate/components/ui/form_text_field.dart';
 import 'package:flutter_boilerplate/validators/auth/schema.dart';
+import 'package:flutter_test/flutter_test.dart';
+
 import '../../test_helpers.dart';
 
 void main() {

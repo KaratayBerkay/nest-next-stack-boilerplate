@@ -12,7 +12,7 @@ class MenubarDemoPage extends StatelessWidget {
         children: [
           Container(
             color: Colors.grey[200],
-            child: Row(
+            child: const Row(
               children: [
                 _MenuButton(label: 'File'),
                 _MenuButton(label: 'Edit'),

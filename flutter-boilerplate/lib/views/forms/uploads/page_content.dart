@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../constants/theme.dart';
-import '../../../components/ui/button/button.dart';
 import '../../../components/ui/avatar/avatar.dart';
+import '../../../components/ui/button/button.dart';
+import '../../../constants/theme.dart';
 
 class FormsUploadsPageContent extends ConsumerStatefulWidget {
   final String lang;
@@ -37,7 +37,7 @@ class _FormsUploadsPageContentState extends ConsumerState<FormsUploadsPageConten
                   Center(
                     child: Column(
                       children: [
-                        Avatar(name: 'User', radius: 36),
+                        const Avatar(name: 'User', radius: 36),
                         const SizedBox(height: 8),
                         Button(variant: ButtonVariant.outline, child: const Text('Upload Photo'), onPressed: () {}),
                       ],
@@ -59,7 +59,7 @@ class _FormsUploadsPageContentState extends ConsumerState<FormsUploadsPageConten
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      border: Border.all(color: colors.border, style: BorderStyle.solid),
+                      border: Border.all(color: colors.border),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Center(
@@ -80,8 +80,8 @@ class _FormsUploadsPageContentState extends ConsumerState<FormsUploadsPageConten
                     title: Text(doc),
                     trailing: IconButton(icon: const Icon(Icons.delete_outline), onPressed: () {
                       setState(() => _uploadedDocs.remove(doc));
-                    }),
-                  )),
+                    },),
+                  ),),
                 ],
               ),
             ),

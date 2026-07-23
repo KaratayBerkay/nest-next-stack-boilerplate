@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart' hide Badge;
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/badge/badge.dart';
+import '../../../constants/theme.dart';
 
 class InvoiceTable extends StatelessWidget {
   final List<Map<String, dynamic>> invoices;
@@ -32,7 +32,7 @@ class InvoiceTable extends StatelessWidget {
           variant: inv['status'] == 'paid' ? BadgeVariant.success : BadgeVariant.warning,
         ),
         onTap: inv['pdfUrl'] != null ? () {} : null,
-      )).toList(),
+      ),).toList(),
     );
   }
 }

@@ -34,7 +34,7 @@ class _InputOtpDemoPageState extends State<InputOtpDemoPage> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Center(child: Text(_code[i], style: const TextStyle(fontSize: 24))),
-                )),
+                ),),
               ),
             ],
           ),

@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../api/client/posts/query.dart';
-import '../../../constants/theme.dart';
-import '../../../types/feed/post.dart';
 import 'post_detail_base_view.dart';
 
 class MediumPostDetailPage extends ConsumerWidget {
@@ -29,8 +27,6 @@ class MediumPostDetailPage extends ConsumerWidget {
         post: post,
         lang: lang,
         showReactions: true,
-        showEdit: false,
-        showWhoReacted: false,
       ),
     );
   }

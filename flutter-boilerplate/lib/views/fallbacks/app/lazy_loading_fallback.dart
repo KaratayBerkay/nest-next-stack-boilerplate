@@ -16,7 +16,6 @@ class LazyLoadingFallback extends StatelessWidget {
       baseColor: colors.surfaceHover,
       highlightColor: colors.surfaceAlt,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 80),

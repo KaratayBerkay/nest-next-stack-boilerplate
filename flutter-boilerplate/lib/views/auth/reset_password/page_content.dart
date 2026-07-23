@@ -29,6 +29,7 @@ class _ResetPasswordPageContentState extends ConsumerState<ResetPasswordPageCont
     setState(() => _loading = true);
     try {
       await ref.read(resetPasswordServerProvider).call(_tokenCtrl.text, _passwordCtrl.text);
+      if (!context.mounted) return;
       setState(() => _done = true);
       showToast(context, 'Password reset successfully');
     } catch (e) {

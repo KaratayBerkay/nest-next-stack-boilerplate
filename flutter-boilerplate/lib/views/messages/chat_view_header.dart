@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../constants/theme.dart';
-import '../../components/ui/avatar/avatar.dart';
 import '../../api/client/messages/query.dart';
+import '../../components/ui/avatar/avatar.dart';
+import '../../constants/theme.dart';
 
 class ChatViewHeader extends ConsumerWidget {
   final String conversationId;

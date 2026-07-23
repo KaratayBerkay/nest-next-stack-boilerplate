@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../api/server/users/search.dart';
 import '../../components/ui/avatar/avatar.dart';
-import '../../constants/theme.dart';
-
 class UserSearchCard extends StatelessWidget {
   final UserSearchResult user;
   final VoidCallback? onAdd;
@@ -18,14 +16,11 @@ class UserSearchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-
     return Card(
       child: ListTile(
         leading: Avatar(
           name: user.name,
           imageUrl: user.avatarUrl,
-          radius: 20,
         ),
         title: Text(user.name),
         trailing: onAdd != null

@@ -1,5 +1,3 @@
-import 'dart:math';
-
 String formatPostContent(String text, int maxLines) {
   final lines = text.split('\n');
   if (lines.length <= maxLines) return text;

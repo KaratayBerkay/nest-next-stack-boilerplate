@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/components/ui/alert_dialog/alert_dialog.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_boilerplate/components/ui/alert_dialog/alert_dialog.dart';
 import '../../test_helpers.dart';
 
 void main() {
@@ -15,8 +15,8 @@ void main() {
           confirmText: 'Proceed',
         ),
         child: const Text('Show'),
-      )),
-    ));
+      ),),
+    ),);
 
     await tester.tap(find.text('Show'));
     await tester.pumpAndSettle();

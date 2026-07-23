@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../api/client/posts/query.dart';
-import '../../components/feed/post_card.dart';
-import '../../components/ui/spinner/spinner.dart';
 import '../../components/ui/empty/empty.dart';
+import '../../components/ui/spinner/spinner.dart';
 import '../../types/feed/post.dart';
 
 class FeedBaseView extends ConsumerWidget {

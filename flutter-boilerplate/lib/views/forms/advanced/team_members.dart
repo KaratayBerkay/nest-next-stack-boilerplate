@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/form_text_field.dart';
+import '../../../constants/theme.dart';
 import '../../../validators/auth/schema.dart' as auth;
 
 class TeamMembers extends StatefulWidget {
@@ -50,7 +50,7 @@ class _TeamMembersState extends State<TeamMembers> {
                 ),
             ],
           ),
-        )),
+        ),),
         TextButton.icon(
           icon: const Icon(Icons.add, size: 18),
           label: const Text('Add Member'),

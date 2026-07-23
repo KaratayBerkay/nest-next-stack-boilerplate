@@ -11,33 +11,33 @@ class AvatarDemoPage extends StatelessWidget {
       appBar: AppBar(title: const Text('Avatar')),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: [
-          const Text('Sizes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
+        children: const [
+          Text('Sizes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
           Wrap(
             spacing: 12,
             runSpacing: 12,
-            children: const [
+            children: [
               Avatar(name: 'Alice', radius: 12),
               Avatar(name: 'Bob', radius: 16),
-              Avatar(name: 'Charlie', radius: 20),
+              Avatar(name: 'Charlie'),
               Avatar(name: 'Diana', radius: 24),
               Avatar(name: 'Eve', radius: 32),
             ],
           ),
-          const SizedBox(height: 24),
-          const Text('With Image', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          const Avatar(name: 'User', radius: 24),
-          const SizedBox(height: 24),
-          const Text('Initials Fallback', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
+          SizedBox(height: 24),
+          Text('With Image', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
+          Avatar(name: 'User', radius: 24),
+          SizedBox(height: 24),
+          Text('Initials Fallback', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
           Wrap(
             spacing: 12,
-            children: const [
-              Avatar(name: 'John Doe', radius: 20),
-              Avatar(name: 'Jane Smith', radius: 20),
-              Avatar(name: 'AI', radius: 20),
+            children: [
+              Avatar(name: 'John Doe'),
+              Avatar(name: 'Jane Smith'),
+              Avatar(name: 'AI'),
             ],
           ),
         ],

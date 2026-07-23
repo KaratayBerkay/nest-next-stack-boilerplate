@@ -12,7 +12,7 @@ class ContextMenuDemoPage extends StatelessWidget {
         child: GestureDetector(
           onLongPress: () => showMenu(
             context: context,
-            position: RelativeRect.fromLTRB(100, 300, 100, 300),
+            position: const RelativeRect.fromLTRB(100, 300, 100, 300),
             items: [
               const PopupMenuItem(value: 'edit', child: Text('Edit')),
               const PopupMenuItem(value: 'copy', child: Text('Copy')),

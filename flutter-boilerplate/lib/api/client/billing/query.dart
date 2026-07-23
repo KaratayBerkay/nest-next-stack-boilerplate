@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../server/billing/subscription.dart';
 import '../../server/billing/history.dart';
 import '../../server/billing/payment_methods.dart';
+import '../../server/billing/subscription.dart';
 
 final subscriptionProvider = FutureProvider<SubscriptionInfo>((ref) async {
   final server = ref.read(subscriptionServerProvider);

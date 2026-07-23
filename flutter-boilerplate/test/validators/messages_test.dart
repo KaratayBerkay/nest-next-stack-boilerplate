@@ -1,6 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
-
 import 'package:flutter_boilerplate/validators/messages/schema.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('validateMessage', () {

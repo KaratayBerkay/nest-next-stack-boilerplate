@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../api/client/api_keys/query.dart';
 import '../../../api/client/api_keys/actions.dart';
+import '../../../api/client/api_keys/query.dart';
 import '../../../components/ui/toast/toast.dart';
 
 final apiKeyHandlersProvider = Provider((ref) {

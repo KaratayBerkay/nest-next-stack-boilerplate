@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../constants/theme.dart';
-import '../../../api/client/sessions/query.dart';
 import '../../../api/client/sessions/actions.dart';
+import '../../../api/client/sessions/query.dart';
 import '../../../components/ui/toast/toast.dart';
+import '../../../constants/theme.dart';
 
 class BasicSettingsSessionsPage extends ConsumerWidget {
   final String lang;
@@ -33,7 +33,7 @@ class BasicSettingsSessionsPage extends ConsumerWidget {
                 ),
                 title: Text(s.device),
                 subtitle: Text('${s.location} · ${s.lastActive}',
-                    style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+                    style: TextStyle(color: colors.fgMuted, fontSize: 12),),
                 trailing: s.isCurrent
                     ? Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -42,7 +42,7 @@ class BasicSettingsSessionsPage extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text('Current',
-                            style: TextStyle(fontSize: 11, color: colors.success)),
+                            style: TextStyle(fontSize: 11, color: colors.success),),
                       )
                     : TextButton(
                         onPressed: () async {
@@ -58,7 +58,7 @@ class BasicSettingsSessionsPage extends ConsumerWidget {
                       ),
               ),
             ),
-          )).toList(),
+          ),).toList(),
         ),
       ),
     );

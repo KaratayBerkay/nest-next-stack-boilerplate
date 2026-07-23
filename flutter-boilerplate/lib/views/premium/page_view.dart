@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_boilerplate/lib/tier_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../lib/tier_view.dart';
-import '../../constants/theme.dart';
 import '../../api/client/premium/query.dart';
+import '../../constants/theme.dart';
 
 class PremiumPageContent extends ConsumerWidget {
   final String lang;
@@ -13,11 +13,11 @@ class PremiumPageContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return TierGate(
-      freeWidget: const _FreePremiumView(),
-      basicWidget: const _BasicPremiumView(),
-      mediumWidget: const _MediumPremiumView(),
-      premiumWidget: const _PremiumPremiumView(),
+    return const TierGate(
+      freeWidget: _FreePremiumView(),
+      basicWidget: _BasicPremiumView(),
+      mediumWidget: _MediumPremiumView(),
+      premiumWidget: _PremiumPremiumView(),
     );
   }
 }

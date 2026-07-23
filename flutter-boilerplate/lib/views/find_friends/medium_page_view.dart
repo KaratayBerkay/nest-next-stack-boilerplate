@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/client/friends/query.dart';
-import '../../api/server/friends/suggested.dart';
-import '../../components/ui/spinner/spinner.dart';
 import '../../components/ui/empty/empty.dart';
-import '../../constants/theme.dart';
+import '../../components/ui/spinner/spinner.dart';
 import 'medium_find_friends_content.dart';
 
 class MediumFindFriendsPage extends ConsumerWidget {

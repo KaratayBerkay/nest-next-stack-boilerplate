@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/form_text_field.dart';
-import '../../../validators/forms/schema.dart' as forms;
 import '../../../validators/billing/schema.dart' as billing;
+import '../../../validators/forms/schema.dart' as forms;
 
 class FormsBillingPageContent extends ConsumerStatefulWidget {
   final String lang;
@@ -74,14 +74,14 @@ class _FormsBillingPageContentState extends ConsumerState<FormsBillingPageConten
             ),
           ),
           const SizedBox(height: 16),
-          Card(
+          const Card(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Billing Summary', style: TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 8),
+                  Text('Billing Summary', style: TextStyle(fontWeight: FontWeight.w600)),
+                  SizedBox(height: 8),
                   _BillingRow(label: 'Current Plan', value: 'Premium'),
                   _BillingRow(label: 'Next Billing', value: 'Apr 15, 2026'),
                   _BillingRow(label: 'Amount', value: '\$29.99/mo'),

@@ -11,12 +11,12 @@ class FindFriendsFallback extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          const Skeleton(width: double.infinity, height: 40),
+          const Skeleton(height: 40),
           const SizedBox(height: 16),
           ...List.generate(5, (_) => const Padding(
             padding: EdgeInsets.only(bottom: 12),
             child: SkeletonCard(lines: 2),
-          )),
+          ),),
         ],
       ),
     );

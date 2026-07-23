@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/input/input.dart';
+import '../../../constants/theme.dart';
 
 class InputPageContent extends StatefulWidget {
   final String lang;

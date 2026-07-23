@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart' hide Badge;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../constants/theme.dart';
+import '../../../api/client/billing/actions.dart';
+import '../../../api/client/billing/query.dart';
 import '../../../components/ui/badge/badge.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/card/card.dart';
 import '../../../components/ui/card/card_content.dart';
 import '../../../components/ui/card/card_header.dart';
-import '../../../api/client/billing/query.dart';
-import '../../../api/client/billing/actions.dart';
+import '../../../constants/theme.dart';
 
 class PremiumSettingsBillingPage extends ConsumerWidget {
   final String lang;
@@ -40,7 +40,7 @@ class PremiumSettingsBillingPage extends ConsumerWidget {
                         Row(
                           children: [
                             Text(sub.plan.toUpperCase(),
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
                             const SizedBox(width: 8),
                             Badge(
                               text: sub.status == 'active' ? 'Active' : sub.status,
@@ -51,12 +51,12 @@ class PremiumSettingsBillingPage extends ConsumerWidget {
                         const SizedBox(height: 8),
                         if (sub.currentPeriodEnd != null)
                           Text('Renewal date: ${sub.currentPeriodEnd!.toLocal().toString().split(' ')[0]}',
-                              style: TextStyle(color: colors.fgMuted, fontSize: 13)),
+                              style: TextStyle(color: colors.fgMuted, fontSize: 13),),
                         if (sub.cancelAtPeriodEnd)
                           Padding(
                             padding: const EdgeInsets.only(top: 8),
                             child: Text('Cancels at period end',
-                                style: TextStyle(color: colors.warning, fontSize: 13)),
+                                style: TextStyle(color: colors.warning, fontSize: 13),),
                           ),
                         const SizedBox(height: 12),
                         if (!sub.cancelAtPeriodEnd)
@@ -97,7 +97,7 @@ class PremiumSettingsBillingPage extends ConsumerWidget {
                     child: Column(
                       children: [
                         Text('Full invoice history available.',
-                            style: TextStyle(color: colors.fgMuted)),
+                            style: TextStyle(color: colors.fgMuted),),
                         const SizedBox(height: 8),
                         Button(
                           variant: ButtonVariant.ghost,

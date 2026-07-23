@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/button/button.dart';
+import '../../../constants/theme.dart';
 
 class InvoicePagination extends StatelessWidget {
   final int currentPage;
@@ -29,8 +29,8 @@ class InvoicePagination extends StatelessWidget {
         Button(
           variant: ButtonVariant.outline,
           size: ButtonSize.sm,
-          child: const Text('Previous'),
           onPressed: currentPage > 1 ? onPrevious : null,
+          child: const Text('Previous'),
         ),
         const SizedBox(width: 16),
         Text(
@@ -41,8 +41,8 @@ class InvoicePagination extends StatelessWidget {
         Button(
           variant: ButtonVariant.outline,
           size: ButtonSize.sm,
-          child: const Text('Next'),
           onPressed: currentPage < totalPages ? onNext : null,
+          child: const Text('Next'),
         ),
       ],
     );

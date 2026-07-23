@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/button/button.dart';
+import '../../../constants/theme.dart';
 
 class DocumentItem {
   final String id;
@@ -34,7 +34,7 @@ class DocumentUploadSection extends StatefulWidget {
 }
 
 class _DocumentUploadSectionState extends State<DocumentUploadSection> {
-  bool _isDragging = false;
+  final bool _isDragging = false;
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +56,6 @@ class _DocumentUploadSectionState extends State<DocumentUploadSection> {
                   color: _isDragging ? colors.surfaceHover : null,
                   border: Border.all(
                     color: _isDragging ? colors.brand : colors.border,
-                    style: BorderStyle.solid,
                   ),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -70,8 +69,8 @@ class _DocumentUploadSectionState extends State<DocumentUploadSection> {
                       Button(
                         variant: ButtonVariant.outline,
                         size: ButtonSize.sm,
-                        child: const Text('Browse Files'),
                         onPressed: widget.onBrowse,
+                        child: const Text('Browse Files'),
                       ),
                     ],
                   ),
@@ -89,7 +88,7 @@ class _DocumentUploadSectionState extends State<DocumentUploadSection> {
                   onPressed: () => widget.onDelete?.call(doc.id),
                 ),
                 dense: true,
-              )),
+              ),),
             ],
           ],
         ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/tier_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../lib/tier_view.dart';
 import '../../../constants/theme.dart';
 
 class SettingsPrivacyPageContent extends ConsumerWidget {
@@ -45,7 +45,7 @@ class _PrivacySettingsState extends State<_PrivacySettings> {
                 SwitchListTile(
                   title: const Text('Online Status'),
                   subtitle: Text('Show when you\'re online',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
                   value: _showOnlineStatus,
                   onChanged: (v) => setState(() => _showOnlineStatus = v),
                 ),
@@ -53,7 +53,7 @@ class _PrivacySettingsState extends State<_PrivacySettings> {
                 SwitchListTile(
                   title: const Text('Read Receipts'),
                   subtitle: Text('Let others know you\'ve read their messages',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
                   value: _showReadReceipts,
                   onChanged: (v) => setState(() => _showReadReceipts = v),
                 ),
@@ -61,7 +61,7 @@ class _PrivacySettingsState extends State<_PrivacySettings> {
                 SwitchListTile(
                   title: const Text('Friend Requests'),
                   subtitle: Text('Allow anyone to send you friend requests',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
                   value: _allowFriendRequests,
                   onChanged: (v) => setState(() => _allowFriendRequests = v),
                 ),

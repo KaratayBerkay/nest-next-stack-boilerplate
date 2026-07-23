@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../server/friends/suggested.dart';
-import '../../server/messages/friends.dart';
 import '../../server/messages/friend_requests.dart';
+import '../../server/messages/friends.dart';
 
 final suggestedFriendsProvider = FutureProvider((ref) async {
   final server = ref.read(suggestedFriendsServerProvider);

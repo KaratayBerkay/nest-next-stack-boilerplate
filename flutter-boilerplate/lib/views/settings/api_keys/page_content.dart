@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../constants/theme.dart';
-import '../../../api/client/api_keys/query.dart';
 import '../../../api/client/api_keys/actions.dart';
-import '../../../components/ui/toast/toast.dart';
+import '../../../api/client/api_keys/query.dart';
 import '../../../components/ui/button/button.dart';
+import '../../../components/ui/toast/toast.dart';
+import '../../../constants/theme.dart';
 
 class SettingsApiKeysPageContent extends ConsumerWidget {
   final String lang;
@@ -64,7 +64,7 @@ class SettingsApiKeysPageContent extends ConsumerWidget {
                               children: [
                                 Text(k.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                                 Text('${k.prefix}••••••••••••••••',
-                                    style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+                                    style: TextStyle(color: colors.fgMuted, fontSize: 12),),
                               ],
                             ),
                           ),
@@ -84,15 +84,15 @@ class SettingsApiKeysPageContent extends ConsumerWidget {
                       ),
                       const SizedBox(height: 8),
                       Text('Created: ${k.createdAt.toLocal().toString().split(' ')[0]}',
-                          style: TextStyle(color: colors.fgMuted, fontSize: 11)),
+                          style: TextStyle(color: colors.fgMuted, fontSize: 11),),
                       if (k.lastUsedAt != null)
                         Text('Last used: ${k.lastUsedAt!.toLocal().toString().split(' ')[0]}',
-                            style: TextStyle(color: colors.fgMuted, fontSize: 11)),
+                            style: TextStyle(color: colors.fgMuted, fontSize: 11),),
                     ],
                   ),
                 ),
               ),
-            )).toList(),
+            ),).toList(),
           );
         },
       ),

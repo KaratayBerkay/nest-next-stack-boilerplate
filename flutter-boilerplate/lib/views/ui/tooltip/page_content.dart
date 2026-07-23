@@ -11,10 +11,10 @@ class TooltipDemoPage extends StatelessWidget {
       appBar: AppBar(title: const Text('Tooltip')),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: [
-          const Text('Tooltips', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
-          const Wrap(
+        children: const [
+          Text('Tooltips', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          SizedBox(height: 12),
+          Wrap(
             spacing: 24,
             runSpacing: 16,
             children: [

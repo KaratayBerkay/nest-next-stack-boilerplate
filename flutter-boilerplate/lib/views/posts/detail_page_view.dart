@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/tier_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../lib/tier_view.dart';
-import '../../constants/theme.dart';
-import '../../api/client/posts/query.dart';
 import '../../api/client/posts/actions.dart';
+import '../../api/client/posts/query.dart';
 import '../../components/ui/avatar/avatar.dart';
+import '../../constants/theme.dart';
 
 class PostDetailPageContent extends ConsumerWidget {
   final String lang;
@@ -55,7 +55,7 @@ class _PostDetailView extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                      Avatar(name: post.authorName, radius: 20),
+                      Avatar(name: post.authorName),
                       const SizedBox(width: 8),
                       Text(post.authorName, style: const TextStyle(fontWeight: FontWeight.w600)),
                     ],
@@ -104,7 +104,7 @@ class _PostDetailView extends ConsumerWidget {
                                   ),
                                 ],
                               ),
-                            )).toList()),
+                            ),).toList(),),
                   ),
                 ],
               ),

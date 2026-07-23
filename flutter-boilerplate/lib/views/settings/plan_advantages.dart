@@ -30,7 +30,7 @@ class PlanAdvantages extends StatelessWidget {
             ),
           ],
         ),
-      )).toList(),
+      ),).toList(),
     );
   }
 }

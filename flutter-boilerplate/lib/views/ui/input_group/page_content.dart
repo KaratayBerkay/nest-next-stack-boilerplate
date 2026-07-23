@@ -29,12 +29,12 @@ class InputGroupDemoPage extends StatelessWidget {
                         ),
                         child: const Text('\$'),
                       ),
-                      Expanded(
+                      const Expanded(
                         child: TextField(
                           decoration: InputDecoration(
-                            border: const OutlineInputBorder(),
+                            border: OutlineInputBorder(),
                             labelText: 'Amount',
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12),
                           ),
                         ),
                       ),

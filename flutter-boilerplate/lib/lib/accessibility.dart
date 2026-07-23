@@ -67,6 +67,6 @@ class A {
   }
 
   static double scale(double size, BuildContext context) {
-    return size * MediaQuery.textScaleFactorOf(context);
+    return MediaQuery.textScalerOf(context).scale(size);
   }
 }

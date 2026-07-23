@@ -23,7 +23,7 @@ class _DynamicAsyncExampleState extends State<DynamicAsyncExample> {
       return;
     }
     setState(() => _checking = true);
-    await Future.delayed(const Duration(milliseconds: 800));
+    await Future<void>.delayed(const Duration(milliseconds: 800));
     if (!mounted) return;
     final taken = ['admin', 'user', 'test'].contains(value.toLowerCase());
     setState(() {
@@ -55,7 +55,7 @@ class _DynamicAsyncExampleState extends State<DynamicAsyncExample> {
         ),
         const SizedBox(height: 8),
         Text(_checking ? 'Checking availability...' : (_usernameError ?? 'Type a username (try admin)'),
-          style: TextStyle(fontSize: 12, color: _usernameError != null ? Colors.red : Colors.grey)),
+          style: TextStyle(fontSize: 12, color: _usernameError != null ? Colors.red : Colors.grey),),
       ],
     );
   }

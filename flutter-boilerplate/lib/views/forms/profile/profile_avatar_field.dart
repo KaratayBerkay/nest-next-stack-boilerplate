@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../constants/theme.dart';
-import '../../../components/ui/button/button.dart';
 import '../../../components/ui/avatar/avatar.dart';
+import '../../../components/ui/button/button.dart';
 
 class ProfileAvatarField extends StatelessWidget {
   final String? name;
@@ -28,8 +27,8 @@ class ProfileAvatarField extends StatelessWidget {
           Button(
             variant: ButtonVariant.ghost,
             size: ButtonSize.sm,
-            child: const Text('Change Avatar'),
             onPressed: onChange,
+            child: const Text('Change Avatar'),
           ),
         ],
       ),

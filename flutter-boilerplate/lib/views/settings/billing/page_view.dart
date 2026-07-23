@@ -2,15 +2,15 @@ import 'package:flutter/material.dart' hide Badge;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../constants/theme.dart';
+import '../../../api/client/billing/actions.dart';
+import '../../../api/client/billing/query.dart';
+import '../../../api/server/billing/subscription.dart';
 import '../../../components/ui/badge/badge.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/card/card.dart';
 import '../../../components/ui/card/card_content.dart';
 import '../../../components/ui/card/card_header.dart';
-import '../../../api/server/billing/subscription.dart';
-import '../../../api/client/billing/query.dart';
-import '../../../api/client/billing/actions.dart';
+import '../../../constants/theme.dart';
 
 class SettingsBillingPageContent extends ConsumerWidget {
   final String lang;
@@ -80,7 +80,7 @@ class _SubscriptionCard extends ConsumerWidget {
                 const SizedBox(height: 8),
                 if (sub.currentPeriodEnd != null)
                   Text('Renewal date: ${sub.currentPeriodEnd!.toLocal().toString().split(' ')[0]}',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 13)),
+                      style: TextStyle(color: colors.fgMuted, fontSize: 13),),
                 if (sub.cancelAtPeriodEnd)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
@@ -153,8 +153,8 @@ class _PaymentMethodsSection extends ConsumerWidget {
                     leading: Icon(Icons.credit_card, color: colors.brand),
                     title: Text('${pm.brand} •••• ${pm.last4}'),
                     subtitle: Text('Expires ${pm.expMonth}/${pm.expYear}'),
-                    trailing: pm.isDefault ? Badge(text: 'Default', variant: BadgeVariant.success) : null,
-                  )).toList(),
+                    trailing: pm.isDefault ? const Badge(text: 'Default', variant: BadgeVariant.success) : null,
+                  ),).toList(),
                 );
               },
             ),
@@ -194,7 +194,7 @@ class _InvoiceHistorySection extends ConsumerWidget {
                       variant: inv.status == 'paid' ? BadgeVariant.success : BadgeVariant.warning,
                     ),
                     onTap: inv.pdfUrl != null ? () {} : null,
-                  )).toList(),
+                  ),).toList(),
                 );
               },
             ),
@@ -227,7 +227,7 @@ class _FreeBillingView extends StatelessWidget {
               const Text('No billing info yet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Text('Upgrade to a paid plan to see billing details.',
-                  style: TextStyle(color: colors.fgMuted)),
+                  style: TextStyle(color: colors.fgMuted),),
               const SizedBox(height: 24),
               Button(
                 child: const Text('View Plans'),

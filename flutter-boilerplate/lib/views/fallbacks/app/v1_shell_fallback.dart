@@ -52,7 +52,7 @@ class V1ShellFallback extends StatelessWidget {
               children: List.generate(
                 8,
                 (i) => Padding(
-                  padding: EdgeInsets.only(bottom: 20),
+                  padding: const EdgeInsets.only(bottom: 20),
                   child: Row(
                     children: [
                       Container(
@@ -64,7 +64,7 @@ class V1ShellFallback extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      Container(
+                      const SizedBox(
                         width: 120,
                         height: 14,
                       ),
@@ -74,15 +74,15 @@ class V1ShellFallback extends StatelessWidget {
               ),
             ),
           ),
-          Expanded(
+          const Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(width: 200, height: 24),
-                  const SizedBox(height: 32),
-                  Container(width: double.infinity, height: 200),
+                  SizedBox(width: 200, height: 24),
+                  SizedBox(height: 32),
+                  SizedBox(width: double.infinity, height: 200),
                 ],
               ),
             ),

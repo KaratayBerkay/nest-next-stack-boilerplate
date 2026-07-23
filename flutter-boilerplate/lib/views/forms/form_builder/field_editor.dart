@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../components/ui/input/input.dart';
 import '../../../components/ui/button/button.dart';
+import '../../../components/ui/input/input.dart';
 import 'form_builder_utils.dart';
 
 class FieldEditor extends StatefulWidget {
@@ -96,8 +96,8 @@ class _FieldEditorState extends State<FieldEditor> {
               children: [
                 Button(
                   variant: ButtonVariant.ghost,
-                  child: const Text('Delete'),
                   onPressed: widget.onDelete,
+                  child: const Text('Delete'),
                 ),
                 const SizedBox(width: 8),
                 Button(
@@ -108,7 +108,7 @@ class _FieldEditorState extends State<FieldEditor> {
                       type: _type,
                       required: _required,
                       hint: _hintCtrl.text.isNotEmpty ? _hintCtrl.text : null,
-                    ));
+                    ),);
                   },
                 ),
               ],

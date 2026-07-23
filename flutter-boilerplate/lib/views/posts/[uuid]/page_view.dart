@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/tier_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../lib/tier_view.dart';
-import '../../../constants/theme.dart';
 import '../../../api/client/posts/query.dart';
-import '../../../api/client/posts/actions.dart';
-import '../../../types/feed/post.dart';
-import 'free_page_view.dart';
 import 'basic_page_view.dart';
+import 'free_page_view.dart';
 import 'medium_page_view.dart';
 import 'premium_page_view.dart';
 

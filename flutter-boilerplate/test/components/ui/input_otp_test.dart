@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/components/ui/input_otp/input_otp.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_boilerplate/components/ui/input_otp/input_otp.dart';
 import '../../test_helpers.dart';
 
 void main() {
   testWidgets('InputOtp renders digit fields', (tester) async {
     await pumpTestApp(
       tester,
-      const InputOtp(length: 6),
+      const InputOtp(),
     );
 
     expect(find.byType(TextField), findsNWidgets(6));

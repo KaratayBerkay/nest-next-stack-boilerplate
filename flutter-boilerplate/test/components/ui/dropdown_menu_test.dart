@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/components/ui/dropdown_menu/dropdown_menu.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_boilerplate/components/ui/dropdown_menu/dropdown_menu.dart';
 import '../../test_helpers.dart';
 
 void main() {
@@ -9,8 +9,8 @@ void main() {
     await pumpTestApp(
       tester,
       const DropdownMenuList(
-        child: Text('Open menu'),
         items: [],
+        child: Text('Open menu'),
       ),
     );
     expect(find.text('Open menu'), findsOneWidget);
@@ -19,24 +19,24 @@ void main() {
   testWidgets('renders dropdown items', (tester) async {
     await pumpTestApp(
       tester,
-      DropdownMenuList(
-        child: const Text('Open'),
+      const DropdownMenuList(
         items: [
-          DropdownMenuItemWidget(label: 'Profile'),
-          DropdownMenuItemWidget(label: 'Settings'),
+          PopupMenuItem(value: 'profile', child: Text('Profile')),
+          PopupMenuItem(value: 'settings', child: Text('Settings')),
         ],
+        child: Text('Open'),
       ),
     );
     expect(find.text('Open'), findsOneWidget);
   });
 
-  testWidgets('renders DropdownMenuSeparator', (tester) async {
-    await pumpTestApp(tester, const DropdownMenuSeparator());
-    expect(find.byType(DropdownMenuSeparator), findsOneWidget);
+  testWidgets('renders PopupMenuDivider', (tester) async {
+    await pumpTestApp(tester, const PopupMenuDivider());
+    expect(find.byType(PopupMenuDivider), findsOneWidget);
   });
 
-  testWidgets('DropdownMenuLabel has correct label', (tester) async {
-    final label = DropdownMenuLabel(label: 'Actions');
-    expect(label.label, 'Actions');
+  testWidgets('PopupMenuItem has correct child', (tester) async {
+    const item = PopupMenuItem(value: 'action', child: Text('Action'));
+    expect((item.child as Text).data, 'Action');
   });
 }

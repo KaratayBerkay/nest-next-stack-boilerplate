@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/container.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../lib/container.dart';
-import 'chat_view_header.dart';
-import 'chat_message_list.dart';
 import 'chat_input_bar.dart';
+import 'chat_message_list.dart';
+import 'chat_view_header.dart';
 
 class ChatView extends ConsumerWidget {
   final String conversationId;

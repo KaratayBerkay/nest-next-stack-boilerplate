@@ -1,6 +1,6 @@
+import 'package:flutter_boilerplate/components/ui/toggle_group/toggle_group.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_boilerplate/components/ui/toggle_group/toggle_group.dart';
 import '../../test_helpers.dart';
 
 void main() {
@@ -23,8 +23,8 @@ void main() {
     await pumpTestApp(
       tester,
       ToggleGroup(
-        options: ['A', 'B'],
-        selectedIndexes: [],
+        options: const ['A', 'B'],
+        selectedIndexes: const [],
         onChanged: (v) => result = v,
       ),
     );

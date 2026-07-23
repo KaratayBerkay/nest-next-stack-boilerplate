@@ -11,15 +11,15 @@ class SwitchDemoPage extends StatelessWidget {
       appBar: AppBar(title: const Text('Switch')),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: [
+        children: const [
           Card(
             child: Column(
               children: [
-                const SwitchWidget(value: true, label: 'Notifications'),
-                const Divider(height: 1),
-                const SwitchWidget(value: false, label: 'Dark Mode'),
-                const Divider(height: 1),
-                const SwitchWidget(value: true, label: 'Sound'),
+                SwitchWidget(value: true, label: 'Notifications'),
+                Divider(height: 1),
+                SwitchWidget(value: false, label: 'Dark Mode'),
+                Divider(height: 1),
+                SwitchWidget(value: true, label: 'Sound'),
               ],
             ),
           ),

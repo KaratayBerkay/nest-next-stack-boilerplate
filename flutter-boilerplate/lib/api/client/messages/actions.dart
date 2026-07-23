@@ -1,11 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../server/messages/send_message.dart';
-import '../../server/messages/mark_read.dart';
-
 import '../../server/messages/accept_friend_request.dart';
 import '../../server/messages/decline_friend_request.dart';
+import '../../server/messages/mark_read.dart';
 import '../../server/messages/send_friend_request.dart';
+import '../../server/messages/send_message.dart';
 
 final messageActionsProvider = Provider((ref) => MessageActions(ref));
 

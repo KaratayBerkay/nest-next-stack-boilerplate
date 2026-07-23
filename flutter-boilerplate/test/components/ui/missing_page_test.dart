@@ -1,6 +1,6 @@
+import 'package:flutter_boilerplate/views/v1/missing_page.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_boilerplate/views/v1/missing_page.dart';
 import '../../test_helpers.dart';
 
 void main() {

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../constants/theme.dart';
-import '../../../components/ui/button/button.dart';
 
 class ApiKeyItem {
   final String id;
@@ -65,7 +64,7 @@ class ApiKeyList extends StatelessWidget {
                 ],
               ),
             ),
-          )),
+          ),),
       ],
     );
   }

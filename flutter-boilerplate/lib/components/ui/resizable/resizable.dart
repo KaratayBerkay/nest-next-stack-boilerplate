@@ -36,7 +36,7 @@ class _ResizablePanelState extends State<ResizablePanel> {
     if (widget.direction == Axis.horizontal) {
       return LayoutBuilder(
         builder: (context, constraints) {
-          final dividerWidth = 4.0;
+          const dividerWidth = 4.0;
           final availableWidth = constraints.maxWidth - dividerWidth;
           return Row(
             children: [

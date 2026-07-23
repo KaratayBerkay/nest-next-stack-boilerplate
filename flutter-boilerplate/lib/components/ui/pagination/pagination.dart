@@ -26,7 +26,7 @@ class PaginationWidget extends StatelessWidget {
         if (showFirstLast)
           _buildButton(context, Icons.first_page, 0, currentPage == 0, colors),
         _buildButton(context, Icons.chevron_left, currentPage - 1,
-            currentPage == 0, colors),
+            currentPage == 0, colors,),
         ...List.generate(totalPages, (i) {
           final isActive = i == currentPage;
           return Container(
@@ -55,16 +55,16 @@ class PaginationWidget extends StatelessWidget {
           );
         }),
         _buildButton(context, Icons.chevron_right, currentPage + 1,
-            currentPage >= totalPages - 1, colors),
+            currentPage >= totalPages - 1, colors,),
         if (showFirstLast)
           _buildButton(context, Icons.last_page, totalPages - 1,
-              currentPage >= totalPages - 1, colors),
+              currentPage >= totalPages - 1, colors,),
       ],
     );
   }
 
   Widget _buildButton(
-      BuildContext context, IconData icon, int page, bool disabled, AppColors colors) {
+      BuildContext context, IconData icon, int page, bool disabled, AppColors colors,) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 2),
       child: IconButton(

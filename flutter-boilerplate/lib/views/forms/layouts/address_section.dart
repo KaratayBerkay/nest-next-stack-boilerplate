@@ -7,24 +7,24 @@ class AddressSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Address', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-        const SizedBox(height: 8),
-        const Input(label: 'Street Address'),
-        const SizedBox(height: 8),
-        const Input(label: 'Apt, Suite, etc.'),
-        const SizedBox(height: 8),
-        const Row(
+        Text('Address', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+        SizedBox(height: 8),
+        Input(label: 'Street Address'),
+        SizedBox(height: 8),
+        Input(label: 'Apt, Suite, etc.'),
+        SizedBox(height: 8),
+        Row(
           children: [
             Expanded(child: Input(label: 'City')),
             SizedBox(width: 12),
             Expanded(child: Input(label: 'State')),
           ],
         ),
-        const SizedBox(height: 8),
-        const Row(
+        SizedBox(height: 8),
+        Row(
           children: [
             Expanded(flex: 2, child: Input(label: 'Country')),
             SizedBox(width: 12),

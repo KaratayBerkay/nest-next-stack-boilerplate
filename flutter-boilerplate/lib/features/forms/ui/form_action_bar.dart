@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/button/button.dart';
+import '../../../constants/theme.dart';
 
 class FormActionBar extends StatelessWidget {
   final VoidCallback? onCancel;
@@ -52,7 +52,6 @@ class FormActionBar extends StatelessWidget {
               ),
             ),
           Button(
-            variant: ButtonVariant.primary,
             loading: isSubmitting,
             onPressed: onSubmit,
             child: Text(submitLabel),

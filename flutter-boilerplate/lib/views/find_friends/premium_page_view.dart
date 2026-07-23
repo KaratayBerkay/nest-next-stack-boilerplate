@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../api/client/friends/actions.dart';
 import '../../api/client/friends/query.dart';
@@ -8,16 +7,13 @@ import '../../api/client/users/search.dart';
 import '../../api/server/friends/suggested.dart';
 import '../../api/server/messages/friend_requests.dart';
 import '../../api/server/users/search.dart';
-import '../../components/ui/spinner/spinner.dart';
 import '../../components/ui/empty/empty.dart';
-import '../../components/ui/avatar/avatar.dart';
+import '../../components/ui/spinner/spinner.dart';
 import '../../constants/theme.dart';
-import 'suggested_friends_panel.dart';
-import 'user_search_card.dart';
 import 'pending_request_card.dart';
-import 'pagination_bar.dart';
+import 'suggested_friends_panel.dart';
 import 'use_friend_search.dart';
-import 'search_utils.dart';
+import 'user_search_card.dart';
 
 class PremiumFindFriendsPage extends ConsumerWidget {
   final String lang;
@@ -99,7 +95,7 @@ class PremiumFindFriendsPage extends ConsumerWidget {
             color: colors.fgMuted,
             fontWeight: FontWeight.w600,
             fontSize: 13,
-          )),
+          ),),
           const SizedBox(height: 8),
           SuggestedFriendsPanel(
             suggestedAsync: suggestedAsync as AsyncValue<List<SuggestedUser>>,
@@ -155,7 +151,7 @@ class PremiumFindFriendsPage extends ConsumerWidget {
         color: colors.fgMuted,
         fontWeight: FontWeight.w600,
         fontSize: 13,
-      )),
+      ),),
       const SizedBox(height: 8),
       ...(requests as List<FriendRequest>).map((req) => Padding(
         padding: const EdgeInsets.only(bottom: 8),
@@ -164,31 +160,31 @@ class PremiumFindFriendsPage extends ConsumerWidget {
           onAccept: () => ref.read(friendActionsProvider).acceptRequest(req.id),
           onDecline: () => ref.read(friendActionsProvider).declineRequest(req.id),
         ),
-      )),
+      ),),
       const SizedBox(height: 16),
     ];
   }
 
   void _showFilterSheet(BuildContext context) {
-    showModalBottomSheet(
+    showModalBottomSheet<void>(
       context: context,
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(24),
+      builder: (_) => const Padding(
+        padding: EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Filter by', style: TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 16),
-            const ListTile(
+            Text('Filter by', style: TextStyle(fontWeight: FontWeight.w600)),
+            SizedBox(height: 16),
+            ListTile(
               leading: Icon(Icons.people),
               title: Text('Mutual friends'),
               trailing: Icon(Icons.check),
             ),
-            const ListTile(
+            ListTile(
               leading: Icon(Icons.location_on),
               title: Text('Nearby'),
             ),
-            const ListTile(
+            ListTile(
               leading: Icon(Icons.school),
               title: Text('Same interests'),
             ),

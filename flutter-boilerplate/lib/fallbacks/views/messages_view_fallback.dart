@@ -17,7 +17,7 @@ class MessagesViewFallback extends StatelessWidget {
               padding: EdgeInsets.all(12),
               child: Row(
                 children: [
-                  SkeletonCircle(radius: 20),
+                  SkeletonCircle(),
                   SizedBox(width: 12),
                   Expanded(
                     child: Column(

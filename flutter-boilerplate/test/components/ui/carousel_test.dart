@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/components/ui/carousel/carousel.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_boilerplate/components/ui/carousel/carousel.dart';
 import '../../test_helpers.dart';
 
 void main() {
@@ -12,7 +12,7 @@ void main() {
         Text('Page 1'),
         Text('Page 2'),
         Text('Page 3'),
-      ]),
+      ],),
     );
 
     expect(find.text('Page 1'), findsOneWidget);
@@ -24,7 +24,7 @@ void main() {
       const Carousel(children: [
         Text('One'),
         Text('Two'),
-      ]),
+      ],),
     );
 
     expect(find.byType(PageView), findsOneWidget);

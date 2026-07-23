@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/form_text_field.dart';
+import '../../../constants/theme.dart';
 import '../../../validators/forms/schema.dart' as forms;
 
 class ApiKeyCreateForm extends StatefulWidget {
@@ -51,8 +51,8 @@ class _ApiKeyCreateFormState extends State<ApiKeyCreateForm> {
               ),
               const SizedBox(height: 16),
               Button(
-                child: const Text('Generate Key'),
                 onPressed: widget.onGenerate,
+                child: const Text('Generate Key'),
               ),
             ],
           ),

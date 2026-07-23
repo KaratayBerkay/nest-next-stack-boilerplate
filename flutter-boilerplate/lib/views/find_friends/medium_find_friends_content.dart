@@ -5,12 +5,12 @@ import '../../api/client/friends/actions.dart';
 import '../../api/client/users/search.dart';
 import '../../api/server/friends/suggested.dart';
 import '../../api/server/users/search.dart';
-import '../../components/ui/spinner/spinner.dart';
 import '../../components/ui/empty/empty.dart';
+import '../../components/ui/spinner/spinner.dart';
 import '../../constants/theme.dart';
 import 'suggested_friends_panel.dart';
-import 'user_search_card.dart';
 import 'use_friend_search.dart';
+import 'user_search_card.dart';
 
 class MediumFindFriendsContent extends ConsumerWidget {
   final String lang;

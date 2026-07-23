@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/components/ui/button/button.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_boilerplate/components/ui/button/button.dart';
 import '../../test_helpers.dart';
 
 void main() {
@@ -28,7 +28,7 @@ void main() {
   testWidgets('Button shows loading state', (tester) async {
     await pumpTestApp(
       tester,
-      const Button(child: Text('Save'), loading: true),
+      const Button(loading: true, child: Text('Save')),
     );
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
@@ -39,9 +39,9 @@ void main() {
     await pumpTestApp(
       tester,
       Button(
-        child: const Text('Disabled'),
         onPressed: () => pressed = true,
         disabled: true,
+        child: const Text('Disabled'),
       ),
     );
 

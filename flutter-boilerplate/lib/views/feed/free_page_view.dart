@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../api/client/posts/query.dart';
 import '../../components/feed/post_card.dart';
-import '../../components/ui/spinner/spinner.dart';
 import '../../components/ui/empty/empty.dart';
+import '../../components/ui/spinner/spinner.dart';
 
 class FreeFeedPage extends ConsumerWidget {
   final String lang;

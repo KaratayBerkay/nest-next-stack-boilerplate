@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/button/button.dart';
+import '../../../constants/theme.dart';
 
 class GalleryItem {
   final String id;
@@ -44,8 +44,8 @@ class GalleryUploadSection extends StatelessWidget {
                 Button(
                   variant: ButtonVariant.outline,
                   size: ButtonSize.sm,
-                  child: const Text('Add Images'),
                   onPressed: onAdd,
+                  child: const Text('Add Images'),
                 ),
               ],
             ),
@@ -63,8 +63,8 @@ class GalleryUploadSection extends StatelessWidget {
                       Button(
                         variant: ButtonVariant.outline,
                         size: ButtonSize.sm,
-                        child: const Text('Upload Images'),
                         onPressed: onAdd,
+                        child: const Text('Upload Images'),
                       ),
                     ],
                   ),

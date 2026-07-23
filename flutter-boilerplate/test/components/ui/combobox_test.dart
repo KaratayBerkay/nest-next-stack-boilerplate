@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/components/ui/combobox/combobox.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_boilerplate/components/ui/combobox/combobox.dart';
 import '../../test_helpers.dart';
 
 void main() {
@@ -54,7 +54,7 @@ void main() {
     await pumpTestApp(
       tester,
       ComboboxWidget(
-        items: ['Alpha', 'Beta'],
+        items: const ['Alpha', 'Beta'],
         onChanged: (v) => result = v,
       ),
     );

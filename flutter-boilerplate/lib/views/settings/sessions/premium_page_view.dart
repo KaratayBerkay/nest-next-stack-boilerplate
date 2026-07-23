@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart' hide Badge;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../constants/theme.dart';
-import '../../../api/client/sessions/query.dart';
 import '../../../api/client/sessions/actions.dart';
-import '../../../components/ui/toast/toast.dart';
+import '../../../api/client/sessions/query.dart';
 import '../../../components/ui/badge/badge.dart';
+import '../../../components/ui/toast/toast.dart';
+import '../../../constants/theme.dart';
 
 class PremiumSettingsSessionsPage extends ConsumerWidget {
   final String lang;
@@ -51,9 +51,9 @@ class PremiumSettingsSessionsPage extends ConsumerWidget {
                   ),
                   title: Text(s.device),
                   subtitle: Text('${s.location} · ${s.lastActive}',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
                   trailing: s.isCurrent
-                      ? Badge(text: 'Current', variant: BadgeVariant.success)
+                      ? const Badge(text: 'Current', variant: BadgeVariant.success)
                       : TextButton(
                           onPressed: () async {
                             try {
@@ -68,7 +68,7 @@ class PremiumSettingsSessionsPage extends ConsumerWidget {
                         ),
                 ),
               ),
-            )),
+            ),),
           ],
         ),
       ),

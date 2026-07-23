@@ -1,6 +1,5 @@
+import 'package:flutter_boilerplate/validators/forms/schema.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import '../../lib/validators/forms/schema.dart';
 
 void main() {
   group('validateRequired', () {

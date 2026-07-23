@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_boilerplate/lib/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
-import '../../../lib/api_client.dart';
 
 final adminSetTierServerProvider = Provider((ref) => AdminSetTierServer(ref.read(dioProvider)));
 
@@ -15,6 +15,6 @@ class AdminSetTierServer {
     await _dio.post<dynamic>(Urls.adminSetTier, data: {
       'userId': userId,
       'tier': tier,
-    });
+    },);
   }
 }

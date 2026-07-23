@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart' hide Badge;
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/badge/badge.dart';
 
 class StatusBadge extends StatelessWidget {
@@ -13,8 +12,6 @@ class StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-
     final (String label, BadgeVariant variant) = switch (status.toLowerCase()) {
       'active' => ('Active', BadgeVariant.success),
       'inactive' => ('Inactive', BadgeVariant.secondary),

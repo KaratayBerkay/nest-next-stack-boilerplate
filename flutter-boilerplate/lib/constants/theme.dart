@@ -239,7 +239,7 @@ ThemeData buildThemeData(AppThemeMode mode) {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: BorderSide(color: colors.border, width: 1),
+        side: BorderSide(color: colors.border),
       ),
     ),
     dividerTheme: DividerThemeData(color: colors.border, thickness: 1),

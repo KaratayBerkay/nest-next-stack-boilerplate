@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -36,7 +35,6 @@ class PprFallback extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: colors.border.withValues(alpha: 0.5),
-                    width: 1,
                   ),
                 ),
                 child: Center(

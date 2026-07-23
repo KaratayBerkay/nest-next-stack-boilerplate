@@ -1,10 +1,9 @@
-import '../riverpod_compat.dart';
-
 import '../../api/client/messages/query.dart';
 import '../../api/client/notifications/query.dart';
 import '../../api/client/posts/query.dart';
 import '../../app_config.dart';
 import '../../hooks/use_auth.dart';
+import '../riverpod_compat.dart';
 import 'realtime_client.dart';
 
 final realtimeStatusProvider = StateProvider<RealtimeStatus>((ref) => RealtimeStatus.idle);

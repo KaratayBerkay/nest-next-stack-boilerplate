@@ -34,7 +34,7 @@ class DateTimeInput extends ConsumerWidget {
                   date.day,
                   existing.hour,
                   existing.minute,
-                ));
+                ),);
               }
             },
             child: InputDecorator(
@@ -65,7 +65,7 @@ class DateTimeInput extends ConsumerWidget {
                   existing.day,
                   time.hour,
                   time.minute,
-                ));
+                ),);
               }
             },
             child: InputDecorator(

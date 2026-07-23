@@ -42,8 +42,8 @@ class _DateTimeSectionState extends State<DateTimeSection> {
 
   @override
   Widget build(BuildContext context) {
-    final fmt = (DateTime d) => '${d.day}/${d.month}/${d.year}';
-    final tfmt = (TimeOfDay t) => '${t.hour}:${t.minute.toString().padLeft(2, '0')}';
+    String fmt(DateTime d) => '${d.day}/${d.month}/${d.year}';
+    String tfmt(TimeOfDay t) => '${t.hour}:${t.minute.toString().padLeft(2, '0')}';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

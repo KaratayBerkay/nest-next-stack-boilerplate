@@ -7,25 +7,25 @@ class FieldStatesGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return const Column(
       children: [
-        const Row(
+        Row(
           children: [
             Expanded(child: Input(label: 'Default')),
             SizedBox(width: 8),
             Expanded(child: Input(label: 'Focused')),
           ],
         ),
-        const SizedBox(height: 8),
-        const Row(
+        SizedBox(height: 8),
+        Row(
           children: [
             Expanded(child: Input(label: 'With Error', errorText: 'Error')),
             SizedBox(width: 8),
             Expanded(child: Input(label: 'Disabled')),
           ],
         ),
-        const SizedBox(height: 8),
-        const Row(
+        SizedBox(height: 8),
+        Row(
           children: [
             Expanded(child: Input(label: 'Filled')),
             SizedBox(width: 8),

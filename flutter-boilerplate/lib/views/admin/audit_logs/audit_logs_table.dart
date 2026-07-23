@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../constants/theme.dart';
 import '../../../api/server/admin/audit_logs.dart';
+import '../../../constants/theme.dart';
 import 'audit_logs_diff_view.dart';
 
 String _formatDate(DateTime d) {
@@ -135,14 +135,14 @@ class _AuditLogTableRow extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: _levelColor(log.level, colors).withOpacity(0.15),
+                    color: _levelColor(log.level, colors).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(log.level, style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                     color: _levelColor(log.level, colors),
-                  )),
+                  ),),
                 ),
                 const SizedBox(width: 8),
                 Expanded(

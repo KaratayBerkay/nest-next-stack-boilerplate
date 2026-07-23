@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../constants/theme.dart';
 import '../../components/ui/card/card.dart';
 
 class SettingsCard extends StatelessWidget {

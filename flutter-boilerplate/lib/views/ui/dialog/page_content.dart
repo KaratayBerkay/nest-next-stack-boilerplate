@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+
+import '../../../components/ui/button/button.dart';
 import '../../../components/ui/dialog/dialog_content.dart';
 import '../../../components/ui/dialog/dialog_title.dart';
-import '../../../components/ui/button/button.dart';
 
 class DialogDemoPage extends StatelessWidget {
   final String lang;

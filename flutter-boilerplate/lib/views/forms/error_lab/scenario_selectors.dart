@@ -13,7 +13,7 @@ class ScenarioSelectors extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
-      value: selected,
+      initialValue: selected,
       items: const [
         DropdownMenuItem(value: 'server-error', child: Text('Server Error')),
         DropdownMenuItem(value: 'validation', child: Text('Validation Error')),

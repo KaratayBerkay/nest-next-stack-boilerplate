@@ -19,7 +19,6 @@ class ExampleTabs extends StatelessWidget {
       length: titles.length,
       child: Scaffold(
         appBar: AppBar(
-          title: null,
           bottom: TabBar(
             isScrollable: true,
             tabAlignment: TabAlignment.start,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/card/card.dart';
+import '../../../constants/theme.dart';
 
 class PaymentCard extends StatelessWidget {
   final String brand;

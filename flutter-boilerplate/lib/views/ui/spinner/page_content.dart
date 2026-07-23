@@ -11,15 +11,15 @@ class SpinnerDemoPage extends StatelessWidget {
       appBar: AppBar(title: const Text('Spinner')),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: [
-          const Text('Sizes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          const Wrap(
+        children: const [
+          Text('Sizes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
+          Wrap(
             spacing: 24,
             runSpacing: 16,
             children: [
               Spinner(size: 16),
-              Spinner(size: 24),
+              Spinner(),
               Spinner(size: 32),
               Spinner(size: 48),
             ],

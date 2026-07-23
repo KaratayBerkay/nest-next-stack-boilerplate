@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_boilerplate/lib/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
-import '../../../lib/api_client.dart';
 import '../../../types/feed/post.dart';
 
 final postUpdateServerProvider = Provider((ref) => PostUpdateServer(ref.read(dioProvider)));
@@ -17,7 +17,7 @@ class PostUpdateServer {
       if (title != null) 'title': title,
       if (content != null) 'content': content,
       if (imageUrl != null) 'imageUrl': imageUrl,
-    });
+    },);
     return Post.fromJson(response.data as Map<String, dynamic>);
   }
 }

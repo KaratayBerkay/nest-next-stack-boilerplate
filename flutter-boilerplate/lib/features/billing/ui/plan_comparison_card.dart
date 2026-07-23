@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../constants/theme.dart';
-import '../../../components/ui/card/card.dart';
 import '../../../components/ui/button/button.dart';
+import '../../../components/ui/card/card.dart';
+import '../../../constants/theme.dart';
 
 class PlanComparisonCard extends StatelessWidget {
   final String name;

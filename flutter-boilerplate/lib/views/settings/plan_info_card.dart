@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart' hide Badge;
 
-import '../../constants/theme.dart';
 import '../../components/ui/badge/badge.dart';
 import '../../components/ui/card/card.dart';
 import '../../components/ui/card/card_content.dart';
 import '../../components/ui/card/card_header.dart';
+import '../../constants/theme.dart';
 
 class PlanInfoCard extends StatelessWidget {
   final String planName;
@@ -52,7 +52,7 @@ class PlanInfoCard extends StatelessWidget {
                 if (renewalDate != null) ...[
                   const SizedBox(height: 8),
                   Text('Renewal date: $renewalDate',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 13)),
+                      style: TextStyle(color: colors.fgMuted, fontSize: 13),),
                 ],
               ],
             ),

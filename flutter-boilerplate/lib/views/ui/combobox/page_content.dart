@@ -11,17 +11,17 @@ class ComboboxDemoPage extends StatelessWidget {
       appBar: AppBar(title: const Text('Combobox')),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: [
-          const Text('Basic Combobox', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          const ComboboxWidget(
+        children: const [
+          Text('Basic Combobox', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
+          ComboboxWidget(
             items: ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry'],
             label: 'Select a fruit',
           ),
-          const SizedBox(height: 24),
-          const Text('With Custom Input', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          const ComboboxWidget(
+          SizedBox(height: 24),
+          Text('With Custom Input', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
+          ComboboxWidget(
             items: ['React', 'Vue', 'Angular', 'Svelte', 'Flutter'],
             label: 'Framework',
           ),

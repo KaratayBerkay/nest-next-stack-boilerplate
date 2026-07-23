@@ -1,13 +1,13 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/riverpod_compat.dart';
 
-import '../../lib/riverpod_compat.dart';
-
-import '../../constants/theme.dart';
-import '../../api/server/admin/search_users.dart';
-import '../../api/server/admin/audit_logs.dart';
-import '../../api/client/admin/query.dart';
 import '../../api/client/admin/actions.dart';
+import '../../api/client/admin/query.dart';
+import '../../api/server/admin/audit_logs.dart';
+import '../../api/server/admin/search_users.dart';
+import '../../constants/theme.dart';
 
 final _adminSearchQueryProvider = StateProvider<String>((ref) => '');
 
@@ -98,7 +98,7 @@ class _AdminPageContentState extends ConsumerState<AdminPageContent> {
                         children: users.map((user) => _UserTierRow(
                           user: user,
                           onSetTier: (tier) => _setTier(user.id, tier),
-                        )).toList(),
+                        ),).toList(),
                       );
                     },
                   ),
@@ -126,7 +126,7 @@ class _AdminPageContentState extends ConsumerState<AdminPageContent> {
                     ),
                     dense: true,
                   ),
-                )).toList(),
+                ),).toList(),
               );
             },
           ),
@@ -164,7 +164,7 @@ class _UserTierRowState extends State<_UserTierRow> {
       child: Row(
         children: [
           CircleAvatar(
-              backgroundColor: colors.brand.withOpacity(0.2),
+              backgroundColor: colors.brand.withValues(alpha: 0.2),
             child: Text(widget.user.name[0].toUpperCase(), style: TextStyle(color: colors.brand)),
           ),
           const SizedBox(width: 12),

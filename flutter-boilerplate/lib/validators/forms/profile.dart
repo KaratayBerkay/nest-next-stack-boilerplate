@@ -1,12 +1,12 @@
 String? validateFirstName(String? value) {
   if (value == null || value.isEmpty) return null;
-  if (value.length < 1) return 'First name is required';
+  if (value.isEmpty) return 'First name is required';
   return null;
 }
 
 String? validateLastName(String? value) {
   if (value == null || value.isEmpty) return null;
-  if (value.length < 1) return 'Last name is required';
+  if (value.isEmpty) return 'Last name is required';
   return null;
 }
 

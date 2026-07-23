@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../api/client/posts/query.dart';
 import '../../../api/client/posts/actions.dart';
-import '../../../constants/theme.dart';
-import '../../../types/feed/post.dart';
-import '../../../types/feed/comment.dart';
+import '../../../api/client/posts/query.dart';
 import '../../../components/ui/avatar/avatar.dart';
-import 'post_header.dart';
+import '../../../constants/theme.dart';
+import '../../../types/feed/comment.dart';
+import '../../../types/feed/post.dart';
 import 'post_content_view.dart';
 import 'post_edit_form.dart';
+import 'post_header.dart';
 import 'reaction_breakdown.dart';
 import 'who_reacted.dart';
 

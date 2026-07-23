@@ -6,7 +6,7 @@ class PricingPageContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lang = 'en';
+    const lang = 'en';
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (context.mounted) {
         context.go('/v1/$lang/plans');

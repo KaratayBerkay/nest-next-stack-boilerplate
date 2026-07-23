@@ -11,25 +11,25 @@ class CheckboxDemoPage extends StatelessWidget {
       appBar: AppBar(title: const Text('Checkbox')),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: [
-          const Text('Variants', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          const CheckboxWidget(value: false, label: 'Default Checkbox'),
-          const CheckboxWidget(value: true, label: 'Checked'),
-          const CheckboxWidget(value: false, label: 'Disabled'),
-          const SizedBox(height: 24),
-          const Text('Checkbox Group', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
+        children: const [
+          Text('Variants', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
+          CheckboxWidget(value: false, label: 'Default Checkbox'),
+          CheckboxWidget(value: true, label: 'Checked'),
+          CheckboxWidget(value: false, label: 'Disabled'),
+          SizedBox(height: 24),
+          Text('Checkbox Group', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
           CheckboxGroup(
             options: ['Option A', 'Option B', 'Option C'],
-            selected: const ['Option A'],
+            selected: ['Option A'],
           ),
-          const SizedBox(height: 24),
-          const Text('Checkbox Card', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
+          SizedBox(height: 24),
+          Text('Checkbox Card', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
           CheckboxCard(
             value: false,
-            child: const Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Card Style Checkbox'),

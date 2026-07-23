@@ -15,7 +15,7 @@ class DialogActionsRow extends StatelessWidget {
           ...children.map((w) => Padding(
                 padding: const EdgeInsets.only(left: 8),
                 child: w,
-              )),
+              ),),
         ],
       ),
     );

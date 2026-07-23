@@ -139,13 +139,13 @@ class MessagesLoadingFallback extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        _ChatBubble(width: 200, align: CrossAxisAlignment.start),
+                        const _ChatBubble(width: 200, align: CrossAxisAlignment.start),
                         const SizedBox(height: 8),
-                        _ChatBubble(width: 150, align: CrossAxisAlignment.end),
+                        const _ChatBubble(width: 150, align: CrossAxisAlignment.end),
                         const SizedBox(height: 8),
-                        _ChatBubble(width: 240, align: CrossAxisAlignment.start),
+                        const _ChatBubble(width: 240, align: CrossAxisAlignment.start),
                         const SizedBox(height: 8),
-                        _ChatBubble(width: 120, align: CrossAxisAlignment.end),
+                        const _ChatBubble(width: 120, align: CrossAxisAlignment.end),
                         const SizedBox(height: 24),
                         Container(
                           width: double.infinity,

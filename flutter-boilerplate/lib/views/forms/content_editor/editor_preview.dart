@@ -30,7 +30,7 @@ class EditorPreview extends StatelessWidget {
               label: Text(t.trim(), style: const TextStyle(fontSize: 12)),
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               visualDensity: VisualDensity.compact,
-            )).toList(),
+            ),).toList(),
           ),
         ],
         const Divider(height: 24),

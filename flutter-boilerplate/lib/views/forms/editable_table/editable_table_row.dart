@@ -98,7 +98,6 @@ class _EditableTableRowState extends State<EditableTableRow> {
           ),
           const SizedBox(width: 8),
           Expanded(
-            flex: 1,
             child: TextField(
               controller: _qtyCtrl,
               keyboardType: TextInputType.number,

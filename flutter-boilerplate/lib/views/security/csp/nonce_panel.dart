@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart' hide Badge;
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/badge/badge.dart';
+import '../../../constants/theme.dart';
 
 class NoncePanel extends StatelessWidget {
   final String nonce;

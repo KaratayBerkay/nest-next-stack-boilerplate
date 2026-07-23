@@ -73,7 +73,7 @@ class _AuditLogsFiltersState extends State<AuditLogsFilters> {
             items: _actions.map((a) => DropdownMenuItem(
               value: a,
               child: Text(a.isEmpty ? 'All actions' : a, style: const TextStyle(fontSize: 13)),
-            )).toList(),
+            ),).toList(),
             onChanged: (v) {
               if (v == null) return;
               widget.onActionChanged(v);
@@ -85,7 +85,7 @@ class _AuditLogsFiltersState extends State<AuditLogsFilters> {
             items: _levels.map((l) => DropdownMenuItem(
               value: l,
               child: Text(l.isEmpty ? 'All levels' : l, style: const TextStyle(fontSize: 13)),
-            )).toList(),
+            ),).toList(),
             onChanged: (v) {
               if (v == null) return;
               widget.onLevelChanged(v);

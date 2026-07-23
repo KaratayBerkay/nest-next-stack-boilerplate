@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 
 class DraftData {
   final String title;
@@ -30,8 +29,6 @@ class DraftData {
 }
 
 class DraftManager {
-  static const _draftKey = 'editor_draft';
-
   static DraftData createDraft({
     required String title,
     required String body,

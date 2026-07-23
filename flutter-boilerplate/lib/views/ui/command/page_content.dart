@@ -11,9 +11,9 @@ class CommandDemoPage extends StatelessWidget {
       appBar: AppBar(title: const Text('Command')),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: [
-          const Text('Command Menu', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
+        children: const [
+          Text('Command Menu', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
           SizedBox(
             height: 300,
             child: CommandWidget(

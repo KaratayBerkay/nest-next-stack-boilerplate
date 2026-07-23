@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_boilerplate/lib/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
-import '../../../lib/api_client.dart';
 
 final revokeOthersServerProvider = Provider((ref) => RevokeOthersServer(ref.read(dioProvider)));
 

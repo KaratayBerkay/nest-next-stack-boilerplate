@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../constants/theme.dart';
 import '../../components/ui/button/button.dart';
 
 class UpgradeActions extends StatelessWidget {
@@ -18,8 +17,6 @@ class UpgradeActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -40,8 +37,8 @@ class UpgradeActions extends StatelessWidget {
           Button(
             fullWidth: true,
             variant: ButtonVariant.danger,
-            child: const Text('Cancel Subscription'),
             onPressed: onCancel,
+            child: const Text('Cancel Subscription'),
           ),
         ],
       ],

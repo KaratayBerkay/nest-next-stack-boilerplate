@@ -23,7 +23,7 @@ class SecurityPageContent extends ConsumerWidget {
                 SwitchListTile(
                   title: const Text('Two-Factor Authentication'),
                   subtitle: Text('Add an extra layer of security',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
                   value: false,
                   onChanged: (_) {},
                 ),
@@ -37,7 +37,7 @@ class SecurityPageContent extends ConsumerWidget {
                 ListTile(
                   title: const Text('Active Sessions'),
                   subtitle: Text('Manage your logged-in devices',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {},
                 ),

@@ -50,7 +50,7 @@ class ApiKeyList extends StatelessWidget {
                         children: [
                           Text(k.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                           Text('${k.prefix}••••••••••••••••',
-                              style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+                              style: TextStyle(color: colors.fgMuted, fontSize: 12),),
                         ],
                       ),
                     ),
@@ -63,15 +63,15 @@ class ApiKeyList extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text('Created: ${k.createdAt.toLocal().toString().split(' ')[0]}',
-                    style: TextStyle(color: colors.fgMuted, fontSize: 11)),
+                    style: TextStyle(color: colors.fgMuted, fontSize: 11),),
                 if (k.lastUsedAt != null)
                   Text('Last used: ${k.lastUsedAt!.toLocal().toString().split(' ')[0]}',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 11)),
+                      style: TextStyle(color: colors.fgMuted, fontSize: 11),),
               ],
             ),
           ),
         ),
-      )).toList(),
+      ),).toList(),
     );
   }
 }

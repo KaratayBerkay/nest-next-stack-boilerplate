@@ -11,13 +11,13 @@ class KbdDemoPage extends StatelessWidget {
       appBar: AppBar(title: const Text('KBD')),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: [
-          const Text('Keyboard Shortcuts', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
+        children: const [
+          Text('Keyboard Shortcuts', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 12,
-            children: const [
+            children: [
               Row(mainAxisSize: MainAxisSize.min, children: [KbdWidget(label: 'Ctrl'), Text(' + '), KbdWidget(label: 'C')]),
               SizedBox(width: 24),
               Row(mainAxisSize: MainAxisSize.min, children: [KbdWidget(label: '⌘'), Text(' + '), KbdWidget(label: 'Shift'), Text(' + '), KbdWidget(label: 'P')]),

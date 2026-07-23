@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/theme.dart';
-import '../../../hooks/use_theme.dart';
 import '../../../hooks/use_locale.dart';
+import '../../../hooks/use_theme.dart';
 
 class BasicSettingsGeneralPage extends ConsumerWidget {
   final String lang;
@@ -27,7 +27,7 @@ class BasicSettingsGeneralPage extends ConsumerWidget {
                 SwitchListTile(
                   title: const Text('Dark Mode'),
                   subtitle: Text('Toggle dark/light theme',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
                   value: themeMode == AppThemeMode.dark,
                   onChanged: (value) {
                     ref.read(themeModeProvider.notifier).state =
@@ -38,7 +38,7 @@ class BasicSettingsGeneralPage extends ConsumerWidget {
                 ListTile(
                   title: const Text('Language'),
                   subtitle: Text(currentLocale.toUpperCase(),
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                 ),
               ],

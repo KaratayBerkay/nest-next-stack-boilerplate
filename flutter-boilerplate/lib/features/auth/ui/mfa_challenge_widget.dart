@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../../constants/theme.dart';
-import '../../../components/ui/input/input.dart';
 import '../../../components/ui/button/button.dart';
+import '../../../components/ui/input/input.dart';
+import '../../../constants/theme.dart';
 
 class MfaChallengeWidget extends StatefulWidget {
   final void Function(String code)? onCodeChanged;

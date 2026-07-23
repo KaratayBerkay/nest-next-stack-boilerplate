@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../constants/theme.dart';
 import '../../api/client/messages/query.dart';
-import '../../components/ui/spinner/spinner.dart';
 import '../../components/ui/empty/empty.dart';
+import '../../components/ui/spinner/spinner.dart';
 import '../../hooks/use_auth.dart';
 import 'chat_message_bubble.dart';
 

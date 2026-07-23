@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/tier_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../lib/tier_view.dart';
-import '../../../constants/theme.dart';
-import '../../../hooks/use_theme.dart';
-import '../../../hooks/use_locale.dart';
 import '../../../constants/i18n.dart';
+import '../../../constants/theme.dart';
+import '../../../hooks/use_locale.dart';
+import '../../../hooks/use_theme.dart';
 
 class SettingsGeneralPageContent extends ConsumerWidget {
   final String lang;
@@ -45,7 +45,7 @@ class _GeneralSettings extends ConsumerWidget {
                 SwitchListTile(
                   title: const Text('Dark Mode'),
                   subtitle: Text('Toggle dark/light theme',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
                   value: themeMode == AppThemeMode.dark,
                   onChanged: (value) {
                     ref.read(themeModeProvider.notifier).state =
@@ -56,7 +56,7 @@ class _GeneralSettings extends ConsumerWidget {
                 ListTile(
                   title: const Text('Language'),
                   subtitle: Text(currentLocale.toUpperCase(),
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
                   trailing: DropdownButton<String>(
                     value: currentLocale,
                     items: I18nConstants.supportedLangs

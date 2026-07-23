@@ -59,7 +59,7 @@ class TablePageContent extends StatelessWidget {
                     DataCell(Text('\$${(i + 1) * 10}.99')),
                     DataCell(Text('${(i + 1) * 50}')),
                     DataCell(Text('${(i + 1) * 20}')),
-                  ]);
+                  ],);
                 }),
               ),
             ),
@@ -85,12 +85,12 @@ class TablePageContent extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           decoration: BoxDecoration(
-            color: statusColor.withOpacity(0.1),
+            color: statusColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(999),
           ),
           child: Text(status, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: statusColor)),
         ),
       ),
-    ]);
+    ],);
   }
 }

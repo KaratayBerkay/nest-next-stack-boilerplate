@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../api/client/posts/query.dart';
 import '../../components/feed/post_card.dart';
-import '../../constants/theme.dart';
 import '../../types/feed/post.dart';
 import 'feed_base_view.dart';
 

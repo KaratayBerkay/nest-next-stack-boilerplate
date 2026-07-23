@@ -1,6 +1,5 @@
+import 'package:flutter_boilerplate/validators/auth/schema.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import '../../lib/validators/auth/schema.dart';
 
 void main() {
   group('validateEmail', () {

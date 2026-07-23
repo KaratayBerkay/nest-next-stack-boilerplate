@@ -50,7 +50,7 @@ class _FormsFiltersPageContentState extends ConsumerState<FormsFiltersPageConten
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
-                      value: _category,
+                      initialValue: _category,
                       items: const [
                         DropdownMenuItem(value: 'all', child: Text('All Categories')),
                         DropdownMenuItem(value: 'tech', child: Text('Technology')),
@@ -62,7 +62,7 @@ class _FormsFiltersPageContentState extends ConsumerState<FormsFiltersPageConten
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
-                      value: _sort,
+                      initialValue: _sort,
                       items: const [
                         DropdownMenuItem(value: 'newest', child: Text('Newest First')),
                         DropdownMenuItem(value: 'oldest', child: Text('Oldest First')),

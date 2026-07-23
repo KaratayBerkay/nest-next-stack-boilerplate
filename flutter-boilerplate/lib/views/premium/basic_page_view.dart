@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../constants/theme.dart';
 import '../../api/client/premium/query.dart';
+import '../../constants/theme.dart';
 import 'stats_section.dart';
 
 class BasicPremiumPage extends ConsumerStatefulWidget {

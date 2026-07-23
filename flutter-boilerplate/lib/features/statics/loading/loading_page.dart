@@ -1,25 +1,20 @@
 import 'package:flutter/material.dart';
 
 class LoadingPage extends StatelessWidget {
-  final String? message;
+  final String text;
 
-  const LoadingPage({super.key, this.message});
+  const LoadingPage({super.key, this.text = 'Loading...'});
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const CircularProgressIndicator(),
-          if (message != null) ...[
-            const SizedBox(height: 16),
-            Text(
-              message!,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ],
-        ],
+      child: Text(
+        text,
+        style: TextStyle(
+          color: colors.onSurface.withValues(alpha: 0.5),
+          fontSize: 13,
+        ),
       ),
     );
   }

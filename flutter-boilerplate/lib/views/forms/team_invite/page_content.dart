@@ -73,7 +73,7 @@ class _FormsTeamInvitePageContentState extends ConsumerState<FormsTeamInvitePage
                             ),
                         ],
                       ),
-                    )),
+                    ),),
                     TextButton.icon(
                       icon: const Icon(Icons.add, size: 18),
                       label: const Text('Add Another'),
@@ -81,7 +81,7 @@ class _FormsTeamInvitePageContentState extends ConsumerState<FormsTeamInvitePage
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: _role,
+                      initialValue: _role,
                       items: const [
                         DropdownMenuItem(value: 'member', child: Text('Member')),
                         DropdownMenuItem(value: 'admin', child: Text('Admin')),
@@ -93,7 +93,7 @@ class _FormsTeamInvitePageContentState extends ConsumerState<FormsTeamInvitePage
                     const SizedBox(height: 16),
                     Button(child: const Text('Send Invites'), onPressed: () {
                       if (_formKey.currentState!.validate()) {}
-                    }),
+                    },),
                   ],
                 ),
               ),

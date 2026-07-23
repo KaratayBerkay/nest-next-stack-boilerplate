@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_boilerplate/lib/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
-import '../../../lib/api_client.dart';
 
 class AdminUser {
   final String id;
@@ -39,7 +39,7 @@ class AdminSearchUsersServer {
   Future<List<AdminUser>> call(String query) async {
     final response = await _dio.get<dynamic>('${Urls.adminAuditLogs}/users', queryParameters: {
       'q': query,
-    });
+    },);
     final list = response.data as List<dynamic>;
     return list.map((e) => AdminUser.fromJson(e as Map<String, dynamic>)).toList();
   }

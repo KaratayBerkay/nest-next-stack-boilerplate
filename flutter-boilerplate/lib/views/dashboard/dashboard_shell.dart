@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 class DashboardShell extends StatelessWidget {
   const DashboardShell({super.key});
@@ -8,12 +7,12 @@ class DashboardShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Dashboard')),
-      body: Row(
+      body: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Expanded(flex: 2, child: AnalyticsPanel()),
-          const VerticalDivider(width: 1),
-          const Expanded(flex: 1, child: TeamPanel()),
+          Expanded(flex: 2, child: AnalyticsPanel()),
+          VerticalDivider(width: 1),
+          Expanded(child: TeamPanel()),
         ],
       ),
     );

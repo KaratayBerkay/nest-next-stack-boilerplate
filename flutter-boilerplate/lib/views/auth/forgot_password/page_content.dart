@@ -27,6 +27,7 @@ class _ForgotPasswordPageContentState extends ConsumerState<ForgotPasswordPageCo
     setState(() => _loading = true);
     try {
       await ref.read(requestPasswordResetServerProvider).call(_emailCtrl.text);
+      if (!context.mounted) return;
       setState(() => _sent = true);
       showToast(context, 'Password reset email sent');
     } catch (e) {

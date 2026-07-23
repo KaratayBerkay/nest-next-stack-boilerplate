@@ -11,18 +11,18 @@ class SeparatorDemoPage extends StatelessWidget {
       appBar: AppBar(title: const Text('Separator')),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: [
-          const Text('Above separator'),
-          const Separator(),
-          const Text('Below separator'),
-          const SizedBox(height: 24),
+        children: const [
+          Text('Above separator'),
+          Separator(),
+          Text('Below separator'),
+          SizedBox(height: 24),
           SizedBox(
             height: 100,
             child: Row(
               children: [
-                const Expanded(child: Text('Left')),
-                const VerticalSeparator(),
-                const Expanded(child: Text('Right')),
+                Expanded(child: Text('Left')),
+                VerticalSeparator(),
+                Expanded(child: Text('Right')),
               ],
             ),
           ),

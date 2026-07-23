@@ -11,13 +11,13 @@ class CollapsibleDemoPage extends StatelessWidget {
       appBar: AppBar(title: const Text('Collapsible')),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: [
-          const CollapsibleWidget(
+        children: const [
+          CollapsibleWidget(
             title: Text('Show Details'),
             child: Text('Hidden content revealed when expanded.'),
           ),
-          const SizedBox(height: 8),
-          const CollapsibleWidget(
+          SizedBox(height: 8),
+          CollapsibleWidget(
             title: Text('Configuration'),
             initiallyExpanded: true,
             child: Column(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/components/ui/toast/toast.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_boilerplate/components/ui/toast/toast.dart';
 import '../../test_helpers.dart';
 
 void main() {
@@ -35,7 +35,7 @@ void main() {
 
   testWidgets('shows info toast', (tester) async {
     await pumpTestApp(tester, const SizedBox());
-    showToast(tester.element(find.byType(SizedBox)), 'Info', type: ToastType.info);
+    showToast(tester.element(find.byType(SizedBox)), 'Info');
     await tester.pump();
     expect(find.text('Info'), findsOneWidget);
   });

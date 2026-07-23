@@ -24,7 +24,7 @@ class RoleStep extends StatelessWidget {
         Text('Choose what permissions invited members will have', style: TextStyle(color: colors.fgMuted, fontSize: 13)),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
-          value: selectedRole,
+          initialValue: selectedRole,
           items: const [
             DropdownMenuItem(value: 'member', child: Text('Member — Can view and edit assigned projects')),
             DropdownMenuItem(value: 'admin', child: Text('Admin — Full access to all projects and settings')),

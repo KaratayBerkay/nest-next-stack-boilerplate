@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/components/ui/sheet/sheet.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_boilerplate/components/ui/sheet/sheet.dart';
 import '../../test_helpers.dart';
 
 void main() {
@@ -23,7 +23,7 @@ void main() {
 
   testWidgets('show displays bottom sheet', (tester) async {
     await pumpTestApp(tester, const SizedBox());
-    SheetWidget.show(
+    SheetWidget.show<void>(
       tester.element(find.byType(SizedBox)),
       child: const Text('Bottom sheet content'),
     );
@@ -34,7 +34,7 @@ void main() {
 
   testWidgets('show uses custom initial size', (tester) async {
     await pumpTestApp(tester, const SizedBox());
-    SheetWidget.show(
+    SheetWidget.show<void>(
       tester.element(find.byType(SizedBox)),
       child: const Text('Sheet'),
       initial: 0.75,

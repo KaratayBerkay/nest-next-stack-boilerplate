@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/button/button.dart';
 
 class ProfileActions extends StatelessWidget {
@@ -25,16 +24,16 @@ class ProfileActions extends StatelessWidget {
       children: [
         Button(
           fullWidth: true,
-          child: Text(saving ? 'Saving...' : saveLabel),
           onPressed: saving ? null : onSave,
+          child: Text(saving ? 'Saving...' : saveLabel),
         ),
         if (onDelete != null) ...[
           const SizedBox(height: 8),
           Button(
             fullWidth: true,
             variant: ButtonVariant.danger,
-            child: Text(deleteLabel),
             onPressed: onDelete,
+            child: Text(deleteLabel),
           ),
         ],
       ],

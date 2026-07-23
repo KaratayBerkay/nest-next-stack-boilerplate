@@ -22,7 +22,7 @@ class SettingSection {
       description: json['description'] as String?,
       settings: (json['settings'] as List<dynamic>?)
               ?.map((e) =>
-                  SettingOption.fromJson(e as Map<String, dynamic>))
+                  SettingOption.fromJson(e as Map<String, dynamic>),)
               .toList() ??
           [],
       sortOrder: json['sortOrder'] as int? ?? 0,

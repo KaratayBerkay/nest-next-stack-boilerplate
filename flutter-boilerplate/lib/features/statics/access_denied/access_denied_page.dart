@@ -1,46 +1,41 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-
-import '../../../constants/theme.dart';
 
 class AccessDeniedPage extends StatelessWidget {
-  final String? requiredTier;
-  final String? currentTier;
+  final String title;
+  final String message;
 
-  const AccessDeniedPage({super.key, this.requiredTier, this.currentTier});
+  const AccessDeniedPage({
+    super.key,
+    this.title = 'Access denied',
+    this.message = 'You do not have permission to access this page.',
+  });
 
   @override
   Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-    return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.lock_outline, size: 64, color: colors.fgMuted),
-              const SizedBox(height: 16),
-              Text(
-                'Access Denied',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                requiredTier != null
-                    ? 'This feature requires $requiredTier tier or above.'
-                    : 'You do not have permission to access this page.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: colors.fgMuted),
-              ),
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: () => context.go('/v1/en/plans'),
-                child: const Text('Upgrade'),
-              ),
-            ],
+    final colors = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              color: colors.primary,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: TextStyle(
+              color: colors.onSurface.withValues(alpha: 0.6),
+              fontSize: 13,
+            ),
+          ),
+        ],
       ),
     );
   }

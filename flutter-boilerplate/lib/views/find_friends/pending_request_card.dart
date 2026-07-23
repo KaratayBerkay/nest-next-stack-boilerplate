@@ -25,7 +25,6 @@ class PendingRequestCard extends StatelessWidget {
         leading: Avatar(
           name: request.fromUserName,
           imageUrl: request.fromUserAvatar,
-          radius: 20,
         ),
         title: Text(request.fromUserName),
         subtitle: Text(

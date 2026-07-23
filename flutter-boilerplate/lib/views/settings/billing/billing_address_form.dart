@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/button/button.dart';
 
 class BillingAddressForm extends StatefulWidget {
@@ -83,8 +82,6 @@ class _BillingAddressFormState extends State<BillingAddressForm> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -137,8 +134,8 @@ class _BillingAddressFormState extends State<BillingAddressForm> {
         const SizedBox(height: 16),
         Button(
           fullWidth: true,
-          child: Text(_saving ? 'Saving...' : 'Save Address'),
           onPressed: _saving ? null : _save,
+          child: Text(_saving ? 'Saving...' : 'Save Address'),
         ),
       ],
     );

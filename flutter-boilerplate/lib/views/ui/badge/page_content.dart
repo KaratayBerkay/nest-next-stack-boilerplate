@@ -11,13 +11,13 @@ class BadgeDemoPage extends StatelessWidget {
       appBar: AppBar(title: const Text('Badge')),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: [
-          const Text('Variants', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
+        children: const [
+          Text('Variants', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: const [
+            children: [
               Badge(text: 'Default'),
               Badge(text: 'Secondary', variant: BadgeVariant.secondary),
               Badge(text: 'Success', variant: BadgeVariant.success),
@@ -26,12 +26,12 @@ class BadgeDemoPage extends StatelessWidget {
               Badge(text: 'Info', variant: BadgeVariant.info),
             ],
           ),
-          const SizedBox(height: 24),
-          const Text('With Icons', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
+          SizedBox(height: 24),
+          Text('With Icons', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
           Wrap(
             spacing: 8,
-            children: const [
+            children: [
               Badge(text: 'Verified', icon: Icons.check_circle, variant: BadgeVariant.success),
               Badge(text: 'Pending', icon: Icons.schedule, variant: BadgeVariant.warning),
               Badge(text: 'New', icon: Icons.fiber_new, variant: BadgeVariant.danger),

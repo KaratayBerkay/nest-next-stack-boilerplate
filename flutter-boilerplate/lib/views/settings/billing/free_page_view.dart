@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/button/button.dart';
+import '../../../constants/theme.dart';
 
 class FreeSettingsBillingPage extends StatelessWidget {
   final String lang;
@@ -26,7 +26,7 @@ class FreeSettingsBillingPage extends StatelessWidget {
               const Text('No billing info yet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Text('Upgrade to a paid plan to see billing details.',
-                  style: TextStyle(color: colors.fgMuted)),
+                  style: TextStyle(color: colors.fgMuted),),
               const SizedBox(height: 24),
               Button(
                 child: const Text('View Plans'),

@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../constants/theme.dart';
 
 final _formSections = <FormSection>[
-  FormSection(
+  const FormSection(
     name: 'Layouts',
     items: [
       FormItem('Two Column', Icons.view_column, '/v1/en/forms/layouts'),
@@ -12,7 +12,7 @@ final _formSections = <FormSection>[
       FormItem('Wizard', Icons.layers, '/v1/en/forms/layouts'),
     ],
   ),
-  FormSection(
+  const FormSection(
     name: 'Elements',
     items: [
       FormItem('Input', Icons.edit, '/v1/en/forms/elements'),
@@ -22,7 +22,7 @@ final _formSections = <FormSection>[
       FormItem('Toggle', Icons.toggle_on, '/v1/en/forms/elements'),
     ],
   ),
-  FormSection(
+  const FormSection(
     name: 'Validation',
     items: [
       FormItem('Field States', Icons.toggle_on, '/v1/en/forms/field-states'),
@@ -30,7 +30,7 @@ final _formSections = <FormSection>[
       FormItem('Form Builder', Icons.dynamic_form, '/v1/en/forms/form-builder'),
     ],
   ),
-  FormSection(
+  const FormSection(
     name: 'Advanced',
     items: [
       FormItem('API Key', Icons.vpn_key, '/v1/en/forms/api-key'),
@@ -98,7 +98,7 @@ class _FormsLayoutState extends State<FormsLayout> with SingleTickerProviderStat
             trailing: Icon(Icons.chevron_right, color: colors.fgMuted),
             onTap: () => context.push(item.route),
           ),
-        )),
+        ),),
       ],
     );
   }

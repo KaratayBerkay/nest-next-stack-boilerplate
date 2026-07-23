@@ -48,7 +48,7 @@ class _FormsFormBuilderPageContentState extends ConsumerState<FormsFormBuilderPa
                         ..._fields.map((f) => Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: FormTextField(controller: f.controller, label: f.label, validator: (v) => forms.validateRequired(v)),
-                        )),
+                        ),),
                       ],
                     ),
                   ),
@@ -72,7 +72,7 @@ class _FormsFormBuilderPageContentState extends ConsumerState<FormsFormBuilderPa
                   const SizedBox(height: 12),
                   Button(child: const Text('+ Text Field'), onPressed: () {
                     setState(() => _fields.add(_FormField(label: 'New Field ${_fields.length + 1}')));
-                  }),
+                  },),
                 ],
               ),
             ),

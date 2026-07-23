@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../components/ui/confirm_dialog/confirm_dialog.dart';
+
 import '../../../components/ui/button/button.dart';
+import '../../../components/ui/confirm_dialog/confirm_dialog.dart';
 
 class ConfirmDialogDemoPage extends StatelessWidget {
   final String lang;

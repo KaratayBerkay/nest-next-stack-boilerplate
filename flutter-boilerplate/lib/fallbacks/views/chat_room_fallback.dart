@@ -7,15 +7,15 @@ class ChatRoomFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
+    return const Padding(
+      padding: EdgeInsets.all(16),
       child: Column(
         children: [
-          const SkeletonCard(lines: 2),
-          const SizedBox(height: 16),
-          const SkeletonCard(lines: 4),
-          const SizedBox(height: 16),
-          const SkeletonCard(lines: 3),
+          SkeletonCard(lines: 2),
+          SizedBox(height: 16),
+          SkeletonCard(lines: 4),
+          SizedBox(height: 16),
+          SkeletonCard(),
         ],
       ),
     );

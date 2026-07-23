@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../components/ui/form_text_field.dart';
 import '../../../validators/auth/schema.dart' as auth;
-import '../../../validators/forms/schema.dart' as forms;
 import '../../../validators/billing/schema.dart' as billing;
+import '../../../validators/forms/schema.dart' as forms;
 
 class AddressGroup extends StatelessWidget {
   final TextEditingController nameCtrl;

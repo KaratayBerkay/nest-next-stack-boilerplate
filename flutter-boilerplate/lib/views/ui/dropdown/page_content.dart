@@ -11,11 +11,11 @@ class DropdownDemoPage extends StatelessWidget {
       appBar: AppBar(title: const Text('Dropdown')),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: [
-          const Text('Basic Dropdown', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
+        children: const [
+          Text('Basic Dropdown', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
           DropdownWidget(
-            items: const [
+            items: [
               DropdownMenuItem(value: 'Option 1', child: Text('Option 1')),
               DropdownMenuItem(value: 'Option 2', child: Text('Option 2')),
               DropdownMenuItem(value: 'Option 3', child: Text('Option 3')),

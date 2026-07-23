@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../constants/theme.dart';
 import '../../api/client/premium/query.dart';
-import 'stats_section.dart';
+import '../../constants/theme.dart';
 import 'growth_stats_section.dart';
+import 'stats_section.dart';
 
 class MediumPremiumPage extends ConsumerStatefulWidget {
   final String lang;

@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_boilerplate/lib/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
-import '../../../lib/api_client.dart';
 import '../../../types/feed/post.dart';
 
 final postCreateServerProvider = Provider((ref) => PostCreateServer(ref.read(dioProvider)));
@@ -17,7 +17,7 @@ class PostCreateServer {
       'title': title,
       'content': content,
       'imageUrl': imageUrl,
-    });
+    },);
     return Post.fromJson(response.data as Map<String, dynamic>);
   }
 }

@@ -45,14 +45,14 @@ class _ProfilePreferencesFieldsState extends State<ProfilePreferencesFields> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _selectedTheme,
+          initialValue: _selectedTheme,
           items: _themes.map((t) => DropdownMenuItem(value: t, child: Text(t[0].toUpperCase() + t.substring(1)))).toList(),
           onChanged: (v) => setState(() => _selectedTheme = v!),
           decoration: const InputDecoration(labelText: 'Theme', border: OutlineInputBorder()),
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _selectedLanguage,
+          initialValue: _selectedLanguage,
           items: _languages.map((l) => DropdownMenuItem(value: l['code'], child: Text(l['label']!))).toList(),
           onChanged: (v) => setState(() => _selectedLanguage = v!),
           decoration: const InputDecoration(labelText: 'Language', border: OutlineInputBorder()),

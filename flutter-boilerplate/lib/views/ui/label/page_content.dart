@@ -11,12 +11,12 @@ class LabelDemoPage extends StatelessWidget {
       appBar: AppBar(title: const Text('Label')),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: [
-          const Label(text: 'Standard Label'),
-          const SizedBox(height: 8),
-          const Text('Required:'),
-          const SizedBox(height: 4),
-          const Label(text: 'Required', required: true),
+        children: const [
+          Label(text: 'Standard Label'),
+          SizedBox(height: 8),
+          Text('Required:'),
+          SizedBox(height: 4),
+          Label(text: 'Required', required: true),
         ],
       ),
     );

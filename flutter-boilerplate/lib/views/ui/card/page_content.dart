@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+
+import '../../../components/ui/button/button.dart';
 import '../../../components/ui/card/card.dart';
-import '../../../components/ui/card/card_header.dart';
 import '../../../components/ui/card/card_content.dart';
 import '../../../components/ui/card/card_footer.dart';
-import '../../../components/ui/button/button.dart';
+import '../../../components/ui/card/card_header.dart';
 
 class CardDemoPage extends StatelessWidget {
   final String lang;
@@ -46,7 +47,6 @@ class CardDemoPage extends StatelessWidget {
           const Text('Tappable Card', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           const CardWidget(
-            onTap: null,
             child: ListTile(
               leading: Icon(Icons.star),
               title: Text('Tappable Card'),

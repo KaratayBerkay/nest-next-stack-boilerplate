@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/avatar/avatar.dart';
 import '../../../components/ui/button/button.dart';
+import '../../../constants/theme.dart';
 
 class AccountAvatarSection extends StatelessWidget {
   final String name;
@@ -35,8 +35,8 @@ class AccountAvatarSection extends StatelessWidget {
             Button(
               variant: ButtonVariant.ghost,
               size: ButtonSize.sm,
-              child: const Text('Change Avatar'),
               onPressed: onChangeAvatar,
+              child: const Text('Change Avatar'),
             ),
           ],
         ],

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../components/ui/input/input.dart';
-import '../../../components/ui/textarea/textarea.dart';
-import '../../../components/ui/checkbox/checkbox.dart';
-import '../../../components/ui/switch/switch.dart';
-import '../../../components/ui/select/select.dart';
 import '../../../components/ui/button/button.dart';
+import '../../../components/ui/checkbox/checkbox.dart';
+import '../../../components/ui/input/input.dart';
+import '../../../components/ui/select/select.dart';
+import '../../../components/ui/switch/switch.dart';
+import '../../../components/ui/textarea/textarea.dart';
 import 'form_builder_utils.dart';
 
 class FormPreview extends StatelessWidget {
@@ -32,7 +32,7 @@ class FormPreview extends StatelessWidget {
         ...fields.map((f) => Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: _buildField(f),
-        )),
+        ),),
         if (onSubmit != null) ...[
           const SizedBox(height: 12),
           Button(onPressed: onSubmit, child: const Text('Submit')),

@@ -81,7 +81,6 @@ class SecurityFallback extends StatelessWidget {
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: colors.border,
-                                width: 1,
                               ),
                             ),
                           ),
@@ -122,7 +121,7 @@ class SecurityFallback extends StatelessWidget {
                       children: List.generate(
                         3,
                         (i) => Padding(
-                          padding: EdgeInsets.only(right: 8),
+                          padding: const EdgeInsets.only(right: 8),
                           child: Container(
                             width: 80 + i * 20,
                             height: 36,

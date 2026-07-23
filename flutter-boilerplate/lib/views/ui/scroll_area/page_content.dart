@@ -16,7 +16,7 @@ class ScrollAreaDemoPage extends StatelessWidget {
             children: List.generate(50, (i) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Text('Item $i'),
-            )),
+            ),),
           ),
         ),
       ),

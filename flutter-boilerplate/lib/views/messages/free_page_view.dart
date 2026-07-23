@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../lib/container.dart';
+import 'package:flutter_boilerplate/lib/container.dart';
 import 'messages_sidebar.dart';
 
 class FreeMessagesPage extends StatelessWidget {

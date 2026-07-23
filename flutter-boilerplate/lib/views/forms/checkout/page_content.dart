@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/form_text_field.dart';
 import '../../../validators/auth/schema.dart' as auth;
-import '../../../validators/forms/schema.dart' as forms;
 import '../../../validators/billing/schema.dart' as billing;
+import '../../../validators/forms/schema.dart' as forms;
 
 class FormsCheckoutPageContent extends ConsumerStatefulWidget {
   final String lang;

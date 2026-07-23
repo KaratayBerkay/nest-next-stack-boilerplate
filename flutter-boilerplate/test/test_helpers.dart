@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/constants/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import '../lib/constants/theme.dart';
 
 Widget createTestApp(Widget child) {
   return ProviderScope(

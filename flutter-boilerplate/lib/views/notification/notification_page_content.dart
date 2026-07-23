@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../constants/theme.dart';
-import '../../lib/date_time.dart';
-import '../../components/ui/button/button.dart';
 import '../../components/ui/separator/separator.dart';
+import '../../constants/theme.dart';
 import '../../types/notification/notification_item.dart';
-import 'notification_header.dart';
 import 'notification_item.dart';
 
 class _NotificationFilter extends Notifier<String> {
@@ -83,7 +80,7 @@ class NotificationPageContent extends ConsumerWidget {
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(vertical: 4),
               itemCount: _sampleNotifications.length,
-              separatorBuilder: (_, __) => Separator(margin: const EdgeInsets.symmetric(horizontal: 16)),
+              separatorBuilder: (_, __) => const Separator(margin: EdgeInsets.symmetric(horizontal: 16)),
               itemBuilder: (_, i) {
                 final n = _sampleNotifications[i];
                 return NotificationItemWidget(
@@ -116,7 +113,7 @@ class _FilterChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? colors.brand.withOpacity(0.1) : colors.surface,
+          color: selected ? colors.brand.withValues(alpha: 0.1) : colors.surface,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(color: selected ? colors.brand : colors.border),
         ),
@@ -140,7 +137,6 @@ final _sampleNotifications = <NotificationItem>[
     title: 'Welcome to the app!',
     body: 'Thanks for joining. We are excited to have you on board. Start exploring the features.',
     createdAt: DateTime.now().subtract(const Duration(minutes: 2)),
-    isRead: false,
   ),
   NotificationItem(
     id: '2',
@@ -148,7 +144,6 @@ final _sampleNotifications = <NotificationItem>[
     title: 'New feature available',
     body: 'Dark mode has been released. You can now switch themes in settings.',
     createdAt: DateTime.now().subtract(const Duration(hours: 1)),
-    isRead: false,
   ),
   NotificationItem(
     id: '3',
@@ -172,7 +167,6 @@ final _sampleNotifications = <NotificationItem>[
     title: 'Team invitation',
     body: 'You have been invited to join the Design Team workspace.',
     createdAt: DateTime.now().subtract(const Duration(days: 2)),
-    isRead: false,
   ),
   NotificationItem(
     id: '6',

@@ -47,7 +47,7 @@ class FormErrorBanner extends StatelessWidget {
                   fontSize: 13,
                   color: colors.danger,
                 ),
-              )),
+              ),),
         ],
       ),
     );

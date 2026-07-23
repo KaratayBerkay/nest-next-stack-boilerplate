@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../constants/theme.dart';
 import '../../components/ui/card/card.dart';
 import '../../components/ui/card/card_content.dart';
 

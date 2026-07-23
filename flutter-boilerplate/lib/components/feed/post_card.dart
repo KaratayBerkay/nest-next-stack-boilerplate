@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/date_time.dart';
 
 import '../../constants/theme.dart';
-import '../../lib/date_time.dart';
 import '../../types/feed/post.dart';
 import '../ui/avatar/avatar.dart';
 

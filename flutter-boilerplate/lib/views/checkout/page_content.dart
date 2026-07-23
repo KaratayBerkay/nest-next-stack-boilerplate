@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_stripe/flutter_stripe.dart' hide Card;
+import 'package:flutter_boilerplate/lib/tier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_stripe/flutter_stripe.dart' hide Card;
 import 'package:go_router/go_router.dart';
 
-import '../../constants/theme.dart';
-import '../../lib/tier.dart';
 import '../../components/ui/stripe_card_form.dart';
-import '../../hooks/use_billing.dart';
 import '../../components/ui/toast/toast.dart';
+import '../../constants/theme.dart';
+import '../../hooks/use_billing.dart';
 
 class CheckoutPageContent extends ConsumerStatefulWidget {
   final String lang;
@@ -74,7 +74,7 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
 
       await Stripe.instance.confirmSetupIntent(
         paymentIntentClientSecret: clientSecret,
-        params: PaymentMethodParams.card(paymentMethodData: const PaymentMethodData()),
+        params: const PaymentMethodParams.card(paymentMethodData: PaymentMethodData()),
       );
 
       await billing.subscribe(_priceId);
@@ -107,10 +107,10 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Selected Plan: ${Tier.displayName(widget.plan ?? 'free')}',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
                   const SizedBox(height: 4),
                   Text('$_price/month — You are about to upgrade your account.',
-                      style: TextStyle(color: colors.fgMuted)),
+                      style: TextStyle(color: colors.fgMuted),),
                 ],
               ),
             ),

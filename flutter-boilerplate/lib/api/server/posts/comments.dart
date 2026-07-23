@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_boilerplate/lib/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
-import '../../../lib/api_client.dart';
 import '../../../types/feed/comment.dart';
 
 final postCommentsServerProvider = Provider((ref) => PostCommentsServer(ref.read(dioProvider)));
@@ -20,6 +20,11 @@ class PostCommentsServer {
 
   Future<Comment> create(String postId, String content) async {
     final response = await _dio.post<dynamic>('${Urls.comments}/$postId', data: {'content': content});
+    return Comment.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<Comment> update(String commentId, {required String content}) async {
+    final response = await _dio.put<dynamic>('${Urls.comments}/$commentId', data: {'content': content});
     return Comment.fromJson(response.data as Map<String, dynamic>);
   }
 

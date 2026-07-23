@@ -42,7 +42,7 @@ class ReviewStep extends StatelessWidget {
                       Text(e),
                     ],
                   ),
-                )),
+                ),),
               ],
             ),
           ),

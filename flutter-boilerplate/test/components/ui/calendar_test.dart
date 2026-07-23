@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-
 import 'package:flutter_boilerplate/components/ui/calendar/calendar.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   testWidgets('CalendarWidget renders month header', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
+      const MaterialApp(
         home: Scaffold(
           body: SingleChildScrollView(
-            child: SizedBox(width: 400, child: const CalendarWidget()),
+            child: SizedBox(width: 400, child: CalendarWidget()),
           ),
         ),
       ),
@@ -22,10 +21,10 @@ void main() {
 
   testWidgets('CalendarWidget renders weekday labels', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
+      const MaterialApp(
         home: Scaffold(
           body: SingleChildScrollView(
-            child: SizedBox(width: 400, child: const CalendarWidget()),
+            child: SizedBox(width: 400, child: CalendarWidget()),
           ),
         ),
       ),
@@ -38,10 +37,10 @@ void main() {
 
   testWidgets('CalendarWidget renders day cells', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
+      const MaterialApp(
         home: Scaffold(
           body: SingleChildScrollView(
-            child: SizedBox(width: 400, child: const CalendarWidget()),
+            child: SizedBox(width: 400, child: CalendarWidget()),
           ),
         ),
       ),

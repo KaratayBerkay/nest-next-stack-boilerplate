@@ -18,7 +18,7 @@ class RoutingFallback extends StatelessWidget {
         children: List.generate(
           8,
           (i) => Padding(
-            padding: EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.only(bottom: 12),
             child: Row(
               children: [
                 Container(

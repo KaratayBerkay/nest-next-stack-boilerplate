@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart' hide Badge;
 import 'package:go_router/go_router.dart';
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/badge/badge.dart';
 import '../../../components/ui/button/button.dart';
+import '../../../constants/theme.dart';
 
 class PaymentMethod {
   final String id;
@@ -64,7 +64,7 @@ class PaymentMethods extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (pm.isDefault)
-              Badge(text: 'Default', variant: BadgeVariant.success),
+              const Badge(text: 'Default', variant: BadgeVariant.success),
             if (!pm.isDefault && onSetDefault != null)
               TextButton(
                 onPressed: () => onSetDefault!(pm.id),
@@ -77,7 +77,7 @@ class PaymentMethods extends StatelessWidget {
               ),
           ],
         ),
-      )).toList(),
+      ),).toList(),
     );
   }
 }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/date_time.dart';
 
-import '../../constants/theme.dart';
 import '../../components/ui/avatar/avatar.dart';
-import '../../lib/date_time.dart';
+import '../../constants/theme.dart';
 import '../../types/notification/notification_item.dart';
 
 class NotificationItemWidget extends StatelessWidget {
@@ -31,7 +31,6 @@ class NotificationItemWidget extends StatelessWidget {
             Avatar(
               imageUrl: item.imageUrl,
               name: item.title,
-              radius: 20,
             ),
             const SizedBox(width: 12),
             Expanded(

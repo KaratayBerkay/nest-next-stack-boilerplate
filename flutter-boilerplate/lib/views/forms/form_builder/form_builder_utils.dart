@@ -72,7 +72,7 @@ class FormBuilderModel extends ChangeNotifier {
       id: 'field_$_counter',
       label: 'Field $_counter',
       type: type,
-    ));
+    ),);
     notifyListeners();
   }
 

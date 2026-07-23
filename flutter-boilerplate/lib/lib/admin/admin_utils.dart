@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:collection/collection.dart';
 
 String formatAuditAction(String action) {
@@ -7,7 +6,7 @@ String formatAuditAction(String action) {
       .split(' ')
       .map((word) => word.isNotEmpty
           ? '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}'
-          : '')
+          : '',)
       .join(' ');
 }
 

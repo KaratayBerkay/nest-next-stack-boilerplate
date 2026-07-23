@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../components/ui/button/button.dart';
 import '../../../components/ui/avatar/avatar.dart';
+import '../../../components/ui/button/button.dart';
 import '../../../components/ui/form_text_field.dart';
 import '../../../validators/auth/schema.dart' as auth;
 
@@ -39,7 +39,7 @@ class _FormsProfilePageContentState extends ConsumerState<FormsProfilePageConten
           Center(
             child: Column(
               children: [
-                Avatar(name: 'John Doe', radius: 40),
+                const Avatar(name: 'John Doe', radius: 40),
                 const SizedBox(height: 8),
                 TextButton(onPressed: () {}, child: const Text('Change Avatar')),
               ],

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/date_time.dart';
 
 import '../../constants/theme.dart';
-import '../../lib/date_time.dart';
 import '../../types/messages/message.dart';
 
 class ChatMessageBubble extends StatelessWidget {

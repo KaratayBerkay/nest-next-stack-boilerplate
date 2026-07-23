@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../api/client/billing/query.dart';
 import '../api/client/billing/actions.dart';
+import '../api/client/billing/query.dart';
 
 final billingStateProvider = Provider((ref) => BillingState(ref));
 

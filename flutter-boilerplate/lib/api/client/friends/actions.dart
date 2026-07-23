@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../server/messages/send_friend_request.dart';
 import '../../server/messages/accept_friend_request.dart';
 import '../../server/messages/decline_friend_request.dart';
+import '../../server/messages/send_friend_request.dart';
 
 final friendActionsProvider = Provider((ref) => FriendActions(ref));
 

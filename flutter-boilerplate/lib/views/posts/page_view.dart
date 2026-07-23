@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/tier_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../lib/tier_view.dart';
-import '../../constants/theme.dart';
-import '../../api/client/posts/query.dart';
 import '../../api/client/posts/actions.dart';
+import '../../api/client/posts/query.dart';
 import '../../components/ui/avatar/avatar.dart';
+import '../../constants/theme.dart';
 import '../../types/feed/post.dart';
 
 class PostsPageContent extends ConsumerWidget {
@@ -141,7 +141,7 @@ class _PostCard extends ConsumerWidget {
                 children: [
                   IconButton(
                     icon: Icon(post.isLiked ? Icons.favorite : Icons.favorite_border,
-                        color: post.isLiked ? colors.danger : null),
+                        color: post.isLiked ? colors.danger : null,),
                     onPressed: () => ref.read(postActionsProvider).toggleReaction(post.id),
                     iconSize: 20,
                   ),

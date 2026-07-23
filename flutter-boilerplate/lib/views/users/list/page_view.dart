@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../constants/theme.dart';
 import '../../../api/client/friends/query.dart';
 import '../../../api/client/users/search.dart';
 import '../../../components/ui/avatar/avatar.dart';
 import '../../../components/ui/empty/empty.dart';
+import '../../../constants/theme.dart';
 
 class UsersListPageContent extends ConsumerStatefulWidget {
   final String lang;
@@ -60,7 +60,7 @@ class _UsersListPageContentState extends ConsumerState<UsersListPageContent> {
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         itemCount: friends.length,
                         itemBuilder: (_, i) => ListTile(
-                          leading: Avatar(name: friends[i].name, radius: 20),
+                          leading: Avatar(name: friends[i].name),
                           title: Text(friends[i].name),
                           subtitle: Row(
                             children: [
@@ -73,7 +73,7 @@ class _UsersListPageContentState extends ConsumerState<UsersListPageContent> {
                               ),
                               const SizedBox(width: 4),
                               Text(friends[i].isOnline ? 'Online' : 'Offline',
-                                  style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+                                  style: TextStyle(color: colors.fgMuted, fontSize: 12),),
                             ],
                           ),
                           trailing: const Icon(Icons.chevron_right),
@@ -89,7 +89,7 @@ class _UsersListPageContentState extends ConsumerState<UsersListPageContent> {
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: users.length,
                       itemBuilder: (_, i) => ListTile(
-                        leading: Avatar(name: users[i].name, radius: 20),
+                        leading: Avatar(name: users[i].name),
                         title: Text(users[i].name),
                         onTap: () => context.go('/v1/${widget.lang}/users/${users[i].id}'),
                       ),

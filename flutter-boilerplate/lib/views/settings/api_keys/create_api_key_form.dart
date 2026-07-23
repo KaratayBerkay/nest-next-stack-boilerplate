@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/button/button.dart';
 
 class CreateApiKeyForm extends StatefulWidget {
@@ -57,8 +56,8 @@ class _CreateApiKeyFormState extends State<CreateApiKeyForm> {
             ),
             const SizedBox(width: 8),
             Button(
-              child: Text(_creating ? 'Creating...' : 'Create'),
               onPressed: _creating ? null : _submit,
+              child: Text(_creating ? 'Creating...' : 'Create'),
             ),
           ],
         ),

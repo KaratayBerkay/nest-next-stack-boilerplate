@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/riverpod_compat.dart';
 
-import '../../../lib/riverpod_compat.dart';
-import '../../../constants/theme.dart';
-import '../../../api/server/admin/audit_logs.dart';
 import '../../../api/client/admin/query.dart';
+import '../../../api/server/admin/audit_logs.dart';
+import '../../../constants/theme.dart';
 
 
 String _formatDate(DateTime d) {
@@ -47,7 +47,6 @@ class _AdminAuditLogsPageContentState extends ConsumerState<AdminAuditLogsPageCo
 
   AuditLogParams _buildParams() {
     return AuditLogParams(
-      take: _pageSize,
       skip: _page * _pageSize,
       action: _actionFilter.isEmpty ? null : _actionFilter,
       level: _levelFilter.isEmpty ? null : _levelFilter,
@@ -92,7 +91,7 @@ class _AdminAuditLogsPageContentState extends ConsumerState<AdminAuditLogsPageCo
                   items: _actions.map((a) => DropdownMenuItem(
                     value: a,
                     child: Text(a.isEmpty ? 'All actions' : a, style: const TextStyle(fontSize: 13)),
-                  )).toList(),
+                  ),).toList(),
                   onChanged: (v) {
                     if (v == null) return;
                     setState(() => _actionFilter = v);
@@ -105,7 +104,7 @@ class _AdminAuditLogsPageContentState extends ConsumerState<AdminAuditLogsPageCo
                   items: _levels.map((l) => DropdownMenuItem(
                     value: l,
                     child: Text(l.isEmpty ? 'All levels' : l, style: const TextStyle(fontSize: 13)),
-                  )).toList(),
+                  ),).toList(),
                   onChanged: (v) {
                     if (v == null) return;
                     setState(() => _levelFilter = v);
@@ -245,14 +244,14 @@ class _AuditLogRow extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: _levelColor(log.level, colors).withOpacity(0.15),
+                    color: _levelColor(log.level, colors).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(log.level, style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                     color: _levelColor(log.level, colors),
-                  )),
+                  ),),
                 ),
                 const SizedBox(width: 8),
                 Expanded(

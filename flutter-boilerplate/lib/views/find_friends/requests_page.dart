@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/tier_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../lib/tier_view.dart';
-import '../../constants/theme.dart';
-import '../../api/client/friends/query.dart';
 import '../../api/client/friends/actions.dart';
+import '../../api/client/friends/query.dart';
 import '../../components/ui/avatar/avatar.dart';
 import '../../components/ui/empty/empty.dart';
+import '../../constants/theme.dart';
 
 class FindFriendsRequestsPage extends ConsumerWidget {
   final String lang;
@@ -53,10 +53,10 @@ class _RequestsView extends ConsumerWidget {
               return Card(
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
-                  leading: Avatar(name: req.fromUserName, radius: 20),
+                  leading: Avatar(name: req.fromUserName),
                   title: Text(req.fromUserName),
                   subtitle: Text('Sent ${_timeAgo(req.createdAt)}',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [

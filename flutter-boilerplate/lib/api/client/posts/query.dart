@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../server/posts/comments.dart';
 import '../../server/posts/list.dart';
 import '../../server/posts/single.dart';
-import '../../server/posts/comments.dart';
 import '../../server/posts/stats.dart';
 
 final feedProvider = FutureProvider((ref) async {

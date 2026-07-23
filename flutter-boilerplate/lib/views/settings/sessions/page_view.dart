@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../constants/theme.dart';
-import '../../../api/client/sessions/query.dart';
 import '../../../api/client/sessions/actions.dart';
+import '../../../api/client/sessions/query.dart';
 import '../../../components/ui/toast/toast.dart';
+import '../../../constants/theme.dart';
 
 class SettingsSessionsPageContent extends ConsumerWidget {
   final String lang;
@@ -49,7 +49,7 @@ class SettingsSessionsPageContent extends ConsumerWidget {
                 ),
                 title: Text(s.device),
                 subtitle: Text('${s.location} · ${s.lastActive}',
-                    style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+                    style: TextStyle(color: colors.fgMuted, fontSize: 12),),
                 trailing: s.isCurrent
                     ? Badge(
                         label: Text('Current', style: TextStyle(fontSize: 11, color: colors.surface)),
@@ -69,7 +69,7 @@ class SettingsSessionsPageContent extends ConsumerWidget {
                       ),
               ),
             ),
-          )).toList(),
+          ),).toList(),
         ),
       ),
     );

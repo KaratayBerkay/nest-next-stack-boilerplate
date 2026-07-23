@@ -1,7 +1,7 @@
+import 'package:flutter_boilerplate/lib/realtime/realtime_client.dart';
+import 'package:flutter_boilerplate/lib/realtime/realtime_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../lib/realtime/realtime_client.dart';
-import '../lib/realtime/realtime_provider.dart';
 import 'use_auth.dart';
 
 final realtimeLifecycleProvider = Provider<RealtimeLifecycle>((ref) {

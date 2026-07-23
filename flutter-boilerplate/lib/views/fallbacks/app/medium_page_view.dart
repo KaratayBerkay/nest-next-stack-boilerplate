@@ -25,7 +25,6 @@ class MediumFallbackPage extends StatelessWidget {
           message: message ?? 'The page you requested could not be found. It may have been removed or the link may be broken.',
           action: onRetry != null
               ? Button(
-                  variant: ButtonVariant.primary,
                   onPressed: onRetry,
                   child: const Text('Return home'),
                 )
@@ -38,7 +37,6 @@ class MediumFallbackPage extends StatelessWidget {
           message: message ?? 'We encountered an error while processing your request. Please try again.',
           action: onRetry != null
               ? Button(
-                  variant: ButtonVariant.primary,
                   onPressed: onRetry,
                   child: const Text('Retry'),
                 )

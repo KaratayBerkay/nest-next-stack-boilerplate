@@ -6,14 +6,14 @@ class ToastProvider extends StatefulWidget {
   const ToastProvider({super.key, required this.child});
 
   @override
-  State<ToastProvider> createState() => _ToastProviderState();
+  State<ToastProvider> createState() => ToastProviderState();
 
-  static _ToastProviderState? of(BuildContext context) {
-    return context.findAncestorStateOfType<_ToastProviderState>();
+  static ToastProviderState? of(BuildContext context) {
+    return context.findAncestorStateOfType<ToastProviderState>();
   }
 }
 
-class _ToastProviderState extends State<ToastProvider> {
+class ToastProviderState extends State<ToastProvider> {
   final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey();
 
   @override

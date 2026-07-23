@@ -22,7 +22,7 @@ class _NativeSelectDemoPageState extends State<NativeSelectDemoPage> {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: DropdownButtonFormField<String>(
-                value: _selected,
+                initialValue: _selected,
                 items: const [
                   DropdownMenuItem(value: 'option1', child: Text('Option 1')),
                   DropdownMenuItem(value: 'option2', child: Text('Option 2')),

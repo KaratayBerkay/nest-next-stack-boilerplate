@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../api/client/posts/actions.dart';
-import '../../../constants/theme.dart';
 import '../../../types/feed/post.dart';
 
 class PostEditForm extends ConsumerStatefulWidget {
@@ -35,8 +34,6 @@ class _PostEditFormState extends ConsumerState<PostEditForm> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

@@ -27,6 +27,7 @@ class _VerifyEmailPageContentState extends ConsumerState<VerifyEmailPageContent>
     setState(() => _loading = true);
     try {
       await ref.read(verifyEmailServerProvider).call(_tokenCtrl.text);
+      if (!context.mounted) return;
       setState(() => _done = true);
       showToast(context, 'Email verified successfully');
     } catch (e) {

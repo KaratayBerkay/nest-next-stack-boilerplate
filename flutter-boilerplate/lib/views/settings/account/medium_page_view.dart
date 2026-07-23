@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/avatar/avatar.dart';
 import '../../../components/ui/button/button.dart';
+import '../../../constants/theme.dart';
 import '../../../hooks/use_auth.dart';
 
 class MediumSettingsAccountPage extends ConsumerStatefulWidget {
@@ -18,7 +18,7 @@ class MediumSettingsAccountPage extends ConsumerStatefulWidget {
 class _MediumSettingsAccountPageState extends ConsumerState<MediumSettingsAccountPage> {
   late TextEditingController _nameCtrl;
   late TextEditingController _bioCtrl;
-  bool _saving = false;
+  final bool _saving = false;
 
   @override
   void initState() {
@@ -51,9 +51,9 @@ class _MediumSettingsAccountPageState extends ConsumerState<MediumSettingsAccoun
                 Avatar(name: user?.name ?? 'U', radius: 32),
                 const SizedBox(height: 12),
                 Text(user?.name ?? 'User',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
                 Text(user?.email ?? '',
-                    style: TextStyle(color: colors.fgMuted)),
+                    style: TextStyle(color: colors.fgMuted),),
               ],
             ),
           ),
@@ -71,8 +71,8 @@ class _MediumSettingsAccountPageState extends ConsumerState<MediumSettingsAccoun
           const SizedBox(height: 24),
           Button(
             fullWidth: true,
-            child: Text(_saving ? 'Saving...' : 'Save Changes'),
             onPressed: _saving ? null : () {},
+            child: Text(_saving ? 'Saving...' : 'Save Changes'),
           ),
         ],
       ),

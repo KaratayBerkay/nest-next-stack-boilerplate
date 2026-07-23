@@ -100,7 +100,7 @@ class _CommandWidgetState extends State<CommandWidget> {
                       leading: item.icon != null ? Icon(item.icon, size: 18) : null,
                       title: Text(item.label),
                       onTap: () => widget.onSelected?.call(item),
-                    )),
+                    ),),
               ];
             }).toList(),
           ),

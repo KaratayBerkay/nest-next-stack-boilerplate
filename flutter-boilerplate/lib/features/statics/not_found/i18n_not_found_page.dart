@@ -1,39 +1,41 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 class I18nNotFoundPage extends StatelessWidget {
-  final String lang;
-  final String? message;
+  final String? description;
+  final String? backLabel;
+  final VoidCallback? onBack;
 
-  const I18nNotFoundPage({super.key, required this.lang, this.message});
+  const I18nNotFoundPage({
+    super.key,
+    this.description,
+    this.backLabel,
+    this.onBack,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colors = Theme.of(context).colorScheme;
+
     return Scaffold(
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const Text('404', style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
               Text(
-                '404',
-                style: theme.textTheme.displayLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: theme.colorScheme.primary,
+                description ?? 'Page not found',
+                style: TextStyle(color: colors.onSurface.withValues(alpha: 0.6)),
+              ),
+              if (onBack != null) ...[
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: onBack,
+                  child: Text(backLabel ?? 'Back home'),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                message ?? 'Page not found',
-                style: theme.textTheme.titleMedium,
-              ),
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: () => context.go('/v1/$lang'),
-                child: const Text('Go Home'),
-              ),
+              ],
             ],
           ),
         ),

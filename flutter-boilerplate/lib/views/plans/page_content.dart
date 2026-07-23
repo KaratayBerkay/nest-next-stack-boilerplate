@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/tier.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../constants/theme.dart';
-import '../../lib/tier.dart';
 
 class PlansPageContent extends StatelessWidget {
   final String lang;
@@ -39,7 +39,7 @@ class PlansPageContent extends StatelessWidget {
                         _PlanCard(
                           tier: Tier.free,
                           price: '\$0',
-                          features: ['Basic feed', '5 messages/day', '1 device'],
+                          features: const ['Basic feed', '5 messages/day', '1 device'],
                           color: colors.surfaceAlt,
                           onSelect: () {},
                         ),
@@ -47,7 +47,7 @@ class PlansPageContent extends StatelessWidget {
                         _PlanCard(
                           tier: Tier.basic,
                           price: '\$9',
-                          features: ['Enhanced feed', '50 messages/day', '3 devices', 'Basic stats'],
+                          features: const ['Enhanced feed', '50 messages/day', '3 devices', 'Basic stats'],
                           color: colors.info,
                           onSelect: () => context.go('/v1/$lang/checkout/basic'),
                         ),
@@ -55,7 +55,7 @@ class PlansPageContent extends StatelessWidget {
                         _PlanCard(
                           tier: Tier.medium,
                           price: '\$19',
-                          features: ['Full feed', 'Unlimited messages', '10 devices', 'Analytics', 'Priority support'],
+                          features: const ['Full feed', 'Unlimited messages', '10 devices', 'Analytics', 'Priority support'],
                           color: colors.brand,
                           onSelect: () => context.go('/v1/$lang/checkout/medium'),
                         ),
@@ -63,7 +63,7 @@ class PlansPageContent extends StatelessWidget {
                         _PlanCard(
                           tier: Tier.premium,
                           price: '\$49',
-                          features: ['Everything', 'Unlimited', 'All devices', 'AI recommendations', 'Video calls', 'Dedicated support'],
+                          features: const ['Everything', 'Unlimited', 'All devices', 'AI recommendations', 'Video calls', 'Dedicated support'],
                           color: colors.warning,
                           isPremium: true,
                           onSelect: () => context.go('/v1/$lang/checkout/premium'),
@@ -154,7 +154,7 @@ class _PlanCard extends StatelessWidget {
                     ),
                   ],
                 ),
-              )),
+              ),),
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,

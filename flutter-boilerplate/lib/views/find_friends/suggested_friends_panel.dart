@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/client/friends/actions.dart';
 import '../../api/server/friends/suggested.dart';
-import '../../components/ui/spinner/spinner.dart';
-import '../../components/ui/empty/empty.dart';
 import '../../components/ui/avatar/avatar.dart';
+import '../../components/ui/empty/empty.dart';
+import '../../components/ui/spinner/spinner.dart';
 import '../../constants/theme.dart';
 
 class SuggestedFriendsPanel extends ConsumerWidget {
@@ -47,7 +47,6 @@ class SuggestedFriendsPanel extends ConsumerWidget {
               leading: Avatar(
                 name: users[i].name,
                 imageUrl: users[i].avatarUrl,
-                radius: 20,
               ),
               title: Text(users[i].name),
               subtitle: Text(

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/avatar/avatar.dart';
+import '../../../constants/theme.dart';
 
 class WhoReacted extends ConsumerWidget {
   final String postId;
@@ -29,7 +29,7 @@ class WhoReacted extends ConsumerWidget {
           ),
           child: Row(
             children: [
-              AvatarGroup(
+              const AvatarGroup(
                 overlap: 6,
                 avatars: [
                   Avatar(name: 'Alice', radius: 14),

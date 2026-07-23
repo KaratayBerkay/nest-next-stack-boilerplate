@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart' hide Badge;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/badge/badge.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/card/card.dart';
 import '../../../components/ui/card/card_content.dart';
 import '../../../components/ui/card/card_header.dart';
+import '../../../constants/theme.dart';
 
 class MediumSettingsBillingPage extends ConsumerWidget {
   final String lang;
@@ -31,16 +31,16 @@ class MediumSettingsBillingPage extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      const Row(
                         children: [
-                          const Text('MEDIUM', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                          const SizedBox(width: 8),
-                          const Badge(text: 'Active', variant: BadgeVariant.success),
+                          Text('MEDIUM', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          SizedBox(width: 8),
+                          Badge(text: 'Active', variant: BadgeVariant.success),
                         ],
                       ),
                       const SizedBox(height: 8),
                       Text('Manage your subscription and payment methods.',
-                          style: TextStyle(color: colors.fgMuted, fontSize: 13)),
+                          style: TextStyle(color: colors.fgMuted, fontSize: 13),),
                       const SizedBox(height: 12),
                       Button(
                         variant: ButtonVariant.outline,
@@ -61,7 +61,7 @@ class MediumSettingsBillingPage extends ConsumerWidget {
                 const CardHeader(child: Text('Payment Methods', style: TextStyle(fontWeight: FontWeight.w600))),
                 CardContent(
                   child: Text('No payment methods saved.',
-                      style: TextStyle(color: colors.fgMuted)),
+                      style: TextStyle(color: colors.fgMuted),),
                 ),
               ],
             ),
@@ -74,7 +74,7 @@ class MediumSettingsBillingPage extends ConsumerWidget {
                 const CardHeader(child: Text('Invoices', style: TextStyle(fontWeight: FontWeight.w600))),
                 CardContent(
                   child: Text('No invoices yet.',
-                      style: TextStyle(color: colors.fgMuted)),
+                      style: TextStyle(color: colors.fgMuted),),
                 ),
               ],
             ),

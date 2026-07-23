@@ -28,7 +28,6 @@ class PremiumFallbackPage extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Button(
-                      variant: ButtonVariant.primary,
                       fullWidth: true,
                       onPressed: onRetry,
                       child: const Text('Go to home'),
@@ -54,7 +53,6 @@ class PremiumFallbackPage extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Button(
-                      variant: ButtonVariant.primary,
                       fullWidth: true,
                       onPressed: onRetry,
                       child: const Text('Try again'),

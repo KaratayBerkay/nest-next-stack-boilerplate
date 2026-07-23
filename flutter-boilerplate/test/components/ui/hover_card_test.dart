@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/components/ui/hover_card/hover_card.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_boilerplate/components/ui/hover_card/hover_card.dart';
 import '../../test_helpers.dart';
 
 void main() {
@@ -9,8 +9,8 @@ void main() {
     await pumpTestApp(
       tester,
       const HoverCard(
-        child: Text('Hover me'),
         content: Text('Tooltip content'),
+        child: Text('Hover me'),
       ),
     );
 

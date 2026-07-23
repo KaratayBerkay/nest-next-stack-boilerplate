@@ -12,9 +12,9 @@ class TableColumn {
 
 const tableColumns = [
   TableColumn(label: 'Item', flex: 3),
-  TableColumn(label: 'Qty', numeric: true, flex: 1),
+  TableColumn(label: 'Qty', numeric: true),
   TableColumn(label: 'Price', numeric: true, flex: 2),
-  TableColumn(label: 'Total', numeric: true, flex: 1),
+  TableColumn(label: 'Total', numeric: true),
 ];
 
 const emptyRowData = {

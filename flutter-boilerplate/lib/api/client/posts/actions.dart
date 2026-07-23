@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../server/posts/comments.dart';
 import '../../server/posts/create.dart';
 import '../../server/posts/delete.dart';
-import '../../server/posts/update.dart';
 import '../../server/posts/reactions.dart';
-import '../../server/posts/comments.dart';
+import '../../server/posts/update.dart';
 import '../../server/posts/upload.dart';
 
 final postActionsProvider = Provider((ref) => PostActions(ref));
@@ -39,9 +39,19 @@ class PostActions {
     await server.create(postId, content);
   }
 
+  Future<void> updateComment(String commentId, {required String content}) async {
+    final server = _ref.read(postCommentsServerProvider);
+    await server.update(commentId, content: content);
+  }
+
   Future<void> deleteComment(String commentId) async {
     final server = _ref.read(postCommentsServerProvider);
     await server.delete(commentId);
+  }
+
+  Future<void> toggleCommentReaction(String commentId) async {
+    final server = _ref.read(postReactionsServerProvider);
+    await server.toggleForComment(commentId);
   }
 
   Future<String> uploadImage(String filePath) async {

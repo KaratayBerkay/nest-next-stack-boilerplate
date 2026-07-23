@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/components/ui/native_select/native_select.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_boilerplate/components/ui/native_select/native_select.dart';
 import '../../test_helpers.dart';
 
 void main() {
@@ -42,7 +42,7 @@ void main() {
     await pumpTestApp(
       tester,
       NativeSelect(
-        items: ['X', 'Y'],
+        items: const ['X', 'Y'],
         onChanged: (v) => selected = v,
       ),
     );

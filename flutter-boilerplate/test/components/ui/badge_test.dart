@@ -1,6 +1,6 @@
+import 'package:flutter_boilerplate/components/ui/badge/badge.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_boilerplate/components/ui/badge/badge.dart';
 import '../../test_helpers.dart';
 
 void main() {
@@ -14,9 +14,9 @@ void main() {
     for (final variant in BadgeVariant.values) {
       await pumpTestApp(
         tester,
-        Badge(text: '${variant.name}', variant: variant),
+        Badge(text: variant.name, variant: variant),
       );
-      expect(find.text('${variant.name}'), findsOneWidget);
+      expect(find.text(variant.name), findsOneWidget);
     }
   });
 }

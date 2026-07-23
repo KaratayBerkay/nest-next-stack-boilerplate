@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/container.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../lib/container.dart';
-import '../../constants/theme.dart';
 import 'v1_header.dart';
-import 'v1_sidebar.dart';
 import 'v1_nav.dart';
+import 'v1_sidebar.dart';
 
 class V1Shell extends ConsumerWidget {
   final String lang;
@@ -21,7 +20,6 @@ class V1Shell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return PopScope(
-      canPop: true,
       child: Scaffold(
         appBar: V1Header(lang: lang),
         body: SafeArea(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/button/button.dart';
+import '../../../constants/theme.dart';
 
 class EditorHeader extends StatelessWidget {
   final String title;
@@ -32,8 +32,8 @@ class EditorHeader extends StatelessWidget {
         Button(
           variant: ButtonVariant.ghost,
           size: ButtonSize.sm,
-          child: Text(isPreview ? 'Edit' : 'Preview'),
           onPressed: onTogglePreview,
+          child: Text(isPreview ? 'Edit' : 'Preview'),
         ),
       ],
     );

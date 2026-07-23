@@ -30,21 +30,21 @@ class NavigationButtons extends StatelessWidget {
         if (!isFirst)
           Button(
             variant: ButtonVariant.outline,
-            child: const Text('Back'),
             onPressed: onBack,
+            child: const Text('Back'),
           ),
         if (!isFirst) const SizedBox(width: 12),
         Expanded(
           child: isLast
               ? Button(
-                  child: const Text('Send Invites'),
                   onPressed: canProceed ? onDone : null,
                   fullWidth: true,
+                  child: const Text('Send Invites'),
                 )
               : Button(
-                  child: const Text('Next'),
                   onPressed: canProceed ? onNext : null,
                   fullWidth: true,
+                  child: const Text('Next'),
                 ),
         ),
       ],

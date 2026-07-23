@@ -1,3 +1,3 @@
-const int FEED_PAGE_SIZE = 20;
-const int MAX_POST_LENGTH = 2000;
-const int MAX_COMMENT_LENGTH = 500;
+const int feedPageSize = 20;
+const int maxPostLength = 2000;
+const int maxCommentLength = 500;

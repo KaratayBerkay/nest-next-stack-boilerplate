@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../components/ui/input/input.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/form_text_field.dart';
+import '../../../components/ui/input/input.dart';
 import '../../../validators/auth/schema.dart' as auth;
 
 class FormsLayoutsPageContent extends ConsumerStatefulWidget {
@@ -84,25 +84,25 @@ class _FormsLayoutsPageContentState extends ConsumerState<FormsLayoutsPageConten
             ),
           ),
           const SizedBox(height: 12),
-          Card(
+          const Card(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Sectioned Form', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  const Text('Personal Info', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                  const SizedBox(height: 8),
-                  const Input(label: 'Full Name'),
-                  const SizedBox(height: 8),
-                  const Input(label: 'Phone'),
-                  const SizedBox(height: 12),
-                  const Text('Address', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                  const SizedBox(height: 8),
-                  const Input(label: 'Street'),
-                  const SizedBox(height: 8),
-                  const Row(
+                  Text('Sectioned Form', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  SizedBox(height: 8),
+                  Text('Personal Info', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                  SizedBox(height: 8),
+                  Input(label: 'Full Name'),
+                  SizedBox(height: 8),
+                  Input(label: 'Phone'),
+                  SizedBox(height: 12),
+                  Text('Address', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                  SizedBox(height: 8),
+                  Input(label: 'Street'),
+                  SizedBox(height: 8),
+                  Row(
                     children: [
                       Expanded(child: Input(label: 'City')),
                       SizedBox(width: 12),

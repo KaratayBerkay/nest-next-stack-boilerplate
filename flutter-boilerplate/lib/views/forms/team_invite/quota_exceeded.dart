@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/button/button.dart';
+import '../../../constants/theme.dart';
 
 class QuotaExceeded extends StatelessWidget {
   final int currentCount;
@@ -46,10 +46,9 @@ class QuotaExceeded extends StatelessWidget {
           if (onUpgrade != null) ...[
             const SizedBox(height: 12),
             Button(
-              variant: ButtonVariant.primary,
               size: ButtonSize.sm,
-              child: const Text('Upgrade Plan'),
               onPressed: onUpgrade,
+              child: const Text('Upgrade Plan'),
             ),
           ],
         ],

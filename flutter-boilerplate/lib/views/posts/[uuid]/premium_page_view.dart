@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../api/client/posts/query.dart';
 import '../../../hooks/use_auth.dart';
-import '../../../types/feed/post.dart';
-import '../../../types/auth/user.dart';
 import 'post_detail_base_view.dart';
 
 class PremiumPostDetailPage extends ConsumerWidget {

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../constants/theme.dart';
 import '../../api/client/messages/actions.dart';
+import '../../constants/theme.dart';
 
 class ChatInputBar extends ConsumerStatefulWidget {
   final String conversationId;

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/components/ui/collapsible/collapsible.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_boilerplate/components/ui/collapsible/collapsible.dart';
 import '../../test_helpers.dart';
 
 void main() {
@@ -10,8 +10,8 @@ void main() {
       tester,
       const CollapsibleWidget(
         title: Text('Section'),
-        child: Text('Visible content'),
         initiallyExpanded: true,
+        child: Text('Visible content'),
       ),
     );
 

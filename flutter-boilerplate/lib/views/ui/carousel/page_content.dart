@@ -24,7 +24,7 @@ class CarouselDemoPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(child: Text(item, style: const TextStyle(fontSize: 24))),
-              )).toList(),
+              ),).toList(),
             ),
           ),
         ],

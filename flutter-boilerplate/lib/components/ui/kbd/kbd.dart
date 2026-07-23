@@ -21,7 +21,6 @@ class KbdWidget extends StatelessWidget {
           BoxShadow(
             color: colors.border,
             offset: const Offset(0, 1),
-            blurRadius: 0,
           ),
         ],
       ),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../../constants/theme.dart';
-import '../../../constants/ui.dart';
 
 class FeedLoadingFallback extends StatelessWidget {
   const FeedLoadingFallback({super.key});
@@ -31,7 +30,7 @@ class FeedLoadingFallback extends StatelessWidget {
             ...List.generate(
               4,
               (i) => Padding(
-                padding: EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.only(bottom: 16),
                 child: Card(
                   margin: EdgeInsets.zero,
                   child: Padding(
@@ -50,23 +49,23 @@ class FeedLoadingFallback extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 12),
-                            Column(
+                            const Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Container(width: 100, height: 14),
-                                const SizedBox(height: 4),
-                                Container(width: 60, height: 11),
+                                SizedBox(width: 100, height: 14),
+                                SizedBox(height: 4),
+                                SizedBox(width: 60, height: 11),
                               ],
                             ),
                           ],
                         ),
                         const SizedBox(height: 12),
-                        Container(
+                        const SizedBox(
                           width: double.infinity,
                           height: 14,
                         ),
                         const SizedBox(height: 6),
-                        Container(
+                        const SizedBox(
                           width: double.infinity * 0.9,
                           height: 14,
                         ),
@@ -91,7 +90,7 @@ class FeedLoadingFallback extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            Container(width: 60, height: 12),
+                            const SizedBox(width: 60, height: 12),
                             const Spacer(),
                             Container(
                               width: 24,
@@ -102,7 +101,7 @@ class FeedLoadingFallback extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            Container(width: 60, height: 12),
+                            const SizedBox(width: 60, height: 12),
                           ],
                         ),
                       ],

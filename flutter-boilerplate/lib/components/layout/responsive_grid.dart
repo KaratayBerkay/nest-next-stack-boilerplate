@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../constants/theme.dart';
-
 class ResponsiveGrid extends StatelessWidget {
   final List<Widget> children;
   final int columnsSm;

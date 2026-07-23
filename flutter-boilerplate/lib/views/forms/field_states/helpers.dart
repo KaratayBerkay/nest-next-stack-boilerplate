@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 bool isFieldEmpty(String? value) {
   return value == null || value.trim().isEmpty;
 }

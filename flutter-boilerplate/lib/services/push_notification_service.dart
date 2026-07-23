@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_boilerplate/lib/api_client.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../lib/api_client.dart';
 import '../hooks/use_auth.dart';
 
 @pragma('vm:entry-point')
@@ -22,14 +22,14 @@ Future<void> _showLocalNotification(RemoteMessage message) async {
   final notification = message.notification;
   if (notification == null) return;
 
-  final androidDetails = AndroidNotificationDetails(
+  const androidDetails = AndroidNotificationDetails(
     'default_channel',
     'Notifications',
     channelDescription: 'General notifications',
     importance: Importance.high,
     priority: Priority.high,
   );
-  final iosDetails = DarwinNotificationDetails(
+  const iosDetails = DarwinNotificationDetails(
     presentAlert: true,
     presentBadge: true,
     presentSound: true,
@@ -38,7 +38,7 @@ Future<void> _showLocalNotification(RemoteMessage message) async {
     id: notification.hashCode,
     title: notification.title,
     body: notification.body,
-    notificationDetails: NotificationDetails(android: androidDetails, iOS: iosDetails),
+    notificationDetails: const NotificationDetails(android: androidDetails, iOS: iosDetails),
     payload: jsonEncode(message.data),
   );
 }
@@ -65,9 +65,7 @@ class PushNotificationService {
 
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
+      
     );
     await _localNotifications.initialize(
       settings: const InitializationSettings(android: androidSettings, iOS: iosSettings),
@@ -77,9 +75,7 @@ class PushNotificationService {
     final messaging = FirebaseMessaging.instance;
 
     await messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
+      
     );
 
     final token = await messaging.getToken();
@@ -102,14 +98,14 @@ class PushNotificationService {
     final notification = message.notification;
     if (notification == null) return;
 
-    final androidDetails = AndroidNotificationDetails(
+    const androidDetails = AndroidNotificationDetails(
       'default_channel',
       'Notifications',
       channelDescription: 'General notifications',
       importance: Importance.high,
       priority: Priority.high,
     );
-    final iosDetails = DarwinNotificationDetails(
+    const iosDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
@@ -118,7 +114,7 @@ class PushNotificationService {
       id: notification.hashCode,
       title: notification.title,
       body: notification.body,
-      notificationDetails: NotificationDetails(android: androidDetails, iOS: iosDetails),
+      notificationDetails: const NotificationDetails(android: androidDetails, iOS: iosDetails),
       payload: jsonEncode(message.data),
     );
   }
@@ -164,7 +160,7 @@ class PushNotificationService {
         await dio.post<dynamic>('/api/push-notifications/register', data: {
           'token': token,
           'platform': Platform.isIOS ? 'ios' : 'android',
-        });
+        },);
       }
     } catch (_) {}
   }

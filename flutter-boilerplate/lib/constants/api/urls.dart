@@ -32,6 +32,7 @@ class Urls {
   static const messages = '/api/messages';
   static const messagesRead = '/api/messages/read';
   static const messagesUnreadCount = '/api/messages/unread-count';
+  static const roomMessages = '/api/messages/room';
 
   // Notifications
   static const notifications = '/api/notifications';

@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 class TeamInviteConfig {
   final int maxInvites;
   final List<String> roles;

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../constants/theme.dart';
+import '../../../api/client/profile/actions.dart';
+import '../../../api/server/profile/get.dart';
 import '../../../components/ui/avatar/avatar.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/toast/toast.dart';
-import '../../../api/client/profile/actions.dart';
-import '../../../api/server/profile/get.dart';
+import '../../../constants/theme.dart';
 import '../../../hooks/use_auth.dart';
 
 final _profileProvider = FutureProvider((ref) async {
@@ -93,9 +93,9 @@ class _AccountFormState extends State<_AccountForm> {
               Avatar(name: widget.profile.name as String? ?? 'U', radius: 32),
               const SizedBox(height: 12),
               Text(widget.profile.name as String? ?? 'User',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
               Text(widget.profile.email as String? ?? '',
-                  style: TextStyle(color: widget.colors.fgMuted)),
+                  style: TextStyle(color: widget.colors.fgMuted),),
             ],
           ),
         ),
@@ -112,8 +112,8 @@ class _AccountFormState extends State<_AccountForm> {
         ),
         const SizedBox(height: 24),
         Button(
-          child: Text(_saving ? 'Saving...' : 'Save Changes'),
           onPressed: _saving ? null : _save,
+          child: Text(_saving ? 'Saving...' : 'Save Changes'),
         ),
       ],
     );

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../constants/theme.dart';
 import '../../../components/ui/avatar/avatar.dart';
 import '../../../components/ui/button/button.dart';
+import '../../../constants/theme.dart';
 import '../../../hooks/use_auth.dart';
 
 class BasicSettingsAccountPage extends ConsumerStatefulWidget {
@@ -47,9 +47,9 @@ class _BasicSettingsAccountPageState extends ConsumerState<BasicSettingsAccountP
                 Avatar(name: user?.name ?? 'U', radius: 32),
                 const SizedBox(height: 12),
                 Text(user?.name ?? 'User',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
                 Text(user?.email ?? '',
-                    style: TextStyle(color: colors.fgMuted)),
+                    style: TextStyle(color: colors.fgMuted),),
               ],
             ),
           ),

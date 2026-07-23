@@ -27,12 +27,10 @@ class _CalendarWidgetState extends State<CalendarWidget> {
     _focusedMonth = DateTime(
       widget.selectedDate?.year ?? DateTime.now().year,
       widget.selectedDate?.month ?? DateTime.now().month,
-      1,
     );
   }
 
   List<DateTime> _daysInMonth(DateTime month) {
-    final first = DateTime(month.year, month.month, 1);
     final last = DateTime(month.year, month.month + 1, 0);
     final days = <DateTime>[];
     for (int d = 1; d <= last.day; d++) {
@@ -57,7 +55,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
               icon: const Icon(Icons.chevron_left),
               onPressed: () {
                 setState(() {
-                  _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month - 1, 1);
+                  _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month - 1);
                 });
               },
             ),
@@ -69,7 +67,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
               icon: const Icon(Icons.chevron_right),
               onPressed: () {
                 setState(() {
-                  _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month + 1, 1);
+                  _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month + 1);
                 });
               },
             ),

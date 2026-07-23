@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/components/ui/navigation_menu/navigation_menu.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_boilerplate/components/ui/navigation_menu/navigation_menu.dart';
 import '../../test_helpers.dart';
 
 void main() {
   testWidgets('renders navigation destinations', (tester) async {
     await pumpTestApp(
       tester,
-      NavigationMenu(
+      const NavigationMenu(
         selectedIndex: 0,
         destinations: [
-          const NavigationMenuDestination(label: 'Home', icon: Icons.home),
-          const NavigationMenuDestination(label: 'Search', icon: Icons.search),
+          NavigationMenuDestination(label: 'Home', icon: Icons.home),
+          NavigationMenuDestination(label: 'Search', icon: Icons.search),
         ],
       ),
     );
@@ -23,12 +23,12 @@ void main() {
   testWidgets('renders body when provided', (tester) async {
     await pumpTestApp(
       tester,
-      NavigationMenu(
+      const NavigationMenu(
         selectedIndex: 0,
-        destinations: const [
+        destinations: [
           NavigationMenuDestination(label: 'Home', icon: Icons.home),
         ],
-        body: const Text('Content'),
+        body: Text('Content'),
       ),
     );
     expect(find.text('Content'), findsOneWidget);
@@ -54,9 +54,9 @@ void main() {
   testWidgets('highlights selected destination', (tester) async {
     await pumpTestApp(
       tester,
-      NavigationMenu(
+      const NavigationMenu(
         selectedIndex: 1,
-        destinations: const [
+        destinations: [
           NavigationMenuDestination(label: 'Home', icon: Icons.home),
           NavigationMenuDestination(label: 'Profile', icon: Icons.person),
         ],

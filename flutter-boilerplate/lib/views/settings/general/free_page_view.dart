@@ -23,7 +23,7 @@ class FreeSettingsGeneralPage extends ConsumerWidget {
             child: SwitchListTile(
               title: const Text('Dark Mode'),
               subtitle: Text('Toggle dark/light theme',
-                  style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+                  style: TextStyle(color: colors.fgMuted, fontSize: 12),),
               value: themeMode == AppThemeMode.dark,
               onChanged: (value) {
                 ref.read(themeModeProvider.notifier).state =
