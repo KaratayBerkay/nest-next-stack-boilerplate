@@ -20,17 +20,17 @@ class MeRawServer {
       );
       final body = response.data as Map<String, dynamic>;
       if (body['errors'] != null || body['data'] == null) {
-        return AuthMeResult(authed: false);
+        return const AuthMeResult(authed: false);
       }
       final result =
           (body['data'] as Map<String, dynamic>)['me'] as Map<String, dynamic>?;
-      if (result == null) return AuthMeResult(authed: false);
+      if (result == null) return const AuthMeResult(authed: false);
       return AuthMeResult(
         authed: true,
         session: result['sessionId'] as String?,
       );
     } on DioException {
-      return AuthMeResult(authed: false);
+      return const AuthMeResult(authed: false);
     }
   }
 }

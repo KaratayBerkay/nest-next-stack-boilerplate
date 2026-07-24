@@ -2,8 +2,8 @@ import 'package:dio/dio.dart';
 
 class GqlError extends DioException {
   final String gqlMessage;
-  GqlError({required this.gqlMessage, required RequestOptions requestOptions})
-      : super(requestOptions: requestOptions, message: gqlMessage);
+  GqlError({required this.gqlMessage, required super.requestOptions})
+      : super(message: gqlMessage);
 }
 
 Future<Map<String, dynamic>> gqlQuery(
