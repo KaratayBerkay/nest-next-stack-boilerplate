@@ -60,51 +60,51 @@ class _FormsFiltersPageContentState
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
                       initialValue: _category,
-                      items: const [
+                      items: [
                         DropdownMenuItem(
                           value: 'all',
-                          child: Text('All Categories'),
+                          child: Text(t.formsFiltersAllCategories),
                         ),
                         DropdownMenuItem(
                           value: 'tech',
-                          child: Text('Technology'),
+                          child: Text(t.formsFiltersTechnology),
                         ),
                         DropdownMenuItem(
                           value: 'design',
-                          child: Text('Design'),
+                          child: Text(t.formsFiltersDesign),
                         ),
                         DropdownMenuItem(
                           value: 'business',
-                          child: Text('Business'),
+                          child: Text(t.formsFiltersBusiness),
                         ),
                       ],
                       onChanged: (v) => setState(() => _category = v!),
-                      decoration: const InputDecoration(
-                        labelText: 'Category',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: t.formsFiltersCategory,
+                        border: const OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
                       initialValue: _sort,
-                      items: const [
+                      items: [
                         DropdownMenuItem(
                           value: 'newest',
-                          child: Text('Newest First'),
+                          child: Text(t.formsFiltersNewestFirst),
                         ),
                         DropdownMenuItem(
                           value: 'oldest',
-                          child: Text('Oldest First'),
+                          child: Text(t.formsFiltersOldestFirst),
                         ),
                         DropdownMenuItem(
                           value: 'popular',
-                          child: Text('Most Popular'),
+                          child: Text(t.formsFiltersMostPopular),
                         ),
                       ],
                       onChanged: (v) => setState(() => _sort = v!),
-                      decoration: const InputDecoration(
-                        labelText: 'Sort By',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: t.formsFiltersSortBy,
+                        border: const OutlineInputBorder(),
                       ),
                     ),
                   ],

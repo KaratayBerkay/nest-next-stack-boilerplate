@@ -54,7 +54,7 @@ class _PremiumSettingsPrivacyPageState
                 ),
                 const Divider(height: 1),
                 SwitchListTile(
-                  title: const Text('Friend Requests'),
+                  title: Text(t.settingsPrivacyFriendRequests),
                   subtitle: Text(
                     'Allow anyone to send you friend requests',
                     style: TextStyle(color: colors.fgMuted, fontSize: 12),
@@ -64,7 +64,7 @@ class _PremiumSettingsPrivacyPageState
                 ),
                 const Divider(height: 1),
                 SwitchListTile(
-                  title: const Text('Share Activity Data'),
+                  title: Text(t.settingsShareActivityData),
                   subtitle: Text(
                     'Help us improve with usage analytics',
                     style: TextStyle(color: colors.fgMuted, fontSize: 12),
@@ -79,7 +79,7 @@ class _PremiumSettingsPrivacyPageState
           Card(
             child: ListTile(
               leading: Icon(Icons.download_outlined, color: colors.brand),
-              title: const Text('Export My Data'),
+              title: Text(t.settingsExportMyData),
               subtitle: Text(
                 'Download all your data',
                 style: TextStyle(color: colors.fgMuted, fontSize: 12),

@@ -212,6 +212,8 @@
   "checkoutPaymentFailedGeneric": "Payment failed. Please try again.",
   "errorNotFound": "Not found",
   "errorPageNotFound": "This page could not be found.",
+  "errorPageNotFoundTitle": "Page not found",
+  "errorPageMovedMessage": "The page you are looking for does not exist or has been moved.",
   "errorV1NotFound": "This v1 resource does not exist.",
   "errorRoutingNotFound": "This routing resource does not exist.",
   "errorBackHome": "Go home",
@@ -228,6 +230,7 @@
   "errorTryingToReconnect": "Trying to reconnect. Some features may be unavailable.",
   "errorTabLocked": "Already connected in another tab",
   "errorTabLockedDescription": "This browser already has an active connection. Close the other tab or this one to continue.",
+  "errorUnexpected": "An unexpected error occurred. Please try again.",
   "feedFeed": "Feed",
   "feedShare": "Share",
   "feedSearchPlaceholder": "Search posts...",
@@ -265,6 +268,8 @@
   "feedMediumTitle": "Medium Feed",
   "feedMediumDescription": "Enhanced feed with analytics.",
   "feedEmptyDescription": "Follow people to see their posts here.",
+  "feedFailedToReact": "Failed to react",
+  "feedReact": "React",
   "findFriendsTitle": "Find Friends",
   "findFriendsAddFriends": "Add Friends",
   "findFriendsPendingRequests": "Pending Requests",
@@ -938,6 +943,8 @@
   "formsLayoutsSectionedAgree_info": "You must accept the terms and conditions to proceed",
   "formsLayoutsSectionedSubmit": "Save Changes",
   "formsLayoutsSectionedCancel": "Cancel",
+  "formsLayoutsSectionedPersonalInformation": "Personal Information",
+  "formsLayoutsSectionedZipShort": "ZIP",
   "formsLayoutsUnsaved": "Unsaved changes",
   "formsErrorsEmailAlreadyMember": "This email is already a member",
   "formsErrorsInviteQuotaExceeded": "Invite quota exceeded — upgrade your plan",
@@ -1065,6 +1072,10 @@
   "settingsCurrency": "Currency",
   "settingsTheme": "Theme",
   "settingsThemeDescription": "Toggle dark/light theme",
+  "settingsThemeLight": "Light",
+  "settingsThemeDark": "Dark",
+  "settingsThemeOcean": "Ocean",
+  "settingsThemeViolet": "Violet",
   "settingsFontSize": "Font Size",
   "settingsFontSizeDescription": "Adjust text size",
   "settingsExperimentalFeatures": "Experimental Features",
@@ -1411,6 +1422,10 @@
       "count": {}
     }
   },
+  "chatRoomCloseSidebar": "Close rooms sidebar",
+  "chatRoomTypeMessage": "Type a message...",
+  "chatRoomTabLocked": "Tab locked",
+  "chatRoomReconnecting": "Disconnected. Reconnecting...",
   "@checkoutConfirmDowngrade": {
     "placeholders": {
       "tier": {}
@@ -1457,6 +1472,18 @@
       "count": {}
     }
   },
+  "postsFailedToUpdateComment": "Failed to update comment",
+  "postsDeleteComment": "Delete comment",
+  "postsDeleteCommentConfirm": "Are you sure you want to delete this comment?",
+  "postsFailedToDeleteComment": "Failed to delete comment",
+  "postsReplyHint": "Reply...",
+  "postsNoCommentsYet": "No comments yet.",
+  "postsEdit": "Edit",
+  "postsDelete": "Delete",
+  "postsViewPost": "View post",
+  "postsEditPost": "Edit post",
+  "postsReply": "Reply",
+  "postsSend": "Send",
   "@premiumErrorStatus": {
     "placeholders": {
       "status": {}
@@ -1537,6 +1564,7 @@
   "adminDetails": "Details",
   "adminChanges": "Changes",
   "adminByActor": "by {name}",
+  "adminApplyFilters": "Apply filters",
   "homeTitle": "Flutter Boilerplate",
   "homeWelcome": "Welcome to Flutter Boilerplate",
   "homeViewPricing": "View Pricing",
@@ -1594,18 +1622,79 @@
   "formsBillingUpdated": "Billing information updated",
   "formsFiltersBusiness": "Business",
   "formsCheckoutPageTitle": "Checkout & Address",
+  "formsCheckoutOrderPlaced": "Order placed — shipping to {name}",
+  "@formsCheckoutOrderPlaced": {
+    "placeholders": {
+      "name": {}
+    }
+  },
   "formsCommonClear": "Clear",
   "formsContentEditorPageTitle": "Content Editor",
+  "formsContentEditorPublishedTitle": "Published: {title}",
+  "@formsContentEditorPublishedTitle": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "formsContentEditorDraftSavedTitle": "Draft saved: {title}",
+  "@formsContentEditorDraftSavedTitle": {
+    "placeholders": {
+      "title": {}
+    }
+  },
   "formsCommonDelete": "Delete",
   "formsFiltersDesign": "Design",
   "formsUploadsDragDrop": "Drag & drop files here",
   "formsEditableTablePageTitle": "Editable Table",
   "formsErrorLabPageTitle": "Error & Async States",
+  "formsErrorLabNoErrors": "No errors",
+  "formsErrorLabError": "Error",
+  "formsErrorLabCode": "Code: {code}",
+  "@formsErrorLabCode": {
+    "placeholders": {
+      "code": {}
+    }
+  },
+  "formsErrorLabNotFound": "Not Found",
+  "formsErrorLabConflict": "Conflict",
+  "formsErrorLabScenarioShort": "Scenario",
   "formsFieldStatesPageTitle": "Field States & Validation",
   "formsUploadsPageTitle": "File Uploads",
   "formsFiltersPageTitle": "Filters",
   "formsFormBuilderPageTitle": "Form Builder",
   "formsElementsPageTitle": "Form Elements",
+  "formsElementsInputDefault_label": "Default Input",
+  "formsElementsInputEnterSomething": "Enter something...",
+  "formsElementsInputWithError_label": "With Error",
+  "formsElementsFieldRequired": "This field is required",
+  "formsElementsInputDisabled_label": "Disabled",
+  "formsElementsInputWithIcon_label": "With Icon",
+  "formsElementsInputNumeric_label": "Numeric",
+  "formsElementsInputWithHelper_label": "With Helper",
+  "formsElementsInputHelperMessage": "This is a helper message",
+  "formsElementsReadOnly": "read only",
+  "formsElementsSelectSimple_label": "Simple Select",
+  "formsElementsSelectChoose": "Choose an option",
+  "formsElementsSelectWithLabel_label": "With Label",
+  "formsElementsSelectValue": "Select a value",
+  "formsElementsSelectColorError": "Please select a color",
+  "formsElementsOptionA": "Option A",
+  "formsElementsOptionB": "Option B",
+  "formsElementsOptionC": "Option C",
+  "formsElementsItem1": "Item 1",
+  "formsElementsItem2": "Item 2",
+  "formsElementsItem3": "Item 3",
+  "formsElementsItem4": "Item 4",
+  "formsElementsRed": "Red",
+  "formsElementsGreen": "Green",
+  "formsElementsBlue": "Blue",
+  "formsElementsTextareaDefaultLabel": "Default Textarea",
+  "formsElementsTextareaTypeMessage": "Type your message here...",
+  "formsElementsMessageRequired": "Message is required",
+  "formsElementsTextareaTall_label": "Tall Area",
+  "formsElementsSomeContent": "Some content",
+  "formsElementsTextareaNoLabel": "No Label",
+  "formsElementsEnterText": "Enter text...",
   "formsLayoutsPageTitle": "Form Layouts",
   "formsTeamInviteRoleMember": "Member",
   "formsTeamInviteRoleMemberDescription": "Member — Can view and edit assigned projects",
@@ -1613,6 +1702,7 @@
   "formsApiKeyProduction": "Production Key",
   "formsCommonPublish": "Publish",
   "formsEditableTableQty": "Qty",
+  "formsEditableTableItemName": "Item name",
   "formsCommonReset": "Reset",
   "formsCommonSave": "Save",
   "formsCommonSearch": "Search",
@@ -1624,6 +1714,13 @@
   "formsBillingUpdate": "Update Billing",
   "formsCommonUpload": "Upload",
   "formsProfilePageTitle": "User Profile",
+  "formsProfileTheme": "Theme",
+  "formsProfileSavedName": "Profile saved — {name}",
+  "@formsProfileSavedName": {
+    "placeholders": {
+      "name": {}
+    }
+  },
   "formsCommonValidate": "Validate",
   "formsCommonVerify": "Verify",
   "formsTeamInviteRoleViewer": "Viewer",
@@ -1649,8 +1746,22 @@
   "securityActiveSessions": "Active Sessions",
   "settingsAddCard": "Add Card",
   "settingsChangePlan": "Change Plan",
+  "settingsDisplayName": "Display Name",
+  "settingsEmail": "Email",
+  "settingsNoInvoices": "No invoices yet.",
+  "settingsAddressLine1": "Address Line 1",
+  "settingsAddressLine2": "Address Line 2 (optional)",
+  "settingsAddressZip": "ZIP Code",
+  "settingsSaveAddress": "Save Address",
+  "settingsCancelSubscriptionTitle": "Cancel subscription?",
+  "settingsKeep": "Keep",
+  "settingsBrowseInvoices": "Browse Invoices",
+  "settingsShareActivityData": "Share Activity Data",
+  "settingsExportMyData": "Export My Data",
+  "settingsCancelSubscriptionBody": "Your subscription will remain active until the end of the billing period.",
   "uiAccordionRichItemsPageTitle": "Rich Items",
   "uiAccordionVariantsPageTitle": "Accordion Variants",
+  "uiClose": "Close",
   "demoCachingTitle": "Caching",
   "demoCachingDescription": "Data caching and revalidation strategies",
   "demoClientDataTitle": "Client Data",
@@ -1669,6 +1780,22 @@
   "demoFormsDescription": "Form handling with validation and submission",
   "demoFormPageTitle": "Form Demo",
   "demoFormPageSignUp": "Sign Up",
+  "demoFormName": "Name",
+  "demoFormEmail": "Email",
+  "demoFormPassword": "Password",
+  "demoFormSignupDemo": "Signup Demo",
+  "demoFormNameRequired": "Name is required",
+  "demoFormEmailRequired": "Email is required",
+  "demoFormEmailInvalid": "Invalid email",
+  "demoFormPasswordRequired": "Password is required",
+  "demoFormMinChars": "Min 6 characters",
+  "demoFormSignedUp": "Signed up: {name} ({email})",
+  "@demoFormSignedUp": {
+    "placeholders": {
+      "name": {},
+      "email": {}
+    }
+  },
   "demoI18nTitle": "i18n Demo",
   "demoI18nActive": "Active: {locale}",
   "demoI18nDefault": "Default: {lang}",
@@ -1690,6 +1817,8 @@
   "demoScriptsDescription": "Third-party script loading with strategy and scheduling",
   "demoSearchParamsTitle": "Search Params",
   "demoSearchParamsDescription": "URL search parameters and query string handling",
+  "demoSearchParamsName": "Name",
+  "demoSearchParamsCategory": "Category",
   "demoSeoTitle": "SEO",
   "demoServerActionsTitle": "Server Actions",
   "demoServerActionsDescription": "Server-side form actions and data mutations",
@@ -1707,6 +1836,7 @@
   "demoWsDescription": "Real-time bidirectional communication over WebSockets",
   "demoWsPageTitle": "WebSocket Demo",
   "demoWsSend": "Send",
+  "demoWsTypeMessage": "Type a message...",
   "@demoI18nActive": {
     "placeholders": {
       "locale": {}
@@ -1742,5 +1872,7 @@
   "formsFiltersAllStatuses": "All Statuses",
   "formsFiltersStatusActive": "Active",
   "formsFiltersStatusPending": "Pending",
-  "formsFiltersStatusArchived": "Archived"
+  "formsFiltersStatusArchived": "Archived",
+  "uiFileInputLabel": "Upload file",
+  "uiFileInputTap": "Tap to select file"
 }

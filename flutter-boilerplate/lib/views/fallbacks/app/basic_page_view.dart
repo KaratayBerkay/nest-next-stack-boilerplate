@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 import 'app_fallback_base.dart';
 
 class BasicFallbackPage extends StatelessWidget {
@@ -18,31 +19,36 @@ class BasicFallbackPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     switch (type) {
       case AppFallbackType.notFound:
         return AppFallbackBase(
           icon: Icons.search_off,
-          title: 'Page not found',
-          message: message ??
-              'The page you are looking for does not exist or has been moved.',
+          title: t.errorPageNotFoundTitle,
+          message: message ?? t.errorPageMovedMessage,
           action: onRetry != null
               ? TextButton(
                   onPressed: onRetry,
-                  child: Text('Go home', style: TextStyle(color: colors.brand)),
+                  child: Text(
+                    t.errorBackHome,
+                    style: TextStyle(color: colors.brand),
+                  ),
                 )
               : null,
         );
       case AppFallbackType.error:
         return AppFallbackBase(
           icon: Icons.error_outline,
-          title: 'Something went wrong',
-          message: message ?? 'An unexpected error occurred. Please try again.',
+          title: t.errorSomethingWentWrong,
+          message: message ?? t.errorUnexpected,
           action: onRetry != null
               ? TextButton(
                   onPressed: onRetry,
-                  child:
-                      Text('Try again', style: TextStyle(color: colors.brand)),
+                  child: Text(
+                    t.errorTryAgain,
+                    style: TextStyle(color: colors.brand),
+                  ),
                 )
               : null,
         );

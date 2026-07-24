@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 Map<String, dynamic> collectContentData({
   required TextEditingController titleCtrl,
   required TextEditingController bodyCtrl,
@@ -32,7 +34,12 @@ void publishContent(
   );
 
   ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text('Published: ${data['title']}')),
+    SnackBar(
+      content: Text(
+        AppLocalizations.of(context)
+            .formsContentEditorPublishedTitle(data['title'] as String),
+      ),
+    ),
   );
 }
 
@@ -49,7 +56,12 @@ void saveDraft(
   );
 
   ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text('Draft saved: ${data['title']}')),
+    SnackBar(
+      content: Text(
+        AppLocalizations.of(context)
+            .formsContentEditorDraftSavedTitle(data['title'] as String),
+      ),
+    ),
   );
 }
 

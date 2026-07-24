@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/date_time.dart';
 
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../types/feed/post.dart';
 import '../ui/avatar/avatar.dart';
 import 'reaction_buttons.dart';
@@ -31,6 +32,7 @@ class PostHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -90,7 +92,7 @@ class PostHeader extends StatelessWidget {
                   constraints:
                       const BoxConstraints(minWidth: 28, minHeight: 28),
                   padding: EdgeInsets.zero,
-                  tooltip: 'View post',
+                  tooltip: t.postsViewPost,
                 ),
               if (isOwn && !editing) ...[
                 IconButton(
@@ -103,7 +105,7 @@ class PostHeader extends StatelessWidget {
                   constraints:
                       const BoxConstraints(minWidth: 28, minHeight: 28),
                   padding: EdgeInsets.zero,
-                  tooltip: 'Edit post',
+                  tooltip: t.postsEditPost,
                 ),
                 IconButton(
                   icon: Icon(
@@ -115,18 +117,16 @@ class PostHeader extends StatelessWidget {
                     final confirmed = await showDialog<bool>(
                       context: context,
                       builder: (ctx) => AlertDialog(
-                        title: const Text('Delete post'),
-                        content: const Text(
-                          'Are you sure you want to delete this post?',
-                        ),
+                        title: Text(t.postsDeletePost),
+                        content: Text(t.postsDeletePostConfirm),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.of(ctx).pop(false),
-                            child: const Text('Cancel'),
+                            child: Text(t.postsCancel),
                           ),
                           FilledButton(
                             onPressed: () => Navigator.of(ctx).pop(true),
-                            child: const Text('Delete'),
+                            child: Text(t.postsDelete),
                           ),
                         ],
                       ),
@@ -136,7 +136,7 @@ class PostHeader extends StatelessWidget {
                   constraints:
                       const BoxConstraints(minWidth: 28, minHeight: 28),
                   padding: EdgeInsets.zero,
-                  tooltip: 'Delete post',
+                  tooltip: t.postsDeletePost,
                 ),
               ],
             ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class EditableTableRowData {
   String item;
@@ -81,6 +82,7 @@ class _EditableTableRowState extends State<EditableTableRow> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -92,7 +94,7 @@ class _EditableTableRowState extends State<EditableTableRow> {
               controller: _itemCtrl,
               decoration: InputDecoration(
                 isDense: true,
-                hintText: 'Item name',
+                hintText: t.formsEditableTableItemName,
                 border: OutlineInputBorder(
                   borderSide: BorderSide(color: colors.border),
                 ),
@@ -106,7 +108,7 @@ class _EditableTableRowState extends State<EditableTableRow> {
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 isDense: true,
-                hintText: 'Qty',
+                hintText: t.formsEditableTableQty,
                 border: OutlineInputBorder(
                   borderSide: BorderSide(color: colors.border),
                 ),
@@ -121,7 +123,7 @@ class _EditableTableRowState extends State<EditableTableRow> {
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 isDense: true,
-                hintText: 'Price',
+                hintText: t.formsEditableTablePrice,
                 prefixText: '\$ ',
                 border: OutlineInputBorder(
                   borderSide: BorderSide(color: colors.border),

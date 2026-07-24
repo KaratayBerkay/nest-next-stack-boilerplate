@@ -1,39 +1,46 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 class SectionedCardForm extends StatelessWidget {
   const SectionedCardForm({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    final t = AppLocalizations.of(context);
+
+    return Column(
       children: [
         Card(
           child: Padding(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Personal Information',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                  t.formsLayoutsSectionedPersonalInformation,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
                       child: TextField(
                         decoration: InputDecoration(
-                          labelText: 'Full Name',
-                          border: OutlineInputBorder(),
+                          labelText: t.formsLayoutsContactFullName_label,
+                          border: const OutlineInputBorder(),
                         ),
                       ),
                     ),
-                    SizedBox(width: 12),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: TextField(
                         decoration: InputDecoration(
-                          labelText: 'Phone',
-                          border: OutlineInputBorder(),
+                          labelText: t.formsElementsPhoneGroup_label,
+                          border: const OutlineInputBorder(),
                         ),
                       ),
                     ),
@@ -43,41 +50,44 @@ class SectionedCardForm extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Card(
           child: Padding(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Address',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                ),
-                SizedBox(height: 8),
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Street',
-                    border: OutlineInputBorder(),
+                  t.formsLayoutsSectioned_address,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
+                TextField(
+                  decoration: InputDecoration(
+                    labelText: t.formsLayoutsSectionedStreet_label,
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
                       child: TextField(
                         decoration: InputDecoration(
-                          labelText: 'City',
-                          border: OutlineInputBorder(),
+                          labelText: t.formsLayoutsSectionedCity_label,
+                          border: const OutlineInputBorder(),
                         ),
                       ),
                     ),
-                    SizedBox(width: 12),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: TextField(
                         decoration: InputDecoration(
-                          labelText: 'ZIP',
-                          border: OutlineInputBorder(),
+                          labelText: t.formsLayoutsSectionedZipShort,
+                          border: const OutlineInputBorder(),
                         ),
                       ),
                     ),

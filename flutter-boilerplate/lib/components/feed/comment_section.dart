@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/date_time.dart';
 
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../types/feed/comment.dart';
 import '../ui/avatar/avatar.dart';
 import 'reaction_buttons.dart';
@@ -60,6 +61,7 @@ class _CommentSectionState extends State<CommentSection> {
   Future<void> _handleSubmit() async {
     final text = _bodyController.text.trim();
     if (text.isEmpty || _submitting) return;
+    final t = AppLocalizations.of(context);
     setState(() => _submitting = true);
     try {
       await widget.onCreateComment?.call(widget.postId, text, _replyTo);
@@ -69,7 +71,7 @@ class _CommentSectionState extends State<CommentSection> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Network error')),
+          SnackBar(content: Text(t.feedNetworkError)),
         );
       }
     } finally {
@@ -80,6 +82,7 @@ class _CommentSectionState extends State<CommentSection> {
   Future<void> _handleEdit(String commentId) async {
     final text = _editController.text.trim();
     if (text.isEmpty) return;
+    final t = AppLocalizations.of(context);
     try {
       await widget.onUpdateComment?.call(commentId, text);
       setState(() => _editingId = null);
@@ -87,26 +90,27 @@ class _CommentSectionState extends State<CommentSection> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to update comment')),
+          SnackBar(content: Text(t.postsFailedToUpdateComment)),
         );
       }
     }
   }
 
   Future<void> _handleDelete(String commentId) async {
+    final t = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete comment'),
-        content: const Text('Are you sure you want to delete this comment?'),
+        title: Text(t.postsDeleteComment),
+        content: Text(t.postsDeleteCommentConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(t.postsCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
+            child: Text(t.postsDelete),
           ),
         ],
       ),
@@ -118,7 +122,7 @@ class _CommentSectionState extends State<CommentSection> {
       } catch (_) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to delete comment')),
+            SnackBar(content: Text(t.postsFailedToDeleteComment)),
           );
         }
       }
@@ -128,6 +132,7 @@ class _CommentSectionState extends State<CommentSection> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,8 +145,9 @@ class _CommentSectionState extends State<CommentSection> {
                 child: TextField(
                   controller: _bodyController,
                   decoration: InputDecoration(
-                    hintText:
-                        _replyTo != null ? 'Reply...' : 'Write a comment...',
+                    hintText: _replyTo != null
+                        ? t.postsReplyHint
+                        : t.postsCommentHint,
                     isDense: true,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -166,7 +172,7 @@ class _CommentSectionState extends State<CommentSection> {
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 ),
                 child: Text(
-                  _replyTo != null ? 'Reply' : 'Send',
+                  _replyTo != null ? t.postsReply : t.postsSend,
                   style: const TextStyle(fontSize: 12),
                 ),
               ),
@@ -174,7 +180,8 @@ class _CommentSectionState extends State<CommentSection> {
                 const SizedBox(width: 8),
                 TextButton(
                   onPressed: () => setState(() => _replyTo = null),
-                  child: const Text('Cancel', style: TextStyle(fontSize: 12)),
+                  child:
+                      Text(t.postsCancel, style: const TextStyle(fontSize: 12)),
                 ),
               ],
             ],
@@ -185,7 +192,7 @@ class _CommentSectionState extends State<CommentSection> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              'No comments yet.',
+              t.postsNoCommentsYet,
               style: TextStyle(color: colors.fgMuted, fontSize: 11),
             ),
           )
@@ -253,6 +260,7 @@ class _CommentTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isEditing = editingId == comment.id;
+    final t = AppLocalizations.of(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
@@ -309,7 +317,7 @@ class _CommentTile extends StatelessWidget {
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                         child: Text(
-                          'Reply',
+                          t.postsReply,
                           style: TextStyle(
                             fontSize: 9,
                             color: colors.fgMuted,
@@ -329,7 +337,7 @@ class _CommentTile extends StatelessWidget {
                           minHeight: 24,
                         ),
                         padding: EdgeInsets.zero,
-                        tooltip: 'Edit',
+                        tooltip: t.postsEdit,
                       ),
                       IconButton(
                         icon: Icon(
@@ -343,7 +351,7 @@ class _CommentTile extends StatelessWidget {
                           minHeight: 24,
                         ),
                         padding: EdgeInsets.zero,
-                        tooltip: 'Delete',
+                        tooltip: t.postsDelete,
                       ),
                     ],
                   ],
@@ -380,9 +388,9 @@ class _CommentTile extends StatelessWidget {
                             vertical: 6,
                           ),
                         ),
-                        child: const Text(
-                          'Save',
-                          style: TextStyle(fontSize: 11),
+                        child: Text(
+                          t.postsSave,
+                          style: const TextStyle(fontSize: 11),
                         ),
                       ),
                       const SizedBox(width: 4),
@@ -395,9 +403,9 @@ class _CommentTile extends StatelessWidget {
                           ),
                           minimumSize: Size.zero,
                         ),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(fontSize: 11),
+                        child: Text(
+                          t.postsCancel,
+                          style: const TextStyle(fontSize: 11),
                         ),
                       ),
                     ],

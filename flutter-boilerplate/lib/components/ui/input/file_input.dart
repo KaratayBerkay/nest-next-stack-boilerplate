@@ -1,6 +1,8 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 class FileInput extends StatelessWidget {
   final String? label;
   final void Function(PlatformFile)? onFilePicked;
@@ -27,10 +29,10 @@ class FileInput extends StatelessWidget {
       },
       child: InputDecorator(
         decoration: InputDecoration(
-          labelText: label ?? 'Upload file',
+          labelText: label ?? AppLocalizations.of(context).uiFileInputLabel,
           suffixIcon: const Icon(Icons.upload_file),
         ),
-        child: const Text('Tap to select file'),
+        child: Text(AppLocalizations.of(context).uiFileInputTap),
       ),
     );
   }

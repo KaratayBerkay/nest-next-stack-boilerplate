@@ -698,6 +698,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get errorPageNotFound => 'Bu sayfa bulunamadı.';
 
   @override
+  String get errorPageNotFoundTitle => 'Sayfa bulunamadı';
+
+  @override
+  String get errorPageMovedMessage =>
+      'Aradığınız sayfa mevcut değil veya taşınmış.';
+
+  @override
   String get errorV1NotFound => 'Bu v1 kaynağı mevcut değil.';
 
   @override
@@ -746,6 +753,10 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get errorTabLockedDescription =>
       'Bu tarayıcıda aktif bir bağlantı var. Devam etmek için diğer sekmeyi veya bu sekmeyi kapatın.';
+
+  @override
+  String get errorUnexpected =>
+      'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
 
   @override
   String get feedFeed => 'Beslenme Akışı';
@@ -861,6 +872,12 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get feedEmptyDescription =>
       'Gönderilerini görmek için kişileri takip edin.';
+
+  @override
+  String get feedFailedToReact => 'Tepki eklenemedi';
+
+  @override
+  String get feedReact => 'Tepki ver';
 
   @override
   String get findFriendsTitle => 'Arkadaş Bul';
@@ -3030,6 +3047,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get formsLayoutsSectionedCancel => 'İptal';
 
   @override
+  String get formsLayoutsSectionedPersonalInformation => 'Kişisel Bilgiler';
+
+  @override
+  String get formsLayoutsSectionedZipShort => 'Posta Kodu';
+
+  @override
   String get formsLayoutsUnsaved => 'Kaydedilmemiş değişiklikler';
 
   @override
@@ -3427,6 +3450,18 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get settingsThemeDescription => 'Koyu/açık tema arasında geçiş yap';
+
+  @override
+  String get settingsThemeLight => 'Açık';
+
+  @override
+  String get settingsThemeDark => 'Koyu';
+
+  @override
+  String get settingsThemeOcean => 'Okyanus';
+
+  @override
+  String get settingsThemeViolet => 'Menekşe';
 
   @override
   String get settingsFontSize => 'Yazı Boyutu';
@@ -4416,6 +4451,56 @@ class AppLocalizationsTr extends AppLocalizations {
   String get v1ShellSkipToContent => 'İçeriğe atla';
 
   @override
+  String get chatRoomCloseSidebar => 'Oda listesini kapat';
+
+  @override
+  String get chatRoomTypeMessage => 'Bir mesaj yazın...';
+
+  @override
+  String get chatRoomTabLocked => 'Sekme kilitli';
+
+  @override
+  String get chatRoomReconnecting =>
+      'Bağlantı kesildi. Yeniden bağlanılıyor...';
+
+  @override
+  String get postsFailedToUpdateComment => 'Yorum güncellenemedi';
+
+  @override
+  String get postsDeleteComment => 'Yorumu sil';
+
+  @override
+  String get postsDeleteCommentConfirm =>
+      'Bu yorumu silmek istediğinizden emin misiniz?';
+
+  @override
+  String get postsFailedToDeleteComment => 'Yorum silinemedi';
+
+  @override
+  String get postsReplyHint => 'Yanıtla...';
+
+  @override
+  String get postsNoCommentsYet => 'Henüz yorum yok.';
+
+  @override
+  String get postsEdit => 'Düzenle';
+
+  @override
+  String get postsDelete => 'Sil';
+
+  @override
+  String get postsViewPost => 'Gönderiyi görüntüle';
+
+  @override
+  String get postsEditPost => 'Gönderiyi düzenle';
+
+  @override
+  String get postsReply => 'Yanıtla';
+
+  @override
+  String get postsSend => 'Gönder';
+
+  @override
   String checkoutSelectedPlan(Object tier) {
     return 'Seçilen plan: $tier';
   }
@@ -4554,6 +4639,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String adminByActor(Object name) {
     return '$name tarafından';
   }
+
+  @override
+  String get adminApplyFilters => 'Filtreleri uygula';
 
   @override
   String get homeTitle => 'Flutter Şablon';
@@ -4732,10 +4820,25 @@ class AppLocalizationsTr extends AppLocalizations {
   String get formsCheckoutPageTitle => 'Ödeme ve Adres';
 
   @override
+  String formsCheckoutOrderPlaced(Object name) {
+    return 'Sipariş alındı — $name adresine kargolanacak';
+  }
+
+  @override
   String get formsCommonClear => 'Temizle';
 
   @override
   String get formsContentEditorPageTitle => 'İçerik Düzenleyici';
+
+  @override
+  String formsContentEditorPublishedTitle(Object title) {
+    return 'Yayımlandı: $title';
+  }
+
+  @override
+  String formsContentEditorDraftSavedTitle(Object title) {
+    return 'Taslak kaydedildi: $title';
+  }
 
   @override
   String get formsCommonDelete => 'Sil';
@@ -4753,6 +4856,26 @@ class AppLocalizationsTr extends AppLocalizations {
   String get formsErrorLabPageTitle => 'Hata ve Async Durumları';
 
   @override
+  String get formsErrorLabNoErrors => 'Hata yok';
+
+  @override
+  String get formsErrorLabError => 'Hata';
+
+  @override
+  String formsErrorLabCode(Object code) {
+    return 'Kod: $code';
+  }
+
+  @override
+  String get formsErrorLabNotFound => 'Bulunamadı';
+
+  @override
+  String get formsErrorLabConflict => 'Çakışma';
+
+  @override
+  String get formsErrorLabScenarioShort => 'Senaryo';
+
+  @override
   String get formsFieldStatesPageTitle => 'Alan Durumları ve Doğrulama';
 
   @override
@@ -4766,6 +4889,102 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get formsElementsPageTitle => 'Form Elemanları';
+
+  @override
+  String get formsElementsInputDefault_label => 'Varsayılan Girdi';
+
+  @override
+  String get formsElementsInputEnterSomething => 'Bir şeyler yazın...';
+
+  @override
+  String get formsElementsInputWithError_label => 'Hatalı';
+
+  @override
+  String get formsElementsFieldRequired => 'Bu alan zorunludur';
+
+  @override
+  String get formsElementsInputDisabled_label => 'Devre Dışı';
+
+  @override
+  String get formsElementsInputWithIcon_label => 'Simgeli';
+
+  @override
+  String get formsElementsInputNumeric_label => 'Sayısal';
+
+  @override
+  String get formsElementsInputWithHelper_label => 'Yardımcı Metinli';
+
+  @override
+  String get formsElementsInputHelperMessage => 'Bu bir yardımcı mesaj';
+
+  @override
+  String get formsElementsReadOnly => 'salt okunur';
+
+  @override
+  String get formsElementsSelectSimple_label => 'Basit Seçim';
+
+  @override
+  String get formsElementsSelectChoose => 'Bir seçenek seçin';
+
+  @override
+  String get formsElementsSelectWithLabel_label => 'Etiketli';
+
+  @override
+  String get formsElementsSelectValue => 'Bir değer seçin';
+
+  @override
+  String get formsElementsSelectColorError => 'Lütfen bir renk seçin';
+
+  @override
+  String get formsElementsOptionA => 'Seçenek A';
+
+  @override
+  String get formsElementsOptionB => 'Seçenek B';
+
+  @override
+  String get formsElementsOptionC => 'Seçenek C';
+
+  @override
+  String get formsElementsItem1 => 'Öğe 1';
+
+  @override
+  String get formsElementsItem2 => 'Öğe 2';
+
+  @override
+  String get formsElementsItem3 => 'Öğe 3';
+
+  @override
+  String get formsElementsItem4 => 'Öğe 4';
+
+  @override
+  String get formsElementsRed => 'Kırmızı';
+
+  @override
+  String get formsElementsGreen => 'Yeşil';
+
+  @override
+  String get formsElementsBlue => 'Mavi';
+
+  @override
+  String get formsElementsTextareaDefaultLabel => 'Varsayılan Metin Alanı';
+
+  @override
+  String get formsElementsTextareaTypeMessage => 'Mesajınızı buraya yazın...';
+
+  @override
+  String get formsElementsMessageRequired => 'Mesaj zorunludur';
+
+  @override
+  String get formsElementsTextareaTall_label => 'Uzun Alan';
+
+  @override
+  String get formsElementsSomeContent => 'Örnek içerik';
+
+  @override
+  String get formsElementsTextareaNoLabel => 'Etiketsiz';
+
+  @override
+  String get formsElementsEnterText => 'Metin girin...';
 
   @override
   String get formsLayoutsPageTitle => 'Form Düzenleri';
@@ -4788,6 +5007,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get formsEditableTableQty => 'Adet';
+
+  @override
+  String get formsEditableTableItemName => 'Öğe adı';
 
   @override
   String get formsCommonReset => 'Sıfırla';
@@ -4821,6 +5043,14 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get formsProfilePageTitle => 'Kullanıcı Profili';
+
+  @override
+  String get formsProfileTheme => 'Tema';
+
+  @override
+  String formsProfileSavedName(Object name) {
+    return 'Profil kaydedildi — $name';
+  }
 
   @override
   String get formsCommonValidate => 'Doğrula';
@@ -4901,10 +5131,53 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsChangePlan => 'Planı Değiştir';
 
   @override
+  String get settingsDisplayName => 'Görünen Ad';
+
+  @override
+  String get settingsEmail => 'E-posta';
+
+  @override
+  String get settingsNoInvoices => 'Henüz fatura yok.';
+
+  @override
+  String get settingsAddressLine1 => 'Adres Satırı 1';
+
+  @override
+  String get settingsAddressLine2 => 'Adres Satırı 2 (isteğe bağlı)';
+
+  @override
+  String get settingsAddressZip => 'Posta Kodu';
+
+  @override
+  String get settingsSaveAddress => 'Adresi Kaydet';
+
+  @override
+  String get settingsCancelSubscriptionTitle => 'Abonelik iptal edilsin mi?';
+
+  @override
+  String get settingsKeep => 'Koru';
+
+  @override
+  String get settingsBrowseInvoices => 'Faturalara Göz At';
+
+  @override
+  String get settingsShareActivityData => 'Etkinlik Verilerini Paylaş';
+
+  @override
+  String get settingsExportMyData => 'Verilerimi Dışa Aktar';
+
+  @override
+  String get settingsCancelSubscriptionBody =>
+      'Aboneliğiniz fatura döneminin sonuna kadar etkin kalacaktır.';
+
+  @override
   String get uiAccordionRichItemsPageTitle => 'Zengin Öğeler';
 
   @override
   String get uiAccordionVariantsPageTitle => 'Akordiyon Varyantları';
+
+  @override
+  String get uiClose => 'Kapat';
 
   @override
   String get demoCachingTitle => 'Önbelleğe Alma';
@@ -4966,6 +5239,38 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get demoFormPageSignUp => 'Kaydol';
+
+  @override
+  String get demoFormName => 'Ad';
+
+  @override
+  String get demoFormEmail => 'E-posta';
+
+  @override
+  String get demoFormPassword => 'Şifre';
+
+  @override
+  String get demoFormSignupDemo => 'Kayıt Demosu';
+
+  @override
+  String get demoFormNameRequired => 'Ad zorunludur';
+
+  @override
+  String get demoFormEmailRequired => 'E-posta zorunludur';
+
+  @override
+  String get demoFormEmailInvalid => 'Geçersiz e-posta';
+
+  @override
+  String get demoFormPasswordRequired => 'Şifre zorunludur';
+
+  @override
+  String get demoFormMinChars => 'En az 6 karakter';
+
+  @override
+  String demoFormSignedUp(Object name, Object email) {
+    return 'Kayıt olundu: $name ($email)';
+  }
 
   @override
   String get demoI18nTitle => 'Çeviri Demo';
@@ -5041,6 +5346,12 @@ class AppLocalizationsTr extends AppLocalizations {
       'URL arama parametreleri ve sorgu dizesi yönetimi';
 
   @override
+  String get demoSearchParamsName => 'Ad';
+
+  @override
+  String get demoSearchParamsCategory => 'Kategori';
+
+  @override
   String get demoSeoTitle => 'SEO';
 
   @override
@@ -5098,6 +5409,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get demoWsSend => 'Gönder';
 
   @override
+  String get demoWsTypeMessage => 'Bir mesaj yazın...';
+
+  @override
   String galleryPhoto(Object id) {
     return 'Fotoğraf #$id';
   }
@@ -5135,4 +5449,10 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get formsFiltersStatusArchived => 'Arşivlenmiş';
+
+  @override
+  String get uiFileInputLabel => 'Dosya yükle';
+
+  @override
+  String get uiFileInputTap => 'Dosya seçmek için dokunun';
 }

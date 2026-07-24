@@ -69,17 +69,17 @@ class _SearchParamsDemoPageState extends State<SearchParamsDemoPage> {
           ),
           const SizedBox(height: 8),
           TextField(
-            decoration: const InputDecoration(
-              labelText: 'Name',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: t.demoSearchParamsName,
+              border: const OutlineInputBorder(),
             ),
             onChanged: (v) => setState(() => _name = v.isEmpty ? 'unknown' : v),
           ),
           const SizedBox(height: 12),
           TextField(
-            decoration: const InputDecoration(
-              labelText: 'Category',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: t.demoSearchParamsCategory,
+              border: const OutlineInputBorder(),
             ),
             onChanged: (v) =>
                 setState(() => _category = v.isEmpty ? 'none' : v),

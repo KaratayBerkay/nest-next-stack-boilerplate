@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../types/messages/message.dart';
 import 'chat_room_message_list.dart';
 import 'chat_room_sub_components.dart';
@@ -41,20 +42,21 @@ class ChatRoomMainContent extends StatelessWidget {
     required this.onScrollToBottom,
   });
 
-  String get _placeholder {
+  String _placeholder(AppLocalizations t) {
     switch (connectionState) {
       case 'online':
-        return 'Message #$room';
+        return t.chatRoomMessagePlaceholder(room);
       case 'connecting':
-        return 'Connecting...';
+        return t.chatRoomConnecting;
       default:
-        return 'Disconnected';
+        return t.chatRoomDisconnected;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     if (connectionState == 'locked') {
       return Center(
@@ -63,7 +65,7 @@ class ChatRoomMainContent extends StatelessWidget {
           children: [
             Icon(Icons.lock_outline, size: 32, color: colors.fgMuted),
             const SizedBox(height: 8),
-            Text('Tab locked', style: TextStyle(color: colors.fgMuted)),
+            Text(t.chatRoomTabLocked, style: TextStyle(color: colors.fgMuted)),
           ],
         ),
       );
@@ -77,7 +79,7 @@ class ChatRoomMainContent extends StatelessWidget {
             Icon(Icons.wifi_off, size: 32, color: colors.warning),
             const SizedBox(height: 8),
             Text(
-              'Disconnected. Reconnecting...',
+              t.chatRoomReconnecting,
               style: TextStyle(color: colors.fgMuted),
             ),
           ],
@@ -102,7 +104,7 @@ class ChatRoomMainContent extends StatelessWidget {
                 HamburgerButton(
                   useNativeControls: useNativeControls,
                   room: room,
-                  countLabel: _placeholder,
+                  countLabel: _placeholder(t),
                   onClick: () => onSetSidebarOpen(true),
                 ),
               ],
@@ -137,7 +139,7 @@ class ChatRoomMainContent extends StatelessWidget {
                   child: MessageInput(
                     useNativeControls: useNativeControls,
                     controller: messageController,
-                    placeholder: _placeholder,
+                    placeholder: _placeholder(t),
                     disabled: connectionState != 'online',
                   ),
                 ),

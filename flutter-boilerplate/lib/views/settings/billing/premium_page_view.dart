@@ -86,25 +86,25 @@ class PremiumSettingsBillingPage extends ConsumerWidget {
                         if (!sub.cancelAtPeriodEnd)
                           Button(
                             variant: ButtonVariant.outline,
-                            child: const Text('Cancel Subscription'),
+                            child: Text(t.settingsCancelSubscription),
                             onPressed: () async {
                               final confirm = await showDialog<bool>(
                                 context: context,
                                 builder: (_) => AlertDialog(
-                                  title: const Text('Cancel subscription?'),
-                                  content: const Text(
-                                    'Your subscription will remain active until the end of the billing period.',
-                                  ),
+                                  title:
+                                      Text(t.settingsCancelSubscriptionTitle),
+                                  content:
+                                      Text(t.settingsCancelSubscriptionBody),
                                   actions: [
                                     TextButton(
                                       onPressed: () =>
                                           Navigator.pop(context, false),
-                                      child: const Text('Keep'),
+                                      child: Text(t.settingsKeep),
                                     ),
                                     FilledButton(
                                       onPressed: () =>
                                           Navigator.pop(context, true),
-                                      child: const Text('Cancel'),
+                                      child: Text(t.settingsCancelButton),
                                     ),
                                   ],
                                 ),
@@ -144,7 +144,7 @@ class PremiumSettingsBillingPage extends ConsumerWidget {
                         const SizedBox(height: 8),
                         Button(
                           variant: ButtonVariant.ghost,
-                          child: const Text('Browse Invoices'),
+                          child: Text(t.settingsBrowseInvoices),
                           onPressed: () {},
                         ),
                       ],

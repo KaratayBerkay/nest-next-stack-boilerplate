@@ -29,7 +29,10 @@ class DraftAlert extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: onDiscard,
-          child: Text('Discard', style: TextStyle(color: colors.danger)),
+          child: Text(
+            t.formsContentEditorDraftDiscard,
+            style: TextStyle(color: colors.danger),
+          ),
         ),
         TextButton(
           onPressed: onCancel,

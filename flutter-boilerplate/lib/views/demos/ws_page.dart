@@ -99,9 +99,9 @@ class _WsDemoPageState extends State<WsDemoPage> {
                 Expanded(
                   child: TextField(
                     controller: _controller,
-                    decoration: const InputDecoration(
-                      hintText: 'Type a message...',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      hintText: t.demoWsTypeMessage,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                 ),

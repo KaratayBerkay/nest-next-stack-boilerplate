@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../constants/theme.dart';
 import '../../hooks/use_theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class ThemePicker extends ConsumerWidget {
   const ThemePicker({super.key});
@@ -10,18 +11,19 @@ class ThemePicker extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(themeModeProvider);
+    final t = AppLocalizations.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Theme'),
+        Text(t.settingsTheme),
         const SizedBox(height: 8),
         SegmentedButton<AppThemeMode>(
           segments: AppThemeMode.values
               .map(
                 (m) => ButtonSegment(
                   value: m,
-                  label: Text(_labelFor(m)),
+                  label: Text(_labelFor(t, m)),
                 ),
               )
               .toList(),
@@ -34,16 +36,16 @@ class ThemePicker extends ConsumerWidget {
     );
   }
 
-  String _labelFor(AppThemeMode mode) {
+  String _labelFor(AppLocalizations t, AppThemeMode mode) {
     switch (mode) {
       case AppThemeMode.light:
-        return 'Light';
+        return t.settingsThemeLight;
       case AppThemeMode.dark:
-        return 'Dark';
+        return t.settingsThemeDark;
       case AppThemeMode.ocean:
-        return 'Ocean';
+        return t.settingsThemeOcean;
       case AppThemeMode.violet:
-        return 'Violet';
+        return t.settingsThemeViolet;
     }
   }
 }

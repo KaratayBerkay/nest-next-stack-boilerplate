@@ -65,6 +65,7 @@ class _SubscriptionCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return CardWidget(
       child: Column(
@@ -116,23 +117,21 @@ class _SubscriptionCard extends ConsumerWidget {
                 if (!sub.cancelAtPeriodEnd)
                   Button(
                     variant: ButtonVariant.outline,
-                    child: const Text('Cancel Subscription'),
+                    child: Text(t.settingsCancelSubscription),
                     onPressed: () async {
                       final confirm = await showDialog<bool>(
                         context: context,
                         builder: (_) => AlertDialog(
-                          title: const Text('Cancel subscription?'),
-                          content: const Text(
-                            'Your subscription will remain active until the end of the billing period.',
-                          ),
+                          title: Text(t.settingsCancelSubscriptionTitle),
+                          content: Text(t.settingsCancelSubscriptionBody),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Keep'),
+                              child: Text(t.settingsKeep),
                             ),
                             FilledButton(
                               onPressed: () => Navigator.pop(context, true),
-                              child: const Text('Cancel'),
+                              child: Text(t.settingsCancelButton),
                             ),
                           ],
                         ),
@@ -159,6 +158,7 @@ class _PaymentMethodsSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final pmAsync = ref.watch(paymentMethodsProvider);
 
     return CardWidget(
@@ -187,7 +187,7 @@ class _PaymentMethodsSection extends ConsumerWidget {
                       const SizedBox(height: 8),
                       Button(
                         variant: ButtonVariant.outline,
-                        child: const Text('Add Card'),
+                        child: Text(t.settingsAddCard),
                         onPressed: () => context.go('/v1/en/plans'),
                       ),
                     ],

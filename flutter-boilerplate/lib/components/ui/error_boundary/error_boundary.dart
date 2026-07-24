@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class ErrorBoundary extends StatelessWidget {
   final Object? error;
@@ -38,7 +39,7 @@ class ErrorBoundary extends StatelessWidget {
             Icon(Icons.error_outline, size: 40, color: colors.danger),
             const SizedBox(height: 12),
             Text(
-              'Something went wrong',
+              AppLocalizations.of(context).errorSomethingWentWrong,
               style: TextStyle(
                 color: colors.fg,
                 fontWeight: FontWeight.w500,
@@ -60,7 +61,7 @@ class ErrorBoundary extends StatelessWidget {
             const SizedBox(height: 16),
             FilledButton.tonal(
               onPressed: _retry,
-              child: const Text('Try again'),
+              child: Text(AppLocalizations.of(context).errorTryAgain),
             ),
           ],
         ),

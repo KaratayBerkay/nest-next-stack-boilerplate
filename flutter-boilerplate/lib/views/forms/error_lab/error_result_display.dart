@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 class ErrorResultDisplay extends StatelessWidget {
   final String? errorCode;
   final String? errorMessage;
@@ -14,6 +16,8 @@ class ErrorResultDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+
     if (errorCode == null && errorMessage == null) {
       return Container(
         padding: const EdgeInsets.all(12),
@@ -22,11 +26,14 @@ class ErrorResultDisplay extends StatelessWidget {
           borderRadius: BorderRadius.circular(6),
           border: Border.all(color: Colors.green.shade200),
         ),
-        child: const Row(
+        child: Row(
           children: [
-            Icon(Icons.check_circle, color: Colors.green, size: 18),
-            SizedBox(width: 8),
-            Text('No errors', style: TextStyle(color: Colors.green)),
+            const Icon(Icons.check_circle, color: Colors.green, size: 18),
+            const SizedBox(width: 8),
+            Text(
+              t.formsErrorLabNoErrors,
+              style: const TextStyle(color: Colors.green),
+            ),
           ],
         ),
       );
@@ -47,7 +54,7 @@ class ErrorResultDisplay extends StatelessWidget {
               const Icon(Icons.error_outline, color: Colors.red, size: 18),
               const SizedBox(width: 8),
               Text(
-                scenario ?? 'Error',
+                scenario ?? t.formsErrorLabError,
                 style: const TextStyle(
                   fontWeight: FontWeight.w600,
                   color: Colors.red,
@@ -58,7 +65,7 @@ class ErrorResultDisplay extends StatelessWidget {
           if (errorCode != null) ...[
             const SizedBox(height: 4),
             Text(
-              'Code: $errorCode',
+              t.formsErrorLabCode(errorCode!),
               style: TextStyle(fontSize: 12, color: Colors.red.shade700),
             ),
           ],

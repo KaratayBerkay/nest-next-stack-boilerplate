@@ -41,17 +41,17 @@ class _PostEditFormState extends ConsumerState<PostEditForm> {
       children: [
         TextField(
           controller: _titleController,
-          decoration: const InputDecoration(
-            labelText: 'Title',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: t.postsTitleLabel,
+            border: const OutlineInputBorder(),
           ),
         ),
         const SizedBox(height: 12),
         TextField(
           controller: _contentController,
-          decoration: const InputDecoration(
-            labelText: 'Content',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: t.postsContentLabel,
+            border: const OutlineInputBorder(),
           ),
           maxLines: 8,
         ),

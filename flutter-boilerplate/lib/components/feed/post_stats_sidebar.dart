@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class PostStats {
   final int totalPosts;
@@ -32,6 +33,7 @@ class _PostStatsSidebarState extends State<PostStatsSidebar> {
 
   Future<void> _loadStats() async {
     if (widget.onLoadStats == null) return;
+    final t = AppLocalizations.of(context);
     setState(() => _loading = true);
     try {
       final stats = await widget.onLoadStats!();
@@ -39,7 +41,7 @@ class _PostStatsSidebarState extends State<PostStatsSidebar> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to load stats')),
+          SnackBar(content: Text(t.feedFailedToLoadStats)),
         );
       }
     } finally {
@@ -50,6 +52,7 @@ class _PostStatsSidebarState extends State<PostStatsSidebar> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -61,7 +64,7 @@ class _PostStatsSidebarState extends State<PostStatsSidebar> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'YOUR POST STATS',
+            t.feedYourPostStats.toUpperCase(),
             style: TextStyle(
               color: colors.fgMuted,
               fontSize: 11,
@@ -75,24 +78,24 @@ class _PostStatsSidebarState extends State<PostStatsSidebar> {
               width: double.infinity,
               child: OutlinedButton(
                 onPressed: _loading ? null : _loadStats,
-                child: Text(_loading ? 'Loading...' : 'Load stats'),
+                child: Text(_loading ? t.feedLoading : t.feedLoadStats),
               ),
             )
           else ...[
             _StatRow(
-              label: 'Posts',
+              label: t.feedPosts,
               value: '${_stats!.totalPosts}',
               colors: colors,
             ),
             const SizedBox(height: 8),
             _StatRow(
-              label: 'Reactions',
+              label: t.feedReactions,
               value: '${_stats!.totalReactions}',
               colors: colors,
             ),
             const SizedBox(height: 8),
             _StatRow(
-              label: 'Avg/Post',
+              label: t.feedAvgPerPost,
               value: _stats!.avgReactionsPerPost.toStringAsFixed(1),
               colors: colors,
             ),

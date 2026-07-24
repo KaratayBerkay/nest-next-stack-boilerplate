@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class SidebarCloseButton extends StatelessWidget {
   final bool useNativeControls;
@@ -17,7 +18,7 @@ class SidebarCloseButton extends StatelessWidget {
     return IconButton(
       icon: const Icon(Icons.close, size: 18),
       onPressed: onClick,
-      tooltip: 'Close rooms sidebar',
+      tooltip: AppLocalizations.of(context).chatRoomCloseSidebar,
     );
   }
 }
@@ -97,7 +98,7 @@ class HamburgerButton extends StatelessWidget {
   final bool useNativeControls;
   final String room;
   final String countLabel;
-  final String ariaLabel;
+  final String? ariaLabel;
   final VoidCallback onClick;
 
   const HamburgerButton({
@@ -105,7 +106,7 @@ class HamburgerButton extends StatelessWidget {
     this.useNativeControls = false,
     required this.room,
     required this.countLabel,
-    this.ariaLabel = 'Open rooms',
+    this.ariaLabel,
     required this.onClick,
   });
 
@@ -113,26 +114,30 @@ class HamburgerButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
 
-    return InkWell(
-      onTap: onClick,
-      child: Row(
-        children: [
-          Icon(Icons.menu, size: 18, color: colors.fgMuted),
-          const SizedBox(width: 8),
-          Text(
-            '# $room',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: colors.fg,
+    return Semantics(
+      label: ariaLabel ?? AppLocalizations.of(context).chatRoomOpenRooms,
+      button: true,
+      child: InkWell(
+        onTap: onClick,
+        child: Row(
+          children: [
+            Icon(Icons.menu, size: 18, color: colors.fgMuted),
+            const SizedBox(width: 8),
+            Text(
+              '# $room',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: colors.fg,
+              ),
             ),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            countLabel,
-            style: TextStyle(fontSize: 12, color: colors.fgMuted),
-          ),
-        ],
+            const SizedBox(width: 4),
+            Text(
+              countLabel,
+              style: TextStyle(fontSize: 12, color: colors.fgMuted),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -160,7 +165,8 @@ class MessageInput extends StatelessWidget {
       controller: controller,
       enabled: !disabled,
       decoration: InputDecoration(
-        hintText: placeholder ?? 'Type a message...',
+        hintText:
+            placeholder ?? AppLocalizations.of(context).chatRoomTypeMessage,
         isDense: true,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
@@ -178,14 +184,14 @@ class SendButton extends StatelessWidget {
   final bool useNativeControls;
   final VoidCallback? onClick;
   final bool disabled;
-  final String label;
+  final String? label;
 
   const SendButton({
     super.key,
     this.useNativeControls = false,
     this.onClick,
     this.disabled = false,
-    this.label = 'Send',
+    this.label,
   });
 
   @override
@@ -200,7 +206,10 @@ class SendButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
-      child: Text(label, style: const TextStyle(fontSize: 13)),
+      child: Text(
+        label ?? AppLocalizations.of(context).chatRoomSend,
+        style: const TextStyle(fontSize: 13),
+      ),
     );
   }
 }

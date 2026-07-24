@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class AuditLogsFilters extends StatefulWidget {
   final String actionFilter;
@@ -73,6 +74,7 @@ class _AuditLogsFiltersState extends State<AuditLogsFilters> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -93,7 +95,7 @@ class _AuditLogsFiltersState extends State<AuditLogsFilters> {
                   (a) => DropdownMenuItem(
                     value: a,
                     child: Text(
-                      a.isEmpty ? 'All actions' : a,
+                      a.isEmpty ? t.adminAllActions : a,
                       style: const TextStyle(fontSize: 13),
                     ),
                   ),
@@ -112,7 +114,7 @@ class _AuditLogsFiltersState extends State<AuditLogsFilters> {
                   (l) => DropdownMenuItem(
                     value: l,
                     child: Text(
-                      l.isEmpty ? 'All levels' : l,
+                      l.isEmpty ? t.adminAllLevels : l,
                       style: const TextStyle(fontSize: 13),
                     ),
                   ),
@@ -128,7 +130,7 @@ class _AuditLogsFiltersState extends State<AuditLogsFilters> {
             child: TextField(
               controller: _entityController,
               decoration: InputDecoration(
-                hintText: 'Entity type...',
+                hintText: t.adminEntityType,
                 prefixIcon: const Icon(Icons.search, size: 18),
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -143,7 +145,7 @@ class _AuditLogsFiltersState extends State<AuditLogsFilters> {
           IconButton(
             icon: Icon(Icons.search, color: colors.brand),
             onPressed: widget.onApply,
-            tooltip: 'Apply filters',
+            tooltip: t.adminApplyFilters,
           ),
         ],
       ),

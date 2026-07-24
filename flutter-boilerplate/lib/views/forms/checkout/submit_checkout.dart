@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 Map<String, dynamic> collectCheckoutData({
   required TextEditingController nameCtrl,
   required TextEditingController addressCtrl,
@@ -41,7 +43,10 @@ void submitCheckout(
         children: [
           const Icon(Icons.check_circle, size: 18),
           const SizedBox(width: 8),
-          Text('Order placed — shipping to ${data['fullName']}'),
+          Text(
+            AppLocalizations.of(context)
+                .formsCheckoutOrderPlaced(data['fullName'] as String),
+          ),
         ],
       ),
     ),

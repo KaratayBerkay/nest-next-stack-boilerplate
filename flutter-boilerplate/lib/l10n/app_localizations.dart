@@ -1376,6 +1376,18 @@ abstract class AppLocalizations {
   /// **'This page could not be found.'**
   String get errorPageNotFound;
 
+  /// No description provided for @errorPageNotFoundTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Page not found'**
+  String get errorPageNotFoundTitle;
+
+  /// No description provided for @errorPageMovedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The page you are looking for does not exist or has been moved.'**
+  String get errorPageMovedMessage;
+
   /// No description provided for @errorV1NotFound.
   ///
   /// In en, this message translates to:
@@ -1471,6 +1483,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This browser already has an active connection. Close the other tab or this one to continue.'**
   String get errorTabLockedDescription;
+
+  /// No description provided for @errorUnexpected.
+  ///
+  /// In en, this message translates to:
+  /// **'An unexpected error occurred. Please try again.'**
+  String get errorUnexpected;
 
   /// No description provided for @feedFeed.
   ///
@@ -1693,6 +1711,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Follow people to see their posts here.'**
   String get feedEmptyDescription;
+
+  /// No description provided for @feedFailedToReact.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to react'**
+  String get feedFailedToReact;
+
+  /// No description provided for @feedReact.
+  ///
+  /// In en, this message translates to:
+  /// **'React'**
+  String get feedReact;
 
   /// No description provided for @findFriendsTitle.
   ///
@@ -5732,6 +5762,18 @@ abstract class AppLocalizations {
   /// **'Cancel'**
   String get formsLayoutsSectionedCancel;
 
+  /// No description provided for @formsLayoutsSectionedPersonalInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal Information'**
+  String get formsLayoutsSectionedPersonalInformation;
+
+  /// No description provided for @formsLayoutsSectionedZipShort.
+  ///
+  /// In en, this message translates to:
+  /// **'ZIP'**
+  String get formsLayoutsSectionedZipShort;
+
   /// No description provided for @formsLayoutsUnsaved.
   ///
   /// In en, this message translates to:
@@ -6493,6 +6535,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Toggle dark/light theme'**
   String get settingsThemeDescription;
+
+  /// No description provided for @settingsThemeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get settingsThemeLight;
+
+  /// No description provided for @settingsThemeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get settingsThemeDark;
+
+  /// No description provided for @settingsThemeOcean.
+  ///
+  /// In en, this message translates to:
+  /// **'Ocean'**
+  String get settingsThemeOcean;
+
+  /// No description provided for @settingsThemeViolet.
+  ///
+  /// In en, this message translates to:
+  /// **'Violet'**
+  String get settingsThemeViolet;
 
   /// No description provided for @settingsFontSize.
   ///
@@ -8384,6 +8450,102 @@ abstract class AppLocalizations {
   /// **'Skip to content'**
   String get v1ShellSkipToContent;
 
+  /// No description provided for @chatRoomCloseSidebar.
+  ///
+  /// In en, this message translates to:
+  /// **'Close rooms sidebar'**
+  String get chatRoomCloseSidebar;
+
+  /// No description provided for @chatRoomTypeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a message...'**
+  String get chatRoomTypeMessage;
+
+  /// No description provided for @chatRoomTabLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Tab locked'**
+  String get chatRoomTabLocked;
+
+  /// No description provided for @chatRoomReconnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnected. Reconnecting...'**
+  String get chatRoomReconnecting;
+
+  /// No description provided for @postsFailedToUpdateComment.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update comment'**
+  String get postsFailedToUpdateComment;
+
+  /// No description provided for @postsDeleteComment.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete comment'**
+  String get postsDeleteComment;
+
+  /// No description provided for @postsDeleteCommentConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this comment?'**
+  String get postsDeleteCommentConfirm;
+
+  /// No description provided for @postsFailedToDeleteComment.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete comment'**
+  String get postsFailedToDeleteComment;
+
+  /// No description provided for @postsReplyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply...'**
+  String get postsReplyHint;
+
+  /// No description provided for @postsNoCommentsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No comments yet.'**
+  String get postsNoCommentsYet;
+
+  /// No description provided for @postsEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get postsEdit;
+
+  /// No description provided for @postsDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get postsDelete;
+
+  /// No description provided for @postsViewPost.
+  ///
+  /// In en, this message translates to:
+  /// **'View post'**
+  String get postsViewPost;
+
+  /// No description provided for @postsEditPost.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit post'**
+  String get postsEditPost;
+
+  /// No description provided for @postsReply.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply'**
+  String get postsReply;
+
+  /// No description provided for @postsSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get postsSend;
+
   /// No description provided for @checkoutSelectedPlan.
   ///
   /// In en, this message translates to:
@@ -8641,6 +8803,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'by {name}'**
   String adminByActor(Object name);
+
+  /// No description provided for @adminApplyFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply filters'**
+  String get adminApplyFilters;
 
   /// No description provided for @homeTitle.
   ///
@@ -8984,6 +9152,12 @@ abstract class AppLocalizations {
   /// **'Checkout & Address'**
   String get formsCheckoutPageTitle;
 
+  /// No description provided for @formsCheckoutOrderPlaced.
+  ///
+  /// In en, this message translates to:
+  /// **'Order placed — shipping to {name}'**
+  String formsCheckoutOrderPlaced(Object name);
+
   /// No description provided for @formsCommonClear.
   ///
   /// In en, this message translates to:
@@ -8995,6 +9169,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Content Editor'**
   String get formsContentEditorPageTitle;
+
+  /// No description provided for @formsContentEditorPublishedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Published: {title}'**
+  String formsContentEditorPublishedTitle(Object title);
+
+  /// No description provided for @formsContentEditorDraftSavedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft saved: {title}'**
+  String formsContentEditorDraftSavedTitle(Object title);
 
   /// No description provided for @formsCommonDelete.
   ///
@@ -9026,6 +9212,42 @@ abstract class AppLocalizations {
   /// **'Error & Async States'**
   String get formsErrorLabPageTitle;
 
+  /// No description provided for @formsErrorLabNoErrors.
+  ///
+  /// In en, this message translates to:
+  /// **'No errors'**
+  String get formsErrorLabNoErrors;
+
+  /// No description provided for @formsErrorLabError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get formsErrorLabError;
+
+  /// No description provided for @formsErrorLabCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Code: {code}'**
+  String formsErrorLabCode(Object code);
+
+  /// No description provided for @formsErrorLabNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Not Found'**
+  String get formsErrorLabNotFound;
+
+  /// No description provided for @formsErrorLabConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Conflict'**
+  String get formsErrorLabConflict;
+
+  /// No description provided for @formsErrorLabScenarioShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Scenario'**
+  String get formsErrorLabScenarioShort;
+
   /// No description provided for @formsFieldStatesPageTitle.
   ///
   /// In en, this message translates to:
@@ -9055,6 +9277,198 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Form Elements'**
   String get formsElementsPageTitle;
+
+  /// No description provided for @formsElementsInputDefault_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Default Input'**
+  String get formsElementsInputDefault_label;
+
+  /// No description provided for @formsElementsInputEnterSomething.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter something...'**
+  String get formsElementsInputEnterSomething;
+
+  /// No description provided for @formsElementsInputWithError_label.
+  ///
+  /// In en, this message translates to:
+  /// **'With Error'**
+  String get formsElementsInputWithError_label;
+
+  /// No description provided for @formsElementsFieldRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'This field is required'**
+  String get formsElementsFieldRequired;
+
+  /// No description provided for @formsElementsInputDisabled_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled'**
+  String get formsElementsInputDisabled_label;
+
+  /// No description provided for @formsElementsInputWithIcon_label.
+  ///
+  /// In en, this message translates to:
+  /// **'With Icon'**
+  String get formsElementsInputWithIcon_label;
+
+  /// No description provided for @formsElementsInputNumeric_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Numeric'**
+  String get formsElementsInputNumeric_label;
+
+  /// No description provided for @formsElementsInputWithHelper_label.
+  ///
+  /// In en, this message translates to:
+  /// **'With Helper'**
+  String get formsElementsInputWithHelper_label;
+
+  /// No description provided for @formsElementsInputHelperMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a helper message'**
+  String get formsElementsInputHelperMessage;
+
+  /// No description provided for @formsElementsReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'read only'**
+  String get formsElementsReadOnly;
+
+  /// No description provided for @formsElementsSelectSimple_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Simple Select'**
+  String get formsElementsSelectSimple_label;
+
+  /// No description provided for @formsElementsSelectChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an option'**
+  String get formsElementsSelectChoose;
+
+  /// No description provided for @formsElementsSelectWithLabel_label.
+  ///
+  /// In en, this message translates to:
+  /// **'With Label'**
+  String get formsElementsSelectWithLabel_label;
+
+  /// No description provided for @formsElementsSelectValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a value'**
+  String get formsElementsSelectValue;
+
+  /// No description provided for @formsElementsSelectColorError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a color'**
+  String get formsElementsSelectColorError;
+
+  /// No description provided for @formsElementsOptionA.
+  ///
+  /// In en, this message translates to:
+  /// **'Option A'**
+  String get formsElementsOptionA;
+
+  /// No description provided for @formsElementsOptionB.
+  ///
+  /// In en, this message translates to:
+  /// **'Option B'**
+  String get formsElementsOptionB;
+
+  /// No description provided for @formsElementsOptionC.
+  ///
+  /// In en, this message translates to:
+  /// **'Option C'**
+  String get formsElementsOptionC;
+
+  /// No description provided for @formsElementsItem1.
+  ///
+  /// In en, this message translates to:
+  /// **'Item 1'**
+  String get formsElementsItem1;
+
+  /// No description provided for @formsElementsItem2.
+  ///
+  /// In en, this message translates to:
+  /// **'Item 2'**
+  String get formsElementsItem2;
+
+  /// No description provided for @formsElementsItem3.
+  ///
+  /// In en, this message translates to:
+  /// **'Item 3'**
+  String get formsElementsItem3;
+
+  /// No description provided for @formsElementsItem4.
+  ///
+  /// In en, this message translates to:
+  /// **'Item 4'**
+  String get formsElementsItem4;
+
+  /// No description provided for @formsElementsRed.
+  ///
+  /// In en, this message translates to:
+  /// **'Red'**
+  String get formsElementsRed;
+
+  /// No description provided for @formsElementsGreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Green'**
+  String get formsElementsGreen;
+
+  /// No description provided for @formsElementsBlue.
+  ///
+  /// In en, this message translates to:
+  /// **'Blue'**
+  String get formsElementsBlue;
+
+  /// No description provided for @formsElementsTextareaDefaultLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Default Textarea'**
+  String get formsElementsTextareaDefaultLabel;
+
+  /// No description provided for @formsElementsTextareaTypeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Type your message here...'**
+  String get formsElementsTextareaTypeMessage;
+
+  /// No description provided for @formsElementsMessageRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Message is required'**
+  String get formsElementsMessageRequired;
+
+  /// No description provided for @formsElementsTextareaTall_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Tall Area'**
+  String get formsElementsTextareaTall_label;
+
+  /// No description provided for @formsElementsSomeContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Some content'**
+  String get formsElementsSomeContent;
+
+  /// No description provided for @formsElementsTextareaNoLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'No Label'**
+  String get formsElementsTextareaNoLabel;
+
+  /// No description provided for @formsElementsEnterText.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter text...'**
+  String get formsElementsEnterText;
 
   /// No description provided for @formsLayoutsPageTitle.
   ///
@@ -9097,6 +9511,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Qty'**
   String get formsEditableTableQty;
+
+  /// No description provided for @formsEditableTableItemName.
+  ///
+  /// In en, this message translates to:
+  /// **'Item name'**
+  String get formsEditableTableItemName;
 
   /// No description provided for @formsCommonReset.
   ///
@@ -9163,6 +9583,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'User Profile'**
   String get formsProfilePageTitle;
+
+  /// No description provided for @formsProfileTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get formsProfileTheme;
+
+  /// No description provided for @formsProfileSavedName.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile saved — {name}'**
+  String formsProfileSavedName(Object name);
 
   /// No description provided for @formsCommonValidate.
   ///
@@ -9314,6 +9746,84 @@ abstract class AppLocalizations {
   /// **'Change Plan'**
   String get settingsChangePlan;
 
+  /// No description provided for @settingsDisplayName.
+  ///
+  /// In en, this message translates to:
+  /// **'Display Name'**
+  String get settingsDisplayName;
+
+  /// No description provided for @settingsEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get settingsEmail;
+
+  /// No description provided for @settingsNoInvoices.
+  ///
+  /// In en, this message translates to:
+  /// **'No invoices yet.'**
+  String get settingsNoInvoices;
+
+  /// No description provided for @settingsAddressLine1.
+  ///
+  /// In en, this message translates to:
+  /// **'Address Line 1'**
+  String get settingsAddressLine1;
+
+  /// No description provided for @settingsAddressLine2.
+  ///
+  /// In en, this message translates to:
+  /// **'Address Line 2 (optional)'**
+  String get settingsAddressLine2;
+
+  /// No description provided for @settingsAddressZip.
+  ///
+  /// In en, this message translates to:
+  /// **'ZIP Code'**
+  String get settingsAddressZip;
+
+  /// No description provided for @settingsSaveAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Address'**
+  String get settingsSaveAddress;
+
+  /// No description provided for @settingsCancelSubscriptionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel subscription?'**
+  String get settingsCancelSubscriptionTitle;
+
+  /// No description provided for @settingsKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep'**
+  String get settingsKeep;
+
+  /// No description provided for @settingsBrowseInvoices.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse Invoices'**
+  String get settingsBrowseInvoices;
+
+  /// No description provided for @settingsShareActivityData.
+  ///
+  /// In en, this message translates to:
+  /// **'Share Activity Data'**
+  String get settingsShareActivityData;
+
+  /// No description provided for @settingsExportMyData.
+  ///
+  /// In en, this message translates to:
+  /// **'Export My Data'**
+  String get settingsExportMyData;
+
+  /// No description provided for @settingsCancelSubscriptionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your subscription will remain active until the end of the billing period.'**
+  String get settingsCancelSubscriptionBody;
+
   /// No description provided for @uiAccordionRichItemsPageTitle.
   ///
   /// In en, this message translates to:
@@ -9325,6 +9835,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Accordion Variants'**
   String get uiAccordionVariantsPageTitle;
+
+  /// No description provided for @uiClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get uiClose;
 
   /// No description provided for @demoCachingTitle.
   ///
@@ -9433,6 +9949,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign Up'**
   String get demoFormPageSignUp;
+
+  /// No description provided for @demoFormName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get demoFormName;
+
+  /// No description provided for @demoFormEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get demoFormEmail;
+
+  /// No description provided for @demoFormPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get demoFormPassword;
+
+  /// No description provided for @demoFormSignupDemo.
+  ///
+  /// In en, this message translates to:
+  /// **'Signup Demo'**
+  String get demoFormSignupDemo;
+
+  /// No description provided for @demoFormNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Name is required'**
+  String get demoFormNameRequired;
+
+  /// No description provided for @demoFormEmailRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Email is required'**
+  String get demoFormEmailRequired;
+
+  /// No description provided for @demoFormEmailInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid email'**
+  String get demoFormEmailInvalid;
+
+  /// No description provided for @demoFormPasswordRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Password is required'**
+  String get demoFormPasswordRequired;
+
+  /// No description provided for @demoFormMinChars.
+  ///
+  /// In en, this message translates to:
+  /// **'Min 6 characters'**
+  String get demoFormMinChars;
+
+  /// No description provided for @demoFormSignedUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed up: {name} ({email})'**
+  String demoFormSignedUp(Object name, Object email);
 
   /// No description provided for @demoI18nTitle.
   ///
@@ -9560,6 +10136,18 @@ abstract class AppLocalizations {
   /// **'URL search parameters and query string handling'**
   String get demoSearchParamsDescription;
 
+  /// No description provided for @demoSearchParamsName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get demoSearchParamsName;
+
+  /// No description provided for @demoSearchParamsCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get demoSearchParamsCategory;
+
   /// No description provided for @demoSeoTitle.
   ///
   /// In en, this message translates to:
@@ -9662,6 +10250,12 @@ abstract class AppLocalizations {
   /// **'Send'**
   String get demoWsSend;
 
+  /// No description provided for @demoWsTypeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a message...'**
+  String get demoWsTypeMessage;
+
   /// No description provided for @galleryPhoto.
   ///
   /// In en, this message translates to:
@@ -9727,6 +10321,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Archived'**
   String get formsFiltersStatusArchived;
+
+  /// No description provided for @uiFileInputLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload file'**
+  String get uiFileInputLabel;
+
+  /// No description provided for @uiFileInputTap.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to select file'**
+  String get uiFileInputTap;
 }
 
 class _AppLocalizationsDelegate

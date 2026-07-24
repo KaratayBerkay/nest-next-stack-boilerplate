@@ -64,9 +64,9 @@ class _ProfilePreferencesFieldsState extends State<ProfilePreferencesFields> {
               )
               .toList(),
           onChanged: (v) => setState(() => _selectedTheme = v!),
-          decoration: const InputDecoration(
-            labelText: 'Theme',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: t.formsProfileTheme,
+            border: const OutlineInputBorder(),
           ),
         ),
         const SizedBox(height: 8),
@@ -81,9 +81,9 @@ class _ProfilePreferencesFieldsState extends State<ProfilePreferencesFields> {
               )
               .toList(),
           onChanged: (v) => setState(() => _selectedLanguage = v!),
-          decoration: const InputDecoration(
-            labelText: 'Language',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: t.formsProfileLanguage,
+            border: const OutlineInputBorder(),
           ),
         ),
       ],

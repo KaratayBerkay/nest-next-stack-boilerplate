@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../components/ui/select/select.dart';
+import '../../../l10n/app_localizations.dart';
 
 class SelectsSection extends StatefulWidget {
   const SelectsSection({super.key});
@@ -16,30 +17,45 @@ class _SelectsSectionState extends State<SelectsSection> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SelectWidget(
-          label: 'Simple Select',
-          hintText: 'Choose an option',
-          items: const ['Option A', 'Option B', 'Option C'],
+          label: t.formsElementsSelectSimple_label,
+          hintText: t.formsElementsSelectChoose,
+          items: [
+            t.formsElementsOptionA,
+            t.formsElementsOptionB,
+            t.formsElementsOptionC,
+          ],
           value: _simple,
           onChanged: (v) => setState(() => _simple = v),
         ),
         const SizedBox(height: 8),
         SelectWidget(
-          label: 'With Label',
-          items: const ['Item 1', 'Item 2', 'Item 3', 'Item 4'],
+          label: t.formsElementsSelectWithLabel_label,
+          items: [
+            t.formsElementsItem1,
+            t.formsElementsItem2,
+            t.formsElementsItem3,
+            t.formsElementsItem4,
+          ],
           value: _withLabel,
           onChanged: (v) => setState(() => _withLabel = v),
         ),
         const SizedBox(height: 8),
         SelectWidget(
-          label: 'With Error',
-          hintText: 'Select a value',
-          items: const ['Red', 'Green', 'Blue'],
+          label: t.formsElementsInputWithError_label,
+          hintText: t.formsElementsSelectValue,
+          items: [
+            t.formsElementsRed,
+            t.formsElementsGreen,
+            t.formsElementsBlue,
+          ],
           value: _withError,
-          errorText: 'Please select a color',
+          errorText: t.formsElementsSelectColorError,
           onChanged: (v) => setState(() => _withError = v),
         ),
       ],

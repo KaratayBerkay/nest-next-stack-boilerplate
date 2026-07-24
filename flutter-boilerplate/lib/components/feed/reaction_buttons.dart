@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../types/feed/reaction.dart';
 
 const _reactionTypes = ['LIKE', 'LOVE', 'LAUGH', 'WOW'];
@@ -39,6 +40,7 @@ class _ReactionInlineState extends State<ReactionInline> {
 
   Future<void> _handleReaction(String type) async {
     if (_submitting) return;
+    final t = AppLocalizations.of(context);
     setState(() => _submitting = true);
     try {
       if (widget.onToggle != null) {
@@ -48,7 +50,7 @@ class _ReactionInlineState extends State<ReactionInline> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to react')),
+          SnackBar(content: Text(t.feedFailedToReact)),
         );
       }
     } finally {
@@ -64,7 +66,7 @@ class _ReactionInlineState extends State<ReactionInline> {
         widget.reactions.any((r) => r.userId == widget.currentUserId);
 
     return Tooltip(
-      message: 'React',
+      message: AppLocalizations.of(context).feedReact,
       child: SizedBox(
         height: 28,
         child: Row(

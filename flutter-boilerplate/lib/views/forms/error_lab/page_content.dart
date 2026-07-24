@@ -55,22 +55,22 @@ class _FormsErrorLabPageContentState
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
                       initialValue: _scenario,
-                      items: const [
+                      items: [
                         DropdownMenuItem(
                           value: 'server-error',
-                          child: Text('Server Error'),
+                          child: Text(t.formsErrorLabServerError),
                         ),
                         DropdownMenuItem(
                           value: 'validation',
-                          child: Text('Validation Error'),
+                          child: Text(t.formsErrorLabValidationError),
                         ),
                         DropdownMenuItem(
                           value: 'network',
-                          child: Text('Network Timeout'),
+                          child: Text(t.formsErrorLabNetworkTimeout),
                         ),
                         DropdownMenuItem(
                           value: 'rate-limit',
-                          child: Text('Rate Limited'),
+                          child: Text(t.formsErrorLabRateLimited),
                         ),
                       ],
                       onChanged: (v) => setState(() => _scenario = v!),
@@ -92,7 +92,7 @@ class _FormsErrorLabPageContentState
                     ),
                     const SizedBox(height: 16),
                     Button(
-                      child: const Text('Submit'),
+                      child: Text(t.formsCommonSubmit),
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
                           ScaffoldMessenger.of(context).showSnackBar(

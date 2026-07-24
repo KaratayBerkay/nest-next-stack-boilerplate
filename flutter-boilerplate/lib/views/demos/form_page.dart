@@ -20,7 +20,8 @@ class _FormDemoPageState extends State<FormDemoPage> {
   void _submit() {
     if (_formKey.currentState!.validate()) {
       setState(() {
-        _result = 'Signed up: ${_nameCtrl.text} (${_emailCtrl.text})';
+        _result = AppLocalizations.of(context)
+            .demoFormSignedUp(_nameCtrl.text, _emailCtrl.text);
       });
     }
   }
@@ -41,9 +42,9 @@ class _FormDemoPageState extends State<FormDemoPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
-            'Signup Demo',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          Text(
+            t.demoFormSignupDemo,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -57,38 +58,40 @@ class _FormDemoPageState extends State<FormDemoPage> {
               children: [
                 TextFormField(
                   controller: _nameCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Name',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: t.demoFormName,
+                    border: const OutlineInputBorder(),
                   ),
                   validator: (v) =>
-                      (v == null || v.isEmpty) ? 'Name is required' : null,
+                      (v == null || v.isEmpty) ? t.demoFormNameRequired : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _emailCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: t.demoFormEmail,
+                    border: const OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.emailAddress,
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Email is required';
-                    if (!v.contains('@')) return 'Invalid email';
+                    if (v == null || v.isEmpty) return t.demoFormEmailRequired;
+                    if (!v.contains('@')) return t.demoFormEmailInvalid;
                     return null;
                   },
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _passwordCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Password',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: t.demoFormPassword,
+                    border: const OutlineInputBorder(),
                   ),
                   obscureText: true,
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Password is required';
-                    if (v.length < 6) return 'Min 6 characters';
+                    if (v == null || v.isEmpty) {
+                      return t.demoFormPasswordRequired;
+                    }
+                    if (v.length < 6) return t.demoFormMinChars;
                     return null;
                   },
                 ),

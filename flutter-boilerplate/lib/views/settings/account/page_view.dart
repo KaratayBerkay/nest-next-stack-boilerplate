@@ -97,6 +97,7 @@ class _AccountFormState extends State<_AccountForm> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -120,12 +121,12 @@ class _AccountFormState extends State<_AccountForm> {
         const SizedBox(height: 24),
         TextField(
           controller: _nameCtrl,
-          decoration: const InputDecoration(labelText: 'Display Name'),
+          decoration: InputDecoration(labelText: t.settingsDisplayName),
         ),
         const SizedBox(height: 12),
         TextField(
           controller: _bioCtrl,
-          decoration: const InputDecoration(labelText: 'Bio'),
+          decoration: InputDecoration(labelText: t.settingsBio),
           maxLines: 3,
         ),
         const SizedBox(height: 24),

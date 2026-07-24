@@ -88,7 +88,10 @@ class _FieldEditorState extends State<FieldEditor> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('Required', style: TextStyle(fontSize: 12)),
+                    Text(
+                      t.formsFormBuilderFieldRequired,
+                      style: const TextStyle(fontSize: 12),
+                    ),
                     Switch(
                       value: _required,
                       onChanged: (v) => setState(() => _required = v),

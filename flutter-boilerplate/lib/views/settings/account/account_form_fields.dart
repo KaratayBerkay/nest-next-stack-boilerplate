@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 class AccountFormFields extends StatelessWidget {
   final TextEditingController nameController;
   final TextEditingController emailController;
@@ -16,23 +18,25 @@ class AccountFormFields extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+
     return Column(
       children: [
         TextField(
           controller: nameController,
-          decoration: const InputDecoration(labelText: 'Display Name'),
+          decoration: InputDecoration(labelText: t.settingsDisplayName),
         ),
         const SizedBox(height: 12),
         TextField(
           controller: emailController,
-          decoration: const InputDecoration(labelText: 'Email'),
+          decoration: InputDecoration(labelText: t.settingsEmail),
           keyboardType: TextInputType.emailAddress,
         ),
         if (bioController != null) ...[
           const SizedBox(height: 12),
           TextField(
             controller: bioController,
-            decoration: const InputDecoration(labelText: 'Bio'),
+            decoration: InputDecoration(labelText: t.settingsBio),
             maxLines: bioMaxLines,
           ),
         ],

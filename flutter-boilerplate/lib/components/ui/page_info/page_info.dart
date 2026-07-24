@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 import '../button/button.dart';
 
 class PageInfoSection {
@@ -86,7 +87,7 @@ class PageInfoButton extends StatelessWidget {
                     child: Button(
                       variant: ButtonVariant.outline,
                       size: ButtonSize.sm,
-                      child: const Text('Close'),
+                      child: Text(AppLocalizations.of(ctx).uiClose),
                       onPressed: () => Navigator.of(ctx).pop(),
                     ),
                   ),

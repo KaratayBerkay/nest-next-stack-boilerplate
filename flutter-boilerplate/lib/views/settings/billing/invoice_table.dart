@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' hide Badge;
 
 import '../../../components/ui/badge/badge.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class InvoiceTable extends StatelessWidget {
   final List<Map<String, dynamic>> invoices;
@@ -16,7 +17,10 @@ class InvoiceTable extends StatelessWidget {
     final colors = AppColors.of(context);
 
     if (invoices.isEmpty) {
-      return Text('No invoices yet.', style: TextStyle(color: colors.fgMuted));
+      return Text(
+        AppLocalizations.of(context).settingsNoInvoices,
+        style: TextStyle(color: colors.fgMuted),
+      );
     }
 
     return Column(

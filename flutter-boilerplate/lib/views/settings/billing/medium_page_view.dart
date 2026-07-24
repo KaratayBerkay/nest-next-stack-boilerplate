@@ -59,7 +59,7 @@ class MediumSettingsBillingPage extends ConsumerWidget {
                       const SizedBox(height: 12),
                       Button(
                         variant: ButtonVariant.outline,
-                        child: const Text('Cancel Subscription'),
+                        child: Text(t.settingsCancelSubscription),
                         onPressed: () {},
                       ),
                     ],

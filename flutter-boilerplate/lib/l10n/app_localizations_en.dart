@@ -696,6 +696,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorPageNotFound => 'This page could not be found.';
 
   @override
+  String get errorPageNotFoundTitle => 'Page not found';
+
+  @override
+  String get errorPageMovedMessage =>
+      'The page you are looking for does not exist or has been moved.';
+
+  @override
   String get errorV1NotFound => 'This v1 resource does not exist.';
 
   @override
@@ -744,6 +751,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorTabLockedDescription =>
       'This browser already has an active connection. Close the other tab or this one to continue.';
+
+  @override
+  String get errorUnexpected =>
+      'An unexpected error occurred. Please try again.';
 
   @override
   String get feedFeed => 'Feed';
@@ -856,6 +867,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get feedEmptyDescription => 'Follow people to see their posts here.';
+
+  @override
+  String get feedFailedToReact => 'Failed to react';
+
+  @override
+  String get feedReact => 'React';
 
   @override
   String get findFriendsTitle => 'Find Friends';
@@ -3025,6 +3042,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get formsLayoutsSectionedCancel => 'Cancel';
 
   @override
+  String get formsLayoutsSectionedPersonalInformation => 'Personal Information';
+
+  @override
+  String get formsLayoutsSectionedZipShort => 'ZIP';
+
+  @override
   String get formsLayoutsUnsaved => 'Unsaved changes';
 
   @override
@@ -3418,6 +3441,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsThemeDescription => 'Toggle dark/light theme';
+
+  @override
+  String get settingsThemeLight => 'Light';
+
+  @override
+  String get settingsThemeDark => 'Dark';
+
+  @override
+  String get settingsThemeOcean => 'Ocean';
+
+  @override
+  String get settingsThemeViolet => 'Violet';
 
   @override
   String get settingsFontSize => 'Font Size';
@@ -4405,6 +4440,55 @@ class AppLocalizationsEn extends AppLocalizations {
   String get v1ShellSkipToContent => 'Skip to content';
 
   @override
+  String get chatRoomCloseSidebar => 'Close rooms sidebar';
+
+  @override
+  String get chatRoomTypeMessage => 'Type a message...';
+
+  @override
+  String get chatRoomTabLocked => 'Tab locked';
+
+  @override
+  String get chatRoomReconnecting => 'Disconnected. Reconnecting...';
+
+  @override
+  String get postsFailedToUpdateComment => 'Failed to update comment';
+
+  @override
+  String get postsDeleteComment => 'Delete comment';
+
+  @override
+  String get postsDeleteCommentConfirm =>
+      'Are you sure you want to delete this comment?';
+
+  @override
+  String get postsFailedToDeleteComment => 'Failed to delete comment';
+
+  @override
+  String get postsReplyHint => 'Reply...';
+
+  @override
+  String get postsNoCommentsYet => 'No comments yet.';
+
+  @override
+  String get postsEdit => 'Edit';
+
+  @override
+  String get postsDelete => 'Delete';
+
+  @override
+  String get postsViewPost => 'View post';
+
+  @override
+  String get postsEditPost => 'Edit post';
+
+  @override
+  String get postsReply => 'Reply';
+
+  @override
+  String get postsSend => 'Send';
+
+  @override
   String checkoutSelectedPlan(Object tier) {
     return 'Selected plan: $tier';
   }
@@ -4544,6 +4628,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String adminByActor(Object name) {
     return 'by $name';
   }
+
+  @override
+  String get adminApplyFilters => 'Apply filters';
 
   @override
   String get homeTitle => 'Flutter Boilerplate';
@@ -4722,10 +4809,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get formsCheckoutPageTitle => 'Checkout & Address';
 
   @override
+  String formsCheckoutOrderPlaced(Object name) {
+    return 'Order placed — shipping to $name';
+  }
+
+  @override
   String get formsCommonClear => 'Clear';
 
   @override
   String get formsContentEditorPageTitle => 'Content Editor';
+
+  @override
+  String formsContentEditorPublishedTitle(Object title) {
+    return 'Published: $title';
+  }
+
+  @override
+  String formsContentEditorDraftSavedTitle(Object title) {
+    return 'Draft saved: $title';
+  }
 
   @override
   String get formsCommonDelete => 'Delete';
@@ -4743,6 +4845,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get formsErrorLabPageTitle => 'Error & Async States';
 
   @override
+  String get formsErrorLabNoErrors => 'No errors';
+
+  @override
+  String get formsErrorLabError => 'Error';
+
+  @override
+  String formsErrorLabCode(Object code) {
+    return 'Code: $code';
+  }
+
+  @override
+  String get formsErrorLabNotFound => 'Not Found';
+
+  @override
+  String get formsErrorLabConflict => 'Conflict';
+
+  @override
+  String get formsErrorLabScenarioShort => 'Scenario';
+
+  @override
   String get formsFieldStatesPageTitle => 'Field States & Validation';
 
   @override
@@ -4756,6 +4878,102 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get formsElementsPageTitle => 'Form Elements';
+
+  @override
+  String get formsElementsInputDefault_label => 'Default Input';
+
+  @override
+  String get formsElementsInputEnterSomething => 'Enter something...';
+
+  @override
+  String get formsElementsInputWithError_label => 'With Error';
+
+  @override
+  String get formsElementsFieldRequired => 'This field is required';
+
+  @override
+  String get formsElementsInputDisabled_label => 'Disabled';
+
+  @override
+  String get formsElementsInputWithIcon_label => 'With Icon';
+
+  @override
+  String get formsElementsInputNumeric_label => 'Numeric';
+
+  @override
+  String get formsElementsInputWithHelper_label => 'With Helper';
+
+  @override
+  String get formsElementsInputHelperMessage => 'This is a helper message';
+
+  @override
+  String get formsElementsReadOnly => 'read only';
+
+  @override
+  String get formsElementsSelectSimple_label => 'Simple Select';
+
+  @override
+  String get formsElementsSelectChoose => 'Choose an option';
+
+  @override
+  String get formsElementsSelectWithLabel_label => 'With Label';
+
+  @override
+  String get formsElementsSelectValue => 'Select a value';
+
+  @override
+  String get formsElementsSelectColorError => 'Please select a color';
+
+  @override
+  String get formsElementsOptionA => 'Option A';
+
+  @override
+  String get formsElementsOptionB => 'Option B';
+
+  @override
+  String get formsElementsOptionC => 'Option C';
+
+  @override
+  String get formsElementsItem1 => 'Item 1';
+
+  @override
+  String get formsElementsItem2 => 'Item 2';
+
+  @override
+  String get formsElementsItem3 => 'Item 3';
+
+  @override
+  String get formsElementsItem4 => 'Item 4';
+
+  @override
+  String get formsElementsRed => 'Red';
+
+  @override
+  String get formsElementsGreen => 'Green';
+
+  @override
+  String get formsElementsBlue => 'Blue';
+
+  @override
+  String get formsElementsTextareaDefaultLabel => 'Default Textarea';
+
+  @override
+  String get formsElementsTextareaTypeMessage => 'Type your message here...';
+
+  @override
+  String get formsElementsMessageRequired => 'Message is required';
+
+  @override
+  String get formsElementsTextareaTall_label => 'Tall Area';
+
+  @override
+  String get formsElementsSomeContent => 'Some content';
+
+  @override
+  String get formsElementsTextareaNoLabel => 'No Label';
+
+  @override
+  String get formsElementsEnterText => 'Enter text...';
 
   @override
   String get formsLayoutsPageTitle => 'Form Layouts';
@@ -4778,6 +4996,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get formsEditableTableQty => 'Qty';
+
+  @override
+  String get formsEditableTableItemName => 'Item name';
 
   @override
   String get formsCommonReset => 'Reset';
@@ -4811,6 +5032,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get formsProfilePageTitle => 'User Profile';
+
+  @override
+  String get formsProfileTheme => 'Theme';
+
+  @override
+  String formsProfileSavedName(Object name) {
+    return 'Profile saved — $name';
+  }
 
   @override
   String get formsCommonValidate => 'Validate';
@@ -4891,10 +5120,53 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsChangePlan => 'Change Plan';
 
   @override
+  String get settingsDisplayName => 'Display Name';
+
+  @override
+  String get settingsEmail => 'Email';
+
+  @override
+  String get settingsNoInvoices => 'No invoices yet.';
+
+  @override
+  String get settingsAddressLine1 => 'Address Line 1';
+
+  @override
+  String get settingsAddressLine2 => 'Address Line 2 (optional)';
+
+  @override
+  String get settingsAddressZip => 'ZIP Code';
+
+  @override
+  String get settingsSaveAddress => 'Save Address';
+
+  @override
+  String get settingsCancelSubscriptionTitle => 'Cancel subscription?';
+
+  @override
+  String get settingsKeep => 'Keep';
+
+  @override
+  String get settingsBrowseInvoices => 'Browse Invoices';
+
+  @override
+  String get settingsShareActivityData => 'Share Activity Data';
+
+  @override
+  String get settingsExportMyData => 'Export My Data';
+
+  @override
+  String get settingsCancelSubscriptionBody =>
+      'Your subscription will remain active until the end of the billing period.';
+
+  @override
   String get uiAccordionRichItemsPageTitle => 'Rich Items';
 
   @override
   String get uiAccordionVariantsPageTitle => 'Accordion Variants';
+
+  @override
+  String get uiClose => 'Close';
 
   @override
   String get demoCachingTitle => 'Caching';
@@ -4957,6 +5229,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get demoFormPageSignUp => 'Sign Up';
+
+  @override
+  String get demoFormName => 'Name';
+
+  @override
+  String get demoFormEmail => 'Email';
+
+  @override
+  String get demoFormPassword => 'Password';
+
+  @override
+  String get demoFormSignupDemo => 'Signup Demo';
+
+  @override
+  String get demoFormNameRequired => 'Name is required';
+
+  @override
+  String get demoFormEmailRequired => 'Email is required';
+
+  @override
+  String get demoFormEmailInvalid => 'Invalid email';
+
+  @override
+  String get demoFormPasswordRequired => 'Password is required';
+
+  @override
+  String get demoFormMinChars => 'Min 6 characters';
+
+  @override
+  String demoFormSignedUp(Object name, Object email) {
+    return 'Signed up: $name ($email)';
+  }
 
   @override
   String get demoI18nTitle => 'i18n Demo';
@@ -5032,6 +5336,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'URL search parameters and query string handling';
 
   @override
+  String get demoSearchParamsName => 'Name';
+
+  @override
+  String get demoSearchParamsCategory => 'Category';
+
+  @override
   String get demoSeoTitle => 'SEO';
 
   @override
@@ -5089,6 +5399,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get demoWsSend => 'Send';
 
   @override
+  String get demoWsTypeMessage => 'Type a message...';
+
+  @override
   String galleryPhoto(Object id) {
     return 'Photo #$id';
   }
@@ -5126,4 +5439,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get formsFiltersStatusArchived => 'Archived';
+
+  @override
+  String get uiFileInputLabel => 'Upload file';
+
+  @override
+  String get uiFileInputTap => 'Tap to select file';
 }

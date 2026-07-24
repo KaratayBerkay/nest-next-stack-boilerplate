@@ -38,13 +38,19 @@ class ScenarioSelectors extends StatelessWidget {
           value: 'auth-error',
           child: Text(t.formsErrorLabAuthError),
         ),
-        const DropdownMenuItem(value: 'not-found', child: Text('Not Found')),
-        const DropdownMenuItem(value: 'conflict', child: Text('Conflict')),
+        DropdownMenuItem(
+          value: 'not-found',
+          child: Text(t.formsErrorLabNotFound),
+        ),
+        DropdownMenuItem(
+          value: 'conflict',
+          child: Text(t.formsErrorLabConflict),
+        ),
       ],
       onChanged: (v) => onChanged(v!),
-      decoration: const InputDecoration(
-        labelText: 'Scenario',
-        border: OutlineInputBorder(),
+      decoration: InputDecoration(
+        labelText: t.formsErrorLabScenarioShort,
+        border: const OutlineInputBorder(),
       ),
     );
   }

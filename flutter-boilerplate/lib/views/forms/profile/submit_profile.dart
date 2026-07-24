@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 Map<String, dynamic> collectProfileData({
   required TextEditingController nameCtrl,
   required TextEditingController emailCtrl,
@@ -36,6 +38,11 @@ void submitProfile(
   );
 
   ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text('Profile saved — ${data['name']}')),
+    SnackBar(
+      content: Text(
+        AppLocalizations.of(context)
+            .formsProfileSavedName(data['name'] as String),
+      ),
+    ),
   );
 }
