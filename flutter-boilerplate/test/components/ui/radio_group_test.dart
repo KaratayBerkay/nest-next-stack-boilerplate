@@ -23,7 +23,8 @@ void main() {
         options: ['Option 1', 'Option 2'],
       ),
     );
-    final group = tester.widget<RadioGroup<String>>(find.byType(RadioGroup<String>));
+    final group =
+        tester.widget<RadioGroup<String>>(find.byType(RadioGroup<String>));
     expect(group.groupValue, 'Option 2');
   });
 

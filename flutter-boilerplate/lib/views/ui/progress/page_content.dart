@@ -12,7 +12,10 @@ class ProgressDemoPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [
-          Text('Progress Bar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            'Progress Bar',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           SizedBox(height: 8),
           ProgressWidget(value: 0.3),
           SizedBox(height: 8),
@@ -20,7 +23,10 @@ class ProgressDemoPage extends StatelessWidget {
           SizedBox(height: 8),
           ProgressWidget(value: 1.0),
           SizedBox(height: 24),
-          Text('Indeterminate', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            'Indeterminate',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           SizedBox(height: 8),
           ProgressWidget(color: Colors.grey),
         ],

@@ -30,7 +30,10 @@ class _FiltersFormState extends State<FiltersForm> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Filter Controls', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text(
+              'Filter Controls',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 12),
             FilterSection(
               title: 'Search',
@@ -38,7 +41,9 @@ class _FiltersFormState extends State<FiltersForm> {
                 label: 'Search',
                 hintText: 'Search items...',
                 prefixIcon: const Icon(Icons.search),
-                controller: TextEditingController.fromValue(TextEditingValue(text: state.search)),
+                controller: TextEditingController.fromValue(
+                  TextEditingValue(text: state.search),
+                ),
                 onChanged: _formManager.updateSearch,
               ),
             ),
@@ -49,7 +54,10 @@ class _FiltersFormState extends State<FiltersForm> {
                 initialValue: state.category,
                 items: categoryItems,
                 onChanged: (v) => _formManager.updateCategory(v!),
-                decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -59,7 +67,10 @@ class _FiltersFormState extends State<FiltersForm> {
                 initialValue: state.sort,
                 items: sortItems,
                 onChanged: (v) => _formManager.updateSort(v!),
-                decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -69,7 +80,10 @@ class _FiltersFormState extends State<FiltersForm> {
                 initialValue: state.status,
                 items: statusItems,
                 onChanged: (v) => _formManager.updateStatus(v!),
-                decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -81,7 +95,13 @@ class _FiltersFormState extends State<FiltersForm> {
                 children: tagOptions.map((tag) {
                   final selected = state.tags.contains(tag);
                   return FilterChip(
-                    label: Text(tag, style: TextStyle(fontSize: 12, color: selected ? Colors.white : null)),
+                    label: Text(
+                      tag,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: selected ? Colors.white : null,
+                      ),
+                    ),
                     selected: selected,
                     selectedColor: Colors.indigo,
                     checkmarkColor: Colors.white,

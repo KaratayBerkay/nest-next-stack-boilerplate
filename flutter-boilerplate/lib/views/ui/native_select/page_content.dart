@@ -29,7 +29,10 @@ class _NativeSelectDemoPageState extends State<NativeSelectDemoPage> {
                   DropdownMenuItem(value: 'option3', child: Text('Option 3')),
                 ],
                 onChanged: (v) => setState(() => _selected = v!),
-                decoration: const InputDecoration(labelText: 'Native Select', border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                  labelText: 'Native Select',
+                  border: OutlineInputBorder(),
+                ),
               ),
             ),
           ),

@@ -25,12 +25,18 @@ class NotFoundPage extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               Text(
                 description,
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
+                style: TextStyle(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.6),
+                ),
               ),
               if (onBack != null) ...[
                 const SizedBox(height: 16),

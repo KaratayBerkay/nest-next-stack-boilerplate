@@ -11,10 +11,12 @@ class FormsFormBuilderPageContent extends ConsumerStatefulWidget {
   const FormsFormBuilderPageContent({super.key, required this.lang});
 
   @override
-  ConsumerState<FormsFormBuilderPageContent> createState() => _FormsFormBuilderPageContentState();
+  ConsumerState<FormsFormBuilderPageContent> createState() =>
+      _FormsFormBuilderPageContentState();
 }
 
-class _FormsFormBuilderPageContentState extends ConsumerState<FormsFormBuilderPageContent> {
+class _FormsFormBuilderPageContentState
+    extends ConsumerState<FormsFormBuilderPageContent> {
   final _formKey = GlobalKey<FormState>();
   final _fields = <_FormField>[];
 
@@ -39,16 +41,25 @@ class _FormsFormBuilderPageContentState extends ConsumerState<FormsFormBuilderPa
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Preview', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Preview',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 12),
                   Form(
                     key: _formKey,
                     child: Column(
                       children: [
-                        ..._fields.map((f) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: FormTextField(controller: f.controller, label: f.label, validator: (v) => forms.validateRequired(v)),
-                        ),),
+                        ..._fields.map(
+                          (f) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: FormTextField(
+                              controller: f.controller,
+                              label: f.label,
+                              validator: (v) => forms.validateRequired(v),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -68,11 +79,23 @@ class _FormsFormBuilderPageContentState extends ConsumerState<FormsFormBuilderPa
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Add Field', style: TextStyle(fontWeight: FontWeight.w600)),
+                  const Text(
+                    'Add Field',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   const SizedBox(height: 12),
-                  Button(child: const Text('+ Text Field'), onPressed: () {
-                    setState(() => _fields.add(_FormField(label: 'New Field ${_fields.length + 1}')));
-                  },),
+                  Button(
+                    child: const Text('+ Text Field'),
+                    onPressed: () {
+                      setState(
+                        () => _fields.add(
+                          _FormField(
+                            label: 'New Field ${_fields.length + 1}',
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/theme.dart';
-import '../../../hooks/use_locale.dart';
 import '../../../hooks/use_theme.dart';
 
 class MediumSettingsGeneralPage extends ConsumerWidget {
@@ -26,26 +25,33 @@ class MediumSettingsGeneralPage extends ConsumerWidget {
               children: [
                 SwitchListTile(
                   title: const Text('Dark Mode'),
-                  subtitle: Text('Toggle dark/light theme',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
+                  subtitle: Text(
+                    'Toggle dark/light theme',
+                    style: TextStyle(color: colors.fgMuted, fontSize: 12),
+                  ),
                   value: themeMode == AppThemeMode.dark,
                   onChanged: (value) {
-                    ref.read(themeModeProvider.notifier).state =
-                        value ? AppThemeMode.dark : AppThemeMode.light;
+                    ref.read(themeModeProvider.notifier).setMode(
+                          value ? AppThemeMode.dark : AppThemeMode.light,
+                        );
                   },
                 ),
                 const Divider(height: 1),
                 ListTile(
                   title: const Text('Language'),
-                  subtitle: Text(currentLocale.toUpperCase(),
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
+                  subtitle: Text(
+                    currentLocale.toUpperCase(),
+                    style: TextStyle(color: colors.fgMuted, fontSize: 12),
+                  ),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                 ),
                 const Divider(height: 1),
                 ListTile(
                   title: const Text('Font Size'),
-                  subtitle: Text('Adjust text size',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
+                  subtitle: Text(
+                    'Adjust text size',
+                    style: TextStyle(color: colors.fgMuted, fontSize: 12),
+                  ),
                   trailing: const Icon(Icons.text_fields, size: 20),
                 ),
               ],

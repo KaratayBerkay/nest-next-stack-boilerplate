@@ -1,9 +1,11 @@
 String formatSettingKey(String key) {
   return key
       .split('_')
-      .map((word) => word.isNotEmpty
-          ? '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}'
-          : '',)
+      .map(
+        (word) => word.isNotEmpty
+            ? '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}'
+            : '',
+      )
       .join(' ');
 }
 

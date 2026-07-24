@@ -29,7 +29,10 @@ class AboutPageContent extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Tech Stack', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                  Text(
+                    'Tech Stack',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
                   SizedBox(height: 12),
                   _TechItem(label: 'Framework', value: 'Flutter 3.x'),
                   _TechItem(label: 'State Management', value: 'Riverpod 3.x'),
@@ -49,7 +52,10 @@ class AboutPageContent extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Architecture', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                  const Text(
+                    'Architecture',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     'This boilerplate mirrors the Next.js web application structure '
@@ -69,19 +75,35 @@ class AboutPageContent extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Features', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                  Text(
+                    'Features',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
                   SizedBox(height: 12),
-                  _FeatureItem(text: 'Auth (login, register, MFA, password reset, email verify)'),
-                  _FeatureItem(text: 'Tier-gated views (Free, Basic, Medium, Premium)'),
-                  _FeatureItem(text: 'Stripe billing integration with card form'),
+                  _FeatureItem(
+                    text:
+                        'Auth (login, register, MFA, password reset, email verify)',
+                  ),
+                  _FeatureItem(
+                    text: 'Tier-gated views (Free, Basic, Medium, Premium)',
+                  ),
+                  _FeatureItem(
+                    text: 'Stripe billing integration with card form',
+                  ),
                   _FeatureItem(text: 'Realtime updates via WebSocket'),
                   _FeatureItem(text: 'Two-layer API pattern (server + client)'),
-                  _FeatureItem(text: 'Admin panel with user search & tier management'),
-                  _FeatureItem(text: 'Audit logs with filters, pagination & diff view'),
+                  _FeatureItem(
+                    text: 'Admin panel with user search & tier management',
+                  ),
+                  _FeatureItem(
+                    text: 'Audit logs with filters, pagination & diff view',
+                  ),
                   _FeatureItem(text: 'Premium analytics dashboard'),
                   _FeatureItem(text: 'Form validation framework'),
                   _FeatureItem(text: '60+ UI component demo pages'),
-                  _FeatureItem(text: 'Settings (account, billing, sessions, API keys)'),
+                  _FeatureItem(
+                    text: 'Settings (account, billing, sessions, API keys)',
+                  ),
                   _FeatureItem(text: 'Dark/light theme support'),
                 ],
               ),
@@ -108,7 +130,13 @@ class _TechItem extends StatelessWidget {
         children: [
           SizedBox(
             width: 140,
-            child: Text(label, style: TextStyle(color: colors.fgMuted, fontWeight: FontWeight.w500)),
+            child: Text(
+              label,
+              style: TextStyle(
+                color: colors.fgMuted,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
           Expanded(child: Text(value)),
         ],

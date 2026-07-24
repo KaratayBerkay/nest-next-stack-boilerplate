@@ -27,10 +27,26 @@ class AlertWidget extends StatelessWidget {
     final colors = AppColors.of(context);
 
     final (Color bg, Color fg, IconData defaultIcon) = switch (variant) {
-      AlertVariant.info => (colors.info.withValues(alpha: 0.1), colors.info, Icons.info_outline),
-      AlertVariant.success => (colors.success.withValues(alpha: 0.1), colors.success, Icons.check_circle_outline),
-      AlertVariant.warning => (colors.warning.withValues(alpha: 0.1), colors.warning, Icons.warning_amber_outlined),
-      AlertVariant.danger => (colors.danger.withValues(alpha: 0.1), colors.danger, Icons.error_outline),
+      AlertVariant.info => (
+          colors.info.withValues(alpha: 0.1),
+          colors.info,
+          Icons.info_outline
+        ),
+      AlertVariant.success => (
+          colors.success.withValues(alpha: 0.1),
+          colors.success,
+          Icons.check_circle_outline
+        ),
+      AlertVariant.warning => (
+          colors.warning.withValues(alpha: 0.1),
+          colors.warning,
+          Icons.warning_amber_outlined
+        ),
+      AlertVariant.danger => (
+          colors.danger.withValues(alpha: 0.1),
+          colors.danger,
+          Icons.error_outline
+        ),
     };
 
     return Container(
@@ -87,7 +103,10 @@ class AlertTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(text, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13));
+    return Text(
+      text,
+      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+    );
   }
 }
 

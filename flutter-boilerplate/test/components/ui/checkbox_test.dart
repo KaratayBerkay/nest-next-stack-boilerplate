@@ -11,14 +11,20 @@ void main() {
   });
 
   testWidgets('CheckboxWidget renders label when provided', (tester) async {
-    await pumpTestApp(tester, const CheckboxWidget(value: false, label: 'Agree'));
+    await pumpTestApp(
+      tester,
+      const CheckboxWidget(value: false, label: 'Agree'),
+    );
 
     expect(find.text('Agree'), findsOneWidget);
   });
 
   testWidgets('CheckboxWidget calls onChanged on tap', (tester) async {
     var toggled = false;
-    await pumpTestApp(tester, CheckboxWidget(value: false, onChanged: (v) => toggled = v));
+    await pumpTestApp(
+      tester,
+      CheckboxWidget(value: false, onChanged: (v) => toggled = v),
+    );
 
     await tester.tap(find.byType(CheckboxWidget));
     expect(toggled, isTrue);

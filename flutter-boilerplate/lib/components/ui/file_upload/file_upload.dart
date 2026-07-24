@@ -36,7 +36,9 @@ class FileUpload extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              fileName != null ? Icons.description : Icons.cloud_upload_outlined,
+              fileName != null
+                  ? Icons.description
+                  : Icons.cloud_upload_outlined,
               size: 24,
               color: colors.primary,
             ),
@@ -44,7 +46,8 @@ class FileUpload extends StatelessWidget {
             Expanded(
               child: Text(
                 fileName ?? hintText ?? 'Drop file here or tap to browse',
-                style: TextStyle(color: colors.onSurface.withValues(alpha: 0.6)),
+                style:
+                    TextStyle(color: colors.onSurface.withValues(alpha: 0.6)),
               ),
             ),
             if (fileName != null && onClear != null)

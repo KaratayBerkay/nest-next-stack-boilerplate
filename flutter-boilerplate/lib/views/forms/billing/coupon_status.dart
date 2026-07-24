@@ -37,9 +37,18 @@ class CouponStatus extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(code!, style: TextStyle(fontWeight: FontWeight.w600, color: colors.success)),
+                Text(
+                  code!,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: colors.success,
+                  ),
+                ),
                 if (discountPercent != null)
-                  Text('${discountPercent!.toInt()}% off', style: TextStyle(fontSize: 12, color: colors.success)),
+                  Text(
+                    '${discountPercent!.toInt()}% off',
+                    style: TextStyle(fontSize: 12, color: colors.success),
+                  ),
               ],
             ),
           ),

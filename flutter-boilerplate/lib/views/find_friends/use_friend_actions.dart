@@ -21,7 +21,10 @@ class FriendActionNotifier extends Notifier<FriendActionState> {
   FriendActionState build() => const FriendActionState();
 
   Future<void> sendRequest(String userId) async {
-    state = FriendActionState(status: FriendActionStatus.loading, lastActionedUserId: userId);
+    state = FriendActionState(
+      status: FriendActionStatus.loading,
+      lastActionedUserId: userId,
+    );
     try {
       await ref.read(friendActionsProvider).sendRequest(userId);
       state = const FriendActionState(status: FriendActionStatus.success);
@@ -64,6 +67,7 @@ class FriendActionNotifier extends Notifier<FriendActionState> {
   }
 }
 
-final friendActionStateProvider = NotifierProvider<FriendActionNotifier, FriendActionState>(
+final friendActionStateProvider =
+    NotifierProvider<FriendActionNotifier, FriendActionState>(
   FriendActionNotifier.new,
 );

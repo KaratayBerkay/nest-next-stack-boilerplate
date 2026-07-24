@@ -24,7 +24,8 @@ class GrowthStats {
   }
 }
 
-final growthStatsServerProvider = Provider((ref) => GrowthStatsServer(ref.read(dioProvider)));
+final growthStatsServerProvider =
+    Provider((ref) => GrowthStatsServer(ref.read(dioProvider)));
 
 class GrowthStatsServer {
   final Dio _dio;

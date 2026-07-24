@@ -37,10 +37,15 @@ class AdminSearchUsersServer {
   AdminSearchUsersServer(this._dio);
 
   Future<List<AdminUser>> call(String query) async {
-    final response = await _dio.get<dynamic>('${Urls.adminAuditLogs}/users', queryParameters: {
-      'q': query,
-    },);
+    final response = await _dio.get<dynamic>(
+      '${Urls.adminAuditLogs}/users',
+      queryParameters: {
+        'q': query,
+      },
+    );
     final list = response.data as List<dynamic>;
-    return list.map((e) => AdminUser.fromJson(e as Map<String, dynamic>)).toList();
+    return list
+        .map((e) => AdminUser.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }

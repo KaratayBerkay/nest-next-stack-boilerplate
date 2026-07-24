@@ -25,6 +25,8 @@ String? validateCountry(String? value) {
 }
 
 String? validateCouponCode(String? value) {
-  if (value != null && value.isNotEmpty && value.length < 3) return 'Invalid coupon code';
+  if (value != null && value.isNotEmpty && value.length < 3) {
+    return 'Invalid coupon code';
+  }
   return null;
 }

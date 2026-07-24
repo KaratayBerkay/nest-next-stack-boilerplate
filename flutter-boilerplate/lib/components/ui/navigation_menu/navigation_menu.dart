@@ -25,13 +25,13 @@ class NavigationMenu extends StatelessWidget {
           destinations: destinations.map((d) {
             return NavigationRailDestination(
               icon: Icon(d.icon),
-              selectedIcon: d.selectedIcon != null ? Icon(d.selectedIcon) : null,
+              selectedIcon:
+                  d.selectedIcon != null ? Icon(d.selectedIcon) : null,
               label: Text(d.label),
             );
           }).toList(),
         ),
-        if (body != null)
-          Expanded(child: body!),
+        if (body != null) Expanded(child: body!),
       ],
     );
   }

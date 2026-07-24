@@ -32,31 +32,53 @@ class PremiumSettingsBillingPage extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const CardHeader(child: Text('Subscription', style: TextStyle(fontWeight: FontWeight.w600))),
+                  const CardHeader(
+                    child: Text(
+                      'Subscription',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
                   CardContent(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            Text(sub.plan.toUpperCase(),
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
+                            Text(
+                              sub.plan.toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             const SizedBox(width: 8),
                             Badge(
-                              text: sub.status == 'active' ? 'Active' : sub.status,
-                              variant: sub.status == 'active' ? BadgeVariant.success : BadgeVariant.warning,
+                              text: sub.status == 'active'
+                                  ? 'Active'
+                                  : sub.status,
+                              variant: sub.status == 'active'
+                                  ? BadgeVariant.success
+                                  : BadgeVariant.warning,
                             ),
                           ],
                         ),
                         const SizedBox(height: 8),
                         if (sub.currentPeriodEnd != null)
-                          Text('Renewal date: ${sub.currentPeriodEnd!.toLocal().toString().split(' ')[0]}',
-                              style: TextStyle(color: colors.fgMuted, fontSize: 13),),
+                          Text(
+                            'Renewal date: ${sub.currentPeriodEnd!.toLocal().toString().split(' ')[0]}',
+                            style:
+                                TextStyle(color: colors.fgMuted, fontSize: 13),
+                          ),
                         if (sub.cancelAtPeriodEnd)
                           Padding(
                             padding: const EdgeInsets.only(top: 8),
-                            child: Text('Cancels at period end',
-                                style: TextStyle(color: colors.warning, fontSize: 13),),
+                            child: Text(
+                              'Cancels at period end',
+                              style: TextStyle(
+                                color: colors.warning,
+                                fontSize: 13,
+                              ),
+                            ),
                           ),
                         const SizedBox(height: 12),
                         if (!sub.cancelAtPeriodEnd)
@@ -68,15 +90,27 @@ class PremiumSettingsBillingPage extends ConsumerWidget {
                                 context: context,
                                 builder: (_) => AlertDialog(
                                   title: const Text('Cancel subscription?'),
-                                  content: const Text('Your subscription will remain active until the end of the billing period.'),
+                                  content: const Text(
+                                    'Your subscription will remain active until the end of the billing period.',
+                                  ),
                                   actions: [
-                                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Keep')),
-                                    FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Cancel')),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
+                                      child: const Text('Keep'),
+                                    ),
+                                    FilledButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, true),
+                                      child: const Text('Cancel'),
+                                    ),
                                   ],
                                 ),
                               );
                               if (confirm == true) {
-                                await ref.read(billingActionsProvider).cancelSubscription();
+                                await ref
+                                    .read(billingActionsProvider)
+                                    .cancelSubscription();
                                 ref.invalidate(subscriptionProvider);
                               }
                             },
@@ -92,12 +126,19 @@ class PremiumSettingsBillingPage extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const CardHeader(child: Text('Invoices', style: TextStyle(fontWeight: FontWeight.w600))),
+                  const CardHeader(
+                    child: Text(
+                      'Invoices',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
                   CardContent(
                     child: Column(
                       children: [
-                        Text('Full invoice history available.',
-                            style: TextStyle(color: colors.fgMuted),),
+                        Text(
+                          'Full invoice history available.',
+                          style: TextStyle(color: colors.fgMuted),
+                        ),
                         const SizedBox(height: 8),
                         Button(
                           variant: ButtonVariant.ghost,

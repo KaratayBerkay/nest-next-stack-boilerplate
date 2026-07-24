@@ -14,9 +14,12 @@ class UsernameAvailableServer {
   UsernameAvailableServer(this._dio);
 
   Future<bool> call(String username) async {
-    final response = await _dio.get<dynamic>(Urls.usernameAvailable, queryParameters: {
-      'username': username,
-    },);
+    final response = await _dio.get<dynamic>(
+      Urls.usernameAvailable,
+      queryParameters: {
+        'username': username,
+      },
+    );
     return response.data['available'] as bool;
   }
 }

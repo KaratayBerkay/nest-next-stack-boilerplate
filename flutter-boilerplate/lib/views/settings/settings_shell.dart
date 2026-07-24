@@ -82,12 +82,18 @@ class SettingsShell extends StatelessWidget {
   void _navigateTo(int index, BuildContext context) {
     final lang = GoRouterState.of(context).pathParameters['lang'] ?? 'en';
     switch (index) {
-      case 0: context.go('/v1/$lang/settings/account');
-      case 1: context.go('/v1/$lang/settings/billing');
-      case 2: context.go('/v1/$lang/settings/general');
-      case 3: context.go('/v1/$lang/settings/privacy');
-      case 4: context.go('/v1/$lang/settings/sessions');
-      case 5: context.go('/v1/$lang/settings/api-keys');
+      case 0:
+        context.go('/v1/$lang/settings/account');
+      case 1:
+        context.go('/v1/$lang/settings/billing');
+      case 2:
+        context.go('/v1/$lang/settings/general');
+      case 3:
+        context.go('/v1/$lang/settings/privacy');
+      case 4:
+        context.go('/v1/$lang/settings/sessions');
+      case 5:
+        context.go('/v1/$lang/settings/api-keys');
     }
   }
 }

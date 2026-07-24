@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
 
-final markReadServerProvider = Provider((ref) => MarkReadServer(ref.read(dioProvider)));
+final markReadServerProvider =
+    Provider((ref) => MarkReadServer(ref.read(dioProvider)));
 
 class MarkReadServer {
   final Dio _dio;

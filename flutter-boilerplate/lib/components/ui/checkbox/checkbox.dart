@@ -92,7 +92,10 @@ class CheckboxCard extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              Checkbox(value: value, onChanged: (v) => onChanged?.call(v ?? false)),
+              Checkbox(
+                value: value,
+                onChanged: (v) => onChanged?.call(v ?? false),
+              ),
               const SizedBox(width: 8),
               Expanded(child: child),
             ],

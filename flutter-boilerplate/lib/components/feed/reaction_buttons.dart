@@ -46,10 +46,11 @@ class _ReactionInlineState extends State<ReactionInline> {
       }
       widget.onReactionChange?.call();
     } catch (_) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to react')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to react')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -117,15 +118,11 @@ class _ReactionInlineState extends State<ReactionInline> {
                     final count =
                         widget.reactions.where((r) => r.type == type).length;
                     final active = widget.reactions.any(
-                      (r) =>
-                          r.type == type &&
-                          r.userId == widget.currentUserId,
+                      (r) => r.type == type && r.userId == widget.currentUserId,
                     );
 
                     return InkWell(
-                      onTap: _submitting
-                          ? null
-                          : () => _handleReaction(type),
+                      onTap: _submitting ? null : () => _handleReaction(type),
                       borderRadius: BorderRadius.circular(4),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -149,9 +146,8 @@ class _ReactionInlineState extends State<ReactionInline> {
                                   '$count',
                                   style: TextStyle(
                                     fontSize: 10,
-                                    color: active
-                                        ? Colors.white
-                                        : Colors.white70,
+                                    color:
+                                        active ? Colors.white : Colors.white70,
                                   ),
                                 ),
                               ),

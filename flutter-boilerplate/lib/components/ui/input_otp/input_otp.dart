@@ -55,7 +55,9 @@ class _InputOtpState extends State<InputOtp> {
       mainAxisSize: MainAxisSize.min,
       children: List.generate(widget.length, (i) {
         return Padding(
-          padding: EdgeInsets.only(right: i < widget.length - 1 ? widget.spacing : 0),
+          padding: EdgeInsets.only(
+            right: i < widget.length - 1 ? widget.spacing : 0,
+          ),
           child: SizedBox(
             width: 40,
             child: TextField(

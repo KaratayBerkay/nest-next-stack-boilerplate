@@ -53,22 +53,35 @@ class _ForgotPasswordFormState extends ConsumerState<ForgotPasswordForm> {
     if (_submitted) {
       return Column(
         children: [
-          Text('Reset Password', style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600)),
+          Text(
+            'Reset Password',
+            style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: 12),
-          Text('Check your email for reset instructions.',
-              style: TextStyle(color: colors.success, fontSize: 14),),
+          Text(
+            'Check your email for reset instructions.',
+            style: TextStyle(color: colors.success, fontSize: 14),
+          ),
           const SizedBox(height: 12),
-          TextButton(onPressed: () => context.go('/auth/login'), child: const Text('Back to Sign In')),
+          TextButton(
+            onPressed: () => context.go('/auth/login'),
+            child: const Text('Back to Sign In'),
+          ),
         ],
       );
     }
 
     return Column(
       children: [
-        Text('Reset Password', style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600)),
+        Text(
+          'Reset Password',
+          style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 8),
-        Text('Enter your email to receive reset instructions.',
-            style: TextStyle(color: colors.fgMuted, fontSize: 12),),
+        Text(
+          'Enter your email to receive reset instructions.',
+          style: TextStyle(color: colors.fgMuted, fontSize: 12),
+        ),
         const SizedBox(height: 16),
         TextField(
           controller: _emailController,

@@ -20,11 +20,22 @@ class ProfileBasicFields extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Profile Details', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        const Text(
+          'Profile Details',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 12),
-        FormTextField(controller: nameCtrl, label: 'Name', validator: auth.validateName),
+        FormTextField(
+          controller: nameCtrl,
+          label: 'Name',
+          validator: auth.validateName,
+        ),
         const SizedBox(height: 8),
-        FormTextField(controller: emailCtrl, label: 'Email', validator: auth.validateEmail),
+        FormTextField(
+          controller: emailCtrl,
+          label: 'Email',
+          validator: auth.validateEmail,
+        ),
         const SizedBox(height: 8),
         FormTextField(controller: bioCtrl, label: 'Bio', maxLines: 3),
       ],

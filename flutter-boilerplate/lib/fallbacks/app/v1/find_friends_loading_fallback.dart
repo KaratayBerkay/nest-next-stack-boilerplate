@@ -10,28 +10,31 @@ class FindFriendsLoadingFallback extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-           const _SkeletonLine(width: 120),
+          const _SkeletonLine(width: 120),
           const SizedBox(height: 16),
           const Row(
             children: [
-              Expanded(child:  _SkeletonLine(height: 32)),
+              Expanded(child: _SkeletonLine(height: 32)),
               SizedBox(width: 8),
-              Expanded(child:  _SkeletonLine(height: 32)),
+              Expanded(child: _SkeletonLine(height: 32)),
             ],
           ),
           const SizedBox(height: 12),
-           const _SkeletonLine(height: 36),
+          const _SkeletonLine(height: 36),
           const SizedBox(height: 16),
-          ...List.generate(5, (_) => const Padding(
-            padding: EdgeInsets.only(bottom: 12),
-            child: Column(
-              children: [
-                 _SkeletonLine(width: 200),
-                SizedBox(height: 4),
-                 _SkeletonLine(width: 120, height: 10),
-              ],
+          ...List.generate(
+            5,
+            (_) => const Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: Column(
+                children: [
+                  _SkeletonLine(width: 200),
+                  SizedBox(height: 4),
+                  _SkeletonLine(width: 120, height: 10),
+                ],
+              ),
             ),
-          ),),
+          ),
         ],
       ),
     );
@@ -41,7 +44,7 @@ class FindFriendsLoadingFallback extends StatelessWidget {
 class _SkeletonLine extends StatelessWidget {
   final double? width;
   final double height;
-  const  _SkeletonLine({this.width, this.height = 16});
+  const _SkeletonLine({this.width, this.height = 16});
 
   @override
   Widget build(BuildContext context) {

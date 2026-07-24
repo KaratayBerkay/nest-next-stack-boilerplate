@@ -21,9 +21,9 @@ class FriendSearchNotifier extends Notifier<FriendSearchState> {
       query: value,
     );
   }
-
 }
 
-final friendSearchProvider = NotifierProvider<FriendSearchNotifier, FriendSearchState>(
+final friendSearchProvider =
+    NotifierProvider<FriendSearchNotifier, FriendSearchState>(
   FriendSearchNotifier.new,
 );

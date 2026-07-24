@@ -34,7 +34,8 @@ void main() {
     expect(find.byIcon(Icons.last_page), findsOneWidget);
   });
 
-  testWidgets('hides first/last buttons when showFirstLast is false', (tester) async {
+  testWidgets('hides first/last buttons when showFirstLast is false',
+      (tester) async {
     await pumpTestApp(
       tester,
       PaginationWidget(

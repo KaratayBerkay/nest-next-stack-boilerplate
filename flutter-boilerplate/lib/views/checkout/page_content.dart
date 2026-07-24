@@ -16,7 +16,8 @@ class CheckoutPageContent extends ConsumerStatefulWidget {
   const CheckoutPageContent({super.key, required this.lang, this.plan});
 
   @override
-  ConsumerState<CheckoutPageContent> createState() => _CheckoutPageContentState();
+  ConsumerState<CheckoutPageContent> createState() =>
+      _CheckoutPageContentState();
 }
 
 class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
@@ -74,7 +75,9 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
 
       await Stripe.instance.confirmSetupIntent(
         paymentIntentClientSecret: clientSecret,
-        params: const PaymentMethodParams.card(paymentMethodData: PaymentMethodData()),
+        params: const PaymentMethodParams.card(
+          paymentMethodData: PaymentMethodData(),
+        ),
       );
 
       await billing.subscribe(_priceId);
@@ -106,32 +109,53 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Selected Plan: ${Tier.displayName(widget.plan ?? 'free')}',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
+                  Text(
+                    'Selected Plan: ${Tier.displayName(widget.plan ?? 'free')}',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 4),
-                  Text('$_price/month — You are about to upgrade your account.',
-                      style: TextStyle(color: colors.fgMuted),),
+                  Text(
+                    '$_price/month — You are about to upgrade your account.',
+                    style: TextStyle(color: colors.fgMuted),
+                  ),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 24),
-          const Text('Payment Method', style: TextStyle(fontWeight: FontWeight.w600)),
+          const Text(
+            'Payment Method',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: 12),
           StripeCardFormField(
             nameController: _nameController,
-            onCompletionChanged: (complete) => setState(() => _cardComplete = complete),
+            onCompletionChanged: (complete) =>
+                setState(() => _cardComplete = complete),
           ),
           if (_error != null)
             Padding(
               padding: const EdgeInsets.only(top: 12),
-              child: Text(_error!, style: TextStyle(color: colors.danger, fontSize: 13)),
+              child: Text(
+                _error!,
+                style: TextStyle(color: colors.danger, fontSize: 13),
+              ),
             ),
           const SizedBox(height: 24),
           FilledButton(
             onPressed: _canSubmit ? _handleSubscribe : null,
             child: _loading
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
                 : Text('Subscribe — $_price/month'),
           ),
         ],

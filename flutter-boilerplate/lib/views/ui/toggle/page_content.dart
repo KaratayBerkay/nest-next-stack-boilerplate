@@ -20,7 +20,10 @@ class _ToggleDemoPageState extends State<ToggleDemoPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('Text Formatting', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'Text Formatting',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
           ToggleButtons(
             isSelected: [_bold, _italic, _underline],

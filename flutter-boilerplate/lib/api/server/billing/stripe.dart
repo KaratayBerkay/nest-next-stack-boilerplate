@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
 
-final stripeServerProvider = Provider((ref) => StripeServer(ref.read(dioProvider)));
+final stripeServerProvider =
+    Provider((ref) => StripeServer(ref.read(dioProvider)));
 
 class StripeServer {
   final Dio _dio;
@@ -17,7 +18,8 @@ class StripeServer {
   }
 
   Future<Map<String, dynamic>> subscribe(String priceId) async {
-    final response = await _dio.post<dynamic>(Urls.billingSubscribe, data: {'priceId': priceId});
+    final response = await _dio
+        .post<dynamic>(Urls.billingSubscribe, data: {'priceId': priceId});
     return response.data as Map<String, dynamic>;
   }
 

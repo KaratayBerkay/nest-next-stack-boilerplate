@@ -12,13 +12,22 @@ class SelectDemoPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [
-          Text('Basic Select', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            'Basic Select',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           SizedBox(height: 8),
           SelectWidget(items: ['Item 1', 'Item 2', 'Item 3']),
           SizedBox(height: 24),
-          Text('With Label', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            'With Label',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           SizedBox(height: 8),
-          SelectWidget(items: ['Option A', 'Option B', 'Option C'], label: 'Choose option'),
+          SelectWidget(
+            items: ['Option A', 'Option B', 'Option C'],
+            label: 'Choose option',
+          ),
         ],
       ),
     );

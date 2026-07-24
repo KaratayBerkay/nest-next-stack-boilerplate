@@ -330,15 +330,9 @@ services:
     profiles: ["flutter"]
     build:
       context: ./flutter-boilerplate
+      target: serve
     ports:
       - "8082:8082"
-    command: >
-      sh -c "
-        flutter build apk --release &&
-        cd build/app/outputs/flutter-apk &&
-        echo '<html><body><h1>Flutter APK</h1><a href=\"app-release.apk\">Download</a></body></html>' > index.html &&
-        python3 -m http.server 8082
-      "
 
 volumes:
   pgdata:

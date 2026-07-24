@@ -15,7 +15,8 @@ class PhotoDetailPage extends StatelessWidget {
       body: Center(
         child: CachedNetworkImage(
           imageUrl: imageUrl,
-          placeholder: (_, __) => const Center(child: CircularProgressIndicator()),
+          placeholder: (_, __) =>
+              const Center(child: CircularProgressIndicator()),
           errorWidget: (_, __, ___) => const Icon(Icons.broken_image, size: 64),
           fit: BoxFit.contain,
         ),

@@ -17,15 +17,23 @@ class InputGroupDemoPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Input Group', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Input Group',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 14,
+                        ),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey),
-                          borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
+                          borderRadius: const BorderRadius.horizontal(
+                            left: Radius.circular(8),
+                          ),
                         ),
                         child: const Text('\$'),
                       ),
@@ -34,15 +42,21 @@ class InputGroupDemoPage extends StatelessWidget {
                           decoration: InputDecoration(
                             border: OutlineInputBorder(),
                             labelText: 'Amount',
-                            contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                            contentPadding:
+                                EdgeInsets.symmetric(horizontal: 12),
                           ),
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 14,
+                        ),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey),
-                          borderRadius: const BorderRadius.horizontal(right: Radius.circular(8)),
+                          borderRadius: const BorderRadius.horizontal(
+                            right: Radius.circular(8),
+                          ),
                         ),
                         child: const Text('USD'),
                       ),

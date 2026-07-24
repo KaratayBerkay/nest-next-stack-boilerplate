@@ -8,10 +8,12 @@ void main() {
   testWidgets('renders menu bar items', (tester) async {
     await pumpTestApp(
       tester,
-      const MenuBar(items: [
-        MenuBarItem(label: 'File'),
-        MenuBarItem(label: 'Edit'),
-      ],),
+      const MenuBar(
+        items: [
+          MenuBarItem(label: 'File'),
+          MenuBarItem(label: 'Edit'),
+        ],
+      ),
     );
     expect(find.text('File'), findsOneWidget);
     expect(find.text('Edit'), findsOneWidget);
@@ -20,15 +22,17 @@ void main() {
   testWidgets('renders items with children', (tester) async {
     await pumpTestApp(
       tester,
-      const MenuBar(items: [
-        MenuBarItem(
-          label: 'File',
-          children: [
-            MenuBarChildItem(value: 'new', label: 'New'),
-            MenuBarChildItem(value: 'open', label: 'Open'),
-          ],
-        ),
-      ],),
+      const MenuBar(
+        items: [
+          MenuBarItem(
+            label: 'File',
+            children: [
+              MenuBarChildItem(value: 'new', label: 'New'),
+              MenuBarChildItem(value: 'open', label: 'Open'),
+            ],
+          ),
+        ],
+      ),
     );
     expect(find.text('File'), findsOneWidget);
   });
@@ -36,12 +40,14 @@ void main() {
   testWidgets('renders dropdown arrow for items with children', (tester) async {
     await pumpTestApp(
       tester,
-      const MenuBar(items: [
-        MenuBarItem(
-          label: 'File',
-          children: [MenuBarChildItem(value: 'new', label: 'New')],
-        ),
-      ],),
+      const MenuBar(
+        items: [
+          MenuBarItem(
+            label: 'File',
+            children: [MenuBarChildItem(value: 'new', label: 'New')],
+          ),
+        ],
+      ),
     );
     expect(find.byIcon(Icons.keyboard_arrow_down), findsOneWidget);
   });
@@ -50,9 +56,11 @@ void main() {
     var tapped = false;
     await pumpTestApp(
       tester,
-      MenuBar(items: [
-        MenuBarItem(label: 'Help', onTap: () => tapped = true),
-      ],),
+      MenuBar(
+        items: [
+          MenuBarItem(label: 'Help', onTap: () => tapped = true),
+        ],
+      ),
     );
     await tester.tap(find.text('Help'));
     expect(tapped, isTrue);

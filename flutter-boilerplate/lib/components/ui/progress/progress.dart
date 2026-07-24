@@ -52,7 +52,9 @@ class StepIndicator extends StatelessWidget {
       children: List.generate(totalSteps, (i) {
         final isCompleted = i < currentStep;
         final isCurrent = i == currentStep;
-        final stepColor = isCompleted ? colors.success : (isCurrent ? colors.brand : colors.border);
+        final stepColor = isCompleted
+            ? colors.success
+            : (isCurrent ? colors.brand : colors.border);
 
         return Expanded(
           child: Row(

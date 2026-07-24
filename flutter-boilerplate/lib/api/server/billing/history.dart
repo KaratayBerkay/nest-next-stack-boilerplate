@@ -33,7 +33,8 @@ class Invoice {
   }
 }
 
-final billingHistoryServerProvider = Provider((ref) => BillingHistoryServer(ref.read(dioProvider)));
+final billingHistoryServerProvider =
+    Provider((ref) => BillingHistoryServer(ref.read(dioProvider)));
 
 class BillingHistoryServer {
   final Dio _dio;
@@ -43,6 +44,8 @@ class BillingHistoryServer {
   Future<List<Invoice>> call() async {
     final response = await _dio.get<dynamic>(Urls.billingHistory);
     final list = response.data as List<dynamic>;
-    return list.map((e) => Invoice.fromJson(e as Map<String, dynamic>)).toList();
+    return list
+        .map((e) => Invoice.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }

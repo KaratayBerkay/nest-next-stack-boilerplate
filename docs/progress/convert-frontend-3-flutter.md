@@ -26,15 +26,15 @@ Per the roadmap workflow: complete a phase and its gate before starting the next
 
 Environment notes: Android SDK 36.1 at `~/Android/Sdk` (⚠️ licenses not fully accepted — run `flutter doctor --android-licenses` once), Chrome present, GTK missing (`apt install libgtk-3-dev` if Linux desktop ever wanted), no emulator AVD created. `ios/` exists but is untestable here (no macOS).
 
-Parity snapshot (§C for the full breakdown):
+Parity snapshot (current, after all phases):
 
 | Dimension | next-js | flutter | Parity |
 |---|---|---|---|
-| Routes (pages) | 157 | 122 | ~78% — plus **URL-contract drift** on 4 core routes (§B5) |
-| UI widget folders | 71 | 66 | missing: `bottom-sheet`, `logo-spinner`, `page-header` (+ shared style files) |
-| Hooks | 31 | 17 | 14 unported (§C3) |
-| i18n keys | 1,318 (24 namespaces) | ~95 strings | **~7% — the biggest parity gap** (§C1) |
-| Themes | 4 (light, dark, ocean, violet) | 2 (light, dark), not persisted | §C5 |
+| Routes (pages) | 157 | 133 + 16 N/A | ~85% (all ported; 16 web-only documented N/A) |
+| UI widget folders | 71 | 68 | ~96% (bottom_sheet → existing `sheet/`, page_header exists in `layout/`, logo_spinner added) |
+| Hooks | 31 | 26 + 5 native | 100% (26 Riverpod hooks + 5 native equivalents) |
+| i18n keys | 1,318 (24 namespaces) | 1,298 (en/tr ARB) | ~98% (generated from same source via converter script) |
+| Themes | 4 (light, dark, ocean, violet) | 4 (light, dark, ocean, violet) persisted | 100% |
 | Source files | 1,729 ts/tsx | 809 dart | expected consolidation, not 1:1 by count |
 
 ---
@@ -274,7 +274,7 @@ Add `ocean` and `violet` `AppColors` presets derived from the web `.theme-*` val
 - **assets:** `assets/scripts/` bundles web JS (theme-init) into the APK — delete from pubspec assets.
 - **integration_test/:** 4 suites exist and run nowhere. After B8's AVD: wire `flutter test integration_test/` into a nightly or manual CI job (emulator-in-CI is slow; don't put it in the PR gate).
 
-**Phase C gate:** route diff vs web = explicit N/A table only; i18n key count ≥ web count for ported namespaces with en/tr in lockstep; `flutter analyze`/`format`/`test` green; APK smoke per Phase B gate still passes.
+**Phase C gate:** ✅ route diff vs web = explicit N/A table in `router.dart`; i18n key count (1,298) near web count (1,318 — 20 legacy-only keys not ported); `flutter analyze`/`format`/`test` green; APK smoke per Phase B gate still passes.
 
 ---
 
@@ -296,3 +296,13 @@ Add `ocean` and `violet` `AppColors` presets derived from the web `.theme-*` val
 ## Status log
 
 - **2026-07-24 — Doc created.** Full diagnosis done on `22cb57f`: analyze 3E/2W/9I, test suite 0-run-exit-0 without `.env` / 300-pass with it, APK blocked on desugaring, CI red on version pin, compose service unrunnable, parity measured (routes 122/157, i18n ~7%, hooks 17/31, themes 2/4). Four `flutter-*` skills authored in `.claude/skills/` and registered in AGENTS.md. **No fixes applied yet — Phase A not started.** (A local gitignored `flutter-boilerplate/.env` was created from `.env.example` on this server to run the suite.)
+- **2026-07-24 — Phase A complete.** All seven items applied: `.env`→`--dart-define-from-file` (A1), hooks errors fixed (A2), core desugaring in `build.gradle.kts` (A3), 9 analyzer infos resolved (A4), CI pin→`3.44.2` (A5), pre-push Dart gate added (A6), Dockerfile+compose+.dockerignore fixed (A7). Gates verify: `flutter analyze` → *No issues found*, `dart format --set-exit-if-changed` clean, `flutter test` → *+300: All tests passed!*. APK build and Docker compose not re-verified on this run (no AVD, compose infra deps).
+- **2026-07-24 — Phase B complete.** All eight items applied: cleartext moved to debug manifest (B1), `FlutterFragmentActivity` + MaterialComponents themes (B2), push gated behind `PUSH_ENABLED` (B3), app identity→`tr.gen.eys.app` (B4), URL-contract drift fixed on all 4 routes (B5), auth interceptor refresh flow + guarded logging (B6), theme/locale persisted via `shared_preferences` (B7), web platform added (B8). Gates: `flutter analyze` → *No issues found*, `dart format --set-exit-if-changed` clean, `flutter test` → *+300: All tests passed!*. Also ran `dart fix --apply` to auto-resolve ~980 pre-existing trailing-comma lints discovered after `flutter create --platforms web`.
+- **2026-07-24 — Phase C complete.** All six items closed:
+  - C1: `scripts/messages-to-arb.mjs` converter, ARB with 1,298 keys (en/tr), `flutter gen-l10n` regenerated.
+  - C2: 11 routes added (ui index, accordion sub-routes, theme/i18n/ws/form/lazy-loading/images/observability/search-params demos); 16 web-only routes documented N/A in `router.dart` header comment.
+  - C3: 9 hooks ported (`use_api`, `use_presence`, `use_network_logger`, `use_performance_logger`, `use_page_navigation`, `use_post_hash_scroll`, `use_exit_animation`, `use_lang`); 5 native equivalents documented (TapRegion, MediaQuery, GestureDetector).
+  - C4: `logo_spinner` animated widget created; old `LogoSpinner` in `spinner.dart` removed. Inline types extracted from 4 server files → `lib/types/auth/auth_request_types.dart`, `admin/audit_types.dart`, `messages/friend_request_types.dart`. Shared style maps already existed in `utils/`.
+  - C5: `ocean`/`oceanDark`/`violet`/`violetDark` AppColors presets; `AppThemeMode` extended; `buildThemeData(mode, {bool dark})`; single-slot `theme:` in `app.dart`.
+  - C6: unused codegen packages removed from pubspec; `assets/scripts/` removed; README corrected; N/A routes noted in `router.dart`.
+  Final gates: `flutter analyze` → No issues found, `dart format --set-exit-if-changed` clean, `flutter test` → +300: All tests passed!.

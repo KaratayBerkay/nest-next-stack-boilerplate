@@ -15,14 +15,20 @@ class ToastDemoPage extends StatelessWidget {
           Button(
             child: const Text('Show Success Toast'),
             onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Operation successful!'), backgroundColor: Colors.green),
+              const SnackBar(
+                content: Text('Operation successful!'),
+                backgroundColor: Colors.green,
+              ),
             ),
           ),
           const SizedBox(height: 8),
           Button(
             child: const Text('Show Error Toast'),
             onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Something went wrong!'), backgroundColor: Colors.red),
+              const SnackBar(
+                content: Text('Something went wrong!'),
+                backgroundColor: Colors.red,
+              ),
             ),
           ),
         ],

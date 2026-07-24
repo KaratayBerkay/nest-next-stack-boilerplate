@@ -6,7 +6,8 @@ class ProgrammaticMetaExample extends StatefulWidget {
   const ProgrammaticMetaExample({super.key});
 
   @override
-  State<ProgrammaticMetaExample> createState() => _ProgrammaticMetaExampleState();
+  State<ProgrammaticMetaExample> createState() =>
+      _ProgrammaticMetaExampleState();
 }
 
 class _ProgrammaticMetaExampleState extends State<ProgrammaticMetaExample> {
@@ -50,13 +51,21 @@ class _ProgrammaticMetaExampleState extends State<ProgrammaticMetaExample> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Input(label: 'Programmatic Field', controller: _fieldCtrl, errorText: _errorText, helperText: _helperText),
+        Input(
+          label: 'Programmatic Field',
+          controller: _fieldCtrl,
+          errorText: _errorText,
+          helperText: _helperText,
+        ),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
           children: [
             FilledButton(onPressed: _setError, child: const Text('Set Error')),
-            OutlinedButton(onPressed: _setHelper, child: const Text('Set Helper')),
+            OutlinedButton(
+              onPressed: _setHelper,
+              child: const Text('Set Helper'),
+            ),
             TextButton(onPressed: _clear, child: const Text('Clear')),
             FilledButton.tonal(onPressed: _touch, child: const Text('Touch')),
           ],

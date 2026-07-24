@@ -14,7 +14,11 @@ class PostActions {
 
   PostActions(this._ref);
 
-  Future<void> create({required String title, required String content, String? imageUrl}) async {
+  Future<void> create({
+    required String title,
+    required String content,
+    String? imageUrl,
+  }) async {
     final server = _ref.read(postCreateServerProvider);
     await server.call(title: title, content: content, imageUrl: imageUrl);
   }
@@ -24,9 +28,19 @@ class PostActions {
     await server.call(postId);
   }
 
-  Future<void> update(String postId, {String? title, String? content, String? imageUrl}) async {
+  Future<void> update(
+    String postId, {
+    String? title,
+    String? content,
+    String? imageUrl,
+  }) async {
     final server = _ref.read(postUpdateServerProvider);
-    await server.call(postId, title: title, content: content, imageUrl: imageUrl);
+    await server.call(
+      postId,
+      title: title,
+      content: content,
+      imageUrl: imageUrl,
+    );
   }
 
   Future<void> toggleReaction(String postId) async {
@@ -39,7 +53,10 @@ class PostActions {
     await server.create(postId, content);
   }
 
-  Future<void> updateComment(String commentId, {required String content}) async {
+  Future<void> updateComment(
+    String commentId, {
+    required String content,
+  }) async {
     final server = _ref.read(postCommentsServerProvider);
     await server.update(commentId, content: content);
   }

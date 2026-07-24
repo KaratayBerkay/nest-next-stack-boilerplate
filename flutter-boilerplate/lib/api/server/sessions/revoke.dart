@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
 
-final revokeSessionServerProvider = Provider((ref) => RevokeSessionServer(ref.read(dioProvider)));
+final revokeSessionServerProvider =
+    Provider((ref) => RevokeSessionServer(ref.read(dioProvider)));
 
 class RevokeSessionServer {
   final Dio _dio;

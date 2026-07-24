@@ -13,27 +13,27 @@ class ShareLoadingFallback extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-               _SkeletonLine(width: 120),
-               _SkeletonLine(width: 24, height: 24),
+              _SkeletonLine(width: 120),
+              _SkeletonLine(width: 24, height: 24),
             ],
           ),
           SizedBox(height: 24),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-               _SkeletonLine(width: 48, height: 12),
+              _SkeletonLine(width: 48, height: 12),
               SizedBox(height: 6),
-               _SkeletonLine(height: 36),
+              _SkeletonLine(height: 36),
               SizedBox(height: 16),
-               _SkeletonLine(width: 64, height: 12),
+              _SkeletonLine(width: 64, height: 12),
               SizedBox(height: 6),
-               _SkeletonLine(height: 128),
+              _SkeletonLine(height: 128),
               SizedBox(height: 16),
-               _SkeletonLine(width: 80, height: 12),
+              _SkeletonLine(width: 80, height: 12),
               SizedBox(height: 6),
-               _SkeletonLine(height: 40),
+              _SkeletonLine(height: 40),
               SizedBox(height: 16),
-               _SkeletonLine(width: 80, height: 36),
+              _SkeletonLine(width: 80, height: 36),
             ],
           ),
         ],
@@ -45,7 +45,7 @@ class ShareLoadingFallback extends StatelessWidget {
 class _SkeletonLine extends StatelessWidget {
   final double? width;
   final double height;
-  const  _SkeletonLine({this.width, this.height = 16});
+  const _SkeletonLine({this.width, this.height = 16});
 
   @override
   Widget build(BuildContext context) {

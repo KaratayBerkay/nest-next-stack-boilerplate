@@ -29,10 +29,12 @@ class FormPreview extends StatelessWidget {
 
     return Column(
       children: [
-        ...fields.map((f) => Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: _buildField(f),
-        ),),
+        ...fields.map(
+          (f) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _buildField(f),
+          ),
+        ),
         if (onSubmit != null) ...[
           const SizedBox(height: 12),
           Button(onPressed: onSubmit, child: const Text('Submit')),
@@ -51,7 +53,8 @@ class FormPreview extends StatelessWidget {
           label: field.label,
           hintText: field.hint,
           obscureText: field.type == FieldType.password,
-          keyboardType: field.type == FieldType.number ? TextInputType.number : null,
+          keyboardType:
+              field.type == FieldType.number ? TextInputType.number : null,
         );
       case FieldType.textarea:
         return Textarea(label: field.label, hintText: field.hint);

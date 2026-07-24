@@ -5,7 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../constants/api/urls.dart';
 import '../../../types/feed/post.dart';
 
-final postSingleServerProvider = Provider((ref) => PostSingleServer(ref.read(dioProvider)));
+final postSingleServerProvider =
+    Provider((ref) => PostSingleServer(ref.read(dioProvider)));
 
 class PostSingleServer {
   final Dio _dio;

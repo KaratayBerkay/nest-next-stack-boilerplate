@@ -29,12 +29,18 @@ class BillingSummary extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Billing Summary', style: TextStyle(fontWeight: FontWeight.w600)),
+                const Text(
+                  'Billing Summary',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
                 if (status != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: status == 'active' ? colors.success.withValues(alpha: 0.1) : colors.warning.withValues(alpha: 0.1),
+                      color: status == 'active'
+                          ? colors.success.withValues(alpha: 0.1)
+                          : colors.warning.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -42,7 +48,9 @@ class BillingSummary extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: status == 'active' ? colors.success : colors.warning,
+                        color: status == 'active'
+                            ? colors.success
+                            : colors.warning,
                       ),
                     ),
                   ),
@@ -65,7 +73,11 @@ class _BillingRow extends StatelessWidget {
   final String value;
   final bool bold;
 
-  const _BillingRow({required this.label, required this.value, this.bold = false});
+  const _BillingRow({
+    required this.label,
+    required this.value,
+    this.bold = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +87,12 @@ class _BillingRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label),
-          Text(value, style: TextStyle(fontWeight: bold ? FontWeight.w700 : FontWeight.w600)),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: bold ? FontWeight.w700 : FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );

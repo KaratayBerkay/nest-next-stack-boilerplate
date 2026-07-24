@@ -29,7 +29,8 @@ class SubscriptionInfo {
   }
 }
 
-final subscriptionServerProvider = Provider((ref) => SubscriptionServer(ref.read(dioProvider)));
+final subscriptionServerProvider =
+    Provider((ref) => SubscriptionServer(ref.read(dioProvider)));
 
 class SubscriptionServer {
   final Dio _dio;

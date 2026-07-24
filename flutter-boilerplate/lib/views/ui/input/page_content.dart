@@ -39,19 +39,35 @@ class _InputPageContentState extends State<InputPageContent> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('Basic Input', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'Basic Input',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
           const Input(label: 'Label', hintText: 'Placeholder text'),
           const SizedBox(height: 16),
-          const Text('With Helper', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'With Helper',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
-          const Input(label: 'Email', hintText: 'you@example.com', helperText: 'We won\'t share your email'),
+          const Input(
+            label: 'Email',
+            hintText: 'you@example.com',
+            helperText: 'We won\'t share your email',
+          ),
           const SizedBox(height: 16),
-          const Text('With Error', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'With Error',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
           const Input(label: 'Username', errorText: 'Required field'),
           const SizedBox(height: 16),
-          const Text('Prefix & Suffix Icons', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'Prefix & Suffix Icons',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
           Input(
             hintText: 'Search...',
@@ -59,18 +75,28 @@ class _InputPageContentState extends State<InputPageContent> {
             suffixIcon: Icon(Icons.clear, size: 18, color: colors.fgMuted),
           ),
           const SizedBox(height: 16),
-          const Text('Password', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'Password',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
           Input(
             label: 'Password',
             obscureText: _obscurePassword,
             suffixIcon: IconButton(
-              icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, size: 18),
-              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+              icon: Icon(
+                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                size: 18,
+              ),
+              onPressed: () =>
+                  setState(() => _obscurePassword = !_obscurePassword),
             ),
           ),
           const SizedBox(height: 16),
-          const Text('Number Input', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'Number Input',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
           const Input(
             label: 'Quantity',
@@ -78,7 +104,10 @@ class _InputPageContentState extends State<InputPageContent> {
             keyboardType: TextInputType.number,
           ),
           const SizedBox(height: 16),
-          const Text('Disabled State', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'Disabled State',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
           Input(
             controller: TextEditingController(text: 'Pre-filled value'),

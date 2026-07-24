@@ -8,7 +8,9 @@ class RequestMemoizationDemo extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Request Memoization')),
       body: const Center(
-        child: Text('Automatic request deduplication and caching across components'),
+        child: Text(
+          'Automatic request deduplication and caching across components',
+        ),
       ),
     );
   }

@@ -12,7 +12,7 @@ class DropdownMenuDemoPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Dropdown Menu')),
       body: const Center(
-        child: const DropdownMenuList(
+        child: DropdownMenuList(
           items: [
             PopupMenuItem(value: 'profile', child: Text('Profile')),
             PopupMenuItem(value: 'settings', child: Text('Settings')),

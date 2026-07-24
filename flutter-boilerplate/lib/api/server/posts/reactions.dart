@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
 
-final postReactionsServerProvider = Provider((ref) => PostReactionsServer(ref.read(dioProvider)));
+final postReactionsServerProvider =
+    Provider((ref) => PostReactionsServer(ref.read(dioProvider)));
 
 class PostReactionsServer {
   final Dio _dio;

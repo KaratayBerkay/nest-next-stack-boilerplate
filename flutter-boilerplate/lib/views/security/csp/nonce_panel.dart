@@ -27,9 +27,16 @@ class NoncePanel extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.security, size: 20, color: isValid ? colors.success : colors.danger),
+                Icon(
+                  Icons.security,
+                  size: 20,
+                  color: isValid ? colors.success : colors.danger,
+                ),
                 const SizedBox(width: 8),
-                const Text('CSP Nonce', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const Text(
+                  'CSP Nonce',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
                 const Spacer(),
                 Badge(
                   text: isValid ? 'Valid' : 'Invalid',
@@ -49,11 +56,22 @@ class NoncePanel extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Nonce Value', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: colors.fgMuted)),
+                  Text(
+                    'Nonce Value',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: colors.fgMuted,
+                    ),
+                  ),
                   const SizedBox(height: 4),
                   SelectableText(
                     nonce,
-                    style: TextStyle(fontSize: 12, fontFamily: 'monospace', color: colors.fg),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontFamily: 'monospace',
+                      color: colors.fg,
+                    ),
                   ),
                 ],
               ),
@@ -62,8 +80,18 @@ class NoncePanel extends StatelessWidget {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Text('Source: ', style: TextStyle(fontSize: 12, color: colors.fgMuted)),
-                  Text(source!, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: colors.fg)),
+                  Text(
+                    'Source: ',
+                    style: TextStyle(fontSize: 12, color: colors.fgMuted),
+                  ),
+                  Text(
+                    source!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: colors.fg,
+                    ),
+                  ),
                 ],
               ),
             ],

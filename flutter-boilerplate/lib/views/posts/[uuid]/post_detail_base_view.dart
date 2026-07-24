@@ -141,7 +141,10 @@ class _CommentSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Comments', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        const Text(
+          'Comments',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 8),
         commentsAsync.when(
           loading: () => const Padding(
@@ -152,9 +155,15 @@ class _CommentSection extends ConsumerWidget {
           data: (comments) => comments.isEmpty
               ? Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Text('No comments yet', style: TextStyle(color: colors.fgMuted)),
+                  child: Text(
+                    'No comments yet',
+                    style: TextStyle(color: colors.fgMuted),
+                  ),
                 )
-              : Column(children: comments.map((c) => _CommentTile(comment: c)).toList()),
+              : Column(
+                  children:
+                      comments.map((c) => _CommentTile(comment: c)).toList(),
+                ),
         ),
       ],
     );
@@ -183,7 +192,10 @@ class _CommentTile extends StatelessWidget {
               children: [
                 Text(
                   comment.authorName,
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
                 ),
                 Text(
                   comment.content,

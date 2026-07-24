@@ -24,7 +24,8 @@ class BasicFallbackPage extends StatelessWidget {
         return AppFallbackBase(
           icon: Icons.search_off,
           title: 'Page not found',
-          message: message ?? 'The page you are looking for does not exist or has been moved.',
+          message: message ??
+              'The page you are looking for does not exist or has been moved.',
           action: onRetry != null
               ? TextButton(
                   onPressed: onRetry,
@@ -40,7 +41,8 @@ class BasicFallbackPage extends StatelessWidget {
           action: onRetry != null
               ? TextButton(
                   onPressed: onRetry,
-                  child: Text('Try again', style: TextStyle(color: colors.brand)),
+                  child:
+                      Text('Try again', style: TextStyle(color: colors.brand)),
                 )
               : null,
         );

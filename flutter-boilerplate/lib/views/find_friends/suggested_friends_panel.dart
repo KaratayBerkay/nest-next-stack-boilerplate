@@ -54,7 +54,8 @@ class SuggestedFriendsPanel extends ConsumerWidget {
                 style: TextStyle(color: colors.fgMuted, fontSize: 12),
               ),
               trailing: FilledButton.tonal(
-                onPressed: () => ref.read(friendActionsProvider).sendRequest(users[i].id),
+                onPressed: () =>
+                    ref.read(friendActionsProvider).sendRequest(users[i].id),
                 child: const Text('Add Friend'),
               ),
             ),

@@ -76,8 +76,10 @@ class ChatRoomMainContent extends StatelessWidget {
           children: [
             Icon(Icons.wifi_off, size: 32, color: colors.warning),
             const SizedBox(height: 8),
-            Text('Disconnected. Reconnecting...',
-                style: TextStyle(color: colors.fgMuted),),
+            Text(
+              'Disconnected. Reconnecting...',
+              style: TextStyle(color: colors.fgMuted),
+            ),
           ],
         ),
       );

@@ -24,7 +24,8 @@ class AlertDialogWidget extends StatelessWidget {
     this.destructive = false,
   });
 
-  static Future<bool?> show(BuildContext context, {
+  static Future<bool?> show(
+    BuildContext context, {
     String? title,
     String? description,
     Widget? content,

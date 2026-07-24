@@ -37,7 +37,8 @@ class FreePremiumPage extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: colors.brand,
                 foregroundColor: colors.fg,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
             ),
           ],

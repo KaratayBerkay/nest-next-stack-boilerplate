@@ -30,7 +30,10 @@ class NotificationHeader extends StatelessWidget {
             TextButton.icon(
               onPressed: onMarkAllRead,
               icon: Icon(Icons.done_all, size: 18, color: colors.brand),
-              label: Text('Mark all read', style: TextStyle(fontSize: 13, color: colors.brand)),
+              label: Text(
+                'Mark all read',
+                style: TextStyle(fontSize: 13, color: colors.brand),
+              ),
             ),
         ],
       ),

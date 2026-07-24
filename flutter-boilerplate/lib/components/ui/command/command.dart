@@ -95,12 +95,15 @@ class _CommandWidgetState extends State<CommandWidget> {
                       ),
                     ),
                   ),
-                ...entry.value.map((item) => ListTile(
-                      dense: true,
-                      leading: item.icon != null ? Icon(item.icon, size: 18) : null,
-                      title: Text(item.label),
-                      onTap: () => widget.onSelected?.call(item),
-                    ),),
+                ...entry.value.map(
+                  (item) => ListTile(
+                    dense: true,
+                    leading:
+                        item.icon != null ? Icon(item.icon, size: 18) : null,
+                    title: Text(item.label),
+                    onTap: () => widget.onSelected?.call(item),
+                  ),
+                ),
               ];
             }).toList(),
           ),
@@ -142,7 +145,9 @@ class CommandGroup extends StatelessWidget {
           child: Text(
             label,
             style: const TextStyle(
-              fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey,
             ),
           ),
         ),
@@ -180,7 +185,12 @@ class CommandItemWidget extends StatelessWidget {
   final IconData? icon;
   final VoidCallback? onTap;
 
-  const CommandItemWidget({super.key, required this.label, this.icon, this.onTap});
+  const CommandItemWidget({
+    super.key,
+    required this.label,
+    this.icon,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {

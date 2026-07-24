@@ -42,7 +42,15 @@ class _PremiumPremiumPageState extends ConsumerState<PremiumPremiumPage> {
         children: [
           Row(
             children: [
-              const Expanded(child: Text('Premium Stats', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+              const Expanded(
+                child: Text(
+                  'Premium Stats',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
               IconButton(
                 icon: Icon(Icons.download, color: colors.brand),
                 tooltip: 'Export CSV',
@@ -53,15 +61,20 @@ class _PremiumPremiumPageState extends ConsumerState<PremiumPremiumPage> {
           const SizedBox(height: 12),
           statsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Text('Error: $e', style: TextStyle(color: colors.danger)),
+            error: (e, _) =>
+                Text('Error: $e', style: TextStyle(color: colors.danger)),
             data: (stats) => PremiumStatsSection(stats: stats),
           ),
           const SizedBox(height: 24),
-          const Text('Growth Stats', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            'Growth Stats',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
           growthAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Text('Error: $e', style: TextStyle(color: colors.danger)),
+            error: (e, _) =>
+                Text('Error: $e', style: TextStyle(color: colors.danger)),
             data: (growth) => GrowthStatsSection(growth: growth),
           ),
         ],

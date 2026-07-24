@@ -30,18 +30,31 @@ class PlanInfoCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CardHeader(child: Text('Current Plan', style: TextStyle(fontWeight: FontWeight.w600))),
+          const CardHeader(
+            child: Text(
+              'Current Plan',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
           CardContent(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Text(planName.toUpperCase(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    Text(
+                      planName.toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(width: 8),
                     Badge(
                       text: status == 'active' ? 'Active' : status,
-                      variant: status == 'active' ? BadgeVariant.success : BadgeVariant.warning,
+                      variant: status == 'active'
+                          ? BadgeVariant.success
+                          : BadgeVariant.warning,
                     ),
                   ],
                 ),
@@ -51,8 +64,10 @@ class PlanInfoCard extends StatelessWidget {
                 ],
                 if (renewalDate != null) ...[
                   const SizedBox(height: 8),
-                  Text('Renewal date: $renewalDate',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 13),),
+                  Text(
+                    'Renewal date: $renewalDate',
+                    style: TextStyle(color: colors.fgMuted, fontSize: 13),
+                  ),
                 ],
               ],
             ),

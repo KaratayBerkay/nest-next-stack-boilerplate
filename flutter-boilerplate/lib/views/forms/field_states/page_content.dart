@@ -11,10 +11,12 @@ class FormsFieldStatesPageContent extends ConsumerStatefulWidget {
   const FormsFieldStatesPageContent({super.key, required this.lang});
 
   @override
-  ConsumerState<FormsFieldStatesPageContent> createState() => _FormsFieldStatesPageContentState();
+  ConsumerState<FormsFieldStatesPageContent> createState() =>
+      _FormsFieldStatesPageContentState();
 }
 
-class _FormsFieldStatesPageContentState extends ConsumerState<FormsFieldStatesPageContent> {
+class _FormsFieldStatesPageContentState
+    extends ConsumerState<FormsFieldStatesPageContent> {
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
@@ -39,25 +41,41 @@ class _FormsFieldStatesPageContentState extends ConsumerState<FormsFieldStatesPa
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Field States', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Field States',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 12),
                   const Input(label: 'Default'),
                   const SizedBox(height: 8),
                   const Input(label: 'With Error', errorText: 'Invalid input'),
                   const SizedBox(height: 8),
-                  Input(label: 'Filled', controller: TextEditingController(text: 'Some value')),
+                  Input(
+                    label: 'Filled',
+                    controller: TextEditingController(text: 'Some value'),
+                  ),
                   const SizedBox(height: 8),
-                  const Input(label: 'With Helper', helperText: 'This is a helper message'),
+                  const Input(
+                    label: 'With Helper',
+                    helperText: 'This is a helper message',
+                  ),
                   const SizedBox(height: 8),
                   const Input(label: 'Password', obscureText: true),
                   const SizedBox(height: 16),
-                  const Text('FormTextField Examples', style: TextStyle(fontWeight: FontWeight.w600)),
+                  const Text(
+                    'FormTextField Examples',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   const SizedBox(height: 8),
                   Form(
                     key: _formKey,
                     child: Column(
                       children: [
-                        FormTextField(controller: _nameCtrl, label: 'Name', validator: (v) => forms.validateRequired(v)),
+                        FormTextField(
+                          controller: _nameCtrl,
+                          label: 'Name',
+                          validator: (v) => forms.validateRequired(v),
+                        ),
                         const SizedBox(height: 8),
                         FormTextField(controller: _emailCtrl, label: 'Email'),
                         const SizedBox(height: 12),

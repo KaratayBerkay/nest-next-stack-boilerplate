@@ -15,7 +15,11 @@ class SlugPage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.link, size: 64, color: Theme.of(context).colorScheme.primary),
+              Icon(
+                Icons.link,
+                size: 64,
+                color: Theme.of(context).colorScheme.primary,
+              ),
               const SizedBox(height: 16),
               Text(
                 'Slug Page',
@@ -31,8 +35,8 @@ class SlugPage extends StatelessWidget {
                 'This page demonstrates catch-all and optional catch-all route segments.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
               ),
             ],
           ),

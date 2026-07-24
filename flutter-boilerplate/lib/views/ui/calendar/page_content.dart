@@ -17,7 +17,10 @@ class CalendarDemoPage extends StatelessWidget {
               padding: EdgeInsets.all(16),
               child: Column(
                 children: [
-                  Text('Date Input', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(
+                    'Date Input',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                   SizedBox(height: 12),
                   DateInput(label: 'Select Date'),
                 ],

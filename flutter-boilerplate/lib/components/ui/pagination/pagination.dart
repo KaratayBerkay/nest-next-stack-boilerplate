@@ -25,8 +25,13 @@ class PaginationWidget extends StatelessWidget {
       children: [
         if (showFirstLast)
           _buildButton(context, Icons.first_page, 0, currentPage == 0, colors),
-        _buildButton(context, Icons.chevron_left, currentPage - 1,
-            currentPage == 0, colors,),
+        _buildButton(
+          context,
+          Icons.chevron_left,
+          currentPage - 1,
+          currentPage == 0,
+          colors,
+        ),
         ...List.generate(totalPages, (i) {
           final isActive = i == currentPage;
           return Container(
@@ -45,7 +50,8 @@ class PaginationWidget extends StatelessWidget {
                     '${i + 1}',
                     style: TextStyle(
                       color: isActive ? colors.surface : colors.fg,
-                      fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                      fontWeight:
+                          isActive ? FontWeight.w600 : FontWeight.normal,
                       fontSize: 13,
                     ),
                   ),
@@ -54,17 +60,32 @@ class PaginationWidget extends StatelessWidget {
             ),
           );
         }),
-        _buildButton(context, Icons.chevron_right, currentPage + 1,
-            currentPage >= totalPages - 1, colors,),
+        _buildButton(
+          context,
+          Icons.chevron_right,
+          currentPage + 1,
+          currentPage >= totalPages - 1,
+          colors,
+        ),
         if (showFirstLast)
-          _buildButton(context, Icons.last_page, totalPages - 1,
-              currentPage >= totalPages - 1, colors,),
+          _buildButton(
+            context,
+            Icons.last_page,
+            totalPages - 1,
+            currentPage >= totalPages - 1,
+            colors,
+          ),
       ],
     );
   }
 
   Widget _buildButton(
-      BuildContext context, IconData icon, int page, bool disabled, AppColors colors,) {
+    BuildContext context,
+    IconData icon,
+    int page,
+    bool disabled,
+    AppColors colors,
+  ) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 2),
       child: IconButton(

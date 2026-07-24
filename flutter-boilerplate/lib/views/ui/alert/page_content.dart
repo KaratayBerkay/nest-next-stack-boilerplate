@@ -12,13 +12,28 @@ class AlertDemoPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [
-          AlertWidget(title: 'Default Alert', message: 'This is a default alert message.'),
+          AlertWidget(
+            title: 'Default Alert',
+            message: 'This is a default alert message.',
+          ),
           SizedBox(height: 8),
-          AlertWidget(title: 'Success', message: 'Operation completed!', variant: AlertVariant.success),
+          AlertWidget(
+            title: 'Success',
+            message: 'Operation completed!',
+            variant: AlertVariant.success,
+          ),
           SizedBox(height: 8),
-          AlertWidget(title: 'Warning', message: 'Please check your input.', variant: AlertVariant.warning),
+          AlertWidget(
+            title: 'Warning',
+            message: 'Please check your input.',
+            variant: AlertVariant.warning,
+          ),
           SizedBox(height: 8),
-          AlertWidget(title: 'Error', message: 'Something went wrong.', variant: AlertVariant.danger),
+          AlertWidget(
+            title: 'Error',
+            message: 'Something went wrong.',
+            variant: AlertVariant.danger,
+          ),
         ],
       ),
     );

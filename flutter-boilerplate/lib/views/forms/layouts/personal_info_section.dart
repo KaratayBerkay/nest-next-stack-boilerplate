@@ -10,7 +10,10 @@ class PersonalInfoSection extends StatelessWidget {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Personal Information', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+        Text(
+          'Personal Information',
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+        ),
         SizedBox(height: 8),
         Row(
           children: [

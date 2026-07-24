@@ -8,7 +8,9 @@ class SeoDemo extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('SEO')),
       body: const Center(
-        child: Text('Search engine optimization with metadata and structured data'),
+        child: Text(
+          'Search engine optimization with metadata and structured data',
+        ),
       ),
     );
   }

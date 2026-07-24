@@ -25,21 +25,34 @@ class BasicSettingsBillingPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const CardHeader(child: Text('Current Plan', style: TextStyle(fontWeight: FontWeight.w600))),
+                const CardHeader(
+                  child: Text(
+                    'Current Plan',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
                 CardContent(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Row(
                         children: [
-                          Text('BASIC', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          Text(
+                            'BASIC',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           SizedBox(width: 8),
                           Badge(text: 'Active', variant: BadgeVariant.success),
                         ],
                       ),
                       const SizedBox(height: 8),
-                      Text('Your basic plan is active.',
-                          style: TextStyle(color: colors.fgMuted, fontSize: 13),),
+                      Text(
+                        'Your basic plan is active.',
+                        style: TextStyle(color: colors.fgMuted, fontSize: 13),
+                      ),
                     ],
                   ),
                 ),
@@ -51,12 +64,19 @@ class BasicSettingsBillingPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const CardHeader(child: Text('Upgrade', style: TextStyle(fontWeight: FontWeight.w600))),
+                const CardHeader(
+                  child: Text(
+                    'Upgrade',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
                 CardContent(
                   child: Column(
                     children: [
-                      Text('Unlock payment methods and detailed invoices with a higher tier.',
-                          style: TextStyle(color: colors.fgMuted, fontSize: 13),),
+                      Text(
+                        'Unlock payment methods and detailed invoices with a higher tier.',
+                        style: TextStyle(color: colors.fgMuted, fontSize: 13),
+                      ),
                     ],
                   ),
                 ),

@@ -33,9 +33,19 @@ class _EagerClassicExampleState extends State<EagerClassicExample> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Input(label: 'Name', controller: _nameCtrl, errorText: _nameError, onChanged: (_) => _validate()),
+        Input(
+          label: 'Name',
+          controller: _nameCtrl,
+          errorText: _nameError,
+          onChanged: (_) => _validate(),
+        ),
         const SizedBox(height: 8),
-        Input(label: 'Email', controller: _emailCtrl, errorText: _emailError, onChanged: (_) => _validate()),
+        Input(
+          label: 'Email',
+          controller: _emailCtrl,
+          errorText: _emailError,
+          onChanged: (_) => _validate(),
+        ),
         const SizedBox(height: 12),
         FilledButton(onPressed: _validate, child: const Text('Validate')),
       ],

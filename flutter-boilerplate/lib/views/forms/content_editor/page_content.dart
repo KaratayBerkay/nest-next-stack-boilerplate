@@ -11,10 +11,12 @@ class FormsContentEditorPageContent extends ConsumerStatefulWidget {
   const FormsContentEditorPageContent({super.key, required this.lang});
 
   @override
-  ConsumerState<FormsContentEditorPageContent> createState() => _FormsContentEditorPageContentState();
+  ConsumerState<FormsContentEditorPageContent> createState() =>
+      _FormsContentEditorPageContentState();
 }
 
-class _FormsContentEditorPageContentState extends ConsumerState<FormsContentEditorPageContent> {
+class _FormsContentEditorPageContentState
+    extends ConsumerState<FormsContentEditorPageContent> {
   final _formKey = GlobalKey<FormState>();
   final _titleCtrl = TextEditingController();
   final _bodyCtrl = TextEditingController();
@@ -44,19 +46,42 @@ class _FormsContentEditorPageContentState extends ConsumerState<FormsContentEdit
             key: _formKey,
             child: Column(
               children: [
-                FormTextField(controller: _titleCtrl, label: 'Title', validator: (v) => forms.validateRequired(v, 'Title')),
+                FormTextField(
+                  controller: _titleCtrl,
+                  label: 'Title',
+                  validator: (v) => forms.validateRequired(v, 'Title'),
+                ),
                 const SizedBox(height: 12),
-                FormTextField(controller: _tagsCtrl, label: 'Tags (comma separated)'),
+                FormTextField(
+                  controller: _tagsCtrl,
+                  label: 'Tags (comma separated)',
+                ),
                 const SizedBox(height: 12),
-                FormTextField(controller: _bodyCtrl, label: 'Content', maxLines: 12, validator: (v) => forms.validateMinLength(v, 10, 'Content')),
+                FormTextField(
+                  controller: _bodyCtrl,
+                  label: 'Content',
+                  maxLines: 12,
+                  validator: (v) => forms.validateMinLength(v, 10, 'Content'),
+                ),
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    Expanded(child: Button(variant: ButtonVariant.outline, child: const Text('Save Draft'), onPressed: () {})),
+                    Expanded(
+                      child: Button(
+                        variant: ButtonVariant.outline,
+                        child: const Text('Save Draft'),
+                        onPressed: () {},
+                      ),
+                    ),
                     const SizedBox(width: 12),
-                    Expanded(child: Button(child: const Text('Publish'), onPressed: () {
-                      if (_formKey.currentState!.validate()) {}
-                    },),),
+                    Expanded(
+                      child: Button(
+                        child: const Text('Publish'),
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {}
+                        },
+                      ),
+                    ),
                   ],
                 ),
               ],

@@ -58,7 +58,14 @@ class _MfaPageContentState extends ConsumerState<MfaPageContent> {
               FilledButton(
                 onPressed: _loading ? null : _handleVerify,
                 child: _loading
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
                     : const Text('Verify'),
               ),
             ],

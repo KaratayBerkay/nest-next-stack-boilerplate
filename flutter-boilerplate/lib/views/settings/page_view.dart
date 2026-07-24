@@ -79,7 +79,10 @@ class _SettingsTile extends StatelessWidget {
       child: ListTile(
         leading: Icon(icon, color: colors.brand),
         title: Text(title),
-        subtitle: Text(subtitle, style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+        subtitle: Text(
+          subtitle,
+          style: TextStyle(color: colors.fgMuted, fontSize: 12),
+        ),
         trailing: Icon(Icons.chevron_right, color: colors.fgMuted),
         onTap: onTap,
       ),

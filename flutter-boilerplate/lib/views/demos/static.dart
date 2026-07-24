@@ -8,7 +8,9 @@ class StaticDemo extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Static Generation')),
       body: const Center(
-        child: Text('Static site generation at build time for optimal performance'),
+        child: Text(
+          'Static site generation at build time for optimal performance',
+        ),
       ),
     );
   }

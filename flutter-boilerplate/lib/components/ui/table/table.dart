@@ -87,9 +87,7 @@ class TableRowWidget extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: selected
-              ? colors.brand.withValues(alpha: 0.05)
-              : null,
+          color: selected ? colors.brand.withValues(alpha: 0.05) : null,
           border: Border(
             bottom: BorderSide(color: colors.border.withValues(alpha: 0.5)),
           ),

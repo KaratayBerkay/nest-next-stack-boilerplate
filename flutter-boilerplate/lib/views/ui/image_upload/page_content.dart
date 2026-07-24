@@ -21,7 +21,11 @@ class ImageUploadDemoPage extends StatelessWidget {
                   CircleAvatar(
                     radius: 48,
                     backgroundColor: colors.primaryContainer,
-                    child: Icon(Icons.person, size: 48, color: colors.onPrimaryContainer),
+                    child: Icon(
+                      Icons.person,
+                      size: 48,
+                      color: colors.onPrimaryContainer,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   ElevatedButton.icon(

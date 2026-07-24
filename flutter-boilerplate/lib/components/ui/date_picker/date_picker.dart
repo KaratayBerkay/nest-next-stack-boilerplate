@@ -23,7 +23,9 @@ class DatePickerField extends StatelessWidget {
     return TextField(
       readOnly: true,
       controller: TextEditingController(
-        text: value != null ? '${value!.year}-${value!.month.toString().padLeft(2, '0')}-${value!.day.toString().padLeft(2, '0')}' : '',
+        text: value != null
+            ? '${value!.year}-${value!.month.toString().padLeft(2, '0')}-${value!.day.toString().padLeft(2, '0')}'
+            : '',
       ),
       decoration: InputDecoration(
         labelText: label,

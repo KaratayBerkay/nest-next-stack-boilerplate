@@ -5,9 +5,9 @@ import 'package:flutter_boilerplate/lib/riverpod_compat.dart';
 
 import '../../api/client/admin/actions.dart';
 import '../../api/client/admin/query.dart';
-import '../../api/server/admin/audit_logs.dart';
 import '../../api/server/admin/search_users.dart';
 import '../../constants/theme.dart';
+import '../../types/admin/audit_types.dart';
 
 final _adminSearchQueryProvider = StateProvider<String>((ref) => '');
 
@@ -60,7 +60,8 @@ class _AdminPageContentState extends ConsumerState<AdminPageContent> {
     final colors = AppColors.of(context);
     final query = ref.watch(_adminSearchQueryProvider);
     final searchResults = ref.watch(adminSearchUsersProvider(query));
-    final logsAsync = ref.watch(auditLogsProvider(const AuditLogParams(take: 10)));
+    final logsAsync =
+        ref.watch(auditLogsProvider(const AuditLogParams(take: 10)));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Admin')),
@@ -73,7 +74,10 @@ class _AdminPageContentState extends ConsumerState<AdminPageContent> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Search Users', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Search Users',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _searchController,
@@ -81,24 +85,40 @@ class _AdminPageContentState extends ConsumerState<AdminPageContent> {
                     decoration: InputDecoration(
                       hintText: 'Search by name or email...',
                       prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       isDense: true,
                     ),
                   ),
                   const SizedBox(height: 12),
                   searchResults.when(
-                    loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                    error: (e, _) => Text('Error: $e', style: TextStyle(color: colors.danger)),
+                    loading: () => const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    error: (e, _) => Text(
+                      'Error: $e',
+                      style: TextStyle(color: colors.danger),
+                    ),
                     data: (users) {
                       if (users.isEmpty) {
-                        if (query.isEmpty) return const Text('Type to search users');
-                        return Text('No users found for "$query"', style: TextStyle(color: colors.fgMuted));
+                        if (query.isEmpty) {
+                          return const Text('Type to search users');
+                        }
+                        return Text(
+                          'No users found for "$query"',
+                          style: TextStyle(color: colors.fgMuted),
+                        );
                       }
                       return Column(
-                        children: users.map((user) => _UserTierRow(
-                          user: user,
-                          onSetTier: (tier) => _setTier(user.id, tier),
-                        ),).toList(),
+                        children: users
+                            .map(
+                              (user) => _UserTierRow(
+                                user: user,
+                                onSetTier: (tier) => _setTier(user.id, tier),
+                              ),
+                            )
+                            .toList(),
                       );
                     },
                   ),
@@ -107,26 +127,50 @@ class _AdminPageContentState extends ConsumerState<AdminPageContent> {
             ),
           ),
           const SizedBox(height: 24),
-          const Text('Audit Logs', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          const Text(
+            'Audit Logs',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: 8),
           logsAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-            error: (e, _) => Center(child: Text('Error: $e', style: TextStyle(color: colors.danger))),
+            loading: () =>
+                const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            error: (e, _) => Center(
+              child: Text('Error: $e', style: TextStyle(color: colors.danger)),
+            ),
             data: (logs) {
               if (logs.items.isEmpty) return const Text('No audit logs');
               return Column(
-                children: logs.items.take(10).map((log) => Card(
-                  margin: const EdgeInsets.only(bottom: 4),
-                  child: ListTile(
-                    title: Text(log.action, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    subtitle: Text(log.details ?? '', style: TextStyle(color: colors.fgMuted, fontSize: 12)),
-                    trailing: Text(
-                      '${log.createdAt.day}/${log.createdAt.month}/${log.createdAt.year}',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 11),
-                    ),
-                    dense: true,
-                  ),
-                ),).toList(),
+                children: logs.items
+                    .take(10)
+                    .map(
+                      (log) => Card(
+                        margin: const EdgeInsets.only(bottom: 4),
+                        child: ListTile(
+                          title: Text(
+                            log.action,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          subtitle: Text(
+                            log.details ?? '',
+                            style: TextStyle(
+                              color: colors.fgMuted,
+                              fontSize: 12,
+                            ),
+                          ),
+                          trailing: Text(
+                            '${log.createdAt.day}/${log.createdAt.month}/${log.createdAt.year}',
+                            style:
+                                TextStyle(color: colors.fgMuted, fontSize: 11),
+                          ),
+                          dense: true,
+                        ),
+                      ),
+                    )
+                    .toList(),
               );
             },
           ),
@@ -164,16 +208,25 @@ class _UserTierRowState extends State<_UserTierRow> {
       child: Row(
         children: [
           CircleAvatar(
-              backgroundColor: colors.brand.withValues(alpha: 0.2),
-            child: Text(widget.user.name[0].toUpperCase(), style: TextStyle(color: colors.brand)),
+            backgroundColor: colors.brand.withValues(alpha: 0.2),
+            child: Text(
+              widget.user.name[0].toUpperCase(),
+              style: TextStyle(color: colors.brand),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(widget.user.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                Text(widget.user.email, style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+                Text(
+                  widget.user.name,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                Text(
+                  widget.user.email,
+                  style: TextStyle(color: colors.fgMuted, fontSize: 12),
+                ),
               ],
             ),
           ),
@@ -193,20 +246,26 @@ class _UserTierRowState extends State<_UserTierRow> {
           ),
           const SizedBox(width: 8),
           _loading
-            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-            : ElevatedButton(
-                onPressed: _selectedTier == widget.user.tier ? null : () async {
-                  setState(() => _loading = true);
-                  widget.onSetTier(_selectedTier);
-                  if (mounted) setState(() => _loading = false);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.brand,
-                  foregroundColor: colors.fg,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : ElevatedButton(
+                  onPressed: _selectedTier == widget.user.tier
+                      ? null
+                      : () async {
+                          setState(() => _loading = true);
+                          widget.onSetTier(_selectedTier);
+                          if (mounted) setState(() => _loading = false);
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.brand,
+                    foregroundColor: colors.fg,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                  child: const Text('Set'),
                 ),
-                child: const Text('Set'),
-              ),
         ],
       ),
     );

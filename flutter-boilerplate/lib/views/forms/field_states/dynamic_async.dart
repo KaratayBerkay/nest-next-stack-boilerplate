@@ -46,16 +46,30 @@ class _DynamicAsyncExampleState extends State<DynamicAsyncExample> {
           label: 'Username',
           controller: _usernameCtrl,
           errorText: _usernameError,
-          suffixIcon: _checking ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : null,
+          suffixIcon: _checking
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : null,
           onChanged: (v) {
             _usernameCtrl.text = v;
-            _usernameCtrl.selection = TextSelection.fromPosition(TextPosition(offset: v.length));
+            _usernameCtrl.selection =
+                TextSelection.fromPosition(TextPosition(offset: v.length));
             _checkUsername(v);
           },
         ),
         const SizedBox(height: 8),
-        Text(_checking ? 'Checking availability...' : (_usernameError ?? 'Type a username (try admin)'),
-          style: TextStyle(fontSize: 12, color: _usernameError != null ? Colors.red : Colors.grey),),
+        Text(
+          _checking
+              ? 'Checking availability...'
+              : (_usernameError ?? 'Type a username (try admin)'),
+          style: TextStyle(
+            fontSize: 12,
+            color: _usernameError != null ? Colors.red : Colors.grey,
+          ),
+        ),
       ],
     );
   }

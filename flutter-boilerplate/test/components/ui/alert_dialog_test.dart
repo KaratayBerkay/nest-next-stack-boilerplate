@@ -6,17 +6,22 @@ import '../../test_helpers.dart';
 
 void main() {
   testWidgets('AlertDialogWidget can be shown via show()', (tester) async {
-    await pumpTestApp(tester, Scaffold(
-      body: Builder(builder: (context) => TextButton(
-        onPressed: () => AlertDialogWidget.show(
-          context,
-          title: 'Warning',
-          description: 'This action is destructive.',
-          confirmText: 'Proceed',
+    await pumpTestApp(
+      tester,
+      Scaffold(
+        body: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => AlertDialogWidget.show(
+              context,
+              title: 'Warning',
+              description: 'This action is destructive.',
+              confirmText: 'Proceed',
+            ),
+            child: const Text('Show'),
+          ),
         ),
-        child: const Text('Show'),
-      ),),
-    ),);
+      ),
+    );
 
     await tester.tap(find.text('Show'));
     await tester.pumpAndSettle();

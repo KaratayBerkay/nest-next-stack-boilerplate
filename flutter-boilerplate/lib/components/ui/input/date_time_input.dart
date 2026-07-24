@@ -28,13 +28,15 @@ class DateTimeInput extends ConsumerWidget {
               );
               if (date != null && onChanged != null) {
                 final existing = value ?? DateTime.now();
-                onChanged!(DateTime(
-                  date.year,
-                  date.month,
-                  date.day,
-                  existing.hour,
-                  existing.minute,
-                ),);
+                onChanged!(
+                  DateTime(
+                    date.year,
+                    date.month,
+                    date.day,
+                    existing.hour,
+                    existing.minute,
+                  ),
+                );
               }
             },
             child: InputDecorator(
@@ -59,13 +61,15 @@ class DateTimeInput extends ConsumerWidget {
               );
               if (time != null && onChanged != null) {
                 final existing = value ?? DateTime.now();
-                onChanged!(DateTime(
-                  existing.year,
-                  existing.month,
-                  existing.day,
-                  time.hour,
-                  time.minute,
-                ),);
+                onChanged!(
+                  DateTime(
+                    existing.year,
+                    existing.month,
+                    existing.day,
+                    time.hour,
+                    time.minute,
+                  ),
+                );
               }
             },
             child: InputDecorator(

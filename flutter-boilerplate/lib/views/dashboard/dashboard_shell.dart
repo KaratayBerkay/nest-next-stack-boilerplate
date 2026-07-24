@@ -27,7 +27,10 @@ class AnalyticsPanel extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const Text('Analytics', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        const Text(
+          'Analytics',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 16),
         _buildMetricCard('Page Views', '12,345', Icons.visibility),
         const SizedBox(height: 8),
@@ -42,7 +45,10 @@ class AnalyticsPanel extends StatelessWidget {
     return Card(
       child: ListTile(
         leading: Icon(icon),
-        title: Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+        title: Text(
+          value,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+        ),
         subtitle: Text(label),
       ),
     );
@@ -57,7 +63,10 @@ class TeamPanel extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const Text('Team', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        const Text(
+          'Team',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 16),
         _buildMember('Alice', 'Developer'),
         _buildMember('Bob', 'Designer'),
@@ -77,7 +86,10 @@ class TeamPanel extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(name, style: const TextStyle(fontWeight: FontWeight.w500)),
-              Text(role, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              Text(
+                role,
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
             ],
           ),
         ],

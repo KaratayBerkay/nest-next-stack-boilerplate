@@ -8,7 +8,8 @@ class ScrollToBottomButtonDemoPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Scroll to Bottom')),
-      body: const Center(child: Text('Use scroll controller to jump to bottom')),
+      body:
+          const Center(child: Text('Use scroll controller to jump to bottom')),
     );
   }
 }

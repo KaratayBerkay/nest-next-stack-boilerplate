@@ -10,7 +10,10 @@ class CardDescription extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     return Text(
       text,
-      style: TextStyle(color: colors.onSurface.withValues(alpha: 0.6), fontSize: 13),
+      style: TextStyle(
+        color: colors.onSurface.withValues(alpha: 0.6),
+        fontSize: 13,
+      ),
     );
   }
 }

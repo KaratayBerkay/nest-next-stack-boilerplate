@@ -2,7 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../server/observability/index.dart';
 
-final observabilityActionsProvider = Provider((ref) => ObservabilityActions(ref));
+final observabilityActionsProvider =
+    Provider((ref) => ObservabilityActions(ref));
 
 class ObservabilityActions {
   final Ref _ref;

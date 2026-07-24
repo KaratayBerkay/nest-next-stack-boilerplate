@@ -11,10 +11,12 @@ class FormsErrorLabPageContent extends ConsumerStatefulWidget {
   const FormsErrorLabPageContent({super.key, required this.lang});
 
   @override
-  ConsumerState<FormsErrorLabPageContent> createState() => _FormsErrorLabPageContentState();
+  ConsumerState<FormsErrorLabPageContent> createState() =>
+      _FormsErrorLabPageContentState();
 }
 
-class _FormsErrorLabPageContentState extends ConsumerState<FormsErrorLabPageContent> {
+class _FormsErrorLabPageContentState
+    extends ConsumerState<FormsErrorLabPageContent> {
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
@@ -42,23 +44,51 @@ class _FormsErrorLabPageContentState extends ConsumerState<FormsErrorLabPageCont
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Scenario', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    const Text(
+                      'Scenario',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
                       initialValue: _scenario,
                       items: const [
-                        DropdownMenuItem(value: 'server-error', child: Text('Server Error')),
-                        DropdownMenuItem(value: 'validation', child: Text('Validation Error')),
-                        DropdownMenuItem(value: 'network', child: Text('Network Timeout')),
-                        DropdownMenuItem(value: 'rate-limit', child: Text('Rate Limited')),
+                        DropdownMenuItem(
+                          value: 'server-error',
+                          child: Text('Server Error'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'validation',
+                          child: Text('Validation Error'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'network',
+                          child: Text('Network Timeout'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'rate-limit',
+                          child: Text('Rate Limited'),
+                        ),
                       ],
                       onChanged: (v) => setState(() => _scenario = v!),
-                      decoration: const InputDecoration(border: OutlineInputBorder()),
+                      decoration:
+                          const InputDecoration(border: OutlineInputBorder()),
                     ),
                     const SizedBox(height: 16),
-                    FormTextField(controller: _emailCtrl, label: 'Email', validator: auth.validateEmail),
+                    FormTextField(
+                      controller: _emailCtrl,
+                      label: 'Email',
+                      validator: auth.validateEmail,
+                    ),
                     const SizedBox(height: 8),
-                    FormTextField(controller: _passwordCtrl, label: 'Password', obscureText: true, validator: auth.validatePassword),
+                    FormTextField(
+                      controller: _passwordCtrl,
+                      label: 'Password',
+                      obscureText: true,
+                      validator: auth.validatePassword,
+                    ),
                     const SizedBox(height: 16),
                     Button(
                       child: const Text('Submit'),

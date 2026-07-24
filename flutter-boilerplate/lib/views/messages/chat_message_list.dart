@@ -18,7 +18,8 @@ class ChatMessageList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUser = ref.watch(currentUserProvider);
-    final messagesAsync = ref.watch(conversationMessagesProvider(conversationId));
+    final messagesAsync =
+        ref.watch(conversationMessagesProvider(conversationId));
 
     return messagesAsync.when(
       loading: () => const Spinner(),

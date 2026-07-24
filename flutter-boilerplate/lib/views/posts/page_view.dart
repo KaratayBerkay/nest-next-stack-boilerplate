@@ -40,7 +40,10 @@ class _FreePostsView extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Posts Available on Paid Plans', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text(
+                'Posts Available on Paid Plans',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               FilledButton(
                 onPressed: () => context.go('/v1/$lang/plans'),
@@ -120,36 +123,66 @@ class _PostCard extends ConsumerWidget {
                 children: [
                   Avatar(name: post.authorName, radius: 16),
                   const SizedBox(width: 8),
-                  Text(post.authorName, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  Text(
+                    post.authorName,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   const Spacer(),
-                  Text(_timeAgo(post.createdAt), style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+                  Text(
+                    _timeAgo(post.createdAt),
+                    style: TextStyle(color: colors.fgMuted, fontSize: 12),
+                  ),
                 ],
               ),
               const SizedBox(height: 8),
-              Text(post.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                post.title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 4),
               Text(post.content, maxLines: 3, overflow: TextOverflow.ellipsis),
               if (post.imageUrl != null) ...[
                 const SizedBox(height: 8),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: Image.network(post.imageUrl!, height: 200, width: double.infinity, fit: BoxFit.cover),
+                  child: Image.network(
+                    post.imageUrl!,
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ],
               const SizedBox(height: 8),
               Row(
                 children: [
                   IconButton(
-                    icon: Icon(post.isLiked ? Icons.favorite : Icons.favorite_border,
-                        color: post.isLiked ? colors.danger : null,),
-                    onPressed: () => ref.read(postActionsProvider).toggleReaction(post.id),
+                    icon: Icon(
+                      post.isLiked ? Icons.favorite : Icons.favorite_border,
+                      color: post.isLiked ? colors.danger : null,
+                    ),
+                    onPressed: () =>
+                        ref.read(postActionsProvider).toggleReaction(post.id),
                     iconSize: 20,
                   ),
-                  Text('${post.likeCount}', style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+                  Text(
+                    '${post.likeCount}',
+                    style: TextStyle(color: colors.fgMuted, fontSize: 12),
+                  ),
                   const SizedBox(width: 16),
-                  Icon(Icons.chat_bubble_outline, size: 20, color: colors.fgMuted),
+                  Icon(
+                    Icons.chat_bubble_outline,
+                    size: 20,
+                    color: colors.fgMuted,
+                  ),
                   const SizedBox(width: 4),
-                  Text('${post.commentCount}', style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+                  Text(
+                    '${post.commentCount}',
+                    style: TextStyle(color: colors.fgMuted, fontSize: 12),
+                  ),
                 ],
               ),
             ],

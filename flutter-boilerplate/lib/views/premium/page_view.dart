@@ -54,7 +54,8 @@ class _FreePremiumView extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: colors.brand,
                 foregroundColor: colors.fg,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
             ),
           ],
@@ -103,7 +104,9 @@ class _BasicPremiumViewState extends ConsumerState<_BasicPremiumView> {
       padding: const EdgeInsets.all(16),
       child: statsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e', style: TextStyle(color: colors.danger))),
+        error: (e, _) => Center(
+          child: Text('Error: $e', style: TextStyle(color: colors.danger)),
+        ),
         data: (stats) => _StatsGrid(stats: stats),
       ),
     );
@@ -138,19 +141,27 @@ class _MediumPremiumViewState extends ConsumerState<_MediumPremiumView> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('Premium Stats', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            'Premium Stats',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
           statsAsync.when(
             loading: () => const _StatsLoadingRow(),
-            error: (e, _) => Text('Error: $e', style: TextStyle(color: colors.danger)),
+            error: (e, _) =>
+                Text('Error: $e', style: TextStyle(color: colors.danger)),
             data: (stats) => _StatsGrid(stats: stats),
           ),
           const SizedBox(height: 24),
-          const Text('Growth Stats', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            'Growth Stats',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
           growthAsync.when(
             loading: () => const _StatsLoadingRow(),
-            error: (e, _) => Text('Error: $e', style: TextStyle(color: colors.danger)),
+            error: (e, _) =>
+                Text('Error: $e', style: TextStyle(color: colors.danger)),
             data: (growth) => _GrowthStatsGrid(growth: growth),
           ),
         ],
@@ -163,7 +174,8 @@ class _PremiumPremiumView extends ConsumerStatefulWidget {
   const _PremiumPremiumView();
 
   @override
-  ConsumerState<_PremiumPremiumView> createState() => _PremiumPremiumViewState();
+  ConsumerState<_PremiumPremiumView> createState() =>
+      _PremiumPremiumViewState();
 }
 
 class _PremiumPremiumViewState extends ConsumerState<_PremiumPremiumView> {
@@ -187,7 +199,9 @@ class _PremiumPremiumViewState extends ConsumerState<_PremiumPremiumView> {
       ..writeln('Active Subscriptions,${stats.activeSubscriptions}')
       ..writeln('Monthly Revenue,\$${stats.monthlyRevenue}')
       ..writeln('New Users This Month,${growth.newUsersThisMonth}')
-      ..writeln('New Subscriptions This Month,${growth.newSubscriptionsThisMonth}')
+      ..writeln(
+        'New Subscriptions This Month,${growth.newSubscriptionsThisMonth}',
+      )
       ..writeln('Growth Rate,${growth.growthRate}%');
 
     Clipboard.setData(ClipboardData(text: csv.toString()));
@@ -212,7 +226,15 @@ class _PremiumPremiumViewState extends ConsumerState<_PremiumPremiumView> {
         children: [
           Row(
             children: [
-              const Expanded(child: Text('Premium Stats', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+              const Expanded(
+                child: Text(
+                  'Premium Stats',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
               IconButton(
                 icon: Icon(Icons.download, color: colors.brand),
                 tooltip: 'Export CSV',
@@ -223,15 +245,20 @@ class _PremiumPremiumViewState extends ConsumerState<_PremiumPremiumView> {
           const SizedBox(height: 12),
           statsAsync.when(
             loading: () => const _StatsLoadingRow(),
-            error: (e, _) => Text('Error: $e', style: TextStyle(color: colors.danger)),
+            error: (e, _) =>
+                Text('Error: $e', style: TextStyle(color: colors.danger)),
             data: (stats) => _StatsGrid(stats: stats),
           ),
           const SizedBox(height: 24),
-          const Text('Growth Stats', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            'Growth Stats',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
           growthAsync.when(
             loading: () => const _StatsLoadingRow(),
-            error: (e, _) => Text('Error: $e', style: TextStyle(color: colors.danger)),
+            error: (e, _) =>
+                Text('Error: $e', style: TextStyle(color: colors.danger)),
             data: (growth) => _GrowthStatsGrid(growth: growth),
           ),
         ],
@@ -252,9 +279,24 @@ class _StatsGrid extends StatelessWidget {
       spacing: 12,
       runSpacing: 12,
       children: [
-        _StatCard(title: 'Total Users', value: '${stats.totalUsers}', icon: Icons.people, color: colors.brand),
-        _StatCard(title: 'Active Subs', value: '${stats.activeSubscriptions}', icon: Icons.subscriptions, color: colors.success),
-        _StatCard(title: 'Monthly Revenue', value: '\$${stats.monthlyRevenue.toStringAsFixed(0)}', icon: Icons.attach_money, color: colors.warning),
+        _StatCard(
+          title: 'Total Users',
+          value: '${stats.totalUsers}',
+          icon: Icons.people,
+          color: colors.brand,
+        ),
+        _StatCard(
+          title: 'Active Subs',
+          value: '${stats.activeSubscriptions}',
+          icon: Icons.subscriptions,
+          color: colors.success,
+        ),
+        _StatCard(
+          title: 'Monthly Revenue',
+          value: '\$${stats.monthlyRevenue.toStringAsFixed(0)}',
+          icon: Icons.attach_money,
+          color: colors.warning,
+        ),
       ],
     );
   }
@@ -272,9 +314,24 @@ class _GrowthStatsGrid extends StatelessWidget {
       spacing: 12,
       runSpacing: 12,
       children: [
-        _StatCard(title: 'New Users (Month)', value: '${growth.newUsersThisMonth}', icon: Icons.person_add, color: colors.info),
-        _StatCard(title: 'New Subs (Month)', value: '${growth.newSubscriptionsThisMonth}', icon: Icons.trending_up, color: colors.success),
-        _StatCard(title: 'Growth Rate', value: '${growth.growthRate.toStringAsFixed(1)}%', icon: Icons.show_chart, color: colors.warning),
+        _StatCard(
+          title: 'New Users (Month)',
+          value: '${growth.newUsersThisMonth}',
+          icon: Icons.person_add,
+          color: colors.info,
+        ),
+        _StatCard(
+          title: 'New Subs (Month)',
+          value: '${growth.newSubscriptionsThisMonth}',
+          icon: Icons.trending_up,
+          color: colors.success,
+        ),
+        _StatCard(
+          title: 'Growth Rate',
+          value: '${growth.growthRate.toStringAsFixed(1)}%',
+          icon: Icons.show_chart,
+          color: colors.warning,
+        ),
       ],
     );
   }
@@ -286,7 +343,12 @@ class _StatCard extends StatelessWidget {
   final IconData icon;
   final Color color;
 
-  const _StatCard({required this.title, required this.value, required this.icon, required this.color});
+  const _StatCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -301,9 +363,19 @@ class _StatCard extends StatelessWidget {
             children: [
               Icon(icon, color: color, size: 28),
               const SizedBox(height: 12),
-              Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color)),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
               const SizedBox(height: 4),
-              Text(title, style: TextStyle(fontSize: 12, color: colors.fgMuted)),
+              Text(
+                title,
+                style: TextStyle(fontSize: 12, color: colors.fgMuted),
+              ),
             ],
           ),
         ),

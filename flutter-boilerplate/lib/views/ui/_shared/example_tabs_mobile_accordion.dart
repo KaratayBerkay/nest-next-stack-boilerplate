@@ -43,13 +43,19 @@ class ExampleTabsMobileAccordion extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: accordionOpen ? colors.onSurface : colors.onSurface.withValues(alpha: 0.6),
+                      color: accordionOpen
+                          ? colors.onSurface
+                          : colors.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                   AnimatedRotation(
                     turns: accordionOpen ? 0.5 : 0,
                     duration: const Duration(milliseconds: 200),
-                    child: Icon(Icons.expand_more, size: 16, color: colors.onSurface),
+                    child: Icon(
+                      Icons.expand_more,
+                      size: 16,
+                      color: colors.onSurface,
+                    ),
                   ),
                 ],
               ),
@@ -74,13 +80,18 @@ class ExampleTabsMobileAccordion extends StatelessWidget {
                   },
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
                     child: Text(
                       example.title,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: isActive ? colors.onSurface : colors.onSurface.withValues(alpha: 0.6),
+                        color: isActive
+                            ? colors.onSurface
+                            : colors.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
                   ),
@@ -88,27 +99,29 @@ class ExampleTabsMobileAccordion extends StatelessWidget {
               }).toList(),
             ),
           ),
-        ...examples.where((e) => e.id == currentValue).map((example) => Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (example.description.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Text(
-                    example.description,
-                    style: TextStyle(
-                      fontStyle: FontStyle.italic,
-                      color: colors.onSurface.withValues(alpha: 0.6),
-                      fontSize: 13,
-                    ),
-                  ),
+        ...examples.where((e) => e.id == currentValue).map(
+              (example) => Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (example.description.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Text(
+                          example.description,
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: colors.onSurface.withValues(alpha: 0.6),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    example.render(),
+                  ],
                 ),
-              example.render(),
-            ],
-          ),
-        ),),
+              ),
+            ),
       ],
     );
   }

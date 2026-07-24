@@ -30,10 +30,18 @@ class MessagesSidebarConversations extends ConsumerWidget {
       data: (convs) {
         final filtered = searchQuery.isEmpty
             ? convs
-            : convs.where((c) =>
-                c.userName.toLowerCase().contains(searchQuery.toLowerCase()) ||
-                (c.lastMessage?.toLowerCase().contains(searchQuery.toLowerCase()) ?? false),
-              ).toList();
+            : convs
+                .where(
+                  (c) =>
+                      c.userName
+                          .toLowerCase()
+                          .contains(searchQuery.toLowerCase()) ||
+                      (c.lastMessage
+                              ?.toLowerCase()
+                              .contains(searchQuery.toLowerCase()) ??
+                          false),
+                )
+                .toList();
 
         if (filtered.isEmpty) {
           return const EmptyWidget(
@@ -50,7 +58,8 @@ class MessagesSidebarConversations extends ConsumerWidget {
             return InkWell(
               onTap: () => context.push('/v1/$lang/chat/${conv.id}'),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 child: Row(
                   children: [
                     Avatar(
@@ -67,13 +76,19 @@ class MessagesSidebarConversations extends ConsumerWidget {
                               Expanded(
                                 child: Text(
                                   conv.userName,
-                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
                                 ),
                               ),
                               if (conv.lastMessageAt != null)
                                 Text(
                                   DateTimeHelper.relative(conv.lastMessageAt!),
-                                  style: TextStyle(fontSize: 11, color: colors.fgMuted),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: colors.fgMuted,
+                                  ),
                                 ),
                             ],
                           ),
@@ -87,14 +102,21 @@ class MessagesSidebarConversations extends ConsumerWidget {
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: conv.unreadCount > 0 ? colors.fg : colors.fgMuted,
-                                    fontWeight: conv.unreadCount > 0 ? FontWeight.w500 : FontWeight.normal,
+                                    color: conv.unreadCount > 0
+                                        ? colors.fg
+                                        : colors.fgMuted,
+                                    fontWeight: conv.unreadCount > 0
+                                        ? FontWeight.w500
+                                        : FontWeight.normal,
                                   ),
                                 ),
                               ),
                               if (conv.unreadCount > 0)
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: colors.brand,
                                     borderRadius: BorderRadius.circular(10),

@@ -19,11 +19,17 @@ class DatePickerDemoPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Date Input', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(
+                    'Date Input',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                   SizedBox(height: 12),
                   DateInput(label: 'Pick a date'),
                   SizedBox(height: 16),
-                  Text('Date & Time Input', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(
+                    'Date & Time Input',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                   SizedBox(height: 12),
                   DateTimeInput(label: 'Pick date & time'),
                 ],

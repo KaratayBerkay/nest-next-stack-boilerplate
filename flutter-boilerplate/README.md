@@ -1,6 +1,6 @@
 # flutter-boilerplate
 
-Flutter mobile clone of [next-js-boilerplate](https://github.com/anomalyco/nest-next-stack) — 180+ routes, 50+ UI components, tier-based views, Stripe billing, WebSocket realtime, and i18n mapped 1:1 from the Next.js web app.
+Flutter mobile clone of [next-js-boilerplate](https://github.com/anomalyco/nest-next-stack) — 130+ routes, 65+ UI components, tier-based views, Stripe billing, WebSocket realtime, and i18n mapped 1:1 from the Next.js web app.
 
 ## Architecture
 
@@ -27,26 +27,26 @@ lib/
 
 ## Key Decisions
 
-- **State:** Riverpod 3.x (no legacy StateNotifier — all `riverpod_generator` + `@riverpod` where possible)
+- **State:** Riverpod 3.x (auth uses `StateNotifierProvider` via legacy compat shim; new providers use `Notifier`/`NotifierProvider`)
 - **Routing:** GoRouter 17.x with auth redirect guards and a `ShellRoute` for the V1 authenticated shell
 - **HTTP:** Dio 5.x with an auth interceptor that attaches Bearer tokens and triggers logout on 401
 - **Realtime:** Custom `RealtimeClient` wrapping `web_socket_channel` with auto-reconnect, exponential backoff, service registration, and topic watch/unwatch
 - **Tier gate:** `TierGate` consumer widget + `Tier.hasAccess()` utility — maps to `allowedTiers` prop
 - **Billing:** `flutter_stripe` 13.x with `StripeCardFormField` wrapping `CardField`, SetupIntent flow via the billing actions provider
-- **i18n:** `flutter gen-l10n` from `l10n.yaml` — 95 strings in `app_en.arb` and `app_tr.arb`
+- **i18n:** `flutter gen-l10n` from `l10n.yaml` — 1,298 strings in `app_en.arb` and `app_tr.arb` (generated from web `messages/` via `scripts/messages-to-arb.mjs`)
 - **Push:** Firebase Cloud Messaging + `flutter_local_notifications` via `PushNotificationService`
 
 ## Getting Started
 
 ```bash
 cd flutter-boilerplate
-cp .env.example .env   # Edit with your API base URL, Stripe key, etc.
 flutter pub get
-flutter gen-l10n       # Generate i18n code
-flutter run            # Choose device from the list
+flutter run --dart-define-from-file=.env   # Optional — defaults to localhost:3001
 ```
 
 ### Environment Variables
+
+Set via `--dart-define-from-file=.env` or individual `--dart-define=KEY=VALUE` flags.
 
 | Variable | Default | Description |
 |---|---|---|
@@ -54,11 +54,12 @@ flutter run            # Choose device from the list
 | `STRIPE_PUBLISHABLE_KEY` | `""` | Stripe publishable key |
 | `WS_URL` | `ws://localhost:3001/ws` | WebSocket endpoint |
 | `APP_ENV` | `development` | Environment name |
+| `PUSH_ENABLED` | `false` | Firebase Cloud Messaging toggle |
 
 ## Testing
 
 ```bash
-flutter test                          # Unit + widget tests (150 tests)
+flutter test                          # Unit + widget tests (300 tests)
 flutter test --coverage               # With coverage
 flutter test integration_test/        # Integration tests (requires device)
 flutter analyze                       # Lint check (0 errors, 0 warnings)
@@ -80,5 +81,5 @@ GitHub Actions at `.github/workflows/flutter-ci.yml` runs on every push/PR touch
 1. `flutter pub get`
 2. `flutter analyze`
 3. `dart format --set-exit-if-changed`
-4. `flutter test --coverage`
-5. Coverage upload to Codecov
+4. `flutter test` (expects `+300: All tests passed!` — not just exit 0)
+5. `flutter build apk --debug` (catches platform-level failures)

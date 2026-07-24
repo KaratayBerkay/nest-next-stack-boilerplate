@@ -1,3 +1,9 @@
+// Web-only routes (16) — Next.js features with no mobile equivalent: ssr, csr, ppr,
+// server-actions, request-memoization, caching, static, scripts, fonts, security/csp,
+// seo, ssr-cookies, csr-cookies, client-data, data-fetching, dynamic.
+// Dashboard @analytics/@team parallel outlets → TabBar inside DashboardShell.
+// Gallery @modal route → showModalBottomSheet on top of grid (deep link uses full page).
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -16,7 +22,15 @@ import '../views/boom/page_content.dart';
 import '../views/chat_room/page_view.dart';
 import '../views/checkout/page_content.dart';
 import '../views/dashboard/dashboard_shell.dart';
+import '../views/demos/form_page.dart';
+import '../views/demos/i18n_page.dart';
+import '../views/demos/images_page.dart';
+import '../views/demos/lazy_loading_page.dart';
+import '../views/demos/observability_page.dart';
 import '../views/demos/page_view.dart';
+import '../views/demos/search_params_page.dart';
+import '../views/demos/theme_page.dart';
+import '../views/demos/ws_page.dart';
 import '../views/feed/page_view.dart';
 import '../views/find_friends/page_view.dart';
 import '../views/find_friends/requests_page.dart';
@@ -60,6 +74,8 @@ import '../views/settings/privacy/page_view.dart';
 import '../views/settings/sessions/page_view.dart';
 import '../views/share/page_content.dart';
 import '../views/ui/accordion/page_content.dart';
+import '../views/ui/accordion/rich_items_page.dart';
+import '../views/ui/accordion/variants_page.dart';
 import '../views/ui/alert/page_content.dart';
 import '../views/ui/alert_dialog/page_content.dart';
 import '../views/ui/aspect_ratio/page_content.dart';
@@ -97,6 +113,7 @@ import '../views/ui/logo_spinner/page_content.dart';
 import '../views/ui/menubar/page_content.dart';
 import '../views/ui/native_select/page_content.dart';
 import '../views/ui/navigation_menu/page_content.dart';
+import '../views/ui/page_content.dart' as ui_index;
 import '../views/ui/pagination/page_content.dart';
 import '../views/ui/popover/page_content.dart';
 import '../views/ui/progress/page_content.dart';
@@ -247,7 +264,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/v1/:lang/missing',
             name: 'v1Missing',
-            builder: (_, state) => MissingPage(lang: state.pathParameters['lang'] ?? 'en'),
+            builder: (_, state) =>
+                MissingPage(lang: state.pathParameters['lang'] ?? 'en'),
           ),
           GoRoute(
             path: '/v1/:lang/feed',
@@ -364,11 +382,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
-            path: '/v1/:lang/posts/:postId',
+            path: '/v1/:lang/posts/:uuid',
             name: 'v1PostDetail',
             builder: (_, state) => PostDetailPageContent(
               lang: state.pathParameters['lang'] ?? 'en',
-              postId: state.pathParameters['postId'] ?? '',
+              postId: state.pathParameters['uuid'] ?? '',
             ),
           ),
           // Find Friends
@@ -388,17 +406,25 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           // Checkout
           GoRoute(
-            path: '/v1/:lang/checkout/:plan',
+            path: '/v1/:lang/checkout/:tier',
             name: 'v1Checkout',
             builder: (_, state) => CheckoutPageContent(
               lang: state.pathParameters['lang'] ?? 'en',
-              plan: state.pathParameters['plan'],
+              plan: state.pathParameters['tier'],
             ),
           ),
           // Chat Room
           GoRoute(
-            path: '/v1/:lang/chat/:conversationId',
+            path: '/v1/:lang/chat-room',
             name: 'v1ChatRoom',
+            builder: (_, state) => ChatRoomPageContent(
+              lang: state.pathParameters['lang'] ?? 'en',
+              initialRoom: state.uri.queryParameters['conversation'],
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/chat/:conversationId',
+            name: 'v1ChatRoomLegacy',
             builder: (_, state) => ChatRoomPageContent(
               lang: state.pathParameters['lang'] ?? 'en',
               initialRoom: state.pathParameters['conversationId'],
@@ -435,12 +461,21 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
-            path: '/v1/:lang/users/:userId',
+            path: '/v1/:lang/users/detail/:uuid',
             name: 'v1UserDetail',
             builder: (_, state) => UserDetailPageContent(
               lang: state.pathParameters['lang'] ?? 'en',
-              userId: state.pathParameters['userId'] ?? '',
+              userId: state.pathParameters['uuid'] ?? '',
             ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/users/:userId',
+            name: 'v1UserDetailLegacy',
+            redirect: (_, state) {
+              final userId = state.pathParameters['userId'] ?? '';
+              final lang = state.pathParameters['lang'] ?? 'en';
+              return '/v1/$lang/users/detail/$userId';
+            },
           ),
           // Security
           GoRoute(
@@ -565,73 +600,486 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           // UI Component Demos
           GoRoute(
+            path: '/v1/:lang/ui',
+            name: 'v1Ui',
+            builder: (_, state) => ui_index.UiPageContent(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
             path: '/v1/:lang/demos',
             name: 'v1Demos',
             builder: (_, state) => DemosPageContent(
               lang: state.pathParameters['lang'] ?? 'en',
             ),
           ),
-          GoRoute(path: '/v1/:lang/ui/accordion', name: 'uiAccordion', builder: (_, state) => AccordionDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/alert', name: 'uiAlert', builder: (_, state) => AlertDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/alert-dialog', name: 'uiAlertDialog', builder: (_, state) => AlertDialogDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/aspect-ratio', name: 'uiAspectRatio', builder: (_, state) => AspectRatioDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/avatar', name: 'uiAvatar', builder: (_, state) => AvatarDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/badge', name: 'uiBadge', builder: (_, state) => BadgeDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/breadcrumb', name: 'uiBreadcrumb', builder: (_, state) => BreadcrumbDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/button', name: 'uiButton', builder: (_, state) => ButtonDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/calendar', name: 'uiCalendar', builder: (_, state) => CalendarDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/card', name: 'uiCard', builder: (_, state) => CardDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/carousel', name: 'uiCarousel', builder: (_, state) => CarouselDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/checkbox', name: 'uiCheckbox', builder: (_, state) => CheckboxDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/collapsible', name: 'uiCollapsible', builder: (_, state) => CollapsibleDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/combobox', name: 'uiCombobox', builder: (_, state) => ComboboxDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/command', name: 'uiCommand', builder: (_, state) => CommandDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/confirm-dialog', name: 'uiConfirmDialog', builder: (_, state) => ConfirmDialogDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/context-menu', name: 'uiContextMenu', builder: (_, state) => ContextMenuDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/counter', name: 'uiCounter', builder: (_, state) => CounterDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/date-picker', name: 'uiDatePicker', builder: (_, state) => DatePickerDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/dialog', name: 'uiDialog', builder: (_, state) => DialogDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/drawer', name: 'uiDrawer', builder: (_, state) => DrawerDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/dropdown', name: 'uiDropdown', builder: (_, state) => DropdownDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/dropdown-menu', name: 'uiDropdownMenu', builder: (_, state) => DropdownMenuDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/empty', name: 'uiEmpty', builder: (_, state) => EmptyDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/error-boundary', name: 'uiErrorBoundary', builder: (_, state) => ErrorBoundaryDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/file-upload', name: 'uiFileUpload', builder: (_, state) => FileUploadDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/form-error-banner', name: 'uiFormErrorBanner', builder: (_, state) => FormErrorBannerDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/form-field-info', name: 'uiFormFieldInfo', builder: (_, state) => FormFieldInfoDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/hover-card', name: 'uiHoverCard', builder: (_, state) => HoverCardDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/image-upload', name: 'uiImageUpload', builder: (_, state) => ImageUploadDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/input-group', name: 'uiInputGroup', builder: (_, state) => InputGroupDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/input-otp', name: 'uiInputOtp', builder: (_, state) => InputOtpDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/kbd', name: 'uiKbd', builder: (_, state) => KbdDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/label', name: 'uiLabel', builder: (_, state) => LabelDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/logo-spinner', name: 'uiLogoSpinner', builder: (_, state) => LogoSpinnerDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/menubar', name: 'uiMenubar', builder: (_, state) => MenubarDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/native-select', name: 'uiNativeSelect', builder: (_, state) => NativeSelectDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/navigation-menu', name: 'uiNavigationMenu', builder: (_, state) => NavigationMenuDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/pagination', name: 'uiPagination', builder: (_, state) => PaginationDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/popover', name: 'uiPopover', builder: (_, state) => PopoverDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/progress', name: 'uiProgress', builder: (_, state) => ProgressDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/radio-group', name: 'uiRadioGroup', builder: (_, state) => RadioGroupDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/resizable', name: 'uiResizable', builder: (_, state) => ResizableDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/scroll-area', name: 'uiScrollArea', builder: (_, state) => ScrollAreaDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/scroll-to-bottom-button', name: 'uiScrollToBottomButton', builder: (_, state) => ScrollToBottomButtonDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/select', name: 'uiSelect', builder: (_, state) => SelectDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/separator', name: 'uiSeparator', builder: (_, state) => SeparatorDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/sheet', name: 'uiSheet', builder: (_, state) => SheetDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/skeleton', name: 'uiSkeleton', builder: (_, state) => SkeletonDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/slider', name: 'uiSlider', builder: (_, state) => SliderDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/spinner', name: 'uiSpinner', builder: (_, state) => SpinnerDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/step-indicator', name: 'uiStepIndicator', builder: (_, state) => StepIndicatorDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/switch', name: 'uiSwitch', builder: (_, state) => SwitchDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/tabs', name: 'uiTabs', builder: (_, state) => TabsDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/textarea', name: 'uiTextarea', builder: (_, state) => TextareaDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/time-input', name: 'uiTimeInput', builder: (_, state) => TimeInputDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/toast', name: 'uiToast', builder: (_, state) => ToastDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/toggle', name: 'uiToggle', builder: (_, state) => ToggleDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/toggle-group', name: 'uiToggleGroup', builder: (_, state) => ToggleGroupDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/tooltip', name: 'uiTooltip', builder: (_, state) => TooltipDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
-          GoRoute(path: '/v1/:lang/ui/typography', name: 'uiTypography', builder: (_, state) => TypographyDemoPage(lang: state.pathParameters['lang'] ?? 'en')),
+          GoRoute(
+            path: '/v1/:lang/theme',
+            name: 'v1Theme',
+            builder: (_, state) => ThemeDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/i18n',
+            name: 'v1I18n',
+            builder: (_, state) => I18nDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ws',
+            name: 'v1Ws',
+            builder: (_, state) => WsDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/form',
+            name: 'v1Form',
+            builder: (_, state) => FormDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/lazy-loading',
+            name: 'v1LazyLoading',
+            builder: (_, state) => LazyLoadingDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/images',
+            name: 'v1Images',
+            builder: (_, state) => ImagesDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/observability',
+            name: 'v1Observability',
+            builder: (_, state) => ObservabilityDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/search-params',
+            name: 'v1SearchParams',
+            builder: (_, state) => SearchParamsDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/accordion',
+            name: 'uiAccordion',
+            builder: (_, state) => AccordionDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+            routes: [
+              GoRoute(
+                path: 'rich-items',
+                name: 'uiAccordionRichItems',
+                builder: (_, state) => AccordionRichItemsPage(
+                  lang: state.pathParameters['lang'] ?? 'en',
+                ),
+              ),
+              GoRoute(
+                path: 'variants',
+                name: 'uiAccordionVariants',
+                builder: (_, state) => AccordionVariantsPage(
+                  lang: state.pathParameters['lang'] ?? 'en',
+                ),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/alert',
+            name: 'uiAlert',
+            builder: (_, state) =>
+                AlertDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/alert-dialog',
+            name: 'uiAlertDialog',
+            builder: (_, state) => AlertDialogDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/aspect-ratio',
+            name: 'uiAspectRatio',
+            builder: (_, state) => AspectRatioDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/avatar',
+            name: 'uiAvatar',
+            builder: (_, state) =>
+                AvatarDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/badge',
+            name: 'uiBadge',
+            builder: (_, state) =>
+                BadgeDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/breadcrumb',
+            name: 'uiBreadcrumb',
+            builder: (_, state) => BreadcrumbDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/button',
+            name: 'uiButton',
+            builder: (_, state) =>
+                ButtonDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/calendar',
+            name: 'uiCalendar',
+            builder: (_, state) =>
+                CalendarDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/card',
+            name: 'uiCard',
+            builder: (_, state) =>
+                CardDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/carousel',
+            name: 'uiCarousel',
+            builder: (_, state) =>
+                CarouselDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/checkbox',
+            name: 'uiCheckbox',
+            builder: (_, state) =>
+                CheckboxDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/collapsible',
+            name: 'uiCollapsible',
+            builder: (_, state) => CollapsibleDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/combobox',
+            name: 'uiCombobox',
+            builder: (_, state) =>
+                ComboboxDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/command',
+            name: 'uiCommand',
+            builder: (_, state) =>
+                CommandDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/confirm-dialog',
+            name: 'uiConfirmDialog',
+            builder: (_, state) => ConfirmDialogDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/context-menu',
+            name: 'uiContextMenu',
+            builder: (_, state) => ContextMenuDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/counter',
+            name: 'uiCounter',
+            builder: (_, state) =>
+                CounterDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/date-picker',
+            name: 'uiDatePicker',
+            builder: (_, state) => DatePickerDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/dialog',
+            name: 'uiDialog',
+            builder: (_, state) =>
+                DialogDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/drawer',
+            name: 'uiDrawer',
+            builder: (_, state) =>
+                DrawerDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/dropdown',
+            name: 'uiDropdown',
+            builder: (_, state) =>
+                DropdownDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/dropdown-menu',
+            name: 'uiDropdownMenu',
+            builder: (_, state) => DropdownMenuDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/empty',
+            name: 'uiEmpty',
+            builder: (_, state) =>
+                EmptyDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/error-boundary',
+            name: 'uiErrorBoundary',
+            builder: (_, state) => ErrorBoundaryDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/file-upload',
+            name: 'uiFileUpload',
+            builder: (_, state) => FileUploadDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/form-error-banner',
+            name: 'uiFormErrorBanner',
+            builder: (_, state) => FormErrorBannerDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/form-field-info',
+            name: 'uiFormFieldInfo',
+            builder: (_, state) => FormFieldInfoDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/hover-card',
+            name: 'uiHoverCard',
+            builder: (_, state) => HoverCardDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/image-upload',
+            name: 'uiImageUpload',
+            builder: (_, state) => ImageUploadDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/input-group',
+            name: 'uiInputGroup',
+            builder: (_, state) => InputGroupDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/input-otp',
+            name: 'uiInputOtp',
+            builder: (_, state) =>
+                InputOtpDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/kbd',
+            name: 'uiKbd',
+            builder: (_, state) =>
+                KbdDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/label',
+            name: 'uiLabel',
+            builder: (_, state) =>
+                LabelDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/logo-spinner',
+            name: 'uiLogoSpinner',
+            builder: (_, state) => LogoSpinnerDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/menubar',
+            name: 'uiMenubar',
+            builder: (_, state) =>
+                MenubarDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/native-select',
+            name: 'uiNativeSelect',
+            builder: (_, state) => NativeSelectDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/navigation-menu',
+            name: 'uiNavigationMenu',
+            builder: (_, state) => NavigationMenuDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/pagination',
+            name: 'uiPagination',
+            builder: (_, state) => PaginationDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/popover',
+            name: 'uiPopover',
+            builder: (_, state) =>
+                PopoverDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/progress',
+            name: 'uiProgress',
+            builder: (_, state) =>
+                ProgressDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/radio-group',
+            name: 'uiRadioGroup',
+            builder: (_, state) => RadioGroupDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/resizable',
+            name: 'uiResizable',
+            builder: (_, state) => ResizableDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/scroll-area',
+            name: 'uiScrollArea',
+            builder: (_, state) => ScrollAreaDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/scroll-to-bottom-button',
+            name: 'uiScrollToBottomButton',
+            builder: (_, state) => ScrollToBottomButtonDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/select',
+            name: 'uiSelect',
+            builder: (_, state) =>
+                SelectDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/separator',
+            name: 'uiSeparator',
+            builder: (_, state) => SeparatorDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/sheet',
+            name: 'uiSheet',
+            builder: (_, state) =>
+                SheetDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/skeleton',
+            name: 'uiSkeleton',
+            builder: (_, state) =>
+                SkeletonDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/slider',
+            name: 'uiSlider',
+            builder: (_, state) =>
+                SliderDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/spinner',
+            name: 'uiSpinner',
+            builder: (_, state) =>
+                SpinnerDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/step-indicator',
+            name: 'uiStepIndicator',
+            builder: (_, state) => StepIndicatorDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/switch',
+            name: 'uiSwitch',
+            builder: (_, state) =>
+                SwitchDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/tabs',
+            name: 'uiTabs',
+            builder: (_, state) =>
+                TabsDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/textarea',
+            name: 'uiTextarea',
+            builder: (_, state) =>
+                TextareaDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/time-input',
+            name: 'uiTimeInput',
+            builder: (_, state) => TimeInputDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/toast',
+            name: 'uiToast',
+            builder: (_, state) =>
+                ToastDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/toggle',
+            name: 'uiToggle',
+            builder: (_, state) =>
+                ToggleDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/toggle-group',
+            name: 'uiToggleGroup',
+            builder: (_, state) => ToggleGroupDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/tooltip',
+            name: 'uiTooltip',
+            builder: (_, state) =>
+                TooltipDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/typography',
+            name: 'uiTypography',
+            builder: (_, state) => TypographyDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
         ],
       ),
     ],
@@ -643,6 +1091,3 @@ final routerProvider = Provider<GoRouter>((ref) {
     ),
   );
 });
-
-
-

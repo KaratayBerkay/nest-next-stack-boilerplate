@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app_config.dart';
 import '../constants/theme.dart';
-import '../hooks/use_locale.dart';
 import '../hooks/use_realtime.dart';
 import '../hooks/use_theme.dart';
 import '../services/push_notification_service.dart';
@@ -16,7 +15,8 @@ class FlutterBoilerplateApp extends ConsumerStatefulWidget {
   const FlutterBoilerplateApp({super.key});
 
   @override
-  ConsumerState<FlutterBoilerplateApp> createState() => _FlutterBoilerplateAppState();
+  ConsumerState<FlutterBoilerplateApp> createState() =>
+      _FlutterBoilerplateAppState();
 }
 
 class _FlutterBoilerplateAppState extends ConsumerState<FlutterBoilerplateApp> {
@@ -30,13 +30,18 @@ class _FlutterBoilerplateAppState extends ConsumerState<FlutterBoilerplateApp> {
 
   Future<void> _initServices() async {
     final router = ref.read(routerProvider);
-    final pushService = ref.read(pushNotificationProvider);
 
-    pushService.navigateTo = (path) => router.go(path);
-
-    try {
-      await pushService.initialize();
-    } catch (_) {}
+    if (AppConfig.pushEnabled) {
+      final pushService = ref.read(pushNotificationProvider);
+      pushService.navigateTo = (path) => router.go(path);
+      try {
+        await pushService.initialize();
+      } catch (e) {
+        debugPrint('[push] init failed: $e');
+      }
+    } else {
+      debugPrint('[push] disabled via PUSH_ENABLED=false');
+    }
   }
 
   @override
@@ -51,9 +56,8 @@ class _FlutterBoilerplateAppState extends ConsumerState<FlutterBoilerplateApp> {
     return MaterialApp.router(
       title: 'Flutter Boilerplate',
       debugShowCheckedModeBanner: AppConfig.isDevelopment,
-      theme: buildThemeData(AppThemeMode.light),
-      darkTheme: buildThemeData(AppThemeMode.dark),
-      themeMode: themeMode == AppThemeMode.dark ? ThemeMode.dark : ThemeMode.light,
+      theme: buildThemeData(themeMode),
+      themeMode: ThemeMode.light,
       locale: Locale(locale),
       supportedLocales: const [Locale('en'), Locale('tr')],
       localizationsDelegates: messages,

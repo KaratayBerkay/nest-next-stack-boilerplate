@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum AppThemeMode { light, dark }
+enum AppThemeMode { light, dark, ocean, violet }
 
 class AppColors extends ThemeExtension<AppColors> {
   final Color brand;
@@ -59,6 +59,66 @@ class AppColors extends ThemeExtension<AppColors> {
     success: Color(0xFF6EE7B7),
     warning: Color(0xFFFCD34D),
     info: Color(0xFF93C5FD),
+  );
+
+  static const ocean = AppColors(
+    brand: Color(0xFF0284C7),
+    brandHover: Color(0xFF0369A1),
+    surface: Color(0xFFF0F9FF),
+    surfaceAlt: Color(0xFFE0F2FE),
+    surfaceHover: Color(0xFFBAE6FD),
+    fg: Color(0xFF0C4A6E),
+    fgMuted: Color(0xFF64748B),
+    border: Color(0xFFBAE6FD),
+    danger: Color(0xFFEF4444),
+    success: Color(0xFF10B981),
+    warning: Color(0xFFF59E0B),
+    info: Color(0xFF0EA5E9),
+  );
+
+  static const oceanDark = AppColors(
+    brand: Color(0xFF38BDF8),
+    brandHover: Color(0xFF7DD3FC),
+    surface: Color(0xFF0C4A6E),
+    surfaceAlt: Color(0xFF075985),
+    surfaceHover: Color(0xFF0369A1),
+    fg: Color(0xFFF0F9FF),
+    fgMuted: Color(0xFF94A3B8),
+    border: Color(0xFF075985),
+    danger: Color(0xFFFCA5A5),
+    success: Color(0xFF6EE7B7),
+    warning: Color(0xFFFCD34D),
+    info: Color(0xFF7DD3FC),
+  );
+
+  static const violet = AppColors(
+    brand: Color(0xFF7C3AED),
+    brandHover: Color(0xFF6D28D9),
+    surface: Color(0xFFF5F3FF),
+    surfaceAlt: Color(0xFFEDE9FE),
+    surfaceHover: Color(0xFFDDD6FE),
+    fg: Color(0xFF4C1D95),
+    fgMuted: Color(0xFF6D28D9),
+    border: Color(0xFFDDD6FE),
+    danger: Color(0xFFEF4444),
+    success: Color(0xFF10B981),
+    warning: Color(0xFFF59E0B),
+    info: Color(0xFF8B5CF6),
+  );
+
+  static const violetDark = AppColors(
+    brand: Color(0xFFA78BFA),
+    brandHover: Color(0xFFC4B5FD),
+    surface: Color(0xFF4C1D95),
+    surfaceAlt: Color(0xFF5B21B6),
+    surfaceHover: Color(0xFF6D28D9),
+    fg: Color(0xFFF5F3FF),
+    fgMuted: Color(0xFFC4B5FD),
+    border: Color(0xFF5B21B6),
+    danger: Color(0xFFFCA5A5),
+    success: Color(0xFF6EE7B7),
+    warning: Color(0xFFFCD34D),
+    info: Color(0xFFC4B5FD),
   );
 
   @override
@@ -145,9 +205,15 @@ class AppTypography extends ThemeExtension<AppTypography> {
     h3: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, height: 1.3),
     h4: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, height: 1.35),
     body: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, height: 1.5),
-    bodySmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, height: 1.5),
+    bodySmall:
+        TextStyle(fontSize: 12, fontWeight: FontWeight.w400, height: 1.5),
     caption: TextStyle(fontSize: 11, fontWeight: FontWeight.w400, height: 1.4),
-    code: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, fontFamily: 'monospace', height: 1.5),
+    code: TextStyle(
+      fontSize: 13,
+      fontWeight: FontWeight.w400,
+      fontFamily: 'monospace',
+      height: 1.5,
+    ),
     label: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, height: 1.4),
   );
 
@@ -199,13 +265,32 @@ class AppTypography extends ThemeExtension<AppTypography> {
   }
 }
 
-ThemeData buildThemeData(AppThemeMode mode) {
-  final isLight = mode == AppThemeMode.light;
-  final colors = isLight ? AppColors.light : AppColors.dark;
-  final typography = isLight ? AppTypography.light : AppTypography.dark;
+AppColors _colorsFor(AppThemeMode mode) {
+  return switch (mode) {
+    AppThemeMode.light => AppColors.light,
+    AppThemeMode.dark => AppColors.dark,
+    AppThemeMode.ocean => AppColors.ocean,
+    AppThemeMode.violet => AppColors.violet,
+  };
+}
 
-  final colorScheme = isLight
-      ? ColorScheme.light(
+AppColors _darkColorsFor(AppThemeMode mode) {
+  return switch (mode) {
+    AppThemeMode.light => AppColors.dark,
+    AppThemeMode.dark => AppColors.dark,
+    AppThemeMode.ocean => AppColors.oceanDark,
+    AppThemeMode.violet => AppColors.violetDark,
+  };
+}
+
+ThemeData buildThemeData(AppThemeMode mode, {bool dark = false}) {
+  final useDark = dark || mode == AppThemeMode.dark;
+  final colors = useDark ? _darkColorsFor(mode) : _colorsFor(mode);
+  final typography = useDark ? AppTypography.dark : AppTypography.light;
+  final brightness = useDark ? Brightness.dark : Brightness.light;
+
+  final colorScheme = useDark
+      ? ColorScheme.dark(
           primary: colors.brand,
           onPrimary: colors.surface,
           secondary: colors.brandHover,
@@ -213,7 +298,7 @@ ThemeData buildThemeData(AppThemeMode mode) {
           onSurface: colors.fg,
           error: colors.danger,
         )
-      : ColorScheme.dark(
+      : ColorScheme.light(
           primary: colors.brand,
           onPrimary: colors.surface,
           secondary: colors.brandHover,
@@ -224,7 +309,7 @@ ThemeData buildThemeData(AppThemeMode mode) {
 
   return ThemeData(
     useMaterial3: true,
-    brightness: isLight ? Brightness.light : Brightness.dark,
+    brightness: brightness,
     colorScheme: colorScheme,
     extensions: [colors, typography],
     scaffoldBackgroundColor: colors.surface,

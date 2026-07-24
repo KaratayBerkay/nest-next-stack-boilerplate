@@ -50,7 +50,11 @@ final _uiRoutes = <(String, IconData, String)>[
   ('Radio Group', Icons.radio_button_checked, '/v1/en/ui/radio-group'),
   ('Resizable', Icons.drag_indicator, '/v1/en/ui/resizable'),
   ('Scroll Area', Icons.swap_vert, '/v1/en/ui/scroll-area'),
-  ('Scroll To Bottom', Icons.vertical_align_bottom, '/v1/en/ui/scroll-to-bottom-button'),
+  (
+    'Scroll To Bottom',
+    Icons.vertical_align_bottom,
+    '/v1/en/ui/scroll-to-bottom-button'
+  ),
   ('Select', Icons.list, '/v1/en/ui/select'),
   ('Separator', Icons.horizontal_rule, '/v1/en/ui/separator'),
   ('Sheet', Icons.article, '/v1/en/ui/sheet'),
@@ -101,7 +105,11 @@ class UiPageContent extends StatelessWidget {
                         children: [
                           Icon(icon, size: 28),
                           const SizedBox(height: 8),
-                          Text(name, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12)),
+                          Text(
+                            name,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontSize: 12),
+                          ),
                         ],
                       ),
                     ),

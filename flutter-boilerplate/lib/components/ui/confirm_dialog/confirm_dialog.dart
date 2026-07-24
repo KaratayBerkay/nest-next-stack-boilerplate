@@ -18,7 +18,8 @@ class ConfirmDialogWidget extends StatelessWidget {
     this.onCancel,
   });
 
-  static Future<bool?> show(BuildContext context, {
+  static Future<bool?> show(
+    BuildContext context, {
     required String title,
     required String message,
     String confirmText = 'Confirm',

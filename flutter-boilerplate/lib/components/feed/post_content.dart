@@ -50,7 +50,9 @@ class PostContent extends StatelessWidget {
               children: [
                 if (editing)
                   TextField(
-                    controller: TextEditingController(text: editTitle ?? postData.title),
+                    controller: TextEditingController(
+                      text: editTitle ?? postData.title,
+                    ),
                     onChanged: onTitleChange,
                     style: TextStyle(
                       color: colors.fg,
@@ -80,7 +82,9 @@ class PostContent extends StatelessWidget {
                 const SizedBox(height: 4),
                 if (editing)
                   TextField(
-                    controller: TextEditingController(text: editContent ?? postData.content),
+                    controller: TextEditingController(
+                      text: editContent ?? postData.content,
+                    ),
                     onChanged: onContentChange,
                     maxLines: 3,
                     style: TextStyle(color: colors.fg, fontSize: 12),

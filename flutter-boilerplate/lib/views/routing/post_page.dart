@@ -8,7 +8,8 @@ class PostPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final subtitle = category != null ? 'Category: $category' : 'No category specified';
+    final subtitle =
+        category != null ? 'Category: $category' : 'No category specified';
 
     return Scaffold(
       appBar: AppBar(title: Text('Post #$postId')),
@@ -18,7 +19,11 @@ class PostPage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.description, size: 64, color: Theme.of(context).colorScheme.primary),
+              Icon(
+                Icons.description,
+                size: 64,
+                color: Theme.of(context).colorScheme.primary,
+              ),
               const SizedBox(height: 16),
               Text(
                 'Post Page',
@@ -34,8 +39,8 @@ class PostPage extends StatelessWidget {
                 'This page demonstrates nested routing with optional query parameters.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
               ),
             ],
           ),

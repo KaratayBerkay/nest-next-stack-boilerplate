@@ -70,7 +70,10 @@ class _FieldEditorState extends State<FieldEditor> {
                 DropdownButton<FieldType>(
                   value: _type,
                   items: FieldType.values.map((t) {
-                    return DropdownMenuItem(value: t, child: Text(t.name, style: const TextStyle(fontSize: 12)));
+                    return DropdownMenuItem(
+                      value: t,
+                      child: Text(t.name, style: const TextStyle(fontSize: 12)),
+                    );
                   }).toList(),
                   onChanged: (v) => setState(() => _type = v!),
                 ),
@@ -85,7 +88,10 @@ class _FieldEditorState extends State<FieldEditor> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text('Required', style: TextStyle(fontSize: 12)),
-                    Switch(value: _required, onChanged: (v) => setState(() => _required = v)),
+                    Switch(
+                      value: _required,
+                      onChanged: (v) => setState(() => _required = v),
+                    ),
                   ],
                 ),
               ],
@@ -103,12 +109,14 @@ class _FieldEditorState extends State<FieldEditor> {
                 Button(
                   child: const Text('Save'),
                   onPressed: () {
-                    widget.onSave(widget.field.copyWith(
-                      label: _labelCtrl.text,
-                      type: _type,
-                      required: _required,
-                      hint: _hintCtrl.text.isNotEmpty ? _hintCtrl.text : null,
-                    ),);
+                    widget.onSave(
+                      widget.field.copyWith(
+                        label: _labelCtrl.text,
+                        type: _type,
+                        required: _required,
+                        hint: _hintCtrl.text.isNotEmpty ? _hintCtrl.text : null,
+                      ),
+                    );
                   },
                 ),
               ],

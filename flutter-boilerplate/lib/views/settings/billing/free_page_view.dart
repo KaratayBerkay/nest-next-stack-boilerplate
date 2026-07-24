@@ -23,10 +23,15 @@ class FreeSettingsBillingPage extends StatelessWidget {
             children: [
               Icon(Icons.credit_card_outlined, size: 48, color: colors.fgMuted),
               const SizedBox(height: 16),
-              const Text('No billing info yet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text(
+                'No billing info yet',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
-              Text('Upgrade to a paid plan to see billing details.',
-                  style: TextStyle(color: colors.fgMuted),),
+              Text(
+                'Upgrade to a paid plan to see billing details.',
+                style: TextStyle(color: colors.fgMuted),
+              ),
               const SizedBox(height: 24),
               Button(
                 child: const Text('View Plans'),

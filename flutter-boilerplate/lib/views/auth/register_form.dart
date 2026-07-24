@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../api/client/auth/actions.dart';
-import '../../api/server/auth/register.dart';
 import '../../constants/theme.dart';
+import '../../types/auth/auth_request_types.dart';
 
 class RegisterForm extends ConsumerStatefulWidget {
   const RegisterForm({super.key});
@@ -39,15 +39,18 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
       return;
     }
     if (password.length < 8) {
-      setState(() => _fieldErrors['password'] = 'Password must be at least 8 characters');
+      setState(
+        () =>
+            _fieldErrors['password'] = 'Password must be at least 8 characters',
+      );
       return;
     }
 
     setState(() => _submitting = true);
     try {
       await ref.read(loginActionsProvider).register(
-        RegisterRequest(email: email, password: password, name: name),
-      );
+            RegisterRequest(email: email, password: password, name: name),
+          );
       if (mounted) context.go('/v1/en/feed');
     } catch (err) {
       setState(() => _fieldErrors['form'] = err.toString());
@@ -62,11 +65,15 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
 
     return Column(
       children: [
-        Text('Create Account', style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600)),
+        Text(
+          'Create Account',
+          style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 16),
         TextField(
           controller: _nameController,
-          decoration: const InputDecoration(labelText: 'Name', hintText: 'Your name'),
+          decoration:
+              const InputDecoration(labelText: 'Name', hintText: 'Your name'),
         ),
         const SizedBox(height: 12),
         TextField(
@@ -90,7 +97,10 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
         if (_fieldErrors.containsKey('form'))
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: Text(_fieldErrors['form']!, style: TextStyle(color: colors.danger, fontSize: 13)),
+            child: Text(
+              _fieldErrors['form']!,
+              style: TextStyle(color: colors.danger, fontSize: 13),
+            ),
           ),
         const SizedBox(height: 12),
         FilledButton(
@@ -101,7 +111,10 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Already have an account?', style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+            Text(
+              'Already have an account?',
+              style: TextStyle(color: colors.fgMuted, fontSize: 12),
+            ),
             TextButton(
               onPressed: () => context.go('/auth/login'),
               child: const Text('Sign In', style: TextStyle(fontSize: 12)),

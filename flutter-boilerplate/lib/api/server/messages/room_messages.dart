@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
 
-final roomMessagesServerProvider = Provider((ref) => RoomMessagesServer(ref.read(dioProvider)));
+final roomMessagesServerProvider =
+    Provider((ref) => RoomMessagesServer(ref.read(dioProvider)));
 
 class RoomMessagesServer {
   final Dio _dio;
@@ -17,12 +18,16 @@ class RoomMessagesServer {
     );
     final data = response.data;
     if (data is List) {
-      return data.map((m) => RoomMessage.fromJson(m as Map<String, dynamic>)).toList();
+      return data
+          .map((m) => RoomMessage.fromJson(m as Map<String, dynamic>))
+          .toList();
     }
     if (data is Map<String, dynamic>) {
       final messages = data['messages'] as List?;
       if (messages != null) {
-        return messages.map((m) => RoomMessage.fromJson(m as Map<String, dynamic>)).toList();
+        return messages
+            .map((m) => RoomMessage.fromJson(m as Map<String, dynamic>))
+            .toList();
       }
     }
     throw Exception('Failed to fetch room messages');

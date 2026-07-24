@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
 
-final postDeleteServerProvider = Provider((ref) => PostDeleteServer(ref.read(dioProvider)));
+final postDeleteServerProvider =
+    Provider((ref) => PostDeleteServer(ref.read(dioProvider)));
 
 class PostDeleteServer {
   final Dio _dio;

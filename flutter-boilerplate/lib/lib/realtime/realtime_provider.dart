@@ -6,7 +6,8 @@ import '../../hooks/use_auth.dart';
 import '../riverpod_compat.dart';
 import 'realtime_client.dart';
 
-final realtimeStatusProvider = StateProvider<RealtimeStatus>((ref) => RealtimeStatus.idle);
+final realtimeStatusProvider =
+    StateProvider<RealtimeStatus>((ref) => RealtimeStatus.idle);
 
 final realtimeProvider = Provider<RealtimeClient>((ref) {
   final onStatus = ref.read(realtimeStatusProvider.notifier);

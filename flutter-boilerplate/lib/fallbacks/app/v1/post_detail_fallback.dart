@@ -28,7 +28,8 @@ class PostDetailFallback extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 16,
-                      backgroundColor: colors.surfaceContainerHighest.withValues(alpha: 0.3),
+                      backgroundColor:
+                          colors.surfaceContainerHighest.withValues(alpha: 0.3),
                     ),
                     const SizedBox(width: 12),
                     const Column(

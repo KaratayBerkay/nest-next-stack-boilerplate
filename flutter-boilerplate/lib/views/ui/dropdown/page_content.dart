@@ -12,7 +12,10 @@ class DropdownDemoPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [
-          Text('Basic Dropdown', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            'Basic Dropdown',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           SizedBox(height: 8),
           DropdownWidget(
             items: [

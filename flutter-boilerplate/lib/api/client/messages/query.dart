@@ -9,7 +9,8 @@ final conversationsProvider = FutureProvider((ref) async {
   return server.call();
 });
 
-final conversationMessagesProvider = FutureProvider.family((ref, String conversationId) async {
+final conversationMessagesProvider =
+    FutureProvider.family((ref, String conversationId) async {
   final server = ref.read(conversationMessagesServerProvider);
   return server.call(conversationId);
 });

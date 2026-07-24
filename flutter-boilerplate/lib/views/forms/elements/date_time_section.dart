@@ -43,20 +43,23 @@ class _DateTimeSectionState extends State<DateTimeSection> {
   @override
   Widget build(BuildContext context) {
     String fmt(DateTime d) => '${d.day}/${d.month}/${d.year}';
-    String tfmt(TimeOfDay t) => '${t.hour}:${t.minute.toString().padLeft(2, '0')}';
+    String tfmt(TimeOfDay t) =>
+        '${t.hour}:${t.minute.toString().padLeft(2, '0')}';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         OutlinedButton.icon(
           onPressed: _pickDate,
           icon: const Icon(Icons.calendar_today, size: 18),
-          label: Text(_selectedDate != null ? fmt(_selectedDate!) : 'Pick Date'),
+          label:
+              Text(_selectedDate != null ? fmt(_selectedDate!) : 'Pick Date'),
         ),
         const SizedBox(height: 8),
         OutlinedButton.icon(
           onPressed: _pickTime,
           icon: const Icon(Icons.access_time, size: 18),
-          label: Text(_selectedTime != null ? tfmt(_selectedTime!) : 'Pick Time'),
+          label:
+              Text(_selectedTime != null ? tfmt(_selectedTime!) : 'Pick Time'),
         ),
         const SizedBox(height: 8),
         OutlinedButton.icon(

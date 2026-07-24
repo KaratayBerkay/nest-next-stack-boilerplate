@@ -12,7 +12,10 @@ class BadgeDemoPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [
-          Text('Variants', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            'Variants',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -27,14 +30,29 @@ class BadgeDemoPage extends StatelessWidget {
             ],
           ),
           SizedBox(height: 24),
-          Text('With Icons', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            'With Icons',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           SizedBox(height: 8),
           Wrap(
             spacing: 8,
             children: [
-              Badge(text: 'Verified', icon: Icons.check_circle, variant: BadgeVariant.success),
-              Badge(text: 'Pending', icon: Icons.schedule, variant: BadgeVariant.warning),
-              Badge(text: 'New', icon: Icons.fiber_new, variant: BadgeVariant.danger),
+              Badge(
+                text: 'Verified',
+                icon: Icons.check_circle,
+                variant: BadgeVariant.success,
+              ),
+              Badge(
+                text: 'Pending',
+                icon: Icons.schedule,
+                variant: BadgeVariant.warning,
+              ),
+              Badge(
+                text: 'New',
+                icon: Icons.fiber_new,
+                variant: BadgeVariant.danger,
+              ),
             ],
           ),
         ],

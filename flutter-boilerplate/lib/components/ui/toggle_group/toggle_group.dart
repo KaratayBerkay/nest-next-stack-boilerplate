@@ -17,7 +17,8 @@ class ToggleGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ToggleButtons(
-      isSelected: List.generate(options.length, (i) => selectedIndexes.contains(i)),
+      isSelected:
+          List.generate(options.length, (i) => selectedIndexes.contains(i)),
       onPressed: (index) {
         if (multiple) {
           if (selectedIndexes.contains(index)) {

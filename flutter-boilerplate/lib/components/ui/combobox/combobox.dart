@@ -80,7 +80,8 @@ class _ComboboxWidgetState extends State<ComboboxWidget> {
             constraints: const BoxConstraints(maxHeight: 200),
             decoration: BoxDecoration(
               border: Border.all(color: Theme.of(context).dividerColor),
-              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(6)),
+              borderRadius:
+                  const BorderRadius.vertical(bottom: Radius.circular(6)),
             ),
             child: ListView.builder(
               shrinkWrap: true,

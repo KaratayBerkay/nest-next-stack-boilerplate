@@ -11,14 +11,20 @@ void main() {
   });
 
   testWidgets('SwitchWidget renders label when provided', (tester) async {
-    await pumpTestApp(tester, const SwitchWidget(value: false, label: 'Notifications'));
+    await pumpTestApp(
+      tester,
+      const SwitchWidget(value: false, label: 'Notifications'),
+    );
 
     expect(find.text('Notifications'), findsOneWidget);
   });
 
   testWidgets('SwitchWidget calls onChanged on tap', (tester) async {
     var toggled = false;
-    await pumpTestApp(tester, SwitchWidget(value: false, onChanged: (v) => toggled = v));
+    await pumpTestApp(
+      tester,
+      SwitchWidget(value: false, onChanged: (v) => toggled = v),
+    );
 
     await tester.tap(find.byType(SwitchWidget));
     expect(toggled, isTrue);

@@ -2,7 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../server/billing/address.dart';
 
-final billingAddressActionsProvider = Provider((ref) => BillingAddressActions(ref));
+final billingAddressActionsProvider =
+    Provider((ref) => BillingAddressActions(ref));
 
 class BillingAddressActions {
   final Ref _ref;

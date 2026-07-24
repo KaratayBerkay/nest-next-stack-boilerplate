@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
 
-final dmUnreadCountServerProvider = Provider((ref) => DmUnreadCountServer(ref.read(dioProvider)));
+final dmUnreadCountServerProvider =
+    Provider((ref) => DmUnreadCountServer(ref.read(dioProvider)));
 
 class DmUnreadCountServer {
   final Dio _dio;

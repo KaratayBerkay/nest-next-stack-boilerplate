@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_boilerplate/lib/riverpod_compat.dart';
 import '../api/server/push_notifications/subscribe.dart';
 import '../api/server/push_notifications/unsubscribe.dart';
 
@@ -16,9 +16,11 @@ final pushNotificationStreamProvider = StreamProvider<RemoteMessage>((ref) {
 
 final fcmTokenProvider = StateProvider<String?>((ref) => null);
 
-final pushNotificationPermissionProvider = StateProvider<NotificationPermission?>((ref) => null);
+final pushNotificationPermissionProvider =
+    StateProvider<AuthorizationStatus?>((ref) => null);
 
-final pushNotificationActionsProvider = NotifierProvider<PushNotificationActionsNotifier, PushNotificationActionsState>(
+final pushNotificationActionsProvider = NotifierProvider<
+    PushNotificationActionsNotifier, PushNotificationActionsState>(
   PushNotificationActionsNotifier.new,
 );
 
@@ -34,7 +36,8 @@ class PushNotificationActionsState {
   });
 }
 
-class PushNotificationActionsNotifier extends Notifier<PushNotificationActionsState> {
+class PushNotificationActionsNotifier
+    extends Notifier<PushNotificationActionsState> {
   @override
   PushNotificationActionsState build() => const PushNotificationActionsState();
 

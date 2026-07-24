@@ -22,12 +22,15 @@ class FreeSettingsGeneralPage extends ConsumerWidget {
           Card(
             child: SwitchListTile(
               title: const Text('Dark Mode'),
-              subtitle: Text('Toggle dark/light theme',
-                  style: TextStyle(color: colors.fgMuted, fontSize: 12),),
+              subtitle: Text(
+                'Toggle dark/light theme',
+                style: TextStyle(color: colors.fgMuted, fontSize: 12),
+              ),
               value: themeMode == AppThemeMode.dark,
               onChanged: (value) {
-                ref.read(themeModeProvider.notifier).state =
-                    value ? AppThemeMode.dark : AppThemeMode.light;
+                ref
+                    .read(themeModeProvider.notifier)
+                    .setMode(value ? AppThemeMode.dark : AppThemeMode.light);
               },
             ),
           ),

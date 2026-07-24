@@ -24,7 +24,8 @@ class PremiumStats {
   }
 }
 
-final premiumStatsServerProvider = Provider((ref) => PremiumStatsServer(ref.read(dioProvider)));
+final premiumStatsServerProvider =
+    Provider((ref) => PremiumStatsServer(ref.read(dioProvider)));
 
 class PremiumStatsServer {
   final Dio _dio;

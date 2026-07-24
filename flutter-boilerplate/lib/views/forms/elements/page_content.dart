@@ -13,10 +13,12 @@ class FormsElementsPageContent extends ConsumerStatefulWidget {
   const FormsElementsPageContent({super.key, required this.lang});
 
   @override
-  ConsumerState<FormsElementsPageContent> createState() => _FormsElementsPageContentState();
+  ConsumerState<FormsElementsPageContent> createState() =>
+      _FormsElementsPageContentState();
 }
 
-class _FormsElementsPageContentState extends ConsumerState<FormsElementsPageContent> {
+class _FormsElementsPageContentState
+    extends ConsumerState<FormsElementsPageContent> {
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
@@ -41,17 +43,32 @@ class _FormsElementsPageContentState extends ConsumerState<FormsElementsPageCont
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Input Fields', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Input Fields',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 12),
                   const Input(label: 'Default Input'),
                   const SizedBox(height: 8),
-                  const Input(label: 'With Error', errorText: 'This field is required'),
+                  const Input(
+                    label: 'With Error',
+                    errorText: 'This field is required',
+                  ),
                   const SizedBox(height: 8),
-                  Input(label: 'Disabled', controller: TextEditingController(text: 'read only')),
+                  Input(
+                    label: 'Disabled',
+                    controller: TextEditingController(text: 'read only'),
+                  ),
                   const SizedBox(height: 8),
-                  const Input(label: 'With Icon', prefixIcon: Icon(Icons.search)),
+                  const Input(
+                    label: 'With Icon',
+                    prefixIcon: Icon(Icons.search),
+                  ),
                   const SizedBox(height: 16),
-                  const Text('FormTextField Examples', style: TextStyle(fontWeight: FontWeight.w600)),
+                  const Text(
+                    'FormTextField Examples',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   const SizedBox(height: 8),
                   Form(
                     key: _formKey,
@@ -71,11 +88,17 @@ class _FormsElementsPageContentState extends ConsumerState<FormsElementsPageCont
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text('Textarea', style: TextStyle(fontWeight: FontWeight.w600)),
+                  const Text(
+                    'Textarea',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   const SizedBox(height: 8),
                   const Textarea(label: 'Message'),
                   const SizedBox(height: 16),
-                  const Text('Checkboxes & Switches', style: TextStyle(fontWeight: FontWeight.w600)),
+                  const Text(
+                    'Checkboxes & Switches',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   const SizedBox(height: 8),
                   const CheckboxWidget(value: false, label: 'Accept terms'),
                   const SizedBox(height: 8),

@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/i18n.dart';
 import '../../../constants/theme.dart';
-import '../../../hooks/use_locale.dart';
 import '../../../hooks/use_theme.dart';
 
 class SettingsGeneralPageContent extends ConsumerWidget {
@@ -44,27 +43,37 @@ class _GeneralSettings extends ConsumerWidget {
               children: [
                 SwitchListTile(
                   title: const Text('Dark Mode'),
-                  subtitle: Text('Toggle dark/light theme',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
+                  subtitle: Text(
+                    'Toggle dark/light theme',
+                    style: TextStyle(color: colors.fgMuted, fontSize: 12),
+                  ),
                   value: themeMode == AppThemeMode.dark,
                   onChanged: (value) {
-                    ref.read(themeModeProvider.notifier).state =
-                        value ? AppThemeMode.dark : AppThemeMode.light;
+                    ref.read(themeModeProvider.notifier).setMode(
+                          value ? AppThemeMode.dark : AppThemeMode.light,
+                        );
                   },
                 ),
                 const Divider(height: 1),
                 ListTile(
                   title: const Text('Language'),
-                  subtitle: Text(currentLocale.toUpperCase(),
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
+                  subtitle: Text(
+                    currentLocale.toUpperCase(),
+                    style: TextStyle(color: colors.fgMuted, fontSize: 12),
+                  ),
                   trailing: DropdownButton<String>(
                     value: currentLocale,
                     items: I18nConstants.supportedLangs
-                        .map((String l) => DropdownMenuItem<String>(value: l, child: Text(l.toUpperCase())))
+                        .map(
+                          (String l) => DropdownMenuItem<String>(
+                            value: l,
+                            child: Text(l.toUpperCase()),
+                          ),
+                        )
                         .toList(),
                     onChanged: (String? v) {
                       if (v != null) {
-                        ref.read(localeProvider.notifier).state = v;
+                        ref.read(localeProvider.notifier).setLocale(v);
                       }
                     },
                     underline: const SizedBox(),

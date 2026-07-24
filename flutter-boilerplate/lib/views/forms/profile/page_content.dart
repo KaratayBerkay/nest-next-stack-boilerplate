@@ -12,10 +12,12 @@ class FormsProfilePageContent extends ConsumerStatefulWidget {
   const FormsProfilePageContent({super.key, required this.lang});
 
   @override
-  ConsumerState<FormsProfilePageContent> createState() => _FormsProfilePageContentState();
+  ConsumerState<FormsProfilePageContent> createState() =>
+      _FormsProfilePageContentState();
 }
 
-class _FormsProfilePageContentState extends ConsumerState<FormsProfilePageContent> {
+class _FormsProfilePageContentState
+    extends ConsumerState<FormsProfilePageContent> {
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController(text: 'John Doe');
   final _emailCtrl = TextEditingController(text: 'john@example.com');
@@ -41,7 +43,10 @@ class _FormsProfilePageContentState extends ConsumerState<FormsProfilePageConten
               children: [
                 const Avatar(name: 'John Doe', radius: 40),
                 const SizedBox(height: 8),
-                TextButton(onPressed: () {}, child: const Text('Change Avatar')),
+                TextButton(
+                  onPressed: () {},
+                  child: const Text('Change Avatar'),
+                ),
               ],
             ),
           ),
@@ -54,11 +59,25 @@ class _FormsProfilePageContentState extends ConsumerState<FormsProfilePageConten
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Profile Details', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    const Text(
+                      'Profile Details',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 12),
-                    FormTextField(controller: _nameCtrl, label: 'Name', validator: auth.validateName),
+                    FormTextField(
+                      controller: _nameCtrl,
+                      label: 'Name',
+                      validator: auth.validateName,
+                    ),
                     const SizedBox(height: 8),
-                    FormTextField(controller: _emailCtrl, label: 'Email', validator: auth.validateEmail),
+                    FormTextField(
+                      controller: _emailCtrl,
+                      label: 'Email',
+                      validator: auth.validateEmail,
+                    ),
                     const SizedBox(height: 8),
                     FormTextField(controller: _bioCtrl, label: 'Bio'),
                     const SizedBox(height: 16),

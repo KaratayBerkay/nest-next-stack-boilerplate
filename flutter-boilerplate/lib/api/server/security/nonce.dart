@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
 
-final nonceServerProvider = Provider((ref) => NonceServer(ref.read(dioProvider)));
+final nonceServerProvider =
+    Provider((ref) => NonceServer(ref.read(dioProvider)));
 
 class NonceServer {
   final Dio _dio;

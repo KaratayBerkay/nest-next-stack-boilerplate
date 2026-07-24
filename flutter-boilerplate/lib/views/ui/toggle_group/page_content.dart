@@ -18,10 +18,17 @@ class _ToggleGroupDemoPageState extends State<ToggleGroupDemoPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('Text Alignment', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'Text Alignment',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
           ToggleButtons(
-            isSelected: [_alignment == 'left', _alignment == 'center', _alignment == 'right'],
+            isSelected: [
+              _alignment == 'left',
+              _alignment == 'center',
+              _alignment == 'right',
+            ],
             onPressed: (i) {
               setState(() {
                 _alignment = ['left', 'center', 'right'][i];

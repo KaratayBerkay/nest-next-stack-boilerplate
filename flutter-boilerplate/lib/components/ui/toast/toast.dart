@@ -4,7 +4,11 @@ import '../../../constants/theme.dart';
 
 enum ToastType { success, error, warning, info }
 
-void showToast(BuildContext context, String message, {ToastType type = ToastType.info}) {
+void showToast(
+  BuildContext context,
+  String message, {
+  ToastType type = ToastType.info,
+}) {
   final colors = AppColors.of(context);
 
   final bgColor = switch (type) {
@@ -18,7 +22,9 @@ void showToast(BuildContext context, String message, {ToastType type = ToastType
     SnackBar(
       content: Text(
         message,
-        style: TextStyle(color: type == ToastType.warning ? colors.fg : colors.surface),
+        style: TextStyle(
+          color: type == ToastType.warning ? colors.fg : colors.surface,
+        ),
       ),
       backgroundColor: bgColor,
       behavior: SnackBarBehavior.floating,

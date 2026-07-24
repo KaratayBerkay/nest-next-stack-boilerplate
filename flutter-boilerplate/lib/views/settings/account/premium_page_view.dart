@@ -12,10 +12,12 @@ class PremiumSettingsAccountPage extends ConsumerStatefulWidget {
   const PremiumSettingsAccountPage({super.key, required this.lang});
 
   @override
-  ConsumerState<PremiumSettingsAccountPage> createState() => _PremiumSettingsAccountPageState();
+  ConsumerState<PremiumSettingsAccountPage> createState() =>
+      _PremiumSettingsAccountPageState();
 }
 
-class _PremiumSettingsAccountPageState extends ConsumerState<PremiumSettingsAccountPage> {
+class _PremiumSettingsAccountPageState
+    extends ConsumerState<PremiumSettingsAccountPage> {
   late TextEditingController _nameCtrl;
   late TextEditingController _bioCtrl;
   final bool _saving = false;
@@ -50,10 +52,17 @@ class _PremiumSettingsAccountPageState extends ConsumerState<PremiumSettingsAcco
               children: [
                 Avatar(name: user?.name ?? 'U', radius: 32),
                 const SizedBox(height: 12),
-                Text(user?.name ?? 'User',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
-                Text(user?.email ?? '',
-                    style: TextStyle(color: colors.fgMuted),),
+                Text(
+                  user?.name ?? 'User',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  user?.email ?? '',
+                  style: TextStyle(color: colors.fgMuted),
+                ),
                 const SizedBox(height: 8),
                 Button(
                   variant: ButtonVariant.ghost,

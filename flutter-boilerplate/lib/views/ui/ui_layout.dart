@@ -14,7 +14,8 @@ class UiLayout extends StatefulWidget {
   State<UiLayout> createState() => _UiLayoutState();
 }
 
-class _UiLayoutState extends State<UiLayout> with SingleTickerProviderStateMixin {
+class _UiLayoutState extends State<UiLayout>
+    with SingleTickerProviderStateMixin {
   late TabController _controller;
 
   @override

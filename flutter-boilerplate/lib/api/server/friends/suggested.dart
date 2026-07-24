@@ -39,6 +39,8 @@ class SuggestedFriendsServer {
   Future<List<SuggestedUser>> call() async {
     final response = await _dio.get<dynamic>(Urls.suggestedFriends);
     final list = response.data as List<dynamic>;
-    return list.map((e) => SuggestedUser.fromJson(e as Map<String, dynamic>)).toList();
+    return list
+        .map((e) => SuggestedUser.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }

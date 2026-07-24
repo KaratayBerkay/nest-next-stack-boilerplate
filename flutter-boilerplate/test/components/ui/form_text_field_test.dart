@@ -58,7 +58,8 @@ void main() {
     expect(find.text('Invalid email format'), findsNothing);
   });
 
-  testWidgets('FormTextField hides text when obscureText is true', (tester) async {
+  testWidgets('FormTextField hides text when obscureText is true',
+      (tester) async {
     await pumpTestApp(
       tester,
       FormTextField(

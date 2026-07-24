@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
 
-final logoutServerProvider = Provider((ref) => LogoutServer(ref.read(dioProvider)));
+final logoutServerProvider =
+    Provider((ref) => LogoutServer(ref.read(dioProvider)));
 
 class LogoutServer {
   final Dio _dio;

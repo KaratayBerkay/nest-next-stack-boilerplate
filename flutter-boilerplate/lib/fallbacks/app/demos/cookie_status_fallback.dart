@@ -14,7 +14,10 @@ class CookieStatusFallback extends StatelessWidget {
       ),
       child: Text(
         'Checking cookie...',
-        style: TextStyle(color: colors.onSurface.withValues(alpha: 0.4), fontSize: 13),
+        style: TextStyle(
+          color: colors.onSurface.withValues(alpha: 0.4),
+          fontSize: 13,
+        ),
       ),
     );
   }

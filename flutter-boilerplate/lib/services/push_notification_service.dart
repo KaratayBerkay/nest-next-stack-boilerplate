@@ -16,7 +16,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await _showLocalNotification(message);
 }
 
-FlutterLocalNotificationsPlugin _sharedPlugin = FlutterLocalNotificationsPlugin();
+FlutterLocalNotificationsPlugin _sharedPlugin =
+    FlutterLocalNotificationsPlugin();
 
 Future<void> _showLocalNotification(RemoteMessage message) async {
   final notification = message.notification;
@@ -38,7 +39,8 @@ Future<void> _showLocalNotification(RemoteMessage message) async {
     id: notification.hashCode,
     title: notification.title,
     body: notification.body,
-    notificationDetails: const NotificationDetails(android: androidDetails, iOS: iosDetails),
+    notificationDetails:
+        const NotificationDetails(android: androidDetails, iOS: iosDetails),
     payload: jsonEncode(message.data),
   );
 }
@@ -50,7 +52,8 @@ final pushNotificationProvider = Provider<PushNotificationService>((ref) {
 });
 
 class PushNotificationService {
-  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
 
   final Ref? ref;
   bool _initialized = false;
@@ -63,20 +66,20 @@ class PushNotificationService {
 
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosSettings = DarwinInitializationSettings(
-      
-    );
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iosSettings = DarwinInitializationSettings();
     await _localNotifications.initialize(
-      settings: const InitializationSettings(android: androidSettings, iOS: iosSettings),
+      settings: const InitializationSettings(
+        android: androidSettings,
+        iOS: iosSettings,
+      ),
       onDidReceiveNotificationResponse: _onNotificationTap,
     );
 
     final messaging = FirebaseMessaging.instance;
 
-    await messaging.requestPermission(
-      
-    );
+    await messaging.requestPermission();
 
     final token = await messaging.getToken();
     if (token != null) {
@@ -114,7 +117,8 @@ class PushNotificationService {
       id: notification.hashCode,
       title: notification.title,
       body: notification.body,
-      notificationDetails: const NotificationDetails(android: androidDetails, iOS: iosDetails),
+      notificationDetails:
+          const NotificationDetails(android: androidDetails, iOS: iosDetails),
       payload: jsonEncode(message.data),
     );
   }
@@ -157,10 +161,13 @@ class PushNotificationService {
       final user = ref!.read(currentUserProvider);
       if (user != null) {
         final dio = ref!.read(dioProvider);
-        await dio.post<dynamic>('/api/push-notifications/register', data: {
-          'token': token,
-          'platform': Platform.isIOS ? 'ios' : 'android',
-        },);
+        await dio.post<dynamic>(
+          '/api/push-notifications/register',
+          data: {
+            'token': token,
+            'platform': Platform.isIOS ? 'ios' : 'android',
+          },
+        );
       }
     } catch (_) {}
   }

@@ -39,13 +39,21 @@ class BillingInfoDisplay extends StatelessWidget {
           Text(email!, style: TextStyle(color: colors.fgMuted, fontSize: 13)),
         if (addressLine1 != null) ...[
           const SizedBox(height: 8),
-          Text(addressLine1!, style: TextStyle(color: colors.fgMuted, fontSize: 13)),
+          Text(
+            addressLine1!,
+            style: TextStyle(color: colors.fgMuted, fontSize: 13),
+          ),
         ],
         if (addressLine2 != null)
-          Text(addressLine2!, style: TextStyle(color: colors.fgMuted, fontSize: 13)),
+          Text(
+            addressLine2!,
+            style: TextStyle(color: colors.fgMuted, fontSize: 13),
+          ),
         if (city != null || state != null || zip != null)
           Text(
-            [city, state, zip].where((s) => s != null && s.isNotEmpty).join(', '),
+            [city, state, zip]
+                .where((s) => s != null && s.isNotEmpty)
+                .join(', '),
             style: TextStyle(color: colors.fgMuted, fontSize: 13),
           ),
         if (country != null)

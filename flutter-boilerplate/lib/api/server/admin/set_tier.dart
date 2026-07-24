@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
 
-final adminSetTierServerProvider = Provider((ref) => AdminSetTierServer(ref.read(dioProvider)));
+final adminSetTierServerProvider =
+    Provider((ref) => AdminSetTierServer(ref.read(dioProvider)));
 
 class AdminSetTierServer {
   final Dio _dio;
@@ -12,9 +13,12 @@ class AdminSetTierServer {
   AdminSetTierServer(this._dio);
 
   Future<void> call(String userId, String tier) async {
-    await _dio.post<dynamic>(Urls.adminSetTier, data: {
-      'userId': userId,
-      'tier': tier,
-    },);
+    await _dio.post<dynamic>(
+      Urls.adminSetTier,
+      data: {
+        'userId': userId,
+        'tier': tier,
+      },
+    );
   }
 }

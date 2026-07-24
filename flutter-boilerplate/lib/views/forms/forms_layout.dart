@@ -50,7 +50,8 @@ class FormsLayout extends StatefulWidget {
   State<FormsLayout> createState() => _FormsLayoutState();
 }
 
-class _FormsLayoutState extends State<FormsLayout> with SingleTickerProviderStateMixin {
+class _FormsLayoutState extends State<FormsLayout>
+    with SingleTickerProviderStateMixin {
   late TabController _controller;
 
   @override
@@ -81,24 +82,32 @@ class _FormsLayoutState extends State<FormsLayout> with SingleTickerProviderStat
       ),
       body: TabBarView(
         controller: _controller,
-        children: _formSections.map((s) => _buildSection(context, colors, s)).toList(),
+        children: _formSections
+            .map((s) => _buildSection(context, colors, s))
+            .toList(),
       ),
     );
   }
 
-  Widget _buildSection(BuildContext context, AppColors colors, FormSection section) {
+  Widget _buildSection(
+    BuildContext context,
+    AppColors colors,
+    FormSection section,
+  ) {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        ...section.items.map((item) => Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: ListTile(
-            leading: Icon(item.icon, color: colors.brand),
-            title: Text(item.name),
-            trailing: Icon(Icons.chevron_right, color: colors.fgMuted),
-            onTap: () => context.push(item.route),
+        ...section.items.map(
+          (item) => Card(
+            margin: const EdgeInsets.only(bottom: 8),
+            child: ListTile(
+              leading: Icon(item.icon, color: colors.brand),
+              title: Text(item.name),
+              trailing: Icon(Icons.chevron_right, color: colors.fgMuted),
+              onTap: () => context.push(item.route),
+            ),
           ),
-        ),),
+        ),
       ],
     );
   }

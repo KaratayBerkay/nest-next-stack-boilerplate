@@ -12,15 +12,24 @@ class SkeletonDemoPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [
-          Text('Card Skeleton', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            'Card Skeleton',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           SizedBox(height: 8),
           SkeletonCard(),
           SizedBox(height: 24),
-          Text('Text Skeleton', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            'Text Skeleton',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           SizedBox(height: 8),
           Skeleton(),
           SizedBox(height: 24),
-          Text('Avatar Skeleton', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            'Avatar Skeleton',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           SizedBox(height: 8),
           SkeletonCircle(),
         ],

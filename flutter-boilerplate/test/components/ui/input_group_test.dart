@@ -10,10 +10,12 @@ void main() {
       tester,
       const SizedBox(
         width: 500,
-        child: InputGroup(children: [
-          Text('Input field'),
-          Text('Suffix text'),
-        ],),
+        child: InputGroup(
+          children: [
+            Text('Input field'),
+            Text('Suffix text'),
+          ],
+        ),
       ),
     );
 

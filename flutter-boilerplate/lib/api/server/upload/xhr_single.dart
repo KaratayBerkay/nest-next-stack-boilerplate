@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
 
-final uploadServerProvider = Provider((ref) => UploadServer(ref.read(dioProvider)));
+final uploadServerProvider =
+    Provider((ref) => UploadServer(ref.read(dioProvider)));
 
 class UploadServer {
   final Dio _dio;

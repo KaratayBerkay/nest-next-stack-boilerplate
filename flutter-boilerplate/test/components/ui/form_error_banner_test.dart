@@ -10,7 +10,9 @@ void main() {
       tester,
       const SizedBox(
         width: 300,
-        child: FormErrorBanner(errors: ['Email is required', 'Password too short']),
+        child: FormErrorBanner(
+          errors: ['Email is required', 'Password too short'],
+        ),
       ),
     );
 

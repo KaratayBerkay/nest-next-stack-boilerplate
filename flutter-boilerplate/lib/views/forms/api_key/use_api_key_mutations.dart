@@ -30,7 +30,8 @@ class _UseApiKeyMutationsState extends ConsumerState<UseApiKeyMutations> {
   void _generateKey() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final id = DateTime.now().millisecondsSinceEpoch.toString();
-    final masked = 'sk_${_nameCtrl.text.toLowerCase().replaceAll(RegExp(r'\s+'), '_')}_${id.substring(id.length - 8)}';
+    final masked =
+        'sk_${_nameCtrl.text.toLowerCase().replaceAll(RegExp(r'\s+'), '_')}_${id.substring(id.length - 8)}';
     setState(() {
       _keys.insert(0, {'id': id, 'name': _nameCtrl.text, 'key': masked});
       _nameCtrl.clear();

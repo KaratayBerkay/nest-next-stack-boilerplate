@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/theme.dart';
-import '../../../hooks/use_locale.dart';
 import '../../../hooks/use_theme.dart';
 
 class PremiumSettingsGeneralPage extends ConsumerStatefulWidget {
@@ -11,10 +10,12 @@ class PremiumSettingsGeneralPage extends ConsumerStatefulWidget {
   const PremiumSettingsGeneralPage({super.key, required this.lang});
 
   @override
-  ConsumerState<PremiumSettingsGeneralPage> createState() => _PremiumSettingsGeneralPageState();
+  ConsumerState<PremiumSettingsGeneralPage> createState() =>
+      _PremiumSettingsGeneralPageState();
 }
 
-class _PremiumSettingsGeneralPageState extends ConsumerState<PremiumSettingsGeneralPage> {
+class _PremiumSettingsGeneralPageState
+    extends ConsumerState<PremiumSettingsGeneralPage> {
   bool _experimentalFeatures = false;
 
   @override
@@ -33,26 +34,33 @@ class _PremiumSettingsGeneralPageState extends ConsumerState<PremiumSettingsGene
               children: [
                 SwitchListTile(
                   title: const Text('Dark Mode'),
-                  subtitle: Text('Toggle dark/light theme',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
+                  subtitle: Text(
+                    'Toggle dark/light theme',
+                    style: TextStyle(color: colors.fgMuted, fontSize: 12),
+                  ),
                   value: themeMode == AppThemeMode.dark,
                   onChanged: (value) {
-                    ref.read(themeModeProvider.notifier).state =
-                        value ? AppThemeMode.dark : AppThemeMode.light;
+                    ref.read(themeModeProvider.notifier).setMode(
+                          value ? AppThemeMode.dark : AppThemeMode.light,
+                        );
                   },
                 ),
                 const Divider(height: 1),
                 ListTile(
                   title: const Text('Language'),
-                  subtitle: Text(currentLocale.toUpperCase(),
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
+                  subtitle: Text(
+                    currentLocale.toUpperCase(),
+                    style: TextStyle(color: colors.fgMuted, fontSize: 12),
+                  ),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                 ),
                 const Divider(height: 1),
                 ListTile(
                   title: const Text('Font Size'),
-                  subtitle: Text('Adjust text size',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
+                  subtitle: Text(
+                    'Adjust text size',
+                    style: TextStyle(color: colors.fgMuted, fontSize: 12),
+                  ),
                   trailing: const Icon(Icons.text_fields, size: 20),
                 ),
               ],
@@ -64,8 +72,10 @@ class _PremiumSettingsGeneralPageState extends ConsumerState<PremiumSettingsGene
               children: [
                 SwitchListTile(
                   title: const Text('Experimental Features'),
-                  subtitle: Text('Try upcoming features before release',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
+                  subtitle: Text(
+                    'Try upcoming features before release',
+                    style: TextStyle(color: colors.fgMuted, fontSize: 12),
+                  ),
                   value: _experimentalFeatures,
                   onChanged: (v) => setState(() => _experimentalFeatures = v),
                 ),

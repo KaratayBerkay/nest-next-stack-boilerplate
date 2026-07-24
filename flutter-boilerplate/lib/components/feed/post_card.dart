@@ -127,10 +127,15 @@ class PostCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   IconButton(
-                    icon: Icon(Icons.chat_bubble_outline, size: 20, color: colors.fgMuted),
+                    icon: Icon(
+                      Icons.chat_bubble_outline,
+                      size: 20,
+                      color: colors.fgMuted,
+                    ),
                     tooltip: 'Comment',
                     onPressed: onComment,
-                    style: IconButton.styleFrom(minimumSize: const Size(36, 36)),
+                    style:
+                        IconButton.styleFrom(minimumSize: const Size(36, 36)),
                   ),
                   Text(
                     '${post.commentCount}',
@@ -138,9 +143,14 @@ class PostCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   IconButton(
-                    icon: Icon(Icons.bookmark_border, size: 20, color: colors.fgMuted),
+                    icon: Icon(
+                      Icons.bookmark_border,
+                      size: 20,
+                      color: colors.fgMuted,
+                    ),
                     onPressed: null,
-                    style: IconButton.styleFrom(minimumSize: const Size(36, 36)),
+                    style:
+                        IconButton.styleFrom(minimumSize: const Size(36, 36)),
                   ),
                 ],
               ),

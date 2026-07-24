@@ -44,7 +44,10 @@ class PaymentMethods extends StatelessWidget {
     if (methods.isEmpty) {
       return Column(
         children: [
-          Text('No payment methods saved.', style: TextStyle(color: colors.fgMuted)),
+          Text(
+            'No payment methods saved.',
+            style: TextStyle(color: colors.fgMuted),
+          ),
           const SizedBox(height: 8),
           Button(
             variant: ButtonVariant.outline,
@@ -56,28 +59,35 @@ class PaymentMethods extends StatelessWidget {
     }
 
     return Column(
-      children: methods.map((pm) => ListTile(
-        leading: Icon(Icons.credit_card, color: colors.brand),
-        title: Text('${pm.brand} •••• ${pm.last4}'),
-        subtitle: Text('Expires ${pm.expMonth}/${pm.expYear}'),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (pm.isDefault)
-              const Badge(text: 'Default', variant: BadgeVariant.success),
-            if (!pm.isDefault && onSetDefault != null)
-              TextButton(
-                onPressed: () => onSetDefault!(pm.id),
-                child: const Text('Set Default', style: TextStyle(fontSize: 12)),
+      children: methods
+          .map(
+            (pm) => ListTile(
+              leading: Icon(Icons.credit_card, color: colors.brand),
+              title: Text('${pm.brand} •••• ${pm.last4}'),
+              subtitle: Text('Expires ${pm.expMonth}/${pm.expYear}'),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (pm.isDefault)
+                    const Badge(text: 'Default', variant: BadgeVariant.success),
+                  if (!pm.isDefault && onSetDefault != null)
+                    TextButton(
+                      onPressed: () => onSetDefault!(pm.id),
+                      child: const Text(
+                        'Set Default',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  if (onRemove != null)
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, size: 18),
+                      onPressed: () => onRemove!(pm.id),
+                    ),
+                ],
               ),
-            if (onRemove != null)
-              IconButton(
-                icon: const Icon(Icons.delete_outline, size: 18),
-                onPressed: () => onRemove!(pm.id),
-              ),
-          ],
-        ),
-      ),).toList(),
+            ),
+          )
+          .toList(),
     );
   }
 }

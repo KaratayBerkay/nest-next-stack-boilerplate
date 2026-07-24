@@ -41,13 +41,15 @@ class FormErrorBanner extends StatelessWidget {
                 ),
               ),
             ),
-          ...errors.map((error) => Text(
-                error,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: colors.danger,
-                ),
-              ),),
+          ...errors.map(
+            (error) => Text(
+              error,
+              style: TextStyle(
+                fontSize: 13,
+                color: colors.danger,
+              ),
+            ),
+          ),
         ],
       ),
     );

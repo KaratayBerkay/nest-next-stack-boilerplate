@@ -14,6 +14,8 @@ class MeServer {
 
   Future<AuthenticatedUser> call() async {
     final response = await _dio.get<dynamic>(Urls.me);
-    return AuthenticatedUser.fromJson(response.data['user'] as Map<String, dynamic>);
+    return AuthenticatedUser.fromJson(
+      response.data['user'] as Map<String, dynamic>,
+    );
   }
 }

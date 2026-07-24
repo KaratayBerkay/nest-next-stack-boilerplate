@@ -2,10 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-List<T> filterByQuery<T>(List<T> items, String query, String Function(T) toField) {
+List<T> filterByQuery<T>(
+  List<T> items,
+  String query,
+  String Function(T) toField,
+) {
   if (query.isEmpty) return items;
   final lower = query.toLowerCase();
-  return items.where((item) => toField(item).toLowerCase().contains(lower)).toList();
+  return items
+      .where((item) => toField(item).toLowerCase().contains(lower))
+      .toList();
 }
 
 class Debouncer {

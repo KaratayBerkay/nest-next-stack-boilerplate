@@ -4,7 +4,12 @@ import '../../constants/chat.dart';
 import 'chat_room_base_view.dart';
 
 class MediumPageView extends ChatRoomBaseView {
-  const MediumPageView({super.key, super.lang, super.initialRoom, super.showPageInfo});
+  const MediumPageView({
+    super.key,
+    super.lang,
+    super.initialRoom,
+    super.showPageInfo,
+  });
 
   @override
   ConsumerState<ChatRoomBaseView> createState() => _MediumPageViewState();

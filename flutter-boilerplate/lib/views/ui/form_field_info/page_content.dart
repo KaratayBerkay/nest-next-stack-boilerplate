@@ -26,7 +26,10 @@ class FormFieldInfoDemoPage extends StatelessWidget {
                       border: const OutlineInputBorder(),
                       hintText: 'Enter password',
                       helperText: 'Must be at least 8 characters with a number',
-                      helperStyle: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
+                      helperStyle: TextStyle(
+                        color: colors.onSurfaceVariant,
+                        fontSize: 12,
+                      ),
                     ),
                     obscureText: true,
                   ),

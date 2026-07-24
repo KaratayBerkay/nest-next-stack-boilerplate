@@ -30,27 +30,36 @@ class _TeamMembersState extends State<TeamMembers> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Team Members', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        const Text(
+          'Team Members',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 12),
-        ...widget.memberCtrls.asMap().entries.map((entry) => Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Row(
-            children: [
-              Expanded(
-                child: FormTextField(
-                  controller: entry.value,
-                  label: 'Member Email',
-                  validator: auth.validateEmail,
+        ...widget.memberCtrls.asMap().entries.map(
+              (entry) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: FormTextField(
+                        controller: entry.value,
+                        label: 'Member Email',
+                        validator: auth.validateEmail,
+                      ),
+                    ),
+                    if (widget.memberCtrls.length > 1)
+                      IconButton(
+                        icon: Icon(
+                          Icons.remove_circle_outline,
+                          color: colors.danger,
+                        ),
+                        onPressed: () =>
+                            setState(() => _removeMember(entry.key)),
+                      ),
+                  ],
                 ),
               ),
-              if (widget.memberCtrls.length > 1)
-                IconButton(
-                  icon: Icon(Icons.remove_circle_outline, color: colors.danger),
-                  onPressed: () => setState(() => _removeMember(entry.key)),
-                ),
-            ],
-          ),
-        ),),
+            ),
         TextButton.icon(
           icon: const Icon(Icons.add, size: 18),
           label: const Text('Add Member'),

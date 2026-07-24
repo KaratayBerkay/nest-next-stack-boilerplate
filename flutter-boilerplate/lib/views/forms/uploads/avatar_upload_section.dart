@@ -28,7 +28,10 @@ class AvatarUploadSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Avatar Upload', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text(
+              'Avatar Upload',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 12),
             Center(
               child: Column(
@@ -50,7 +53,10 @@ class AvatarUploadSection extends StatelessWidget {
                           variant: ButtonVariant.ghost,
                           size: ButtonSize.sm,
                           onPressed: onRemove,
-                          child: Text('Remove', style: TextStyle(color: colors.danger)),
+                          child: Text(
+                            'Remove',
+                            style: TextStyle(color: colors.danger),
+                          ),
                         ),
                       ],
                     ],

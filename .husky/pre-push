@@ -1,1 +1,5 @@
 pnpm --dir next-js-boilerplate exec tsc --noEmit
+
+if git diff --cached --name-only HEAD | grep -q '^flutter-boilerplate/'; then
+  (cd flutter-boilerplate && flutter analyze && dart format --set-exit-if-changed lib/ test/)
+fi

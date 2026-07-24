@@ -33,7 +33,9 @@ class RealtimeLifecycle {
 
   void _connect() {
     final client = _ref.read(realtimeProvider);
-    client.registerServices(['MESSAGE', 'NOTIFICATION', 'chat', 'notifications', 'feed']);
+    client.registerServices(
+      ['MESSAGE', 'NOTIFICATION', 'chat', 'notifications', 'feed'],
+    );
     client.connect();
   }
 

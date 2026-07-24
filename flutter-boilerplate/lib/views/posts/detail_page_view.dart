@@ -11,7 +11,11 @@ class PostDetailPageContent extends ConsumerWidget {
   final String lang;
   final String postId;
 
-  const PostDetailPageContent({super.key, required this.lang, required this.postId});
+  const PostDetailPageContent({
+    super.key,
+    required this.lang,
+    required this.postId,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -57,11 +61,20 @@ class _PostDetailView extends ConsumerWidget {
                     children: [
                       Avatar(name: post.authorName),
                       const SizedBox(width: 8),
-                      Text(post.authorName, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      Text(
+                        post.authorName,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Text(post.title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  Text(
+                    post.title,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Text(post.content),
                   if (post.imageUrl != null) ...[
@@ -73,39 +86,64 @@ class _PostDetailView extends ConsumerWidget {
                   ],
                   const SizedBox(height: 16),
                   const Divider(),
-                  const Text('Comments', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Comments',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
                   ref.watch(postCommentsProvider(postId)).when(
-                    loading: () => const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Center(child: CircularProgressIndicator()),
-                    ),
-                    error: (e, _) => Text('Error: $e'),
-                    data: (comments) => comments.isEmpty
-                        ? Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Text('No comments yet', style: TextStyle(color: colors.fgMuted)),
-                          )
-                        : Column(children: comments.map((c) => Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Avatar(name: c.authorName, radius: 12),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(c.authorName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                                        Text(c.content),
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                        loading: () => const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Center(child: CircularProgressIndicator()),
+                        ),
+                        error: (e, _) => Text('Error: $e'),
+                        data: (comments) => comments.isEmpty
+                            ? Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Text(
+                                  'No comments yet',
+                                  style: TextStyle(color: colors.fgMuted),
+                                ),
+                              )
+                            : Column(
+                                children: comments
+                                    .map(
+                                      (c) => Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 8),
+                                        child: Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Avatar(
+                                              name: c.authorName,
+                                              radius: 12,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    c.authorName,
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize: 13,
+                                                    ),
+                                                  ),
+                                                  Text(c.content),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
                               ),
-                            ),).toList(),),
-                  ),
+                      ),
                 ],
               ),
             ),

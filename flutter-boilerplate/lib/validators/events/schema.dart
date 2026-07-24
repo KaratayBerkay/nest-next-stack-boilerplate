@@ -6,7 +6,9 @@ String? validateEventType(String? value) {
 
 String? validateClientSessionId(String? value) {
   if (value == null || value.isEmpty) return 'Client session ID is required';
-  if (value.length > 64) return 'Client session ID must be at most 64 characters';
+  if (value.length > 64) {
+    return 'Client session ID must be at most 64 characters';
+  }
   return null;
 }
 

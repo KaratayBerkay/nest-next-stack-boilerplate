@@ -8,7 +8,8 @@ class MediumSettingsPrivacyPage extends StatefulWidget {
   const MediumSettingsPrivacyPage({super.key, required this.lang});
 
   @override
-  State<MediumSettingsPrivacyPage> createState() => _MediumSettingsPrivacyPageState();
+  State<MediumSettingsPrivacyPage> createState() =>
+      _MediumSettingsPrivacyPageState();
 }
 
 class _MediumSettingsPrivacyPageState extends State<MediumSettingsPrivacyPage> {
@@ -30,24 +31,30 @@ class _MediumSettingsPrivacyPageState extends State<MediumSettingsPrivacyPage> {
               children: [
                 SwitchListTile(
                   title: const Text('Online Status'),
-                  subtitle: Text('Show when you\'re online',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
+                  subtitle: Text(
+                    'Show when you\'re online',
+                    style: TextStyle(color: colors.fgMuted, fontSize: 12),
+                  ),
                   value: _showOnlineStatus,
                   onChanged: (v) => setState(() => _showOnlineStatus = v),
                 ),
                 const Divider(height: 1),
                 SwitchListTile(
                   title: const Text('Read Receipts'),
-                  subtitle: Text('Let others know you\'ve read their messages',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
+                  subtitle: Text(
+                    'Let others know you\'ve read their messages',
+                    style: TextStyle(color: colors.fgMuted, fontSize: 12),
+                  ),
                   value: _showReadReceipts,
                   onChanged: (v) => setState(() => _showReadReceipts = v),
                 ),
                 const Divider(height: 1),
                 SwitchListTile(
                   title: const Text('Friend Requests'),
-                  subtitle: Text('Allow anyone to send you friend requests',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
+                  subtitle: Text(
+                    'Allow anyone to send you friend requests',
+                    style: TextStyle(color: colors.fgMuted, fontSize: 12),
+                  ),
                   value: _allowFriendRequests,
                   onChanged: (v) => setState(() => _allowFriendRequests = v),
                 ),

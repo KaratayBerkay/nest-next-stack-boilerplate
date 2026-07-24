@@ -3,8 +3,10 @@ import 'package:flutter_boilerplate/lib/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
+import '../../../types/auth/auth_request_types.dart';
 
-final registerServerProvider = Provider((ref) => RegisterServer(ref.read(dioProvider)));
+final registerServerProvider =
+    Provider((ref) => RegisterServer(ref.read(dioProvider)));
 
 class RegisterServer {
   final Dio _dio;
@@ -17,35 +19,5 @@ class RegisterServer {
       data: request.toJson(),
     );
     return RegisterResponse.fromJson(response.data as Map<String, dynamic>);
-  }
-}
-
-class RegisterRequest {
-  final String email;
-  final String password;
-  final String name;
-
-  const RegisterRequest({
-    required this.email,
-    required this.password,
-    required this.name,
-  });
-
-  Map<String, dynamic> toJson() => {
-        'email': email,
-        'password': password,
-        'name': name,
-      };
-}
-
-class RegisterResponse {
-  final String accessToken;
-
-  const RegisterResponse({required this.accessToken});
-
-  factory RegisterResponse.fromJson(Map<String, dynamic> json) {
-    return RegisterResponse(
-      accessToken: json['accessToken'] as String,
-    );
   }
 }

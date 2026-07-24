@@ -40,7 +40,8 @@ class NotificationItemWidget extends StatelessWidget {
                   Text(
                     item.title,
                     style: TextStyle(
-                      fontWeight: item.isRead ? FontWeight.normal : FontWeight.w600,
+                      fontWeight:
+                          item.isRead ? FontWeight.normal : FontWeight.w600,
                       fontSize: 13,
                     ),
                   ),

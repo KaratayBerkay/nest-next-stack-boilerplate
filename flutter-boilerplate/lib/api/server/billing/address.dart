@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
 
-final billingAddressServerProvider = Provider((ref) => BillingAddressServer(ref.read(dioProvider)));
+final billingAddressServerProvider =
+    Provider((ref) => BillingAddressServer(ref.read(dioProvider)));
 
 class BillingAddressServer {
   final Dio _dio;

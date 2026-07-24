@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../constants/theme.dart';
 
 enum ButtonVariant { primary, secondary, ghost, danger, outline }
+
 enum ButtonSize { sm, md, lg }
 
 class Button extends StatelessWidget {

@@ -12,13 +12,27 @@ class PaginationDemoPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('Basic Pagination', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'Basic Pagination',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
-          PaginationWidget(currentPage: 1, totalPages: 10, onPageChanged: (_) {}),
+          PaginationWidget(
+            currentPage: 1,
+            totalPages: 10,
+            onPageChanged: (_) {},
+          ),
           const SizedBox(height: 24),
-          const Text('On Last Page', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'On Last Page',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
-          PaginationWidget(currentPage: 10, totalPages: 10, onPageChanged: (_) {}),
+          PaginationWidget(
+            currentPage: 10,
+            totalPages: 10,
+            onPageChanged: (_) {},
+          ),
         ],
       ),
     );

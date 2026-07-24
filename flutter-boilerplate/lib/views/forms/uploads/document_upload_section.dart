@@ -46,7 +46,10 @@ class _DocumentUploadSectionState extends State<DocumentUploadSection> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Document Upload', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text(
+              'Document Upload',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 12),
             GestureDetector(
               onTap: widget.onBrowse,
@@ -62,7 +65,11 @@ class _DocumentUploadSectionState extends State<DocumentUploadSection> {
                 child: Center(
                   child: Column(
                     children: [
-                      Icon(Icons.cloud_upload_outlined, size: 32, color: colors.fgMuted),
+                      Icon(
+                        Icons.cloud_upload_outlined,
+                        size: 32,
+                        color: colors.fgMuted,
+                      ),
                       const SizedBox(height: 8),
                       const Text('Drag & drop files here'),
                       const SizedBox(height: 8),
@@ -79,16 +86,21 @@ class _DocumentUploadSectionState extends State<DocumentUploadSection> {
             ),
             if (widget.documents.isNotEmpty) ...[
               const SizedBox(height: 12),
-              ...widget.documents.map((doc) => ListTile(
-                leading: Icon(Icons.description, color: colors.brand),
-                title: Text(doc.name),
-                subtitle: Text('${doc.size} — ${doc.type}', style: TextStyle(color: colors.fgMuted, fontSize: 12)),
-                trailing: IconButton(
-                  icon: Icon(Icons.delete_outline, color: colors.danger),
-                  onPressed: () => widget.onDelete?.call(doc.id),
+              ...widget.documents.map(
+                (doc) => ListTile(
+                  leading: Icon(Icons.description, color: colors.brand),
+                  title: Text(doc.name),
+                  subtitle: Text(
+                    '${doc.size} — ${doc.type}',
+                    style: TextStyle(color: colors.fgMuted, fontSize: 12),
+                  ),
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete_outline, color: colors.danger),
+                    onPressed: () => widget.onDelete?.call(doc.id),
+                  ),
+                  dense: true,
                 ),
-                dense: true,
-              ),),
+              ),
             ],
           ],
         ),

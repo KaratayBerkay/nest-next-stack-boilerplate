@@ -15,21 +15,30 @@ class AspectRatioDemoPage extends StatelessWidget {
           CardWidget(
             child: AspectRatio(
               aspectRatio: 16 / 9,
-              child: Container(color: Colors.grey[300], child: const Center(child: Text('16:9'))),
+              child: Container(
+                color: Colors.grey[300],
+                child: const Center(child: Text('16:9')),
+              ),
             ),
           ),
           const SizedBox(height: 12),
           CardWidget(
             child: AspectRatio(
               aspectRatio: 4 / 3,
-              child: Container(color: Colors.grey[200], child: const Center(child: Text('4:3'))),
+              child: Container(
+                color: Colors.grey[200],
+                child: const Center(child: Text('4:3')),
+              ),
             ),
           ),
           const SizedBox(height: 12),
           CardWidget(
             child: AspectRatio(
               aspectRatio: 1 / 1,
-              child: Container(color: Colors.grey[100], child: const Center(child: Text('1:1'))),
+              child: Container(
+                color: Colors.grey[100],
+                child: const Center(child: Text('1:1')),
+              ),
             ),
           ),
         ],

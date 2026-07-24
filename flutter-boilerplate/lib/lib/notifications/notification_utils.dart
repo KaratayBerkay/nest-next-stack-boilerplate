@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 String formatNotificationType(String type) {
   return type
       .split(RegExp(r'[_-]'))
-      .map((word) => word.isNotEmpty
-          ? '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}'
-          : '',)
+      .map(
+        (word) => word.isNotEmpty
+            ? '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}'
+            : '',
+      )
       .join(' ');
 }
 

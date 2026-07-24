@@ -3,13 +3,25 @@ String? validateRequired(String? value, [String field = 'This field']) {
   return null;
 }
 
-String? validateMinLength(String? value, int min, [String field = 'This field']) {
-  if (value != null && value.length < min) return '$field must be at least $min characters';
+String? validateMinLength(
+  String? value,
+  int min, [
+  String field = 'This field',
+]) {
+  if (value != null && value.length < min) {
+    return '$field must be at least $min characters';
+  }
   return null;
 }
 
-String? validateMaxLength(String? value, int max, [String field = 'This field']) {
-  if (value != null && value.length > max) return '$field must be at most $max characters';
+String? validateMaxLength(
+  String? value,
+  int max, [
+  String field = 'This field',
+]) {
+  if (value != null && value.length > max) {
+    return '$field must be at most $max characters';
+  }
   return null;
 }
 

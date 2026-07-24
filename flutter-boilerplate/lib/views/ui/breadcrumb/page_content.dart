@@ -12,7 +12,10 @@ class BreadcrumbDemoPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [
-          Text('Basic Breadcrumb', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            'Basic Breadcrumb',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           SizedBox(height: 8),
           BreadcrumbWidget(
             items: [
@@ -22,7 +25,10 @@ class BreadcrumbDemoPage extends StatelessWidget {
             ],
           ),
           SizedBox(height: 24),
-          Text('With Icons', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            'With Icons',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           SizedBox(height: 8),
           BreadcrumbWidget(
             items: [

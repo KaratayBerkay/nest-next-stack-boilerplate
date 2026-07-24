@@ -14,21 +14,33 @@ void main() {
 
   testWidgets('shows success toast', (tester) async {
     await pumpTestApp(tester, const SizedBox());
-    showToast(tester.element(find.byType(SizedBox)), 'Success', type: ToastType.success);
+    showToast(
+      tester.element(find.byType(SizedBox)),
+      'Success',
+      type: ToastType.success,
+    );
     await tester.pump();
     expect(find.text('Success'), findsOneWidget);
   });
 
   testWidgets('shows error toast', (tester) async {
     await pumpTestApp(tester, const SizedBox());
-    showToast(tester.element(find.byType(SizedBox)), 'Error', type: ToastType.error);
+    showToast(
+      tester.element(find.byType(SizedBox)),
+      'Error',
+      type: ToastType.error,
+    );
     await tester.pump();
     expect(find.text('Error'), findsOneWidget);
   });
 
   testWidgets('shows warning toast', (tester) async {
     await pumpTestApp(tester, const SizedBox());
-    showToast(tester.element(find.byType(SizedBox)), 'Warning', type: ToastType.warning);
+    showToast(
+      tester.element(find.byType(SizedBox)),
+      'Warning',
+      type: ToastType.warning,
+    );
     await tester.pump();
     expect(find.text('Warning'), findsOneWidget);
   });
@@ -39,6 +51,4 @@ void main() {
     await tester.pump();
     expect(find.text('Info'), findsOneWidget);
   });
-
-
 }

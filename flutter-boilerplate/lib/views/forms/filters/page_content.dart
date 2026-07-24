@@ -10,10 +10,12 @@ class FormsFiltersPageContent extends ConsumerStatefulWidget {
   const FormsFiltersPageContent({super.key, required this.lang});
 
   @override
-  ConsumerState<FormsFiltersPageContent> createState() => _FormsFiltersPageContentState();
+  ConsumerState<FormsFiltersPageContent> createState() =>
+      _FormsFiltersPageContentState();
 }
 
-class _FormsFiltersPageContentState extends ConsumerState<FormsFiltersPageContent> {
+class _FormsFiltersPageContentState
+    extends ConsumerState<FormsFiltersPageContent> {
   final _formKey = GlobalKey<FormState>();
   String _category = 'all';
   String _sort = 'newest';
@@ -40,7 +42,13 @@ class _FormsFiltersPageContentState extends ConsumerState<FormsFiltersPageConten
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Filter Controls', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    const Text(
+                      'Filter Controls',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     FormTextField(
                       controller: _searchCtrl,
@@ -52,24 +60,51 @@ class _FormsFiltersPageContentState extends ConsumerState<FormsFiltersPageConten
                     DropdownButtonFormField<String>(
                       initialValue: _category,
                       items: const [
-                        DropdownMenuItem(value: 'all', child: Text('All Categories')),
-                        DropdownMenuItem(value: 'tech', child: Text('Technology')),
-                        DropdownMenuItem(value: 'design', child: Text('Design')),
-                        DropdownMenuItem(value: 'business', child: Text('Business')),
+                        DropdownMenuItem(
+                          value: 'all',
+                          child: Text('All Categories'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'tech',
+                          child: Text('Technology'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'design',
+                          child: Text('Design'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'business',
+                          child: Text('Business'),
+                        ),
                       ],
                       onChanged: (v) => setState(() => _category = v!),
-                      decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                        labelText: 'Category',
+                        border: OutlineInputBorder(),
+                      ),
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
                       initialValue: _sort,
                       items: const [
-                        DropdownMenuItem(value: 'newest', child: Text('Newest First')),
-                        DropdownMenuItem(value: 'oldest', child: Text('Oldest First')),
-                        DropdownMenuItem(value: 'popular', child: Text('Most Popular')),
+                        DropdownMenuItem(
+                          value: 'newest',
+                          child: Text('Newest First'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'oldest',
+                          child: Text('Oldest First'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'popular',
+                          child: Text('Most Popular'),
+                        ),
                       ],
                       onChanged: (v) => setState(() => _sort = v!),
-                      decoration: const InputDecoration(labelText: 'Sort By', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                        labelText: 'Sort By',
+                        border: OutlineInputBorder(),
+                      ),
                     ),
                   ],
                 ),

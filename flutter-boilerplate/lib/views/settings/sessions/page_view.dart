@@ -25,7 +25,9 @@ class SettingsSessionsPageContent extends ConsumerWidget {
               try {
                 await ref.read(sessionActionsProvider).revokeOthers();
                 ref.invalidate(sessionsProvider);
-                if (context.mounted) showToast(context, 'Other sessions revoked');
+                if (context.mounted) {
+                  showToast(context, 'Other sessions revoked');
+                }
               } catch (e) {
                 if (context.mounted) showToast(context, 'Failed: $e');
               }
@@ -39,37 +41,58 @@ class SettingsSessionsPageContent extends ConsumerWidget {
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (sessions) => ListView(
           padding: const EdgeInsets.all(16),
-          children: sessions.map((s) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Card(
-              child: ListTile(
-                leading: Icon(
-                  s.isCurrent ? Icons.devices : Icons.device_unknown,
-                  color: s.isCurrent ? colors.brand : colors.fgMuted,
-                ),
-                title: Text(s.device),
-                subtitle: Text('${s.location} · ${s.lastActive}',
-                    style: TextStyle(color: colors.fgMuted, fontSize: 12),),
-                trailing: s.isCurrent
-                    ? Badge(
-                        label: Text('Current', style: TextStyle(fontSize: 11, color: colors.surface)),
-                        backgroundColor: colors.success,
-                      )
-                    : TextButton(
-                        onPressed: () async {
-                          try {
-                            await ref.read(sessionActionsProvider).revoke(s.id);
-                            ref.invalidate(sessionsProvider);
-                            if (context.mounted) showToast(context, 'Session revoked');
-                          } catch (e) {
-                            if (context.mounted) showToast(context, 'Failed: $e');
-                          }
-                        },
-                        child: const Text('Revoke', style: TextStyle(fontSize: 12)),
+          children: sessions
+              .map(
+                (s) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Card(
+                    child: ListTile(
+                      leading: Icon(
+                        s.isCurrent ? Icons.devices : Icons.device_unknown,
+                        color: s.isCurrent ? colors.brand : colors.fgMuted,
                       ),
-              ),
-            ),
-          ),).toList(),
+                      title: Text(s.device),
+                      subtitle: Text(
+                        '${s.location} · ${s.lastActive}',
+                        style: TextStyle(color: colors.fgMuted, fontSize: 12),
+                      ),
+                      trailing: s.isCurrent
+                          ? Badge(
+                              label: Text(
+                                'Current',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: colors.surface,
+                                ),
+                              ),
+                              backgroundColor: colors.success,
+                            )
+                          : TextButton(
+                              onPressed: () async {
+                                try {
+                                  await ref
+                                      .read(sessionActionsProvider)
+                                      .revoke(s.id);
+                                  ref.invalidate(sessionsProvider);
+                                  if (context.mounted) {
+                                    showToast(context, 'Session revoked');
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    showToast(context, 'Failed: $e');
+                                  }
+                                }
+                              },
+                              child: const Text(
+                                'Revoke',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                            ),
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
         ),
       ),
     );

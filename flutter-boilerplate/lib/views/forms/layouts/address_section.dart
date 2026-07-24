@@ -10,7 +10,10 @@ class AddressSection extends StatelessWidget {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Address', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+        Text(
+          'Address',
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+        ),
         SizedBox(height: 8),
         Input(label: 'Street Address'),
         SizedBox(height: 8),

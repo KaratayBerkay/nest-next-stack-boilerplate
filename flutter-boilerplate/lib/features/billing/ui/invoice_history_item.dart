@@ -42,11 +42,19 @@ class InvoiceHistoryItem extends StatelessWidget {
             ),
             Expanded(
               flex: 2,
-              child: _StatusBadge(status: status, colors: colors, typography: typography),
+              child: _StatusBadge(
+                status: status,
+                colors: colors,
+                typography: typography,
+              ),
             ),
             if (onDownload != null)
               IconButton(
-                icon: Icon(Icons.download_rounded, size: 18, color: colors.fgMuted),
+                icon: Icon(
+                  Icons.download_rounded,
+                  size: 18,
+                  color: colors.fgMuted,
+                ),
                 onPressed: onDownload,
                 constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                 padding: EdgeInsets.zero,
@@ -72,10 +80,26 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (Color bg, Color fg, String label) = switch (status) {
-      InvoiceStatus.paid => (colors.success.withValues(alpha: 0.1), colors.success, 'Paid'),
-      InvoiceStatus.pending => (colors.warning.withValues(alpha: 0.1), colors.warning, 'Pending'),
-      InvoiceStatus.failed => (colors.danger.withValues(alpha: 0.1), colors.danger, 'Failed'),
-      InvoiceStatus.cancelled => (colors.fgMuted.withValues(alpha: 0.1), colors.fgMuted, 'Cancelled'),
+      InvoiceStatus.paid => (
+          colors.success.withValues(alpha: 0.1),
+          colors.success,
+          'Paid'
+        ),
+      InvoiceStatus.pending => (
+          colors.warning.withValues(alpha: 0.1),
+          colors.warning,
+          'Pending'
+        ),
+      InvoiceStatus.failed => (
+          colors.danger.withValues(alpha: 0.1),
+          colors.danger,
+          'Failed'
+        ),
+      InvoiceStatus.cancelled => (
+          colors.fgMuted.withValues(alpha: 0.1),
+          colors.fgMuted,
+          'Cancelled'
+        ),
     };
 
     return Container(
@@ -86,7 +110,8 @@ class _StatusBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: typography.caption.copyWith(color: fg, fontWeight: FontWeight.w600),
+        style:
+            typography.caption.copyWith(color: fg, fontWeight: FontWeight.w600),
       ),
     );
   }

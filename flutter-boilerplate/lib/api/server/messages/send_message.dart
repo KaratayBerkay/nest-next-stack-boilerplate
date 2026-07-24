@@ -5,7 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../constants/api/urls.dart';
 import '../../../types/messages/message.dart';
 
-final sendMessageServerProvider = Provider((ref) => SendMessageServer(ref.read(dioProvider)));
+final sendMessageServerProvider =
+    Provider((ref) => SendMessageServer(ref.read(dioProvider)));
 
 class SendMessageServer {
   final Dio _dio;

@@ -10,24 +10,24 @@ class SettingsLoadingFallback extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-           _SkeletonLine(width: 100),
+          _SkeletonLine(width: 100),
           SizedBox(height: 24),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-               _SkeletonLine(width: 60, height: 12),
+              _SkeletonLine(width: 60, height: 12),
               SizedBox(height: 6),
-               _SkeletonLine(height: 36),
+              _SkeletonLine(height: 36),
               SizedBox(height: 16),
-               _SkeletonLine(width: 80, height: 12),
+              _SkeletonLine(width: 80, height: 12),
               SizedBox(height: 6),
-               _SkeletonLine(height: 36),
+              _SkeletonLine(height: 36),
               SizedBox(height: 16),
-               _SkeletonLine(width: 48, height: 12),
+              _SkeletonLine(width: 48, height: 12),
               SizedBox(height: 6),
-               _SkeletonLine(height: 80),
+              _SkeletonLine(height: 80),
               SizedBox(height: 16),
-               _SkeletonLine(width: 100, height: 36),
+              _SkeletonLine(width: 100, height: 36),
             ],
           ),
         ],
@@ -39,7 +39,7 @@ class SettingsLoadingFallback extends StatelessWidget {
 class _SkeletonLine extends StatelessWidget {
   final double? width;
   final double height;
-  const  _SkeletonLine({this.width, this.height = 16});
+  const _SkeletonLine({this.width, this.height = 16});
 
   @override
   Widget build(BuildContext context) {

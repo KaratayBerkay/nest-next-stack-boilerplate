@@ -3,7 +3,8 @@ import 'package:go_router/go_router.dart';
 
 class DeepLinkService {
   final GoRouter router;
-  final StreamController<String> _linkController = StreamController<String>.broadcast();
+  final StreamController<String> _linkController =
+      StreamController<String>.broadcast();
 
   DeepLinkService({required this.router});
 

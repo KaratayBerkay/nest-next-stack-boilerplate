@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../api/client/auth/actions.dart';
-import '../../api/server/auth/login.dart';
 import '../../constants/theme.dart';
 import '../../hooks/use_auth.dart';
+import '../../types/auth/auth_request_types.dart';
 
 class LoginForm extends ConsumerStatefulWidget {
   const LoginForm({super.key});
@@ -49,9 +49,11 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     setState(() => _submitting = true);
     try {
       final response = await ref.read(loginActionsProvider).login(
-        LoginRequest(email: email, password: password),
-      );
-      await ref.read(authProvider.notifier).setSession(response.accessToken, response.user);
+            LoginRequest(email: email, password: password),
+          );
+      await ref
+          .read(authProvider.notifier)
+          .setSession(response.accessToken, response.user);
       if (mounted) context.go('/v1/en/feed');
     } catch (err) {
       setState(() => _fieldErrors['form'] = err.toString());
@@ -69,8 +71,11 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     setState(() => _mfaSubmitting = true);
     try {
       await ref.read(loginActionsProvider).login(
-        LoginRequest(email: _emailController.text.trim(), password: _passwordController.text),
-      );
+            LoginRequest(
+              email: _emailController.text.trim(),
+              password: _passwordController.text,
+            ),
+          );
       if (mounted) context.go('/v1/en/feed');
     } catch (err) {
       setState(() => _mfaError = err.toString());
@@ -90,7 +95,10 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     return Form(
       child: Column(
         children: [
-          Text('Sign In', style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600)),
+          Text(
+            'Sign In',
+            style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: 16),
           TextField(
             controller: _emailController,
@@ -115,13 +123,19 @@ class _LoginFormState extends ConsumerState<LoginForm> {
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: () => context.go('/auth/forgot-password'),
-              child: const Text('Forgot password?', style: TextStyle(fontSize: 12)),
+              child: const Text(
+                'Forgot password?',
+                style: TextStyle(fontSize: 12),
+              ),
             ),
           ),
           if (_fieldErrors.containsKey('form'))
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: Text(_fieldErrors['form']!, style: TextStyle(color: colors.danger, fontSize: 13)),
+              child: Text(
+                _fieldErrors['form']!,
+                style: TextStyle(color: colors.danger, fontSize: 13),
+              ),
             ),
           FilledButton(
             onPressed: _submitting ? null : _handleLogin,
@@ -131,7 +145,10 @@ class _LoginFormState extends ConsumerState<LoginForm> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text("Don't have an account?", style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+              Text(
+                "Don't have an account?",
+                style: TextStyle(color: colors.fgMuted, fontSize: 12),
+              ),
               TextButton(
                 onPressed: () => context.go('/auth/register'),
                 child: const Text('Register', style: TextStyle(fontSize: 12)),
@@ -146,10 +163,15 @@ class _LoginFormState extends ConsumerState<LoginForm> {
   Widget _buildMfaForm(AppColors colors) {
     return Column(
       children: [
-        Text('Two-Factor Authentication', style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600)),
+        Text(
+          'Two-Factor Authentication',
+          style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 8),
-        Text('Enter the 6-digit code from your authenticator app.',
-            style: TextStyle(color: colors.fgMuted, fontSize: 12),),
+        Text(
+          'Enter the 6-digit code from your authenticator app.',
+          style: TextStyle(color: colors.fgMuted, fontSize: 12),
+        ),
         const SizedBox(height: 16),
         TextField(
           controller: _mfaController,
@@ -168,7 +190,10 @@ class _LoginFormState extends ConsumerState<LoginForm> {
         ),
         TextButton(
           onPressed: () => setState(() => _mfaToken = null),
-          child: const Text('Use a different account', style: TextStyle(fontSize: 12)),
+          child: const Text(
+            'Use a different account',
+            style: TextStyle(fontSize: 12),
+          ),
         ),
       ],
     );

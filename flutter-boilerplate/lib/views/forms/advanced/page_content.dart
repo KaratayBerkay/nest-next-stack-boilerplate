@@ -11,10 +11,12 @@ class FormsAdvancedPageContent extends ConsumerStatefulWidget {
   const FormsAdvancedPageContent({super.key, required this.lang});
 
   @override
-  ConsumerState<FormsAdvancedPageContent> createState() => _FormsAdvancedPageContentState();
+  ConsumerState<FormsAdvancedPageContent> createState() =>
+      _FormsAdvancedPageContentState();
 }
 
-class _FormsAdvancedPageContentState extends ConsumerState<FormsAdvancedPageContent> {
+class _FormsAdvancedPageContentState
+    extends ConsumerState<FormsAdvancedPageContent> {
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
@@ -30,7 +32,6 @@ class _FormsAdvancedPageContentState extends ConsumerState<FormsAdvancedPageCont
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(title: const Text('Advanced Patterns')),
       body: ListView(
@@ -44,13 +45,32 @@ class _FormsAdvancedPageContentState extends ConsumerState<FormsAdvancedPageCont
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Personal Info', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    const Text(
+                      'Personal Info',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 12),
-                    FormTextField(controller: _nameCtrl, label: 'Name', validator: auth.validateName),
+                    FormTextField(
+                      controller: _nameCtrl,
+                      label: 'Name',
+                      validator: auth.validateName,
+                    ),
                     const SizedBox(height: 8),
-                    FormTextField(controller: _emailCtrl, label: 'Email', validator: auth.validateEmail),
+                    FormTextField(
+                      controller: _emailCtrl,
+                      label: 'Email',
+                      validator: auth.validateEmail,
+                    ),
                     const SizedBox(height: 8),
-                    FormTextField(controller: _bioCtrl, label: 'Bio', maxLines: 3, validator: (v) => forms.validateRequired(v, 'Bio')),
+                    FormTextField(
+                      controller: _bioCtrl,
+                      label: 'Bio',
+                      maxLines: 3,
+                      validator: (v) => forms.validateRequired(v, 'Bio'),
+                    ),
                     const SizedBox(height: 12),
                     FilledButton(
                       onPressed: () {

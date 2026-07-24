@@ -3,17 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../api/client/auth/actions.dart';
-import '../../../api/server/auth/login.dart';
-import '../../../api/server/auth/register.dart';
 import '../../../components/ui/form_text_field.dart';
 import '../../../hooks/use_auth.dart';
+import '../../../types/auth/auth_request_types.dart';
 import '../../../validators/auth/schema.dart';
 
 class RegisterPageContent extends ConsumerStatefulWidget {
   const RegisterPageContent({super.key});
 
   @override
-  ConsumerState<RegisterPageContent> createState() => _RegisterPageContentState();
+  ConsumerState<RegisterPageContent> createState() =>
+      _RegisterPageContentState();
 }
 
 class _RegisterPageContentState extends ConsumerState<RegisterPageContent> {
@@ -33,8 +33,10 @@ class _RegisterPageContentState extends ConsumerState<RegisterPageContent> {
   }
 
   Future<void> _handleRegister() async {
-
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
 
     try {
       final actions = ref.read(loginActionsProvider);
@@ -45,9 +47,12 @@ class _RegisterPageContentState extends ConsumerState<RegisterPageContent> {
       );
       await actions.register(request);
 
-      final loginReq = LoginRequest(email: _emailCtrl.text, password: _passwordCtrl.text);
+      final loginReq =
+          LoginRequest(email: _emailCtrl.text, password: _passwordCtrl.text);
       final loginRes = await actions.login(loginReq);
-      await ref.read(authProvider.notifier).setSession(loginRes.accessToken, loginRes.user);
+      await ref
+          .read(authProvider.notifier)
+          .setSession(loginRes.accessToken, loginRes.user);
 
       if (mounted) context.go('/v1/en/feed');
     } catch (e) {
@@ -91,13 +96,26 @@ class _RegisterPageContentState extends ConsumerState<RegisterPageContent> {
                 if (_error != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
-                    child: Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 13)),
+                    child: Text(
+                      _error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                        fontSize: 13,
+                      ),
+                    ),
                   ),
                 const SizedBox(height: 20),
                 FilledButton(
                   onPressed: _loading ? null : _handleRegister,
                   child: _loading
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
                       : const Text('Create Account'),
                 ),
                 TextButton(

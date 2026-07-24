@@ -23,11 +23,15 @@ class I18nNotFoundPage extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('404', style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold)),
+              const Text(
+                '404',
+                style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 12),
               Text(
                 description ?? 'Page not found',
-                style: TextStyle(color: colors.onSurface.withValues(alpha: 0.6)),
+                style:
+                    TextStyle(color: colors.onSurface.withValues(alpha: 0.6)),
               ),
               if (onBack != null) ...[
                 const SizedBox(height: 16),

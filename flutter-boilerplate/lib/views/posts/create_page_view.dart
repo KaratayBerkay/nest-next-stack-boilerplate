@@ -23,7 +23,9 @@ class PostCreatePageContent extends ConsumerWidget {
               final title = titleController.text.trim();
               final content = contentController.text.trim();
               if (title.isEmpty || content.isEmpty) return;
-              await ref.read(postActionsProvider).create(title: title, content: content);
+              await ref
+                  .read(postActionsProvider)
+                  .create(title: title, content: content);
               if (context.mounted) context.pop();
             },
             child: const Text('Post'),

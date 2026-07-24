@@ -59,9 +59,13 @@ class _TabNavState extends State<TabNav> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color: isActive ? colors.surfaceContainerHighest : Colors.transparent,
+                  color: isActive
+                      ? colors.surfaceContainerHighest
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(6),
-                  border: isActive ? Border.all(color: colors.outlineVariant) : null,
+                  border: isActive
+                      ? Border.all(color: colors.outlineVariant)
+                      : null,
                 ),
                 child: Text(
                   item.title,
@@ -69,7 +73,9 @@ class _TabNavState extends State<TabNav> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: isActive ? colors.onSurface : colors.onSurface.withValues(alpha: 0.6),
+                    color: isActive
+                        ? colors.onSurface
+                        : colors.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
               ),
@@ -89,7 +95,9 @@ class _TabNavState extends State<TabNav> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: _accordionOpen ? colors.surfaceContainerHighest : colors.surface,
+              color: _accordionOpen
+                  ? colors.surfaceContainerHighest
+                  : colors.surface,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: colors.outlineVariant),
             ),
@@ -101,13 +109,19 @@ class _TabNavState extends State<TabNav> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: _accordionOpen ? colors.onSurface : colors.onSurface.withValues(alpha: 0.6),
+                    color: _accordionOpen
+                        ? colors.onSurface
+                        : colors.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
                 AnimatedRotation(
                   turns: _accordionOpen ? 0.5 : 0,
                   duration: const Duration(milliseconds: 200),
-                  child: Icon(Icons.expand_more, size: 16, color: colors.onSurface),
+                  child: Icon(
+                    Icons.expand_more,
+                    size: 16,
+                    color: colors.onSurface,
+                  ),
                 ),
               ],
             ),
@@ -130,13 +144,18 @@ class _TabNavState extends State<TabNav> {
                     setState(() => _accordionOpen = false);
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
                     child: Text(
                       item.title,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: isActive ? colors.onSurface : colors.onSurface.withValues(alpha: 0.6),
+                        color: isActive
+                            ? colors.onSurface
+                            : colors.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
                   ),

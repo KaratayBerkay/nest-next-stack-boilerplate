@@ -30,7 +30,8 @@ class Session {
   }
 }
 
-final sessionsListServerProvider = Provider((ref) => SessionsListServer(ref.read(dioProvider)));
+final sessionsListServerProvider =
+    Provider((ref) => SessionsListServer(ref.read(dioProvider)));
 
 class SessionsListServer {
   final Dio _dio;
@@ -40,6 +41,8 @@ class SessionsListServer {
   Future<List<Session>> call() async {
     final response = await _dio.get<dynamic>(Urls.sessionsList);
     final list = response.data as List<dynamic>;
-    return list.map((e) => Session.fromJson(e as Map<String, dynamic>)).toList();
+    return list
+        .map((e) => Session.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }

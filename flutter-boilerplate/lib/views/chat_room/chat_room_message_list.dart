@@ -26,8 +26,10 @@ class ChatRoomMessageList extends StatelessWidget {
 
     if (msgsError) {
       return const Center(
-        child: Text('Failed to load messages',
-            style: TextStyle(color: Colors.red, fontSize: 12),),
+        child: Text(
+          'Failed to load messages',
+          style: TextStyle(color: Colors.red, fontSize: 12),
+        ),
       );
     }
 
@@ -76,7 +78,8 @@ class ChatRoomMessageList extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: colors.success,
                               shape: BoxShape.circle,
-                              border: Border.all(color: colors.surface, width: 1.5),
+                              border:
+                                  Border.all(color: colors.surface, width: 1.5),
                             ),
                           ),
                         ),
@@ -85,9 +88,8 @@ class ChatRoomMessageList extends StatelessWidget {
                 ),
               Flexible(
                 child: Column(
-                  crossAxisAlignment: isMe
-                      ? CrossAxisAlignment.end
-                      : CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                      isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                   children: [
                     if (!isMe)
                       Padding(
@@ -103,7 +105,9 @@ class ChatRoomMessageList extends StatelessWidget {
                       ),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6,),
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: isMe ? colors.brand : colors.surfaceAlt,
                         borderRadius: BorderRadius.circular(12).copyWith(
@@ -114,8 +118,7 @@ class ChatRoomMessageList extends StatelessWidget {
                         ),
                       ),
                       constraints: BoxConstraints(
-                        maxWidth:
-                            MediaQuery.of(context).size.width * 0.7,
+                        maxWidth: MediaQuery.of(context).size.width * 0.7,
                       ),
                       child: Text(
                         msg.content,

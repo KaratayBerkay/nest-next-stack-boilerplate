@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../api/server/admin/audit_logs.dart';
 import '../../../constants/theme.dart';
+import '../../../types/admin/audit_types.dart';
 import 'audit_logs_diff_view.dart';
 
 String _formatDate(DateTime d) {
@@ -15,11 +15,18 @@ String _formatDate(DateTime d) {
 
 Color _levelColor(String level, AppColors colors) {
   switch (level.toUpperCase()) {
-    case 'ERROR': case 'FATAL': return colors.danger;
-    case 'WARN': return colors.warning;
-    case 'INFO': return colors.info;
-    case 'DEBUG': case 'TRACE': return colors.fgMuted;
-    default: return colors.fgMuted;
+    case 'ERROR':
+    case 'FATAL':
+      return colors.danger;
+    case 'WARN':
+      return colors.warning;
+    case 'INFO':
+      return colors.info;
+    case 'DEBUG':
+    case 'TRACE':
+      return colors.fgMuted;
+    default:
+      return colors.fgMuted;
   }
 }
 
@@ -69,7 +76,8 @@ class _AuditLogsTableState extends State<AuditLogsTable> {
           child: ListView.separated(
             padding: const EdgeInsets.all(8),
             itemCount: widget.items.length + 1,
-            separatorBuilder: (_, __) => Divider(height: 1, color: colors.border),
+            separatorBuilder: (_, __) =>
+                Divider(height: 1, color: colors.border),
             itemBuilder: (_, i) {
               if (i == widget.items.length) {
                 return const SizedBox(height: 56);
@@ -98,12 +106,18 @@ class _AuditLogsTableState extends State<AuditLogsTable> {
               children: [
                 IconButton(
                   icon: const Icon(Icons.chevron_left),
-                  onPressed: widget.currentPage > 0 ? widget.onPreviousPage : null,
+                  onPressed:
+                      widget.currentPage > 0 ? widget.onPreviousPage : null,
                 ),
-                Text('Page ${widget.currentPage + 1} of ${widget.totalPages}', style: const TextStyle(fontSize: 13)),
+                Text(
+                  'Page ${widget.currentPage + 1} of ${widget.totalPages}',
+                  style: const TextStyle(fontSize: 13),
+                ),
                 IconButton(
                   icon: const Icon(Icons.chevron_right),
-                  onPressed: widget.currentPage < widget.totalPages - 1 ? widget.onNextPage : null,
+                  onPressed: widget.currentPage < widget.totalPages - 1
+                      ? widget.onNextPage
+                      : null,
                 ),
               ],
             ),
@@ -118,7 +132,11 @@ class _AuditLogTableRow extends StatelessWidget {
   final bool isExpanded;
   final VoidCallback onToggle;
 
-  const _AuditLogTableRow({required this.log, required this.isExpanded, required this.onToggle});
+  const _AuditLogTableRow({
+    required this.log,
+    required this.isExpanded,
+    required this.onToggle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -133,25 +151,39 @@ class _AuditLogTableRow extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: _levelColor(log.level, colors).withValues(alpha: 0.15),
+                    color:
+                        _levelColor(log.level, colors).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Text(log.level, style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: _levelColor(log.level, colors),
-                  ),),
+                  child: Text(
+                    log.level,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: _levelColor(log.level, colors),
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(log.action, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                      Text(
+                        log.action,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       if (log.actor != null)
-                        Text('by ${log.actor!.name}', style: TextStyle(fontSize: 11, color: colors.fgMuted)),
+                        Text(
+                          'by ${log.actor!.name}',
+                          style: TextStyle(fontSize: 11, color: colors.fgMuted),
+                        ),
                     ],
                   ),
                 ),
@@ -159,15 +191,24 @@ class _AuditLogTableRow extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         border: Border.all(color: colors.border),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Text(log.entityType, style: TextStyle(fontSize: 10, color: colors.fgMuted)),
+                      child: Text(
+                        log.entityType,
+                        style: TextStyle(fontSize: 10, color: colors.fgMuted),
+                      ),
                     ),
                   ),
-                Text(_formatDate(log.createdAt), style: TextStyle(fontSize: 11, color: colors.fgMuted)),
+                Text(
+                  _formatDate(log.createdAt),
+                  style: TextStyle(fontSize: 11, color: colors.fgMuted),
+                ),
                 const SizedBox(width: 4),
                 Icon(
                   isExpanded ? Icons.expand_less : Icons.expand_more,
@@ -204,7 +245,10 @@ class _AuditLogTableDetail extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (log.actor != null) ...[
-            _DetailRow(label: 'Actor', value: '${log.actor!.name} (${log.actor!.email})'),
+            _DetailRow(
+              label: 'Actor',
+              value: '${log.actor!.name} (${log.actor!.email})',
+            ),
             const SizedBox(height: 4),
           ],
           if (log.summary != null) ...[
@@ -247,7 +291,14 @@ class _DetailRow extends StatelessWidget {
       children: [
         SizedBox(
           width: 80,
-          child: Text(label, style: TextStyle(fontSize: 11, color: colors.fgMuted, fontWeight: FontWeight.w500)),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: colors.fgMuted,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ),
         Expanded(child: Text(value, style: const TextStyle(fontSize: 11))),
       ],

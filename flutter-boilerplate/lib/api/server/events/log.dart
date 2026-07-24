@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
 
-final eventsLogServerProvider = Provider((ref) => EventsLogServer(ref.read(dioProvider)));
+final eventsLogServerProvider =
+    Provider((ref) => EventsLogServer(ref.read(dioProvider)));
 
 class EventsLogServer {
   final Dio _dio;
@@ -12,9 +13,12 @@ class EventsLogServer {
   EventsLogServer(this._dio);
 
   Future<void> call(String event, Map<String, dynamic>? properties) async {
-    await _dio.post<dynamic>(Urls.events, data: {
-      'event': event,
-      'properties': properties ?? {},
-    },);
+    await _dio.post<dynamic>(
+      Urls.events,
+      data: {
+        'event': event,
+        'properties': properties ?? {},
+      },
+    );
   }
 }

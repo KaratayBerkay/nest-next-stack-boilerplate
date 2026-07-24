@@ -38,9 +38,9 @@ class _VerifyEmailFormState extends ConsumerState<VerifyEmailForm> {
     } catch (err) {
       if (mounted) {
         setState(() {
-        _status = 'error';
-        _errorMsg = err.toString();
-      });
+          _status = 'error';
+          _errorMsg = err.toString();
+        });
       }
     }
   }
@@ -51,20 +51,32 @@ class _VerifyEmailFormState extends ConsumerState<VerifyEmailForm> {
 
     return Column(
       children: [
-        Text('Verify Email', style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600)),
+        Text(
+          'Verify Email',
+          style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 12),
         if (_status == 'verifying')
           const CircularProgressIndicator()
         else if (_status == 'success')
           Column(
             children: [
-              Text('Email verified successfully!', style: TextStyle(color: colors.success, fontSize: 14)),
+              Text(
+                'Email verified successfully!',
+                style: TextStyle(color: colors.success, fontSize: 14),
+              ),
               const SizedBox(height: 12),
-              TextButton(onPressed: () => context.go('/auth/login'), child: const Text('Sign In')),
+              TextButton(
+                onPressed: () => context.go('/auth/login'),
+                child: const Text('Sign In'),
+              ),
             ],
           )
         else
-          Text(_errorMsg ?? 'Verification failed', style: TextStyle(color: colors.danger, fontSize: 14)),
+          Text(
+            _errorMsg ?? 'Verification failed',
+            style: TextStyle(color: colors.danger, fontSize: 14),
+          ),
       ],
     );
   }

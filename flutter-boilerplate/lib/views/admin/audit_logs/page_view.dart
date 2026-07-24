@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/riverpod_compat.dart';
 
 import '../../../api/client/admin/query.dart';
-import '../../../api/server/admin/audit_logs.dart';
 import '../../../constants/theme.dart';
-
+import '../../../types/admin/audit_types.dart';
 
 String _formatDate(DateTime d) {
   final now = DateTime.now();
@@ -17,11 +16,18 @@ String _formatDate(DateTime d) {
 
 Color _levelColor(String level, AppColors colors) {
   switch (level.toUpperCase()) {
-    case 'ERROR': case 'FATAL': return colors.danger;
-    case 'WARN': return colors.warning;
-    case 'INFO': return colors.info;
-    case 'DEBUG': case 'TRACE': return colors.fgMuted;
-    default: return colors.fgMuted;
+    case 'ERROR':
+    case 'FATAL':
+      return colors.danger;
+    case 'WARN':
+      return colors.warning;
+    case 'INFO':
+      return colors.info;
+    case 'DEBUG':
+    case 'TRACE':
+      return colors.fgMuted;
+    default:
+      return colors.fgMuted;
   }
 }
 
@@ -31,10 +37,12 @@ class AdminAuditLogsPageContent extends ConsumerStatefulWidget {
   const AdminAuditLogsPageContent({super.key, required this.lang});
 
   @override
-  ConsumerState<AdminAuditLogsPageContent> createState() => _AdminAuditLogsPageContentState();
+  ConsumerState<AdminAuditLogsPageContent> createState() =>
+      _AdminAuditLogsPageContentState();
 }
 
-class _AdminAuditLogsPageContentState extends ConsumerState<AdminAuditLogsPageContent> {
+class _AdminAuditLogsPageContentState
+    extends ConsumerState<AdminAuditLogsPageContent> {
   String _actionFilter = '';
   String _levelFilter = '';
   final _entityController = TextEditingController();
@@ -42,15 +50,33 @@ class _AdminAuditLogsPageContentState extends ConsumerState<AdminAuditLogsPageCo
   String? _expandedId;
 
   static const _pageSize = 50;
-  static const _actions = ['', 'CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'SET_TIER', 'API_KEY'];
-  static const _levels = ['', 'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'];
+  static const _actions = [
+    '',
+    'CREATE',
+    'UPDATE',
+    'DELETE',
+    'LOGIN',
+    'LOGOUT',
+    'SET_TIER',
+    'API_KEY',
+  ];
+  static const _levels = [
+    '',
+    'TRACE',
+    'DEBUG',
+    'INFO',
+    'WARN',
+    'ERROR',
+    'FATAL',
+  ];
 
   AuditLogParams _buildParams() {
     return AuditLogParams(
       skip: _page * _pageSize,
       action: _actionFilter.isEmpty ? null : _actionFilter,
       level: _levelFilter.isEmpty ? null : _levelFilter,
-      entityType: _entityController.text.isEmpty ? null : _entityController.text.trim(),
+      entityType:
+          _entityController.text.isEmpty ? null : _entityController.text.trim(),
     );
   }
 
@@ -88,10 +114,17 @@ class _AdminAuditLogsPageContentState extends ConsumerState<AdminAuditLogsPageCo
                 DropdownButton<String>(
                   value: _actionFilter,
                   underline: const SizedBox(),
-                  items: _actions.map((a) => DropdownMenuItem(
-                    value: a,
-                    child: Text(a.isEmpty ? 'All actions' : a, style: const TextStyle(fontSize: 13)),
-                  ),).toList(),
+                  items: _actions
+                      .map(
+                        (a) => DropdownMenuItem(
+                          value: a,
+                          child: Text(
+                            a.isEmpty ? 'All actions' : a,
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        ),
+                      )
+                      .toList(),
                   onChanged: (v) {
                     if (v == null) return;
                     setState(() => _actionFilter = v);
@@ -101,10 +134,17 @@ class _AdminAuditLogsPageContentState extends ConsumerState<AdminAuditLogsPageCo
                 DropdownButton<String>(
                   value: _levelFilter,
                   underline: const SizedBox(),
-                  items: _levels.map((l) => DropdownMenuItem(
-                    value: l,
-                    child: Text(l.isEmpty ? 'All levels' : l, style: const TextStyle(fontSize: 13)),
-                  ),).toList(),
+                  items: _levels
+                      .map(
+                        (l) => DropdownMenuItem(
+                          value: l,
+                          child: Text(
+                            l.isEmpty ? 'All levels' : l,
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        ),
+                      )
+                      .toList(),
                   onChanged: (v) {
                     if (v == null) return;
                     setState(() => _levelFilter = v);
@@ -119,9 +159,14 @@ class _AdminAuditLogsPageContentState extends ConsumerState<AdminAuditLogsPageCo
                     decoration: InputDecoration(
                       hintText: 'Entity type...',
                       prefixIcon: const Icon(Icons.search, size: 18),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                       isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 8,
+                      ),
                     ),
                   ),
                 ),
@@ -154,7 +199,10 @@ class _AdminAuditLogsPageContentState extends ConsumerState<AdminAuditLogsPageCo
                       children: [
                         Icon(Icons.history, size: 48, color: colors.fgMuted),
                         const SizedBox(height: 8),
-                        Text('No audit logs', style: TextStyle(color: colors.fgMuted)),
+                        Text(
+                          'No audit logs',
+                          style: TextStyle(color: colors.fgMuted),
+                        ),
                       ],
                     ),
                   );
@@ -168,7 +216,8 @@ class _AdminAuditLogsPageContentState extends ConsumerState<AdminAuditLogsPageCo
                       child: ListView.separated(
                         padding: const EdgeInsets.all(8),
                         itemCount: response.items.length + 1,
-                        separatorBuilder: (_, __) => Divider(height: 1, color: colors.border),
+                        separatorBuilder: (_, __) =>
+                            Divider(height: 1, color: colors.border),
                         itemBuilder: (_, i) {
                           if (i == response.items.length) {
                             return const SizedBox(height: 56);
@@ -179,7 +228,9 @@ class _AdminAuditLogsPageContentState extends ConsumerState<AdminAuditLogsPageCo
                             log: log,
                             isExpanded: isExpanded,
                             onToggle: () {
-                              setState(() => _expandedId = isExpanded ? null : log.id);
+                              setState(
+                                () => _expandedId = isExpanded ? null : log.id,
+                              );
                             },
                           );
                         },
@@ -187,7 +238,10 @@ class _AdminAuditLogsPageContentState extends ConsumerState<AdminAuditLogsPageCo
                     ),
                     if (totalPages > 1)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: colors.surfaceAlt,
                           border: Border(top: BorderSide(color: colors.border)),
@@ -197,16 +251,23 @@ class _AdminAuditLogsPageContentState extends ConsumerState<AdminAuditLogsPageCo
                           children: [
                             IconButton(
                               icon: const Icon(Icons.chevron_left),
-                              onPressed: _page > 0 ? () {
-                                setState(() => _page--);
-                              } : null,
+                              onPressed: _page > 0
+                                  ? () {
+                                      setState(() => _page--);
+                                    }
+                                  : null,
                             ),
-                            Text('Page ${_page + 1} of $totalPages', style: const TextStyle(fontSize: 13)),
+                            Text(
+                              'Page ${_page + 1} of $totalPages',
+                              style: const TextStyle(fontSize: 13),
+                            ),
                             IconButton(
                               icon: const Icon(Icons.chevron_right),
-                              onPressed: _page < totalPages - 1 ? () {
-                                setState(() => _page++);
-                              } : null,
+                              onPressed: _page < totalPages - 1
+                                  ? () {
+                                      setState(() => _page++);
+                                    }
+                                  : null,
                             ),
                           ],
                         ),
@@ -227,7 +288,11 @@ class _AuditLogRow extends StatelessWidget {
   final bool isExpanded;
   final VoidCallback onToggle;
 
-  const _AuditLogRow({required this.log, required this.isExpanded, required this.onToggle});
+  const _AuditLogRow({
+    required this.log,
+    required this.isExpanded,
+    required this.onToggle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -242,25 +307,39 @@ class _AuditLogRow extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: _levelColor(log.level, colors).withValues(alpha: 0.15),
+                    color:
+                        _levelColor(log.level, colors).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Text(log.level, style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: _levelColor(log.level, colors),
-                  ),),
+                  child: Text(
+                    log.level,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: _levelColor(log.level, colors),
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(log.action, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                      Text(
+                        log.action,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       if (log.actor != null)
-                        Text('by ${log.actor!.name}', style: TextStyle(fontSize: 11, color: colors.fgMuted)),
+                        Text(
+                          'by ${log.actor!.name}',
+                          style: TextStyle(fontSize: 11, color: colors.fgMuted),
+                        ),
                     ],
                   ),
                 ),
@@ -268,15 +347,24 @@ class _AuditLogRow extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         border: Border.all(color: colors.border),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Text(log.entityType, style: TextStyle(fontSize: 10, color: colors.fgMuted)),
+                      child: Text(
+                        log.entityType,
+                        style: TextStyle(fontSize: 10, color: colors.fgMuted),
+                      ),
                     ),
                   ),
-                Text(_formatDate(log.createdAt), style: TextStyle(fontSize: 11, color: colors.fgMuted)),
+                Text(
+                  _formatDate(log.createdAt),
+                  style: TextStyle(fontSize: 11, color: colors.fgMuted),
+                ),
                 const SizedBox(width: 4),
                 Icon(
                   isExpanded ? Icons.expand_less : Icons.expand_more,
@@ -314,7 +402,10 @@ class _AuditLogDetail extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (log.actor != null) ...[
-            _DetailRow(label: 'Actor', value: '${log.actor!.name} (${log.actor!.email})'),
+            _DetailRow(
+              label: 'Actor',
+              value: '${log.actor!.name} (${log.actor!.email})',
+            ),
             const SizedBox(height: 4),
           ],
           if (log.summary != null) ...[
@@ -335,7 +426,10 @@ class _AuditLogDetail extends StatelessWidget {
           ],
           if (hasDiff) ...[
             const SizedBox(height: 8),
-            const Text('Changes', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+            const Text(
+              'Changes',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 4),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -351,17 +445,29 @@ class _AuditLogDetail extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Before', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: colors.danger)),
+                          Text(
+                            'Before',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: colors.danger,
+                            ),
+                          ),
                           const SizedBox(height: 4),
                           Text(
                             _prettyJson(log.before!),
-                            style: TextStyle(fontSize: 10, color: colors.fg, fontFamily: 'monospace'),
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: colors.fg,
+                              fontFamily: 'monospace',
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                if (log.before != null && log.after != null) const SizedBox(width: 8),
+                if (log.before != null && log.after != null)
+                  const SizedBox(width: 8),
                 if (log.after != null)
                   Expanded(
                     child: Container(
@@ -373,11 +479,22 @@ class _AuditLogDetail extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('After', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: colors.success)),
+                          Text(
+                            'After',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: colors.success,
+                            ),
+                          ),
                           const SizedBox(height: 4),
                           Text(
                             _prettyJson(log.after!),
-                            style: TextStyle(fontSize: 10, color: colors.fg, fontFamily: 'monospace'),
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: colors.fg,
+                              fontFamily: 'monospace',
+                            ),
                           ),
                         ],
                       ),
@@ -414,7 +531,14 @@ class _DetailRow extends StatelessWidget {
       children: [
         SizedBox(
           width: 80,
-          child: Text(label, style: TextStyle(fontSize: 11, color: colors.fgMuted, fontWeight: FontWeight.w500)),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: colors.fgMuted,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ),
         Expanded(child: Text(value, style: const TextStyle(fontSize: 11))),
       ],

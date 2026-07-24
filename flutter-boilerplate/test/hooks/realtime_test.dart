@@ -25,7 +25,8 @@ void main() {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      container.read(realtimeStatusProvider.notifier).state = RealtimeStatus.open;
+      container.read(realtimeStatusProvider.notifier).state =
+          RealtimeStatus.open;
       expect(container.read(realtimeStatusProvider), RealtimeStatus.open);
     });
   });

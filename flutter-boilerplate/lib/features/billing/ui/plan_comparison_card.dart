@@ -67,17 +67,25 @@ class PlanComparisonCard extends StatelessWidget {
                         padding: const EdgeInsets.only(left: 4),
                         child: Text(
                           '/$interval',
-                          style: typography.body.copyWith(color: colors.fgMuted),
+                          style:
+                              typography.body.copyWith(color: colors.fgMuted),
                         ),
                       ),
                     if (priceSuffix != null) priceSuffix!,
                   ],
                 ),
                 const SizedBox(height: 20),
-                ...features.map((feature) => _FeatureRow(feature: feature, colors: colors, typography: typography)),
+                ...features.map(
+                  (feature) => _FeatureRow(
+                    feature: feature,
+                    colors: colors,
+                    typography: typography,
+                  ),
+                ),
                 const SizedBox(height: 24),
                 Button(
-                  variant: isPopular ? ButtonVariant.primary : ButtonVariant.outline,
+                  variant:
+                      isPopular ? ButtonVariant.primary : ButtonVariant.outline,
                   fullWidth: true,
                   onPressed: onSelect,
                   child: Text(selectedLabel ?? 'Select plan'),

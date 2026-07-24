@@ -38,7 +38,8 @@ class MediumFindFriendsContent extends ConsumerWidget {
             decoration: InputDecoration(
               hintText: 'Search users...',
               prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               isDense: true,
             ),
             onChanged: (v) => searchActions.onQueryChanged(v),
@@ -84,7 +85,8 @@ class MediumFindFriendsContent extends ConsumerWidget {
             padding: const EdgeInsets.only(bottom: 8),
             child: UserSearchCard(
               user: users[i],
-              onAdd: () => ref.read(friendActionsProvider).sendRequest(users[i].id),
+              onAdd: () =>
+                  ref.read(friendActionsProvider).sendRequest(users[i].id),
             ),
           ),
         );

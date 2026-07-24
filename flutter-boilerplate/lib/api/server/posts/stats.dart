@@ -24,7 +24,8 @@ class PostStats {
   }
 }
 
-final postStatsServerProvider = Provider((ref) => PostStatsServer(ref.read(dioProvider)));
+final postStatsServerProvider =
+    Provider((ref) => PostStatsServer(ref.read(dioProvider)));
 
 class PostStatsServer {
   final Dio _dio;

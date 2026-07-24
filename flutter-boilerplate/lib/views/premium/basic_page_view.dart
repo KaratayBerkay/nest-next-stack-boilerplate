@@ -46,7 +46,9 @@ class _BasicPremiumPageState extends ConsumerState<BasicPremiumPage> {
       padding: const EdgeInsets.all(16),
       child: statsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e', style: TextStyle(color: colors.danger))),
+        error: (e, _) => Center(
+          child: Text('Error: $e', style: TextStyle(color: colors.danger)),
+        ),
         data: (stats) => PremiumStatsSection(stats: stats),
       ),
     );

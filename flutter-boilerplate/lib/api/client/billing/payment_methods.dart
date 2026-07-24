@@ -2,7 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../server/billing/payment_methods.dart';
 
-final paymentMethodsActionsProvider = Provider((ref) => PaymentMethodsActions(ref));
+final paymentMethodsActionsProvider =
+    Provider((ref) => PaymentMethodsActions(ref));
 
 class PaymentMethodsActions {
   final Ref _ref;

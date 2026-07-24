@@ -33,7 +33,8 @@ class UserProfile {
   }
 }
 
-final profileGetServerProvider = Provider((ref) => ProfileGetServer(ref.read(dioProvider)));
+final profileGetServerProvider =
+    Provider((ref) => ProfileGetServer(ref.read(dioProvider)));
 
 class ProfileGetServer {
   final Dio _dio;

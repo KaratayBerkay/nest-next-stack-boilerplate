@@ -14,7 +14,8 @@ class SheetWidget extends StatelessWidget {
     this.maxChildSize = 0.9,
   });
 
-  static Future<T?> show<T>(BuildContext context, {
+  static Future<T?> show<T>(
+    BuildContext context, {
     required Widget child,
     double initial = 0.5,
     double min = 0.25,

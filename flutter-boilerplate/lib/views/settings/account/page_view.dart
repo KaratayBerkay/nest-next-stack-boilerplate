@@ -30,7 +30,12 @@ class SettingsAccountPageContent extends ConsumerWidget {
       body: profileAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
-        data: (profile) => _AccountForm(profile: profile, user: user, colors: colors, ref: ref),
+        data: (profile) => _AccountForm(
+          profile: profile,
+          user: user,
+          colors: colors,
+          ref: ref,
+        ),
       ),
     );
   }
@@ -42,7 +47,12 @@ class _AccountForm extends StatefulWidget {
   final AppColors colors;
   final WidgetRef ref;
 
-  const _AccountForm({required this.profile, required this.user, required this.colors, required this.ref});
+  const _AccountForm({
+    required this.profile,
+    required this.user,
+    required this.colors,
+    required this.ref,
+  });
 
   @override
   State<_AccountForm> createState() => _AccountFormState();
@@ -56,7 +66,8 @@ class _AccountFormState extends State<_AccountForm> {
   @override
   void initState() {
     super.initState();
-    _nameCtrl = TextEditingController(text: widget.profile.name as String? ?? '');
+    _nameCtrl =
+        TextEditingController(text: widget.profile.name as String? ?? '');
     _bioCtrl = TextEditingController(text: widget.profile.bio as String? ?? '');
   }
 
@@ -71,9 +82,9 @@ class _AccountFormState extends State<_AccountForm> {
     setState(() => _saving = true);
     try {
       await widget.ref.read(profileActionsProvider).update(
-        name: _nameCtrl.text,
-        bio: _bioCtrl.text,
-      );
+            name: _nameCtrl.text,
+            bio: _bioCtrl.text,
+          );
       if (mounted) showToast(context, 'Profile updated');
     } catch (e) {
       if (mounted) showToast(context, 'Failed: $e');
@@ -92,10 +103,15 @@ class _AccountFormState extends State<_AccountForm> {
             children: [
               Avatar(name: widget.profile.name as String? ?? 'U', radius: 32),
               const SizedBox(height: 12),
-              Text(widget.profile.name as String? ?? 'User',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
-              Text(widget.profile.email as String? ?? '',
-                  style: TextStyle(color: widget.colors.fgMuted),),
+              Text(
+                widget.profile.name as String? ?? 'User',
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                widget.profile.email as String? ?? '',
+                style: TextStyle(color: widget.colors.fgMuted),
+              ),
             ],
           ),
         ),

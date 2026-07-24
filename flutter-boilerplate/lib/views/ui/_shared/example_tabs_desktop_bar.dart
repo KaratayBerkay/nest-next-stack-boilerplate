@@ -46,9 +46,13 @@ class ExampleTabsDesktopBar extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color: isActive ? colors.surfaceContainerHighest : Colors.transparent,
+                  color: isActive
+                      ? colors.surfaceContainerHighest
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(6),
-                  border: isActive ? Border.all(color: colors.outlineVariant) : null,
+                  border: isActive
+                      ? Border.all(color: colors.outlineVariant)
+                      : null,
                 ),
                 child: Text(
                   example.title,
@@ -56,7 +60,9 @@ class ExampleTabsDesktopBar extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: isActive ? colors.onSurface : colors.onSurface.withValues(alpha: 0.6),
+                    color: isActive
+                        ? colors.onSurface
+                        : colors.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
               ),

@@ -36,7 +36,10 @@ class SettingsApiKeysPageContent extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('No API keys yet.', style: TextStyle(color: colors.fgMuted)),
+                  Text(
+                    'No API keys yet.',
+                    style: TextStyle(color: colors.fgMuted),
+                  ),
                   const SizedBox(height: 16),
                   Button(
                     child: const Text('Create Key'),
@@ -48,51 +51,85 @@ class SettingsApiKeysPageContent extends ConsumerWidget {
           }
           return ListView(
             padding: const EdgeInsets.all(16),
-            children: keys.map((k) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+            children: keys
+                .map(
+                  (k) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
                               children: [
-                                Text(k.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                                Text('${k.prefix}••••••••••••••••',
-                                    style: TextStyle(color: colors.fgMuted, fontSize: 12),),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        k.name,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      Text(
+                                        '${k.prefix}••••••••••••••••',
+                                        style: TextStyle(
+                                          color: colors.fgMuted,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    size: 18,
+                                  ),
+                                  onPressed: () async {
+                                    try {
+                                      await ref
+                                          .read(apiKeyActionsProvider)
+                                          .revoke(k.id);
+                                      ref.invalidate(apiKeysProvider);
+                                      if (context.mounted) {
+                                        showToast(context, 'Key revoked');
+                                      }
+                                    } catch (e) {
+                                      if (context.mounted) {
+                                        showToast(context, 'Failed: $e');
+                                      }
+                                    }
+                                  },
+                                ),
                               ],
                             ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline, size: 18),
-                            onPressed: () async {
-                              try {
-                                await ref.read(apiKeyActionsProvider).revoke(k.id);
-                                ref.invalidate(apiKeysProvider);
-                                if (context.mounted) showToast(context, 'Key revoked');
-                              } catch (e) {
-                                if (context.mounted) showToast(context, 'Failed: $e');
-                              }
-                            },
-                          ),
-                        ],
+                            const SizedBox(height: 8),
+                            Text(
+                              'Created: ${k.createdAt.toLocal().toString().split(' ')[0]}',
+                              style: TextStyle(
+                                color: colors.fgMuted,
+                                fontSize: 11,
+                              ),
+                            ),
+                            if (k.lastUsedAt != null)
+                              Text(
+                                'Last used: ${k.lastUsedAt!.toLocal().toString().split(' ')[0]}',
+                                style: TextStyle(
+                                  color: colors.fgMuted,
+                                  fontSize: 11,
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 8),
-                      Text('Created: ${k.createdAt.toLocal().toString().split(' ')[0]}',
-                          style: TextStyle(color: colors.fgMuted, fontSize: 11),),
-                      if (k.lastUsedAt != null)
-                        Text('Last used: ${k.lastUsedAt!.toLocal().toString().split(' ')[0]}',
-                            style: TextStyle(color: colors.fgMuted, fontSize: 11),),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-            ),).toList(),
+                )
+                .toList(),
           );
         },
       ),
@@ -111,7 +148,10 @@ class SettingsApiKeysPageContent extends ConsumerWidget {
           autofocus: true,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
             onPressed: () async {
               Navigator.pop(ctx);

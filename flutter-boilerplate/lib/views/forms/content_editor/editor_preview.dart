@@ -21,20 +21,31 @@ class EditorPreview extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
         if (tags.isNotEmpty) ...[
           const SizedBox(height: 8),
           Wrap(
             spacing: 6,
-            children: tags.split(',').map((t) => Chip(
-              label: Text(t.trim(), style: const TextStyle(fontSize: 12)),
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              visualDensity: VisualDensity.compact,
-            ),).toList(),
+            children: tags
+                .split(',')
+                .map(
+                  (t) => Chip(
+                    label: Text(t.trim(), style: const TextStyle(fontSize: 12)),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                )
+                .toList(),
           ),
         ],
         const Divider(height: 24),
-        Text(body, style: TextStyle(fontSize: 16, height: 1.6, color: colors.fg)),
+        Text(
+          body,
+          style: TextStyle(fontSize: 16, height: 1.6, color: colors.fg),
+        ),
       ],
     );
   }

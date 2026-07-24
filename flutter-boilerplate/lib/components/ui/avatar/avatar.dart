@@ -26,9 +26,8 @@ class Avatar extends StatelessWidget {
     final circle = CircleAvatar(
       radius: radius,
       backgroundColor: colors.brand.withValues(alpha: 0.15),
-      backgroundImage: imageUrl != null
-          ? CachedNetworkImageProvider(imageUrl!)
-          : null,
+      backgroundImage:
+          imageUrl != null ? CachedNetworkImageProvider(imageUrl!) : null,
       child: imageUrl == null
           ? Text(
               initials,

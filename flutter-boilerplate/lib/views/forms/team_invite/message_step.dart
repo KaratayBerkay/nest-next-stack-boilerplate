@@ -15,9 +15,15 @@ class MessageStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Personal Message (Optional)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        const Text(
+          'Personal Message (Optional)',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 4),
-        Text('Add a personal note to your invitation', style: TextStyle(color: colors.fgMuted, fontSize: 13)),
+        Text(
+          'Add a personal note to your invitation',
+          style: TextStyle(color: colors.fgMuted, fontSize: 13),
+        ),
         const SizedBox(height: 12),
         FormTextField(
           controller: messageCtrl,

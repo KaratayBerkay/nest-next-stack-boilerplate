@@ -9,10 +9,12 @@ class ResetPasswordPageContent extends ConsumerStatefulWidget {
   const ResetPasswordPageContent({super.key});
 
   @override
-  ConsumerState<ResetPasswordPageContent> createState() => _ResetPasswordPageContentState();
+  ConsumerState<ResetPasswordPageContent> createState() =>
+      _ResetPasswordPageContentState();
 }
 
-class _ResetPasswordPageContentState extends ConsumerState<ResetPasswordPageContent> {
+class _ResetPasswordPageContentState
+    extends ConsumerState<ResetPasswordPageContent> {
   final _tokenCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   bool _loading = false;
@@ -28,8 +30,10 @@ class _ResetPasswordPageContentState extends ConsumerState<ResetPasswordPageCont
   Future<void> _handleReset() async {
     setState(() => _loading = true);
     try {
-      await ref.read(resetPasswordServerProvider).call(_tokenCtrl.text, _passwordCtrl.text);
-      if (!context.mounted) return;
+      await ref
+          .read(resetPasswordServerProvider)
+          .call(_tokenCtrl.text, _passwordCtrl.text);
+      if (!mounted) return;
       setState(() => _done = true);
       showToast(context, 'Password reset successfully');
     } catch (e) {
@@ -52,11 +56,21 @@ class _ResetPasswordPageContentState extends ConsumerState<ResetPasswordPageCont
               if (_done)
                 Column(
                   children: [
-                    const Icon(Icons.check_circle, color: Colors.green, size: 48),
+                    const Icon(
+                      Icons.check_circle,
+                      color: Colors.green,
+                      size: 48,
+                    ),
                     const SizedBox(height: 16),
-                    const Text('Password has been reset.', textAlign: TextAlign.center),
+                    const Text(
+                      'Password has been reset.',
+                      textAlign: TextAlign.center,
+                    ),
                     const SizedBox(height: 16),
-                    FilledButton(onPressed: () => context.go('/auth/login'), child: const Text('Back to Login')),
+                    FilledButton(
+                      onPressed: () => context.go('/auth/login'),
+                      child: const Text('Back to Login'),
+                    ),
                   ],
                 )
               else
@@ -64,19 +78,28 @@ class _ResetPasswordPageContentState extends ConsumerState<ResetPasswordPageCont
                   children: [
                     TextField(
                       controller: _tokenCtrl,
-                      decoration: const InputDecoration(labelText: 'Reset Token'),
+                      decoration:
+                          const InputDecoration(labelText: 'Reset Token'),
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: _passwordCtrl,
-                      decoration: const InputDecoration(labelText: 'New Password'),
+                      decoration:
+                          const InputDecoration(labelText: 'New Password'),
                       obscureText: true,
                     ),
                     const SizedBox(height: 20),
                     FilledButton(
                       onPressed: _loading ? null : _handleReset,
                       child: _loading
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
                           : const Text('Reset Password'),
                     ),
                   ],

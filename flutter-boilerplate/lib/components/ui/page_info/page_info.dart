@@ -64,7 +64,10 @@ class PageInfoButton extends StatelessWidget {
                 children: [
                   Text(
                     content.title,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -99,24 +102,27 @@ class PageInfoButton extends StatelessWidget {
   List<Widget> _buildSections(AppColors colors) {
     final widgets = <Widget>[];
     for (final section in content.sections) {
-      widgets.add(Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              section.title,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              section.description,
-              style: TextStyle(fontSize: 12, color: colors.fgMuted, height: 1.4),
-            ),
-          ],
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                section.title,
+                style:
+                    const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                section.description,
+                style:
+                    TextStyle(fontSize: 12, color: colors.fgMuted, height: 1.4),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
     }
     return widgets;
   }
@@ -136,13 +142,20 @@ class PageInfoButton extends StatelessWidget {
         children: [
           Text(
             'Tips',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: colors.fg),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: colors.fg,
+            ),
           ),
           const SizedBox(height: 4),
           for (final tip in tips)
             Padding(
               padding: const EdgeInsets.only(bottom: 2),
-              child: Text(tip, style: TextStyle(fontSize: 12, color: colors.fgMuted)),
+              child: Text(
+                tip,
+                style: TextStyle(fontSize: 12, color: colors.fgMuted),
+              ),
             ),
         ],
       ),

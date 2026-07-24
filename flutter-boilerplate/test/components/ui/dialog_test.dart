@@ -6,17 +6,22 @@ import '../../test_helpers.dart';
 
 void main() {
   testWidgets('DialogWidget can be shown via show()', (tester) async {
-    await pumpTestApp(tester, Scaffold(
-      body: Builder(builder: (context) => TextButton(
-        onPressed: () => DialogWidget.show<void>(
-          context,
-          title: 'Confirm',
-          description: 'Are you sure?',
-          actions: [TextButton(onPressed: () {}, child: const Text('OK'))],
+    await pumpTestApp(
+      tester,
+      Scaffold(
+        body: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => DialogWidget.show<void>(
+              context,
+              title: 'Confirm',
+              description: 'Are you sure?',
+              actions: [TextButton(onPressed: () {}, child: const Text('OK'))],
+            ),
+            child: const Text('Show'),
+          ),
         ),
-        child: const Text('Show'),
-      ),),
-    ),);
+      ),
+    );
 
     await tester.tap(find.text('Show'));
     await tester.pumpAndSettle();

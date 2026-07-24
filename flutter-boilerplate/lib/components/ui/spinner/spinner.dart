@@ -23,31 +23,3 @@ class Spinner extends StatelessWidget {
     );
   }
 }
-
-class LogoSpinner extends StatelessWidget {
-  final double size;
-
-  const LogoSpinner({super.key, this.size = 48});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.flutter_dash, size: size, color: colors.brand),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(colors.brand),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

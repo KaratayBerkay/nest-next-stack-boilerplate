@@ -35,7 +35,11 @@ class _CarouselState extends State<Carousel> {
     Future.delayed(widget.autoPlayInterval, () {
       if (!mounted) return;
       final next = (_currentPage + 1) % widget.children.length;
-      _pageController.animateToPage(next, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+      _pageController.animateToPage(
+        next,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     });
   }
 

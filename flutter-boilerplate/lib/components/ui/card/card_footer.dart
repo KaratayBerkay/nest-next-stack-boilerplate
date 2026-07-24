@@ -11,7 +11,9 @@ class CardFooter extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: colors.outline.withValues(alpha: 0.2))),
+        border: Border(
+          top: BorderSide(color: colors.outline.withValues(alpha: 0.2)),
+        ),
       ),
       child: child,
     );

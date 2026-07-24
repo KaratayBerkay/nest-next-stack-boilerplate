@@ -33,7 +33,8 @@ class RealtimeClient {
   static const int _backoffBaseMs = 1000;
   static const int _backoffCapMs = 30000;
 
-  static final _topicAllowlist = RegExp(r'^(feed|post:[a-z0-9]+|conversation:[a-z0-9]+)$');
+  static final _topicAllowlist =
+      RegExp(r'^(feed|post:[a-z0-9]+|conversation:[a-z0-9]+)$');
 
   RealtimeClient({
     required this.url,
@@ -86,7 +87,8 @@ class RealtimeClient {
     try {
       final data = jsonDecode(raw as String) as Map<String, dynamic>;
       if (data['type'] == 'error' &&
-          (data['message'] as String?)?.toLowerCase().contains('auth') == true) {
+          (data['message'] as String?)?.toLowerCase().contains('auth') ==
+              true) {
         _pendingAuthFail = true;
         _channel?.sink.close();
         return;
@@ -209,7 +211,9 @@ class RealtimeClient {
 
   void _startBackoff() {
     final delay = min(
-      _backoffBaseMs * pow(2, _authFailRetries - 1) * (0.5 + Random().nextDouble() * 0.5),
+      _backoffBaseMs *
+          pow(2, _authFailRetries - 1) *
+          (0.5 + Random().nextDouble() * 0.5),
       _backoffCapMs,
     ).toInt();
     _setStatus(RealtimeStatus.backoff);

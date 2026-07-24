@@ -67,10 +67,11 @@ class _CommentSectionState extends State<CommentSection> {
       setState(() => _replyTo = null);
       widget.onCommentAdded?.call();
     } catch (_) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Network error')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Network error')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -84,10 +85,11 @@ class _CommentSectionState extends State<CommentSection> {
       setState(() => _editingId = null);
       widget.onCommentAdded?.call();
     } catch (_) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to update comment')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update comment')),
+        );
+      }
     }
   }
 
@@ -114,10 +116,11 @@ class _CommentSectionState extends State<CommentSection> {
         await widget.onDeleteComment?.call(commentId);
         widget.onCommentAdded?.call();
       } catch (_) {
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to delete comment')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to delete comment')),
+          );
+        }
       }
     }
   }
@@ -137,7 +140,8 @@ class _CommentSectionState extends State<CommentSection> {
                 child: TextField(
                   controller: _bodyController,
                   decoration: InputDecoration(
-                    hintText: _replyTo != null ? 'Reply...' : 'Write a comment...',
+                    hintText:
+                        _replyTo != null ? 'Reply...' : 'Write a comment...',
                     isDense: true,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -158,7 +162,8 @@ class _CommentSectionState extends State<CommentSection> {
                     ? null
                     : _handleSubmit,
                 style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 ),
                 child: Text(
                   _replyTo != null ? 'Reply' : 'Send',
@@ -185,25 +190,27 @@ class _CommentSectionState extends State<CommentSection> {
             ),
           )
         else
-          ..._topLevel.map((comment) => _CommentTile(
-                comment: comment,
-                colors: colors,
-                isOwn: _isOwn(comment),
-                replies: _replies(comment.id),
-                editingId: _editingId,
-                editController: _editController,
-                currentUserId: widget.currentUserId,
-                onReply: () => setState(() => _replyTo = comment.id),
-                onEditStart: () {
-                  _editController.text = comment.body;
-                  setState(() => _editingId = comment.id);
-                },
-                onEditCancel: () => setState(() => _editingId = null),
-                onEditSave: () => _handleEdit(comment.id),
-                onDelete: () => _handleDelete(comment.id),
-                onToggleReaction: widget.onToggleReaction,
-                onCommentAdded: widget.onCommentAdded,
-              ),),
+          ..._topLevel.map(
+            (comment) => _CommentTile(
+              comment: comment,
+              colors: colors,
+              isOwn: _isOwn(comment),
+              replies: _replies(comment.id),
+              editingId: _editingId,
+              editController: _editController,
+              currentUserId: widget.currentUserId,
+              onReply: () => setState(() => _replyTo = comment.id),
+              onEditStart: () {
+                _editController.text = comment.body;
+                setState(() => _editingId = comment.id);
+              },
+              onEditCancel: () => setState(() => _editingId = null),
+              onEditSave: () => _handleEdit(comment.id),
+              onDelete: () => _handleDelete(comment.id),
+              onToggleReaction: widget.onToggleReaction,
+              onCommentAdded: widget.onCommentAdded,
+            ),
+          ),
       ],
     );
   }
@@ -311,20 +318,30 @@ class _CommentTile extends StatelessWidget {
                       ),
                     if (isOwn && !isEditing) ...[
                       IconButton(
-                        icon: Icon(Icons.edit_outlined,
-                            size: 12, color: colors.fgMuted,),
+                        icon: Icon(
+                          Icons.edit_outlined,
+                          size: 12,
+                          color: colors.fgMuted,
+                        ),
                         onPressed: onEditStart,
                         constraints: const BoxConstraints(
-                            minWidth: 24, minHeight: 24,),
+                          minWidth: 24,
+                          minHeight: 24,
+                        ),
                         padding: EdgeInsets.zero,
                         tooltip: 'Edit',
                       ),
                       IconButton(
-                        icon: Icon(Icons.delete_outline,
-                            size: 12, color: colors.fgMuted,),
+                        icon: Icon(
+                          Icons.delete_outline,
+                          size: 12,
+                          color: colors.fgMuted,
+                        ),
                         onPressed: onDelete,
                         constraints: const BoxConstraints(
-                            minWidth: 24, minHeight: 24,),
+                          minWidth: 24,
+                          minHeight: 24,
+                        ),
                         padding: EdgeInsets.zero,
                         tooltip: 'Delete',
                       ),
@@ -347,7 +364,9 @@ class _CommentTile extends StatelessWidget {
                               borderSide: BorderSide(color: colors.border),
                             ),
                             contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 6,),
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
                           ),
                           onSubmitted: (_) => onEditSave(),
                         ),
@@ -357,21 +376,29 @@ class _CommentTile extends StatelessWidget {
                         onPressed: onEditSave,
                         style: FilledButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6,),
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                         ),
-                        child: const Text('Save',
-                            style: TextStyle(fontSize: 11),),
+                        child: const Text(
+                          'Save',
+                          style: TextStyle(fontSize: 11),
+                        ),
                       ),
                       const SizedBox(width: 4),
                       TextButton(
                         onPressed: onEditCancel,
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 6,),
+                            horizontal: 8,
+                            vertical: 6,
+                          ),
                           minimumSize: Size.zero,
                         ),
-                        child: const Text('Cancel',
-                            style: TextStyle(fontSize: 11),),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(fontSize: 11),
+                        ),
                       ),
                     ],
                   )
@@ -387,28 +414,30 @@ class _CommentTile extends StatelessWidget {
               ],
             ),
           ),
-          ...replies.map((reply) => Padding(
-                padding: const EdgeInsets.only(left: 16, top: 2),
-                child: _CommentTile(
-                  comment: reply,
-                  colors: colors,
-                  isOwn: isOwn,
-                  replies: const [],
-                  editingId: editingId,
-                  editController: editController,
-                  currentUserId: currentUserId,
-                  onReply: onReply,
-                  onEditStart: () {
-                    editController.text = reply.body;
-                    onEditStart;
-                  },
-                  onEditCancel: onEditCancel,
-                  onEditSave: () => onEditSave,
-                  onDelete: onDelete,
-                  onToggleReaction: onToggleReaction,
-                  onCommentAdded: onCommentAdded,
-                ),
-              ),),
+          ...replies.map(
+            (reply) => Padding(
+              padding: const EdgeInsets.only(left: 16, top: 2),
+              child: _CommentTile(
+                comment: reply,
+                colors: colors,
+                isOwn: isOwn,
+                replies: const [],
+                editingId: editingId,
+                editController: editController,
+                currentUserId: currentUserId,
+                onReply: onReply,
+                onEditStart: () {
+                  editController.text = reply.body;
+                  onEditStart;
+                },
+                onEditCancel: onEditCancel,
+                onEditSave: () => onEditSave,
+                onDelete: onDelete,
+                onToggleReaction: onToggleReaction,
+                onCommentAdded: onCommentAdded,
+              ),
+            ),
+          ),
         ],
       ),
     );

@@ -29,7 +29,10 @@ class ErrorPage extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               message,
-              style: TextStyle(color: colors.onSurface.withValues(alpha: 0.6), fontSize: 12),
+              style: TextStyle(
+                color: colors.onSurface.withValues(alpha: 0.6),
+                fontSize: 12,
+              ),
               textAlign: TextAlign.center,
             ),
             if (digest != null) ...[
@@ -39,11 +42,18 @@ class ErrorPage extends StatelessWidget {
                 children: [
                   Text(
                     'Reference: ',
-                    style: TextStyle(color: colors.onSurface.withValues(alpha: 0.5), fontSize: 11),
+                    style: TextStyle(
+                      color: colors.onSurface.withValues(alpha: 0.5),
+                      fontSize: 11,
+                    ),
                   ),
                   Text(
                     digest!,
-                    style: TextStyle(fontFamily: 'monospace', color: colors.onSurface, fontSize: 11),
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      color: colors.onSurface,
+                      fontSize: 11,
+                    ),
                   ),
                 ],
               ),

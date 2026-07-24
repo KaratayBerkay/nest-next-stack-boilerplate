@@ -12,10 +12,12 @@ class FormsApiKeyPageContent extends ConsumerStatefulWidget {
   const FormsApiKeyPageContent({super.key, required this.lang});
 
   @override
-  ConsumerState<FormsApiKeyPageContent> createState() => _FormsApiKeyPageContentState();
+  ConsumerState<FormsApiKeyPageContent> createState() =>
+      _FormsApiKeyPageContentState();
 }
 
-class _FormsApiKeyPageContentState extends ConsumerState<FormsApiKeyPageContent> {
+class _FormsApiKeyPageContentState
+    extends ConsumerState<FormsApiKeyPageContent> {
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
 
@@ -42,9 +44,19 @@ class _FormsApiKeyPageContentState extends ConsumerState<FormsApiKeyPageContent>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Create API Key', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    const Text(
+                      'Create API Key',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 12),
-                    FormTextField(controller: _nameCtrl, label: 'Key Name', validator: (v) => forms.validateRequired(v)),
+                    FormTextField(
+                      controller: _nameCtrl,
+                      label: 'Key Name',
+                      validator: (v) => forms.validateRequired(v),
+                    ),
                     const SizedBox(height: 12),
                     Button(
                       child: const Text('Generate Key'),
@@ -61,8 +73,14 @@ class _FormsApiKeyPageContentState extends ConsumerState<FormsApiKeyPageContent>
           Card(
             child: ListTile(
               title: const Text('Production Key'),
-              subtitle: Text('sk_prod_••••••••••••••••', style: TextStyle(color: colors.fgMuted, fontSize: 12)),
-              trailing: IconButton(icon: const Icon(Icons.delete_outline), onPressed: () {}),
+              subtitle: Text(
+                'sk_prod_••••••••••••••••',
+                style: TextStyle(color: colors.fgMuted, fontSize: 12),
+              ),
+              trailing: IconButton(
+                icon: const Icon(Icons.delete_outline),
+                onPressed: () {},
+              ),
             ),
           ),
         ],

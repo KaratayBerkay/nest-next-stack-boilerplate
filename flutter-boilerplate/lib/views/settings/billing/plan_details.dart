@@ -28,11 +28,16 @@ class PlanDetails extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text(planName.toUpperCase(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              planName.toUpperCase(),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(width: 8),
             Badge(
               text: status == 'active' ? 'Active' : status,
-              variant: status == 'active' ? BadgeVariant.success : BadgeVariant.warning,
+              variant: status == 'active'
+                  ? BadgeVariant.success
+                  : BadgeVariant.warning,
             ),
           ],
         ),
@@ -42,13 +47,18 @@ class PlanDetails extends StatelessWidget {
         ],
         if (renewalDate != null) ...[
           const SizedBox(height: 8),
-          Text('Renewal date: $renewalDate',
-              style: TextStyle(color: colors.fgMuted, fontSize: 13),),
+          Text(
+            'Renewal date: $renewalDate',
+            style: TextStyle(color: colors.fgMuted, fontSize: 13),
+          ),
         ],
         if (cancelAtPeriodEnd)
           Padding(
             padding: const EdgeInsets.only(top: 8),
-            child: Text('Cancels at period end', style: TextStyle(color: colors.warning, fontSize: 13)),
+            child: Text(
+              'Cancels at period end',
+              style: TextStyle(color: colors.warning, fontSize: 13),
+            ),
           ),
       ],
     );

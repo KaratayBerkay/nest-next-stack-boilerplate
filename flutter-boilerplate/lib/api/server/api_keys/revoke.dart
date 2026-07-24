@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
 
-final apiKeyRevokeServerProvider = Provider((ref) => ApiKeyRevokeServer(ref.read(dioProvider)));
+final apiKeyRevokeServerProvider =
+    Provider((ref) => ApiKeyRevokeServer(ref.read(dioProvider)));
 
 class ApiKeyRevokeServer {
   final Dio _dio;

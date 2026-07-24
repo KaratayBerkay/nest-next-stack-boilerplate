@@ -34,44 +34,62 @@ class ApiKeyList extends StatelessWidget {
 
     return ListView(
       padding: const EdgeInsets.all(16),
-      children: keys.map((k) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+      children: keys
+          .map(
+            (k) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          Text(k.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                          Text('${k.prefix}••••••••••••••••',
-                              style: TextStyle(color: colors.fgMuted, fontSize: 12),),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  k.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  '${k.prefix}••••••••••••••••',
+                                  style: TextStyle(
+                                    color: colors.fgMuted,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (onRevoke != null)
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, size: 18),
+                              onPressed: () => onRevoke!(k.id),
+                            ),
                         ],
                       ),
-                    ),
-                    if (onRevoke != null)
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline, size: 18),
-                        onPressed: () => onRevoke!(k.id),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Created: ${k.createdAt.toLocal().toString().split(' ')[0]}',
+                        style: TextStyle(color: colors.fgMuted, fontSize: 11),
                       ),
-                  ],
+                      if (k.lastUsedAt != null)
+                        Text(
+                          'Last used: ${k.lastUsedAt!.toLocal().toString().split(' ')[0]}',
+                          style: TextStyle(color: colors.fgMuted, fontSize: 11),
+                        ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 8),
-                Text('Created: ${k.createdAt.toLocal().toString().split(' ')[0]}',
-                    style: TextStyle(color: colors.fgMuted, fontSize: 11),),
-                if (k.lastUsedAt != null)
-                  Text('Last used: ${k.lastUsedAt!.toLocal().toString().split(' ')[0]}',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 11),),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),).toList(),
+          )
+          .toList(),
     );
   }
 }

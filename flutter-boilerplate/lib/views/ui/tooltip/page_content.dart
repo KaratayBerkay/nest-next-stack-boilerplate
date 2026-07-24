@@ -12,16 +12,28 @@ class TooltipDemoPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [
-          Text('Tooltips', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            'Tooltips',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           SizedBox(height: 12),
           Wrap(
             spacing: 24,
             runSpacing: 16,
             children: [
               TooltipWidget(message: 'Save', child: Icon(Icons.save, size: 32)),
-              TooltipWidget(message: 'Delete', child: Icon(Icons.delete, size: 32)),
-              TooltipWidget(message: 'Settings', child: Icon(Icons.settings, size: 32)),
-              TooltipWidget(message: 'Notifications', child: Icon(Icons.notifications, size: 32)),
+              TooltipWidget(
+                message: 'Delete',
+                child: Icon(Icons.delete, size: 32),
+              ),
+              TooltipWidget(
+                message: 'Settings',
+                child: Icon(Icons.settings, size: 32),
+              ),
+              TooltipWidget(
+                message: 'Notifications',
+                child: Icon(Icons.notifications, size: 32),
+              ),
             ],
           ),
         ],

@@ -9,7 +9,11 @@ class UserSearchResult {
   final String name;
   final String? avatarUrl;
 
-  const UserSearchResult({required this.id, required this.name, this.avatarUrl});
+  const UserSearchResult({
+    required this.id,
+    required this.name,
+    this.avatarUrl,
+  });
 
   factory UserSearchResult.fromJson(Map<String, dynamic> json) {
     return UserSearchResult(
@@ -20,7 +24,8 @@ class UserSearchResult {
   }
 }
 
-final usersSearchServerProvider = Provider((ref) => UsersSearchServer(ref.read(dioProvider)));
+final usersSearchServerProvider =
+    Provider((ref) => UsersSearchServer(ref.read(dioProvider)));
 
 class UsersSearchServer {
   final Dio _dio;
@@ -28,8 +33,11 @@ class UsersSearchServer {
   UsersSearchServer(this._dio);
 
   Future<List<UserSearchResult>> call(String query) async {
-    final response = await _dio.get<dynamic>(Urls.usersSearch, queryParameters: {'q': query});
+    final response = await _dio
+        .get<dynamic>(Urls.usersSearch, queryParameters: {'q': query});
     final list = response.data as List<dynamic>;
-    return list.map((e) => UserSearchResult.fromJson(e as Map<String, dynamic>)).toList();
+    return list
+        .map((e) => UserSearchResult.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }

@@ -24,17 +24,40 @@ class AddressGroup extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Shipping Address', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        const Text(
+          'Shipping Address',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 12),
-        FormTextField(controller: nameCtrl, label: 'Full Name', validator: auth.validateName),
+        FormTextField(
+          controller: nameCtrl,
+          label: 'Full Name',
+          validator: auth.validateName,
+        ),
         const SizedBox(height: 8),
-        FormTextField(controller: addressCtrl, label: 'Address', validator: (v) => forms.validateRequired(v, 'Address')),
+        FormTextField(
+          controller: addressCtrl,
+          label: 'Address',
+          validator: (v) => forms.validateRequired(v, 'Address'),
+        ),
         const SizedBox(height: 8),
         Row(
           children: [
-            Expanded(child: FormTextField(controller: cityCtrl, label: 'City', validator: billing.validateCity)),
+            Expanded(
+              child: FormTextField(
+                controller: cityCtrl,
+                label: 'City',
+                validator: billing.validateCity,
+              ),
+            ),
             const SizedBox(width: 12),
-            Expanded(child: FormTextField(controller: zipCtrl, label: 'ZIP', validator: billing.validatePostalCode)),
+            Expanded(
+              child: FormTextField(
+                controller: zipCtrl,
+                label: 'ZIP',
+                validator: billing.validatePostalCode,
+              ),
+            ),
           ],
         ),
       ],

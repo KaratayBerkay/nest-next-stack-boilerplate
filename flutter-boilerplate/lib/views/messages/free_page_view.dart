@@ -18,7 +18,10 @@ class FreeMessagesPage extends StatelessWidget {
         MessagesSidebar(lang: lang),
         const Expanded(
           child: Center(
-            child: Text('Select a conversation', style: TextStyle(color: Colors.grey)),
+            child: Text(
+              'Select a conversation',
+              style: TextStyle(color: Colors.grey),
+            ),
           ),
         ),
       ],

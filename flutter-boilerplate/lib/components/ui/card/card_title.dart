@@ -10,7 +10,11 @@ class CardTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: style ?? Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+      style: style ??
+          Theme.of(context)
+              .textTheme
+              .titleMedium
+              ?.copyWith(fontWeight: FontWeight.w600),
     );
   }
 }

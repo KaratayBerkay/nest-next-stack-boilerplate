@@ -8,7 +8,11 @@ class MediumPostDetailPage extends ConsumerWidget {
   final String lang;
   final String postId;
 
-  const MediumPostDetailPage({super.key, required this.lang, required this.postId});
+  const MediumPostDetailPage({
+    super.key,
+    required this.lang,
+    required this.postId,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

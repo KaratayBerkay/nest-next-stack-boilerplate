@@ -64,10 +64,12 @@ void main() {
       tester,
       const TableWidget(
         children: [
-          TableFooter(cells: [
-            Text('Total'),
-            Text('\$100'),
-          ],),
+          TableFooter(
+            cells: [
+              Text('Total'),
+              Text('\$100'),
+            ],
+          ),
         ],
       ),
     );

@@ -12,7 +12,10 @@ class AvatarDemoPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [
-          Text('Sizes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            'Sizes',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           SizedBox(height: 8),
           Wrap(
             spacing: 12,
@@ -26,11 +29,17 @@ class AvatarDemoPage extends StatelessWidget {
             ],
           ),
           SizedBox(height: 24),
-          Text('With Image', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            'With Image',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           SizedBox(height: 8),
           Avatar(name: 'User', radius: 24),
           SizedBox(height: 24),
-          Text('Initials Fallback', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            'Initials Fallback',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           SizedBox(height: 8),
           Wrap(
             spacing: 12,

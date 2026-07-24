@@ -11,15 +11,33 @@ class TypographyDemoPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text('Display Large', style: Theme.of(context).textTheme.displayLarge),
+          Text(
+            'Display Large',
+            style: Theme.of(context).textTheme.displayLarge,
+          ),
           const SizedBox(height: 8),
-          Text('Display Medium', style: Theme.of(context).textTheme.displayMedium),
+          Text(
+            'Display Medium',
+            style: Theme.of(context).textTheme.displayMedium,
+          ),
           const SizedBox(height: 8),
-          Text('Display Small', style: Theme.of(context).textTheme.displaySmall),
+          Text(
+            'Display Small',
+            style: Theme.of(context).textTheme.displaySmall,
+          ),
           const SizedBox(height: 16),
-          Text('Headline Large', style: Theme.of(context).textTheme.headlineLarge),
-          Text('Headline Medium', style: Theme.of(context).textTheme.headlineMedium),
-          Text('Headline Small', style: Theme.of(context).textTheme.headlineSmall),
+          Text(
+            'Headline Large',
+            style: Theme.of(context).textTheme.headlineLarge,
+          ),
+          Text(
+            'Headline Medium',
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+          Text(
+            'Headline Small',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
           const SizedBox(height: 16),
           Text('Title Large', style: Theme.of(context).textTheme.titleLarge),
           Text('Title Medium', style: Theme.of(context).textTheme.titleMedium),

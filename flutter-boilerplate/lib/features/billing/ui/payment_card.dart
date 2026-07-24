@@ -55,14 +55,18 @@ class PaymentCard extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.only(left: 8),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: colors.brand.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
                             'Default',
-                            style: typography.caption.copyWith(color: colors.brand, fontSize: 10),
+                            style: typography.caption
+                                .copyWith(color: colors.brand, fontSize: 10),
                           ),
                         ),
                       ),
@@ -90,7 +94,11 @@ class PaymentCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                   child: Padding(
                     padding: const EdgeInsets.all(4),
-                    child: Icon(Icons.delete_outline, size: 16, color: colors.danger),
+                    child: Icon(
+                      Icons.delete_outline,
+                      size: 16,
+                      color: colors.danger,
+                    ),
                   ),
                 ),
               ],

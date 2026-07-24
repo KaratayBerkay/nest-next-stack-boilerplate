@@ -11,10 +11,12 @@ class FormsUploadsPageContent extends ConsumerStatefulWidget {
   const FormsUploadsPageContent({super.key, required this.lang});
 
   @override
-  ConsumerState<FormsUploadsPageContent> createState() => _FormsUploadsPageContentState();
+  ConsumerState<FormsUploadsPageContent> createState() =>
+      _FormsUploadsPageContentState();
 }
 
-class _FormsUploadsPageContentState extends ConsumerState<FormsUploadsPageContent> {
+class _FormsUploadsPageContentState
+    extends ConsumerState<FormsUploadsPageContent> {
   final _uploadedDocs = <String>[];
 
   @override
@@ -32,14 +34,21 @@ class _FormsUploadsPageContentState extends ConsumerState<FormsUploadsPageConten
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Avatar Upload', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Avatar Upload',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 12),
                   Center(
                     child: Column(
                       children: [
                         const Avatar(name: 'User', radius: 36),
                         const SizedBox(height: 8),
-                        Button(variant: ButtonVariant.outline, child: const Text('Upload Photo'), onPressed: () {}),
+                        Button(
+                          variant: ButtonVariant.outline,
+                          child: const Text('Upload Photo'),
+                          onPressed: () {},
+                        ),
                       ],
                     ),
                   ),
@@ -54,7 +63,10 @@ class _FormsUploadsPageContentState extends ConsumerState<FormsUploadsPageConten
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Document Upload', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Document Upload',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(24),
@@ -65,23 +77,36 @@ class _FormsUploadsPageContentState extends ConsumerState<FormsUploadsPageConten
                     child: Center(
                       child: Column(
                         children: [
-                          Icon(Icons.cloud_upload_outlined, size: 32, color: colors.fgMuted),
+                          Icon(
+                            Icons.cloud_upload_outlined,
+                            size: 32,
+                            color: colors.fgMuted,
+                          ),
                           const SizedBox(height: 8),
                           const Text('Drag & drop files here'),
                           const SizedBox(height: 8),
-                          Button(variant: ButtonVariant.outline, child: const Text('Browse Files'), onPressed: () {}),
+                          Button(
+                            variant: ButtonVariant.outline,
+                            child: const Text('Browse Files'),
+                            onPressed: () {},
+                          ),
                         ],
                       ),
                     ),
                   ),
                   const SizedBox(height: 12),
-                  ..._uploadedDocs.map((doc) => ListTile(
-                    leading: Icon(Icons.description, color: colors.brand),
-                    title: Text(doc),
-                    trailing: IconButton(icon: const Icon(Icons.delete_outline), onPressed: () {
-                      setState(() => _uploadedDocs.remove(doc));
-                    },),
-                  ),),
+                  ..._uploadedDocs.map(
+                    (doc) => ListTile(
+                      leading: Icon(Icons.description, color: colors.brand),
+                      title: Text(doc),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete_outline),
+                        onPressed: () {
+                          setState(() => _uploadedDocs.remove(doc));
+                        },
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

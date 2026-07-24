@@ -39,7 +39,11 @@ class PlansPageContent extends StatelessWidget {
                         _PlanCard(
                           tier: Tier.free,
                           price: '\$0',
-                          features: const ['Basic feed', '5 messages/day', '1 device'],
+                          features: const [
+                            'Basic feed',
+                            '5 messages/day',
+                            '1 device',
+                          ],
                           color: colors.surfaceAlt,
                           onSelect: () {},
                         ),
@@ -47,26 +51,47 @@ class PlansPageContent extends StatelessWidget {
                         _PlanCard(
                           tier: Tier.basic,
                           price: '\$9',
-                          features: const ['Enhanced feed', '50 messages/day', '3 devices', 'Basic stats'],
+                          features: const [
+                            'Enhanced feed',
+                            '50 messages/day',
+                            '3 devices',
+                            'Basic stats',
+                          ],
                           color: colors.info,
-                          onSelect: () => context.go('/v1/$lang/checkout/basic'),
+                          onSelect: () =>
+                              context.go('/v1/$lang/checkout/basic'),
                         ),
                         const SizedBox(width: 16),
                         _PlanCard(
                           tier: Tier.medium,
                           price: '\$19',
-                          features: const ['Full feed', 'Unlimited messages', '10 devices', 'Analytics', 'Priority support'],
+                          features: const [
+                            'Full feed',
+                            'Unlimited messages',
+                            '10 devices',
+                            'Analytics',
+                            'Priority support',
+                          ],
                           color: colors.brand,
-                          onSelect: () => context.go('/v1/$lang/checkout/medium'),
+                          onSelect: () =>
+                              context.go('/v1/$lang/checkout/medium'),
                         ),
                         const SizedBox(width: 16),
                         _PlanCard(
                           tier: Tier.premium,
                           price: '\$49',
-                          features: const ['Everything', 'Unlimited', 'All devices', 'AI recommendations', 'Video calls', 'Dedicated support'],
+                          features: const [
+                            'Everything',
+                            'Unlimited',
+                            'All devices',
+                            'AI recommendations',
+                            'Video calls',
+                            'Dedicated support',
+                          ],
                           color: colors.warning,
                           isPremium: true,
-                          onSelect: () => context.go('/v1/$lang/checkout/premium'),
+                          onSelect: () =>
+                              context.go('/v1/$lang/checkout/premium'),
                         ),
                       ],
                     ),
@@ -143,18 +168,20 @@ class _PlanCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Spacer(),
-          ...features.map((f) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  children: [
-                    Icon(Icons.check, size: 16, color: colors.success),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(f, style: const TextStyle(fontSize: 13)),
-                    ),
-                  ],
-                ),
-              ),),
+          ...features.map(
+            (f) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Icon(Icons.check, size: 16, color: colors.success),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(f, style: const TextStyle(fontSize: 13)),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,

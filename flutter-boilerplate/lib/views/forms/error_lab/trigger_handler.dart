@@ -24,7 +24,10 @@ class TriggerHandler extends StatelessWidget {
           child: Text(label),
         ),
         const SizedBox(width: 12),
-        Text(loading ? 'Processing...' : 'Ready to trigger', style: const TextStyle(fontSize: 12)),
+        Text(
+          loading ? 'Processing...' : 'Ready to trigger',
+          style: const TextStyle(fontSize: 12),
+        ),
       ],
     );
   }

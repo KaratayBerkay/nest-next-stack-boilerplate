@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
 
-final pushSubscribeServerProvider = Provider((ref) => PushSubscribeServer(ref.read(dioProvider)));
+final pushSubscribeServerProvider =
+    Provider((ref) => PushSubscribeServer(ref.read(dioProvider)));
 
 class PushSubscribeServer {
   final Dio _dio;

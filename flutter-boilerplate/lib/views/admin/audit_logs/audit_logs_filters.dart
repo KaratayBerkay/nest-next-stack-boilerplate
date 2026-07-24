@@ -38,7 +38,8 @@ class _AuditLogsFiltersState extends State<AuditLogsFilters> {
   @override
   void didUpdateWidget(AuditLogsFilters oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.entityFilter != oldWidget.entityFilter && _entityController.text != widget.entityFilter) {
+    if (widget.entityFilter != oldWidget.entityFilter &&
+        _entityController.text != widget.entityFilter) {
       _entityController.text = widget.entityFilter;
     }
   }
@@ -49,8 +50,25 @@ class _AuditLogsFiltersState extends State<AuditLogsFilters> {
     super.dispose();
   }
 
-  static const _actions = ['', 'CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'SET_TIER', 'API_KEY'];
-  static const _levels = ['', 'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'];
+  static const _actions = [
+    '',
+    'CREATE',
+    'UPDATE',
+    'DELETE',
+    'LOGIN',
+    'LOGOUT',
+    'SET_TIER',
+    'API_KEY',
+  ];
+  static const _levels = [
+    '',
+    'TRACE',
+    'DEBUG',
+    'INFO',
+    'WARN',
+    'ERROR',
+    'FATAL',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -70,10 +88,17 @@ class _AuditLogsFiltersState extends State<AuditLogsFilters> {
           DropdownButton<String>(
             value: widget.actionFilter,
             underline: const SizedBox(),
-            items: _actions.map((a) => DropdownMenuItem(
-              value: a,
-              child: Text(a.isEmpty ? 'All actions' : a, style: const TextStyle(fontSize: 13)),
-            ),).toList(),
+            items: _actions
+                .map(
+                  (a) => DropdownMenuItem(
+                    value: a,
+                    child: Text(
+                      a.isEmpty ? 'All actions' : a,
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  ),
+                )
+                .toList(),
             onChanged: (v) {
               if (v == null) return;
               widget.onActionChanged(v);
@@ -82,10 +107,17 @@ class _AuditLogsFiltersState extends State<AuditLogsFilters> {
           DropdownButton<String>(
             value: widget.levelFilter,
             underline: const SizedBox(),
-            items: _levels.map((l) => DropdownMenuItem(
-              value: l,
-              child: Text(l.isEmpty ? 'All levels' : l, style: const TextStyle(fontSize: 13)),
-            ),).toList(),
+            items: _levels
+                .map(
+                  (l) => DropdownMenuItem(
+                    value: l,
+                    child: Text(
+                      l.isEmpty ? 'All levels' : l,
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  ),
+                )
+                .toList(),
             onChanged: (v) {
               if (v == null) return;
               widget.onLevelChanged(v);
@@ -98,11 +130,14 @@ class _AuditLogsFiltersState extends State<AuditLogsFilters> {
               decoration: InputDecoration(
                 hintText: 'Entity type...',
                 prefixIcon: const Icon(Icons.search, size: 18),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                 isDense: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               ),
-              onChanged: (_) => widget.onEntityChanged(_entityController.text.trim()),
+              onChanged: (_) =>
+                  widget.onEntityChanged(_entityController.text.trim()),
             ),
           ),
           IconButton(

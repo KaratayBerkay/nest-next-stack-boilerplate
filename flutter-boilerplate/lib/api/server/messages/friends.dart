@@ -27,7 +27,8 @@ class Friend {
   }
 }
 
-final friendsListServerProvider = Provider((ref) => FriendsListServer(ref.read(dioProvider)));
+final friendsListServerProvider =
+    Provider((ref) => FriendsListServer(ref.read(dioProvider)));
 
 class FriendsListServer {
   final Dio _dio;

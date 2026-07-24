@@ -13,7 +13,11 @@ class IconPrefixedForm extends StatelessWidget {
         SizedBox(height: 8),
         IconField(icon: Icons.email_outlined, label: 'Email'),
         SizedBox(height: 8),
-        IconField(icon: Icons.lock_outline, label: 'Password', obscureText: true),
+        IconField(
+          icon: Icons.lock_outline,
+          label: 'Password',
+          obscureText: true,
+        ),
         SizedBox(height: 8),
         IconField(icon: Icons.phone_outlined, label: 'Phone'),
       ],

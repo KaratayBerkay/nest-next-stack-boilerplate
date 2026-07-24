@@ -1,7 +1,9 @@
 class FiltersValidator {
   static String? validateSortBy(String? value) {
     if (value == null || value.isEmpty) return null;
-    if (!['relevance', 'date', 'name'].contains(value)) return 'Invalid sort option';
+    if (!['relevance', 'date', 'name'].contains(value)) {
+      return 'Invalid sort option';
+    }
     return null;
   }
 

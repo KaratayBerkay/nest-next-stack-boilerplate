@@ -12,7 +12,10 @@ class CommandDemoPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [
-          Text('Command Menu', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            'Command Menu',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           SizedBox(height: 8),
           SizedBox(
             height: 300,

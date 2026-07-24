@@ -6,11 +6,13 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../types/auth/user.dart';
 
 const _accessTokenKey = 'access_token';
+const _refreshTokenKey = 'refresh_token';
 const _userKey = 'session_user';
 
 const _storage = FlutterSecureStorage();
 
-final authProvider = StateNotifierProvider<AuthNotifier, AsyncValue<AuthenticatedUser?>>((ref) {
+final authProvider =
+    StateNotifierProvider<AuthNotifier, AsyncValue<AuthenticatedUser?>>((ref) {
   return AuthNotifier();
 });
 
@@ -40,11 +42,20 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthenticatedUser?>> {
   Future<void> logout() async {
     await _storage.delete(key: _accessTokenKey);
     await _storage.delete(key: _userKey);
+    await _storage.delete(key: _refreshTokenKey);
     state = const AsyncData(null);
   }
 
   Future<String?> getToken() async {
     return _storage.read(key: _accessTokenKey);
+  }
+
+  Future<void> setRefreshToken(String token) async {
+    await _storage.write(key: _refreshTokenKey, value: token);
+  }
+
+  Future<String?> getRefreshToken() async {
+    return _storage.read(key: _refreshTokenKey);
   }
 }
 

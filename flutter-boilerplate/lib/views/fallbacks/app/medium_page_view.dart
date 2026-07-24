@@ -22,7 +22,8 @@ class MediumFallbackPage extends StatelessWidget {
         return AppFallbackBase(
           icon: Icons.search_off_rounded,
           title: 'Page not found',
-          message: message ?? 'The page you requested could not be found. It may have been removed or the link may be broken.',
+          message: message ??
+              'The page you requested could not be found. It may have been removed or the link may be broken.',
           action: onRetry != null
               ? Button(
                   onPressed: onRetry,
@@ -34,7 +35,8 @@ class MediumFallbackPage extends StatelessWidget {
         return AppFallbackBase(
           icon: Icons.error_outline_rounded,
           title: 'Something went wrong',
-          message: message ?? 'We encountered an error while processing your request. Please try again.',
+          message: message ??
+              'We encountered an error while processing your request. Please try again.',
           action: onRetry != null
               ? Button(
                   onPressed: onRetry,

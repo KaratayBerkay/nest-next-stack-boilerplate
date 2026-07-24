@@ -40,7 +40,10 @@ class GalleryUploadSection extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Gallery', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const Text(
+                  'Gallery',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
                 Button(
                   variant: ButtonVariant.outline,
                   size: ButtonSize.sm,
@@ -56,9 +59,16 @@ class GalleryUploadSection extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 32),
                   child: Column(
                     children: [
-                      Icon(Icons.photo_library_outlined, size: 48, color: colors.fgMuted),
+                      Icon(
+                        Icons.photo_library_outlined,
+                        size: 48,
+                        color: colors.fgMuted,
+                      ),
                       const SizedBox(height: 8),
-                      Text('No images yet', style: TextStyle(color: colors.fgMuted)),
+                      Text(
+                        'No images yet',
+                        style: TextStyle(color: colors.fgMuted),
+                      ),
                       const SizedBox(height: 8),
                       Button(
                         variant: ButtonVariant.outline,
@@ -106,7 +116,11 @@ class GalleryUploadSection extends StatelessWidget {
                                 color: colors.danger,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.close, size: 12, color: Colors.white),
+                              child: const Icon(
+                                Icons.close,
+                                size: 12,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),

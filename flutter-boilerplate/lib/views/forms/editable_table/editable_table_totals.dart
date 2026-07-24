@@ -26,11 +26,24 @@ class EditableTableTotals extends StatelessWidget {
     return Column(
       children: [
         if (discount != null && discount! > 0)
-          _TotalRow(label: 'Discount', value: '- \$${discountedAmount.toStringAsFixed(2)}', color: colors.success),
+          _TotalRow(
+            label: 'Discount',
+            value: '- \$${discountedAmount.toStringAsFixed(2)}',
+            color: colors.success,
+          ),
         if (calculatedTax > 0)
-          _TotalRow(label: 'Tax', value: '\$${calculatedTax.toStringAsFixed(2)}', color: colors.fgMuted),
+          _TotalRow(
+            label: 'Tax',
+            value: '\$${calculatedTax.toStringAsFixed(2)}',
+            color: colors.fgMuted,
+          ),
         const Divider(height: 20),
-        _TotalRow(label: 'Total', value: '\$${total.toStringAsFixed(2)}', bold: true, color: colors.fg),
+        _TotalRow(
+          label: 'Total',
+          value: '\$${total.toStringAsFixed(2)}',
+          bold: true,
+          color: colors.fg,
+        ),
       ],
     );
   }
@@ -58,7 +71,13 @@ class _TotalRow extends StatelessWidget {
         children: [
           Text(label, style: TextStyle(color: color)),
           const SizedBox(width: 12),
-          Text(value, style: TextStyle(fontWeight: bold ? FontWeight.bold : FontWeight.w600, color: color)),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: bold ? FontWeight.bold : FontWeight.w600,
+              color: color,
+            ),
+          ),
         ],
       ),
     );

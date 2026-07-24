@@ -16,7 +16,10 @@ class DefaultInputsSection extends StatelessWidget {
         const SizedBox(height: 8),
         const Input(label: 'With Error', errorText: 'This field is required'),
         const SizedBox(height: 8),
-        Input(label: 'Disabled', controller: TextEditingController(text: 'read only')),
+        Input(
+          label: 'Disabled',
+          controller: TextEditingController(text: 'read only'),
+        ),
         const SizedBox(height: 8),
         const Input(label: 'With Icon', prefixIcon: Icon(Icons.search)),
         const SizedBox(height: 8),
@@ -24,7 +27,10 @@ class DefaultInputsSection extends StatelessWidget {
         const SizedBox(height: 8),
         const Input(label: 'Numeric', keyboardType: TextInputType.number),
         const SizedBox(height: 8),
-        const Input(label: 'With Helper', helperText: 'This is a helper message'),
+        const Input(
+          label: 'With Helper',
+          helperText: 'This is a helper message',
+        ),
       ],
     );
   }

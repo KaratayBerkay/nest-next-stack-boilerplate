@@ -26,21 +26,34 @@ class MediumSettingsBillingPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const CardHeader(child: Text('Subscription', style: TextStyle(fontWeight: FontWeight.w600))),
+                const CardHeader(
+                  child: Text(
+                    'Subscription',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
                 CardContent(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Row(
                         children: [
-                          Text('MEDIUM', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          Text(
+                            'MEDIUM',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           SizedBox(width: 8),
                           Badge(text: 'Active', variant: BadgeVariant.success),
                         ],
                       ),
                       const SizedBox(height: 8),
-                      Text('Manage your subscription and payment methods.',
-                          style: TextStyle(color: colors.fgMuted, fontSize: 13),),
+                      Text(
+                        'Manage your subscription and payment methods.',
+                        style: TextStyle(color: colors.fgMuted, fontSize: 13),
+                      ),
                       const SizedBox(height: 12),
                       Button(
                         variant: ButtonVariant.outline,
@@ -58,10 +71,17 @@ class MediumSettingsBillingPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const CardHeader(child: Text('Payment Methods', style: TextStyle(fontWeight: FontWeight.w600))),
+                const CardHeader(
+                  child: Text(
+                    'Payment Methods',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
                 CardContent(
-                  child: Text('No payment methods saved.',
-                      style: TextStyle(color: colors.fgMuted),),
+                  child: Text(
+                    'No payment methods saved.',
+                    style: TextStyle(color: colors.fgMuted),
+                  ),
                 ),
               ],
             ),
@@ -71,10 +91,17 @@ class MediumSettingsBillingPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const CardHeader(child: Text('Invoices', style: TextStyle(fontWeight: FontWeight.w600))),
+                const CardHeader(
+                  child: Text(
+                    'Invoices',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
                 CardContent(
-                  child: Text('No invoices yet.',
-                      style: TextStyle(color: colors.fgMuted),),
+                  child: Text(
+                    'No invoices yet.',
+                    style: TextStyle(color: colors.fgMuted),
+                  ),
                 ),
               ],
             ),

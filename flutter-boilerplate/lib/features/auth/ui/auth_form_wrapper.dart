@@ -64,7 +64,8 @@ class AuthFormWrapper extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Text(
                           'or',
-                          style: typography.caption.copyWith(color: colors.fgMuted),
+                          style: typography.caption
+                              .copyWith(color: colors.fgMuted),
                         ),
                       ),
                       Expanded(child: Divider(color: colors.border)),

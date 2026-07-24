@@ -46,9 +46,7 @@ class _PostActionsState extends State<PostActions> {
             children: [
               IconButton(
                 icon: Icon(
-                  _isExpanded
-                      ? Icons.message
-                      : Icons.message_outlined,
+                  _isExpanded ? Icons.message : Icons.message_outlined,
                   size: 16,
                   color: _isExpanded ? colors.brand : colors.fgMuted,
                 ),

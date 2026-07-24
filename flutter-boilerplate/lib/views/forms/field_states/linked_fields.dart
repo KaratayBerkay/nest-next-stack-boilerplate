@@ -18,7 +18,8 @@ class _LinkedFieldsExampleState extends State<LinkedFieldsExample> {
   void _validate() {
     setState(() {
       _passError = _passCtrl.text.length < 6 ? 'At least 6 characters' : null;
-      _confirmError = _confirmCtrl.text != _passCtrl.text ? 'Passwords do not match' : null;
+      _confirmError =
+          _confirmCtrl.text != _passCtrl.text ? 'Passwords do not match' : null;
     });
   }
 
@@ -33,9 +34,21 @@ class _LinkedFieldsExampleState extends State<LinkedFieldsExample> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Input(label: 'Password', obscureText: true, controller: _passCtrl, errorText: _passError, onChanged: (_) => _validate()),
+        Input(
+          label: 'Password',
+          obscureText: true,
+          controller: _passCtrl,
+          errorText: _passError,
+          onChanged: (_) => _validate(),
+        ),
         const SizedBox(height: 8),
-        Input(label: 'Confirm Password', obscureText: true, controller: _confirmCtrl, errorText: _confirmError, onChanged: (_) => _validate()),
+        Input(
+          label: 'Confirm Password',
+          obscureText: true,
+          controller: _confirmCtrl,
+          errorText: _confirmError,
+          onChanged: (_) => _validate(),
+        ),
         const SizedBox(height: 12),
         FilledButton(onPressed: _validate, child: const Text('Verify')),
       ],

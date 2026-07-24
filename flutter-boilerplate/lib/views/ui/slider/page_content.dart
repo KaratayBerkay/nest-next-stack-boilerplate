@@ -19,13 +19,24 @@ class _SliderDemoPageState extends State<SliderDemoPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('Basic Slider', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'Basic Slider',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           Slider(value: _value, onChanged: (v) => setState(() => _value = v)),
           Text('Value: ${_value.toStringAsFixed(2)}'),
           const SizedBox(height: 24),
-          const Text('Range Slider', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          RangeSlider(values: _range, onChanged: (v) => setState(() => _range = v)),
-          Text('Range: ${_range.start.toStringAsFixed(2)} - ${_range.end.toStringAsFixed(2)}'),
+          const Text(
+            'Range Slider',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          RangeSlider(
+            values: _range,
+            onChanged: (v) => setState(() => _range = v),
+          ),
+          Text(
+            'Range: ${_range.start.toStringAsFixed(2)} - ${_range.end.toStringAsFixed(2)}',
+          ),
         ],
       ),
     );

@@ -14,7 +14,10 @@ class LazyLoadingFallback extends StatelessWidget {
       ),
       child: Text(
         'Loading heavy component...',
-        style: TextStyle(color: colors.onSurface.withValues(alpha: 0.4), fontSize: 13),
+        style: TextStyle(
+          color: colors.onSurface.withValues(alpha: 0.4),
+          fontSize: 13,
+        ),
       ),
     );
   }

@@ -12,14 +12,20 @@ class ComboboxDemoPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [
-          Text('Basic Combobox', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            'Basic Combobox',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           SizedBox(height: 8),
           ComboboxWidget(
             items: ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry'],
             label: 'Select a fruit',
           ),
           SizedBox(height: 24),
-          Text('With Custom Input', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            'With Custom Input',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           SizedBox(height: 8),
           ComboboxWidget(
             items: ['React', 'Vue', 'Angular', 'Svelte', 'Flutter'],

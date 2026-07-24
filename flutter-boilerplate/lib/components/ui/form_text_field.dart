@@ -73,7 +73,9 @@ class _FormTextFieldState extends State<FormTextField> {
             errorText: _error,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: _error != null ? colors.danger : colors.border),
+              borderSide: BorderSide(
+                color: _error != null ? colors.danger : colors.border,
+              ),
             ),
           ),
         ),

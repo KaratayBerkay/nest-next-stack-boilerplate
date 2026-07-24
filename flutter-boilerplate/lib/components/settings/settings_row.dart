@@ -37,7 +37,8 @@ class SettingsRow extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
                       description!,
-                      style: typography.bodySmall.copyWith(color: colors.fgMuted),
+                      style:
+                          typography.bodySmall.copyWith(color: colors.fgMuted),
                     ),
                   ),
               ],
@@ -52,10 +53,7 @@ class SettingsRow extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (onTap != null)
-          InkWell(onTap: onTap, child: content)
-        else
-          content,
+        if (onTap != null) InkWell(onTap: onTap, child: content) else content,
         if (showDivider)
           Padding(
             padding: const EdgeInsets.only(left: 16),

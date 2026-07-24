@@ -8,7 +8,8 @@ class PprDemo extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Partial Prerendering')),
       body: const Center(
-        child: Text('Partial prerendering for hybrid static and dynamic content'),
+        child:
+            Text('Partial prerendering for hybrid static and dynamic content'),
       ),
     );
   }

@@ -9,10 +9,12 @@ class VerifyEmailPageContent extends ConsumerStatefulWidget {
   const VerifyEmailPageContent({super.key});
 
   @override
-  ConsumerState<VerifyEmailPageContent> createState() => _VerifyEmailPageContentState();
+  ConsumerState<VerifyEmailPageContent> createState() =>
+      _VerifyEmailPageContentState();
 }
 
-class _VerifyEmailPageContentState extends ConsumerState<VerifyEmailPageContent> {
+class _VerifyEmailPageContentState
+    extends ConsumerState<VerifyEmailPageContent> {
   final _tokenCtrl = TextEditingController();
   bool _loading = false;
   bool _done = false;
@@ -27,7 +29,7 @@ class _VerifyEmailPageContentState extends ConsumerState<VerifyEmailPageContent>
     setState(() => _loading = true);
     try {
       await ref.read(verifyEmailServerProvider).call(_tokenCtrl.text);
-      if (!context.mounted) return;
+      if (!mounted) return;
       setState(() => _done = true);
       showToast(context, 'Email verified successfully');
     } catch (e) {
@@ -50,27 +52,48 @@ class _VerifyEmailPageContentState extends ConsumerState<VerifyEmailPageContent>
               if (_done)
                 Column(
                   children: [
-                    const Icon(Icons.check_circle, color: Colors.green, size: 48),
+                    const Icon(
+                      Icons.check_circle,
+                      color: Colors.green,
+                      size: 48,
+                    ),
                     const SizedBox(height: 16),
-                    const Text('Your email has been verified!', textAlign: TextAlign.center),
+                    const Text(
+                      'Your email has been verified!',
+                      textAlign: TextAlign.center,
+                    ),
                     const SizedBox(height: 16),
-                    FilledButton(onPressed: () => context.go('/auth/login'), child: const Text('Continue')),
+                    FilledButton(
+                      onPressed: () => context.go('/auth/login'),
+                      child: const Text('Continue'),
+                    ),
                   ],
                 )
               else
                 Column(
                   children: [
-                    const Text('Enter the verification token sent to your email.'),
+                    const Text(
+                      'Enter the verification token sent to your email.',
+                    ),
                     const SizedBox(height: 16),
                     TextField(
                       controller: _tokenCtrl,
-                      decoration: const InputDecoration(labelText: 'Verification Token'),
+                      decoration: const InputDecoration(
+                        labelText: 'Verification Token',
+                      ),
                     ),
                     const SizedBox(height: 20),
                     FilledButton(
                       onPressed: _loading ? null : _handleVerify,
                       child: _loading
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
                           : const Text('Verify'),
                     ),
                   ],

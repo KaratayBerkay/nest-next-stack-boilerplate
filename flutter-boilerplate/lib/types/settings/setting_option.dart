@@ -27,9 +27,8 @@ class SettingOption {
       description: json['description'] as String?,
       value: json['value'],
       defaultValue: json['defaultValue'],
-      options: (json['options'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList(),
+      options:
+          (json['options'] as List<dynamic>?)?.map((e) => e as String).toList(),
       category: json['category'] as String?,
     );
   }

@@ -20,8 +20,10 @@ class FreeSettingsPrivacyPage extends StatelessWidget {
           Card(
             child: SwitchListTile(
               title: const Text('Online Status'),
-              subtitle: Text('Show when you\'re online',
-                  style: TextStyle(color: colors.fgMuted, fontSize: 12),),
+              subtitle: Text(
+                'Show when you\'re online',
+                style: TextStyle(color: colors.fgMuted, fontSize: 12),
+              ),
               value: true,
               onChanged: (_) {},
             ),
@@ -32,8 +34,10 @@ class FreeSettingsPrivacyPage extends StatelessWidget {
               children: [
                 Icon(Icons.lock_outline, size: 40, color: colors.fgMuted),
                 const SizedBox(height: 12),
-                const Text('More privacy controls available on higher tiers',
-                    style: TextStyle(fontSize: 14),),
+                const Text(
+                  'More privacy controls available on higher tiers',
+                  style: TextStyle(fontSize: 14),
+                ),
                 const SizedBox(height: 12),
                 Button(
                   child: const Text('Upgrade for More'),

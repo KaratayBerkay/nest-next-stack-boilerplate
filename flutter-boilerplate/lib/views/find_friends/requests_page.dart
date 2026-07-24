@@ -55,18 +55,24 @@ class _RequestsView extends ConsumerWidget {
                 child: ListTile(
                   leading: Avatar(name: req.fromUserName),
                   title: Text(req.fromUserName),
-                  subtitle: Text('Sent ${_timeAgo(req.createdAt)}',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 12),),
+                  subtitle: Text(
+                    'Sent ${_timeAgo(req.createdAt)}',
+                    style: TextStyle(color: colors.fgMuted, fontSize: 12),
+                  ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
                         icon: Icon(Icons.check_circle, color: colors.success),
-                        onPressed: () => ref.read(friendActionsProvider).acceptRequest(req.id),
+                        onPressed: () => ref
+                            .read(friendActionsProvider)
+                            .acceptRequest(req.id),
                       ),
                       IconButton(
                         icon: Icon(Icons.cancel, color: colors.danger),
-                        onPressed: () => ref.read(friendActionsProvider).declineRequest(req.id),
+                        onPressed: () => ref
+                            .read(friendActionsProvider)
+                            .declineRequest(req.id),
                       ),
                     ],
                   ),

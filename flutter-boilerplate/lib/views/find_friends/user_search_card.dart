@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../api/server/users/search.dart';
 import '../../components/ui/avatar/avatar.dart';
+
 class UserSearchCard extends StatelessWidget {
   final UserSearchResult user;
   final VoidCallback? onAdd;

@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
 
-enum FieldType { text, email, password, number, textarea, select, checkbox, switch_ }
+enum FieldType {
+  text,
+  email,
+  password,
+  number,
+  textarea,
+  select,
+  checkbox,
+  switch_
+}
 
 class FormFieldConfig {
   final String id;
@@ -68,11 +77,13 @@ class FormBuilderModel extends ChangeNotifier {
 
   void addField({FieldType type = FieldType.text}) {
     _counter++;
-    _fields.add(FormFieldConfig(
-      id: 'field_$_counter',
-      label: 'Field $_counter',
-      type: type,
-    ),);
+    _fields.add(
+      FormFieldConfig(
+        id: 'field_$_counter',
+        label: 'Field $_counter',
+        type: type,
+      ),
+    );
     notifyListeners();
   }
 

@@ -21,7 +21,9 @@ class DraftAlert extends StatelessWidget {
 
     return AlertDialog(
       title: const Text('Unsaved Changes'),
-      content: const Text('You have unsaved changes. Do you want to save a draft before leaving?'),
+      content: const Text(
+        'You have unsaved changes. Do you want to save a draft before leaving?',
+      ),
       actions: [
         TextButton(
           onPressed: onDiscard,

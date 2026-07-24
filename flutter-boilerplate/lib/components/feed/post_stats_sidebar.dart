@@ -37,10 +37,11 @@ class _PostStatsSidebarState extends State<PostStatsSidebar> {
       final stats = await widget.onLoadStats!();
       setState(() => _stats = stats);
     } catch (_) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to load stats')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to load stats')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }

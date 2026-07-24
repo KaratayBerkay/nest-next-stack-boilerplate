@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
 
-final verifyEmailServerProvider = Provider((ref) => VerifyEmailServer(ref.read(dioProvider)));
+final verifyEmailServerProvider =
+    Provider((ref) => VerifyEmailServer(ref.read(dioProvider)));
 
 class VerifyEmailServer {
   final Dio _dio;

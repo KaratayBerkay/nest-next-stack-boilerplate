@@ -16,7 +16,9 @@ class Breakpoint {
 }
 
 final breakpointProvider = Provider<Breakpoint>((ref) {
-  throw UnimplementedError('Use BreakpointBuilder or MediaQuery directly in widgets');
+  throw UnimplementedError(
+    'Use BreakpointBuilder or MediaQuery directly in widgets',
+  );
 });
 
 Breakpoint useBreakpoint(BuildContext context) {

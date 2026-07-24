@@ -33,9 +33,19 @@ class QuotaExceeded extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: colors.warning, size: 20),
+              Icon(
+                Icons.warning_amber_rounded,
+                color: colors.warning,
+                size: 20,
+              ),
               const SizedBox(width: 8),
-              Text('Invite Limit Reached', style: TextStyle(fontWeight: FontWeight.w600, color: colors.warning)),
+              Text(
+                'Invite Limit Reached',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: colors.warning,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),

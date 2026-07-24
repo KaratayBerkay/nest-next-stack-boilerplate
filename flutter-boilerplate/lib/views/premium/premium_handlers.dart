@@ -15,7 +15,9 @@ void exportStatsCSV(WidgetRef ref, BuildContext context) {
     ..writeln('Active Subscriptions,${stats.activeSubscriptions}')
     ..writeln('Monthly Revenue,\$${stats.monthlyRevenue}')
     ..writeln('New Users This Month,${growth.newUsersThisMonth}')
-    ..writeln('New Subscriptions This Month,${growth.newSubscriptionsThisMonth}')
+    ..writeln(
+      'New Subscriptions This Month,${growth.newSubscriptionsThisMonth}',
+    )
     ..writeln('Growth Rate,${growth.growthRate}%');
 
   Clipboard.setData(ClipboardData(text: csv.toString()));

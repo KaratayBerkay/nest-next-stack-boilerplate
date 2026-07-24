@@ -28,7 +28,15 @@ class EditorHeader extends StatelessWidget {
             icon: Icon(Icons.arrow_back, color: colors.fg),
             onPressed: onBack,
           ),
-        Expanded(child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600))),
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
         Button(
           variant: ButtonVariant.ghost,
           size: ButtonSize.sm,

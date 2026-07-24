@@ -39,7 +39,10 @@ class _ValidationModesExampleState extends State<ValidationModesExample> {
         const SizedBox(height: 8),
         const Input(label: 'Field 3'),
         const SizedBox(height: 12),
-        FilledButton(onPressed: _mode == 'on-submit' ? () {} : null, child: const Text('Submit')),
+        FilledButton(
+          onPressed: _mode == 'on-submit' ? () {} : null,
+          child: const Text('Submit'),
+        ),
       ],
     );
   }

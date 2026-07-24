@@ -17,14 +17,20 @@ class CarouselDemoPage extends StatelessWidget {
           SizedBox(
             height: 200,
             child: PageView(
-              children: items.map((item) => Container(
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(
-                  color: colors.primaryContainer,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(child: Text(item, style: const TextStyle(fontSize: 24))),
-              ),).toList(),
+              children: items
+                  .map(
+                    (item) => Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      decoration: BoxDecoration(
+                        color: colors.primaryContainer,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: Text(item, style: const TextStyle(fontSize: 24)),
+                      ),
+                    ),
+                  )
+                  .toList(),
             ),
           ),
         ],

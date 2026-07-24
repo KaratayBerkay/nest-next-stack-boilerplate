@@ -5,11 +5,11 @@ import '../../api/client/friends/actions.dart';
 import '../../api/client/friends/query.dart';
 import '../../api/client/users/search.dart';
 import '../../api/server/friends/suggested.dart';
-import '../../api/server/messages/friend_requests.dart';
 import '../../api/server/users/search.dart';
 import '../../components/ui/empty/empty.dart';
 import '../../components/ui/spinner/spinner.dart';
 import '../../constants/theme.dart';
+import '../../types/messages/friend_request_types.dart';
 import 'pending_request_card.dart';
 import 'suggested_friends_panel.dart';
 import 'use_friend_search.dart';
@@ -48,7 +48,8 @@ class PremiumFindFriendsPage extends ConsumerWidget {
               decoration: InputDecoration(
                 hintText: 'Search users by name or email...',
                 prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 isDense: true,
               ),
               onChanged: (v) => searchActions.onQueryChanged(v),
@@ -91,11 +92,14 @@ class PremiumFindFriendsPage extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ..._buildRequestsSection(requestsAsync, ref, colors),
-          Text('Suggested Friends', style: TextStyle(
-            color: colors.fgMuted,
-            fontWeight: FontWeight.w600,
-            fontSize: 13,
-          ),),
+          Text(
+            'Suggested Friends',
+            style: TextStyle(
+              color: colors.fgMuted,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+          ),
           const SizedBox(height: 8),
           SuggestedFriendsPanel(
             suggestedAsync: suggestedAsync as AsyncValue<List<SuggestedUser>>,
@@ -134,7 +138,8 @@ class PremiumFindFriendsPage extends ConsumerWidget {
             padding: const EdgeInsets.only(bottom: 8),
             child: UserSearchCard(
               user: users[i],
-              onAdd: () => ref.read(friendActionsProvider).sendRequest(users[i].id),
+              onAdd: () =>
+                  ref.read(friendActionsProvider).sendRequest(users[i].id),
             ),
           ),
         );
@@ -142,25 +147,36 @@ class PremiumFindFriendsPage extends ConsumerWidget {
     );
   }
 
-  List<Widget> _buildRequestsSection(AsyncValue<dynamic> requestsAsync, WidgetRef ref, AppColors colors) {
+  List<Widget> _buildRequestsSection(
+    AsyncValue<dynamic> requestsAsync,
+    WidgetRef ref,
+    AppColors colors,
+  ) {
     final requests = requestsAsync.asData?.value;
     if (requests == null || (requests as List).isEmpty) return [];
 
     return [
-      Text('Pending Requests', style: TextStyle(
-        color: colors.fgMuted,
-        fontWeight: FontWeight.w600,
-        fontSize: 13,
-      ),),
-      const SizedBox(height: 8),
-      ...(requests as List<FriendRequest>).map((req) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: PendingRequestCard(
-          request: req,
-          onAccept: () => ref.read(friendActionsProvider).acceptRequest(req.id),
-          onDecline: () => ref.read(friendActionsProvider).declineRequest(req.id),
+      Text(
+        'Pending Requests',
+        style: TextStyle(
+          color: colors.fgMuted,
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
         ),
-      ),),
+      ),
+      const SizedBox(height: 8),
+      ...(requests as List<FriendRequest>).map(
+        (req) => Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: PendingRequestCard(
+            request: req,
+            onAccept: () =>
+                ref.read(friendActionsProvider).acceptRequest(req.id),
+            onDecline: () =>
+                ref.read(friendActionsProvider).declineRequest(req.id),
+          ),
+        ),
+      ),
       const SizedBox(height: 16),
     ];
   }

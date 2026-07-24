@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
 
-final billingCancelServerProvider = Provider((ref) => BillingCancelServer(ref.read(dioProvider)));
+final billingCancelServerProvider =
+    Provider((ref) => BillingCancelServer(ref.read(dioProvider)));
 
 class BillingCancelServer {
   final Dio _dio;

@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
 
-final meRawServerProvider = Provider((ref) => MeRawServer(ref.read(dioProvider)));
+final meRawServerProvider =
+    Provider((ref) => MeRawServer(ref.read(dioProvider)));
 
 class MeRawServer {
   final Dio _dio;

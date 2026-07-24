@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/api/urls.dart';
 
-final tokenServerProvider = Provider((ref) => TokenServer(ref.read(dioProvider)));
+final tokenServerProvider =
+    Provider((ref) => TokenServer(ref.read(dioProvider)));
 
 class TokenServer {
   final Dio _dio;

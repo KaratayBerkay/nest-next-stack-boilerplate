@@ -32,7 +32,8 @@ class _UsersPageContentState extends ConsumerState<UsersPageContent> {
               decoration: InputDecoration(
                 hintText: 'Search users...',
                 prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 isDense: true,
               ),
               onSubmitted: (v) => setState(() => _query = v),

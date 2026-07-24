@@ -20,11 +20,22 @@ class BusinessFields extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Business Info', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        const Text(
+          'Business Info',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 12),
-        FormTextField(controller: companyCtrl, label: 'Company', validator: (v) => forms.validateRequired(v, 'Company')),
+        FormTextField(
+          controller: companyCtrl,
+          label: 'Company',
+          validator: (v) => forms.validateRequired(v, 'Company'),
+        ),
         const SizedBox(height: 8),
-        FormTextField(controller: roleCtrl, label: 'Job Title', validator: (v) => forms.validateRequired(v, 'Job Title')),
+        FormTextField(
+          controller: roleCtrl,
+          label: 'Job Title',
+          validator: (v) => forms.validateRequired(v, 'Job Title'),
+        ),
         const SizedBox(height: 8),
         FormTextField(controller: industryCtrl, label: 'Industry'),
       ],

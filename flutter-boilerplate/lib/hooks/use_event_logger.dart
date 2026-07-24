@@ -15,7 +15,8 @@ class EventLogger {
     String? label,
     Map<String, dynamic>? metadata,
   }) async {
-    final event = label != null ? '$category.$action.$label' : '$category.$action';
+    final event =
+        label != null ? '$category.$action.$label' : '$category.$action';
     await _ref.read(eventsActionsProvider).log(event, metadata);
   }
 }

@@ -10,36 +10,39 @@ class AuditLogsLoadingFallback extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-           const _SkeletonLine(width: 120),
+          const _SkeletonLine(width: 120),
           const SizedBox(height: 16),
           const Row(
             children: [
-               _SkeletonLine(width: 120, height: 32),
+              _SkeletonLine(width: 120, height: 32),
               SizedBox(width: 8),
-               _SkeletonLine(width: 100, height: 32),
+              _SkeletonLine(width: 100, height: 32),
               SizedBox(width: 8),
-               _SkeletonLine(width: 140, height: 32),
+              _SkeletonLine(width: 140, height: 32),
             ],
           ),
           const SizedBox(height: 16),
-          ...List.generate(8, (_) => const Padding(
-            padding: EdgeInsets.only(bottom: 8),
-            child: Row(
-              children: [
-                 _SkeletonLine(width: 100),
-                SizedBox(width: 16),
-                 _SkeletonLine(width: 80),
-                SizedBox(width: 16),
-                 _SkeletonLine(width: 50),
-                SizedBox(width: 16),
-                 _SkeletonLine(width: 80),
-                SizedBox(width: 16),
-                 _SkeletonLine(width: 60),
-                SizedBox(width: 16),
-                 _SkeletonLine(width: 120),
-              ],
+          ...List.generate(
+            8,
+            (_) => const Padding(
+              padding: EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  _SkeletonLine(width: 100),
+                  SizedBox(width: 16),
+                  _SkeletonLine(width: 80),
+                  SizedBox(width: 16),
+                  _SkeletonLine(width: 50),
+                  SizedBox(width: 16),
+                  _SkeletonLine(width: 80),
+                  SizedBox(width: 16),
+                  _SkeletonLine(width: 60),
+                  SizedBox(width: 16),
+                  _SkeletonLine(width: 120),
+                ],
+              ),
             ),
-          ),),
+          ),
         ],
       ),
     );
@@ -49,7 +52,7 @@ class AuditLogsLoadingFallback extends StatelessWidget {
 class _SkeletonLine extends StatelessWidget {
   final double? width;
   final double height;
-  const  _SkeletonLine({this.width, this.height = 12});
+  const _SkeletonLine({this.width, this.height = 12});
 
   @override
   Widget build(BuildContext context) {

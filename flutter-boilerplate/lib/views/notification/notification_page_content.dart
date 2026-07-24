@@ -12,7 +12,8 @@ class _NotificationFilter extends Notifier<String> {
   void update(String value) => state = value;
 }
 
-final _notificationFilterProvider = NotifierProvider<_NotificationFilter, String>(_NotificationFilter.new);
+final _notificationFilterProvider =
+    NotifierProvider<_NotificationFilter, String>(_NotificationFilter.new);
 
 class NotificationPageContent extends ConsumerWidget {
   final String lang;
@@ -28,9 +29,10 @@ class NotificationPageContent extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Notifications'),
         actions: [
-                IconButton(
+          IconButton(
             icon: Icon(Icons.checklist, color: colors.fgMuted),
-            onPressed: () => ref.read(_notificationFilterProvider.notifier).update('all'),
+            onPressed: () =>
+                ref.read(_notificationFilterProvider.notifier).update('all'),
             tooltip: 'Mark all as read',
           ),
           IconButton(
@@ -53,25 +55,34 @@ class NotificationPageContent extends ConsumerWidget {
                 _FilterChip(
                   label: 'All',
                   selected: filter == 'all',
-                  onTap: () => ref.read(_notificationFilterProvider.notifier).update('all'),
+                  onTap: () => ref
+                      .read(_notificationFilterProvider.notifier)
+                      .update('all'),
                 ),
                 const SizedBox(width: 8),
                 _FilterChip(
                   label: 'Unread',
                   selected: filter == 'unread',
-                  onTap: () => ref.read(_notificationFilterProvider.notifier).update('unread'),
+                  onTap: () => ref
+                      .read(_notificationFilterProvider.notifier)
+                      .update('unread'),
                 ),
                 const SizedBox(width: 8),
                 _FilterChip(
                   label: 'Mentions',
                   selected: filter == 'mentions',
-                  onTap: () => ref.read(_notificationFilterProvider.notifier).update('mentions'),
+                  onTap: () => ref
+                      .read(_notificationFilterProvider.notifier)
+                      .update('mentions'),
                 ),
                 const Spacer(),
                 TextButton.icon(
                   onPressed: () {},
                   icon: Icon(Icons.done_all, size: 16, color: colors.brand),
-                  label: Text('Mark all read', style: TextStyle(fontSize: 12, color: colors.brand)),
+                  label: Text(
+                    'Mark all read',
+                    style: TextStyle(fontSize: 12, color: colors.brand),
+                  ),
                 ),
               ],
             ),
@@ -80,7 +91,8 @@ class NotificationPageContent extends ConsumerWidget {
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(vertical: 4),
               itemCount: _sampleNotifications.length,
-              separatorBuilder: (_, __) => const Separator(margin: EdgeInsets.symmetric(horizontal: 16)),
+              separatorBuilder: (_, __) =>
+                  const Separator(margin: EdgeInsets.symmetric(horizontal: 16)),
               itemBuilder: (_, i) {
                 final n = _sampleNotifications[i];
                 return NotificationItemWidget(
@@ -102,7 +114,11 @@ class _FilterChip extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const _FilterChip({required this.label, required this.selected, required this.onTap});
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -113,7 +129,8 @@ class _FilterChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? colors.brand.withValues(alpha: 0.1) : colors.surface,
+          color:
+              selected ? colors.brand.withValues(alpha: 0.1) : colors.surface,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(color: selected ? colors.brand : colors.border),
         ),
@@ -135,7 +152,8 @@ final _sampleNotifications = <NotificationItem>[
     id: '1',
     type: 'welcome',
     title: 'Welcome to the app!',
-    body: 'Thanks for joining. We are excited to have you on board. Start exploring the features.',
+    body:
+        'Thanks for joining. We are excited to have you on board. Start exploring the features.',
     createdAt: DateTime.now().subtract(const Duration(minutes: 2)),
   ),
   NotificationItem(
@@ -177,5 +195,3 @@ final _sampleNotifications = <NotificationItem>[
     isRead: true,
   ),
 ];
-
-

@@ -92,8 +92,7 @@ class _ChatRoomSidebarState extends State<ChatRoomSidebar>
             tabs: [
               const Tab(text: 'Rooms'),
               Tab(
-                text:
-                    'Online (${widget.roomCounts[widget.room] ?? 0})',
+                text: 'Online (${widget.roomCounts[widget.room] ?? 0})',
               ),
             ],
             labelColor: colors.brand,
@@ -131,7 +130,9 @@ class _ChatRoomSidebarState extends State<ChatRoomSidebar>
                           final name = m['name'] ?? 'Unknown';
                           return Padding(
                             padding: const EdgeInsets.symmetric(
-                                vertical: 4, horizontal: 8,),
+                              vertical: 4,
+                              horizontal: 8,
+                            ),
                             child: Row(
                               children: [
                                 Avatar(name: name, radius: 16),

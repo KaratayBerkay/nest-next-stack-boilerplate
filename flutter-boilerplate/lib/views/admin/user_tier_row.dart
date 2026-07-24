@@ -47,8 +47,14 @@ class _UserTierRowState extends State<UserTierRow> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(widget.user.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                Text(widget.user.email, style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+                Text(
+                  widget.user.name,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                Text(
+                  widget.user.email,
+                  style: TextStyle(color: colors.fgMuted, fontSize: 12),
+                ),
               ],
             ),
           ),
@@ -68,20 +74,26 @@ class _UserTierRowState extends State<UserTierRow> {
           ),
           const SizedBox(width: 8),
           _loading
-            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-            : ElevatedButton(
-                onPressed: _selectedTier == widget.user.tier ? null : () async {
-                  setState(() => _loading = true);
-                  widget.onSetTier(_selectedTier);
-                  if (mounted) setState(() => _loading = false);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.brand,
-                  foregroundColor: colors.fg,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : ElevatedButton(
+                  onPressed: _selectedTier == widget.user.tier
+                      ? null
+                      : () async {
+                          setState(() => _loading = true);
+                          widget.onSetTier(_selectedTier);
+                          if (mounted) setState(() => _loading = false);
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.brand,
+                    foregroundColor: colors.fg,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                  child: const Text('Set'),
                 ),
-                child: const Text('Set'),
-              ),
         ],
       ),
     );

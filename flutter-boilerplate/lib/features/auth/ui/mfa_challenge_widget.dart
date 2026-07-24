@@ -99,7 +99,9 @@ class _MfaChallengeWidgetState extends State<MfaChallengeWidget> {
             onPressed: canResend
                 ? () {
                     widget.onResend?.call();
-                    setState(() => _remainingSeconds = widget.resendCooldownSeconds);
+                    setState(
+                      () => _remainingSeconds = widget.resendCooldownSeconds,
+                    );
                     _resetTimer();
                   }
                 : null,

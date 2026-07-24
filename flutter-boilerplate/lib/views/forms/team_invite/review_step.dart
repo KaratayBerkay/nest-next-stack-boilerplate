@@ -21,9 +21,15 @@ class ReviewStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Review Invitations', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        const Text(
+          'Review Invitations',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 4),
-        Text('Please review before sending', style: TextStyle(color: colors.fgMuted, fontSize: 13)),
+        Text(
+          'Please review before sending',
+          style: TextStyle(color: colors.fgMuted, fontSize: 13),
+        ),
         const SizedBox(height: 12),
         Card(
           child: Padding(
@@ -31,18 +37,27 @@ class ReviewStep extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Recipients (${emails.length})', style: TextStyle(fontWeight: FontWeight.w600, color: colors.fgMuted, fontSize: 12)),
-                const SizedBox(height: 4),
-                ...emails.map((e) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Row(
-                    children: [
-                      Icon(Icons.email, size: 14, color: colors.fgMuted),
-                      const SizedBox(width: 6),
-                      Text(e),
-                    ],
+                Text(
+                  'Recipients (${emails.length})',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: colors.fgMuted,
+                    fontSize: 12,
                   ),
-                ),),
+                ),
+                const SizedBox(height: 4),
+                ...emails.map(
+                  (e) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Row(
+                      children: [
+                        Icon(Icons.email, size: 14, color: colors.fgMuted),
+                        const SizedBox(width: 6),
+                        Text(e),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -54,7 +69,14 @@ class ReviewStep extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Role', style: TextStyle(fontWeight: FontWeight.w600, color: colors.fgMuted, fontSize: 12)),
+                Text(
+                  'Role',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: colors.fgMuted,
+                    fontSize: 12,
+                  ),
+                ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
@@ -75,7 +97,14 @@ class ReviewStep extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Message', style: TextStyle(fontWeight: FontWeight.w600, color: colors.fgMuted, fontSize: 12)),
+                  Text(
+                    'Message',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: colors.fgMuted,
+                      fontSize: 12,
+                    ),
+                  ),
                   const SizedBox(height: 4),
                   Text(message!),
                 ],

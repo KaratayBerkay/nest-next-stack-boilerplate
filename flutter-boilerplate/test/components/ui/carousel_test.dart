@@ -8,23 +8,28 @@ void main() {
   testWidgets('Carousel renders all pages', (tester) async {
     await pumpTestApp(
       tester,
-      const Carousel(children: [
-        Text('Page 1'),
-        Text('Page 2'),
-        Text('Page 3'),
-      ],),
+      const Carousel(
+        children: [
+          Text('Page 1'),
+          Text('Page 2'),
+          Text('Page 3'),
+        ],
+      ),
     );
 
     expect(find.text('Page 1'), findsOneWidget);
   });
 
-  testWidgets('Carousel renders dot indicators for multiple pages', (tester) async {
+  testWidgets('Carousel renders dot indicators for multiple pages',
+      (tester) async {
     await pumpTestApp(
       tester,
-      const Carousel(children: [
-        Text('One'),
-        Text('Two'),
-      ],),
+      const Carousel(
+        children: [
+          Text('One'),
+          Text('Two'),
+        ],
+      ),
     );
 
     expect(find.byType(PageView), findsOneWidget);

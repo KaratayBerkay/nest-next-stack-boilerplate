@@ -9,10 +9,12 @@ class ForgotPasswordPageContent extends ConsumerStatefulWidget {
   const ForgotPasswordPageContent({super.key});
 
   @override
-  ConsumerState<ForgotPasswordPageContent> createState() => _ForgotPasswordPageContentState();
+  ConsumerState<ForgotPasswordPageContent> createState() =>
+      _ForgotPasswordPageContentState();
 }
 
-class _ForgotPasswordPageContentState extends ConsumerState<ForgotPasswordPageContent> {
+class _ForgotPasswordPageContentState
+    extends ConsumerState<ForgotPasswordPageContent> {
   final _emailCtrl = TextEditingController();
   bool _loading = false;
   bool _sent = false;
@@ -27,7 +29,7 @@ class _ForgotPasswordPageContentState extends ConsumerState<ForgotPasswordPageCo
     setState(() => _loading = true);
     try {
       await ref.read(requestPasswordResetServerProvider).call(_emailCtrl.text);
-      if (!context.mounted) return;
+      if (!mounted) return;
       setState(() => _sent = true);
       showToast(context, 'Password reset email sent');
     } catch (e) {
@@ -50,11 +52,21 @@ class _ForgotPasswordPageContentState extends ConsumerState<ForgotPasswordPageCo
               if (_sent)
                 Column(
                   children: [
-                    const Icon(Icons.check_circle, color: Colors.green, size: 48),
+                    const Icon(
+                      Icons.check_circle,
+                      color: Colors.green,
+                      size: 48,
+                    ),
                     const SizedBox(height: 16),
-                    const Text('Check your email for reset instructions.', textAlign: TextAlign.center),
+                    const Text(
+                      'Check your email for reset instructions.',
+                      textAlign: TextAlign.center,
+                    ),
                     const SizedBox(height: 16),
-                    FilledButton(onPressed: () => context.go('/auth/login'), child: const Text('Back to Login')),
+                    FilledButton(
+                      onPressed: () => context.go('/auth/login'),
+                      child: const Text('Back to Login'),
+                    ),
                   ],
                 )
               else
@@ -69,7 +81,14 @@ class _ForgotPasswordPageContentState extends ConsumerState<ForgotPasswordPageCo
                     FilledButton(
                       onPressed: _loading ? null : _handleSend,
                       child: _loading
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
                           : const Text('Send Reset Link'),
                     ),
                   ],

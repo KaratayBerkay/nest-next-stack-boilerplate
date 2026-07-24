@@ -38,7 +38,8 @@ class MessagesSidebarTabBar extends StatelessWidget {
                   'Conversations',
                   style: TextStyle(
                     fontSize: 13,
-                    fontWeight: activeTab == 0 ? FontWeight.w600 : FontWeight.normal,
+                    fontWeight:
+                        activeTab == 0 ? FontWeight.w600 : FontWeight.normal,
                     color: activeTab == 0 ? colors.fg : colors.fgMuted,
                   ),
                 ),
@@ -63,7 +64,8 @@ class MessagesSidebarTabBar extends StatelessWidget {
                   'Friends',
                   style: TextStyle(
                     fontSize: 13,
-                    fontWeight: activeTab == 1 ? FontWeight.w600 : FontWeight.normal,
+                    fontWeight:
+                        activeTab == 1 ? FontWeight.w600 : FontWeight.normal,
                     color: activeTab == 1 ? colors.fg : colors.fgMuted,
                   ),
                 ),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../api/server/messages/friend_requests.dart';
 import '../../components/ui/avatar/avatar.dart';
 import '../../constants/theme.dart';
+import '../../types/messages/friend_request_types.dart';
 
 class PendingRequestCard extends StatelessWidget {
   final FriendRequest request;

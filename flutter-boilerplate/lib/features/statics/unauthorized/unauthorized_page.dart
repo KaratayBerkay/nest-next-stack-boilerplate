@@ -24,7 +24,10 @@ class UnauthorizedPage extends StatelessWidget {
           children: [
             Text(
               message,
-              style: TextStyle(color: colors.onSurface.withValues(alpha: 0.6), fontSize: 13),
+              style: TextStyle(
+                color: colors.onSurface.withValues(alpha: 0.6),
+                fontSize: 13,
+              ),
             ),
             const SizedBox(height: 16),
             FilledButton(

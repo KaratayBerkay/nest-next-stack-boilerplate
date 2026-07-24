@@ -15,7 +15,11 @@ class ItemContentPage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.article, size: 64, color: Theme.of(context).colorScheme.primary),
+              Icon(
+                Icons.article,
+                size: 64,
+                color: Theme.of(context).colorScheme.primary,
+              ),
               const SizedBox(height: 16),
               Text(
                 'Item Content Page',
@@ -31,8 +35,8 @@ class ItemContentPage extends StatelessWidget {
                 'This page demonstrates dynamic route segments with path parameters.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
               ),
             ],
           ),

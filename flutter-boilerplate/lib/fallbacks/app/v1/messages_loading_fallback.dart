@@ -50,7 +50,9 @@ class MessagesLoadingFallback extends StatelessWidget {
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 12),
                               child: Row(
-                                mainAxisAlignment: i.isEven ? MainAxisAlignment.end : MainAxisAlignment.start,
+                                mainAxisAlignment: i.isEven
+                                    ? MainAxisAlignment.end
+                                    : MainAxisAlignment.start,
                                 children: [
                                   _PulseLine(
                                     width: 100.0 + (i % 3) * 60,

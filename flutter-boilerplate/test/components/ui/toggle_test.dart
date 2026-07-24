@@ -11,7 +11,10 @@ void main() {
   });
 
   testWidgets('renders with label', (tester) async {
-    await pumpTestApp(tester, const ToggleSwitch(value: false, label: 'Dark mode'));
+    await pumpTestApp(
+      tester,
+      const ToggleSwitch(value: false, label: 'Dark mode'),
+    );
     expect(find.text('Dark mode'), findsOneWidget);
     expect(find.byType(SwitchListTile), findsOneWidget);
   });

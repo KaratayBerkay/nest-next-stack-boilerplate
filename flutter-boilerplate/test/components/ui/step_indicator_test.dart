@@ -16,7 +16,8 @@ void main() {
     expect(find.text('3'), findsOneWidget);
   });
 
-  testWidgets('StepIndicator shows check icon for completed steps', (tester) async {
+  testWidgets('StepIndicator shows check icon for completed steps',
+      (tester) async {
     await pumpTestApp(
       tester,
       const StepIndicator(currentStep: 2, totalSteps: 3),

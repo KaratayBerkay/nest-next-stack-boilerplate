@@ -8,10 +8,12 @@ void main() {
   testWidgets('renders command items', (tester) async {
     await pumpTestApp(
       tester,
-      const CommandWidget(items: [
-        CommandItem(label: 'Copy'),
-        CommandItem(label: 'Paste'),
-      ],),
+      const CommandWidget(
+        items: [
+          CommandItem(label: 'Copy'),
+          CommandItem(label: 'Paste'),
+        ],
+      ),
     );
     expect(find.text('Copy'), findsOneWidget);
     expect(find.text('Paste'), findsOneWidget);
@@ -31,10 +33,12 @@ void main() {
   testWidgets('filters items on search', (tester) async {
     await pumpTestApp(
       tester,
-      const CommandWidget(items: [
-        CommandItem(label: 'Copy'),
-        CommandItem(label: 'Paste'),
-      ],),
+      const CommandWidget(
+        items: [
+          CommandItem(label: 'Copy'),
+          CommandItem(label: 'Paste'),
+        ],
+      ),
     );
     await tester.enterText(find.byType(TextField), 'Pas');
     await tester.pump();
@@ -59,10 +63,12 @@ void main() {
   testWidgets('renders items with group labels', (tester) async {
     await pumpTestApp(
       tester,
-      const CommandWidget(items: [
-        CommandItem(label: 'Copy', group: 'Edit'),
-        CommandItem(label: 'Save', group: 'File'),
-      ],),
+      const CommandWidget(
+        items: [
+          CommandItem(label: 'Copy', group: 'Edit'),
+          CommandItem(label: 'Save', group: 'File'),
+        ],
+      ),
     );
     expect(find.text('Edit'), findsOneWidget);
     expect(find.text('File'), findsOneWidget);

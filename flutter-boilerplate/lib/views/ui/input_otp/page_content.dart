@@ -21,20 +21,31 @@ class _InputOtpDemoPageState extends State<InputOtpDemoPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Enter verification code', style: TextStyle(fontSize: 16)),
+              const Text(
+                'Enter verification code',
+                style: TextStyle(fontSize: 16),
+              ),
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(6, (i) => Container(
-                  width: 48,
-                  height: 56,
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(8),
+                children: List.generate(
+                  6,
+                  (i) => Container(
+                    width: 48,
+                    height: 56,
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Text(
+                        _code[i],
+                        style: const TextStyle(fontSize: 24),
+                      ),
+                    ),
                   ),
-                  child: Center(child: Text(_code[i], style: const TextStyle(fontSize: 24))),
-                ),),
+                ),
               ),
             ],
           ),

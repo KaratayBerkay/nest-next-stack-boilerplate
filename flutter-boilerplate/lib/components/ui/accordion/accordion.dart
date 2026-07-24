@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 class AccordionWidget extends StatefulWidget {
   final List<AccordionItem> items;
   final bool expandMultiple;
@@ -39,51 +38,57 @@ class _AccordionWidgetState extends State<AccordionWidget> {
 
         return Column(
           children: [
-          InkWell(
-            onTap: () {
-              setState(() {
-              if (widget.expandMultiple) {
-                if (isExpanded) {
-                  _expandedIndexes.remove(i);
-                } else {
-                  _expandedIndexes.add(i);
-                }
-              } else {
-                _expandedIndexes.clear();
-                if (!isExpanded) _expandedIndexes.add(i);
-              }
-              });
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-              children: [
-                if (item.icon != null) ...[
-                  Icon(item.icon, size: 18),
-                  const SizedBox(width: 12),
-                ],
-                Expanded(
-                  child: Text(item.title, style: const TextStyle(fontWeight: FontWeight.w500)),
+            InkWell(
+              onTap: () {
+                setState(() {
+                  if (widget.expandMultiple) {
+                    if (isExpanded) {
+                      _expandedIndexes.remove(i);
+                    } else {
+                      _expandedIndexes.add(i);
+                    }
+                  } else {
+                    _expandedIndexes.clear();
+                    if (!isExpanded) _expandedIndexes.add(i);
+                  }
+                });
+              },
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    if (item.icon != null) ...[
+                      Icon(item.icon, size: 18),
+                      const SizedBox(width: 12),
+                    ],
+                    Expanded(
+                      child: Text(
+                        item.title,
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    AnimatedRotation(
+                      turns: isExpanded ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 200),
+                      child: const Icon(Icons.keyboard_arrow_down, size: 20),
+                    ),
+                  ],
                 ),
-                AnimatedRotation(
-                  turns: isExpanded ? 0.5 : 0,
-                  duration: const Duration(milliseconds: 200),
-                  child: const Icon(Icons.keyboard_arrow_down, size: 20),
-                ),
-              ],
               ),
             ),
-          ),
-          AnimatedCrossFade(
-            firstChild: const SizedBox.shrink(),
-            secondChild: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child: item.content,
+            AnimatedCrossFade(
+              firstChild: const SizedBox.shrink(),
+              secondChild: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: item.content,
+              ),
+              crossFadeState: isExpanded
+                  ? CrossFadeState.showSecond
+                  : CrossFadeState.showFirst,
+              duration: const Duration(milliseconds: 200),
             ),
-            crossFadeState: isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-            duration: const Duration(milliseconds: 200),
-          ),
-          Divider(height: 1, color: Theme.of(context).dividerColor),
+            Divider(height: 1, color: Theme.of(context).dividerColor),
           ],
         );
       }),

@@ -5,7 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../test_helpers.dart';
 
 void main() {
-  testWidgets('CollapsibleWidget shows child when initiallyExpanded', (tester) async {
+  testWidgets('CollapsibleWidget shows child when initiallyExpanded',
+      (tester) async {
     await pumpTestApp(
       tester,
       const CollapsibleWidget(

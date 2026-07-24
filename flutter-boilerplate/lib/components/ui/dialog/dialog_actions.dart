@@ -12,10 +12,12 @@ class DialogActionsRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          ...children.map((w) => Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: w,
-              ),),
+          ...children.map(
+            (w) => Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: w,
+            ),
+          ),
         ],
       ),
     );

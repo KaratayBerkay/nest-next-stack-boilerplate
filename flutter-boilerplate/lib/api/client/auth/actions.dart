@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../types/auth/auth_request_types.dart';
 import '../../server/auth/login.dart';
 import '../../server/auth/logout.dart';
 import '../../server/auth/register.dart';

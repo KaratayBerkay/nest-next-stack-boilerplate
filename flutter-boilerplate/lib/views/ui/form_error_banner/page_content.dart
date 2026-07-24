@@ -14,7 +14,8 @@ class FormErrorBannerDemoPage extends StatelessWidget {
         children: const [
           AlertWidget(
             title: 'Please fix the following errors',
-            message: '• Email is required\n• Password must be at least 8 characters',
+            message:
+                '• Email is required\n• Password must be at least 8 characters',
             variant: AlertVariant.danger,
           ),
         ],

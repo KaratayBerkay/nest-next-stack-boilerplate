@@ -36,19 +36,27 @@ class _MediumPremiumPageState extends ConsumerState<MediumPremiumPage> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('Premium Stats', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            'Premium Stats',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
           statsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Text('Error: $e', style: TextStyle(color: colors.danger)),
+            error: (e, _) =>
+                Text('Error: $e', style: TextStyle(color: colors.danger)),
             data: (stats) => PremiumStatsSection(stats: stats),
           ),
           const SizedBox(height: 24),
-          const Text('Growth Stats', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            'Growth Stats',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
           growthAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Text('Error: $e', style: TextStyle(color: colors.danger)),
+            error: (e, _) =>
+                Text('Error: $e', style: TextStyle(color: colors.danger)),
             data: (growth) => GrowthStatsSection(growth: growth),
           ),
         ],

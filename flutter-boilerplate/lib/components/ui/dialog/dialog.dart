@@ -16,7 +16,8 @@ class DialogWidget extends StatelessWidget {
     this.trigger,
   });
 
-  static Future<T?> show<T>(BuildContext context, {
+  static Future<T?> show<T>(
+    BuildContext context, {
     String? title,
     String? description,
     Widget? content,

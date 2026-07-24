@@ -24,7 +24,8 @@ class V1ShellFallback extends StatelessWidget {
                       width: 80,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: colors.surfaceContainerHighest.withValues(alpha: 0.3),
+                        color: colors.surfaceContainerHighest
+                            .withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),

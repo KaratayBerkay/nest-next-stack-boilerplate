@@ -42,7 +42,12 @@ class ResponsiveGrid extends StatelessWidget {
   List<List<Widget>> _buildRows(int columns) {
     final rows = <List<Widget>>[];
     for (var i = 0; i < children.length; i += columns) {
-      rows.add(children.sublist(i, i + columns > children.length ? children.length : i + columns));
+      rows.add(
+        children.sublist(
+          i,
+          i + columns > children.length ? children.length : i + columns,
+        ),
+      );
     }
     return rows;
   }

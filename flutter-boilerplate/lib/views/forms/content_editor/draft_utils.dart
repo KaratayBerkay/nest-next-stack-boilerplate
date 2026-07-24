@@ -14,18 +14,18 @@ class DraftData {
   });
 
   Map<String, dynamic> toJson() => {
-    'title': title,
-    'body': body,
-    'tags': tags,
-    'savedAt': savedAt.toIso8601String(),
-  };
+        'title': title,
+        'body': body,
+        'tags': tags,
+        'savedAt': savedAt.toIso8601String(),
+      };
 
   factory DraftData.fromJson(Map<String, dynamic> json) => DraftData(
-    title: json['title'] as String,
-    body: json['body'] as String,
-    tags: json['tags'] as String,
-    savedAt: DateTime.parse(json['savedAt'] as String),
-  );
+        title: json['title'] as String,
+        body: json['body'] as String,
+        tags: json['tags'] as String,
+        savedAt: DateTime.parse(json['savedAt'] as String),
+      );
 }
 
 class DraftManager {
@@ -54,7 +54,10 @@ class DraftManager {
     }
   }
 
-  static bool isDraftStale(DraftData draft, {Duration maxAge = const Duration(days: 7)}) {
+  static bool isDraftStale(
+    DraftData draft, {
+    Duration maxAge = const Duration(days: 7),
+  }) {
     return DateTime.now().difference(draft.savedAt) > maxAge;
   }
 }

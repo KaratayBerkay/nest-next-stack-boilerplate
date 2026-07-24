@@ -44,7 +44,8 @@ class _EditableTableRowState extends State<EditableTableRow> {
     super.initState();
     _itemCtrl = TextEditingController(text: widget.data.item);
     _qtyCtrl = TextEditingController(text: widget.data.quantity.toString());
-    _priceCtrl = TextEditingController(text: widget.data.price.toStringAsFixed(2));
+    _priceCtrl =
+        TextEditingController(text: widget.data.price.toStringAsFixed(2));
     _itemCtrl.addListener(_emitChange);
     _qtyCtrl.addListener(_emitChange);
     _priceCtrl.addListener(_emitChange);
@@ -92,7 +93,9 @@ class _EditableTableRowState extends State<EditableTableRow> {
               decoration: InputDecoration(
                 isDense: true,
                 hintText: 'Item name',
-                border: OutlineInputBorder(borderSide: BorderSide(color: colors.border)),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(color: colors.border),
+                ),
               ),
             ),
           ),
@@ -104,7 +107,9 @@ class _EditableTableRowState extends State<EditableTableRow> {
               decoration: InputDecoration(
                 isDense: true,
                 hintText: 'Qty',
-                border: OutlineInputBorder(borderSide: BorderSide(color: colors.border)),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(color: colors.border),
+                ),
               ),
             ),
           ),
@@ -118,14 +123,19 @@ class _EditableTableRowState extends State<EditableTableRow> {
                 isDense: true,
                 hintText: 'Price',
                 prefixText: '\$ ',
-                border: OutlineInputBorder(borderSide: BorderSide(color: colors.border)),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(color: colors.border),
+                ),
               ),
             ),
           ),
           const SizedBox(width: 8),
           SizedBox(
             width: 60,
-            child: Text('\$${widget.data.total.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w600)),
+            child: Text(
+              '\$${widget.data.total.toStringAsFixed(2)}',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
           ),
           if (widget.onDelete != null)
             IconButton(

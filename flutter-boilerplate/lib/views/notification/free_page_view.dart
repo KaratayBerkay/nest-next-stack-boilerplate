@@ -39,7 +39,8 @@ class FreeNotificationPage extends ConsumerWidget {
             onRefresh: () => ref.refresh(notificationsProvider.future),
             child: ListView.separated(
               itemCount: items.length,
-              separatorBuilder: (_, __) => Divider(height: 1, color: colors.border, indent: 72),
+              separatorBuilder: (_, __) =>
+                  Divider(height: 1, color: colors.border, indent: 72),
               itemBuilder: (_, i) {
                 final item = items[i];
                 return NotificationItemWidget(

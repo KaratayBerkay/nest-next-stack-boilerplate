@@ -10,29 +10,32 @@ class PremiumLoadingFallback extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-           const _SkeletonLine(width: 160),
+          const _SkeletonLine(width: 160),
           const SizedBox(height: 24),
           Row(
-            children: List.generate(4, (_) => const Expanded(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                     _SkeletonLine(width: 60),
-                    SizedBox(height: 8),
-                     _SkeletonLine(height: 32),
-                  ],
+            children: List.generate(
+              4,
+              (_) => const Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _SkeletonLine(width: 60),
+                      SizedBox(height: 8),
+                      _SkeletonLine(height: 32),
+                    ],
+                  ),
                 ),
               ),
-            ),),
+            ),
           ),
           const SizedBox(height: 24),
-           const _SkeletonLine(width: 120),
+          const _SkeletonLine(width: 120),
           const SizedBox(height: 12),
-           const _SkeletonLine(),
+          const _SkeletonLine(),
           const SizedBox(height: 8),
-           const _SkeletonLine(width: 200),
+          const _SkeletonLine(width: 200),
         ],
       ),
     );
@@ -42,7 +45,7 @@ class PremiumLoadingFallback extends StatelessWidget {
 class _SkeletonLine extends StatelessWidget {
   final double? width;
   final double height;
-  const  _SkeletonLine({this.width, this.height = 16});
+  const _SkeletonLine({this.width, this.height = 16});
 
   @override
   Widget build(BuildContext context) {

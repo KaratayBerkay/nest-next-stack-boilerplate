@@ -19,11 +19,20 @@ class EditorFormFields extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        FormTextField(controller: titleCtrl, label: 'Title', validator: (v) => forms.validateRequired(v, 'Title')),
+        FormTextField(
+          controller: titleCtrl,
+          label: 'Title',
+          validator: (v) => forms.validateRequired(v, 'Title'),
+        ),
         const SizedBox(height: 12),
         FormTextField(controller: tagsCtrl, label: 'Tags (comma separated)'),
         const SizedBox(height: 12),
-        FormTextField(controller: bodyCtrl, label: 'Content', maxLines: 12, validator: (v) => forms.validateMinLength(v, 10, 'Content')),
+        FormTextField(
+          controller: bodyCtrl,
+          label: 'Content',
+          maxLines: 12,
+          validator: (v) => forms.validateMinLength(v, 10, 'Content'),
+        ),
       ],
     );
   }

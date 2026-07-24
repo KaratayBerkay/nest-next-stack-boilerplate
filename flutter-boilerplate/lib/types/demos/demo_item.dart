@@ -24,10 +24,9 @@ class DemoItem {
       description: json['description'] as String,
       imageUrl: json['imageUrl'] as String?,
       routeName: json['routeName'] as String?,
-      tags: (json['tags'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
-          [],
+      tags:
+          (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+              [],
       isActive: json['isActive'] as bool? ?? false,
     );
   }

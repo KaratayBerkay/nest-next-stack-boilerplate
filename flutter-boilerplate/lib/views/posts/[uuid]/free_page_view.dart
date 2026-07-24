@@ -8,7 +8,11 @@ class FreePostDetailPage extends ConsumerWidget {
   final String lang;
   final String postId;
 
-  const FreePostDetailPage({super.key, required this.lang, required this.postId});
+  const FreePostDetailPage({
+    super.key,
+    required this.lang,
+    required this.postId,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

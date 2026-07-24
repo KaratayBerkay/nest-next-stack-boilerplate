@@ -49,6 +49,7 @@ export 'input_group/input_group.dart';
 export 'input_otp/input_otp.dart';
 export 'kbd/kbd.dart';
 export 'label/label.dart';
+export 'logo_spinner/logo_spinner.dart';
 export 'menubar/menubar.dart';
 export 'native_select/native_select.dart';
 export 'navigation_menu/navigation_menu.dart';

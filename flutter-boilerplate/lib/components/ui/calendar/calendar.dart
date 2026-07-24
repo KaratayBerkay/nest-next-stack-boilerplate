@@ -55,7 +55,8 @@ class _CalendarWidgetState extends State<CalendarWidget> {
               icon: const Icon(Icons.chevron_left),
               onPressed: () {
                 setState(() {
-                  _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month - 1);
+                  _focusedMonth =
+                      DateTime(_focusedMonth.year, _focusedMonth.month - 1);
                 });
               },
             ),
@@ -67,7 +68,8 @@ class _CalendarWidgetState extends State<CalendarWidget> {
               icon: const Icon(Icons.chevron_right),
               onPressed: () {
                 setState(() {
-                  _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month + 1);
+                  _focusedMonth =
+                      DateTime(_focusedMonth.year, _focusedMonth.month + 1);
                 });
               },
             ),
@@ -78,7 +80,17 @@ class _CalendarWidgetState extends State<CalendarWidget> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           children: [
-            ...weekDays.map((d) => Center(child: Text(d, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)))),
+            ...weekDays.map(
+              (d) => Center(
+                child: Text(
+                  d,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
             ...List.generate(startWeekday, (_) => const SizedBox.shrink()),
             ...days.map((day) {
               final isSelected = widget.selectedDate != null &&
@@ -89,14 +101,18 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                 onTap: () => widget.onDateSelected?.call(day),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isSelected ? Theme.of(context).colorScheme.primary : null,
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.primary
+                        : null,
                     shape: BoxShape.circle,
                   ),
                   child: Center(
                     child: Text(
                       '${day.day}',
                       style: TextStyle(
-                        color: isSelected ? Theme.of(context).colorScheme.onPrimary : null,
+                        color: isSelected
+                            ? Theme.of(context).colorScheme.onPrimary
+                            : null,
                         fontWeight: isSelected ? FontWeight.w600 : null,
                       ),
                     ),
@@ -111,7 +127,20 @@ class _CalendarWidgetState extends State<CalendarWidget> {
   }
 
   String _monthName(int month) {
-    const names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const names = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     return names[month - 1];
   }
 }

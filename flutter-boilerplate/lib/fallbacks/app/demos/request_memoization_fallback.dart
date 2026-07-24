@@ -8,7 +8,10 @@ class RequestMemoizationFallback extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     return Text(
       'Loading results...',
-      style: TextStyle(color: colors.onSurface.withValues(alpha: 0.4), fontSize: 13),
+      style: TextStyle(
+        color: colors.onSurface.withValues(alpha: 0.4),
+        fontSize: 13,
+      ),
     );
   }
 }

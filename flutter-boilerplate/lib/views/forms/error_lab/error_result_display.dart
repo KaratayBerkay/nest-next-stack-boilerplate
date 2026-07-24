@@ -46,16 +46,28 @@ class ErrorResultDisplay extends StatelessWidget {
             children: [
               const Icon(Icons.error_outline, color: Colors.red, size: 18),
               const SizedBox(width: 8),
-              Text(scenario ?? 'Error', style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.red)),
+              Text(
+                scenario ?? 'Error',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.red,
+                ),
+              ),
             ],
           ),
           if (errorCode != null) ...[
             const SizedBox(height: 4),
-            Text('Code: $errorCode', style: TextStyle(fontSize: 12, color: Colors.red.shade700)),
+            Text(
+              'Code: $errorCode',
+              style: TextStyle(fontSize: 12, color: Colors.red.shade700),
+            ),
           ],
           if (errorMessage != null) ...[
             const SizedBox(height: 4),
-            Text(errorMessage!, style: TextStyle(fontSize: 12, color: Colors.red.shade700)),
+            Text(
+              errorMessage!,
+              style: TextStyle(fontSize: 12, color: Colors.red.shade700),
+            ),
           ],
         ],
       ),

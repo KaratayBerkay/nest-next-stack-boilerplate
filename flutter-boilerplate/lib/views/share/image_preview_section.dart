@@ -24,7 +24,10 @@ class ImagePreviewSection extends StatelessWidget {
             children: [
               Icon(Icons.image_outlined, size: 48, color: colors.fgMuted),
               const SizedBox(height: 8),
-              Text('No image selected', style: TextStyle(color: colors.fgMuted)),
+              Text(
+                'No image selected',
+                style: TextStyle(color: colors.fgMuted),
+              ),
             ],
           ),
         ),
@@ -47,7 +50,10 @@ class ImagePreviewSection extends StatelessWidget {
               children: [
                 Icon(Icons.broken_image, size: 48, color: colors.danger),
                 const SizedBox(height: 8),
-                Text('Failed to load image', style: TextStyle(color: colors.fgMuted)),
+                Text(
+                  'Failed to load image',
+                  style: TextStyle(color: colors.fgMuted),
+                ),
               ],
             ),
           ),

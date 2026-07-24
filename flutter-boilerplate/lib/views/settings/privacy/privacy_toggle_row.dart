@@ -26,7 +26,10 @@ class PrivacyToggleRow extends StatelessWidget {
       children: [
         SwitchListTile(
           title: Text(title),
-          subtitle: Text(subtitle, style: TextStyle(color: colors.fgMuted, fontSize: 12)),
+          subtitle: Text(
+            subtitle,
+            style: TextStyle(color: colors.fgMuted, fontSize: 12),
+          ),
           value: value,
           onChanged: onChanged,
         ),

@@ -40,22 +40,24 @@ class PlanSummaryCard extends StatelessWidget {
           ),
           if (features.isNotEmpty) ...[
             const SizedBox(height: 12),
-            ...features.map((f) => Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Row(
-                    children: [
-                      Icon(Icons.check, size: 14, color: colors.success),
-                      const SizedBox(width: 6),
-                      Text(
-                        f,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: colors.fgMuted,
-                        ),
+            ...features.map(
+              (f) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  children: [
+                    Icon(Icons.check, size: 14, color: colors.success),
+                    const SizedBox(width: 6),
+                    Text(
+                      f,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: colors.fgMuted,
                       ),
-                    ],
-                  ),
-                ),),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ],
       ),

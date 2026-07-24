@@ -63,7 +63,13 @@ void main() {
       expect(validatePhone('+905551234567'), isNull);
     });
 
-    test('returns error for short phone', () => expect(validatePhone('123'), isNotEmpty));
-    test('returns error for empty phone', () => expect(validatePhone(''), isNull));
+    test(
+      'returns error for short phone',
+      () => expect(validatePhone('123'), isNotEmpty),
+    );
+    test(
+      'returns error for empty phone',
+      () => expect(validatePhone(''), isNull),
+    );
   });
 }

@@ -24,15 +24,27 @@ class _RadioGroupDemoPageState extends State<RadioGroupDemoPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Select an option', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Select an option',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                   RadioGroup<String>(
                     groupValue: _selected,
                     onChanged: (v) => setState(() => _selected = v!),
                     child: const Column(
                       children: [
-                        RadioListTile(value: 'option1', title: Text('Option 1')),
-                        RadioListTile(value: 'option2', title: Text('Option 2')),
-                        RadioListTile(value: 'option3', title: Text('Option 3')),
+                        RadioListTile(
+                          value: 'option1',
+                          title: Text('Option 1'),
+                        ),
+                        RadioListTile(
+                          value: 'option2',
+                          title: Text('Option 2'),
+                        ),
+                        RadioListTile(
+                          value: 'option3',
+                          title: Text('Option 3'),
+                        ),
                       ],
                     ),
                   ),

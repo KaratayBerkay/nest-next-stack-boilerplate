@@ -32,7 +32,8 @@ class ApiKey {
   }
 }
 
-final apiKeyListServerProvider = Provider((ref) => ApiKeyListServer(ref.read(dioProvider)));
+final apiKeyListServerProvider =
+    Provider((ref) => ApiKeyListServer(ref.read(dioProvider)));
 
 class ApiKeyListServer {
   final Dio _dio;

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 class Input extends StatelessWidget {
   final String? label;
   final String? hintText;

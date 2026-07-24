@@ -4,9 +4,11 @@ String formatAuditAction(String action) {
   return action
       .replaceAll(RegExp(r'[_-]'), ' ')
       .split(' ')
-      .map((word) => word.isNotEmpty
-          ? '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}'
-          : '',)
+      .map(
+        (word) => word.isNotEmpty
+            ? '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}'
+            : '',
+      )
       .join(' ');
 }
 
@@ -28,7 +30,10 @@ String formatAuditLevel(String level) {
   }
 }
 
-List<String> extractDiffKeys(Map<String, dynamic> before, Map<String, dynamic> after) {
+List<String> extractDiffKeys(
+  Map<String, dynamic> before,
+  Map<String, dynamic> after,
+) {
   final keys = <String>{};
   keys.addAll(before.keys);
   keys.addAll(after.keys);

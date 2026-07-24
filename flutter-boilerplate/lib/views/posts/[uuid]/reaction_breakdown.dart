@@ -28,7 +28,8 @@ class ReactionBreakdown extends ConsumerWidget {
               color: post.isLiked ? colors.danger : colors.fgMuted,
               size: 22,
             ),
-            onPressed: () => ref.read(postActionsProvider).toggleReaction(post.id),
+            onPressed: () =>
+                ref.read(postActionsProvider).toggleReaction(post.id),
             style: IconButton.styleFrom(minimumSize: const Size(40, 40)),
           ),
           Text(
@@ -44,7 +45,11 @@ class ReactionBreakdown extends ConsumerWidget {
           const SizedBox(width: 6),
           Text(
             '${post.commentCount}',
-            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: colors.fg),
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+              color: colors.fg,
+            ),
           ),
           const Spacer(),
           Icon(Icons.bookmark_border, size: 22, color: colors.fgMuted),

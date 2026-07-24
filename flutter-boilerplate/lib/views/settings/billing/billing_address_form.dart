@@ -92,7 +92,8 @@ class _BillingAddressFormState extends State<BillingAddressForm> {
         const SizedBox(height: 12),
         TextField(
           controller: _line2Ctrl,
-          decoration: const InputDecoration(labelText: 'Address Line 2 (optional)'),
+          decoration:
+              const InputDecoration(labelText: 'Address Line 2 (optional)'),
         ),
         const SizedBox(height: 12),
         Row(

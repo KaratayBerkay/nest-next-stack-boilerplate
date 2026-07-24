@@ -8,7 +8,11 @@ class BasicPostDetailPage extends ConsumerWidget {
   final String lang;
   final String postId;
 
-  const BasicPostDetailPage({super.key, required this.lang, required this.postId});
+  const BasicPostDetailPage({
+    super.key,
+    required this.lang,
+    required this.postId,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

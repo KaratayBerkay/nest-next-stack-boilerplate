@@ -45,7 +45,8 @@ class _CollapsibleWidgetState extends State<CollapsibleWidget> {
         AnimatedCrossFade(
           firstChild: const SizedBox.shrink(),
           secondChild: widget.child,
-          crossFadeState: _expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+          crossFadeState:
+              _expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
           duration: const Duration(milliseconds: 200),
         ),
       ],

@@ -34,7 +34,10 @@ class _ResetPasswordFormState extends ConsumerState<ResetPasswordForm> {
     final confirm = _confirmController.text;
 
     if (password.length < 8) {
-      setState(() => _fieldErrors['password'] = 'Password must be at least 8 characters');
+      setState(
+        () =>
+            _fieldErrors['password'] = 'Password must be at least 8 characters',
+      );
       return;
     }
     if (password != confirm) {
@@ -44,7 +47,9 @@ class _ResetPasswordFormState extends ConsumerState<ResetPasswordForm> {
 
     setState(() => _submitting = true);
     try {
-      await ref.read(loginActionsProvider).resetPassword(widget.token!, password);
+      await ref
+          .read(loginActionsProvider)
+          .resetPassword(widget.token!, password);
       setState(() => _success = true);
     } catch (err) {
       setState(() => _fieldErrors['form'] = err.toString());
@@ -60,9 +65,15 @@ class _ResetPasswordFormState extends ConsumerState<ResetPasswordForm> {
     if (widget.token == null) {
       return Column(
         children: [
-          Text('Reset Password', style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600)),
+          Text(
+            'Reset Password',
+            style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: 12),
-          Text('Invalid or missing reset token.', style: TextStyle(color: colors.danger, fontSize: 14)),
+          Text(
+            'Invalid or missing reset token.',
+            style: TextStyle(color: colors.danger, fontSize: 14),
+          ),
         ],
       );
     }
@@ -70,18 +81,30 @@ class _ResetPasswordFormState extends ConsumerState<ResetPasswordForm> {
     if (_success) {
       return Column(
         children: [
-          Text('Reset Password', style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600)),
+          Text(
+            'Reset Password',
+            style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: 12),
-          Text('Password reset successfully!', style: TextStyle(color: colors.success, fontSize: 14)),
+          Text(
+            'Password reset successfully!',
+            style: TextStyle(color: colors.success, fontSize: 14),
+          ),
           const SizedBox(height: 12),
-          TextButton(onPressed: () => context.go('/auth/login'), child: const Text('Sign In')),
+          TextButton(
+            onPressed: () => context.go('/auth/login'),
+            child: const Text('Sign In'),
+          ),
         ],
       );
     }
 
     return Column(
       children: [
-        Text('Reset Password', style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600)),
+        Text(
+          'Reset Password',
+          style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 16),
         TextField(
           controller: _passwordController,
@@ -103,7 +126,10 @@ class _ResetPasswordFormState extends ConsumerState<ResetPasswordForm> {
         if (_fieldErrors.containsKey('form'))
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: Text(_fieldErrors['form']!, style: TextStyle(color: colors.danger, fontSize: 13)),
+            child: Text(
+              _fieldErrors['form']!,
+              style: TextStyle(color: colors.danger, fontSize: 13),
+            ),
           ),
         const SizedBox(height: 16),
         FilledButton(

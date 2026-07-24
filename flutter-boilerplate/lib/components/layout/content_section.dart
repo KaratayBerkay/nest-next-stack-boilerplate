@@ -30,8 +30,7 @@ class ContentSection extends StatelessWidget {
               Expanded(
                 child: Text(title, style: typography.h3),
               ),
-              if (actions != null)
-                ...actions!,
+              if (actions != null) ...actions!,
             ],
           ),
           const SizedBox(height: 12),

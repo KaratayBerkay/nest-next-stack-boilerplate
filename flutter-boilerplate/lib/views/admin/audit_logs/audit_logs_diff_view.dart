@@ -19,7 +19,10 @@ class AuditLogsDiffView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Changes', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+        const Text(
+          'Changes',
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 4),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,11 +38,22 @@ class AuditLogsDiffView extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Before', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: colors.danger)),
+                      Text(
+                        'Before',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: colors.danger,
+                        ),
+                      ),
                       const SizedBox(height: 4),
                       Text(
                         _prettyJson(before!),
-                        style: TextStyle(fontSize: 10, color: colors.fg, fontFamily: 'monospace'),
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: colors.fg,
+                          fontFamily: 'monospace',
+                        ),
                       ),
                     ],
                   ),
@@ -57,11 +71,22 @@ class AuditLogsDiffView extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('After', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: colors.success)),
+                      Text(
+                        'After',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: colors.success,
+                        ),
+                      ),
                       const SizedBox(height: 4),
                       Text(
                         _prettyJson(after!),
-                        style: TextStyle(fontSize: 10, color: colors.fg, fontFamily: 'monospace'),
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: colors.fg,
+                          fontFamily: 'monospace',
+                        ),
                       ),
                     ],
                   ),

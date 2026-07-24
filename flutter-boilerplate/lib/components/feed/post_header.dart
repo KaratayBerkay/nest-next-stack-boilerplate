@@ -81,32 +81,44 @@ class PostHeader extends StatelessWidget {
               ),
               if (onViewPost != null)
                 IconButton(
-                  icon: Icon(Icons.visibility_outlined,
-                      size: 14, color: colors.fgMuted,),
+                  icon: Icon(
+                    Icons.visibility_outlined,
+                    size: 14,
+                    color: colors.fgMuted,
+                  ),
                   onPressed: onViewPost,
-                  constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                  constraints:
+                      const BoxConstraints(minWidth: 28, minHeight: 28),
                   padding: EdgeInsets.zero,
                   tooltip: 'View post',
                 ),
               if (isOwn && !editing) ...[
                 IconButton(
-                  icon: Icon(Icons.edit_outlined,
-                      size: 14, color: colors.fgMuted,),
+                  icon: Icon(
+                    Icons.edit_outlined,
+                    size: 14,
+                    color: colors.fgMuted,
+                  ),
                   onPressed: onEditStart,
-                  constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                  constraints:
+                      const BoxConstraints(minWidth: 28, minHeight: 28),
                   padding: EdgeInsets.zero,
                   tooltip: 'Edit post',
                 ),
                 IconButton(
-                  icon: Icon(Icons.delete_outline,
-                      size: 14, color: colors.fgMuted,),
+                  icon: Icon(
+                    Icons.delete_outline,
+                    size: 14,
+                    color: colors.fgMuted,
+                  ),
                   onPressed: () async {
                     final confirmed = await showDialog<bool>(
                       context: context,
                       builder: (ctx) => AlertDialog(
                         title: const Text('Delete post'),
-                        content:
-                            const Text('Are you sure you want to delete this post?'),
+                        content: const Text(
+                          'Are you sure you want to delete this post?',
+                        ),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.of(ctx).pop(false),
@@ -121,7 +133,8 @@ class PostHeader extends StatelessWidget {
                     );
                     if (confirmed == true) onDeleteConfirm?.call();
                   },
-                  constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                  constraints:
+                      const BoxConstraints(minWidth: 28, minHeight: 28),
                   padding: EdgeInsets.zero,
                   tooltip: 'Delete post',
                 ),

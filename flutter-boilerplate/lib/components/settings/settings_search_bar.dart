@@ -58,10 +58,15 @@ class _SettingsSearchBarState extends State<SettingsSearchBar> {
         onChanged: widget.onChanged,
         decoration: InputDecoration(
           hintText: widget.hintText ?? 'Search settings...',
-          prefixIcon: Icon(Icons.search_rounded, size: 20, color: colors.fgMuted),
+          prefixIcon:
+              Icon(Icons.search_rounded, size: 20, color: colors.fgMuted),
           suffixIcon: _hasText
               ? IconButton(
-                  icon: Icon(Icons.close_rounded, size: 18, color: colors.fgMuted),
+                  icon: Icon(
+                    Icons.close_rounded,
+                    size: 18,
+                    color: colors.fgMuted,
+                  ),
                   onPressed: () {
                     _controller.clear();
                     widget.onChanged?.call('');

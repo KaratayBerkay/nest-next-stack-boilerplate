@@ -62,7 +62,10 @@ class _StripeElementsConfigState extends State<StripeElementsConfig> {
               const SizedBox(height: 12),
               Text(
                 'Failed to initialize payment system',
-                style: TextStyle(color: colors.danger, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  color: colors.danger,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 8),
               Text(

@@ -17,7 +17,8 @@ class NetworkCache {
     try {
       final decoded = jsonDecode(json) as Map<String, dynamic>;
       for (final entry in decoded.entries) {
-        _memoryCache[entry.key] = _CacheEntry.fromJson(entry.value as Map<String, dynamic>);
+        _memoryCache[entry.key] =
+            _CacheEntry.fromJson(entry.value as Map<String, dynamic>);
       }
     } catch (_) {}
   }
@@ -51,7 +52,8 @@ class NetworkCache {
 
   static Future<void> _persist() async {
     final prefs = await SharedPreferences.getInstance();
-    final json = jsonEncode(_memoryCache.map((k, v) => MapEntry(k, v.toJson())));
+    final json =
+        jsonEncode(_memoryCache.map((k, v) => MapEntry(k, v.toJson())));
     await prefs.setString(_prefsKey, json);
   }
 }

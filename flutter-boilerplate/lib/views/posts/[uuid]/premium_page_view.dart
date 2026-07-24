@@ -9,7 +9,11 @@ class PremiumPostDetailPage extends ConsumerWidget {
   final String lang;
   final String postId;
 
-  const PremiumPostDetailPage({super.key, required this.lang, required this.postId});
+  const PremiumPostDetailPage({
+    super.key,
+    required this.lang,
+    required this.postId,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -16,7 +16,11 @@ class UserDetailPageContent extends ConsumerWidget {
   final String lang;
   final String userId;
 
-  const UserDetailPageContent({super.key, required this.lang, required this.userId});
+  const UserDetailPageContent({
+    super.key,
+    required this.lang,
+    required this.userId,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -36,7 +40,13 @@ class UserDetailPageContent extends ConsumerWidget {
                 children: [
                   Avatar(name: user.name, radius: 40),
                   const SizedBox(height: 12),
-                  Text(user.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                  Text(
+                    user.name,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   Text(user.email, style: TextStyle(color: colors.fgMuted)),
                   if (user.bio != null) ...[
                     const SizedBox(height: 8),
@@ -47,8 +57,10 @@ class UserDetailPageContent extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Badge(
-                        label: Text(user.tier.toUpperCase(),
-                            style: TextStyle(fontSize: 11, color: colors.surface),),
+                        label: Text(
+                          user.tier.toUpperCase(),
+                          style: TextStyle(fontSize: 11, color: colors.surface),
+                        ),
                         backgroundColor: colors.brand,
                       ),
                     ],
@@ -56,7 +68,8 @@ class UserDetailPageContent extends ConsumerWidget {
                   const SizedBox(height: 24),
                   Button(
                     child: const Text('Add Friend'),
-                    onPressed: () => ref.read(friendActionsProvider).sendRequest(user.id),
+                    onPressed: () =>
+                        ref.read(friendActionsProvider).sendRequest(user.id),
                   ),
                 ],
               ),

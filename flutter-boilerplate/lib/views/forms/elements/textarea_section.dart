@@ -12,11 +12,18 @@ class TextareaSection extends StatelessWidget {
       children: [
         const Textarea(label: 'Default Textarea'),
         const SizedBox(height: 8),
-        const Textarea(label: 'With Placeholder', hintText: 'Type your message here...'),
+        const Textarea(
+          label: 'With Placeholder',
+          hintText: 'Type your message here...',
+        ),
         const SizedBox(height: 8),
         const Textarea(label: 'With Error', errorText: 'Message is required'),
         const SizedBox(height: 8),
-        Textarea(label: 'Tall Area', controller: TextEditingController(text: 'Some content'), minLines: 5),
+        Textarea(
+          label: 'Tall Area',
+          controller: TextEditingController(text: 'Some content'),
+          minLines: 5,
+        ),
         const SizedBox(height: 8),
         const Textarea(label: 'No Label', hintText: 'Enter text...'),
       ],

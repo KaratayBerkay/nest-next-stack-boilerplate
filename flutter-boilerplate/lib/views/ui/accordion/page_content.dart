@@ -14,9 +14,18 @@ class AccordionDemoPage extends StatelessWidget {
         children: const [
           AccordionWidget(
             items: [
-              AccordionItem(title: 'Section 1', content: Text('Content for section 1')),
-              AccordionItem(title: 'Section 2', content: Text('Content for section 2')),
-              AccordionItem(title: 'Section 3', content: Text('Content for section 3')),
+              AccordionItem(
+                title: 'Section 1',
+                content: Text('Content for section 1'),
+              ),
+              AccordionItem(
+                title: 'Section 2',
+                content: Text('Content for section 2'),
+              ),
+              AccordionItem(
+                title: 'Section 3',
+                content: Text('Content for section 3'),
+              ),
             ],
           ),
         ],

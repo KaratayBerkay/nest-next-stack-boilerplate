@@ -13,10 +13,12 @@ class FormsCheckoutPageContent extends ConsumerStatefulWidget {
   const FormsCheckoutPageContent({super.key, required this.lang});
 
   @override
-  ConsumerState<FormsCheckoutPageContent> createState() => _FormsCheckoutPageContentState();
+  ConsumerState<FormsCheckoutPageContent> createState() =>
+      _FormsCheckoutPageContentState();
 }
 
-class _FormsCheckoutPageContentState extends ConsumerState<FormsCheckoutPageContent> {
+class _FormsCheckoutPageContentState
+    extends ConsumerState<FormsCheckoutPageContent> {
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
@@ -34,7 +36,6 @@ class _FormsCheckoutPageContentState extends ConsumerState<FormsCheckoutPageCont
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(title: const Text('Checkout & Address')),
       body: ListView(
@@ -48,17 +49,43 @@ class _FormsCheckoutPageContentState extends ConsumerState<FormsCheckoutPageCont
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Shipping Address', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    const Text(
+                      'Shipping Address',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 12),
-                    FormTextField(controller: _nameCtrl, label: 'Full Name', validator: auth.validateName),
+                    FormTextField(
+                      controller: _nameCtrl,
+                      label: 'Full Name',
+                      validator: auth.validateName,
+                    ),
                     const SizedBox(height: 8),
-                    FormTextField(controller: _addressCtrl, label: 'Address', validator: (v) => forms.validateRequired(v, 'Address')),
+                    FormTextField(
+                      controller: _addressCtrl,
+                      label: 'Address',
+                      validator: (v) => forms.validateRequired(v, 'Address'),
+                    ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        Expanded(child: FormTextField(controller: _cityCtrl, label: 'City', validator: billing.validateCity)),
+                        Expanded(
+                          child: FormTextField(
+                            controller: _cityCtrl,
+                            label: 'City',
+                            validator: billing.validateCity,
+                          ),
+                        ),
                         const SizedBox(width: 12),
-                        Expanded(child: FormTextField(controller: _zipCtrl, label: 'ZIP', validator: billing.validatePostalCode)),
+                        Expanded(
+                          child: FormTextField(
+                            controller: _zipCtrl,
+                            label: 'ZIP',
+                            validator: billing.validatePostalCode,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),

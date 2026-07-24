@@ -26,7 +26,8 @@ void main() {
       ),
     );
 
-    final aspectRatioWidget = tester.widget<AspectRatio>(find.byType(AspectRatio));
+    final aspectRatioWidget =
+        tester.widget<AspectRatio>(find.byType(AspectRatio));
     expect(aspectRatioWidget.aspectRatio, equals(4 / 3));
   });
 }

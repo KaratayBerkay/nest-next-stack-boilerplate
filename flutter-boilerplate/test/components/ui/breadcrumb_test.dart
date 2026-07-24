@@ -7,10 +7,12 @@ void main() {
   testWidgets('BreadcrumbWidget renders items', (tester) async {
     await pumpTestApp(
       tester,
-      const BreadcrumbWidget(items: [
-        BreadcrumbItem(label: 'Home'),
-        BreadcrumbItem(label: 'Settings'),
-      ],),
+      const BreadcrumbWidget(
+        items: [
+          BreadcrumbItem(label: 'Home'),
+          BreadcrumbItem(label: 'Settings'),
+        ],
+      ),
     );
 
     expect(find.text('Home'), findsOneWidget);

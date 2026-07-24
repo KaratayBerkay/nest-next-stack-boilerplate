@@ -17,7 +17,8 @@ class ProfileUploadAvatarServer {
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(filePath),
     });
-    final response = await _dio.post<dynamic>('${Urls.profile}/avatar', data: formData);
+    final response =
+        await _dio.post<dynamic>('${Urls.profile}/avatar', data: formData);
     return response.data['avatarUrl'] as String;
   }
 }

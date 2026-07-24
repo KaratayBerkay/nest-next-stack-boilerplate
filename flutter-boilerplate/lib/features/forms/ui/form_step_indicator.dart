@@ -95,11 +95,25 @@ class _StepCircle extends StatelessWidget {
     } else if (isCurrent) {
       bgColor = colors.brand.withValues(alpha: 0.1);
       fgColor = colors.brand;
-      content = Text('$stepNumber', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: fgColor));
+      content = Text(
+        '$stepNumber',
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: fgColor,
+        ),
+      );
     } else {
       bgColor = colors.surfaceHover;
       fgColor = colors.fgMuted;
-      content = Text('$stepNumber', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: fgColor));
+      content = Text(
+        '$stepNumber',
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: fgColor,
+        ),
+      );
     }
 
     return Container(

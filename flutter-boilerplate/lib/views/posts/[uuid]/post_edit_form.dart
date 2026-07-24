@@ -68,10 +68,10 @@ class _PostEditFormState extends ConsumerState<PostEditForm> {
                 final content = _contentController.text.trim();
                 if (title.isEmpty || content.isEmpty) return;
                 await ref.read(postActionsProvider).update(
-                  widget.post.id,
-                  title: title,
-                  content: content,
-                );
+                      widget.post.id,
+                      title: title,
+                      content: content,
+                    );
                 widget.onSaved();
               },
               child: const Text('Save'),

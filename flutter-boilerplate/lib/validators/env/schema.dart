@@ -1,7 +1,9 @@
 String? validateAppUrl(String? value) {
   if (value == null || value.isEmpty) return 'App URL is required';
   final uri = Uri.tryParse(value);
-  if (uri == null || !uri.hasScheme || !uri.host.isNotEmpty) return 'Must be a valid URL';
+  if (uri == null || !uri.hasScheme || !uri.host.isNotEmpty) {
+    return 'Must be a valid URL';
+  }
   return null;
 }
 
@@ -24,7 +26,9 @@ String? validateStripeKey(String? value) {
 
 String? validateNodeEnv(String? value) {
   if (value == null || value.isEmpty) return 'NODE_ENV is required';
-  if (!['development', 'test', 'production'].contains(value)) return 'Must be development, test, or production';
+  if (!['development', 'test', 'production'].contains(value)) {
+    return 'Must be development, test, or production';
+  }
   return null;
 }
 
@@ -35,7 +39,9 @@ String? validateCookieDomain(String? value) {
 
 String? validateCookieSameSite(String? value) {
   if (value == null || value.isEmpty) return 'Cookie samesite is required';
-  if (!['lax', 'strict', 'none'].contains(value.toLowerCase())) return 'Must be lax, strict, or none';
+  if (!['lax', 'strict', 'none'].contains(value.toLowerCase())) {
+    return 'Must be lax, strict, or none';
+  }
   return null;
 }
 

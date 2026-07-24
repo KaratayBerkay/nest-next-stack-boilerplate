@@ -25,14 +25,25 @@ class BillingAddressField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: colors.fg)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: colors.fg,
+          ),
+        ),
         const SizedBox(height: 6),
         TextField(
           controller: controller,
           decoration: InputDecoration(
             hintText: hintText ?? 'Enter your billing address',
             hintStyle: TextStyle(color: colors.fgMuted, fontSize: 14),
-            prefixIcon: Icon(Icons.location_on_outlined, color: colors.fgMuted, size: 20),
+            prefixIcon: Icon(
+              Icons.location_on_outlined,
+              color: colors.fgMuted,
+              size: 20,
+            ),
           ),
           onChanged: onChanged,
         ),

@@ -18,19 +18,27 @@ class PlanBenefits extends StatelessWidget {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: benefits.map((benefit) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(Icons.check_circle, size: 18, color: iconColor ?? colors.success),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(benefit, style: const TextStyle(fontSize: 14)),
+      children: benefits
+          .map(
+            (benefit) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.check_circle,
+                    size: 18,
+                    color: iconColor ?? colors.success,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(benefit, style: const TextStyle(fontSize: 14)),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
-      ),).toList(),
+          )
+          .toList(),
     );
   }
 }

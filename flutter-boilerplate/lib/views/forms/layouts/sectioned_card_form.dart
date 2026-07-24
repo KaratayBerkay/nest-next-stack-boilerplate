@@ -13,13 +13,30 @@ class SectionedCardForm extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Personal Information', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                Text(
+                  'Personal Information',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                ),
                 SizedBox(height: 8),
                 Row(
                   children: [
-                    Expanded(child: TextField(decoration: InputDecoration(labelText: 'Full Name', border: OutlineInputBorder()))),
+                    Expanded(
+                      child: TextField(
+                        decoration: InputDecoration(
+                          labelText: 'Full Name',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
                     SizedBox(width: 12),
-                    Expanded(child: TextField(decoration: InputDecoration(labelText: 'Phone', border: OutlineInputBorder()))),
+                    Expanded(
+                      child: TextField(
+                        decoration: InputDecoration(
+                          labelText: 'Phone',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -33,15 +50,37 @@ class SectionedCardForm extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Address', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                Text(
+                  'Address',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                ),
                 SizedBox(height: 8),
-                TextField(decoration: InputDecoration(labelText: 'Street', border: OutlineInputBorder())),
+                TextField(
+                  decoration: InputDecoration(
+                    labelText: 'Street',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
                 SizedBox(height: 8),
                 Row(
                   children: [
-                    Expanded(child: TextField(decoration: InputDecoration(labelText: 'City', border: OutlineInputBorder()))),
+                    Expanded(
+                      child: TextField(
+                        decoration: InputDecoration(
+                          labelText: 'City',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
                     SizedBox(width: 12),
-                    Expanded(child: TextField(decoration: InputDecoration(labelText: 'ZIP', border: OutlineInputBorder()))),
+                    Expanded(
+                      child: TextField(
+                        decoration: InputDecoration(
+                          labelText: 'ZIP',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ],

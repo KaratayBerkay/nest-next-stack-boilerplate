@@ -12,10 +12,12 @@ class FormsBillingPageContent extends ConsumerStatefulWidget {
   const FormsBillingPageContent({super.key, required this.lang});
 
   @override
-  ConsumerState<FormsBillingPageContent> createState() => _FormsBillingPageContentState();
+  ConsumerState<FormsBillingPageContent> createState() =>
+      _FormsBillingPageContentState();
 }
 
-class _FormsBillingPageContentState extends ConsumerState<FormsBillingPageContent> {
+class _FormsBillingPageContentState
+    extends ConsumerState<FormsBillingPageContent> {
   final _formKey = GlobalKey<FormState>();
   final _cardCtrl = TextEditingController();
   final _expiryCtrl = TextEditingController();
@@ -31,7 +33,6 @@ class _FormsBillingPageContentState extends ConsumerState<FormsBillingPageConten
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(title: const Text('Billing Form')),
       body: ListView(
@@ -45,7 +46,13 @@ class _FormsBillingPageContentState extends ConsumerState<FormsBillingPageConten
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Payment Details', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    const Text(
+                      'Payment Details',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     FormTextField(
                       controller: _cardCtrl,
@@ -56,9 +63,22 @@ class _FormsBillingPageContentState extends ConsumerState<FormsBillingPageConten
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        Expanded(child: FormTextField(controller: _expiryCtrl, label: 'MM/YY', validator: (v) => forms.validateRequired(v, 'Expiry'))),
+                        Expanded(
+                          child: FormTextField(
+                            controller: _expiryCtrl,
+                            label: 'MM/YY',
+                            validator: (v) =>
+                                forms.validateRequired(v, 'Expiry'),
+                          ),
+                        ),
                         const SizedBox(width: 12),
-                        Expanded(child: FormTextField(controller: _cvcCtrl, label: 'CVC', validator: (v) => forms.validateRequired(v, 'CVC'))),
+                        Expanded(
+                          child: FormTextField(
+                            controller: _cvcCtrl,
+                            label: 'CVC',
+                            validator: (v) => forms.validateRequired(v, 'CVC'),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -80,7 +100,10 @@ class _FormsBillingPageContentState extends ConsumerState<FormsBillingPageConten
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Billing Summary', style: TextStyle(fontWeight: FontWeight.w600)),
+                  Text(
+                    'Billing Summary',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   SizedBox(height: 8),
                   _BillingRow(label: 'Current Plan', value: 'Premium'),
                   _BillingRow(label: 'Next Billing', value: 'Apr 15, 2026'),
@@ -107,7 +130,10 @@ class _BillingRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [Text(label), Text(value, style: const TextStyle(fontWeight: FontWeight.w600))],
+        children: [
+          Text(label),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
+        ],
       ),
     );
   }

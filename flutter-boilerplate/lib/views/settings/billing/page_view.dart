@@ -22,7 +22,8 @@ class SettingsBillingPageContent extends ConsumerWidget {
     final subAsync = ref.watch(subscriptionProvider);
 
     return subAsync.when(
-      loading: () => _scaffold(context, const Center(child: CircularProgressIndicator())),
+      loading: () =>
+          _scaffold(context, const Center(child: CircularProgressIndicator())),
       error: (e, _) => _scaffold(context, Center(child: Text('Error: $e'))),
       data: (sub) {
         if (sub.plan == 'free') return _FreeBillingView(lang: lang);
@@ -62,29 +63,47 @@ class _SubscriptionCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CardHeader(child: Text('Subscription', style: TextStyle(fontWeight: FontWeight.w600))),
+          const CardHeader(
+            child: Text(
+              'Subscription',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
           CardContent(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Text(sub.plan.toUpperCase(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    Text(
+                      sub.plan.toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(width: 8),
                     Badge(
                       text: sub.status == 'active' ? 'Active' : sub.status,
-                      variant: sub.status == 'active' ? BadgeVariant.success : BadgeVariant.warning,
+                      variant: sub.status == 'active'
+                          ? BadgeVariant.success
+                          : BadgeVariant.warning,
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 if (sub.currentPeriodEnd != null)
-                  Text('Renewal date: ${sub.currentPeriodEnd!.toLocal().toString().split(' ')[0]}',
-                      style: TextStyle(color: colors.fgMuted, fontSize: 13),),
+                  Text(
+                    'Renewal date: ${sub.currentPeriodEnd!.toLocal().toString().split(' ')[0]}',
+                    style: TextStyle(color: colors.fgMuted, fontSize: 13),
+                  ),
                 if (sub.cancelAtPeriodEnd)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
-                    child: Text('Cancels at period end', style: TextStyle(color: colors.warning, fontSize: 13)),
+                    child: Text(
+                      'Cancels at period end',
+                      style: TextStyle(color: colors.warning, fontSize: 13),
+                    ),
                   ),
                 const SizedBox(height: 12),
                 if (!sub.cancelAtPeriodEnd)
@@ -96,15 +115,25 @@ class _SubscriptionCard extends ConsumerWidget {
                         context: context,
                         builder: (_) => AlertDialog(
                           title: const Text('Cancel subscription?'),
-                          content: const Text('Your subscription will remain active until the end of the billing period.'),
+                          content: const Text(
+                            'Your subscription will remain active until the end of the billing period.',
+                          ),
                           actions: [
-                            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Keep')),
-                            FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Cancel')),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Keep'),
+                            ),
+                            FilledButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text('Cancel'),
+                            ),
                           ],
                         ),
                       );
                       if (confirm == true) {
-                        await ref.read(billingActionsProvider).cancelSubscription();
+                        await ref
+                            .read(billingActionsProvider)
+                            .cancelSubscription();
                         ref.invalidate(subscriptionProvider);
                         if (context.mounted) context.go('/v1/$lang/plans');
                       }
@@ -129,16 +158,25 @@ class _PaymentMethodsSection extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CardHeader(child: Text('Payment Methods', style: TextStyle(fontWeight: FontWeight.w600))),
+          const CardHeader(
+            child: Text(
+              'Payment Methods',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
           CardContent(
             child: pmAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Text('Error: $e', style: TextStyle(color: colors.danger)),
+              error: (e, _) =>
+                  Text('Error: $e', style: TextStyle(color: colors.danger)),
               data: (methods) {
                 if (methods.isEmpty) {
                   return Column(
                     children: [
-                      Text('No payment methods saved.', style: TextStyle(color: colors.fgMuted)),
+                      Text(
+                        'No payment methods saved.',
+                        style: TextStyle(color: colors.fgMuted),
+                      ),
                       const SizedBox(height: 8),
                       Button(
                         variant: ButtonVariant.outline,
@@ -149,12 +187,22 @@ class _PaymentMethodsSection extends ConsumerWidget {
                   );
                 }
                 return Column(
-                  children: methods.map((pm) => ListTile(
-                    leading: Icon(Icons.credit_card, color: colors.brand),
-                    title: Text('${pm.brand} •••• ${pm.last4}'),
-                    subtitle: Text('Expires ${pm.expMonth}/${pm.expYear}'),
-                    trailing: pm.isDefault ? const Badge(text: 'Default', variant: BadgeVariant.success) : null,
-                  ),).toList(),
+                  children: methods
+                      .map(
+                        (pm) => ListTile(
+                          leading: Icon(Icons.credit_card, color: colors.brand),
+                          title: Text('${pm.brand} •••• ${pm.last4}'),
+                          subtitle:
+                              Text('Expires ${pm.expMonth}/${pm.expYear}'),
+                          trailing: pm.isDefault
+                              ? const Badge(
+                                  text: 'Default',
+                                  variant: BadgeVariant.success,
+                                )
+                              : null,
+                        ),
+                      )
+                      .toList(),
                 );
               },
             ),
@@ -175,26 +223,45 @@ class _InvoiceHistorySection extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CardHeader(child: Text('Invoices', style: TextStyle(fontWeight: FontWeight.w600))),
+          const CardHeader(
+            child: Text(
+              'Invoices',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
           CardContent(
             child: historyAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Text('Error: $e', style: TextStyle(color: colors.danger)),
+              error: (e, _) =>
+                  Text('Error: $e', style: TextStyle(color: colors.danger)),
               data: (invoices) {
                 if (invoices.isEmpty) {
-                  return Text('No invoices yet.', style: TextStyle(color: colors.fgMuted));
+                  return Text(
+                    'No invoices yet.',
+                    style: TextStyle(color: colors.fgMuted),
+                  );
                 }
                 return Column(
-                  children: invoices.map((inv) => ListTile(
-                    leading: Icon(Icons.receipt, color: colors.fgMuted),
-                    title: Text('\$${inv.amount} ${inv.currency.toUpperCase()}'),
-                    subtitle: Text(inv.createdAt.toLocal().toString().split(' ')[0]),
-                    trailing: Badge(
-                      text: inv.status,
-                      variant: inv.status == 'paid' ? BadgeVariant.success : BadgeVariant.warning,
-                    ),
-                    onTap: inv.pdfUrl != null ? () {} : null,
-                  ),).toList(),
+                  children: invoices
+                      .map(
+                        (inv) => ListTile(
+                          leading: Icon(Icons.receipt, color: colors.fgMuted),
+                          title: Text(
+                            '\$${inv.amount} ${inv.currency.toUpperCase()}',
+                          ),
+                          subtitle: Text(
+                            inv.createdAt.toLocal().toString().split(' ')[0],
+                          ),
+                          trailing: Badge(
+                            text: inv.status,
+                            variant: inv.status == 'paid'
+                                ? BadgeVariant.success
+                                : BadgeVariant.warning,
+                          ),
+                          onTap: inv.pdfUrl != null ? () {} : null,
+                        ),
+                      )
+                      .toList(),
                 );
               },
             ),
@@ -224,10 +291,15 @@ class _FreeBillingView extends StatelessWidget {
             children: [
               Icon(Icons.credit_card_outlined, size: 48, color: colors.fgMuted),
               const SizedBox(height: 16),
-              const Text('No billing info yet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text(
+                'No billing info yet',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
-              Text('Upgrade to a paid plan to see billing details.',
-                  style: TextStyle(color: colors.fgMuted),),
+              Text(
+                'Upgrade to a paid plan to see billing details.',
+                style: TextStyle(color: colors.fgMuted),
+              ),
               const SizedBox(height: 24),
               Button(
                 child: const Text('View Plans'),

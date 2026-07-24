@@ -136,7 +136,8 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
                     builder: (_) => AlertDialog(
                       title: const Text('Chat Rooms'),
                       content: const Text(
-                          'Real-time chat rooms with multiple topics.',),
+                        'Real-time chat rooms with multiple topics.',
+                      ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(),
@@ -173,7 +174,8 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
               const SizedBox(width: 12),
               Expanded(
                 child: messagesAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (e, _) => Center(child: Text('Error: $e')),
                   data: (messages) => ChatRoomMainContent(
                     useNativeControls: useNativeControls,

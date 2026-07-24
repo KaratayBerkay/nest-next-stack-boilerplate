@@ -10,7 +10,9 @@ class LoadingTextFallback extends StatelessWidget {
     return Center(
       child: Text(
         text,
-        style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+        ),
       ),
     );
   }

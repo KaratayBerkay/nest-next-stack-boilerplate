@@ -3,7 +3,8 @@ bool isFieldEmpty(String? value) {
 }
 
 bool isFieldValidEmail(String value) {
-  return RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(value);
+  return RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+      .hasMatch(value);
 }
 
 bool isFieldMinLength(String value, int min) {

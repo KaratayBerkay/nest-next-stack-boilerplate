@@ -17,13 +17,19 @@ class CardDemoPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('Basic Card', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'Basic Card',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
           const CardWidget(
             child: Text('This is a basic card with some content.'),
           ),
           const SizedBox(height: 24),
-          const Text('Card with Header & Footer', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'Card with Header & Footer',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
           CardWidget(
             child: Column(
@@ -34,7 +40,11 @@ class CardDemoPage extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Button(variant: ButtonVariant.ghost, child: const Text('Cancel'), onPressed: () {}),
+                      Button(
+                        variant: ButtonVariant.ghost,
+                        child: const Text('Cancel'),
+                        onPressed: () {},
+                      ),
                       const SizedBox(width: 8),
                       Button(child: const Text('Save'), onPressed: () {}),
                     ],
@@ -44,7 +54,10 @@ class CardDemoPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          const Text('Tappable Card', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'Tappable Card',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
           const CardWidget(
             child: ListTile(

@@ -17,15 +17,16 @@ class ScrollToBottomButton extends StatelessWidget {
     if (!visible) return const SizedBox.shrink();
 
     return FloatingActionButton.small(
-      onPressed: onPressed ?? () {
-        if (scrollController.hasClients) {
-          scrollController.animateTo(
-            scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
-        }
-      },
+      onPressed: onPressed ??
+          () {
+            if (scrollController.hasClients) {
+              scrollController.animateTo(
+                scrollController.position.maxScrollExtent,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+              );
+            }
+          },
       child: const Icon(Icons.keyboard_arrow_down),
     );
   }

@@ -27,7 +27,10 @@ class AccountAvatarSection extends StatelessWidget {
         children: [
           Avatar(name: name, imageUrl: imageUrl, radius: 32),
           const SizedBox(height: 12),
-          Text(name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(
+            name,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           if (email != null)
             Text(email!, style: TextStyle(color: colors.fgMuted)),
           if (onChangeAvatar != null) ...[

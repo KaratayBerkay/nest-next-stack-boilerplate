@@ -38,16 +38,33 @@ class _ApiKeyCreateFormState extends State<ApiKeyCreateForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Create API Key', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const Text(
+                'Create API Key',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 12),
-              FormTextField(controller: widget.nameCtrl, label: 'Key Name', validator: (v) => forms.validateRequired(v)),
+              FormTextField(
+                controller: widget.nameCtrl,
+                label: 'Key Name',
+                validator: (v) => forms.validateRequired(v),
+              ),
               const SizedBox(height: 12),
-              Text('Scope', style: TextStyle(color: colors.fgMuted, fontSize: 13)),
+              Text(
+                'Scope',
+                style: TextStyle(color: colors.fgMuted, fontSize: 13),
+              ),
               const SizedBox(height: 4),
               SegmentedButton<int>(
-                segments: _scopes.asMap().entries.map((e) => ButtonSegment(value: e.key, label: Text(e.value))).toList(),
+                segments: _scopes
+                    .asMap()
+                    .entries
+                    .map(
+                      (e) => ButtonSegment(value: e.key, label: Text(e.value)),
+                    )
+                    .toList(),
                 selected: {_selectedScope},
-                onSelectionChanged: (v) => setState(() => _selectedScope = v.first),
+                onSelectionChanged: (v) =>
+                    setState(() => _selectedScope = v.first),
               ),
               const SizedBox(height: 16),
               Button(

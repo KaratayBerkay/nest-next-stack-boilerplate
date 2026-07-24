@@ -19,10 +19,18 @@ class DialogDemoPage extends StatelessWidget {
             context: context,
             builder: (_) => AlertDialog(
               title: const DialogTitleWidget(text: 'Dialog Title'),
-              content: const DialogContent(child: Text('This is the dialog content.')),
+              content: const DialogContent(
+                child: Text('This is the dialog content.'),
+              ),
               actions: [
-                TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-                Button(child: const Text('Confirm'), onPressed: () => Navigator.of(context).pop()),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                Button(
+                  child: const Text('Confirm'),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
               ],
             ),
           ),
