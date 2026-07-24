@@ -2,8 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_boilerplate/lib/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../constants/api/urls.dart';
-
 class PaymentMethod {
   final String id;
   final String brand;
@@ -37,14 +35,37 @@ final paymentMethodsServerProvider = Provider(
   (ref) => PaymentMethodsServer(ref.read(dioProvider)),
 );
 
+const _query = '''
+  query MyPaymentMethods {
+    myPaymentMethods {
+      id
+      brand
+      last4
+      expMonth
+      expYear
+      isDefault
+    }
+  }
+''';
+
 class PaymentMethodsServer {
   final Dio _dio;
 
   PaymentMethodsServer(this._dio);
 
   Future<List<PaymentMethod>> call() async {
-    final response = await _dio.get<dynamic>(Urls.billingPaymentMethods);
-    final list = response.data as List<dynamic>;
+    final response = await _dio.post<dynamic>(
+      '/graphql',
+      data: {'query': _query},
+    );
+    final body = response.data as Map<String, dynamic>;
+    if (body['errors'] != null) {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        message: 'Failed to fetch payment methods',
+      );
+    }
+    final list = (body['data'] as Map<String, dynamic>)['myPaymentMethods'] as List;
     return list
         .map((e) => PaymentMethod.fromJson(e as Map<String, dynamic>))
         .toList();

@@ -2,8 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_boilerplate/lib/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../constants/api/urls.dart';
-
 class Invoice {
   final String id;
   final String status;
@@ -28,7 +26,7 @@ class Invoice {
       amount: (json['amount'] as num).toDouble(),
       currency: json['currency'] as String,
       createdAt: DateTime.parse(json['createdAt'] as String),
-      pdfUrl: json['pdfUrl'] as String?,
+      pdfUrl: json['stripeInvoiceUrl'] as String?,
     );
   }
 }
@@ -36,14 +34,40 @@ class Invoice {
 final billingHistoryServerProvider =
     Provider((ref) => BillingHistoryServer(ref.read(dioProvider)));
 
+const _query = '''
+  query MyBillingHistory {
+    myBillingHistory {
+      id
+      type
+      status
+      amount
+      currency
+      reference
+      stripeInvoiceUrl
+      metadata
+      createdAt
+    }
+  }
+''';
+
 class BillingHistoryServer {
   final Dio _dio;
 
   BillingHistoryServer(this._dio);
 
   Future<List<Invoice>> call() async {
-    final response = await _dio.get<dynamic>(Urls.billingHistory);
-    final list = response.data as List<dynamic>;
+    final response = await _dio.post<dynamic>(
+      '/graphql',
+      data: {'query': _query},
+    );
+    final body = response.data as Map<String, dynamic>;
+    if (body['errors'] != null) {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        message: 'Failed to fetch billing history',
+      );
+    }
+    final list = (body['data'] as Map<String, dynamic>)['myBillingHistory'] as List;
     return list
         .map((e) => Invoice.fromJson(e as Map<String, dynamic>))
         .toList();

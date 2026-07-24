@@ -2,10 +2,14 @@ import 'package:dio/dio.dart';
 import 'package:flutter_boilerplate/lib/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../constants/api/urls.dart';
-
 final resetPasswordServerProvider =
     Provider((ref) => ResetPasswordServer(ref.read(dioProvider)));
+
+const _mutation = '''
+  mutation ResetPassword(\$input: ResetPasswordInput!) {
+    resetPassword(input: \$input)
+  }
+''';
 
 class ResetPasswordServer {
   final Dio _dio;
@@ -13,12 +17,25 @@ class ResetPasswordServer {
   ResetPasswordServer(this._dio);
 
   Future<void> call(String token, String password) async {
-    await _dio.post<dynamic>(
-      Urls.resetPassword,
+    final response = await _dio.post<dynamic>(
+      '/graphql',
       data: {
-        'token': token,
-        'password': password,
+        'query': _mutation,
+        'variables': {
+          'input': {'token': token, 'newPassword': password},
+        },
       },
     );
+    final body = response.data as Map<String, dynamic>;
+    if (body['errors'] != null) {
+      final msgs = (body['errors'] as List)
+          .map((e) => (e as Map<String, dynamic>)['message'] as String?)
+          .where((m) => m != null)
+          .join(', ');
+      throw DioException(
+        requestOptions: response.requestOptions,
+        message: msgs.isNotEmpty ? msgs : 'Password reset failed',
+      );
+    }
   }
 }

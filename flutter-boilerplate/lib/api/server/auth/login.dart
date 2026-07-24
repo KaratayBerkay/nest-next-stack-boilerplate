@@ -2,12 +2,29 @@ import 'package:dio/dio.dart';
 import 'package:flutter_boilerplate/lib/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../constants/api/urls.dart';
 import '../../../types/auth/auth_request_types.dart';
 import '../../../types/auth/user.dart';
 
 final loginServerProvider =
     Provider((ref) => LoginServer(ref.read(dioProvider)));
+
+const _loginMutation = '''
+  mutation Login(\$input: LoginInput!) {
+    login(input: \$input) {
+      accessToken
+      mfaRequired
+      mfaToken
+      user {
+        id
+        email
+        name
+        avatarUrl
+        locale
+        subscriptionTier
+      }
+    }
+  }
+''';
 
 class LoginServer {
   final Dio _dio;
@@ -16,21 +33,48 @@ class LoginServer {
 
   Future<LoginResult> call(LoginRequest request) async {
     final response = await _dio.post<dynamic>(
-      Urls.login,
-      data: request.toJson(),
+      '/graphql',
+      data: {
+        'query': _loginMutation,
+        'variables': {
+          'input': {'email': request.email, 'password': request.password},
+        },
+      },
     );
 
-    final data = response.data as Map<String, dynamic>;
+    final body = response.data as Map<String, dynamic>;
+    if (body['errors'] != null) {
+      final messages = (body['errors'] as List)
+          .map((e) => (e as Map<String, dynamic>)['message'] as String?)
+          .where((m) => m != null)
+          .join(', ');
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        message: messages.isNotEmpty ? messages : 'Login failed',
+      );
+    }
 
-    if (response.statusCode == 202 || data['mfaRequired'] == true) {
+    final result =
+        (body['data'] as Map<String, dynamic>)['login']
+            as Map<String, dynamic>;
+
+    if (result['mfaRequired'] == true) {
       return LoginMfaRequired(
-        mfaToken: data['mfaToken'] as String,
+        mfaToken: result['mfaToken'] as String,
         user: AuthenticatedUser.fromJson(
-          data['user'] as Map<String, dynamic>,
+          result['user'] as Map<String, dynamic>,
         ),
       );
     }
 
-    return LoginSuccess(LoginResponse.fromJson(data));
+    return LoginSuccess(
+      LoginResponse(
+        accessToken: result['accessToken'] as String,
+        user: AuthenticatedUser.fromJson(
+          result['user'] as Map<String, dynamic>,
+        ),
+      ),
+    );
   }
 }

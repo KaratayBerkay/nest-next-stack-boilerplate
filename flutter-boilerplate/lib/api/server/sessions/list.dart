@@ -2,8 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_boilerplate/lib/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../constants/api/urls.dart';
-
 class Session {
   final String id;
   final String device;
@@ -21,10 +19,10 @@ class Session {
 
   factory Session.fromJson(Map<String, dynamic> json) {
     return Session(
-      id: json['id'] as String,
-      device: json['device'] as String,
-      location: json['location'] as String,
-      lastActive: json['lastActive'] as String,
+      id: json['sessionId'] as String? ?? json['id'] as String,
+      device: json['deviceId'] as String? ?? json['device'] as String,
+      location: json['ip'] as String? ?? json['location'] as String? ?? '',
+      lastActive: json['issuedAt'] as String? ?? json['lastActive'] as String? ?? '',
       isCurrent: json['isCurrent'] as bool? ?? false,
     );
   }
@@ -33,14 +31,36 @@ class Session {
 final sessionsListServerProvider =
     Provider((ref) => SessionsListServer(ref.read(dioProvider)));
 
+const _query = '''
+  query MySessions {
+    mySessions {
+      sessionId
+      deviceId
+      ip
+      userAgent
+      issuedAt
+    }
+  }
+''';
+
 class SessionsListServer {
   final Dio _dio;
 
   SessionsListServer(this._dio);
 
   Future<List<Session>> call() async {
-    final response = await _dio.get<dynamic>(Urls.sessionsList);
-    final list = response.data as List<dynamic>;
+    final response = await _dio.post<dynamic>(
+      '/graphql',
+      data: {'query': _query},
+    );
+    final body = response.data as Map<String, dynamic>;
+    if (body['errors'] != null) {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        message: 'Failed to fetch sessions',
+      );
+    }
+    final list = (body['data'] as Map<String, dynamic>)['mySessions'] as List;
     return list
         .map((e) => Session.fromJson(e as Map<String, dynamic>))
         .toList();

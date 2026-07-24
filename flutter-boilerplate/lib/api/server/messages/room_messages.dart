@@ -2,8 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_boilerplate/lib/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../constants/api/urls.dart';
-
 final roomMessagesServerProvider =
     Provider((ref) => RoomMessagesServer(ref.read(dioProvider)));
 
@@ -14,7 +12,7 @@ class RoomMessagesServer {
 
   Future<List<RoomMessage>> call(String room) async {
     final response = await _dio.get<dynamic>(
-      '${Urls.roomMessages}/$room/messages',
+      '/api/rooms/$room/messages',
     );
     final data = response.data;
     if (data is List) {

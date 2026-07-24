@@ -2,8 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_boilerplate/lib/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../constants/api/urls.dart';
-
 class Friend {
   final String id;
   final String name;
@@ -36,7 +34,7 @@ class FriendsListServer {
   FriendsListServer(this._dio);
 
   Future<List<Friend>> call() async {
-    final response = await _dio.get<dynamic>(Urls.friends);
+    final response = await _dio.get<dynamic>('/api/friends');
     final list = response.data as List<dynamic>;
     return list.map((e) => Friend.fromJson(e as Map<String, dynamic>)).toList();
   }

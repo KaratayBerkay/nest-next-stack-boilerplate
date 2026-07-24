@@ -2,11 +2,11 @@ import 'package:dio/dio.dart';
 import 'package:flutter_boilerplate/lib/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../constants/api/urls.dart';
-
 final usernameAvailableServerProvider = Provider(
   (ref) => UsernameAvailableServer(ref.read(dioProvider)),
 );
+
+const _query = 'query IsUsernameAvailable(\$username: String!) { isUsernameAvailable(username: \$username) }';
 
 class UsernameAvailableServer {
   final Dio _dio;
@@ -14,12 +14,20 @@ class UsernameAvailableServer {
   UsernameAvailableServer(this._dio);
 
   Future<bool> call(String username) async {
-    final response = await _dio.get<dynamic>(
-      Urls.usernameAvailable,
-      queryParameters: {
-        'username': username,
+    final response = await _dio.post<dynamic>(
+      '/graphql',
+      data: {
+        'query': _query,
+        'variables': {'username': username},
       },
     );
-    return response.data['available'] as bool;
+    final body = response.data as Map<String, dynamic>;
+    if (body['errors'] != null) {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        message: 'Failed to check username availability',
+      );
+    }
+    return (body['data'] as Map<String, dynamic>)['isUsernameAvailable'] as bool;
   }
 }

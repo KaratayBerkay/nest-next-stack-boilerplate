@@ -20,9 +20,9 @@ class AuthenticatedUser {
       id: json['id'] as String,
       email: json['email'] as String,
       name: json['name'] as String,
-      tier: json['tier'] as String? ?? 'free',
+      tier: (json['tier'] as String?) ?? (json['subscriptionTier'] as String?) ?? 'free',
       avatarUrl: json['avatarUrl'] as String?,
-      language: json['language'] as String?,
+      language: (json['language'] as String?) ?? (json['locale'] as String?),
     );
   }
 

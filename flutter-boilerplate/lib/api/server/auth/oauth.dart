@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_boilerplate/lib/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../constants/api/urls.dart';
 import '../../../types/auth/oauth_types.dart';
 
 final oauthProfileServerProvider =
@@ -18,7 +17,7 @@ class OAuthProfileServer {
 
   Future<OAuthProfile> call(String provider, String state) async {
     final response = await _dio.get<dynamic>(
-      '${Urls.oauth}/$provider/profile',
+      '/auth/oauth/$provider/profile',
       queryParameters: {'state': state},
     );
     return OAuthProfile.fromJson(response.data as Map<String, dynamic>);
