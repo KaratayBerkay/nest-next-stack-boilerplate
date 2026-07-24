@@ -26,15 +26,16 @@ Per the roadmap workflow: complete a phase and its gate before starting the next
 
 Environment notes: Android SDK 36.1 at `~/Android/Sdk` (⚠️ licenses not fully accepted — run `flutter doctor --android-licenses` once), Chrome present, GTK missing (`apt install libgtk-3-dev` if Linux desktop ever wanted), no emulator AVD created. `ios/` exists but is untestable here (no macOS).
 
-Parity snapshot (current, after all phases):
+Parity snapshot (**re-verified 2026-07-24, verification round 1** — see §V below for the ⚠️ items):
 
-| Dimension | next-js | flutter | Parity |
+| Dimension | next-js | flutter (verified) | Parity |
 |---|---|---|---|
-| Routes (pages) | 157 | 133 + 16 N/A | ~85% (all ported; 16 web-only documented N/A) |
-| UI widget folders | 71 | 68 | ~96% (bottom_sheet → existing `sheet/`, page_header exists in `layout/`, logo_spinner added) |
-| Hooks | 31 | 26 + 5 native | 100% (26 Riverpod hooks + 5 native equivalents) |
-| i18n keys | 1,318 (24 namespaces) | 1,298 (en/tr ARB) | ~98% (generated from same source via converter script) |
-| Themes | 4 (light, dark, ocean, violet) | 4 (light, dark, ocean, violet) persisted | 100% |
+| Routes (pages) | 157 | 135 route paths (incl. web-contract aliases); 16 web-only documented at `router.dart:1` | ✅ closed |
+| UI widget folders | 71 | 67 + `page_header` in `components/layout/` (bottom_sheet → existing `sheet/`) | ✅ closed |
+| Hooks | 31 | 25 hook files (8 newly ported); swipe/click-outside/media-query = native equivalents | ✅ closed |
+| i18n keys | 1,318 (24 namespaces) | 1,298 keys in en+tr ARB, 0 en/tr mismatch, gen-l10n regenerated (1,276 getters) — ⚠️ **0 of 410 view files consume them; UI still renders hardcoded English** | ❌ **§V-1** |
+| Themes | 4 (light, dark, ocean, violet) | 4+dark-variant presets, persisted via shared_preferences — ⚠️ **settings UI is a light/dark Switch; ocean/violet unreachable** | ❌ **§V-2** |
+| Release APK | n/a | ✅ builds — 73.8 MB — after §V-3's lint fix (applied + verified this round) | §V-3 |
 | Source files | 1,729 ts/tsx | 809 dart | expected consolidation, not 1:1 by count |
 
 ---
@@ -121,16 +122,20 @@ Gate on `flutter analyze` printing `No issues found!` — infos included. That i
 
 ### A6 · Nothing gates Dart locally (P1)
 
-`.husky/pre-push` runs only `tsc` for next-js. Add a guarded Flutter gate so broken Dart can't land silently:
+`.husky/pre-push` runs only `tsc` for next-js. Add a guarded Flutter gate so broken Dart can't land silently.
+
+> ⚠️ **Corrected recipe (verification round 1).** The snippet originally given here — `git diff --cached --name-only HEAD` — is a **no-op at pre-push time**: after committing, the index matches HEAD, so the diff is always empty and the gate never fires (and that is exactly what got implemented). Pre-push must inspect the *outgoing commit range*, not the index:
 
 ```sh
-# .husky/pre-push (append)
-if git diff --cached --name-only HEAD | grep -q '^flutter-boilerplate/'; then
+# .husky/pre-push (append) — gate fires when outgoing commits touch flutter-boilerplate/
+upstream="$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || echo origin/main)"
+range_base="$(git merge-base HEAD "$upstream" 2>/dev/null || git rev-parse HEAD~1 2>/dev/null || echo HEAD)"
+if git diff --name-only "$range_base"..HEAD | grep -q '^flutter-boilerplate/'; then
   (cd flutter-boilerplate && flutter analyze && dart format --set-exit-if-changed lib/ test/)
 fi
 ```
 
-(Full `flutter test` pre-push is a taste call — 35 s — but analyze+format is non-negotiable.)
+Sanity-check it fires: commit a deliberate format violation under `flutter-boilerplate/`, run `git push --dry-run`, expect the hook to fail. (Full `flutter test` pre-push is a taste call — 35 s — but analyze+format is non-negotiable.)
 
 ### A7 · Docker compose `flutter` service cannot start (P1)
 
@@ -274,7 +279,135 @@ Add `ocean` and `violet` `AppColors` presets derived from the web `.theme-*` val
 - **assets:** `assets/scripts/` bundles web JS (theme-init) into the APK — delete from pubspec assets.
 - **integration_test/:** 4 suites exist and run nowhere. After B8's AVD: wire `flutter test integration_test/` into a nightly or manual CI job (emulator-in-CI is slow; don't put it in the PR gate).
 
-**Phase C gate:** ✅ route diff vs web = explicit N/A table in `router.dart`; i18n key count (1,298) near web count (1,318 — 20 legacy-only keys not ported); `flutter analyze`/`format`/`test` green; APK smoke per Phase B gate still passes.
+**Phase C gate:** ⚠️ *partially met — corrected by verification round 1 (§V).* Route diff ✅ (135 paths, 16 web-only documented at `router.dart:1`); analyze/format/test ✅; **but** i18n keys exist without being consumed by any view (§V-1), the 4-theme system has no picker (§V-2), and the release APK did not build (§V-3) — so "APK smoke per Phase B gate still passes" was never true. The gate re-closes when §V-1…V-3 land.
+
+---
+
+## §V — Verification round 1 (2026-07-24, on `5a400eb`)
+
+Every §A/§B/§C claim was re-checked line-by-line against the code, and all gates were re-run. **Most of the work is genuinely done and verified**: A1 (dotenv fully removed, `String.fromEnvironment` AppConfig, Dockerfile `--dart-define-from-file`), A2, A4 (`flutter analyze` → *No issues found*), A5 (CI pin 3.44.2), A7 (serve stage + `target: serve` + `.dockerignore` + pinned base `:3.44.2`), B1 (cleartext debug-only), B2 (`FlutterFragmentActivity` + MaterialComponents themes in values, values-night, values-v31), B3 (`PUSH_ENABLED` gate with visible log), B5 (all four contract routes present, old paths kept as aliases), B6 (refresh-once-then-retry interceptor; LogInterceptor dev-only), B7 (theme+locale in shared_preferences), C2 (135 paths; 16 web-only listed at `router.dart:1`), C3 (25 hooks, real implementations), C4 (types extracted, `logo_spinner/` widget), C6 (pubspec codegen purged — 0 refs; `assets/scripts` gone; README now accurate). `dart format` — 916 files, 0 changed. Suite re-run below.
+
+**Six items did not survive verification.** They are the remaining work; each comes with its full fix.
+
+### V-1 · i18n is generated but *not wired* — the app still renders hardcoded English (P0 for parity)
+
+Verified: `app_en.arb`/`app_tr.arb` each hold **1,298 keys with zero en/tr mismatch**, `scripts/messages-to-arb.mjs` exists, gen-l10n outputs are regenerated (1,276 getters). But **0 of 410 files under `lib/views/` import the localizations, and `AppLocalizations.of(` appears exactly once in the entire codebase** (the delegate wiring in `app.dart`). Switching locale changes nothing the user can see. The §C1 sweep step ("replace literals with `AppLocalizations.of(context).<key>`") was skipped entirely — this is the difference between *having* translations and *being* translated.
+
+**Fix — the namespace sweep (mechanical, since the keys already exist):**
+
+1. One-time ergonomics: add `nullable-getter: false` to `l10n.yaml` and re-run `flutter gen-l10n` — `AppLocalizations.of(context)` then returns non-nullable, so call sites don't need `!`.
+2. One-time test harness: in `test/test_helpers.dart`, add to the `MaterialApp`:
+   ```dart
+   localizationsDelegates: AppLocalizations.localizationsDelegates,
+   supportedLocales: const [Locale('en'), Locale('tr')],
+   ```
+   Widget tests keep asserting English text (en is default), so existing `find.text(...)` assertions survive.
+3. Per namespace (suggested order: `v1-shell` → `auth` → `feed` → `messages` → `settings` → `notification` → `posts` → `find-friends` → `forms` → `ui` → rest — 24 total):
+   - Find the literals: `grep -rnE "Text\('|labelText:|hintText:|title: '|tooltip:" lib/views/<ns>/ lib/components/<ns>/`
+   - In each file: `import 'package:flutter_boilerplate/l10n/app_localizations.dart';`, then `final t = AppLocalizations.of(context);` at the top of `build`, then replace: `Text('Login')` → `Text(t.auth_login_title)`. Key names follow `<ns>_<camelPath>` — they were generated *from* the web `messages/` tree, so the web component you're mirroring names the key for you.
+   - A literal with no matching key (mobile-only string): add it to **both** ARBs, re-run `flutter gen-l10n`, commit the regenerated files.
+   - Gate per namespace: `flutter analyze` + `flutter test` + flip locale on one screen of that namespace (tr renders). Commit per namespace — 24 reviewable commits, not one 400-file bomb.
+4. Track progress with a 24-row checklist appended to the status log; the item closes when `grep -rL 'app_localizations' lib/views --include='*.dart'` returns only files with zero user-facing strings.
+
+### V-2 · Four themes exist; only two are selectable (P1)
+
+Verified: `AppColors` has `ocean`/`oceanDark`/`violet`/`violetDark` presets, `AppThemeMode` has 4 values, `buildThemeData(mode, {dark})` handles all of them, persistence works. But every `views/settings/general/*_page_view.dart` (all four tier variants) renders a **light↔dark `Switch`** — nothing can ever select ocean or violet; they are dead presets. (`app.dart` pinning `themeMode: ThemeMode.light` and routing everything through `theme: buildThemeData(themeMode)` is correct for the explicit-picker model — keep it.)
+
+**Fix:** replace the Switch in each settings/general tier view (extract one shared widget, e.g. `components/settings/theme_picker.dart` since all four render it) with:
+
+```dart
+final mode = ref.watch(themeModeProvider);
+SegmentedButton<AppThemeMode>(
+  segments: AppThemeMode.values
+      .map((m) => ButtonSegment(value: m, label: Text(m.name)))
+      .toList(),
+  selected: {mode},
+  onSelectionChanged: (s) => ref.read(themeModeProvider.notifier).setMode(s.first),
+)
+```
+
+Labels go through V-1's keys once the `settings` namespace is swept (web already has them). The `oceanDark`/`violetDark` presets stay reachable later via the `dark:` flag if a "match system brightness" toggle is ever wanted — web has no such toggle, so don't add one for parity.
+
+### V-3 · Release APK still does not build — stripe_android lint classpath (P0)
+
+Verified twice: `flutter build apk --release` fails in `:stripe_android:lintVitalAnalyzeRelease` — it tries to resolve `com.google.android.gms:play-services-tapandpay:17.1.2` (pulled by `com.stripe:stripe-android-issuing-push-provisioning`), which **Google does not publish on any public Maven repo** (private to approved push-provisioning partners). So A3's desugaring fix was necessary but not sufficient; release lint-vital can never resolve and must be off (the flutter_stripe-documented workaround):
+
+```kotlin
+// android/app/build.gradle.kts — inside android { }
+lint {
+    checkReleaseBuilds = false
+}
+```
+
+*Applied in the working tree during this verification round* — see the status log for the resulting build. Trade-off: release builds lose the lint-vital safety net; `flutter analyze` remains the Dart-side gate, and debug-build lint still runs.
+
+### V-4 · The pre-push Dart gate is a no-op as committed (P1)
+
+Verified: `.husky/pre-push` contains the gate — but built on `git diff --cached --name-only HEAD`, which compares the **index** to HEAD. At push time the index matches HEAD, the diff is empty, and the Flutter gate has never fired once. (The defective snippet came from this doc's original §A6 — the recipe was wrong, not the implementation.) §A6 above now carries the corrected, range-based version; replace the block in `.husky/pre-push` with it and sanity-check by pushing a deliberate format violation with `git push --dry-run`.
+
+### V-5 · Release signing still debug (P1 — blocks distribution & App Links)
+
+Verified: `buildTypes.release` still has `signingConfig = signingConfigs.getByName("debug")` (identity itself is done: `tr.gen.eys.app`, label "EYS", activity package moved). Fix:
+
+```bash
+keytool -genkey -v -keystore ~/keystores/eys-upload.jks \
+  -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+```
+
+```properties
+# android/key.properties (MUST be gitignored — add `android/key.properties` + `*.jks` to .gitignore)
+storeFile=/home/berkay-server/keystores/eys-upload.jks
+storePassword=…
+keyAlias=upload
+keyPassword=…
+```
+
+```kotlin
+// android/app/build.gradle.kts (top of file)
+import java.util.Properties
+import java.io.FileInputStream
+val keystoreProperties = Properties().apply {
+    val f = rootProject.file("key.properties")
+    if (f.exists()) load(FileInputStream(f))
+}
+// inside android { }
+signingConfigs {
+    create("release") {
+        keyAlias = keystoreProperties["keyAlias"] as String?
+        keyPassword = keystoreProperties["keyPassword"] as String?
+        storeFile = (keystoreProperties["storeFile"] as String?)?.let { file(it) }
+        storePassword = keystoreProperties["storePassword"] as String?
+    }
+}
+buildTypes {
+    release {
+        signingConfig = if (rootProject.file("key.properties").exists())
+            signingConfigs.getByName("release") else signingConfigs.getByName("debug")
+    }
+}
+```
+
+Then publish `/.well-known/assetlinks.json` on `app.eys.gen.tr` with the SHA-256 from `keytool -list -v` (B5's App Links residue — deep links only auto-verify after this).
+
+### V-6 · Web preview shipped without guards; AVD & integration tests still absent (P2)
+
+Verified: `web/` is committed (B8 item 1 ✅) but there are **no `kIsWeb` guards anywhere** — `stripeInitProvider` sets `Stripe.publishableKey`/`merchantIdentifier` unconditionally at startup, and flutter_stripe has no default web implementation, so `flutter run -d chrome` risks a startup `MissingPluginException` (and Stripe screens definitely don't work on web). Guard the init:
+
+```dart
+final stripeInitProvider = Provider((_) {
+  if (kIsWeb) return false;          // web preview only — Stripe is mobile-only here
+  Stripe.publishableKey = AppConfig.stripePublishableKey;
+  ...
+});
+```
+
+Same `!kIsWeb` guard belongs on the `PUSH_ENABLED` branch in `app.dart`. Also still open from B8/C6: no AVD was created (`flutter emulators` is empty — `flutter emulators --create --name pixel` once), so the 4 `integration_test/` suites *still* run nowhere; wire them as a manual/nightly job only after an emulator exists.
+
+### V-7 · Minor notes (no action forced)
+
+- Dev-only `LogInterceptor` still logs `responseBody` — login responses include tokens; fine for local dev, but add an `Authorization`/token redactor if logs ever leave the machine.
+- Theme/locale load async *after* first frame — one frame of light/en flash on cold start. Web solved this with `theme-init.js`; the Flutter equivalent is reading SharedPreferences in `main()` before `runApp` and passing initial values into the providers. Cosmetic; do it opportunistically.
+- `use_presence.dart` implements *connectivity* presence (online/offline of the device), not the web's *user* presence over realtime — semantic drift to reconcile when the realtime parity pass happens.
 
 ---
 
@@ -306,3 +439,4 @@ Add `ocean` and `violet` `AppColors` presets derived from the web `.theme-*` val
   - C5: `ocean`/`oceanDark`/`violet`/`violetDark` AppColors presets; `AppThemeMode` extended; `buildThemeData(mode, {bool dark})`; single-slot `theme:` in `app.dart`.
   - C6: unused codegen packages removed from pubspec; `assets/scripts/` removed; README corrected; N/A routes noted in `router.dart`.
   Final gates: `flutter analyze` → No issues found, `dart format --set-exit-if-changed` clean, `flutter test` → +300: All tests passed!.
+- **2026-07-24 — Verification round 1 (on `5a400eb`).** Every phase claim re-checked line-by-line; all gates re-run. **Confirmed done:** A1/A2/A4/A5/A7, B1/B2/B3/B5/B6/B7, C2/C3/C4/C6 — `flutter analyze` *No issues found*, `dart format` 0 of 916 changed, `flutter test` **+300: All tests passed**. **Did not survive verification (details + fixes in §V):** (V-1) i18n generated (1,298 = 1,298 en/tr keys) but **0/410 view files consume it** — UI still renders hardcoded English, locale switch is a no-op; (V-2) ocean/violet theme presets unreachable — settings UI only offers a light/dark Switch; (V-3) release APK failed on `:stripe_android:lintVitalAnalyzeRelease` (`play-services-tapandpay:17.1.2` is not on public Maven) — fixed with `lint { checkReleaseBuilds = false }` and **verified: `app-release.apk` builds, 73.8 MB** (fix applied in working tree this round); (V-4) pre-push Dart gate was a no-op (`git diff --cached` is empty at push time — defective recipe originated in this doc; §A6 now carries the corrected range-based version, `.husky/pre-push` still needs it applied); (V-5) release still signs with the debug keystore; (V-6) no `kIsWeb` guards (web preview risks Stripe init crash), no AVD, `integration_test/` still runs nowhere. **Remaining work = §V-1 (the parity flagship), V-2, V-4, V-5, V-6.**
