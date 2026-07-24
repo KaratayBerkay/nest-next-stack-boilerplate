@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../api/client/posts/actions.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../types/feed/post.dart';
 
 class PostEditForm extends ConsumerStatefulWidget {
@@ -34,6 +35,7 @@ class _PostEditFormState extends ConsumerState<PostEditForm> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -59,7 +61,7 @@ class _PostEditFormState extends ConsumerState<PostEditForm> {
           children: [
             OutlinedButton(
               onPressed: widget.onSaved,
-              child: const Text('Cancel'),
+              child: Text(t.postsCancel),
             ),
             const SizedBox(width: 8),
             FilledButton(
@@ -74,7 +76,7 @@ class _PostEditFormState extends ConsumerState<PostEditForm> {
                     );
                 widget.onSaved();
               },
-              child: const Text('Save'),
+              child: Text(t.postsSave),
             ),
           ],
         ),

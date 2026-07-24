@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../components/ui/textarea/textarea.dart';
+import '../../../l10n/app_localizations.dart';
 
 class TextareaDemoPage extends StatelessWidget {
   final String lang;
@@ -7,8 +8,9 @@ class TextareaDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Textarea')),
+      appBar: AppBar(title: Text(t.uiTextareaTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [

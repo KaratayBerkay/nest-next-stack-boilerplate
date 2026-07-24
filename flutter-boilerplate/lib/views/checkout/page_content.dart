@@ -8,6 +8,7 @@ import '../../components/ui/stripe_card_form.dart';
 import '../../components/ui/toast/toast.dart';
 import '../../constants/theme.dart';
 import '../../hooks/use_billing.dart';
+import '../../l10n/app_localizations.dart';
 
 class CheckoutPageContent extends ConsumerStatefulWidget {
   final String lang;
@@ -84,7 +85,7 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
       billing.invalidate();
 
       if (mounted) {
-        showToast(context, 'Subscription activated!');
+        showToast(context, AppLocalizations.of(context).checkoutUpgradeSuccess);
         context.go('/v1/${widget.lang}/settings/billing');
       }
     } catch (e) {
@@ -97,9 +98,10 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Checkout')),
+      appBar: AppBar(title: Text(t.checkoutCheckout)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -110,7 +112,9 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Selected Plan: ${Tier.displayName(widget.plan ?? 'free')}',
+                    t.checkoutSelectedPlan(
+                      Tier.displayName(widget.plan ?? 'free'),
+                    ),
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -118,7 +122,7 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '$_price/month — You are about to upgrade your account.',
+                    t.checkoutChangedImmediately,
                     style: TextStyle(color: colors.fgMuted),
                   ),
                 ],
@@ -126,9 +130,9 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'Payment Method',
-            style: TextStyle(fontWeight: FontWeight.w600),
+          Text(
+            t.checkoutPaymentMethod,
+            style: const TextStyle(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
           StripeCardFormField(
@@ -156,7 +160,7 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
                       color: Colors.white,
                     ),
                   )
-                : Text('Subscribe — $_price/month'),
+                : Text('${t.checkoutUpgrade} — $_price/month'),
           ),
         ],
       ),

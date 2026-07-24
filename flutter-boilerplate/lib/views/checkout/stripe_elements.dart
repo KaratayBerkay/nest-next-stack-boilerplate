@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class StripeElementsConfig extends StatefulWidget {
   final String publishableKey;
@@ -50,6 +51,7 @@ class _StripeElementsConfigState extends State<StripeElementsConfig> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     if (_error != null) {
       return Center(
@@ -61,7 +63,7 @@ class _StripeElementsConfigState extends State<StripeElementsConfig> {
               Icon(Icons.error_outline, size: 48, color: colors.danger),
               const SizedBox(height: 12),
               Text(
-                'Failed to initialize payment system',
+                t.checkoutFailedToInitPayment,
                 style: TextStyle(
                   color: colors.danger,
                   fontWeight: FontWeight.w600,

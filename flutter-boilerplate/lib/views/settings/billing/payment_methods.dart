@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../components/ui/badge/badge.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class PaymentMethod {
   final String id;
@@ -39,19 +40,20 @@ class PaymentMethods extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final colors = AppColors.of(context);
 
     if (methods.isEmpty) {
       return Column(
         children: [
           Text(
-            'No payment methods saved.',
+            t.settingsNoPaymentMethods,
             style: TextStyle(color: colors.fgMuted),
           ),
           const SizedBox(height: 8),
           Button(
             variant: ButtonVariant.outline,
-            child: const Text('Add Card'),
+            child: Text(t.settingsAddCard),
             onPressed: () => context.go('/v1/$lang/plans'),
           ),
         ],

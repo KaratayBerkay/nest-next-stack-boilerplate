@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class ImagePreviewSection extends StatelessWidget {
   final String? imageUrl;
@@ -10,6 +11,7 @@ class ImagePreviewSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     if (imageUrl == null) {
       return Container(
@@ -25,7 +27,7 @@ class ImagePreviewSection extends StatelessWidget {
               Icon(Icons.image_outlined, size: 48, color: colors.fgMuted),
               const SizedBox(height: 8),
               Text(
-                'No image selected',
+                t.shareNoImage,
                 style: TextStyle(color: colors.fgMuted),
               ),
             ],
@@ -51,7 +53,7 @@ class ImagePreviewSection extends StatelessWidget {
                 Icon(Icons.broken_image, size: 48, color: colors.danger),
                 const SizedBox(height: 8),
                 Text(
-                  'Failed to load image',
+                  t.shareFailedToLoadImage,
                   style: TextStyle(color: colors.fgMuted),
                 ),
               ],

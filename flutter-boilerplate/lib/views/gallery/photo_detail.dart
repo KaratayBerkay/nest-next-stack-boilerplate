@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class PhotoDetailPage extends StatelessWidget {
   final String id;
 
@@ -8,10 +10,11 @@ class PhotoDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final imageUrl = 'https://picsum.photos/seed/$id/800/600';
 
     return Scaffold(
-      appBar: AppBar(title: Text('Photo #$id')),
+      appBar: AppBar(title: Text(t.galleryPhoto(id))),
       body: Center(
         child: CachedNetworkImage(
           imageUrl: imageUrl,

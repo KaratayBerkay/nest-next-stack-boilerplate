@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../components/ui/button/button.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class GalleryItem {
   final String id;
@@ -31,6 +32,7 @@ class GalleryUploadSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
 
+    final t = AppLocalizations.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -48,7 +50,7 @@ class GalleryUploadSection extends StatelessWidget {
                   variant: ButtonVariant.outline,
                   size: ButtonSize.sm,
                   onPressed: onAdd,
-                  child: const Text('Add Images'),
+                  child: Text(t.formsUploadsAddImages),
                 ),
               ],
             ),
@@ -74,7 +76,7 @@ class GalleryUploadSection extends StatelessWidget {
                         variant: ButtonVariant.outline,
                         size: ButtonSize.sm,
                         onPressed: onAdd,
-                        child: const Text('Upload Images'),
+                        child: Text(t.formsUploadsUploadImages),
                       ),
                     ],
                   ),

@@ -3,6 +3,7 @@ import 'package:flutter_boilerplate/lib/tier.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class PlansPageContent extends StatelessWidget {
   final String lang;
@@ -12,9 +13,10 @@ class PlansPageContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Plans')),
+      appBar: AppBar(title: Text(t.plansTitle)),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),

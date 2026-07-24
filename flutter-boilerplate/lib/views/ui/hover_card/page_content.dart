@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/popover/popover.dart';
+import '../../../l10n/app_localizations.dart';
 
 class HoverCardDemoPage extends StatelessWidget {
   final String lang;
@@ -9,8 +10,9 @@ class HoverCardDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Hover Card')),
+      appBar: AppBar(title: Text(t.uiHoverCardTitle)),
       body: Center(
         child: PopoverWidget(
           child: Button(child: const Text('Hover me'), onPressed: () {}),

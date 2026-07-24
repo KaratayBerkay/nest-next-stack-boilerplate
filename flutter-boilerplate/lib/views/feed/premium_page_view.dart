@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../components/ui/empty/empty.dart';
+import '../../l10n/app_localizations.dart';
 
 class PremiumFeedPage extends StatelessWidget {
   final String lang;
@@ -8,9 +9,10 @@ class PremiumFeedPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const EmptyWidget(
-      title: 'Premium Feed',
-      description: 'Full premium feed experience with AI recommendations.',
+    final t = AppLocalizations.of(context);
+    return EmptyWidget(
+      title: t.feedPremiumTitle,
+      description: t.feedPremiumDescription,
       icon: Icons.workspace_premium,
     );
   }

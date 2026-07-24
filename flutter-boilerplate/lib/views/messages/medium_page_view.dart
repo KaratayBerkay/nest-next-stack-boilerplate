@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import 'messages_sidebar.dart';
 
 class MediumMessagesPage extends StatelessWidget {
@@ -9,11 +10,12 @@ class MediumMessagesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Row(
       children: [
         MessagesSidebar(lang: lang),
-        const Expanded(
-          child: Center(child: Text('Medium chat with file sharing')),
+        Expanded(
+          child: Center(child: Text(t.messagesMediumDescription)),
         ),
       ],
     );

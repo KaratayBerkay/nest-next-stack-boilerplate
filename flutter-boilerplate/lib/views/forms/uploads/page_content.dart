@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../components/ui/avatar/avatar.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class FormsUploadsPageContent extends ConsumerStatefulWidget {
   final String lang;
@@ -23,8 +24,9 @@ class _FormsUploadsPageContentState
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
 
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('File Uploads')),
+      appBar: AppBar(title: Text(t.formsUploadsPageTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -46,7 +48,7 @@ class _FormsUploadsPageContentState
                         const SizedBox(height: 8),
                         Button(
                           variant: ButtonVariant.outline,
-                          child: const Text('Upload Photo'),
+                          child: Text(t.formsUploadsUploadPhoto),
                           onPressed: () {},
                         ),
                       ],
@@ -83,11 +85,11 @@ class _FormsUploadsPageContentState
                             color: colors.fgMuted,
                           ),
                           const SizedBox(height: 8),
-                          const Text('Drag & drop files here'),
+                          Text(t.formsUploadsDragDrop),
                           const SizedBox(height: 8),
                           Button(
                             variant: ButtonVariant.outline,
-                            child: const Text('Browse Files'),
+                            child: Text(t.formsUploadsBrowseFiles),
                             onPressed: () {},
                           ),
                         ],

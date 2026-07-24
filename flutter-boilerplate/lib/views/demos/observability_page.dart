@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 
+import '../../l10n/app_localizations.dart';
+
 final _logger = Logger();
 
 class ObservabilityDemoPage extends StatelessWidget {
@@ -9,8 +11,9 @@ class ObservabilityDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Observability')),
+      appBar: AppBar(title: Text(t.demoObservabilityPageTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

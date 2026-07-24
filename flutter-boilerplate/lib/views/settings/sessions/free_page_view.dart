@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../api/client/sessions/query.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class FreeSettingsSessionsPage extends ConsumerWidget {
   final String lang;
@@ -13,10 +14,11 @@ class FreeSettingsSessionsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final sessionsAsync = ref.watch(sessionsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Sessions')),
+      appBar: AppBar(title: Text(t.settingsNavSessions)),
       body: sessionsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
@@ -40,8 +42,7 @@ class FreeSettingsSessionsPage extends ConsumerWidget {
                   ),
                 ),
               ),
-              if (current.isEmpty)
-                const Center(child: Text('No active sessions')),
+              if (current.isEmpty) Center(child: Text(t.settingsNoSessions)),
               const SizedBox(height: 24),
               Center(
                 child: Column(
@@ -49,12 +50,12 @@ class FreeSettingsSessionsPage extends ConsumerWidget {
                     Icon(Icons.lock_outline, size: 40, color: colors.fgMuted),
                     const SizedBox(height: 12),
                     Text(
-                      'Upgrade to manage all sessions',
+                      t.settingsUpgradePlan,
                       style: TextStyle(color: colors.fgMuted),
                     ),
                     const SizedBox(height: 12),
                     Button(
-                      child: const Text('Upgrade'),
+                      child: Text(t.settingsUpgradePlan),
                       onPressed: () {},
                     ),
                   ],

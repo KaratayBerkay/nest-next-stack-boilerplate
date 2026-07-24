@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../api/client/posts/query.dart';
 import '../../../hooks/use_auth.dart';
+import '../../../l10n/app_localizations.dart';
 import 'post_detail_base_view.dart';
 
 class PremiumPostDetailPage extends ConsumerWidget {
@@ -17,16 +18,17 @@ class PremiumPostDetailPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
     final postAsync = ref.watch(postProvider(postId));
     final user = ref.watch(currentUserProvider);
 
     return postAsync.when(
       loading: () => Scaffold(
-        appBar: AppBar(title: const Text('Post')),
+        appBar: AppBar(title: Text(t.postsDetail)),
         body: const Center(child: CircularProgressIndicator()),
       ),
       error: (e, _) => Scaffold(
-        appBar: AppBar(title: const Text('Post')),
+        appBar: AppBar(title: Text(t.postsDetail)),
         body: Center(child: Text('Error: $e')),
       ),
       data: (post) {

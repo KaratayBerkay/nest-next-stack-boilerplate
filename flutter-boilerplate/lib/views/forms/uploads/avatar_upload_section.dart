@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../components/ui/avatar/avatar.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class AvatarUploadSection extends StatelessWidget {
   final String? imageUrl;
@@ -22,6 +23,7 @@ class AvatarUploadSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
 
+    final t = AppLocalizations.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -45,7 +47,7 @@ class AvatarUploadSection extends StatelessWidget {
                         variant: ButtonVariant.outline,
                         size: ButtonSize.sm,
                         onPressed: onUpload,
-                        child: const Text('Upload Photo'),
+                        child: Text(t.formsUploadsUploadPhoto),
                       ),
                       if (imageUrl != null && onRemove != null) ...[
                         const SizedBox(width: 8),

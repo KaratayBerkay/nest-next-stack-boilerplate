@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../components/ui/card/card.dart';
 import '../../components/ui/card/card_content.dart';
+import '../../l10n/app_localizations.dart';
 
 final _uiRoutes = <(String, IconData, String)>[
   ('Accordion', Icons.expand_more, '/v1/en/ui/accordion'),
@@ -81,8 +82,9 @@ class UiPageContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('UI Components')),
+      appBar: AppBar(title: Text(t.uiPageTitle)),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Wrap(

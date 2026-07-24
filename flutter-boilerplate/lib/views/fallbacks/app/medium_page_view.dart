@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../components/ui/button/button.dart';
+import '../../../l10n/app_localizations.dart';
 import 'app_fallback_base.dart';
 
 class MediumFallbackPage extends StatelessWidget {
@@ -17,6 +18,7 @@ class MediumFallbackPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     switch (type) {
       case AppFallbackType.notFound:
         return AppFallbackBase(
@@ -27,7 +29,7 @@ class MediumFallbackPage extends StatelessWidget {
           action: onRetry != null
               ? Button(
                   onPressed: onRetry,
-                  child: const Text('Return home'),
+                  child: Text(t.errorBackHome),
                 )
               : null,
         );
@@ -40,7 +42,7 @@ class MediumFallbackPage extends StatelessWidget {
           action: onRetry != null
               ? Button(
                   onPressed: onRetry,
-                  child: const Text('Retry'),
+                  child: Text(t.errorTryAgain),
                 )
               : null,
         );

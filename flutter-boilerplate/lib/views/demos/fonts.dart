@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class FontsDemo extends StatelessWidget {
   const FontsDemo({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Fonts')),
-      body: const Center(
-        child: Text('Custom font loading, subsetting, and optimization'),
+      appBar: AppBar(title: Text(t.demoFontsTitle)),
+      body: Center(
+        child: Text(t.demoFontsDescription),
       ),
     );
   }

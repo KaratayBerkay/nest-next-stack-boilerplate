@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../api/server/auth/reset_password.dart';
 import '../../../components/ui/toast/toast.dart';
+import '../../../l10n/app_localizations.dart';
 
 class ResetPasswordPageContent extends ConsumerStatefulWidget {
   const ResetPasswordPageContent({super.key});
@@ -28,6 +29,7 @@ class _ResetPasswordPageContentState
   }
 
   Future<void> _handleReset() async {
+    final t = AppLocalizations.of(context);
     setState(() => _loading = true);
     try {
       await ref
@@ -35,9 +37,9 @@ class _ResetPasswordPageContentState
           .call(_tokenCtrl.text, _passwordCtrl.text);
       if (!mounted) return;
       setState(() => _done = true);
-      showToast(context, 'Password reset successfully');
+      showToast(context, t.authFormResetPasswordSuccess);
     } catch (e) {
-      if (mounted) showToast(context, 'Failed: $e');
+      if (mounted) showToast(context, '$e');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -45,8 +47,10 @@ class _ResetPasswordPageContentState
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Reset Password')),
+      appBar: AppBar(title: Text(t.authFormResetPasswordTitle)),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -62,14 +66,14 @@ class _ResetPasswordPageContentState
                       size: 48,
                     ),
                     const SizedBox(height: 16),
-                    const Text(
-                      'Password has been reset.',
+                    Text(
+                      t.authFormResetPasswordSuccess,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
                     FilledButton(
                       onPressed: () => context.go('/auth/login'),
-                      child: const Text('Back to Login'),
+                      child: Text(t.authFormResetPasswordLoginLink),
                     ),
                   ],
                 )
@@ -78,14 +82,16 @@ class _ResetPasswordPageContentState
                   children: [
                     TextField(
                       controller: _tokenCtrl,
-                      decoration:
-                          const InputDecoration(labelText: 'Reset Token'),
+                      decoration: InputDecoration(
+                        labelText: t.authFormResetPasswordTokenLabel,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: _passwordCtrl,
-                      decoration:
-                          const InputDecoration(labelText: 'New Password'),
+                      decoration: InputDecoration(
+                        labelText: t.authFormResetPasswordPasswordLabel,
+                      ),
                       obscureText: true,
                     ),
                     const SizedBox(height: 20),
@@ -100,7 +106,7 @@ class _ResetPasswordPageContentState
                                 color: Colors.white,
                               ),
                             )
-                          : const Text('Reset Password'),
+                          : Text(t.authFormResetPasswordSubmit),
                     ),
                   ],
                 ),

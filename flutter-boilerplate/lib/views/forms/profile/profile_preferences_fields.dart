@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class ProfilePreferencesFields extends StatefulWidget {
   final bool notificationsEnabled;
@@ -32,6 +33,7 @@ class _ProfilePreferencesFieldsState extends State<ProfilePreferencesFields> {
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
 
+    final t = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -41,7 +43,7 @@ class _ProfilePreferencesFieldsState extends State<ProfilePreferencesFields> {
         ),
         const SizedBox(height: 12),
         SwitchListTile(
-          title: const Text('Email Notifications'),
+          title: Text(t.formsProfileEmailNotifications),
           subtitle: Text(
             'Receive updates about your account',
             style: TextStyle(color: colors.fgMuted, fontSize: 12),

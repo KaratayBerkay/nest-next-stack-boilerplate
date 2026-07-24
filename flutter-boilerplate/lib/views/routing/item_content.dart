@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class ItemContentPage extends StatelessWidget {
   final String itemId;
 
@@ -7,8 +9,9 @@ class ItemContentPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text('Item #$itemId')),
+      appBar: AppBar(title: Text(t.routingItem(itemId))),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),

@@ -6,6 +6,7 @@ import '../../../api/client/api_keys/query.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/toast/toast.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class SettingsApiKeysPageContent extends ConsumerWidget {
   final String lang;
@@ -15,15 +16,16 @@ class SettingsApiKeysPageContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final keysAsync = ref.watch(apiKeysProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('API Keys'),
+        title: Text(t.settingsApiKeysHeading),
         actions: [
           TextButton(
             onPressed: () => _showCreateDialog(context, ref),
-            child: const Text('Create'),
+            child: Text(t.settingsApiKeysCreate),
           ),
         ],
       ),
@@ -42,7 +44,7 @@ class SettingsApiKeysPageContent extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   Button(
-                    child: const Text('Create Key'),
+                    child: Text(t.settingsApiKeysCreate),
                     onPressed: () => _showCreateDialog(context, ref),
                   ),
                 ],
@@ -137,20 +139,21 @@ class SettingsApiKeysPageContent extends ConsumerWidget {
   }
 
   void _showCreateDialog(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
     final ctrl = TextEditingController();
     showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Create API Key'),
+        title: Text(t.settingsApiKeysCreateHeading),
         content: TextField(
           controller: ctrl,
-          decoration: const InputDecoration(labelText: 'Key Name'),
+          decoration: InputDecoration(labelText: t.settingsApiKeysNameLabel),
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(t.settingsCancelButton),
           ),
           FilledButton(
             onPressed: () async {
@@ -163,7 +166,7 @@ class SettingsApiKeysPageContent extends ConsumerWidget {
                 if (context.mounted) showToast(context, 'Failed: $e');
               }
             },
-            child: const Text('Create'),
+            child: Text(t.settingsApiKeysCreate),
           ),
         ],
       ),

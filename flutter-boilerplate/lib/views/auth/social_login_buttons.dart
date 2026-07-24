@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class SocialLoginButtons extends ConsumerWidget {
   final void Function(String provider)? onSocialLogin;
@@ -9,12 +10,13 @@ class SocialLoginButtons extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     return Column(
       children: [
         OutlinedButton.icon(
           onPressed: () => onSocialLogin?.call('google'),
           icon: const Icon(Icons.g_mobiledata),
-          label: const Text('Continue with Google'),
+          label: Text(t.authSocialGoogle),
           style: OutlinedButton.styleFrom(
             minimumSize: const Size(double.infinity, 44),
             side: BorderSide(color: colors.border),
@@ -24,7 +26,7 @@ class SocialLoginButtons extends ConsumerWidget {
         OutlinedButton.icon(
           onPressed: () => onSocialLogin?.call('github'),
           icon: const Icon(Icons.code),
-          label: const Text('Continue with GitHub'),
+          label: Text(t.authSocialGitHub),
           style: OutlinedButton.styleFrom(
             minimumSize: const Size(double.infinity, 44),
             side: BorderSide(color: colors.border),

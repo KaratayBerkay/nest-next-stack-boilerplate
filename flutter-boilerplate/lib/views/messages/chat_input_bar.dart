@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/client/messages/actions.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class ChatInputBar extends ConsumerStatefulWidget {
   final String conversationId;
@@ -36,6 +37,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -48,9 +50,9 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
           Expanded(
             child: TextField(
               controller: _controller,
-              decoration: const InputDecoration(
-                hintText: 'Type a message...',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                hintText: t.messagesInputPlaceholder,
+                border: const OutlineInputBorder(),
                 isDense: true,
               ),
               onSubmitted: (_) => _sendMessage(),

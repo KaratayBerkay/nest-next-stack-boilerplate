@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../components/ui/tooltip/tooltip.dart';
+import '../../../l10n/app_localizations.dart';
 
 class TooltipDemoPage extends StatelessWidget {
   final String lang;
@@ -7,8 +8,9 @@ class TooltipDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Tooltip')),
+      appBar: AppBar(title: Text(t.uiTooltipTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [

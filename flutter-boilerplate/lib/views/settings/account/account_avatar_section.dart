@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../components/ui/avatar/avatar.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class AccountAvatarSection extends StatelessWidget {
   final String name;
@@ -20,6 +21,7 @@ class AccountAvatarSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final colors = AppColors.of(context);
 
     return Center(
@@ -39,7 +41,7 @@ class AccountAvatarSection extends StatelessWidget {
               variant: ButtonVariant.ghost,
               size: ButtonSize.sm,
               onPressed: onChangeAvatar,
-              child: const Text('Change Avatar'),
+              child: Text(t.settingsAvatarChange),
             ),
           ],
         ],

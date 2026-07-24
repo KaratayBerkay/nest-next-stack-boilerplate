@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../components/ui/avatar/avatar.dart';
 import '../../../components/ui/button/button.dart';
+import '../../../l10n/app_localizations.dart';
 
 class ProfileAvatarField extends StatelessWidget {
   final String? name;
@@ -19,6 +20,7 @@ class ProfileAvatarField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Center(
       child: Column(
         children: [
@@ -28,7 +30,7 @@ class ProfileAvatarField extends StatelessWidget {
             variant: ButtonVariant.ghost,
             size: ButtonSize.sm,
             onPressed: onChange,
-            child: const Text('Change Avatar'),
+            child: Text(t.formsProfileChangeAvatar),
           ),
         ],
       ),

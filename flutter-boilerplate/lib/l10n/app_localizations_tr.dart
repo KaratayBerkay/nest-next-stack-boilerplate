@@ -303,6 +303,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get authFormLoginMfaVerifying => 'Doğrulanıyor...';
 
   @override
+  String get authFormLoginMfaDescription =>
+      'Doğrulama uygulamanızdaki 6 haneli kodu girin.';
+
+  @override
+  String get authFormLoginMfaCodePlaceholder => '000000';
+
+  @override
+  String get authFormLoginMfaCodeLengthError => '6 haneli kodunuzu girin';
+
+  @override
+  String get authFormLoginMfaVerified => 'MFA doğrulandı';
+
+  @override
+  String get authFormLoginDifferentAccount => 'Farklı bir hesap kullan';
+
+  @override
   String get authFormRegisterTitle => 'Hesabınızı oluşturun';
 
   @override
@@ -384,6 +400,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get authFormResetPasswordLoginLink => 'Giriş Yap';
 
   @override
+  String get authFormResetPasswordTokenLabel => 'Sıfırlama Token\'ı';
+
+  @override
+  String get authFormResetPasswordInvalidToken =>
+      'Geçersiz veya eksik sıfırlama token\'ı.';
+
+  @override
   String get authFormForgotPasswordTitle => 'Şifremi Unuttum';
 
   @override
@@ -399,8 +422,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get authFormForgotPasswordSubmitting => 'Gönderiliyor...';
 
   @override
+  String get authFormForgotPasswordDescription =>
+      'Sıfırlama talimatlarını almak için e-postanızı girin.';
+
+  @override
   String get authFormForgotPasswordSuccess =>
       'Bu e-posta ile kayıtlı bir hesap varsa, şifre sıfırlama bağlantısı alacaksınız.';
+
+  @override
+  String get authFormForgotPasswordSuccessSent =>
+      'Parola sıfırlama e-postası gönderildi';
 
   @override
   String get authFormForgotPasswordLoginLink => 'Giriş Yap\'a Dön';
@@ -419,7 +450,23 @@ class AppLocalizationsTr extends AppLocalizations {
   String get authFormVerifyEmailLoginLink => 'Giriş Yap';
 
   @override
+  String get authFormVerifyEmailDescription =>
+      'E-postanıza gönderilen doğrulama token\'ını girin.';
+
+  @override
+  String get authFormVerifyEmailTokenLabel => 'Doğrulama Token\'ı';
+
+  @override
+  String get authFormVerifyEmailSubmit => 'Doğrula';
+
+  @override
   String get authSocialContinueWith => 'veya devam et';
+
+  @override
+  String get authSocialGoogle => 'Google ile Devam Et';
+
+  @override
+  String get authSocialGitHub => 'GitHub ile Devam Et';
 
   @override
   String get authLoading => 'Yükleniyor...';
@@ -738,6 +785,43 @@ class AppLocalizationsTr extends AppLocalizations {
   String get feedPosts => 'Gönderiler';
 
   @override
+  String get postsHeading => 'Gönderiler';
+
+  @override
+  String get postsCreate => 'Gönderi Oluştur';
+
+  @override
+  String get postsCreateSubmit => 'Gönder';
+
+  @override
+  String get postsTitleLabel => 'Başlık';
+
+  @override
+  String get postsContentLabel => 'İçerik';
+
+  @override
+  String get postsDetail => 'Gönderi';
+
+  @override
+  String get postsUpgradeDetail => 'Gönderi detaylarını görmek için yükseltin';
+
+  @override
+  String get postsUpgradeView => 'Gönderileri Görüntüle';
+
+  @override
+  String get postsCommentHint => 'Yorum yaz...';
+
+  @override
+  String get postsCommentsHeading => 'Yorumlar';
+
+  @override
+  String get postsNoComments => 'Henüz yorum yok';
+
+  @override
+  String get postsDetailUpgradeTitle =>
+      'Gönderi Detayları Ücretli Planlarda Mevcut';
+
+  @override
   String get feedReactions => 'Tepkiler';
 
   @override
@@ -751,6 +835,32 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get feedNetworkError => 'Ağ hatası';
+
+  @override
+  String get feedAiRecommendations => 'Yapay zeka destekli öneriler';
+
+  @override
+  String get feedPremiumTitle => 'Premium Akış';
+
+  @override
+  String get feedPremiumDescription =>
+      'AI önerileriyle tam premium akış deneyimi.';
+
+  @override
+  String get feedBasicTitle => 'Temel Akış';
+
+  @override
+  String get feedBasicDescription => 'Temel akış deneyiminiz.';
+
+  @override
+  String get feedMediumTitle => 'Orta Düzey Akış';
+
+  @override
+  String get feedMediumDescription => 'Analitiklerle gelişmiş akış.';
+
+  @override
+  String get feedEmptyDescription =>
+      'Gönderilerini görmek için kişileri takip edin.';
 
   @override
   String get findFriendsTitle => 'Arkadaş Bul';
@@ -827,6 +937,40 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get findFriendsSignInRequired => 'Arkadaş bulmak için giriş yapın';
+
+  @override
+  String get findFriendsFriendRequests => 'Arkadaşlık İstekleri';
+
+  @override
+  String get findFriendsUpgradeToSee =>
+      'Arkadaşlık isteklerini görmek için yükseltin';
+
+  @override
+  String get findFriendsSearchUsersHint => 'Kullanıcı ara...';
+
+  @override
+  String get findFriendsSearchFailed => 'Arama başarısız';
+
+  @override
+  String get findFriendsFilterBy => 'Filtrele';
+
+  @override
+  String get findFriendsMutualFriendsLabel => 'Ortak arkadaşlar';
+
+  @override
+  String get findFriendsNearby => 'Yakındakiler';
+
+  @override
+  String get findFriendsSameInterests => 'Aynı ilgi alanları';
+
+  @override
+  String get findFriendsSearchDifferentTerm =>
+      'Farklı bir arama terimi deneyin.';
+
+  @override
+  String findFriendsSentLabel(Object time) {
+    return '$time önce gönderildi';
+  }
 
   @override
   String get formsGalleryPageTitle => 'Form Demoları';
@@ -3006,13 +3150,30 @@ class AppLocalizationsTr extends AppLocalizations {
   String get messagesSignInRequired => 'Mesajlaşmaya başlamak için giriş yapın';
 
   @override
+  String get messagesSearchConversations => 'Konuşmaları ara...';
+
+  @override
+  String get messagesBasicDescription =>
+      'Temel sohbet özellikleri yakında geliyor';
+
+  @override
+  String get messagesMediumDescription => 'Dosya paylaşımlı orta düzey sohbet';
+
+  @override
+  String get messagesPremiumDescription => 'Görüntülü görüşmeli premium sohbet';
+
+  @override
+  String get messagesSelectConversationDescription =>
+      'Sohbete başlamak için kenar çubuğundan bir konuşma seçin';
+
+  @override
   String get notificationTitle => 'Bildirimler';
 
   @override
   String get notificationMarkAllRead => 'Tümünü okundu işaretle';
 
   @override
-  String get notificationNoNotifications => 'Henüz bildirim yok';
+  String get notificationNoNotifications => 'Bildirim yok';
 
   @override
   String get notificationEnablePush => 'Bildirimleri etkinleştir';
@@ -3185,19 +3346,42 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsNavGeneral => 'Genel';
 
   @override
+  String get settingsGeneralSubtitle => 'Dil, tema, tercihler';
+
+  @override
   String get settingsNavAccount => 'Hesap';
 
   @override
   String get settingsNavPrivacy => 'Gizlilik';
 
   @override
+  String get settingsPrivacySubtitle => 'Gizlilik ayarları, veri paylaşımı';
+
+  @override
   String get settingsNavBilling => 'Fatura';
+
+  @override
+  String get settingsBillingSubtitle => 'Ödeme yöntemleri, faturalar, plan';
 
   @override
   String get settingsNavSessions => 'Oturumlar';
 
   @override
+  String get settingsSessionsSubtitle => 'Aktif oturumlar, cihaz yönetimi';
+
+  @override
   String get settingsAccountHeading => 'Hesap';
+
+  @override
+  String get settingsAccountSubtitle => 'Profil, avatar, isim';
+
+  @override
+  String get settingsAccountFreeHeading =>
+      'Profilinizi düzenlemek için yükseltin';
+
+  @override
+  String get settingsAccountFreeDescription =>
+      'Ücretsiz hesapların sınırlı profil seçenekleri vardır.';
 
   @override
   String get settingsName => 'İsim';
@@ -3240,6 +3424,22 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get settingsTheme => 'Tema';
+
+  @override
+  String get settingsThemeDescription => 'Koyu/açık tema arasında geçiş yap';
+
+  @override
+  String get settingsFontSize => 'Yazı Boyutu';
+
+  @override
+  String get settingsFontSizeDescription => 'Metin boyutunu ayarla';
+
+  @override
+  String get settingsExperimentalFeatures => 'Deneysel Özellikler';
+
+  @override
+  String get settingsExperimentalFeaturesDescription =>
+      'Yayın öncesi özellikleri deneyin';
 
   @override
   String get settingsDateDisplay => 'Tarih gösterimi';
@@ -3413,11 +3613,59 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsPrivacyNicknamePlaceholder => 'Rumuzunuzu girin';
 
   @override
+  String get settingsPrivacyOnlineStatus => 'Çevrimiçi durumu';
+
+  @override
+  String get settingsPrivacyReadReceipts => 'Okundu bilgisi';
+
+  @override
+  String get settingsPrivacyActivityStatus => 'Aktivite durumu';
+
+  @override
+  String get settingsPrivacyDataSharing => 'Veri paylaşımı';
+
+  @override
+  String get settingsPrivacyProfileVisibility => 'Profil görünürlüğü';
+
+  @override
+  String get settingsPrivacyFriendRequests => 'Arkadaşlık istekleri';
+
+  @override
   String get settingsPrivacyTwoFactor => 'İki faktörlü kimlik doğrulama (2FA)';
 
   @override
   String get settingsPrivacyTwoFactorDesc =>
       'Hesabınıza ekstra bir güvenlik katmanı ekleyin';
+
+  @override
+  String get notificationHeading => 'Bildirimler';
+
+  @override
+  String get notificationFilterAll => 'Tümü';
+
+  @override
+  String get notificationFilterUnread => 'Okunmamış';
+
+  @override
+  String get notificationFilterMentions => 'Bahsedilenler';
+
+  @override
+  String get notificationLoadFailed => 'Yüklenemedi';
+
+  @override
+  String get notificationBasicFeatures => 'Temel bildirim özellikleri';
+
+  @override
+  String get notificationMediumFeatures => 'Orta düzey bildirim özellikleri';
+
+  @override
+  String get notificationPremiumFeatures => 'Premium bildirim özellikleri';
+
+  @override
+  String get notificationAllCaughtUp => 'Hiçbir şey kaçırmadınız!';
+
+  @override
+  String get notificationSettings => 'Bildirim ayarları';
 
   @override
   String get settingsSettingsLink => 'Ayarlar';
@@ -3449,6 +3697,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get settingsNavApiKeys => 'API Anahtarları';
+
+  @override
+  String get settingsApiKeysSubtitle => 'API anahtarlarını yönet';
 
   @override
   String get settingsApiKeysHeading => 'API Anahtarları';
@@ -3493,6 +3744,22 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get settingsApiKeysRevoked => 'API anahtarı iptal edildi';
+
+  @override
+  String get settingsApiKeysCreating => 'Oluşturuluyor...';
+
+  @override
+  String get settingsCancelButton => 'İptal';
+
+  @override
+  String get settingsNoBillingInfo => 'Henüz fatura bilgisi yok';
+
+  @override
+  String get settingsBillingUpgradePrompt =>
+      'Fatura detaylarını görmek için ücretli bir plana geçin.';
+
+  @override
+  String get settingsViewPlans => 'Planları Görüntüle';
 
   @override
   String get settingsApiKeysActive => 'Aktif';
@@ -4147,4 +4414,725 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get v1ShellSkipToContent => 'İçeriğe atla';
+
+  @override
+  String checkoutSelectedPlan(Object tier) {
+    return 'Seçilen plan: $tier';
+  }
+
+  @override
+  String get checkoutPaymentMethod => 'Ödeme yöntemi';
+
+  @override
+  String get checkoutFailedToInitPayment => 'Ödeme sistemi başlatılamadı';
+
+  @override
+  String get checkoutConfirmDowngradeSimple => 'Düşürmeyi onayla';
+
+  @override
+  String get premiumUpgradeToPremium => 'Premium\'a Yükselt';
+
+  @override
+  String get premiumExclusiveFeatures =>
+      'Özel özelliklere ve içgörülere erişin.';
+
+  @override
+  String get premiumStatsTitle => 'Premium İstatistikler';
+
+  @override
+  String get premiumGrowthStatsTitle => 'Büyüme İstatistikleri';
+
+  @override
+  String get premiumActiveSubs => 'Aktif Abonelikler';
+
+  @override
+  String get premiumNewUsersMonth => 'Yeni Kullanıcılar (Ay)';
+
+  @override
+  String get premiumNewSubsMonth => 'Yeni Abonelikler (Ay)';
+
+  @override
+  String get premiumGrowthRate => 'Büyüme Oranı';
+
+  @override
+  String get premiumCsvCopied => 'CSV içeriği panoya kopyalandı';
+
+  @override
+  String get shareShareLink => 'Bağlantıyı Paylaş';
+
+  @override
+  String get shareCopyLink => 'Bağlantıyı Kopyala';
+
+  @override
+  String get shareLinkCopied => 'Bağlantı panoya kopyalandı';
+
+  @override
+  String get shareNoImage => 'Resim seçilmedi';
+
+  @override
+  String get shareFailedToLoadImage => 'Resim yüklenemedi';
+
+  @override
+  String get usersSearchHint => 'Kullanıcı ara...';
+
+  @override
+  String get usersAddFriend => 'Arkadaş Ekle';
+
+  @override
+  String get usersNoFriends => 'Henüz arkadaş yok';
+
+  @override
+  String get usersOnline => 'Çevrimiçi';
+
+  @override
+  String get usersOffline => 'Çevrimdışı';
+
+  @override
+  String get usersProfile => 'Profil';
+
+  @override
+  String get adminSearchUsers => 'Kullanıcı Ara';
+
+  @override
+  String get adminTypeToSearch => 'Kullanıcıları aramak için yazın';
+
+  @override
+  String adminNoUsersFor(Object query) {
+    return '\"$query\" için kullanıcı bulunamadı';
+  }
+
+  @override
+  String get adminSet => 'Ayarla';
+
+  @override
+  String get adminTierUpdated => 'Seviye güncellendi';
+
+  @override
+  String get adminFailedToLoadLogs => 'Günlükler yüklenemedi';
+
+  @override
+  String get adminRetry => 'Tekrar Dene';
+
+  @override
+  String get adminNoAuditLogs => 'Denetim günlüğü yok';
+
+  @override
+  String get timeJustNow => 'şimdi';
+
+  @override
+  String timeMinutesAgo(Object minutes) {
+    return '${minutes}dk önce';
+  }
+
+  @override
+  String timeHoursAgo(Object hours) {
+    return '${hours}s önce';
+  }
+
+  @override
+  String get tierFree => 'Ücretsiz';
+
+  @override
+  String get tierBasic => 'Temel';
+
+  @override
+  String get tierMedium => 'Orta';
+
+  @override
+  String get tierPremium => 'Premium';
+
+  @override
+  String get adminRequestId => 'İstek Kimliği';
+
+  @override
+  String get adminDetails => 'Detaylar';
+
+  @override
+  String get adminChanges => 'Değişiklikler';
+
+  @override
+  String adminByActor(Object name) {
+    return '$name tarafından';
+  }
+
+  @override
+  String get homeTitle => 'Flutter Şablon';
+
+  @override
+  String get homeWelcome => 'Flutter Şablonuna Hoş Geldiniz';
+
+  @override
+  String get homeViewPricing => 'Fiyatları Gör';
+
+  @override
+  String get formsAdvancedPageTitle => 'Gelişmiş Desenler';
+
+  @override
+  String get formsApiKeyGenerate => 'Anahtar Oluştur';
+
+  @override
+  String get formsApiKeyProductionKey => 'Üretim Anahtarı';
+
+  @override
+  String get formsCheckoutCheckoutAddress => 'Ödeme & Adres';
+
+  @override
+  String get formsCheckoutContinuePayment => 'Ödemeye Devam Et';
+
+  @override
+  String get formsContentEditorUnsavedTitle => 'Kaydedilmemiş Değişiklikler';
+
+  @override
+  String get formsEditableTableItem => 'Ürün';
+
+  @override
+  String get formsEditableTablePrice => 'Fiyat';
+
+  @override
+  String get formsEditableTableDelete => 'Sil';
+
+  @override
+  String get formsElementsValidate => 'Doğrula';
+
+  @override
+  String get formsErrorLabServerError => 'Sunucu Hatası';
+
+  @override
+  String get formsErrorLabValidationError => 'Doğrulama Hatası';
+
+  @override
+  String get formsErrorLabNetworkTimeout => 'Ağ Zaman Aşımı';
+
+  @override
+  String get formsErrorLabRateLimited => 'Hız Sınırı Aşıldı';
+
+  @override
+  String get formsFieldStatesValidate => 'Doğrula';
+
+  @override
+  String get formsFieldStatesVerify => 'Onayla';
+
+  @override
+  String get formsFieldStatesSetError => 'Hata Ayarla';
+
+  @override
+  String get formsFieldStatesSetHelper => 'Yardım Ayarla';
+
+  @override
+  String get formsFieldStatesClear => 'Temizle';
+
+  @override
+  String get formsFieldStatesTouch => 'Dokun';
+
+  @override
+  String get formsFieldStatesOnChange => 'Değişiklikte';
+
+  @override
+  String get formsFieldStatesOnBlur => 'Odak Kaybında';
+
+  @override
+  String get formsFieldStatesOnSubmit => 'Göndermede';
+
+  @override
+  String get formsFieldStatesLazy => 'Tembel';
+
+  @override
+  String get formsFiltersAllCategories => 'Tüm Kategoriler';
+
+  @override
+  String get formsFiltersMarketing => 'Pazarlama';
+
+  @override
+  String get formsFiltersApply => 'Filtreleri Uygula';
+
+  @override
+  String get formsFiltersResetBtn => 'Sıfırla';
+
+  @override
+  String get formsFormBuilderNoFields =>
+      'Henüz alan yok. Aşağıdan alan ekleyin.';
+
+  @override
+  String get formsFormBuilderAddFieldsBelow => 'Aşağıdan alan ekleyin';
+
+  @override
+  String get formsFormBuilderTextFieldBtn => '+ Metin Alanı';
+
+  @override
+  String get formsProfileChangeAvatar => 'Fotoğraf Değiştir';
+
+  @override
+  String get formsProfileEmailNotifications => 'E-posta Bildirimleri';
+
+  @override
+  String get formsTeamInviteAddAnother => 'Bir Tane Daha Ekle';
+
+  @override
+  String get formsTeamInviteUpgradePlan => 'Planı Yükselt';
+
+  @override
+  String get formsTeamInviteMember => 'Üye';
+
+  @override
+  String get formsTeamInviteAdmin => 'Yönetici';
+
+  @override
+  String get formsTeamInviteMemberDesc =>
+      'Üye — Atanan projeleri görüntüleyebilir ve düzenleyebilir';
+
+  @override
+  String get formsTeamInviteAdminDesc =>
+      'Yönetici — Tüm projelere ve ayarlara tam erişim';
+
+  @override
+  String get formsTeamInviteViewerDesc =>
+      'İzleyici — Atanan projelere salt okunur erişim';
+
+  @override
+  String get formsUploadsUploadPhoto => 'Fotoğraf Yükle';
+
+  @override
+  String get formsUploadsDragDropFiles => 'Dosyaları buraya sürükleyip bırakın';
+
+  @override
+  String get formsUploadsBrowseFiles => 'Dosyalara Göz At';
+
+  @override
+  String get formsUploadsAddImages => 'Görsel Ekle';
+
+  @override
+  String get formsUploadsUploadImages => 'Görsel Yükle';
+
+  @override
+  String get formsFormBuilderAddTextField => '+ Metin Alanı';
+
+  @override
+  String get formsApiKeyPageTitle => 'API Anahtar Yöneticisi';
+
+  @override
+  String get formsTeamInviteRoleAdmin => 'Yönetici';
+
+  @override
+  String get formsTeamInviteRoleAdminDescription =>
+      'Yönetici — Tüm proje ve ayarlara tam erişim';
+
+  @override
+  String get formsErrorLabAuthError => 'Kimlik Doğrulama Hatası';
+
+  @override
+  String get formsBillingPageTitle => 'Fatura Formu';
+
+  @override
+  String get formsBillingUpdated => 'Fatura bilgileri güncellendi';
+
+  @override
+  String get formsFiltersBusiness => 'İş';
+
+  @override
+  String get formsCheckoutPageTitle => 'Ödeme ve Adres';
+
+  @override
+  String get formsCommonClear => 'Temizle';
+
+  @override
+  String get formsContentEditorPageTitle => 'İçerik Düzenleyici';
+
+  @override
+  String get formsCommonDelete => 'Sil';
+
+  @override
+  String get formsFiltersDesign => 'Tasarım';
+
+  @override
+  String get formsUploadsDragDrop => 'Dosyaları buraya sürükleyip bırakın';
+
+  @override
+  String get formsEditableTablePageTitle => 'Düzenlenebilir Tablo';
+
+  @override
+  String get formsErrorLabPageTitle => 'Hata ve Async Durumları';
+
+  @override
+  String get formsFieldStatesPageTitle => 'Alan Durumları ve Doğrulama';
+
+  @override
+  String get formsUploadsPageTitle => 'Dosya Yüklemeleri';
+
+  @override
+  String get formsFiltersPageTitle => 'Filtreler';
+
+  @override
+  String get formsFormBuilderPageTitle => 'Form Oluşturucu';
+
+  @override
+  String get formsElementsPageTitle => 'Form Elemanları';
+
+  @override
+  String get formsLayoutsPageTitle => 'Form Düzenleri';
+
+  @override
+  String get formsTeamInviteRoleMember => 'Üye';
+
+  @override
+  String get formsTeamInviteRoleMemberDescription =>
+      'Üye — Atanan projeleri görüntüleyebilir ve düzenleyebilir';
+
+  @override
+  String get formsCommonPreview => 'Önizle';
+
+  @override
+  String get formsApiKeyProduction => 'Üretim Anahtarı';
+
+  @override
+  String get formsCommonPublish => 'Yayınla';
+
+  @override
+  String get formsEditableTableQty => 'Adet';
+
+  @override
+  String get formsCommonReset => 'Sıfırla';
+
+  @override
+  String get formsCommonSave => 'Kaydet';
+
+  @override
+  String get formsCommonSearch => 'Ara';
+
+  @override
+  String get formsLayoutsSendMessage => 'Mesaj Gönder';
+
+  @override
+  String get formsCommonSubmit => 'Gönder';
+
+  @override
+  String get formsTeamInvitePageTitle => 'Ekip Daveti';
+
+  @override
+  String get formsFiltersTechnology => 'Teknoloji';
+
+  @override
+  String get formsCommonUpdate => 'Güncelle';
+
+  @override
+  String get formsBillingUpdate => 'Faturayı Güncelle';
+
+  @override
+  String get formsCommonUpload => 'Yükle';
+
+  @override
+  String get formsProfilePageTitle => 'Kullanıcı Profili';
+
+  @override
+  String get formsCommonValidate => 'Doğrula';
+
+  @override
+  String get formsCommonVerify => 'Onayla';
+
+  @override
+  String get formsTeamInviteRoleViewer => 'İzleyici';
+
+  @override
+  String get formsTeamInviteRoleViewerDescription =>
+      'İzleyici — Atanan projelerde salt okunur erişim';
+
+  @override
+  String get formsTeamInviteTitle => 'Ekip Üyelerini Davet Et';
+
+  @override
+  String get formsTeamInviteEmailLabel => 'E-posta Adresi';
+
+  @override
+  String get formsTeamInviteRoleSelect => 'Rol Seçin';
+
+  @override
+  String get formsTeamInviteRoleHint =>
+      'Davet edilen üyelerin hangi izinlere sahip olacağını seçin';
+
+  @override
+  String get uiInputTitle => 'Girdi';
+
+  @override
+  String get uiTableTitle => 'Tablo';
+
+  @override
+  String get uiScrollToBottomButtonHint =>
+      'Kaydırma kontrolörünü kullanarak alta git';
+
+  @override
+  String get uiInputOtpEnterCode => 'Doğrulama kodunu girin';
+
+  @override
+  String get aboutTitle => 'Hakkında';
+
+  @override
+  String get plansTitle => 'Planlar';
+
+  @override
+  String get dashboardTitle => 'Panel';
+
+  @override
+  String get galleryTitle => 'Galeri';
+
+  @override
+  String get boomTitle => 'Hata Tetikleyici';
+
+  @override
+  String get boomTrigger => 'Hatayı Tetikle';
+
+  @override
+  String get fallbackContactSupport => 'Destek ile iletişime geç';
+
+  @override
+  String get securityTitle => 'Güvenlik';
+
+  @override
+  String get securityTwoFactor => 'İki Faktörlü Kimlik Doğrulama';
+
+  @override
+  String get securityChangePassword => 'Şifre Değiştir';
+
+  @override
+  String get securityActiveSessions => 'Aktif Oturumlar';
+
+  @override
+  String get settingsAddCard => 'Kart Ekle';
+
+  @override
+  String get settingsChangePlan => 'Planı Değiştir';
+
+  @override
+  String get uiAccordionRichItemsPageTitle => 'Zengin Öğeler';
+
+  @override
+  String get uiAccordionVariantsPageTitle => 'Akordiyon Varyantları';
+
+  @override
+  String get demoCachingTitle => 'Önbelleğe Alma';
+
+  @override
+  String get demoCachingDescription =>
+      'Veri önbelleğe alma ve yeniden doğrulama stratejileri';
+
+  @override
+  String get demoClientDataTitle => 'İstemci Verisi';
+
+  @override
+  String get demoClientDataDescription =>
+      'İstemci tarafında veri getirme, durum yönetimi ve önbellekleme';
+
+  @override
+  String get demoCsrTitle => 'İstemci Tarafı Oluşturma';
+
+  @override
+  String get demoCsrDescription =>
+      'Dinamik veri getirme ile istemci tarafı oluşturma';
+
+  @override
+  String get demoCsrCookiesTitle => 'CSR Çerezleri';
+
+  @override
+  String get demoCsrCookiesDescription =>
+      'document.cookie ile istemci tarafında çerez yönetimi';
+
+  @override
+  String get demoDataFetchingTitle => 'Veri Getirme';
+
+  @override
+  String get demoDataFetchingDescription =>
+      'Veri getirme desenleri ve en iyi uygulamalar';
+
+  @override
+  String get demoDynamicRoutesTitle => 'Dinamik Rotalar';
+
+  @override
+  String get demoDynamicRoutesDescription =>
+      'Dinamik rota segmentleri ve parametreleri';
+
+  @override
+  String get demoFontsTitle => 'Yazı Tipleri';
+
+  @override
+  String get demoFontsDescription =>
+      'Özel yazı tipi yükleme, alt kümeleme ve optimizasyon';
+
+  @override
+  String get demoFormsTitle => 'Formlar';
+
+  @override
+  String get demoFormsDescription => 'Doğrulama ve gönderme ile form yönetimi';
+
+  @override
+  String get demoFormPageTitle => 'Form Demo';
+
+  @override
+  String get demoFormPageSignUp => 'Kaydol';
+
+  @override
+  String get demoI18nTitle => 'Çeviri Demo';
+
+  @override
+  String demoI18nActive(Object locale) {
+    return 'Aktif: $locale';
+  }
+
+  @override
+  String demoI18nDefault(Object lang) {
+    return 'Varsayılan: $lang';
+  }
+
+  @override
+  String get demoImagesTitle => 'Görseller';
+
+  @override
+  String get demoImagesDescription =>
+      'Görsel optimizasyonu, geç yükleme ve duyarlı görseller';
+
+  @override
+  String get demoImagesPageTitle => 'Görsel Demo';
+
+  @override
+  String get demoImagesFailed => 'Görsel yüklenemedi';
+
+  @override
+  String get demoLazyLoadingTitle => 'Geç Yükleme';
+
+  @override
+  String get demoLazyLoadingDescription =>
+      'Performans için bileşenlerin ve verinin geç yüklenmesi';
+
+  @override
+  String get demoLazyLoadingPageTitle => 'Geç Yükleme';
+
+  @override
+  String get demoLazyLoadingLoad => 'Ağır Bileşeni Yükle';
+
+  @override
+  String get demoObservabilityTitle => 'Gözlenebilirlik';
+
+  @override
+  String get demoObservabilityDescription =>
+      'Günlükleme, izleme, takip ve hata takibi';
+
+  @override
+  String get demoObservabilityPageTitle => 'Gözlenebilirlik';
+
+  @override
+  String get demoPprTitle => 'Kısmi Ön Oluşturma';
+
+  @override
+  String get demoPprDescription =>
+      'Karma statik ve dinamik içerik için kısmi ön oluşturma';
+
+  @override
+  String get demoRequestMemoizationTitle => 'İstek Belleğe Alma';
+
+  @override
+  String get demoScriptsTitle => 'Betikler';
+
+  @override
+  String get demoScriptsDescription =>
+      'Strateji ve zamanlama ile üçüncü taraf betik yükleme';
+
+  @override
+  String get demoSearchParamsTitle => 'Arama Parametreleri';
+
+  @override
+  String get demoSearchParamsDescription =>
+      'URL arama parametreleri ve sorgu dizesi yönetimi';
+
+  @override
+  String get demoSeoTitle => 'SEO';
+
+  @override
+  String get demoServerActionsTitle => 'Sunucu Eylemleri';
+
+  @override
+  String get demoServerActionsDescription =>
+      'Sunucu taraflı form eylemleri ve veri mutasyonları';
+
+  @override
+  String get demoSseTitle => 'Sunucu Olayları';
+
+  @override
+  String get demoSseDescription =>
+      'Sunucu olay akışları ile gerçek zamanlı güncellemeler';
+
+  @override
+  String get demoSsrTitle => 'Sunucu Tarafı Oluşturma';
+
+  @override
+  String get demoSsrDescription =>
+      'Her istekte dinamik veri ile sunucu tarafı oluşturma';
+
+  @override
+  String get demoSsrCookiesTitle => 'SSR Çerezleri';
+
+  @override
+  String get demoSsrCookiesDescription =>
+      'Sunucu tarafında çerez okuma ve ayarlama';
+
+  @override
+  String get demoStaticGenerationTitle => 'Statik Oluşturma';
+
+  @override
+  String get demoThemingTitle => 'Tema';
+
+  @override
+  String get demoThemingDescription =>
+      'Açık ve koyu mod desteği ile uygulama teması';
+
+  @override
+  String get demoThemePageTitle => 'Tema Demo';
+
+  @override
+  String get demoWsTitle => 'WebSoketler';
+
+  @override
+  String get demoWsDescription =>
+      'WebSoketler üzerinden gerçek zamanlı çift yönlü iletişim';
+
+  @override
+  String get demoWsPageTitle => 'WebSocket Demo';
+
+  @override
+  String get demoWsSend => 'Gönder';
+
+  @override
+  String galleryPhoto(Object id) {
+    return 'Fotoğraf #$id';
+  }
+
+  @override
+  String routingItem(Object itemId) {
+    return 'Öğe #$itemId';
+  }
+
+  @override
+  String routingPost(Object postId) {
+    return 'Gönderi #$postId';
+  }
+
+  @override
+  String get formsFiltersNewestFirst => 'Önce En Yeniler';
+
+  @override
+  String get formsFiltersOldestFirst => 'Önce En Eskiler';
+
+  @override
+  String get formsFiltersMostPopular => 'En Popüler';
+
+  @override
+  String get formsFiltersRelevance => 'Alaka Düzeyi';
+
+  @override
+  String get formsFiltersAllStatuses => 'Tüm Durumlar';
+
+  @override
+  String get formsFiltersStatusActive => 'Aktif';
+
+  @override
+  String get formsFiltersStatusPending => 'Beklemede';
+
+  @override
+  String get formsFiltersStatusArchived => 'Arşivlenmiş';
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 
 class FormFieldInfoDemoPage extends StatelessWidget {
   final String lang;
@@ -8,8 +9,9 @@ class FormFieldInfoDemoPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Form Field Info')),
+      appBar: AppBar(title: Text(t.uiFormFieldInfoTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

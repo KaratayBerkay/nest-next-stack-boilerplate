@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../components/ui/button/button.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class InvoicePagination extends StatelessWidget {
   final int currentPage;
@@ -21,6 +22,7 @@ class InvoicePagination extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final colors = AppColors.of(context);
 
     return Row(
@@ -30,7 +32,7 @@ class InvoicePagination extends StatelessWidget {
           variant: ButtonVariant.outline,
           size: ButtonSize.sm,
           onPressed: currentPage > 1 ? onPrevious : null,
-          child: const Text('Previous'),
+          child: Text(t.settingsPrevious),
         ),
         const SizedBox(width: 16),
         Text(
@@ -42,7 +44,7 @@ class InvoicePagination extends StatelessWidget {
           variant: ButtonVariant.outline,
           size: ButtonSize.sm,
           onPressed: currentPage < totalPages ? onNext : null,
-          child: const Text('Next'),
+          child: Text(t.settingsNext),
         ),
       ],
     );

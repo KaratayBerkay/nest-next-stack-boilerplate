@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/client/premium/query.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 import 'growth_stats_section.dart';
 import 'premium_handlers.dart';
 import 'stats_section.dart';
@@ -29,6 +30,7 @@ class _PremiumPremiumPageState extends ConsumerState<PremiumPremiumPage> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final statsAsync = ref.watch(premiumStatsProvider);
     final growthAsync = ref.watch(growthStatsProvider);
 
@@ -42,10 +44,10 @@ class _PremiumPremiumPageState extends ConsumerState<PremiumPremiumPage> {
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Premium Stats',
-                  style: TextStyle(
+                  t.premiumStatsTitle,
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -53,7 +55,7 @@ class _PremiumPremiumPageState extends ConsumerState<PremiumPremiumPage> {
               ),
               IconButton(
                 icon: Icon(Icons.download, color: colors.brand),
-                tooltip: 'Export CSV',
+                tooltip: t.premiumExportCsv,
                 onPressed: () => exportStatsCSV(ref, context),
               ),
             ],
@@ -66,9 +68,9 @@ class _PremiumPremiumPageState extends ConsumerState<PremiumPremiumPage> {
             data: (stats) => PremiumStatsSection(stats: stats),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'Growth Stats',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            t.premiumGrowthStatsTitle,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           growthAsync.when(

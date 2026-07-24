@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class SharePageContent extends StatelessWidget {
   final String lang;
@@ -10,9 +11,10 @@ class SharePageContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Share')),
+      appBar: AppBar(title: Text(t.shareShare)),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -21,9 +23,10 @@ class SharePageContent extends StatelessWidget {
             children: [
               Icon(Icons.share, size: 48, color: colors.brand),
               const SizedBox(height: 16),
-              const Text(
-                'Share with friends',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Text(
+                t.shareShareSomething,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
@@ -34,7 +37,7 @@ class SharePageContent extends StatelessWidget {
               FilledButton.icon(
                 onPressed: () {},
                 icon: const Icon(Icons.share),
-                label: const Text('Share Link'),
+                label: Text(t.shareShareLink),
               ),
             ],
           ),

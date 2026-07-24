@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../api/client/messages/query.dart';
 import '../../constants/chat.dart';
 import '../../hooks/use_auth.dart';
+import '../../l10n/app_localizations.dart';
 import 'chat_room_header.dart';
 import 'chat_room_main_content.dart';
 import 'chat_room_sidebar.dart';
@@ -123,6 +124,7 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
 
     final allRooms = [...ChatConstants.chatRooms, ...vipRooms];
 
+    final t = AppLocalizations.of(context);
     return Column(
       children: [
         ChatRoomHeader(
@@ -134,14 +136,14 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
               ? () => showDialog<void>(
                     context: context,
                     builder: (_) => AlertDialog(
-                      title: const Text('Chat Rooms'),
+                      title: Text(t.chatRoomTitle),
                       content: const Text(
                         'Real-time chat rooms with multiple topics.',
                       ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('Close'),
+                          child: Text(t.v1ShellClose),
                         ),
                       ],
                     ),
@@ -176,7 +178,8 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
                 child: messagesAsync.when(
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('Error: $e')),
+                  error: (e, _) =>
+                      Center(child: Text('${t.errorSomethingWentWrong}: $e')),
                   data: (messages) => ChatRoomMainContent(
                     useNativeControls: useNativeControls,
                     room: _room,

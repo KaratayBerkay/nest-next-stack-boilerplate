@@ -302,6 +302,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authFormLoginMfaVerifying => 'Verifying...';
 
   @override
+  String get authFormLoginMfaDescription =>
+      'Enter the 6-digit code from your authenticator app.';
+
+  @override
+  String get authFormLoginMfaCodePlaceholder => '000000';
+
+  @override
+  String get authFormLoginMfaCodeLengthError => 'Enter your 6-digit code';
+
+  @override
+  String get authFormLoginMfaVerified => 'MFA verified';
+
+  @override
+  String get authFormLoginDifferentAccount => 'Use a different account';
+
+  @override
   String get authFormRegisterTitle => 'Create your account';
 
   @override
@@ -383,6 +399,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authFormResetPasswordLoginLink => 'Sign In';
 
   @override
+  String get authFormResetPasswordTokenLabel => 'Reset Token';
+
+  @override
+  String get authFormResetPasswordInvalidToken =>
+      'Invalid or missing reset token.';
+
+  @override
   String get authFormForgotPasswordTitle => 'Forgot Password';
 
   @override
@@ -398,8 +421,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authFormForgotPasswordSubmitting => 'Sending...';
 
   @override
+  String get authFormForgotPasswordDescription =>
+      'Enter your email to receive reset instructions.';
+
+  @override
   String get authFormForgotPasswordSuccess =>
       'If an account exists with this email, you will receive a password reset link.';
+
+  @override
+  String get authFormForgotPasswordSuccessSent => 'Password reset email sent';
 
   @override
   String get authFormForgotPasswordLoginLink => 'Back to Sign In';
@@ -418,7 +448,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authFormVerifyEmailLoginLink => 'Sign In';
 
   @override
+  String get authFormVerifyEmailDescription =>
+      'Enter the verification token sent to your email.';
+
+  @override
+  String get authFormVerifyEmailTokenLabel => 'Verification Token';
+
+  @override
+  String get authFormVerifyEmailSubmit => 'Verify';
+
+  @override
   String get authSocialContinueWith => 'Or continue with';
+
+  @override
+  String get authSocialGoogle => 'Continue with Google';
+
+  @override
+  String get authSocialGitHub => 'Continue with GitHub';
 
   @override
   String get authLoading => 'Loading...';
@@ -736,6 +782,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get feedPosts => 'Posts';
 
   @override
+  String get postsHeading => 'Posts';
+
+  @override
+  String get postsCreate => 'Create Post';
+
+  @override
+  String get postsCreateSubmit => 'Post';
+
+  @override
+  String get postsTitleLabel => 'Title';
+
+  @override
+  String get postsContentLabel => 'Content';
+
+  @override
+  String get postsDetail => 'Post';
+
+  @override
+  String get postsUpgradeDetail => 'Upgrade to view post details';
+
+  @override
+  String get postsUpgradeView => 'Upgrade to View Posts';
+
+  @override
+  String get postsCommentHint => 'Write a comment...';
+
+  @override
+  String get postsCommentsHeading => 'Comments';
+
+  @override
+  String get postsNoComments => 'No comments yet';
+
+  @override
+  String get postsDetailUpgradeTitle => 'Post Details Available on Paid Plans';
+
+  @override
   String get feedReactions => 'Reactions';
 
   @override
@@ -749,6 +831,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get feedNetworkError => 'Network error';
+
+  @override
+  String get feedAiRecommendations => 'AI-powered recommendations';
+
+  @override
+  String get feedPremiumTitle => 'Premium Feed';
+
+  @override
+  String get feedPremiumDescription =>
+      'Full premium feed experience with AI recommendations.';
+
+  @override
+  String get feedBasicTitle => 'Basic Feed';
+
+  @override
+  String get feedBasicDescription => 'Your basic feed experience.';
+
+  @override
+  String get feedMediumTitle => 'Medium Feed';
+
+  @override
+  String get feedMediumDescription => 'Enhanced feed with analytics.';
+
+  @override
+  String get feedEmptyDescription => 'Follow people to see their posts here.';
 
   @override
   String get findFriendsTitle => 'Find Friends';
@@ -825,6 +932,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get findFriendsSignInRequired => 'Sign in to find friends';
+
+  @override
+  String get findFriendsFriendRequests => 'Friend Requests';
+
+  @override
+  String get findFriendsUpgradeToSee => 'Upgrade to see friend requests';
+
+  @override
+  String get findFriendsSearchUsersHint => 'Search users...';
+
+  @override
+  String get findFriendsSearchFailed => 'Search failed';
+
+  @override
+  String get findFriendsFilterBy => 'Filter by';
+
+  @override
+  String get findFriendsMutualFriendsLabel => 'Mutual friends';
+
+  @override
+  String get findFriendsNearby => 'Nearby';
+
+  @override
+  String get findFriendsSameInterests => 'Same interests';
+
+  @override
+  String get findFriendsSearchDifferentTerm => 'Try a different search term.';
+
+  @override
+  String findFriendsSentLabel(Object time) {
+    return 'Sent $time ago';
+  }
 
   @override
   String get formsGalleryPageTitle => 'Forms Demo';
@@ -3006,13 +3145,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get messagesSignInRequired => 'Sign in to start messaging';
 
   @override
+  String get messagesSearchConversations => 'Search conversations...';
+
+  @override
+  String get messagesBasicDescription => 'Basic chat features coming soon';
+
+  @override
+  String get messagesMediumDescription => 'Medium chat with file sharing';
+
+  @override
+  String get messagesPremiumDescription => 'Premium chat with video calls';
+
+  @override
+  String get messagesSelectConversationDescription =>
+      'Choose a conversation from the sidebar to start chatting';
+
+  @override
   String get notificationTitle => 'Notifications';
 
   @override
   String get notificationMarkAllRead => 'Mark all read';
 
   @override
-  String get notificationNoNotifications => 'No notifications yet';
+  String get notificationNoNotifications => 'No notifications';
 
   @override
   String get notificationEnablePush => 'Enable push notifications';
@@ -3183,19 +3338,41 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsNavGeneral => 'General';
 
   @override
+  String get settingsGeneralSubtitle => 'Language, theme, preferences';
+
+  @override
   String get settingsNavAccount => 'Account';
 
   @override
   String get settingsNavPrivacy => 'Privacy';
 
   @override
+  String get settingsPrivacySubtitle => 'Privacy settings, data sharing';
+
+  @override
   String get settingsNavBilling => 'Billing';
+
+  @override
+  String get settingsBillingSubtitle => 'Payment methods, invoices, plan';
 
   @override
   String get settingsNavSessions => 'Sessions';
 
   @override
+  String get settingsSessionsSubtitle => 'Active sessions, device management';
+
+  @override
   String get settingsAccountHeading => 'Account';
+
+  @override
+  String get settingsAccountSubtitle => 'Profile, avatar, name';
+
+  @override
+  String get settingsAccountFreeHeading => 'Upgrade to edit your profile';
+
+  @override
+  String get settingsAccountFreeDescription =>
+      'Free accounts have limited profile options.';
 
   @override
   String get settingsName => 'Name';
@@ -3238,6 +3415,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsTheme => 'Theme';
+
+  @override
+  String get settingsThemeDescription => 'Toggle dark/light theme';
+
+  @override
+  String get settingsFontSize => 'Font Size';
+
+  @override
+  String get settingsFontSizeDescription => 'Adjust text size';
+
+  @override
+  String get settingsExperimentalFeatures => 'Experimental Features';
+
+  @override
+  String get settingsExperimentalFeaturesDescription =>
+      'Try upcoming features before release';
 
   @override
   String get settingsDateDisplay => 'Date display';
@@ -3414,11 +3607,59 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsPrivacyNicknamePlaceholder => 'Enter your nickname';
 
   @override
+  String get settingsPrivacyOnlineStatus => 'Online status';
+
+  @override
+  String get settingsPrivacyReadReceipts => 'Read receipts';
+
+  @override
+  String get settingsPrivacyActivityStatus => 'Activity status';
+
+  @override
+  String get settingsPrivacyDataSharing => 'Data sharing';
+
+  @override
+  String get settingsPrivacyProfileVisibility => 'Profile visibility';
+
+  @override
+  String get settingsPrivacyFriendRequests => 'Friend requests';
+
+  @override
   String get settingsPrivacyTwoFactor => 'Two-factor authentication (2FA)';
 
   @override
   String get settingsPrivacyTwoFactorDesc =>
       'Add an extra layer of security to your account';
+
+  @override
+  String get notificationHeading => 'Notifications';
+
+  @override
+  String get notificationFilterAll => 'All';
+
+  @override
+  String get notificationFilterUnread => 'Unread';
+
+  @override
+  String get notificationFilterMentions => 'Mentions';
+
+  @override
+  String get notificationLoadFailed => 'Failed to load';
+
+  @override
+  String get notificationBasicFeatures => 'Basic notification features';
+
+  @override
+  String get notificationMediumFeatures => 'Medium notification features';
+
+  @override
+  String get notificationPremiumFeatures => 'Premium notification features';
+
+  @override
+  String get notificationAllCaughtUp => 'You\'re all caught up!';
+
+  @override
+  String get notificationSettings => 'Notification settings';
 
   @override
   String get settingsSettingsLink => 'Settings';
@@ -3450,6 +3691,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsNavApiKeys => 'API Keys';
+
+  @override
+  String get settingsApiKeysSubtitle => 'Manage API keys';
 
   @override
   String get settingsApiKeysHeading => 'API Keys';
@@ -3495,6 +3739,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsApiKeysRevoked => 'API key revoked';
+
+  @override
+  String get settingsApiKeysCreating => 'Creating...';
+
+  @override
+  String get settingsCancelButton => 'Cancel';
+
+  @override
+  String get settingsNoBillingInfo => 'No billing info yet';
+
+  @override
+  String get settingsBillingUpgradePrompt =>
+      'Upgrade to a paid plan to see billing details.';
+
+  @override
+  String get settingsViewPlans => 'View Plans';
 
   @override
   String get settingsApiKeysActive => 'Active';
@@ -4143,4 +4403,727 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get v1ShellSkipToContent => 'Skip to content';
+
+  @override
+  String checkoutSelectedPlan(Object tier) {
+    return 'Selected plan: $tier';
+  }
+
+  @override
+  String get checkoutPaymentMethod => 'Payment method';
+
+  @override
+  String get checkoutFailedToInitPayment =>
+      'Failed to initialize payment system';
+
+  @override
+  String get checkoutConfirmDowngradeSimple => 'Confirm downgrade';
+
+  @override
+  String get premiumUpgradeToPremium => 'Upgrade to Premium';
+
+  @override
+  String get premiumExclusiveFeatures =>
+      'Get access to exclusive features and insights.';
+
+  @override
+  String get premiumStatsTitle => 'Premium Stats';
+
+  @override
+  String get premiumGrowthStatsTitle => 'Growth Stats';
+
+  @override
+  String get premiumActiveSubs => 'Active Subs';
+
+  @override
+  String get premiumNewUsersMonth => 'New Users (Month)';
+
+  @override
+  String get premiumNewSubsMonth => 'New Subs (Month)';
+
+  @override
+  String get premiumGrowthRate => 'Growth Rate';
+
+  @override
+  String get premiumCsvCopied => 'CSV content copied to clipboard';
+
+  @override
+  String get shareShareLink => 'Share Link';
+
+  @override
+  String get shareCopyLink => 'Copy Link';
+
+  @override
+  String get shareLinkCopied => 'Link copied to clipboard';
+
+  @override
+  String get shareNoImage => 'No image selected';
+
+  @override
+  String get shareFailedToLoadImage => 'Failed to load image';
+
+  @override
+  String get usersSearchHint => 'Search users...';
+
+  @override
+  String get usersAddFriend => 'Add Friend';
+
+  @override
+  String get usersNoFriends => 'No friends yet';
+
+  @override
+  String get usersOnline => 'Online';
+
+  @override
+  String get usersOffline => 'Offline';
+
+  @override
+  String get usersProfile => 'Profile';
+
+  @override
+  String get adminSearchUsers => 'Search Users';
+
+  @override
+  String get adminTypeToSearch => 'Type to search users';
+
+  @override
+  String adminNoUsersFor(Object query) {
+    return 'No users found for \"$query\"';
+  }
+
+  @override
+  String get adminSet => 'Set';
+
+  @override
+  String get adminTierUpdated => 'Tier updated';
+
+  @override
+  String get adminFailedToLoadLogs => 'Failed to load logs';
+
+  @override
+  String get adminRetry => 'Retry';
+
+  @override
+  String get adminNoAuditLogs => 'No audit logs';
+
+  @override
+  String get timeJustNow => 'just now';
+
+  @override
+  String timeMinutesAgo(Object minutes) {
+    return '${minutes}m ago';
+  }
+
+  @override
+  String timeHoursAgo(Object hours) {
+    return '${hours}h ago';
+  }
+
+  @override
+  String get tierFree => 'Free';
+
+  @override
+  String get tierBasic => 'Basic';
+
+  @override
+  String get tierMedium => 'Medium';
+
+  @override
+  String get tierPremium => 'Premium';
+
+  @override
+  String get adminRequestId => 'Request ID';
+
+  @override
+  String get adminDetails => 'Details';
+
+  @override
+  String get adminChanges => 'Changes';
+
+  @override
+  String adminByActor(Object name) {
+    return 'by $name';
+  }
+
+  @override
+  String get homeTitle => 'Flutter Boilerplate';
+
+  @override
+  String get homeWelcome => 'Welcome to Flutter Boilerplate';
+
+  @override
+  String get homeViewPricing => 'View Pricing';
+
+  @override
+  String get formsAdvancedPageTitle => 'Advanced Patterns';
+
+  @override
+  String get formsApiKeyGenerate => 'Generate Key';
+
+  @override
+  String get formsApiKeyProductionKey => 'Production Key';
+
+  @override
+  String get formsCheckoutCheckoutAddress => 'Checkout & Address';
+
+  @override
+  String get formsCheckoutContinuePayment => 'Continue to Payment';
+
+  @override
+  String get formsContentEditorUnsavedTitle => 'Unsaved Changes';
+
+  @override
+  String get formsEditableTableItem => 'Item';
+
+  @override
+  String get formsEditableTablePrice => 'Price';
+
+  @override
+  String get formsEditableTableDelete => 'Delete';
+
+  @override
+  String get formsElementsValidate => 'Validate';
+
+  @override
+  String get formsErrorLabServerError => 'Server Error';
+
+  @override
+  String get formsErrorLabValidationError => 'Validation Error';
+
+  @override
+  String get formsErrorLabNetworkTimeout => 'Network Timeout';
+
+  @override
+  String get formsErrorLabRateLimited => 'Rate Limited';
+
+  @override
+  String get formsFieldStatesValidate => 'Validate';
+
+  @override
+  String get formsFieldStatesVerify => 'Verify';
+
+  @override
+  String get formsFieldStatesSetError => 'Set Error';
+
+  @override
+  String get formsFieldStatesSetHelper => 'Set Helper';
+
+  @override
+  String get formsFieldStatesClear => 'Clear';
+
+  @override
+  String get formsFieldStatesTouch => 'Touch';
+
+  @override
+  String get formsFieldStatesOnChange => 'On Change';
+
+  @override
+  String get formsFieldStatesOnBlur => 'On Blur';
+
+  @override
+  String get formsFieldStatesOnSubmit => 'On Submit';
+
+  @override
+  String get formsFieldStatesLazy => 'Lazy';
+
+  @override
+  String get formsFiltersAllCategories => 'All Categories';
+
+  @override
+  String get formsFiltersMarketing => 'Marketing';
+
+  @override
+  String get formsFiltersApply => 'Apply Filters';
+
+  @override
+  String get formsFiltersResetBtn => 'Reset';
+
+  @override
+  String get formsFormBuilderNoFields =>
+      'No fields yet. Add some fields below.';
+
+  @override
+  String get formsFormBuilderAddFieldsBelow => 'Add fields below';
+
+  @override
+  String get formsFormBuilderTextFieldBtn => '+ Text Field';
+
+  @override
+  String get formsProfileChangeAvatar => 'Change Avatar';
+
+  @override
+  String get formsProfileEmailNotifications => 'Email Notifications';
+
+  @override
+  String get formsTeamInviteAddAnother => 'Add Another';
+
+  @override
+  String get formsTeamInviteUpgradePlan => 'Upgrade Plan';
+
+  @override
+  String get formsTeamInviteMember => 'Member';
+
+  @override
+  String get formsTeamInviteAdmin => 'Admin';
+
+  @override
+  String get formsTeamInviteMemberDesc =>
+      'Member — Can view and edit assigned projects';
+
+  @override
+  String get formsTeamInviteAdminDesc =>
+      'Admin — Full access to all projects and settings';
+
+  @override
+  String get formsTeamInviteViewerDesc =>
+      'Viewer — Read-only access to assigned projects';
+
+  @override
+  String get formsUploadsUploadPhoto => 'Upload Photo';
+
+  @override
+  String get formsUploadsDragDropFiles => 'Drag & drop files here';
+
+  @override
+  String get formsUploadsBrowseFiles => 'Browse Files';
+
+  @override
+  String get formsUploadsAddImages => 'Add Images';
+
+  @override
+  String get formsUploadsUploadImages => 'Upload Images';
+
+  @override
+  String get formsFormBuilderAddTextField => '+ Text Field';
+
+  @override
+  String get formsApiKeyPageTitle => 'API Key Manager';
+
+  @override
+  String get formsTeamInviteRoleAdmin => 'Admin';
+
+  @override
+  String get formsTeamInviteRoleAdminDescription =>
+      'Admin — Full access to all projects and settings';
+
+  @override
+  String get formsErrorLabAuthError => 'Auth Error';
+
+  @override
+  String get formsBillingPageTitle => 'Billing Form';
+
+  @override
+  String get formsBillingUpdated => 'Billing information updated';
+
+  @override
+  String get formsFiltersBusiness => 'Business';
+
+  @override
+  String get formsCheckoutPageTitle => 'Checkout & Address';
+
+  @override
+  String get formsCommonClear => 'Clear';
+
+  @override
+  String get formsContentEditorPageTitle => 'Content Editor';
+
+  @override
+  String get formsCommonDelete => 'Delete';
+
+  @override
+  String get formsFiltersDesign => 'Design';
+
+  @override
+  String get formsUploadsDragDrop => 'Drag & drop files here';
+
+  @override
+  String get formsEditableTablePageTitle => 'Editable Table';
+
+  @override
+  String get formsErrorLabPageTitle => 'Error & Async States';
+
+  @override
+  String get formsFieldStatesPageTitle => 'Field States & Validation';
+
+  @override
+  String get formsUploadsPageTitle => 'File Uploads';
+
+  @override
+  String get formsFiltersPageTitle => 'Filters';
+
+  @override
+  String get formsFormBuilderPageTitle => 'Form Builder';
+
+  @override
+  String get formsElementsPageTitle => 'Form Elements';
+
+  @override
+  String get formsLayoutsPageTitle => 'Form Layouts';
+
+  @override
+  String get formsTeamInviteRoleMember => 'Member';
+
+  @override
+  String get formsTeamInviteRoleMemberDescription =>
+      'Member — Can view and edit assigned projects';
+
+  @override
+  String get formsCommonPreview => 'Preview';
+
+  @override
+  String get formsApiKeyProduction => 'Production Key';
+
+  @override
+  String get formsCommonPublish => 'Publish';
+
+  @override
+  String get formsEditableTableQty => 'Qty';
+
+  @override
+  String get formsCommonReset => 'Reset';
+
+  @override
+  String get formsCommonSave => 'Save';
+
+  @override
+  String get formsCommonSearch => 'Search';
+
+  @override
+  String get formsLayoutsSendMessage => 'Send Message';
+
+  @override
+  String get formsCommonSubmit => 'Submit';
+
+  @override
+  String get formsTeamInvitePageTitle => 'Team Invite';
+
+  @override
+  String get formsFiltersTechnology => 'Technology';
+
+  @override
+  String get formsCommonUpdate => 'Update';
+
+  @override
+  String get formsBillingUpdate => 'Update Billing';
+
+  @override
+  String get formsCommonUpload => 'Upload';
+
+  @override
+  String get formsProfilePageTitle => 'User Profile';
+
+  @override
+  String get formsCommonValidate => 'Validate';
+
+  @override
+  String get formsCommonVerify => 'Verify';
+
+  @override
+  String get formsTeamInviteRoleViewer => 'Viewer';
+
+  @override
+  String get formsTeamInviteRoleViewerDescription =>
+      'Viewer — Read-only access to assigned projects';
+
+  @override
+  String get formsTeamInviteTitle => 'Invite Team Members';
+
+  @override
+  String get formsTeamInviteEmailLabel => 'Email Address';
+
+  @override
+  String get formsTeamInviteRoleSelect => 'Select Role';
+
+  @override
+  String get formsTeamInviteRoleHint =>
+      'Choose what permissions invited members will have';
+
+  @override
+  String get uiInputTitle => 'Input';
+
+  @override
+  String get uiTableTitle => 'Table';
+
+  @override
+  String get uiScrollToBottomButtonHint =>
+      'Use scroll controller to jump to bottom';
+
+  @override
+  String get uiInputOtpEnterCode => 'Enter verification code';
+
+  @override
+  String get aboutTitle => 'About';
+
+  @override
+  String get plansTitle => 'Plans';
+
+  @override
+  String get dashboardTitle => 'Dashboard';
+
+  @override
+  String get galleryTitle => 'Gallery';
+
+  @override
+  String get boomTitle => 'Error Trigger';
+
+  @override
+  String get boomTrigger => 'Trigger Error';
+
+  @override
+  String get fallbackContactSupport => 'Contact support';
+
+  @override
+  String get securityTitle => 'Security';
+
+  @override
+  String get securityTwoFactor => 'Two-Factor Authentication';
+
+  @override
+  String get securityChangePassword => 'Change Password';
+
+  @override
+  String get securityActiveSessions => 'Active Sessions';
+
+  @override
+  String get settingsAddCard => 'Add Card';
+
+  @override
+  String get settingsChangePlan => 'Change Plan';
+
+  @override
+  String get uiAccordionRichItemsPageTitle => 'Rich Items';
+
+  @override
+  String get uiAccordionVariantsPageTitle => 'Accordion Variants';
+
+  @override
+  String get demoCachingTitle => 'Caching';
+
+  @override
+  String get demoCachingDescription =>
+      'Data caching and revalidation strategies';
+
+  @override
+  String get demoClientDataTitle => 'Client Data';
+
+  @override
+  String get demoClientDataDescription =>
+      'Client-side data fetching, state management, and caching';
+
+  @override
+  String get demoCsrTitle => 'Client-Side Rendering';
+
+  @override
+  String get demoCsrDescription =>
+      'Client-side rendering with dynamic data fetching';
+
+  @override
+  String get demoCsrCookiesTitle => 'CSR Cookies';
+
+  @override
+  String get demoCsrCookiesDescription =>
+      'Client-side cookie handling with document.cookie';
+
+  @override
+  String get demoDataFetchingTitle => 'Data Fetching';
+
+  @override
+  String get demoDataFetchingDescription =>
+      'Data fetching patterns and best practices';
+
+  @override
+  String get demoDynamicRoutesTitle => 'Dynamic Routes';
+
+  @override
+  String get demoDynamicRoutesDescription =>
+      'Dynamic route segments and parameters';
+
+  @override
+  String get demoFontsTitle => 'Fonts';
+
+  @override
+  String get demoFontsDescription =>
+      'Custom font loading, subsetting, and optimization';
+
+  @override
+  String get demoFormsTitle => 'Forms';
+
+  @override
+  String get demoFormsDescription =>
+      'Form handling with validation and submission';
+
+  @override
+  String get demoFormPageTitle => 'Form Demo';
+
+  @override
+  String get demoFormPageSignUp => 'Sign Up';
+
+  @override
+  String get demoI18nTitle => 'i18n Demo';
+
+  @override
+  String demoI18nActive(Object locale) {
+    return 'Active: $locale';
+  }
+
+  @override
+  String demoI18nDefault(Object lang) {
+    return 'Default: $lang';
+  }
+
+  @override
+  String get demoImagesTitle => 'Images';
+
+  @override
+  String get demoImagesDescription =>
+      'Image optimization, lazy loading, and responsive images';
+
+  @override
+  String get demoImagesPageTitle => 'Images Demo';
+
+  @override
+  String get demoImagesFailed => 'Failed to load image';
+
+  @override
+  String get demoLazyLoadingTitle => 'Lazy Loading';
+
+  @override
+  String get demoLazyLoadingDescription =>
+      'Lazy loading components and data for performance';
+
+  @override
+  String get demoLazyLoadingPageTitle => 'Lazy Loading';
+
+  @override
+  String get demoLazyLoadingLoad => 'Load Heavy Component';
+
+  @override
+  String get demoObservabilityTitle => 'Observability';
+
+  @override
+  String get demoObservabilityDescription =>
+      'Logging, monitoring, tracing, and error tracking';
+
+  @override
+  String get demoObservabilityPageTitle => 'Observability';
+
+  @override
+  String get demoPprTitle => 'Partial Prerendering';
+
+  @override
+  String get demoPprDescription =>
+      'Partial prerendering for hybrid static and dynamic content';
+
+  @override
+  String get demoRequestMemoizationTitle => 'Request Memoization';
+
+  @override
+  String get demoScriptsTitle => 'Scripts';
+
+  @override
+  String get demoScriptsDescription =>
+      'Third-party script loading with strategy and scheduling';
+
+  @override
+  String get demoSearchParamsTitle => 'Search Params';
+
+  @override
+  String get demoSearchParamsDescription =>
+      'URL search parameters and query string handling';
+
+  @override
+  String get demoSeoTitle => 'SEO';
+
+  @override
+  String get demoServerActionsTitle => 'Server Actions';
+
+  @override
+  String get demoServerActionsDescription =>
+      'Server-side form actions and data mutations';
+
+  @override
+  String get demoSseTitle => 'Server-Sent Events';
+
+  @override
+  String get demoSseDescription =>
+      'Real-time updates via server-sent event streams';
+
+  @override
+  String get demoSsrTitle => 'Server-Side Rendering';
+
+  @override
+  String get demoSsrDescription =>
+      'Server-side rendering with dynamic data on each request';
+
+  @override
+  String get demoSsrCookiesTitle => 'SSR Cookies';
+
+  @override
+  String get demoSsrCookiesDescription =>
+      'Server-side cookie reading and setting';
+
+  @override
+  String get demoStaticGenerationTitle => 'Static Generation';
+
+  @override
+  String get demoThemingTitle => 'Theming';
+
+  @override
+  String get demoThemingDescription =>
+      'Application theming with light and dark mode support';
+
+  @override
+  String get demoThemePageTitle => 'Theme Demo';
+
+  @override
+  String get demoWsTitle => 'WebSockets';
+
+  @override
+  String get demoWsDescription =>
+      'Real-time bidirectional communication over WebSockets';
+
+  @override
+  String get demoWsPageTitle => 'WebSocket Demo';
+
+  @override
+  String get demoWsSend => 'Send';
+
+  @override
+  String galleryPhoto(Object id) {
+    return 'Photo #$id';
+  }
+
+  @override
+  String routingItem(Object itemId) {
+    return 'Item #$itemId';
+  }
+
+  @override
+  String routingPost(Object postId) {
+    return 'Post #$postId';
+  }
+
+  @override
+  String get formsFiltersNewestFirst => 'Newest First';
+
+  @override
+  String get formsFiltersOldestFirst => 'Oldest First';
+
+  @override
+  String get formsFiltersMostPopular => 'Most Popular';
+
+  @override
+  String get formsFiltersRelevance => 'Relevance';
+
+  @override
+  String get formsFiltersAllStatuses => 'All Statuses';
+
+  @override
+  String get formsFiltersStatusActive => 'Active';
+
+  @override
+  String get formsFiltersStatusPending => 'Pending';
+
+  @override
+  String get formsFiltersStatusArchived => 'Archived';
 }

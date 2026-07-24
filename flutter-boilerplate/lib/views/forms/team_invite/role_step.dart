@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class RoleStep extends StatelessWidget {
   final String selectedRole;
@@ -16,39 +17,40 @@ class RoleStep extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
 
+    final t = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Select Role',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        Text(
+          t.formsTeamInviteRoleSelect,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 4),
         Text(
-          'Choose what permissions invited members will have',
+          t.formsTeamInviteRoleHint,
           style: TextStyle(color: colors.fgMuted, fontSize: 13),
         ),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
           initialValue: selectedRole,
-          items: const [
+          items: [
             DropdownMenuItem(
               value: 'member',
-              child: Text('Member — Can view and edit assigned projects'),
+              child: Text(t.formsTeamInviteRoleMemberDescription),
             ),
             DropdownMenuItem(
               value: 'admin',
-              child: Text('Admin — Full access to all projects and settings'),
+              child: Text(t.formsTeamInviteRoleAdminDescription),
             ),
             DropdownMenuItem(
               value: 'viewer',
-              child: Text('Viewer — Read-only access to assigned projects'),
+              child: Text(t.formsTeamInviteRoleViewerDescription),
             ),
           ],
           onChanged: (v) => onChanged(v!),
-          decoration: const InputDecoration(
-            labelText: 'Role',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: t.formsTeamInviteRoleLabel,
+            border: const OutlineInputBorder(),
           ),
         ),
       ],

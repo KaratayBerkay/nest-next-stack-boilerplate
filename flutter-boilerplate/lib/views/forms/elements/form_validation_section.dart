@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../components/ui/input/input.dart';
+import '../../../l10n/app_localizations.dart';
 
 class FormValidationSection extends StatefulWidget {
   const FormValidationSection({super.key});
@@ -25,6 +26,7 @@ class _FormValidationSectionState extends State<FormValidationSection> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Form(
       key: _formKey,
       child: Column(
@@ -40,7 +42,7 @@ class _FormValidationSectionState extends State<FormValidationSection> {
           const SizedBox(height: 12),
           FilledButton(
             onPressed: () => _formKey.currentState?.validate(),
-            child: const Text('Validate'),
+            child: Text(t.formsElementsValidate),
           ),
         ],
       ),

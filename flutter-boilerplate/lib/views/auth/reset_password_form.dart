@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../api/client/auth/actions.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class ResetPasswordForm extends ConsumerStatefulWidget {
   final String? token;
@@ -29,19 +30,17 @@ class _ResetPasswordFormState extends ConsumerState<ResetPasswordForm> {
   }
 
   Future<void> _handleSubmit() async {
+    final t = AppLocalizations.of(context);
     setState(() => _fieldErrors = {});
     final password = _passwordController.text;
     final confirm = _confirmController.text;
 
     if (password.length < 8) {
-      setState(
-        () =>
-            _fieldErrors['password'] = 'Password must be at least 8 characters',
-      );
+      setState(() => _fieldErrors['password'] = t.authErrorsPasswordMin);
       return;
     }
     if (password != confirm) {
-      setState(() => _fieldErrors['confirm'] = 'Passwords do not match');
+      setState(() => _fieldErrors['confirm'] = t.authErrorsPasswordsMustMatch);
       return;
     }
 
@@ -61,17 +60,18 @@ class _ResetPasswordFormState extends ConsumerState<ResetPasswordForm> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     if (widget.token == null) {
       return Column(
         children: [
           Text(
-            'Reset Password',
+            t.authFormResetPasswordTitle,
             style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
           Text(
-            'Invalid or missing reset token.',
+            t.authFormResetPasswordInvalidToken,
             style: TextStyle(color: colors.danger, fontSize: 14),
           ),
         ],
@@ -82,18 +82,18 @@ class _ResetPasswordFormState extends ConsumerState<ResetPasswordForm> {
       return Column(
         children: [
           Text(
-            'Reset Password',
+            t.authFormResetPasswordTitle,
             style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
           Text(
-            'Password reset successfully!',
+            t.authFormResetPasswordSuccess,
             style: TextStyle(color: colors.success, fontSize: 14),
           ),
           const SizedBox(height: 12),
           TextButton(
             onPressed: () => context.go('/auth/login'),
-            child: const Text('Sign In'),
+            child: Text(t.authFormResetPasswordLoginLink),
           ),
         ],
       );
@@ -102,14 +102,14 @@ class _ResetPasswordFormState extends ConsumerState<ResetPasswordForm> {
     return Column(
       children: [
         Text(
-          'Reset Password',
+          t.authFormResetPasswordTitle,
           style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 16),
         TextField(
           controller: _passwordController,
           decoration: InputDecoration(
-            labelText: 'New Password',
+            labelText: t.authFormResetPasswordPasswordLabel,
             errorText: _fieldErrors['password'],
           ),
           obscureText: true,
@@ -118,7 +118,7 @@ class _ResetPasswordFormState extends ConsumerState<ResetPasswordForm> {
         TextField(
           controller: _confirmController,
           decoration: InputDecoration(
-            labelText: 'Confirm Password',
+            labelText: t.authFormResetPasswordConfirmPasswordLabel,
             errorText: _fieldErrors['confirm'],
           ),
           obscureText: true,
@@ -134,7 +134,11 @@ class _ResetPasswordFormState extends ConsumerState<ResetPasswordForm> {
         const SizedBox(height: 16),
         FilledButton(
           onPressed: _submitting ? null : _handleSubmit,
-          child: Text(_submitting ? 'Resetting...' : 'Reset Password'),
+          child: Text(
+            _submitting
+                ? t.authFormResetPasswordSubmitting
+                : t.authFormResetPasswordSubmit,
+          ),
         ),
       ],
     );

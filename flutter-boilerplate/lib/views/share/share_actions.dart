@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class ShareActions extends StatelessWidget {
   final String shareLink;
@@ -18,6 +19,7 @@ class ShareActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -25,7 +27,7 @@ class ShareActions extends StatelessWidget {
         FilledButton.icon(
           onPressed: onShare ?? () {},
           icon: const Icon(Icons.share),
-          label: const Text('Share Link'),
+          label: Text(t.shareShareLink),
           style: FilledButton.styleFrom(
             minimumSize: const Size(double.infinity, 48),
           ),
@@ -35,11 +37,11 @@ class ShareActions extends StatelessWidget {
           onPressed: () {
             Clipboard.setData(ClipboardData(text: shareLink));
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Link copied to clipboard')),
+              SnackBar(content: Text(t.shareLinkCopied)),
             );
           },
           icon: Icon(Icons.copy, color: colors.fg),
-          label: Text('Copy Link', style: TextStyle(color: colors.fg)),
+          label: Text(t.shareCopyLink, style: TextStyle(color: colors.fg)),
           style: OutlinedButton.styleFrom(
             minimumSize: const Size(double.infinity, 48),
             side: BorderSide(color: colors.border),

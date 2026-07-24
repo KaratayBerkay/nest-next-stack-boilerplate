@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../constants/theme.dart';
 import '../../hooks/use_theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class ThemeDemoPage extends ConsumerWidget {
   final String lang;
@@ -14,8 +15,9 @@ class ThemeDemoPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentMode = ref.watch(themeModeProvider);
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Theme Demo')),
+      appBar: AppBar(title: Text(t.demoThemePageTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

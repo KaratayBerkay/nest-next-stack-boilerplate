@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../components/ui/dropdown/dropdown.dart';
+import '../../../l10n/app_localizations.dart';
 
 class DropdownDemoPage extends StatelessWidget {
   final String lang;
@@ -7,8 +8,9 @@ class DropdownDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Dropdown')),
+      appBar: AppBar(title: Text(t.uiDropdownTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [

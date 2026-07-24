@@ -1,14 +1,17 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class ImagesDemoPage extends StatelessWidget {
   final String lang;
   const ImagesDemoPage({super.key, required this.lang});
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Images Demo')),
+      appBar: AppBar(title: Text(t.demoImagesPageTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -37,9 +40,9 @@ class ImagesDemoPage extends StatelessWidget {
                 height: 200,
                 child: Center(child: CircularProgressIndicator()),
               ),
-              errorWidget: (_, __, ___) => const SizedBox(
+              errorWidget: (_, __, ___) => SizedBox(
                 height: 200,
-                child: Center(child: Text('Failed to load image')),
+                child: Center(child: Text(t.demoImagesFailed)),
               ),
             ),
           ),
@@ -61,9 +64,9 @@ class ImagesDemoPage extends StatelessWidget {
                     height: 200,
                     child: Center(child: CircularProgressIndicator()),
                   ),
-                  errorWidget: (_, __, ___) => const SizedBox(
+                  errorWidget: (_, __, ___) => SizedBox(
                     height: 200,
-                    child: Center(child: Text('Failed to load image')),
+                    child: Center(child: Text(t.demoImagesFailed)),
                   ),
                 );
               },

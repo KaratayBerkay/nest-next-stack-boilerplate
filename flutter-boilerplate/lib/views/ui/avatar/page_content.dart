@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../components/ui/avatar/avatar.dart';
+import '../../../l10n/app_localizations.dart';
 
 class AvatarDemoPage extends StatelessWidget {
   final String lang;
@@ -7,8 +8,9 @@ class AvatarDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Avatar')),
+      appBar: AppBar(title: Text(t.uiAvatarTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [

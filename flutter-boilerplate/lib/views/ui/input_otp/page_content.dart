@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 class InputOtpDemoPage extends StatefulWidget {
   final String lang;
   const InputOtpDemoPage({super.key, required this.lang});
@@ -13,17 +15,18 @@ class _InputOtpDemoPageState extends State<InputOtpDemoPage> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('OTP Input')),
+      appBar: AppBar(title: Text(t.uiInputOtpTitle)),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Enter verification code',
-                style: TextStyle(fontSize: 16),
+              Text(
+                t.uiInputOtpEnterCode,
+                style: const TextStyle(fontSize: 16),
               ),
               const SizedBox(height: 24),
               Row(

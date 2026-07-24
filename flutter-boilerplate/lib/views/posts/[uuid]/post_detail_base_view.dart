@@ -5,6 +5,7 @@ import '../../../api/client/posts/actions.dart';
 import '../../../api/client/posts/query.dart';
 import '../../../components/ui/avatar/avatar.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../types/feed/comment.dart';
 import '../../../types/feed/post.dart';
 import 'post_content_view.dart';
@@ -32,12 +33,13 @@ class PostDetailBaseView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final commentController = TextEditingController();
     final isEditing = ValueNotifier<bool>(false);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Post'),
+        title: Text(t.postsDetail),
         actions: [
           if (showEdit)
             ValueListenableBuilder<bool>(
@@ -100,9 +102,9 @@ class PostDetailBaseView extends ConsumerWidget {
                 Expanded(
                   child: TextField(
                     controller: commentController,
-                    decoration: const InputDecoration(
-                      hintText: 'Write a comment...',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      hintText: t.postsCommentHint,
+                      border: const OutlineInputBorder(),
                       isDense: true,
                     ),
                   ),
@@ -136,14 +138,15 @@ class _CommentSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final commentsAsync = ref.watch(postCommentsProvider(postId));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Comments',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        Text(
+          t.postsCommentsHeading,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         commentsAsync.when(
@@ -156,7 +159,7 @@ class _CommentSection extends ConsumerWidget {
               ? Padding(
                   padding: const EdgeInsets.all(16),
                   child: Text(
-                    'No comments yet',
+                    t.postsNoComments,
                     style: TextStyle(color: colors.fgMuted),
                   ),
                 )

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class MessagesSidebarSearch extends StatelessWidget {
   final ValueChanged<String> onChanged;
@@ -13,13 +14,14 @@ class MessagesSidebarSearch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Padding(
       padding: const EdgeInsets.all(12),
       child: TextField(
         onChanged: onChanged,
         decoration: InputDecoration(
-          hintText: 'Search conversations...',
+          hintText: t.messagesSearchConversations,
           prefixIcon: const Icon(Icons.search, size: 18),
           filled: true,
           fillColor: colors.surfaceAlt,

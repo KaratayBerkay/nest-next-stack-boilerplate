@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/i18n/messages_provider.dart';
 import 'package:flutter_boilerplate/lib/riverpod_compat.dart';
@@ -29,6 +30,8 @@ class _FlutterBoilerplateAppState extends ConsumerState<FlutterBoilerplateApp> {
   }
 
   Future<void> _initServices() async {
+    if (kIsWeb) return;
+
     final router = ref.read(routerProvider);
 
     if (AppConfig.pushEnabled) {

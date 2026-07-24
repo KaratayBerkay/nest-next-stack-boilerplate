@@ -6,6 +6,7 @@ import '../../../api/server/profile/get.dart';
 import '../../../components/ui/avatar/avatar.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 final _userDetailProvider = FutureProvider.family((ref, String userId) async {
   final server = ref.read(profileGetServerProvider);
@@ -25,10 +26,11 @@ class UserDetailPageContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final userAsync = ref.watch(_userDetailProvider(userId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: AppBar(title: Text(t.usersProfile)),
       body: userAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
@@ -67,7 +69,7 @@ class UserDetailPageContent extends ConsumerWidget {
                   ),
                   const SizedBox(height: 24),
                   Button(
-                    child: const Text('Add Friend'),
+                    child: Text(t.usersAddFriend),
                     onPressed: () =>
                         ref.read(friendActionsProvider).sendRequest(user.id),
                   ),

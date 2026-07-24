@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/form_text_field.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../validators/auth/schema.dart' as auth;
 
 class FormsErrorLabPageContent extends ConsumerStatefulWidget {
@@ -31,8 +31,9 @@ class _FormsErrorLabPageContentState
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Error & Async States')),
+      appBar: AppBar(title: Text(t.formsErrorLabPageTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

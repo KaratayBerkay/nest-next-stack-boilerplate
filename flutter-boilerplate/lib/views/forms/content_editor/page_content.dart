@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/form_text_field.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../validators/forms/schema.dart' as forms;
 
 class FormsContentEditorPageContent extends ConsumerStatefulWidget {
@@ -32,11 +33,15 @@ class _FormsContentEditorPageContentState
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Content Editor'),
+        title: Text(t.formsContentEditorHeading),
         actions: [
-          TextButton(onPressed: () {}, child: const Text('Preview')),
+          TextButton(
+            onPressed: () {},
+            child: Text(t.formsContentEditorPreview),
+          ),
         ],
       ),
       body: ListView(
@@ -69,14 +74,14 @@ class _FormsContentEditorPageContentState
                     Expanded(
                       child: Button(
                         variant: ButtonVariant.outline,
-                        child: const Text('Save Draft'),
+                        child: Text(t.formsContentEditorSaveDraft),
                         onPressed: () {},
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Button(
-                        child: const Text('Publish'),
+                        child: Text(t.formsContentEditorPublish),
                         onPressed: () {
                           if (_formKey.currentState!.validate()) {}
                         },

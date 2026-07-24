@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class ClientDataDemo extends StatelessWidget {
   const ClientDataDemo({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Client Data')),
-      body: const Center(
-        child: Text('Client-side data fetching, state management, and caching'),
+      appBar: AppBar(title: Text(t.demoClientDataTitle)),
+      body: Center(
+        child: Text(t.demoClientDataDescription),
       ),
     );
   }

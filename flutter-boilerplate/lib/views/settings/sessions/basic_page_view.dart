@@ -5,6 +5,7 @@ import '../../../api/client/sessions/actions.dart';
 import '../../../api/client/sessions/query.dart';
 import '../../../components/ui/toast/toast.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class BasicSettingsSessionsPage extends ConsumerWidget {
   final String lang;
@@ -14,10 +15,11 @@ class BasicSettingsSessionsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final sessionsAsync = ref.watch(sessionsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Sessions')),
+      appBar: AppBar(title: Text(t.settingsNavSessions)),
       body: sessionsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),

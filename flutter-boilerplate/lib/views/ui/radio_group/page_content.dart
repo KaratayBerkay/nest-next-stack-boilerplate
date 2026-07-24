@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 
 class RadioGroupDemoPage extends StatefulWidget {
   final String lang;
@@ -13,8 +14,9 @@ class _RadioGroupDemoPageState extends State<RadioGroupDemoPage> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Radio Group')),
+      appBar: AppBar(title: Text(t.uiRadioGroupTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

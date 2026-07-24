@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../api/client/posts/query.dart';
 import '../../components/ui/empty/empty.dart';
 import '../../components/ui/spinner/spinner.dart';
+import '../../l10n/app_localizations.dart';
 import '../../types/feed/post.dart';
 
 class FeedBaseView extends ConsumerWidget {
@@ -19,6 +20,7 @@ class FeedBaseView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final postsAsync = ref.watch(feedProvider);
+    final t = AppLocalizations.of(context);
 
     return postsAsync.when(
       loading: () => const Column(
@@ -28,15 +30,15 @@ class FeedBaseView extends ConsumerWidget {
         ],
       ),
       error: (err, _) => EmptyWidget(
-        title: 'Failed to load feed',
+        title: t.feedFailedToLoadPosts,
         description: err.toString(),
         icon: Icons.error_outline,
       ),
       data: (posts) {
         if (posts.isEmpty) {
-          return const EmptyWidget(
-            title: 'No posts yet',
-            description: 'Follow people to see their posts here.',
+          return EmptyWidget(
+            title: t.feedNoPostsYet,
+            description: t.feedEmptyDescription,
             icon: Icons.article_outlined,
           );
         }

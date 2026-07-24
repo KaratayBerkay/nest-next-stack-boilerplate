@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class SessionCard extends StatelessWidget {
   final String id;
@@ -23,6 +24,7 @@ class SessionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Card(
       child: ListTile(
@@ -39,12 +41,18 @@ class SessionCard extends StatelessWidget {
         ),
         trailing: isCurrent
             ? Badge(
-                label: const Text('Current', style: TextStyle(fontSize: 11)),
+                label: Text(
+                  t.settingsCurrentSession,
+                  style: const TextStyle(fontSize: 11),
+                ),
                 backgroundColor: colors.success,
               )
             : TextButton(
                 onPressed: onRevoke,
-                child: const Text('Revoke', style: TextStyle(fontSize: 12)),
+                child: Text(
+                  t.settingsRevoke,
+                  style: const TextStyle(fontSize: 12),
+                ),
               ),
       ),
     );

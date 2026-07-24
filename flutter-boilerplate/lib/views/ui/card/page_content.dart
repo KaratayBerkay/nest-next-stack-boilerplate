@@ -5,6 +5,7 @@ import '../../../components/ui/card/card.dart';
 import '../../../components/ui/card/card_content.dart';
 import '../../../components/ui/card/card_footer.dart';
 import '../../../components/ui/card/card_header.dart';
+import '../../../l10n/app_localizations.dart';
 
 class CardDemoPage extends StatelessWidget {
   final String lang;
@@ -12,8 +13,9 @@ class CardDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Card')),
+      appBar: AppBar(title: Text(t.uiCardTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

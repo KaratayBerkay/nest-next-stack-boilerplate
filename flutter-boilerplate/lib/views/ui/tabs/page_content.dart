@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../components/ui/tabs/tabs.dart';
+import '../../../l10n/app_localizations.dart';
 
 class TabsDemoPage extends StatelessWidget {
   final String lang;
@@ -7,8 +8,9 @@ class TabsDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Tabs')),
+      appBar: AppBar(title: Text(t.uiTabsTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [

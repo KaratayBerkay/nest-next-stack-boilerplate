@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../components/ui/form_text_field.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../validators/auth/schema.dart' as auth;
 
 class EmailsStep extends StatelessWidget {
@@ -20,6 +21,7 @@ class EmailsStep extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
 
+    final t = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -64,7 +66,7 @@ class EmailsStep extends StatelessWidget {
         if (!maxReached)
           TextButton.icon(
             icon: const Icon(Icons.add, size: 18),
-            label: const Text('Add Another'),
+            label: Text(t.formsTeamInviteAddAnother),
             onPressed: onAdd,
           ),
       ],

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../constants/i18n.dart';
 import '../../hooks/use_theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class I18nDemoPage extends ConsumerWidget {
   final String lang;
@@ -13,9 +14,10 @@ class I18nDemoPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
     final currentLocale = ref.watch(localeProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('i18n Demo')),
+      appBar: AppBar(title: Text(t.demoI18nTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -52,8 +54,8 @@ class I18nDemoPage extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text('Active: $currentLocale'),
-                  Text('Default: ${I18nConstants.defaultLang}'),
+                  Text(t.demoI18nActive(currentLocale)),
+                  Text(t.demoI18nDefault(I18nConstants.defaultLang)),
                   Text('Fallback: ${I18nConstants.fallbackLang}'),
                 ],
               ),

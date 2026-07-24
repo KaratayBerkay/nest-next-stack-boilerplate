@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../api/client/auth/actions.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class ForgotPasswordForm extends ConsumerStatefulWidget {
   const ForgotPasswordForm({super.key});
@@ -25,9 +26,10 @@ class _ForgotPasswordFormState extends ConsumerState<ForgotPasswordForm> {
   }
 
   Future<void> _handleSubmit() async {
+    final t = AppLocalizations.of(context);
     final email = _emailController.text.trim();
     if (email.isEmpty) {
-      setState(() => _error = 'Email is required');
+      setState(() => _error = t.authErrorsEmailRequired);
       return;
     }
 
@@ -49,23 +51,24 @@ class _ForgotPasswordFormState extends ConsumerState<ForgotPasswordForm> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     if (_submitted) {
       return Column(
         children: [
           Text(
-            'Reset Password',
+            t.authFormForgotPasswordTitle,
             style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
           Text(
-            'Check your email for reset instructions.',
+            t.authFormForgotPasswordSuccess,
             style: TextStyle(color: colors.success, fontSize: 14),
           ),
           const SizedBox(height: 12),
           TextButton(
             onPressed: () => context.go('/auth/login'),
-            child: const Text('Back to Sign In'),
+            child: Text(t.authFormForgotPasswordLoginLink),
           ),
         ],
       );
@@ -74,20 +77,20 @@ class _ForgotPasswordFormState extends ConsumerState<ForgotPasswordForm> {
     return Column(
       children: [
         Text(
-          'Reset Password',
+          t.authFormForgotPasswordTitle,
           style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         Text(
-          'Enter your email to receive reset instructions.',
+          t.authFormForgotPasswordDescription,
           style: TextStyle(color: colors.fgMuted, fontSize: 12),
         ),
         const SizedBox(height: 16),
         TextField(
           controller: _emailController,
           decoration: InputDecoration(
-            labelText: 'Email',
-            hintText: 'you@example.com',
+            labelText: t.authFormForgotPasswordEmailLabel,
+            hintText: t.authFormForgotPasswordEmailPlaceholder,
             errorText: _error,
           ),
           keyboardType: TextInputType.emailAddress,
@@ -95,12 +98,19 @@ class _ForgotPasswordFormState extends ConsumerState<ForgotPasswordForm> {
         const SizedBox(height: 16),
         FilledButton(
           onPressed: _submitting ? null : _handleSubmit,
-          child: Text(_submitting ? 'Sending...' : 'Send Reset Link'),
+          child: Text(
+            _submitting
+                ? t.authFormForgotPasswordSubmitting
+                : t.authFormForgotPasswordSubmit,
+          ),
         ),
         const SizedBox(height: 8),
         TextButton(
           onPressed: () => context.go('/auth/login'),
-          child: const Text('Back to Sign In', style: TextStyle(fontSize: 12)),
+          child: Text(
+            t.authFormForgotPasswordLoginLink,
+            style: const TextStyle(fontSize: 12),
+          ),
         ),
       ],
     );

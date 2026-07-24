@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:flutter_boilerplate/lib/container.dart';
+import '../../l10n/app_localizations.dart';
 import 'messages_sidebar.dart';
 
 class FreeMessagesPage extends StatelessWidget {
@@ -10,17 +11,18 @@ class FreeMessagesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     if (context.isMobile) {
-      return const _MobileMessagesView();
+      return _MobileMessagesView(t: t);
     }
     return Row(
       children: [
         MessagesSidebar(lang: lang),
-        const Expanded(
+        Expanded(
           child: Center(
             child: Text(
-              'Select a conversation',
-              style: TextStyle(color: Colors.grey),
+              t.messagesSelectConversation,
+              style: const TextStyle(color: Colors.grey),
             ),
           ),
         ),
@@ -30,10 +32,11 @@ class FreeMessagesPage extends StatelessWidget {
 }
 
 class _MobileMessagesView extends StatelessWidget {
-  const _MobileMessagesView();
+  final AppLocalizations t;
+  const _MobileMessagesView({required this.t});
 
   @override
   Widget build(BuildContext context) {
-    return const Center(child: Text('Messages page'));
+    return Center(child: Text(t.messagesTitle));
   }
 }

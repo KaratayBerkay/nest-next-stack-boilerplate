@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class WsDemoPage extends StatefulWidget {
   final String lang;
   const WsDemoPage({super.key, required this.lang});
@@ -68,8 +70,9 @@ class _WsDemoPageState extends State<WsDemoPage> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('WebSocket Demo')),
+      appBar: AppBar(title: Text(t.demoWsPageTitle)),
       body: Column(
         children: [
           Container(
@@ -103,7 +106,7 @@ class _WsDemoPageState extends State<WsDemoPage> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                FilledButton(onPressed: _send, child: const Text('Send')),
+                FilledButton(onPressed: _send, child: Text(t.demoWsSend)),
               ],
             ),
           ),

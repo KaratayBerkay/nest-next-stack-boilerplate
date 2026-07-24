@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../api/server/admin/search_users.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class UserTierRow extends StatefulWidget {
   final AdminUser user;
@@ -30,6 +31,7 @@ class _UserTierRowState extends State<UserTierRow> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -62,11 +64,11 @@ class _UserTierRowState extends State<UserTierRow> {
           DropdownButton<String>(
             value: _selectedTier,
             underline: const SizedBox(),
-            items: const [
-              DropdownMenuItem(value: 'FREE', child: Text('Free')),
-              DropdownMenuItem(value: 'BASIC', child: Text('Basic')),
-              DropdownMenuItem(value: 'MEDIUM', child: Text('Medium')),
-              DropdownMenuItem(value: 'PREMIUM', child: Text('Premium')),
+            items: [
+              DropdownMenuItem(value: 'FREE', child: Text(t.tierFree)),
+              DropdownMenuItem(value: 'BASIC', child: Text(t.tierBasic)),
+              DropdownMenuItem(value: 'MEDIUM', child: Text(t.tierMedium)),
+              DropdownMenuItem(value: 'PREMIUM', child: Text(t.tierPremium)),
             ],
             onChanged: (v) {
               if (v != null) setState(() => _selectedTier = v);
@@ -92,7 +94,7 @@ class _UserTierRowState extends State<UserTierRow> {
                     foregroundColor: colors.fg,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                   ),
-                  child: const Text('Set'),
+                  child: Text(t.adminSet),
                 ),
         ],
       ),

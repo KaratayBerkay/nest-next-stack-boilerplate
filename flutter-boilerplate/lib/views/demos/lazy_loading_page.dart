@@ -2,6 +2,8 @@
 
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class LazyLoadingDemoPage extends StatefulWidget {
   final String lang;
   const LazyLoadingDemoPage({super.key, required this.lang});
@@ -15,8 +17,9 @@ class _LazyLoadingDemoPageState extends State<LazyLoadingDemoPage> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Lazy Loading')),
+      appBar: AppBar(title: Text(t.demoLazyLoadingPageTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -34,7 +37,7 @@ class _LazyLoadingDemoPageState extends State<LazyLoadingDemoPage> {
             FilledButton.icon(
               onPressed: () => setState(() => _loaded = true),
               icon: const Icon(Icons.download),
-              label: const Text('Load Heavy Component'),
+              label: Text(t.demoLazyLoadingLoad),
             )
           else
             const _HeavyComponent(),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/form_text_field.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../validators/auth/schema.dart' as auth;
 import '../../../validators/billing/schema.dart' as billing;
 import '../../../validators/forms/schema.dart' as forms;
@@ -36,8 +37,9 @@ class _FormsCheckoutPageContentState
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Checkout & Address')),
+      appBar: AppBar(title: Text(t.formsCheckoutCheckoutAddress)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -90,7 +92,7 @@ class _FormsCheckoutPageContentState
                     ),
                     const SizedBox(height: 16),
                     Button(
-                      child: const Text('Continue to Payment'),
+                      child: Text(t.formsCheckoutContinuePayment),
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {}
                       },

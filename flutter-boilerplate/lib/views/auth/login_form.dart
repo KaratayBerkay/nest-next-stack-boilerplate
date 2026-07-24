@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../api/client/auth/actions.dart';
 import '../../constants/theme.dart';
 import '../../hooks/use_auth.dart';
+import '../../l10n/app_localizations.dart';
 import '../../types/auth/auth_request_types.dart';
 
 class LoginForm extends ConsumerStatefulWidget {
@@ -34,15 +35,16 @@ class _LoginFormState extends ConsumerState<LoginForm> {
 
   Future<void> _handleLogin() async {
     setState(() => _fieldErrors = {});
+    final t = AppLocalizations.of(context);
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
     if (email.isEmpty) {
-      setState(() => _fieldErrors['email'] = 'Email is required');
+      setState(() => _fieldErrors['email'] = t.authErrorsEmailRequired);
       return;
     }
     if (password.isEmpty) {
-      setState(() => _fieldErrors['password'] = 'Password is required');
+      setState(() => _fieldErrors['password'] = t.authErrorsPasswordRequired);
       return;
     }
 
@@ -63,9 +65,10 @@ class _LoginFormState extends ConsumerState<LoginForm> {
   }
 
   Future<void> _handleMfa() async {
+    final t = AppLocalizations.of(context);
     final code = _mfaController.text.trim();
     if (code.length < 6) {
-      setState(() => _mfaError = 'Enter your 6-digit code');
+      setState(() => _mfaError = t.authFormLoginMfaCodeLengthError);
       return;
     }
     setState(() => _mfaSubmitting = true);
@@ -87,24 +90,25 @@ class _LoginFormState extends ConsumerState<LoginForm> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     if (_mfaToken != null) {
-      return _buildMfaForm(colors);
+      return _buildMfaForm(colors, t);
     }
 
     return Form(
       child: Column(
         children: [
           Text(
-            'Sign In',
+            t.authFormLoginTitle,
             style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _emailController,
             decoration: InputDecoration(
-              labelText: 'Email',
-              hintText: 'you@example.com',
+              labelText: t.authFormLoginEmailLabel,
+              hintText: t.authFormLoginEmailPlaceholder,
               errorText: _fieldErrors['email'],
             ),
             keyboardType: TextInputType.emailAddress,
@@ -113,7 +117,8 @@ class _LoginFormState extends ConsumerState<LoginForm> {
           TextField(
             controller: _passwordController,
             decoration: InputDecoration(
-              labelText: 'Password',
+              labelText: t.authFormLoginPasswordLabel,
+              hintText: t.authFormLoginPasswordPlaceholder,
               errorText: _fieldErrors['password'],
             ),
             obscureText: true,
@@ -123,9 +128,9 @@ class _LoginFormState extends ConsumerState<LoginForm> {
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: () => context.go('/auth/forgot-password'),
-              child: const Text(
-                'Forgot password?',
-                style: TextStyle(fontSize: 12),
+              child: Text(
+                t.authFormLoginForgotPassword,
+                style: const TextStyle(fontSize: 12),
               ),
             ),
           ),
@@ -139,19 +144,24 @@ class _LoginFormState extends ConsumerState<LoginForm> {
             ),
           FilledButton(
             onPressed: _submitting ? null : _handleLogin,
-            child: Text(_submitting ? 'Signing in...' : 'Sign In'),
+            child: Text(
+              _submitting ? t.authFormLoginSubmitting : t.authFormLoginSubmit,
+            ),
           ),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                "Don't have an account?",
+                t.authFormLoginNoAccount,
                 style: TextStyle(color: colors.fgMuted, fontSize: 12),
               ),
               TextButton(
                 onPressed: () => context.go('/auth/register'),
-                child: const Text('Register', style: TextStyle(fontSize: 12)),
+                child: Text(
+                  t.authFormLoginRegisterLink,
+                  style: const TextStyle(fontSize: 12),
+                ),
               ),
             ],
           ),
@@ -160,24 +170,24 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     );
   }
 
-  Widget _buildMfaForm(AppColors colors) {
+  Widget _buildMfaForm(AppColors colors, AppLocalizations t) {
     return Column(
       children: [
         Text(
-          'Two-Factor Authentication',
+          t.authFormLoginMfaTitle,
           style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         Text(
-          'Enter the 6-digit code from your authenticator app.',
+          t.authFormLoginMfaDescription,
           style: TextStyle(color: colors.fgMuted, fontSize: 12),
         ),
         const SizedBox(height: 16),
         TextField(
           controller: _mfaController,
           decoration: InputDecoration(
-            labelText: 'MFA Code',
-            hintText: '000000',
+            labelText: t.authFormLoginMfaCodeLabel,
+            hintText: t.authFormLoginMfaCodePlaceholder,
             errorText: _mfaError,
           ),
           keyboardType: TextInputType.number,
@@ -186,13 +196,17 @@ class _LoginFormState extends ConsumerState<LoginForm> {
         const SizedBox(height: 12),
         FilledButton(
           onPressed: _mfaSubmitting ? null : _handleMfa,
-          child: Text(_mfaSubmitting ? 'Verifying...' : 'Verify'),
+          child: Text(
+            _mfaSubmitting
+                ? t.authFormLoginMfaVerifying
+                : t.authFormLoginMfaVerify,
+          ),
         ),
         TextButton(
           onPressed: () => setState(() => _mfaToken = null),
-          child: const Text(
-            'Use a different account',
-            style: TextStyle(fontSize: 12),
+          child: Text(
+            t.authFormLoginDifferentAccount,
+            style: const TextStyle(fontSize: 12),
           ),
         ),
       ],

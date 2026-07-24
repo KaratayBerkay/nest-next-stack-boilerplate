@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class AboutPageContent extends StatelessWidget {
   const AboutPageContent({super.key});
@@ -7,9 +8,10 @@ class AboutPageContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('About')),
+      appBar: AppBar(title: Text(t.aboutTitle)),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [

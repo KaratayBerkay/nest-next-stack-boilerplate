@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../components/ui/input/file_input.dart';
+import '../../../l10n/app_localizations.dart';
 
 class FileUploadDemoPage extends StatelessWidget {
   final String lang;
@@ -7,8 +8,9 @@ class FileUploadDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('File Upload')),
+      appBar: AppBar(title: Text(t.uiFileUploadTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [

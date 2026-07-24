@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../components/ui/select/select.dart';
+import '../../../l10n/app_localizations.dart';
 
 class SelectDemoPage extends StatelessWidget {
   final String lang;
@@ -7,8 +8,9 @@ class SelectDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Select')),
+      appBar: AppBar(title: Text(t.uiSelectTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [

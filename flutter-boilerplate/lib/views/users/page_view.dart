@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/client/users/search.dart';
 import '../../components/ui/avatar/avatar.dart';
+import '../../l10n/app_localizations.dart';
 
 class UsersPageContent extends ConsumerStatefulWidget {
   final String lang;
@@ -19,10 +20,11 @@ class _UsersPageContentState extends ConsumerState<UsersPageContent> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final resultsAsync = ref.watch(searchUsersProvider(_query));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Users')),
+      appBar: AppBar(title: Text(t.usersTitle)),
       body: Column(
         children: [
           Padding(
@@ -30,7 +32,7 @@ class _UsersPageContentState extends ConsumerState<UsersPageContent> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search users...',
+                hintText: t.usersSearchHint,
                 prefixIcon: const Icon(Icons.search),
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

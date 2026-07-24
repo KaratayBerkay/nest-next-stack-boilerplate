@@ -9,6 +9,7 @@ import '../../../components/ui/card/card.dart';
 import '../../../components/ui/card/card_content.dart';
 import '../../../components/ui/card/card_header.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class PremiumSettingsBillingPage extends ConsumerWidget {
   final String lang;
@@ -18,10 +19,11 @@ class PremiumSettingsBillingPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final subAsync = ref.watch(subscriptionProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Billing')),
+      appBar: AppBar(title: Text(t.settingsBillingHeading)),
       body: subAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),

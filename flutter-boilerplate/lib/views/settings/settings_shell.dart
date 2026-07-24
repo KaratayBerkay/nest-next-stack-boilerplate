@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class SettingsShell extends StatelessWidget {
   final String lang;
   final Widget child;
@@ -13,9 +15,11 @@ class SettingsShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: Text(t.settingsSettingsSectionLabel),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/v1/$lang/feed'),
@@ -28,36 +32,36 @@ class SettingsShell extends StatelessWidget {
             selectedIndex: _selectedIndex(context),
             onDestinationSelected: (i) => _navigateTo(i, context),
             labelType: NavigationRailLabelType.all,
-            destinations: const [
+            destinations: [
               NavigationRailDestination(
-                icon: Icon(Icons.person_outline),
-                selectedIcon: Icon(Icons.person),
-                label: Text('Account'),
+                icon: const Icon(Icons.person_outline),
+                selectedIcon: const Icon(Icons.person),
+                label: Text(t.settingsNavAccount),
               ),
               NavigationRailDestination(
-                icon: Icon(Icons.credit_card_outlined),
-                selectedIcon: Icon(Icons.credit_card),
-                label: Text('Billing'),
+                icon: const Icon(Icons.credit_card_outlined),
+                selectedIcon: const Icon(Icons.credit_card),
+                label: Text(t.settingsNavBilling),
               ),
               NavigationRailDestination(
-                icon: Icon(Icons.settings_outlined),
-                selectedIcon: Icon(Icons.settings),
-                label: Text('General'),
+                icon: const Icon(Icons.settings_outlined),
+                selectedIcon: const Icon(Icons.settings),
+                label: Text(t.settingsNavGeneral),
               ),
               NavigationRailDestination(
-                icon: Icon(Icons.lock_outline),
-                selectedIcon: Icon(Icons.lock),
-                label: Text('Privacy'),
+                icon: const Icon(Icons.lock_outline),
+                selectedIcon: const Icon(Icons.lock),
+                label: Text(t.settingsNavPrivacy),
               ),
               NavigationRailDestination(
-                icon: Icon(Icons.devices_outlined),
-                selectedIcon: Icon(Icons.devices),
-                label: Text('Sessions'),
+                icon: const Icon(Icons.devices_outlined),
+                selectedIcon: const Icon(Icons.devices),
+                label: Text(t.settingsNavSessions),
               ),
               NavigationRailDestination(
-                icon: Icon(Icons.vpn_key_outlined),
-                selectedIcon: Icon(Icons.vpn_key),
-                label: Text('API Keys'),
+                icon: const Icon(Icons.vpn_key_outlined),
+                selectedIcon: const Icon(Icons.vpn_key),
+                label: Text(t.settingsNavApiKeys),
               ),
             ],
           ),

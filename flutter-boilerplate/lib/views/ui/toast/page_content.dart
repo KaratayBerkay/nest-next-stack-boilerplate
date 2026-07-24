@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../components/ui/button/button.dart';
+import '../../../l10n/app_localizations.dart';
 
 class ToastDemoPage extends StatelessWidget {
   final String lang;
@@ -7,8 +8,9 @@ class ToastDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Toast')),
+      appBar: AppBar(title: Text(t.uiToastTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

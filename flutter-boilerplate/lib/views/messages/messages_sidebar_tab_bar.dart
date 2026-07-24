@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class MessagesSidebarTabBar extends StatelessWidget {
   final int activeTab;
@@ -15,6 +16,7 @@ class MessagesSidebarTabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -35,7 +37,7 @@ class MessagesSidebarTabBar extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  'Conversations',
+                  t.messagesChats,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight:
@@ -61,7 +63,7 @@ class MessagesSidebarTabBar extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  'Friends',
+                  t.messagesFriends,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight:

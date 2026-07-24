@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../components/ui/button/button.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class DocumentItem {
   final String id;
@@ -40,6 +41,7 @@ class _DocumentUploadSectionState extends State<DocumentUploadSection> {
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
 
+    final t = AppLocalizations.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -71,13 +73,13 @@ class _DocumentUploadSectionState extends State<DocumentUploadSection> {
                         color: colors.fgMuted,
                       ),
                       const SizedBox(height: 8),
-                      const Text('Drag & drop files here'),
+                      Text(t.formsUploadsDragDrop),
                       const SizedBox(height: 8),
                       Button(
                         variant: ButtonVariant.outline,
                         size: ButtonSize.sm,
                         onPressed: widget.onBrowse,
-                        child: const Text('Browse Files'),
+                        child: Text(t.formsUploadsBrowseFiles),
                       ),
                     ],
                   ),

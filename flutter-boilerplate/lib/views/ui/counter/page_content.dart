@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../components/ui/counter/counter.dart';
+import '../../../l10n/app_localizations.dart';
 
 class CounterDemoPage extends StatelessWidget {
   final String lang;
@@ -7,8 +8,9 @@ class CounterDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Counter')),
+      appBar: AppBar(title: Text(t.uiCounterTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [

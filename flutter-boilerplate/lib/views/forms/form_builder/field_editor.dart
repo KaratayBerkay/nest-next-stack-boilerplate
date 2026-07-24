@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/input/input.dart';
+import '../../../l10n/app_localizations.dart';
 import 'form_builder_utils.dart';
 
 class FieldEditor extends StatefulWidget {
@@ -55,6 +55,7 @@ class _FieldEditorState extends State<FieldEditor> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -103,11 +104,11 @@ class _FieldEditorState extends State<FieldEditor> {
                 Button(
                   variant: ButtonVariant.ghost,
                   onPressed: widget.onDelete,
-                  child: const Text('Delete'),
+                  child: Text(t.formsCommonDelete),
                 ),
                 const SizedBox(width: 8),
                 Button(
-                  child: const Text('Save'),
+                  child: Text(t.formsCommonSave),
                   onPressed: () {
                     widget.onSave(
                       widget.field.copyWith(

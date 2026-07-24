@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class TablePageContent extends StatelessWidget {
   final String lang;
@@ -10,9 +11,10 @@ class TablePageContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Table')),
+      appBar: AppBar(title: Text(t.uiTableTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

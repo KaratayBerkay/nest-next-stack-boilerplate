@@ -6,6 +6,7 @@ import '../../api/client/posts/actions.dart';
 import '../../api/client/posts/query.dart';
 import '../../components/ui/avatar/avatar.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class PostDetailPageContent extends ConsumerWidget {
   final String lang;
@@ -19,13 +20,14 @@ class PostDetailPageContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
     ref.watch(postProvider(postId));
     ref.watch(postCommentsProvider(postId));
 
     return TierGate(
       freeWidget: Scaffold(
-        appBar: AppBar(title: const Text('Post')),
-        body: const Center(child: Text('Upgrade to view post details')),
+        appBar: AppBar(title: Text(t.postsDetail)),
+        body: Center(child: Text(t.postsUpgradeDetail)),
       ),
       basicWidget: _PostDetailView(postId: postId, lang: lang),
       mediumWidget: _PostDetailView(postId: postId, lang: lang),
@@ -43,11 +45,12 @@ class _PostDetailView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final postAsync = ref.watch(postProvider(postId));
     final commentController = TextEditingController();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Post')),
+      appBar: AppBar(title: Text(t.postsDetail)),
       body: postAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
@@ -86,9 +89,12 @@ class _PostDetailView extends ConsumerWidget {
                   ],
                   const SizedBox(height: 16),
                   const Divider(),
-                  const Text(
-                    'Comments',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  Text(
+                    t.postsCommentsHeading,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   ref.watch(postCommentsProvider(postId)).when(
@@ -101,7 +107,7 @@ class _PostDetailView extends ConsumerWidget {
                             ? Padding(
                                 padding: const EdgeInsets.all(16),
                                 child: Text(
-                                  'No comments yet',
+                                  t.postsNoComments,
                                   style: TextStyle(color: colors.fgMuted),
                                 ),
                               )
@@ -158,9 +164,9 @@ class _PostDetailView extends ConsumerWidget {
                   Expanded(
                     child: TextField(
                       controller: commentController,
-                      decoration: const InputDecoration(
-                        hintText: 'Write a comment...',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        hintText: t.postsCommentHint,
+                        border: const OutlineInputBorder(),
                         isDense: true,
                       ),
                     ),

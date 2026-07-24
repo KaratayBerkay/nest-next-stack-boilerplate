@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 
 class ErrorBoundaryDemoPage extends StatefulWidget {
   final String lang;
@@ -13,8 +14,9 @@ class _ErrorBoundaryDemoPageState extends State<ErrorBoundaryDemoPage> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Error Boundary')),
+      appBar: AppBar(title: Text(t.uiErrorBoundaryTitle)),
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,

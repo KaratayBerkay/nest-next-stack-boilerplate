@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../components/ui/input/input.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class InputPageContent extends StatefulWidget {
   final String lang;
@@ -33,9 +34,10 @@ class _InputPageContentState extends State<InputPageContent> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Input')),
+      appBar: AppBar(title: Text(t.uiInputTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

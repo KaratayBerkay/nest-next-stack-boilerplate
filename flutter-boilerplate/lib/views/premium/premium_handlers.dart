@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/client/premium/query.dart';
+import '../../l10n/app_localizations.dart';
 
 void exportStatsCSV(WidgetRef ref, BuildContext context) {
   final stats = ref.read(premiumStatsProvider).asData?.value;
@@ -20,9 +21,10 @@ void exportStatsCSV(WidgetRef ref, BuildContext context) {
     )
     ..writeln('Growth Rate,${growth.growthRate}%');
 
+  final t = AppLocalizations.of(context);
   Clipboard.setData(ClipboardData(text: csv.toString()));
   ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text('CSV content copied to clipboard')),
+    SnackBar(content: Text(t.premiumCsvCopied)),
   );
 }
 

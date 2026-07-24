@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../components/ui/pagination/pagination.dart';
+import '../../../l10n/app_localizations.dart';
 
 class PaginationDemoPage extends StatelessWidget {
   final String lang;
@@ -7,8 +8,9 @@ class PaginationDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Pagination')),
+      appBar: AppBar(title: Text(t.uiPaginationTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

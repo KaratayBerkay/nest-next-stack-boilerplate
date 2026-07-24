@@ -7,6 +7,7 @@ import '../../../api/client/users/search.dart';
 import '../../../components/ui/avatar/avatar.dart';
 import '../../../components/ui/empty/empty.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class UsersListPageContent extends ConsumerStatefulWidget {
   final String lang;
@@ -25,11 +26,12 @@ class _UsersListPageContentState extends ConsumerState<UsersListPageContent> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final friendsAsync = ref.watch(friendsListProvider);
     final searchAsync = ref.watch(searchUsersProvider(_query));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Users')),
+      appBar: AppBar(title: Text(t.usersTitle)),
       body: Column(
         children: [
           Padding(
@@ -37,7 +39,7 @@ class _UsersListPageContentState extends ConsumerState<UsersListPageContent> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search users...',
+                hintText: t.usersSearchHint,
                 prefixIcon: const Icon(Icons.search),
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -54,8 +56,8 @@ class _UsersListPageContentState extends ConsumerState<UsersListPageContent> {
                     error: (e, _) => Center(child: Text('Error: $e')),
                     data: (friends) {
                       if (friends.isEmpty) {
-                        return const EmptyWidget(
-                          title: 'No friends yet',
+                        return EmptyWidget(
+                          title: t.usersNoFriends,
                           icon: Icons.people_outline,
                         );
                       }
@@ -79,7 +81,9 @@ class _UsersListPageContentState extends ConsumerState<UsersListPageContent> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                friends[i].isOnline ? 'Online' : 'Offline',
+                                friends[i].isOnline
+                                    ? t.usersOnline
+                                    : t.usersOffline,
                                 style: TextStyle(
                                   color: colors.fgMuted,
                                   fontSize: 12,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/drawer/drawer.dart';
+import '../../../l10n/app_localizations.dart';
 
 class DrawerDemoPage extends StatelessWidget {
   final String lang;
@@ -9,8 +10,9 @@ class DrawerDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Drawer')),
+      appBar: AppBar(title: Text(t.uiDrawerTitle)),
       drawer: const DrawerWidget(
         child: Column(
           children: [

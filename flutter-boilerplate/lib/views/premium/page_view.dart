@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/client/premium/query.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class PremiumPageContent extends ConsumerWidget {
   final String lang;
@@ -28,6 +29,7 @@ class _FreePremiumView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -36,13 +38,13 @@ class _FreePremiumView extends StatelessWidget {
           children: [
             Icon(Icons.workspace_premium, size: 64, color: colors.warning),
             const SizedBox(height: 16),
-            const Text(
-              'Upgrade to Premium',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Text(
+              t.premiumUpgradeToPremium,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
-              'Get access to exclusive features and insights.',
+              t.premiumExclusiveFeatures,
               style: TextStyle(color: colors.fgMuted),
               textAlign: TextAlign.center,
             ),
@@ -50,7 +52,7 @@ class _FreePremiumView extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: () {},
               icon: const Icon(Icons.arrow_forward),
-              label: const Text('View Plans'),
+              label: Text(t.premiumViewPlans),
               style: ElevatedButton.styleFrom(
                 backgroundColor: colors.brand,
                 foregroundColor: colors.fg,
@@ -78,6 +80,7 @@ class _BasicPremiumViewState extends ConsumerState<_BasicPremiumView> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final statsAsync = ref.watch(premiumStatsProvider);
 
     if (!_loaded) {
@@ -85,7 +88,7 @@ class _BasicPremiumViewState extends ConsumerState<_BasicPremiumView> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Load stats to see premium insights'),
+            Text(t.premiumLoadStats),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () => setState(() => _loaded = true),
@@ -93,7 +96,7 @@ class _BasicPremiumViewState extends ConsumerState<_BasicPremiumView> {
                 backgroundColor: colors.brand,
                 foregroundColor: colors.fg,
               ),
-              child: const Text('Load Stats'),
+              child: Text(t.premiumLoadStats),
             ),
           ],
         ),
@@ -130,6 +133,7 @@ class _MediumPremiumViewState extends ConsumerState<_MediumPremiumView> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final statsAsync = ref.watch(premiumStatsProvider);
     final growthAsync = ref.watch(growthStatsProvider);
 
@@ -141,9 +145,9 @@ class _MediumPremiumViewState extends ConsumerState<_MediumPremiumView> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
-            'Premium Stats',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            t.premiumStatsTitle,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           statsAsync.when(
@@ -153,9 +157,9 @@ class _MediumPremiumViewState extends ConsumerState<_MediumPremiumView> {
             data: (stats) => _StatsGrid(stats: stats),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'Growth Stats',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            t.premiumGrowthStatsTitle,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           growthAsync.when(
@@ -204,15 +208,17 @@ class _PremiumPremiumViewState extends ConsumerState<_PremiumPremiumView> {
       )
       ..writeln('Growth Rate,${growth.growthRate}%');
 
+    final t = AppLocalizations.of(context);
     Clipboard.setData(ClipboardData(text: csv.toString()));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('CSV content copied to clipboard')),
+      SnackBar(content: Text(t.premiumCsvCopied)),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final statsAsync = ref.watch(premiumStatsProvider);
     final growthAsync = ref.watch(growthStatsProvider);
 
@@ -226,10 +232,10 @@ class _PremiumPremiumViewState extends ConsumerState<_PremiumPremiumView> {
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Premium Stats',
-                  style: TextStyle(
+                  t.premiumStatsTitle,
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -237,7 +243,7 @@ class _PremiumPremiumViewState extends ConsumerState<_PremiumPremiumView> {
               ),
               IconButton(
                 icon: Icon(Icons.download, color: colors.brand),
-                tooltip: 'Export CSV',
+                tooltip: t.premiumExportCsv,
                 onPressed: _exportCSV,
               ),
             ],
@@ -250,9 +256,9 @@ class _PremiumPremiumViewState extends ConsumerState<_PremiumPremiumView> {
             data: (stats) => _StatsGrid(stats: stats),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'Growth Stats',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            t.premiumGrowthStatsTitle,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           growthAsync.when(
@@ -275,24 +281,25 @@ class _StatsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     return Wrap(
       spacing: 12,
       runSpacing: 12,
       children: [
         _StatCard(
-          title: 'Total Users',
+          title: t.premiumTotalUsers,
           value: '${stats.totalUsers}',
           icon: Icons.people,
           color: colors.brand,
         ),
         _StatCard(
-          title: 'Active Subs',
+          title: t.premiumActiveSubs,
           value: '${stats.activeSubscriptions}',
           icon: Icons.subscriptions,
           color: colors.success,
         ),
         _StatCard(
-          title: 'Monthly Revenue',
+          title: t.premiumRevenue,
           value: '\$${stats.monthlyRevenue.toStringAsFixed(0)}',
           icon: Icons.attach_money,
           color: colors.warning,
@@ -310,24 +317,25 @@ class _GrowthStatsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     return Wrap(
       spacing: 12,
       runSpacing: 12,
       children: [
         _StatCard(
-          title: 'New Users (Month)',
+          title: t.premiumNewUsersMonth,
           value: '${growth.newUsersThisMonth}',
           icon: Icons.person_add,
           color: colors.info,
         ),
         _StatCard(
-          title: 'New Subs (Month)',
+          title: t.premiumNewSubsMonth,
           value: '${growth.newSubscriptionsThisMonth}',
           icon: Icons.trending_up,
           color: colors.success,
         ),
         _StatCard(
-          title: 'Growth Rate',
+          title: t.premiumGrowthRate,
           value: '${growth.growthRate.toStringAsFixed(1)}%',
           icon: Icons.show_chart,
           color: colors.warning,

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class UiLayout extends StatefulWidget {
   final List<UiCategory> categories;
   final int initialIndex;
@@ -36,9 +38,10 @@ class _UiLayoutState extends State<UiLayout>
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('UI Components'),
+        title: Text(t.uiPageTitle),
         bottom: TabBar(
           controller: _controller,
           isScrollable: true,

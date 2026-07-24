@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../components/ui/accordion/accordion.dart';
+import '../../../l10n/app_localizations.dart';
 
 class AccordionDemoPage extends StatelessWidget {
   final String lang;
@@ -7,8 +8,9 @@ class AccordionDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Accordion')),
+      appBar: AppBar(title: Text(t.uiAccordionTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [

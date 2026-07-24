@@ -8,6 +8,7 @@ import '../../../components/ui/button/button.dart';
 import '../../../components/ui/toast/toast.dart';
 import '../../../constants/theme.dart';
 import '../../../hooks/use_auth.dart';
+import '../../../l10n/app_localizations.dart';
 
 final _profileProvider = FutureProvider((ref) async {
   final server = ref.read(profileGetServerProvider);
@@ -21,12 +22,13 @@ class SettingsAccountPageContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
     final colors = AppColors.of(context);
     final profileAsync = ref.watch(_profileProvider);
     final user = ref.watch(currentUserProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Account')),
+      appBar: AppBar(title: Text(t.settingsAccountHeading)),
       body: profileAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),

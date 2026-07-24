@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/form_text_field.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../validators/forms/schema.dart' as forms;
 
 class FormsApiKeyPageContent extends ConsumerStatefulWidget {
@@ -30,9 +31,10 @@ class _FormsApiKeyPageContentState
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('API Key Manager')),
+      appBar: AppBar(title: Text(t.formsApiKeyHeading)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -59,7 +61,7 @@ class _FormsApiKeyPageContentState
                     ),
                     const SizedBox(height: 12),
                     Button(
-                      child: const Text('Generate Key'),
+                      child: Text(t.formsApiKeyGenerate),
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {}
                       },
@@ -72,7 +74,7 @@ class _FormsApiKeyPageContentState
           const SizedBox(height: 16),
           Card(
             child: ListTile(
-              title: const Text('Production Key'),
+              title: Text(t.formsApiKeyProductionKey),
               subtitle: Text(
                 'sk_prod_••••••••••••••••',
                 style: TextStyle(color: colors.fgMuted, fontSize: 12),

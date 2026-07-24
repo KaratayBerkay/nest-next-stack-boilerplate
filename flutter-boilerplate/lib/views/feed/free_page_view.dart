@@ -6,6 +6,7 @@ import '../../api/client/posts/query.dart';
 import '../../components/feed/post_card.dart';
 import '../../components/ui/empty/empty.dart';
 import '../../components/ui/spinner/spinner.dart';
+import '../../l10n/app_localizations.dart';
 
 class FreeFeedPage extends ConsumerWidget {
   final String lang;
@@ -14,6 +15,7 @@ class FreeFeedPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final postsAsync = ref.watch(feedProvider);
+    final t = AppLocalizations.of(context);
 
     return postsAsync.when(
       loading: () => const Column(
@@ -23,15 +25,15 @@ class FreeFeedPage extends ConsumerWidget {
         ],
       ),
       error: (err, _) => EmptyWidget(
-        title: 'Failed to load feed',
+        title: t.feedFailedToLoadPosts,
         description: err.toString(),
         icon: Icons.error_outline,
       ),
       data: (posts) {
         if (posts.isEmpty) {
-          return const EmptyWidget(
-            title: 'No posts yet',
-            description: 'Follow people to see their posts here.',
+          return EmptyWidget(
+            title: t.feedNoPostsYet,
+            description: t.feedEmptyDescription,
             icon: Icons.article_outlined,
           );
         }

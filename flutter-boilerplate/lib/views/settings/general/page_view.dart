@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../constants/i18n.dart';
 import '../../../constants/theme.dart';
 import '../../../hooks/use_theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class SettingsGeneralPageContent extends ConsumerWidget {
   final String lang;
@@ -32,9 +33,10 @@ class _GeneralSettings extends ConsumerWidget {
     final colors = AppColors.of(context);
     final themeMode = ref.watch(themeModeProvider);
     final currentLocale = ref.watch(localeProvider);
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('General')),
+      appBar: AppBar(title: Text(t.settingsGeneralHeading)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -42,9 +44,9 @@ class _GeneralSettings extends ConsumerWidget {
             child: Column(
               children: [
                 SwitchListTile(
-                  title: const Text('Dark Mode'),
+                  title: Text(t.settingsTheme),
                   subtitle: Text(
-                    'Toggle dark/light theme',
+                    t.settingsThemeDescription,
                     style: TextStyle(color: colors.fgMuted, fontSize: 12),
                   ),
                   value: themeMode == AppThemeMode.dark,
@@ -56,7 +58,7 @@ class _GeneralSettings extends ConsumerWidget {
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  title: const Text('Language'),
+                  title: Text(t.settingsLanguage),
                   subtitle: Text(
                     currentLocale.toUpperCase(),
                     style: TextStyle(color: colors.fgMuted, fontSize: 12),

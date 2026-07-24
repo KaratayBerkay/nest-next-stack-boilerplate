@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class DashboardShell extends StatelessWidget {
   const DashboardShell({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Dashboard')),
+      appBar: AppBar(title: Text(t.dashboardTitle)),
       body: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

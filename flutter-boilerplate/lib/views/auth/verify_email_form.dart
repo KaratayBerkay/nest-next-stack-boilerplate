@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../api/client/auth/actions.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class VerifyEmailForm extends ConsumerStatefulWidget {
   final String? token;
@@ -48,33 +49,43 @@ class _VerifyEmailFormState extends ConsumerState<VerifyEmailForm> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Column(
       children: [
         Text(
-          'Verify Email',
+          t.authFormVerifyEmailTitle,
           style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 12),
         if (_status == 'verifying')
-          const CircularProgressIndicator()
+          Column(
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 8),
+              Text(
+                t.authFormVerifyEmailVerifying,
+                style: TextStyle(color: colors.fgMuted, fontSize: 12),
+              ),
+            ],
+          )
         else if (_status == 'success')
           Column(
             children: [
               Text(
-                'Email verified successfully!',
+                t.authFormVerifyEmailSuccess,
                 style: TextStyle(color: colors.success, fontSize: 14),
               ),
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () => context.go('/auth/login'),
-                child: const Text('Sign In'),
+                child: Text(t.authFormVerifyEmailLoginLink),
               ),
             ],
           )
         else
           Text(
-            _errorMsg ?? 'Verification failed',
+            _errorMsg ?? t.authErrorsVerifyEmailFailed,
             style: TextStyle(color: colors.danger, fontSize: 14),
           ),
       ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 
 class TypographyDemoPage extends StatelessWidget {
   final String lang;
@@ -6,8 +7,9 @@ class TypographyDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Typography')),
+      appBar: AppBar(title: Text(t.uiTypographyTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

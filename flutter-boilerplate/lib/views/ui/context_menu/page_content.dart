@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 
 class ContextMenuDemoPage extends StatelessWidget {
   final String lang;
@@ -6,8 +7,9 @@ class ContextMenuDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Context Menu')),
+      appBar: AppBar(title: Text(t.uiContextMenuTitle)),
       body: Center(
         child: GestureDetector(
           onLongPress: () => showMenu(

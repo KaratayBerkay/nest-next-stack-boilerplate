@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 Map<String, dynamic> collectBillingData({
   required TextEditingController cardCtrl,
@@ -20,13 +21,14 @@ bool validateBillingForm(GlobalKey<FormState> formKey) {
 
 void showBillingSuccess(BuildContext context) {
   final colors = AppColors.of(context);
+  final t = AppLocalizations.of(context);
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Row(
         children: [
           Icon(Icons.check_circle, color: colors.success, size: 18),
           const SizedBox(width: 8),
-          const Text('Billing information updated'),
+          Text(t.formsBillingSaveSuccess),
         ],
       ),
     ),

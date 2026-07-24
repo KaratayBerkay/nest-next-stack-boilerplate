@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 
 class MenubarDemoPage extends StatelessWidget {
   final String lang;
@@ -6,8 +7,9 @@ class MenubarDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Menubar')),
+      appBar: AppBar(title: Text(t.uiMenubarTitle)),
       body: Column(
         children: [
           Container(

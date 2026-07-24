@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/form_text_field.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../validators/forms/schema.dart' as forms;
 
 class FormsFormBuilderPageContent extends ConsumerStatefulWidget {
@@ -30,8 +30,9 @@ class _FormsFormBuilderPageContentState
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Form Builder')),
+      appBar: AppBar(title: Text(t.formsFormBuilderPageTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -64,9 +65,10 @@ class _FormsFormBuilderPageContentState
                     ),
                   ),
                   if (_fields.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Center(child: Text('Add fields below')),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child:
+                          Center(child: Text(t.formsFormBuilderAddFieldsBelow)),
                     ),
                 ],
               ),
@@ -85,7 +87,7 @@ class _FormsFormBuilderPageContentState
                   ),
                   const SizedBox(height: 12),
                   Button(
-                    child: const Text('+ Text Field'),
+                    child: Text(t.formsFormBuilderAddTextField),
                     onPressed: () {
                       setState(
                         () => _fields.add(

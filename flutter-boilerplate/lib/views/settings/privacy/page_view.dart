@@ -3,6 +3,7 @@ import 'package:flutter_boilerplate/lib/tier_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class SettingsPrivacyPageContent extends ConsumerWidget {
   final String lang;
@@ -33,9 +34,10 @@ class _PrivacySettingsState extends State<_PrivacySettings> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Privacy')),
+      appBar: AppBar(title: Text(t.settingsPrivacyHeading)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -43,7 +45,7 @@ class _PrivacySettingsState extends State<_PrivacySettings> {
             child: Column(
               children: [
                 SwitchListTile(
-                  title: const Text('Online Status'),
+                  title: Text(t.settingsPrivacyOnlineStatus),
                   subtitle: Text(
                     'Show when you\'re online',
                     style: TextStyle(color: colors.fgMuted, fontSize: 12),
@@ -53,7 +55,7 @@ class _PrivacySettingsState extends State<_PrivacySettings> {
                 ),
                 const Divider(height: 1),
                 SwitchListTile(
-                  title: const Text('Read Receipts'),
+                  title: Text(t.settingsPrivacyReadReceipts),
                   subtitle: Text(
                     'Let others know you\'ve read their messages',
                     style: TextStyle(color: colors.fgMuted, fontSize: 12),
@@ -63,7 +65,7 @@ class _PrivacySettingsState extends State<_PrivacySettings> {
                 ),
                 const Divider(height: 1),
                 SwitchListTile(
-                  title: const Text('Friend Requests'),
+                  title: Text(t.settingsPrivacyFriendRequests),
                   subtitle: Text(
                     'Allow anyone to send you friend requests',
                     style: TextStyle(color: colors.fgMuted, fontSize: 12),

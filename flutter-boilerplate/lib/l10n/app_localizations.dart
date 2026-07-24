@@ -67,8 +67,8 @@ abstract class AppLocalizations {
 
   final String localeName;
 
-  static AppLocalizations? of(BuildContext context) {
-    return Localizations.of<AppLocalizations>(context, AppLocalizations);
+  static AppLocalizations of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
   }
 
   static const LocalizationsDelegate<AppLocalizations> delegate =
@@ -644,6 +644,36 @@ abstract class AppLocalizations {
   /// **'Verifying...'**
   String get authFormLoginMfaVerifying;
 
+  /// No description provided for @authFormLoginMfaDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit code from your authenticator app.'**
+  String get authFormLoginMfaDescription;
+
+  /// No description provided for @authFormLoginMfaCodePlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'000000'**
+  String get authFormLoginMfaCodePlaceholder;
+
+  /// No description provided for @authFormLoginMfaCodeLengthError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your 6-digit code'**
+  String get authFormLoginMfaCodeLengthError;
+
+  /// No description provided for @authFormLoginMfaVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'MFA verified'**
+  String get authFormLoginMfaVerified;
+
+  /// No description provided for @authFormLoginDifferentAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a different account'**
+  String get authFormLoginDifferentAccount;
+
   /// No description provided for @authFormRegisterTitle.
   ///
   /// In en, this message translates to:
@@ -800,6 +830,18 @@ abstract class AppLocalizations {
   /// **'Sign In'**
   String get authFormResetPasswordLoginLink;
 
+  /// No description provided for @authFormResetPasswordTokenLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Token'**
+  String get authFormResetPasswordTokenLabel;
+
+  /// No description provided for @authFormResetPasswordInvalidToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid or missing reset token.'**
+  String get authFormResetPasswordInvalidToken;
+
   /// No description provided for @authFormForgotPasswordTitle.
   ///
   /// In en, this message translates to:
@@ -830,11 +872,23 @@ abstract class AppLocalizations {
   /// **'Sending...'**
   String get authFormForgotPasswordSubmitting;
 
+  /// No description provided for @authFormForgotPasswordDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email to receive reset instructions.'**
+  String get authFormForgotPasswordDescription;
+
   /// No description provided for @authFormForgotPasswordSuccess.
   ///
   /// In en, this message translates to:
   /// **'If an account exists with this email, you will receive a password reset link.'**
   String get authFormForgotPasswordSuccess;
+
+  /// No description provided for @authFormForgotPasswordSuccessSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Password reset email sent'**
+  String get authFormForgotPasswordSuccessSent;
 
   /// No description provided for @authFormForgotPasswordLoginLink.
   ///
@@ -866,11 +920,41 @@ abstract class AppLocalizations {
   /// **'Sign In'**
   String get authFormVerifyEmailLoginLink;
 
+  /// No description provided for @authFormVerifyEmailDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the verification token sent to your email.'**
+  String get authFormVerifyEmailDescription;
+
+  /// No description provided for @authFormVerifyEmailTokenLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification Token'**
+  String get authFormVerifyEmailTokenLabel;
+
+  /// No description provided for @authFormVerifyEmailSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get authFormVerifyEmailSubmit;
+
   /// No description provided for @authSocialContinueWith.
   ///
   /// In en, this message translates to:
   /// **'Or continue with'**
   String get authSocialContinueWith;
+
+  /// No description provided for @authSocialGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Google'**
+  String get authSocialGoogle;
+
+  /// No description provided for @authSocialGitHub.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with GitHub'**
+  String get authSocialGitHub;
 
   /// No description provided for @authLoading.
   ///
@@ -1460,6 +1544,78 @@ abstract class AppLocalizations {
   /// **'Posts'**
   String get feedPosts;
 
+  /// No description provided for @postsHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Posts'**
+  String get postsHeading;
+
+  /// No description provided for @postsCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Post'**
+  String get postsCreate;
+
+  /// No description provided for @postsCreateSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Post'**
+  String get postsCreateSubmit;
+
+  /// No description provided for @postsTitleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get postsTitleLabel;
+
+  /// No description provided for @postsContentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Content'**
+  String get postsContentLabel;
+
+  /// No description provided for @postsDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Post'**
+  String get postsDetail;
+
+  /// No description provided for @postsUpgradeDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade to view post details'**
+  String get postsUpgradeDetail;
+
+  /// No description provided for @postsUpgradeView.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade to View Posts'**
+  String get postsUpgradeView;
+
+  /// No description provided for @postsCommentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Write a comment...'**
+  String get postsCommentHint;
+
+  /// No description provided for @postsCommentsHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Comments'**
+  String get postsCommentsHeading;
+
+  /// No description provided for @postsNoComments.
+  ///
+  /// In en, this message translates to:
+  /// **'No comments yet'**
+  String get postsNoComments;
+
+  /// No description provided for @postsDetailUpgradeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Post Details Available on Paid Plans'**
+  String get postsDetailUpgradeTitle;
+
   /// No description provided for @feedReactions.
   ///
   /// In en, this message translates to:
@@ -1489,6 +1645,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Network error'**
   String get feedNetworkError;
+
+  /// No description provided for @feedAiRecommendations.
+  ///
+  /// In en, this message translates to:
+  /// **'AI-powered recommendations'**
+  String get feedAiRecommendations;
+
+  /// No description provided for @feedPremiumTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium Feed'**
+  String get feedPremiumTitle;
+
+  /// No description provided for @feedPremiumDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Full premium feed experience with AI recommendations.'**
+  String get feedPremiumDescription;
+
+  /// No description provided for @feedBasicTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic Feed'**
+  String get feedBasicTitle;
+
+  /// No description provided for @feedBasicDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Your basic feed experience.'**
+  String get feedBasicDescription;
+
+  /// No description provided for @feedMediumTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium Feed'**
+  String get feedMediumTitle;
+
+  /// No description provided for @feedMediumDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Enhanced feed with analytics.'**
+  String get feedMediumDescription;
+
+  /// No description provided for @feedEmptyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow people to see their posts here.'**
+  String get feedEmptyDescription;
 
   /// No description provided for @findFriendsTitle.
   ///
@@ -1633,6 +1837,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign in to find friends'**
   String get findFriendsSignInRequired;
+
+  /// No description provided for @findFriendsFriendRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Friend Requests'**
+  String get findFriendsFriendRequests;
+
+  /// No description provided for @findFriendsUpgradeToSee.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade to see friend requests'**
+  String get findFriendsUpgradeToSee;
+
+  /// No description provided for @findFriendsSearchUsersHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search users...'**
+  String get findFriendsSearchUsersHint;
+
+  /// No description provided for @findFriendsSearchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Search failed'**
+  String get findFriendsSearchFailed;
+
+  /// No description provided for @findFriendsFilterBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by'**
+  String get findFriendsFilterBy;
+
+  /// No description provided for @findFriendsMutualFriendsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Mutual friends'**
+  String get findFriendsMutualFriendsLabel;
+
+  /// No description provided for @findFriendsNearby.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby'**
+  String get findFriendsNearby;
+
+  /// No description provided for @findFriendsSameInterests.
+  ///
+  /// In en, this message translates to:
+  /// **'Same interests'**
+  String get findFriendsSameInterests;
+
+  /// No description provided for @findFriendsSearchDifferentTerm.
+  ///
+  /// In en, this message translates to:
+  /// **'Try a different search term.'**
+  String get findFriendsSearchDifferentTerm;
+
+  /// No description provided for @findFriendsSentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent {time} ago'**
+  String findFriendsSentLabel(Object time);
 
   /// No description provided for @formsGalleryPageTitle.
   ///
@@ -5696,6 +5960,36 @@ abstract class AppLocalizations {
   /// **'Sign in to start messaging'**
   String get messagesSignInRequired;
 
+  /// No description provided for @messagesSearchConversations.
+  ///
+  /// In en, this message translates to:
+  /// **'Search conversations...'**
+  String get messagesSearchConversations;
+
+  /// No description provided for @messagesBasicDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic chat features coming soon'**
+  String get messagesBasicDescription;
+
+  /// No description provided for @messagesMediumDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium chat with file sharing'**
+  String get messagesMediumDescription;
+
+  /// No description provided for @messagesPremiumDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium chat with video calls'**
+  String get messagesPremiumDescription;
+
+  /// No description provided for @messagesSelectConversationDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a conversation from the sidebar to start chatting'**
+  String get messagesSelectConversationDescription;
+
   /// No description provided for @notificationTitle.
   ///
   /// In en, this message translates to:
@@ -5711,7 +6005,7 @@ abstract class AppLocalizations {
   /// No description provided for @notificationNoNotifications.
   ///
   /// In en, this message translates to:
-  /// **'No notifications yet'**
+  /// **'No notifications'**
   String get notificationNoNotifications;
 
   /// No description provided for @notificationEnablePush.
@@ -6038,6 +6332,12 @@ abstract class AppLocalizations {
   /// **'General'**
   String get settingsNavGeneral;
 
+  /// No description provided for @settingsGeneralSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Language, theme, preferences'**
+  String get settingsGeneralSubtitle;
+
   /// No description provided for @settingsNavAccount.
   ///
   /// In en, this message translates to:
@@ -6050,11 +6350,23 @@ abstract class AppLocalizations {
   /// **'Privacy'**
   String get settingsNavPrivacy;
 
+  /// No description provided for @settingsPrivacySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy settings, data sharing'**
+  String get settingsPrivacySubtitle;
+
   /// No description provided for @settingsNavBilling.
   ///
   /// In en, this message translates to:
   /// **'Billing'**
   String get settingsNavBilling;
+
+  /// No description provided for @settingsBillingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment methods, invoices, plan'**
+  String get settingsBillingSubtitle;
 
   /// No description provided for @settingsNavSessions.
   ///
@@ -6062,11 +6374,35 @@ abstract class AppLocalizations {
   /// **'Sessions'**
   String get settingsNavSessions;
 
+  /// No description provided for @settingsSessionsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Active sessions, device management'**
+  String get settingsSessionsSubtitle;
+
   /// No description provided for @settingsAccountHeading.
   ///
   /// In en, this message translates to:
   /// **'Account'**
   String get settingsAccountHeading;
+
+  /// No description provided for @settingsAccountSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile, avatar, name'**
+  String get settingsAccountSubtitle;
+
+  /// No description provided for @settingsAccountFreeHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade to edit your profile'**
+  String get settingsAccountFreeHeading;
+
+  /// No description provided for @settingsAccountFreeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Free accounts have limited profile options.'**
+  String get settingsAccountFreeDescription;
 
   /// No description provided for @settingsName.
   ///
@@ -6151,6 +6487,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Theme'**
   String get settingsTheme;
+
+  /// No description provided for @settingsThemeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle dark/light theme'**
+  String get settingsThemeDescription;
+
+  /// No description provided for @settingsFontSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Font Size'**
+  String get settingsFontSize;
+
+  /// No description provided for @settingsFontSizeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust text size'**
+  String get settingsFontSizeDescription;
+
+  /// No description provided for @settingsExperimentalFeatures.
+  ///
+  /// In en, this message translates to:
+  /// **'Experimental Features'**
+  String get settingsExperimentalFeatures;
+
+  /// No description provided for @settingsExperimentalFeaturesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Try upcoming features before release'**
+  String get settingsExperimentalFeaturesDescription;
 
   /// No description provided for @settingsDateDisplay.
   ///
@@ -6476,6 +6842,42 @@ abstract class AppLocalizations {
   /// **'Enter your nickname'**
   String get settingsPrivacyNicknamePlaceholder;
 
+  /// No description provided for @settingsPrivacyOnlineStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Online status'**
+  String get settingsPrivacyOnlineStatus;
+
+  /// No description provided for @settingsPrivacyReadReceipts.
+  ///
+  /// In en, this message translates to:
+  /// **'Read receipts'**
+  String get settingsPrivacyReadReceipts;
+
+  /// No description provided for @settingsPrivacyActivityStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity status'**
+  String get settingsPrivacyActivityStatus;
+
+  /// No description provided for @settingsPrivacyDataSharing.
+  ///
+  /// In en, this message translates to:
+  /// **'Data sharing'**
+  String get settingsPrivacyDataSharing;
+
+  /// No description provided for @settingsPrivacyProfileVisibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile visibility'**
+  String get settingsPrivacyProfileVisibility;
+
+  /// No description provided for @settingsPrivacyFriendRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Friend requests'**
+  String get settingsPrivacyFriendRequests;
+
   /// No description provided for @settingsPrivacyTwoFactor.
   ///
   /// In en, this message translates to:
@@ -6487,6 +6889,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add an extra layer of security to your account'**
   String get settingsPrivacyTwoFactorDesc;
+
+  /// No description provided for @notificationHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notificationHeading;
+
+  /// No description provided for @notificationFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get notificationFilterAll;
+
+  /// No description provided for @notificationFilterUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread'**
+  String get notificationFilterUnread;
+
+  /// No description provided for @notificationFilterMentions.
+  ///
+  /// In en, this message translates to:
+  /// **'Mentions'**
+  String get notificationFilterMentions;
+
+  /// No description provided for @notificationLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load'**
+  String get notificationLoadFailed;
+
+  /// No description provided for @notificationBasicFeatures.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic notification features'**
+  String get notificationBasicFeatures;
+
+  /// No description provided for @notificationMediumFeatures.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium notification features'**
+  String get notificationMediumFeatures;
+
+  /// No description provided for @notificationPremiumFeatures.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium notification features'**
+  String get notificationPremiumFeatures;
+
+  /// No description provided for @notificationAllCaughtUp.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re all caught up!'**
+  String get notificationAllCaughtUp;
+
+  /// No description provided for @notificationSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification settings'**
+  String get notificationSettings;
 
   /// No description provided for @settingsSettingsLink.
   ///
@@ -6547,6 +7009,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'API Keys'**
   String get settingsNavApiKeys;
+
+  /// No description provided for @settingsApiKeysSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage API keys'**
+  String get settingsApiKeysSubtitle;
 
   /// No description provided for @settingsApiKeysHeading.
   ///
@@ -6625,6 +7093,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'API key revoked'**
   String get settingsApiKeysRevoked;
+
+  /// No description provided for @settingsApiKeysCreating.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating...'**
+  String get settingsApiKeysCreating;
+
+  /// No description provided for @settingsCancelButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get settingsCancelButton;
+
+  /// No description provided for @settingsNoBillingInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'No billing info yet'**
+  String get settingsNoBillingInfo;
+
+  /// No description provided for @settingsBillingUpgradePrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade to a paid plan to see billing details.'**
+  String get settingsBillingUpgradePrompt;
+
+  /// No description provided for @settingsViewPlans.
+  ///
+  /// In en, this message translates to:
+  /// **'View Plans'**
+  String get settingsViewPlans;
 
   /// No description provided for @settingsApiKeysActive.
   ///
@@ -7885,6 +8383,1350 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Skip to content'**
   String get v1ShellSkipToContent;
+
+  /// No description provided for @checkoutSelectedPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected plan: {tier}'**
+  String checkoutSelectedPlan(Object tier);
+
+  /// No description provided for @checkoutPaymentMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment method'**
+  String get checkoutPaymentMethod;
+
+  /// No description provided for @checkoutFailedToInitPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to initialize payment system'**
+  String get checkoutFailedToInitPayment;
+
+  /// No description provided for @checkoutConfirmDowngradeSimple.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm downgrade'**
+  String get checkoutConfirmDowngradeSimple;
+
+  /// No description provided for @premiumUpgradeToPremium.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade to Premium'**
+  String get premiumUpgradeToPremium;
+
+  /// No description provided for @premiumExclusiveFeatures.
+  ///
+  /// In en, this message translates to:
+  /// **'Get access to exclusive features and insights.'**
+  String get premiumExclusiveFeatures;
+
+  /// No description provided for @premiumStatsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium Stats'**
+  String get premiumStatsTitle;
+
+  /// No description provided for @premiumGrowthStatsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Growth Stats'**
+  String get premiumGrowthStatsTitle;
+
+  /// No description provided for @premiumActiveSubs.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Subs'**
+  String get premiumActiveSubs;
+
+  /// No description provided for @premiumNewUsersMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'New Users (Month)'**
+  String get premiumNewUsersMonth;
+
+  /// No description provided for @premiumNewSubsMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'New Subs (Month)'**
+  String get premiumNewSubsMonth;
+
+  /// No description provided for @premiumGrowthRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Growth Rate'**
+  String get premiumGrowthRate;
+
+  /// No description provided for @premiumCsvCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'CSV content copied to clipboard'**
+  String get premiumCsvCopied;
+
+  /// No description provided for @shareShareLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Share Link'**
+  String get shareShareLink;
+
+  /// No description provided for @shareCopyLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Link'**
+  String get shareCopyLink;
+
+  /// No description provided for @shareLinkCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied to clipboard'**
+  String get shareLinkCopied;
+
+  /// No description provided for @shareNoImage.
+  ///
+  /// In en, this message translates to:
+  /// **'No image selected'**
+  String get shareNoImage;
+
+  /// No description provided for @shareFailedToLoadImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load image'**
+  String get shareFailedToLoadImage;
+
+  /// No description provided for @usersSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search users...'**
+  String get usersSearchHint;
+
+  /// No description provided for @usersAddFriend.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Friend'**
+  String get usersAddFriend;
+
+  /// No description provided for @usersNoFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'No friends yet'**
+  String get usersNoFriends;
+
+  /// No description provided for @usersOnline.
+  ///
+  /// In en, this message translates to:
+  /// **'Online'**
+  String get usersOnline;
+
+  /// No description provided for @usersOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get usersOffline;
+
+  /// No description provided for @usersProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get usersProfile;
+
+  /// No description provided for @adminSearchUsers.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Users'**
+  String get adminSearchUsers;
+
+  /// No description provided for @adminTypeToSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Type to search users'**
+  String get adminTypeToSearch;
+
+  /// No description provided for @adminNoUsersFor.
+  ///
+  /// In en, this message translates to:
+  /// **'No users found for \"{query}\"'**
+  String adminNoUsersFor(Object query);
+
+  /// No description provided for @adminSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Set'**
+  String get adminSet;
+
+  /// No description provided for @adminTierUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Tier updated'**
+  String get adminTierUpdated;
+
+  /// No description provided for @adminFailedToLoadLogs.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load logs'**
+  String get adminFailedToLoadLogs;
+
+  /// No description provided for @adminRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get adminRetry;
+
+  /// No description provided for @adminNoAuditLogs.
+  ///
+  /// In en, this message translates to:
+  /// **'No audit logs'**
+  String get adminNoAuditLogs;
+
+  /// No description provided for @timeJustNow.
+  ///
+  /// In en, this message translates to:
+  /// **'just now'**
+  String get timeJustNow;
+
+  /// No description provided for @timeMinutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes}m ago'**
+  String timeMinutesAgo(Object minutes);
+
+  /// No description provided for @timeHoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h ago'**
+  String timeHoursAgo(Object hours);
+
+  /// No description provided for @tierFree.
+  ///
+  /// In en, this message translates to:
+  /// **'Free'**
+  String get tierFree;
+
+  /// No description provided for @tierBasic.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic'**
+  String get tierBasic;
+
+  /// No description provided for @tierMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get tierMedium;
+
+  /// No description provided for @tierPremium.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium'**
+  String get tierPremium;
+
+  /// No description provided for @adminRequestId.
+  ///
+  /// In en, this message translates to:
+  /// **'Request ID'**
+  String get adminRequestId;
+
+  /// No description provided for @adminDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get adminDetails;
+
+  /// No description provided for @adminChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes'**
+  String get adminChanges;
+
+  /// No description provided for @adminByActor.
+  ///
+  /// In en, this message translates to:
+  /// **'by {name}'**
+  String adminByActor(Object name);
+
+  /// No description provided for @homeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Flutter Boilerplate'**
+  String get homeTitle;
+
+  /// No description provided for @homeWelcome.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to Flutter Boilerplate'**
+  String get homeWelcome;
+
+  /// No description provided for @homeViewPricing.
+  ///
+  /// In en, this message translates to:
+  /// **'View Pricing'**
+  String get homeViewPricing;
+
+  /// No description provided for @formsAdvancedPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced Patterns'**
+  String get formsAdvancedPageTitle;
+
+  /// No description provided for @formsApiKeyGenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate Key'**
+  String get formsApiKeyGenerate;
+
+  /// No description provided for @formsApiKeyProductionKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Production Key'**
+  String get formsApiKeyProductionKey;
+
+  /// No description provided for @formsCheckoutCheckoutAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Checkout & Address'**
+  String get formsCheckoutCheckoutAddress;
+
+  /// No description provided for @formsCheckoutContinuePayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue to Payment'**
+  String get formsCheckoutContinuePayment;
+
+  /// No description provided for @formsContentEditorUnsavedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsaved Changes'**
+  String get formsContentEditorUnsavedTitle;
+
+  /// No description provided for @formsEditableTableItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Item'**
+  String get formsEditableTableItem;
+
+  /// No description provided for @formsEditableTablePrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Price'**
+  String get formsEditableTablePrice;
+
+  /// No description provided for @formsEditableTableDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get formsEditableTableDelete;
+
+  /// No description provided for @formsElementsValidate.
+  ///
+  /// In en, this message translates to:
+  /// **'Validate'**
+  String get formsElementsValidate;
+
+  /// No description provided for @formsErrorLabServerError.
+  ///
+  /// In en, this message translates to:
+  /// **'Server Error'**
+  String get formsErrorLabServerError;
+
+  /// No description provided for @formsErrorLabValidationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Validation Error'**
+  String get formsErrorLabValidationError;
+
+  /// No description provided for @formsErrorLabNetworkTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Network Timeout'**
+  String get formsErrorLabNetworkTimeout;
+
+  /// No description provided for @formsErrorLabRateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate Limited'**
+  String get formsErrorLabRateLimited;
+
+  /// No description provided for @formsFieldStatesValidate.
+  ///
+  /// In en, this message translates to:
+  /// **'Validate'**
+  String get formsFieldStatesValidate;
+
+  /// No description provided for @formsFieldStatesVerify.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get formsFieldStatesVerify;
+
+  /// No description provided for @formsFieldStatesSetError.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Error'**
+  String get formsFieldStatesSetError;
+
+  /// No description provided for @formsFieldStatesSetHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Helper'**
+  String get formsFieldStatesSetHelper;
+
+  /// No description provided for @formsFieldStatesClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get formsFieldStatesClear;
+
+  /// No description provided for @formsFieldStatesTouch.
+  ///
+  /// In en, this message translates to:
+  /// **'Touch'**
+  String get formsFieldStatesTouch;
+
+  /// No description provided for @formsFieldStatesOnChange.
+  ///
+  /// In en, this message translates to:
+  /// **'On Change'**
+  String get formsFieldStatesOnChange;
+
+  /// No description provided for @formsFieldStatesOnBlur.
+  ///
+  /// In en, this message translates to:
+  /// **'On Blur'**
+  String get formsFieldStatesOnBlur;
+
+  /// No description provided for @formsFieldStatesOnSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'On Submit'**
+  String get formsFieldStatesOnSubmit;
+
+  /// No description provided for @formsFieldStatesLazy.
+  ///
+  /// In en, this message translates to:
+  /// **'Lazy'**
+  String get formsFieldStatesLazy;
+
+  /// No description provided for @formsFiltersAllCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'All Categories'**
+  String get formsFiltersAllCategories;
+
+  /// No description provided for @formsFiltersMarketing.
+  ///
+  /// In en, this message translates to:
+  /// **'Marketing'**
+  String get formsFiltersMarketing;
+
+  /// No description provided for @formsFiltersApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply Filters'**
+  String get formsFiltersApply;
+
+  /// No description provided for @formsFiltersResetBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get formsFiltersResetBtn;
+
+  /// No description provided for @formsFormBuilderNoFields.
+  ///
+  /// In en, this message translates to:
+  /// **'No fields yet. Add some fields below.'**
+  String get formsFormBuilderNoFields;
+
+  /// No description provided for @formsFormBuilderAddFieldsBelow.
+  ///
+  /// In en, this message translates to:
+  /// **'Add fields below'**
+  String get formsFormBuilderAddFieldsBelow;
+
+  /// No description provided for @formsFormBuilderTextFieldBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'+ Text Field'**
+  String get formsFormBuilderTextFieldBtn;
+
+  /// No description provided for @formsProfileChangeAvatar.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Avatar'**
+  String get formsProfileChangeAvatar;
+
+  /// No description provided for @formsProfileEmailNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Email Notifications'**
+  String get formsProfileEmailNotifications;
+
+  /// No description provided for @formsTeamInviteAddAnother.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Another'**
+  String get formsTeamInviteAddAnother;
+
+  /// No description provided for @formsTeamInviteUpgradePlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade Plan'**
+  String get formsTeamInviteUpgradePlan;
+
+  /// No description provided for @formsTeamInviteMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Member'**
+  String get formsTeamInviteMember;
+
+  /// No description provided for @formsTeamInviteAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin'**
+  String get formsTeamInviteAdmin;
+
+  /// No description provided for @formsTeamInviteMemberDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Member — Can view and edit assigned projects'**
+  String get formsTeamInviteMemberDesc;
+
+  /// No description provided for @formsTeamInviteAdminDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin — Full access to all projects and settings'**
+  String get formsTeamInviteAdminDesc;
+
+  /// No description provided for @formsTeamInviteViewerDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Viewer — Read-only access to assigned projects'**
+  String get formsTeamInviteViewerDesc;
+
+  /// No description provided for @formsUploadsUploadPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload Photo'**
+  String get formsUploadsUploadPhoto;
+
+  /// No description provided for @formsUploadsDragDropFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag & drop files here'**
+  String get formsUploadsDragDropFiles;
+
+  /// No description provided for @formsUploadsBrowseFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse Files'**
+  String get formsUploadsBrowseFiles;
+
+  /// No description provided for @formsUploadsAddImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Images'**
+  String get formsUploadsAddImages;
+
+  /// No description provided for @formsUploadsUploadImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload Images'**
+  String get formsUploadsUploadImages;
+
+  /// No description provided for @formsFormBuilderAddTextField.
+  ///
+  /// In en, this message translates to:
+  /// **'+ Text Field'**
+  String get formsFormBuilderAddTextField;
+
+  /// No description provided for @formsApiKeyPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'API Key Manager'**
+  String get formsApiKeyPageTitle;
+
+  /// No description provided for @formsTeamInviteRoleAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin'**
+  String get formsTeamInviteRoleAdmin;
+
+  /// No description provided for @formsTeamInviteRoleAdminDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin — Full access to all projects and settings'**
+  String get formsTeamInviteRoleAdminDescription;
+
+  /// No description provided for @formsErrorLabAuthError.
+  ///
+  /// In en, this message translates to:
+  /// **'Auth Error'**
+  String get formsErrorLabAuthError;
+
+  /// No description provided for @formsBillingPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Billing Form'**
+  String get formsBillingPageTitle;
+
+  /// No description provided for @formsBillingUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Billing information updated'**
+  String get formsBillingUpdated;
+
+  /// No description provided for @formsFiltersBusiness.
+  ///
+  /// In en, this message translates to:
+  /// **'Business'**
+  String get formsFiltersBusiness;
+
+  /// No description provided for @formsCheckoutPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Checkout & Address'**
+  String get formsCheckoutPageTitle;
+
+  /// No description provided for @formsCommonClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get formsCommonClear;
+
+  /// No description provided for @formsContentEditorPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Content Editor'**
+  String get formsContentEditorPageTitle;
+
+  /// No description provided for @formsCommonDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get formsCommonDelete;
+
+  /// No description provided for @formsFiltersDesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Design'**
+  String get formsFiltersDesign;
+
+  /// No description provided for @formsUploadsDragDrop.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag & drop files here'**
+  String get formsUploadsDragDrop;
+
+  /// No description provided for @formsEditableTablePageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Editable Table'**
+  String get formsEditableTablePageTitle;
+
+  /// No description provided for @formsErrorLabPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Error & Async States'**
+  String get formsErrorLabPageTitle;
+
+  /// No description provided for @formsFieldStatesPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Field States & Validation'**
+  String get formsFieldStatesPageTitle;
+
+  /// No description provided for @formsUploadsPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'File Uploads'**
+  String get formsUploadsPageTitle;
+
+  /// No description provided for @formsFiltersPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get formsFiltersPageTitle;
+
+  /// No description provided for @formsFormBuilderPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Form Builder'**
+  String get formsFormBuilderPageTitle;
+
+  /// No description provided for @formsElementsPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Form Elements'**
+  String get formsElementsPageTitle;
+
+  /// No description provided for @formsLayoutsPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Form Layouts'**
+  String get formsLayoutsPageTitle;
+
+  /// No description provided for @formsTeamInviteRoleMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Member'**
+  String get formsTeamInviteRoleMember;
+
+  /// No description provided for @formsTeamInviteRoleMemberDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Member — Can view and edit assigned projects'**
+  String get formsTeamInviteRoleMemberDescription;
+
+  /// No description provided for @formsCommonPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get formsCommonPreview;
+
+  /// No description provided for @formsApiKeyProduction.
+  ///
+  /// In en, this message translates to:
+  /// **'Production Key'**
+  String get formsApiKeyProduction;
+
+  /// No description provided for @formsCommonPublish.
+  ///
+  /// In en, this message translates to:
+  /// **'Publish'**
+  String get formsCommonPublish;
+
+  /// No description provided for @formsEditableTableQty.
+  ///
+  /// In en, this message translates to:
+  /// **'Qty'**
+  String get formsEditableTableQty;
+
+  /// No description provided for @formsCommonReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get formsCommonReset;
+
+  /// No description provided for @formsCommonSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get formsCommonSave;
+
+  /// No description provided for @formsCommonSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get formsCommonSearch;
+
+  /// No description provided for @formsLayoutsSendMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Send Message'**
+  String get formsLayoutsSendMessage;
+
+  /// No description provided for @formsCommonSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit'**
+  String get formsCommonSubmit;
+
+  /// No description provided for @formsTeamInvitePageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Team Invite'**
+  String get formsTeamInvitePageTitle;
+
+  /// No description provided for @formsFiltersTechnology.
+  ///
+  /// In en, this message translates to:
+  /// **'Technology'**
+  String get formsFiltersTechnology;
+
+  /// No description provided for @formsCommonUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get formsCommonUpdate;
+
+  /// No description provided for @formsBillingUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Billing'**
+  String get formsBillingUpdate;
+
+  /// No description provided for @formsCommonUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload'**
+  String get formsCommonUpload;
+
+  /// No description provided for @formsProfilePageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'User Profile'**
+  String get formsProfilePageTitle;
+
+  /// No description provided for @formsCommonValidate.
+  ///
+  /// In en, this message translates to:
+  /// **'Validate'**
+  String get formsCommonValidate;
+
+  /// No description provided for @formsCommonVerify.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get formsCommonVerify;
+
+  /// No description provided for @formsTeamInviteRoleViewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Viewer'**
+  String get formsTeamInviteRoleViewer;
+
+  /// No description provided for @formsTeamInviteRoleViewerDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Viewer — Read-only access to assigned projects'**
+  String get formsTeamInviteRoleViewerDescription;
+
+  /// No description provided for @formsTeamInviteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite Team Members'**
+  String get formsTeamInviteTitle;
+
+  /// No description provided for @formsTeamInviteEmailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email Address'**
+  String get formsTeamInviteEmailLabel;
+
+  /// No description provided for @formsTeamInviteRoleSelect.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Role'**
+  String get formsTeamInviteRoleSelect;
+
+  /// No description provided for @formsTeamInviteRoleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose what permissions invited members will have'**
+  String get formsTeamInviteRoleHint;
+
+  /// No description provided for @uiInputTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Input'**
+  String get uiInputTitle;
+
+  /// No description provided for @uiTableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Table'**
+  String get uiTableTitle;
+
+  /// No description provided for @uiScrollToBottomButtonHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Use scroll controller to jump to bottom'**
+  String get uiScrollToBottomButtonHint;
+
+  /// No description provided for @uiInputOtpEnterCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter verification code'**
+  String get uiInputOtpEnterCode;
+
+  /// No description provided for @aboutTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get aboutTitle;
+
+  /// No description provided for @plansTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Plans'**
+  String get plansTitle;
+
+  /// No description provided for @dashboardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dashboard'**
+  String get dashboardTitle;
+
+  /// No description provided for @galleryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get galleryTitle;
+
+  /// No description provided for @boomTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Error Trigger'**
+  String get boomTitle;
+
+  /// No description provided for @boomTrigger.
+  ///
+  /// In en, this message translates to:
+  /// **'Trigger Error'**
+  String get boomTrigger;
+
+  /// No description provided for @fallbackContactSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact support'**
+  String get fallbackContactSupport;
+
+  /// No description provided for @securityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Security'**
+  String get securityTitle;
+
+  /// No description provided for @securityTwoFactor.
+  ///
+  /// In en, this message translates to:
+  /// **'Two-Factor Authentication'**
+  String get securityTwoFactor;
+
+  /// No description provided for @securityChangePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Password'**
+  String get securityChangePassword;
+
+  /// No description provided for @securityActiveSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Sessions'**
+  String get securityActiveSessions;
+
+  /// No description provided for @settingsAddCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Card'**
+  String get settingsAddCard;
+
+  /// No description provided for @settingsChangePlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Plan'**
+  String get settingsChangePlan;
+
+  /// No description provided for @uiAccordionRichItemsPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rich Items'**
+  String get uiAccordionRichItemsPageTitle;
+
+  /// No description provided for @uiAccordionVariantsPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Accordion Variants'**
+  String get uiAccordionVariantsPageTitle;
+
+  /// No description provided for @demoCachingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Caching'**
+  String get demoCachingTitle;
+
+  /// No description provided for @demoCachingDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Data caching and revalidation strategies'**
+  String get demoCachingDescription;
+
+  /// No description provided for @demoClientDataTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Client Data'**
+  String get demoClientDataTitle;
+
+  /// No description provided for @demoClientDataDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Client-side data fetching, state management, and caching'**
+  String get demoClientDataDescription;
+
+  /// No description provided for @demoCsrTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Client-Side Rendering'**
+  String get demoCsrTitle;
+
+  /// No description provided for @demoCsrDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Client-side rendering with dynamic data fetching'**
+  String get demoCsrDescription;
+
+  /// No description provided for @demoCsrCookiesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CSR Cookies'**
+  String get demoCsrCookiesTitle;
+
+  /// No description provided for @demoCsrCookiesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Client-side cookie handling with document.cookie'**
+  String get demoCsrCookiesDescription;
+
+  /// No description provided for @demoDataFetchingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Data Fetching'**
+  String get demoDataFetchingTitle;
+
+  /// No description provided for @demoDataFetchingDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Data fetching patterns and best practices'**
+  String get demoDataFetchingDescription;
+
+  /// No description provided for @demoDynamicRoutesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dynamic Routes'**
+  String get demoDynamicRoutesTitle;
+
+  /// No description provided for @demoDynamicRoutesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Dynamic route segments and parameters'**
+  String get demoDynamicRoutesDescription;
+
+  /// No description provided for @demoFontsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fonts'**
+  String get demoFontsTitle;
+
+  /// No description provided for @demoFontsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom font loading, subsetting, and optimization'**
+  String get demoFontsDescription;
+
+  /// No description provided for @demoFormsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Forms'**
+  String get demoFormsTitle;
+
+  /// No description provided for @demoFormsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Form handling with validation and submission'**
+  String get demoFormsDescription;
+
+  /// No description provided for @demoFormPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Form Demo'**
+  String get demoFormPageTitle;
+
+  /// No description provided for @demoFormPageSignUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign Up'**
+  String get demoFormPageSignUp;
+
+  /// No description provided for @demoI18nTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'i18n Demo'**
+  String get demoI18nTitle;
+
+  /// No description provided for @demoI18nActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active: {locale}'**
+  String demoI18nActive(Object locale);
+
+  /// No description provided for @demoI18nDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Default: {lang}'**
+  String demoI18nDefault(Object lang);
+
+  /// No description provided for @demoImagesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Images'**
+  String get demoImagesTitle;
+
+  /// No description provided for @demoImagesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Image optimization, lazy loading, and responsive images'**
+  String get demoImagesDescription;
+
+  /// No description provided for @demoImagesPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Images Demo'**
+  String get demoImagesPageTitle;
+
+  /// No description provided for @demoImagesFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load image'**
+  String get demoImagesFailed;
+
+  /// No description provided for @demoLazyLoadingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lazy Loading'**
+  String get demoLazyLoadingTitle;
+
+  /// No description provided for @demoLazyLoadingDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Lazy loading components and data for performance'**
+  String get demoLazyLoadingDescription;
+
+  /// No description provided for @demoLazyLoadingPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lazy Loading'**
+  String get demoLazyLoadingPageTitle;
+
+  /// No description provided for @demoLazyLoadingLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Load Heavy Component'**
+  String get demoLazyLoadingLoad;
+
+  /// No description provided for @demoObservabilityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Observability'**
+  String get demoObservabilityTitle;
+
+  /// No description provided for @demoObservabilityDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Logging, monitoring, tracing, and error tracking'**
+  String get demoObservabilityDescription;
+
+  /// No description provided for @demoObservabilityPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Observability'**
+  String get demoObservabilityPageTitle;
+
+  /// No description provided for @demoPprTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Partial Prerendering'**
+  String get demoPprTitle;
+
+  /// No description provided for @demoPprDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Partial prerendering for hybrid static and dynamic content'**
+  String get demoPprDescription;
+
+  /// No description provided for @demoRequestMemoizationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Request Memoization'**
+  String get demoRequestMemoizationTitle;
+
+  /// No description provided for @demoScriptsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scripts'**
+  String get demoScriptsTitle;
+
+  /// No description provided for @demoScriptsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Third-party script loading with strategy and scheduling'**
+  String get demoScriptsDescription;
+
+  /// No description provided for @demoSearchParamsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Params'**
+  String get demoSearchParamsTitle;
+
+  /// No description provided for @demoSearchParamsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'URL search parameters and query string handling'**
+  String get demoSearchParamsDescription;
+
+  /// No description provided for @demoSeoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SEO'**
+  String get demoSeoTitle;
+
+  /// No description provided for @demoServerActionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Server Actions'**
+  String get demoServerActionsTitle;
+
+  /// No description provided for @demoServerActionsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Server-side form actions and data mutations'**
+  String get demoServerActionsDescription;
+
+  /// No description provided for @demoSseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Server-Sent Events'**
+  String get demoSseTitle;
+
+  /// No description provided for @demoSseDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Real-time updates via server-sent event streams'**
+  String get demoSseDescription;
+
+  /// No description provided for @demoSsrTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Server-Side Rendering'**
+  String get demoSsrTitle;
+
+  /// No description provided for @demoSsrDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Server-side rendering with dynamic data on each request'**
+  String get demoSsrDescription;
+
+  /// No description provided for @demoSsrCookiesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SSR Cookies'**
+  String get demoSsrCookiesTitle;
+
+  /// No description provided for @demoSsrCookiesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Server-side cookie reading and setting'**
+  String get demoSsrCookiesDescription;
+
+  /// No description provided for @demoStaticGenerationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Static Generation'**
+  String get demoStaticGenerationTitle;
+
+  /// No description provided for @demoThemingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Theming'**
+  String get demoThemingTitle;
+
+  /// No description provided for @demoThemingDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Application theming with light and dark mode support'**
+  String get demoThemingDescription;
+
+  /// No description provided for @demoThemePageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme Demo'**
+  String get demoThemePageTitle;
+
+  /// No description provided for @demoWsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'WebSockets'**
+  String get demoWsTitle;
+
+  /// No description provided for @demoWsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Real-time bidirectional communication over WebSockets'**
+  String get demoWsDescription;
+
+  /// No description provided for @demoWsPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'WebSocket Demo'**
+  String get demoWsPageTitle;
+
+  /// No description provided for @demoWsSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get demoWsSend;
+
+  /// No description provided for @galleryPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo #{id}'**
+  String galleryPhoto(Object id);
+
+  /// No description provided for @routingItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Item #{itemId}'**
+  String routingItem(Object itemId);
+
+  /// No description provided for @routingPost.
+  ///
+  /// In en, this message translates to:
+  /// **'Post #{postId}'**
+  String routingPost(Object postId);
+
+  /// No description provided for @formsFiltersNewestFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest First'**
+  String get formsFiltersNewestFirst;
+
+  /// No description provided for @formsFiltersOldestFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest First'**
+  String get formsFiltersOldestFirst;
+
+  /// No description provided for @formsFiltersMostPopular.
+  ///
+  /// In en, this message translates to:
+  /// **'Most Popular'**
+  String get formsFiltersMostPopular;
+
+  /// No description provided for @formsFiltersRelevance.
+  ///
+  /// In en, this message translates to:
+  /// **'Relevance'**
+  String get formsFiltersRelevance;
+
+  /// No description provided for @formsFiltersAllStatuses.
+  ///
+  /// In en, this message translates to:
+  /// **'All Statuses'**
+  String get formsFiltersAllStatuses;
+
+  /// No description provided for @formsFiltersStatusActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get formsFiltersStatusActive;
+
+  /// No description provided for @formsFiltersStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get formsFiltersStatusPending;
+
+  /// No description provided for @formsFiltersStatusArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get formsFiltersStatusArchived;
 }
 
 class _AppLocalizationsDelegate

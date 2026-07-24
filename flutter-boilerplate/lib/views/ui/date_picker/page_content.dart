@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../components/ui/input/date_input.dart';
 import '../../../components/ui/input/date_time_input.dart';
+import '../../../l10n/app_localizations.dart';
 
 class DatePickerDemoPage extends StatelessWidget {
   final String lang;
@@ -8,8 +9,9 @@ class DatePickerDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Date Picker')),
+      appBar: AppBar(title: Text(t.uiDatePickerTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/dialog/dialog_content.dart';
 import '../../../components/ui/dialog/dialog_title.dart';
+import '../../../l10n/app_localizations.dart';
 
 class DialogDemoPage extends StatelessWidget {
   final String lang;
@@ -10,8 +11,9 @@ class DialogDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Dialog')),
+      appBar: AppBar(title: Text(t.uiDialogTitle)),
       body: Center(
         child: Button(
           child: const Text('Open Dialog'),

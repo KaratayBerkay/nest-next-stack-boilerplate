@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 
 class ImageUploadDemoPage extends StatelessWidget {
   final String lang;
@@ -8,8 +9,9 @@ class ImageUploadDemoPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Image Upload')),
+      appBar: AppBar(title: Text(t.uiImageUploadTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

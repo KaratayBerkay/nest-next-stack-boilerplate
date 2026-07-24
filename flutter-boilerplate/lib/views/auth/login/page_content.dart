@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../api/client/auth/actions.dart';
 import '../../../components/ui/form_text_field.dart';
 import '../../../hooks/use_auth.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../types/auth/auth_request_types.dart';
 import '../../../validators/auth/schema.dart';
 
@@ -54,8 +55,10 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
+      appBar: AppBar(title: Text(t.authFormLoginTitle)),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -64,14 +67,14 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
             children: [
               FormTextField(
                 controller: _emailCtrl,
-                label: 'Email',
+                label: t.authFormLoginEmailLabel,
                 keyboardType: TextInputType.emailAddress,
                 validator: validateEmail,
               ),
               const SizedBox(height: 12),
               FormTextField(
                 controller: _passwordCtrl,
-                label: 'Password',
+                label: t.authFormLoginPasswordLabel,
                 obscureText: true,
                 validator: validatePassword,
               ),
@@ -98,15 +101,15 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text('Sign In'),
+                    : Text(t.authFormLoginSubmit),
               ),
               TextButton(
                 onPressed: () => context.go('/auth/register'),
-                child: const Text('Create account'),
+                child: Text(t.authFormLoginRegisterLink),
               ),
               TextButton(
                 onPressed: () => context.go('/auth/forgot-password'),
-                child: const Text('Forgot password?'),
+                child: Text(t.authFormLoginForgotPassword),
               ),
             ],
           ),

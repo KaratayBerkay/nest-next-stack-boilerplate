@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../components/ui/button/button.dart';
+import '../../../l10n/app_localizations.dart';
 
 class EditableTableRowActions extends StatelessWidget {
   final VoidCallback? onAdd;
@@ -16,6 +17,7 @@ class EditableTableRowActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Row(
       children: [
         if (canDelete && onDelete != null)
@@ -25,7 +27,7 @@ class EditableTableRowActions extends StatelessWidget {
               variant: ButtonVariant.danger,
               size: ButtonSize.sm,
               onPressed: onDelete,
-              child: const Text('Delete'),
+              child: Text(t.formsEditableTableDelete),
             ),
           ),
         if (onAdd != null)
@@ -33,7 +35,7 @@ class EditableTableRowActions extends StatelessWidget {
             variant: ButtonVariant.outline,
             size: ButtonSize.sm,
             onPressed: onAdd,
-            child: const Text('Add Row'),
+            child: Text(t.formsEditableTableAddRow),
           ),
       ],
     );

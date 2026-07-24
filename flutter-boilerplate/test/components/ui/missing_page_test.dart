@@ -4,11 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../test_helpers.dart';
 
 void main() {
-  testWidgets('MissingPage shows 404 and message', (tester) async {
+  testWidgets('MissingPage shows error and message', (tester) async {
     await pumpTestApp(tester, const MissingPage(lang: 'en'));
 
-    expect(find.text('404'), findsOneWidget);
-    expect(find.text('This resource could not be found.'), findsOneWidget);
-    expect(find.text('Go Home'), findsOneWidget);
+    expect(find.text('Not found'), findsOneWidget);
+    expect(find.text('This v1 resource does not exist.'), findsOneWidget);
+    expect(find.text('Back to v1 home'), findsOneWidget);
   });
 }

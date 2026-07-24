@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../components/ui/form_text_field.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../validators/auth/schema.dart' as auth;
 import '../../../validators/forms/schema.dart' as forms;
 
@@ -32,8 +33,9 @@ class _FormsAdvancedPageContentState
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Advanced Patterns')),
+      appBar: AppBar(title: Text(t.formsAdvancedPageTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -76,7 +78,7 @@ class _FormsAdvancedPageContentState
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {}
                       },
-                      child: const Text('Save'),
+                      child: Text(t.postsSave),
                     ),
                   ],
                 ),

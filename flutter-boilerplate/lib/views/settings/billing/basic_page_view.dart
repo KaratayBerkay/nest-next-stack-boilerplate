@@ -6,6 +6,7 @@ import '../../../components/ui/card/card.dart';
 import '../../../components/ui/card/card_content.dart';
 import '../../../components/ui/card/card_header.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class BasicSettingsBillingPage extends ConsumerWidget {
   final String lang;
@@ -15,9 +16,10 @@ class BasicSettingsBillingPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Billing')),
+      appBar: AppBar(title: Text(t.settingsBillingHeading)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

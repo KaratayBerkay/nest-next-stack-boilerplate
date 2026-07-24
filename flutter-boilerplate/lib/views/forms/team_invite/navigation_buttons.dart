@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../components/ui/button/button.dart';
+import '../../../l10n/app_localizations.dart';
 
 class NavigationButtons extends StatelessWidget {
   final int currentStep;
@@ -25,13 +26,14 @@ class NavigationButtons extends StatelessWidget {
     final isFirst = currentStep == 0;
     final isLast = currentStep == totalSteps - 1;
 
+    final t = AppLocalizations.of(context);
     return Row(
       children: [
         if (!isFirst)
           Button(
             variant: ButtonVariant.outline,
             onPressed: onBack,
-            child: const Text('Back'),
+            child: Text(t.uiBack),
           ),
         if (!isFirst) const SizedBox(width: 12),
         Expanded(
@@ -39,12 +41,12 @@ class NavigationButtons extends StatelessWidget {
               ? Button(
                   onPressed: canProceed ? onDone : null,
                   fullWidth: true,
-                  child: const Text('Send Invites'),
+                  child: Text(t.formsTeamInviteSend),
                 )
               : Button(
                   onPressed: canProceed ? onNext : null,
                   fullWidth: true,
-                  child: const Text('Next'),
+                  child: Text(t.settingsNext),
                 ),
         ),
       ],

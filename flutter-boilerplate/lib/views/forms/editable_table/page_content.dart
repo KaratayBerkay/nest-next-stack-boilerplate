@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../components/ui/button/button.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class FormsEditableTablePageContent extends ConsumerStatefulWidget {
   final String lang;
@@ -25,20 +26,30 @@ class _FormsEditableTablePageContentState
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final total = _rows.fold<double>(0, (sum, r) => sum + r.quantity * r.price);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Editable Table')),
+      appBar: AppBar(title: Text(t.formsEditableTableHeading)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Card(
             child: DataTable(
-              columns: const [
-                DataColumn(label: Text('Item')),
-                DataColumn(label: Text('Qty'), numeric: true),
-                DataColumn(label: Text('Price'), numeric: true),
-                DataColumn(label: Text('Total'), numeric: true),
+              columns: [
+                DataColumn(label: Text(t.formsEditableTableItem)),
+                DataColumn(
+                  label: Text(t.formsEditableTableQuantity),
+                  numeric: true,
+                ),
+                DataColumn(
+                  label: Text(t.formsEditableTablePrice),
+                  numeric: true,
+                ),
+                DataColumn(
+                  label: Text(t.formsEditableTableTotal),
+                  numeric: true,
+                ),
               ],
               rows: _rows
                   .map(
@@ -74,7 +85,7 @@ class _FormsEditableTablePageContentState
           ),
           const SizedBox(height: 16),
           Button(
-            child: const Text('Add Row'),
+            child: Text(t.formsEditableTableAddRow),
             onPressed: () {
               setState(
                 () => _rows.add(

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/form_text_field.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../validators/auth/schema.dart' as auth;
 
 class FormsTeamInvitePageContent extends ConsumerStatefulWidget {
@@ -42,8 +43,9 @@ class _FormsTeamInvitePageContentState
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Team Invite')),
+      appBar: AppBar(title: Text(t.formsTeamInvitePageTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -55,9 +57,9 @@ class _FormsTeamInvitePageContentState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Invite Team Members',
-                      style: TextStyle(
+                    Text(
+                      t.formsTeamInviteTitle,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -71,7 +73,7 @@ class _FormsTeamInvitePageContentState
                                 Expanded(
                                   child: FormTextField(
                                     controller: entry.value,
-                                    label: 'Email Address',
+                                    label: t.formsTeamInviteEmailLabel,
                                     validator: auth.validateEmail,
                                   ),
                                 ),
@@ -87,32 +89,35 @@ class _FormsTeamInvitePageContentState
                         ),
                     TextButton.icon(
                       icon: const Icon(Icons.add, size: 18),
-                      label: const Text('Add Another'),
+                      label: Text(t.formsTeamInviteAddAnother),
                       onPressed: _addEmail,
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
                       initialValue: _role,
-                      items: const [
+                      items: [
                         DropdownMenuItem(
                           value: 'member',
-                          child: Text('Member'),
+                          child: Text(t.formsTeamInviteRoleMember),
                         ),
-                        DropdownMenuItem(value: 'admin', child: Text('Admin')),
+                        DropdownMenuItem(
+                          value: 'admin',
+                          child: Text(t.formsTeamInviteRoleAdmin),
+                        ),
                         DropdownMenuItem(
                           value: 'viewer',
-                          child: Text('Viewer'),
+                          child: Text(t.formsTeamInviteRoleViewer),
                         ),
                       ],
                       onChanged: (v) => setState(() => _role = v!),
-                      decoration: const InputDecoration(
-                        labelText: 'Role',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: t.formsTeamInviteRoleLabel,
+                        border: const OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 16),
                     Button(
-                      child: const Text('Send Invites'),
+                      child: Text(t.formsTeamInviteSend),
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {}
                       },

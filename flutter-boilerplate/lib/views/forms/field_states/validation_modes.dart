@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../components/ui/input/input.dart';
+import '../../../l10n/app_localizations.dart';
 
 class ValidationModesExample extends StatefulWidget {
   const ValidationModesExample({super.key});
@@ -14,6 +15,7 @@ class _ValidationModesExampleState extends State<ValidationModesExample> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Column(
       children: [
         Row(
@@ -22,11 +24,23 @@ class _ValidationModesExampleState extends State<ValidationModesExample> {
             const SizedBox(width: 8),
             DropdownButton<String>(
               value: _mode,
-              items: const [
-                DropdownMenuItem(value: 'on-change', child: Text('On Change')),
-                DropdownMenuItem(value: 'on-blur', child: Text('On Blur')),
-                DropdownMenuItem(value: 'on-submit', child: Text('On Submit')),
-                DropdownMenuItem(value: 'lazy', child: Text('Lazy')),
+              items: [
+                DropdownMenuItem(
+                  value: 'on-change',
+                  child: Text(t.formsFieldStatesOnChange),
+                ),
+                DropdownMenuItem(
+                  value: 'on-blur',
+                  child: Text(t.formsFieldStatesOnBlur),
+                ),
+                DropdownMenuItem(
+                  value: 'on-submit',
+                  child: Text(t.formsFieldStatesOnSubmit),
+                ),
+                DropdownMenuItem(
+                  value: 'lazy',
+                  child: Text(t.formsFieldStatesLazy),
+                ),
               ],
               onChanged: (v) => setState(() => _mode = v!),
             ),
@@ -41,7 +55,7 @@ class _ValidationModesExampleState extends State<ValidationModesExample> {
         const SizedBox(height: 12),
         FilledButton(
           onPressed: _mode == 'on-submit' ? () {} : null,
-          child: const Text('Submit'),
+          child: Text(t.formsCommonSubmit),
         ),
       ],
     );

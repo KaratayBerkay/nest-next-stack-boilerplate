@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../components/ui/skeleton/skeleton.dart';
+import '../../../l10n/app_localizations.dart';
 
 class SkeletonDemoPage extends StatelessWidget {
   final String lang;
@@ -7,8 +8,9 @@ class SkeletonDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Skeleton')),
+      appBar: AppBar(title: Text(t.uiSkeletonTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [

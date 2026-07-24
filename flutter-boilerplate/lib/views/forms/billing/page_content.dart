@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/form_text_field.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../validators/billing/schema.dart' as billing;
 import '../../../validators/forms/schema.dart' as forms;
 
@@ -33,8 +34,9 @@ class _FormsBillingPageContentState
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Billing Form')),
+      appBar: AppBar(title: Text(t.formsBillingHeading)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -83,7 +85,7 @@ class _FormsBillingPageContentState
                     ),
                     const SizedBox(height: 16),
                     Button(
-                      child: const Text('Update Billing'),
+                      child: Text(t.formsBillingUpdateButton),
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {}
                       },

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/server/friends/suggested.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 import 'suggested_friends_panel.dart';
 
 class FreeFindFriendsContent extends ConsumerWidget {
@@ -18,6 +19,7 @@ class FreeFindFriendsContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -25,19 +27,19 @@ class FreeFindFriendsContent extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Find People',
+            t.findFriendsTitle,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
           ),
           const SizedBox(height: 4),
           Text(
-            'Upgrade to Basic to search for users.',
+            t.findFriendsUpgradeToSee,
             style: TextStyle(color: colors.fgMuted, fontSize: 13),
           ),
           const SizedBox(height: 24),
           Text(
-            'Suggested Friends',
+            t.findFriendsSuggestedFriends,
             style: TextStyle(
               color: colors.fgMuted,
               fontWeight: FontWeight.w600,

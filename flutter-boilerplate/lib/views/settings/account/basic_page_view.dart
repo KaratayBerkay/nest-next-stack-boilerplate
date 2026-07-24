@@ -5,6 +5,7 @@ import '../../../components/ui/avatar/avatar.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../constants/theme.dart';
 import '../../../hooks/use_auth.dart';
+import '../../../l10n/app_localizations.dart';
 
 class BasicSettingsAccountPage extends ConsumerStatefulWidget {
   final String lang;
@@ -37,9 +38,10 @@ class _BasicSettingsAccountPageState
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     final user = ref.watch(currentUserProvider);
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Account')),
+      appBar: AppBar(title: Text(t.settingsAccountHeading)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -65,12 +67,12 @@ class _BasicSettingsAccountPageState
           const SizedBox(height: 24),
           TextField(
             controller: _nameCtrl,
-            decoration: const InputDecoration(labelText: 'Display Name'),
+            decoration: InputDecoration(labelText: t.settingsName),
           ),
           const SizedBox(height: 24),
           Button(
             fullWidth: true,
-            child: const Text('Save Name'),
+            child: Text(t.settingsSave),
             onPressed: () {},
           ),
         ],

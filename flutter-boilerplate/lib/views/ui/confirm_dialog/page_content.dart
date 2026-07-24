@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/confirm_dialog/confirm_dialog.dart';
+import '../../../l10n/app_localizations.dart';
 
 class ConfirmDialogDemoPage extends StatelessWidget {
   final String lang;
@@ -9,8 +10,9 @@ class ConfirmDialogDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Confirm Dialog')),
+      appBar: AppBar(title: Text(t.uiConfirmDialogTitle)),
       body: Center(
         child: Button(
           child: const Text('Show Confirm'),

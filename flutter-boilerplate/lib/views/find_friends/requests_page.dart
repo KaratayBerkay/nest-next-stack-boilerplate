@@ -7,6 +7,7 @@ import '../../api/client/friends/query.dart';
 import '../../components/ui/avatar/avatar.dart';
 import '../../components/ui/empty/empty.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class FindFriendsRequestsPage extends ConsumerWidget {
   final String lang;
@@ -15,10 +16,11 @@ class FindFriendsRequestsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
     return TierGate(
       freeWidget: Scaffold(
-        appBar: AppBar(title: const Text('Friend Requests')),
-        body: const Center(child: Text('Upgrade to see friend requests')),
+        appBar: AppBar(title: Text(t.findFriendsFriendRequests)),
+        body: Center(child: Text(t.findFriendsUpgradeToSee)),
       ),
       basicWidget: _RequestsView(),
       mediumWidget: _RequestsView(),
@@ -31,17 +33,18 @@ class _RequestsView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final requestsAsync = ref.watch(friendRequestsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Friend Requests')),
+      appBar: AppBar(title: Text(t.findFriendsFriendRequests)),
       body: requestsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (requests) {
           if (requests.isEmpty) {
-            return const EmptyWidget(
-              title: 'No pending requests',
+            return EmptyWidget(
+              title: t.findFriendsNoRequests,
               icon: Icons.person_add_disabled,
             );
           }

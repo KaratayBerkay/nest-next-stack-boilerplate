@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class MessageDropdown extends StatelessWidget {
   final String lang;
   final int unreadCount;
@@ -13,12 +15,14 @@ class MessageDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
         IconButton(
           icon: const Icon(Icons.message_outlined),
-          tooltip: 'Messages',
+          tooltip: t.v1ShellNavMessages,
           onPressed: () => context.go('/v1/$lang/messages'),
         ),
         if (unreadCount > 0)

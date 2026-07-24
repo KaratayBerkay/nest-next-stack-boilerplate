@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../api/server/auth/request_password_reset.dart';
 import '../../../components/ui/toast/toast.dart';
+import '../../../l10n/app_localizations.dart';
 
 class ForgotPasswordPageContent extends ConsumerStatefulWidget {
   const ForgotPasswordPageContent({super.key});
@@ -26,14 +27,15 @@ class _ForgotPasswordPageContentState
   }
 
   Future<void> _handleSend() async {
+    final t = AppLocalizations.of(context);
     setState(() => _loading = true);
     try {
       await ref.read(requestPasswordResetServerProvider).call(_emailCtrl.text);
       if (!mounted) return;
       setState(() => _sent = true);
-      showToast(context, 'Password reset email sent');
+      showToast(context, t.authFormForgotPasswordSuccessSent);
     } catch (e) {
-      if (mounted) showToast(context, 'Failed: $e');
+      if (mounted) showToast(context, '$e');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -41,8 +43,10 @@ class _ForgotPasswordPageContentState
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Forgot Password')),
+      appBar: AppBar(title: Text(t.authFormForgotPasswordTitle)),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -58,14 +62,14 @@ class _ForgotPasswordPageContentState
                       size: 48,
                     ),
                     const SizedBox(height: 16),
-                    const Text(
-                      'Check your email for reset instructions.',
+                    Text(
+                      t.authFormForgotPasswordSuccess,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
                     FilledButton(
                       onPressed: () => context.go('/auth/login'),
-                      child: const Text('Back to Login'),
+                      child: Text(t.authFormForgotPasswordLoginLink),
                     ),
                   ],
                 )
@@ -74,7 +78,9 @@ class _ForgotPasswordPageContentState
                   children: [
                     TextField(
                       controller: _emailCtrl,
-                      decoration: const InputDecoration(labelText: 'Email'),
+                      decoration: InputDecoration(
+                        labelText: t.authFormForgotPasswordEmailLabel,
+                      ),
                       keyboardType: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: 20),
@@ -89,7 +95,7 @@ class _ForgotPasswordPageContentState
                                 color: Colors.white,
                               ),
                             )
-                          : const Text('Send Reset Link'),
+                          : Text(t.authFormForgotPasswordSubmit),
                     ),
                   ],
                 ),

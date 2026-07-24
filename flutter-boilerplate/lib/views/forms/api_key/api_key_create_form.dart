@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/form_text_field.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../validators/forms/schema.dart' as forms;
 
 class ApiKeyCreateForm extends StatefulWidget {
@@ -29,6 +30,7 @@ class _ApiKeyCreateFormState extends State<ApiKeyCreateForm> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Card(
       child: Padding(
@@ -69,7 +71,7 @@ class _ApiKeyCreateFormState extends State<ApiKeyCreateForm> {
               const SizedBox(height: 16),
               Button(
                 onPressed: widget.onGenerate,
-                child: const Text('Generate Key'),
+                child: Text(t.formsApiKeyGenerate),
               ),
             ],
           ),

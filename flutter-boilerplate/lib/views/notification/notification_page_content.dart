@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../components/ui/separator/separator.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../types/notification/notification_item.dart';
 import 'notification_item.dart';
 
@@ -23,22 +24,23 @@ class NotificationPageContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final filter = ref.watch(_notificationFilterProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: Text(t.notificationHeading),
         actions: [
           IconButton(
             icon: Icon(Icons.checklist, color: colors.fgMuted),
             onPressed: () =>
                 ref.read(_notificationFilterProvider.notifier).update('all'),
-            tooltip: 'Mark all as read',
+            tooltip: t.notificationMarkAllRead,
           ),
           IconButton(
             icon: Icon(Icons.settings, color: colors.fgMuted),
             onPressed: () {},
-            tooltip: 'Notification settings',
+            tooltip: t.notificationSettings,
           ),
         ],
       ),
@@ -53,7 +55,7 @@ class NotificationPageContent extends ConsumerWidget {
             child: Row(
               children: [
                 _FilterChip(
-                  label: 'All',
+                  label: t.notificationFilterAll,
                   selected: filter == 'all',
                   onTap: () => ref
                       .read(_notificationFilterProvider.notifier)
@@ -61,7 +63,7 @@ class NotificationPageContent extends ConsumerWidget {
                 ),
                 const SizedBox(width: 8),
                 _FilterChip(
-                  label: 'Unread',
+                  label: t.notificationFilterUnread,
                   selected: filter == 'unread',
                   onTap: () => ref
                       .read(_notificationFilterProvider.notifier)
@@ -69,7 +71,7 @@ class NotificationPageContent extends ConsumerWidget {
                 ),
                 const SizedBox(width: 8),
                 _FilterChip(
-                  label: 'Mentions',
+                  label: t.notificationFilterMentions,
                   selected: filter == 'mentions',
                   onTap: () => ref
                       .read(_notificationFilterProvider.notifier)
@@ -80,7 +82,7 @@ class NotificationPageContent extends ConsumerWidget {
                   onPressed: () {},
                   icon: Icon(Icons.done_all, size: 16, color: colors.brand),
                   label: Text(
-                    'Mark all read',
+                    t.notificationMarkAllRead,
                     style: TextStyle(fontSize: 12, color: colors.brand),
                   ),
                 ),

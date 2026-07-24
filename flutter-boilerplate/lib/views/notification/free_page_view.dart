@@ -7,6 +7,7 @@ import '../../api/client/notifications/query.dart';
 import '../../components/ui/empty/empty.dart';
 import '../../components/ui/spinner/spinner.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 import 'notification_item.dart';
 
 class FreeNotificationPage extends ConsumerWidget {
@@ -17,21 +18,22 @@ class FreeNotificationPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final notifAsync = ref.watch(notificationsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Notifications')),
+      appBar: AppBar(title: Text(t.notificationHeading)),
       body: notifAsync.when(
         loading: () => const Spinner(),
-        error: (_, __) => const EmptyWidget(
-          title: 'Failed to load',
+        error: (_, __) => EmptyWidget(
+          title: t.notificationLoadFailed,
           icon: Icons.error_outline,
         ),
         data: (items) {
           if (items.isEmpty) {
-            return const EmptyWidget(
-              title: 'No notifications',
-              description: 'You\'re all caught up!',
+            return EmptyWidget(
+              title: t.notificationNoNotifications,
+              description: t.notificationAllCaughtUp,
               icon: Icons.notifications_off_outlined,
             );
           }

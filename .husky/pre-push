@@ -1,5 +1,7 @@
 pnpm --dir next-js-boilerplate exec tsc --noEmit
 
-if git diff --cached --name-only HEAD | grep -q '^flutter-boilerplate/'; then
+upstream="$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || echo origin/main)"
+range_base="$(git merge-base HEAD "$upstream" 2>/dev/null || git rev-parse HEAD~1 2>/dev/null || echo HEAD)"
+if git diff --name-only "$range_base"..HEAD | grep -q '^flutter-boilerplate/'; then
   (cd flutter-boilerplate && flutter analyze && dart format --set-exit-if-changed lib/ test/)
 fi

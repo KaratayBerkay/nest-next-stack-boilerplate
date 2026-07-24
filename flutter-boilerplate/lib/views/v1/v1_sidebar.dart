@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class V1Sidebar extends StatelessWidget {
   final int selectedIndex;
   final void Function(int) onItemSelected;
@@ -12,30 +14,32 @@ class V1Sidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+
     return NavigationRail(
       selectedIndex: selectedIndex,
       onDestinationSelected: onItemSelected,
       labelType: NavigationRailLabelType.all,
-      destinations: const [
+      destinations: [
         NavigationRailDestination(
-          icon: Icon(Icons.home_outlined),
-          selectedIcon: Icon(Icons.home),
-          label: Text('Home'),
+          icon: const Icon(Icons.home_outlined),
+          selectedIcon: const Icon(Icons.home),
+          label: Text(t.v1ShellNavHome),
         ),
         NavigationRailDestination(
-          icon: Icon(Icons.article_outlined),
-          selectedIcon: Icon(Icons.article),
-          label: Text('Feed'),
+          icon: const Icon(Icons.article_outlined),
+          selectedIcon: const Icon(Icons.article),
+          label: Text(t.v1ShellNavFeed),
         ),
         NavigationRailDestination(
-          icon: Icon(Icons.forum_outlined),
-          selectedIcon: Icon(Icons.forum),
-          label: Text('Messages'),
+          icon: const Icon(Icons.forum_outlined),
+          selectedIcon: const Icon(Icons.forum),
+          label: Text(t.v1ShellNavMessages),
         ),
         NavigationRailDestination(
-          icon: Icon(Icons.settings_outlined),
-          selectedIcon: Icon(Icons.settings),
-          label: Text('Settings'),
+          icon: const Icon(Icons.settings_outlined),
+          selectedIcon: const Icon(Icons.settings),
+          label: Text(t.v1ShellNavSettings),
         ),
       ],
     );

@@ -5,6 +5,7 @@ import '../../api/client/messages/query.dart';
 import '../../components/ui/empty/empty.dart';
 import '../../components/ui/spinner/spinner.dart';
 import '../../hooks/use_auth.dart';
+import '../../l10n/app_localizations.dart';
 import 'chat_message_bubble.dart';
 
 class ChatMessageList extends ConsumerWidget {
@@ -20,18 +21,18 @@ class ChatMessageList extends ConsumerWidget {
     final currentUser = ref.watch(currentUserProvider);
     final messagesAsync =
         ref.watch(conversationMessagesProvider(conversationId));
+    final t = AppLocalizations.of(context);
 
     return messagesAsync.when(
       loading: () => const Spinner(),
-      error: (_, __) => const EmptyWidget(
-        title: 'Failed to load messages',
+      error: (_, __) => EmptyWidget(
+        title: t.messagesFailedToLoad,
         icon: Icons.error_outline,
       ),
       data: (messages) {
         if (messages.isEmpty) {
-          return const EmptyWidget(
-            title: 'No messages yet',
-            description: 'Send a message to start the conversation',
+          return EmptyWidget(
+            title: t.messagesNoMessages,
             icon: Icons.chat_outlined,
           );
         }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 
 class ResizableDemoPage extends StatelessWidget {
   final String lang;
@@ -6,8 +7,9 @@ class ResizableDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Resizable')),
+      appBar: AppBar(title: Text(t.uiResizableTitle)),
       body: Row(
         children: [
           Container(

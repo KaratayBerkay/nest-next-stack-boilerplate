@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../components/ui/empty/empty.dart';
+import '../../l10n/app_localizations.dart';
 
 class BasicFeedPage extends StatelessWidget {
   final String lang;
@@ -8,9 +9,10 @@ class BasicFeedPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const EmptyWidget(
-      title: 'Basic Feed',
-      description: 'Your basic feed experience.',
+    final t = AppLocalizations.of(context);
+    return EmptyWidget(
+      title: t.feedBasicTitle,
+      description: t.feedBasicDescription,
       icon: Icons.auto_awesome,
     );
   }

@@ -11,6 +11,7 @@ import '../../../components/ui/card/card.dart';
 import '../../../components/ui/card/card_content.dart';
 import '../../../components/ui/card/card_header.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class SettingsBillingPageContent extends ConsumerWidget {
   final String lang;
@@ -45,7 +46,13 @@ class SettingsBillingPageContent extends ConsumerWidget {
   }
 
   Widget _scaffold(BuildContext context, Widget body) {
-    return Scaffold(appBar: AppBar(title: const Text('Billing')), body: body);
+    final t = AppLocalizations.of(context);
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(t.settingsBillingHeading),
+      ),
+      body: body,
+    );
   }
 }
 
@@ -280,9 +287,10 @@ class _FreeBillingView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Billing')),
+      appBar: AppBar(title: Text(t.settingsBillingHeading)),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -291,18 +299,19 @@ class _FreeBillingView extends StatelessWidget {
             children: [
               Icon(Icons.credit_card_outlined, size: 48, color: colors.fgMuted),
               const SizedBox(height: 16),
-              const Text(
-                'No billing info yet',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Text(
+                t.settingsNoBillingInfo,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
-                'Upgrade to a paid plan to see billing details.',
+                t.settingsBillingUpgradePrompt,
                 style: TextStyle(color: colors.fgMuted),
               ),
               const SizedBox(height: 24),
               Button(
-                child: const Text('View Plans'),
+                child: Text(t.settingsViewPlans),
                 onPressed: () => context.go('/v1/$lang/plans'),
               ),
             ],

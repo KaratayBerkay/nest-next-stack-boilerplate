@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class MissingPage extends StatelessWidget {
   final String lang;
 
@@ -9,6 +11,8 @@ class MissingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = AppLocalizations.of(context);
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -16,7 +20,7 @@ class MissingPage extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              '404',
+              t.errorNotFound,
               style: theme.textTheme.displayLarge?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: theme.colorScheme.primary,
@@ -24,13 +28,13 @@ class MissingPage extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'This resource could not be found.',
+              t.errorV1NotFound,
               style: theme.textTheme.titleMedium,
             ),
             const SizedBox(height: 24),
             FilledButton(
               onPressed: () => context.go('/v1/$lang'),
-              child: const Text('Go Home'),
+              child: Text(t.errorBackToV1),
             ),
           ],
         ),

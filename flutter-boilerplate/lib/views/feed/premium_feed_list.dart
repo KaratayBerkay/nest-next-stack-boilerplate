@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../api/client/posts/query.dart';
 import '../../components/feed/post_card.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../types/feed/post.dart';
 import 'feed_base_view.dart';
 
@@ -44,6 +45,7 @@ class _PremiumBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -53,7 +55,7 @@ class _PremiumBanner extends StatelessWidget {
           Icon(Icons.auto_awesome, color: colors.brand, size: 20),
           const SizedBox(width: 8),
           Text(
-            'AI-powered recommendations',
+            t.feedAiRecommendations,
             style: TextStyle(
               color: colors.brand,
               fontWeight: FontWeight.w600,

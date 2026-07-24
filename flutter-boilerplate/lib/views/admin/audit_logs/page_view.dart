@@ -3,14 +3,15 @@ import 'package:flutter_boilerplate/lib/riverpod_compat.dart';
 
 import '../../../api/client/admin/query.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../types/admin/audit_types.dart';
 
-String _formatDate(DateTime d) {
+String _formatDate(DateTime d, AppLocalizations t) {
   final now = DateTime.now();
   final diff = now.difference(d);
-  if (diff.inMinutes < 1) return 'just now';
-  if (diff.inHours < 1) return '${diff.inMinutes}m ago';
-  if (diff.inDays < 1) return '${diff.inHours}h ago';
+  if (diff.inMinutes < 1) return t.timeJustNow;
+  if (diff.inHours < 1) return t.timeMinutesAgo(diff.inMinutes);
+  if (diff.inDays < 1) return t.timeHoursAgo(diff.inHours);
   return '${d.day}/${d.month}/${d.year} ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
 }
 
@@ -97,8 +98,9 @@ class _AdminAuditLogsPageContentState
     final params = _buildParams();
     final logsAsync = ref.watch(auditLogsProvider(params));
 
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Audit Logs')),
+      appBar: AppBar(title: Text(t.adminAuditLogTitle)),
       body: Column(
         children: [
           Container(
@@ -119,7 +121,7 @@ class _AdminAuditLogsPageContentState
                         (a) => DropdownMenuItem(
                           value: a,
                           child: Text(
-                            a.isEmpty ? 'All actions' : a,
+                            a.isEmpty ? t.adminAllActions : a,
                             style: const TextStyle(fontSize: 13),
                           ),
                         ),
@@ -139,7 +141,7 @@ class _AdminAuditLogsPageContentState
                         (l) => DropdownMenuItem(
                           value: l,
                           child: Text(
-                            l.isEmpty ? 'All levels' : l,
+                            l.isEmpty ? t.adminAllLevels : l,
                             style: const TextStyle(fontSize: 13),
                           ),
                         ),
@@ -157,7 +159,7 @@ class _AdminAuditLogsPageContentState
                     controller: _entityController,
                     onChanged: (_) => _onFilterChanged(),
                     decoration: InputDecoration(
-                      hintText: 'Entity type...',
+                      hintText: t.adminEntityType,
                       prefixIcon: const Icon(Icons.search, size: 18),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -182,11 +184,11 @@ class _AdminAuditLogsPageContentState
                   children: [
                     Icon(Icons.error_outline, size: 48, color: colors.danger),
                     const SizedBox(height: 8),
-                    const Text('Failed to load logs'),
+                    Text(t.adminFailedToLoadLogs),
                     const SizedBox(height: 8),
                     ElevatedButton(
                       onPressed: () => ref.invalidate(auditLogsProvider),
-                      child: const Text('Retry'),
+                      child: Text(t.adminRetry),
                     ),
                   ],
                 ),
@@ -200,7 +202,7 @@ class _AdminAuditLogsPageContentState
                         Icon(Icons.history, size: 48, color: colors.fgMuted),
                         const SizedBox(height: 8),
                         Text(
-                          'No audit logs',
+                          t.adminNoAuditLogs,
                           style: TextStyle(color: colors.fgMuted),
                         ),
                       ],
@@ -258,7 +260,7 @@ class _AdminAuditLogsPageContentState
                                   : null,
                             ),
                             Text(
-                              'Page ${_page + 1} of $totalPages',
+                              t.adminPageOf(_page + 1, totalPages),
                               style: const TextStyle(fontSize: 13),
                             ),
                             IconButton(
@@ -297,6 +299,7 @@ class _AuditLogRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Column(
       children: [
@@ -337,7 +340,7 @@ class _AuditLogRow extends StatelessWidget {
                       ),
                       if (log.actor != null)
                         Text(
-                          'by ${log.actor!.name}',
+                          t.adminByActor(log.actor!.name),
                           style: TextStyle(fontSize: 11, color: colors.fgMuted),
                         ),
                     ],
@@ -362,7 +365,7 @@ class _AuditLogRow extends StatelessWidget {
                     ),
                   ),
                 Text(
-                  _formatDate(log.createdAt),
+                  _formatDate(log.createdAt, t),
                   style: TextStyle(fontSize: 11, color: colors.fgMuted),
                 ),
                 const SizedBox(width: 4),
@@ -389,6 +392,7 @@ class _AuditLogDetail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final hasDiff = log.before != null || log.after != null;
 
     return Container(
@@ -403,32 +407,32 @@ class _AuditLogDetail extends StatelessWidget {
         children: [
           if (log.actor != null) ...[
             _DetailRow(
-              label: 'Actor',
+              label: t.adminActor,
               value: '${log.actor!.name} (${log.actor!.email})',
             ),
             const SizedBox(height: 4),
           ],
           if (log.summary != null) ...[
-            _DetailRow(label: 'Summary', value: log.summary!),
+            _DetailRow(label: t.adminSummary, value: log.summary!),
             const SizedBox(height: 4),
           ],
           if (log.ip != null) ...[
-            _DetailRow(label: 'IP', value: log.ip!),
+            _DetailRow(label: t.adminIp, value: log.ip!),
             const SizedBox(height: 4),
           ],
           if (log.requestId != null) ...[
-            _DetailRow(label: 'Request ID', value: log.requestId!),
+            _DetailRow(label: t.adminRequestId, value: log.requestId!),
             const SizedBox(height: 4),
           ],
           if (log.details != null) ...[
-            _DetailRow(label: 'Details', value: log.details!),
+            _DetailRow(label: t.adminDetails, value: log.details!),
             const SizedBox(height: 4),
           ],
           if (hasDiff) ...[
             const SizedBox(height: 8),
-            const Text(
-              'Changes',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            Text(
+              t.adminChanges,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 4),
             Row(
@@ -446,7 +450,7 @@ class _AuditLogDetail extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Before',
+                            t.adminBefore,
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
@@ -480,7 +484,7 @@ class _AuditLogDetail extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'After',
+                            t.adminAfter,
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,

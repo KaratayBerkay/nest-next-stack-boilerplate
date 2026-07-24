@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 final _formSections = <FormSection>[
   const FormSection(
@@ -69,10 +70,11 @@ class _FormsLayoutState extends State<FormsLayout>
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Forms'),
+        title: Text(t.formsGalleryTitle),
         bottom: TabBar(
           controller: _controller,
           isScrollable: true,

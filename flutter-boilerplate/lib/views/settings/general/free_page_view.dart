@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../constants/theme.dart';
-import '../../../hooks/use_theme.dart';
+import '../../../components/settings/theme_picker.dart';
+import '../../../l10n/app_localizations.dart';
 
 class FreeSettingsGeneralPage extends ConsumerWidget {
   final String lang;
@@ -11,27 +11,16 @@ class FreeSettingsGeneralPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = AppColors.of(context);
-    final themeMode = ref.watch(themeModeProvider);
-
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('General')),
+      appBar: AppBar(title: Text(t.settingsGeneralHeading)),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: [
+        children: const [
           Card(
-            child: SwitchListTile(
-              title: const Text('Dark Mode'),
-              subtitle: Text(
-                'Toggle dark/light theme',
-                style: TextStyle(color: colors.fgMuted, fontSize: 12),
-              ),
-              value: themeMode == AppThemeMode.dark,
-              onChanged: (value) {
-                ref
-                    .read(themeModeProvider.notifier)
-                    .setMode(value ? AppThemeMode.dark : AppThemeMode.light);
-              },
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: ThemePicker(),
             ),
           ),
         ],

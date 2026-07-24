@@ -6,7 +6,8 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('UI demo pages', () {
-    testWidgets('unauthenticated user is redirected from ui demo to login', (tester) async {
+    testWidgets('unauthenticated user is redirected from ui demo to login',
+        (tester) async {
       app.main();
       await tester.pumpAndSettle();
 

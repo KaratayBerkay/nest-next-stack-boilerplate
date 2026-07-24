@@ -1,26 +1,46 @@
 import 'package:flutter/material.dart';
 
-const List<DropdownMenuItem<String>> categoryItems = [
-  DropdownMenuItem(value: 'all', child: Text('All Categories')),
-  DropdownMenuItem(value: 'tech', child: Text('Technology')),
-  DropdownMenuItem(value: 'design', child: Text('Design')),
-  DropdownMenuItem(value: 'business', child: Text('Business')),
-  DropdownMenuItem(value: 'marketing', child: Text('Marketing')),
-];
+import '../../../l10n/app_localizations.dart';
 
-const List<DropdownMenuItem<String>> sortItems = [
-  DropdownMenuItem(value: 'newest', child: Text('Newest First')),
-  DropdownMenuItem(value: 'oldest', child: Text('Oldest First')),
-  DropdownMenuItem(value: 'popular', child: Text('Most Popular')),
-  DropdownMenuItem(value: 'relevance', child: Text('Relevance')),
-];
+List<DropdownMenuItem<String>> buildCategoryItems(AppLocalizations t) => [
+      DropdownMenuItem(value: 'all', child: Text(t.formsFiltersAllCategories)),
+      DropdownMenuItem(value: 'tech', child: Text(t.formsFiltersTechnology)),
+      DropdownMenuItem(value: 'design', child: Text(t.formsFiltersDesign)),
+      DropdownMenuItem(value: 'business', child: Text(t.formsFiltersBusiness)),
+      DropdownMenuItem(
+        value: 'marketing',
+        child: Text(t.formsFiltersMarketing),
+      ),
+    ];
 
-const List<DropdownMenuItem<String>> statusItems = [
-  DropdownMenuItem(value: 'all', child: Text('All Statuses')),
-  DropdownMenuItem(value: 'active', child: Text('Active')),
-  DropdownMenuItem(value: 'pending', child: Text('Pending')),
-  DropdownMenuItem(value: 'archived', child: Text('Archived')),
-];
+List<DropdownMenuItem<String>> buildSortItems(AppLocalizations t) => [
+      DropdownMenuItem(value: 'newest', child: Text(t.formsFiltersNewestFirst)),
+      DropdownMenuItem(value: 'oldest', child: Text(t.formsFiltersOldestFirst)),
+      DropdownMenuItem(
+        value: 'popular',
+        child: Text(t.formsFiltersMostPopular),
+      ),
+      DropdownMenuItem(
+        value: 'relevance',
+        child: Text(t.formsFiltersRelevance),
+      ),
+    ];
+
+List<DropdownMenuItem<String>> buildStatusItems(AppLocalizations t) => [
+      DropdownMenuItem(value: 'all', child: Text(t.formsFiltersAllStatuses)),
+      DropdownMenuItem(
+        value: 'active',
+        child: Text(t.formsFiltersStatusActive),
+      ),
+      DropdownMenuItem(
+        value: 'pending',
+        child: Text(t.formsFiltersStatusPending),
+      ),
+      DropdownMenuItem(
+        value: 'archived',
+        child: Text(t.formsFiltersStatusArchived),
+      ),
+    ];
 
 const List<String> tagOptions = [
   'Flutter',

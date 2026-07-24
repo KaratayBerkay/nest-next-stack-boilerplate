@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class DataFetchingDemo extends StatelessWidget {
   const DataFetchingDemo({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Data Fetching')),
-      body: const Center(
-        child: Text('Data fetching patterns and best practices'),
+      appBar: AppBar(title: Text(t.demoDataFetchingTitle)),
+      body: Center(
+        child: Text(t.demoDataFetchingDescription),
       ),
     );
   }

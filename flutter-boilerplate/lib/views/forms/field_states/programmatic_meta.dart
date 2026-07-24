@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../components/ui/input/input.dart';
+import '../../../l10n/app_localizations.dart';
 
 class ProgrammaticMetaExample extends StatefulWidget {
   const ProgrammaticMetaExample({super.key});
@@ -49,6 +50,7 @@ class _ProgrammaticMetaExampleState extends State<ProgrammaticMetaExample> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Column(
       children: [
         Input(
@@ -61,13 +63,19 @@ class _ProgrammaticMetaExampleState extends State<ProgrammaticMetaExample> {
         Wrap(
           spacing: 8,
           children: [
-            FilledButton(onPressed: _setError, child: const Text('Set Error')),
+            FilledButton(
+              onPressed: _setError,
+              child: Text(t.formsFieldStatesSetError),
+            ),
             OutlinedButton(
               onPressed: _setHelper,
-              child: const Text('Set Helper'),
+              child: Text(t.formsFieldStatesSetHelper),
             ),
-            TextButton(onPressed: _clear, child: const Text('Clear')),
-            FilledButton.tonal(onPressed: _touch, child: const Text('Touch')),
+            TextButton(onPressed: _clear, child: Text(t.formsCommonClear)),
+            FilledButton.tonal(
+              onPressed: _touch,
+              child: Text(t.formsFieldStatesTouch),
+            ),
           ],
         ),
         const SizedBox(height: 4),

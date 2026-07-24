@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../components/ui/empty/empty.dart';
+import '../../l10n/app_localizations.dart';
 
 class BasicFindFriendsPage extends StatelessWidget {
   final String lang;
@@ -9,9 +10,10 @@ class BasicFindFriendsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const EmptyWidget(
-      title: 'Basic Find Friends',
-      description: 'Your basic find friends experience.',
+    final t = AppLocalizations.of(context);
+    return EmptyWidget(
+      title: t.findFriendsTitle,
+      description: t.findFriendsUpgradeToSee,
       icon: Icons.people_outline,
     );
   }

@@ -7,6 +7,7 @@ import '../../components/ui/avatar/avatar.dart';
 import '../../components/ui/empty/empty.dart';
 import '../../components/ui/spinner/spinner.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class SuggestedFriendsPanel extends ConsumerWidget {
   final AsyncValue<List<SuggestedUser>> suggestedAsync;
@@ -22,17 +23,18 @@ class SuggestedFriendsPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
 
+    final t = AppLocalizations.of(context);
     return suggestedAsync.when(
       loading: () => const Spinner(),
       error: (err, _) => EmptyWidget(
-        title: 'Failed to load suggestions',
+        title: t.findFriendsFailedToLoadSuggestions,
         description: err.toString(),
         icon: Icons.error_outline,
       ),
       data: (users) {
         if (users.isEmpty) {
-          return const EmptyWidget(
-            title: 'No suggestions yet',
+          return EmptyWidget(
+            title: t.findFriendsNoSuggestions,
             description: 'Follow more people to get suggestions.',
             icon: Icons.people_outline,
           );
@@ -56,7 +58,7 @@ class SuggestedFriendsPanel extends ConsumerWidget {
               trailing: FilledButton.tonal(
                 onPressed: () =>
                     ref.read(friendActionsProvider).sendRequest(users[i].id),
-                child: const Text('Add Friend'),
+                child: Text(t.findFriendsAddFriend),
               ),
             ),
           ),

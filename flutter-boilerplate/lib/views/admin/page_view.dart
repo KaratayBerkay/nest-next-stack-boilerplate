@@ -7,6 +7,7 @@ import '../../api/client/admin/actions.dart';
 import '../../api/client/admin/query.dart';
 import '../../api/server/admin/search_users.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../types/admin/audit_types.dart';
 
 final _adminSearchQueryProvider = StateProvider<String>((ref) => '');
@@ -43,7 +44,9 @@ class _AdminPageContentState extends ConsumerState<AdminPageContent> {
       await ref.read(adminActionsProvider).setTier(userId, tier);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tier updated')),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).adminTierUpdated),
+          ),
         );
       }
     } catch (e) {
@@ -58,13 +61,14 @@ class _AdminPageContentState extends ConsumerState<AdminPageContent> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final query = ref.watch(_adminSearchQueryProvider);
     final searchResults = ref.watch(adminSearchUsersProvider(query));
     final logsAsync =
         ref.watch(auditLogsProvider(const AuditLogParams(take: 10)));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Admin')),
+      appBar: AppBar(title: Text(t.adminTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -74,16 +78,19 @@ class _AdminPageContentState extends ConsumerState<AdminPageContent> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Search Users',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Text(
+                    t.adminSearchUsers,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _searchController,
                     onChanged: _onSearchChanged,
                     decoration: InputDecoration(
-                      hintText: 'Search by name or email...',
+                      hintText: t.adminSearchPlaceholder,
                       prefixIcon: const Icon(Icons.search),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -103,10 +110,10 @@ class _AdminPageContentState extends ConsumerState<AdminPageContent> {
                     data: (users) {
                       if (users.isEmpty) {
                         if (query.isEmpty) {
-                          return const Text('Type to search users');
+                          return Text(t.adminTypeToSearch);
                         }
                         return Text(
-                          'No users found for "$query"',
+                          t.adminNoUsersFor(query),
                           style: TextStyle(color: colors.fgMuted),
                         );
                       }
@@ -127,9 +134,9 @@ class _AdminPageContentState extends ConsumerState<AdminPageContent> {
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'Audit Logs',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          Text(
+            t.adminAuditLogTitle,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           logsAsync.when(
@@ -139,7 +146,7 @@ class _AdminPageContentState extends ConsumerState<AdminPageContent> {
               child: Text('Error: $e', style: TextStyle(color: colors.danger)),
             ),
             data: (logs) {
-              if (logs.items.isEmpty) return const Text('No audit logs');
+              if (logs.items.isEmpty) return Text(t.adminNoAuditLogs);
               return Column(
                 children: logs.items
                     .take(10)
@@ -203,6 +210,7 @@ class _UserTierRowState extends State<_UserTierRow> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -234,11 +242,11 @@ class _UserTierRowState extends State<_UserTierRow> {
           DropdownButton<String>(
             value: _selectedTier,
             underline: const SizedBox(),
-            items: const [
-              DropdownMenuItem(value: 'FREE', child: Text('Free')),
-              DropdownMenuItem(value: 'BASIC', child: Text('Basic')),
-              DropdownMenuItem(value: 'MEDIUM', child: Text('Medium')),
-              DropdownMenuItem(value: 'PREMIUM', child: Text('Premium')),
+            items: [
+              DropdownMenuItem(value: 'FREE', child: Text(t.tierFree)),
+              DropdownMenuItem(value: 'BASIC', child: Text(t.tierBasic)),
+              DropdownMenuItem(value: 'MEDIUM', child: Text(t.tierMedium)),
+              DropdownMenuItem(value: 'PREMIUM', child: Text(t.tierPremium)),
             ],
             onChanged: (v) {
               if (v != null) setState(() => _selectedTier = v);
@@ -264,7 +272,7 @@ class _UserTierRowState extends State<_UserTierRow> {
                     foregroundColor: colors.fg,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                   ),
-                  child: const Text('Set'),
+                  child: Text(t.adminSet),
                 ),
         ],
       ),

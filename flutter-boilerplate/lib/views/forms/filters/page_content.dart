@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../components/ui/form_text_field.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../validators/forms/schema.dart' as forms;
 
 class FormsFiltersPageContent extends ConsumerStatefulWidget {
@@ -29,8 +29,9 @@ class _FormsFiltersPageContentState
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Filters')),
+      appBar: AppBar(title: Text(t.formsFiltersPageTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

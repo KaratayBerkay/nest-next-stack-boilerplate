@@ -8,6 +8,7 @@ import '../../components/ui/avatar/avatar.dart';
 import '../../components/ui/empty/empty.dart';
 import '../../components/ui/spinner/spinner.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class MessagesSidebarConversations extends ConsumerWidget {
   final String lang;
@@ -23,10 +24,11 @@ class MessagesSidebarConversations extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
     final convAsync = ref.watch(conversationsProvider);
+    final t = AppLocalizations.of(context);
 
     return convAsync.when(
       loading: () => const Spinner(),
-      error: (_, __) => const Center(child: Text('Failed to load')),
+      error: (_, __) => Center(child: Text(t.messagesFailedToLoad)),
       data: (convs) {
         final filtered = searchQuery.isEmpty
             ? convs
@@ -44,8 +46,8 @@ class MessagesSidebarConversations extends ConsumerWidget {
                 .toList();
 
         if (filtered.isEmpty) {
-          return const EmptyWidget(
-            title: 'No conversations',
+          return EmptyWidget(
+            title: t.messagesNoConversations,
             icon: Icons.forum_outlined,
           );
         }
@@ -97,7 +99,7 @@ class MessagesSidebarConversations extends ConsumerWidget {
                             children: [
                               Expanded(
                                 child: Text(
-                                  conv.lastMessage ?? 'No messages yet',
+                                  conv.lastMessage ?? t.messagesNoMessages,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(

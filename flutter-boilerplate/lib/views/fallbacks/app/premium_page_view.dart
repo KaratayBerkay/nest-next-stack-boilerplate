@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../components/ui/button/button.dart';
+import '../../../l10n/app_localizations.dart';
 import 'app_fallback_base.dart';
 
 class PremiumFallbackPage extends StatelessWidget {
@@ -17,6 +18,7 @@ class PremiumFallbackPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     switch (type) {
       case AppFallbackType.notFound:
         return AppFallbackBase(
@@ -31,14 +33,14 @@ class PremiumFallbackPage extends StatelessWidget {
                     Button(
                       fullWidth: true,
                       onPressed: onRetry,
-                      child: const Text('Go to home'),
+                      child: Text(t.errorBackHome),
                     ),
                     const SizedBox(height: 12),
                     Button(
                       variant: ButtonVariant.outline,
                       fullWidth: true,
                       onPressed: () {},
-                      child: const Text('Contact support'),
+                      child: Text(t.fallbackContactSupport),
                     ),
                   ],
                 )
@@ -47,7 +49,7 @@ class PremiumFallbackPage extends StatelessWidget {
       case AppFallbackType.error:
         return AppFallbackBase(
           icon: Icons.error_rounded,
-          title: 'Something went wrong',
+          title: t.errorSomethingWentWrong,
           message: message ??
               'An unexpected error occurred. Our team has been notified. If the problem persists, please reach out to support.',
           action: onRetry != null
@@ -57,14 +59,14 @@ class PremiumFallbackPage extends StatelessWidget {
                     Button(
                       fullWidth: true,
                       onPressed: onRetry,
-                      child: const Text('Try again'),
+                      child: Text(t.errorTryAgain),
                     ),
                     const SizedBox(height: 12),
                     Button(
                       variant: ButtonVariant.outline,
                       fullWidth: true,
                       onPressed: () {},
-                      child: const Text('Contact support'),
+                      child: Text(t.fallbackContactSupport),
                     ),
                   ],
                 )

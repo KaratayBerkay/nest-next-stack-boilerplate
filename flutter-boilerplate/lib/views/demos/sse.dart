@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class SseDemo extends StatelessWidget {
   const SseDemo({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Server-Sent Events')),
-      body: const Center(
-        child: Text('Real-time updates via server-sent event streams'),
+      appBar: AppBar(title: Text(t.demoSseTitle)),
+      body: Center(
+        child: Text(t.demoSseDescription),
       ),
     );
   }

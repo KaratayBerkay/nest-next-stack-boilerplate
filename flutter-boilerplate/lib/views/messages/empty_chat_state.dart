@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 
 import '../../components/ui/empty/empty.dart';
+import '../../l10n/app_localizations.dart';
 
 class EmptyChatState extends StatelessWidget {
   const EmptyChatState({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const EmptyWidget(
-      title: 'Select a conversation',
-      description: 'Choose a conversation from the sidebar to start chatting',
+    final t = AppLocalizations.of(context);
+    return EmptyWidget(
+      title: t.messagesSelectConversation,
+      description: t.messagesSelectConversationDescription,
       icon: Icons.chat_bubble_outline,
     );
   }

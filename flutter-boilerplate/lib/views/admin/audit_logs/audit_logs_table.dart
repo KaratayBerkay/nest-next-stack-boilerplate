@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../types/admin/audit_types.dart';
 import 'audit_logs_diff_view.dart';
 
-String _formatDate(DateTime d) {
+String _formatDate(DateTime d, AppLocalizations t) {
   final now = DateTime.now();
   final diff = now.difference(d);
-  if (diff.inMinutes < 1) return 'just now';
-  if (diff.inHours < 1) return '${diff.inMinutes}m ago';
-  if (diff.inDays < 1) return '${diff.inHours}h ago';
+  if (diff.inMinutes < 1) return t.timeJustNow;
+  if (diff.inHours < 1) return t.timeMinutesAgo(diff.inMinutes);
+  if (diff.inDays < 1) return t.timeHoursAgo(diff.inHours);
   return '${d.day}/${d.month}/${d.year} ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
 }
 
@@ -56,6 +57,7 @@ class _AuditLogsTableState extends State<AuditLogsTable> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     if (widget.items.isEmpty) {
       return Center(
@@ -64,7 +66,7 @@ class _AuditLogsTableState extends State<AuditLogsTable> {
           children: [
             Icon(Icons.history, size: 48, color: colors.fgMuted),
             const SizedBox(height: 8),
-            Text('No audit logs', style: TextStyle(color: colors.fgMuted)),
+            Text(t.adminNoAuditLogs, style: TextStyle(color: colors.fgMuted)),
           ],
         ),
       );
@@ -141,6 +143,7 @@ class _AuditLogTableRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Column(
       children: [
@@ -181,7 +184,7 @@ class _AuditLogTableRow extends StatelessWidget {
                       ),
                       if (log.actor != null)
                         Text(
-                          'by ${log.actor!.name}',
+                          t.adminByActor(log.actor!.name),
                           style: TextStyle(fontSize: 11, color: colors.fgMuted),
                         ),
                     ],
@@ -206,7 +209,7 @@ class _AuditLogTableRow extends StatelessWidget {
                     ),
                   ),
                 Text(
-                  _formatDate(log.createdAt),
+                  _formatDate(log.createdAt, t),
                   style: TextStyle(fontSize: 11, color: colors.fgMuted),
                 ),
                 const SizedBox(width: 4),

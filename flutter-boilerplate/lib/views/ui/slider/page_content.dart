@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 
 class SliderDemoPage extends StatefulWidget {
   final String lang;
@@ -14,8 +15,9 @@ class _SliderDemoPageState extends State<SliderDemoPage> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Slider')),
+      appBar: AppBar(title: Text(t.uiSliderTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

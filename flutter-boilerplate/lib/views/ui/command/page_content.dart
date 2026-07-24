@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../components/ui/command/command.dart';
+import '../../../l10n/app_localizations.dart';
 
 class CommandDemoPage extends StatelessWidget {
   final String lang;
@@ -7,8 +8,9 @@ class CommandDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Command')),
+      appBar: AppBar(title: Text(t.uiCommandTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [

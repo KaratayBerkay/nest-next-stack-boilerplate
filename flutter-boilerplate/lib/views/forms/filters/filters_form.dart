@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-
 import '../../../components/ui/input/input.dart';
+import '../../../l10n/app_localizations.dart';
 import 'constants.dart';
 import 'filter_section.dart';
 import 'use_filters_form.dart';
@@ -24,22 +24,23 @@ class _FiltersFormState extends State<FiltersForm> {
   @override
   Widget build(BuildContext context) {
     final state = _formManager.state;
+    final t = AppLocalizations.of(context);
     return ListenableBuilder(
       listenable: _formManager,
       builder: (context, _) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Filter Controls',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            Text(
+              t.formsFiltersHeading,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             FilterSection(
-              title: 'Search',
+              title: t.formsFiltersSearch,
               child: Input(
-                label: 'Search',
-                hintText: 'Search items...',
+                label: t.formsFiltersSearch,
+                hintText: t.formsFiltersSearchPlaceholder,
                 prefixIcon: const Icon(Icons.search),
                 controller: TextEditingController.fromValue(
                   TextEditingValue(text: state.search),
@@ -49,10 +50,10 @@ class _FiltersFormState extends State<FiltersForm> {
             ),
             const SizedBox(height: 12),
             FilterSection(
-              title: 'Category',
+              title: t.formsFiltersCategory,
               child: DropdownButtonFormField<String>(
                 initialValue: state.category,
-                items: categoryItems,
+                items: buildCategoryItems(t),
                 onChanged: (v) => _formManager.updateCategory(v!),
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
@@ -62,10 +63,10 @@ class _FiltersFormState extends State<FiltersForm> {
             ),
             const SizedBox(height: 12),
             FilterSection(
-              title: 'Sort By',
+              title: t.formsFiltersSortBy,
               child: DropdownButtonFormField<String>(
                 initialValue: state.sort,
-                items: sortItems,
+                items: buildSortItems(t),
                 onChanged: (v) => _formManager.updateSort(v!),
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
@@ -75,10 +76,10 @@ class _FiltersFormState extends State<FiltersForm> {
             ),
             const SizedBox(height: 12),
             FilterSection(
-              title: 'Status',
+              title: t.formsFiltersStatus,
               child: DropdownButtonFormField<String>(
                 initialValue: state.status,
-                items: statusItems,
+                items: buildStatusItems(t),
                 onChanged: (v) => _formManager.updateStatus(v!),
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
@@ -88,7 +89,7 @@ class _FiltersFormState extends State<FiltersForm> {
             ),
             const SizedBox(height: 12),
             FilterSection(
-              title: 'Tags',
+              title: t.formsFiltersTags,
               child: Wrap(
                 spacing: 6,
                 runSpacing: 6,
@@ -115,12 +116,12 @@ class _FiltersFormState extends State<FiltersForm> {
               children: [
                 FilledButton(
                   onPressed: () {},
-                  child: const Text('Apply Filters'),
+                  child: Text(t.formsFiltersApply),
                 ),
                 const SizedBox(width: 8),
                 OutlinedButton(
                   onPressed: _formManager.reset,
-                  child: const Text('Reset'),
+                  child: Text(t.formsCommonReset),
                 ),
               ],
             ),

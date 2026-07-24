@@ -6,6 +6,7 @@ import '../../../components/ui/form_text_field.dart';
 import '../../../components/ui/input/input.dart';
 import '../../../components/ui/switch/switch.dart';
 import '../../../components/ui/textarea/textarea.dart';
+import '../../../l10n/app_localizations.dart';
 
 class FormsElementsPageContent extends ConsumerStatefulWidget {
   final String lang;
@@ -32,8 +33,9 @@ class _FormsElementsPageContentState
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Form Elements')),
+      appBar: AppBar(title: Text(t.formsElementsHeading)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -82,7 +84,7 @@ class _FormsElementsPageContentState
                           onPressed: () {
                             if (_formKey.currentState!.validate()) {}
                           },
-                          child: const Text('Submit'),
+                          child: Text(t.formsFormBuilderSubmitPreview),
                         ),
                       ],
                     ),

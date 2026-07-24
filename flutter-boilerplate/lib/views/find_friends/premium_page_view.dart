@@ -9,6 +9,7 @@ import '../../api/server/users/search.dart';
 import '../../components/ui/empty/empty.dart';
 import '../../components/ui/spinner/spinner.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../types/messages/friend_request_types.dart';
 import 'pending_request_card.dart';
 import 'suggested_friends_panel.dart';
@@ -23,6 +24,7 @@ class PremiumFindFriendsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final suggestedAsync = ref.watch(suggestedFriendsProvider);
     final requestsAsync = ref.watch(friendRequestsProvider);
     final searchState = ref.watch(friendSearchProvider);
@@ -31,7 +33,7 @@ class PremiumFindFriendsPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Find Friends'),
+        title: Text(t.findFriendsTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.filter_list),
@@ -46,7 +48,7 @@ class PremiumFindFriendsPage extends ConsumerWidget {
             child: TextField(
               controller: searchState.controller,
               decoration: InputDecoration(
-                hintText: 'Search users by name or email...',
+                hintText: t.findFriendsSearchUsersHint,
                 prefixIcon: const Icon(Icons.search),
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -116,18 +118,19 @@ class PremiumFindFriendsPage extends ConsumerWidget {
     WidgetRef ref,
     AsyncValue<List<UserSearchResult>> resultsAsync,
   ) {
+    final t = AppLocalizations.of(context);
     return resultsAsync.when(
       loading: () => const Spinner(),
       error: (err, _) => EmptyWidget(
-        title: 'Search failed',
+        title: t.findFriendsSearchFailed,
         description: err.toString(),
         icon: Icons.error_outline,
       ),
       data: (users) {
         if (users.isEmpty) {
-          return const EmptyWidget(
-            title: 'No users found',
-            description: 'Try a different search term.',
+          return EmptyWidget(
+            title: t.findFriendsNoUsersFound,
+            description: t.findFriendsSearchDifferentTerm,
             icon: Icons.search_off,
           );
         }
@@ -182,27 +185,31 @@ class PremiumFindFriendsPage extends ConsumerWidget {
   }
 
   void _showFilterSheet(BuildContext context) {
+    final t = AppLocalizations.of(context);
     showModalBottomSheet<void>(
       context: context,
-      builder: (_) => const Padding(
-        padding: EdgeInsets.all(24),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Filter by', style: TextStyle(fontWeight: FontWeight.w600)),
-            SizedBox(height: 16),
+            Text(
+              t.findFriendsFilterBy,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 16),
             ListTile(
-              leading: Icon(Icons.people),
-              title: Text('Mutual friends'),
-              trailing: Icon(Icons.check),
+              leading: const Icon(Icons.people),
+              title: Text(t.findFriendsMutualFriendsLabel),
+              trailing: const Icon(Icons.check),
             ),
             ListTile(
-              leading: Icon(Icons.location_on),
-              title: Text('Nearby'),
+              leading: const Icon(Icons.location_on),
+              title: Text(t.findFriendsNearby),
             ),
             ListTile(
-              leading: Icon(Icons.school),
-              title: Text('Same interests'),
+              leading: const Icon(Icons.school),
+              title: Text(t.findFriendsSameInterests),
             ),
           ],
         ),

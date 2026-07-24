@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../api/server/users/search.dart';
 import '../../components/ui/avatar/avatar.dart';
+import '../../l10n/app_localizations.dart';
 
 class UserSearchCard extends StatelessWidget {
   final UserSearchResult user;
@@ -17,6 +18,7 @@ class UserSearchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Card(
       child: ListTile(
         leading: Avatar(
@@ -27,7 +29,7 @@ class UserSearchCard extends StatelessWidget {
         trailing: onAdd != null
             ? FilledButton.tonal(
                 onPressed: onAdd,
-                child: const Text('Add Friend'),
+                child: Text(t.findFriendsAddFriend),
               )
             : null,
         onTap: onTap,

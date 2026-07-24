@@ -6,6 +6,7 @@ import '../../../api/client/sessions/query.dart';
 import '../../../components/ui/badge/badge.dart';
 import '../../../components/ui/toast/toast.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class PremiumSettingsSessionsPage extends ConsumerWidget {
   final String lang;
@@ -15,11 +16,12 @@ class PremiumSettingsSessionsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final sessionsAsync = ref.watch(sessionsProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sessions'),
+        title: Text(t.settingsNavSessions),
         actions: [
           TextButton(
             onPressed: () async {
@@ -33,7 +35,7 @@ class PremiumSettingsSessionsPage extends ConsumerWidget {
                 if (context.mounted) showToast(context, 'Failed: $e');
               }
             },
-            child: const Text('Revoke All'),
+            child: Text(t.settingsLogOutAllOtherSessions),
           ),
         ],
       ),

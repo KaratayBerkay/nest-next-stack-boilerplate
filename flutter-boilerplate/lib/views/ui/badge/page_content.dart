@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart' hide Badge;
 import '../../../components/ui/badge/badge.dart';
+import '../../../l10n/app_localizations.dart';
 
 class BadgeDemoPage extends StatelessWidget {
   final String lang;
@@ -7,8 +8,9 @@ class BadgeDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Badge')),
+      appBar: AppBar(title: Text(t.uiBadgeTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [

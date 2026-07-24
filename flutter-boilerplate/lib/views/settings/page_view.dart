@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class SettingsPageContent extends StatelessWidget {
   final String lang;
@@ -10,45 +11,47 @@ class SettingsPageContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(t.settingsSettingsSectionLabel)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _SettingsTile(
             icon: Icons.person_outline,
-            title: 'Account',
-            subtitle: 'Profile, avatar, name',
+            title: t.settingsNavAccount,
+            subtitle: t.settingsAccountSubtitle,
             onTap: () => context.go('/v1/$lang/settings/account'),
           ),
           _SettingsTile(
             icon: Icons.credit_card_outlined,
-            title: 'Billing',
-            subtitle: 'Payment methods, invoices, plan',
+            title: t.settingsNavBilling,
+            subtitle: t.settingsBillingSubtitle,
             onTap: () => context.go('/v1/$lang/settings/billing'),
           ),
           _SettingsTile(
             icon: Icons.settings_outlined,
-            title: 'General',
-            subtitle: 'Language, theme, preferences',
+            title: t.settingsNavGeneral,
+            subtitle: t.settingsGeneralSubtitle,
             onTap: () => context.go('/v1/$lang/settings/general'),
           ),
           _SettingsTile(
             icon: Icons.lock_outline,
-            title: 'Privacy',
-            subtitle: 'Privacy settings, data sharing',
+            title: t.settingsNavPrivacy,
+            subtitle: t.settingsPrivacySubtitle,
             onTap: () => context.go('/v1/$lang/settings/privacy'),
           ),
           _SettingsTile(
             icon: Icons.devices_outlined,
-            title: 'Sessions',
-            subtitle: 'Active sessions, device management',
+            title: t.settingsNavSessions,
+            subtitle: t.settingsSessionsSubtitle,
             onTap: () => context.go('/v1/$lang/settings/sessions'),
           ),
           _SettingsTile(
             icon: Icons.vpn_key_outlined,
-            title: 'API Keys',
-            subtitle: 'Manage API keys',
+            title: t.settingsNavApiKeys,
+            subtitle: t.settingsApiKeysSubtitle,
             onTap: () => context.go('/v1/$lang/settings/api-keys'),
           ),
         ],

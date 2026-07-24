@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../components/ui/button/button.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class QuotaExceeded extends StatelessWidget {
   final int currentCount;
@@ -21,6 +22,7 @@ class QuotaExceeded extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
 
+    final t = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -58,7 +60,7 @@ class QuotaExceeded extends StatelessWidget {
             Button(
               size: ButtonSize.sm,
               onPressed: onUpgrade,
-              child: const Text('Upgrade Plan'),
+              child: Text(t.formsTeamInviteUpgradePlan),
             ),
           ],
         ],

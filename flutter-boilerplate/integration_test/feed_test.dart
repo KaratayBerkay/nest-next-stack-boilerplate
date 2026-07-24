@@ -7,14 +7,16 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('Feed page', () {
-    testWidgets('navigating to feed redirects to login when unauthenticated', (tester) async {
+    testWidgets('navigating to feed redirects to login when unauthenticated',
+        (tester) async {
       app.main();
       await tester.pumpAndSettle();
 
       expect(find.text('Login'), findsOneWidget);
     });
 
-    testWidgets('feed page route shows auth gate when logged out', (tester) async {
+    testWidgets('feed page route shows auth gate when logged out',
+        (tester) async {
       app.main();
       await tester.pumpAndSettle();
 

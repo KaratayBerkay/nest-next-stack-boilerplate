@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/client/premium/query.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 import 'stats_section.dart';
 
 class BasicPremiumPage extends ConsumerStatefulWidget {
@@ -20,6 +21,7 @@ class _BasicPremiumPageState extends ConsumerState<BasicPremiumPage> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final statsAsync = ref.watch(premiumStatsProvider);
 
     if (!_loaded) {
@@ -27,7 +29,7 @@ class _BasicPremiumPageState extends ConsumerState<BasicPremiumPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Load stats to see premium insights'),
+            Text(t.premiumLoadStats),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () => setState(() => _loaded = true),
@@ -35,7 +37,7 @@ class _BasicPremiumPageState extends ConsumerState<BasicPremiumPage> {
                 backgroundColor: colors.brand,
                 foregroundColor: colors.fg,
               ),
-              child: const Text('Load Stats'),
+              child: Text(t.premiumLoadStats),
             ),
           ],
         ),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../components/ui/form_text_field.dart';
 import '../../../components/ui/input/input.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../validators/forms/schema.dart' as forms;
 
 class FormsFieldStatesPageContent extends ConsumerStatefulWidget {
@@ -30,8 +30,9 @@ class _FormsFieldStatesPageContentState
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Field States & Validation')),
+      appBar: AppBar(title: Text(t.formsFieldStatesPageTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -83,7 +84,7 @@ class _FormsFieldStatesPageContentState
                           onPressed: () {
                             if (_formKey.currentState!.validate()) {}
                           },
-                          child: const Text('Submit'),
+                          child: Text(t.formsCommonSubmit),
                         ),
                       ],
                     ),

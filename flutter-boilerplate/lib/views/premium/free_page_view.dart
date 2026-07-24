@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class FreePremiumPage extends StatelessWidget {
   final String lang;
@@ -10,6 +11,7 @@ class FreePremiumPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Center(
       child: Padding(
@@ -19,13 +21,13 @@ class FreePremiumPage extends StatelessWidget {
           children: [
             Icon(Icons.workspace_premium, size: 64, color: colors.warning),
             const SizedBox(height: 16),
-            const Text(
-              'Upgrade to Premium',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Text(
+              t.premiumUpgradeToPremium,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
-              'Get access to exclusive features and insights.',
+              t.premiumExclusiveFeatures,
               style: TextStyle(color: colors.fgMuted),
               textAlign: TextAlign.center,
             ),
@@ -33,7 +35,7 @@ class FreePremiumPage extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: () {},
               icon: const Icon(Icons.arrow_forward),
-              label: const Text('View Plans'),
+              label: Text(t.premiumViewPlans),
               style: ElevatedButton.styleFrom(
                 backgroundColor: colors.brand,
                 foregroundColor: colors.fg,

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../api/client/auth/actions.dart';
 import '../../../components/ui/form_text_field.dart';
 import '../../../hooks/use_auth.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../types/auth/auth_request_types.dart';
 import '../../../validators/auth/schema.dart';
 
@@ -64,8 +65,10 @@ class _RegisterPageContentState extends ConsumerState<RegisterPageContent> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Register')),
+      appBar: AppBar(title: Text(t.authFormRegisterTitle)),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -76,20 +79,20 @@ class _RegisterPageContentState extends ConsumerState<RegisterPageContent> {
               children: [
                 FormTextField(
                   controller: _nameCtrl,
-                  label: 'Name',
+                  label: t.authFormRegisterNameLabel,
                   validator: validateName,
                 ),
                 const SizedBox(height: 12),
                 FormTextField(
                   controller: _emailCtrl,
-                  label: 'Email',
+                  label: t.authFormRegisterEmailLabel,
                   keyboardType: TextInputType.emailAddress,
                   validator: validateEmail,
                 ),
                 const SizedBox(height: 12),
                 FormTextField(
                   controller: _passwordCtrl,
-                  label: 'Password',
+                  label: t.authFormRegisterPasswordLabel,
                   obscureText: true,
                   validator: validatePassword,
                 ),
@@ -116,11 +119,11 @@ class _RegisterPageContentState extends ConsumerState<RegisterPageContent> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text('Create Account'),
+                      : Text(t.authFormRegisterSubmit),
                 ),
                 TextButton(
                   onPressed: () => context.go('/auth/login'),
-                  child: const Text('Already have an account?'),
+                  child: Text(t.authFormRegisterHasAccount),
                 ),
               ],
             ),

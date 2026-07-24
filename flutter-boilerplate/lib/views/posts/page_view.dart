@@ -7,6 +7,7 @@ import '../../api/client/posts/actions.dart';
 import '../../api/client/posts/query.dart';
 import '../../components/ui/avatar/avatar.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../types/feed/post.dart';
 
 class PostsPageContent extends ConsumerWidget {
@@ -32,22 +33,24 @@ class _FreePostsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Posts')),
+      appBar: AppBar(title: Text(t.postsHeading)),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Posts Available on Paid Plans',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Text(
+                t.postsUpgradeView,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               FilledButton(
                 onPressed: () => context.go('/v1/$lang/plans'),
-                child: const Text('Upgrade to View Posts'),
+                child: Text(t.postsUpgradeView),
               ),
             ],
           ),
@@ -64,11 +67,12 @@ class _PostsView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
     final postsAsync = ref.watch(feedProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Posts'),
+        title: Text(t.postsHeading),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),

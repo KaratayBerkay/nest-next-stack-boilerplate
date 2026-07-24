@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/form_text_field.dart';
 import '../../../components/ui/input/input.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../validators/auth/schema.dart' as auth;
 
 class FormsLayoutsPageContent extends ConsumerStatefulWidget {
@@ -33,8 +33,9 @@ class _FormsLayoutsPageContentState
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Form Layouts')),
+      appBar: AppBar(title: Text(t.formsLayoutsPageTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -95,7 +96,7 @@ class _FormsLayoutsPageContentState
                         ),
                         const SizedBox(height: 12),
                         Button(
-                          child: const Text('Submit'),
+                          child: Text(t.formsCommonSubmit),
                           onPressed: () {
                             if (_formKey.currentState!.validate()) {}
                           },

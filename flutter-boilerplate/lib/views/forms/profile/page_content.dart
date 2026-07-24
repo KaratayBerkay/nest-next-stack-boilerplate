@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../components/ui/avatar/avatar.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/form_text_field.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../validators/auth/schema.dart' as auth;
 
 class FormsProfilePageContent extends ConsumerStatefulWidget {
@@ -33,8 +33,9 @@ class _FormsProfilePageContentState
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('User Profile')),
+      appBar: AppBar(title: Text(t.formsProfilePageTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -45,7 +46,7 @@ class _FormsProfilePageContentState
                 const SizedBox(height: 8),
                 TextButton(
                   onPressed: () {},
-                  child: const Text('Change Avatar'),
+                  child: Text(t.formsProfileChangeAvatar),
                 ),
               ],
             ),
@@ -82,7 +83,7 @@ class _FormsProfilePageContentState
                     FormTextField(controller: _bioCtrl, label: 'Bio'),
                     const SizedBox(height: 16),
                     Button(
-                      child: const Text('Save Profile'),
+                      child: Text(t.formsProfileSave),
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {}
                       },

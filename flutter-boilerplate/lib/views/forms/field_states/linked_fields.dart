@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../components/ui/input/input.dart';
+import '../../../l10n/app_localizations.dart';
 
 class LinkedFieldsExample extends StatefulWidget {
   const LinkedFieldsExample({super.key});
@@ -32,6 +33,7 @@ class _LinkedFieldsExampleState extends State<LinkedFieldsExample> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Column(
       children: [
         Input(
@@ -50,7 +52,7 @@ class _LinkedFieldsExampleState extends State<LinkedFieldsExample> {
           onChanged: (_) => _validate(),
         ),
         const SizedBox(height: 12),
-        FilledButton(onPressed: _validate, child: const Text('Verify')),
+        FilledButton(onPressed: _validate, child: Text(t.formsCommonVerify)),
       ],
     );
   }

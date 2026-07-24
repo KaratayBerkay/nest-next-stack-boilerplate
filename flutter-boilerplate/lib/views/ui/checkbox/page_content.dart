@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../components/ui/checkbox/checkbox.dart';
+import '../../../l10n/app_localizations.dart';
 
 class CheckboxDemoPage extends StatelessWidget {
   final String lang;
@@ -7,8 +8,9 @@ class CheckboxDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Checkbox')),
+      appBar: AppBar(title: Text(t.uiCheckboxTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [

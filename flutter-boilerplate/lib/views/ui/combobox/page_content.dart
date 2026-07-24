@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../components/ui/combobox/combobox.dart';
+import '../../../l10n/app_localizations.dart';
 
 class ComboboxDemoPage extends StatelessWidget {
   final String lang;
@@ -7,8 +8,9 @@ class ComboboxDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Combobox')),
+      appBar: AppBar(title: Text(t.uiComboboxTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [

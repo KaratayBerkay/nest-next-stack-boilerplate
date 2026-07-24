@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class ScriptsDemo extends StatelessWidget {
   const ScriptsDemo({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Scripts')),
-      body: const Center(
-        child: Text('Third-party script loading with strategy and scheduling'),
+      appBar: AppBar(title: Text(t.demoScriptsTitle)),
+      body: Center(
+        child: Text(t.demoScriptsDescription),
       ),
     );
   }

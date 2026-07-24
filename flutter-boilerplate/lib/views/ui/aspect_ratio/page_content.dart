@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../components/ui/card/card.dart';
+import '../../../l10n/app_localizations.dart';
 
 class AspectRatioDemoPage extends StatelessWidget {
   final String lang;
@@ -7,8 +8,9 @@ class AspectRatioDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Aspect Ratio')),
+      appBar: AppBar(title: Text(t.uiAspectRatioTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

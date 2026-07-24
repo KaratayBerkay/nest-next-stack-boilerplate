@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/empty/empty.dart';
+import '../../../l10n/app_localizations.dart';
 
 class EmptyDemoPage extends StatelessWidget {
   final String lang;
@@ -9,8 +10,9 @@ class EmptyDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Empty')),
+      appBar: AppBar(title: Text(t.uiEmptyTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 
 class InputGroupDemoPage extends StatelessWidget {
   final String lang;
@@ -6,8 +7,9 @@ class InputGroupDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Input Group')),
+      appBar: AppBar(title: Text(t.uiInputGroupTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

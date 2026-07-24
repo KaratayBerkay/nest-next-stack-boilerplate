@@ -8,6 +8,7 @@ import '../../api/server/users/search.dart';
 import '../../components/ui/empty/empty.dart';
 import '../../components/ui/spinner/spinner.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 import 'suggested_friends_panel.dart';
 import 'use_friend_search.dart';
 import 'user_search_card.dart';
@@ -25,6 +26,7 @@ class MediumFindFriendsContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final searchState = ref.watch(friendSearchProvider);
     final searchActions = ref.read(friendSearchProvider.notifier);
     final resultsAsync = ref.watch(searchUsersProvider(searchState.query));
@@ -36,7 +38,7 @@ class MediumFindFriendsContent extends ConsumerWidget {
           child: TextField(
             controller: searchState.controller,
             decoration: InputDecoration(
-              hintText: 'Search users...',
+              hintText: t.findFriendsSearchUsersHint,
               prefixIcon: const Icon(Icons.search),
               border:
                   OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

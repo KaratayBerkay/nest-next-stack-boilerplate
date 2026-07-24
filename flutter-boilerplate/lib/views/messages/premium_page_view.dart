@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import 'messages_sidebar.dart';
 
 class PremiumMessagesPage extends StatelessWidget {
@@ -9,11 +10,12 @@ class PremiumMessagesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Row(
       children: [
         MessagesSidebar(lang: lang),
-        const Expanded(
-          child: Center(child: Text('Premium chat with video calls')),
+        Expanded(
+          child: Center(child: Text(t.messagesPremiumDescription)),
         ),
       ],
     );

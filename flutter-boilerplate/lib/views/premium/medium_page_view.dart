@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/client/premium/query.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 import 'growth_stats_section.dart';
 import 'stats_section.dart';
 
@@ -25,6 +26,7 @@ class _MediumPremiumPageState extends ConsumerState<MediumPremiumPage> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final statsAsync = ref.watch(premiumStatsProvider);
     final growthAsync = ref.watch(growthStatsProvider);
 
@@ -36,9 +38,9 @@ class _MediumPremiumPageState extends ConsumerState<MediumPremiumPage> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
-            'Premium Stats',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            t.premiumStatsTitle,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           statsAsync.when(
@@ -48,9 +50,9 @@ class _MediumPremiumPageState extends ConsumerState<MediumPremiumPage> {
             data: (stats) => PremiumStatsSection(stats: stats),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'Growth Stats',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            t.premiumGrowthStatsTitle,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           growthAsync.when(

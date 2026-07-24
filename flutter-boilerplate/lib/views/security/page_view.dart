@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class SecurityPageContent extends ConsumerWidget {
   final String lang;
@@ -10,10 +11,11 @@ class SecurityPageContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
     final colors = AppColors.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Security')),
+      appBar: AppBar(title: Text(t.securityTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -21,7 +23,7 @@ class SecurityPageContent extends ConsumerWidget {
             child: Column(
               children: [
                 SwitchListTile(
-                  title: const Text('Two-Factor Authentication'),
+                  title: Text(t.securityTwoFactor),
                   subtitle: Text(
                     'Add an extra layer of security',
                     style: TextStyle(color: colors.fgMuted, fontSize: 12),
@@ -31,13 +33,13 @@ class SecurityPageContent extends ConsumerWidget {
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  title: const Text('Change Password'),
+                  title: Text(t.securityChangePassword),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {},
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  title: const Text('Active Sessions'),
+                  title: Text(t.securityActiveSessions),
                   subtitle: Text(
                     'Manage your logged-in devices',
                     style: TextStyle(color: colors.fgMuted, fontSize: 12),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../api/client/auth/actions.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../types/auth/auth_request_types.dart';
 
 class RegisterForm extends ConsumerStatefulWidget {
@@ -29,20 +30,18 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
   }
 
   Future<void> _handleRegister() async {
+    final t = AppLocalizations.of(context);
     setState(() => _fieldErrors = {});
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
     if (email.isEmpty) {
-      setState(() => _fieldErrors['email'] = 'Email is required');
+      setState(() => _fieldErrors['email'] = t.authErrorsEmailRequired);
       return;
     }
     if (password.length < 8) {
-      setState(
-        () =>
-            _fieldErrors['password'] = 'Password must be at least 8 characters',
-      );
+      setState(() => _fieldErrors['password'] = t.authErrorsPasswordMin);
       return;
     }
 
@@ -62,25 +61,28 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Column(
       children: [
         Text(
-          'Create Account',
+          t.authFormRegisterTitle,
           style: TextStyle(color: colors.brand, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 16),
         TextField(
           controller: _nameController,
-          decoration:
-              const InputDecoration(labelText: 'Name', hintText: 'Your name'),
+          decoration: InputDecoration(
+            labelText: t.authFormRegisterNameLabel,
+            hintText: t.authFormRegisterNamePlaceholder,
+          ),
         ),
         const SizedBox(height: 12),
         TextField(
           controller: _emailController,
           decoration: InputDecoration(
-            labelText: 'Email',
-            hintText: 'you@example.com',
+            labelText: t.authFormRegisterEmailLabel,
+            hintText: t.authFormRegisterEmailPlaceholder,
             errorText: _fieldErrors['email'],
           ),
           keyboardType: TextInputType.emailAddress,
@@ -89,7 +91,8 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
         TextField(
           controller: _passwordController,
           decoration: InputDecoration(
-            labelText: 'Password',
+            labelText: t.authFormRegisterPasswordLabel,
+            hintText: t.authFormRegisterPasswordPlaceholder,
             errorText: _fieldErrors['password'],
           ),
           obscureText: true,
@@ -105,19 +108,26 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
         const SizedBox(height: 12),
         FilledButton(
           onPressed: _submitting ? null : _handleRegister,
-          child: Text(_submitting ? 'Creating account...' : 'Create Account'),
+          child: Text(
+            _submitting
+                ? t.authFormRegisterSubmitting
+                : t.authFormRegisterSubmit,
+          ),
         ),
         const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Already have an account?',
+              t.authFormRegisterHasAccount,
               style: TextStyle(color: colors.fgMuted, fontSize: 12),
             ),
             TextButton(
               onPressed: () => context.go('/auth/login'),
-              child: const Text('Sign In', style: TextStyle(fontSize: 12)),
+              child: Text(
+                t.authFormRegisterLoginLink,
+                style: const TextStyle(fontSize: 12),
+              ),
             ),
           ],
         ),

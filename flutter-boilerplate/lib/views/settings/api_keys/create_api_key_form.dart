@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../components/ui/button/button.dart';
+import '../../../l10n/app_localizations.dart';
 
 class CreateApiKeyForm extends StatefulWidget {
   final Future<void> Function(String name) onCreate;
@@ -38,12 +39,13 @@ class _CreateApiKeyFormState extends State<CreateApiKeyForm> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         TextField(
           controller: _nameCtrl,
-          decoration: const InputDecoration(labelText: 'Key Name'),
+          decoration: InputDecoration(labelText: t.settingsApiKeysNameLabel),
           autofocus: true,
         ),
         const SizedBox(height: 16),
@@ -52,12 +54,14 @@ class _CreateApiKeyFormState extends State<CreateApiKeyForm> {
           children: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(t.settingsCancelButton),
             ),
             const SizedBox(width: 8),
             Button(
               onPressed: _creating ? null : _submit,
-              child: Text(_creating ? 'Creating...' : 'Create'),
+              child: Text(
+                _creating ? t.settingsApiKeysCreating : t.settingsApiKeysCreate,
+              ),
             ),
           ],
         ),

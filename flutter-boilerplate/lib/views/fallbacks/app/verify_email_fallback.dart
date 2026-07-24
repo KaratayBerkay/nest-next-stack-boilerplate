@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class VerifyEmailFallbackScreen extends StatelessWidget {
   final String? error;
@@ -84,6 +85,7 @@ class _VerifyErrorFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final colors = AppColors.of(context);
 
     return Center(
@@ -95,7 +97,7 @@ class _VerifyErrorFallback extends StatelessWidget {
             Icon(Icons.warning_amber_rounded, size: 64, color: colors.warning),
             const SizedBox(height: 20),
             Text(
-              'Verification error',
+              t.errorSomethingWentWrong,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -112,7 +114,7 @@ class _VerifyErrorFallback extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('Try Again'),
+                label: Text(t.errorTryAgain),
               ),
             ],
           ],

@@ -5,6 +5,7 @@ import '../../../components/ui/avatar/avatar.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../constants/theme.dart';
 import '../../../hooks/use_auth.dart';
+import '../../../l10n/app_localizations.dart';
 
 class MediumSettingsAccountPage extends ConsumerStatefulWidget {
   final String lang;
@@ -41,9 +42,10 @@ class _MediumSettingsAccountPageState
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     final user = ref.watch(currentUserProvider);
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Account')),
+      appBar: AppBar(title: Text(t.settingsAccountHeading)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -69,19 +71,19 @@ class _MediumSettingsAccountPageState
           const SizedBox(height: 24),
           TextField(
             controller: _nameCtrl,
-            decoration: const InputDecoration(labelText: 'Display Name'),
+            decoration: InputDecoration(labelText: t.settingsName),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _bioCtrl,
-            decoration: const InputDecoration(labelText: 'Bio'),
+            decoration: InputDecoration(labelText: t.settingsBio),
             maxLines: 3,
           ),
           const SizedBox(height: 24),
           Button(
             fullWidth: true,
             onPressed: _saving ? null : () {},
-            child: Text(_saving ? 'Saving...' : 'Save Changes'),
+            child: Text(_saving ? t.settingsSaving : t.settingsSave),
           ),
         ],
       ),

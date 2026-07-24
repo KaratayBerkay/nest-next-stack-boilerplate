@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/checkbox/checkbox.dart';
 import '../../../components/ui/input/input.dart';
 import '../../../components/ui/select/select.dart';
 import '../../../components/ui/switch/switch.dart';
 import '../../../components/ui/textarea/textarea.dart';
+import '../../../l10n/app_localizations.dart';
 import 'form_builder_utils.dart';
 
 class FormPreview extends StatelessWidget {
@@ -20,10 +20,11 @@ class FormPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     if (fields.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(24),
-        child: Center(child: Text('No fields yet. Add some fields below.')),
+      return Padding(
+        padding: const EdgeInsets.all(24),
+        child: Center(child: Text(t.formsFormBuilderNoFields)),
       );
     }
 
@@ -37,7 +38,7 @@ class FormPreview extends StatelessWidget {
         ),
         if (onSubmit != null) ...[
           const SizedBox(height: 12),
-          Button(onPressed: onSubmit, child: const Text('Submit')),
+          Button(onPressed: onSubmit, child: Text(t.formsCommonSubmit)),
         ],
       ],
     );

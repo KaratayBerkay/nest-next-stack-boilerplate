@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../components/ui/progress/progress.dart';
+import '../../../l10n/app_localizations.dart';
 
 class ProgressDemoPage extends StatelessWidget {
   final String lang;
@@ -7,8 +8,9 @@ class ProgressDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Progress')),
+      appBar: AppBar(title: Text(t.uiProgressTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: const [

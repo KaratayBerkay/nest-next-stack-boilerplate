@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../components/ui/button/button.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class FreeSettingsPrivacyPage extends StatelessWidget {
   final String lang;
@@ -11,15 +12,16 @@ class FreeSettingsPrivacyPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Privacy')),
+      appBar: AppBar(title: Text(t.settingsPrivacyHeading)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Card(
             child: SwitchListTile(
-              title: const Text('Online Status'),
+              title: Text(t.settingsPrivacyOnlineStatus),
               subtitle: Text(
                 'Show when you\'re online',
                 style: TextStyle(color: colors.fgMuted, fontSize: 12),
@@ -40,7 +42,7 @@ class FreeSettingsPrivacyPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Button(
-                  child: const Text('Upgrade for More'),
+                  child: Text(t.settingsUpgradePlan),
                   onPressed: () {},
                 ),
               ],

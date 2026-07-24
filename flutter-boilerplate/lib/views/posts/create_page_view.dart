@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../api/client/posts/actions.dart';
+import '../../l10n/app_localizations.dart';
 
 class PostCreatePageContent extends ConsumerWidget {
   final String lang;
@@ -13,10 +14,11 @@ class PostCreatePageContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final titleController = TextEditingController();
     final contentController = TextEditingController();
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Post'),
+        title: Text(t.postsCreate),
         actions: [
           TextButton(
             onPressed: () async {
@@ -28,7 +30,7 @@ class PostCreatePageContent extends ConsumerWidget {
                   .create(title: title, content: content);
               if (context.mounted) context.pop();
             },
-            child: const Text('Post'),
+            child: Text(t.postsCreateSubmit),
           ),
         ],
       ),
@@ -37,17 +39,17 @@ class PostCreatePageContent extends ConsumerWidget {
         children: [
           TextField(
             controller: titleController,
-            decoration: const InputDecoration(
-              labelText: 'Title',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: t.postsTitleLabel,
+              border: const OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: contentController,
-            decoration: const InputDecoration(
-              labelText: 'Content',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: t.postsContentLabel,
+              border: const OutlineInputBorder(),
             ),
             maxLines: 8,
           ),

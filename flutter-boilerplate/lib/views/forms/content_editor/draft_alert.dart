@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../components/ui/button/button.dart';
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class DraftAlert extends StatelessWidget {
   final VoidCallback? onSave;
@@ -18,9 +19,10 @@ class DraftAlert extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return AlertDialog(
-      title: const Text('Unsaved Changes'),
+      title: Text(t.formsContentEditorUnsavedTitle),
       content: const Text(
         'You have unsaved changes. Do you want to save a draft before leaving?',
       ),
@@ -31,12 +33,12 @@ class DraftAlert extends StatelessWidget {
         ),
         TextButton(
           onPressed: onCancel,
-          child: const Text('Cancel'),
+          child: Text(t.formsApiKeyCancel),
         ),
         Button(
           size: ButtonSize.sm,
           onPressed: onSave,
-          child: const Text('Save Draft'),
+          child: Text(t.formsContentEditorSaveDraft),
         ),
       ],
     );
