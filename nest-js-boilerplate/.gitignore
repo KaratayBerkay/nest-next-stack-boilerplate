@@ -33,8 +33,10 @@ yarn-error.log*
 # dotenv environment variable files — real env files stay local; *.example are tracked.
 .env
 .env.*
+*.env
 !.env.example
 !.env.*.example
+!*.env.example
 
 # temp directories
 .temp
