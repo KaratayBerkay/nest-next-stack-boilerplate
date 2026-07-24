@@ -9,6 +9,7 @@ import '../../../api/client/auth/actions.dart';
 import '../../../components/auth/auth_layout.dart';
 import '../../../components/auth/labeled_field.dart';
 import '../../../components/auth/link_text.dart';
+import '../../../components/auth/social_login_buttons.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../constants/theme.dart';
 import '../../../hooks/use_auth.dart';
@@ -265,6 +266,8 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
             ),
           ),
         ),
+        const SizedBox(height: 20),
+        const SocialLoginButtons(),
         const SizedBox(height: 16),
         Text.rich(
           TextSpan(

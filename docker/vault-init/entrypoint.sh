@@ -10,6 +10,7 @@ SERVICES="
   kafka
   kibana
   minio
+  mobile
   mongo
   postgres
   rabbitmq
@@ -53,5 +54,14 @@ if [ -f /secrets/frontend.env ]; then
     echo "vault-init: $(echo "$build_vars" | wc -l) NEXT_PUBLIC_* vars merged into .env"
   fi
 fi
+
+# Copy full mobile.env to flutter-boilerplate/.env for Flutter builds
+cp /secrets/mobile.env /project/flutter-boilerplate/.env
+echo "vault-init: copied mobile.env → flutter-boilerplate/.env"
+
+# Fix ownership to host user (default 1000 if HOST_UID not set)
+chown -R "${HOST_UID:-1000}:${HOST_GID:-1000}" \
+  /secrets /project/flutter-boilerplate/.env
+echo "vault-init: chowned secrets and flutter .env to ${HOST_UID:-1000}:${HOST_GID:-1000}"
 
 echo "vault-init: done"

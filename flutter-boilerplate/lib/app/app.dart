@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/i18n/messages_provider.dart';
+import 'package:flutter_boilerplate/lib/oauth_link_handler.dart';
 import 'package:flutter_boilerplate/lib/riverpod_compat.dart';
 import 'package:flutter_boilerplate/lib/stripe_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,6 +22,8 @@ class FlutterBoilerplateApp extends ConsumerStatefulWidget {
 }
 
 class _FlutterBoilerplateAppState extends ConsumerState<FlutterBoilerplateApp> {
+  OAuthLinkHandler? _oauthLinkHandler;
+
   @override
   void initState() {
     super.initState();
@@ -29,8 +32,17 @@ class _FlutterBoilerplateAppState extends ConsumerState<FlutterBoilerplateApp> {
     });
   }
 
+  @override
+  void dispose() {
+    _oauthLinkHandler?.dispose();
+    super.dispose();
+  }
+
   Future<void> _initServices() async {
     if (kIsWeb) return;
+
+    _oauthLinkHandler = OAuthLinkHandler();
+    await _oauthLinkHandler!.init(ref);
 
     final router = ref.read(routerProvider);
 

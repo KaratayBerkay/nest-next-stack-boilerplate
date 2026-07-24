@@ -956,6 +956,36 @@ abstract class AppLocalizations {
   /// **'Continue with GitHub'**
   String get authSocialGitHub;
 
+  /// No description provided for @authSocialLinkedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with LinkedIn'**
+  String get authSocialLinkedIn;
+
+  /// No description provided for @authSocialHuggingFace.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Hugging Face'**
+  String get authSocialHuggingFace;
+
+  /// No description provided for @authSocialTwitch.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Twitch'**
+  String get authSocialTwitch;
+
+  /// No description provided for @authSocialX.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with X'**
+  String get authSocialX;
+
+  /// No description provided for @authSocialError.
+  ///
+  /// In en, this message translates to:
+  /// **'Social login failed. Please try again.'**
+  String get authSocialError;
+
   /// No description provided for @authLoading.
   ///
   /// In en, this message translates to:

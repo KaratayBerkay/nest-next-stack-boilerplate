@@ -469,6 +469,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get authSocialGitHub => 'GitHub ile Devam Et';
 
   @override
+  String get authSocialLinkedIn => 'LinkedIn ile Devam Et';
+
+  @override
+  String get authSocialHuggingFace => 'Hugging Face ile Devam Et';
+
+  @override
+  String get authSocialTwitch => 'Twitch ile Devam Et';
+
+  @override
+  String get authSocialX => 'X ile Devam Et';
+
+  @override
+  String get authSocialError =>
+      'Sosyal giriş başarısız oldu. Lütfen tekrar deneyin.';
+
+  @override
   String get authLoading => 'Yükleniyor...';
 
   @override

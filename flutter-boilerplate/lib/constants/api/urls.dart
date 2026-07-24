@@ -1,9 +1,6 @@
 class Urls {
   Urls._();
 
-  static const baseUrl = 'http://10.10.2.175:3000';
-  static const wsUrl = 'ws://10.10.2.175:3000';
-
   // Auth
   static const login = '/api/auth/login';
   static const register = '/api/auth/register';

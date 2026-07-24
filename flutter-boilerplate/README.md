@@ -38,12 +38,31 @@ lib/
 
 ## Getting Started
 
+### 1. Sync secrets from Vault
+
+```bash
+# From repo root — fetches vault secrets and copies them to flutter-boilerplate/.env
+docker compose run --rm vault-init
+```
+
+This populates `.vault-envs/mobile.env` from Vault at `secret/data/secret/production/mobile` and copies it to `flutter-boilerplate/.env`.
+
+### 2. Run
+
 ```bash
 cd flutter-boilerplate
-flutter pub get
-flutter run -d chrome --web-port 5262 --dart-define-from-file=.env   # Production preview against mobile.eys.gen.tr
-# Or without .env: flutter run --dart-define-from-file=.env           # Local dev against localhost:3001
+
+# Web (Chrome) — fixed port for nginx proxying
+flutter run -d chrome --web-port=4000 --dart-define-from-file=.env
+
+# Android APK
+flutter build apk --release --dart-define-from-file=.env
+
+# iOS
+flutter build ios --dart-define-from-file=.env
 ```
+
+> **CORS:** When running Flutter web against `api.eys.gen.tr`, the backend must allow your Flutter origin in `CORS_ORIGIN`. For local dev, use `CORS_ORIGIN=*` on the backend, or proxy both through nginx on the same origin.
 
 ### Environment Variables
 
@@ -55,6 +74,8 @@ Set via `--dart-define-from-file=.env` or individual `--dart-define=KEY=VALUE` f
 | `STRIPE_PUBLISHABLE_KEY` | `""` | Stripe publishable key |
 | `WS_URL` | `ws://localhost:3001/ws` | WebSocket endpoint |
 | `APP_ENV` | `development` | Environment name |
+| `APP_NAME` | `""` | App display name |
+| `SENTRY_DSN` | `""` | Sentry error tracking DSN |
 | `PUSH_ENABLED` | `false` | Firebase Cloud Messaging toggle |
 
 ## Testing

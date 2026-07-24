@@ -467,6 +467,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authSocialGitHub => 'Continue with GitHub';
 
   @override
+  String get authSocialLinkedIn => 'Continue with LinkedIn';
+
+  @override
+  String get authSocialHuggingFace => 'Continue with Hugging Face';
+
+  @override
+  String get authSocialTwitch => 'Continue with Twitch';
+
+  @override
+  String get authSocialX => 'Continue with X';
+
+  @override
+  String get authSocialError => 'Social login failed. Please try again.';
+
+  @override
   String get authLoading => 'Loading...';
 
   @override
