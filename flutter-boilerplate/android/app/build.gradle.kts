@@ -33,6 +33,13 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    lint {
+        // stripe_android's lint classpath references play-services-tapandpay,
+        // which Google does not publish publicly — lintVitalAnalyzeRelease can
+        // never resolve it, so release lint-vital must be off (flutter_stripe FAQ).
+        checkReleaseBuilds = false
+    }
 }
 
 kotlin {
