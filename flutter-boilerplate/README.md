@@ -41,7 +41,8 @@ lib/
 ```bash
 cd flutter-boilerplate
 flutter pub get
-flutter run --dart-define-from-file=.env   # Optional — defaults to localhost:3001
+flutter run -d chrome --web-port 5262 --dart-define-from-file=.env   # Production preview against mobile.eys.gen.tr
+# Or without .env: flutter run --dart-define-from-file=.env           # Local dev against localhost:3001
 ```
 
 ### Environment Variables

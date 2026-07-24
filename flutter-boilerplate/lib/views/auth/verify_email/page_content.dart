@@ -1,13 +1,18 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../api/server/auth/verify_email.dart';
-import '../../../components/ui/toast/toast.dart';
+import '../../../api/client/auth/actions.dart';
+import '../../../components/auth/auth_layout.dart';
+import '../../../components/ui/button/button.dart';
+import '../../../constants/theme.dart';
 import '../../../l10n/app_localizations.dart';
 
 class VerifyEmailPageContent extends ConsumerStatefulWidget {
-  const VerifyEmailPageContent({super.key});
+  final String token;
+
+  const VerifyEmailPageContent({super.key, this.token = ''});
 
   @override
   ConsumerState<VerifyEmailPageContent> createState() =>
@@ -16,94 +21,98 @@ class VerifyEmailPageContent extends ConsumerStatefulWidget {
 
 class _VerifyEmailPageContentState
     extends ConsumerState<VerifyEmailPageContent> {
-  final _tokenCtrl = TextEditingController();
-  bool _loading = false;
-  bool _done = false;
+  bool _verifying = true;
+  bool _success = false;
+  String? _error;
 
   @override
-  void dispose() {
-    _tokenCtrl.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    if (widget.token.isNotEmpty) {
+      _verify();
+    } else {
+      _verifying = false;
+      _error = null;
+    }
   }
 
-  Future<void> _handleVerify() async {
+  Future<void> _verify() async {
     final t = AppLocalizations.of(context);
-    setState(() => _loading = true);
+
+    setState(() {
+      _verifying = true;
+      _error = null;
+    });
+
     try {
-      await ref.read(verifyEmailServerProvider).call(_tokenCtrl.text);
-      if (!mounted) return;
-      setState(() => _done = true);
-      showToast(context, t.authFormVerifyEmailSuccess);
-    } catch (e) {
-      if (mounted) showToast(context, '$e');
+      final actions = ref.read(loginActionsProvider);
+      await actions.verifyEmail(widget.token);
+      if (mounted) setState(() => _success = true);
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      final msg =
+          (data is Map && data['msg'] is String) ? data['msg'] as String : null;
+      if (mounted) {
+        setState(() => _error = msg ?? t.authErrorsVerifyEmailFailed);
+      }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) setState(() => _verifying = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    final colors = AppColors.of(context);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(t.authFormVerifyEmailTitle)),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_done)
-                Column(
-                  children: [
-                    const Icon(
-                      Icons.check_circle,
-                      color: Colors.green,
-                      size: 48,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      t.authFormVerifyEmailSuccess,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: () => context.go('/auth/login'),
-                      child: Text(t.authFormVerifyEmailLoginLink),
-                    ),
-                  ],
-                )
-              else
-                Column(
-                  children: [
-                    Text(t.authFormVerifyEmailDescription),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _tokenCtrl,
-                      decoration: InputDecoration(
-                        labelText: t.authFormVerifyEmailTokenLabel,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    FilledButton(
-                      onPressed: _loading ? null : _handleVerify,
-                      child: _loading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : Text(t.authFormVerifyEmailSubmit),
-                    ),
-                  ],
-                ),
-            ],
-          ),
+    Widget body;
+
+    if (widget.token.isEmpty) {
+      body = Padding(
+        padding: const EdgeInsets.symmetric(vertical: 32),
+        child: Text(
+          t.authErrorsVerifyEmailTokenMissing,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 14),
         ),
-      ),
-    );
+      );
+    } else if (_verifying) {
+      body = const Padding(
+        padding: EdgeInsets.symmetric(vertical: 32),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    } else if (_success) {
+      body = Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Icon(Icons.check_circle, color: colors.success, size: 48),
+          const SizedBox(height: 16),
+          Text(
+            t.authFormVerifyEmailSuccess,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 36,
+            child: Button(
+              onPressed: () => context.go('/auth/login'),
+              child: Text(t.authFormVerifyEmailLoginLink),
+            ),
+          ),
+        ],
+      );
+    } else {
+      body = Padding(
+        padding: const EdgeInsets.symmetric(vertical: 32),
+        child: Text(
+          _error ?? t.authErrorsVerifyEmailFailed,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 14, color: colors.danger),
+        ),
+      );
+    }
+
+    return AuthLayout(child: body);
   }
 }

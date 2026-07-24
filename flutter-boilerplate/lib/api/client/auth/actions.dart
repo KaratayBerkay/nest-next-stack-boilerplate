@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../types/auth/auth_request_types.dart';
 import '../../server/auth/login.dart';
 import '../../server/auth/logout.dart';
+import '../../server/auth/mfa.dart';
 import '../../server/auth/register.dart';
 import '../../server/auth/request_password_reset.dart';
 import '../../server/auth/reset_password.dart';
@@ -15,9 +16,14 @@ class LoginActions {
 
   LoginActions(this._ref);
 
-  Future<LoginResponse> login(LoginRequest request) async {
+  Future<LoginResult> login(LoginRequest request) async {
     final server = _ref.read(loginServerProvider);
     return server.call(request);
+  }
+
+  Future<Map<String, dynamic>> loginMfa(String mfaToken, String code) async {
+    final server = _ref.read(mfaServerProvider);
+    return server.call(mfaToken, code);
   }
 
   Future<RegisterResponse> register(RegisterRequest request) async {

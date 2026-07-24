@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class Input extends StatelessWidget {
   final String? label;
@@ -11,6 +12,11 @@ class Input extends StatelessWidget {
   final Widget? prefixIcon;
   final Widget? suffixIcon;
   final void Function(String)? onChanged;
+  final TextInputAction? textInputAction;
+  final VoidCallback? onSubmitted;
+  final bool autofocus;
+  final int? maxLength;
+  final List<TextInputFormatter>? inputFormatters;
 
   const Input({
     super.key,
@@ -24,6 +30,11 @@ class Input extends StatelessWidget {
     this.prefixIcon,
     this.suffixIcon,
     this.onChanged,
+    this.textInputAction,
+    this.onSubmitted,
+    this.autofocus = false,
+    this.maxLength,
+    this.inputFormatters,
   });
 
   @override
@@ -33,6 +44,11 @@ class Input extends StatelessWidget {
       obscureText: obscureText,
       keyboardType: keyboardType,
       onChanged: onChanged,
+      textInputAction: textInputAction,
+      onSubmitted: onSubmitted != null ? (_) => onSubmitted!() : null,
+      autofocus: autofocus,
+      maxLength: maxLength,
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         labelText: label,
         hintText: hintText,

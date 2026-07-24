@@ -11,8 +11,11 @@ class MfaServer {
 
   MfaServer(this._dio);
 
-  Future<Map<String, dynamic>> call(String code) async {
-    final response = await _dio.post<dynamic>(Urls.mfa, data: {'code': code});
+  Future<Map<String, dynamic>> call(String mfaToken, String code) async {
+    final response = await _dio.post<dynamic>(
+      Urls.mfa,
+      data: {'mfaToken': mfaToken, 'code': code},
+    );
     return response.data as Map<String, dynamic>;
   }
 }

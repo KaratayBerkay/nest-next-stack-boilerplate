@@ -1,5 +1,20 @@
 import 'user.dart';
 
+sealed class LoginResult {}
+
+class LoginSuccess extends LoginResult {
+  final LoginResponse response;
+
+  LoginSuccess(this.response);
+}
+
+class LoginMfaRequired extends LoginResult {
+  final String mfaToken;
+  final AuthenticatedUser user;
+
+  LoginMfaRequired({required this.mfaToken, required this.user});
+}
+
 class LoginRequest {
   final String email;
   final String password;
@@ -46,12 +61,14 @@ class RegisterRequest {
 
 class RegisterResponse {
   final String accessToken;
+  final AuthenticatedUser user;
 
-  const RegisterResponse({required this.accessToken});
+  const RegisterResponse({required this.accessToken, required this.user});
 
   factory RegisterResponse.fromJson(Map<String, dynamic> json) {
     return RegisterResponse(
       accessToken: json['accessToken'] as String,
+      user: AuthenticatedUser.fromJson(json['user'] as Map<String, dynamic>),
     );
   }
 }

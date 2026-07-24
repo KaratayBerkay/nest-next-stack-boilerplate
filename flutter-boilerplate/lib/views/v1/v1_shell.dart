@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_boilerplate/lib/container.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'v1_header.dart';
-import 'v1_nav.dart';
 import 'v1_sidebar.dart';
 
-class V1Shell extends ConsumerWidget {
+class V1Shell extends ConsumerStatefulWidget {
   final String lang;
   final Widget child;
 
@@ -18,50 +16,58 @@ class V1Shell extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<V1Shell> createState() => _V1ShellState();
+}
+
+class _V1ShellState extends ConsumerState<V1Shell> {
+  bool _sidebarOpen = false;
+
+  void _toggleSidebar() => setState(() => _sidebarOpen = !_sidebarOpen);
+  void _closeSidebar() => setState(() => _sidebarOpen = false);
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = GoRouterState.of(context).uri.toString();
+    final width = MediaQuery.of(context).size.width;
+    final isMobile = width < 768;
+
     return PopScope(
       child: Scaffold(
-        appBar: V1Header(lang: lang),
-        body: SafeArea(
-          child: Row(
-            children: [
-              if (!context.isMobile)
-                V1Sidebar(
-                  selectedIndex: _selectedNavIndex(context),
-                  onItemSelected: (i) => _onNavTap(context, i),
-                ),
-              Expanded(child: child),
-            ],
-          ),
+        appBar: V1Header(
+          lang: widget.lang,
+          onToggleSidebar: _toggleSidebar,
         ),
-        bottomNavigationBar: context.isMobile
-            ? V1BottomNav(
-                currentIndex: _selectedNavIndex(context),
-                onTap: (i) => _onNavTap(context, i),
+        body: isMobile
+            ? Stack(
+                children: [
+                  SafeArea(
+                    top: false,
+                    child: widget.child,
+                  ),
+                  V1Sidebar(
+                    lang: widget.lang,
+                    currentPath: loc,
+                    sidebarOpen: _sidebarOpen,
+                    onClose: _closeSidebar,
+                  ),
+                ],
               )
-            : null,
+            : SafeArea(
+                top: false,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    V1Sidebar(
+                      lang: widget.lang,
+                      currentPath: loc,
+                      sidebarOpen: _sidebarOpen,
+                      onClose: _closeSidebar,
+                    ),
+                    Expanded(child: widget.child),
+                  ],
+                ),
+              ),
       ),
     );
-  }
-
-  int _selectedNavIndex(BuildContext context) {
-    final loc = GoRouterState.of(context).uri.toString();
-    if (loc.contains('/feed')) return 1;
-    if (loc.contains('/messages')) return 2;
-    if (loc.contains('/settings')) return 3;
-    return 0;
-  }
-
-  void _onNavTap(BuildContext context, int index) {
-    switch (index) {
-      case 0:
-        context.go('/v1/$lang');
-      case 1:
-        context.go('/v1/$lang/feed');
-      case 2:
-        context.go('/v1/$lang/messages');
-      case 3:
-        context.go('/v1/$lang/settings');
-    }
   }
 }

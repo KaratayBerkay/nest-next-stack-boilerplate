@@ -14,7 +14,6 @@ import '../views/admin/audit_logs/page_view.dart';
 import '../views/admin/page_view.dart';
 import '../views/auth/forgot_password/page_content.dart';
 import '../views/auth/login/page_content.dart';
-import '../views/auth/mfa/page_content.dart';
 import '../views/auth/register/page_content.dart';
 import '../views/auth/reset_password/page_content.dart';
 import '../views/auth/verify_email/page_content.dart';
@@ -72,6 +71,7 @@ import '../views/settings/general/page_view.dart';
 import '../views/settings/page_view.dart';
 import '../views/settings/privacy/page_view.dart';
 import '../views/settings/sessions/page_view.dart';
+
 import '../views/share/page_content.dart';
 import '../views/ui/accordion/page_content.dart';
 import '../views/ui/accordion/rich_items_page.dart';
@@ -234,19 +234,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/auth/reset-password',
         name: 'resetPassword',
-        builder: (_, __) => const ResetPasswordPageContent(),
+        builder: (_, state) => ResetPasswordPageContent(
+          token: state.uri.queryParameters['token'] ?? '',
+        ),
       ),
       GoRoute(
         path: '/auth/verify-email',
         name: 'verifyEmail',
-        builder: (_, __) => const VerifyEmailPageContent(),
+        builder: (_, state) => VerifyEmailPageContent(
+          token: state.uri.queryParameters['token'] ?? '',
+        ),
       ),
-      GoRoute(
-        path: '/auth/mfa',
-        name: 'mfa',
-        builder: (_, __) => const MfaPageContent(),
-      ),
-
       // V1 authenticated shell
       ShellRoute(
         builder: (_, state, child) {

@@ -1,103 +1,169 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../constants/theme.dart';
 import '../../l10n/app_localizations.dart';
 
-class SettingsShell extends StatelessWidget {
+class SettingsNav extends StatelessWidget {
   final String lang;
-  final Widget child;
 
-  const SettingsShell({
-    super.key,
-    required this.lang,
-    required this.child,
-  });
+  const SettingsNav({super.key, required this.lang});
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final t = AppLocalizations.of(context);
+    final path = GoRouterState.of(context).matchedLocation;
+    final isWide = MediaQuery.of(context).size.width >= 768;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(t.settingsSettingsSectionLabel),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/v1/$lang/feed'),
-        ),
+    final tabs = [
+      _TabData(
+        Icons.person_outline,
+        Icons.person,
+        t.settingsNavAccount,
+        '/v1/$lang/settings/account',
       ),
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          NavigationRail(
-            selectedIndex: _selectedIndex(context),
-            onDestinationSelected: (i) => _navigateTo(i, context),
-            labelType: NavigationRailLabelType.all,
-            destinations: [
-              NavigationRailDestination(
-                icon: const Icon(Icons.person_outline),
-                selectedIcon: const Icon(Icons.person),
-                label: Text(t.settingsNavAccount),
+      _TabData(
+        Icons.settings_outlined,
+        Icons.settings,
+        t.settingsNavGeneral,
+        '/v1/$lang/settings/general',
+      ),
+      _TabData(
+        Icons.lock_outline,
+        Icons.lock,
+        t.settingsNavPrivacy,
+        '/v1/$lang/settings/privacy',
+      ),
+      _TabData(
+        Icons.credit_card_outlined,
+        Icons.credit_card,
+        t.settingsNavBilling,
+        '/v1/$lang/settings/billing',
+      ),
+      _TabData(
+        Icons.vpn_key_outlined,
+        Icons.vpn_key,
+        t.settingsNavApiKeys,
+        '/v1/$lang/settings/api-keys',
+      ),
+      _TabData(
+        Icons.devices_outlined,
+        Icons.devices,
+        t.settingsNavSessions,
+        '/v1/$lang/settings/sessions',
+      ),
+    ];
+
+    if (isWide) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: tabs.map((tab) {
+          final active = path == tab.path;
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () => context.go(tab.path),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: active
+                        ? colors.brand.withValues(alpha: 0.1)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        active ? tab.activeIcon : tab.icon,
+                        size: 18,
+                        color: active ? colors.brand : colors.fgMuted,
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        tab.label,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight:
+                              active ? FontWeight.w600 : FontWeight.normal,
+                          color: active ? colors.brand : colors.fg,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              NavigationRailDestination(
-                icon: const Icon(Icons.credit_card_outlined),
-                selectedIcon: const Icon(Icons.credit_card),
-                label: Text(t.settingsNavBilling),
+            ),
+          );
+        }).toList(),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: tabs.map((tab) {
+            final active = path == tab.path;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () => context.go(tab.path),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: active
+                          ? colors.brand.withValues(alpha: 0.1)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          active ? tab.activeIcon : tab.icon,
+                          size: 16,
+                          color: active ? colors.brand : colors.fgMuted,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          tab.label,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight:
+                                active ? FontWeight.w600 : FontWeight.normal,
+                            color: active ? colors.brand : colors.fg,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-              NavigationRailDestination(
-                icon: const Icon(Icons.settings_outlined),
-                selectedIcon: const Icon(Icons.settings),
-                label: Text(t.settingsNavGeneral),
-              ),
-              NavigationRailDestination(
-                icon: const Icon(Icons.lock_outline),
-                selectedIcon: const Icon(Icons.lock),
-                label: Text(t.settingsNavPrivacy),
-              ),
-              NavigationRailDestination(
-                icon: const Icon(Icons.devices_outlined),
-                selectedIcon: const Icon(Icons.devices),
-                label: Text(t.settingsNavSessions),
-              ),
-              NavigationRailDestination(
-                icon: const Icon(Icons.vpn_key_outlined),
-                selectedIcon: const Icon(Icons.vpn_key),
-                label: Text(t.settingsNavApiKeys),
-              ),
-            ],
-          ),
-          const VerticalDivider(width: 1),
-          Expanded(child: child),
-        ],
+            );
+          }).toList(),
+        ),
       ),
     );
   }
+}
 
-  int _selectedIndex(BuildContext context) {
-    final path = GoRouterState.of(context).matchedLocation;
-    if (path.contains('/settings/account')) return 0;
-    if (path.contains('/settings/billing')) return 1;
-    if (path.contains('/settings/general')) return 2;
-    if (path.contains('/settings/privacy')) return 3;
-    if (path.contains('/settings/sessions')) return 4;
-    if (path.contains('/settings/api-keys')) return 5;
-    return 0;
-  }
+class _TabData {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  final String path;
 
-  void _navigateTo(int index, BuildContext context) {
-    final lang = GoRouterState.of(context).pathParameters['lang'] ?? 'en';
-    switch (index) {
-      case 0:
-        context.go('/v1/$lang/settings/account');
-      case 1:
-        context.go('/v1/$lang/settings/billing');
-      case 2:
-        context.go('/v1/$lang/settings/general');
-      case 3:
-        context.go('/v1/$lang/settings/privacy');
-      case 4:
-        context.go('/v1/$lang/settings/sessions');
-      case 5:
-        context.go('/v1/$lang/settings/api-keys');
-    }
-  }
+  const _TabData(this.icon, this.activeIcon, this.label, this.path);
 }

@@ -10,7 +10,9 @@ SERVICE ?=
 PROFILE_FLAG := $(if $(PROFILE),--profile $(PROFILE),)
 COMPOSE := docker compose $(PROFILE_FLAG)
 
-.PHONY: up down build rebuild restart logs ps vault clean deploy
+.PHONY: up down build rebuild restart logs ps vault clean deploy flutter-run
+
+vault: ## Fetch secrets from Vault
 
 vault: ## Fetch secrets from Vault
 	$(COMPOSE) run --rm vault-init
@@ -50,3 +52,6 @@ logs: ## Follow logs
 
 ps: ## Show container status
 	$(COMPOSE) ps
+
+flutter-run: ## Run flutter-boilerplate in Chrome against mobile.eys.gen.tr (web-port 5262)
+	cd flutter-boilerplate && flutter run -d chrome --web-port 5262 --dart-define-from-file=.env

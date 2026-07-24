@@ -8,6 +8,7 @@ import '../../components/ui/avatar/avatar.dart';
 import '../../components/ui/empty/empty.dart';
 import '../../components/ui/spinner/spinner.dart';
 import '../../constants/theme.dart';
+import '../../hooks/use_presence.dart';
 import '../../l10n/app_localizations.dart';
 
 class MessagesSidebarConversations extends ConsumerWidget {
@@ -64,7 +65,7 @@ class MessagesSidebarConversations extends ConsumerWidget {
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 child: Row(
                   children: [
-                    Avatar(
+                    _OnlineAvatar(
                       imageUrl: conv.userAvatarUrl,
                       name: conv.userName,
                     ),
@@ -144,6 +145,49 @@ class MessagesSidebarConversations extends ConsumerWidget {
           },
         );
       },
+    );
+  }
+}
+
+class _OnlineAvatar extends ConsumerWidget {
+  final String? imageUrl;
+  final String name;
+
+  const _OnlineAvatar({this.imageUrl, required this.name});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
+    final isOnline = ref.watch(isOnlineProvider);
+
+    return Stack(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border:
+                isOnline ? Border.all(color: colors.success, width: 2) : null,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(2),
+            child: Avatar(imageUrl: imageUrl, name: name),
+          ),
+        ),
+        if (isOnline)
+          Positioned(
+            right: 0,
+            bottom: 2,
+            child: Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color: colors.success,
+                shape: BoxShape.circle,
+                border: Border.all(color: colors.surface, width: 1.5),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
