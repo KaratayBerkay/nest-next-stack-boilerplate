@@ -3,6 +3,7 @@ import 'package:flutter_boilerplate/lib/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../types/auth/auth_request_types.dart';
+import '../../../types/auth/user.dart';
 
 final registerServerProvider =
     Provider((ref) => RegisterServer(ref.read(dioProvider)));

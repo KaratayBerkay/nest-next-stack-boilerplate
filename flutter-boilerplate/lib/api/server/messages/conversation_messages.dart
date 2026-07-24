@@ -51,7 +51,6 @@ class ConversationMessagesServer {
 
   ChatMessage _mapMessage(Map<String, dynamic> json) {
     final sender = json['sender'] as Map<String, dynamic>?;
-    final recipient = json['recipient'] as Map<String, dynamic>?;
     return ChatMessage(
       id: json['id'] as String,
       conversationId: json['recipientId'] as String,
