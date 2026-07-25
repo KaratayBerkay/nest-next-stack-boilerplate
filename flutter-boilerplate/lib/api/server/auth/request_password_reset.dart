@@ -23,7 +23,7 @@ class RequestPasswordResetServer {
       data: {
         'query': _mutation,
         'variables': {
-          'input': {'email': email}
+          'input': {'email': email},
         },
       },
     );
