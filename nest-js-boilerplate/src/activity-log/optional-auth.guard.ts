@@ -8,20 +8,13 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
 import { accessCookieName } from '../auth/access-cookie';
+import { rbacCookieName } from '../auth/rbac-cookie';
+import { userCookieName } from '../auth/user-cookie';
+import { deviceCookieName } from '../devices/device-cookie';
 import type { JwtPayload, JwtUser } from '../auth/auth.types';
+import { TokenDerivationService } from '../auth/token-derivation.service';
+import { TokenStoreService } from '../auth/token-store.service';
 
-/**
- * Soft auth guard — validates the JWT if present but never rejects the request.
- *
- * Mirrors `SessionAuthGuard`'s token extraction but without requiring a valid
- * session. If a valid Bearer token or `access_token` cookie is found, populates
- * `req.user` with the JWT payload (userId/email/role). Otherwise the request
- * proceeds anonymously — the controller can check `req.user` for optional
- * per-user enrichment.
- *
- * This is the NestJS equivalent of the web BFF's `resolveMe()` try/catch
- * pattern in `route.ts:90-157`.
- */
 @Injectable()
 export class OptionalAuthGuard implements CanActivate {
   private readonly logger = new Logger(OptionalAuthGuard.name);
@@ -29,30 +22,89 @@ export class OptionalAuthGuard implements CanActivate {
   constructor(
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+    private readonly tokenStore: TokenStoreService,
+    private readonly derivation: TokenDerivationService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<Request>();
 
-    try {
-      const token = this.extractToken(req);
-      if (!token) return true;
+    const accessToken = this.extractAccessToken(req);
+    if (!accessToken) return true;
 
-      const payload = await this.jwt.verifyAsync<JwtPayload>(token);
-      (req as Request & { user?: JwtUser }).user = {
-        userId: payload.sub,
-        email: payload.email,
-        role: payload.role,
-        tier: 'FREE',
-      };
+    let payload: JwtPayload;
+    try {
+      payload = await this.jwt.verifyAsync<JwtPayload>(accessToken);
     } catch {
-      this.logger.debug('Optional auth: token invalid or expired — proceeding anonymously');
+      this.logger.debug('Optional auth: JWT invalid — proceeding anonymously');
+      return true;
     }
+
+    const rbacToken = this.extractRbacToken(req);
+    const deviceToken = this.extractDeviceToken(req);
+    const userToken = this.extractUserToken(req);
+
+    let sessionUser: Awaited<ReturnType<typeof this.tokenStore.read>> | null = null;
+
+    if (rbacToken && userToken) {
+      const expectedUserToken = this.derivation.deriveUserToken(payload.sub);
+      if (this.derivation.timingSafeEqual(userToken, expectedUserToken)) {
+        const compoundKey = this.tokenStore.buildKey(
+          accessToken,
+          rbacToken,
+          deviceToken ?? '',
+          userToken,
+        );
+        try {
+          sessionUser = await this.tokenStore.read(compoundKey);
+        } catch {
+          this.logger.debug('Optional auth: Redis read failed — proceeding with JWT user');
+        }
+
+        if (sessionUser && payload.sub === sessionUser.userId) {
+          const expectedRbacToken = this.derivation.deriveRbacToken(
+            payload.sub,
+            sessionUser.tier,
+          );
+          if (this.derivation.timingSafeEqual(rbacToken, expectedRbacToken)) {
+            (req as Request & { user?: JwtUser }).user = {
+              userId: sessionUser.userId,
+              email: sessionUser.email,
+              role: sessionUser.role,
+              tier: sessionUser.tier,
+              name: sessionUser.name,
+              username: sessionUser.username,
+              avatarUrl: sessionUser.avatarUrl,
+              locale: sessionUser.locale || 'en',
+              timezone: sessionUser.timezone || 'UTC',
+              friends: sessionUser.friends,
+              unread: sessionUser.unread,
+              orgIds: sessionUser.orgIds,
+              teamIds: sessionUser.teamIds,
+              sessionId: sessionUser.sessionId,
+            };
+            try {
+              await this.tokenStore.extendTTL(compoundKey);
+            } catch {
+              this.logger.debug('Optional auth: TTL extend failed — non-fatal');
+            }
+            return true;
+          }
+        }
+      }
+    }
+
+    (req as Request & { user?: JwtUser }).user = {
+      userId: payload.sub,
+      email: payload.email,
+      role: payload.role,
+      tier: 'FREE',
+    };
 
     return true;
   }
 
-  private extractToken(req: Request): string | null {
+  private extractAccessToken(req: Request): string | null {
     const header = req.headers.authorization;
     if (header?.startsWith('Bearer ')) {
       return header.slice(7);
@@ -60,5 +112,32 @@ export class OptionalAuthGuard implements CanActivate {
     const cookieName = accessCookieName(this.config);
     const cookies = (req as unknown as { cookies?: Record<string, string> }).cookies;
     return cookies?.[cookieName] ?? null;
+  }
+
+  private extractRbacToken(req: Request): string | null {
+    const cookieName = rbacCookieName(this.config);
+    const cookies = (req as unknown as { cookies?: Record<string, string> }).cookies;
+    const fromCookie = cookies?.[cookieName] ?? null;
+    if (fromCookie) return fromCookie;
+    const header = req.headers['x-rbac-token'];
+    return (Array.isArray(header) ? header[0] : header) ?? null;
+  }
+
+  private extractDeviceToken(req: Request): string | null {
+    const name = deviceCookieName(this.config);
+    const cookies = (req as unknown as { cookies?: Record<string, string> }).cookies;
+    const fromCookie = cookies?.[name] ?? null;
+    if (fromCookie) return fromCookie;
+    const header = req.headers['x-device-token'];
+    return (Array.isArray(header) ? header[0] : header) ?? null;
+  }
+
+  private extractUserToken(req: Request): string | null {
+    const cookieName = userCookieName(this.config);
+    const cookies = (req as unknown as { cookies?: Record<string, string> }).cookies;
+    const fromCookie = cookies?.[cookieName] ?? null;
+    if (fromCookie) return fromCookie;
+    const header = req.headers['x-user-token'];
+    return (Array.isArray(header) ? header[0] : header) ?? null;
   }
 }

@@ -36,6 +36,7 @@ class ActivityLogger {
   void enqueue(Map<String, dynamic> event) {
     final fullEvent = <String, dynamic>{
       ...event,
+      'eventType': event['eventType'] ?? event['event'],
       'clientSessionId': clientSessionId,
       'timestamp': DateTime.now().toUtc().toIso8601String(),
     };

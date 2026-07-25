@@ -10,6 +10,7 @@ import {
   MaxLength,
   MinLength,
   IsIn,
+  ValidateNested,
 } from 'class-validator';
 
 const CATEGORIES = [
@@ -91,6 +92,7 @@ export class LogActivityDto {
   @IsArray()
   @ArrayMinSize(1)
   @ArrayMaxSize(50)
+  @ValidateNested({ each: true })
   @Type(() => FrontendEventDto)
   events: FrontendEventDto[];
 }
