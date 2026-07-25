@@ -8,6 +8,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { DirectiveLocation, GraphQLDirective } from 'graphql';
+import { ActivityLogModule } from './activity-log/activity-log.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { Redis } from 'ioredis';
@@ -167,6 +168,7 @@ const CORE_MODULES = [
   RedisModule,
   CsrfModule,
   DataloaderModule,
+  ActivityLogModule,
 ];
 
 // ── Demo modules — NestJS docs examples, gated behind LOAD_DEMO_MODULES ────

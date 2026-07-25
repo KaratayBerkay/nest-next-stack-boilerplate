@@ -3,10 +3,10 @@ name: boilers
 
 x-logging: &default-logging
   logging:
-    driver: json-file
+    driver: fluentd
     options:
-      max-size: "10m"
-      max-file: "3"
+      fluentd-address: localhost:24224
+      tag: "{{.Name}}"
 
 services:
   # ──────────────────────────────────────────────────────

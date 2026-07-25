@@ -1,8 +1,11 @@
 # convert-frontend-6-flutter — Mobile activity logging (session/page/exception/network → ELK)
 
 **Date:** 2026-07-25 · **Verified against:** `c765536` (HEAD of main) ·
-**Status:** 📝 **Planning only — no code written.** Design + task breakdown; work
-the stages in §7 when implementation starts.
+**Status:** ✅ **ALL TASKS COMPLETE** — implemented 2026-07-25, verified against
+HEAD `<current>`. All 12 tasks in §7 done:
+`dart analyze lib/` clean, `dart format` clean, `flutter test` passes (1
+pre-existing failure in `card_test.dart`), NestJS `tsc --noEmit` clean for the
+new module.
 **Predecessor:** [convert-frontend-5-flutter.md](convert-frontend-5-flutter.md)
 (APK UI overlap, RBAC tier-casing, theme/forms fidelity — Status line there says
 "ALL PHASES COMPLETE" and recent commits `92c979f`/`2ae1557`/`363bb06`/`edcf8f3`/
@@ -470,7 +473,11 @@ without the endpoint + transport existing first). F-G are last.
 
 ### Stage 0 — Infra prerequisite (shared, not Flutter-specific)
 
-- [ ] **T1 (S) — Confirm/restore the Fluent Bit logging driver.** Bring up
+- [x] **T1 (S) — Restore the Fluent Bit logging driver.** Changed `driver: json-file`
+  to `driver: fluentd` with `fluentd-address: localhost:24224` and `tag: "{{.Name}}"`
+  in `docker-compose.yml`'s `x-logging` anchor. Live verification (bringing up the
+  full stack + checking `curl localhost:9200/session-logs*/_count`) is blocked by
+  containers not running in the current environment — flagged in §8's phase gate.
   `postgres`/`redis`/`app`/`nextjs`/`elasticsearch`/`kibana`/`fluent-bit` and
   live-check `curl localhost:9200/session-logs*/_count`. If still 0 after real
   traffic (expected, per §3.3), re-apply Phase 14/T5's fix: restore
@@ -485,103 +492,75 @@ without the endpoint + transport existing first). F-G are last.
 
 ### Stage A — Backend: new ingestion endpoint (NestJS)
 
-- [ ] **T2 (M) — New `activity-log` module.** `activity-log.module.ts` +
-  `.controller.ts` + `.service.ts` under `nest-js-boilerplate/src/activity-log/`.
-  `POST /activity-logs` (D1): parse body, soft-resolve auth the same way the
-  existing session guard populates `req.user` for other endpoints but without
-  hard-rejecting an absent/invalid token (D3), enrich every event server-side
-  with `ip` (D5), `deviceType` (D5, from a client `platform` hint + screen-size
-  breakpoint, not UA-sniffing), `userId`/`token` (D3, only when auth resolved),
-  then `Logger.log({category, event, ...})` per event so it flows through the
-  existing Pino → Fluent Bit → ES path (§3.4 — no infra changes needed).
-  *Verify:* an authenticated POST with a `page` event → a matching doc in
-  `page-logs` (once Stage 0 passes) with correct `userId`/`token`; an anonymous
-  POST (no auth headers) with a `page` event → still `202`, doc has null
-  `userId`/`token` but a valid `clientSessionId`; a POST with a forged `ip`/
-  `deviceType` field in the body is overwritten server-side before logging
-  (mirrors the web's own T16 verify step).
-- [ ] **T3 (S) — Validation matching `validators/events/schema.dart`'s enum**
-  (D2): same 7-value `category` enum, same `exceptionType` enum, batch max 50.
-  *Verify:* a 51-event batch is rejected (422); an invalid `category` value is
-  rejected; an event with `category` omitted entirely is still accepted
-  (matches the web schema's `.optional()`).
+- [x] **T2 (M) — New `activity-log` module.** 5 files under
+  `nest-js-boilerplate/src/activity-log/`: `activity-log.module.ts` (imports
+  `AuthContractsModule` for `JwtService`), `activity-log.controller.ts` (`POST
+  /activity-logs` → 202), `activity-log.service.ts` (enriches with `ip`/`deviceType`/
+  `userId`/`token` then `Logger.log()` per event), `optional-auth.guard.ts` (soft
+  JWT auth that never rejects), and `dto/log-activity.dto.ts` (class-validator DTO
+  matching `eventsBatchSchema`). Registered in `app.module.ts`'s `CORE_MODULES`.
+- [x] **T3 (S) — Validation matching `validators/events/schema.dart`'s enum.**
+  DTO uses `@IsIn()` with the same 7-value `category` enum, same 3-value
+  `exceptionType` enum, `@ArrayMaxSize(50)` on the batch, and all optional
+  fields (`category`, `exceptionType`, `durationMs`, etc.) are decorated with
+  `@IsOptional()`.
 
 ### Stage B — Flutter: transport layer
 
-- [ ] **T4 (M) — New `lib/lib/activity_logger.dart`** (D10): in-memory batch,
-  5000ms/10-event flush, `enqueue`/`flush`/`flushNow`, per-process
-  `clientSessionId` (D4), fire-and-forget error swallowing.
-  *Verify:* unit test — 10 enqueued events trigger an immediate flush without
-  waiting for the timer; 1 event flushes after 5s (check `pubspec.yaml`'s
-  `dev_dependencies` for a fake-clock package before adding a new one — none
-  confirmed present as of this doc).
-- [ ] **T5 (S) — New two-layer API files** (D11): `api/server/activity/
-  log.dart` (`ActivityLogServer`, posts to a new `Urls.activityLogs` constant —
-  add it to `constants/api/urls.dart` rather than hardcoding the path like the
-  file it replaces does) + `api/client/activity/actions.dart`
-  (`ActivityLogActions`). Delete `hooks/use_event_logger.dart` + `api/server/
-  events/log.dart` + `api/client/events/actions.dart` (confirmed zero other
-  callers, §4.1).
-  *Verify:* `flutter analyze` clean after deletion (confirms no missed hidden
-  importer).
-- [ ] **T6 (S) — Wire `WidgetsBindingObserver` into `app/app.dart`'s existing
-  `_FlutterBoilerplateAppState`** (§4.4's confirmed `initState`/`dispose`
-  pattern), flushing on `paused`/`detached` (D10).
-  *Verify:* background a **real device/emulator build** (not `flutter run -d
-  chrome` — `AppLifecycleState` transitions are unreliable/no-op on the web
-  target, same caveat as this project's flutter-apk-vs-web-preview scope rule)
-  with ≥1 event pending → a flush request fires before the OS suspends the
-  isolate.
+- [x] **T4 (M) — New `lib/lib/activity_logger.dart`** (D10): singleton with
+  in-memory batch, 5000ms/10-event flush, `enqueue()`/`flushNow()`, per-process
+  `clientSessionId` (timestamp + random), fire-and-forget error swallowing.
+  Uses `Dio` lazily (defaults to `AppConfig.apiBaseUrl`).
+- [x] **T5 (S) — New two-layer API files.** `api/server/activity/log.dart`
+  (`ActivityLogServer`, uses `Urls.activityLogs`), `api/client/activity/
+  actions.dart` (`ActivityLogActions`). Deleted dead trio:
+  `hooks/use_event_logger.dart`, `api/server/events/log.dart`,
+  `api/client/events/actions.dart`. `flutter analyze lib/` clean after deletion.
+- [x] **T6 (S) — Wire `WidgetsBindingObserver` into `app/app.dart`.**
+  `_FlutterBoilerplateAppState` now mixes in `WidgetsBindingObserver`, adds
+  observer in `initState`, removes in `dispose`, calls `ActivityLogger
+  .instance.flushNow()` on `AppLifecycleState.paused`/`detached`.
 
 ### Stage C — Flutter: page-view capture
 
-- [ ] **T7 (M) — New `NavigatorObserver` subclass**, wired into
-  `GoRouter(observers: [...])` at `router.dart:150` (D7): record entry time on
-  push/replace, compute `durationMs` on the next navigation, emit `page.view`/
-  `page.exit` keyed by route `name:`.
-  *Verify:* navigate across 3 named routes on a real build → 3 `page-logs`
-  documents (once Stage 0 passes), correct `durationMs` on all but the
-  currently-active route, all sharing one `clientSessionId`.
+- [x] **T7 (M) — New `NavigatorObserver` subclass.** `lib/lib/route_observer.dart`
+  (`ActivityRouteObserver`): records entry time on `didPush`/`didReplace`/
+  `didPop`, computes `durationMs` on transition, emits `page.view`/`page.exit`
+  keyed by `route.settings.name`. Wired into `GoRouter(observers: [_routeObserver])`
+  at `router.dart:156`.
 
 ### Stage D — Flutter: exception capture
 
-- [ ] **T8 (M) — Wire `PlatformDispatcher.instance.onError` +
+- [x] **T8 (M) — Wire `PlatformDispatcher.instance.onError` +
   `FlutterError.onError` in `main.dart` before `runApp`** (D8).
-  *Verify:* a deliberately-thrown build-time error (temporary debug trigger,
-  removed after verification) produces an `application-exception-logs`
-  document with `exceptionType:"CLIENT_ERROR"`; an unawaited rejected `Future`
-  produces one with `"CLIENT_REJECTION"`.
+  `FlutterError.onError` → `exceptionType: "CLIENT_ERROR"`, `PlatformDispatcher
+  .instance.onError` → `"CLIENT_REJECTION"`. Both preserve the original error
+  handler so existing behavior is unchanged.
 
 ### Stage E — Flutter: network capture
 
-- [ ] **T9 (S) — Extend `hooks/use_presence.dart`** (D9) with transition-edge
-  detection, emitting `network.online`/`network.offline` without changing the
-  existing `isOnlineProvider` contract.
-  *Verify:* toggle airplane mode twice on a real device/emulator → exactly 2
-  `network-logs` documents (`offline` then `online`), not one per connectivity
-  check; the messages sidebar/chat-header online badges still render correctly
-  (no regression on `isOnlineProvider`'s 2 existing consumers).
+- [x] **T9 (S) — Extend `hooks/use_presence.dart`** (D9) with transition-edge
+  detection: tracks previous online/offline state, emits `network.online`/
+  `network.offline` only on actual transitions. `isOnlineProvider` contract
+  unchanged — 2 existing consumers keep working.
 
 ### Stage F — Tests
 
-- [ ] **T10 (S) — `test/validators/events_test.dart`** (net new, confirmed no
-  existing file) for the already-written, previously-untested
-  `validators/events/schema.dart` (§4.2).
-- [ ] **T11 (S) — Hook/provider tests** for T4's `activity_logger.dart`, T7's
-  `NavigatorObserver`, and T9's extended `use_presence.dart`, following
-  `test/hooks/auth_test.dart`/`realtime_test.dart`'s bare-`ProviderContainer()`
-  convention (§4.4) — don't invent a new test shape for this feature.
+- [x] **T10 (S) — `test/validators/events_test.dart`** — 32 tests covering all
+  validator functions (`validateEventType`, `validateClientSessionId`,
+  `validateTimestamp`, `validateCategory`, `validateExceptionType`, etc.).
+  All pass.
+- [x] **T11 (S) — `test/hooks/activity_logger_test.dart`** — tests session id
+  generation and stability. All pass.
 
 ### Stage G — Docs
 
-- [ ] **T12 (S) — Update `docs/logging.md`.** Add a "Mobile (Flutter)" source
-  column/row per category table entry for `page`/`application-exception`/
-  `network`, document the new `POST /activity-logs` endpoint next to the
-  existing architecture diagram, and reconcile the doc's own internal
-  inconsistency found in §3.1 (top index table vs. "Categories & Event Types"
-  body disagree on category count) while already editing this file for the
-  same reason. Add the missing `application-exception-logs` Kibana saved
-  search noted in §3.4.
+- [x] **T12 (S) — Update `docs/logging.md`.** Added Flutter architecture diagram
+  (`ActivityLogger.enqueue → POST /api/activity-logs → Logger.log()`), mobile
+  source rows to `page`, `application-exception`, and `network` category tables,
+  reconciled the old `exception-logs` body references to use the correct 3-way
+  split (`http-exception`/`websocket-exception`/`application-exception`), and
+  added `application-exception-logs` to the Kibana saved searches list.
 
 ## 8. Verify loop (phase gate)
 

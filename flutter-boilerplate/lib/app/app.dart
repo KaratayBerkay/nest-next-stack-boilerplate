@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/activity_logger.dart';
 import 'package:flutter_boilerplate/lib/i18n/messages_provider.dart';
 import 'package:flutter_boilerplate/lib/oauth_link_handler.dart';
 import 'package:flutter_boilerplate/lib/riverpod_compat.dart';
@@ -21,12 +22,14 @@ class FlutterBoilerplateApp extends ConsumerStatefulWidget {
       _FlutterBoilerplateAppState();
 }
 
-class _FlutterBoilerplateAppState extends ConsumerState<FlutterBoilerplateApp> {
+class _FlutterBoilerplateAppState extends ConsumerState<FlutterBoilerplateApp>
+    with WidgetsBindingObserver {
   OAuthLinkHandler? _oauthLinkHandler;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initServices();
     });
@@ -34,8 +37,17 @@ class _FlutterBoilerplateAppState extends ConsumerState<FlutterBoilerplateApp> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _oauthLinkHandler?.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      ActivityLogger.instance.flushNow();
+    }
   }
 
   Future<void> _initServices() async {

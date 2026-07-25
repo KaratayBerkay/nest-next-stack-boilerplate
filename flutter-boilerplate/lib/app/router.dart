@@ -5,6 +5,7 @@
 // Gallery @modal route → showModalBottomSheet on top of grid (deep link uses full page).
 
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/route_observer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -144,12 +145,15 @@ import '../views/v1/home/page_content.dart' as v1_home;
 import '../views/v1/missing_page.dart';
 import '../views/v1/v1_shell.dart';
 
+final _routeObserver = ActivityRouteObserver();
+
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
 
   return GoRouter(
     initialLocation: '/',
     debugLogDiagnostics: true,
+    observers: [_routeObserver],
     redirect: (context, state) {
       final isLoggedIn = authState.asData?.value != null;
       final isRootRoute = state.matchedLocation == '/';

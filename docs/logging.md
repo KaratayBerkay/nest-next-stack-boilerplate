@@ -17,7 +17,9 @@
 | `app-logs` | (no category — backend fallback) | All backend records without a matching category |
 | `frontend-logs` | (no category — frontend fallback) | All frontend records without a matching category |
 
-Events flow Pino → stdout → Fluent Bit → ES from both the backend (NestJS) and frontend (Next.js). Kafka/`frontend-events` remains only for events with no `category`.
+Events flow Pino → stdout → Fluent Bit → ES from the backend (NestJS), frontend (Next.js), and mobile (Flutter). Kafka/`frontend-events` remains only for events with no `category`.
+
+**Mobile (Flutter)** cannot participate in stdout capture directly (no container stdout). Instead, Flutter sends batched events to a dedicated NestJS endpoint `POST /activity-logs` (see §Architecture), which enriches them server-side and logs via the same Pino → Fluent Bit pipeline.
 
 ## Architecture
 
@@ -32,7 +34,7 @@ Backend (NestJS):
                       session  page exception network  database  performance
                          │      │       │       │        │          │
                          ▼      ▼       ▼       ▼        ▼          ▼
-                  session-logs  page-logs  exception-logs  network-logs  database-logs  performance-logs
+                  session-logs  page-logs  app-exception-logs  network-logs  database-logs  performance-logs
 
 Frontend (Next.js):
   useEventLogger → POST /api/events
@@ -41,6 +43,19 @@ Frontend (Next.js):
     ↓
   category present? → Pino (stdout → Fluent Bit → ES)
   no category?      → Kafka (frontend-events topic)
+
+Mobile (Flutter):
+  ActivityLogger.enqueue → batch (5s / 10 events)
+    ↓
+  POST /api/activity-logs (to NestJS, not Next.js)
+    ↓
+  OptionalAuthGuard (soft-resolve userId/sessionId if token present)
+    ↓
+  Server enriches (ip, deviceType from platform hint)
+    ↓
+  Logger.log({ category, event, ... }) per event
+    ↓
+  Pino (stdout → Fluent Bit → ES)  ← same pipeline as backend
 ```
 
 ## Categories & Event Types
@@ -84,14 +99,16 @@ Frontend (Next.js):
 |---|---|---|
 | `network.rate_limited` | `HttpThrottlerGuard` (NestJS), events Route Handler (Next.js) | `ip`, `path`, `method`, `userAgent`, `deviceType` |
 | `network.csrf_fail` | `CsrfGuard` (NestJS) | `ip`, `path`, `method`, `userAgent`, `deviceType` |
-| `network.offline` | `useNetworkLogger` (frontend) | `url` |
-| `network.online` | `useNetworkLogger` (frontend) | `url` |
+| `network.offline` | `useNetworkLogger` (web frontend) | `url` |
+| `network.online` | `useNetworkLogger` (web frontend) | `url` |
+| `network.offline` | `hooks/use_presence.dart` — Flutter connectivity transition (D9) | `clientSessionId`, `category`, `event` |
+| `network.online` | `hooks/use_presence.dart` — Flutter connectivity transition (D9) | `clientSessionId`, `category`, `event` |
 
-### `exception` — exception-logs
+### `application-exception` — application-exception-logs
 
 | event | source | fields |
 |---|---|---|
-| `exception.unhandled` | `GlobalHttpExceptionFilter` | `httpStatus` (5xx), `path`, `method`, `ip`, `userAgent`, `deviceType`, `errorMessage`, `stack` |
+| `exception.unhandled` | `GlobalHttpExceptionFilter` (NestJS) | `httpStatus` (5xx), `path`, `method`, `ip`, `userAgent`, `deviceType`, `errorMessage`, `stack` |
 | `exception.handled` | `GlobalHttpExceptionFilter` | `httpStatus` (4xx), `path`, `method`, `ip`, `userAgent`, `deviceType`, `errorMessage` |
 | `exception.websocket` | `AllWsExceptionsFilter` | `socketId`, `ip`, `userAgent`, `deviceType`, `errorMessage`, `stack` |
 | `exception.ws_handled` | `CustomWsExceptionFilter` | `socketId`, `ip`, `userAgent`, `deviceType`, `detail` |
@@ -99,13 +116,17 @@ Frontend (Next.js):
 | `device-change` | `DeviceIpMiddleware` | `deviceId`, `previousIp`, `newIp` |
 | `exception` (frontend) | `useEventLogger.ts` | `url`, `exceptionType`, `message`, `stack` |
 | `CLIENT_REQUEST_ERROR` | `instrumentation.ts` — `onRequestError` | `route`, `message` |
+| `application-exception.framework_error` | `FlutterError.onError` in `main.dart` (D8) | `exceptionType: "CLIENT_ERROR"`, `metadata.exception`, `metadata.stack`, `clientSessionId` |
+| `application-exception.unhandled_error` | `PlatformDispatcher.instance.onError` in `main.dart` (D8) | `exceptionType: "CLIENT_REJECTION"`, `metadata.exception`, `metadata.stack`, `clientSessionId` |
 
-### `page` — page-logs (frontend)
+### `page` — page-logs (frontend + mobile)
 
 | event | source | fields |
 |---|---|---|
-| `page.view` | `useEventLogger.ts` — client hook | `url`, `category`, `event`, `page` |
+| `page.view` | `useEventLogger.ts` — web client hook | `url`, `category`, `event`, `page` |
 | `page.exit` | `useEventLogger.ts` — route change / unmount | `url`, `category`, `event`, `page`, `durationMs` |
+| `page.view` | `ActivityRouteObserver` — Flutter `NavigatorObserver` (D7) | `page` (route `name:`), `clientSessionId`, `category`, `event` |
+| `page.exit` | `ActivityRouteObserver` — Flutter `NavigatorObserver` (D7) | `page` (route `name:`), `clientSessionId`, `category`, `event`, `durationMs` |
 
 ## Querying in Kibana
 
@@ -117,7 +138,7 @@ GET session-logs/_search
 }
 
 // Exception events in the last hour
-GET exception-logs/_search
+GET application-exception-logs/_search
 {
   "query": {
     "bool": {
@@ -143,7 +164,7 @@ GET page-logs/_search
 }
 
 // Connection losses (abnormal WS close codes)
-GET exception-logs/_search
+GET websocket-exception-logs/_search
 {
   "query": {
     "bool": {
@@ -156,7 +177,7 @@ GET exception-logs/_search
 }
 
 // Device IP changes
-GET exception-logs/_search
+GET websocket-exception-logs/_search
 {
   "query": { "term": { "event": "device-change" } }
 }
@@ -239,8 +260,8 @@ GET performance-logs/_search
 }
 ```
 
-Kibana saved searches: `session-logs-search`, `exception-logs-search`, `page-logs-search`, `network-logs-search`, `database-logs-search`, `performance-logs-search`
-(imported via `kibana-saved-objects.ndjson`). Data views: `session-logs*`, `exception-logs*`,
+Kibana saved searches: `session-logs-search`, `application-exception-logs-search`, `page-logs-search`, `network-logs-search`, `database-logs-search`, `performance-logs-search`
+(imported via `kibana-saved-objects.ndjson`). Data views: `session-logs*`, `application-exception-logs*`,
 `page-logs*`, `network-logs*`, `database-logs*`, `performance-logs*`, `app-logs*`, `frontend-logs*`.
 
 ## Kafka / Frontend-Events Pipeline
@@ -258,7 +279,9 @@ as a dependency for observability data and keeps the critical path simple.
 ## ES Index Template
 
 The file `docker/elasticsearch/index-template-structured-logs.json` defines the mapping for
-`session-logs*`, `exception-logs*`, `page-logs*`, `network-logs*`, `database-logs*`, `performance-logs*` indices. Key decisions:
+`session-logs*`, `http-exception-logs*`, `websocket-exception-logs*`, `application-exception-logs*`,
+`page-logs*`, `network-logs*`, `database-logs*`, `performance-logs*`, `payment-logs*`, `billing-logs*`
+indices. Key decisions:
 - All string fields (`token`, `userId`, `deviceType`, etc.) are mapped as `keyword` (not
   `text`) so they are aggregatable and sortable in Kibana.
 - `errorMessage`, `stack`, `detail` are `text` for full-text search.
@@ -276,8 +299,9 @@ curl -X PUT "localhost:9200/_index_template/structured-logs" \
 ## Fluent Bit Routing
 
 Two `[FILTER] Name rewrite_tag` blocks in `fluent-bit.conf` (one matching the raw `app` tag,
-one matching `frontend`) inspect each record's `category` field and rewrite the tag to
-`session`/`exception`/`page`/`network`/`database`/`performance` when it matches, via the
-`$category ^(session|exception|page|network|database|performance)$ $1` rule. The corresponding `[OUTPUT]` blocks then
-send rewritten records to the correct index. Records without a `category` field keep their original
-tag (`app`, `frontend`, `messaging-ws`) and route to the general indices.
+one matching `frontend`) inspect each record's `category` field and rewrite the tag to the
+matching index via the rule `$category ^(session|page|http-exception|websocket-exception|application-exception|network|database|performance|payment|billing)$ $1`.
+There are 10 real category values, each routing to its own ES index (see the Index Reference table).
+The corresponding `[OUTPUT]` blocks then send rewritten records to the correct index. Records without
+a `category` field keep their original tag (`app`, `frontend`, `messaging-ws`) and route to the
+general indices.
