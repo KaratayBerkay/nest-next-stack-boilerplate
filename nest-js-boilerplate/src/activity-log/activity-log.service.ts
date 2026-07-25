@@ -25,6 +25,12 @@ export class ActivityLogService {
 
     for (const event of events) {
       this.logger.log({
+        // NOTE: do not name this "source" — Docker's fluentd log driver already
+        // injects a top-level `source` field (stdout/stderr) into every record,
+        // which silently wins over this one, per-record, before it ever reaches
+        // Fluent Bit's rewrite_tag rule. Confirmed by a live routing test where
+        // every activity-log event ended up in backend-logs with source:"stdout".
+        origin: 'mobile',
         category: event.category,
         event: event.event ?? event.eventType,
         eventType: event.eventType,

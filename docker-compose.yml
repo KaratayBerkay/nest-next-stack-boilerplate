@@ -1,12 +1,8 @@
 # Infra services for local dev — secrets fetched from Vault by vault-init.
 name: boilers
 
-x-logging: &default-logging
-  logging:
-    driver: fluentd
-    options:
-      fluentd-address: localhost:24224
-      tag: "{{.Name}}"
+x-logging-options: &default-logging-options
+  fluentd-address: localhost:24224
 
 services:
   # ──────────────────────────────────────────────────────
@@ -172,7 +168,11 @@ services:
     command: ["node_modules/.bin/prisma", "db", "push", "--accept-data-loss"]
 
   app:
-    <<: *default-logging
+    logging:
+      driver: fluentd
+      options:
+        <<: *default-logging-options
+        tag: "app"
     build:
       context: ./nest-js-boilerplate
     restart: unless-stopped
@@ -198,7 +198,11 @@ services:
       - "5050:5050"
 
   nextjs:
-    <<: *default-logging
+    logging:
+      driver: fluentd
+      options:
+        <<: *default-logging-options
+        tag: "frontend"
     build:
       context: ./next-js-boilerplate
       network: host

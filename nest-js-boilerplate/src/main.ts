@@ -1,4 +1,8 @@
-import { ValidationPipe, type ValidationError } from '@nestjs/common';
+import {
+  BadRequestException,
+  ValidationPipe,
+  type ValidationError,
+} from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import compression from 'compression';
@@ -48,13 +52,13 @@ function validationExceptionFactory(errors: ValidationError[]) {
     }));
   });
 
-  return {
+  return new BadRequestException({
     statusCode: 400,
     exc: 'EX_VALIDATION_FORM' as const,
     msg: 'Validation failed',
     key: 'error.validation',
     fields,
-  };
+  });
 }
 
 async function bootstrap() {

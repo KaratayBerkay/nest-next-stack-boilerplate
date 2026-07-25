@@ -86,7 +86,7 @@ class Urls {
   static const securityNonce = '/api/security/nonce';
 
   // Activity logs
-  static const activityLogs = '/api/activity-logs';
+  static const activityLogs = '/activity-logs';
 
   // Events
   static const events = '/api/events';
