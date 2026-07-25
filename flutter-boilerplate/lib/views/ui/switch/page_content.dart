@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../components/ui/switch/switch.dart';
-import '../../../l10n/app_localizations.dart';
 
 class SwitchDemoPage extends StatelessWidget {
   final String lang;
@@ -8,25 +7,21 @@ class SwitchDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.uiSwitchTitle)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: const [
-          Card(
-            child: Column(
-              children: [
-                SwitchWidget(value: true, label: 'Notifications'),
-                Divider(height: 1),
-                SwitchWidget(value: false, label: 'Dark Mode'),
-                Divider(height: 1),
-                SwitchWidget(value: true, label: 'Sound'),
-              ],
-            ),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: const [
+        Card(
+          child: Column(
+            children: [
+              SwitchWidget(value: true, label: 'Notifications'),
+              Divider(height: 1),
+              SwitchWidget(value: false, label: 'Dark Mode'),
+              Divider(height: 1),
+              SwitchWidget(value: true, label: 'Sound'),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

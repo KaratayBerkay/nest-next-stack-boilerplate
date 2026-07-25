@@ -34,26 +34,22 @@ class _FreePostsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.postsHeading)),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                t.postsUpgradeView,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              FilledButton(
-                onPressed: () => context.go('/v1/$lang/plans'),
-                child: Text(t.postsUpgradeView),
-              ),
-            ],
-          ),
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              t.postsUpgradeView,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            FilledButton(
+              onPressed: () => context.go('/v1/$lang/plans'),
+              child: Text(t.postsUpgradeView),
+            ),
+          ],
         ),
       ),
     );
@@ -70,25 +66,38 @@ class _PostsView extends ConsumerWidget {
     final t = AppLocalizations.of(context);
     final postsAsync = ref.watch(feedProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(t.postsHeading),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => context.go('/v1/$lang/posts/create'),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Row(
+            children: [
+              Text(
+                t.postsHeading,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              const Spacer(),
+              if (context.mounted)
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: () => context.go('/v1/$lang/posts/create'),
+                ),
+            ],
           ),
-        ],
-      ),
-      body: postsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (posts) => ListView.builder(
-          padding: const EdgeInsets.all(8),
-          itemCount: posts.length,
-          itemBuilder: (_, i) => _PostCard(post: posts[i], lang: lang),
         ),
-      ),
+        Expanded(
+          child: postsAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('Error: $e')),
+            data: (posts) => ListView.builder(
+              padding: const EdgeInsets.all(8),
+              itemCount: posts.length,
+              itemBuilder: (_, i) => _PostCard(post: posts[i], lang: lang),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

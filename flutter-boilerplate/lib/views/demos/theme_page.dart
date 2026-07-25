@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../constants/theme.dart';
 import '../../hooks/use_theme.dart';
-import '../../l10n/app_localizations.dart';
 
 class ThemeDemoPage extends ConsumerWidget {
   final String lang;
@@ -15,48 +14,44 @@ class ThemeDemoPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentMode = ref.watch(themeModeProvider);
-    final t = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.demoThemePageTitle)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Text(
-            'Current theme: ${currentMode.name}',
-            style: const TextStyle(fontSize: 16),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text(
+          'Current theme: ${currentMode.name}',
+          style: const TextStyle(fontSize: 16),
+        ),
+        const SizedBox(height: 16),
+        ...AppThemeMode.values.map(
+          (mode) => RadioListTile<AppThemeMode>(
+            title: Text(mode.name),
+            value: mode,
+            groupValue: currentMode,
+            onChanged: (v) {
+              if (v != null) {
+                ref.read(themeModeProvider.notifier).setMode(v);
+              }
+            },
           ),
-          const SizedBox(height: 16),
-          ...AppThemeMode.values.map(
-            (mode) => RadioListTile<AppThemeMode>(
-              title: Text(mode.name),
-              value: mode,
-              groupValue: currentMode,
-              onChanged: (v) {
-                if (v != null) {
-                  ref.read(themeModeProvider.notifier).setMode(v);
-                }
-              },
-            ),
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          'Color Tokens',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
           ),
-          const SizedBox(height: 24),
-          const Text(
-            'Color Tokens',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          _tokenRow('Brand', AppColors.of(context).brand),
-          _tokenRow('Surface', AppColors.of(context).surface),
-          _tokenRow('Surface Alt', AppColors.of(context).surfaceAlt),
-          _tokenRow('Foreground', AppColors.of(context).fg),
-          _tokenRow('Fg Muted', AppColors.of(context).fgMuted),
-          _tokenRow('Border', AppColors.of(context).border),
-          _tokenRow('Danger', AppColors.of(context).danger),
-          _tokenRow('Success', AppColors.of(context).success),
-        ],
-      ),
+        ),
+        const SizedBox(height: 8),
+        _tokenRow('Brand', AppColors.of(context).brand),
+        _tokenRow('Surface', AppColors.of(context).surface),
+        _tokenRow('Surface Alt', AppColors.of(context).surfaceAlt),
+        _tokenRow('Foreground', AppColors.of(context).fg),
+        _tokenRow('Fg Muted', AppColors.of(context).fgMuted),
+        _tokenRow('Border', AppColors.of(context).border),
+        _tokenRow('Danger', AppColors.of(context).danger),
+        _tokenRow('Success', AppColors.of(context).success),
+      ],
     );
   }
 

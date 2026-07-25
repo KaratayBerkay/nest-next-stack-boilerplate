@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../l10n/app_localizations.dart';
 
 class ToggleGroupDemoPage extends StatefulWidget {
   final String lang;
@@ -14,37 +13,33 @@ class _ToggleGroupDemoPageState extends State<ToggleGroupDemoPage> {
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.uiToggleGroupTitle)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Text(
-            'Text Alignment',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          ToggleButtons(
-            isSelected: [
-              _alignment == 'left',
-              _alignment == 'center',
-              _alignment == 'right',
-            ],
-            onPressed: (i) {
-              setState(() {
-                _alignment = ['left', 'center', 'right'][i];
-              });
-            },
-            children: const [
-              Icon(Icons.format_align_left),
-              Icon(Icons.format_align_center),
-              Icon(Icons.format_align_right),
-            ],
-          ),
-          Text('Selected: $_alignment'),
-        ],
-      ),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const Text(
+          'Text Alignment',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        ToggleButtons(
+          isSelected: [
+            _alignment == 'left',
+            _alignment == 'center',
+            _alignment == 'right',
+          ],
+          onPressed: (i) {
+            setState(() {
+              _alignment = ['left', 'center', 'right'][i];
+            });
+          },
+          children: const [
+            Icon(Icons.format_align_left),
+            Icon(Icons.format_align_center),
+            Icon(Icons.format_align_right),
+          ],
+        ),
+        Text('Selected: $_alignment'),
+      ],
     );
   }
 }

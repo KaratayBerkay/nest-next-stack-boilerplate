@@ -20,53 +20,71 @@ class SettingsPageContent extends ConsumerWidget {
     final t = AppLocalizations.of(context);
     final tier = ref.watch(userTierProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(t.settingsSettingsSectionLabel),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/v1/$lang/feed'),
-        ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Row(
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Row(
             children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => context.go('/v1/$lang/feed'),
+              ),
+              const SizedBox(width: 8),
               Text(
-                t.settingsCurrentPlan,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: colors.fg,
-                ),
+                t.settingsSettingsSectionLabel,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
               const Spacer(),
-              InkWell(
-                borderRadius: BorderRadius.circular(8),
-                onTap: () => _showSettingsInfo(context),
-                child:
-                    Icon(Icons.info_outline, size: 18, color: colors.fgMuted),
+            ],
+          ),
+        ),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Row(
+                children: [
+                  Text(
+                    t.settingsCurrentPlan,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: colors.fg,
+                    ),
+                  ),
+                  const Spacer(),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () => _showSettingsInfo(context),
+                    child: Icon(
+                      Icons.info_outline,
+                      size: 18,
+                      color: colors.fgMuted,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              PlanInfoCard(
+                planName: tier.toUpperCase(),
+                status: 'active',
+                price: tier == 'free' ? 'Free' : null,
+              ),
+              const SizedBox(height: 12),
+              PlanAdvantages(
+                advantages: _featuresForTier(tier),
+              ),
+              const SizedBox(height: 12),
+              UpgradeActions(
+                lang: lang,
+                isOnPaidPlan: tier != 'free',
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          PlanInfoCard(
-            planName: tier.toUpperCase(),
-            status: 'active',
-            price: tier == 'free' ? 'Free' : null,
-          ),
-          const SizedBox(height: 12),
-          PlanAdvantages(
-            advantages: _featuresForTier(tier),
-          ),
-          const SizedBox(height: 12),
-          UpgradeActions(
-            lang: lang,
-            isOnPaidPlan: tier != 'free',
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

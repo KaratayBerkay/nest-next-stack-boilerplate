@@ -92,32 +92,62 @@ class ChatRoomMainContent extends StatelessWidget {
         border: Border.all(color: colors.border),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Column(
+      child: Stack(
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: colors.border)),
-            ),
-            child: Row(
-              children: [
-                HamburgerButton(
-                  useNativeControls: useNativeControls,
-                  room: room,
-                  countLabel: _placeholder(t),
-                  onClick: () => onSetSidebarOpen(true),
+          Column(
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  border: Border(bottom: BorderSide(color: colors.border)),
                 ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: ChatRoomMessageList(
-              messages: messages,
-              userId: userId,
-              onlineUserIds: onlineUserIds,
-              msgsLoading: msgsLoading,
-              msgsError: msgsError,
-            ),
+                child: Row(
+                  children: [
+                    HamburgerButton(
+                      useNativeControls: useNativeControls,
+                      room: room,
+                      countLabel: _placeholder(t),
+                      onClick: () => onSetSidebarOpen(true),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ChatRoomMessageList(
+                  messages: messages,
+                  userId: userId,
+                  onlineUserIds: onlineUserIds,
+                  msgsLoading: msgsLoading,
+                  msgsError: msgsError,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: colors.border)),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: MessageInput(
+                        useNativeControls: useNativeControls,
+                        controller: messageController,
+                        placeholder: _placeholder(t),
+                        disabled: connectionState != 'online',
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    SendButton(
+                      useNativeControls: useNativeControls,
+                      onClick: onSend,
+                      disabled: connectionState != 'online' ||
+                          messageController.text.trim().isEmpty,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           if (!isAtBottom && messages.isNotEmpty)
             Positioned(
@@ -128,31 +158,6 @@ class ChatRoomMainContent extends StatelessWidget {
                 child: const Icon(Icons.arrow_downward),
               ),
             ),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              border: Border(top: BorderSide(color: colors.border)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: MessageInput(
-                    useNativeControls: useNativeControls,
-                    controller: messageController,
-                    placeholder: _placeholder(t),
-                    disabled: connectionState != 'online',
-                  ),
-                ),
-                const SizedBox(width: 8),
-                SendButton(
-                  useNativeControls: useNativeControls,
-                  onClick: onSend,
-                  disabled: connectionState != 'online' ||
-                      messageController.text.trim().isEmpty,
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );

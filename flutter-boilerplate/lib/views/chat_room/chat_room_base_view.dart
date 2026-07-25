@@ -117,6 +117,8 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
     final user = ref.watch(currentUserProvider);
     final connected = ref.watch(realtimeConnectedProvider);
     final messagesAsync = ref.watch(conversationMessagesProvider(_room));
+    final width = MediaQuery.of(context).size.width;
+    final isMobile = width < 768;
 
     if (user == null) {
       return const Center(child: CircularProgressIndicator());
@@ -125,6 +127,40 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
     final allRooms = [...ChatConstants.chatRooms, ...vipRooms];
 
     final t = AppLocalizations.of(context);
+
+    final sidebar = ChatRoomSidebar(
+      useNativeControls: useNativeControls,
+      sidebarOpen: _sidebarOpen,
+      rooms: allRooms,
+      room: _room,
+      roomCounts: _roomCounts,
+      vipRooms: vipRooms,
+      roomMembers: _roomMembers,
+      currentUserId: user.id,
+      showSelfCrown: showSelfCrown,
+      onSetSidebarOpen: (v) => setState(() => _sidebarOpen = v),
+      onSelectRoom: _selectRoom,
+    );
+
+    final messagesContent = messagesAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('${t.errorSomethingWentWrong}: $e')),
+      data: (messages) => ChatRoomMainContent(
+        useNativeControls: useNativeControls,
+        room: _room,
+        roomCounts: _roomCounts,
+        connectionState: _connectionState,
+        messages: messages,
+        userId: user.id,
+        messageController: _messageController,
+        scrollController: _scrollController,
+        isAtBottom: _isAtBottom,
+        onSetSidebarOpen: (v) => setState(() => _sidebarOpen = v),
+        onSend: _handleSend,
+        onScrollToBottom: _scrollToBottom,
+      ),
+    );
+
     return Column(
       children: [
         ChatRoomHeader(
@@ -152,52 +188,36 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
         ),
         const SizedBox(height: 8),
         Expanded(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (_sidebarOpen)
-                GestureDetector(
-                  onTap: () => setState(() => _sidebarOpen = false),
-                  child: Container(color: Colors.black26),
+          child: isMobile
+              ? Stack(
+                  children: [
+                    messagesContent,
+                    if (_sidebarOpen)
+                      GestureDetector(
+                        onTap: () => setState(() => _sidebarOpen = false),
+                        child: Container(
+                          color: Colors.black.withValues(alpha: 0.3),
+                        ),
+                      ),
+                    AnimatedPositioned(
+                      left: _sidebarOpen ? 0 : -width,
+                      top: 0,
+                      bottom: 0,
+                      width: width * 0.8,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOut,
+                      child: sidebar,
+                    ),
+                  ],
+                )
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    sidebar,
+                    const SizedBox(width: 12),
+                    Expanded(child: messagesContent),
+                  ],
                 ),
-              ChatRoomSidebar(
-                useNativeControls: useNativeControls,
-                sidebarOpen: _sidebarOpen,
-                rooms: allRooms,
-                room: _room,
-                roomCounts: _roomCounts,
-                vipRooms: vipRooms,
-                roomMembers: _roomMembers,
-                currentUserId: user.id,
-                showSelfCrown: showSelfCrown,
-                onSetSidebarOpen: (v) => setState(() => _sidebarOpen = v),
-                onSelectRoom: _selectRoom,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: messagesAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (e, _) =>
-                      Center(child: Text('${t.errorSomethingWentWrong}: $e')),
-                  data: (messages) => ChatRoomMainContent(
-                    useNativeControls: useNativeControls,
-                    room: _room,
-                    roomCounts: _roomCounts,
-                    connectionState: _connectionState,
-                    messages: messages,
-                    userId: user.id,
-                    messageController: _messageController,
-                    scrollController: _scrollController,
-                    isAtBottom: _isAtBottom,
-                    onSetSidebarOpen: (v) => setState(() => _sidebarOpen = v),
-                    onSend: _handleSend,
-                    onScrollToBottom: _scrollToBottom,
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
       ],
     );

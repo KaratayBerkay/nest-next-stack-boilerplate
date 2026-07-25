@@ -71,47 +71,44 @@ class _WsDemoPageState extends State<WsDemoPage> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.demoWsPageTitle)),
-      body: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            color: _status == 'Connected'
-                ? Colors.green.shade100
-                : Colors.red.shade100,
-            child: Text('Status: $_status'),
-          ),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _messages.length,
-              itemBuilder: (_, i) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Text(_messages[i]),
-              ),
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          color: _status == 'Connected'
+              ? Colors.green.shade100
+              : Colors.red.shade100,
+          child: Text('Status: $_status'),
+        ),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: _messages.length,
+            itemBuilder: (_, i) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Text(_messages[i]),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: InputDecoration(
-                      hintText: t.demoWsTypeMessage,
-                      border: const OutlineInputBorder(),
-                    ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  decoration: InputDecoration(
+                    hintText: t.demoWsTypeMessage,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
-                const SizedBox(width: 8),
-                FilledButton(onPressed: _send, child: Text(t.demoWsSend)),
-              ],
-            ),
+              ),
+              const SizedBox(width: 8),
+              FilledButton(onPressed: _send, child: Text(t.demoWsSend)),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

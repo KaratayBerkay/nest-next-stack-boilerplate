@@ -19,122 +19,134 @@ class SettingsApiKeysPageContent extends ConsumerWidget {
     final t = AppLocalizations.of(context);
     final keysAsync = ref.watch(apiKeysProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(t.settingsApiKeysHeading),
-        actions: [
-          TextButton(
-            onPressed: () => _showCreateDialog(context, ref),
-            child: Text(t.settingsApiKeysCreate),
-          ),
-        ],
-      ),
-      body: keysAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (keys) {
-          if (keys.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'No API keys yet.',
-                    style: TextStyle(color: colors.fgMuted),
-                  ),
-                  const SizedBox(height: 16),
-                  Button(
-                    child: Text(t.settingsApiKeysCreate),
-                    onPressed: () => _showCreateDialog(context, ref),
-                  ),
-                ],
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Row(
+            children: [
+              Text(
+                t.settingsApiKeysHeading,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
-            );
-          }
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: keys
-                .map(
-                  (k) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+              const Spacer(),
+              TextButton(
+                onPressed: () => _showCreateDialog(context, ref),
+                child: Text(t.settingsApiKeysCreate),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: keysAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('Error: $e')),
+            data: (keys) {
+              if (keys.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'No API keys yet.',
+                        style: TextStyle(color: colors.fgMuted),
+                      ),
+                      const SizedBox(height: 16),
+                      Button(
+                        child: Text(t.settingsApiKeysCreate),
+                        onPressed: () => _showCreateDialog(context, ref),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              return ListView(
+                padding: const EdgeInsets.all(16),
+                children: keys
+                    .map(
+                      (k) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        k.name,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            k.name,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          Text(
+                                            '${k.prefix}••••••••••••••••',
+                                            style: TextStyle(
+                                              color: colors.fgMuted,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      Text(
-                                        '${k.prefix}••••••••••••••••',
-                                        style: TextStyle(
-                                          color: colors.fgMuted,
-                                          fontSize: 12,
-                                        ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.delete_outline,
+                                        size: 18,
                                       ),
-                                    ],
+                                      onPressed: () async {
+                                        try {
+                                          await ref
+                                              .read(apiKeyActionsProvider)
+                                              .revoke(k.id);
+                                          ref.invalidate(apiKeysProvider);
+                                          if (context.mounted) {
+                                            showToast(context, 'Key revoked');
+                                          }
+                                        } catch (e) {
+                                          if (context.mounted) {
+                                            showToast(context, 'Failed: $e');
+                                          }
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Created: ${k.createdAt.toLocal().toString().split(' ')[0]}',
+                                  style: TextStyle(
+                                    color: colors.fgMuted,
+                                    fontSize: 11,
                                   ),
                                 ),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.delete_outline,
-                                    size: 18,
+                                if (k.lastUsedAt != null)
+                                  Text(
+                                    'Last used: ${k.lastUsedAt!.toLocal().toString().split(' ')[0]}',
+                                    style: TextStyle(
+                                      color: colors.fgMuted,
+                                      fontSize: 11,
+                                    ),
                                   ),
-                                  onPressed: () async {
-                                    try {
-                                      await ref
-                                          .read(apiKeyActionsProvider)
-                                          .revoke(k.id);
-                                      ref.invalidate(apiKeysProvider);
-                                      if (context.mounted) {
-                                        showToast(context, 'Key revoked');
-                                      }
-                                    } catch (e) {
-                                      if (context.mounted) {
-                                        showToast(context, 'Failed: $e');
-                                      }
-                                    }
-                                  },
-                                ),
                               ],
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Created: ${k.createdAt.toLocal().toString().split(' ')[0]}',
-                              style: TextStyle(
-                                color: colors.fgMuted,
-                                fontSize: 11,
-                              ),
-                            ),
-                            if (k.lastUsedAt != null)
-                              Text(
-                                'Last used: ${k.lastUsedAt!.toLocal().toString().split(' ')[0]}',
-                                style: TextStyle(
-                                  color: colors.fgMuted,
-                                  fontSize: 11,
-                                ),
-                              ),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                )
-                .toList(),
-          );
-        },
-      ),
+                    )
+                    .toList(),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 

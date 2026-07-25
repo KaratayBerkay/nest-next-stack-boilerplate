@@ -15,6 +15,7 @@ const _query = '''
       avatarUrl
       locale
       subscriptionTier
+      role
       sessionId
     }
   }

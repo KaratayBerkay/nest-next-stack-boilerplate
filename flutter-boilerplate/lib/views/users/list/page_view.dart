@@ -30,92 +30,89 @@ class _UsersListPageContentState extends ConsumerState<UsersListPageContent> {
     final friendsAsync = ref.watch(friendsListProvider);
     final searchAsync = ref.watch(searchUsersProvider(_query));
 
-    return Scaffold(
-      appBar: AppBar(title: Text(t.usersTitle)),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: t.usersSearchHint,
-                prefixIcon: const Icon(Icons.search),
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                isDense: true,
-              ),
-              onSubmitted: (v) => setState(() => _query = v),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: t.usersSearchHint,
+              prefixIcon: const Icon(Icons.search),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              isDense: true,
             ),
+            onSubmitted: (v) => setState(() => _query = v),
           ),
-          Expanded(
-            child: _query.isEmpty
-                ? friendsAsync.when(
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Center(child: Text('Error: $e')),
-                    data: (friends) {
-                      if (friends.isEmpty) {
-                        return EmptyWidget(
-                          title: t.usersNoFriends,
-                          icon: Icons.people_outline,
-                        );
-                      }
-                      return ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: friends.length,
-                        itemBuilder: (_, i) => ListTile(
-                          leading: Avatar(name: friends[i].name),
-                          title: Text(friends[i].name),
-                          subtitle: Row(
-                            children: [
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: friends[i].isOnline
-                                      ? colors.success
-                                      : colors.fgMuted,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                friends[i].isOnline
-                                    ? t.usersOnline
-                                    : t.usersOffline,
-                                style: TextStyle(
-                                  color: colors.fgMuted,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () => context
-                              .go('/v1/${widget.lang}/users/${friends[i].id}'),
-                        ),
+        ),
+        Expanded(
+          child: _query.isEmpty
+              ? friendsAsync.when(
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (e, _) => Center(child: Text('Error: $e')),
+                  data: (friends) {
+                    if (friends.isEmpty) {
+                      return EmptyWidget(
+                        title: t.usersNoFriends,
+                        icon: Icons.people_outline,
                       );
-                    },
-                  )
-                : searchAsync.when(
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Center(child: Text('Error: $e')),
-                    data: (users) => ListView.builder(
+                    }
+                    return ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: users.length,
+                      itemCount: friends.length,
                       itemBuilder: (_, i) => ListTile(
-                        leading: Avatar(name: users[i].name),
-                        title: Text(users[i].name),
+                        leading: Avatar(name: friends[i].name),
+                        title: Text(friends[i].name),
+                        subtitle: Row(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: friends[i].isOnline
+                                    ? colors.success
+                                    : colors.fgMuted,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              friends[i].isOnline
+                                  ? t.usersOnline
+                                  : t.usersOffline,
+                              style: TextStyle(
+                                color: colors.fgMuted,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
                         onTap: () => context
-                            .go('/v1/${widget.lang}/users/${users[i].id}'),
+                            .go('/v1/${widget.lang}/users/${friends[i].id}'),
                       ),
+                    );
+                  },
+                )
+              : searchAsync.when(
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (e, _) => Center(child: Text('Error: $e')),
+                  data: (users) => ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: users.length,
+                    itemBuilder: (_, i) => ListTile(
+                      leading: Avatar(name: users[i].name),
+                      title: Text(users[i].name),
+                      onTap: () =>
+                          context.go('/v1/${widget.lang}/users/${users[i].id}'),
                     ),
                   ),
-          ),
-        ],
-      ),
+                ),
+        ),
+      ],
     );
   }
 }

@@ -38,72 +38,69 @@ class _FormsCheckoutPageContentState
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.formsCheckoutCheckoutAddress)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Shipping Address',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Shipping Address',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  FormTextField(
+                    controller: _nameCtrl,
+                    label: 'Full Name',
+                    validator: auth.validateName,
+                  ),
+                  const SizedBox(height: 8),
+                  FormTextField(
+                    controller: _addressCtrl,
+                    label: 'Address',
+                    validator: (v) => forms.validateRequired(v, 'Address'),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FormTextField(
+                          controller: _cityCtrl,
+                          label: 'City',
+                          validator: billing.validateCity,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    FormTextField(
-                      controller: _nameCtrl,
-                      label: 'Full Name',
-                      validator: auth.validateName,
-                    ),
-                    const SizedBox(height: 8),
-                    FormTextField(
-                      controller: _addressCtrl,
-                      label: 'Address',
-                      validator: (v) => forms.validateRequired(v, 'Address'),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: FormTextField(
-                            controller: _cityCtrl,
-                            label: 'City',
-                            validator: billing.validateCity,
-                          ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FormTextField(
+                          controller: _zipCtrl,
+                          label: 'ZIP',
+                          validator: billing.validatePostalCode,
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: FormTextField(
-                            controller: _zipCtrl,
-                            label: 'ZIP',
-                            validator: billing.validatePostalCode,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Button(
-                      child: Text(t.formsCheckoutContinuePayment),
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {}
-                      },
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Button(
+                    child: Text(t.formsCheckoutContinuePayment),
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {}
+                    },
+                  ),
+                ],
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

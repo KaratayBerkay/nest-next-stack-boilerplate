@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../components/ui/collapsible/collapsible.dart';
-import '../../../l10n/app_localizations.dart';
 
 class CollapsibleDemoPage extends StatelessWidget {
   final String lang;
@@ -8,29 +7,25 @@ class CollapsibleDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.uiCollapsibleTitle)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: const [
-          CollapsibleWidget(
-            title: Text('Show Details'),
-            child: Text('Hidden content revealed when expanded.'),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: const [
+        CollapsibleWidget(
+          title: Text('Show Details'),
+          child: Text('Hidden content revealed when expanded.'),
+        ),
+        SizedBox(height: 8),
+        CollapsibleWidget(
+          title: Text('Configuration'),
+          initiallyExpanded: true,
+          child: Column(
+            children: [
+              Text('Setting 1: Enabled'),
+              Text('Setting 2: Disabled'),
+            ],
           ),
-          SizedBox(height: 8),
-          CollapsibleWidget(
-            title: Text('Configuration'),
-            initiallyExpanded: true,
-            child: Column(
-              children: [
-                Text('Setting 1: Enabled'),
-                Text('Setting 2: Disabled'),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

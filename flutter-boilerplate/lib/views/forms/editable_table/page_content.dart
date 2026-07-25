@@ -29,77 +29,74 @@ class _FormsEditableTablePageContentState
     final t = AppLocalizations.of(context);
     final total = _rows.fold<double>(0, (sum, r) => sum + r.quantity * r.price);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(t.formsEditableTableHeading)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: DataTable(
-              columns: [
-                DataColumn(label: Text(t.formsEditableTableItem)),
-                DataColumn(
-                  label: Text(t.formsEditableTableQuantity),
-                  numeric: true,
-                ),
-                DataColumn(
-                  label: Text(t.formsEditableTablePrice),
-                  numeric: true,
-                ),
-                DataColumn(
-                  label: Text(t.formsEditableTableTotal),
-                  numeric: true,
-                ),
-              ],
-              rows: _rows
-                  .map(
-                    (r) => DataRow(
-                      cells: [
-                        DataCell(Text(r.item)),
-                        DataCell(Text('${r.quantity}')),
-                        DataCell(Text('\$${r.price.toStringAsFixed(2)}')),
-                        DataCell(
-                          Text(
-                            '\$${(r.quantity * r.price).toStringAsFixed(2)}',
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                  .toList(),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Text('Total: ', style: TextStyle(color: colors.fgMuted)),
-              Text(
-                '\$${total.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Card(
+          child: DataTable(
+            columns: [
+              DataColumn(label: Text(t.formsEditableTableItem)),
+              DataColumn(
+                label: Text(t.formsEditableTableQuantity),
+                numeric: true,
+              ),
+              DataColumn(
+                label: Text(t.formsEditableTablePrice),
+                numeric: true,
+              ),
+              DataColumn(
+                label: Text(t.formsEditableTableTotal),
+                numeric: true,
               ),
             ],
-          ),
-          const SizedBox(height: 16),
-          Button(
-            child: Text(t.formsEditableTableAddRow),
-            onPressed: () {
-              setState(
-                () => _rows.add(
-                  const _TableRowData(
-                    item: 'New Item',
-                    quantity: 1,
-                    price: 0,
+            rows: _rows
+                .map(
+                  (r) => DataRow(
+                    cells: [
+                      DataCell(Text(r.item)),
+                      DataCell(Text('${r.quantity}')),
+                      DataCell(Text('\$${r.price.toStringAsFixed(2)}')),
+                      DataCell(
+                        Text(
+                          '\$${(r.quantity * r.price).toStringAsFixed(2)}',
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              );
-            },
+                )
+                .toList(),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Text('Total: ', style: TextStyle(color: colors.fgMuted)),
+            Text(
+              '\$${total.toStringAsFixed(2)}',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Button(
+          child: Text(t.formsEditableTableAddRow),
+          onPressed: () {
+            setState(
+              () => _rows.add(
+                const _TableRowData(
+                  item: 'New Item',
+                  quantity: 1,
+                  price: 0,
+                ),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 }

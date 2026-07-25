@@ -99,188 +99,185 @@ class _AdminAuditLogsPageContentState
     final logsAsync = ref.watch(auditLogsProvider(params));
 
     final t = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.adminAuditLogTitle)),
-      body: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: colors.surfaceAlt,
-              border: Border(bottom: BorderSide(color: colors.border)),
-            ),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                DropdownButton<String>(
-                  value: _actionFilter,
-                  underline: const SizedBox(),
-                  items: _actions
-                      .map(
-                        (a) => DropdownMenuItem(
-                          value: a,
-                          child: Text(
-                            a.isEmpty ? t.adminAllActions : a,
-                            style: const TextStyle(fontSize: 13),
-                          ),
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: colors.surfaceAlt,
+            border: Border(bottom: BorderSide(color: colors.border)),
+          ),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              DropdownButton<String>(
+                value: _actionFilter,
+                underline: const SizedBox(),
+                items: _actions
+                    .map(
+                      (a) => DropdownMenuItem(
+                        value: a,
+                        child: Text(
+                          a.isEmpty ? t.adminAllActions : a,
+                          style: const TextStyle(fontSize: 13),
                         ),
-                      )
-                      .toList(),
-                  onChanged: (v) {
-                    if (v == null) return;
-                    setState(() => _actionFilter = v);
-                    _onFilterChanged();
-                  },
-                ),
-                DropdownButton<String>(
-                  value: _levelFilter,
-                  underline: const SizedBox(),
-                  items: _levels
-                      .map(
-                        (l) => DropdownMenuItem(
-                          value: l,
-                          child: Text(
-                            l.isEmpty ? t.adminAllLevels : l,
-                            style: const TextStyle(fontSize: 13),
-                          ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (v) {
+                  if (v == null) return;
+                  setState(() => _actionFilter = v);
+                  _onFilterChanged();
+                },
+              ),
+              DropdownButton<String>(
+                value: _levelFilter,
+                underline: const SizedBox(),
+                items: _levels
+                    .map(
+                      (l) => DropdownMenuItem(
+                        value: l,
+                        child: Text(
+                          l.isEmpty ? t.adminAllLevels : l,
+                          style: const TextStyle(fontSize: 13),
                         ),
-                      )
-                      .toList(),
-                  onChanged: (v) {
-                    if (v == null) return;
-                    setState(() => _levelFilter = v);
-                    _onFilterChanged();
-                  },
-                ),
-                SizedBox(
-                  width: 160,
-                  child: TextField(
-                    controller: _entityController,
-                    onChanged: (_) => _onFilterChanged(),
-                    decoration: InputDecoration(
-                      hintText: t.adminEntityType,
-                      prefixIcon: const Icon(Icons.search, size: 18),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
                       ),
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 8,
-                      ),
+                    )
+                    .toList(),
+                onChanged: (v) {
+                  if (v == null) return;
+                  setState(() => _levelFilter = v);
+                  _onFilterChanged();
+                },
+              ),
+              SizedBox(
+                width: 160,
+                child: TextField(
+                  controller: _entityController,
+                  onChanged: (_) => _onFilterChanged(),
+                  decoration: InputDecoration(
+                    hintText: t.adminEntityType,
+                    prefixIcon: const Icon(Icons.search, size: 18),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
                     ),
                   ),
                 ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: logsAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.error_outline, size: 48, color: colors.danger),
-                    const SizedBox(height: 8),
-                    Text(t.adminFailedToLoadLogs),
-                    const SizedBox(height: 8),
-                    ElevatedButton(
-                      onPressed: () => ref.invalidate(auditLogsProvider),
-                      child: Text(t.adminRetry),
-                    ),
-                  ],
-                ),
               ),
-              data: (response) {
-                if (response.items.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.history, size: 48, color: colors.fgMuted),
-                        const SizedBox(height: 8),
-                        Text(
-                          t.adminNoAuditLogs,
-                          style: TextStyle(color: colors.fgMuted),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                final totalPages = (response.total / _pageSize).ceil();
-
-                return Column(
-                  children: [
-                    Expanded(
-                      child: ListView.separated(
-                        padding: const EdgeInsets.all(8),
-                        itemCount: response.items.length + 1,
-                        separatorBuilder: (_, __) =>
-                            Divider(height: 1, color: colors.border),
-                        itemBuilder: (_, i) {
-                          if (i == response.items.length) {
-                            return const SizedBox(height: 56);
-                          }
-                          final log = response.items[i];
-                          final isExpanded = _expandedId == log.id;
-                          return _AuditLogRow(
-                            log: log,
-                            isExpanded: isExpanded,
-                            onToggle: () {
-                              setState(
-                                () => _expandedId = isExpanded ? null : log.id,
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                    if (totalPages > 1)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colors.surfaceAlt,
-                          border: Border(top: BorderSide(color: colors.border)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.chevron_left),
-                              onPressed: _page > 0
-                                  ? () {
-                                      setState(() => _page--);
-                                    }
-                                  : null,
-                            ),
-                            Text(
-                              t.adminPageOf(_page + 1, totalPages),
-                              style: const TextStyle(fontSize: 13),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.chevron_right),
-                              onPressed: _page < totalPages - 1
-                                  ? () {
-                                      setState(() => _page++);
-                                    }
-                                  : null,
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
-                );
-              },
-            ),
+            ],
           ),
-        ],
-      ),
+        ),
+        Expanded(
+          child: logsAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (_, __) => Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.error_outline, size: 48, color: colors.danger),
+                  const SizedBox(height: 8),
+                  Text(t.adminFailedToLoadLogs),
+                  const SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: () => ref.invalidate(auditLogsProvider),
+                    child: Text(t.adminRetry),
+                  ),
+                ],
+              ),
+            ),
+            data: (response) {
+              if (response.items.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.history, size: 48, color: colors.fgMuted),
+                      const SizedBox(height: 8),
+                      Text(
+                        t.adminNoAuditLogs,
+                        style: TextStyle(color: colors.fgMuted),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              final totalPages = (response.total / _pageSize).ceil();
+
+              return Column(
+                children: [
+                  Expanded(
+                    child: ListView.separated(
+                      padding: const EdgeInsets.all(8),
+                      itemCount: response.items.length + 1,
+                      separatorBuilder: (_, __) =>
+                          Divider(height: 1, color: colors.border),
+                      itemBuilder: (_, i) {
+                        if (i == response.items.length) {
+                          return const SizedBox(height: 56);
+                        }
+                        final log = response.items[i];
+                        final isExpanded = _expandedId == log.id;
+                        return _AuditLogRow(
+                          log: log,
+                          isExpanded: isExpanded,
+                          onToggle: () {
+                            setState(
+                              () => _expandedId = isExpanded ? null : log.id,
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                  if (totalPages > 1)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors.surfaceAlt,
+                        border: Border(top: BorderSide(color: colors.border)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.chevron_left),
+                            onPressed: _page > 0
+                                ? () {
+                                    setState(() => _page--);
+                                  }
+                                : null,
+                          ),
+                          Text(
+                            t.adminPageOf(_page + 1, totalPages),
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.chevron_right),
+                            onPressed: _page < totalPages - 1
+                                ? () {
+                                    setState(() => _page++);
+                                  }
+                                : null,
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

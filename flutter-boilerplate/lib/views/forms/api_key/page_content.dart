@@ -33,60 +33,57 @@ class _FormsApiKeyPageContentState
     final colors = AppColors.of(context);
     final t = AppLocalizations.of(context);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(t.formsApiKeyHeading)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Create API Key',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Create API Key',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(height: 12),
-                    FormTextField(
-                      controller: _nameCtrl,
-                      label: 'Key Name',
-                      validator: (v) => forms.validateRequired(v),
-                    ),
-                    const SizedBox(height: 12),
-                    Button(
-                      child: Text(t.formsApiKeyGenerate),
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {}
-                      },
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 12),
+                  FormTextField(
+                    controller: _nameCtrl,
+                    label: 'Key Name',
+                    validator: (v) => forms.validateRequired(v),
+                  ),
+                  const SizedBox(height: 12),
+                  Button(
+                    child: Text(t.formsApiKeyGenerate),
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {}
+                    },
+                  ),
+                ],
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          Card(
-            child: ListTile(
-              title: Text(t.formsApiKeyProductionKey),
-              subtitle: Text(
-                'sk_prod_••••••••••••••••',
-                style: TextStyle(color: colors.fgMuted, fontSize: 12),
-              ),
-              trailing: IconButton(
-                icon: const Icon(Icons.delete_outline),
-                onPressed: () {},
-              ),
+        ),
+        const SizedBox(height: 16),
+        Card(
+          child: ListTile(
+            title: Text(t.formsApiKeyProductionKey),
+            subtitle: Text(
+              'sk_prod_••••••••••••••••',
+              style: TextStyle(color: colors.fgMuted, fontSize: 12),
+            ),
+            trailing: IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: () {},
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

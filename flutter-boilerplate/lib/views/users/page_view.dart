@@ -23,40 +23,37 @@ class _UsersPageContentState extends ConsumerState<UsersPageContent> {
     final t = AppLocalizations.of(context);
     final resultsAsync = ref.watch(searchUsersProvider(_query));
 
-    return Scaffold(
-      appBar: AppBar(title: Text(t.usersTitle)),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: t.usersSearchHint,
-                prefixIcon: const Icon(Icons.search),
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                isDense: true,
-              ),
-              onSubmitted: (v) => setState(() => _query = v),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: t.usersSearchHint,
+              prefixIcon: const Icon(Icons.search),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              isDense: true,
             ),
+            onSubmitted: (v) => setState(() => _query = v),
           ),
-          Expanded(
-            child: resultsAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
-              data: (users) => ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: users.length,
-                itemBuilder: (_, i) => ListTile(
-                  leading: Avatar(name: users[i].name),
-                  title: Text(users[i].name),
-                ),
+        ),
+        Expanded(
+          child: resultsAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('Error: $e')),
+            data: (users) => ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: users.length,
+              itemBuilder: (_, i) => ListTile(
+                leading: Avatar(name: users[i].name),
+                title: Text(users[i].name),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

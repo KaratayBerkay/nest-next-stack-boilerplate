@@ -9,11 +9,13 @@ import '../../l10n/app_localizations.dart';
 class V1Nav extends ConsumerWidget {
   final String lang;
   final String currentPath;
+  final VoidCallback? onNavigate;
 
   const V1Nav({
     super.key,
     required this.lang,
     required this.currentPath,
+    this.onNavigate,
   });
 
   @override
@@ -23,7 +25,7 @@ class V1Nav extends ConsumerWidget {
     final user = ref.watch(currentUserProvider);
 
     final base = '/v1/$lang';
-    final isAdmin = user?.tier == 'ADMIN' || user?.tier == 'SUPERADMIN';
+    final isAdmin = user?.role == 'ADMIN' || user?.role == 'SUPERADMIN';
 
     final links = <_NavLink>[
       _NavLink(
@@ -121,6 +123,7 @@ class V1Nav extends ConsumerWidget {
             active: active,
             colors: colors,
             target: full,
+            onNavigate: onNavigate,
           );
         }),
         if (isAdmin) ...[
@@ -134,6 +137,7 @@ class V1Nav extends ConsumerWidget {
             active: currentPath == '$base/admin',
             colors: colors,
             target: '$base/admin',
+            onNavigate: onNavigate,
           ),
           _NavItem(
             icon: currentPath == '$base/admin/audit-logs'
@@ -143,6 +147,7 @@ class V1Nav extends ConsumerWidget {
             active: currentPath == '$base/admin/audit-logs',
             colors: colors,
             target: '$base/admin/audit-logs',
+            onNavigate: onNavigate,
           ),
         ],
       ],
@@ -174,12 +179,14 @@ class _NavItem extends StatelessWidget {
   final bool active;
   final AppColors colors;
   final String target;
+  final VoidCallback? onNavigate;
   const _NavItem({
     required this.icon,
     required this.label,
     required this.active,
     required this.colors,
     required this.target,
+    this.onNavigate,
   });
 
   @override
@@ -195,7 +202,12 @@ class _NavItem extends StatelessWidget {
             : const BoxDecoration(),
         child: InkWell(
           borderRadius: BorderRadius.circular(8),
-          onTap: active ? null : () => context.go(target),
+          onTap: active
+              ? null
+              : () {
+                  onNavigate?.call();
+                  context.go(target);
+                },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Row(

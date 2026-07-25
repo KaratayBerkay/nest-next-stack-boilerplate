@@ -17,75 +17,71 @@ class _SearchParamsDemoPageState extends State<SearchParamsDemoPage> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.demoSearchParamsTitle)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Text(
-            'Search Params Demo',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Simulates query parameter handling with local state.',
-            style: TextStyle(fontSize: 13, color: Colors.grey),
-          ),
-          const SizedBox(height: 16),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Current Params',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 8),
-                  Text('name = $_name'),
-                  Text('category = $_category'),
-                ],
-              ),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const Text(
+          'Search Params Demo',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Simulates query parameter handling with local state.',
+          style: TextStyle(fontSize: 13, color: Colors.grey),
+        ),
+        const SizedBox(height: 16),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Current Params',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                Text('name = $_name'),
+                Text('category = $_category'),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'Presets',
-            style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Presets',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            _presetChip('Alice / Books', 'alice', 'books'),
+            const SizedBox(width: 8),
+            _presetChip('Bob / Games', 'bob', 'games'),
+          ],
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          'Manual Input',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          decoration: InputDecoration(
+            labelText: t.demoSearchParamsName,
+            border: const OutlineInputBorder(),
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _presetChip('Alice / Books', 'alice', 'books'),
-              const SizedBox(width: 8),
-              _presetChip('Bob / Games', 'bob', 'games'),
-            ],
+          onChanged: (v) => setState(() => _name = v.isEmpty ? 'unknown' : v),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          decoration: InputDecoration(
+            labelText: t.demoSearchParamsCategory,
+            border: const OutlineInputBorder(),
           ),
-          const SizedBox(height: 24),
-          const Text(
-            'Manual Input',
-            style: TextStyle(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            decoration: InputDecoration(
-              labelText: t.demoSearchParamsName,
-              border: const OutlineInputBorder(),
-            ),
-            onChanged: (v) => setState(() => _name = v.isEmpty ? 'unknown' : v),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            decoration: InputDecoration(
-              labelText: t.demoSearchParamsCategory,
-              border: const OutlineInputBorder(),
-            ),
-            onChanged: (v) =>
-                setState(() => _category = v.isEmpty ? 'none' : v),
-          ),
-        ],
-      ),
+          onChanged: (v) => setState(() => _category = v.isEmpty ? 'none' : v),
+        ),
+      ],
     );
   }
 

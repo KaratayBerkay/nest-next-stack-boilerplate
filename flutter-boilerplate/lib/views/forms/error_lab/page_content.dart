@@ -32,82 +32,79 @@ class _FormsErrorLabPageContentState
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.formsErrorLabPageTitle)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Scenario',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Scenario',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: _scenario,
+                    items: [
+                      DropdownMenuItem(
+                        value: 'server-error',
+                        child: Text(t.formsErrorLabServerError),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      initialValue: _scenario,
-                      items: [
-                        DropdownMenuItem(
-                          value: 'server-error',
-                          child: Text(t.formsErrorLabServerError),
-                        ),
-                        DropdownMenuItem(
-                          value: 'validation',
-                          child: Text(t.formsErrorLabValidationError),
-                        ),
-                        DropdownMenuItem(
-                          value: 'network',
-                          child: Text(t.formsErrorLabNetworkTimeout),
-                        ),
-                        DropdownMenuItem(
-                          value: 'rate-limit',
-                          child: Text(t.formsErrorLabRateLimited),
-                        ),
-                      ],
-                      onChanged: (v) => setState(() => _scenario = v!),
-                      decoration:
-                          const InputDecoration(border: OutlineInputBorder()),
-                    ),
-                    const SizedBox(height: 16),
-                    FormTextField(
-                      controller: _emailCtrl,
-                      label: 'Email',
-                      validator: auth.validateEmail,
-                    ),
-                    const SizedBox(height: 8),
-                    FormTextField(
-                      controller: _passwordCtrl,
-                      label: 'Password',
-                      obscureText: true,
-                      validator: auth.validatePassword,
-                    ),
-                    const SizedBox(height: 16),
-                    Button(
-                      child: Text(t.formsCommonSubmit),
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Simulated: $_scenario')),
-                          );
-                        }
-                      },
-                    ),
-                  ],
-                ),
+                      DropdownMenuItem(
+                        value: 'validation',
+                        child: Text(t.formsErrorLabValidationError),
+                      ),
+                      DropdownMenuItem(
+                        value: 'network',
+                        child: Text(t.formsErrorLabNetworkTimeout),
+                      ),
+                      DropdownMenuItem(
+                        value: 'rate-limit',
+                        child: Text(t.formsErrorLabRateLimited),
+                      ),
+                    ],
+                    onChanged: (v) => setState(() => _scenario = v!),
+                    decoration:
+                        const InputDecoration(border: OutlineInputBorder()),
+                  ),
+                  const SizedBox(height: 16),
+                  FormTextField(
+                    controller: _emailCtrl,
+                    label: 'Email',
+                    validator: auth.validateEmail,
+                  ),
+                  const SizedBox(height: 8),
+                  FormTextField(
+                    controller: _passwordCtrl,
+                    label: 'Password',
+                    obscureText: true,
+                    validator: auth.validatePassword,
+                  ),
+                  const SizedBox(height: 16),
+                  Button(
+                    child: Text(t.formsCommonSubmit),
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Simulated: $_scenario')),
+                        );
+                      }
+                    },
+                  ),
+                ],
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

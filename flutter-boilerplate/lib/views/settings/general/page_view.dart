@@ -35,57 +35,54 @@ class _GeneralSettings extends ConsumerWidget {
     final currentLocale = ref.watch(localeProvider);
     final t = AppLocalizations.of(context);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(t.settingsGeneralHeading)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: Column(
-              children: [
-                SwitchListTile(
-                  title: Text(t.settingsTheme),
-                  subtitle: Text(
-                    t.settingsThemeDescription,
-                    style: TextStyle(color: colors.fgMuted, fontSize: 12),
-                  ),
-                  value: themeMode == AppThemeMode.dark,
-                  onChanged: (value) {
-                    ref.read(themeModeProvider.notifier).setMode(
-                          value ? AppThemeMode.dark : AppThemeMode.light,
-                        );
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Card(
+          child: Column(
+            children: [
+              SwitchListTile(
+                title: Text(t.settingsTheme),
+                subtitle: Text(
+                  t.settingsThemeDescription,
+                  style: TextStyle(color: colors.fgMuted, fontSize: 12),
+                ),
+                value: themeMode == AppThemeMode.dark,
+                onChanged: (value) {
+                  ref.read(themeModeProvider.notifier).setMode(
+                        value ? AppThemeMode.dark : AppThemeMode.light,
+                      );
+                },
+              ),
+              const Divider(height: 1),
+              ListTile(
+                title: Text(t.settingsLanguage),
+                subtitle: Text(
+                  currentLocale.toUpperCase(),
+                  style: TextStyle(color: colors.fgMuted, fontSize: 12),
+                ),
+                trailing: DropdownButton<String>(
+                  value: currentLocale,
+                  items: I18nConstants.supportedLangs
+                      .map(
+                        (String l) => DropdownMenuItem<String>(
+                          value: l,
+                          child: Text(l.toUpperCase()),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (String? v) {
+                    if (v != null) {
+                      ref.read(localeProvider.notifier).setLocale(v);
+                    }
                   },
+                  underline: const SizedBox(),
                 ),
-                const Divider(height: 1),
-                ListTile(
-                  title: Text(t.settingsLanguage),
-                  subtitle: Text(
-                    currentLocale.toUpperCase(),
-                    style: TextStyle(color: colors.fgMuted, fontSize: 12),
-                  ),
-                  trailing: DropdownButton<String>(
-                    value: currentLocale,
-                    items: I18nConstants.supportedLangs
-                        .map(
-                          (String l) => DropdownMenuItem<String>(
-                            value: l,
-                            child: Text(l.toUpperCase()),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (String? v) {
-                      if (v != null) {
-                        ref.read(localeProvider.notifier).setLocale(v);
-                      }
-                    },
-                    underline: const SizedBox(),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../l10n/app_localizations.dart';
 
 class ImageUploadDemoPage extends StatelessWidget {
   final String lang;
@@ -9,38 +8,34 @@ class ImageUploadDemoPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    final t = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.uiImageUploadTitle)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 48,
-                    backgroundColor: colors.primaryContainer,
-                    child: Icon(
-                      Icons.person,
-                      size: 48,
-                      color: colors.onPrimaryContainer,
-                    ),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                CircleAvatar(
+                  radius: 48,
+                  backgroundColor: colors.primaryContainer,
+                  child: Icon(
+                    Icons.person,
+                    size: 48,
+                    color: colors.onPrimaryContainer,
                   ),
-                  const SizedBox(height: 12),
-                  ElevatedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.camera_alt),
-                    label: const Text('Upload Photo'),
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: () {},
+                  icon: const Icon(Icons.camera_alt),
+                  label: const Text('Upload Photo'),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

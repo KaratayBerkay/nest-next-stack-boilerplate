@@ -18,31 +18,28 @@ class _LazyLoadingDemoPageState extends State<LazyLoadingDemoPage> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.demoLazyLoadingPageTitle)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Text(
-            'Lazy Loading',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Tap the button below to lazily load a component.',
-            style: TextStyle(fontSize: 13, color: Colors.grey),
-          ),
-          const SizedBox(height: 16),
-          if (!_loaded)
-            FilledButton.icon(
-              onPressed: () => setState(() => _loaded = true),
-              icon: const Icon(Icons.download),
-              label: Text(t.demoLazyLoadingLoad),
-            )
-          else
-            const _HeavyComponent(),
-        ],
-      ),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const Text(
+          'Lazy Loading',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Tap the button below to lazily load a component.',
+          style: TextStyle(fontSize: 13, color: Colors.grey),
+        ),
+        const SizedBox(height: 16),
+        if (!_loaded)
+          FilledButton.icon(
+            onPressed: () => setState(() => _loaded = true),
+            icon: const Icon(Icons.download),
+            label: Text(t.demoLazyLoadingLoad),
+          )
+        else
+          const _HeavyComponent(),
+      ],
     );
   }
 }

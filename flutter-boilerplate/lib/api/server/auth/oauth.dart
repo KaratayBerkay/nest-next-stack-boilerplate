@@ -41,6 +41,7 @@ class OAuthLoginServer {
             avatarUrl
             locale
             tier: subscriptionTier
+            role
           }
         }
       }

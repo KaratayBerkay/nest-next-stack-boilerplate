@@ -16,53 +16,50 @@ class I18nDemoPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
     final currentLocale = ref.watch(localeProvider);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.demoI18nTitle)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Text(
-            'Current Language',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const Text(
+          'Current Language',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
           ),
-          const SizedBox(height: 8),
-          ...I18nConstants.supportedLangs.map(
-            (l) => RadioListTile<String>(
-              title: Text(l),
-              value: l,
-              groupValue: currentLocale,
-              onChanged: (v) {
-                if (v != null) ref.read(localeProvider.notifier).setLocale(v);
-              },
-            ),
+        ),
+        const SizedBox(height: 8),
+        ...I18nConstants.supportedLangs.map(
+          (l) => RadioListTile<String>(
+            title: Text(l),
+            value: l,
+            groupValue: currentLocale,
+            onChanged: (v) {
+              if (v != null) ref.read(localeProvider.notifier).setLocale(v);
+            },
           ),
-          const SizedBox(height: 24),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Locale Info',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
+        ),
+        const SizedBox(height: 24),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Locale Info',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
                   ),
-                  const SizedBox(height: 8),
-                  Text(t.demoI18nActive(currentLocale)),
-                  Text(t.demoI18nDefault(I18nConstants.defaultLang)),
-                  Text('Fallback: ${I18nConstants.fallbackLang}'),
-                ],
-              ),
+                ),
+                const SizedBox(height: 8),
+                Text(t.demoI18nActive(currentLocale)),
+                Text(t.demoI18nDefault(I18nConstants.defaultLang)),
+                Text('Fallback: ${I18nConstants.fallbackLang}'),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

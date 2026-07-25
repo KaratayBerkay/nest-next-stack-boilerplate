@@ -152,9 +152,11 @@ final routerProvider = Provider<GoRouter>((ref) {
     debugLogDiagnostics: true,
     redirect: (context, state) {
       final isLoggedIn = authState.asData?.value != null;
+      final isRootRoute = state.matchedLocation == '/';
       final isAuthRoute = state.matchedLocation.startsWith('/auth');
       final isV1Route = state.matchedLocation.startsWith('/v1');
 
+      if (isRootRoute) return isLoggedIn ? '/v1/en/feed' : '/auth/login';
       if (!isLoggedIn && isV1Route) return '/auth/login';
       if (isLoggedIn && isAuthRoute) return '/v1/en/feed';
       return null;

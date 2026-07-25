@@ -34,121 +34,118 @@ class _FormsLayoutsPageContentState
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.formsLayoutsPageTitle)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Two Column Grid',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  const Row(
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Two Column Grid',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                const Row(
+                  children: [
+                    Expanded(child: Input(label: 'First Name')),
+                    SizedBox(width: 12),
+                    Expanded(child: Input(label: 'Last Name')),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const Input(label: 'Email'),
+                const SizedBox(height: 16),
+                const Text(
+                  'FormTextField Examples',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                Form(
+                  key: _formKey,
+                  child: Column(
                     children: [
-                      Expanded(child: Input(label: 'First Name')),
-                      SizedBox(width: 12),
-                      Expanded(child: Input(label: 'Last Name')),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: FormTextField(
+                              controller: _firstNameCtrl,
+                              label: 'First Name',
+                              validator: auth.validateName,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: FormTextField(
+                              controller: _lastNameCtrl,
+                              label: 'Last Name',
+                              validator: auth.validateName,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      FormTextField(
+                        controller: _emailCtrl,
+                        label: 'Email',
+                        validator: auth.validateEmail,
+                      ),
+                      const SizedBox(height: 12),
+                      Button(
+                        child: Text(t.formsCommonSubmit),
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {}
+                        },
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  const Input(label: 'Email'),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'FormTextField Examples',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 8),
-                  Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: FormTextField(
-                                controller: _firstNameCtrl,
-                                label: 'First Name',
-                                validator: auth.validateName,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: FormTextField(
-                                controller: _lastNameCtrl,
-                                label: 'Last Name',
-                                validator: auth.validateName,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        FormTextField(
-                          controller: _emailCtrl,
-                          label: 'Email',
-                          validator: auth.validateEmail,
-                        ),
-                        const SizedBox(height: 12),
-                        Button(
-                          child: Text(t.formsCommonSubmit),
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {}
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 12),
-          const Card(
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Sectioned Form',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Personal Info',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                  ),
-                  SizedBox(height: 8),
-                  Input(label: 'Full Name'),
-                  SizedBox(height: 8),
-                  Input(label: 'Phone'),
-                  SizedBox(height: 12),
-                  Text(
-                    'Address',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                  ),
-                  SizedBox(height: 8),
-                  Input(label: 'Street'),
-                  SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(child: Input(label: 'City')),
-                      SizedBox(width: 12),
-                      Expanded(child: Input(label: 'ZIP')),
-                    ],
-                  ),
-                ],
-              ),
+        ),
+        const SizedBox(height: 12),
+        const Card(
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Sectioned Form',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Personal Info',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                ),
+                SizedBox(height: 8),
+                Input(label: 'Full Name'),
+                SizedBox(height: 8),
+                Input(label: 'Phone'),
+                SizedBox(height: 12),
+                Text(
+                  'Address',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                ),
+                SizedBox(height: 8),
+                Input(label: 'Street'),
+                SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(child: Input(label: 'City')),
+                    SizedBox(width: 12),
+                    Expanded(child: Input(label: 'ZIP')),
+                  ],
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -313,6 +313,7 @@ ThemeData buildThemeData(AppThemeMode mode, {bool dark = false}) {
     colorScheme: colorScheme,
     extensions: [colors, typography],
     scaffoldBackgroundColor: colors.surface,
+    fontFamily: 'Geist',
     appBarTheme: AppBarTheme(
       backgroundColor: colors.surface,
       foregroundColor: colors.fg,
@@ -373,6 +374,58 @@ ThemeData buildThemeData(AppThemeMode mode, {bool dark = false}) {
     ),
     navigationRailTheme: NavigationRailThemeData(
       backgroundColor: colors.surface,
+    ),
+    checkboxTheme: CheckboxThemeData(
+      fillColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.selected)
+            ? colors.brand
+            : Colors.transparent,
+      ),
+      checkColor: WidgetStateProperty.all(colors.surface),
+      side: BorderSide(color: colors.border),
+    ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: colors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+    ),
+    radioTheme: RadioThemeData(
+      fillColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.selected)
+            ? colors.brand
+            : colors.fgMuted,
+      ),
+    ),
+    switchTheme: SwitchThemeData(
+      thumbColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.selected)
+            ? colors.brand
+            : colors.fgMuted,
+      ),
+      trackColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.selected)
+            ? colors.brand.withValues(alpha: 0.3)
+            : colors.border,
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: colors.brand,
+        side: BorderSide(color: colors.border),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(6),
+        ),
+      ),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: colors.brand,
+        foregroundColor: colors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(6),
+        ),
+      ),
     ),
   );
 }

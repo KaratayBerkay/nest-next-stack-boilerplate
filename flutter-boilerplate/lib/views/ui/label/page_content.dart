@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../components/ui/label/label.dart';
-import '../../../l10n/app_localizations.dart';
 
 class LabelDemoPage extends StatelessWidget {
   final String lang;
@@ -8,19 +7,15 @@ class LabelDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.uiLabelTitle)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: const [
-          Label(text: 'Standard Label'),
-          SizedBox(height: 8),
-          Text('Required:'),
-          SizedBox(height: 4),
-          Label(text: 'Required', required: true),
-        ],
-      ),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: const [
+        Label(text: 'Standard Label'),
+        SizedBox(height: 8),
+        Text('Required:'),
+        SizedBox(height: 4),
+        Label(text: 'Required', required: true),
+      ],
     );
   }
 }

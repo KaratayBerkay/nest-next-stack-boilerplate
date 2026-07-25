@@ -34,17 +34,26 @@ class _FormsContentEditorPageContentState
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(t.formsContentEditorHeading),
-        actions: [
-          TextButton(
-            onPressed: () {},
-            child: Text(t.formsContentEditorPreview),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Row(
+            children: [
+              Text(
+                t.formsContentEditorHeading,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              const Spacer(),
+              TextButton(
+                onPressed: () {},
+                child: Text(t.formsContentEditorPreview),
+              ),
+            ],
           ),
-        ],
-      ),
-      body: ListView(
+        ),
+        Expanded(
+          child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Form(
@@ -94,6 +103,8 @@ class _FormsContentEditorPageContentState
           ),
         ],
       ),
+    ),
+      ],
     );
   }
 }

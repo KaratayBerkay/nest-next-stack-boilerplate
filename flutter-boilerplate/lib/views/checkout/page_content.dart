@@ -100,70 +100,67 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
     final colors = AppColors.of(context);
     final t = AppLocalizations.of(context);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(t.checkoutCheckout)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    t.checkoutSelectedPlan(
-                      Tier.displayName(widget.plan ?? 'free'),
-                    ),
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  t.checkoutSelectedPlan(
+                    Tier.displayName(widget.plan ?? 'free'),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    t.checkoutChangedImmediately,
-                    style: TextStyle(color: colors.fgMuted),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  t.checkoutChangedImmediately,
+                  style: TextStyle(color: colors.fgMuted),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 24),
-          Text(
-            t.checkoutPaymentMethod,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 12),
-          StripeCardFormField(
-            nameController: _nameController,
-            onCompletionChanged: (complete) =>
-                setState(() => _cardComplete = complete),
-          ),
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Text(
-                _error!,
-                style: TextStyle(color: colors.danger, fontSize: 13),
-              ),
+        ),
+        const SizedBox(height: 24),
+        Text(
+          t.checkoutPaymentMethod,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 12),
+        StripeCardFormField(
+          nameController: _nameController,
+          onCompletionChanged: (complete) =>
+              setState(() => _cardComplete = complete),
+        ),
+        if (_error != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Text(
+              _error!,
+              style: TextStyle(color: colors.danger, fontSize: 13),
             ),
-          const SizedBox(height: 24),
-          FilledButton(
-            onPressed: _canSubmit ? _handleSubscribe : null,
-            child: _loading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : Text('${t.checkoutUpgrade} — $_price/month'),
           ),
-        ],
-      ),
+        const SizedBox(height: 24),
+        FilledButton(
+          onPressed: _canSubmit ? _handleSubscribe : null,
+          child: _loading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Text('${t.checkoutUpgrade} — $_price/month'),
+        ),
+      ],
     );
   }
 }

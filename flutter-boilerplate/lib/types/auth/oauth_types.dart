@@ -50,6 +50,7 @@ class OAuthLoginResponse {
       'email': userData['email'],
       'name': userData['name'],
       'tier': userData['tier'] ?? 'free',
+      'role': userData['role'],
       'avatarUrl': userData['avatarUrl'],
       'language': userData['locale'],
     };

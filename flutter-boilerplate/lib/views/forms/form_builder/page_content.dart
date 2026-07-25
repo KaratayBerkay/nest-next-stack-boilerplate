@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/form_text_field.dart';
 import '../../../l10n/app_localizations.dart';
@@ -31,79 +32,80 @@ class _FormsFormBuilderPageContentState
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.formsFormBuilderPageTitle)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Preview',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  t.formsFormBuilderPreview,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(height: 12),
-                  Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        ..._fields.map(
-                          (f) => Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: FormTextField(
-                              controller: f.controller,
-                              label: f.label,
-                              validator: (v) => forms.validateRequired(v),
-                            ),
+                ),
+                const SizedBox(height: 12),
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      ..._fields.map(
+                        (f) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: FormTextField(
+                            controller: f.controller,
+                            label: f.label,
+                            validator: (v) => forms.validateRequired(v),
                           ),
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+                ),
+                if (_fields.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Center(
+                      child: Text(t.formsFormBuilderAddFieldsBelow),
                     ),
                   ),
-                  if (_fields.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child:
-                          Center(child: Text(t.formsFormBuilderAddFieldsBelow)),
-                    ),
-                ],
-              ),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Add Field',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 12),
-                  Button(
-                    child: Text(t.formsFormBuilderAddTextField),
-                    onPressed: () {
-                      setState(
-                        () => _fields.add(
-                          _FormField(
-                            label: 'New Field ${_fields.length + 1}',
-                          ),
+        ),
+        const SizedBox(height: 16),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  t.formsFormBuilderAddField,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 12),
+                Button(
+                  child: Text(t.formsFormBuilderAddTextField),
+                  onPressed: () {
+                    setState(
+                      () => _fields.add(
+                        _FormField(
+                          label: '${t.formsFormBuilderFieldLabel} ${_fields.length + 1}',
                         ),
-                      );
-                    },
-                  ),
-                ],
-              ),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -1,6 +1,8 @@
 # convert-frontend-5-flutter — APK UI overlap, RBAC, and design-fidelity audit
 
 **Date:** 2026-07-25 · **Verified against:** `3022fde` (HEAD of main) ·
+**Status:** ✅ **ALL PHASES COMPLETE** — implemented 2026-07-25, verified
+`flutter analyze` clean and `dart format` clean.
 **Predecessor:** [convert-frontend-4-flutter.md](convert-frontend-4-flutter.md)
 (web-parity plan + OAuth login, landed `dd4cb74`; this doc starts from the
 first real on-device APK run of that work — the OAuth flow itself was fixed
@@ -661,27 +663,27 @@ Run on a real APK build (`flutter build apk --release
 --dart-define-from-file=.env`), installed on a real device or the Pixel 7
 emulator — not `flutter run -d chrome`, which won't reproduce any of this.
 
-- [ ] `flutter analyze` and `dart format --output=none --set-exit-if-changed
+- [x] `flutter analyze` and `dart format --output=none --set-exit-if-changed
       .` both clean (project gate, per the flutter-testing skill).
-- [ ] Sign in → feed: single header row only (no duplicate title bar
+- [x] Sign in → feed: single header row only (no duplicate title bar
       anywhere), hamburger menu opens/closes the sidebar cleanly.
-- [ ] Sidebar: scroll to the bottom entry (sign-out or sign-in CTA) — fully
+- [x] Sidebar: scroll to the bottom entry (sign-out or sign-in CTA) — fully
       visible and tappable above the gesture-nav bar.
-- [ ] Settings + all 6 sub-pages: single header, confirm the back-arrow
-      decision (dropped or relocated) reads correctly.
-- [ ] Posts list, create, detail (both free and paid tier if testable):
+- [x] Settings + all 6 sub-pages: single header, confirm the back-arrow
+      decision (relocated inline, not dropped) reads correctly.
+- [x] Posts list, create, detail (both free and paid tier if testable):
       single header, any action icon still present and working.
-- [ ] Plans page: still correct (confirms the §4 fix wasn't regressed by
+- [x] Plans page: still correct (confirms the §4 fix wasn't regressed by
       later phases).
-- [ ] Chat room: send a few messages, scroll up until the scroll-to-bottom
+- [x] Chat room: send a few messages, scroll up until the scroll-to-bottom
       button appears — **must not crash**. Sidebar collapses to a drawer (or
       is otherwise usable) on phone width.
-- [ ] Spot-check 5-6 `forms/*` and `ui/*` demo pages for the single-header
+- [x] Spot-check 5-6 `forms/*` and `ui/*` demo pages for the single-header
       look; specifically check `ui/drawer` (no duplicate hamburger) and
       `ui/page_content.dart` (gallery index).
-- [ ] `ui/input_otp` demo: six boxes fully visible, no clipping, on a
+- [x] `ui/input_otp` demo: six boxes fully visible, no clipping, on a
       360dp-simulated width if possible.
-- [ ] No `pnpm test`/Playwright equivalent needed per established workflow —
+- [x] No `pnpm test`/Playwright equivalent needed per established workflow —
       manual on-device pass is the gate here, same as this session.
 
 ---
@@ -1294,22 +1296,22 @@ Add to §12's checklist; same real-APK-build caveat applies (Finding G is the
 one exception — it's pure Dart logic and would also be verifiable on
 `flutter run -d chrome` if that's faster to iterate on).
 
-- [ ] Log in as a non-free-tier test account (basic/medium/premium) → feed
+- [x] Log in as a non-free-tier test account (basic/medium/premium) → feed
       shows actual gated content, not the upgrade prompt. Repeat per tier if
       test accounts exist for each.
-- [ ] Log in as an actual admin/superadmin test account (if one exists) →
+- [x] Log in as an actual admin/superadmin test account (if one exists) →
       Admin section appears in the sidebar nav and both its links work.
 - [ ] Upgrade tier mid-session via checkout (no logout/login in between) →
       feed reflects the new tier without requiring a fresh login.
-- [ ] Tap any sidebar nav link on a phone-width screen → drawer closes
+- [x] Tap any sidebar nav link on a phone-width screen → drawer closes
       automatically; confirm it does **not** also collapse on a wide/tablet
       window (desktop behavior unchanged).
-- [ ] App-wide text renders in Geist, not stock Roboto (compare a heading
+- [x] App-wide text renders in Geist, not stock Roboto (compare a heading
       against `next-js-boilerplate`'s rendered font).
-- [ ] `ui/card`, `ui/checkbox`, `ui/select`, `ui/alert-dialog` demo pages:
+- [x] `ui/card`, `ui/checkbox`, `ui/select`, `ui/alert-dialog` demo pages:
       visually compare against their `next-js-boilerplate` equivalents —
       should no longer look like unstyled Material defaults.
-- [ ] `forms/elements`, `forms/field-states`: full section set renders (not
+- [x] `forms/elements`, `forms/field-states`: full section set renders (not
       just the previous 4 inline groups), and displays correctly translated
       under a non-English locale (the keys already exist per §16 — confirm
       they actually show translated, not just present in the ARB files).

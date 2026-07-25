@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../components/ui/card/card.dart';
 import '../../components/ui/card/card_content.dart';
-import '../../l10n/app_localizations.dart';
 
 final _componentList = [
   ('Accordion', '/v1/en/ui/accordion'),
@@ -77,33 +76,29 @@ class DemosPageContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final t = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.uiPageTitle)),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: _componentList.map((c) {
-            final name = c.$1;
-            final route = c.$2;
-            return SizedBox(
-              width: 160,
-              child: CardWidget(
-                child: CardContent(
-                  child: InkWell(
-                    onTap: () => context.push(route),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Text(name, textAlign: TextAlign.center),
-                    ),
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Wrap(
+        spacing: 12,
+        runSpacing: 12,
+        children: _componentList.map((c) {
+          final name = c.$1;
+          final route = c.$2;
+          return SizedBox(
+            width: 160,
+            child: CardWidget(
+              child: CardContent(
+                child: InkWell(
+                  onTap: () => context.push(route),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Text(name, textAlign: TextAlign.center),
                   ),
                 ),
               ),
-            );
-          }).toList(),
-        ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }

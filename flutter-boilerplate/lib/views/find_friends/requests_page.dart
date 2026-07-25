@@ -18,10 +18,7 @@ class FindFriendsRequestsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
     return TierGate(
-      freeWidget: Scaffold(
-        appBar: AppBar(title: Text(t.findFriendsFriendRequests)),
-        body: Center(child: Text(t.findFriendsUpgradeToSee)),
-      ),
+      freeWidget: Center(child: Text(t.findFriendsUpgradeToSee)),
       basicWidget: _RequestsView(),
       mediumWidget: _RequestsView(),
       premiumWidget: _RequestsView(),
@@ -36,55 +33,51 @@ class _RequestsView extends ConsumerWidget {
     final t = AppLocalizations.of(context);
     final requestsAsync = ref.watch(friendRequestsProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(t.findFriendsFriendRequests)),
-      body: requestsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (requests) {
-          if (requests.isEmpty) {
-            return EmptyWidget(
-              title: t.findFriendsNoRequests,
-              icon: Icons.person_add_disabled,
-            );
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: requests.length,
-            itemBuilder: (_, i) {
-              final req = requests[i];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: ListTile(
-                  leading: Avatar(name: req.fromUserName),
-                  title: Text(req.fromUserName),
-                  subtitle: Text(
-                    'Sent ${_timeAgo(req.createdAt)}',
-                    style: TextStyle(color: colors.fgMuted, fontSize: 12),
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.check_circle, color: colors.success),
-                        onPressed: () => ref
-                            .read(friendActionsProvider)
-                            .acceptRequest(req.id),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.cancel, color: colors.danger),
-                        onPressed: () => ref
-                            .read(friendActionsProvider)
-                            .declineRequest(req.id),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
+    return requestsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Error: $e')),
+      data: (requests) {
+        if (requests.isEmpty) {
+          return EmptyWidget(
+            title: t.findFriendsNoRequests,
+            icon: Icons.person_add_disabled,
           );
-        },
-      ),
+        }
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: requests.length,
+          itemBuilder: (_, i) {
+            final req = requests[i];
+            return Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                leading: Avatar(name: req.fromUserName),
+                title: Text(req.fromUserName),
+                subtitle: Text(
+                  'Sent ${_timeAgo(req.createdAt)}',
+                  style: TextStyle(color: colors.fgMuted, fontSize: 12),
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.check_circle, color: colors.success),
+                      onPressed: () =>
+                          ref.read(friendActionsProvider).acceptRequest(req.id),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.cancel, color: colors.danger),
+                      onPressed: () => ref
+                          .read(friendActionsProvider)
+                          .declineRequest(req.id),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

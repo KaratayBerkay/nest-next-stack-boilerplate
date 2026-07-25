@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../l10n/app_localizations.dart';
 
 class SliderDemoPage extends StatefulWidget {
   final String lang;
@@ -15,32 +14,28 @@ class _SliderDemoPageState extends State<SliderDemoPage> {
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.uiSliderTitle)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Text(
-            'Basic Slider',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          Slider(value: _value, onChanged: (v) => setState(() => _value = v)),
-          Text('Value: ${_value.toStringAsFixed(2)}'),
-          const SizedBox(height: 24),
-          const Text(
-            'Range Slider',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          RangeSlider(
-            values: _range,
-            onChanged: (v) => setState(() => _range = v),
-          ),
-          Text(
-            'Range: ${_range.start.toStringAsFixed(2)} - ${_range.end.toStringAsFixed(2)}',
-          ),
-        ],
-      ),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const Text(
+          'Basic Slider',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        Slider(value: _value, onChanged: (v) => setState(() => _value = v)),
+        Text('Value: ${_value.toStringAsFixed(2)}'),
+        const SizedBox(height: 24),
+        const Text(
+          'Range Slider',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        RangeSlider(
+          values: _range,
+          onChanged: (v) => setState(() => _range = v),
+        ),
+        Text(
+          'Range: ${_range.start.toStringAsFixed(2)} - ${_range.end.toStringAsFixed(2)}',
+        ),
+      ],
     );
   }
 }

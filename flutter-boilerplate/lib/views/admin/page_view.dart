@@ -67,122 +67,118 @@ class _AdminPageContentState extends ConsumerState<AdminPageContent> {
     final logsAsync =
         ref.watch(auditLogsProvider(const AuditLogParams(take: 10)));
 
-    return Scaffold(
-      appBar: AppBar(title: Text(t.adminTitle)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    t.adminSearchUsers,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  t.adminSearchUsers,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _searchController,
-                    onChanged: _onSearchChanged,
-                    decoration: InputDecoration(
-                      hintText: t.adminSearchPlaceholder,
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      isDense: true,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _searchController,
+                  onChanged: _onSearchChanged,
+                  decoration: InputDecoration(
+                    hintText: t.adminSearchPlaceholder,
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    isDense: true,
                   ),
-                  const SizedBox(height: 12),
-                  searchResults.when(
-                    loading: () => const Center(
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                    error: (e, _) => Text(
-                      'Error: $e',
-                      style: TextStyle(color: colors.danger),
-                    ),
-                    data: (users) {
-                      if (users.isEmpty) {
-                        if (query.isEmpty) {
-                          return Text(t.adminTypeToSearch);
-                        }
-                        return Text(
-                          t.adminNoUsersFor(query),
-                          style: TextStyle(color: colors.fgMuted),
-                        );
+                ),
+                const SizedBox(height: 12),
+                searchResults.when(
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  error: (e, _) => Text(
+                    'Error: $e',
+                    style: TextStyle(color: colors.danger),
+                  ),
+                  data: (users) {
+                    if (users.isEmpty) {
+                      if (query.isEmpty) {
+                        return Text(t.adminTypeToSearch);
                       }
-                      return Column(
-                        children: users
-                            .map(
-                              (user) => _UserTierRow(
-                                user: user,
-                                onSetTier: (tier) => _setTier(user.id, tier),
-                              ),
-                            )
-                            .toList(),
+                      return Text(
+                        t.adminNoUsersFor(query),
+                        style: TextStyle(color: colors.fgMuted),
                       );
-                    },
-                  ),
-                ],
-              ),
+                    }
+                    return Column(
+                      children: users
+                          .map(
+                            (user) => _UserTierRow(
+                              user: user,
+                              onSetTier: (tier) => _setTier(user.id, tier),
+                            ),
+                          )
+                          .toList(),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 24),
-          Text(
-            t.adminAuditLogTitle,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 24),
+        Text(
+          t.adminAuditLogTitle,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        logsAsync.when(
+          loading: () =>
+              const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          error: (e, _) => Center(
+            child: Text('Error: $e', style: TextStyle(color: colors.danger)),
           ),
-          const SizedBox(height: 8),
-          logsAsync.when(
-            loading: () =>
-                const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-            error: (e, _) => Center(
-              child: Text('Error: $e', style: TextStyle(color: colors.danger)),
-            ),
-            data: (logs) {
-              if (logs.items.isEmpty) return Text(t.adminNoAuditLogs);
-              return Column(
-                children: logs.items
-                    .take(10)
-                    .map(
-                      (log) => Card(
-                        margin: const EdgeInsets.only(bottom: 4),
-                        child: ListTile(
-                          title: Text(
-                            log.action,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
+          data: (logs) {
+            if (logs.items.isEmpty) return Text(t.adminNoAuditLogs);
+            return Column(
+              children: logs.items
+                  .take(10)
+                  .map(
+                    (log) => Card(
+                      margin: const EdgeInsets.only(bottom: 4),
+                      child: ListTile(
+                        title: Text(
+                          log.action,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
                           ),
-                          subtitle: Text(
-                            log.details ?? '',
-                            style: TextStyle(
-                              color: colors.fgMuted,
-                              fontSize: 12,
-                            ),
-                          ),
-                          trailing: Text(
-                            '${log.createdAt.day}/${log.createdAt.month}/${log.createdAt.year}',
-                            style:
-                                TextStyle(color: colors.fgMuted, fontSize: 11),
-                          ),
-                          dense: true,
                         ),
+                        subtitle: Text(
+                          log.details ?? '',
+                          style: TextStyle(
+                            color: colors.fgMuted,
+                            fontSize: 12,
+                          ),
+                        ),
+                        trailing: Text(
+                          '${log.createdAt.day}/${log.createdAt.month}/${log.createdAt.year}',
+                          style: TextStyle(color: colors.fgMuted, fontSize: 11),
+                        ),
+                        dense: true,
                       ),
-                    )
-                    .toList(),
-              );
-            },
-          ),
-        ],
-      ),
+                    ),
+                  )
+                  .toList(),
+            );
+          },
+        ),
+      ],
     );
   }
 }

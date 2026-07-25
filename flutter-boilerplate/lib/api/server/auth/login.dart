@@ -21,6 +21,7 @@ const _loginMutation = '''
         avatarUrl
         locale
         subscriptionTier
+        role
       }
     }
   }

@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../components/ui/card/card.dart';
 import '../../components/ui/card/card_content.dart';
-import '../../l10n/app_localizations.dart';
 
 final _uiRoutes = <(String, IconData, String)>[
   ('Accordion', Icons.expand_more, '/v1/en/ui/accordion'),
@@ -82,45 +81,41 @@ class UiPageContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.uiPageTitle)),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: _uiRoutes.map((r) {
-            final name = r.$1;
-            final icon = r.$2;
-            final route = r.$3;
-            return SizedBox(
-              width: 150,
-              child: CardWidget(
-                child: CardContent(
-                  child: InkWell(
-                    onTap: () => context.push(route),
-                    borderRadius: BorderRadius.circular(8),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      child: Column(
-                        children: [
-                          Icon(icon, size: 28),
-                          const SizedBox(height: 8),
-                          Text(
-                            name,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ],
-                      ),
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Wrap(
+        spacing: 12,
+        runSpacing: 12,
+        children: _uiRoutes.map((r) {
+          final name = r.$1;
+          final icon = r.$2;
+          final route = r.$3;
+          return SizedBox(
+            width: 150,
+            child: CardWidget(
+              child: CardContent(
+                child: InkWell(
+                  onTap: () => context.push(route),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    child: Column(
+                      children: [
+                        Icon(icon, size: 28),
+                        const SizedBox(height: 8),
+                        Text(
+                          name,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
-            );
-          }).toList(),
-        ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }

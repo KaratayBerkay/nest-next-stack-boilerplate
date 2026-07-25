@@ -46,13 +46,7 @@ class SettingsBillingPageContent extends ConsumerWidget {
   }
 
   Widget _scaffold(BuildContext context, Widget body) {
-    final t = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(t.settingsBillingHeading),
-      ),
-      body: body,
-    );
+    return body;
   }
 }
 
@@ -289,33 +283,29 @@ class _FreeBillingView extends StatelessWidget {
     final colors = AppColors.of(context);
     final t = AppLocalizations.of(context);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(t.settingsBillingHeading)),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.credit_card_outlined, size: 48, color: colors.fgMuted),
-              const SizedBox(height: 16),
-              Text(
-                t.settingsNoBillingInfo,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                t.settingsBillingUpgradePrompt,
-                style: TextStyle(color: colors.fgMuted),
-              ),
-              const SizedBox(height: 24),
-              Button(
-                child: Text(t.settingsViewPlans),
-                onPressed: () => context.go('/v1/$lang/plans'),
-              ),
-            ],
-          ),
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.credit_card_outlined, size: 48, color: colors.fgMuted),
+            const SizedBox(height: 16),
+            Text(
+              t.settingsNoBillingInfo,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              t.settingsBillingUpgradePrompt,
+              style: TextStyle(color: colors.fgMuted),
+            ),
+            const SizedBox(height: 24),
+            Button(
+              child: Text(t.settingsViewPlans),
+              onPressed: () => context.go('/v1/$lang/plans'),
+            ),
+          ],
         ),
       ),
     );

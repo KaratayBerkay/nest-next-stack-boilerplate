@@ -34,59 +34,56 @@ class _FormsAdvancedPageContentState
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.formsAdvancedPageTitle)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Personal Info',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Personal Info',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(height: 12),
-                    FormTextField(
-                      controller: _nameCtrl,
-                      label: 'Name',
-                      validator: auth.validateName,
-                    ),
-                    const SizedBox(height: 8),
-                    FormTextField(
-                      controller: _emailCtrl,
-                      label: 'Email',
-                      validator: auth.validateEmail,
-                    ),
-                    const SizedBox(height: 8),
-                    FormTextField(
-                      controller: _bioCtrl,
-                      label: 'Bio',
-                      maxLines: 3,
-                      validator: (v) => forms.validateRequired(v, 'Bio'),
-                    ),
-                    const SizedBox(height: 12),
-                    FilledButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {}
-                      },
-                      child: Text(t.postsSave),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 12),
+                  FormTextField(
+                    controller: _nameCtrl,
+                    label: 'Name',
+                    validator: auth.validateName,
+                  ),
+                  const SizedBox(height: 8),
+                  FormTextField(
+                    controller: _emailCtrl,
+                    label: 'Email',
+                    validator: auth.validateEmail,
+                  ),
+                  const SizedBox(height: 8),
+                  FormTextField(
+                    controller: _bioCtrl,
+                    label: 'Bio',
+                    maxLines: 3,
+                    validator: (v) => forms.validateRequired(v, 'Bio'),
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton(
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {}
+                    },
+                    child: Text(t.postsSave),
+                  ),
+                ],
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

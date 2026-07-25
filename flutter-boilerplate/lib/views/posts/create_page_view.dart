@@ -16,45 +16,57 @@ class PostCreatePageContent extends ConsumerWidget {
     final contentController = TextEditingController();
     final t = AppLocalizations.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(t.postsCreate),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              final title = titleController.text.trim();
-              final content = contentController.text.trim();
-              if (title.isEmpty || content.isEmpty) return;
-              await ref
-                  .read(postActionsProvider)
-                  .create(title: title, content: content);
-              if (context.mounted) context.pop();
-            },
-            child: Text(t.postsCreateSubmit),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Row(
+            children: [
+              Text(
+                t.postsCreate,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              const Spacer(),
+              TextButton(
+                onPressed: () async {
+                  final title = titleController.text.trim();
+                  final content = contentController.text.trim();
+                  if (title.isEmpty || content.isEmpty) return;
+                  await ref
+                      .read(postActionsProvider)
+                      .create(title: title, content: content);
+                  if (context.mounted) context.pop();
+                },
+                child: Text(t.postsCreateSubmit),
+              ),
+            ],
           ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          TextField(
-            controller: titleController,
-            decoration: InputDecoration(
-              labelText: t.postsTitleLabel,
-              border: const OutlineInputBorder(),
-            ),
+        ),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: InputDecoration(
+                  labelText: t.postsTitleLabel,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: contentController,
+                decoration: InputDecoration(
+                  labelText: t.postsContentLabel,
+                  border: const OutlineInputBorder(),
+                ),
+                maxLines: 8,
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: contentController,
-            decoration: InputDecoration(
-              labelText: t.postsContentLabel,
-              border: const OutlineInputBorder(),
-            ),
-            maxLines: 8,
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

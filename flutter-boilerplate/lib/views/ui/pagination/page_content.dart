@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../components/ui/pagination/pagination.dart';
-import '../../../l10n/app_localizations.dart';
 
 class PaginationDemoPage extends StatelessWidget {
   final String lang;
@@ -8,35 +7,31 @@ class PaginationDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.uiPaginationTitle)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Text(
-            'Basic Pagination',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          PaginationWidget(
-            currentPage: 1,
-            totalPages: 10,
-            onPageChanged: (_) {},
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            'On Last Page',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          PaginationWidget(
-            currentPage: 10,
-            totalPages: 10,
-            onPageChanged: (_) {},
-          ),
-        ],
-      ),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const Text(
+          'Basic Pagination',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        PaginationWidget(
+          currentPage: 1,
+          totalPages: 10,
+          onPageChanged: (_) {},
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          'On Last Page',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        PaginationWidget(
+          currentPage: 10,
+          totalPages: 10,
+          onPageChanged: (_) {},
+        ),
+      ],
     );
   }
 }

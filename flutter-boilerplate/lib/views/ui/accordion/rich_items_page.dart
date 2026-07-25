@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../components/ui/accordion/accordion.dart';
-import '../../../l10n/app_localizations.dart';
 
 class AccordionRichItemsPage extends StatelessWidget {
   final String lang;
@@ -12,55 +11,51 @@ class AccordionRichItemsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.uiAccordionRichItemsPageTitle)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Text(
-            'User Profiles',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-          AccordionWidget(
-            items: [
-              AccordionItem(
-                title: 'Sarah Johnson',
-                icon: Icons.person,
-                content: const Text(
-                  'Sarah is a product designer with 5+ years of experience.',
-                ),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const Text(
+          'User Profiles',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        AccordionWidget(
+          items: [
+            AccordionItem(
+              title: 'Sarah Johnson',
+              icon: Icons.person,
+              content: const Text(
+                'Sarah is a product designer with 5+ years of experience.',
               ),
-              AccordionItem(
-                title: 'Mike Chen',
-                icon: Icons.person,
-                content: const Text(
-                  'Mike is a full-stack engineer specializing in React and Node.js.',
-                ),
+            ),
+            AccordionItem(
+              title: 'Mike Chen',
+              icon: Icons.person,
+              content: const Text(
+                'Mike is a full-stack engineer specializing in React and Node.js.',
               ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            'With Badges',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-          AccordionWidget(
-            items: [
-              AccordionItem(
-                title: 'Notifications',
-                content: const Text('You have 3 unread notifications.'),
-              ),
-              AccordionItem(
-                title: 'Messages',
-                content: const Text('You have 12 unread messages.'),
-              ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          'With Badges',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        AccordionWidget(
+          items: [
+            AccordionItem(
+              title: 'Notifications',
+              content: const Text('You have 3 unread notifications.'),
+            ),
+            AccordionItem(
+              title: 'Messages',
+              content: const Text('You have 12 unread messages.'),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
