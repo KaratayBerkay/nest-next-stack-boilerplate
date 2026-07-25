@@ -95,7 +95,8 @@ class _FormsFormBuilderPageContentState
                     setState(
                       () => _fields.add(
                         _FormField(
-                          label: '${t.formsFormBuilderFieldLabel} ${_fields.length + 1}',
+                          label:
+                              '${t.formsFormBuilderFieldLabel} ${_fields.length + 1}',
                         ),
                       ),
                     );

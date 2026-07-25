@@ -30,26 +30,26 @@ class _InputOtpDemoPageState extends State<InputOtpDemoPage> {
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                6,
-                (i) => Container(
-                  width: 48,
-                  height: 56,
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Center(
-                    child: Text(
-                      _code[i],
-                      style: const TextStyle(fontSize: 24),
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  6,
+                  (i) => Container(
+                    width: 48,
+                    height: 56,
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Text(
+                        _code[i],
+                        style: const TextStyle(fontSize: 24),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
             ),
           ],
         ),

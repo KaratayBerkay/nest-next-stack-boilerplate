@@ -42,7 +42,8 @@ class _FormsContentEditorPageContentState
             children: [
               Text(
                 t.formsContentEditorHeading,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
               const Spacer(),
               TextButton(
@@ -54,56 +55,57 @@ class _FormsContentEditorPageContentState
         ),
         Expanded(
           child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                FormTextField(
-                  controller: _titleCtrl,
-                  label: 'Title',
-                  validator: (v) => forms.validateRequired(v, 'Title'),
-                ),
-                const SizedBox(height: 12),
-                FormTextField(
-                  controller: _tagsCtrl,
-                  label: 'Tags (comma separated)',
-                ),
-                const SizedBox(height: 12),
-                FormTextField(
-                  controller: _bodyCtrl,
-                  label: 'Content',
-                  maxLines: 12,
-                  validator: (v) => forms.validateMinLength(v, 10, 'Content'),
-                ),
-                const SizedBox(height: 16),
-                Row(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Form(
+                key: _formKey,
+                child: Column(
                   children: [
-                    Expanded(
-                      child: Button(
-                        variant: ButtonVariant.outline,
-                        child: Text(t.formsContentEditorSaveDraft),
-                        onPressed: () {},
-                      ),
+                    FormTextField(
+                      controller: _titleCtrl,
+                      label: 'Title',
+                      validator: (v) => forms.validateRequired(v, 'Title'),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Button(
-                        child: Text(t.formsContentEditorPublish),
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {}
-                        },
-                      ),
+                    const SizedBox(height: 12),
+                    FormTextField(
+                      controller: _tagsCtrl,
+                      label: 'Tags (comma separated)',
+                    ),
+                    const SizedBox(height: 12),
+                    FormTextField(
+                      controller: _bodyCtrl,
+                      label: 'Content',
+                      maxLines: 12,
+                      validator: (v) =>
+                          forms.validateMinLength(v, 10, 'Content'),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Button(
+                            variant: ButtonVariant.outline,
+                            child: Text(t.formsContentEditorSaveDraft),
+                            onPressed: () {},
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Button(
+                            child: Text(t.formsContentEditorPublish),
+                            onPressed: () {
+                              if (_formKey.currentState!.validate()) {}
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
-    ),
+        ),
       ],
     );
   }

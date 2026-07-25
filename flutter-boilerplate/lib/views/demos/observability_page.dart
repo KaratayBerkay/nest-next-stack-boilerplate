@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 
-
 final _logger = Logger();
 
 class ObservabilityDemoPage extends StatelessWidget {
