@@ -22,7 +22,9 @@ class RequestPasswordResetServer {
       '/graphql',
       data: {
         'query': _mutation,
-        'variables': {'input': {'email': email}},
+        'variables': {
+          'input': {'email': email}
+        },
       },
     );
     final body = response.data as Map<String, dynamic>;

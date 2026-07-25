@@ -22,7 +22,8 @@ class Session {
       id: json['sessionId'] as String? ?? json['id'] as String,
       device: json['deviceId'] as String? ?? json['device'] as String,
       location: json['ip'] as String? ?? json['location'] as String? ?? '',
-      lastActive: json['issuedAt'] as String? ?? json['lastActive'] as String? ?? '',
+      lastActive:
+          json['issuedAt'] as String? ?? json['lastActive'] as String? ?? '',
       isCurrent: json['isCurrent'] as bool? ?? false,
     );
   }

@@ -5,7 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final revokeSessionServerProvider =
     Provider((ref) => RevokeSessionServer(ref.read(dioProvider)));
 
-const _mutation = 'mutation RevokeSession(\$sessionId: ID!) { revokeSession(sessionId: \$sessionId) }';
+const _mutation =
+    'mutation RevokeSession(\$sessionId: ID!) { revokeSession(sessionId: \$sessionId) }';
 
 class RevokeSessionServer {
   final Dio _dio;

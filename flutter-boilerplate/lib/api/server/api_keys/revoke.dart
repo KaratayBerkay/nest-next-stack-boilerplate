@@ -5,7 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final apiKeyRevokeServerProvider =
     Provider((ref) => ApiKeyRevokeServer(ref.read(dioProvider)));
 
-const _mutation = 'mutation RevokeApiKey(\$id: String!) { revokeApiKey(id: \$id) }';
+const _mutation =
+    'mutation RevokeApiKey(\$id: String!) { revokeApiKey(id: \$id) }';
 
 class ApiKeyRevokeServer {
   final Dio _dio;

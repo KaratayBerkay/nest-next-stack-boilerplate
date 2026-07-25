@@ -58,7 +58,8 @@ class SuggestedFriendsServer {
         message: 'Failed to fetch suggested friends',
       );
     }
-    final list = (body['data'] as Map<String, dynamic>)['suggestedFriends'] as List;
+    final list =
+        (body['data'] as Map<String, dynamic>)['suggestedFriends'] as List;
     return list
         .map((e) => SuggestedUser.fromJson(e as Map<String, dynamic>))
         .toList();

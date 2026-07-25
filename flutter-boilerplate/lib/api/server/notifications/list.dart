@@ -43,7 +43,8 @@ class NotificationsServer {
         message: 'Failed to fetch notifications',
       );
     }
-    final list = (body['data'] as Map<String, dynamic>)['myNotifications'] as List;
+    final list =
+        (body['data'] as Map<String, dynamic>)['myNotifications'] as List;
     return list
         .map((e) => NotificationItem.fromJson(e as Map<String, dynamic>))
         .toList();

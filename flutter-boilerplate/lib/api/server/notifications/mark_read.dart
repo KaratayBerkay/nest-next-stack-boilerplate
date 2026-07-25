@@ -6,7 +6,8 @@ final notificationsMarkReadServerProvider = Provider(
   (ref) => NotificationsMarkReadServer(ref.read(dioProvider)),
 );
 
-const _mutation = 'mutation MarkNotificationRead(\$id: ID!) { markNotificationRead(id: \$id) }';
+const _mutation =
+    'mutation MarkNotificationRead(\$id: ID!) { markNotificationRead(id: \$id) }';
 
 class NotificationsMarkReadServer {
   final Dio _dio;

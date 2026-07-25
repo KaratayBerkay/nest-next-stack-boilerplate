@@ -56,8 +56,7 @@ class LoginServer {
     }
 
     final result =
-        (body['data'] as Map<String, dynamic>)['login']
-            as Map<String, dynamic>;
+        (body['data'] as Map<String, dynamic>)['login'] as Map<String, dynamic>;
 
     if (result['mfaRequired'] == true) {
       return LoginMfaRequired(

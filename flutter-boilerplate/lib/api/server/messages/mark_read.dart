@@ -5,7 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final markReadServerProvider =
     Provider((ref) => MarkReadServer(ref.read(dioProvider)));
 
-const _mutation = 'mutation MarkMessagesRead(\$userId: String!) { markMessagesRead(userId: \$userId) }';
+const _mutation =
+    'mutation MarkMessagesRead(\$userId: String!) { markMessagesRead(userId: \$userId) }';
 
 class MarkReadServer {
   final Dio _dio;

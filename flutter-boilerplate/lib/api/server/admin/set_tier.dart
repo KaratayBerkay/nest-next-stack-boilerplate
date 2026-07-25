@@ -5,7 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final adminSetTierServerProvider =
     Provider((ref) => AdminSetTierServer(ref.read(dioProvider)));
 
-const _mutation = 'mutation SetUserTier(\$userId: String!, \$tier: SubscriptionTier!) { setUserTier(userId: \$userId, tier: \$tier) }';
+const _mutation =
+    'mutation SetUserTier(\$userId: String!, \$tier: SubscriptionTier!) { setUserTier(userId: \$userId, tier: \$tier) }';
 
 class AdminSetTierServer {
   final Dio _dio;

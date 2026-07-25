@@ -5,7 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final postDeleteServerProvider =
     Provider((ref) => PostDeleteServer(ref.read(dioProvider)));
 
-const _mutation = 'mutation DeletePost(\$id: ID!) { deletePost(id: \$id) { id } }';
+const _mutation =
+    'mutation DeletePost(\$id: ID!) { deletePost(id: \$id) { id } }';
 
 class PostDeleteServer {
   final Dio _dio;

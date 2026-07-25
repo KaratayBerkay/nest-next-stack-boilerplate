@@ -15,7 +15,8 @@ class GrowthStats {
 
   factory GrowthStats.fromJson(Map<String, dynamic> json) {
     return GrowthStats(
-      newUsersThisMonth: json['newUsersLast7Days'] as int? ?? json['newUsersThisMonth'] as int,
+      newUsersThisMonth:
+          json['newUsersLast7Days'] as int? ?? json['newUsersThisMonth'] as int,
       newSubscriptionsThisMonth: json['newSubscriptionsThisMonth'] as int? ?? 0,
       growthRate: (json['growthRate'] as num?)?.toDouble() ?? 0.0,
     );
@@ -25,7 +26,8 @@ class GrowthStats {
 final growthStatsServerProvider =
     Provider((ref) => GrowthStatsServer(ref.read(dioProvider)));
 
-const _query = 'query GrowthStats { growthStats { totalUsers newUsersLast7Days totalPosts totalFriendships } }';
+const _query =
+    'query GrowthStats { growthStats { totalUsers newUsersLast7Days totalPosts totalFriendships } }';
 
 class GrowthStatsServer {
   final Dio _dio;

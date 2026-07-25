@@ -5,9 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final notificationReadServerProvider =
     Provider((ref) => NotificationReadServer(ref.read(dioProvider)));
 
-const _mutation = 'mutation MarkNotificationRead(\$id: ID!) { markNotificationRead(id: \$id) { id read } }';
+const _mutation =
+    'mutation MarkNotificationRead(\$id: ID!) { markNotificationRead(id: \$id) { id read } }';
 
-const _markAllMutation = 'mutation MarkAllNotificationsRead { markAllNotificationsRead }';
+const _markAllMutation =
+    'mutation MarkAllNotificationsRead { markAllNotificationsRead }';
 
 class NotificationReadServer {
   final Dio _dio;

@@ -46,8 +46,6 @@ class FeedListServer {
       );
     }
     final list = (body['data'] as Map<String, dynamic>)['postList'] as List;
-    return list
-        .map((e) => Post.fromJson(e as Map<String, dynamic>))
-        .toList();
+    return list.map((e) => Post.fromJson(e as Map<String, dynamic>)).toList();
   }
 }

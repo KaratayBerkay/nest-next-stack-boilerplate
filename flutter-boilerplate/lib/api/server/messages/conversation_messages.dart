@@ -43,10 +43,9 @@ class ConversationMessagesServer {
         message: 'Failed to fetch messages',
       );
     }
-    final list = (body['data'] as Map<String, dynamic>)['conversationMessages'] as List;
-    return list
-        .map((e) => _mapMessage(e as Map<String, dynamic>))
-        .toList();
+    final list =
+        (body['data'] as Map<String, dynamic>)['conversationMessages'] as List;
+    return list.map((e) => _mapMessage(e as Map<String, dynamic>)).toList();
   }
 
   ChatMessage _mapMessage(Map<String, dynamic> json) {

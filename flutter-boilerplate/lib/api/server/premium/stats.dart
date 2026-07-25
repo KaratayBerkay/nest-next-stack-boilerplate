@@ -16,8 +16,10 @@ class PremiumStats {
   factory PremiumStats.fromJson(Map<String, dynamic> json) {
     return PremiumStats(
       totalUsers: json['totalUsers'] as int,
-      activeSubscriptions: json['activeUsers'] as int? ?? json['activeSubscriptions'] as int,
-      monthlyRevenue: (json['revenue'] as num?)?.toDouble() ?? (json['monthlyRevenue'] as num).toDouble(),
+      activeSubscriptions:
+          json['activeUsers'] as int? ?? json['activeSubscriptions'] as int,
+      monthlyRevenue: (json['revenue'] as num?)?.toDouble() ??
+          (json['monthlyRevenue'] as num).toDouble(),
     );
   }
 }
@@ -25,7 +27,8 @@ class PremiumStats {
 final premiumStatsServerProvider =
     Provider((ref) => PremiumStatsServer(ref.read(dioProvider)));
 
-const _query = 'query PremiumStats { premiumStats { totalUsers activeUsers revenue } }';
+const _query =
+    'query PremiumStats { premiumStats { totalUsers activeUsers revenue } }';
 
 class PremiumStatsServer {
   final Dio _dio;

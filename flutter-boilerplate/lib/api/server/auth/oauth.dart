@@ -67,9 +67,8 @@ class OAuthLoginServer {
       );
     }
 
-    final result =
-        (body['data'] as Map<String, dynamic>)['loginWithOAuth']
-            as Map<String, dynamic>;
+    final result = (body['data'] as Map<String, dynamic>)['loginWithOAuth']
+        as Map<String, dynamic>;
     return OAuthLoginResponse.fromJson(result);
   }
 }

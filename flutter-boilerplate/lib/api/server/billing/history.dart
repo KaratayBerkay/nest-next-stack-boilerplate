@@ -67,7 +67,8 @@ class BillingHistoryServer {
         message: 'Failed to fetch billing history',
       );
     }
-    final list = (body['data'] as Map<String, dynamic>)['myBillingHistory'] as List;
+    final list =
+        (body['data'] as Map<String, dynamic>)['myBillingHistory'] as List;
     return list
         .map((e) => Invoice.fromJson(e as Map<String, dynamic>))
         .toList();

@@ -25,7 +25,8 @@ class UserSearchResult {
 final usersSearchServerProvider =
     Provider((ref) => UsersSearchServer(ref.read(dioProvider)));
 
-const _query = 'query Users(\$search: String) { users(search: \$search) { id name email avatarUrl } }';
+const _query =
+    'query Users(\$search: String) { users(search: \$search) { id name email avatarUrl } }';
 
 class UsersSearchServer {
   final Dio _dio;

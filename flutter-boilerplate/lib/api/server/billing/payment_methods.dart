@@ -65,7 +65,8 @@ class PaymentMethodsServer {
         message: 'Failed to fetch payment methods',
       );
     }
-    final list = (body['data'] as Map<String, dynamic>)['myPaymentMethods'] as List;
+    final list =
+        (body['data'] as Map<String, dynamic>)['myPaymentMethods'] as List;
     return list
         .map((e) => PaymentMethod.fromJson(e as Map<String, dynamic>))
         .toList();

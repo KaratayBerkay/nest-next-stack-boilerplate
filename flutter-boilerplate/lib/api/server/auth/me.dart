@@ -37,8 +37,8 @@ class MeServer {
         message: 'Failed to fetch user',
       );
     }
-    final result = (body['data'] as Map<String, dynamic>)['me']
-        as Map<String, dynamic>;
+    final result =
+        (body['data'] as Map<String, dynamic>)['me'] as Map<String, dynamic>;
     return AuthenticatedUser.fromJson(result);
   }
 }

@@ -25,6 +25,7 @@ class DmUnreadNotificationsServer {
         message: 'Failed to fetch unread count',
       );
     }
-    return (body['data'] as Map<String, dynamic>)['unreadNotificationCount'] as int;
+    return (body['data'] as Map<String, dynamic>)['unreadNotificationCount']
+        as int;
   }
 }

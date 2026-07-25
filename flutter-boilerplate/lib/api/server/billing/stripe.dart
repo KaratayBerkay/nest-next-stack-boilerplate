@@ -5,7 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final stripeServerProvider =
     Provider((ref) => StripeServer(ref.read(dioProvider)));
 
-const _setupIntentMutation = 'mutation CreateBillingSetupIntent { createBillingSetupIntent { clientSecret } }';
+const _setupIntentMutation =
+    'mutation CreateBillingSetupIntent { createBillingSetupIntent { clientSecret } }';
 
 const _subscribeMutation = '''
   mutation SubscribeToPlan(\$tier: SubscriptionTier!, \$paymentMethodId: String) {

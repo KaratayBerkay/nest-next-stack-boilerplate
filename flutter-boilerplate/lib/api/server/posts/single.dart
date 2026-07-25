@@ -41,8 +41,8 @@ class PostSingleServer {
         message: 'Failed to fetch post',
       );
     }
-    final result = (body['data'] as Map<String, dynamic>)['post']
-        as Map<String, dynamic>;
+    final result =
+        (body['data'] as Map<String, dynamic>)['post'] as Map<String, dynamic>;
     return Post.fromJson(result);
   }
 }

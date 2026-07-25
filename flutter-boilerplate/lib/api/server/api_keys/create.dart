@@ -5,7 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final apiKeyCreateServerProvider =
     Provider((ref) => ApiKeyCreateServer(ref.read(dioProvider)));
 
-const _mutation = 'mutation CreateApiKey(\$name: String!, \$expiresInDays: Int) { createApiKey(name: \$name, expiresInDays: \$expiresInDays) { fullKey key { id name keyPrefix createdAt lastUsedAt expiresAt enabled } } }';
+const _mutation =
+    'mutation CreateApiKey(\$name: String!, \$expiresInDays: Int) { createApiKey(name: \$name, expiresInDays: \$expiresInDays) { fullKey key { id name keyPrefix createdAt lastUsedAt expiresAt enabled } } }';
 
 class ApiKeyCreateServer {
   final Dio _dio;
@@ -27,6 +28,7 @@ class ApiKeyCreateServer {
         message: 'Failed to create API key',
       );
     }
-    return (body['data'] as Map<String, dynamic>)['createApiKey'] as Map<String, dynamic>;
+    return (body['data'] as Map<String, dynamic>)['createApiKey']
+        as Map<String, dynamic>;
   }
 }

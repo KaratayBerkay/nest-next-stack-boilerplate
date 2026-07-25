@@ -6,7 +6,8 @@ final usernameAvailableServerProvider = Provider(
   (ref) => UsernameAvailableServer(ref.read(dioProvider)),
 );
 
-const _query = 'query IsUsernameAvailable(\$username: String!) { isUsernameAvailable(username: \$username) }';
+const _query =
+    'query IsUsernameAvailable(\$username: String!) { isUsernameAvailable(username: \$username) }';
 
 class UsernameAvailableServer {
   final Dio _dio;
@@ -28,6 +29,7 @@ class UsernameAvailableServer {
         message: 'Failed to check username availability',
       );
     }
-    return (body['data'] as Map<String, dynamic>)['isUsernameAvailable'] as bool;
+    return (body['data'] as Map<String, dynamic>)['isUsernameAvailable']
+        as bool;
   }
 }

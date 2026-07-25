@@ -25,7 +25,8 @@ class PostStats {
 final postStatsServerProvider =
     Provider((ref) => PostStatsServer(ref.read(dioProvider)));
 
-const _query = 'query MyPostStats { myPostStats { totalPosts totalReactions avgReactionsPerPost } }';
+const _query =
+    'query MyPostStats { myPostStats { totalPosts totalReactions avgReactionsPerPost } }';
 
 class PostStatsServer {
   final Dio _dio;

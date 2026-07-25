@@ -35,7 +35,8 @@ class ConversationsServer {
         message: 'Failed to fetch conversations',
       );
     }
-    final list = (body['data'] as Map<String, dynamic>)['conversations'] as List;
+    final list =
+        (body['data'] as Map<String, dynamic>)['conversations'] as List;
     return list
         .map((e) => _mapConversation(e as Map<String, dynamic>))
         .toList();
