@@ -48,7 +48,7 @@ jobs:
         run: flutter test --no-pub --coverage
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           directory: flutter-boilerplate/coverage
           flags: flutter
