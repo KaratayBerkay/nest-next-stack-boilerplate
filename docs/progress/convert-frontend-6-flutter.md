@@ -1,17 +1,20 @@
 # convert-frontend-6-flutter — Mobile activity logging (session/page/exception/network → ELK)
 
 **Date:** 2026-07-25 · **Verified against:** `c765536` (HEAD of main) ·
-**Status:** ✅ **ALL TASKS COMPLETE** — implemented 2026-07-25, verified against
-HEAD `<current>`. All 12 tasks in §7 done:
-`dart analyze lib/` clean, `dart format` clean, `flutter test` passes (1
-pre-existing failure in `card_test.dart`), NestJS `tsc --noEmit` clean for the
-new module.
+**Status:** ⚠️ **IMPLEMENTED, NOT CLEAN** — all 12 tasks in §7 landed in `da6bba6`
+(2026-07-25, "feat: mobile activity logging (convert-frontend-6)"), and the
+gate claims below are real: `dart analyze lib/` clean, `dart format` clean,
+`flutter test` passes (1 pre-existing failure in `card_test.dart`), NestJS
+`tsc --noEmit` clean for the new module. **But an independent verification
+pass against `da6bba6` (§9) found 5 real issues the gates above don't catch —
+2 of them mean the feature does not do what §5's decisions promise.** Read §9
+before treating this as done; it has a concrete fix plan (Stage H).
 **Predecessor:** [convert-frontend-5-flutter.md](convert-frontend-5-flutter.md)
 (APK UI overlap, RBAC tier-casing, theme/forms fidelity — Status line there says
 "ALL PHASES COMPLETE" and recent commits `92c979f`/`2ae1557`/`363bb06`/`edcf8f3`/
 `c765536` look like real follow-through, but its own findings haven't had an
 independent re-verification pass as of this writing. Not a blocker for this doc —
-see §9.)
+see §10.)
 **Reference doc this mirrors:** [`docs/logging.md`](../logging.md) — the existing
 web+backend structured-logging architecture (built across the old `phase14.md` /
 `phase15.md` / `phase16.md` trackers, archived under `docs/progress/archive/steps/`).
@@ -63,7 +66,8 @@ web+backend structured-logging architecture (built across the old `phase14.md` /
 6. [Scope — what Flutter will and won't emit](#6-scope--what-flutter-will-and-wont-emit)
 7. [Tasks](#7-tasks)
 8. [Verify loop (phase gate)](#8-verify-loop-phase-gate)
-9. [Relationship to convert-frontend-5](#9-relationship-to-convert-frontend-5)
+9. [Verification round 1 findings (2026-07-25, against `da6bba6`)](#9-verification-round-1-findings-2026-07-25-against-da6bba6)
+10. [Relationship to convert-frontend-5](#10-relationship-to-convert-frontend-5)
 
 ---
 
@@ -564,11 +568,25 @@ without the endpoint + transport existing first). F-G are last.
 
 ## 8. Verify loop (phase gate)
 
+> Re-run 2026-07-25 against `da6bba6` as part of §9's independent pass. Boxes
+> below reflect what was actually confirmed, not what was hoped — see §9 for
+> the evidence behind every unchecked/failing item.
+
 - [ ] **Stage 0 passes live** — `session-logs*`/`page-logs*`/etc. document
   counts actually move after real traffic. Blocking for everything below being
-  confirmable live, not blocking for code review of Stages A-G.
+  confirmable live, not blocking for code review of Stages A-G. **Still not
+  confirmable**: `app`/`nextjs` containers are up in this environment now
+  (they weren't when this doc was first written), but both are running a
+  pre-`da6bba6` image — `POST /activity-logs` 404s live (checked directly).
+  Needs `docker compose up -d --build app nextjs` before this can be tried;
+  not done in the verification pass, on purpose (heavier/slower than the rest
+  of that pass warranted) — do this first when picking Stage H back up.
 - [ ] **Backend endpoint** behaves per T2/T3: anonymous, authenticated, and
-  forged-field cases all match their verify lines.
+  forged-field cases all match their verify lines. **Will not pass as-is**:
+  §9 F1 proved (empirically, not just by reading) that forged/malformed
+  fields are silently accepted, not rejected — `@ValidateNested` is missing.
+  §9 F2 means the "authenticated" case never gets a real `sessionId` either.
+  Both need Stage H fixes first.
 - [ ] **One real APK build, one real session** (per this project's
   flutter-apk-vs-web-preview-scope rule — app-lifecycle/background-flush
   specifically cannot be verified via `flutter run -d chrome`, T6) produces:
@@ -577,16 +595,303 @@ without the endpoint + transport existing first). F-G are last.
   `application-exception-logs` doc, exactly 2 `network-logs` docs from one
   airplane-mode toggle — all sharing one `clientSessionId`; the authenticated
   ones also sharing one `token`/`userId` matching the backend's Redis session.
-- [ ] **`flutter analyze` / `dart format --set-exit-if-changed` / `flutter
-  test`** clean.
+  **The last clause (`token` match) cannot pass today** — §9 F2, `token` is
+  always `null` regardless of auth state until Stage H/F2 is fixed.
+- [x] **`flutter analyze` / `dart format --set-exit-if-changed` / `flutter
+  test`** clean. Independently re-run 2026-07-25 (§9): `dart analyze lib/` →
+  0 issues; `dart format --set-exit-if-changed` → 0 files changed; `flutter
+  test` → 340 total, exactly the 1 known pre-existing `card_test.dart`
+  failure, nothing new; the 34 new tests (T10/T11) genuinely execute (checked
+  by running just those two files) rather than being silently skipped. NestJS
+  `tsc --noEmit` also re-checked: pre-existing errors exist elsewhere in the
+  repo (unrelated spec files, untouched by this commit), zero touch
+  `src/activity-log/`.
 - [ ] **Kibana**: the relevant saved searches (§3.4/T12) show live
   mobile-originated rows alongside existing web rows in the UI itself, not just
   via `curl` to the ES API — confirms no new Kibana config was actually needed,
-  just data arriving.
+  just data arriving. **Cannot pass**: §9 F5, the saved search T12 claims to
+  have added was never actually added to `kibana-saved-objects.ndjson` — it
+  only exists as a line of prose in `docs/logging.md`.
 - [ ] **No regression**: `isOnlineProvider`'s 2 existing consumers (messages
-  sidebar, chat header) still render correctly after T9.
+  sidebar, chat header) still render correctly after T9. Contract-level check
+  only so far (§9): `isOnlineProvider`'s return type and the 2 call sites are
+  unchanged by T9's diff — live UI re-render not attempted in this pass.
 
-## 9. Relationship to convert-frontend-5
+## 9. Verification round 1 findings (2026-07-25, against `da6bba6`)
+
+Independent re-verification pass, done the way this project's convention
+requires (see the register memory this session wrote): re-check against
+actual HEAD rather than trust the doc's own "complete" claim, re-run every
+gate rather than trust the stated result, and read every changed file rather
+than sample it. `da6bba6` is one commit implementing all of §7's Stage 0-G in
+one shot — that's what's being verified here, not the plan in §1-§6 (which
+still holds up as *design*; the gap is between design and what actually
+shipped).
+
+Gates independently re-run and confirmed accurate (see §8's now-checked box):
+`dart analyze`, `dart format`, `flutter test`, NestJS `tsc --noEmit` scoped to
+the new module. The dead trio (§4.1) is confirmed deleted. `docs/logging.md`'s
+Stage G update (T12) is substantive and accurate — it really does reconcile
+the stale 6-category body content into the real 10-category/3-way-split
+taxonomy §3.1 described. One thing initially *suspected* as a bug and ruled
+out after checking: Stage C's route observer is attached only to the root
+`GoRouter`, and 47 of the app's 134 named routes live inside a `ShellRoute`
+(`router.dart:255`, the "V1 authenticated shell") — a nested `Navigator` that,
+in some UI frameworks, wouldn't be seen by a parent-level observer. Checked
+directly against the installed `go_router-17.3.0` source
+(`~/.pub-cache/hosted/pub.dev/go_router-17.3.0/lib/src/route.dart:501-510`):
+`ShellRouteBase.notifyRootObserver` defaults to `true`, so shell-nested
+navigation *does* forward to the root observers. Not a bug — recorded here so
+the next verification pass doesn't re-spend time on the same question.
+
+Five real issues did survive verification, two of them severe enough that §5's
+decisions aren't actually true of the shipped code. Ranked by severity:
+
+### F1 (Backend, high) — per-event validation is entirely dead code
+
+**`nest-js-boilerplate/src/activity-log/dto/log-activity.dto.ts:90-96`**:
+
+```ts
+export class LogActivityDto {
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(50)
+  @Type(() => FrontendEventDto)
+  events: FrontendEventDto[];
+}
+```
+
+`@Type(() => FrontendEventDto)` (from `class-transformer`) makes `plainToInstance`
+turn each array element into a real `FrontendEventDto` instance. It does
+**not**, by itself, make `class-validator` recurse into that instance's own
+`@IsString()`/`@MinLength()`/`@IsIn()` decorators — that requires
+`@ValidateNested({ each: true })` on the same property, and it's missing here
+(`ValidateNested` isn't even imported). This is a well-known class-validator
+gotcha, not a subtle judgment call, and it means every constraint on
+`FrontendEventDto` (required `eventType`/`clientSessionId`/`timestamp`, the
+7-value `category` enum, the 3-value `exceptionType` enum, all the
+`@MaxLength`s) currently does nothing.
+
+**Confirmed empirically, not just by reading the decorators.** Wrote a
+throwaway script inside `nest-js-boilerplate/src/activity-log/` (deleted
+after, `git status` confirmed clean) that ran the real, imported
+`LogActivityDto` class through the real `plainToInstance` + `validate()` from
+`class-transformer`/`class-validator` — the same functions NestJS's
+`ValidationPipe` calls, with the same `{ whitelist: true, forbidNonWhitelisted:
+true }` options `main.ts:121-127` configures globally:
+
+- A payload shaped exactly like what Flutter actually sends (`category`,
+  `event`, `page`, `clientSessionId`, `timestamp` — **no** `eventType`, see
+  F4) → **0 validation errors.**
+- A deliberately garbage payload (`category: "not-a-real-category"`,
+  `exceptionType: "NOT_A_REAL_TYPE"`, `durationMs: "not-a-number"`, missing
+  every required field) → **0 validation errors.**
+
+`POST /activity-logs` currently accepts `{"events":[{}]}` and returns 202.
+T3's claim that the DTO enforces the same 7/3-value enums as
+`validators/events/schema.dart` is true of the decorators' *existence*, not
+their *effect*.
+
+**Fix:** import `ValidateNested` from `class-validator` and add
+`@ValidateNested({ each: true })` directly above (or below — order between
+these two doesn't matter) the existing `@Type(() => FrontendEventDto)` on
+`LogActivityDto.events`. Re-run the same empirical check (or add it as a real
+test, see Stage H below) with both payloads above and confirm the garbage one
+now produces errors and the well-formed one still produces zero.
+
+**Sequencing warning:** fixing F1 alone, before F4, will make Flutter's real
+traffic start failing — Flutter never sends `eventType` (F4), which is a
+*required* field once nested validation actually runs. Fix F4 together with
+or before F1, not after.
+
+### F2 (Backend, high) — `sessionId` can never be populated, contradicting D3
+
+**`nest-js-boilerplate/src/activity-log/optional-auth.guard.ts`** and
+**`activity-log.service.ts:34`** (`token: user?.sessionId ?? null`).
+
+D3 says this endpoint "can reuse the exact same guard every other
+authenticated Flutter request already goes through to get
+`req.user.sessionId`/`req.user.id` populated." It doesn't, and structurally
+can't with `OptionalAuthGuard`'s current implementation:
+
+- The real session id lives only in the Redis-backed `SessionUser` hash
+  (`auth.types.ts` — `SessionUser.sessionId`), populated by
+  `SessionAuthGuard` (`session-auth.guard.ts`) only *after* it separately
+  extracts `rbacToken`/`deviceToken`/`userToken` (cookies or
+  `x-rbac-token`/`x-device-token`/`x-user-token` headers — confirmed Flutter's
+  `AuthInterceptor`, `lib/lib/api_client.dart:44-48`, does send all of these
+  today) and does a `TokenStoreService.read(compoundKey)` Redis lookup.
+- The signed JWT itself doesn't carry `sessionId` at all —
+  `JwtPayload` (`auth.types.ts`) is `{ sub, email, role }`, full stop.
+- `OptionalAuthGuard.canActivate` only verifies the JWT and copies
+  `sub`/`email`/`role` onto `req.user`. It never touches
+  `TokenStoreService`, never reads the rbac/device/user tokens, so
+  `req.user.sessionId` is never set — `user?.sessionId` in
+  `activity-log.service.ts:34` is `undefined` on every single request,
+  authenticated or not.
+
+**Consequence:** `token` is `null` in every activity-log ES document, even
+from a user with a fully live session. Mobile activity can be attributed to a
+`userId` but never correlated to a specific session the way `session-logs`
+and every other authenticated category already can. §8's own phase-gate line
+("the authenticated ones also sharing one `token`/`userId` matching the
+backend's Redis session") cannot pass until this is fixed.
+
+**Fix — three real options, pick one (this is a design call, not purely
+mechanical, which is why it wasn't fixed inline during this pass):**
+
+- **Option A (recommended) — make `OptionalAuthGuard` do the real lookup,
+  soft-fail instead of throwing.** Inject `TokenStoreService` and
+  `TokenDerivationService` (same ones `SessionAuthGuard` uses) into
+  `OptionalAuthGuard`. After the JWT verifies, also try extracting
+  rbac/user tokens and doing the same `tokenStore.read(compoundKey)`
+  `SessionAuthGuard` does; on success, populate the full `req.user` including
+  `sessionId`; on any failure (missing token, Redis miss, mismatch), fall back
+  to the JWT-only partial user rather than throwing. Matches D3's original
+  intent exactly. Cost: couples `activity-log` to two more services, and adds
+  a Redis round-trip to every flush request — acceptable given flushes are
+  already batched (5s/10-event), not per-UI-action.
+- **Option B — put `sessionId` in the JWT payload itself** at issuance
+  (wherever `JwtPayload` is signed, e.g. `auth-token.service.ts`), so any
+  guard that merely verifies the JWT gets it for free with zero extra I/O.
+  Resolves the deeper mismatch (`JwtPayload` not carrying session identity)
+  but is a cross-cutting change to shared auth infra well beyond this
+  feature's scope — touches every consumer of `JwtPayload`, not just this
+  endpoint.
+- **Option C (cheapest, honest downgrade) — stop claiming `token` here.**
+  Drop the `token` field (or document plainly that mobile activity logs
+  correlate by `userId` only, not session) and update D3 to say so. Lowest
+  risk, but a real capability loss — can't distinguish two concurrent
+  sessions of the same authenticated user.
+
+### F3 (Flutter, medium) — the new two-layer API is dead code
+
+**`flutter-boilerplate/lib/api/server/activity/log.dart`** +
+**`lib/api/client/activity/actions.dart`** (`ActivityLogServer`/
+`ActivityLogActions`, added in T5 to follow this app's two-layer Dio
+convention per D11). Grep-confirmed zero callers outside their own
+definitions. What every real capture site (`route_observer.dart`,
+`main.dart`, `use_presence.dart`) actually calls is
+`ActivityLogger.instance.enqueue()` (`lib/lib/activity_logger.dart`), whose
+`_flush()` builds and owns its own bare `Dio(BaseOptions(...))` inline,
+never touching `ActivityLogServer`. This is the same "scaffolding nobody
+calls" shape §4.1 documented as the reason to delete the *old* trio,
+reintroduced in miniature by the code that replaced it. T5's own text also
+says `ActivityLogServer` "uses `Urls.activityLogs`" — it doesn't; it POSTs to
+a hardcoded literal `'/api/activity-logs'` (same value today, so no
+functional bug, but the claim is false and it's the exact anti-pattern §4.1
+called out about the old `log.dart`).
+
+**Why it can't just be "wired up" as the obvious fix:** `ActivityLogger` is a
+bare singleton (`ActivityLogger.instance`), not a Riverpod provider, because
+it has to be callable from contexts with no `Ref` available at all —
+`main.dart`'s error handlers run *before* `runApp(ProviderScope(...))`
+(`main.dart:13-14` vs. the handlers registered above it), and
+`ActivityRouteObserver` (`route_observer.dart`) is a plain `NavigatorObserver`
+instantiated at top-level (`router.dart:148`, `final _routeObserver =
+ActivityRouteObserver();`), also with no `Ref`. Only `use_presence.dart`'s
+call site actually runs inside a Riverpod provider body with a `ref` in
+scope. So "make everything go through `ActivityLogActions`" isn't a clean
+option without threading a `Ref`/`Dio` into two non-widget, non-provider
+classes — meaningfully more invasive than it looks at first glance.
+
+**Fix (recommended): delete `api/server/activity/log.dart` and
+`api/client/activity/actions.dart`.** `ActivityLogger`'s inline `Dio` usage
+already works standalone (aside from F4) and is the only thing that *can*
+work from all three call sites uniformly. Update T5's text to stop claiming
+the two-layer files are used. (Rejected alternative: keep the files and wire
+only `use_presence.dart` through them since it's the one call site that
+could — creates an inconsistent "some call sites use the layered API, some
+don't" pattern for no real benefit.)
+
+### F4 (Flutter, low-medium) — every call site omits `eventType`
+
+**`lib/lib/route_observer.dart`** (6 `enqueue()` calls across `didPush`/
+`didReplace`/`didPop`), **`main.dart`** (2 calls, the `FlutterError.onError`/
+`PlatformDispatcher.instance.onError` handlers), **`hooks/use_presence.dart`**
+(1 call) — none of the 9 call sites set `eventType`, only `event`. Compare the
+web's `useEventLogger.ts`, which sets both on every single emit (e.g.
+`eventType: "page.view", event: "page.view"` — same pattern for `page.exit`
+and both exception handlers, where both fields get the literal `"exception"`
+regardless of `exceptionType`). Harmless today only because of F1 — once F1 is
+fixed, this becomes a hard failure (see F1's sequencing warning), and even
+before that, every mobile-originated ES document is missing a field its web
+counterpart always has.
+
+**Fix (recommended): fix it once, centrally, not at 9 call sites.** The web's
+own convention (confirmed above) is that `eventType` and `event` are always
+the same string at every call site. Mirror that by having
+`ActivityLogger.enqueue()` itself (`lib/lib/activity_logger.dart`, where
+`clientSessionId`/`timestamp` are already auto-filled) default `eventType`
+to the caller's `event` value when not explicitly given:
+
+```dart
+final fullEvent = <String, dynamic>{
+  ...event,
+  'eventType': event['eventType'] ?? event['event'],
+  'clientSessionId': clientSessionId,
+  'timestamp': DateTime.now().toUtc().toIso8601String(),
+};
+```
+
+This fixes all 9 call sites at once and makes it impossible for a future
+capture site to reintroduce the same gap.
+
+### F5 (Docs/Kibana, low) — the claimed 4th saved search doesn't exist
+
+T12 says `application-exception-logs` was added "to the Kibana saved searches
+list." True only of `docs/logging.md`'s prose. Checked
+`nest-js-boilerplate/docker/elasticsearch/kibana-saved-objects.ndjson`
+directly (the file that actually has to be imported into Kibana for a saved
+search to be real) — `application-exception-logs` and
+`application-exception-logs-search` are both absent. More precisely than
+§3.4 originally guessed: **the 3-way exception split has no Kibana
+representation at all** — the ndjson still only has the single pre-split
+`exception-logs`/`exception-logs-search` pair (ids: `exception-logs`,
+`exception-logs-search`); `http-exception-logs` and `websocket-exception-logs`
+are equally missing, not just `application-exception-logs`. The other two are
+pre-existing gaps outside this doc's scope (flagged, not fixed here, same
+convention §3.3 used for the fluentd regression) — only
+`application-exception-logs` is this feature's to add, since it's the only
+new category Flutter introduces.
+
+**Fix:** add two objects to `kibana-saved-objects.ndjson`, modeled exactly on
+the existing `page-logs`/`page-logs-search` pair (or `network-logs`/
+`network-logs-search` — same shape):
+
+```json
+{"attributes":{"fieldAttrs":"{}","fields":"[]","runtimeFieldMap":"{}","timeFieldName":"@timestamp","title":"application-exception-logs*"},"coreMigrationVersion":"8.0.0","id":"application-exception-logs","migrationVersion":{"index-pattern":"8.0.0"},"references":[],"type":"index-pattern","updated_at":"2026-01-01T00:00:00.000Z"}
+{"attributes":{"columns":["event","exceptionType","page","userId"],"description":"Application exceptions (Flutter FlutterError.onError / PlatformDispatcher.onError, web window.onerror / unhandledrejection)","hits":0,"kibanaSavedObjectMeta":{"searchSourceJSON":"{\"filter\":[],\"highlightAll\":true,\"query\":{\"language\":\"kuery\",\"query\":\"\"},\"version\":true}"},"sort":[["@timestamp","desc"]],"title":"Application Exception Logs","version":1},"id":"application-exception-logs-search","references":[{"id":"application-exception-logs","name":"application-exception-logs","type":"index-pattern"}],"type":"search","updated_at":"2026-01-01T00:00:00.000Z"}
+```
+
+No repo automation imports this file (checked — no script/Makefile target
+references it); it's a manual Kibana Stack Management → Saved Objects →
+Import, or `POST /api/saved_objects/_import` with the file as multipart form
+data. Do this as part of Stage H's live-verify step, not blind — confirm the
+import succeeds and the saved search actually returns rows after Stage 0/A
+are live.
+
+### Stage H — Fix plan (not yet implemented)
+
+Ordered for correctness (F4 before F1, per F1's sequencing warning) and by
+how much they block §8's live checks:
+
+- [ ] **H1 (S) — Fix F4**: centralize `eventType` defaulting in
+  `ActivityLogger.enqueue()`.
+- [ ] **H2 (S) — Fix F1**: add `@ValidateNested({ each: true })` to
+  `LogActivityDto.events`. Do not land before H1. Add a NestJS test (none
+  exist for this module today — a real Stage F gap this doc's original task
+  list never scoped in) asserting a garbage payload now gets 400.
+- [ ] **H3 (M/L, needs a decision) — Fix F2**: pick Option A, B, or C above
+  and implement it. Default to A unless there's a reason to prefer B or C.
+- [ ] **H4 (S) — Fix F3**: delete the dead two-layer files, update T5's text.
+- [ ] **H5 (S) — Fix F5**: add the two Kibana saved-object entries, verify
+  the import.
+- [ ] **H6 — Re-run §8's phase gate** end-to-end once H1-H5 land, including
+  the live checks that weren't attempted in this pass (Stage 0 live traffic
+  after a container rebuild, real APK session, Kibana UI check).
+
+## 10. Relationship to convert-frontend-5
 
 `convert-frontend-5-flutter.md`'s header claims "ALL PHASES COMPLETE," and
 recent commits (`92c979f`, `2ae1557`, `363bb06`, `edcf8f3`, `c765536`) look
