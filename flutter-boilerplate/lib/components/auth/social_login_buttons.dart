@@ -198,9 +198,13 @@ class _SocialLoginButtonState extends ConsumerState<_SocialLoginButton> {
       final profile = await actions.getProfile(widget.provider, resultState);
       final authResult = await actions.loginWithOAuth(profile);
 
-      await ref
-          .read(authProvider.notifier)
-          .setSession(authResult.accessToken, authResult.user);
+      await ref.read(authProvider.notifier).setSession(
+            authResult.accessToken,
+            authResult.user,
+            rbacToken: authResult.rbacToken,
+            deviceToken: authResult.deviceToken,
+            userToken: authResult.userToken,
+          );
 
       if (mounted) {
         final locale = ref.read(localeProvider);

@@ -15,9 +15,8 @@ final realtimeProvider = Provider<RealtimeClient>((ref) {
   final client = RealtimeClient(
     url: AppConfig.wsUrl,
     getTokens: () async {
-      final user = ref.read(currentUserProvider);
-      if (user == null) return null;
-      return {'userId': user.id, 'tier': user.tier};
+      if (ref.read(currentUserProvider) == null) return null;
+      return ref.read(authProvider.notifier).getAuthTokens();
     },
     onStatusChange: (status) => onStatus.state = status,
     onFrame: (frame) {

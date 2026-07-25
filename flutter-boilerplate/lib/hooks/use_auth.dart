@@ -7,6 +7,9 @@ import '../types/auth/user.dart';
 
 const _accessTokenKey = 'access_token';
 const _refreshTokenKey = 'refresh_token';
+const _rbacTokenKey = 'rbac_token';
+const _deviceTokenKey = 'device_token';
+const _userTokenKey = 'user_token';
 const _userKey = 'session_user';
 
 const _storage = FlutterSecureStorage();
@@ -33,21 +36,51 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthenticatedUser?>> {
     });
   }
 
-  Future<void> setSession(String token, AuthenticatedUser user) async {
+  Future<void> setSession(
+    String token,
+    AuthenticatedUser user, {
+    required String rbacToken,
+    required String deviceToken,
+    required String userToken,
+  }) async {
     await _storage.write(key: _accessTokenKey, value: token);
+    await _storage.write(key: _rbacTokenKey, value: rbacToken);
+    await _storage.write(key: _deviceTokenKey, value: deviceToken);
+    await _storage.write(key: _userTokenKey, value: userToken);
     await _storage.write(key: _userKey, value: jsonEncode(user.toJson()));
     state = AsyncData(user);
   }
 
   Future<void> logout() async {
     await _storage.delete(key: _accessTokenKey);
+    await _storage.delete(key: _rbacTokenKey);
+    await _storage.delete(key: _deviceTokenKey);
+    await _storage.delete(key: _userTokenKey);
     await _storage.delete(key: _userKey);
     await _storage.delete(key: _refreshTokenKey);
     state = const AsyncData(null);
   }
 
-  Future<String?> getToken() async {
-    return _storage.read(key: _accessTokenKey);
+  /// The full auth-frame token bundle the backend requires on every
+  /// authenticated request (REST/GraphQL headers and the WS auth frame) —
+  /// `accessToken` alone is rejected with "Missing RBAC token".
+  Future<Map<String, String>?> getAuthTokens() async {
+    final accessToken = await _storage.read(key: _accessTokenKey);
+    final rbacToken = await _storage.read(key: _rbacTokenKey);
+    final deviceToken = await _storage.read(key: _deviceTokenKey);
+    final userToken = await _storage.read(key: _userTokenKey);
+    if (accessToken == null ||
+        rbacToken == null ||
+        deviceToken == null ||
+        userToken == null) {
+      return null;
+    }
+    return {
+      'accessToken': accessToken,
+      'rbacToken': rbacToken,
+      'deviceToken': deviceToken,
+      'userToken': userToken,
+    };
   }
 
   Future<void> setRefreshToken(String token) async {

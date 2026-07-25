@@ -12,6 +12,9 @@ const _loginMutation = '''
   mutation Login(\$input: LoginInput!) {
     login(input: \$input) {
       accessToken
+      rbacToken
+      deviceToken
+      userToken
       mfaRequired
       mfaToken
       user {
@@ -71,6 +74,9 @@ class LoginServer {
     return LoginSuccess(
       LoginResponse(
         accessToken: result['accessToken'] as String,
+        rbacToken: result['rbacToken'] as String,
+        deviceToken: result['deviceToken'] as String,
+        userToken: result['userToken'] as String,
         user: AuthenticatedUser.fromJson(
           result['user'] as Map<String, dynamic>,
         ),

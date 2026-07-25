@@ -36,10 +36,16 @@ class OAuthProfile {
 
 class OAuthLoginResponse {
   final String accessToken;
+  final String rbacToken;
+  final String deviceToken;
+  final String userToken;
   final AuthenticatedUser user;
 
   const OAuthLoginResponse({
     required this.accessToken,
+    required this.rbacToken,
+    required this.deviceToken,
+    required this.userToken,
     required this.user,
   });
 
@@ -56,6 +62,9 @@ class OAuthLoginResponse {
     };
     return OAuthLoginResponse(
       accessToken: json['accessToken'] as String,
+      rbacToken: json['rbacToken'] as String,
+      deviceToken: json['deviceToken'] as String,
+      userToken: json['userToken'] as String,
       user: AuthenticatedUser.fromJson(mappedUser),
     );
   }

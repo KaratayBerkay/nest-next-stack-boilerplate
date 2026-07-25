@@ -87,9 +87,13 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
 
       switch (result) {
         case LoginSuccess(:final response):
-          await ref
-              .read(authProvider.notifier)
-              .setSession(response.accessToken, response.user);
+          await ref.read(authProvider.notifier).setSession(
+                response.accessToken,
+                response.user,
+                rbacToken: response.rbacToken,
+                deviceToken: response.deviceToken,
+                userToken: response.userToken,
+              );
           if (mounted) {
             final locale = ref.read(localeProvider);
             context.go('/v1/$locale/feed');
@@ -141,9 +145,13 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
       final data = await actions.loginMfa(_mfaToken!, code);
       final response = LoginResponse.fromJson(data);
 
-      await ref
-          .read(authProvider.notifier)
-          .setSession(response.accessToken, response.user);
+      await ref.read(authProvider.notifier).setSession(
+            response.accessToken,
+            response.user,
+            rbacToken: response.rbacToken,
+            deviceToken: response.deviceToken,
+            userToken: response.userToken,
+          );
 
       if (mounted) {
         final locale = ref.read(localeProvider);

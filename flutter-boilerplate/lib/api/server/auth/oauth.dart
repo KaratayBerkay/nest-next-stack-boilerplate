@@ -34,6 +34,9 @@ class OAuthLoginServer {
       mutation LoginWithOAuth(\$profile: OAuthProfileInput!) {
         loginWithOAuth(profile: \$profile) {
           accessToken
+          rbacToken
+          deviceToken
+          userToken
           user {
             id
             email

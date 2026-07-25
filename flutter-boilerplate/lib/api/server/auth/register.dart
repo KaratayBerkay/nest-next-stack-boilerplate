@@ -12,6 +12,9 @@ const _mutation = '''
   mutation Register(\$input: RegisterInput!) {
     register(input: \$input) {
       accessToken
+      rbacToken
+      deviceToken
+      userToken
       user {
         id
         email
@@ -58,6 +61,9 @@ class RegisterServer {
         as Map<String, dynamic>;
     return RegisterResponse(
       accessToken: result['accessToken'] as String,
+      rbacToken: result['rbacToken'] as String,
+      deviceToken: result['deviceToken'] as String,
+      userToken: result['userToken'] as String,
       user: AuthenticatedUser.fromJson(
         result['user'] as Map<String, dynamic>,
       ),

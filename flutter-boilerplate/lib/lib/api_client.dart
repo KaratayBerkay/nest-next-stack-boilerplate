@@ -40,9 +40,12 @@ class AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    final token = await _ref.read(authProvider.notifier).getToken();
-    if (token != null) {
-      options.headers['Authorization'] = 'Bearer $token';
+    final tokens = await _ref.read(authProvider.notifier).getAuthTokens();
+    if (tokens != null) {
+      options.headers['Authorization'] = 'Bearer ${tokens['accessToken']}';
+      options.headers['x-rbac-token'] = tokens['rbacToken'];
+      options.headers['x-device-token'] = tokens['deviceToken'];
+      options.headers['x-user-token'] = tokens['userToken'];
     }
     handler.next(options);
   }

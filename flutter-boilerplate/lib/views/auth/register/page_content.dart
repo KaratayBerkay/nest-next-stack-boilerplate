@@ -87,9 +87,13 @@ class _RegisterPageContentState extends ConsumerState<RegisterPageContent> {
       );
       final response = await actions.register(request);
 
-      await ref
-          .read(authProvider.notifier)
-          .setSession(response.accessToken, response.user);
+      await ref.read(authProvider.notifier).setSession(
+            response.accessToken,
+            response.user,
+            rbacToken: response.rbacToken,
+            deviceToken: response.deviceToken,
+            userToken: response.userToken,
+          );
 
       if (mounted) {
         final locale = ref.read(localeProvider);

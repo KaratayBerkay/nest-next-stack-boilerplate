@@ -29,13 +29,25 @@ class LoginRequest {
 
 class LoginResponse {
   final String accessToken;
+  final String rbacToken;
+  final String deviceToken;
+  final String userToken;
   final AuthenticatedUser user;
 
-  const LoginResponse({required this.accessToken, required this.user});
+  const LoginResponse({
+    required this.accessToken,
+    required this.rbacToken,
+    required this.deviceToken,
+    required this.userToken,
+    required this.user,
+  });
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
     return LoginResponse(
       accessToken: json['accessToken'] as String,
+      rbacToken: json['rbacToken'] as String,
+      deviceToken: json['deviceToken'] as String,
+      userToken: json['userToken'] as String,
       user: AuthenticatedUser.fromJson(json['user'] as Map<String, dynamic>),
     );
   }
@@ -61,13 +73,25 @@ class RegisterRequest {
 
 class RegisterResponse {
   final String accessToken;
+  final String rbacToken;
+  final String deviceToken;
+  final String userToken;
   final AuthenticatedUser user;
 
-  const RegisterResponse({required this.accessToken, required this.user});
+  const RegisterResponse({
+    required this.accessToken,
+    required this.rbacToken,
+    required this.deviceToken,
+    required this.userToken,
+    required this.user,
+  });
 
   factory RegisterResponse.fromJson(Map<String, dynamic> json) {
     return RegisterResponse(
       accessToken: json['accessToken'] as String,
+      rbacToken: json['rbacToken'] as String,
+      deviceToken: json['deviceToken'] as String,
+      userToken: json['userToken'] as String,
       user: AuthenticatedUser.fromJson(json['user'] as Map<String, dynamic>),
     );
   }

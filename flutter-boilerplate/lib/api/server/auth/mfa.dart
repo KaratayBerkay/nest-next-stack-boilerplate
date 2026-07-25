@@ -8,6 +8,9 @@ const _mutation = '''
   mutation VerifyLoginMfa(\$input: VerifyLoginMfaInput!) {
     verifyLoginMfa(input: \$input) {
       accessToken
+      rbacToken
+      deviceToken
+      userToken
       user {
         id
         email

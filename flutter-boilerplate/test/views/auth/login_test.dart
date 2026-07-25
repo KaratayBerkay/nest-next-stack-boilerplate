@@ -137,7 +137,13 @@ void main() {
 
       when(() => mockActions.login(any())).thenAnswer(
         (_) async => LoginSuccess(
-          const LoginResponse(accessToken: 'token123', user: testUser),
+          const LoginResponse(
+            accessToken: 'token123',
+            rbacToken: 'rbac123',
+            deviceToken: 'device123',
+            userToken: 'user123',
+            user: testUser,
+          ),
         ),
       );
 
@@ -236,6 +242,9 @@ void main() {
       when(() => mockActions.loginMfa(any(), any())).thenAnswer(
         (_) async => {
           'accessToken': 'token-mfa',
+          'rbacToken': 'rbac-mfa',
+          'deviceToken': 'device-mfa',
+          'userToken': 'user-mfa',
           'user': testUser.toJson(),
         },
       );
