@@ -52,6 +52,7 @@ class RealtimeClient {
     _setStatus(RealtimeStatus.connecting);
 
     final wsUrl = Uri.parse(url);
+    debugPrint('[Realtime] connecting to $wsUrl');
     _channel = WebSocketChannel.connect(wsUrl);
 
     _channel!.stream.listen(
@@ -60,7 +61,10 @@ class RealtimeClient {
       onError: (_) => _handleDisconnect(),
     );
 
-    _channel!.ready.then((_) => _handleOpen());
+    _channel!.ready.then((_) => _handleOpen()).catchError((Object e) {
+      debugPrint('[Realtime] connect failed: $e');
+      _handleDisconnect();
+    });
   }
 
   Future<void> _handleOpen() async {
@@ -76,6 +80,9 @@ class RealtimeClient {
     }
 
     if (tokens == null || _destroyed) {
+      debugPrint(
+        '[Realtime] no tokens available, closing (destroyed=$_destroyed)',
+      );
       _channel?.sink.close();
       return;
     }
@@ -89,6 +96,7 @@ class RealtimeClient {
       if (data['type'] == 'error' &&
           (data['message'] as String?)?.toLowerCase().contains('auth') ==
               true) {
+        debugPrint('[Realtime] auth failed: ${data['message']}');
         _pendingAuthFail = true;
         _channel?.sink.close();
         return;
@@ -157,6 +165,7 @@ class RealtimeClient {
   }
 
   void _setStatus(RealtimeStatus s) {
+    debugPrint('[Realtime] status -> $s');
     _status = s;
     onStatusChange(s);
   }
