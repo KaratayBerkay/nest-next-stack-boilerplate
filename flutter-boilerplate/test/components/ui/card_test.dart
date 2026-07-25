@@ -17,7 +17,7 @@ void main() {
   testWidgets('CardWidget supports custom elevation', (tester) async {
     await pumpTestApp(
       tester,
-      const CardWidget(elevation: 4, child: Text('Raised')),
+      const CardWidget(variant: CardVariant.elevated, child: Text('Raised')),
     );
 
     expect(find.text('Raised'), findsOneWidget);
