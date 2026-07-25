@@ -1,14 +1,17 @@
 # convert-frontend-6-flutter — Mobile activity logging (session/page/exception/network → ELK)
 
 **Date:** 2026-07-25 · **Verified against:** `c765536` (HEAD of main) ·
-**Status:** ⚠️ **IMPLEMENTED, NOT CLEAN** — all 12 tasks in §7 landed in `da6bba6`
-(2026-07-25, "feat: mobile activity logging (convert-frontend-6)"), and the
-gate claims below are real: `dart analyze lib/` clean, `dart format` clean,
-`flutter test` passes (1 pre-existing failure in `card_test.dart`), NestJS
-`tsc --noEmit` clean for the new module. **But an independent verification
-pass against `da6bba6` (§9) found 5 real issues the gates above don't catch —
-2 of them mean the feature does not do what §5's decisions promise.** Read §9
-before treating this as done; it has a concrete fix plan (Stage H).
+**Status:** ⚠️ **CODE FIXES VERIFIED, LIVE GATE STILL OPEN** — all 12 tasks in
+§7 landed in `da6bba6` (2026-07-25). An independent verification pass (§9,
+round 1) found 5 real issues; all 5 code-level fixes (Stage H, H1-H5) landed
+in `3ae7c0c` the same day and were independently re-verified against that
+commit (§9, round 2) — all 5 hold up, nothing new broken. Gates clean:
+`dart analyze lib/`, `dart format`, `flutter test` (340 total, 1 pre-existing
+failure in `card_test.dart`), NestJS `tsc --noEmit` scoped to the module.
+**What's left is H6 alone** — §8's live phase gate (container rebuild, real
+APK session, Kibana saved-object import) has never actually been attempted;
+everything blocking it now is infra/live-verification, not code correctness.
+Read §9 for both rounds' findings before assuming H6 would pass untried.
 **Predecessor:** [convert-frontend-5-flutter.md](convert-frontend-5-flutter.md)
 (APK UI overlap, RBAC tier-casing, theme/forms fidelity — Status line there says
 "ALL PHASES COMPLETE" and recent commits `92c979f`/`2ae1557`/`363bb06`/`edcf8f3`/
@@ -582,11 +585,11 @@ without the endpoint + transport existing first). F-G are last.
   not done in the verification pass, on purpose (heavier/slower than the rest
   of that pass warranted) — do this first when picking Stage H back up.
 - [ ] **Backend endpoint** behaves per T2/T3: anonymous, authenticated, and
-  forged-field cases all match their verify lines. **Will not pass as-is**:
-  §9 F1 proved (empirically, not just by reading) that forged/malformed
-  fields are silently accepted, not rejected — `@ValidateNested` is missing.
-  §9 F2 means the "authenticated" case never gets a real `sessionId` either.
-  Both need Stage H fixes first.
+  forged-field cases all match their verify lines. **Code-level blockers
+  fixed** (§9 round 2): F1's `@ValidateNested` gap and F2's `sessionId`
+  gap are both fixed in `3ae7c0c` and re-verified. Still unchecked only
+  because nobody has hit the live endpoint yet (H6) — no live contradiction
+  remains, just an untried step.
 - [ ] **One real APK build, one real session** (per this project's
   flutter-apk-vs-web-preview-scope rule — app-lifecycle/background-flush
   specifically cannot be verified via `flutter run -d chrome`, T6) produces:
@@ -595,8 +598,9 @@ without the endpoint + transport existing first). F-G are last.
   `application-exception-logs` doc, exactly 2 `network-logs` docs from one
   airplane-mode toggle — all sharing one `clientSessionId`; the authenticated
   ones also sharing one `token`/`userId` matching the backend's Redis session.
-  **The last clause (`token` match) cannot pass today** — §9 F2, `token` is
-  always `null` regardless of auth state until Stage H/F2 is fixed.
+  **The last clause (`token` match) is code-fixed, not live-confirmed** —
+  §9 round 2, F2's fix means `token` should now populate correctly, but no
+  real APK session has actually exercised it yet (H6).
 - [x] **`flutter analyze` / `dart format --set-exit-if-changed` / `flutter
   test`** clean. Independently re-run 2026-07-25 (§9): `dart analyze lib/` →
   0 issues; `dart format --set-exit-if-changed` → 0 files changed; `flutter
@@ -609,15 +613,22 @@ without the endpoint + transport existing first). F-G are last.
 - [ ] **Kibana**: the relevant saved searches (§3.4/T12) show live
   mobile-originated rows alongside existing web rows in the UI itself, not just
   via `curl` to the ES API — confirms no new Kibana config was actually needed,
-  just data arriving. **Cannot pass**: §9 F5, the saved search T12 claims to
-  have added was never actually added to `kibana-saved-objects.ndjson` — it
-  only exists as a line of prose in `docs/logging.md`.
+  just data arriving. **Code-level gap fixed, import not done** — §9 round 2,
+  F5's two saved-object entries are now actually in
+  `kibana-saved-objects.ndjson`, but nobody has imported them into a live
+  Kibana or confirmed rows show up in the UI yet (H6).
 - [ ] **No regression**: `isOnlineProvider`'s 2 existing consumers (messages
   sidebar, chat header) still render correctly after T9. Contract-level check
   only so far (§9): `isOnlineProvider`'s return type and the 2 call sites are
   unchanged by T9's diff — live UI re-render not attempted in this pass.
 
 ## 9. Verification round 1 findings (2026-07-25, against `da6bba6`)
+
+> Two passes live in this section now, both 2026-07-25: round 1 below found
+> F1-F5 against `da6bba6`; round 2, folded directly into Stage H's checklist
+> further down, re-verified the fix commit (`3ae7c0c`) against those same 5
+> findings. Read top to bottom — Stage H's checkboxes carry round 2's
+> results inline rather than living in a separate subsection.
 
 Independent re-verification pass, done the way this project's convention
 requires (see the register memory this session wrote): re-check against
@@ -871,25 +882,72 @@ data. Do this as part of Stage H's live-verify step, not blind — confirm the
 import succeeds and the saved search actually returns rows after Stage 0/A
 are live.
 
-### Stage H — Fix plan (not yet implemented)
+### Stage H — Fix plan
 
 Ordered for correctness (F4 before F1, per F1's sequencing warning) and by
-how much they block §8's live checks:
+how much they block §8's live checks. **H1-H5 implemented 2026-07-25 in
+`3ae7c0c`** ("fix(activity-log): stage H fixes for verification findings
+F1-F5"). **Round 2 verification, same day, against `3ae7c0c`:** re-read every
+changed line against what round 1 recommended, re-ran the round-1 empirical
+class-validator test with the fixed code, re-ran all 4 gates, grepped for
+orphaned references. All 5 code fixes hold up as described below; no new
+bugs found in the fix pass itself — worth stating plainly since this
+project's fix passes don't always come back clean (see the project-enhance-3/
+project-enhance-6 register memories).
 
-- [ ] **H1 (S) — Fix F4**: centralize `eventType` defaulting in
-  `ActivityLogger.enqueue()`.
-- [ ] **H2 (S) — Fix F1**: add `@ValidateNested({ each: true })` to
-  `LogActivityDto.events`. Do not land before H1. Add a NestJS test (none
-  exist for this module today — a real Stage F gap this doc's original task
-  list never scoped in) asserting a garbage payload now gets 400.
-- [ ] **H3 (M/L, needs a decision) — Fix F2**: pick Option A, B, or C above
-  and implement it. Default to A unless there's a reason to prefer B or C.
-- [ ] **H4 (S) — Fix F3**: delete the dead two-layer files, update T5's text.
-- [ ] **H5 (S) — Fix F5**: add the two Kibana saved-object entries, verify
-  the import.
-- [ ] **H6 — Re-run §8's phase gate** end-to-end once H1-H5 land, including
-  the live checks that weren't attempted in this pass (Stage 0 live traffic
-  after a container rebuild, real APK session, Kibana UI check).
+- [x] **H1 (S) — Fix F4**: centralize `eventType` defaulting in
+  `ActivityLogger.enqueue()`. Done — `'eventType': event['eventType'] ??
+  event['event']` added exactly where round 1 recommended.
+- [x] **H2 (S) — Fix F1**: add `@ValidateNested({ each: true })` to
+  `LogActivityDto.events`. Done, landed together with H1 as the sequencing
+  warning required. Re-ran round 1's empirical test against the fixed DTO:
+  well-formed payload (with `eventType`) → 0 errors; garbage payload
+  (invalid category/exceptionType/types) → 1 error, proving nested
+  validation now actually runs; the *old* pre-H1 Flutter shape (missing
+  `eventType`) → 1 error, confirming the sequencing dependency was real and
+  was correctly respected. **Not done, still a real gap:** no NestJS test
+  asserts this — the empirical check has only ever been run ad hoc, by hand,
+  twice now (round 1 and round 2). Stage F never scoped backend tests in the
+  first place (§9 round 1 already flagged this); still true.
+- [x] **H3 (M/L) — Fix F2**: picked Option A (full soft session lookup) as
+  recommended. `OptionalAuthGuard` rewritten — verified line-by-line against
+  `SessionAuthGuard`: correctly mirrors steps 1-6/8/9 (JWT verify → extract
+  rbac/device/user tokens → userToken timing-safe check → Redis
+  compound-key read → sub/userId sanity check → rbac derivation check →
+  attach full `req.user` incl. `sessionId` → slide TTL), correctly omits
+  steps 7/10 (IP/UA-drift logging, CSRF — don't apply to a soft/REST
+  endpoint), every failure point degrades to the anonymous/JWT-only case
+  instead of throwing. `req.user.sessionId` now actually populates for real
+  sessions. **Verified by reasoning + `tsc --noEmit`, not by an actual
+  boot:** `OptionalAuthGuard` now injects `TokenStoreService`/
+  `TokenDerivationService`; `activity-log.module.ts` itself wasn't touched by
+  `3ae7c0c`, but doesn't need to be — `AuthContractsModule` (already
+  imported pre-fix) already provides and exports both, so the DI graph
+  resolves on well-established NestJS semantics (a provider's own deps
+  resolve from its home module, not the consumer's). A live container boot
+  (needed for H6 anyway) is the only way to turn this from "verified by
+  reasoning" into "empirically confirmed" — deliberately not done in either
+  round, consistent both times: rebuilding/restarting the app container is a
+  heavier action than either verification pass called for on its own.
+- [x] **H4 (S) — Fix F3**: delete the dead two-layer files. Done — both
+  files gone, re-grepped the whole Flutter tree for `ActivityLogServer`/
+  `ActivityLogActions`/`activityLogServerProvider`/`activityLogActionsProvider`,
+  zero remaining references anywhere. T5's text still needs a manual
+  correction (still says "uses `Urls.activityLogs`") — a documentation-only
+  loose end, not a code gap.
+- [x] **H5 (S) — Fix F5**: add the two Kibana saved-object entries. Done —
+  structurally identical to round 1's proposal, correctly modeled on the
+  `page-logs`/`network-logs` pattern, valid JSON. **The entries existing is
+  necessary but not sufficient** — nobody has actually imported them into a
+  live Kibana or confirmed the saved search returns rows; that's H6's job.
+- [ ] **H6 — Re-run §8's phase gate** end-to-end, including the live checks
+  neither round attempted: Stage 0 live traffic after a container rebuild
+  (`app`/`nextjs` are up in this environment but still running a
+  pre-`da6bba6` image — confirmed via a direct `curl`, still true as of
+  round 2), a real APK session, and actually importing H5's ndjson entries
+  into Kibana and checking the UI. **This is the only item left in Stage H.**
+  Nothing blocking it is a code-correctness question anymore — it's
+  entirely live/infra verification.
 
 ## 10. Relationship to convert-frontend-5
 
