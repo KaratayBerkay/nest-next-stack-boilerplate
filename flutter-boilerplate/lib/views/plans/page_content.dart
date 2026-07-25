@@ -3,7 +3,6 @@ import 'package:flutter_boilerplate/lib/tier.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../constants/theme.dart';
-import '../../l10n/app_localizations.dart';
 
 class PlansPageContent extends StatelessWidget {
   final String lang;
@@ -13,96 +12,105 @@ class PlansPageContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    final t = AppLocalizations.of(context);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(t.plansTitle)),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              const Text(
-                'Choose your plan',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Unlock more features as you grow',
-                style: TextStyle(color: colors.fgMuted),
-              ),
-              const SizedBox(height: 32),
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (_, constraints) => SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        _PlanCard(
-                          tier: Tier.free,
-                          price: '\$0',
-                          features: const [
-                            'Basic feed',
-                            '5 messages/day',
-                            '1 device',
-                          ],
-                          color: colors.surfaceAlt,
-                          onSelect: () {},
-                        ),
-                        const SizedBox(width: 16),
-                        _PlanCard(
-                          tier: Tier.basic,
-                          price: '\$9',
-                          features: const [
-                            'Enhanced feed',
-                            '50 messages/day',
-                            '3 devices',
-                            'Basic stats',
-                          ],
-                          color: colors.info,
-                          onSelect: () =>
-                              context.go('/v1/$lang/checkout/basic'),
-                        ),
-                        const SizedBox(width: 16),
-                        _PlanCard(
-                          tier: Tier.medium,
-                          price: '\$19',
-                          features: const [
-                            'Full feed',
-                            'Unlimited messages',
-                            '10 devices',
-                            'Analytics',
-                            'Priority support',
-                          ],
-                          color: colors.brand,
-                          onSelect: () =>
-                              context.go('/v1/$lang/checkout/medium'),
-                        ),
-                        const SizedBox(width: 16),
-                        _PlanCard(
-                          tier: Tier.premium,
-                          price: '\$49',
-                          features: const [
-                            'Everything',
-                            'Unlimited',
-                            'All devices',
-                            'AI recommendations',
-                            'Video calls',
-                            'Dedicated support',
-                          ],
-                          color: colors.warning,
-                          isPremium: true,
-                          onSelect: () =>
-                              context.go('/v1/$lang/checkout/premium'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
+    List<_PlanCard> buildCards(double width) => [
+          _PlanCard(
+            tier: Tier.free,
+            price: '\$0',
+            features: const ['Basic feed', '5 messages/day', '1 device'],
+            color: colors.surfaceAlt,
+            onSelect: () {},
+            width: width,
           ),
-        ),
+          _PlanCard(
+            tier: Tier.basic,
+            price: '\$9',
+            features: const [
+              'Enhanced feed',
+              '50 messages/day',
+              '3 devices',
+              'Basic stats',
+            ],
+            color: colors.info,
+            onSelect: () => context.go('/v1/$lang/checkout/basic'),
+            width: width,
+          ),
+          _PlanCard(
+            tier: Tier.medium,
+            price: '\$19',
+            features: const [
+              'Full feed',
+              'Unlimited messages',
+              '10 devices',
+              'Analytics',
+              'Priority support',
+            ],
+            color: colors.brand,
+            onSelect: () => context.go('/v1/$lang/checkout/medium'),
+            width: width,
+          ),
+          _PlanCard(
+            tier: Tier.premium,
+            price: '\$49',
+            features: const [
+              'Everything',
+              'Unlimited',
+              'All devices',
+              'AI recommendations',
+              'Video calls',
+              'Dedicated support',
+            ],
+            color: colors.warning,
+            isPremium: true,
+            onSelect: () => context.go('/v1/$lang/checkout/premium'),
+            width: width,
+          ),
+        ];
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          const Text(
+            'Choose your plan',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Unlock more features as you grow',
+            style: TextStyle(color: colors.fgMuted),
+          ),
+          const SizedBox(height: 32),
+          LayoutBuilder(
+            builder: (_, constraints) {
+              // Mirrors the web grid's `sm` breakpoint: a single scrollable
+              // column on narrow (phone) widths instead of a horizontal
+              // carousel that hides cards off-screen with no scroll cue.
+              final isMobile = constraints.maxWidth < 768;
+              if (isMobile) {
+                return Column(
+                  children: [
+                    for (final card in buildCards(double.infinity)) ...[
+                      card,
+                      const SizedBox(height: 16),
+                    ],
+                  ],
+                );
+              }
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    for (final card in buildCards(220)) ...[
+                      card,
+                      const SizedBox(width: 16),
+                    ],
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -115,6 +123,7 @@ class _PlanCard extends StatelessWidget {
   final Color color;
   final VoidCallback onSelect;
   final bool isPremium;
+  final double width;
 
   const _PlanCard({
     required this.tier,
@@ -122,6 +131,7 @@ class _PlanCard extends StatelessWidget {
     required this.features,
     required this.color,
     required this.onSelect,
+    required this.width,
     this.isPremium = false,
   });
 
@@ -130,7 +140,7 @@ class _PlanCard extends StatelessWidget {
     final colors = AppColors.of(context);
 
     return Container(
-      width: 220,
+      width: width,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isPremium ? color.withValues(alpha: 0.1) : colors.surface,
@@ -168,8 +178,7 @@ class _PlanCard extends StatelessWidget {
               Text('/mo', style: TextStyle(color: colors.fgMuted)),
             ],
           ),
-          const SizedBox(height: 16),
-          const Spacer(),
+          const SizedBox(height: 24),
           ...features.map(
             (f) => Padding(
               padding: const EdgeInsets.only(bottom: 8),

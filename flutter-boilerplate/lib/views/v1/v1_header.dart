@@ -30,131 +30,134 @@ class V1Header extends ConsumerWidget implements PreferredSizeWidget {
     final user = authState.asData?.value;
     final loading = authState.isLoading;
 
-    return Container(
-      height: 56,
-      decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border(bottom: BorderSide(color: colors.border)),
-      ),
-      child: Row(
-        children: [
-          InkWell(
-            borderRadius: BorderRadius.circular(8),
-            onTap: onToggleSidebar,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Icon(Icons.menu, size: 20, color: colors.fgMuted),
-            ),
-          ),
-          const SizedBox(width: 4),
-          InkWell(
-            borderRadius: BorderRadius.circular(8),
-            onTap: () => context.go('/v1/$lang'),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: colors.brand,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'V',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: colors.surface,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    t.v1ShellBrand,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: colors.fg,
-                    ),
-                  ),
-                ],
+    return SafeArea(
+      bottom: false,
+      child: Container(
+        height: 56,
+        decoration: BoxDecoration(
+          color: colors.surface,
+          border: Border(bottom: BorderSide(color: colors.border)),
+        ),
+        child: Row(
+          children: [
+            InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: onToggleSidebar,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Icon(Icons.menu, size: 20, color: colors.fgMuted),
               ),
             ),
-          ),
-          const Spacer(),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const LangSwitcher(),
-              const ThemeToggle(),
-              if (loading)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Text(
-                    t.v1ShellAuthLoading,
-                    style: TextStyle(fontSize: 11, color: colors.fgMuted),
-                  ),
-                )
-              else if (user != null) ...[
-                InkWell(
-                  borderRadius: BorderRadius.circular(8),
-                  onTap: () => context.go('/v1/$lang/notification'),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Icon(
-                      Icons.notifications_outlined,
-                      size: 20,
-                      color: colors.fgMuted,
-                    ),
-                  ),
-                ),
-                InkWell(
-                  borderRadius: BorderRadius.circular(8),
-                  onTap: () => context.go('/v1/$lang/messages'),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Icon(
-                      Icons.message_outlined,
-                      size: 20,
-                      color: colors.fgMuted,
-                    ),
-                  ),
-                ),
-                _ProfileAvatar(user: user, colors: colors, lang: lang),
-              ] else
-                Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(8),
-                    onTap: () => context.go('/auth/login'),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
+            const SizedBox(width: 4),
+            InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () => context.go('/v1/$lang'),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
                       decoration: BoxDecoration(
                         color: colors.brand,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Text(
-                        t.v1ShellSignIn,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: colors.surface,
+                      child: Center(
+                        child: Text(
+                          'V',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: colors.surface,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      t.v1ShellBrand,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: colors.fg,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const Spacer(),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const LangSwitcher(),
+                const ThemeToggle(),
+                if (loading)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      t.v1ShellAuthLoading,
+                      style: TextStyle(fontSize: 11, color: colors.fgMuted),
+                    ),
+                  )
+                else if (user != null) ...[
+                  InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () => context.go('/v1/$lang/notification'),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Icon(
+                        Icons.notifications_outlined,
+                        size: 20,
+                        color: colors.fgMuted,
+                      ),
+                    ),
+                  ),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () => context.go('/v1/$lang/messages'),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Icon(
+                        Icons.message_outlined,
+                        size: 20,
+                        color: colors.fgMuted,
+                      ),
+                    ),
+                  ),
+                  _ProfileAvatar(user: user, colors: colors, lang: lang),
+                ] else
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: () => context.go('/auth/login'),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colors.brand,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          t.v1ShellSignIn,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: colors.surface,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

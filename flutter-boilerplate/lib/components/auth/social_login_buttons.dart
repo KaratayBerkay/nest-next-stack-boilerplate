@@ -125,13 +125,15 @@ class SocialLoginButtons extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 12),
-        ..._allProviders.map((p) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _SocialLoginButton(
-                provider: p.name,
-                label: p.label,
-              ),
-            ),),
+        ..._allProviders.map(
+          (p) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _SocialLoginButton(
+              provider: p.name,
+              label: p.label,
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -147,8 +149,7 @@ class _SocialLoginButton extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<_SocialLoginButton> createState() =>
-      _SocialLoginButtonState();
+  ConsumerState<_SocialLoginButton> createState() => _SocialLoginButtonState();
 }
 
 class _SocialLoginButtonState extends ConsumerState<_SocialLoginButton> {
@@ -161,8 +162,7 @@ class _SocialLoginButtonState extends ConsumerState<_SocialLoginButton> {
       final state = _generateState();
       const callbackUri = 'flutterboilerplate://oauth/callback';
       const backendUrl = AppConfig.apiBaseUrl;
-      final url =
-          '$backendUrl/auth/oauth/${widget.provider}'
+      final url = '$backendUrl/auth/oauth/${widget.provider}'
           '?state=$state&redirect_uri=${Uri.encodeComponent(callbackUri)}';
 
       final completer = Completer<String>();

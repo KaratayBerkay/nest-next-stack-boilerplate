@@ -16,8 +16,7 @@ class PendingOAuth {
   });
 }
 
-final pendingOAuthProvider =
-    StateProvider<PendingOAuth?>((ref) => null);
+final pendingOAuthProvider = StateProvider<PendingOAuth?>((ref) => null);
 
 class OAuthLinkHandler {
   final AppLinks _appLinks = AppLinks();
@@ -35,9 +34,12 @@ class OAuthLinkHandler {
   }
 
   void _handleUri(Uri uri, WidgetRef ref) {
+    // `flutterboilerplate://oauth/callback` parses with 'oauth' as the URI
+    // *host* (authority), not a path segment, so pathSegments is just
+    // ['callback'] — check scheme+host, then the remaining path segment.
+    if (uri.scheme != 'flutterboilerplate' || uri.host != 'oauth') return;
     final segments = uri.pathSegments;
-    if (segments.length < 2) return;
-    if (segments[0] != 'oauth' || segments[1] != 'callback') return;
+    if (segments.isEmpty || segments[0] != 'callback') return;
 
     final state = uri.queryParameters['state'];
     if (state == null) return;

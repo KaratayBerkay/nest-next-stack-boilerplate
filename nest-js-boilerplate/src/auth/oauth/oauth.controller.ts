@@ -15,10 +15,17 @@ import type { Response } from 'express';
 import { AuthService } from '../auth.service';
 import { OAuthService } from './oauth.service';
 
-function isSafeRedirect(target: string, allowedOrigin: string): boolean {
+// URL.origin is the opaque string "null" for non-special schemes (custom app URI
+// schemes like "flutterboilerplate://"), so it can never match a real origin —
+// compare scheme+host directly instead, which works for both http(s) and custom
+// schemes.
+function redirectOrigin(url: URL): string {
+  return `${url.protocol}//${url.host}`;
+}
+
+function isSafeRedirect(target: string, allowedOrigins: string[]): boolean {
   try {
-    const parsed = new URL(target, allowedOrigin);
-    return parsed.origin === allowedOrigin;
+    return allowedOrigins.includes(redirectOrigin(new URL(target)));
   } catch {
     return false;
   }
@@ -38,6 +45,17 @@ export class OAuthController {
     return this.config
       .get<string>('FRONTEND_URL', 'http://localhost:3000')
       .replace(/\/+$/, '');
+  }
+
+  /** Custom URI scheme the Flutter app registers for its OAuth deep-link callback. */
+  private get mobileRedirectOrigin(): string {
+    return this.config
+      .get<string>('MOBILE_OAUTH_REDIRECT_ORIGIN', 'flutterboilerplate://oauth')
+      .replace(/\/+$/, '');
+  }
+
+  private get allowedRedirectOrigins(): string[] {
+    return [this.frontendOrigin, this.mobileRedirectOrigin];
   }
 
   /** GET /auth/oauth/providers — returns list of configured provider names */
@@ -67,7 +85,7 @@ export class OAuthController {
         key: 'error.missingOAuthParams',
       });
     }
-    if (!isSafeRedirect(redirectUri, this.frontendOrigin)) {
+    if (!isSafeRedirect(redirectUri, this.allowedRedirectOrigins)) {
       throw new BadRequestException({
         exc: 'EX_VALIDATION_FORM',
         msg: 'Invalid redirect_uri origin',
@@ -96,13 +114,18 @@ export class OAuthController {
       ? await this.oauth.getRedirectUri(state)
       : null;
     const safeLoginErrorUrl = (err: string) => {
-      const origin = redirectUriForState
-        ? new URL(redirectUriForState).origin
-        : this.frontendOrigin;
-      const safeOrigin = isSafeRedirect(origin, this.frontendOrigin)
-        ? origin
-        : this.frontendOrigin;
-      return `${safeOrigin}/auth/login?error=${encodeURIComponent(err)}`;
+      let origin = this.frontendOrigin;
+      if (redirectUriForState) {
+        try {
+          const candidate = redirectOrigin(new URL(redirectUriForState));
+          if (this.allowedRedirectOrigins.includes(candidate)) {
+            origin = candidate;
+          }
+        } catch {
+          // keep frontendOrigin fallback
+        }
+      }
+      return `${origin}/auth/login?error=${encodeURIComponent(err)}`;
     };
 
     if (error) {
@@ -117,7 +140,10 @@ export class OAuthController {
 
     try {
       const redirectUri = await this.oauth.handleCallback(code, state);
-      const safeTarget = isSafeRedirect(redirectUri, this.frontendOrigin)
+      const safeTarget = isSafeRedirect(
+        redirectUri,
+        this.allowedRedirectOrigins,
+      )
         ? redirectUri
         : this.frontendOrigin;
       const separator = safeTarget.includes('?') ? '&' : '?';
