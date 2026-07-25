@@ -12,6 +12,7 @@ const _loginMutation = '''
   mutation Login(\$input: LoginInput!) {
     login(input: \$input) {
       accessToken
+      refreshToken
       rbacToken
       deviceToken
       userToken

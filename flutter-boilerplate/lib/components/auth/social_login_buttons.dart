@@ -205,6 +205,10 @@ class _SocialLoginButtonState extends ConsumerState<_SocialLoginButton> {
             deviceToken: authResult.deviceToken,
             userToken: authResult.userToken,
           );
+      final rt = authResult.refreshToken;
+      if (rt != null) {
+        await ref.read(authProvider.notifier).setRefreshToken(rt);
+      }
 
       if (mounted) {
         final locale = ref.read(localeProvider);

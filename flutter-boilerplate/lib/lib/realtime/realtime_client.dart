@@ -15,7 +15,7 @@ class RealtimeClient {
   final void Function(RealtimeStatus) onStatusChange;
   final RealtimeFrameCallback onFrame;
   final VoidCallback? onAuthenticated;
-  final VoidCallback? onBustTokenCache;
+  final Future<void> Function()? onBustTokenCache;
 
   WebSocketChannel? _channel;
   RealtimeStatus _status = RealtimeStatus.idle;
@@ -94,9 +94,8 @@ class RealtimeClient {
     try {
       final data = jsonDecode(raw as String) as Map<String, dynamic>;
       if (data['type'] == 'error' &&
-          (data['message'] as String?)?.toLowerCase().contains('auth') ==
-              true) {
-        debugPrint('[Realtime] auth failed: ${data['message']}');
+          (data['msg'] as String?)?.toLowerCase().contains('auth') == true) {
+        debugPrint('[Realtime] auth failed: ${data['msg']}');
         _pendingAuthFail = true;
         _channel?.sink.close();
         return;
@@ -202,7 +201,7 @@ class RealtimeClient {
   }
 
   Future<Map<String, String>?> _refreshAndFetchTokens() async {
-    onBustTokenCache?.call();
+    await onBustTokenCache?.call();
     return getTokens();
   }
 

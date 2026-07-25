@@ -19,6 +19,8 @@ final realtimeProvider = Provider<RealtimeClient>((ref) {
       return ref.read(authProvider.notifier).getAuthTokens();
     },
     onStatusChange: (status) => onStatus.state = status,
+    onBustTokenCache: () =>
+        ref.read(authProvider.notifier).refreshAccessToken(),
     onFrame: (frame) {
       final type = frame['type'] as String?;
       switch (type) {

@@ -22,6 +22,7 @@ class RefreshTokenServer {
     final response = await _dio.post<dynamic>(
       '/graphql',
       data: {'query': _mutation},
+      options: Options(headers: {'x-refresh-token': refreshToken}),
     );
     final body = response.data as Map<String, dynamic>;
     if (body['errors'] != null) {

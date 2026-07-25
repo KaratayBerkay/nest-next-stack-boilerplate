@@ -94,6 +94,10 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
                 deviceToken: response.deviceToken,
                 userToken: response.userToken,
               );
+          final rt = response.refreshToken;
+          if (rt != null) {
+            await ref.read(authProvider.notifier).setRefreshToken(rt);
+          }
           if (mounted) {
             final locale = ref.read(localeProvider);
             context.go('/v1/$locale/feed');
@@ -152,6 +156,10 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
             deviceToken: response.deviceToken,
             userToken: response.userToken,
           );
+      final rt = response.refreshToken;
+      if (rt != null) {
+        await ref.read(authProvider.notifier).setRefreshToken(rt);
+      }
 
       if (mounted) {
         final locale = ref.read(localeProvider);

@@ -36,6 +36,7 @@ class OAuthProfile {
 
 class OAuthLoginResponse {
   final String accessToken;
+  final String? refreshToken;
   final String rbacToken;
   final String deviceToken;
   final String userToken;
@@ -43,6 +44,7 @@ class OAuthLoginResponse {
 
   const OAuthLoginResponse({
     required this.accessToken,
+    this.refreshToken,
     required this.rbacToken,
     required this.deviceToken,
     required this.userToken,
@@ -62,6 +64,7 @@ class OAuthLoginResponse {
     };
     return OAuthLoginResponse(
       accessToken: json['accessToken'] as String,
+      refreshToken: json['refreshToken'] as String?,
       rbacToken: json['rbacToken'] as String,
       deviceToken: json['deviceToken'] as String,
       userToken: json['userToken'] as String,

@@ -12,6 +12,7 @@ const _mutation = '''
   mutation Register(\$input: RegisterInput!) {
     register(input: \$input) {
       accessToken
+      refreshToken
       rbacToken
       deviceToken
       userToken

@@ -1,8 +1,11 @@
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
+import 'package:flutter_boilerplate/app_config.dart';
 import 'package:flutter_boilerplate/lib/riverpod_compat.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../api/server/auth/refresh_token.dart';
 import '../types/auth/user.dart';
 
 const _accessTokenKey = 'access_token';
@@ -89,6 +92,25 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthenticatedUser?>> {
 
   Future<String?> getRefreshToken() async {
     return _storage.read(key: _refreshTokenKey);
+  }
+
+  Future<void> updateAccessToken(String token) async {
+    await _storage.write(key: _accessTokenKey, value: token);
+  }
+
+  Future<bool> refreshAccessToken() async {
+    final refreshToken = await getRefreshToken();
+    if (refreshToken == null) return false;
+    try {
+      final server = RefreshTokenServer(
+        Dio(BaseOptions(baseUrl: AppConfig.apiBaseUrl)),
+      );
+      final newToken = await server.call(refreshToken);
+      await updateAccessToken(newToken);
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 }
 

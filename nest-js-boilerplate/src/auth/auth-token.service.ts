@@ -123,7 +123,11 @@ export class AuthTokenService {
   }
 
   extractRefreshToken(ctx: RequestContext): string | null {
-    return this.extractCookie(ctx, refreshCookieName(this.config));
+    return this.extractCookieOrHeader(
+      ctx,
+      refreshCookieName(this.config),
+      'x-refresh-token',
+    );
   }
 
   private extractCookie(ctx: RequestContext, name: string): string | null {

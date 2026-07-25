@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../api/server/auth/refresh_token.dart';
 import '../app_config.dart';
 import '../hooks/use_auth.dart';
 
@@ -65,20 +64,25 @@ class AuthInterceptor extends Interceptor {
     _isRefreshing = true;
     try {
       final authNotifier = _ref.read(authProvider.notifier);
-      final refreshToken = await authNotifier.getRefreshToken();
-      if (refreshToken == null) {
+      final refreshed = await authNotifier.refreshAccessToken();
+      if (!refreshed) {
         authNotifier.logout();
         handler.next(err);
         return;
       }
 
-      final refreshServer = RefreshTokenServer(
-        Dio(BaseOptions(baseUrl: AppConfig.apiBaseUrl)),
-      );
-      final newToken = await refreshServer.call(refreshToken);
+      final tokens = await authNotifier.getAuthTokens();
+      if (tokens == null) {
+        authNotifier.logout();
+        handler.next(err);
+        return;
+      }
 
-      // Retry the original request
-      err.requestOptions.headers['Authorization'] = 'Bearer $newToken';
+      err.requestOptions.headers['Authorization'] =
+          'Bearer ${tokens['accessToken']}';
+      err.requestOptions.headers['x-rbac-token'] = tokens['rbacToken'];
+      err.requestOptions.headers['x-device-token'] = tokens['deviceToken'];
+      err.requestOptions.headers['x-user-token'] = tokens['userToken'];
       final response = await Dio().fetch<dynamic>(err.requestOptions);
       handler.resolve(response);
     } catch (_) {

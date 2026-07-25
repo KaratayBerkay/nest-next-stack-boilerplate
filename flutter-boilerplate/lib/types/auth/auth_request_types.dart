@@ -29,6 +29,7 @@ class LoginRequest {
 
 class LoginResponse {
   final String accessToken;
+  final String? refreshToken;
   final String rbacToken;
   final String deviceToken;
   final String userToken;
@@ -36,6 +37,7 @@ class LoginResponse {
 
   const LoginResponse({
     required this.accessToken,
+    this.refreshToken,
     required this.rbacToken,
     required this.deviceToken,
     required this.userToken,
@@ -45,6 +47,7 @@ class LoginResponse {
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
     return LoginResponse(
       accessToken: json['accessToken'] as String,
+      refreshToken: json['refreshToken'] as String?,
       rbacToken: json['rbacToken'] as String,
       deviceToken: json['deviceToken'] as String,
       userToken: json['userToken'] as String,
@@ -73,6 +76,7 @@ class RegisterRequest {
 
 class RegisterResponse {
   final String accessToken;
+  final String? refreshToken;
   final String rbacToken;
   final String deviceToken;
   final String userToken;
@@ -80,6 +84,7 @@ class RegisterResponse {
 
   const RegisterResponse({
     required this.accessToken,
+    this.refreshToken,
     required this.rbacToken,
     required this.deviceToken,
     required this.userToken,
@@ -89,6 +94,7 @@ class RegisterResponse {
   factory RegisterResponse.fromJson(Map<String, dynamic> json) {
     return RegisterResponse(
       accessToken: json['accessToken'] as String,
+      refreshToken: json['refreshToken'] as String?,
       rbacToken: json['rbacToken'] as String,
       deviceToken: json['deviceToken'] as String,
       userToken: json['userToken'] as String,
