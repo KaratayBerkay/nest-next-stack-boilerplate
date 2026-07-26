@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/container.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../api/client/messages/query.dart';
 import '../../components/ui/avatar/avatar.dart';
 import '../../constants/theme.dart';
+import '../../hooks/use_messages_page.dart';
 import '../../hooks/use_presence.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -40,10 +41,17 @@ class ChatViewHeader extends ConsumerWidget {
           ),
           child: Row(
             children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => context.pop(),
-              ),
+              // Only shown on mobile, where ChatView replaces the
+              // conversation list entirely — desktop shows both side by
+              // side, so there's nothing to "go back" to (matches web's
+              // `mr-1 md:hidden` on this same button).
+              if (context.isMobile)
+                IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => ref
+                      .read(selectedConversationUserIdProvider.notifier)
+                      .state = null,
+                ),
               _PresenceAvatar(
                 avatar: Avatar(
                   imageUrl: avatarUrl,

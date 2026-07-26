@@ -1,23 +1,6 @@
-import 'package:flutter/material.dart';
+import 'free_page_view.dart';
 
-import '../../l10n/app_localizations.dart';
-import 'messages_sidebar.dart';
-
-class PremiumMessagesPage extends StatelessWidget {
-  final String lang;
-
-  const PremiumMessagesPage({super.key, required this.lang});
-
-  @override
-  Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    return Row(
-      children: [
-        MessagesSidebar(lang: lang),
-        Expanded(
-          child: Center(child: Text(t.messagesPremiumDescription)),
-        ),
-      ],
-    );
-  }
-}
+/// Mirrors the web's `export const PremiumPageView = FreePageView` —
+/// messaging has no tier differentiation in the source of truth
+/// (`PremiumPageView.tsx`).
+typedef PremiumMessagesPage = FreeMessagesPage;

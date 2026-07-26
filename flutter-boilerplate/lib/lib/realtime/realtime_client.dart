@@ -48,7 +48,14 @@ class RealtimeClient {
   RealtimeStatus get status => _status;
 
   void connect() {
-    if (_destroyed) return;
+    // `disconnect()` sets `_destroyed` so in-flight async callbacks from the
+    // connection being torn down (an old `.ready`/`_handleOpen` future
+    // completing late) no-op instead of acting on a dead channel. But
+    // `connect()` is also the reconnection entry point after an explicit
+    // `disconnect()` (e.g. logout then log back in) on this same
+    // long-lived, non-autoDispose client instance — clear it here so a new
+    // connection attempt isn't permanently blocked by the previous one.
+    _destroyed = false;
     _setStatus(RealtimeStatus.connecting);
 
     final wsUrl = Uri.parse(url);

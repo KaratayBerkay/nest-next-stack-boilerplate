@@ -14,7 +14,7 @@ const _query = '''
       type
       title
       body
-      read
+      readAt
       createdAt
     }
   }

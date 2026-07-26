@@ -134,6 +134,14 @@ export class MessagingDmService {
       where,
       orderBy: { createdAt: 'desc' },
       take,
+      include: {
+        sender: {
+          select: { id: true, name: true, email: true, avatarUrl: true },
+        },
+        recipient: {
+          select: { id: true, name: true, email: true, avatarUrl: true },
+        },
+      },
     });
     return { messages: messages.reverse(), hasMore: messages.length === take };
   }
@@ -160,7 +168,14 @@ export class MessagingDmService {
     }
     const message = await this.prisma.message.create({
       data: { senderId, recipientId, body: text },
-      include: { sender: { select: { id: true, name: true, email: true } } },
+      include: {
+        sender: {
+          select: { id: true, name: true, email: true, avatarUrl: true },
+        },
+        recipient: {
+          select: { id: true, name: true, email: true, avatarUrl: true },
+        },
+      },
     });
     this.logger.log(
       `Message ${message.id} created: ${senderId} → ${recipientId}`,

@@ -1,23 +1,5 @@
-import 'package:flutter/material.dart';
+import 'free_page_view.dart';
 
-import '../../l10n/app_localizations.dart';
-import 'messages_sidebar.dart';
-
-class MediumMessagesPage extends StatelessWidget {
-  final String lang;
-
-  const MediumMessagesPage({super.key, required this.lang});
-
-  @override
-  Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    return Row(
-      children: [
-        MessagesSidebar(lang: lang),
-        Expanded(
-          child: Center(child: Text(t.messagesMediumDescription)),
-        ),
-      ],
-    );
-  }
-}
+/// Mirrors the web's `export const MediumPageView = FreePageView` — messaging
+/// has no tier differentiation in the source of truth (`MediumPageView.tsx`).
+typedef MediumMessagesPage = FreeMessagesPage;

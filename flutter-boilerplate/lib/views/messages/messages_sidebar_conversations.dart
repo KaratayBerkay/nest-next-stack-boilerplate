@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/date_time.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../api/client/messages/query.dart';
 import '../../components/ui/avatar/avatar.dart';
 import '../../components/ui/empty/empty.dart';
 import '../../components/ui/spinner/spinner.dart';
 import '../../constants/theme.dart';
+import '../../hooks/use_messages_page.dart';
 import '../../hooks/use_presence.dart';
 import '../../l10n/app_localizations.dart';
 
 class MessagesSidebarConversations extends ConsumerWidget {
-  final String lang;
   final String searchQuery;
 
   const MessagesSidebarConversations({
     super.key,
-    required this.lang,
     this.searchQuery = '',
   });
 
@@ -25,6 +23,7 @@ class MessagesSidebarConversations extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
     final convAsync = ref.watch(conversationsProvider);
+    final selectedUserId = ref.watch(selectedConversationUserIdProvider);
     final t = AppLocalizations.of(context);
 
     return convAsync.when(
@@ -58,9 +57,13 @@ class MessagesSidebarConversations extends ConsumerWidget {
           separatorBuilder: (_, __) => Divider(height: 1, color: colors.border),
           itemBuilder: (_, i) {
             final conv = filtered[i];
+            final isSelected = selectedUserId == conv.id;
             return InkWell(
-              onTap: () => context.push('/v1/$lang/chat/${conv.id}'),
-              child: Padding(
+              onTap: () => ref
+                  .read(selectedConversationUserIdProvider.notifier)
+                  .state = conv.id,
+              child: Container(
+                color: isSelected ? colors.brand.withValues(alpha: 0.1) : null,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 child: Row(

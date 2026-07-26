@@ -163,6 +163,7 @@ export class PostService {
             imageUrl: true,
             coverImage: true,
             createdAt: true,
+            updatedAt: true,
             authorId: true,
             status: true,
             reactions: {
@@ -195,6 +196,7 @@ export class PostService {
             imageUrl: true,
             coverImage: true,
             createdAt: true,
+            updatedAt: true,
             authorId: true,
             status: true,
             author: {

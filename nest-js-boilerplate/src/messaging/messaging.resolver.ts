@@ -32,7 +32,11 @@ export class MessagingResolver {
     @CurrentUser() user: JwtUser,
     @Args('userId') otherUserId: string,
   ) {
-    return this.ms.getMessages(user.userId, otherUserId);
+    // `getMessages` returns `{ messages, hasMore }` (the REST controller at
+    // messaging.controller.ts needs `hasMore` for pagination) but this field
+    // is declared `[Message!]!` — a bare list — so only the array belongs here.
+    const { messages } = await this.ms.getMessages(user.userId, otherUserId);
+    return messages;
   }
 
   @Mutation(() => Message)

@@ -105,8 +105,12 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthenticatedUser?>> {
       final server = RefreshTokenServer(
         Dio(BaseOptions(baseUrl: AppConfig.apiBaseUrl)),
       );
-      final newToken = await server.call(refreshToken);
-      await updateAccessToken(newToken);
+      final result = await server.call(refreshToken);
+      await updateAccessToken(result.accessToken);
+      // The backend rotates the refresh token on every use — must persist
+      // the new one or the session hard-expires on a fixed clock from
+      // login regardless of how many refreshes succeed in between.
+      await setRefreshToken(result.refreshToken);
       return true;
     } catch (_) {
       return false;

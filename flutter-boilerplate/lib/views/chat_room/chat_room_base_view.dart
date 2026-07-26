@@ -39,21 +39,42 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
   bool get showSelfCrown => false;
   String get _connectionState => 'online';
 
+  /// `ChatRoomBaseView` is reused by the legacy `/v1/:lang/chat/:conversationId`
+  /// route for 1:1 DM threads, where `_room` is actually a peer's user id, not
+  /// a named room — `isValidRoom` on the backend (and the room-scoped realtime
+  /// verbs: room-message, get-room-counts, the chat-room page claim) only make
+  /// sense for the named-room case. Mirrors the backend's own
+  /// `isValidRoom`/`VIP_ROOM_PREFIX` check (messaging-room.service.ts).
+  bool get _isNamedRoom =>
+      ChatConstants.chatRooms.contains(_room) ||
+      vipRooms.contains(_room) ||
+      _room.startsWith('vip-');
+
   @override
   void initState() {
     super.initState();
     _room = widget.initialRoom;
     _scrollController.addListener(_onScroll);
+    // SendButton's `disabled` is computed from messageController.text at
+    // build time (mirrors the web's `disabled={!text.trim()}`, which
+    // re-renders on every keystroke via controlled-input state) — without
+    // this listener nothing ever rebuilds ChatRoomBaseView as the user
+    // types, so the button stays stuck at whatever it was on the last
+    // unrelated rebuild (typically disabled, from when the field was empty).
+    _messageController.addListener(_onMessageTextChanged);
     _setupRealtime();
   }
 
   @override
   void dispose() {
+    _messageController.removeListener(_onMessageTextChanged);
     _messageController.dispose();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
   }
+
+  void _onMessageTextChanged() => setState(() {});
 
   void _onScroll() {
     final maxScroll = _scrollController.position.maxScrollExtent;
@@ -69,6 +90,7 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
     // (RealtimeLifecycle claims 'chat-room' with this room on entering this
     // route — see convert-frontend-7-flutter.md §9.1/§10 D9). `watch()` was
     // never the right mechanism for room membership (§9.3) and is gone.
+    if (!_isNamedRoom) return;
     final client = ref.read(realtimeProvider);
     client.send({'type': 'get-room-counts'});
   }
@@ -93,11 +115,11 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
     if (user == null) return;
 
     final client = ref.read(realtimeProvider);
-    client.send({
-      'type': 'room-message',
-      'room': _room,
-      'text': text,
-    });
+    client.send(
+      _isNamedRoom
+          ? {'type': 'room-message', 'room': _room, 'text': text}
+          : {'type': 'direct-message', 'recipientId': _room, 'text': text},
+    );
     _messageController.clear();
     _scrollToBottom();
   }
@@ -118,7 +140,24 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
     final connected = ref.watch(realtimeConnectedProvider);
-    final messagesAsync = ref.watch(roomMessagesProvider(_room));
+    final messagesAsync = _isNamedRoom
+        ? ref.watch(roomMessagesProvider(_room)).whenData(
+              (messages) => messages
+                  .map(
+                    (m) => ChatMessage(
+                      id: m.id,
+                      conversationId: _room,
+                      senderId: m.senderId,
+                      senderName: m.senderName,
+                      senderAvatarUrl: m.avatar,
+                      content: m.body,
+                      createdAt: DateTime.parse(m.createdAt),
+                      isRead: true,
+                    ),
+                  )
+                  .toList(),
+            )
+        : ref.watch(conversationMessagesProvider(_room));
     final roomCounts = ref.watch(roomCountsProvider);
     final roomMembers = ref.watch(roomMembersProvider(_room));
     final width = MediaQuery.of(context).size.width;
@@ -154,20 +193,7 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
         room: _room,
         roomCounts: roomCounts,
         connectionState: _connectionState,
-        messages: messages
-            .map(
-              (m) => ChatMessage(
-                id: m.id,
-                conversationId: _room,
-                senderId: m.senderId,
-                senderName: m.senderName,
-                senderAvatarUrl: m.avatar,
-                content: m.body,
-                createdAt: DateTime.parse(m.createdAt),
-                isRead: true,
-              ),
-            )
-            .toList(),
+        messages: messages,
         userId: user.id,
         messageController: _messageController,
         scrollController: _scrollController,

@@ -24,7 +24,7 @@ class NotificationItem {
       title: json['title'] as String,
       body: json['body'] as String,
       imageUrl: json['imageUrl'] as String?,
-      isRead: json['isRead'] as bool? ?? false,
+      isRead: json['readAt'] != null,
       createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }

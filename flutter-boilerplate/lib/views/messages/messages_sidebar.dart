@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/container.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../constants/theme.dart';
@@ -8,9 +9,7 @@ import 'messages_sidebar_search.dart';
 import 'messages_sidebar_tab_bar.dart';
 
 class MessagesSidebar extends ConsumerStatefulWidget {
-  final String lang;
-
-  const MessagesSidebar({super.key, required this.lang});
+  const MessagesSidebar({super.key});
 
   @override
   ConsumerState<MessagesSidebar> createState() => _MessagesSidebarState();
@@ -23,11 +22,13 @@ class _MessagesSidebarState extends ConsumerState<MessagesSidebar> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final isMobile = context.isMobile;
 
     return Container(
-      width: 320,
+      width: isMobile ? double.infinity : 320,
       decoration: BoxDecoration(
-        border: Border(right: BorderSide(color: colors.border)),
+        border:
+            isMobile ? null : Border(right: BorderSide(color: colors.border)),
       ),
       child: Column(
         children: [
@@ -40,10 +41,7 @@ class _MessagesSidebarState extends ConsumerState<MessagesSidebar> {
           ),
           Expanded(
             child: _activeTab == 0
-                ? MessagesSidebarConversations(
-                    lang: widget.lang,
-                    searchQuery: _searchQuery,
-                  )
+                ? MessagesSidebarConversations(searchQuery: _searchQuery)
                 : const MessagesSidebarFriends(),
           ),
         ],

@@ -28,9 +28,23 @@ dispatcher, and the three chat-room-specific fixes (§11) — and
 pre-existing unrelated failure as round 1). **Not yet done: T21-T23 (new
 tests for this round) and every item in §12's live verify loop** — nothing
 in this round has been exercised against a running app with a second
-session yet, only verified by direct code read and the static gates. See §9
-for the full chain, §10 for decisions, §11 for tasks, §12 for what's still
-unverified live.
+session yet, only verified by direct code read and the static gates.
+**§13 (round 3, critical): the actual reason refresh never worked in
+practice was found live-testing against real backend logs — `refresh` is
+CSRF-guarded (`@UseGuards(CsrfGuard)` on `auth.resolver.ts`), a requirement
+rounds 1-2 never investigated, so every refresh attempt 403'd regardless of
+the refresh token's validity. Fixed and live-verified against the running
+backend via curl** (confirmed both the 403-without-fix and the
+past-the-guard-with-fix responses directly).
+**§14 (round 4): a real regression from round 2's T19** — `ChatRoomBaseView`
+is reused by a legacy route (`/chat/:conversationId`) for 1:1 DM threads
+where the "room" is actually a peer's user id, not a named room; T19 sent
+it through `roomMessagesProvider`/`isValidRoom` unconditionally, 404ing.
+Found from a live backend log showing the exact bad request, fixed by
+branching every room-specific call on whether `_room` is actually a named
+room. See §9 for the full frame-delivery chain, §10 for decisions, §11 for
+tasks, §12 for what's still unverified live, §13 for the CSRF finding, §14
+for the legacy-route regression.
 This doc was originally written after finding, via a live Kibana/ES check, that the realtime
 WebSocket never once reaches `RealtimeStatus.open` for the whole session —
 518 identical `ws.auth_fail (reason: invalid_jwt)` cycles in `backend-logs`,
@@ -1028,3 +1042,565 @@ untested-but-analyze/format-clean realtime code stacked on each other.
   2026-07-26**: `analyze` 0 issues, `format` clean, `test` 339/340 (same
   pre-existing unrelated `card_test.dart` failure as round 1, no new
   regressions).
+
+## 13. Round 3 (2026-07-26) — the actual reason refresh never worked live: a missed CSRF guard
+
+Berkay reported messages/chat-room still couldn't "connect" after rounds
+1-2 landed, and asked to check logs. Live backend logs
+(`docker logs boilers-app-1`, since the ES/Kibana pipeline had gone stale —
+nothing indexed since the previous day despite the containers being up)
+showed the same `ws.auth_fail (reason: invalid_jwt)` cycle §0 originally
+found, still repeating, plus something the original investigation never
+looked for:
+
+```
+{"category":"network","event":"network.csrf_fail","method":"POST", ...}   ← ~20ms before each:
+{"category":"session","event":"ws.auth_fail","reason":"invalid_jwt"}
+```
+
+Three `network.csrf_fail` events landed immediately before three consecutive
+`ws.auth_fail`s in the same reproduction. Tracing this: `refresh`
+(`auth.resolver.ts:50`) and `logout` (`:56`) are both decorated
+`@UseGuards(CsrfGuard)` — confirmed by direct read of
+`nest-js-boilerplate/src/csrf/csrf.guard.ts`, whose own header comment says
+plainly: *"applied only to the cookie-driven mutations (refresh/logout)...
+Clients fetch the token via GET /csrf/token (sets the csrf cookie) and echo
+it in `x-csrf-token`."* This is a real, separate requirement from
+`x-refresh-token` (D3/T6, round 1) — a double-submit CSRF check
+(`csrf.middleware.ts`, the `csrf-csrf` npm package) that **T6's fix never
+satisfied**, because §3.D/D3's original investigation (round 1) never
+looked at what else `auth.resolver.ts`'s `refresh` mutation required beyond
+the token itself. Flutter's `RefreshTokenServer.call()` sent
+`x-refresh-token` correctly but nothing CSRF-related — every refresh
+attempt got a 403 **regardless of whether the refresh token was valid**,
+which is indistinguishable downstream from "refresh isn't working" and
+exactly reproduces as an endless `invalid_jwt` loop, since the access token
+this is trying to renew stays stale forever.
+
+**This bug predates rounds 1 and 2 entirely and affects both the REST-side
+(`AuthInterceptor`) and realtime-side (`onBustTokenCache`) refresh paths
+identically**, since D2 already made them share one `refreshAccessToken()`
+— it was invisible in rounds 1-2 because nothing in this doc had yet
+exercised a real, live refresh call against the actual backend; `flutter
+analyze`/`test` can't catch a live 403 from a guard the unit tests never
+call over the wire.
+
+**Fix applied and live-verified** (`refresh_token.dart`): `RefreshTokenServer`
+now calls `GET /csrf/token` first, reads the JSON body's `token` field and
+the `Set-Cookie` response header (grabbing everything before the first
+`;` — deliberately not hardcoding `csrf-token` vs. `__Host-csrf`, since
+`isProd` in `csrf.middleware.ts:36` picks the name and this container turned
+out to be running with `__Host-csrf` despite being a local docker-compose
+environment — confirmed live via `curl http://localhost:3000/csrf/token`),
+then sends both `x-csrf-token` and a manually-set `cookie` header alongside
+`x-refresh-token` on the actual refresh call. Verified end-to-end against
+the running backend, not just unit-tested:
+
+- Same call **without** the new CSRF headers → `403 "Invalid or missing
+  CSRF token"` (`EX_FORBIDDEN`) — reproduces the bug exactly.
+- Same call **with** them (and a deliberately bogus refresh token, to
+  isolate the CSRF check from the token-validity check) → `401 "Invalid or
+  expired refresh token"` (`EX_AUTH_INVALID_TOKEN`) — past the CSRF gate,
+  correctly rejected by the *real* check instead. This is the strongest
+  verification in this doc so far: a live request/response pair against the
+  actual backend, not a static read or a mocked test.
+
+`flutter analyze`/`dart format --set-exit-if-changed`/`flutter test`
+re-run clean after this change (339/340, same pre-existing unrelated
+failure).
+
+**Still needed before Berkay's phone will actually see this work**: the
+app on-device needs a genuine rebuild+reinstall (not a hot-reload/hot-restart
+of a build compiled before this fix), and — separately — **a fresh
+logout+login** afterward, since a session that logged in before F1 (round 1)
+shipped has no stored refresh token at all (`getRefreshToken()` → null →
+`refreshAccessToken()` short-circuits to `false` before ever reaching
+`RefreshTokenServer`), which would reproduce the exact same symptom for a
+completely different reason and could easily be mistaken for this fix not
+working.
+
+**Not yet done**: logout (the other CSRF-guarded mutation) isn't called by
+Flutter at all today (`AuthNotifier.logout()` only clears local secure
+storage, confirmed by direct read of `use_auth.dart` — no backend mutation
+call), so it isn't affected by this bug and wasn't touched — noted so it
+isn't mistaken for an oversight.
+
+## 14. Round 4 (2026-07-26) — a real regression from T19: legacy chat route sends a UUID as a room name
+
+Berkay rebuilt, retried, and hit a visible error card in the Chat Rooms
+screen: `DioException [bad response]... status code 404`. Backend logs
+(`docker logs boilers-app-1`) showed the actual request:
+`GET /api/rooms/019f709d-1aaa-76b8-9f1c-4ea0b69c0529/messages` — a **UUID**,
+not one of `ChatConstants.chatRooms`. Confirmed the route and proxy are both
+fine first (`curl` against both `localhost:3000` and the real
+`https://api.eys.gen.tr` domain returns `401 Missing access token` for
+`/api/rooms/general/messages` — proving the route is reachable end-to-end;
+a 404 only happens for a room name that fails `isValidRoom`, per
+`messaging-room.service.ts:106-108`).
+
+The actual bug: `ChatRoomBaseView` is reused by **two different routes** —
+`/v1/:lang/chat-room?conversation=X` (named rooms: general/random/tech/
+design/music/vip-*) and the legacy `/v1/:lang/chat/:conversationId`
+(`router.dart:429-436`, a 1:1 DM thread where `initialRoom` is actually a
+**peer's user id**). T19 (round 2) wired `_room` unconditionally into
+`roomMessagesProvider`/`isValidRoom`-shaped calls, never accounting for the
+legacy route's completely different semantics for the same field — this is
+a genuine regression I introduced, not a pre-existing bug. Confirmed via
+the activity-log page-tracking evidence from round 3's log dig too: the
+`v1Messages` ↔ `v1ChatRoomLegacy` bouncing pattern is exactly "select a
+conversation from the Messages sidebar," which routes through the legacy
+alias.
+
+**Fix** (`chat_room_base_view.dart`): added `_isNamedRoom` (mirrors the
+backend's own `isValidRoom`/`VIP_ROOM_PREFIX` check — `ChatConstants.
+chatRooms.contains(_room) || vipRooms.contains(_room) ||
+_room.startsWith('vip-')`) and branched every room-specific behavior on it:
+- Message history: named room → `roomMessagesProvider` (mapped to
+  `ChatMessage` via `AsyncValue.whenData`); otherwise →
+  `conversationMessagesProvider(_room)` (the original, correct provider for
+  this case, restoring what T19 regressed).
+- `_setupRealtime()`: only sends `get-room-counts` for named rooms.
+- `_handleSend()`: named room → `{type: 'room-message', room, text}`;
+  otherwise → `{type: 'direct-message', recipientId: _room, text}`
+  (matches `messaging-ws.gateway.ts`'s `'direct-message'` handler shape —
+  this exact mismatch pre-dated T19 too, since `_handleSend` always sent
+  `room-message` unconditionally even before this doc touched the file, but
+  is fixed now as part of the same branch since it's the same root
+  confusion).
+- Room selection (`_selectRoom`) and the sidebar's room list are untouched
+  — both only ever offer named rooms by construction (`allRooms =
+  [...ChatConstants.chatRooms, ...vipRooms]`), so no branch was needed
+  there.
+
+`flutter analyze`/`dart format --set-exit-if-changed`/`flutter test`
+re-run clean (339/340, same pre-existing unrelated failure). Not
+live-verified against the legacy-route/conversation-mode path specifically
+(would need a two-account DM to confirm `conversationMessagesProvider`
+loads and `direct-message` sends correctly end-to-end) — flagged as a §12
+follow-up rather than assumed.
+
+## 15. Round 5 (2026-07-26) — realtime never recovers from its first disconnect, plus three independent GraphQL schema bugs
+
+Berkay rebuilt again, walked every mobile page, and reported chat room,
+messages, and notifications all still broken, feed failing to load, and
+asked for a deep investigation of the realtime connection specifically,
+with logs. Device logs + screenshots showed: a live `RealtimeStatus.open`
+early on, dropping to `idle` shortly after and never reconnecting despite
+~20 more minutes of active navigation; the Chat Rooms screen erroring
+`DioException [unknown]: Failed to fetch messages` after tapping a user
+from Messages (the legacy DM route); and Feed erroring `Failed to load
+posts`.
+
+**Kibana/ES is still stale** — confirmed again (`websocket-exception-logs`/
+`app-logs` latest doc: `2026-07-25T18:25`, nothing from today) — used
+`docker logs boilers-app-1` directly throughout, per [[log-query-hooks-agents-md]].
+`boilers-app-1`/`boilers-nextjs-1` also showed Docker `unhealthy` with
+`FailingStreak: 43`; `docker inspect`'s health log showed the actual cause
+is unrelated to app correctness — `curl: executable file not found in
+$PATH` — the healthcheck's own binary is missing from the runtime image.
+Confirmed the app itself is fine (`curl http://localhost:3000/health` →
+`200 {"status":"ok"}` from the host). Flagged, not fixed (unrelated to
+anything reported today, needs a Dockerfile change to either install curl
+or switch the healthcheck to Node/wget).
+
+### 15.1 Realtime: one connect, one disconnect, dead for the rest of the session
+
+`docker logs boilers-app-1 --since <session start> | grep -o '"event":"[^"]*"' | sort | uniq -c`
+for the entire ~20-minute test: exactly **one** `ws.connect`, one
+`ws.auth_success`, one `connection-loss` (code 1005)/`ws.disconnect` — all
+four lines share the same `token`/`socketId`, at 12:49:17–12:49:21 UTC, in
+the first four seconds of the session. Zero `ws.auth_fail`, zero
+`csrf_fail` — §13's CSRF fix is holding. Nothing in the rest of the
+session (chat-room, messages, the legacy DM route twice, notification,
+home, feed — all confirmed via `page.view`/`page.exit` activity-log
+entries in the same window) produced a second `ws.connect`, even though
+the client's own log shows it stayed logged in and active throughout.
+
+Root cause, confirmed by direct read of `realtime_client.dart`: `disconnect()`
+(line ~117) sets `_destroyed = true` and nothing anywhere in the class ever
+sets it back to `false` (confirmed via `grep -n _destroyed`, only the one
+assignment exists) — `connect()`'s very first line is `if (_destroyed)
+return;`, so once `disconnect()` has run once, every future `connect()`
+call on that instance is a silent no-op forever. `realtimeProvider`
+(`realtime_provider.dart`) is a plain `Provider` with no `ref.watch` in its
+build body, so it's a true singleton for the app's process lifetime — the
+same `RealtimeClient` instance is reused across every auth transition.
+`RealtimeLifecycle` (`hooks/use_realtime.dart`) calls `client.disconnect()`
+whenever `isAuthenticatedProvider` goes false (real logout, or — as
+apparently happened here — a stale/rejected session forcing a re-login,
+matching the login-form IME/keystroke events in the device log right after
+the `idle` transition) and `client.connect()` when it goes true again. That
+second `connect()` call is exactly the one silently swallowed. This isn't
+specific to today's stale-session trigger — it reproduces on **any** normal
+logout-then-log-back-in, since `disconnect()` is the same call either way.
+
+**Fix** (`realtime_client.dart`): `connect()` now clears `_destroyed = false`
+as its first statement, so it behaves like the already-working internal
+backoff-retry path (`_startBackoff` → `Timer(...).then(connect)`, which
+never touches `_destroyed` and already reconnects fine on the same
+instance) instead of being permanently one-shot after an explicit
+`disconnect()`.
+
+### 15.2 Three independent, deterministic GraphQL bugs — not realtime, not the round-4 routing fix
+
+Reproduced all three directly against the live backend with real tokens
+(login as the existing `wstest-carousel@example.com` test user, then curl
+`/graphql` with the exact query strings from the Flutter source), rather
+than trusting server logs — confirmed the standard pino HTTP logger here
+never logs request/response **bodies** (only headers/status/timing), so a
+GraphQL-level `errors[]` array (a 200 response) leaves no server-side trace
+to grep for at all. Each Flutter `*Server.call()` does
+`if (body['errors'] != null) throw DioException(message: 'Failed to fetch
+...')`, discarding the real message — curling directly was the only way to
+see it.
+
+- **Feed (`postList`) / post detail (`post`)** — `post.service.ts`'s
+  `findAll` (~line 159) and `findOne` (~line 191) `select` blocks both omit
+  `updatedAt`, which `schema.gql` declares non-null (`Post.updatedAt:
+  DateTime!`) and both `posts/list.dart` and `posts/single.dart` request.
+  Live error: `Cannot return null for non-nullable field Post.updatedAt.`
+  Since the field and the list itself are both non-null, graphql-js nulls
+  the *entire* response the moment the feed has ≥1 post — matches "Failed
+  to load posts" exactly. Fixed: added `updatedAt: true` to both selects.
+  (`findOne` is also missing `slug`/`viewCount`/`score`, also non-null in
+  the schema — left alone since neither Flutter query requests them today;
+  noted here in case a future query does.)
+
+- **Chat Rooms / legacy DM route (`conversationMessages`)** — NOT the
+  round-4 routing regression (§14) recurring; that fix (`_isNamedRoom`) is
+  confirmed still in place and correctly routes the legacy
+  `/v1/:lang/chat/:conversationId` path to `conversationMessagesProvider`.
+  The bug is one level deeper: `messaging.resolver.ts`'s
+  `conversationMessages` (line 30) returns `this.ms.getMessages(...)`
+  unchanged, but `MessagingDmService.getMessages`
+  (`messaging-dm.service.ts:117`) always returns `{ messages, hasMore }`,
+  never a bare array, while the schema declares `[Message!]!`. Live error:
+  `Expected Iterable, but did not find one for field
+  "Query.conversationMessages".` — reproduces on **every** call,
+  unconditionally, regardless of the user/data. Confirmed
+  `messaging.controller.ts`'s REST endpoint (line 170) needs the
+  `{messages, hasMore}` shape as-is for pagination, so the fix is scoped to
+  the resolver only: destructure `{ messages }` from the service call and
+  return just the array, leaving `MessagingService`/`MessagingDmService`/the
+  REST controller untouched.
+
+- **Notifications (`myNotifications`)** — Flutter's query
+  (`notifications/list.dart`) asks for a field named `read`; the generated
+  `Notification` type only has `readAt: DateTime` (nullable). Live error:
+  `Cannot query field "read" on type "Notification". Did you mean
+  "readAt"?` — a query-validation failure, before any resolver runs, on
+  every call. Fixed: query now requests `readAt`;
+  `NotificationItem.fromJson` (`types/notification/notification_item.dart`)
+  now computes `isRead: json['readAt'] != null` instead of reading a
+  nonexistent `json['isRead']` (which was silently always defaulting to
+  `false` via `?? false` — a second, smaller latent bug in the same field,
+  moot now that the query itself is fixed).
+
+Also checked and ruled out as in scope: the `[push] init failed: [core/no-app]`
+line in the device log is Firebase Cloud Messaging (push notifications),
+not the in-app Notification page — confirmed no `google-services.json`,
+no `firebase_options.dart`, and no `Firebase.initializeApp()` call exist
+anywhere in the repo, so this is push notifications having never been
+configured for this environment (the existing `try/catch` around
+`pushService.initialize()` in `app.dart` is already the correct graceful
+handling of that). Not something fixable without real Firebase project
+credentials from Berkay; left as-is.
+
+**Verification**: rebuilt and restarted `boilers-app-1`
+(`docker compose build app && docker compose up -d app`) after the backend
+edits, then re-ran all three curl reproductions — `postList` now returns
+real posts with `updatedAt` populated, `myNotifications` and
+`conversationMessages` both execute cleanly (empty arrays for the test
+account used, not errors). `flutter analyze` / `dart format
+--set-exit-if-changed` / `flutter test` re-run clean (339/340, same
+pre-existing unrelated `card_test.dart` failure as every prior round).
+
+**Not yet done**: not verified end-to-end on Berkay's own device/account —
+needs a genuine rebuild+reinstall and a fresh pass through chat
+room/messages/notifications/feed to confirm the realtime reconnect fix
+holds through a real logout/login cycle and that live push delivery (new
+message → live frame, not just initial load) still works given §9's
+wire-format audit.
+
+## 16. Round 6 (2026-07-26) — refresh token is never rotated client-side, so every session hard-expires ~15 minutes after login
+
+Immediately after round 5's fixes, Berkay reported the app now repeatedly
+bounces him back to `/auth/login`. `docker logs boilers-app-1` showed two
+things happening together in a loop, every 30–90s: `ws.auth_fail` (first
+`reason: invalid_jwt`, then `reason: session_miss`, both for Berkay's real
+`userId`) from the round-5 realtime fix now actually retrying instead of
+silently giving up — and repeated `GET /api/rooms/general/messages → 401`
+in the plain HTTP access log. The 401s are the real trigger:
+`AuthInterceptor.onError` (`api_client.dart`) calls
+`authNotifier.refreshAccessToken()` on any 401, and `logout()`s (→
+`isAuthenticatedProvider` false → router redirect to login) if it fails.
+
+Live-tested the CSRF-guarded refresh flow itself first (login as
+`wstest-carousel@example.com`, `GET /csrf/token`, `POST /graphql` with
+`x-refresh-token`/`x-csrf-token`/`cookie`, exactly like
+`RefreshTokenServer.call()`) — it **succeeded**. But the response's
+`Set-Cookie: __Secure-refresh_token=...` carried a **different** token
+than the one sent in. Confirmed why by reading
+`auth-session.service.ts:53-111`: `refresh()` always calls
+`authTokens.issueTokens(user, ctx)`, which mints a whole new session
+(new `sessionId`/refreshToken) — the backend rotates the refresh token on
+**every** use, by design.
+
+`refresh_token.dart`'s mutation only ever requested `{ refresh {
+accessToken } }`, and `use_auth.dart`'s `refreshAccessToken()` only called
+`updateAccessToken()` — the rotated `refreshToken` was silently discarded
+every time, so the app kept re-submitting the **original** refresh token
+from login, forever. Reused that same original token three times live
+(2s apart) to check whether reuse alone breaks it — it didn't; all three
+succeeded, ruling out immediate revocation-on-reuse. Checked Redis
+directly instead: `docker exec boilers-redis-1 redis-cli TTL
+refresh_sess:<token>` showed **857s remaining after 3 live reuses across
+~45 seconds** — proof the `refresh_sess:*` key's TTL (`SESSION_TTL`,
+900s/15min — `token-store.service.ts:34`) counts down from creation and
+is **never renewed on reuse** (`extendTTL()` only touches the main
+`sess:*` key, not the `refresh_sess:*` index). Net effect: since the app
+always resubmits the same original token, that token's Redis entry expires
+exactly `SESSION_TTL` after the **original login**, permanently, regardless
+of how many successful refreshes happened before then — and every login
+after that only buys another 15-minute window before hitting the identical
+wall. That's the repeating "keeps sending me to login" pattern exactly.
+
+**Fix**: `AuthPayload` already declares `refreshToken` as a queryable
+GraphQL field (`auth.types.ts:133`) — the same field `login`/`register`
+already request successfully (`login.dart`) — so no backend change was
+needed, only catching up client-side to what the schema already offers.
+Added `refreshToken` to `refresh_token.dart`'s mutation; `call()` now
+returns a `({String accessToken, String refreshToken})` record (only
+caller is `use_auth.dart`, confirmed via grep, so the signature change is
+safe); `refreshAccessToken()` now calls `setRefreshToken()` with the
+rotated value alongside `updateAccessToken()`.
+
+**Verification**: live-curled the exact new query shape
+(`refresh { accessToken refreshToken }`) end-to-end — both fields returned
+cleanly. `flutter analyze` / `dart format --set-exit-if-changed` /
+`flutter test` re-run clean (339/340, same pre-existing unrelated
+failure). No backend files touched this round — this is a Flutter-only
+fix, but still needs a genuine rebuild+reinstall on Berkay's phone (not a
+hot reload/restart of a build compiled before this fix) plus a fresh
+logout+login, since — per §13's identical caveat — a session already
+past its 15-minute window has no way to recover retroactively; the fix
+only prevents the *next* session from hitting the same wall.
+
+## 17. Round 7 (2026-07-26) — Send button frozen disabled, and Messages never actually showed a conversation
+
+Two more reports after round 6 landed: (1) still can't send in the Chat
+Rooms "general" room — text typed, Send stayed visibly greyed out; (2)
+tapping a conversation in Messages lands on the "Chat Rooms" shell UI
+instead, "which is so silly."
+
+**Send button**: `chat_room_main_content.dart`'s `SendButton.disabled` is
+`connectionState != 'online' || messageController.text.trim().isEmpty`,
+evaluated fresh each time `ChatRoomMainContent` is built. But
+`ChatRoomBaseViewState` only rebuilds via `setState()` or a watched
+Riverpod provider changing — typing into `messageController` does neither.
+The `TextField` itself redraws (it listens to its own controller for
+display), but the `SendButton` a few widgets over was handed a *snapshot*
+of `.text.trim().isEmpty` from the last unrelated rebuild and never
+updates — stuck disabled from whenever the field was last actually empty
+at build time. `_scrollController` already had exactly this kind of
+listener (`_onScroll`) for scroll position; `_messageController` had none.
+**Fix**: added `_messageController.addListener(_onMessageTextChanged)` in
+`initState()` (removed in `dispose()`) calling `setState(() {})`, so every
+keystroke rebuilds and recomputes the button's disabled state — mirrors
+the web's controlled-input `disabled={!text.trim()}`, which re-renders on
+every `onChange` for the same reason.
+
+**Messages routing**: read `next-js-boilerplate/src/views/messages/FreePageView.tsx`
+(the source of truth all four tier views alias to —
+`BasicPageView.tsx`/`MediumPageView.tsx`/`PremiumPageView.tsx` are all
+literally `export const X = FreePageView`, i.e. messaging has zero tier
+differentiation upstream). Its actual mechanism: clicking a conversation
+calls `openConversation` → `setSelectedUser` (in-page React state, no
+navigation), and the main pane conditionally renders `ChatView` or
+`EmptyChatState` based on `selectedUser` — both mounted under the same
+`/v1/:lang/messages` route always.
+
+flutter-boilerplate never did this. `messages_sidebar_conversations.dart`
+pushed `/v1/$lang/chat/${conv.id}` — the legacy route from §14 that lands
+on `ChatRoomBaseView` (the *Chat Rooms* shell: room sidebar, "Chat Rooms"
+title, hamburger button), because that route was originally created just
+to give this exact tap handler somewhere to go, not because it's the
+right destination. Confirmed via repo-wide grep that flutter-boilerplate
+already has a **complete, correct** `ChatView` implementation
+(`chat_view.dart` + `chat_view_header.dart` + `chat_message_list.dart` +
+`chat_input_bar.dart`, all reading/writing through
+`conversationMessagesProvider`/`messageActionsProvider` correctly) that
+was simply **never imported or instantiated anywhere** — dead code since
+whenever it was written.
+
+**Fix** — wired it up to match `FreePageView.tsx` exactly instead of
+inventing a new pattern:
+- New `hooks/use_messages_page.dart`: `selectedConversationUserIdProvider`
+  (`StateProvider<String?>`), mirroring `selectedUser`.
+- `messages_sidebar_conversations.dart`: tap now sets the provider instead
+  of `context.push(...)`; added the same `bg-brand/10`-equivalent selected
+  highlight the web version has (`isSelected` → tinted background). Its
+  now-unused `lang` param was removed (only use was the route push), which
+  cascaded to removing `MessagesSidebar.lang` too (same reason) —
+  `free_page_view.dart` is the only remaining caller and already has `lang`
+  from its own widget parameter for passing to `ChatView`.
+- `chat_view_header.dart`: the back button called `context.pop()`, which
+  would have popped the *router's* navigation stack (wrong now that
+  there's no push to undo) — changed to clear the provider instead,
+  exactly matching web's `onClick={() => setSelectedUser(null)}`. Also
+  gated the button to mobile-only (`context.isMobile`), matching web's
+  `mr-1 md:hidden` — desktop shows the list and chat side by side, so
+  there's nothing to "go back" from.
+- `messages_sidebar.dart`: hardcoded `width: 320` made responsive
+  (`double.infinity` + no right border on mobile) since it's now also
+  used as the full mobile view, not just a desktop rail.
+- `free_page_view.dart`: converted `StatelessWidget` → `ConsumerWidget`
+  (needs to watch the selection); desktop renders sidebar +
+  `EmptyChatState`/`ChatView` side by side; mobile swaps between the
+  sidebar (full-screen list) and `ChatView` (full-screen thread) based on
+  selection — the old mobile branch was `Center(child: Text(t.messagesTitle))`,
+  a placeholder that never showed the conversation list *or* a thread.
+- `basic_page_view.dart`/`medium_page_view.dart`/`premium_page_view.dart`:
+  replaced their own (identical, stub) implementations with
+  `typedef XMessagesPage = FreeMessagesPage;` — the Dart equivalent of the
+  web's `export const X = FreePageView` alias, same reasoning (no tier
+  differentiation exists upstream, so there shouldn't be one here either).
+
+Left the legacy `/v1/:lang/chat/:conversationId` route itself in
+`router.dart` untouched (confirmed via grep it has no other callers now,
+but removing route definitions outright felt riskier than leaving an
+unused one — e.g. unknown whether push-notification deep-linking expects
+it).
+
+Did **not** live-verify the DM `sendMessage` mutation itself (the write
+path `ChatInputBar` now actually reaches for the first time) — static
+read of `messaging.resolver.ts`'s `sendMessage`/`sendAndDeliverMessage`
+and `schema.gql`'s `Message` type shows the fields Flutter requests
+(`sender`/`recipient` sub-objects, `readAt`) all exist and the resolver
+returns a flat `Message`, not wrapped like the round-5 `conversationMessages`
+bug — looks sound, but this was reasoning from code reading, not a live
+curl reproduction like every other fix in this doc, since no failure
+against this specific path has actually been reported yet (it was
+unreachable UI before this round). Flag for live verification the moment
+DM sending is actually tested, rather than assuming clean.
+
+`flutter analyze` / `dart format --set-exit-if-changed` / `flutter test`
+all clean after both fixes (339/340, same pre-existing unrelated
+`card_test.dart` failure).
+
+## 18. Round 8 (2026-07-26) — the flagged-but-unverified `sendMessage` path, now live-tested and fixed
+
+Predicted at the end of round 7: DM sending through the newly-wired
+`ChatInputBar` hadn't been live-verified. Berkay tried it — "sent a
+message but connection broken" — and the client-side exception landed in
+`docker logs boilers-app-1` on its own, via this app's activity-log
+exception pipeline (`category: application-exception`,
+`event: application-exception.unhandled_error`, `exceptionType:
+CLIENT_REJECTION`): `DioException [unknown]: Failed to send message` at
+`SendMessageServer.call (send_message.dart:45)` — the same generic
+error-swallowing pattern as every bug this doc has found (`if
+(body['errors'] != null) throw DioException(message: 'generic string')`,
+discarding the real GraphQL message).
+
+Reproduced live: registered a second throwaway test account
+(`wstest-carousel-b@example.com`), inserted an `ACCEPTED` `Friendship` row
+directly via `docker exec boilers-postgres-1 psql` (bypassing the
+request/accept UI, not relevant to what's being tested), then ran the
+exact `SendMessage` mutation `send_message.dart` sends. Live error:
+`Cannot return null for non-nullable field Message.recipient.` — same bug
+class as round 5's `Post.updatedAt`: `messaging-dm.service.ts`'s
+`sendMessage()` (~line 161) only ever had `include: { sender: {...} }` on
+the `prisma.message.create()` call — `recipient` was never fetched at
+all, but `schema.gql` declares `Message.recipient: User!` (non-null) and
+`send_message.dart`'s mutation requests it. Also noticed while there:
+`sender`'s `select` was missing `avatarUrl` too — nullable in the schema
+(`User.avatarUrl: String`, no crash) but silently dropped, so a
+just-sent message's own bubble would render without the sender's avatar
+until the next full reload picked it up correctly from elsewhere. Fixed
+both in the same edit: `include` now fetches `recipient` alongside
+`sender`, and both select `avatarUrl` too.
+
+Confirmed the message **was** being saved and delivered correctly the
+whole time — the first live-repro attempt (pre-fix) is still sitting in
+`conversationMessages` after the fix, timestamped from the failed call.
+Only the mutation's own response serialization crashed; the write and the
+realtime delivery underneath it were never broken. So "connection broken"
+was actually: message sent successfully, server then failed to tell the
+client that, client saw a thrown exception and had no way to distinguish
+"my message didn't go through" from "it went through but I couldn't
+confirm it" — worth knowing since it means nothing about the realtime
+delivery path (rounds 5-6) needed touching here.
+
+Checked whether the *other* send path — Chat Room's WS `room-message`
+frame (`MessagingRoomService.saveRoomMessage`, the thing round 7's Send-
+button fix made reachable) — has the same class of bug: it doesn't go
+through GraphQL at all (plain WS frame, `RoomMessage` JSON-serialized
+straight to the socket), so there's no schema non-null enforcement to
+crash against the way there is here. Not fixed, since there's no evidence
+of a failure there and no live reproduction attempted — noted in case it
+comes up next.
+
+**Verification**: rebuilt + restarted `boilers-app-1`
+(`docker compose build app && docker compose up -d app`), re-ran the
+exact same mutation — returns cleanly with both `sender` and `recipient`
+fully populated, and the message appears correctly via
+`conversationMessages` afterward. No Flutter files touched this round
+(backend-only fix), so no analyze/format/test re-run needed.
+
+## 19. Round 9 (2026-07-26) — the message list never fetched sender/recipient either, and round 5's own verification missed it
+
+Berkay: "connections stable but can not load messages" — a stuck spinner
+in `ChatView` on the "Blue Bird Rex" conversation, WS showing "Connected".
+Backend logs (`docker logs boilers-app-1 --since 15m`) showed no thrown
+exceptions, but a suspicious pattern: a 344-byte `/graphql` request
+repeating every ~7 seconds, always producing an identical 348-byte
+response. Computed the byte length of the real
+`conversationMessages` query from `conversation_messages.dart` with a
+UUID variable (346 bytes with Python's compact JSON separators, 2 bytes
+off from the observed 344 — close enough given I can't reproduce Dio's
+exact serialization) — confirmed this repeating call *is*
+`conversationMessages` for this exact peer. (The ~7s repeat interval
+itself was never fully explained — didn't match any `Timer`/polling code
+found via grep — but wasn't needed to find the actual bug once the query
+identity was confirmed.)
+
+Checked the real data first, since round 5/8 both live-verified this
+exact resolver as working: `docker exec boilers-postgres-1 psql` showed
+223 real messages between Berkay and this peer, all with valid
+sender/recipient FKs, normal short bodies (avg 8 chars) — no data
+corruption, ruling that out. Confirmed the current container
+(`docker inspect boilers-app-1 --format '{{.State.StartedAt}}'` →
+14:13:23Z) started *before* the screenshot's ~14:15:20Z, so this wasn't a
+stale-pre-fix-container artifact either.
+
+Re-read `messaging-dm.service.ts`'s `getMessages()` (the method backing
+`conversationMessages`, fixed for its *array-wrapping* bug in round 5) and
+found the real problem: its `prisma.message.findMany({ where, orderBy,
+take })` call has **no `include` at all** — it only ever returns bare
+`Message` scalar columns, never the `sender`/`recipient` relations. Round
+5's fix only addressed the resolver unwrapping `{messages, hasMore}` into
+a bare array; it never touched what's *inside* each message. This wasn't
+caught at the time because **my own round 5/8 verification curls for this
+exact query used an abbreviated field selection
+(`id body senderId recipientId createdAt readAt`) that never actually
+requested `sender { id name avatarUrl }`/`recipient { id name avatarUrl }`
+— fields the real `conversation_messages.dart` query has always asked
+for.** Confirmed by re-running the *exact* real query text this round:
+`Cannot return null for non-nullable field Message.sender.` — the same
+error class as round 8's `sendMessage` bug, in the sibling read path,
+100% reproducible for every conversation, not data- or account-specific.
+Noting this here plainly since it's a gap in this doc's own diligence,
+not just the code's: matching the client's exact query text (not a
+same-operation-name shorthand) is the actual bar for "verified," and
+round 5 didn't clear it for this one field set.
+
+**Fix**: added the same `include` shape as round 8's `sendMessage` fix —
+both `sender` and `recipient`, each selecting
+`{ id, name, email, avatarUrl }` — to `getMessages()`'s `findMany` call.
+`messaging.controller.ts`'s REST endpoint (the other consumer of
+`getMessages()`, confirmed via round 5's grep) only gains fields, nothing
+removed, so it's unaffected.
+
+**Verification**: rebuilt + restarted `boilers-app-1`, re-ran the *exact*
+real query text (not abbreviated this time) — returns cleanly with both
+`sender` and `recipient` fully populated. No Flutter files touched.
