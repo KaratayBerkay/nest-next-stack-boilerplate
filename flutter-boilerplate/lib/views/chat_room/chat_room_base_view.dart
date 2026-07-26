@@ -127,11 +127,30 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
   }
 
   void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) => _settleToBottom());
+  }
+
+  /// `maxScrollExtent` is only an estimate until every item between the
+  /// current viewport and the end has actually been built — `ListView`
+  /// only lays out items near what's visible. For a long room, a single
+  /// jump/animate to that estimate undershoots, because scrolling through
+  /// is what makes Flutter build (and correct the estimate for) the rest.
+  /// Keep jumping to the newest estimate, one frame at a time, until it
+  /// stops growing, then finish with one smooth animation.
+  void _settleToBottom([int attempt = 0]) {
+    if (!_scrollController.hasClients) return;
+    final before = _scrollController.position.maxScrollExtent;
+    _scrollController.jumpTo(before);
+    if (attempt >= 8) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
+      if (!_scrollController.hasClients) return;
+      final after = _scrollController.position.maxScrollExtent;
+      if (after > before) {
+        _settleToBottom(attempt + 1);
+      } else {
         _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 200),
+          after,
+          duration: const Duration(milliseconds: 150),
           curve: Curves.easeOut,
         );
       }

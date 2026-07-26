@@ -41,7 +41,12 @@ class ChatMessageList extends ConsumerWidget {
 
         return ListView.builder(
           controller: scrollController,
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          // Extra bottom padding is deliberate margin above the input bar —
+          // it's part of the scrollable content, so "scroll to bottom"
+          // naturally settles with this gap already showing instead of
+          // stopping short of it (see ChatView, which no longer adds a
+          // static sibling gap for the same reason).
+          padding: const EdgeInsets.only(top: 12, bottom: 24),
           itemCount: messages.length,
           itemBuilder: (_, i) {
             final msg = messages[i];

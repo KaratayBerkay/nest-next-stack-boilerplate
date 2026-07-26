@@ -50,7 +50,12 @@ class ChatRoomMessageList extends StatelessWidget {
 
     return ListView.builder(
       controller: scrollController,
-      padding: const EdgeInsets.all(12),
+      // Extra bottom padding is deliberate margin above the input bar — it's
+      // part of the scrollable content, so "scroll to bottom" naturally
+      // settles with this gap already showing instead of stopping short of
+      // it (see ChatRoomMainContent/ChatView, which no longer add a static
+      // sibling gap for the same reason).
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
       itemCount: messages.length,
       itemBuilder: (_, i) {
         final msg = messages[i];
