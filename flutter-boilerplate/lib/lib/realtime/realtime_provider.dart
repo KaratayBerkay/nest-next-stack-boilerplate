@@ -1,11 +1,13 @@
 import 'package:flutter/foundation.dart';
 
 import '../../api/client/friends/query.dart';
+import '../../api/client/messages/mark_read.dart';
 import '../../api/client/messages/query.dart';
 import '../../api/client/notifications/query.dart';
 import '../../api/client/posts/query.dart';
 import '../../app_config.dart';
 import '../../hooks/use_auth.dart';
+import '../../hooks/use_messages_page.dart';
 import '../riverpod_compat.dart';
 import 'realtime_client.dart';
 
@@ -102,12 +104,23 @@ void handleEventFrame(Ref ref, Map<String, dynamic> frame) {
   switch (frame['type'] as String?) {
     case 'direct-message':
       ref.invalidate(conversationsProvider);
-      final peerId = _peerIdFromMessage(
-        frame['message'] as Map<String, dynamic>?,
-        ref.read(currentUserProvider)?.id,
-      );
+      final message = frame['message'] as Map<String, dynamic>?;
+      final myId = ref.read(currentUserProvider)?.id;
+      final peerId = _peerIdFromMessage(message, myId);
       if (peerId != null) {
         ref.invalidate(conversationMessagesProvider(peerId));
+      }
+      // Mirrors the web's event-dispatch.ts activePeerId check: a message
+      // that arrives while its sender's thread is the one currently open in
+      // the Messages page is being seen live, so mark it read immediately —
+      // without this, messages that arrive while you're already looking at
+      // the conversation get rendered (and auto-scrolled to) but never
+      // marked read, so the unread badge never clears for them even though
+      // you plainly saw them.
+      if (message != null &&
+          message['recipientId'] == myId &&
+          message['senderId'] == ref.read(selectedConversationUserIdProvider)) {
+        ref.read(markReadActionsProvider).call(message['senderId'] as String);
       }
     case 'message-read':
     case 'message-delivered':
