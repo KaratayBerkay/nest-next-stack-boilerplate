@@ -10,10 +10,12 @@ import 'chat_message_bubble.dart';
 
 class ChatMessageList extends ConsumerWidget {
   final String conversationId;
+  final ScrollController? scrollController;
 
   const ChatMessageList({
     super.key,
     required this.conversationId,
+    this.scrollController,
   });
 
   @override
@@ -38,6 +40,7 @@ class ChatMessageList extends ConsumerWidget {
         }
 
         return ListView.builder(
+          controller: scrollController,
           padding: const EdgeInsets.symmetric(vertical: 12),
           itemCount: messages.length,
           itemBuilder: (_, i) {

@@ -10,6 +10,7 @@ class ChatRoomMessageList extends StatelessWidget {
   final Set<String> onlineUserIds;
   final bool msgsLoading;
   final bool msgsError;
+  final ScrollController? scrollController;
 
   const ChatRoomMessageList({
     super.key,
@@ -18,6 +19,7 @@ class ChatRoomMessageList extends StatelessWidget {
     this.onlineUserIds = const {},
     this.msgsLoading = false,
     this.msgsError = false,
+    this.scrollController,
   });
 
   @override
@@ -47,6 +49,7 @@ class ChatRoomMessageList extends StatelessWidget {
     }
 
     return ListView.builder(
+      controller: scrollController,
       padding: const EdgeInsets.all(12),
       itemCount: messages.length,
       itemBuilder: (_, i) {

@@ -213,7 +213,6 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
         isAtBottom: _isAtBottom,
         onSetSidebarOpen: (v) => setState(() => _sidebarOpen = v),
         onSend: _handleSend,
-        onScrollToBottom: _scrollToBottom,
       ),
     );
 

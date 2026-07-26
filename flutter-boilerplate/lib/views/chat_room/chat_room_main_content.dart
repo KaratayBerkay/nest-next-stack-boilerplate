@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../components/ui/scroll_to_bottom_button/scroll_to_bottom_button.dart';
 import '../../constants/theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../../types/messages/message.dart';
@@ -21,7 +22,6 @@ class ChatRoomMainContent extends StatelessWidget {
   final bool isAtBottom;
   final ValueChanged<bool> onSetSidebarOpen;
   final VoidCallback onSend;
-  final VoidCallback onScrollToBottom;
 
   const ChatRoomMainContent({
     super.key,
@@ -39,7 +39,6 @@ class ChatRoomMainContent extends StatelessWidget {
     this.isAtBottom = true,
     required this.onSetSidebarOpen,
     required this.onSend,
-    required this.onScrollToBottom,
   });
 
   String _placeholder(AppLocalizations t) {
@@ -120,6 +119,7 @@ class ChatRoomMainContent extends StatelessWidget {
                   onlineUserIds: onlineUserIds,
                   msgsLoading: msgsLoading,
                   msgsError: msgsError,
+                  scrollController: scrollController,
                 ),
               ),
               Container(
@@ -153,9 +153,8 @@ class ChatRoomMainContent extends StatelessWidget {
             Positioned(
               bottom: 80,
               right: 16,
-              child: FloatingActionButton.small(
-                onPressed: onScrollToBottom,
-                child: const Icon(Icons.arrow_downward),
+              child: ScrollToBottomButton(
+                scrollController: scrollController,
               ),
             ),
         ],
