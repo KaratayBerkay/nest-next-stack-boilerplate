@@ -62,6 +62,7 @@ class RegisterServer {
         as Map<String, dynamic>;
     return RegisterResponse(
       accessToken: result['accessToken'] as String,
+      refreshToken: result['refreshToken'] as String?,
       rbacToken: result['rbacToken'] as String,
       deviceToken: result['deviceToken'] as String,
       userToken: result['userToken'] as String,

@@ -75,6 +75,7 @@ class LoginServer {
     return LoginSuccess(
       LoginResponse(
         accessToken: result['accessToken'] as String,
+        refreshToken: result['refreshToken'] as String?,
         rbacToken: result['rbacToken'] as String,
         deviceToken: result['deviceToken'] as String,
         userToken: result['userToken'] as String,

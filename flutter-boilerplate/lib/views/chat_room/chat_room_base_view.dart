@@ -6,6 +6,7 @@ import '../../api/client/messages/query.dart';
 import '../../constants/chat.dart';
 import '../../hooks/use_auth.dart';
 import '../../l10n/app_localizations.dart';
+import '../../types/messages/message.dart';
 import 'chat_room_header.dart';
 import 'chat_room_main_content.dart';
 import 'chat_room_sidebar.dart';
@@ -32,8 +33,6 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   bool _isAtBottom = true;
-  final Map<String, int> _roomCounts = {};
-  List<Map<String, String?>> _roomMembers = [];
 
   List<String> get vipRooms => const [];
   bool get useNativeControls => false;
@@ -66,20 +65,23 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
   }
 
   void _setupRealtime() {
+    // Joining the room itself is handled by the route-driven page claim
+    // (RealtimeLifecycle claims 'chat-room' with this room on entering this
+    // route — see convert-frontend-7-flutter.md §9.1/§10 D9). `watch()` was
+    // never the right mechanism for room membership (§9.3) and is gone.
     final client = ref.read(realtimeProvider);
-    final room = _room;
-
-    client.watch('room:$room');
     client.send({'type': 'get-room-counts'});
   }
 
   void _selectRoom(String r) {
     setState(() {
       _room = r;
-      _roomMembers = [];
       _sidebarOpen = false;
     });
+    // Switching rooms in-page doesn't change the route, so the router-level
+    // claim (above) won't see it — claim the new room directly (§10 D11).
     final client = ref.read(realtimeProvider);
+    client.claimPage('chat-room', params: {'room': r});
     client.send({'type': 'get-room-counts'});
   }
 
@@ -116,7 +118,9 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
     final connected = ref.watch(realtimeConnectedProvider);
-    final messagesAsync = ref.watch(conversationMessagesProvider(_room));
+    final messagesAsync = ref.watch(roomMessagesProvider(_room));
+    final roomCounts = ref.watch(roomCountsProvider);
+    final roomMembers = ref.watch(roomMembersProvider(_room));
     final width = MediaQuery.of(context).size.width;
     final isMobile = width < 768;
 
@@ -133,9 +137,9 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
       sidebarOpen: _sidebarOpen,
       rooms: allRooms,
       room: _room,
-      roomCounts: _roomCounts,
+      roomCounts: roomCounts,
       vipRooms: vipRooms,
-      roomMembers: _roomMembers,
+      roomMembers: roomMembers,
       currentUserId: user.id,
       showSelfCrown: showSelfCrown,
       onSetSidebarOpen: (v) => setState(() => _sidebarOpen = v),
@@ -148,9 +152,22 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
       data: (messages) => ChatRoomMainContent(
         useNativeControls: useNativeControls,
         room: _room,
-        roomCounts: _roomCounts,
+        roomCounts: roomCounts,
         connectionState: _connectionState,
-        messages: messages,
+        messages: messages
+            .map(
+              (m) => ChatMessage(
+                id: m.id,
+                conversationId: _room,
+                senderId: m.senderId,
+                senderName: m.senderName,
+                senderAvatarUrl: m.avatar,
+                content: m.body,
+                createdAt: DateTime.parse(m.createdAt),
+                isRead: true,
+              ),
+            )
+            .toList(),
         userId: user.id,
         messageController: _messageController,
         scrollController: _scrollController,
