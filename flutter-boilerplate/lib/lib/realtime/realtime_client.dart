@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -63,18 +64,19 @@ class RealtimeClient {
     _channel = WebSocketChannel.connect(wsUrl);
 
     _channel!.stream.listen(
-      (data) => _handleMessage(data),
+      (data) => handleMessage(data),
       onDone: () => _handleDisconnect(),
       onError: (_) => _handleDisconnect(),
     );
 
-    _channel!.ready.then((_) => _handleOpen()).catchError((Object e) {
+    _channel!.ready.then((_) => handleOpen()).catchError((Object e) {
       debugPrint('[Realtime] connect failed: $e');
       _handleDisconnect();
     });
   }
 
-  Future<void> _handleOpen() async {
+  @visibleForTesting
+  Future<void> handleOpen() async {
     if (_destroyed) return;
     _setStatus(RealtimeStatus.authenticating);
 
@@ -96,7 +98,8 @@ class RealtimeClient {
     _send({'type': 'auth', 'tokens': tokens});
   }
 
-  void _handleMessage(dynamic raw) {
+  @visibleForTesting
+  void handleMessage(dynamic raw) {
     if (_destroyed) return;
     try {
       final data = jsonDecode(raw as String) as Map<String, dynamic>;

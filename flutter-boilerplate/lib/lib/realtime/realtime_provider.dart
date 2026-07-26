@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../../api/client/friends/query.dart';
 import '../../api/client/messages/query.dart';
 import '../../api/client/notifications/query.dart';
@@ -35,11 +37,11 @@ final realtimeProvider = Provider<RealtimeClient>((ref) {
         ref.read(authProvider.notifier).refreshAccessToken(),
     onFrame: (frame) {
       final renew = frame['renew'] as String?;
-      if (renew != null) {
-        _handleRenewFrame(ref, renew, frame);
-      } else {
-        _handleEventFrame(ref, frame);
-      }
+  if (renew != null) {
+    handleRenewFrame(ref, renew, frame);
+  } else {
+    handleEventFrame(ref, frame);
+  }
     },
   );
 
@@ -53,7 +55,8 @@ final realtimeProvider = Provider<RealtimeClient>((ref) {
 /// convert-frontend-7-flutter.md §9 for the wire-format audit and §10 D10
 /// for why this replaced the old flat `'notification'`/`'feed_update'` cases
 /// that never matched anything the backend actually sends.
-void _handleRenewFrame(Ref ref, String renew, Map<String, dynamic> frame) {
+@visibleForTesting
+void handleRenewFrame(Ref ref, String renew, Map<String, dynamic> frame) {
   final subtype = frame['type'] as String?;
   switch (renew) {
     case 'Notifications':
@@ -93,7 +96,8 @@ void _handleRenewFrame(Ref ref, String renew, Map<String, dynamic> frame) {
 
 /// Flat (non-`renew`) event frames — data payloads for pages that already
 /// have the relevant object materialized, not blunt cache invalidation.
-void _handleEventFrame(Ref ref, Map<String, dynamic> frame) {
+@visibleForTesting
+void handleEventFrame(Ref ref, Map<String, dynamic> frame) {
   switch (frame['type'] as String?) {
     case 'direct-message':
       ref.invalidate(conversationsProvider);
