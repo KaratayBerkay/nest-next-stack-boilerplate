@@ -7,10 +7,12 @@ import '../../l10n/app_localizations.dart';
 
 class ChatInputBar extends ConsumerStatefulWidget {
   final String conversationId;
+  final VoidCallback? onSent;
 
   const ChatInputBar({
     super.key,
     required this.conversationId,
+    this.onSent,
   });
 
   @override
@@ -26,12 +28,16 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
     super.dispose();
   }
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
-    ref.read(messageActionsProvider).sendMessage(widget.conversationId, text);
+    await ref
+        .read(messageActionsProvider)
+        .sendMessage(widget.conversationId, text);
+    if (!mounted) return;
     _controller.clear();
+    widget.onSent?.call();
   }
 
   @override

@@ -33,8 +33,14 @@ class V1Header extends ConsumerWidget implements PreferredSizeWidget {
     final loading = authState.isLoading;
     final unreadCount = ref.watch(notificationsUnreadCountProvider);
     final dmUnreadCount = ref.watch(dmUnreadCountProvider);
-    final notificationBadgeCount =
-        (unreadCount.asData?.value ?? 0) + (dmUnreadCount.asData?.value ?? 0);
+    // Notifications and DMs are separate inboxes (mirrors the web's
+    // NotificationDropdown, whose bell badge is notification-count-only) —
+    // mixing DM count into the bell badge made it look "renewed" for
+    // messages that will never show up on the notifications page, since
+    // DMs are never notifications. The DM count belongs on the messages
+    // icon below instead.
+    final notificationBadgeCount = unreadCount.asData?.value ?? 0;
+    final dmBadgeCount = dmUnreadCount.asData?.value ?? 0;
 
     return SafeArea(
       bottom: false,
@@ -158,10 +164,40 @@ class V1Header extends ConsumerWidget implements PreferredSizeWidget {
                     onTap: () => context.go('/v1/$lang/messages'),
                     child: Padding(
                       padding: const EdgeInsets.all(8),
-                      child: Icon(
-                        Icons.message_outlined,
-                        size: 20,
-                        color: colors.fgMuted,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Icon(
+                            Icons.message_outlined,
+                            size: 20,
+                            color: colors.fgMuted,
+                          ),
+                          if (dmBadgeCount > 0)
+                            Positioned(
+                              right: -6,
+                              top: -4,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: colors.danger,
+                                  shape: BoxShape.circle,
+                                ),
+                                constraints: const BoxConstraints(
+                                  minWidth: 18,
+                                  minHeight: 18,
+                                ),
+                                child: Text(
+                                  dmBadgeCount > 99 ? '99+' : '$dmBadgeCount',
+                                  style: TextStyle(
+                                    color: colors.surface,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ),

@@ -168,9 +168,12 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
     final currentMessages = messagesAsync.asData?.value;
     if (currentMessages != null && currentMessages.isNotEmpty) {
       final newLastId = currentMessages.last.id;
-      if (_lastMessageLastId != null &&
-          newLastId != _lastMessageLastId &&
-          _isAtBottom) {
+      // `_lastMessageLastId` starts null, so the first successful load also
+      // satisfies `newLastId != _lastMessageLastId` — that's intentional
+      // (mirrors the web's `useAutoScroll`, whose `lastIdRef` starts null
+      // too) and is what makes a freshly-opened room land at the bottom
+      // instead of wherever ListView happens to initialize.
+      if (newLastId != _lastMessageLastId && _isAtBottom) {
         _scrollToBottom();
       }
       _lastMessageLastId = newLastId;

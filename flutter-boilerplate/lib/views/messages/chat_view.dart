@@ -83,9 +83,12 @@ class _ChatViewState extends ConsumerState<ChatView> {
     final currentMessages = messagesAsync.asData?.value;
     if (currentMessages != null && currentMessages.isNotEmpty) {
       final newLastId = currentMessages.last.id;
-      if (_lastMessageLastId != null &&
-          newLastId != _lastMessageLastId &&
-          _isAtBottom) {
+      // `_lastMessageLastId` starts null, so the first successful load also
+      // satisfies `newLastId != _lastMessageLastId` — that's intentional
+      // (mirrors the web's `useAutoScroll`, whose `lastIdRef` starts null
+      // too) and is what makes a freshly-opened conversation land at the
+      // bottom instead of wherever ListView happens to initialize.
+      if (newLastId != _lastMessageLastId && _isAtBottom) {
         _scrollToBottom();
       }
       _lastMessageLastId = newLastId;
@@ -106,24 +109,32 @@ class _ChatViewState extends ConsumerState<ChatView> {
             scrollController: _scrollController,
           ),
         ),
-        ChatInputBar(conversationId: widget.conversationId),
+        ChatInputBar(
+          conversationId: widget.conversationId,
+          onSent: _scrollToBottom,
+        ),
       ],
     );
 
-    final content = showScrollButton
-        ? Stack(
-            children: [
-              body,
-              Positioned(
-                bottom: 80,
-                right: 16,
-                child: ScrollToBottomButton(
-                  scrollController: _scrollController,
-                ),
-              ),
-            ],
-          )
-        : body;
+    // The Stack itself must stay unconditional — swapping between
+    // `Stack(...)` and a bare `body` (rather than toggling only the
+    // Positioned child) changes `body`'s ancestor at this slot, which makes
+    // Flutter tear down and recreate the ListView's Scrollable and reset its
+    // scroll offset to 0. That's the "slides down then pops back" bug: it
+    // fires right as `_isAtBottom` flips true from the button's own scroll.
+    final content = Stack(
+      children: [
+        body,
+        if (showScrollButton)
+          Positioned(
+            bottom: 80,
+            right: 16,
+            child: ScrollToBottomButton(
+              scrollController: _scrollController,
+            ),
+          ),
+      ],
+    );
 
     if (context.isMobile) {
       return Scaffold(body: content);
