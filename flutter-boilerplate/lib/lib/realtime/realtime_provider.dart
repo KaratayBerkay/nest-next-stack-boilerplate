@@ -66,6 +66,7 @@ void handleRenewFrame(Ref ref, String renew, Map<String, dynamic> frame) {
         case 'DmCount':
           ref.invalidate(dmUnreadCountProvider);
           ref.invalidate(dmUnreadNotificationsProvider);
+          ref.invalidate(notificationsUnreadCountProvider);
         case 'Item':
           ref.invalidate(notificationsProvider);
         case 'Read':

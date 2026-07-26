@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../api/client/messages/query.dart';
 import '../../api/client/notifications/query.dart';
 import '../../components/nav/lang_switcher.dart';
 import '../../components/nav/theme_toggle.dart';
@@ -31,7 +32,9 @@ class V1Header extends ConsumerWidget implements PreferredSizeWidget {
     final user = authState.asData?.value;
     final loading = authState.isLoading;
     final unreadCount = ref.watch(notificationsUnreadCountProvider);
-    final notificationBadgeCount = unreadCount.asData?.value;
+    final dmUnreadCount = ref.watch(dmUnreadCountProvider);
+    final notificationBadgeCount =
+        (unreadCount.asData?.value ?? 0) + (dmUnreadCount.asData?.value ?? 0);
 
     return SafeArea(
       bottom: false,
@@ -119,8 +122,7 @@ class V1Header extends ConsumerWidget implements PreferredSizeWidget {
                             size: 20,
                             color: colors.fgMuted,
                           ),
-                          if (notificationBadgeCount != null &&
-                              notificationBadgeCount > 0)
+                          if (notificationBadgeCount > 0)
                             Positioned(
                               right: -6,
                               top: -4,
