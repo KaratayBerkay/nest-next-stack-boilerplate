@@ -37,11 +37,11 @@ final realtimeProvider = Provider<RealtimeClient>((ref) {
         ref.read(authProvider.notifier).refreshAccessToken(),
     onFrame: (frame) {
       final renew = frame['renew'] as String?;
-  if (renew != null) {
-    handleRenewFrame(ref, renew, frame);
-  } else {
-    handleEventFrame(ref, frame);
-  }
+      if (renew != null) {
+        handleRenewFrame(ref, renew, frame);
+      } else {
+        handleEventFrame(ref, frame);
+      }
     },
   );
 

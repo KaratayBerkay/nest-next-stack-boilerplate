@@ -74,8 +74,7 @@ Widget buildTestApp({
 
 void main() {
   setUp(() {
-    FlutterSecureStoragePlatform.instance =
-        TestFlutterSecureStoragePlatform({
+    FlutterSecureStoragePlatform.instance = TestFlutterSecureStoragePlatform({
       'access_token': 'test-access-token',
       'rbac_token': 'test-rbac',
       'device_token': 'test-device',

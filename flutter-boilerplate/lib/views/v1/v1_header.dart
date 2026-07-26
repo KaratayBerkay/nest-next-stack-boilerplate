@@ -105,50 +105,52 @@ class V1Header extends ConsumerWidget implements PreferredSizeWidget {
                       style: TextStyle(fontSize: 11, color: colors.fgMuted),
                     ),
                   )
-                else
-                  if (user != null) ...[
-                    InkWell(
-                      borderRadius: BorderRadius.circular(8),
-                      onTap: () => context.go('/v1/$lang/notification'),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Icon(
-                              Icons.notifications_outlined,
-                              size: 20,
-                              color: colors.fgMuted,
-                            ),
-                            if (notificationBadgeCount != null && notificationBadgeCount > 0)
-                              Positioned(
-                                right: -6,
-                                top: -4,
-                                child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: BoxDecoration(
-                                    color: colors.danger,
-                                    shape: BoxShape.circle,
+                else if (user != null) ...[
+                  InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () => context.go('/v1/$lang/notification'),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Icon(
+                            Icons.notifications_outlined,
+                            size: 20,
+                            color: colors.fgMuted,
+                          ),
+                          if (notificationBadgeCount != null &&
+                              notificationBadgeCount > 0)
+                            Positioned(
+                              right: -6,
+                              top: -4,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: colors.danger,
+                                  shape: BoxShape.circle,
+                                ),
+                                constraints: const BoxConstraints(
+                                  minWidth: 18,
+                                  minHeight: 18,
+                                ),
+                                child: Text(
+                                  notificationBadgeCount > 99
+                                      ? '99+'
+                                      : '$notificationBadgeCount',
+                                  style: TextStyle(
+                                    color: colors.surface,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  constraints: const BoxConstraints(
-                                    minWidth: 18,
-                                    minHeight: 18,
-                                  ),
-                                  child: Text(
-                                    notificationBadgeCount > 99 ? '99+' : '$notificationBadgeCount',
-                                    style: TextStyle(
-                                      color: colors.surface,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
+                                  textAlign: TextAlign.center,
                                 ),
                               ),
-                          ],
-                        ),
+                            ),
+                        ],
                       ),
                     ),
+                  ),
                   InkWell(
                     borderRadius: BorderRadius.circular(8),
                     onTap: () => context.go('/v1/$lang/messages'),
