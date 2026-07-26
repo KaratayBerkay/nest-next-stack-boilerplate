@@ -136,6 +136,24 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
     });
   }
 
+  void _onMessagesChanged(
+    AsyncValue<List<dynamic>>? prev,
+    AsyncValue<List<dynamic>> next,
+  ) {
+    if (!_isAtBottom) return;
+    next.whenOrNull(
+      data: (messages) {
+        prev?.whenOrNull(
+          data: (prevMessages) {
+            if (messages.length > prevMessages.length) {
+              _scrollToBottom();
+            }
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
@@ -162,6 +180,12 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
     final roomMembers = ref.watch(roomMembersProvider(_room));
     final width = MediaQuery.of(context).size.width;
     final isMobile = width < 768;
+
+    if (_isNamedRoom) {
+      ref.listen(roomMessagesProvider(_room), _onMessagesChanged);
+    } else {
+      ref.listen(conversationMessagesProvider(_room), _onMessagesChanged);
+    }
 
     if (user == null) {
       return const Center(child: CircularProgressIndicator());
