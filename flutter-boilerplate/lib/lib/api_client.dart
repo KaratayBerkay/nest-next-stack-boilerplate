@@ -50,6 +50,42 @@ class AuthInterceptor extends Interceptor {
   }
 
   @override
+  void onResponse(
+    Response<dynamic> response,
+    ResponseInterceptorHandler handler,
+  ) {
+    // Backend GraphQL errors always come back as HTTP 200 with the real
+    // status in `errors[0].extensions.statusCode`, so an expired access
+    // token never surfaces as a 401 for Dio to catch on its own — recreate
+    // that signal here so it shares the retry logic below.
+    if (response.requestOptions.path == '/graphql' &&
+        _graphQlErrorStatusCode(response.data) == 401) {
+      handler.reject(
+        DioException(
+          requestOptions: response.requestOptions,
+          response: response..statusCode = 401,
+          type: DioExceptionType.badResponse,
+          message: 'GraphQL request unauthenticated',
+        ),
+        true, // let onError below run — a plain reject() would skip straight past it
+      );
+      return;
+    }
+    handler.next(response);
+  }
+
+  int? _graphQlErrorStatusCode(dynamic body) {
+    if (body is! Map<String, dynamic>) return null;
+    final errors = body['errors'];
+    if (errors is! List || errors.isEmpty) return null;
+    final first = errors.first;
+    if (first is! Map<String, dynamic>) return null;
+    final extensions = first['extensions'];
+    if (extensions is! Map<String, dynamic>) return null;
+    return extensions['statusCode'] as int?;
+  }
+
+  @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     if (err.response?.statusCode != 401) {
       handler.next(err);
