@@ -33,6 +33,7 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   bool _isAtBottom = true;
+  String? _lastMessageLastId;
 
   List<String> get vipRooms => const [];
   bool get useNativeControls => false;
@@ -99,6 +100,7 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
     setState(() {
       _room = r;
       _sidebarOpen = false;
+      _lastMessageLastId = null;
     });
     // Switching rooms in-page doesn't change the route, so the router-level
     // claim (above) won't see it — claim the new room directly (§10 D11).
@@ -136,24 +138,6 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
     });
   }
 
-  void _onMessagesChanged(
-    AsyncValue<List<dynamic>>? prev,
-    AsyncValue<List<dynamic>> next,
-  ) {
-    if (!_isAtBottom) return;
-    next.whenOrNull(
-      data: (messages) {
-        prev?.whenOrNull(
-          data: (prevMessages) {
-            if (messages.length > prevMessages.length) {
-              _scrollToBottom();
-            }
-          },
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
@@ -181,10 +165,15 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
     final width = MediaQuery.of(context).size.width;
     final isMobile = width < 768;
 
-    if (_isNamedRoom) {
-      ref.listen(roomMessagesProvider(_room), _onMessagesChanged);
-    } else {
-      ref.listen(conversationMessagesProvider(_room), _onMessagesChanged);
+    final currentMessages = messagesAsync.asData?.value;
+    if (currentMessages != null && currentMessages.isNotEmpty) {
+      final newLastId = currentMessages.last.id;
+      if (_lastMessageLastId != null &&
+          newLastId != _lastMessageLastId &&
+          _isAtBottom) {
+        _scrollToBottom();
+      }
+      _lastMessageLastId = newLastId;
     }
 
     if (user == null) {
