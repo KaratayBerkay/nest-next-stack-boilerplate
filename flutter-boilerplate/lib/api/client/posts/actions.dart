@@ -43,22 +43,22 @@ class PostActions {
     );
   }
 
-  Future<void> toggleReaction(String postId) async {
+  Future<void> toggleReaction(String postId, {String type = 'LIKE'}) async {
     final server = _ref.read(postReactionsServerProvider);
-    await server.toggle(postId);
+    await server.toggle(postId, type: type);
   }
 
-  Future<void> addComment(String postId, String content) async {
+  Future<void> addComment(String postId, String bodyText) async {
     final server = _ref.read(postCommentsServerProvider);
-    await server.create(postId, content);
+    await server.create(postId, bodyText);
   }
 
   Future<void> updateComment(
     String commentId, {
-    required String content,
+    required String bodyText,
   }) async {
     final server = _ref.read(postCommentsServerProvider);
-    await server.update(commentId, content: content);
+    await server.update(commentId, bodyText: bodyText);
   }
 
   Future<void> deleteComment(String commentId) async {
@@ -66,9 +66,9 @@ class PostActions {
     await server.delete(commentId);
   }
 
-  Future<void> toggleCommentReaction(String commentId) async {
+  Future<void> toggleCommentReaction(String commentId, {String type = 'LIKE'}) async {
     final server = _ref.read(postReactionsServerProvider);
-    await server.toggleForComment(commentId);
+    await server.toggleForComment(commentId, type: type);
   }
 
   Future<String> uploadImage(String filePath) async {

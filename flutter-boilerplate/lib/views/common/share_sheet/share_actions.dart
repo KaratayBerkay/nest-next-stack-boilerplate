@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../constants/theme.dart';
-import '../../l10n/app_localizations.dart';
+import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class ShareActions extends StatelessWidget {
   final String shareLink;

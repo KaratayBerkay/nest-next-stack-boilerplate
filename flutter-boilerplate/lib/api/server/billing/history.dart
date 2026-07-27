@@ -7,6 +7,8 @@ class Invoice {
   final String status;
   final double amount;
   final String currency;
+  final String? type;
+  final String? reference;
   final DateTime createdAt;
   final String? pdfUrl;
 
@@ -15,6 +17,8 @@ class Invoice {
     required this.status,
     required this.amount,
     required this.currency,
+    this.type,
+    this.reference,
     required this.createdAt,
     this.pdfUrl,
   });
@@ -25,6 +29,8 @@ class Invoice {
       status: json['status'] as String,
       amount: (json['amount'] as num).toDouble(),
       currency: json['currency'] as String,
+      type: json['type'] as String?,
+      reference: json['reference'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
       pdfUrl: json['stripeInvoiceUrl'] as String?,
     );

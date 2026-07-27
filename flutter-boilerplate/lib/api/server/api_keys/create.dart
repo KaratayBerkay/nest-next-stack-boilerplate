@@ -13,12 +13,15 @@ class ApiKeyCreateServer {
 
   ApiKeyCreateServer(this._dio);
 
-  Future<Map<String, dynamic>> call(String name) async {
+  Future<Map<String, dynamic>> call(String name, {int? expiresInDays}) async {
     final response = await _dio.post<dynamic>(
       '/graphql',
       data: {
         'query': _mutation,
-        'variables': {'name': name},
+        'variables': {
+          'name': name,
+          if (expiresInDays != null) 'expiresInDays': expiresInDays,
+        },
       },
     );
     final body = response.data as Map<String, dynamic>;

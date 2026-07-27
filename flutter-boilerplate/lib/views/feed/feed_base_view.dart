@@ -3,34 +3,65 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../api/client/posts/query.dart';
+import '../../components/feed/feed_list_empty_state.dart';
 import '../../components/feed/post_stats_sidebar.dart';
-import '../../components/ui/empty/empty.dart';
-import '../../components/ui/spinner/spinner.dart';
+import '../../components/ui/page_info/page_info.dart';
+import '../../components/ui/skeleton/skeleton.dart';
+import '../../constants/page_info/feed.dart';
 import '../../constants/theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../../types/feed/post.dart';
 
-class FeedBaseView extends ConsumerWidget {
+class FeedBaseView extends ConsumerStatefulWidget {
   final String lang;
-  final Widget Function(List<Post> posts) builder;
+  final Widget Function(Post post) cardBuilder;
+  final bool Function(Post post)? isOwnPost;
   final bool showSidebar;
   final bool showPageInfo;
 
   const FeedBaseView({
     super.key,
     required this.lang,
-    required this.builder,
+    required this.cardBuilder,
+    this.isOwnPost,
     this.showSidebar = false,
     this.showPageInfo = false,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FeedBaseView> createState() => _FeedBaseViewState();
+}
+
+class _FeedBaseViewState extends ConsumerState<FeedBaseView> {
+  final ScrollController _scrollCtrl = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollCtrl.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollCtrl.removeListener(_onScroll);
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollCtrl.position.pixels >=
+        _scrollCtrl.position.maxScrollExtent - 200) {
+      ref.read(paginatedFeedProvider.notifier).loadMore();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     final t = AppLocalizations.of(context);
-    final postsAsync = ref.watch(feedProvider);
+    final feedState = ref.watch(paginatedFeedProvider);
 
-    final content = _contentWidget(postsAsync, t);
+    final content = _contentWidget(feedState, t, colors);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -41,23 +72,6 @@ class FeedBaseView extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 8),
-              SizedBox(
-                height: 32,
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: t.feedSearchPlaceholder,
-                    prefixIcon:
-                        Icon(Icons.search, size: 14, color: colors.fgMuted),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    isDense: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: colors.border),
-                    ),
-                  ),
-                  style: TextStyle(fontSize: 12, color: colors.fg),
-                ),
-              ),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -72,7 +86,7 @@ class FeedBaseView extends ConsumerWidget {
                   const Spacer(),
                   InkWell(
                     borderRadius: BorderRadius.circular(8),
-                    onTap: () => context.push('/v1/$lang/share'),
+                    onTap: () => context.push('/v1/${widget.lang}/share'),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
@@ -92,17 +106,9 @@ class FeedBaseView extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  if (showPageInfo) ...[
+                  if (widget.showPageInfo) ...[
                     const SizedBox(width: 8),
-                    InkWell(
-                      borderRadius: BorderRadius.circular(8),
-                      onTap: () => _showPageInfo(context),
-                      child: Icon(
-                        Icons.info_outline,
-                        size: 18,
-                        color: colors.fgMuted,
-                      ),
-                    ),
+                    const PageInfoButton(content: feedPageInfo),
                   ],
                 ],
               ),
@@ -111,28 +117,133 @@ class FeedBaseView extends ConsumerWidget {
           ),
         ),
         Expanded(
-          child: showSidebar ? _SidebarLayout(content: content) : content,
+          child: widget.showSidebar
+              ? _SidebarLayout(content: content)
+              : content,
         ),
       ],
     );
   }
 
-  Widget _contentWidget(AsyncValue<List<Post>> postsAsync, AppLocalizations t) {
-    return postsAsync.when(
-      loading: () => const Center(child: Spinner()),
-      error: (err, _) => EmptyWidget(
-        title: t.feedFailedToLoadPosts,
-        icon: Icons.error_outline,
+  Widget _loadingSkeleton() {
+    return ListView(
+      controller: _scrollCtrl,
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      children: List.generate(
+        5,
+        (_) => const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          child: SkeletonCard(lines: 3),
+        ),
       ),
-      data: (posts) {
-        if (posts.isEmpty) {
-          return EmptyWidget(
-            title: t.feedNoPostsYet,
-            icon: Icons.article_outlined,
-          );
-        }
-        return builder(posts);
-      },
+    );
+  }
+
+  Widget _postList(List<Post> posts, bool isLoadingMore, bool hasMore) {
+    return RefreshIndicator(
+      onRefresh: () => ref.read(paginatedFeedProvider.notifier).refresh(),
+      child: ListView.builder(
+        controller: _scrollCtrl,
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        itemCount: posts.length + (isLoadingMore || hasMore ? 1 : 0),
+        itemBuilder: (context, i) {
+          if (i == posts.length) {
+            return _footerIndicator(isLoadingMore, hasMore);
+          }
+          final post = posts[i];
+          final isOwn = widget.isOwnPost != null && widget.isOwnPost!(post);
+          if (isOwn) {
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 16, top: 4),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.shade100,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          '👑 Your Post',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                widget.cardBuilder(post),
+              ],
+            );
+          }
+          return widget.cardBuilder(post);
+        },
+      ),
+    );
+  }
+
+  Widget _footerIndicator(bool isLoadingMore, bool hasMore) {
+    final t = AppLocalizations.of(context);
+    final colors = AppColors.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: Center(
+        child: isLoadingMore
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colors.brand,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    t.feedLoadingMore,
+                    style: TextStyle(fontSize: 12, color: colors.fgMuted),
+                  ),
+                ],
+              )
+            : Text(
+                t.feedAllCaughtUp,
+                style: TextStyle(fontSize: 12, color: colors.fgMuted),
+              ),
+      ),
+    );
+  }
+
+  Widget _contentWidget(
+    PaginatedFeedState feedState,
+    AppLocalizations t,
+    AppColors colors,
+  ) {
+    if (feedState.isInitialLoading) {
+      return _loadingSkeleton();
+    }
+    if (feedState.error != null && feedState.posts.isEmpty) {
+      return FeedListEmptyState(
+        onShare: () => context.push('/v1/${widget.lang}/share'),
+      );
+    }
+    if (feedState.posts.isEmpty) {
+      return FeedListEmptyState(
+        onShare: () => context.push('/v1/${widget.lang}/share'),
+      );
+    }
+    return _postList(
+      feedState.posts,
+      feedState.isLoadingMore,
+      feedState.hasMore,
     );
   }
 }
@@ -172,20 +283,4 @@ class _SidebarLayout extends StatelessWidget {
       ],
     );
   }
-}
-
-void _showPageInfo(BuildContext context) {
-  showDialog<void>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(AppLocalizations.of(ctx).feedFeed),
-      content: const Text('The feed displays posts from users you follow.'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(),
-          child: const Text('Close'),
-        ),
-      ],
-    ),
-  );
 }

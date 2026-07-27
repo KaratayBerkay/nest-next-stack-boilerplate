@@ -1,12 +1,23 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Badge;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../api/client/api_keys/actions.dart';
 import '../../../api/client/api_keys/query.dart';
+import '../../../components/ui/badge/badge.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/toast/toast.dart';
 import '../../../constants/theme.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../../fallbacks/index.dart';
+import '../settings_shell.dart';
+
+const _expiryPresets = <int?>[
+  null,
+  7,
+  30,
+  90,
+  365,
+];
 
 class SettingsApiKeysPageContent extends ConsumerWidget {
   final String lang;
@@ -19,7 +30,9 @@ class SettingsApiKeysPageContent extends ConsumerWidget {
     final t = AppLocalizations.of(context);
     final keysAsync = ref.watch(apiKeysProvider);
 
-    return Column(
+    return SettingsShellScaffold(
+      lang: lang,
+      child: Column(
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
@@ -40,7 +53,7 @@ class SettingsApiKeysPageContent extends ConsumerWidget {
         ),
         Expanded(
           child: keysAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const Center(child: SettingsLoadingFallback()),
             error: (e, _) => Center(child: Text('Error: $e')),
             data: (keys) {
               if (keys.isEmpty) {
@@ -80,11 +93,22 @@ class SettingsApiKeysPageContent extends ConsumerWidget {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            k.name,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                            ),
+                                          Row(
+                                            children: [
+                                              Text(
+                                                k.name,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Badge(
+                                                text: k.enabled ? 'Active' : 'Disabled',
+                                                variant: k.enabled
+                                                    ? BadgeVariant.success
+                                                    : BadgeVariant.warning,
+                                              ),
+                                            ],
                                           ),
                                           Text(
                                             '${k.prefix}••••••••••••••••',
@@ -127,6 +151,15 @@ class SettingsApiKeysPageContent extends ConsumerWidget {
                                     fontSize: 11,
                                   ),
                                 ),
+                                Text(
+                                  k.expiresAt != null
+                                      ? 'Expires: ${k.expiresAt!.toLocal().toString().split(' ')[0]}'
+                                      : 'No expiry',
+                                  style: TextStyle(
+                                    color: colors.fgMuted,
+                                    fontSize: 11,
+                                  ),
+                                ),
                                 if (k.lastUsedAt != null)
                                   Text(
                                     'Last used: ${k.lastUsedAt!.toLocal().toString().split(' ')[0]}',
@@ -147,38 +180,119 @@ class SettingsApiKeysPageContent extends ConsumerWidget {
           ),
         ),
       ],
+      ),
     );
   }
 
   void _showCreateDialog(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
-    final ctrl = TextEditingController();
+    final nameCtrl = TextEditingController();
+    int? selectedExpiry;
+
+    showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text(t.settingsApiKeysCreateHeading),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: nameCtrl,
+                decoration: InputDecoration(
+                  labelText: t.settingsApiKeysNameLabel,
+                ),
+                autofocus: true,
+              ),
+              const SizedBox(height: 16),
+              const Text('Expiry',
+                  style: TextStyle(fontWeight: FontWeight.w500)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: _expiryPresets.map((days) {
+                  final label = days == null ? 'No expiry' : '$days days';
+                  final selected = selectedExpiry == days;
+                  return ChoiceChip(
+                    label: Text(label, style: const TextStyle(fontSize: 12)),
+                    selected: selected,
+                    onSelected: (_) {
+                      setDialogState(() => selectedExpiry = days);
+                    },
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(t.settingsCancelButton),
+            ),
+            FilledButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                try {
+                  final result = await ref
+                      .read(apiKeyActionsProvider)
+                      .create(nameCtrl.text, expiresInDays: selectedExpiry);
+                  ref.invalidate(apiKeysProvider);
+                  if (context.mounted) {
+                    _showKeyDialog(context, result);
+                  }
+                } catch (e) {
+                  if (context.mounted) showToast(context, 'Failed: $e');
+                }
+              },
+              child: Text(t.settingsApiKeysCreate),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showKeyDialog(BuildContext context, Map<String, dynamic> result) {
+    final fullKey = result['fullKey'] as String?;
+    if (fullKey == null) return;
+    final t = AppLocalizations.of(context);
+
     showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(t.settingsApiKeysCreateHeading),
-        content: TextField(
-          controller: ctrl,
-          decoration: InputDecoration(labelText: t.settingsApiKeysNameLabel),
-          autofocus: true,
+        title: const Text('API Key Created'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Make sure to copy your API key now. You won\'t be able to see it again.',
+              style: TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: SelectableText(
+                fullKey,
+                style: const TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(t.settingsCancelButton),
-          ),
-          FilledButton(
-            onPressed: () async {
+            onPressed: () {
               Navigator.pop(ctx);
-              try {
-                await ref.read(apiKeyActionsProvider).create(ctrl.text);
-                ref.invalidate(apiKeysProvider);
-                if (context.mounted) showToast(context, 'Key created');
-              } catch (e) {
-                if (context.mounted) showToast(context, 'Failed: $e');
-              }
             },
-            child: Text(t.settingsApiKeysCreate),
+            child: Text(t.v1ShellClose),
           ),
         ],
       ),

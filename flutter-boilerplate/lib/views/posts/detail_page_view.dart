@@ -132,7 +132,7 @@ class _PostDetailView extends ConsumerWidget {
                                                     fontSize: 13,
                                                   ),
                                                 ),
-                                                Text(c.content),
+                                                Text(c.body),
                                               ],
                                             ),
                                           ),

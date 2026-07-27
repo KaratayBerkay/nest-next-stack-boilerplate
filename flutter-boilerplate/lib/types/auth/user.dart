@@ -6,6 +6,7 @@ class AuthenticatedUser {
   final String role;
   final String? avatarUrl;
   final String? language;
+  final String? sessionId;
 
   const AuthenticatedUser({
     required this.id,
@@ -15,6 +16,7 @@ class AuthenticatedUser {
     this.role = 'USER',
     this.avatarUrl,
     this.language,
+    this.sessionId,
   });
 
   factory AuthenticatedUser.fromJson(Map<String, dynamic> json) {
@@ -29,6 +31,7 @@ class AuthenticatedUser {
       role: (json['role'] as String?) ?? 'USER',
       avatarUrl: json['avatarUrl'] as String?,
       language: (json['language'] as String?) ?? (json['locale'] as String?),
+      sessionId: json['sessionId'] as String?,
     );
   }
 
@@ -40,5 +43,6 @@ class AuthenticatedUser {
         'role': role,
         'avatarUrl': avatarUrl,
         'language': language,
+        'sessionId': sessionId,
       };
 }

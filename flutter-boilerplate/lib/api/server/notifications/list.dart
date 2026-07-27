@@ -16,6 +16,12 @@ const _query = '''
       body
       readAt
       createdAt
+      payload
+      actor {
+        id
+        name
+        avatarUrl
+      }
     }
   }
 ''';

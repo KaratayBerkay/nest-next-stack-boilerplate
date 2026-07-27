@@ -22,7 +22,25 @@ class FreeNotificationPage extends ConsumerWidget {
     final notifAsync = ref.watch(notificationsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(t.notificationHeading)),
+      appBar: AppBar(
+        title: Text(t.notificationHeading),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              try {
+                await ref.read(notificationActionsProvider).markAllRead();
+                ref.invalidate(notificationsProvider);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('All marked as read')),
+                  );
+                }
+              } catch (_) {}
+            },
+            child: const Text('Mark all read'),
+          ),
+        ],
+      ),
       body: notifAsync.when(
         loading: () => const Spinner(),
         error: (_, __) => EmptyWidget(
@@ -45,6 +63,10 @@ class FreeNotificationPage extends ConsumerWidget {
                   Divider(height: 1, color: colors.border, indent: 72),
               itemBuilder: (_, i) {
                 final item = items[i];
+                final payload = item.payload;
+                final targetId = payload?['postId'] as String? ??
+                    payload?['senderId'] as String? ??
+                    payload?['friendRequestId'] as String?;
                 return NotificationItemWidget(
                   item: item,
                   lang: lang,
@@ -53,12 +75,12 @@ class FreeNotificationPage extends ConsumerWidget {
                       ref.read(notificationActionsProvider).markRead(item.id);
                       ref.invalidate(notificationsProvider);
                     }
-                    if (item.type == 'message') {
-                      context.push('/v1/$lang/messages');
-                    } else if (item.type == 'friend_request') {
+                    if (item.type == 'FRIEND_REQUEST' || item.type == 'friend_request') {
                       context.push('/v1/$lang/find-friends/requests');
-                    } else if (item.type == 'post') {
-                      context.push('/v1/$lang/posts/${item.id}');
+                    } else if (item.type == 'POST' || item.type == 'post') {
+                      context.push('/v1/$lang/posts/$targetId');
+                    } else if (item.type == 'MESSAGE' || item.type == 'message') {
+                      context.push('/v1/$lang/messages');
                     }
                   },
                 );

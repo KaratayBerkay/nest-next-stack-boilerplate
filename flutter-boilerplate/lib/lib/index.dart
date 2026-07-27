@@ -6,8 +6,7 @@ export 'cn.dart';
 export 'container.dart';
 export 'date_time.dart';
 export 'env.dart';
-export 'feed/feed_constants.dart';
-export 'feed/feed_utils.dart';
+
 export 'forms/form_constants.dart';
 export 'forms/form_utils.dart';
 export 'initials.dart';

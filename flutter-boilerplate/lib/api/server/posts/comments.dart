@@ -11,7 +11,7 @@ const _listQuery = '''
   query PostComments(\$postId: ID!) {
     postComments(postId: \$postId) {
       id
-      content
+      body
       authorId
       postId
       createdAt
@@ -24,7 +24,7 @@ const _createMutation = '''
   mutation CreateComment(\$data: CreateCommentInput!) {
     createComment(data: \$data) {
       id
-      content
+      body
       authorId
       postId
       createdAt
@@ -37,7 +37,7 @@ const _updateMutation = '''
   mutation UpdateComment(\$id: ID!, \$data: UpdateCommentInput!) {
     updateComment(id: \$id, data: \$data) {
       id
-      content
+      body
       authorId
       postId
       createdAt
@@ -80,13 +80,13 @@ class PostCommentsServer {
         .toList();
   }
 
-  Future<Comment> create(String postId, String content) async {
+  Future<Comment> create(String postId, String bodyText) async {
     final response = await _dio.post<dynamic>(
       '/graphql',
       data: {
         'query': _createMutation,
         'variables': {
-          'data': {'postId': postId, 'content': content},
+          'data': {'postId': postId, 'body': bodyText},
         },
       },
     );
@@ -102,14 +102,14 @@ class PostCommentsServer {
     return Comment.fromJson(result);
   }
 
-  Future<Comment> update(String commentId, {required String content}) async {
+  Future<Comment> update(String commentId, {required String bodyText}) async {
     final response = await _dio.post<dynamic>(
       '/graphql',
       data: {
         'query': _updateMutation,
         'variables': {
           'id': commentId,
-          'data': {'content': content},
+          'data': {'body': bodyText},
         },
       },
     );

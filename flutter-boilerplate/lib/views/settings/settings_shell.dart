@@ -18,16 +18,16 @@ class SettingsNav extends StatelessWidget {
 
     final tabs = [
       _TabData(
-        Icons.person_outline,
-        Icons.person,
-        t.settingsNavAccount,
-        '/v1/$lang/settings/account',
-      ),
-      _TabData(
         Icons.settings_outlined,
         Icons.settings,
         t.settingsNavGeneral,
         '/v1/$lang/settings/general',
+      ),
+      _TabData(
+        Icons.person_outline,
+        Icons.person,
+        t.settingsNavAccount,
+        '/v1/$lang/settings/account',
       ),
       _TabData(
         Icons.lock_outline,
@@ -155,6 +155,47 @@ class SettingsNav extends StatelessWidget {
           }).toList(),
         ),
       ),
+    );
+  }
+}
+
+class SettingsShellScaffold extends StatelessWidget {
+  final String lang;
+  final Widget child;
+
+  const SettingsShellScaffold({
+    super.key,
+    required this.lang,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isWide = MediaQuery.of(context).size.width >= 768;
+
+    if (isWide) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 220,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16, left: 12),
+              child: SettingsNav(lang: lang),
+            ),
+          ),
+          const VerticalDivider(width: 1),
+          Expanded(child: child),
+        ],
+      );
+    }
+
+    return Column(
+      children: [
+        SettingsNav(lang: lang),
+        const Divider(height: 1),
+        Expanded(child: child),
+      ],
     );
   }
 }

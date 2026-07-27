@@ -25,10 +25,21 @@ class ProfileUpdateServer {
 
   ProfileUpdateServer(this._dio);
 
-  Future<void> call({String? name, String? bio}) async {
+  Future<void> call({
+    String? name,
+    String? bio,
+    String? username,
+    String? avatarUrl,
+    String? locale,
+    String? timezone,
+  }) async {
     final data = <String, dynamic>{};
     if (name != null) data['name'] = name;
     if (bio != null) data['bio'] = bio;
+    if (username != null) data['username'] = username;
+    if (avatarUrl != null) data['avatarUrl'] = avatarUrl;
+    if (locale != null) data['locale'] = locale;
+    if (timezone != null) data['timezone'] = timezone;
 
     final response = await _dio.post<dynamic>(
       '/graphql',

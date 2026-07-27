@@ -5,7 +5,7 @@ class Comment {
   final String postId;
   final String authorName;
   final String? authorAvatarUrl;
-  final String content;
+  final String body;
   final DateTime createdAt;
   final String? parentId;
   final String? authorId;
@@ -17,7 +17,7 @@ class Comment {
     required this.postId,
     required this.authorName,
     this.authorAvatarUrl,
-    required this.content,
+    required this.body,
     required this.createdAt,
     this.parentId,
     this.authorId,
@@ -25,15 +25,13 @@ class Comment {
     this.reactions = const [],
   });
 
-  String get body => content;
-
   factory Comment.fromJson(Map<String, dynamic> json) {
     return Comment(
       id: json['id'] as String,
       postId: json['postId'] as String,
       authorName: json['authorName'] as String,
       authorAvatarUrl: json['authorAvatarUrl'] as String?,
-      content: json['content'] as String,
+      body: json['body'] as String,
       createdAt: DateTime.parse(json['createdAt'] as String),
       parentId: json['parentId'] as String?,
       authorId: json['authorId'] as String?,

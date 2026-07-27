@@ -201,7 +201,7 @@ class _CommentTile extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  comment.content,
+                  comment.body,
                   style: TextStyle(color: colors.fg),
                 ),
               ],

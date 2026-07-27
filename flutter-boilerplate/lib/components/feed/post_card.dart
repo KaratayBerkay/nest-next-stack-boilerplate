@@ -1,162 +1,60 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_boilerplate/lib/date_time.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-import '../../constants/theme.dart';
+import '../../api/client/posts/actions.dart' hide PostActions;
+import '../../api/client/posts/query.dart';
+import '../../hooks/use_auth.dart';
 import '../../types/feed/post.dart';
-import '../ui/avatar/avatar.dart';
+import 'post_actions.dart';
+import 'post_content.dart';
+import 'post_header.dart';
 
-class PostCard extends StatelessWidget {
+class PostCard extends ConsumerWidget {
   final Post post;
-  final VoidCallback? onTap;
-  final VoidCallback? onLike;
-  final VoidCallback? onComment;
+  final String lang;
 
   const PostCard({
     super.key,
     required this.post,
-    this.onTap,
-    this.onLike,
-    this.onComment,
+    required this.lang,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-    final typography = AppTypography.of(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider);
+    final isOwn = user?.id == post.authorId;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: Row(
-                children: [
-                  Avatar(
-                    imageUrl: post.authorAvatarUrl,
-                    name: post.authorName,
-                    radius: 18,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          post.authorName,
-                          style: typography.label,
-                        ),
-                        Text(
-                          DateTimeHelper.relative(post.createdAt),
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: colors.fgMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Image
-            if (post.imageUrl != null) ...[
-              const SizedBox(height: 12),
-              CachedNetworkImage(
-                imageUrl: post.imageUrl!,
-                height: 200,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                placeholder: (_, __) => Container(
-                  height: 200,
-                  color: colors.surfaceHover,
-                ),
-              ),
-            ],
-
-            // Title & Content
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    post.title,
-                    style: typography.h4,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    post.content,
-                    style: typography.body,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-
-            // Actions
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      post.isLiked ? Icons.favorite : Icons.favorite_border,
-                      size: 20,
-                      color: post.isLiked ? colors.danger : colors.fgMuted,
-                    ),
-                    tooltip: 'Like',
-                    onPressed: onLike,
-                    style: IconButton.styleFrom(
-                      minimumSize: const Size(36, 36),
-                    ),
-                  ),
-                  Text(
-                    '${post.likeCount}',
-                    style: TextStyle(fontSize: 12, color: colors.fgMuted),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: Icon(
-                      Icons.chat_bubble_outline,
-                      size: 20,
-                      color: colors.fgMuted,
-                    ),
-                    tooltip: 'Comment',
-                    onPressed: onComment,
-                    style:
-                        IconButton.styleFrom(minimumSize: const Size(36, 36)),
-                  ),
-                  Text(
-                    '${post.commentCount}',
-                    style: TextStyle(fontSize: 12, color: colors.fgMuted),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: Icon(
-                      Icons.bookmark_border,
-                      size: 20,
-                      color: colors.fgMuted,
-                    ),
-                    onPressed: null,
-                    style:
-                        IconButton.styleFrom(minimumSize: const Size(36, 36)),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          PostHeader(
+            postData: post,
+            isOwn: isOwn,
+            onViewPost: () => context.push('/v1/$lang/posts/${post.id}'),
+            onToggleReaction: (String type) =>
+                ref.read(postActionsProvider).toggleReaction(post.id, type: type),
+          ),
+          PostContent(postData: post),
+          PostActions(
+            postData: post,
+            currentUserId: user?.id,
+            onCommentAdded: () => ref.invalidate(paginatedFeedProvider),
+            onCreateComment: (String postId, String body, String? parentId) =>
+                ref.read(postActionsProvider).addComment(postId, body),
+            onUpdateComment: (String commentId, String body) =>
+                ref.read(postActionsProvider).updateComment(commentId, bodyText: body),
+            onDeleteComment: (String commentId) =>
+                ref.read(postActionsProvider).deleteComment(commentId),
+            onToggleReaction: (String type, String? postId, String? commentId) =>
+                commentId != null
+                    ? ref.read(postActionsProvider).toggleCommentReaction(commentId, type: type)
+                    : ref.read(postActionsProvider).toggleReaction(postId!, type: type),
+          ),
+        ],
       ),
     );
   }

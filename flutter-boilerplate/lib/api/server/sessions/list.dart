@@ -7,14 +7,14 @@ class Session {
   final String device;
   final String location;
   final String lastActive;
-  final bool isCurrent;
+  final String? userAgent;
 
   const Session({
     required this.id,
     required this.device,
     required this.location,
     required this.lastActive,
-    this.isCurrent = false,
+    this.userAgent,
   });
 
   factory Session.fromJson(Map<String, dynamic> json) {
@@ -24,7 +24,7 @@ class Session {
       location: json['ip'] as String? ?? json['location'] as String? ?? '',
       lastActive:
           json['issuedAt'] as String? ?? json['lastActive'] as String? ?? '',
-      isCurrent: json['isCurrent'] as bool? ?? false,
+      userAgent: json['userAgent'] as String?,
     );
   }
 }

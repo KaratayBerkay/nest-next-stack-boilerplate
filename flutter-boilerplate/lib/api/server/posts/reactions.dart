@@ -18,13 +18,13 @@ class PostReactionsServer {
 
   PostReactionsServer(this._dio);
 
-  Future<void> toggle(String postId) async {
+  Future<void> toggle(String postId, {String type = 'LIKE'}) async {
     final response = await _dio.post<dynamic>(
       '/graphql',
       data: {
         'query': _toggleMutation,
         'variables': {
-          'data': {'postId': postId, 'type': 'like'},
+          'data': {'postId': postId, 'type': type},
         },
       },
     );
@@ -37,13 +37,13 @@ class PostReactionsServer {
     }
   }
 
-  Future<void> toggleForComment(String commentId) async {
+  Future<void> toggleForComment(String commentId, {String type = 'LIKE'}) async {
     final response = await _dio.post<dynamic>(
       '/graphql',
       data: {
         'query': _toggleMutation,
         'variables': {
-          'data': {'commentId': commentId, 'type': 'like'},
+          'data': {'commentId': commentId, 'type': type},
         },
       },
     );

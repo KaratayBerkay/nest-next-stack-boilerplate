@@ -36,6 +36,7 @@ class RealtimeLifecycle {
   void _connect() {
     final client = _ref.read(realtimeProvider);
     client.registerServices(['MESSAGE', 'NOTIFICATION']);
+    client.watch('feed');
     client.connect();
 
     _ref.read(routerProvider).routerDelegate.addListener(_onRouteChanged);

@@ -11,9 +11,23 @@ class ProfileActions {
 
   ProfileActions(this._ref);
 
-  Future<void> update({String? name, String? bio}) async {
+  Future<void> update({
+    String? name,
+    String? bio,
+    String? username,
+    String? avatarUrl,
+    String? locale,
+    String? timezone,
+  }) async {
     final server = _ref.read(profileUpdateServerProvider);
-    await server.call(name: name, bio: bio);
+    await server.call(
+      name: name,
+      bio: bio,
+      username: username,
+      avatarUrl: avatarUrl,
+      locale: locale,
+      timezone: timezone,
+    );
   }
 
   Future<String> uploadAvatar(String filePath) async {

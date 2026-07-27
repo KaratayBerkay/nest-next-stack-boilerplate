@@ -1,17 +1,25 @@
 import 'package:flutter/material.dart' hide Badge;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../api/client/billing/actions.dart';
 import '../../../api/client/billing/query.dart';
+import '../../../api/server/billing/address.dart';
 import '../../../api/server/billing/subscription.dart';
 import '../../../components/ui/badge/badge.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/card/card.dart';
 import '../../../components/ui/card/card_content.dart';
 import '../../../components/ui/card/card_header.dart';
+import '../../../components/ui/toast/toast.dart';
 import '../../../constants/theme.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../../fallbacks/index.dart';
+import '../../settings/billing/billing_address_form.dart';
+import '../../settings/billing/billing_info_display.dart';
+import '../../settings/billing/invoice_pagination.dart';
+import '../settings_shell.dart';
 
 class SettingsBillingPageContent extends ConsumerWidget {
   final String lang;
@@ -22,31 +30,28 @@ class SettingsBillingPageContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final subAsync = ref.watch(subscriptionProvider);
 
-    return subAsync.when(
-      loading: () =>
-          _scaffold(context, const Center(child: CircularProgressIndicator())),
-      error: (e, _) => _scaffold(context, Center(child: Text('Error: $e'))),
-      data: (sub) {
-        if (sub.plan == 'free') return _FreeBillingView(lang: lang);
-        return _scaffold(
-          context,
-          ListView(
+    return SettingsShellScaffold(
+      lang: lang,
+      child: subAsync.when(
+        loading: () => const SettingsLoadingFallback(),
+        error: (e, _) => Center(child: Text('Error: $e')),
+        data: (sub) {
+          if (sub.plan == 'free') return _FreeBillingView(lang: lang);
+          return ListView(
             padding: const EdgeInsets.all(16),
             children: [
               _SubscriptionCard(sub: sub, lang: lang),
+              const SizedBox(height: 16),
+              _BillingAddressSection(),
               const SizedBox(height: 16),
               _PaymentMethodsSection(),
               const SizedBox(height: 16),
               _InvoiceHistorySection(),
             ],
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
-  }
-
-  Widget _scaffold(BuildContext context, Widget body) {
-    return body;
   }
 }
 
@@ -148,9 +153,139 @@ class _SubscriptionCard extends ConsumerWidget {
   }
 }
 
-class _PaymentMethodsSection extends ConsumerWidget {
+class _BillingAddressSection extends ConsumerStatefulWidget {
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_BillingAddressSection> createState() =>
+      _BillingAddressSectionState();
+}
+
+class _BillingAddressSectionState
+    extends ConsumerState<_BillingAddressSection> {
+  Map<String, dynamic>? _address;
+  bool _loading = true;
+  bool _editing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAddress();
+  }
+
+  Future<void> _loadAddress() async {
+    try {
+      final server = ref.read(billingAddressServerProvider);
+      final addr = await server.get();
+      if (mounted) {
+        setState(() {
+          _address = addr;
+          _loading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _saveAddress(Map<String, dynamic> data) async {
+    try {
+      await ref.read(billingActionsProvider).updateAddress(data);
+      if (mounted) {
+        setState(() {
+          _address = data;
+          _editing = false;
+        });
+        showToast(context, 'Billing address saved');
+      }
+    } catch (e) {
+      if (mounted) showToast(context, 'Failed: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+
+    return CardWidget(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CardHeader(
+            child: Row(
+              children: [
+                const Text(
+                  'Billing Address',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const Spacer(),
+                if (!_editing)
+                  TextButton(
+                    onPressed: () => setState(() => _editing = true),
+                    child: const Text('Edit'),
+                  ),
+              ],
+            ),
+          ),
+          CardContent(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _editing
+                    ? BillingAddressForm(
+                        initialData: _address,
+                        onSave: _saveAddress,
+                      )
+                    : _address != null &&
+                            (_address!['street'] != null ||
+                                _address!['name'] != null)
+                        ? BillingInfoDisplay(
+                            name: _address!['name'] as String?,
+                            email: _address!['email'] as String?,
+                            addressLine1: _address!['street'] as String?,
+                            city: _address!['city'] as String?,
+                            state: _address!['state'] as String?,
+                            zip: _address!['zipCode'] as String?,
+                            country: _address!['country'] as String?,
+                          )
+                        : Text(
+                            'No billing address set.',
+                            style: TextStyle(color: colors.fgMuted),
+                          ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PaymentMethodsSection extends ConsumerStatefulWidget {
+  @override
+  ConsumerState<_PaymentMethodsSection> createState() =>
+      _PaymentMethodsSectionState();
+}
+
+class _PaymentMethodsSectionState
+    extends ConsumerState<_PaymentMethodsSection> {
+  Future<void> _removeMethod(String id) async {
+    try {
+      await ref.read(billingActionsProvider).removePaymentMethod(id);
+      ref.invalidate(paymentMethodsProvider);
+      if (mounted) showToast(context, 'Payment method removed');
+    } catch (e) {
+      if (mounted) showToast(context, 'Failed: $e');
+    }
+  }
+
+  Future<void> _setDefault(String id) async {
+    try {
+      await ref.read(billingActionsProvider).setDefaultPaymentMethod(id);
+      ref.invalidate(paymentMethodsProvider);
+      if (mounted) showToast(context, 'Default payment method updated');
+    } catch (e) {
+      if (mounted) showToast(context, 'Failed: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     final t = AppLocalizations.of(context);
     final pmAsync = ref.watch(paymentMethodsProvider);
@@ -167,7 +302,8 @@ class _PaymentMethodsSection extends ConsumerWidget {
           ),
           CardContent(
             child: pmAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () =>
+                  const Center(child: CircularProgressIndicator()),
               error: (e, _) =>
                   Text('Error: $e', style: TextStyle(color: colors.danger)),
               data: (methods) {
@@ -188,22 +324,44 @@ class _PaymentMethodsSection extends ConsumerWidget {
                   );
                 }
                 return Column(
-                  children: methods
-                      .map(
-                        (pm) => ListTile(
-                          leading: Icon(Icons.credit_card, color: colors.brand),
-                          title: Text('${pm.brand} •••• ${pm.last4}'),
-                          subtitle:
-                              Text('Expires ${pm.expMonth}/${pm.expYear}'),
-                          trailing: pm.isDefault
-                              ? const Badge(
-                                  text: 'Default',
-                                  variant: BadgeVariant.success,
-                                )
-                              : null,
-                        ),
-                      )
-                      .toList(),
+                  children: [
+                    ...methods.map(
+                      (pm) => ListTile(
+                        leading:
+                            Icon(Icons.credit_card, color: colors.brand),
+                        title:
+                            Text('${pm.brand} •••• ${pm.last4}'),
+                        subtitle: Text(
+                            'Expires ${pm.expMonth}/${pm.expYear}'),
+                        trailing: pm.isDefault
+                            ? const Badge(
+                                text: 'Default',
+                                variant: BadgeVariant.success,
+                              )
+                            : Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  TextButton(
+                                    onPressed: () => _setDefault(pm.id),
+                                    child: const Text('Set default',
+                                        style: TextStyle(fontSize: 12)),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => _removeMethod(pm.id),
+                                    child: const Text('Remove',
+                                        style: TextStyle(fontSize: 12)),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Button(
+                      variant: ButtonVariant.outline,
+                      child: Text(t.settingsAddCard),
+                      onPressed: () => context.go('/v1/en/plans'),
+                    ),
+                  ],
                 );
               },
             ),
@@ -214,9 +372,19 @@ class _PaymentMethodsSection extends ConsumerWidget {
   }
 }
 
-class _InvoiceHistorySection extends ConsumerWidget {
+class _InvoiceHistorySection extends ConsumerStatefulWidget {
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_InvoiceHistorySection> createState() =>
+      _InvoiceHistorySectionState();
+}
+
+class _InvoiceHistorySectionState
+    extends ConsumerState<_InvoiceHistorySection> {
+  int _page = 1;
+  static const _perPage = 5;
+
+  @override
+  Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     final historyAsync = ref.watch(billingHistoryProvider);
 
@@ -232,10 +400,19 @@ class _InvoiceHistorySection extends ConsumerWidget {
           ),
           CardContent(
             child: historyAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () =>
+                  const Center(child: CircularProgressIndicator()),
               error: (e, _) =>
                   Text('Error: $e', style: TextStyle(color: colors.danger)),
               data: (invoices) {
+                final totalPages =
+                    (invoices.length / _perPage).ceil().clamp(1, 1);
+                final start = (_page - 1) * _perPage;
+                final pageItems = invoices
+                    .skip(start)
+                    .take(_perPage)
+                    .toList();
+
                 if (invoices.isEmpty) {
                   return Text(
                     'No invoices yet.',
@@ -243,26 +420,43 @@ class _InvoiceHistorySection extends ConsumerWidget {
                   );
                 }
                 return Column(
-                  children: invoices
-                      .map(
-                        (inv) => ListTile(
-                          leading: Icon(Icons.receipt, color: colors.fgMuted),
-                          title: Text(
-                            '\$${inv.amount} ${inv.currency.toUpperCase()}',
-                          ),
-                          subtitle: Text(
-                            inv.createdAt.toLocal().toString().split(' ')[0],
-                          ),
-                          trailing: Badge(
-                            text: inv.status,
-                            variant: inv.status == 'paid'
-                                ? BadgeVariant.success
-                                : BadgeVariant.warning,
-                          ),
-                          onTap: inv.pdfUrl != null ? () {} : null,
+                  children: [
+                    ...pageItems.map(
+                      (inv) => ListTile(
+                        leading: Icon(Icons.receipt,
+                            color: colors.fgMuted),
+                        title: Text(
+                          '\$${inv.amount} ${inv.currency.toUpperCase()}',
                         ),
-                      )
-                      .toList(),
+                        subtitle: Text(
+                          inv.createdAt
+                              .toLocal()
+                              .toString()
+                              .split(' ')[0],
+                        ),
+                        trailing: Badge(
+                          text: inv.status,
+                          variant: inv.status == 'paid'
+                              ? BadgeVariant.success
+                              : BadgeVariant.warning,
+                        ),
+                        onTap: inv.pdfUrl != null
+                            ? () => launchUrl(Uri.parse(inv.pdfUrl!))
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    InvoicePagination(
+                      currentPage: _page,
+                      totalPages: totalPages,
+                      onPrevious: _page > 1
+                          ? () => setState(() => _page--)
+                          : null,
+                      onNext: _page < totalPages
+                          ? () => setState(() => _page++)
+                          : null,
+                    ),
+                  ],
                 );
               },
             ),

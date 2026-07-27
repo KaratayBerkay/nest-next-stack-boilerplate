@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,6 +12,8 @@ import '../../../components/ui/toast/toast.dart';
 import '../../../constants/theme.dart';
 import '../../../hooks/use_auth.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../../fallbacks/index.dart';
+import '../settings_shell.dart';
 
 final _profileProvider = FutureProvider((ref) async {
   final server = ref.read(profileGetServerProvider);
@@ -26,14 +31,38 @@ class SettingsAccountPageContent extends ConsumerWidget {
     final profileAsync = ref.watch(_profileProvider);
     final user = ref.watch(currentUserProvider);
 
-    return profileAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
-      data: (profile) => _AccountForm(
-        profile: profile,
-        user: user,
-        colors: colors,
-        ref: ref,
+    return SettingsShellScaffold(
+      lang: lang,
+      child: profileAsync.when(
+        loading: () => const SettingsLoadingFallback(),
+        error: (e, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.error_outline, size: 48, color: colors.danger),
+                const SizedBox(height: 12),
+                Text(
+                  'Error loading profile',
+                  style: TextStyle(color: colors.danger, fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '$e',
+                  style: TextStyle(color: colors.fgMuted, fontSize: 13),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+        data: (profile) => _AccountForm(
+          profile: profile,
+          user: user,
+          colors: colors,
+          ref: ref,
+        ),
       ),
     );
   }
@@ -59,7 +88,13 @@ class _AccountForm extends StatefulWidget {
 class _AccountFormState extends State<_AccountForm> {
   late TextEditingController _nameCtrl;
   late TextEditingController _bioCtrl;
+  late TextEditingController _usernameCtrl;
   bool _saving = false;
+  bool _avatarUploading = false;
+
+  Timer? _usernameDebounce;
+  bool _usernameChecking = false;
+  bool? _usernameAvailable;
 
   @override
   void initState() {
@@ -67,22 +102,102 @@ class _AccountFormState extends State<_AccountForm> {
     _nameCtrl =
         TextEditingController(text: widget.profile.name as String? ?? '');
     _bioCtrl = TextEditingController(text: widget.profile.bio as String? ?? '');
+    _usernameCtrl = TextEditingController(
+      text: widget.profile.username as String? ?? '',
+    );
   }
 
   @override
   void dispose() {
     _nameCtrl.dispose();
     _bioCtrl.dispose();
+    _usernameCtrl.dispose();
+    _usernameDebounce?.cancel();
     super.dispose();
+  }
+
+  void _onUsernameChanged(String value) {
+    _usernameDebounce?.cancel();
+    if (value.isEmpty || value == (widget.profile.username as String? ?? '')) {
+      setState(() {
+        _usernameChecking = false;
+        _usernameAvailable = null;
+      });
+      return;
+    }
+    setState(() => _usernameChecking = true);
+    _usernameDebounce = Timer(const Duration(milliseconds: 300), () async {
+      try {
+        final available =
+            await widget.ref.read(profileActionsProvider).checkUsername(value);
+        if (mounted) {
+          setState(() {
+            _usernameChecking = false;
+            _usernameAvailable = available;
+          });
+        }
+      } catch (_) {
+        if (mounted) {
+          setState(() {
+            _usernameChecking = false;
+            _usernameAvailable = null;
+          });
+        }
+      }
+    });
+  }
+
+  Future<void> _pickAvatar() async {
+    final result = await FilePicker.pickFiles(
+      type: FileType.image,
+    );
+    if (result == null || result.files.isEmpty) return;
+
+    final file = result.files.first;
+    if (file.size > 5 * 1024 * 1024) {
+      if (mounted) showToast(context, 'File must be under 5MB');
+      return;
+    }
+    final ext = file.extension?.toLowerCase();
+    if (ext == null || !['jpg', 'jpeg', 'png', 'webp', 'gif'].contains(ext)) {
+      if (mounted) showToast(context, 'Only jpeg, png, webp, gif allowed');
+      return;
+    }
+    if (file.path == null) return;
+
+    setState(() => _avatarUploading = true);
+    try {
+      final url =
+          await widget.ref.read(profileActionsProvider).uploadAvatar(file.path!);
+      await widget.ref.read(profileActionsProvider).update(avatarUrl: url);
+      if (mounted) showToast(context, 'Avatar updated');
+    } catch (e) {
+      if (mounted) showToast(context, 'Failed: $e');
+    } finally {
+      if (mounted) setState(() => _avatarUploading = false);
+    }
   }
 
   Future<void> _save() async {
     setState(() => _saving = true);
     try {
-      await widget.ref.read(profileActionsProvider).update(
-            name: _nameCtrl.text,
-            bio: _bioCtrl.text,
-          );
+      final Map<String, dynamic> updates = {};
+      if (_nameCtrl.text != (widget.profile.name as String? ?? '')) {
+        updates['name'] = _nameCtrl.text;
+      }
+      if (_bioCtrl.text != (widget.profile.bio as String? ?? '')) {
+        updates['bio'] = _bioCtrl.text;
+      }
+      if (_usernameCtrl.text != (widget.profile.username as String? ?? '')) {
+        updates['username'] = _usernameCtrl.text;
+      }
+      if (updates.isNotEmpty) {
+        await widget.ref.read(profileActionsProvider).update(
+              name: updates['name'] as String?,
+              bio: updates['bio'] as String?,
+              username: updates['username'] as String?,
+            );
+      }
       if (mounted) showToast(context, 'Profile updated');
     } catch (e) {
       if (mounted) showToast(context, 'Failed: $e');
@@ -94,22 +209,61 @@ class _AccountFormState extends State<_AccountForm> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    final colors = widget.colors;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         Center(
           child: Column(
             children: [
-              Avatar(name: widget.profile.name as String? ?? 'U', radius: 32),
+              Stack(
+                children: [
+                  Avatar(
+                    imageUrl: widget.profile.avatarUrl as String?,
+                    name: widget.profile.name as String? ?? 'U',
+                    radius: 32,
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: InkWell(
+                      onTap: _avatarUploading ? null : _pickAvatar,
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: colors.brand,
+                          shape: BoxShape.circle,
+                        ),
+                        child: _avatarUploading
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.camera_alt,
+                                size: 16,
+                                color: Colors.white,
+                              ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 12),
               Text(
                 widget.profile.name as String? ?? 'User',
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    fontSize: 18, fontWeight: FontWeight.bold),
               ),
               Text(
                 widget.profile.email as String? ?? '',
-                style: TextStyle(color: widget.colors.fgMuted),
+                style: TextStyle(color: colors.fgMuted),
               ),
             ],
           ),
@@ -118,6 +272,28 @@ class _AccountFormState extends State<_AccountForm> {
         TextField(
           controller: _nameCtrl,
           decoration: InputDecoration(labelText: t.settingsDisplayName),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _usernameCtrl,
+          decoration: InputDecoration(
+            labelText: 'Username',
+            suffixIcon: _usernameChecking
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: Padding(
+                      padding: EdgeInsets.all(12),
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : _usernameAvailable == true
+                    ? const Icon(Icons.check_circle, color: Colors.green)
+                    : _usernameAvailable == false
+                        ? const Icon(Icons.cancel, color: Colors.red)
+                        : null,
+          ),
+          onChanged: _onUsernameChanged,
         ),
         const SizedBox(height: 12),
         TextField(

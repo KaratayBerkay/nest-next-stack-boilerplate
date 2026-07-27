@@ -14,6 +14,7 @@ const _query = '''
       title
       content
       imageUrl
+      coverImage
       createdAt
       updatedAt
       author {
@@ -21,6 +22,15 @@ const _query = '''
         name
         avatarUrl
         email
+      }
+      reactions {
+        id
+        type
+        userId
+      }
+      _count {
+        comments
+        reactions
       }
     }
   }

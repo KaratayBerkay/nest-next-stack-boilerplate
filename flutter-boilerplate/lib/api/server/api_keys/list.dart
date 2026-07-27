@@ -8,6 +8,10 @@ class ApiKey {
   final String prefix;
   final DateTime createdAt;
   final DateTime? lastUsedAt;
+  final DateTime? expiresAt;
+  final bool enabled;
+  final String role;
+  final String tier;
 
   const ApiKey({
     required this.id,
@@ -15,6 +19,10 @@ class ApiKey {
     required this.prefix,
     required this.createdAt,
     this.lastUsedAt,
+    this.expiresAt,
+    this.enabled = true,
+    this.role = 'USER',
+    this.tier = 'free',
   });
 
   factory ApiKey.fromJson(Map<String, dynamic> json) {
@@ -26,6 +34,12 @@ class ApiKey {
       lastUsedAt: json['lastUsedAt'] != null
           ? DateTime.parse(json['lastUsedAt'] as String)
           : null,
+      expiresAt: json['expiresAt'] != null
+          ? DateTime.parse(json['expiresAt'] as String)
+          : null,
+      enabled: json['enabled'] as bool? ?? true,
+      role: json['role'] as String? ?? 'USER',
+      tier: json['tier'] as String? ?? 'free',
     );
   }
 }

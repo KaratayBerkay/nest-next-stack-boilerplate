@@ -10,9 +10,9 @@ class ApiKeyActions {
 
   ApiKeyActions(this._ref);
 
-  Future<Map<String, dynamic>> create(String name) async {
+  Future<Map<String, dynamic>> create(String name, {int? expiresInDays}) async {
     final server = _ref.read(apiKeyCreateServerProvider);
-    return server.call(name);
+    return server.call(name, expiresInDays: expiresInDays);
   }
 
   Future<void> revoke(String keyId) async {

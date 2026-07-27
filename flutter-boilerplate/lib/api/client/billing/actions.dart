@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../server/billing/address.dart';
 import '../../server/billing/cancel.dart';
+import '../../server/billing/remove_payment_method.dart';
+import '../../server/billing/set_default_payment_method.dart';
 import '../../server/billing/stripe.dart';
 
 final billingActionsProvider = Provider((ref) => BillingActions(ref));
@@ -29,5 +31,15 @@ class BillingActions {
   Future<Map<String, dynamic>> subscribe(String priceId) async {
     final server = _ref.read(stripeServerProvider);
     return server.subscribe(priceId);
+  }
+
+  Future<void> removePaymentMethod(String paymentMethodId) async {
+    final server = _ref.read(removePaymentMethodServerProvider);
+    await server.call(paymentMethodId);
+  }
+
+  Future<void> setDefaultPaymentMethod(String paymentMethodId) async {
+    final server = _ref.read(setDefaultPaymentMethodServerProvider);
+    await server.call(paymentMethodId);
   }
 }
