@@ -1,13 +1,14 @@
 # convert-frontend-8-flutter — Settings, Feed, and Share: close the gap with Next.js
 
 **Date:** 2026-07-27 · **Planned against:** HEAD `b8afd99` · **Implemented as:**
-`9839ee2`/`9a47fd3` · **Re-verified against:** HEAD `9a47fd3` · **Status:** ⚠️
-**PARTIALLY IMPLEMENTED.** Researched via 4 parallel deep-comparison
+`9839ee2`/`9a47fd3`/`259fe6e` · **Re-verified against:** HEAD `259fe6e` · **Status:** ✅
+**FULLY IMPLEMENTED.** Researched via 4 parallel deep-comparison
 passes (Settings general/account/privacy/nav, Settings billing/api-keys/sessions/index,
 Feed, Share), each independently verifying file:line citations on both sides against
-current HEAD. All 61 tasks below were then implemented and committed, and all gates
-are genuinely green (`flutter analyze` 0 issues, `dart format` clean, `flutter test`
-412/413 — the 1 failure is the pre-existing, pre-disclosed `card_test.dart` flake,
+current HEAD. All 79 tasks (Stages A–R + Stage S) were then implemented and committed,
+and all gates are genuinely green (`flutter analyze` 0 issues, `dart format` clean,
+`flutter test` 416/417 — the 1 failure is the pre-existing, pre-disclosed
+`card_test.dart` flake,
 not a regression).
 
 **But green gates and `[x]` marks were not sufficient here, again** (this project's
@@ -868,7 +869,7 @@ full root-cause detail for each is in §11. T62/T63/T64 (reaction highlighting) 
 the highest priority: same app-wide-impact class as Stage K itself. Otherwise these
 are independent — no shared blocker, fix in any order.
 
-- [ ] **T62 (M) — Thread `currentUserId` through `PostHeader` into its
+- [x] **T62 (M) — Thread `currentUserId` through `PostHeader` into its
   `ReactionInline`.** Add a `String? currentUserId` field to `PostHeader`
   (`components/feed/post_header.dart` — currently has no such field anywhere in its
   constructor), pass it through to the `ReactionInline` call
@@ -876,34 +877,34 @@ are independent — no shared blocker, fix in any order.
   (`components/feed/post_card.dart:34-41`) pass `user?.id` — it already computes
   `user` via `currentUserProvider` at line 25 for the `isOwn` check, just reuse it.
   See §11.1.
-- [ ] **T63 (S) — Wire `onToggle` into comment-level `ReactionInline`.**
+- [x] **T63 (S) — Wire `onToggle` into comment-level `ReactionInline`.**
   `components/feed/comment_section.dart`'s `_CommentTile` (the `ReactionInline` call
   at lines 304-310) receives `onToggleReaction` as a widget field but never forwards
   it as `ReactionInline`'s `onToggle` — add
   `onToggle: (type) => onToggleReaction?.call(type, null, comment.id)`. Also drop
   the `comment.reactions.isNotEmpty` gate around that call (line 304) so a comment
   with zero reactions still has a way to add the first one. See §11.1.
-- [ ] **T64 (S) — Retire `Post.isLiked`, use `isLikedBy()` everywhere.** Delete the
+- [x] **T64 (S) — Retire `Post.isLiked`, use `isLikedBy()` everywhere.** Delete the
   dead `isLiked` field (`types/feed/post.dart:31`, permanently `false` since nothing
   sets it from JSON anymore) and update its last 2 real callers —
   `views/posts/page_view.dart:177-181` and
   `views/posts/[uuid]/reaction_breakdown.dart:27-40` — to call
   `post.isLikedBy(currentUserId)` instead, threading `currentUserId` in from
   `currentUserProvider` the same way T62 does. See §11.1.
-- [ ] **T65 (M) — Build the feed search box.** `feedSearchProvider`
+- [x] **T65 (M) — Build the feed search box.** `feedSearchProvider`
   (`api/client/posts/query.dart:126-130`) already exists, already correctly forwards
   `search:` to the backend, and has zero callers. Add a `TextField` to
   `feed_base_view.dart`'s header row (next to the Share button) with a
   `controller`/`onChanged`, and switch the list to read from
   `feedSearchProvider(query)` when the query is non-empty, falling back to
   `paginatedFeedProvider` otherwise. See §11.2.
-- [ ] **T66 (S) — Point realtime feed invalidation at the provider the UI actually
+- [x] **T66 (S) — Point realtime feed invalidation at the provider the UI actually
   reads.** `lib/realtime/realtime_provider.dart`'s `Feed` case (`subtype == 'New'`
   and `subtype == 'Post'` branches, lines 82-92) invalidates `feedProvider`; change
   both to invalidate `paginatedFeedProvider` instead (or call its `.refresh()`),
   since `feed_base_view.dart` has read `paginatedFeedProvider` exclusively since
   T42's pagination rework. See §11.2.
-- [ ] **T67 (M) — Fix the notification-tap dispatch to cover all real notification
+- [x] **T67 (M) — Fix the notification-tap dispatch to cover all real notification
   types.** `views/notification/free_page_view.dart:78-86` only branches on
   `FRIEND_REQUEST`/`POST`/a nonexistent `MESSAGE`. Mirror web's actual
   `notificationTarget()` (`next-js-boilerplate/src/lib/notifications/target.ts`):
@@ -913,13 +914,13 @@ are independent — no shared blocker, fix in any order.
   Drop the dead `MESSAGE`/`'message'` branch — confirmed not a real
   `NotificationType` value (`MENTION | COMMENT | REACTION | FOLLOW |
   FRIEND_REQUEST | POST | SYSTEM | BILLING | SECURITY`). See §11.2.
-- [ ] **T68 (S) — Seed Timezone from the real profile.**
+- [x] **T68 (S) — Seed Timezone from the real profile.**
   `general/page_view.dart`'s `_stagedTimezone` initializes to `''`
   unconditionally (line 107) and nothing in the file ever reads the user's
   profile. Read `userProfileProvider` (already built,
   `api/client/profile/query.dart`) and seed `_stagedTimezone` from `user.timezone`
   the same way `_stagedLocale` seeds from `localeProvider`. See §11.3.
-- [ ] **T69 (M) — Give date-display a real persisted provider.** Build a
+- [x] **T69 (M) — Give date-display a real persisted provider.** Build a
   `dateDisplayProvider` mirroring `hooks/use_currency.dart`'s
   `StateNotifierProvider` + `SharedPreferences` load-on-init/save-on-set pattern
   exactly (currently `general/page_view.dart` only *writes* the `date_display` key
@@ -928,7 +929,7 @@ are independent — no shared blocker, fix in any order.
   `dateDisplayCookieProvider` (`hooks/use_date_display_cookie.dart`, zero call
   sites) rather than leaving a 3rd disconnected piece of date-display state around.
   See §11.3.
-- [ ] **T70 (S) — Localize Account's username/avatar-upload/error strings.**
+- [x] **T70 (S) — Localize Account's username/avatar-upload/error strings.**
   Replace the hardcoded strings in `account/page_view.dart` — `'Username'` (line
   283), `'File must be under 5MB'` (line 158), `'Only jpeg, png, webp, gif
   allowed'` (line 163), and the unused checking/available/taken state text — with
@@ -938,16 +939,16 @@ are independent — no shared blocker, fix in any order.
   `settingsErrorsUsernameTaken`. Also localize the "Error loading profile" heading
   (lines 38-59) and stop showing the raw `'$e'` exception text to the user. See
   §11.3.
-- [ ] **T71 (S) — Reuse `privacy_toggle_row.dart` as T14 originally specified**, or
+- [x] **T71 (S) — Reuse `privacy_toggle_row.dart` as T14 originally specified**, or
   formally delete it if the inline-`SwitchListTile` approach in
   `privacy/page_view.dart` (lines 73-113) is the preferred shape going forward —
   right now it's neither, just dead again. See §11.4.
-- [ ] **T72 (S) — Wrap Billing's Cancel-Subscription call in try/catch + toast.**
+- [x] **T72 (S) — Wrap Billing's Cancel-Subscription call in try/catch + toast.**
   `billing/page_view.dart`'s cancel `onPressed` (lines 120-146) still has no error
   handling around `cancelSubscription()` — a paid user's failed cancel (network
   error, already-canceled, etc.) still fails with no feedback and no navigation.
   See §11.5.
-- [ ] **T73 (M) — Wire "Add card" to the real Stripe setup-intent flow**, or
+- [x] **T73 (M) — Wire "Add card" to the real Stripe setup-intent flow**, or
   deliberately relabel/repurpose the button if "redirect to upgrade" turns out to
   be the intended design. Currently `billing/page_view.dart` (lines 320 and 364)
   both call `context.go('/v1/en/plans')` — hardcoded `en` regardless of `lang`, and
@@ -955,23 +956,23 @@ are independent — no shared blocker, fix in any order.
   `BillingActions.createSetupIntent()`/Stripe plumbing (`lib/stripe_provider.dart`,
   `views/checkout/stripe_elements.dart`) T17 was supposed to wire up here. See
   §11.5.
-- [ ] **T74 (S) — Fix the invoice-pagination page-count bug.**
+- [x] **T74 (S) — Fix the invoice-pagination page-count bug.**
   `billing/page_view.dart:409-410`: `(invoices.length / _perPage).ceil().clamp(1,
   1)` always evaluates to exactly `1` regardless of `invoices.length`, so "Next" is
   permanently disabled no matter how many invoices exist. Drop the `.clamp(1, 1)`
   (the empty-list case is already handled separately above, so no lower-bound
   clamp is even needed). See §11.5.
-- [ ] **T75 (S) — Localize the new Billing sections' hardcoded strings**
+- [x] **T75 (S) — Localize the new Billing sections' hardcoded strings**
   (`'Payment Methods'`, `'Billing Address'`, `'Invoices'`, `'No payment methods
   saved.'`, `'No invoices yet.'`, `'Set default'`, `'Remove'`, `'Failed: $e'`, etc.
   throughout `billing/page_view.dart`) — matching ARB keys already exist verbatim:
   `settingsPaymentMethods`, `settingsInvoices`, `settingsNoPaymentMethods`,
   `settingsNoInvoices`, `settingsBillingAddressEmpty`. See §11.5.
-- [ ] **T76 (S) — Render API key `role`/`tier`.** Both are already fetched and
+- [x] **T76 (S) — Render API key `role`/`tier`.** Both are already fetched and
   parsed onto `ApiKey` (`api/server/api_keys/list.dart:41-42`) but never displayed
   anywhere in `api_keys/page_content.dart` — add them next to the existing
   enabled/expiresAt line. See §11.6.
-- [ ] **T77 (M) — Fix `_featuresForTier()`'s mapping direction.**
+- [x] **T77 (M) — Fix `_featuresForTier()`'s mapping direction.**
   `settings/page_view.dart:118-151` currently maps each tier to its *own* features;
   per T28's original spec it should match
   `next-js-boilerplate/src/views/settings/PageContent.tsx:40-45`'s one-tier-ahead
@@ -979,7 +980,7 @@ are independent — no shared blocker, fix in any order.
   `PREMIUM` → Pro's) as an upsell teaser. Also fix the free-tier (`default`)
   branch, which currently returns a truncated 1-item list instead of Basic's full
   2-item feature list. See §11.7.
-- [ ] **T78 (S) — Surface `PlanInfoCard`'s `price` and `cancelAtPeriodEnd`.**
+- [x] **T78 (S) — Surface `PlanInfoCard`'s `price` and `cancelAtPeriodEnd`.**
   Two bugs: (1) `api/server/billing/subscription.dart`'s query already fetches
   `priceCents`/`currency` over the wire, but `SubscriptionInfo.fromJson` never
   parses them onto the model — extend `SubscriptionInfo` to carry both; (2)
@@ -988,7 +989,7 @@ are independent — no shared blocker, fix in any order.
   `cancelAtPeriodEnd` into `plan_info_card.dart`, which declares the field but
   never renders it in `build()` — format a real price string for paid tiers and
   render a "Cancels on {date}" line when `cancelAtPeriodEnd` is true. See §11.7.
-- [ ] **T79 (S) — Replace `date_display_test.dart` with a real persistence test**
+- [x] **T79 (S) — Replace `date_display_test.dart` with a real persistence test**
   once T69 lands — the current test only checks unrelated pre-existing
   `DateDisplayConstants` format strings, not the date-display preference's
   load/save behavior it's nominally covering. See §11.8.
