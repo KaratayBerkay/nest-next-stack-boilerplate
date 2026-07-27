@@ -148,6 +148,7 @@ class MessageInput extends StatelessWidget {
   final TextEditingController controller;
   final String? placeholder;
   final bool disabled;
+  final ValueChanged<String>? onSubmitted;
 
   const MessageInput({
     super.key,
@@ -155,6 +156,7 @@ class MessageInput extends StatelessWidget {
     required this.controller,
     this.placeholder,
     this.disabled = false,
+    this.onSubmitted,
   });
 
   @override
@@ -164,6 +166,8 @@ class MessageInput extends StatelessWidget {
     return TextField(
       controller: controller,
       enabled: !disabled,
+      onSubmitted: onSubmitted,
+      textInputAction: TextInputAction.send,
       decoration: InputDecoration(
         hintText:
             placeholder ?? AppLocalizations.of(context).chatRoomTypeMessage,
@@ -198,18 +202,13 @@ class SendButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
 
-    return FilledButton(
+    return IconButton(
+      icon: Icon(
+        Icons.send,
+        color: disabled ? colors.fgMuted : colors.brand,
+      ),
       onPressed: disabled ? null : onClick,
-      style: FilledButton.styleFrom(
-        backgroundColor: colors.brand,
-        foregroundColor: colors.surface,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-      child: Text(
-        label ?? AppLocalizations.of(context).chatRoomSend,
-        style: const TextStyle(fontSize: 13),
-      ),
+      tooltip: label ?? AppLocalizations.of(context).chatRoomSend,
     );
   }
 }

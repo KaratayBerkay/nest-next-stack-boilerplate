@@ -280,7 +280,7 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
                       left: _sidebarOpen ? 0 : -width,
                       top: 0,
                       bottom: 0,
-                      width: width * 0.8,
+                      width: width,
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeOut,
                       child: sidebar,
@@ -290,7 +290,7 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
               : Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    sidebar,
+                    SizedBox(width: 220, child: sidebar),
                     const SizedBox(width: 12),
                     Expanded(child: messagesContent),
                   ],

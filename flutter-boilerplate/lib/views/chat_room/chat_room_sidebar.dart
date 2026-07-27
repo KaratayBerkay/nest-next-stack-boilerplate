@@ -57,10 +57,10 @@ class _ChatRoomSidebarState extends State<ChatRoomSidebar>
     final colors = AppColors.of(context);
 
     return Container(
-      width: 220,
-      margin: const EdgeInsets.only(right: 12),
+      width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
+        color: colors.surface,
         border: Border.all(color: colors.border),
         borderRadius: BorderRadius.circular(12),
       ),

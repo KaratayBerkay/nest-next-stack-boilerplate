@@ -135,6 +135,7 @@ class ChatRoomMainContent extends StatelessWidget {
                         controller: messageController,
                         placeholder: _placeholder(t),
                         disabled: connectionState != 'online',
+                        onSubmitted: (_) => onSend(),
                       ),
                     ),
                     const SizedBox(width: 8),
