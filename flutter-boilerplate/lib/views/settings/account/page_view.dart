@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../fallbacks/index.dart';
 import '../../../api/client/profile/actions.dart';
 import '../../../api/server/profile/get.dart';
 import '../../../components/ui/avatar/avatar.dart';
@@ -12,7 +13,6 @@ import '../../../components/ui/toast/toast.dart';
 import '../../../constants/theme.dart';
 import '../../../hooks/use_auth.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../../../fallbacks/index.dart';
 import '../settings_shell.dart';
 
 final _profileProvider = FutureProvider((ref) async {
@@ -167,8 +167,9 @@ class _AccountFormState extends State<_AccountForm> {
 
     setState(() => _avatarUploading = true);
     try {
-      final url =
-          await widget.ref.read(profileActionsProvider).uploadAvatar(file.path!);
+      final url = await widget.ref
+          .read(profileActionsProvider)
+          .uploadAvatar(file.path!);
       await widget.ref.read(profileActionsProvider).update(avatarUrl: url);
       if (mounted) showToast(context, 'Avatar updated');
     } catch (e) {
@@ -259,7 +260,9 @@ class _AccountFormState extends State<_AccountForm> {
               Text(
                 widget.profile.name as String? ?? 'User',
                 style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.bold),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               Text(
                 widget.profile.email as String? ?? '',

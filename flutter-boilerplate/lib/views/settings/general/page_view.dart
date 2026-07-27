@@ -42,8 +42,18 @@ String _previewDate(String format) {
   switch (format) {
     case 'Long':
       const months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
       ];
       return '${months[now.month - 1]} ${now.day}, ${now.year}';
     case 'ISO':
@@ -102,11 +112,12 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
   Future<void> _save() async {
     setState(() => _saving = true);
     try {
-      if (_stagedLocale != ref.read(localeProvider) || _stagedTimezone.isNotEmpty) {
+      if (_stagedLocale != ref.read(localeProvider) ||
+          _stagedTimezone.isNotEmpty) {
         await ref.read(profileActionsProvider).update(
-          locale: _stagedLocale,
-          timezone: _stagedTimezone,
-        );
+              locale: _stagedLocale,
+              timezone: _stagedTimezone,
+            );
         ref.read(localeProvider.notifier).setLocale(_stagedLocale);
       }
       await ref.read(currencyProvider.notifier).setCurrency(_stagedCurrency);
@@ -132,8 +143,8 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 16, 16, 12),
                 child: ThemePicker(),
               ),
               const Divider(height: 1),
@@ -169,7 +180,9 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
                   style: TextStyle(color: colors.fgMuted, fontSize: 12),
                 ),
                 trailing: DropdownButton<String>(
-                  value: _timezones.contains(_stagedTimezone) ? _stagedTimezone : null,
+                  value: _timezones.contains(_stagedTimezone)
+                      ? _stagedTimezone
+                      : null,
                   items: _timezones
                       .map(
                         (tz) => DropdownMenuItem<String>(

@@ -75,11 +75,13 @@ class FreeNotificationPage extends ConsumerWidget {
                       ref.read(notificationActionsProvider).markRead(item.id);
                       ref.invalidate(notificationsProvider);
                     }
-                    if (item.type == 'FRIEND_REQUEST' || item.type == 'friend_request') {
+                    if (item.type == 'FRIEND_REQUEST' ||
+                        item.type == 'friend_request') {
                       context.push('/v1/$lang/find-friends/requests');
                     } else if (item.type == 'POST' || item.type == 'post') {
                       context.push('/v1/$lang/posts/$targetId');
-                    } else if (item.type == 'MESSAGE' || item.type == 'message') {
+                    } else if (item.type == 'MESSAGE' ||
+                        item.type == 'message') {
                       context.push('/v1/$lang/messages');
                     }
                   },

@@ -117,9 +117,8 @@ class _FeedBaseViewState extends ConsumerState<FeedBaseView> {
           ),
         ),
         Expanded(
-          child: widget.showSidebar
-              ? _SidebarLayout(content: content)
-              : content,
+          child:
+              widget.showSidebar ? _SidebarLayout(content: content) : content,
         ),
       ],
     );
@@ -133,7 +132,7 @@ class _FeedBaseViewState extends ConsumerState<FeedBaseView> {
         5,
         (_) => const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          child: SkeletonCard(lines: 3),
+          child: SkeletonCard(),
         ),
       ),
     );

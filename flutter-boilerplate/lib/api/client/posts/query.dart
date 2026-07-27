@@ -7,7 +7,7 @@ import '../../server/posts/list.dart';
 import '../../server/posts/single.dart';
 import '../../server/posts/stats.dart';
 
-const PAGE_SIZE = 5;
+const pageSize = 5;
 
 class PaginatedFeedState {
   final List<Post> posts;
@@ -58,10 +58,10 @@ class PaginatedFeedNotifier extends StateNotifier<PaginatedFeedState> {
   }
 
   Future<void> _initialLoad() async {
-    state = const PaginatedFeedState(isInitialLoading: true);
+    state = const PaginatedFeedState();
     try {
-      final posts = await _server.call(take: PAGE_SIZE);
-      final hasMore = posts.length >= PAGE_SIZE;
+      final posts = await _server.call(take: pageSize);
+      final hasMore = posts.length >= pageSize;
       final cursor = posts.isNotEmpty ? posts.last.id : null;
       state = PaginatedFeedState(
         posts: posts,
@@ -81,9 +81,10 @@ class PaginatedFeedNotifier extends StateNotifier<PaginatedFeedState> {
     if (state.isLoadingMore || !state.hasMore || state.cursor == null) return;
     state = state.copyWith(isLoadingMore: true);
     try {
-      final nextPosts = await _server.call(cursor: state.cursor, take: PAGE_SIZE);
+      final nextPosts =
+          await _server.call(cursor: state.cursor, take: pageSize);
       final combined = [...state.posts, ...nextPosts];
-      final hasMore = nextPosts.length >= PAGE_SIZE;
+      final hasMore = nextPosts.length >= pageSize;
       final cursor = nextPosts.isNotEmpty ? nextPosts.last.id : null;
       state = PaginatedFeedState(
         posts: combined,
@@ -97,10 +98,10 @@ class PaginatedFeedNotifier extends StateNotifier<PaginatedFeedState> {
   }
 
   Future<void> refresh() async {
-    state = const PaginatedFeedState(isInitialLoading: true);
+    state = const PaginatedFeedState();
     try {
-      final posts = await _server.call(take: PAGE_SIZE);
-      final hasMore = posts.length >= PAGE_SIZE;
+      final posts = await _server.call(take: pageSize);
+      final hasMore = posts.length >= pageSize;
       final cursor = posts.isNotEmpty ? posts.last.id : null;
       state = PaginatedFeedState(
         posts: posts,
@@ -122,17 +123,20 @@ final feedProvider = FutureProvider<List<Post>>((ref) async {
   return server.call();
 });
 
-final feedSearchProvider = FutureProvider.family<List<Post>, String>((ref, String query) async {
+final feedSearchProvider =
+    FutureProvider.family<List<Post>, String>((ref, String query) async {
   final server = ref.read(feedListServerProvider);
   return server.call(search: query.isEmpty ? null : query);
 });
 
-final postProvider = FutureProvider.family<Post, String>((ref, String postId) async {
+final postProvider =
+    FutureProvider.family<Post, String>((ref, String postId) async {
   final server = ref.read(postSingleServerProvider);
   return server.call(postId);
 });
 
-final postCommentsProvider = FutureProvider.family<List<Comment>, String>((ref, String postId) async {
+final postCommentsProvider =
+    FutureProvider.family<List<Comment>, String>((ref, String postId) async {
   final server = ref.read(postCommentsServerProvider);
   return server.list(postId);
 });

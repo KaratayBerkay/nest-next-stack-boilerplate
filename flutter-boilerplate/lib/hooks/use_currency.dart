@@ -3,8 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const _currencyKey = 'currency_preference';
 
-final currencyProvider =
-    StateNotifierProvider<CurrencyNotifier, String>((ref) {
+final currencyProvider = StateNotifierProvider<CurrencyNotifier, String>((ref) {
   return CurrencyNotifier();
 });
 

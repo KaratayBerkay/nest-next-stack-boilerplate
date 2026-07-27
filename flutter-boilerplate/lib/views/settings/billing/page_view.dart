@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../fallbacks/index.dart';
 import '../../../api/client/billing/actions.dart';
 import '../../../api/client/billing/query.dart';
 import '../../../api/server/billing/address.dart';
@@ -15,7 +16,6 @@ import '../../../components/ui/card/card_header.dart';
 import '../../../components/ui/toast/toast.dart';
 import '../../../constants/theme.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../../../fallbacks/index.dart';
 import '../../settings/billing/billing_address_form.dart';
 import '../../settings/billing/billing_info_display.dart';
 import '../../settings/billing/invoice_pagination.dart';
@@ -302,8 +302,7 @@ class _PaymentMethodsSectionState
           ),
           CardContent(
             child: pmAsync.when(
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
+              loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) =>
                   Text('Error: $e', style: TextStyle(color: colors.danger)),
               data: (methods) {
@@ -327,12 +326,11 @@ class _PaymentMethodsSectionState
                   children: [
                     ...methods.map(
                       (pm) => ListTile(
-                        leading:
-                            Icon(Icons.credit_card, color: colors.brand),
-                        title:
-                            Text('${pm.brand} •••• ${pm.last4}'),
+                        leading: Icon(Icons.credit_card, color: colors.brand),
+                        title: Text('${pm.brand} •••• ${pm.last4}'),
                         subtitle: Text(
-                            'Expires ${pm.expMonth}/${pm.expYear}'),
+                          'Expires ${pm.expMonth}/${pm.expYear}',
+                        ),
                         trailing: pm.isDefault
                             ? const Badge(
                                 text: 'Default',
@@ -343,13 +341,17 @@ class _PaymentMethodsSectionState
                                 children: [
                                   TextButton(
                                     onPressed: () => _setDefault(pm.id),
-                                    child: const Text('Set default',
-                                        style: TextStyle(fontSize: 12)),
+                                    child: const Text(
+                                      'Set default',
+                                      style: TextStyle(fontSize: 12),
+                                    ),
                                   ),
                                   TextButton(
                                     onPressed: () => _removeMethod(pm.id),
-                                    child: const Text('Remove',
-                                        style: TextStyle(fontSize: 12)),
+                                    child: const Text(
+                                      'Remove',
+                                      style: TextStyle(fontSize: 12),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -400,18 +402,14 @@ class _InvoiceHistorySectionState
           ),
           CardContent(
             child: historyAsync.when(
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
+              loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) =>
                   Text('Error: $e', style: TextStyle(color: colors.danger)),
               data: (invoices) {
                 final totalPages =
                     (invoices.length / _perPage).ceil().clamp(1, 1);
                 final start = (_page - 1) * _perPage;
-                final pageItems = invoices
-                    .skip(start)
-                    .take(_perPage)
-                    .toList();
+                final pageItems = invoices.skip(start).take(_perPage).toList();
 
                 if (invoices.isEmpty) {
                   return Text(
@@ -423,16 +421,15 @@ class _InvoiceHistorySectionState
                   children: [
                     ...pageItems.map(
                       (inv) => ListTile(
-                        leading: Icon(Icons.receipt,
-                            color: colors.fgMuted),
+                        leading: Icon(
+                          Icons.receipt,
+                          color: colors.fgMuted,
+                        ),
                         title: Text(
                           '\$${inv.amount} ${inv.currency.toUpperCase()}',
                         ),
                         subtitle: Text(
-                          inv.createdAt
-                              .toLocal()
-                              .toString()
-                              .split(' ')[0],
+                          inv.createdAt.toLocal().toString().split(' ')[0],
                         ),
                         trailing: Badge(
                           text: inv.status,
@@ -449,9 +446,8 @@ class _InvoiceHistorySectionState
                     InvoicePagination(
                       currentPage: _page,
                       totalPages: totalPages,
-                      onPrevious: _page > 1
-                          ? () => setState(() => _page--)
-                          : null,
+                      onPrevious:
+                          _page > 1 ? () => setState(() => _page--) : null,
                       onNext: _page < totalPages
                           ? () => setState(() => _page++)
                           : null,

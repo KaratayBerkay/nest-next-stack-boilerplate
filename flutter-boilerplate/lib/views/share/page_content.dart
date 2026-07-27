@@ -39,19 +39,19 @@ class _SharePageContentState extends ConsumerState<SharePageContent> {
   }
 
   Future<void> _pickImage() async {
+    final t = AppLocalizations.of(context);
     final result = await FilePicker.pickFiles(
       type: FileType.image,
     );
     if (result == null || result.files.isEmpty) return;
     final file = result.files.first;
     if (file.size > UploadConstants.maxImageSize) {
-      _showError(AppLocalizations.of(context).settingsFileTooLarge);
+      _showError(t.settingsFileTooLarge);
       return;
     }
     final ext = file.extension?.toLowerCase();
-    if (ext == null ||
-        !UploadConstants.allowedImageTypes.contains(ext)) {
-      _showError(AppLocalizations.of(context).settingsInvalidFileType);
+    if (ext == null || !UploadConstants.allowedImageTypes.contains(ext)) {
+      _showError(t.settingsInvalidFileType);
       return;
     }
     if (file.path == null) return;
@@ -82,7 +82,8 @@ class _SharePageContentState extends ConsumerState<SharePageContent> {
       if (_pickedFilePath != null) {
         setState(() => _uploadStatus = UploadStatus.uploading);
         try {
-          imageUrl = await ref.read(postActionsProvider).uploadImage(_pickedFilePath!);
+          imageUrl =
+              await ref.read(postActionsProvider).uploadImage(_pickedFilePath!);
         } catch (_) {
           if (mounted) {
             setState(() {
@@ -96,13 +97,13 @@ class _SharePageContentState extends ConsumerState<SharePageContent> {
       }
 
       await ref.read(postActionsProvider).create(
-        title: title,
-        content: content,
-        imageUrl: imageUrl,
-      );
+            title: title,
+            content: content,
+            imageUrl: imageUrl,
+          );
 
       ref.invalidate(paginatedFeedProvider);
-      if (context.mounted) {
+      if (mounted) {
         context.go('/v1/${widget.lang}/feed');
       }
     } catch (_) {
@@ -156,7 +157,7 @@ class _SharePageContentState extends ConsumerState<SharePageContent> {
                 ),
               ),
               const Spacer(),
-              PageInfoButton(content: sharePageInfo),
+              const PageInfoButton(content: sharePageInfo),
             ],
           ),
           const SizedBox(height: 16),

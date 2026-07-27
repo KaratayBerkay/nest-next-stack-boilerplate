@@ -35,8 +35,9 @@ class PostCard extends ConsumerWidget {
             postData: post,
             isOwn: isOwn,
             onViewPost: () => context.push('/v1/$lang/posts/${post.id}'),
-            onToggleReaction: (String type) =>
-                ref.read(postActionsProvider).toggleReaction(post.id, type: type),
+            onToggleReaction: (String type) => ref
+                .read(postActionsProvider)
+                .toggleReaction(post.id, type: type),
           ),
           PostContent(postData: post),
           PostActions(
@@ -45,14 +46,20 @@ class PostCard extends ConsumerWidget {
             onCommentAdded: () => ref.invalidate(paginatedFeedProvider),
             onCreateComment: (String postId, String body, String? parentId) =>
                 ref.read(postActionsProvider).addComment(postId, body),
-            onUpdateComment: (String commentId, String body) =>
-                ref.read(postActionsProvider).updateComment(commentId, bodyText: body),
+            onUpdateComment: (String commentId, String body) => ref
+                .read(postActionsProvider)
+                .updateComment(commentId, bodyText: body),
             onDeleteComment: (String commentId) =>
                 ref.read(postActionsProvider).deleteComment(commentId),
-            onToggleReaction: (String type, String? postId, String? commentId) =>
-                commentId != null
-                    ? ref.read(postActionsProvider).toggleCommentReaction(commentId, type: type)
-                    : ref.read(postActionsProvider).toggleReaction(postId!, type: type),
+            onToggleReaction:
+                (String type, String? postId, String? commentId) =>
+                    commentId != null
+                        ? ref
+                            .read(postActionsProvider)
+                            .toggleCommentReaction(commentId, type: type)
+                        : ref
+                            .read(postActionsProvider)
+                            .toggleReaction(postId!, type: type),
           ),
         ],
       ),

@@ -49,7 +49,11 @@ class ImagePreviewSection extends StatelessWidget {
                   height: 200,
                   color: colors.surfaceAlt,
                   child: Center(
-                    child: Icon(Icons.broken_image, size: 48, color: colors.danger),
+                    child: Icon(
+                      Icons.broken_image,
+                      size: 48,
+                      color: colors.danger,
+                    ),
                   ),
                 ),
               ),
@@ -77,7 +81,8 @@ class ImagePreviewSection extends StatelessWidget {
                       color: Colors.black.withValues(alpha: 0.5),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.close, size: 18, color: Colors.white),
+                    child:
+                        const Icon(Icons.close, size: 18, color: Colors.white),
                   ),
                 ),
               ),
@@ -104,11 +109,15 @@ class ImagePreviewSection extends StatelessWidget {
                 ),
                 TextButton(
                   onPressed: onRemove,
-                  child: Text(t.shareRemove, style: TextStyle(fontSize: 12, color: colors.danger)),
+                  child: Text(
+                    t.shareRemove,
+                    style: TextStyle(fontSize: 12, color: colors.danger),
+                  ),
                 ),
                 TextButton(
                   onPressed: onRetry,
-                  child: Text(t.shareRetry, style: TextStyle(fontSize: 12)),
+                  child:
+                      Text(t.shareRetry, style: const TextStyle(fontSize: 12)),
                 ),
               ],
             ),

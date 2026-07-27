@@ -66,7 +66,10 @@ class PostActions {
     await server.delete(commentId);
   }
 
-  Future<void> toggleCommentReaction(String commentId, {String type = 'LIKE'}) async {
+  Future<void> toggleCommentReaction(
+    String commentId, {
+    String type = 'LIKE',
+  }) async {
     final server = _ref.read(postReactionsServerProvider);
     await server.toggleForComment(commentId, type: type);
   }

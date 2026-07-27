@@ -37,7 +37,10 @@ class PostReactionsServer {
     }
   }
 
-  Future<void> toggleForComment(String commentId, {String type = 'LIKE'}) async {
+  Future<void> toggleForComment(
+    String commentId, {
+    String type = 'LIKE',
+  }) async {
     final response = await _dio.post<dynamic>(
       '/graphql',
       data: {

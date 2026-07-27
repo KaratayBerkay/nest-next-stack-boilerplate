@@ -17,7 +17,9 @@ class SubscriptionInfo {
 
   factory SubscriptionInfo.fromJson(Map<String, dynamic> json) {
     return SubscriptionInfo(
-      plan: ((json['tier'] as String?) ?? (json['plan'] as String?))?.toLowerCase() ?? 'free',
+      plan: ((json['tier'] as String?) ?? (json['plan'] as String?))
+              ?.toLowerCase() ??
+          'free',
       status: json['cancelAtPeriodEnd'] == true ? 'canceling' : 'active',
       currentPeriodEnd: json['periodEnd'] != null
           ? DateTime.tryParse(json['periodEnd'] as String)
