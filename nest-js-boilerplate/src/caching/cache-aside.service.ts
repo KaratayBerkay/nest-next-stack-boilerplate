@@ -4,6 +4,9 @@ import { REDIS_CLIENT } from '../redis/redis.tokens';
 
 const DEFAULT_TTL = 60; // seconds
 
+// Matches JSON.stringify's Date output (Date.prototype.toJSON -> toISOString).
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
+
 @Injectable()
 export class CacheAsideService {
   private readonly logger = new Logger(CacheAsideService.name);
@@ -14,7 +17,17 @@ export class CacheAsideService {
     try {
       const raw = await this.redis.get(key);
       if (!raw) return null;
-      return JSON.parse(raw) as T;
+      // Revive ISO date strings back into Date instances: JSON.stringify
+      // collapses Date -> string on write, but our GraphQL DateTime scalar's
+      // serialize() is `value instanceof Date ? ... : null`, so a cache hit
+      // that still holds plain strings crashes every Date field as non-null
+      // violations. Without this, cached objects diverge in type from a
+      // fresh Prisma read even though the data is identical.
+      return JSON.parse(raw, (_key, value) =>
+        typeof value === 'string' && ISO_DATE_RE.test(value)
+          ? new Date(value)
+          : value,
+      ) as T;
     } catch {
       return null;
     }

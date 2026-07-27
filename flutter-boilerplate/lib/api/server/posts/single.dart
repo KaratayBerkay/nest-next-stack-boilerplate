@@ -14,9 +14,14 @@ const _query = '''
       title
       content
       imageUrl
-      authorId
       createdAt
       updatedAt
+      author {
+        id
+        name
+        avatarUrl
+        email
+      }
     }
   }
 ''';

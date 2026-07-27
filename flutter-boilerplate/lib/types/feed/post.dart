@@ -2,7 +2,6 @@ import 'reaction.dart';
 
 class Post {
   final String id;
-  final String uuid;
   final String title;
   final String content;
   final String? imageUrl;
@@ -17,7 +16,6 @@ class Post {
 
   const Post({
     required this.id,
-    required this.uuid,
     required this.title,
     required this.content,
     this.imageUrl,
@@ -32,15 +30,15 @@ class Post {
   });
 
   factory Post.fromJson(Map<String, dynamic> json) {
+    final author = json['author'] as Map<String, dynamic>?;
     return Post(
       id: json['id'] as String,
-      uuid: json['uuid'] as String,
       title: json['title'] as String,
       content: json['content'] as String,
       imageUrl: json['imageUrl'] as String?,
-      authorName: json['authorName'] as String,
-      authorAvatarUrl: json['authorAvatarUrl'] as String?,
-      authorEmail: json['authorEmail'] as String?,
+      authorName: (author?['name'] as String?) ?? 'Unknown',
+      authorAvatarUrl: author?['avatarUrl'] as String?,
+      authorEmail: author?['email'] as String?,
       likeCount: json['likeCount'] as int? ?? 0,
       commentCount: json['commentCount'] as int? ?? 0,
       isLiked: json['isLiked'] as bool? ?? false,
