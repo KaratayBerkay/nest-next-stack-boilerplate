@@ -96,19 +96,34 @@ class _GeneralSettings extends ConsumerStatefulWidget {
 
 class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
   late String _stagedLocale;
-  late String _stagedTimezone;
+  String _stagedTimezone = '';
   late String _stagedCurrency;
   late String _stagedDateDisplay;
   bool _saving = false;
+  bool _currencyTouched = false;
+  bool _dateDisplayTouched = false;
 
   @override
   void initState() {
     super.initState();
     _stagedLocale = ref.read(localeProvider);
-    final profile = ref.read(userProfileProvider).asData?.value;
-    _stagedTimezone = profile?.timezone ?? '';
     _stagedCurrency = ref.read(currencyProvider);
     _stagedDateDisplay = ref.read(dateDisplayProvider);
+    final profile = ref.read(userProfileProvider).asData?.value;
+    if (profile?.timezone != null) _stagedTimezone = profile!.timezone!;
+  }
+
+  void _syncFromProviders() {
+    final tz = ref.watch(userProfileProvider).asData?.value.timezone;
+    if (tz != null && _stagedTimezone.isEmpty) {
+      _stagedTimezone = tz;
+    }
+    ref.listen<String>(currencyProvider, (prev, next) {
+      if (!_currencyTouched) setState(() => _stagedCurrency = next);
+    });
+    ref.listen<String>(dateDisplayProvider, (prev, next) {
+      if (!_dateDisplayTouched) setState(() => _stagedDateDisplay = next);
+    });
   }
 
   Future<void> _save() async {
@@ -138,6 +153,7 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     final t = AppLocalizations.of(context);
+    _syncFromProviders();
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -221,7 +237,10 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
                       .toList(),
                   onChanged: (String? v) {
                     if (v != null) {
-                      setState(() => _stagedCurrency = v);
+                      setState(() {
+                        _stagedCurrency = v;
+                        _currencyTouched = true;
+                      });
                     }
                   },
                   underline: const SizedBox(),
@@ -246,7 +265,10 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
                       .toList(),
                   onChanged: (String? v) {
                     if (v != null) {
-                      setState(() => _stagedDateDisplay = v);
+                      setState(() {
+                        _stagedDateDisplay = v;
+                        _dateDisplayTouched = true;
+                      });
                     }
                   },
                   underline: const SizedBox(),

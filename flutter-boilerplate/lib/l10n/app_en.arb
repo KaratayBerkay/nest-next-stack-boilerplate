@@ -1099,6 +1099,8 @@
   "settingsPaymentMethods": "Payment Methods",
   "settingsAddPaymentMethod": "Add new card",
   "settingsMakeDefault": "Make default",
+  "settingsDefaultBadge": "Default",
+  "settingsRemove": "Remove",
   "settingsEditBillingInfo": "Edit billing info",
   "settingsBillingInfo": "Billing Info",
   "settingsBillingAddressEmpty": "No billing address saved.",

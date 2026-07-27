@@ -3535,6 +3535,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsMakeDefault => 'Varsayılan yap';
 
   @override
+  String get settingsDefaultBadge => 'Varsayılan';
+
+  @override
+  String get settingsRemove => 'Kaldır';
+
+  @override
   String get settingsEditBillingInfo => 'Fatura bilgisini düzenle';
 
   @override

@@ -6698,6 +6698,18 @@ abstract class AppLocalizations {
   /// **'Make default'**
   String get settingsMakeDefault;
 
+  /// No description provided for @settingsDefaultBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get settingsDefaultBadge;
+
+  /// No description provided for @settingsRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get settingsRemove;
+
   /// No description provided for @settingsEditBillingInfo.
   ///
   /// In en, this message translates to:

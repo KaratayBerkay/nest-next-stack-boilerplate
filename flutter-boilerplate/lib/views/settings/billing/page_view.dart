@@ -30,13 +30,14 @@ class SettingsBillingPageContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
     final subAsync = ref.watch(subscriptionProvider);
 
     return SettingsShellScaffold(
       lang: lang,
       child: subAsync.when(
         loading: () => const SettingsLoadingFallback(),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(t.notificationLoadFailed)),
         data: (sub) {
           if (sub.plan == 'free') return _FreeBillingView(lang: lang);
           return ListView(
@@ -112,7 +113,9 @@ class _SubscriptionCard extends ConsumerWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
-                      t.settingsCancelsOn,
+                      sub.currentPeriodEnd != null
+                          ? '${t.settingsCancelsOn} ${sub.currentPeriodEnd!.toLocal().toString().split(' ')[0]}'
+                          : t.settingsCancelsOn,
                       style: TextStyle(color: colors.warning, fontSize: 13),
                     ),
                   ),
@@ -150,7 +153,10 @@ class _SubscriptionCard extends ConsumerWidget {
                           }
                         } catch (e) {
                           if (context.mounted) {
-                            showToast(context, 'Failed to cancel: $e');
+                            showToast(
+                              context,
+                              t.settingsCancelSubscriptionFailed,
+                            );
                           }
                         }
                       }
@@ -210,7 +216,7 @@ class _BillingAddressSectionState
         showToast(context, t.settingsSaveSuccess);
       }
     } catch (e) {
-      if (mounted) showToast(context, 'Failed: $e');
+      if (mounted) showToast(context, t.settingsSaveFailed);
     }
   }
 
@@ -285,7 +291,7 @@ class _PaymentMethodsSectionState
       ref.invalidate(paymentMethodsProvider);
       if (mounted) showToast(context, t.settingsSaveSuccess);
     } catch (e) {
-      if (mounted) showToast(context, 'Failed: $e');
+      if (mounted) showToast(context, t.settingsSaveFailed);
     }
   }
 
@@ -296,7 +302,7 @@ class _PaymentMethodsSectionState
       ref.invalidate(paymentMethodsProvider);
       if (mounted) showToast(context, t.settingsSaveSuccess);
     } catch (e) {
-      if (mounted) showToast(context, 'Failed: $e');
+      if (mounted) showToast(context, t.settingsSaveFailed);
     }
   }
 
@@ -351,7 +357,7 @@ class _PaymentMethodsSectionState
       ref.invalidate(paymentMethodsProvider);
       if (mounted) showToast(context, t.settingsSaveSuccess);
     } catch (e) {
-      if (mounted) showToast(context, 'Failed: $e');
+      if (mounted) showToast(context, t.settingsSaveFailed);
     }
   }
 
@@ -374,8 +380,10 @@ class _PaymentMethodsSectionState
           CardContent(
             child: pmAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) =>
-                  Text('Error: $e', style: TextStyle(color: colors.danger)),
+              error: (e, _) => Text(
+                t.notificationLoadFailed,
+                style: TextStyle(color: colors.danger),
+              ),
               data: (methods) {
                 if (methods.isEmpty) {
                   return Column(
@@ -404,7 +412,7 @@ class _PaymentMethodsSectionState
                         ),
                         trailing: pm.isDefault
                             ? Badge(
-                                text: t.settingsMakeDefault,
+                                text: t.settingsDefaultBadge,
                                 variant: BadgeVariant.success,
                               )
                             : Row(
@@ -419,9 +427,9 @@ class _PaymentMethodsSectionState
                                   ),
                                   TextButton(
                                     onPressed: () => _removeMethod(pm.id),
-                                    child: const Text(
-                                      'Remove',
-                                      style: TextStyle(fontSize: 12),
+                                    child: Text(
+                                      t.settingsRemove,
+                                      style: const TextStyle(fontSize: 12),
                                     ),
                                   ),
                                 ],
@@ -475,8 +483,10 @@ class _InvoiceHistorySectionState
           CardContent(
             child: historyAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) =>
-                  Text('Error: $e', style: TextStyle(color: colors.danger)),
+              error: (e, _) => Text(
+                t.notificationLoadFailed,
+                style: TextStyle(color: colors.danger),
+              ),
               data: (invoices) {
                 final totalPages =
                     (invoices.length / _perPage).ceil().clamp(1, 999);

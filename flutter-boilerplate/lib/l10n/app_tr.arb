@@ -1099,6 +1099,8 @@
   "settingsPaymentMethods": "Ödeme Yöntemleri",
   "settingsAddPaymentMethod": "Yeni kart ekle",
   "settingsMakeDefault": "Varsayılan yap",
+  "settingsDefaultBadge": "Varsayılan",
+  "settingsRemove": "Kaldır",
   "settingsEditBillingInfo": "Fatura bilgisini düzenle",
   "settingsBillingInfo": "Fatura Bilgisi",
   "settingsBillingAddressEmpty": "Fatura adresi kaydedilmemiş.",

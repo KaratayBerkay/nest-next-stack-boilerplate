@@ -3525,6 +3525,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsMakeDefault => 'Make default';
 
   @override
+  String get settingsDefaultBadge => 'Default';
+
+  @override
+  String get settingsRemove => 'Remove';
+
+  @override
   String get settingsEditBillingInfo => 'Edit billing info';
 
   @override
