@@ -34,6 +34,7 @@ class PostCard extends ConsumerWidget {
           PostHeader(
             postData: post,
             isOwn: isOwn,
+            currentUserId: user?.id,
             onViewPost: () => context.push('/v1/$lang/posts/${post.id}'),
             onToggleReaction: (String type) => ref
                 .read(postActionsProvider)

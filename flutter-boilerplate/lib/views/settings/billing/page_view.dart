@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart' hide Badge;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -13,6 +14,7 @@ import '../../../components/ui/button/button.dart';
 import '../../../components/ui/card/card.dart';
 import '../../../components/ui/card/card_content.dart';
 import '../../../components/ui/card/card_header.dart';
+import '../../../components/ui/stripe_card_form.dart';
 import '../../../components/ui/toast/toast.dart';
 import '../../../constants/theme.dart';
 import '../../../l10n/app_localizations.dart';
@@ -70,10 +72,10 @@ class _SubscriptionCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CardHeader(
+          CardHeader(
             child: Text(
-              'Subscription',
-              style: TextStyle(fontWeight: FontWeight.w600),
+              t.settingsPlanDetails,
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
           CardContent(
@@ -91,7 +93,9 @@ class _SubscriptionCard extends ConsumerWidget {
                     ),
                     const SizedBox(width: 8),
                     Badge(
-                      text: sub.status == 'active' ? 'Active' : sub.status,
+                      text: sub.status == 'active'
+                          ? t.accordionStatusActive
+                          : sub.status,
                       variant: sub.status == 'active'
                           ? BadgeVariant.success
                           : BadgeVariant.warning,
@@ -101,14 +105,14 @@ class _SubscriptionCard extends ConsumerWidget {
                 const SizedBox(height: 8),
                 if (sub.currentPeriodEnd != null)
                   Text(
-                    'Renewal date: ${sub.currentPeriodEnd!.toLocal().toString().split(' ')[0]}',
+                    '${t.settingsRenewalDate}: ${sub.currentPeriodEnd!.toLocal().toString().split(' ')[0]}',
                     style: TextStyle(color: colors.fgMuted, fontSize: 13),
                   ),
                 if (sub.cancelAtPeriodEnd)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
-                      'Cancels at period end',
+                      t.settingsCancelsOn,
                       style: TextStyle(color: colors.warning, fontSize: 13),
                     ),
                   ),
@@ -136,11 +140,19 @@ class _SubscriptionCard extends ConsumerWidget {
                         ),
                       );
                       if (confirm == true) {
-                        await ref
-                            .read(billingActionsProvider)
-                            .cancelSubscription();
-                        ref.invalidate(subscriptionProvider);
-                        if (context.mounted) context.go('/v1/$lang/plans');
+                        try {
+                          await ref
+                              .read(billingActionsProvider)
+                              .cancelSubscription();
+                          ref.invalidate(subscriptionProvider);
+                          if (context.mounted) {
+                            context.go('/v1/$lang/plans');
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            showToast(context, 'Failed to cancel: $e');
+                          }
+                        }
                       }
                     },
                   ),
@@ -187,6 +199,7 @@ class _BillingAddressSectionState
   }
 
   Future<void> _saveAddress(Map<String, dynamic> data) async {
+    final t = AppLocalizations.of(context);
     try {
       await ref.read(billingActionsProvider).updateAddress(data);
       if (mounted) {
@@ -194,7 +207,7 @@ class _BillingAddressSectionState
           _address = data;
           _editing = false;
         });
-        showToast(context, 'Billing address saved');
+        showToast(context, t.settingsSaveSuccess);
       }
     } catch (e) {
       if (mounted) showToast(context, 'Failed: $e');
@@ -204,6 +217,7 @@ class _BillingAddressSectionState
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return CardWidget(
       child: Column(
@@ -212,15 +226,15 @@ class _BillingAddressSectionState
           CardHeader(
             child: Row(
               children: [
-                const Text(
-                  'Billing Address',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                Text(
+                  t.settingsBillingInfo,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 const Spacer(),
                 if (!_editing)
                   TextButton(
                     onPressed: () => setState(() => _editing = true),
-                    child: const Text('Edit'),
+                    child: Text(t.settingsEditAddress),
                   ),
               ],
             ),
@@ -246,7 +260,7 @@ class _BillingAddressSectionState
                             country: _address!['country'] as String?,
                           )
                         : Text(
-                            'No billing address set.',
+                            t.settingsBillingAddressEmpty,
                             style: TextStyle(color: colors.fgMuted),
                           ),
           ),
@@ -265,20 +279,77 @@ class _PaymentMethodsSection extends ConsumerStatefulWidget {
 class _PaymentMethodsSectionState
     extends ConsumerState<_PaymentMethodsSection> {
   Future<void> _removeMethod(String id) async {
+    final t = AppLocalizations.of(context);
     try {
       await ref.read(billingActionsProvider).removePaymentMethod(id);
       ref.invalidate(paymentMethodsProvider);
-      if (mounted) showToast(context, 'Payment method removed');
+      if (mounted) showToast(context, t.settingsSaveSuccess);
     } catch (e) {
       if (mounted) showToast(context, 'Failed: $e');
     }
   }
 
   Future<void> _setDefault(String id) async {
+    final t = AppLocalizations.of(context);
     try {
       await ref.read(billingActionsProvider).setDefaultPaymentMethod(id);
       ref.invalidate(paymentMethodsProvider);
-      if (mounted) showToast(context, 'Default payment method updated');
+      if (mounted) showToast(context, t.settingsSaveSuccess);
+    } catch (e) {
+      if (mounted) showToast(context, 'Failed: $e');
+    }
+  }
+
+  Future<void> _showAddCardDialog() async {
+    final t = AppLocalizations.of(context);
+    final nameCtrl = TextEditingController();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.settingsAddCard),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              StripeCardFormField(
+                nameController: nameCtrl,
+                onCompletionChanged: (v) {},
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(t.settingsCancelButton),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(t.settingsAddCard),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      final setupIntent =
+          await ref.read(billingActionsProvider).createSetupIntent();
+      final clientSecret = setupIntent['clientSecret'] as String?;
+      if (clientSecret == null) throw Exception('Failed to get client secret');
+
+      await Stripe.instance.confirmSetupIntent(
+        paymentIntentClientSecret: clientSecret,
+        params: const PaymentMethodParams.card(
+          paymentMethodData: PaymentMethodData(),
+        ),
+      );
+
+      ref.invalidate(paymentMethodsProvider);
+      if (mounted) showToast(context, t.settingsSaveSuccess);
     } catch (e) {
       if (mounted) showToast(context, 'Failed: $e');
     }
@@ -294,10 +365,10 @@ class _PaymentMethodsSectionState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CardHeader(
+          CardHeader(
             child: Text(
-              'Payment Methods',
-              style: TextStyle(fontWeight: FontWeight.w600),
+              t.settingsPaymentMethods,
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
           CardContent(
@@ -310,14 +381,14 @@ class _PaymentMethodsSectionState
                   return Column(
                     children: [
                       Text(
-                        'No payment methods saved.',
+                        t.settingsNoPaymentMethods,
                         style: TextStyle(color: colors.fgMuted),
                       ),
                       const SizedBox(height: 8),
                       Button(
                         variant: ButtonVariant.outline,
+                        onPressed: _showAddCardDialog,
                         child: Text(t.settingsAddCard),
-                        onPressed: () => context.go('/v1/en/plans'),
                       ),
                     ],
                   );
@@ -332,8 +403,8 @@ class _PaymentMethodsSectionState
                           'Expires ${pm.expMonth}/${pm.expYear}',
                         ),
                         trailing: pm.isDefault
-                            ? const Badge(
-                                text: 'Default',
+                            ? Badge(
+                                text: t.settingsMakeDefault,
                                 variant: BadgeVariant.success,
                               )
                             : Row(
@@ -341,9 +412,9 @@ class _PaymentMethodsSectionState
                                 children: [
                                   TextButton(
                                     onPressed: () => _setDefault(pm.id),
-                                    child: const Text(
-                                      'Set default',
-                                      style: TextStyle(fontSize: 12),
+                                    child: Text(
+                                      t.settingsMakeDefault,
+                                      style: const TextStyle(fontSize: 12),
                                     ),
                                   ),
                                   TextButton(
@@ -360,8 +431,8 @@ class _PaymentMethodsSectionState
                     const SizedBox(height: 8),
                     Button(
                       variant: ButtonVariant.outline,
+                      onPressed: _showAddCardDialog,
                       child: Text(t.settingsAddCard),
-                      onPressed: () => context.go('/v1/en/plans'),
                     ),
                   ],
                 );
@@ -387,6 +458,7 @@ class _InvoiceHistorySectionState
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final colors = AppColors.of(context);
     final historyAsync = ref.watch(billingHistoryProvider);
 
@@ -394,10 +466,10 @@ class _InvoiceHistorySectionState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CardHeader(
+          CardHeader(
             child: Text(
-              'Invoices',
-              style: TextStyle(fontWeight: FontWeight.w600),
+              t.settingsInvoices,
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
           CardContent(
@@ -407,13 +479,13 @@ class _InvoiceHistorySectionState
                   Text('Error: $e', style: TextStyle(color: colors.danger)),
               data: (invoices) {
                 final totalPages =
-                    (invoices.length / _perPage).ceil().clamp(1, 1);
+                    (invoices.length / _perPage).ceil().clamp(1, 999);
                 final start = (_page - 1) * _perPage;
                 final pageItems = invoices.skip(start).take(_perPage).toList();
 
                 if (invoices.isEmpty) {
                   return Text(
-                    'No invoices yet.',
+                    t.settingsNoInvoices,
                     style: TextStyle(color: colors.fgMuted),
                   );
                 }

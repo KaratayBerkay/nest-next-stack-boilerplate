@@ -28,6 +28,7 @@ class SettingsAccountPageContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final profileAsync = ref.watch(_profileProvider);
     final user = ref.watch(currentUserProvider);
 
@@ -35,7 +36,7 @@ class SettingsAccountPageContent extends ConsumerWidget {
       lang: lang,
       child: profileAsync.when(
         loading: () => const SettingsLoadingFallback(),
-        error: (e, _) => Center(
+        error: (_, __) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -44,14 +45,8 @@ class SettingsAccountPageContent extends ConsumerWidget {
                 Icon(Icons.error_outline, size: 48, color: colors.danger),
                 const SizedBox(height: 12),
                 Text(
-                  'Error loading profile',
+                  t.notificationLoadFailed,
                   style: TextStyle(color: colors.danger, fontSize: 16),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '$e',
-                  style: TextStyle(color: colors.fgMuted, fontSize: 13),
-                  textAlign: TextAlign.center,
                 ),
               ],
             ),
@@ -152,15 +147,17 @@ class _AccountFormState extends State<_AccountForm> {
       type: FileType.image,
     );
     if (result == null || result.files.isEmpty) return;
+    if (!mounted) return;
 
+    final t = AppLocalizations.of(context);
     final file = result.files.first;
     if (file.size > 5 * 1024 * 1024) {
-      if (mounted) showToast(context, 'File must be under 5MB');
+      if (mounted) showToast(context, t.settingsFileTooLarge);
       return;
     }
     final ext = file.extension?.toLowerCase();
     if (ext == null || !['jpg', 'jpeg', 'png', 'webp', 'gif'].contains(ext)) {
-      if (mounted) showToast(context, 'Only jpeg, png, webp, gif allowed');
+      if (mounted) showToast(context, t.settingsInvalidFileType);
       return;
     }
     if (file.path == null) return;
@@ -171,7 +168,7 @@ class _AccountFormState extends State<_AccountForm> {
           .read(profileActionsProvider)
           .uploadAvatar(file.path!);
       await widget.ref.read(profileActionsProvider).update(avatarUrl: url);
-      if (mounted) showToast(context, 'Avatar updated');
+      if (mounted) showToast(context, t.settingsSaveSuccess);
     } catch (e) {
       if (mounted) showToast(context, 'Failed: $e');
     } finally {
@@ -180,6 +177,7 @@ class _AccountFormState extends State<_AccountForm> {
   }
 
   Future<void> _save() async {
+    final t = AppLocalizations.of(context);
     setState(() => _saving = true);
     try {
       final Map<String, dynamic> updates = {};
@@ -199,7 +197,7 @@ class _AccountFormState extends State<_AccountForm> {
               username: updates['username'] as String?,
             );
       }
-      if (mounted) showToast(context, 'Profile updated');
+      if (mounted) showToast(context, t.settingsSaveSuccess);
     } catch (e) {
       if (mounted) showToast(context, 'Failed: $e');
     } finally {
@@ -280,7 +278,7 @@ class _AccountFormState extends State<_AccountForm> {
         TextField(
           controller: _usernameCtrl,
           decoration: InputDecoration(
-            labelText: 'Username',
+            labelText: t.settingsUsername,
             suffixIcon: _usernameChecking
                 ? const SizedBox(
                     width: 20,
@@ -295,6 +293,13 @@ class _AccountFormState extends State<_AccountForm> {
                     : _usernameAvailable == false
                         ? const Icon(Icons.cancel, color: Colors.red)
                         : null,
+            helperText: _usernameChecking
+                ? t.settingsUsernameChecking
+                : _usernameAvailable == true
+                    ? t.settingsUsernameAvailable
+                    : _usernameAvailable == false
+                        ? t.settingsUsernameTaken
+                        : null,
           ),
           onChanged: _onUsernameChanged,
         ),
@@ -307,7 +312,7 @@ class _AccountFormState extends State<_AccountForm> {
         const SizedBox(height: 24),
         Button(
           onPressed: _saving ? null : _save,
-          child: Text(_saving ? 'Saving...' : 'Save Changes'),
+          child: Text(_saving ? t.settingsSaving : t.settingsSave),
         ),
       ],
     );

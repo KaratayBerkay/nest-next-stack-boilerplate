@@ -7,12 +7,16 @@ class SubscriptionInfo {
   final String status;
   final DateTime? currentPeriodEnd;
   final bool cancelAtPeriodEnd;
+  final int? priceCents;
+  final String? currency;
 
   const SubscriptionInfo({
     required this.plan,
     required this.status,
     this.currentPeriodEnd,
     this.cancelAtPeriodEnd = false,
+    this.priceCents,
+    this.currency,
   });
 
   factory SubscriptionInfo.fromJson(Map<String, dynamic> json) {
@@ -25,6 +29,8 @@ class SubscriptionInfo {
           ? DateTime.tryParse(json['periodEnd'] as String)
           : null,
       cancelAtPeriodEnd: json['cancelAtPeriodEnd'] as bool? ?? false,
+      priceCents: json['priceCents'] as int?,
+      currency: json['currency'] as String?,
     );
   }
 }

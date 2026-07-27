@@ -11,6 +11,7 @@ class PostHeader extends StatelessWidget {
   final Post postData;
   final bool isOwn;
   final bool editing;
+  final String? currentUserId;
   final VoidCallback? onRefresh;
   final VoidCallback? onEditStart;
   final VoidCallback? onDeleteConfirm;
@@ -22,6 +23,7 @@ class PostHeader extends StatelessWidget {
     required this.postData,
     this.isOwn = false,
     this.editing = false,
+    this.currentUserId,
     this.onRefresh,
     this.onEditStart,
     this.onDeleteConfirm,
@@ -78,6 +80,7 @@ class PostHeader extends StatelessWidget {
               ReactionInline(
                 postId: postData.id,
                 reactions: postData.reactions,
+                currentUserId: currentUserId,
                 onReactionChange: onRefresh,
                 onToggle: onToggleReaction,
               ),

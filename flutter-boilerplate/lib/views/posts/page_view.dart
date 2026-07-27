@@ -7,6 +7,7 @@ import '../../api/client/posts/actions.dart';
 import '../../api/client/posts/query.dart';
 import '../../components/ui/avatar/avatar.dart';
 import '../../constants/theme.dart';
+import '../../hooks/use_auth.dart';
 import '../../l10n/app_localizations.dart';
 import '../../types/feed/post.dart';
 
@@ -122,6 +123,7 @@ class _PostCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final currentUserId = ref.watch(currentUserProvider)?.id;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -174,8 +176,13 @@ class _PostCard extends ConsumerWidget {
                 children: [
                   IconButton(
                     icon: Icon(
-                      post.isLiked ? Icons.favorite : Icons.favorite_border,
-                      color: post.isLiked ? colors.danger : null,
+                      currentUserId != null && post.isLikedBy(currentUserId)
+                          ? Icons.favorite
+                          : Icons.favorite_border,
+                      color:
+                          currentUserId != null && post.isLikedBy(currentUserId)
+                              ? colors.danger
+                              : null,
                     ),
                     onPressed: () =>
                         ref.read(postActionsProvider).toggleReaction(post.id),

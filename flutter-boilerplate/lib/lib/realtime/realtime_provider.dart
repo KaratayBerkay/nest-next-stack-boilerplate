@@ -81,9 +81,9 @@ void handleRenewFrame(Ref ref, String renew, Map<String, dynamic> frame) {
       }
     case 'Feed':
       if (subtype == 'New') {
-        ref.invalidate(feedProvider);
+        ref.invalidate(paginatedFeedProvider);
       } else if (subtype == 'Post') {
-        ref.invalidate(feedProvider);
+        ref.invalidate(paginatedFeedProvider);
         final id = frame['id'] as String?;
         if (id != null) {
           ref.invalidate(postProvider(id));

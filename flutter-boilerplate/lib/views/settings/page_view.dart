@@ -82,16 +82,26 @@ class SettingsPageContent extends ConsumerWidget {
                     status: 'active',
                     price: tier == 'free' ? 'Free' : null,
                   ),
-                  data: (sub) => PlanInfoCard(
-                    planName: sub.plan.toUpperCase(),
-                    status: sub.status,
-                    renewalDate: sub.currentPeriodEnd
-                        ?.toLocal()
-                        .toString()
-                        .split(' ')[0],
-                    cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
-                    price: tier == 'free' || sub.plan == 'free' ? 'Free' : null,
-                  ),
+                  data: (sub) {
+                    String? priceStr;
+                    if (tier == 'free' || sub.plan == 'free') {
+                      priceStr = 'Free';
+                    } else if (sub.priceCents != null && sub.currency != null) {
+                      final dollars = sub.priceCents! / 100;
+                      priceStr =
+                          '\$${dollars.toStringAsFixed(2)}/${sub.currency}';
+                    }
+                    return PlanInfoCard(
+                      planName: sub.plan.toUpperCase(),
+                      status: sub.status,
+                      renewalDate: sub.currentPeriodEnd
+                          ?.toLocal()
+                          .toString()
+                          .split(' ')[0],
+                      cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
+                      price: priceStr,
+                    );
+                  },
                 ),
                 const SizedBox(height: 12),
                 PlanAdvantages(
@@ -105,7 +115,7 @@ class SettingsPageContent extends ConsumerWidget {
                 const SizedBox(height: 8),
                 TextButton(
                   onPressed: () => context.go('/v1/$lang/settings/billing'),
-                  child: const Text('Manage Billing'),
+                  child: Text(t.settingsBillingHeading),
                 ),
               ],
             ),
@@ -117,23 +127,31 @@ class SettingsPageContent extends ConsumerWidget {
 
   List<String> _featuresForTier(AppLocalizations t, String tier) {
     switch (tier) {
-      case 'basic':
+      case 'free':
         return [
           t.pricingFeaturesBasic0,
           t.pricingFeaturesBasic1,
         ];
-      case 'medium':
+      case 'basic':
         return [
           t.pricingFeaturesMedium0,
           t.pricingFeaturesMedium1,
           t.pricingFeaturesMedium2,
         ];
-      case 'premium':
+      case 'medium':
         return [
           t.pricingFeaturesPremium0,
           t.pricingFeaturesPremium1,
           t.pricingFeaturesPremium2,
           t.pricingFeaturesPremium3,
+        ];
+      case 'premium':
+        return [
+          t.pricingFeaturesPro0,
+          t.pricingFeaturesPro1,
+          t.pricingFeaturesPro2,
+          t.pricingFeaturesPro3,
+          t.pricingFeaturesPro4,
         ];
       case 'pro':
         return [
@@ -146,6 +164,7 @@ class SettingsPageContent extends ConsumerWidget {
       default:
         return [
           t.pricingFeaturesBasic0,
+          t.pricingFeaturesBasic1,
         ];
     }
   }

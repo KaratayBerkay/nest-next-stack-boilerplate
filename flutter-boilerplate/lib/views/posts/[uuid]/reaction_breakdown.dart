@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../api/client/posts/actions.dart';
 import '../../../constants/theme.dart';
+import '../../../hooks/use_auth.dart';
 import '../../../types/feed/post.dart';
 
 class ReactionBreakdown extends ConsumerWidget {
@@ -13,6 +14,7 @@ class ReactionBreakdown extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final currentUserId = ref.watch(currentUserProvider)?.id;
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
@@ -24,8 +26,12 @@ class ReactionBreakdown extends ConsumerWidget {
         children: [
           IconButton(
             icon: Icon(
-              post.isLiked ? Icons.favorite : Icons.favorite_border,
-              color: post.isLiked ? colors.danger : colors.fgMuted,
+              currentUserId != null && post.isLikedBy(currentUserId)
+                  ? Icons.favorite
+                  : Icons.favorite_border,
+              color: currentUserId != null && post.isLikedBy(currentUserId)
+                  ? colors.danger
+                  : colors.fgMuted,
               size: 22,
             ),
             onPressed: () =>
@@ -37,7 +43,9 @@ class ReactionBreakdown extends ConsumerWidget {
             style: TextStyle(
               fontWeight: FontWeight.w600,
               fontSize: 14,
-              color: post.isLiked ? colors.danger : colors.fg,
+              color: currentUserId != null && post.isLikedBy(currentUserId)
+                  ? colors.danger
+                  : colors.fg,
             ),
           ),
           const SizedBox(width: 24),

@@ -64,9 +64,8 @@ class FreeNotificationPage extends ConsumerWidget {
               itemBuilder: (_, i) {
                 final item = items[i];
                 final payload = item.payload;
-                final targetId = payload?['postId'] as String? ??
-                    payload?['senderId'] as String? ??
-                    payload?['friendRequestId'] as String?;
+                final kind = payload?['kind'] as String?;
+                final postId = payload?['postId'] as String?;
                 return NotificationItemWidget(
                   item: item,
                   lang: lang,
@@ -75,14 +74,18 @@ class FreeNotificationPage extends ConsumerWidget {
                       ref.read(notificationActionsProvider).markRead(item.id);
                       ref.invalidate(notificationsProvider);
                     }
-                    if (item.type == 'FRIEND_REQUEST' ||
-                        item.type == 'friend_request') {
-                      context.push('/v1/$lang/find-friends/requests');
-                    } else if (item.type == 'POST' || item.type == 'post') {
-                      context.push('/v1/$lang/posts/$targetId');
-                    } else if (item.type == 'MESSAGE' ||
-                        item.type == 'message') {
-                      context.push('/v1/$lang/messages');
+                    final target = () {
+                      if (kind == 'friend-request' ||
+                          kind == 'friend-accepted') {
+                        return '/v1/$lang/find-friends/requests';
+                      }
+                      if (postId != null) {
+                        return '/v1/$lang/posts/$postId';
+                      }
+                      return null;
+                    }();
+                    if (target != null) {
+                      context.push(target);
                     }
                   },
                 );

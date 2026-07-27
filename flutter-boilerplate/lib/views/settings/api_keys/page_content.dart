@@ -172,6 +172,19 @@ class SettingsApiKeysPageContent extends ConsumerWidget {
                                         fontSize: 11,
                                       ),
                                     ),
+                                  Row(
+                                    children: [
+                                      Badge(
+                                        text: k.role,
+                                        variant: BadgeVariant.info,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Badge(
+                                        text: k.tier,
+                                        variant: BadgeVariant.info,
+                                      ),
+                                    ],
+                                  ),
                                 ],
                               ),
                             ),

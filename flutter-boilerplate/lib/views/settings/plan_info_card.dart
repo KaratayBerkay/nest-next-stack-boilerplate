@@ -62,7 +62,13 @@ class PlanInfoCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(price!, style: const TextStyle(fontSize: 14)),
                 ],
-                if (renewalDate != null) ...[
+                if (cancelAtPeriodEnd) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Cancels on ${renewalDate ?? "period end"}',
+                    style: TextStyle(color: colors.warning, fontSize: 13),
+                  ),
+                ] else if (renewalDate != null) ...[
                   const SizedBox(height: 8),
                   Text(
                     'Renewal date: $renewalDate',

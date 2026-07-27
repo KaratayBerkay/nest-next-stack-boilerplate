@@ -5,9 +5,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/toast/toast.dart';
-import '../../../constants/theme.dart';
 import '../../../l10n/app_localizations.dart';
 import '../settings_shell.dart';
+import 'privacy_toggle_row.dart';
 
 class SettingsPrivacyPageContent extends ConsumerWidget {
   final String lang;
@@ -61,7 +61,6 @@ class _PrivacySettingsState extends State<_PrivacySettings> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
     final t = AppLocalizations.of(context);
 
     return ListView(
@@ -70,22 +69,15 @@ class _PrivacySettingsState extends State<_PrivacySettings> {
         Card(
           child: Column(
             children: [
-              SwitchListTile(
-                title: Text(t.settingsPrivacyHideProfilePicture),
-                subtitle: Text(
-                  t.settingsPrivacyHideProfilePictureDesc,
-                  style: TextStyle(color: colors.fgMuted, fontSize: 12),
-                ),
+              PrivacyToggleRow(
+                title: t.settingsPrivacyHideProfilePicture,
+                subtitle: t.settingsPrivacyHideProfilePictureDesc,
                 value: _hideProfilePicture,
                 onChanged: (v) => setState(() => _hideProfilePicture = v),
               ),
-              const Divider(height: 1),
-              SwitchListTile(
-                title: Text(t.settingsPrivacyNickname),
-                subtitle: Text(
-                  t.settingsPrivacyNicknameDesc,
-                  style: TextStyle(color: colors.fgMuted, fontSize: 12),
-                ),
+              PrivacyToggleRow(
+                title: t.settingsPrivacyNickname,
+                subtitle: t.settingsPrivacyNicknameDesc,
                 value: _useNickname,
                 onChanged: (v) => setState(() => _useNickname = v),
               ),
@@ -100,15 +92,12 @@ class _PrivacySettingsState extends State<_PrivacySettings> {
                     ),
                   ),
                 ),
-              const Divider(height: 1),
-              SwitchListTile(
-                title: Text(t.settingsPrivacyTwoFactor),
-                subtitle: Text(
-                  t.settingsPrivacyTwoFactorDesc,
-                  style: TextStyle(color: colors.fgMuted, fontSize: 12),
-                ),
+              PrivacyToggleRow(
+                title: t.settingsPrivacyTwoFactor,
+                subtitle: t.settingsPrivacyTwoFactorDesc,
                 value: _enable2FA,
                 onChanged: (v) => setState(() => _enable2FA = v),
+                showDivider: false,
               ),
             ],
           ),

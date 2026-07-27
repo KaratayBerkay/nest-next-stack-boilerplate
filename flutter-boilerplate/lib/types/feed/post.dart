@@ -12,7 +12,6 @@ class Post {
   final String authorId;
   final int likeCount;
   final int commentCount;
-  final bool isLiked;
   final DateTime createdAt;
   final List<FeedReaction> reactions;
 
@@ -28,7 +27,6 @@ class Post {
     required this.authorId,
     required this.likeCount,
     required this.commentCount,
-    this.isLiked = false,
     required this.createdAt,
     this.reactions = const [],
   });

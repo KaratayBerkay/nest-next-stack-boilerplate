@@ -34,6 +34,8 @@ class FeedBaseView extends ConsumerStatefulWidget {
 
 class _FeedBaseViewState extends ConsumerState<FeedBaseView> {
   final ScrollController _scrollCtrl = ScrollController();
+  final TextEditingController _searchCtrl = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -45,10 +47,12 @@ class _FeedBaseViewState extends ConsumerState<FeedBaseView> {
   void dispose() {
     _scrollCtrl.removeListener(_onScroll);
     _scrollCtrl.dispose();
+    _searchCtrl.dispose();
     super.dispose();
   }
 
   void _onScroll() {
+    if (_searchQuery.isNotEmpty) return;
     if (_scrollCtrl.position.pixels >=
         _scrollCtrl.position.maxScrollExtent - 200) {
       ref.read(paginatedFeedProvider.notifier).loadMore();
@@ -59,9 +63,21 @@ class _FeedBaseViewState extends ConsumerState<FeedBaseView> {
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     final t = AppLocalizations.of(context);
-    final feedState = ref.watch(paginatedFeedProvider);
 
-    final content = _contentWidget(feedState, t, colors);
+    final Widget content;
+    if (_searchQuery.isNotEmpty) {
+      final searchResults = ref.watch(feedSearchProvider(_searchQuery));
+      content = searchResults.when(
+        loading: _loadingSkeleton,
+        error: (e, _) => FeedListEmptyState(
+          onShare: () => context.push('/v1/${widget.lang}/share'),
+        ),
+        data: (posts) => _searchResultList(posts),
+      );
+    } else {
+      final feedState = ref.watch(paginatedFeedProvider);
+      content = _contentWidget(feedState, t, colors);
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -112,6 +128,26 @@ class _FeedBaseViewState extends ConsumerState<FeedBaseView> {
                   ],
                 ],
               ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _searchCtrl,
+                onChanged: (v) => setState(() => _searchQuery = v),
+                decoration: InputDecoration(
+                  hintText: t.feedSearchPlaceholder,
+                  prefixIcon: const Icon(Icons.search, size: 18),
+                  filled: true,
+                  fillColor: colors.surfaceAlt,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  isDense: true,
+                ),
+              ),
               const SizedBox(height: 12),
             ],
           ),
@@ -121,6 +157,28 @@ class _FeedBaseViewState extends ConsumerState<FeedBaseView> {
               widget.showSidebar ? _SidebarLayout(content: content) : content,
         ),
       ],
+    );
+  }
+
+  Widget _searchResultList(List<Post> posts) {
+    if (posts.isEmpty) {
+      final t = AppLocalizations.of(context);
+      final colors = AppColors.of(context);
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Text(
+            t.feedNoPostsYet,
+            style: TextStyle(color: colors.fgMuted),
+          ),
+        ),
+      );
+    }
+    return ListView.builder(
+      controller: _scrollCtrl,
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      itemCount: posts.length,
+      itemBuilder: (context, i) => widget.cardBuilder(posts[i]),
     );
   }
 

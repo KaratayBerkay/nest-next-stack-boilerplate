@@ -301,13 +301,17 @@ class _CommentTile extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    if (comment.reactions.isNotEmpty)
-                      ReactionInline(
-                        commentId: comment.id,
-                        reactions: comment.reactions,
-                        currentUserId: currentUserId,
-                        onReactionChange: onCommentAdded,
+                    ReactionInline(
+                      commentId: comment.id,
+                      reactions: comment.reactions,
+                      currentUserId: currentUserId,
+                      onReactionChange: onCommentAdded,
+                      onToggle: (type) async => onToggleReaction?.call(
+                        type,
+                        null,
+                        comment.id,
                       ),
+                    ),
                     if (!isOwn)
                       TextButton(
                         onPressed: onReply,

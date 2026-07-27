@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/tier_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../api/client/profile/actions.dart';
+import '../../../api/client/profile/query.dart';
 import '../../../components/settings/theme_picker.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/toast/toast.dart';
 import '../../../constants/i18n.dart';
 import '../../../constants/theme.dart';
 import '../../../hooks/use_currency.dart';
+import '../../../hooks/use_date_display.dart';
 import '../../../hooks/use_theme.dart';
 import '../../../l10n/app_localizations.dart';
 import '../settings_shell.dart';
@@ -104,9 +105,10 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
   void initState() {
     super.initState();
     _stagedLocale = ref.read(localeProvider);
-    _stagedTimezone = '';
+    final profile = ref.read(userProfileProvider).asData?.value;
+    _stagedTimezone = profile?.timezone ?? '';
     _stagedCurrency = ref.read(currencyProvider);
-    _stagedDateDisplay = 'Long';
+    _stagedDateDisplay = ref.read(dateDisplayProvider);
   }
 
   Future<void> _save() async {
@@ -121,8 +123,9 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
         ref.read(localeProvider.notifier).setLocale(_stagedLocale);
       }
       await ref.read(currencyProvider.notifier).setCurrency(_stagedCurrency);
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('date_display', _stagedDateDisplay);
+      await ref
+          .read(dateDisplayProvider.notifier)
+          .setDateDisplay(_stagedDateDisplay);
       if (mounted) showToast(context, 'Settings saved');
     } catch (e) {
       if (mounted) showToast(context, 'Failed: $e');
