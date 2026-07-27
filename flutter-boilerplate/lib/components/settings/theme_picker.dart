@@ -19,6 +19,7 @@ class ThemePicker extends ConsumerWidget {
         Text(t.settingsTheme),
         const SizedBox(height: 8),
         SegmentedButton<AppThemeMode>(
+          showSelectedIcon: false,
           segments: AppThemeMode.values
               .map(
                 (m) => ButtonSegment(

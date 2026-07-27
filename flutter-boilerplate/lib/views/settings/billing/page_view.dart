@@ -120,48 +120,59 @@ class _SubscriptionCard extends ConsumerWidget {
                     ),
                   ),
                 const SizedBox(height: 12),
-                if (!sub.cancelAtPeriodEnd)
-                  Button(
-                    variant: ButtonVariant.outline,
-                    child: Text(t.settingsCancelSubscription),
-                    onPressed: () async {
-                      final confirm = await showDialog<bool>(
-                        context: context,
-                        builder: (_) => AlertDialog(
-                          title: Text(t.settingsCancelSubscriptionTitle),
-                          content: Text(t.settingsCancelSubscriptionBody),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: Text(t.settingsKeep),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    Button(
+                      child: Text(t.settingsUpgradePlan),
+                      onPressed: () => context.go('/v1/$lang/plans'),
+                    ),
+                    if (!sub.cancelAtPeriodEnd)
+                      Button(
+                        variant: ButtonVariant.outline,
+                        child: Text(t.settingsCancelSubscription),
+                        onPressed: () async {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (_) => AlertDialog(
+                              title: Text(t.settingsCancelSubscriptionTitle),
+                              content: Text(t.settingsCancelSubscriptionBody),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
+                                  child: Text(t.settingsKeep),
+                                ),
+                                FilledButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: Text(t.settingsCancelButton),
+                                ),
+                              ],
                             ),
-                            FilledButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              child: Text(t.settingsCancelButton),
-                            ),
-                          ],
-                        ),
-                      );
-                      if (confirm == true) {
-                        try {
-                          await ref
-                              .read(billingActionsProvider)
-                              .cancelSubscription();
-                          ref.invalidate(subscriptionProvider);
-                          if (context.mounted) {
-                            context.go('/v1/$lang/plans');
+                          );
+                          if (confirm == true) {
+                            try {
+                              await ref
+                                  .read(billingActionsProvider)
+                                  .cancelSubscription();
+                              ref.invalidate(subscriptionProvider);
+                              if (context.mounted) {
+                                context.go('/v1/$lang/plans');
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                showToast(
+                                  context,
+                                  t.settingsCancelSubscriptionFailed,
+                                );
+                              }
+                            }
                           }
-                        } catch (e) {
-                          if (context.mounted) {
-                            showToast(
-                              context,
-                              t.settingsCancelSubscriptionFailed,
-                            );
-                          }
-                        }
-                      }
-                    },
-                  ),
+                        },
+                      ),
+                  ],
+                ),
               ],
             ),
           ),

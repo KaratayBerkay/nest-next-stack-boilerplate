@@ -4,10 +4,47 @@ import 'package:go_router/go_router.dart';
 import '../../constants/theme.dart';
 import '../../l10n/app_localizations.dart';
 
-class SettingsNav extends StatelessWidget {
+class SettingsNav extends StatefulWidget {
   final String lang;
 
   const SettingsNav({super.key, required this.lang});
+
+  @override
+  State<SettingsNav> createState() => _SettingsNavState();
+}
+
+class _SettingsNavState extends State<SettingsNav> {
+  final ScrollController _scrollCtrl = ScrollController();
+  bool _canScrollLeft = false;
+  bool _canScrollRight = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollCtrl.addListener(_updateScrollAffordance);
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _updateScrollAffordance());
+  }
+
+  @override
+  void dispose() {
+    _scrollCtrl.removeListener(_updateScrollAffordance);
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  void _updateScrollAffordance() {
+    if (!_scrollCtrl.hasClients) return;
+    final position = _scrollCtrl.position;
+    final canLeft = position.pixels > position.minScrollExtent + 1;
+    final canRight = position.pixels < position.maxScrollExtent - 1;
+    if (canLeft != _canScrollLeft || canRight != _canScrollRight) {
+      setState(() {
+        _canScrollLeft = canLeft;
+        _canScrollRight = canRight;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,37 +58,37 @@ class SettingsNav extends StatelessWidget {
         Icons.settings_outlined,
         Icons.settings,
         t.settingsNavGeneral,
-        '/v1/$lang/settings/general',
+        '/v1/${widget.lang}/settings/general',
       ),
       _TabData(
         Icons.person_outline,
         Icons.person,
         t.settingsNavAccount,
-        '/v1/$lang/settings/account',
+        '/v1/${widget.lang}/settings/account',
       ),
       _TabData(
         Icons.lock_outline,
         Icons.lock,
         t.settingsNavPrivacy,
-        '/v1/$lang/settings/privacy',
+        '/v1/${widget.lang}/settings/privacy',
       ),
       _TabData(
         Icons.credit_card_outlined,
         Icons.credit_card,
         t.settingsNavBilling,
-        '/v1/$lang/settings/billing',
+        '/v1/${widget.lang}/settings/billing',
       ),
       _TabData(
         Icons.vpn_key_outlined,
         Icons.vpn_key,
         t.settingsNavApiKeys,
-        '/v1/$lang/settings/api-keys',
+        '/v1/${widget.lang}/settings/api-keys',
       ),
       _TabData(
         Icons.devices_outlined,
         Icons.devices,
         t.settingsNavSessions,
-        '/v1/$lang/settings/sessions',
+        '/v1/${widget.lang}/settings/sessions',
       ),
     ];
 
@@ -105,55 +142,112 @@ class SettingsNav extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: tabs.map((tab) {
-            final active = path == tab.path;
-            return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(8),
-                  onTap: () => context.go(tab.path),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: active
-                          ? colors.brand.withValues(alpha: 0.1)
-                          : Colors.transparent,
+      child: Stack(
+        alignment: Alignment.centerRight,
+        children: [
+          SingleChildScrollView(
+            controller: _scrollCtrl,
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: tabs.map((tab) {
+                final active = path == tab.path;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
                       borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          active ? tab.activeIcon : tab.icon,
-                          size: 16,
-                          color: active ? colors.brand : colors.fgMuted,
+                      onTap: () => context.go(tab.path),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          tab.label,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight:
-                                active ? FontWeight.w600 : FontWeight.normal,
-                            color: active ? colors.brand : colors.fg,
-                          ),
+                        decoration: BoxDecoration(
+                          color: active
+                              ? colors.brand.withValues(alpha: 0.1)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                      ],
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              active ? tab.activeIcon : tab.icon,
+                              size: 16,
+                              color: active ? colors.brand : colors.fgMuted,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              tab.label,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: active
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                                color: active ? colors.brand : colors.fg,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                );
+              }).toList(),
+            ),
+          ),
+          if (_canScrollLeft)
+            Positioned(
+              left: 0,
+              child: _ScrollEdgeFade(
+                colors: colors,
+                icon: Icons.chevron_left,
+                alignment: Alignment.centerLeft,
               ),
-            );
-          }).toList(),
+            ),
+          if (_canScrollRight)
+            Positioned(
+              right: 0,
+              child: _ScrollEdgeFade(
+                colors: colors,
+                icon: Icons.chevron_right,
+                alignment: Alignment.centerRight,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ScrollEdgeFade extends StatelessWidget {
+  final AppColors colors;
+  final IconData icon;
+  final Alignment alignment;
+
+  const _ScrollEdgeFade({
+    required this.colors,
+    required this.icon,
+    required this.alignment,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isLeft = alignment == Alignment.centerLeft;
+    return IgnorePointer(
+      child: Container(
+        width: 28,
+        height: 40,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: isLeft ? Alignment.centerLeft : Alignment.centerRight,
+            end: isLeft ? Alignment.centerRight : Alignment.centerLeft,
+            colors: [colors.surface, colors.surface.withValues(alpha: 0)],
+          ),
         ),
+        alignment: alignment,
+        child: Icon(icon, size: 18, color: colors.fgMuted),
       ),
     );
   }
