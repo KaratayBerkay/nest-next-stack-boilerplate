@@ -29,7 +29,7 @@ class NotificationItem {
       id: json['id'] as String,
       type: json['type'] as String,
       title: json['title'] as String,
-      body: json['body'] as String,
+      body: json['body'] as String? ?? '',
       imageUrl: json['imageUrl'] as String? ?? actor?['avatarUrl'] as String?,
       isRead: json['readAt'] != null,
       createdAt: DateTime.parse(json['createdAt'] as String),
