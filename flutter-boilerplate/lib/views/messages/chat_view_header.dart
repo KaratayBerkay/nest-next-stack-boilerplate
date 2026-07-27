@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/container.dart';
+import 'package:flutter_boilerplate/lib/realtime/realtime_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/client/messages/query.dart';
 import '../../components/ui/avatar/avatar.dart';
 import '../../constants/theme.dart';
 import '../../hooks/use_messages_page.dart';
-import '../../hooks/use_presence.dart';
 import '../../l10n/app_localizations.dart';
 
 class ChatViewHeader extends ConsumerWidget {
@@ -24,7 +24,7 @@ class ChatViewHeader extends ConsumerWidget {
     final colors = AppColors.of(context);
     final t = AppLocalizations.of(context);
     final convAsync = ref.watch(conversationsProvider);
-    final isOnline = ref.watch(isOnlineProvider);
+    final onlineUsers = ref.watch(onlineUsersProvider);
 
     return convAsync.when(
       loading: () => const SizedBox.shrink(),
@@ -33,6 +33,7 @@ class ChatViewHeader extends ConsumerWidget {
         final conv = convs.where((c) => c.id == conversationId).firstOrNull;
         final name = conv?.userName ?? 'Chat';
         final avatarUrl = conv?.userAvatarUrl;
+        final isOnline = onlineUsers.contains(conversationId);
 
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
