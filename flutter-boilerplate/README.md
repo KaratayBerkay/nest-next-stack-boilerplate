@@ -99,9 +99,29 @@ flutter analyze                       # Lint check (0 errors, 0 warnings)
 
 ## CI/CD
 
-GitHub Actions at `.github/workflows/flutter-ci.yml` runs on every push/PR touching `flutter-boilerplate/`:
+### Android / Lint (`flutter-ci.yml`)
+
+Runs on every push/PR touching `flutter-boilerplate/`:
 1. `flutter pub get`
 2. `flutter analyze`
 3. `dart format --set-exit-if-changed`
 4. `flutter test` (expects `+300: All tests passed!` — not just exit 0)
 5. `flutter build apk --debug` (catches platform-level failures)
+
+### iOS IPA (`build-ios.yml`) — disabled
+
+Builds a signed `.ipa` on push to `main`. **Disabled** until an Apple Developer account is purchased.
+
+To enable:
+1. Buy [Apple Developer Program](https://developer.apple.com/programs/) ($99/year)
+2. Create an **Ad Hoc Provisioning Profile** for `com.example.flutterBoilerplate`
+3. Export your distribution certificate as `.p12`
+4. Add these **GitHub Secrets** (repo → Settings → Secrets → Actions):
+   - `BUILD_CERTIFICATE_BASE64` — `base64 -i cert.p12 | pbcopy`
+   - `P12_PASSWORD` — your .p12 password
+   - `BUILD_PROVISION_PROFILE_BASE64` — `base64 -i profile.mobileprovision | pbcopy`
+   - `KEYCHAIN_PASSWORD` — any random string (`openssl rand -hex 16`)
+   - `APPLE_TEAM_ID` — 10-char team ID from Apple Developer portal
+5. Update `ios/ExportOptions.plist` with your team ID and profile name
+6. Uncomment `.github/workflows/build-ios.yml`
+7. Push to `main` — the `.ipa` is downloadable from the Actions tab (30-day retention)
