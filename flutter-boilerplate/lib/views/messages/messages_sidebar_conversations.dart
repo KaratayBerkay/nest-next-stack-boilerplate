@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/date_time.dart';
+import 'package:flutter_boilerplate/lib/realtime/realtime_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/client/messages/query.dart';
@@ -8,7 +9,6 @@ import '../../components/ui/empty/empty.dart';
 import '../../components/ui/spinner/spinner.dart';
 import '../../constants/theme.dart';
 import '../../hooks/use_messages_page.dart';
-import '../../hooks/use_presence.dart';
 import '../../l10n/app_localizations.dart';
 
 class MessagesSidebarConversations extends ConsumerWidget {
@@ -71,6 +71,7 @@ class MessagesSidebarConversations extends ConsumerWidget {
                     _OnlineAvatar(
                       imageUrl: conv.userAvatarUrl,
                       name: conv.userName,
+                      userId: conv.id,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -155,13 +156,19 @@ class MessagesSidebarConversations extends ConsumerWidget {
 class _OnlineAvatar extends ConsumerWidget {
   final String? imageUrl;
   final String name;
+  final String userId;
 
-  const _OnlineAvatar({this.imageUrl, required this.name});
+  const _OnlineAvatar({
+    this.imageUrl,
+    required this.name,
+    required this.userId,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
-    final isOnline = ref.watch(isOnlineProvider);
+    final onlineUsers = ref.watch(onlineUsersProvider);
+    final isOnline = onlineUsers.contains(userId);
 
     return Stack(
       children: [

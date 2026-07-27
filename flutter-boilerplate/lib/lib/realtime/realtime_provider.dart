@@ -149,6 +149,27 @@ void handleEventFrame(Ref ref, Map<String, dynamic> frame) {
         ref.read(roomMembersProvider(room).notifier).state =
             members.map((m) => Map<String, String?>.from(m as Map)).toList();
       }
+    case 'online-users':
+      final users = frame['users'] as List<dynamic>?;
+      if (users != null) {
+        ref.read(onlineUsersProvider.notifier).state = Set<String>.from(
+          users.map((u) => (u as Map<String, dynamic>)['id'] as String),
+        );
+      }
+    case 'user-online':
+      final user = frame['user'] as Map<String, dynamic>?;
+      final userId = user?['id'] as String?;
+      if (userId != null) {
+        final current = ref.read(onlineUsersProvider);
+        ref.read(onlineUsersProvider.notifier).state = {...current, userId};
+      }
+    case 'user-offline':
+      final userId = frame['userId'] as String?;
+      if (userId != null) {
+        final current = ref.read(onlineUsersProvider);
+        ref.read(onlineUsersProvider.notifier).state = {...current}
+          ..remove(userId);
+      }
   }
 }
 
@@ -168,3 +189,8 @@ final realtimeConnectedProvider = Provider<bool>((ref) {
   final status = ref.watch(realtimeStatusProvider);
   return status == RealtimeStatus.open;
 });
+
+/// Set of user IDs that are currently online, maintained from realtime
+/// `online-users`, `user-online`, and `user-offline` events — mirrors the
+/// web's `usePresence()` hook.
+final onlineUsersProvider = StateProvider<Set<String>>((ref) => <String>{});
