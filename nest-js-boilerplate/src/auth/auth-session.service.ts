@@ -2,8 +2,7 @@ import { Logger, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TokenStoreService } from './token-store.service';
 import { AuthTokenService } from './auth-token.service';
-import { refreshCookieName } from './refresh-cookie';
-import type { RequestContext } from '../devices/device.service';
+import type { DeviceContext, RequestContext } from '../devices/device.service';
 
 export class AuthSessionService {
   private readonly logger = new Logger(AuthSessionService.name);
@@ -89,15 +88,34 @@ export class AuthSessionService {
       });
     }
 
+    const rbacToken = this.authTokens.extractRbacToken(ctx) ?? '';
+    const deviceToken = this.authTokens.extractDeviceToken(ctx);
+    const userToken = this.authTokens.extractUserToken(ctx) ?? '';
+
     const compoundKey = this.tokenStore.buildKey(
       this.authTokens.extractAccessToken(ctx) ?? '',
-      this.authTokens.extractRbacToken(ctx) ?? '',
-      this.authTokens.extractDeviceToken(ctx) ?? '',
-      this.authTokens.extractUserToken(ctx) ?? '',
+      rbacToken,
+      deviceToken ?? '',
+      userToken,
     );
     await this.tokenStore.revoke(compoundKey);
 
-    const payload = await this.authTokens.issueTokens(user, ctx);
+    // Carry the renewing device's identity into the new session. Without
+    // this, issueTokens() keys the new session on an empty device-token
+    // slot that the next real request — which always presents the actual
+    // one — can never match, making every refresh unusable the instant
+    // it's issued.
+    const device: DeviceContext | undefined = deviceToken
+      ? {
+          deviceId: session.deviceId ?? '',
+          deviceToken,
+          changed: false,
+          ip: ctx.req.ip ?? null,
+          userAgent: ctx.req.headers['user-agent'] ?? null,
+        }
+      : undefined;
+
+    const payload = await this.authTokens.issueTokens(user, ctx, device);
 
     return {
       accessToken: payload.accessToken ?? '',

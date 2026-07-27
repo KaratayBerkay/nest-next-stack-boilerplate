@@ -49,9 +49,18 @@ class RefreshTokenServer {
   /// convert-frontend-7-flutter.md §16), so the caller must persist the new
   /// `refreshToken` here or every session hard-expires ~`SESSION_TTL` after
   /// login regardless of how many successful refreshes happen in between.
+  ///
+  /// Also sends the existing rbac/device/user tokens alongside the refresh
+  /// token — the backend keys the renewed session on all four together, so
+  /// omitting any of them makes the new access token unusable the instant
+  /// it's issued (the next request presents the real device token, which
+  /// can never match a session keyed on a blank one).
   Future<({String accessToken, String refreshToken})> call(
-    String refreshToken,
-  ) async {
+    String refreshToken, {
+    required String rbacToken,
+    required String deviceToken,
+    required String userToken,
+  }) async {
     final csrfHeaders = await _fetchCsrfHeaders();
     final response = await _dio.post<dynamic>(
       '/graphql',
@@ -59,6 +68,9 @@ class RefreshTokenServer {
       options: Options(
         headers: {
           'x-refresh-token': refreshToken,
+          'x-rbac-token': rbacToken,
+          'x-device-token': deviceToken,
+          'x-user-token': userToken,
           ...csrfHeaders,
         },
       ),

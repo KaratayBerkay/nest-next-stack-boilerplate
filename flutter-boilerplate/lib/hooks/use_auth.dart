@@ -101,11 +101,18 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthenticatedUser?>> {
   Future<bool> refreshAccessToken() async {
     final refreshToken = await getRefreshToken();
     if (refreshToken == null) return false;
+    final tokens = await getAuthTokens();
+    if (tokens == null) return false;
     try {
       final server = RefreshTokenServer(
         Dio(BaseOptions(baseUrl: AppConfig.apiBaseUrl)),
       );
-      final result = await server.call(refreshToken);
+      final result = await server.call(
+        refreshToken,
+        rbacToken: tokens['rbacToken']!,
+        deviceToken: tokens['deviceToken']!,
+        userToken: tokens['userToken']!,
+      );
       await updateAccessToken(result.accessToken);
       // The backend rotates the refresh token on every use — must persist
       // the new one or the session hard-expires on a fixed clock from

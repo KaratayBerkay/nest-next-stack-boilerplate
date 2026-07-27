@@ -130,6 +130,23 @@ void main() {
       final result = await notifier.refreshAccessToken();
       expect(result, isFalse);
     });
+
+    test(
+      'returns false without attempting a call when rbac/device/user tokens are missing',
+      () async {
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+
+        final notifier = container.read(authProvider.notifier);
+        // A refresh token alone isn't enough to renew — the backend needs
+        // the rbac/device/user tokens too, or the renewed session comes
+        // back keyed on blanks that can never match a real request.
+        await notifier.setRefreshToken('some-refresh-token');
+
+        final result = await notifier.refreshAccessToken();
+        expect(result, isFalse);
+      },
+    );
   });
 
   group('AuthNotifier.setSession / logout / getAuthTokens', () {
