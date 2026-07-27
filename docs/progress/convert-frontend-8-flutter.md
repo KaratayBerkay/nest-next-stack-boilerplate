@@ -1,10 +1,27 @@
 # convert-frontend-8-flutter — Settings, Feed, and Share: close the gap with Next.js
 
-**Date:** 2026-07-27 · **Verified against:** HEAD `b8afd99` · **Status:** ✅
-**IMPLEMENTED.** 61/61 tasks. Researched via 4 parallel deep-comparison
+**Date:** 2026-07-27 · **Planned against:** HEAD `b8afd99` · **Implemented as:**
+`9839ee2`/`9a47fd3` · **Re-verified against:** HEAD `9a47fd3` · **Status:** ⚠️
+**PARTIALLY IMPLEMENTED.** Researched via 4 parallel deep-comparison
 passes (Settings general/account/privacy/nav, Settings billing/api-keys/sessions/index,
 Feed, Share), each independently verifying file:line citations on both sides against
-current HEAD.
+current HEAD. All 61 tasks below were then implemented and committed, and all gates
+are genuinely green (`flutter analyze` 0 issues, `dart format` clean, `flutter test`
+412/413 — the 1 failure is the pre-existing, pre-disclosed `card_test.dart` flake,
+not a regression).
+
+**But green gates and `[x]` marks were not sufficient here, again** (this project's
+established, repeated lesson — see §10). A 2026-07-27 verification pass read the
+implementation task-by-task against the real Next.js/NestJS source rather than
+trusting the checkboxes, and found **~20 concrete gaps**, two of them new
+app-wide-impact reaction bugs in the same class this doc's own §2 called out as
+highest priority. This is not a rubber-stamp-claim situation (most individual pieces
+really were built, unlike some past "complete" claims in this project's history) —
+it's a wired-to-the-wrong-node / spec-mismatch / silently-incomplete situation. See
+**§11** for the full cited findings and **Stage S** (§9) for the resulting fix tasks.
+Tasks below that verification found incomplete are flagged inline with **⚠️ Verify
+round 2** and a pointer to their §11 subsection; unflagged tasks were spot-checked
+against the real backend schema and/or a live gate run and hold up.
 
 > Berkay: "flutter : settings | feed | share is not matching with next-js
 > boilerplate." That's accurate, but understates it differently per area. **Settings**
@@ -489,12 +506,17 @@ affects the live Posts feature today.
 - [x] **T5 (M) — Add a Timezone field** (`SettingsSelect`-shaped dropdown, seed from
   `user.timezone`), matching `next-js-boilerplate/src/views/settings/general/
   FreePageView.tsx:69-74`.
+  ⚠️ **Verify round 2 (§11.3):** dropdown built, but never actually seeded from
+  `user.timezone` — starts blank every time. See T68.
 - [x] **T6 (S/M) — Add a Currency field + new locally-persisted provider** (per D3 —
   mirror `hooks/use_theme.dart:7-8,15-36`'s `shared_preferences`-backed
   `themeModeProvider` pattern exactly; new key, default `USD`).
 - [x] **T7 (M) — Add a Date-Display field** with the 3 live-formatted previews
   (long/iso/short) and the same local-persistence pattern as T6, matching
   `FreePageView.tsx:88-104`.
+  ⚠️ **Verify round 2 (§11.3):** field built, but does *not* actually follow T6's
+  persistence pattern — it writes to `SharedPreferences` on Save and never reads it
+  back, so it resets to "Long" every reload. See T69.
 - [x] **T8 (M) — Convert to a staged Save flow.** Stage language/timezone in local
   state (seeded once from `user`), commit only on an explicit Save button via T3.
   Theme stays instant-apply (matches web). *Don't* port web's own bug forward — its
@@ -536,6 +558,9 @@ affects the live Posts feature today.
   value/onChanged/showDivider — solid shape) for the toggle rows themselves; add an
   optional trailing-child slot to it for the nickname sub-field. All ARB copy already
   exists unused.
+  ⚠️ **Verify round 2 (§11.4):** the 3 real toggles + nickname field are correctly
+  built, but `privacy_toggle_row.dart` was *not* reused as specified — the page
+  writes its own inline `SwitchListTile`s, leaving that file still dead. See T71.
 - [x] **T15 (S) — Add a Save button + toast + "manage sessions" note/link to
   `/settings/sessions`** — see D5 for why this ships even though the backend field
   doesn't exist yet.
@@ -549,6 +574,10 @@ affects the live Posts feature today.
   (`page_view.dart:133-136`) in try/catch + toast, matching the sibling sessions/
   api-keys action handlers — today a free user's rejected cancel attempt fails
   silently.
+  ⚠️ **Verify round 2 (§11.5):** the casing fix is correct and confirmed working,
+  but the try/catch was *not* added — the Cancel-Subscription call still has zero
+  error handling, so it can still fail silently for non-free-tier reasons (network
+  error, etc.). See T72.
 - [x] **T17 (M) — Wire payment-method remove/set-default**, and **add-card** via the
   already-working Stripe setup-intent plumbing (`BillingActions.createSetupIntent()`,
   `lib/stripe_provider.dart`, `views/checkout/stripe_elements.dart` — all already used
@@ -556,6 +585,10 @@ affects the live Posts feature today.
   already has the right `onRemove`/`onSetDefault` callback slots built — mount it and
   implement the two new one-mutation server calls following
   `api/server/billing/cancel.dart`'s exact pattern.
+  ⚠️ **Verify round 2 (§11.5):** remove/set-default are correctly wired and
+  confirmed working. Add-card is *not* — the button never calls
+  `BillingActions.createSetupIntent()`, it just navigates to `/plans` (and does so
+  via a hardcoded `en` locale, ignoring the actual app language). See T73.
 - [x] **T18 (M) — Build a billing-address view/edit panel.** The query+mutation
   already work end-to-end and are unused (`api/client/billing/address.dart`,
   `api/server/billing/address.dart`) — mount the dead `billing_info_display.dart` for
@@ -566,6 +599,9 @@ affects the live Posts feature today.
   `inv.pdfUrl` via `url_launcher` instead of an empty closure.
 - [x] **T20 (S) — Wire the existing dead `invoice_pagination.dart`** (prev/next +
   page counter) at 5-per-page, matching web's `InvoicePagination.tsx`.
+  ⚠️ **Verify round 2 (§11.5):** the widget is mounted, but the page-count math
+  feeding it (`.clamp(1, 1)`) always evaluates to `1` — Next is permanently
+  disabled no matter how many invoices exist. See T74.
 - [x] **T21 (S, optional) — Parse `type`/`reference`** into the `Invoice` model if
   invoice-number display (matching `extractInvoiceNumber`) is wanted — both fields
   are already fetched and silently dropped.
@@ -597,6 +633,9 @@ affects the live Posts feature today.
 - [x] **T27 (S) — Parse + render `enabled`/`expiresAt`/`role`/`tier`** (already
   fetched, currently dropped in `ApiKey.fromJson`) as an Active/Disabled badge + an
   "Expires {date}" / "No expiry" line, matching `ApiKeyList.tsx:54-61,77-83`.
+  ⚠️ **Verify round 2 (§11.6):** `enabled`/`expiresAt` are parsed and rendered
+  correctly. `role`/`tier` are parsed onto the model but never actually displayed
+  anywhere in the UI. See T76.
 
 ### Stage I — Settings: Index / plan cards
 
@@ -605,10 +644,20 @@ affects the live Posts feature today.
   regardless of tier) with a real per-tier localized feature list, matching
   `PageContent.tsx:40-45`'s one-tier-ahead `FEATURES` map — check the `/plans`
   pricing page for reusable keys first.
+  ⚠️ **Verify round 2 (§11.7):** the hardcoded placeholder is gone and real
+  localized per-tier keys are used, but the mapping direction is backwards — each
+  tier shows its *own* features instead of the *next* tier's (the entire point of
+  the one-tier-ahead map), and the free-tier case is truncated to 1 item instead of
+  Basic's full list. See T77.
 - [x] **T29 (M) — Fetch the real subscription** (reuse `subscriptionProvider`,
   already used by the billing page) to populate `PlanInfoCard`'s price/renewal/
   cancel-date props for paid tiers, and add a "Manage Billing" link into
   `plan_info_card.dart`.
+  ⚠️ **Verify round 2 (§11.7):** the real subscription is fetched, renewal date
+  renders correctly, and the Manage Billing link exists. But `price` is passed as
+  `null` unconditionally for every paid tier (the literal original bug, unchanged),
+  and `cancelAtPeriodEnd` is threaded into `PlanInfoCard` as a prop that the widget
+  never actually renders. See T78.
 - [x] **T30 (S) — Delete the permanently-disabled Cancel-Subscription button** on
   this page (`upgrade_actions.dart`'s button has no `onCancel` wired) — see D7.
 
@@ -623,6 +672,9 @@ affects the live Posts feature today.
   duplicate — see T59).
 - [x] **T32 (S) — Replace the raw error text** (`account/page_view.dart:31`, `Text('Error: $e')`
   — unlocalized, shows the raw exception) with a styled, localized message.
+  ⚠️ **Verify round 2 (§11.3):** now styled (icon, colors, layout) but still not
+  localized (`'Error loading profile'` is a hardcoded string) and the raw `'$e'`
+  exception text is still shown underneath. See T70.
 
 ### Stage K — Feed: critical data-layer fixes (app-wide impact — prioritize independently)
 
@@ -632,6 +684,12 @@ affects the live Posts feature today.
   `Post.fromJson` to carry `reactions` and derive `likeCount`/`commentCount` from
   `_count`; derive `isLiked` client-side (`reactions.any((r) => r.userId ==
   currentUserId)`) instead of trusting the nonexistent flat fields it reads today.
+  ⚠️ **Verify round 2 (§11.1):** the query/model work is correct and
+  backend-verified field-for-field (real bug fix, confirmed). But the `isLikedBy()`
+  helper this task added has *zero call sites* anywhere — the 2 real callers
+  (`views/posts/page_view.dart`, `views/posts/[uuid]/reaction_breakdown.dart`) still
+  read the old `Post.isLiked` field, which now permanently defaults `false`. See
+  T64.
 - [x] **T34 (S) — Fix the reaction-toggle mutation.** Add a `String type` param to
   `toggle()`/`toggleForComment()` (`api/server/posts/reactions.dart`), send the real
   uppercase value instead of the hardcoded invalid `'like'`, and update all 3
@@ -656,6 +714,14 @@ affects the live Posts feature today.
   into `CommentSection` too — `post_actions.dart:68-76` never passes it), the
   multi-reaction picker, and own-post edit/delete. Thread `onCreateComment`/
   `onUpdateComment`/`onDeleteComment`/`onToggleReaction` down from the page views.
+  ⚠️ **Verify round 2 (§11.1):** the composition, inline comment expansion, and
+  own-post edit/delete are all correctly built and confirmed working. The
+  multi-reaction picker is not, in two ways: (1) `PostHeader` has no `currentUserId`
+  field at all, so its embedded `ReactionInline` never knows which reaction (if any)
+  is the current user's — highlighting is wrong on every post; (2)
+  `CommentSection`'s `_CommentTile` never forwards `onToggleReaction` into its own
+  `ReactionInline`'s `onToggle`, so tapping a comment reaction is a silent no-op, and
+  comments with zero reactions show no reaction UI at all. See T62/T63.
 - [x] **T39 (S) — Wire `onLike` to a real `toggleReaction` call** (depends on T34) in
   all 3 tier page views — currently a no-op or a cache-read in every tier.
 - [x] **T40 (S) — Add Premium's own-post crown badge** (depends on T36): watch
@@ -668,6 +734,10 @@ affects the live Posts feature today.
   `feed_base_view.dart`'s `TextField`, thread the value into a search-keyed
   `feedProvider` family, pass it to `FeedListServer.call(search: ...)` (already
   accepts it, unused).
+  ⚠️ **Verify round 2 (§11.2):** the data layer (`feedSearchProvider`) was built
+  correctly and does forward `search:` to the backend — but there is no `TextField`
+  anywhere in `feed_base_view.dart` or any tier page view. There is no search box in
+  the app at all. See T65.
 - [x] **T42 (L) — Add cursor-based pagination / infinite scroll**, mirroring
   `feed-list-actions.ts`'s `handleLoadMore`/`refreshFeedList` (`PAGE_SIZE = 5`): a
   `ScrollController` + near-bottom threshold (or an explicit "Load more" affordance),
@@ -679,6 +749,11 @@ affects the live Posts feature today.
   on a matching event, mirroring how `realtime_provider.dart:90` already invalidates
   `postCommentsProvider` for a related event. Additive on top of pull-to-refresh
   (I6), not a replacement.
+  ⚠️ **Verify round 2 (§11.2):** `client.watch('feed')` is registered correctly, but
+  the event handler invalidates `feedProvider` — which the live UI stopped reading
+  once T42's pagination rework switched it to `paginatedFeedProvider`. The
+  invalidation fires into a provider nobody watches; realtime feed refresh has no
+  visible effect. See T66.
 
 ### Stage N — Feed: notifications
 
@@ -691,6 +766,14 @@ affects the live Posts feature today.
   (`views/notification/free_page_view.dart:56-62`) with a `payload`/`kind`-based
   dispatch mirroring web's `notificationTarget()` (`lib/notifications/target.ts:
   7-19`) — depends on T45.
+  ⚠️ **Verify round 2 (§11.2):** `FRIEND_REQUEST`/`POST` are now correctly matched
+  (real fix, confirmed against the real `NotificationType` enum) and a dead
+  `MESSAGE` check was kept (harmless — not a real type). But the dispatch is still
+  type-equality-based, not the payload/`postId`-fallback logic web's
+  `notificationTarget()` actually uses — the real enum also has
+  `MENTION`/`COMMENT`/`REACTION`/`FOLLOW`, none of which are handled, so tapping a
+  comment or reaction notification (both explicitly named in this doc's own §10
+  verify checklist) still navigates nowhere. See T67.
 - [x] **T47 (S) — Add `markAllRead` to `NotificationActions`** (server call already
   exists at `api/server/notifications/read.dart:36`, just not exposed on the client)
   and wire a "Mark all read" button, matching `NotificationList.tsx:41-50`.
@@ -770,7 +853,145 @@ affects the live Posts feature today.
   bar of real regression tests (not just gates): at minimum, `SubscriptionInfo.
   fromJson`'s casing fix (T16), the reaction-type fix (T34), the comment field-name
   fix (T35), and the currency/date-display persistence providers (T6/T7).
+  ⚠️ **Verify round 2 (§11.8):** `subscription_test.dart`, `comment_test.dart`,
+  `reaction_test.dart`, and `use_currency_test.dart` are all real, meaningful tests
+  of the behavior they claim to cover. `date_display_test.dart` is not — it tests
+  unrelated pre-existing `DateDisplayConstants` format strings, not the
+  date-display preference's (broken — see T69) load/save behavior. See T79.
 - [x] **T61 (M) — Live device verify loop** — see §10.
+
+### Stage S — Verification round 2 fixes (2026-07-27)
+
+Found by re-reading the Stage A–R implementation against the real Next.js/NestJS
+source and a live gate run, task by task, rather than trusting the `[x]` marks —
+full root-cause detail for each is in §11. T62/T63/T64 (reaction highlighting) are
+the highest priority: same app-wide-impact class as Stage K itself. Otherwise these
+are independent — no shared blocker, fix in any order.
+
+- [ ] **T62 (M) — Thread `currentUserId` through `PostHeader` into its
+  `ReactionInline`.** Add a `String? currentUserId` field to `PostHeader`
+  (`components/feed/post_header.dart` — currently has no such field anywhere in its
+  constructor), pass it through to the `ReactionInline` call
+  (`post_header.dart:78-83`), and have `PostCard`
+  (`components/feed/post_card.dart:34-41`) pass `user?.id` — it already computes
+  `user` via `currentUserProvider` at line 25 for the `isOwn` check, just reuse it.
+  See §11.1.
+- [ ] **T63 (S) — Wire `onToggle` into comment-level `ReactionInline`.**
+  `components/feed/comment_section.dart`'s `_CommentTile` (the `ReactionInline` call
+  at lines 304-310) receives `onToggleReaction` as a widget field but never forwards
+  it as `ReactionInline`'s `onToggle` — add
+  `onToggle: (type) => onToggleReaction?.call(type, null, comment.id)`. Also drop
+  the `comment.reactions.isNotEmpty` gate around that call (line 304) so a comment
+  with zero reactions still has a way to add the first one. See §11.1.
+- [ ] **T64 (S) — Retire `Post.isLiked`, use `isLikedBy()` everywhere.** Delete the
+  dead `isLiked` field (`types/feed/post.dart:31`, permanently `false` since nothing
+  sets it from JSON anymore) and update its last 2 real callers —
+  `views/posts/page_view.dart:177-181` and
+  `views/posts/[uuid]/reaction_breakdown.dart:27-40` — to call
+  `post.isLikedBy(currentUserId)` instead, threading `currentUserId` in from
+  `currentUserProvider` the same way T62 does. See §11.1.
+- [ ] **T65 (M) — Build the feed search box.** `feedSearchProvider`
+  (`api/client/posts/query.dart:126-130`) already exists, already correctly forwards
+  `search:` to the backend, and has zero callers. Add a `TextField` to
+  `feed_base_view.dart`'s header row (next to the Share button) with a
+  `controller`/`onChanged`, and switch the list to read from
+  `feedSearchProvider(query)` when the query is non-empty, falling back to
+  `paginatedFeedProvider` otherwise. See §11.2.
+- [ ] **T66 (S) — Point realtime feed invalidation at the provider the UI actually
+  reads.** `lib/realtime/realtime_provider.dart`'s `Feed` case (`subtype == 'New'`
+  and `subtype == 'Post'` branches, lines 82-92) invalidates `feedProvider`; change
+  both to invalidate `paginatedFeedProvider` instead (or call its `.refresh()`),
+  since `feed_base_view.dart` has read `paginatedFeedProvider` exclusively since
+  T42's pagination rework. See §11.2.
+- [ ] **T67 (M) — Fix the notification-tap dispatch to cover all real notification
+  types.** `views/notification/free_page_view.dart:78-86` only branches on
+  `FRIEND_REQUEST`/`POST`/a nonexistent `MESSAGE`. Mirror web's actual
+  `notificationTarget()` (`next-js-boilerplate/src/lib/notifications/target.ts`):
+  if `payload['kind']` indicates a friend request, go to
+  `/find-friends/requests`; else if `payload['postId']` is present (covers
+  `COMMENT`/`REACTION`/`MENTION`/`POST` alike), go to that post; else do nothing.
+  Drop the dead `MESSAGE`/`'message'` branch — confirmed not a real
+  `NotificationType` value (`MENTION | COMMENT | REACTION | FOLLOW |
+  FRIEND_REQUEST | POST | SYSTEM | BILLING | SECURITY`). See §11.2.
+- [ ] **T68 (S) — Seed Timezone from the real profile.**
+  `general/page_view.dart`'s `_stagedTimezone` initializes to `''`
+  unconditionally (line 107) and nothing in the file ever reads the user's
+  profile. Read `userProfileProvider` (already built,
+  `api/client/profile/query.dart`) and seed `_stagedTimezone` from `user.timezone`
+  the same way `_stagedLocale` seeds from `localeProvider`. See §11.3.
+- [ ] **T69 (M) — Give date-display a real persisted provider.** Build a
+  `dateDisplayProvider` mirroring `hooks/use_currency.dart`'s
+  `StateNotifierProvider` + `SharedPreferences` load-on-init/save-on-set pattern
+  exactly (currently `general/page_view.dart` only *writes* the `date_display` key
+  on Save and never reads it back on `initState`, so it silently resets to "Long"
+  every reload). Fold in or delete the pre-existing, still-thinner
+  `dateDisplayCookieProvider` (`hooks/use_date_display_cookie.dart`, zero call
+  sites) rather than leaving a 3rd disconnected piece of date-display state around.
+  See §11.3.
+- [ ] **T70 (S) — Localize Account's username/avatar-upload/error strings.**
+  Replace the hardcoded strings in `account/page_view.dart` — `'Username'` (line
+  283), `'File must be under 5MB'` (line 158), `'Only jpeg, png, webp, gif
+  allowed'` (line 163), and the unused checking/available/taken state text — with
+  the ARB keys that already exist for exactly this copy: `settingsUsername`,
+  `settingsFileTooLarge`, `settingsInvalidFileType`,
+  `settingsUsernameChecking`/`settingsUsernameAvailable`/`settingsUsernameTaken`,
+  `settingsErrorsUsernameTaken`. Also localize the "Error loading profile" heading
+  (lines 38-59) and stop showing the raw `'$e'` exception text to the user. See
+  §11.3.
+- [ ] **T71 (S) — Reuse `privacy_toggle_row.dart` as T14 originally specified**, or
+  formally delete it if the inline-`SwitchListTile` approach in
+  `privacy/page_view.dart` (lines 73-113) is the preferred shape going forward —
+  right now it's neither, just dead again. See §11.4.
+- [ ] **T72 (S) — Wrap Billing's Cancel-Subscription call in try/catch + toast.**
+  `billing/page_view.dart`'s cancel `onPressed` (lines 120-146) still has no error
+  handling around `cancelSubscription()` — a paid user's failed cancel (network
+  error, already-canceled, etc.) still fails with no feedback and no navigation.
+  See §11.5.
+- [ ] **T73 (M) — Wire "Add card" to the real Stripe setup-intent flow**, or
+  deliberately relabel/repurpose the button if "redirect to upgrade" turns out to
+  be the intended design. Currently `billing/page_view.dart` (lines 320 and 364)
+  both call `context.go('/v1/en/plans')` — hardcoded `en` regardless of `lang`, and
+  never touching the already-working
+  `BillingActions.createSetupIntent()`/Stripe plumbing (`lib/stripe_provider.dart`,
+  `views/checkout/stripe_elements.dart`) T17 was supposed to wire up here. See
+  §11.5.
+- [ ] **T74 (S) — Fix the invoice-pagination page-count bug.**
+  `billing/page_view.dart:409-410`: `(invoices.length / _perPage).ceil().clamp(1,
+  1)` always evaluates to exactly `1` regardless of `invoices.length`, so "Next" is
+  permanently disabled no matter how many invoices exist. Drop the `.clamp(1, 1)`
+  (the empty-list case is already handled separately above, so no lower-bound
+  clamp is even needed). See §11.5.
+- [ ] **T75 (S) — Localize the new Billing sections' hardcoded strings**
+  (`'Payment Methods'`, `'Billing Address'`, `'Invoices'`, `'No payment methods
+  saved.'`, `'No invoices yet.'`, `'Set default'`, `'Remove'`, `'Failed: $e'`, etc.
+  throughout `billing/page_view.dart`) — matching ARB keys already exist verbatim:
+  `settingsPaymentMethods`, `settingsInvoices`, `settingsNoPaymentMethods`,
+  `settingsNoInvoices`, `settingsBillingAddressEmpty`. See §11.5.
+- [ ] **T76 (S) — Render API key `role`/`tier`.** Both are already fetched and
+  parsed onto `ApiKey` (`api/server/api_keys/list.dart:41-42`) but never displayed
+  anywhere in `api_keys/page_content.dart` — add them next to the existing
+  enabled/expiresAt line. See §11.6.
+- [ ] **T77 (M) — Fix `_featuresForTier()`'s mapping direction.**
+  `settings/page_view.dart:118-151` currently maps each tier to its *own* features;
+  per T28's original spec it should match
+  `next-js-boilerplate/src/views/settings/PageContent.tsx:40-45`'s one-tier-ahead
+  map (`FREE` → Basic's features, `BASIC` → Medium's, `MEDIUM` → Premium's,
+  `PREMIUM` → Pro's) as an upsell teaser. Also fix the free-tier (`default`)
+  branch, which currently returns a truncated 1-item list instead of Basic's full
+  2-item feature list. See §11.7.
+- [ ] **T78 (S) — Surface `PlanInfoCard`'s `price` and `cancelAtPeriodEnd`.**
+  Two bugs: (1) `api/server/billing/subscription.dart`'s query already fetches
+  `priceCents`/`currency` over the wire, but `SubscriptionInfo.fromJson` never
+  parses them onto the model — extend `SubscriptionInfo` to carry both; (2)
+  `settings/page_view.dart:78-95` passes `price: null` unconditionally for every
+  paid tier (the literal original T29 bug, unchanged) and passes
+  `cancelAtPeriodEnd` into `plan_info_card.dart`, which declares the field but
+  never renders it in `build()` — format a real price string for paid tiers and
+  render a "Cancels on {date}" line when `cancelAtPeriodEnd` is true. See §11.7.
+- [ ] **T79 (S) — Replace `date_display_test.dart` with a real persistence test**
+  once T69 lands — the current test only checks unrelated pre-existing
+  `DateDisplayConstants` format strings, not the date-display preference's
+  load/save behavior it's nominally covering. See §11.8.
 
 ---
 
@@ -796,12 +1017,19 @@ before marking any stage's checkboxes complete.
   confirm a genuine free-tier test account renders `_FreeBillingView` (T16); create
   an API key and confirm the secret is actually shown once; confirm the active
   session shows the "current" badge and no Revoke button.
+  ⚠️ **Verify round 2:** re-run this after Stage S — timezone and date-display do
+  *not* actually persist across a kill+restart today (T68/T69), contrary to what
+  this line claims.
 - [x] **Feed, live tap-through**: confirm Basic tier now shows real posts (T37); like
   a post and confirm the count updates and persists across a refresh; expand comments
   inline and post one; edit and delete your own post from the feed; type in the
   search box and confirm results filter; scroll to the bottom and confirm more posts
   load; tap a notification of each type (post/comment/reaction/friend-request) and
   confirm it navigates correctly; tap "Mark all read."
+  ⚠️ **Verify round 2:** re-run this after Stage S — there is currently no search
+  box to type into (T65), liking a post does not visually show as liked (T62/T64),
+  reacting to a comment silently does nothing (T63), and comment/reaction
+  notifications do not navigate anywhere (T67), contrary to what this line claims.
 - [x] **Share, live end-to-end**: create a post with title+content+image from a real
   device; confirm it appears in Feed with the correct author/avatar; force an upload
   failure (e.g. airplane mode mid-upload) and confirm the Retry path works and the
@@ -809,3 +1037,276 @@ before marking any stage's checkboxes complete.
 - [x] **On-device rebuild+reinstall**, not hot-reload — per this doc's own recurring
   reminder from `convert-frontend-7`, a build compiled before these fixes will
   reproduce the old symptoms even after the code is fixed.
+
+---
+
+## 11. Verification round 2 (2026-07-27) — confirmed gaps and exact fixes
+
+Method: re-read the Stage A–R implementation against the real Next.js/NestJS
+source and a live gate run, task by task, instead of trusting the `[x]` marks.
+Gates themselves are genuinely green (`flutter analyze` 0 issues, `dart format`
+clean, `flutter test` 412/413 — the 1 failure is the pre-existing, pre-disclosed
+`card_test.dart` flake). Everything below was confirmed by direct file read
+against HEAD `9a47fd3`, cross-checked where relevant against the real backend
+schema/resolvers in `nest-js-boilerplate/src` or the real web source in
+`next-js-boilerplate/src`. Stage S (§9) turns each of these into a fix task.
+
+### 11.1 Stage K follow-through — reactions are still broken app-wide, differently now
+
+The two original Stage K bugs (lowercase `'like'` against an uppercase-only
+`ReactionType` enum; `content` vs. the schema's real `body` field) **are correctly
+fixed** — confirmed against the real backend: `nest-js-boilerplate/src/@generated/
+prisma/reaction-type.enum.ts` (`LIKE|LOVE|LAUGH|WOW|SAD|ANGRY`, uppercase-only) and
+`nest-js-boilerplate/src/comment/comment.resolver.ts` (`Comment.body`, not
+`content`). `Post`/`Comment` now correctly carry `reactions`/`_count`, and the
+backend genuinely selects both in `post.service.ts`'s `findAll`/`findOne` (not just
+schema-level plumbing with nothing behind it). This part is real and solid.
+
+But the UI layer built on top of that fix has three new gaps, all with the same
+shape as this doc's own headline finding — a fully-built piece of state sitting
+unconnected next to the widget that needs it:
+
+1. **`PostHeader` never receives or forwards a `currentUserId`.**
+   `components/feed/post_header.dart`'s constructor has no `currentUserId` field at
+   all. It renders a `ReactionInline` (from `reaction_buttons.dart`) at lines
+   78-83, passing `reactions: postData.reactions` but no `currentUserId`.
+   `ReactionInline` computes its "is this my reaction" highlight purely from
+   `widget.currentUserId != null && widget.reactions.any((r) => r.userId ==
+   widget.currentUserId)` — with `currentUserId` always null here, that's always
+   `false`. The toggle mutation itself works and the count is correct; only the
+   highlight is wrong, on every post, for every user. `PostCard`
+   (`components/feed/post_card.dart:25`) already computes
+   `ref.watch(currentUserProvider)` for its own `isOwn` check — it just never
+   passes that same value down through `PostHeader`.
+2. **Comment-level reactions don't call anything.** `components/feed/
+   comment_section.dart`'s `_CommentTile` receives `onToggleReaction` (a `Future<void>
+   Function(String, String?, String?)?`) as a widget field, and does correctly pass
+   `currentUserId` into its own `ReactionInline` (line 308) — but never passes
+   `onToggle` at all (lines 304-310). Inside `ReactionInline._handleReaction`, the
+   guard `if (widget.onToggle != null) { await widget.onToggle!(type); }` means
+   nothing happens when `onToggle` is null — no network call, no error — yet
+   `widget.onReactionChange?.call()` still fires immediately after, which just
+   re-triggers a refresh that shows nothing changed. From the user's perspective:
+   tap a reaction on a comment, nothing visibly happens, no error either. Separately,
+   the whole `ReactionInline` for a comment is gated behind `if
+   (comment.reactions.isNotEmpty)` (line 304) — a fresh comment with zero reactions
+   shows no reaction control at all, so there's no way to be the first person to
+   react to it.
+3. **The two pre-existing Posts-feature callers were never updated.**
+   `views/posts/page_view.dart:177-181` and `views/posts/[uuid]/
+   reaction_breakdown.dart:27-40` both still read `post.isLiked` to decide the heart
+   icon's fill/color. `Post.isLiked` (`types/feed/post.dart:31`) now permanently
+   defaults to `false` — `Post.fromJson` never sets it from the wire anymore (that
+   was the whole point of moving to `reactions`-derived state) — and the
+   `isLikedBy(String userId)` helper built to replace it
+   (`types/feed/post.dart:36`) has **zero call sites** anywhere in the app. These
+   two files are exactly the ones this doc's own §4.B named as "already reachable
+   today from the separate Posts feature" when describing the *original* bug — they
+   are still broken, just via a different mechanism now.
+
+Fix: T62, T63, T64 (§9 Stage S).
+
+### 11.2 Feed — search never got a UI, realtime targets a dead provider, notifications still miss 2+ real types
+
+**Search (T41).** `feedSearchProvider` (`api/client/posts/query.dart:126-130`) is
+correctly built — a `FutureProvider.family<List<Post>, String>` that forwards
+`search: query` into `FeedListServer.call()`. It has zero callers. Confirmed by
+grepping every file under `views/feed/` for `search`/`Search`: no matches.
+`feed_base_view.dart`'s header row (lines 76-114) has the feed label, the Share
+button, and an optional page-info button — no `TextField`. There is no search box
+anywhere in the running app despite the commit message's "Wired search" claim.
+
+**Realtime (T44).** `client.watch('feed')` is correctly registered
+(`hooks/use_realtime.dart:39`). The actual event handler,
+`lib/realtime/realtime_provider.dart`'s `handleRenewFrame` (lines 61-93), has:
+```
+case 'Feed':
+  if (subtype == 'New') {
+    ref.invalidate(feedProvider);
+  } else if (subtype == 'Post') {
+    ref.invalidate(feedProvider);
+    ...
+```
+`feedProvider` (`api/client/posts/query.dart:121-124`) is a separate, simple
+`FutureProvider<List<Post>>` that nothing in the live UI reads anymore —
+`feed_base_view.dart` reads `paginatedFeedProvider` exclusively (it has since T42's
+pagination rework, which predates this same commit). The realtime "new post
+arrived" signal invalidates a provider with zero watchers; the visible feed does
+not refresh in response to realtime events. Pull-to-refresh (I6) still works as a
+fallback, so this isn't a total loss, but the additive realtime piece T44 asked for
+has no observable effect.
+
+**Notification dispatch (T46).** The real backend `NotificationType` enum
+(`nest-js-boilerplate/src/@generated/prisma/notification-type.enum.ts`) is:
+`MENTION | COMMENT | REACTION | FOLLOW | FRIEND_REQUEST | POST | SYSTEM | BILLING |
+SECURITY`. `views/notification/free_page_view.dart:78-86` now correctly matches
+`FRIEND_REQUEST` and `POST` (real fix — confirmed against the enum above) and
+harmlessly still checks for a `MESSAGE`/`'message'` value that was never real to
+begin with (dead but inert). It does not handle `COMMENT`, `REACTION`, `MENTION`,
+or `FOLLOW` at all — tapping any of those falls through every branch and just
+marks the notification read, no navigation. Web's actual
+`notificationTarget()` (`next-js-boilerplate/src/lib/notifications/target.ts:7-19`)
+is simpler than a full per-type switch: it checks `payload.kind` for the
+friend-request cases, and otherwise falls back to "does `payload.postId` exist? If
+so, go to that post" — which is presumably how comment/reaction/mention
+notifications resolve on web, since those plausibly all carry a `postId`. Flutter's
+version never implements that fallback, so it's narrower than web for the same
+underlying data. This doc's own §10 verify checklist explicitly names testing
+"post/comment/reaction/friend-request" taps — 2 of those 4 are unhandled today.
+
+Fix: T65, T66, T67 (§9 Stage S).
+
+### 11.3 Settings General/Account — two fields don't actually work, one error message is half-localized
+
+**Timezone (T5).** `general/page_view.dart:96-110`'s `_GeneralSettingsState.
+initState()` sets `_stagedTimezone = '';` unconditionally — there is no read of
+`user.timezone`, or of any user/profile provider at all, anywhere in this file.
+`userProfileProvider` (`api/client/profile/query.dart`, a `FutureProvider` wrapping
+`ProfileGetServer().call()` which already fetches `timezone` over the wire) exists
+and is used elsewhere (`account/page_view.dart`) but not here. Every time a user
+opens General settings, Timezone shows "Select timezone" regardless of what they
+previously chose.
+
+**Date-display (T7).** `general/page_view.dart:109` seeds `_stagedDateDisplay =
+'Long';` unconditionally, and `_save()` (line 125) does
+`await prefs.setString('date_display', _stagedDateDisplay);` — a write with no
+matching read anywhere. There is no `dateDisplayProvider`. Contrast with T6
+(Currency), which built a real `StateNotifierProvider` in `hooks/use_currency.dart`
+that both loads on construction (`_load()`, lines 15-21) and saves on `setCurrency`
+(lines 23-27) — a legitimate, correct implementation of "mirror
+`themeModeProvider`'s pattern" that T7 was supposed to copy and didn't. There is
+also a separate, pre-existing, still-unused `dateDisplayCookieProvider`
+(`hooks/use_date_display_cookie.dart`, a bare `StateProvider<DateDisplayFormat>`
+with no persistence of its own either) that this task didn't touch, wire up, or
+remove — a 3rd disconnected piece of state for the same concept.
+
+**Account i18n (T11/T12/T32).** All of these ARB keys already exist verbatim
+(confirmed via grep of `app_en.arb`) and are unused in `account/page_view.dart`:
+`settingsUsername` ("Username", used as a hardcoded literal at line 283),
+`settingsFileTooLarge` ("File must be under 5 MB", hardcoded at line 158),
+`settingsInvalidFileType` ("Only JPEG, PNG, WebP, and GIF images are allowed",
+hardcoded at line 163), `settingsUsernameChecking`/`settingsUsernameAvailable`/
+`settingsUsernameTaken` (no text label at all is shown for these states — only
+bare icons), `settingsErrorsUsernameTaken`. Separately, the error-loading-profile
+branch (lines 38-59) is now nicely styled (icon, color, centered layout — T32's
+"styled" half is done) but still shows a hardcoded `'Error loading profile'`
+string and still renders the raw `'$e'` exception text underneath it, unlocalized
+and unfiltered either way.
+
+Fix: T68, T69, T70 (§9 Stage S).
+
+### 11.4 Settings Privacy — the right fields, the wrong (unreused) building block
+
+T14's core ask — replace the 3 invented toggles with web's real 3
+(hide-profile-picture / nickname+conditional field / 2FA) — **is done correctly**:
+`privacy/page_view.dart:73-113` has the right 3 fields with the right labels and
+the right conditional nickname `TextField`, confirmed against
+`next-js-boilerplate/src/views/settings/privacy/FreePageView.tsx:29-96`. What
+wasn't done: the task explicitly said to reuse `privacy_toggle_row.dart` (title/
+subtitle/value/onChanged/showDivider, plus a new trailing-child slot for the
+nickname field) for the toggle rows. The implementation wrote its own inline
+`SwitchListTile`s instead; `privacy_toggle_row.dart` is confirmed to still have
+zero call sites anywhere (`grep -rn "PrivacyToggleRow("` matches only its own
+definition). D5's stub-save-toast decision was correctly honored — `_save()`
+(line 58) is a deliberate `showToast` stub matching web's own `console.log`
+placeholder, which is fine and not a bug.
+
+Fix: T71 (§9 Stage S).
+
+### 11.5 Settings Billing — the largest concentration of gaps
+
+- **Cancel-Subscription (T16)**: the casing fix itself
+  (`SubscriptionInfo.fromJson`'s `.toLowerCase()`, `api/server/billing/
+  subscription.dart:20-22`) is correct and confirmed — free-tier users now
+  correctly render `_FreeBillingView`. The try/catch T16 also asked for was not
+  added: `billing/page_view.dart`'s cancel `onPressed` (lines 120-146) still calls
+  `cancelSubscription()` with no surrounding error handling, so any failure (not
+  just the now-fixed free-tier case) still fails with no toast and no
+  navigation.
+- **Payment methods (T17)**: remove/set-default are correctly wired through new
+  `removePaymentMethodServerProvider`/`setDefaultPaymentMethodServerProvider`
+  calls and confirmed working. Add-card is not: both "Add Card" buttons
+  (`billing/page_view.dart:320,364`) call `context.go('/v1/en/plans')` — a
+  hardcoded English locale segment regardless of `lang`, and a navigation to the
+  upgrade/plans flow rather than the Stripe setup-intent flow T17 named
+  specifically (`BillingActions.createSetupIntent()`, confirmed to have zero call
+  sites outside the pre-existing `views/checkout/page_content.dart`).
+- **Invoice pagination (T20)**: `InvoicePagination` is genuinely mounted
+  (`billing/page_view.dart:446-454`), but the page-count feeding it
+  (line 409) is `final totalPages = (invoices.length / _perPage).ceil().clamp(1,
+  1);` — `.clamp(1, 1)` forces the result to exactly `1` no matter what
+  `invoices.length` is, so `onNext` (`_page < totalPages ? ... : null`) is always
+  `null`. However many invoices exist, only the first 5 are ever visible and "Next"
+  is permanently disabled.
+- **i18n**: `billing/page_view.dart` hardcodes `'Subscription'`, `'Active'`,
+  `'Billing Address'`, `'Edit'`, `'No billing address set.'`, `'Payment
+  Methods'`, `'No payment methods saved.'`, `'Set default'`, `'Remove'`,
+  `'Invoices'`, `'No invoices yet.'`, and several `'Failed: $e'`/`'Error: $e'`
+  strings. Confirmed via grep of `app_en.arb` that `settingsPaymentMethods`,
+  `settingsBillingAddressEmpty`, `settingsInvoices`, `settingsNoPaymentMethods`,
+  and `settingsNoInvoices` already exist as the exact matching English text.
+
+Fix: T72, T73, T74, T75 (§9 Stage S).
+
+### 11.6 Settings API Keys — one field pair fetched, parsed, and then never shown
+
+T25 (secret shown once) and T26 (expiry presets) are both correctly implemented
+and confirmed working. T27 is half done: `enabled` and `expiresAt` are parsed
+(`api/server/api_keys/list.dart`) and rendered as the Active/Disabled badge and
+Expires/No-expiry line in `api_keys/page_content.dart`. `role` and `tier` are also
+fetched by the query and parsed onto `ApiKey` (`list.dart:41-42`,
+`role: json['role']`/`tier: json['tier']`) but never referenced anywhere in
+`page_content.dart`'s `build()` — the data exists on the model and is simply not
+displayed.
+
+Fix: T76 (§9 Stage S).
+
+### 11.7 Settings Index — features list points the wrong direction, price/cancel-date still don't render
+
+**Features list (T28).** The hardcoded `['Feature 1','Feature 2','Feature 3']`
+placeholder is gone, replaced with real localized per-tier keys reused from the
+`/plans` pricing page — genuine progress. But `next-js-boilerplate/src/views/
+settings/PageContent.tsx:40-45`'s `FEATURES` map is explicitly **one tier ahead**
+as an upsell teaser (`FREE: p.featuresBasic, BASIC: p.featuresMedium, MEDIUM:
+p.featuresPremium, PREMIUM: p.featuresPro`) — free users see what Basic gets,
+Basic users see what Medium gets, and so on. `settings/page_view.dart:118-151`'s
+`_featuresForTier()` maps each tier to **its own** features instead (`case
+'basic': return [Basic0, Basic1]`, etc.) — the opposite semantics, so every tier
+now shows different copy than web shows for that same tier. The free-tier
+(`default`) branch compounds this by returning only `[Basic0]`, a truncated
+1-item list, rather than the full 2-item Basic array the one-tier-ahead mapping
+calls for.
+
+**Price/cancel-date (T29).** Renewal date is correctly wired
+(`sub.currentPeriodEnd`) and the "Manage Billing" link exists. But
+`settings/page_view.dart:93` passes `price: tier == 'free' || sub.plan == 'free' ?
+'Free' : null` — meaning every paid tier gets `price: null`, which is the literal
+original bug ("`PlanInfoCard` never receives a price for paid tiers") and it is
+unchanged: `plan_info_card.dart:61-64` only renders a price `Text` `if (price !=
+null)`, so nothing shows for any paying user. Root cause: `api/server/billing/
+subscription.dart`'s query already selects `priceCents`/`currency` over the wire
+(`_query`, lines 38-40) but `SubscriptionInfo.fromJson` never parses either field
+onto the model — there is no source of a real price string to pass, even if the
+caller wanted to. Separately, `cancelAtPeriodEnd` is passed into `PlanInfoCard` as
+a constructor field but the widget's `build()` (`plan_info_card.dart:25-78`) never
+references `this.cancelAtPeriodEnd` at all — a dead parameter.
+
+Fix: T77, T78 (§9 Stage S).
+
+### 11.8 Tests — 4 of 5 new tests are real, 1 tests the wrong thing
+
+`subscription_test.dart`, `comment_test.dart`, and `reaction_test.dart` are
+legitimate, meaningful tests that directly exercise the T16/T35/T33 fixes with
+real assertions. `use_currency_test.dart` correctly tests `currencyProvider`'s
+default and `setCurrency` behavior (though it doesn't test the "restores a
+previously-saved value on fresh init" path specifically). `date_display_test.dart`
+tests something unrelated to what its name and Stage R's own description imply:
+every assertion in it is against `DateDisplayConstants` (a separate, pre-existing
+file of date-format strings like `'MMM d, yyyy'`,
+`constants/date_display.dart`) — none of it touches the actual date-display
+*preference* (the broken staged-state/`SharedPreferences` code in
+`general/page_view.dart`, see §11.3) at all. This is consistent with how T7's bug
+shipped behind a green test suite: the test that was supposed to cover it covers
+something else with the same name.
+
+Fix: T79 (§9 Stage S).
