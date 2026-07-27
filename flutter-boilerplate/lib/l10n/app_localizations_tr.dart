@@ -3144,6 +3144,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get messagesDisconnected => 'Bağlantı Kesildi';
 
   @override
+  String get messagesTyping => 'Yazıyor...';
+
+  @override
   String get messagesChats => 'Sohbetler';
 
   @override

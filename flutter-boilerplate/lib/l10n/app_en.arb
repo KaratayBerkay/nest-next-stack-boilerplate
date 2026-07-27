@@ -973,6 +973,7 @@
   "messagesTitle": "Messages",
   "messagesConnected": "Connected",
   "messagesDisconnected": "Disconnected",
+  "messagesTyping": "Typing...",
   "messagesChats": "Chats",
   "messagesFriends": "Friends",
   "messagesSearchUsers": "Search all users...",

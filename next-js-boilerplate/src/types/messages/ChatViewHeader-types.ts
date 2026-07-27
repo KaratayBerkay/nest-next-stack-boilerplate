@@ -6,4 +6,5 @@ export interface ChatViewHeaderProps {
   setSelectedUser: Dispatch<SetStateAction<UserInfo | null>>;
   setSidebarOpen: Dispatch<SetStateAction<boolean>>;
   onlineUsers: Set<string>;
+  isTyping: boolean;
 }

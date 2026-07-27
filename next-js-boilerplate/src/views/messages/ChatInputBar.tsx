@@ -1,7 +1,15 @@
-import type { Dispatch, SetStateAction } from "react";
+import {
+  useEffect,
+  useRef,
+  useCallback,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/button/icon-button";
 import { IconPaperclip, IconSend } from "@tabler/icons-react";
+
+const TYPING_TIMEOUT_MS = 3000;
 
 export interface ChatInputBarProps {
   input: string;
@@ -11,6 +19,9 @@ export interface ChatInputBarProps {
   connectionState: string;
   inputPlaceholder: string;
   connectingLabel: string;
+  recipientId: string;
+  onTypingStart: (recipientId: string) => void;
+  onTypingStop: (recipientId: string) => void;
 }
 
 export function ChatInputBar({
@@ -21,7 +32,57 @@ export function ChatInputBar({
   connectionState,
   inputPlaceholder,
   connectingLabel,
+  recipientId,
+  onTypingStart,
+  onTypingStop,
 }: ChatInputBarProps) {
+  const isTypingRef = useRef(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const sendTypingStop = useCallback(() => {
+    if (!isTypingRef.current) return;
+    isTypingRef.current = false;
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    onTypingStop(recipientId);
+  }, [recipientId, onTypingStop]);
+
+  // Cleanup typing on unmount / recipient change
+  useEffect(() => {
+    return () => {
+      sendTypingStop();
+    };
+  }, [recipientId, sendTypingStop]);
+
+  const handleChange = useCallback(
+    (value: string) => {
+      setInput(value);
+
+      if (value.trim() && !isTypingRef.current) {
+        isTypingRef.current = true;
+        onTypingStart(recipientId);
+      }
+
+      if (timerRef.current) clearTimeout(timerRef.current);
+
+      if (value.trim()) {
+        timerRef.current = setTimeout(() => {
+          sendTypingStop();
+        }, TYPING_TIMEOUT_MS);
+      } else {
+        sendTypingStop();
+      }
+    },
+    [setInput, recipientId, onTypingStart, sendTypingStop],
+  );
+
+  const doSend = useCallback(() => {
+    sendTypingStop();
+    handleSend();
+  }, [sendTypingStop, handleSend]);
+
   return (
     <div className="flex items-end gap-3 border-t px-5 py-4">
       <IconButton
@@ -35,11 +96,11 @@ export function ChatInputBar({
       <div className="flex flex-1 flex-col">
         <input
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => handleChange(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
-              handleSend();
+              doSend();
             }
           }}
           placeholder={
@@ -55,7 +116,7 @@ export function ChatInputBar({
       <Button
         variant="primary"
         size="md"
-        onClick={handleSend}
+        onClick={doSend}
         disabled={connectionState !== "online" || !input.trim()}
         className="flex shrink-0 items-center gap-2 rounded-lg px-4 py-3"
       >

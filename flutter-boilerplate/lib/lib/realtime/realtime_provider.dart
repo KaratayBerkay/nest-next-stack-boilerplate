@@ -6,6 +6,7 @@ import '../../api/client/messages/query.dart';
 import '../../api/client/notifications/query.dart';
 import '../../api/client/posts/query.dart';
 import '../../app_config.dart';
+import '../../constants/chat.dart';
 import '../../hooks/use_auth.dart';
 import '../../hooks/use_messages_page.dart';
 import '../riverpod_compat.dart';
@@ -170,6 +171,38 @@ void handleEventFrame(Ref ref, Map<String, dynamic> frame) {
         ref.read(onlineUsersProvider.notifier).state = {...current}
           ..remove(userId);
       }
+    case 'typing-start':
+      final senderId = frame['senderId'] as String?;
+      if (senderId != null) {
+        final current = Map<String, DateTime>.from(
+          ref.read(typingUsersProvider),
+        );
+        current[senderId] = DateTime.now();
+        ref.read(typingUsersProvider.notifier).state = current;
+        // Auto-expire after typingTimeout
+        Future.delayed(ChatConstants.typingTimeout, () {
+          if (!ref.read(typingUsersProvider).containsKey(senderId)) return;
+          final still = Map<String, DateTime>.from(
+            ref.read(typingUsersProvider),
+          );
+          final started = still[senderId];
+          if (started != null &&
+              DateTime.now().difference(started) >=
+                  ChatConstants.typingTimeout) {
+            still.remove(senderId);
+            ref.read(typingUsersProvider.notifier).state = still;
+          }
+        });
+      }
+    case 'typing-stop':
+      final senderId = frame['senderId'] as String?;
+      if (senderId != null) {
+        final current = Map<String, DateTime>.from(
+          ref.read(typingUsersProvider),
+        );
+        current.remove(senderId);
+        ref.read(typingUsersProvider.notifier).state = current;
+      }
   }
 }
 
@@ -194,3 +227,8 @@ final realtimeConnectedProvider = Provider<bool>((ref) {
 /// `online-users`, `user-online`, and `user-offline` events — mirrors the
 /// web's `usePresence()` hook.
 final onlineUsersProvider = StateProvider<Set<String>>((ref) => <String>{});
+
+/// Map of user IDs currently typing to the timestamp when they started.
+/// Entries auto-expire after [ChatConstants.typingTimeout].
+final typingUsersProvider =
+    StateProvider<Map<String, DateTime>>((ref) => <String, DateTime>{});

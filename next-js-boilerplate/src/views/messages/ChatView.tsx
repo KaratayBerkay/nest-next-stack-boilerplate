@@ -10,7 +10,11 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import type { ChatViewProps } from "@/types/messages/ChatView-types";
 import { useMessageActions } from "@/api/client/messages/actions";
-import { chatViewHandleSend, groupMessagesByDate } from "@/views/messages/ChatView-utils";
+import { useTypingUsers } from "@/hooks/useTypingUsers";
+import {
+  chatViewHandleSend,
+  groupMessagesByDate,
+} from "@/views/messages/ChatView-utils";
 import { ChatViewHeader } from "@/views/messages/ChatViewHeader";
 import { ChatInputBar } from "@/views/messages/ChatInputBar";
 import { ChatMessageList } from "@/views/messages/ChatMessageList";
@@ -49,6 +53,7 @@ export function ChatView({
   );
 
   const { sendMessage } = useMessageActions();
+  const { typingUsers, sendTypingStart, sendTypingStop } = useTypingUsers();
 
   const handleSend = useCallback(
     () =>
@@ -90,6 +95,7 @@ export function ChatView({
         setSelectedUser={setSelectedUser}
         setSidebarOpen={setSidebarOpen}
         onlineUsers={onlineUsers}
+        isTyping={typingUsers.has(selectedUser.id)}
       />
 
       <ChatMessageList
@@ -118,6 +124,9 @@ export function ChatView({
         connectionState={connectionState}
         inputPlaceholder={t.inputPlaceholder}
         connectingLabel={t.connecting}
+        recipientId={selectedUser.id}
+        onTypingStart={sendTypingStart}
+        onTypingStop={sendTypingStop}
       />
     </div>
   );

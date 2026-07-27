@@ -2,6 +2,7 @@
   "title": "Messages",
   "connected": "Connected",
   "disconnected": "Disconnected",
+  "typing": "Typing...",
   "chats": "Chats",
   "friends": "Friends",
   "searchUsers": "Search all users...",

@@ -5942,6 +5942,12 @@ abstract class AppLocalizations {
   /// **'Disconnected'**
   String get messagesDisconnected;
 
+  /// No description provided for @messagesTyping.
+  ///
+  /// In en, this message translates to:
+  /// **'Typing...'**
+  String get messagesTyping;
+
   /// No description provided for @messagesChats.
   ///
   /// In en, this message translates to:

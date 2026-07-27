@@ -3138,6 +3138,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get messagesDisconnected => 'Disconnected';
 
   @override
+  String get messagesTyping => 'Typing...';
+
+  @override
   String get messagesChats => 'Chats';
 
   @override

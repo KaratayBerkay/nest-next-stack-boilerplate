@@ -66,6 +66,18 @@ export class MessagingWsGateway implements OnModuleInit {
     this.realtime.registerHandler('get-room-counts', (ws) =>
       this.handleGetRoomCounts(ws as AuthWs),
     );
+    this.realtime.registerHandler('typing-start', (ws, data) =>
+      this.handleTypingStart(
+        ws as AuthWs,
+        data as unknown as { recipientId: string },
+      ),
+    );
+    this.realtime.registerHandler('typing-stop', (ws, data) =>
+      this.handleTypingStop(
+        ws as AuthWs,
+        data as unknown as { recipientId: string },
+      ),
+    );
 
     // Page-claim callbacks for chat-room (Phase 7 D1/D2)
     this.realtime.registerPageCallbacks(
@@ -275,6 +287,28 @@ export class MessagingWsGateway implements OnModuleInit {
     this.realtime.broadcastAll({
       type: 'room-counts',
       rooms: this.ms.getRoomCounts(),
+    });
+  }
+
+  private handleTypingStart(
+    ws: AuthWs,
+    data: { recipientId: string },
+  ) {
+    if (!ws.userId) return;
+    this.realtime.emitToPage(data.recipientId, 'messages', {
+      type: 'typing-start',
+      senderId: ws.userId,
+    });
+  }
+
+  private handleTypingStop(
+    ws: AuthWs,
+    data: { recipientId: string },
+  ) {
+    if (!ws.userId) return;
+    this.realtime.emitToPage(data.recipientId, 'messages', {
+      type: 'typing-stop',
+      senderId: ws.userId,
     });
   }
 }

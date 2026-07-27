@@ -1015,6 +1015,7 @@ export type I18nMessages = {
       "title": string;
       "connected": string;
       "disconnected": string;
+      "typing": string;
       "chats": string;
       "friends": string;
       "searchUsers": string;

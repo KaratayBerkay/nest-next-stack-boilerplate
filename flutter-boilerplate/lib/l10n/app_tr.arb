@@ -973,6 +973,7 @@
   "messagesTitle": "Mesajlar",
   "messagesConnected": "Bağlandı",
   "messagesDisconnected": "Bağlantı Kesildi",
+  "messagesTyping": "Yazıyor...",
   "messagesChats": "Sohbetler",
   "messagesFriends": "Arkadaşlar",
   "messagesSearchUsers": "Tüm kullanıcıları ara...",

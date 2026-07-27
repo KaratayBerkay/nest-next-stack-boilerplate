@@ -25,6 +25,7 @@ class ChatViewHeader extends ConsumerWidget {
     final t = AppLocalizations.of(context);
     final convAsync = ref.watch(conversationsProvider);
     final onlineUsers = ref.watch(onlineUsersProvider);
+    final typingUsers = ref.watch(typingUsersProvider);
 
     return convAsync.when(
       loading: () => const SizedBox.shrink(),
@@ -34,6 +35,7 @@ class ChatViewHeader extends ConsumerWidget {
         final name = conv?.userName ?? 'Chat';
         final avatarUrl = conv?.userAvatarUrl;
         final isOnline = onlineUsers.contains(conversationId);
+        final isTyping = typingUsers.containsKey(conversationId);
 
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -75,10 +77,18 @@ class ChatViewHeader extends ConsumerWidget {
                       ),
                     ),
                     Text(
-                      isOnline ? t.messagesConnected : t.messagesDisconnected,
+                      isTyping
+                          ? t.messagesTyping
+                          : isOnline
+                              ? t.messagesConnected
+                              : t.messagesDisconnected,
                       style: TextStyle(
                         fontSize: 11,
-                        color: isOnline ? colors.success : colors.fgMuted,
+                        color: isTyping
+                            ? colors.brand
+                            : isOnline
+                                ? colors.success
+                                : colors.fgMuted,
                       ),
                     ),
                   ],
