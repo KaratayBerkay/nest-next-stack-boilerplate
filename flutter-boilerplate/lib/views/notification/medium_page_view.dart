@@ -1,15 +1,5 @@
-import 'package:flutter/material.dart';
+import 'free_page_view.dart';
 
-import '../../l10n/app_localizations.dart';
-
-class MediumNotificationPage extends StatelessWidget {
-  final String lang;
-
-  const MediumNotificationPage({super.key, required this.lang});
-
-  @override
-  Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    return Center(child: Text(t.notificationMediumFeatures));
-  }
+class MediumNotificationPage extends FreeNotificationPage {
+  const MediumNotificationPage({super.key, required super.lang});
 }

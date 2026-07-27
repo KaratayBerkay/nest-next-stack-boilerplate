@@ -1,15 +1,5 @@
-import 'package:flutter/material.dart';
+import 'free_page_view.dart';
 
-import '../../l10n/app_localizations.dart';
-
-class BasicNotificationPage extends StatelessWidget {
-  final String lang;
-
-  const BasicNotificationPage({super.key, required this.lang});
-
-  @override
-  Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    return Center(child: Text(t.notificationBasicFeatures));
-  }
+class BasicNotificationPage extends FreeNotificationPage {
+  const BasicNotificationPage({super.key, required super.lang});
 }
