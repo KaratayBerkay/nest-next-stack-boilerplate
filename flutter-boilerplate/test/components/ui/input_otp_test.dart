@@ -6,12 +6,22 @@ import '../../test_helpers.dart';
 
 void main() {
   testWidgets('InputOtp renders digit fields', (tester) async {
+    await pumpTestApp(tester, const InputOtp());
+    expect(find.byType(TextField), findsNWidgets(6));
+  });
+
+  testWidgets('InputOtp calls onChanged on keystroke', (tester) async {
+    String? current;
     await pumpTestApp(
       tester,
-      const InputOtp(),
+      InputOtp(onChanged: (v) => current = v),
     );
 
-    expect(find.byType(TextField), findsNWidgets(6));
+    await tester.enterText(find.byType(TextField).at(0), '1');
+    expect(current, equals('1'));
+
+    await tester.enterText(find.byType(TextField).at(1), '2');
+    expect(current, equals('12'));
   });
 
   testWidgets('InputOtp fires onCompleted when all filled', (tester) async {
@@ -27,5 +37,37 @@ void main() {
     }
 
     expect(result, equals('1234'));
+  });
+
+  testWidgets('InputOtp syncs from value prop', (tester) async {
+    await pumpTestApp(
+      tester,
+      const InputOtp(value: '456'),
+    );
+
+    for (int i = 0; i < 3; i++) {
+      expect(
+        (tester.widget<TextField>(find.byType(TextField).at(i)))
+            .controller
+            ?.text,
+        equals('456'[i]),
+      );
+    }
+  });
+
+  testWidgets('InputOtp clears when value set to empty', (tester) async {
+    await pumpTestApp(
+      tester,
+      const InputOtp(value: ''),
+    );
+
+    for (int i = 0; i < 6; i++) {
+      expect(
+        (tester.widget<TextField>(find.byType(TextField).at(i)))
+            .controller
+            ?.text,
+        equals(''),
+      );
+    }
   });
 }

@@ -162,7 +162,11 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       if (isRootRoute) return isLoggedIn ? '/v1/en/feed' : '/auth/login';
       if (!isLoggedIn && isV1Route) return '/auth/login';
-      if (isLoggedIn && isAuthRoute && !state.matchedLocation.startsWith('/auth/verify-email')) return '/v1/en/feed';
+      if (isLoggedIn &&
+          isAuthRoute &&
+          !state.matchedLocation.startsWith('/auth/verify-email')) {
+        return '/v1/en/feed';
+      }
       return null;
     },
     routes: [
@@ -371,6 +375,13 @@ final routerProvider = Provider<GoRouter>((ref) {
               lang: state.pathParameters['lang'] ?? 'en',
             ),
           ),
+          GoRoute(
+            path: '/v1/:lang/settings/security',
+            name: 'v1SettingsSecurity',
+            builder: (_, state) => SecurityPageContent(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
           // Posts routes
           GoRoute(
             path: '/v1/:lang/posts',
@@ -481,14 +492,6 @@ final routerProvider = Provider<GoRouter>((ref) {
               final lang = state.pathParameters['lang'] ?? 'en';
               return '/v1/$lang/users/detail/$userId';
             },
-          ),
-          // Security
-          GoRoute(
-            path: '/v1/:lang/security',
-            name: 'v1Security',
-            builder: (_, state) => SecurityPageContent(
-              lang: state.pathParameters['lang'] ?? 'en',
-            ),
           ),
           // Forms
           GoRoute(

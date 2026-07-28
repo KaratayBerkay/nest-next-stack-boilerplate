@@ -28,11 +28,13 @@ export async function handleVerify(
   setVerifyData: Dispatch<SetStateAction<VerifyMfaResult | null>>,
   setError: Dispatch<SetStateAction<string | null>>,
   setStep: Dispatch<SetStateAction<Step>>,
+  setMfaEnabled?: Dispatch<SetStateAction<boolean>>,
 ) {
   try {
     setError(null);
     const data = await verifyMfaEnrollment(code);
     setVerifyData(data);
+    setMfaEnabled?.(true);
     setStep("backup-codes");
   } catch {
     setError("Failed to verify code");

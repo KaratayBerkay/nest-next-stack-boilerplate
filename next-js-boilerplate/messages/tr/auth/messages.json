@@ -20,7 +20,10 @@
       "mfaEmailDescription": "{email} adresinize gönderilen 6 haneli kodu girin.",
       "mfaTotpDescription": "Kimlik doğrulama uygulamanızdaki 6 haneli kodu {email} için girin.",
       "mfaResendCode": "Kodu yeniden gönder",
-      "mfaResending": "Gönderiliyor..."
+      "mfaResendCooldown": "Yeniden göndermek için",
+      "mfaResending": "Gönderiliyor...",
+      "trustDevice": "Bu cihaza güven",
+      "useDifferentAccount": "Farklı bir hesap kullan"
     },
     "register": {
       "title": "Hesabınızı oluşturun",

@@ -328,6 +328,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authFormLoginMfaResendCode => 'Resend code';
 
   @override
+  String authFormLoginMfaResendCooldown(Object seconds) {
+    return 'Resend in ${seconds}s';
+  }
+
+  @override
+  String get authFormLoginMfaTrustDevice => 'Trust this device';
+
+  @override
   String get authCodeResent => 'Verification code sent';
 
   @override
@@ -3417,6 +3425,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsNavPrivacy => 'Privacy';
 
   @override
+  String get settingsNavSecurity => 'Security';
+
+  @override
   String get settingsPrivacySubtitle => 'Privacy settings, data sharing';
 
   @override
@@ -5172,6 +5183,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get securityChangePassword => 'Change Password';
 
   @override
+  String get securityChangePasswordComingSoon => 'Change password coming soon';
+
+  @override
   String get securityActiveSessions => 'Active Sessions';
 
   @override
@@ -5243,6 +5257,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get securityBiometricDisabledSubtitle =>
       'Require biometric authentication to unlock the app';
+
+  @override
+  String get securityBiometricLockedTitle => 'App Locked';
+
+  @override
+  String get securityBiometricLockedSubtitle =>
+      'Authenticate to access the app';
+
+  @override
+  String get biometricSignOutInstead => 'Sign out instead';
 
   @override
   String get settingsAddCard => 'Add Card';

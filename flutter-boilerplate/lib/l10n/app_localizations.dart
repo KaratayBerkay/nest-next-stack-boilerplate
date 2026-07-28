@@ -692,6 +692,18 @@ abstract class AppLocalizations {
   /// **'Resend code'**
   String get authFormLoginMfaResendCode;
 
+  /// No description provided for @authFormLoginMfaResendCooldown.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend in {seconds}s'**
+  String authFormLoginMfaResendCooldown(Object seconds);
+
+  /// No description provided for @authFormLoginMfaTrustDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Trust this device'**
+  String get authFormLoginMfaTrustDevice;
+
   /// No description provided for @authCodeResent.
   ///
   /// In en, this message translates to:
@@ -6482,6 +6494,12 @@ abstract class AppLocalizations {
   /// **'Privacy'**
   String get settingsNavPrivacy;
 
+  /// No description provided for @settingsNavSecurity.
+  ///
+  /// In en, this message translates to:
+  /// **'Security'**
+  String get settingsNavSecurity;
+
   /// No description provided for @settingsPrivacySubtitle.
   ///
   /// In en, this message translates to:
@@ -9842,6 +9860,12 @@ abstract class AppLocalizations {
   /// **'Change Password'**
   String get securityChangePassword;
 
+  /// No description provided for @securityChangePasswordComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Change password coming soon'**
+  String get securityChangePasswordComingSoon;
+
   /// No description provided for @securityActiveSessions.
   ///
   /// In en, this message translates to:
@@ -9973,6 +9997,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Require biometric authentication to unlock the app'**
   String get securityBiometricDisabledSubtitle;
+
+  /// No description provided for @securityBiometricLockedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'App Locked'**
+  String get securityBiometricLockedTitle;
+
+  /// No description provided for @securityBiometricLockedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Authenticate to access the app'**
+  String get securityBiometricLockedSubtitle;
+
+  /// No description provided for @biometricSignOutInstead.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out instead'**
+  String get biometricSignOutInstead;
 
   /// No description provided for @settingsAddCard.
   ///

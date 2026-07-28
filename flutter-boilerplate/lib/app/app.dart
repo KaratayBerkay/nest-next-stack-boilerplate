@@ -10,8 +10,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app_config.dart';
 import '../constants/theme.dart';
+import '../hooks/use_auth.dart';
+import '../hooks/use_biometric.dart';
 import '../hooks/use_realtime.dart';
 import '../hooks/use_theme.dart';
+import '../l10n/app_localizations.dart';
 import '../services/push_notification_service.dart';
 import 'router.dart';
 
@@ -26,6 +29,7 @@ class FlutterBoilerplateApp extends ConsumerStatefulWidget {
 class _FlutterBoilerplateAppState extends ConsumerState<FlutterBoilerplateApp>
     with WidgetsBindingObserver {
   OAuthLinkHandler? _oauthLinkHandler;
+  bool _biometricGatePending = !kIsWeb;
   bool _biometricLocked = false;
   bool _biometricChecked = false;
 
@@ -35,6 +39,12 @@ class _FlutterBoilerplateAppState extends ConsumerState<FlutterBoilerplateApp>
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initServices();
+    });
+    ref.listen(biometricEnabledProvider, (prev, next) {
+      final enabled = next.asData?.value ?? false;
+      if (enabled && !_biometricChecked) {
+        setState(() => _biometricChecked = true);
+      }
     });
   }
 
@@ -61,6 +71,14 @@ class _FlutterBoilerplateAppState extends ConsumerState<FlutterBoilerplateApp>
   Future<void> _initServices() async {
     if (kIsWeb) return;
 
+    final biometric = ref.read(biometricProvider);
+    final enabled = await biometric.isEnabled();
+    if (enabled) {
+      _biometricChecked = true;
+      await _unlockWithBiometric();
+    }
+    if (mounted) setState(() => _biometricGatePending = false);
+
     _oauthLinkHandler = OAuthLinkHandler();
     await _oauthLinkHandler!.init(ref);
 
@@ -77,13 +95,6 @@ class _FlutterBoilerplateAppState extends ConsumerState<FlutterBoilerplateApp>
     } else {
       debugPrint('[push] disabled via PUSH_ENABLED=false');
     }
-
-    final biometric = ref.read(biometricProvider);
-    final enabled = await biometric.isEnabled();
-    if (enabled) {
-      _biometricChecked = true;
-      if (mounted) _unlockWithBiometric();
-    }
   }
 
   void _lockWithBiometric() {
@@ -98,14 +109,27 @@ class _FlutterBoilerplateAppState extends ConsumerState<FlutterBoilerplateApp>
     }
   }
 
+  Future<void> _signOut() async {
+    final auth = ref.read(authProvider.notifier);
+    await auth.logout();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
     final messages = ref.watch(messagesProvider(locale));
 
     ref.watch(useRealtimeProvider);
     ref.watch(stripeInitProvider);
+
+    if (_biometricGatePending) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Container(color: colors.surface),
+      );
+    }
 
     Widget app = MaterialApp.router(
       title: 'Flutter Boilerplate',
@@ -123,7 +147,10 @@ class _FlutterBoilerplateAppState extends ConsumerState<FlutterBoilerplateApp>
         children: [
           app,
           Positioned.fill(
-            child: _BiometricOverlay(onUnlock: _unlockWithBiometric),
+            child: _BiometricOverlay(
+              onUnlock: _unlockWithBiometric,
+              onSignOut: _signOut,
+            ),
           ),
         ],
       );
@@ -135,12 +162,17 @@ class _FlutterBoilerplateAppState extends ConsumerState<FlutterBoilerplateApp>
 
 class _BiometricOverlay extends StatelessWidget {
   final VoidCallback onUnlock;
+  final VoidCallback onSignOut;
 
-  const _BiometricOverlay({required this.onUnlock});
+  const _BiometricOverlay({
+    required this.onUnlock,
+    required this.onSignOut,
+  });
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Container(
       color: colors.surface,
@@ -155,7 +187,7 @@ class _BiometricOverlay extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'App Locked',
+              t.securityBiometricLockedTitle,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -164,7 +196,7 @@ class _BiometricOverlay extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Authenticate to access the app',
+              t.securityBiometricLockedSubtitle,
               style: TextStyle(
                 fontSize: 14,
                 color: colors.fgMuted,
@@ -175,6 +207,11 @@ class _BiometricOverlay extends StatelessWidget {
               iconSize: 48,
               icon: Icon(Icons.fingerprint, color: colors.brand),
               onPressed: onUnlock,
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: onSignOut,
+              child: Text(t.biometricSignOutInstead),
             ),
           ],
         ),

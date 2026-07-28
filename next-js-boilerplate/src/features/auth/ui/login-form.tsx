@@ -3,6 +3,7 @@
 import {
   useState,
   useCallback,
+  useEffect,
   type Dispatch,
   type SetStateAction,
 } from "react";
@@ -106,7 +107,11 @@ async function handleMfaSubmit(
   try {
     await verifyMfa(mfaState.mfaToken, mfaCode);
     if (trustDevice) {
-      await trustDeviceServer();
+      try {
+        await trustDeviceServer();
+      } catch {
+        // Non-fatal — login already succeeded; trusting the device is best-effort.
+      }
     }
     const match = document.cookie.match(new RegExp(`${LANG_COOKIE}=([^;]+)`));
     const lang =
@@ -136,6 +141,18 @@ export function LoginForm() {
   const [mfaError, setMfaError] = useState<string | null>(null);
   const [resending, setResending] = useState(false);
   const [trustDevice, setTrustDevice] = useState(false);
+  const [cooldownEnd, setCooldownEnd] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+
+  const cooldownRemaining = cooldownEnd
+    ? Math.max(0, Math.ceil((cooldownEnd - now) / 1000))
+    : 0;
+
+  useEffect(() => {
+    if (!cooldownEnd || cooldownRemaining <= 0) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [cooldownEnd, cooldownRemaining]);
 
   const schema = loginFormSchema(t.errors);
 
@@ -145,9 +162,12 @@ export function LoginForm() {
     if (!mfaState) return;
     setResending(true);
     try {
-      await resendLoginCodeServer(mfaState.mfaToken);
+      const { mfaToken } = await resendLoginCodeServer(mfaState.mfaToken);
+      setMfaState({ ...mfaState, mfaToken });
+      setCooldownEnd(Date.now() + 60000);
+      setNow(Date.now());
     } catch {
-      // ignore
+      setMfaError("Couldn't resend the code — try again");
     } finally {
       setResending(false);
     }
@@ -230,12 +250,14 @@ export function LoginForm() {
             <button
               type="button"
               onClick={onResend}
-              disabled={resending}
+              disabled={resending || cooldownRemaining > 0}
               className="text-brand text-xs underline disabled:opacity-50"
             >
-              {resending
-                ? t.form.login.mfaResending
-                : t.form.login.mfaResendCode}
+              {cooldownRemaining > 0
+                ? `${t.form.login.mfaResendCooldown} ${cooldownRemaining}s`
+                : resending
+                  ? t.form.login.mfaResending
+                  : t.form.login.mfaResendCode}
             </button>
           )}
 
@@ -246,7 +268,7 @@ export function LoginForm() {
               onChange={(e) => setTrustDevice(e.target.checked)}
               className="h-4 w-4"
             />
-            Trust this device
+            {t.form.login.trustDevice}
           </label>
 
           <Button
@@ -268,7 +290,7 @@ export function LoginForm() {
             setMfaError(null);
           }}
         >
-          Use a different account
+          {t.form.login.useDifferentAccount}
         </button>
       </div>
     );

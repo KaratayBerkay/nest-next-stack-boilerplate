@@ -329,6 +329,14 @@ class AppLocalizationsTr extends AppLocalizations {
   String get authFormLoginMfaResendCode => 'Kodu yeniden gönder';
 
   @override
+  String authFormLoginMfaResendCooldown(Object seconds) {
+    return '${seconds}s sonra yeniden gönder';
+  }
+
+  @override
+  String get authFormLoginMfaTrustDevice => 'Bu cihaza güven';
+
+  @override
   String get authCodeResent => 'Doğrulama kodu gönderildi';
 
   @override
@@ -3426,6 +3434,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsNavPrivacy => 'Gizlilik';
 
   @override
+  String get settingsNavSecurity => 'Güvenlik';
+
+  @override
   String get settingsPrivacySubtitle => 'Gizlilik ayarları, veri paylaşımı';
 
   @override
@@ -5184,6 +5195,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get securityChangePassword => 'Şifre Değiştir';
 
   @override
+  String get securityChangePasswordComingSoon =>
+      'Şifre değiştirme yakında gelecek';
+
+  @override
   String get securityActiveSessions => 'Aktif Oturumlar';
 
   @override
@@ -5258,6 +5273,16 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get securityBiometricDisabledSubtitle =>
       'Uygulamayı açmak için biyometrik doğrulama iste';
+
+  @override
+  String get securityBiometricLockedTitle => 'Uygulama Kilitli';
+
+  @override
+  String get securityBiometricLockedSubtitle =>
+      'Uygulamaya erişmek için kimlik doğrulaması yapın';
+
+  @override
+  String get biometricSignOutInstead => 'Çıkış yap';
 
   @override
   String get settingsAddCard => 'Kart Ekle';

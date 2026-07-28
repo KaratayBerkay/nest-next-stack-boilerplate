@@ -21,9 +21,8 @@ class VerifyMfaResponse {
   factory VerifyMfaResponse.fromJson(Map<String, dynamic> json) {
     return VerifyMfaResponse(
       enabled: json['enabled'] as bool,
-      backupCodes: (json['backupCodes'] as List)
-          .map((e) => e as String)
-          .toList(),
+      backupCodes:
+          (json['backupCodes'] as List).map((e) => e as String).toList(),
     );
   }
 }

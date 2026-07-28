@@ -47,5 +47,5 @@ export const POST = withLogging(async (request, log) => {
     return NextResponse.json(body, { status: body.statusCode });
   }
 
-  return NextResponse.json({ msg: data.resendLoginCode }, { status: 200 });
+  return NextResponse.json({ mfaToken: data.resendLoginCode }, { status: 200 });
 });

@@ -105,6 +105,13 @@ export class AuthSessionService {
     // slot that the next real request — which always presents the actual
     // one — can never match, making every refresh unusable the instant
     // it's issued.
+    const deviceRecord = session.deviceId
+      ? await this.prisma.device.findUnique({
+          where: { id: session.deviceId },
+          select: { trusted: true },
+        })
+      : null;
+
     const device: DeviceContext | undefined = deviceToken
       ? {
           deviceId: session.deviceId ?? '',
@@ -112,6 +119,7 @@ export class AuthSessionService {
           changed: false,
           ip: ctx.req.ip ?? null,
           userAgent: ctx.req.headers['user-agent'] ?? null,
+          trusted: deviceRecord?.trusted ?? false,
         }
       : undefined;
 

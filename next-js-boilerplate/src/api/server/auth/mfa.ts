@@ -69,8 +69,8 @@ export async function disableMfaServer(
 
 export async function resendLoginCodeServer(
   mfaToken: string,
-): Promise<{ msg: string }> {
-  return apiFetchJson<{ msg: string }>(AUTH_LOGIN_MFA_RESEND_URL, {
+): Promise<{ mfaToken: string }> {
+  return apiFetchJson<{ mfaToken: string }>(AUTH_LOGIN_MFA_RESEND_URL, {
     method: POST,
     headers: JSON_CONTENT_TYPE_HEADER,
     body: JSON.stringify({ mfaToken }),

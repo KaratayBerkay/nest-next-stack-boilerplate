@@ -67,10 +67,16 @@ class _SettingsNavState extends State<SettingsNav> {
         '/v1/${widget.lang}/settings/account',
       ),
       _TabData(
-        Icons.lock_outline,
+        Icons.lock_outlined,
         Icons.lock,
         t.settingsNavPrivacy,
         '/v1/${widget.lang}/settings/privacy',
+      ),
+      _TabData(
+        Icons.shield_outlined,
+        Icons.shield,
+        t.settingsNavSecurity,
+        '/v1/${widget.lang}/settings/security',
       ),
       _TabData(
         Icons.credit_card_outlined,

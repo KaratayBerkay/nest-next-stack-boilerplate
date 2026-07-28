@@ -1,12 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../api/client/auth/actions.dart';
 import '../../../components/ui/button/button.dart';
+import '../../../components/ui/input_otp/input_otp.dart';
 import '../../../components/ui/spinner/spinner.dart';
 import '../../../constants/theme.dart';
 import '../../../hooks/use_auth.dart';
@@ -27,7 +27,7 @@ class _MfaEnrollPageContentState extends ConsumerState<MfaEnrollPageContent> {
   _EnrollStep _step = _EnrollStep.qrCode;
   EnrollMfaResponse? _enrollData;
   VerifyMfaResponse? _verifyData;
-  final _codeCtrl = TextEditingController();
+  String _code = '';
   bool _loading = false;
   bool _codesSaved = false;
   String? _error;
@@ -36,12 +36,6 @@ class _MfaEnrollPageContentState extends ConsumerState<MfaEnrollPageContent> {
   void initState() {
     super.initState();
     _startEnrollment();
-  }
-
-  @override
-  void dispose() {
-    _codeCtrl.dispose();
-    super.dispose();
   }
 
   Future<void> _startEnrollment() async {
@@ -62,13 +56,12 @@ class _MfaEnrollPageContentState extends ConsumerState<MfaEnrollPageContent> {
   }
 
   Future<void> _verifyCode() async {
-    final code = _codeCtrl.text.trim();
-    if (code.length < 6) return;
+    if (_code.length < 6) return;
 
     setState(() => _loading = true);
     try {
       final actions = ref.read(loginActionsProvider);
-      final data = await actions.verifyMfa(code);
+      final data = await actions.verifyMfa(_code);
       setState(() {
         _verifyData = data;
         _step = _EnrollStep.backupCodes;
@@ -213,24 +206,21 @@ class _MfaEnrollPageContentState extends ConsumerState<MfaEnrollPageContent> {
             style: TextStyle(fontSize: 14, color: colors.fgMuted),
           ),
           const SizedBox(height: 24),
-          TextField(
-            controller: _codeCtrl,
-            keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(6),
-            ],
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 24, letterSpacing: 8),
-            decoration: InputDecoration(
-              hintText: '000000',
-              errorText: _error,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+          Center(
+            child: InputOtp(
+              value: _code,
+              onChanged: (v) => setState(() => _code = v),
+              onCompleted: (_) => _verifyCode(),
             ),
-            onSubmitted: (_) => _verifyCode(),
           ),
+          if (_error != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              _error!,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: colors.danger),
+            ),
+          ],
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
@@ -243,7 +233,12 @@ class _MfaEnrollPageContentState extends ConsumerState<MfaEnrollPageContent> {
           ),
           const SizedBox(height: 12),
           TextButton(
-            onPressed: _startEnrollment,
+            onPressed: () {
+              _code = '';
+              _error = null;
+              setState(() => _step = _EnrollStep.qrCode);
+              _startEnrollment();
+            },
             child: Text(
               t.securityRegenerateQr,
               style: TextStyle(color: colors.brand),

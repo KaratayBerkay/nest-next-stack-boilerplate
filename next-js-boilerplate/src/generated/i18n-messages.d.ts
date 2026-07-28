@@ -110,7 +110,10 @@ export type I18nMessages = {
           "mfaEmailDescription": string;
           "mfaTotpDescription": string;
           "mfaResendCode": string;
+          "mfaResendCooldown": string;
           "mfaResending": string;
+          "trustDevice": string;
+          "useDifferentAccount": string;
         };
         "register": {
           "title": string;

@@ -20,7 +20,10 @@
       "mfaEmailDescription": "Enter the 6-digit code sent to your email for {email}.",
       "mfaTotpDescription": "Enter the 6-digit code from your authenticator app for {email}.",
       "mfaResendCode": "Resend code",
-      "mfaResending": "Sending..."
+      "mfaResendCooldown": "Resend in",
+      "mfaResending": "Sending...",
+      "trustDevice": "Trust this device",
+      "useDifferentAccount": "Use a different account"
     },
     "register": {
       "title": "Create your account",

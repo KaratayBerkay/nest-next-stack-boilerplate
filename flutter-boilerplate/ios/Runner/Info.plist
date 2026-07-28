@@ -70,6 +70,8 @@
 	<string>This app uses the camera to upload profile photos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs access to the photo library to upload images.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Use Face ID to unlock the app.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

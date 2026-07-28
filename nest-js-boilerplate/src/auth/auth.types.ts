@@ -93,6 +93,9 @@ export class SessionUserPayload {
 
   @Field({ nullable: true })
   sessionId?: string;
+
+  @Field({ defaultValue: false })
+  mfaEnabled!: boolean;
 }
 
 @ObjectType()

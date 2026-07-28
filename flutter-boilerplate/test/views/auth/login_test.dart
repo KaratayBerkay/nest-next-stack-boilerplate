@@ -249,8 +249,10 @@ void main() {
         },
       );
 
-      final mfaField = find.byType(TextField);
-      await tester.enterText(mfaField, '123456');
+      final mfaFields = find.byType(TextField);
+      for (var i = 0; i < 6; i++) {
+        await tester.enterText(mfaFields.at(i), '${i + 1}');
+      }
 
       await tester.tap(find.text('Verify'));
       await tester.pumpAndSettle();

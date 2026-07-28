@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -6,11 +8,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../api/client/auth/actions.dart';
+import '../../../api/server/sessions/trust_device.dart';
 import '../../../components/auth/auth_layout.dart';
 import '../../../components/auth/labeled_field.dart';
 import '../../../components/auth/link_text.dart';
 import '../../../components/auth/social_login_buttons.dart';
 import '../../../components/ui/button/button.dart';
+import '../../../components/ui/input_otp/input_otp.dart';
 import '../../../constants/theme.dart';
 import '../../../hooks/use_auth.dart';
 import '../../../hooks/use_theme.dart';
@@ -36,6 +40,10 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
   String? _mfaMethod;
   bool _resending = false;
   bool _backupCodeMode = false;
+  bool _trustDevice = false;
+  String _mfaOtpCode = '';
+  int _cooldownRemaining = 0;
+  Timer? _cooldownTimer;
   Map<String, String?> _fieldErrors = {};
 
   @override
@@ -43,6 +51,7 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
     _mfaCodeCtrl.dispose();
+    _cooldownTimer?.cancel();
     super.dispose();
   }
 
@@ -135,8 +144,27 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
     });
   }
 
+  void _startCooldown() {
+    const duration = 60;
+    _cooldownRemaining = duration;
+    _cooldownTimer?.cancel();
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() {
+        _cooldownRemaining--;
+        if (_cooldownRemaining <= 0) {
+          _cooldownTimer?.cancel();
+          _cooldownRemaining = 0;
+        }
+      });
+    });
+  }
+
   Future<void> _verifyMfa() async {
-    final code = _mfaCodeCtrl.text.trim();
+    final code = _backupCodeMode ? _mfaCodeCtrl.text.trim() : _mfaOtpCode;
     final t = AppLocalizations.of(context);
 
     final minLen = _backupCodeMode ? 6 : 6;
@@ -167,6 +195,14 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
         await ref.read(authProvider.notifier).setRefreshToken(rt);
       }
 
+      if (_trustDevice) {
+        try {
+          await ref.read(trustDeviceServerProvider).call();
+        } catch (_) {
+          // Non-fatal — login already succeeded.
+        }
+      }
+
       if (mounted) {
         final locale = ref.read(localeProvider);
         context.go('/v1/$locale/feed');
@@ -183,8 +219,13 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
     setState(() => _resending = true);
     try {
       final actions = ref.read(loginActionsProvider);
-      await actions.resendLoginCode(_mfaToken!);
+      final newToken = await actions.resendLoginCode(_mfaToken!);
       if (mounted) {
+        setState(() {
+          _mfaToken = newToken;
+          _mfaOtpCode = '';
+        });
+        _startCooldown();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppLocalizations.of(context).authCodeResent)),
         );
@@ -209,8 +250,12 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
       _mfaToken = null;
       _mfaMethod = null;
       _mfaCodeCtrl.clear();
+      _mfaOtpCode = '';
       _fieldErrors = {};
       _backupCodeMode = false;
+      _trustDevice = false;
+      _cooldownTimer?.cancel();
+      _cooldownRemaining = 0;
     });
   }
 
@@ -377,23 +422,41 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
             keyboardType: TextInputType.text,
             autofocus: true,
             maxLength: 10,
-            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-fA-F0-9]'))],
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[a-fA-F0-9]')),
+            ],
             errorText: _fieldErrors['mfa'],
             textInputAction: TextInputAction.done,
             onSubmitted: _verifyMfa,
           )
         else
-          LabeledField(
-            label: t.authFormLoginMfaCodeLabel,
-            hint: t.authFormLoginMfaCodePlaceholder,
-            controller: _mfaCodeCtrl,
-            keyboardType: TextInputType.number,
-            autofocus: true,
-            maxLength: 6,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            errorText: _fieldErrors['mfa'],
-            textInputAction: TextInputAction.done,
-            onSubmitted: _verifyMfa,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                t.authFormLoginMfaCodeLabel,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: colors.fg,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Center(
+                child: InputOtp(
+                  value: _mfaOtpCode,
+                  onChanged: (v) => setState(() => _mfaOtpCode = v),
+                  onCompleted: (_) => _verifyMfa(),
+                ),
+              ),
+              if (_fieldErrors['mfa'] != null) ...[
+                const SizedBox(height: 6),
+                Text(
+                  _fieldErrors['mfa']!,
+                  style: TextStyle(fontSize: 12, color: colors.danger),
+                ),
+              ],
+            ],
           ),
         if (_fieldErrors['form'] != null) ...[
           const SizedBox(height: 12),
@@ -403,21 +466,23 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
             style: TextStyle(fontSize: 14, color: colors.danger),
           ),
         ],
-        const SizedBox(height: 8),
-        Center(
-          child: LinkText(
-            _backupCodeMode
-                ? t.authFormLoginMfaUseCode
-                : t.authFormLoginMfaUseBackupCode,
-            onTap: () {
-              setState(() {
-                _backupCodeMode = !_backupCodeMode;
-                _mfaCodeCtrl.clear();
-                _fieldErrors = {};
-              });
-            },
+        if (_mfaMethod == 'TOTP') ...[
+          const SizedBox(height: 8),
+          Center(
+            child: LinkText(
+              _backupCodeMode
+                  ? t.authFormLoginMfaUseCode
+                  : t.authFormLoginMfaUseBackupCode,
+              onTap: () {
+                setState(() {
+                  _backupCodeMode = !_backupCodeMode;
+                  _mfaCodeCtrl.clear();
+                  _fieldErrors = {};
+                });
+              },
+            ),
           ),
-        ),
+        ],
         const SizedBox(height: 12),
         SizedBox(
           height: 36,
@@ -435,22 +500,43 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
         if (isEmailMethod) ...[
           const SizedBox(height: 8),
           Center(
-            child: _resending
-                ? SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: colors.brand,
-                    ),
+            child: _cooldownRemaining > 0
+                ? Text(
+                    t.authFormLoginMfaResendCooldown('$_cooldownRemaining'),
+                    style: TextStyle(fontSize: 12, color: colors.fgMuted),
                   )
-                : LinkText(
-                    t.authFormLoginMfaResendCode,
-                    onTap: _resendCode,
-                  ),
+                : _resending
+                    ? SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: colors.brand,
+                        ),
+                      )
+                    : LinkText(
+                        t.authFormLoginMfaResendCode,
+                        onTap: _resendCode,
+                      ),
           ),
         ],
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Checkbox(
+              value: _trustDevice,
+              onChanged: (v) => setState(() => _trustDevice = v ?? false),
+            ),
+            GestureDetector(
+              onTap: () => setState(() => _trustDevice = !_trustDevice),
+              child: Text(
+                t.authFormLoginMfaTrustDevice,
+                style: TextStyle(fontSize: 12, color: colors.fg),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
         Center(
           child: LinkText(
             t.authFormLoginDifferentAccount,

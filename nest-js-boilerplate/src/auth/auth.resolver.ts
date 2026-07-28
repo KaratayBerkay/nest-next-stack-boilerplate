@@ -7,6 +7,7 @@ import { CsrfGuard } from '../csrf/csrf.guard';
 import { RolesGuard } from '../authorization/roles.guard';
 import { Roles } from '../authorization/roles.decorator';
 import { UserRole } from '../@generated/prisma/user-role.enum';
+import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from './auth.service';
 import { AuthPayload, SessionUserPayload } from './auth.types';
 import type { JwtUser } from './auth.types';
@@ -22,7 +23,10 @@ import type { OAuthProfile } from './auth.service';
 
 @Resolver()
 export class AuthResolver {
-  constructor(private readonly auth: AuthService) {}
+  constructor(
+    private readonly auth: AuthService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Mutation(() => AuthPayload)
@@ -141,7 +145,12 @@ export class AuthResolver {
    */
   @UseGuards(SessionAuthGuard)
   @Query(() => SessionUserPayload, { name: 'me' })
-  me(@CurrentUser() user: JwtUser): SessionUserPayload {
+  async me(@CurrentUser() user: JwtUser): Promise<SessionUserPayload> {
+    const dbUser = await this.prisma.user.findUnique({
+      where: { id: user.userId },
+      select: { mfaEnabled: true },
+    });
+
     return {
       id: user.userId,
       email: user.email,
@@ -153,6 +162,7 @@ export class AuthResolver {
       locale: user.locale ?? 'en',
       timezone: user.timezone ?? 'UTC',
       sessionId: user.sessionId,
+      mfaEnabled: dbUser?.mfaEnabled ?? false,
     };
   }
 }

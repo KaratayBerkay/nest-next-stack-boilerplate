@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 
 class InputOtp extends StatefulWidget {
   final int length;
+  final String? value;
+  final void Function(String)? onChanged;
   final void Function(String)? onCompleted;
   final double spacing;
 
   const InputOtp({
     super.key,
     this.length = 6,
+    this.value,
+    this.onChanged,
     this.onCompleted,
     this.spacing = 8,
   });
@@ -17,16 +21,19 @@ class InputOtp extends StatefulWidget {
 }
 
 class _InputOtpState extends State<InputOtp> {
-  final List<TextEditingController> _controllers = [];
-  final List<FocusNode> _focusNodes = [];
+  late List<TextEditingController> _controllers;
+  late List<FocusNode> _focusNodes;
 
   @override
   void initState() {
     super.initState();
-    for (int i = 0; i < widget.length; i++) {
-      _controllers.add(TextEditingController());
-      _focusNodes.add(FocusNode());
-    }
+    _initControllers();
+  }
+
+  void _initControllers() {
+    _controllers = List.generate(widget.length, (_) => TextEditingController());
+    _focusNodes = List.generate(widget.length, (_) => FocusNode());
+    _syncFromValue();
   }
 
   @override
@@ -40,12 +47,34 @@ class _InputOtpState extends State<InputOtp> {
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(covariant InputOtp old) {
+    super.didUpdateWidget(old);
+    if (widget.value != old.value) {
+      _syncFromValue();
+    }
+  }
+
+  void _syncFromValue() {
+    final v = widget.value ?? '';
+    for (int i = 0; i < widget.length; i++) {
+      final char = i < v.length ? v[i] : '';
+      if (_controllers[i].text != char) {
+        _controllers[i].text = char;
+      }
+    }
+  }
+
+  String get _fullValue => _controllers.map((c) => c.text).join();
+
   void _onChanged(String value, int index) {
     if (value.isNotEmpty && index < widget.length - 1) {
       _focusNodes[index + 1].requestFocus();
     }
-    if (_controllers.every((c) => c.text.isNotEmpty)) {
-      widget.onCompleted?.call(_controllers.map((c) => c.text).join());
+    final full = _fullValue;
+    widget.onChanged?.call(full);
+    if (full.length == widget.length) {
+      widget.onCompleted?.call(full);
     }
   }
 

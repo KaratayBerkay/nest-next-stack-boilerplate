@@ -5,6 +5,7 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
+import { CryptoService } from '../common/crypto/crypto.service';
 import { MailService } from '../mail/mail.service';
 import { TokenStoreService } from './token-store.service';
 
@@ -18,6 +19,7 @@ export class EmailOtpService {
   constructor(
     private readonly tokenStore: TokenStoreService,
     private readonly mail: MailService,
+    private readonly crypto: CryptoService,
   ) {}
 
   async generate(
@@ -25,9 +27,21 @@ export class EmailOtpService {
     email: string,
     purpose: 'REGISTRATION' | 'LOGIN',
   ): Promise<void> {
-    const code = String(randomInt(100000, 999999));
+    const cooldownKey = `otp_cooldown:${purpose}:${userId}`;
+    const remaining = await this.tokenStore.getOtpResendCooldown(cooldownKey);
+    if (remaining > 0) {
+      throw new BadRequestException({
+        exc: 'EX_AUTH_OTP_RESEND_COOLDOWN',
+        msg: `Please wait ${remaining} seconds before requesting a new code`,
+        key: 'auth.errors.otpResendCooldown',
+      });
+    }
 
-    await this.tokenStore.writeEmailOtp(purpose, userId, code, email);
+    const code = String(randomInt(100000, 999999));
+    const codeHash = this.crypto.sha256(code);
+
+    await this.tokenStore.writeEmailOtp(purpose, userId, codeHash, email);
+    await this.tokenStore.setOtpResendCooldown(cooldownKey, RESEND_COOLDOWN_SECONDS);
 
     await this.mail.enqueue({
       to: email,
@@ -66,7 +80,8 @@ export class EmailOtpService {
       });
     }
 
-    if (stored.code !== code) {
+    const codeHash = this.crypto.sha256(code);
+    if (stored.codeHash !== codeHash) {
       await this.tokenStore.incrementOtpAttempts(purpose, userId);
       const remaining = MAX_OTP_ATTEMPTS - stored.attempts - 1;
       throw new BadRequestException({
@@ -85,22 +100,11 @@ export class EmailOtpService {
     email: string,
     purpose: 'REGISTRATION' | 'LOGIN',
   ): Promise<void> {
-    const cooldownKey = `otp_cooldown:${purpose}:${userId}`;
-    const remaining = await this.tokenStore.getOtpResendCooldown(cooldownKey);
-    if (remaining > 0) {
-      throw new BadRequestException({
-        exc: 'EX_AUTH_OTP_RESEND_COOLDOWN',
-        msg: `Please wait ${remaining} seconds before requesting a new code`,
-        key: 'auth.errors.otpResendCooldown',
-      });
-    }
-
     const stored = await this.tokenStore.peekEmailOtp(purpose, userId);
     if (stored) {
       await this.tokenStore.deleteEmailOtp(purpose, userId);
     }
 
     await this.generate(userId, email, purpose);
-    await this.tokenStore.setOtpResendCooldown(cooldownKey, RESEND_COOLDOWN_SECONDS);
   }
 }

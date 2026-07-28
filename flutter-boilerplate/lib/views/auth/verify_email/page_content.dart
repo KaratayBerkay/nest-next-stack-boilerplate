@@ -1,12 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../api/client/auth/actions.dart';
 import '../../../components/auth/auth_layout.dart';
 import '../../../components/ui/button/button.dart';
+import '../../../components/ui/input_otp/input_otp.dart';
 import '../../../constants/theme.dart';
 import '../../../hooks/use_auth.dart';
 import '../../../hooks/use_locale.dart';
@@ -29,20 +29,19 @@ class VerifyEmailPageContent extends ConsumerStatefulWidget {
 
 class _VerifyEmailPageContentState
     extends ConsumerState<VerifyEmailPageContent> {
-  final _codeCtrl = TextEditingController();
+  String _code = '';
   bool _verifying = false;
   bool _success = false;
   bool _resending = false;
   String? _error;
 
-  @override
-  void dispose() {
-    _codeCtrl.dispose();
-    super.dispose();
-  }
-
   bool get _hasToken => widget.token.isNotEmpty;
   bool get _codeMode => !_hasToken && widget.userId.isNotEmpty;
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
   Future<void> _verifyWithToken() async {
     final t = AppLocalizations.of(context);
@@ -69,8 +68,7 @@ class _VerifyEmailPageContentState
   }
 
   Future<void> _verifyWithCode() async {
-    final code = _codeCtrl.text.trim();
-    if (code.length < 6) return;
+    if (_code.length < 6) return;
 
     final t = AppLocalizations.of(context);
 
@@ -81,7 +79,7 @@ class _VerifyEmailPageContentState
 
     try {
       final actions = ref.read(loginActionsProvider);
-      await actions.verifyEmailCode(widget.userId, code);
+      await actions.verifyEmailCode(widget.userId, _code);
       if (mounted) setState(() => _success = true);
     } on DioException catch (e) {
       final data = e.response?.data;
@@ -193,24 +191,21 @@ class _VerifyEmailPageContentState
             style: TextStyle(fontSize: 12, color: colors.fgMuted),
           ),
           const SizedBox(height: 24),
-          TextField(
-            controller: _codeCtrl,
-            keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(6),
-            ],
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 24, letterSpacing: 8),
-            decoration: InputDecoration(
-              hintText: '000000',
-              errorText: _error,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+          Center(
+            child: InputOtp(
+              value: _code,
+              onChanged: (v) => setState(() => _code = v),
+              onCompleted: (_) => _verifyWithCode(),
             ),
-            onSubmitted: (_) => _verifyWithCode(),
           ),
+          if (_error != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              _error!,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: colors.danger),
+            ),
+          ],
           const SizedBox(height: 16),
           SizedBox(
             height: 36,

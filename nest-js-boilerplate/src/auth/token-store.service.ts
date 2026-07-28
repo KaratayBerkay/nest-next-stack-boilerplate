@@ -311,17 +311,17 @@ export class TokenStoreService {
     }
   }
 
-  /** Store a 6-digit email OTP with purpose-scoped key. */
+  /** Store a 6-digit email OTP hash with purpose-scoped key. */
   async writeEmailOtp(
     purpose: 'REGISTRATION' | 'LOGIN',
     subjectId: string,
-    code: string,
+    codeHash: string,
     email: string,
   ): Promise<void> {
     const key = `${EMAIL_OTP_PREFIX}${purpose}:${subjectId}`;
     await this.redis.set(
       key,
-      JSON.stringify({ code, email, attempts: 0 }),
+      JSON.stringify({ codeHash, email, attempts: 0 }),
       'EX',
       EMAIL_OTP_TTL,
     );
@@ -331,13 +331,13 @@ export class TokenStoreService {
   async consumeEmailOtp(
     purpose: 'REGISTRATION' | 'LOGIN',
     subjectId: string,
-  ): Promise<{ code: string; email: string; attempts: number } | null> {
+  ): Promise<{ codeHash: string; email: string; attempts: number } | null> {
     const key = `${EMAIL_OTP_PREFIX}${purpose}:${subjectId}`;
     const raw = await this.redis.getdel(key);
     if (!raw) return null;
     try {
       return JSON.parse(raw) as {
-        code: string;
+        codeHash: string;
         email: string;
         attempts: number;
       };
@@ -350,13 +350,13 @@ export class TokenStoreService {
   async peekEmailOtp(
     purpose: 'REGISTRATION' | 'LOGIN',
     subjectId: string,
-  ): Promise<{ code: string; email: string; attempts: number } | null> {
+  ): Promise<{ codeHash: string; email: string; attempts: number } | null> {
     const key = `${EMAIL_OTP_PREFIX}${purpose}:${subjectId}`;
     const raw = await this.redis.get(key);
     if (!raw) return null;
     try {
       return JSON.parse(raw) as {
-        code: string;
+        codeHash: string;
         email: string;
         attempts: number;
       };
@@ -374,7 +374,7 @@ export class TokenStoreService {
     const raw = await this.redis.get(key);
     if (!raw) return;
     const data = JSON.parse(raw) as {
-      code: string;
+      codeHash: string;
       email: string;
       attempts: number;
     };

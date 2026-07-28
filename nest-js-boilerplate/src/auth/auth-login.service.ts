@@ -95,7 +95,7 @@ export class AuthLoginService {
       ? await this.devices.resolveForLogin(user.id, ctx)
       : undefined;
 
-    if (user.mfaEnabled && !device?.trusted) {
+    if (!device?.trusted) {
       const factor = await this.prisma.mfaFactor.findFirst({
         where: { userId: user.id, method: 'TOTP', verifiedAt: { not: null } },
         orderBy: { createdAt: 'desc' },

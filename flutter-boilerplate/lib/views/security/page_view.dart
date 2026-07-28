@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_boilerplate/lib/biometric_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -10,8 +11,9 @@ import '../../constants/theme.dart';
 import '../../hooks/use_auth.dart';
 import '../../hooks/use_biometric.dart';
 import '../../l10n/app_localizations.dart';
-import 'package:flutter_boilerplate/lib/biometric_auth.dart';
+
 import '../../types/auth/user.dart';
+import '../settings/settings_shell.dart';
 import 'mfa_enroll/page_content.dart';
 
 class SecurityPageContent extends ConsumerWidget {
@@ -30,37 +32,42 @@ class SecurityPageContent extends ConsumerWidget {
     final bioAvail = biometricAvailable.asData?.value ?? false;
     final bioEnabled = biometricEnabled.asData?.value ?? false;
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Card(
-          child: Column(
-            children: [
-              _MfaTile(user: user),
-              if (bioAvail) ...[
+    return SettingsShellScaffold(
+      lang: lang,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Card(
+            child: Column(
+              children: [
+                _MfaTile(user: user),
+                if (bioAvail) ...[
+                  const Divider(height: 1),
+                  _BiometricTile(enabled: bioEnabled),
+                ],
                 const Divider(height: 1),
-                _BiometricTile(enabled: bioEnabled),
-              ],
-              const Divider(height: 1),
-              ListTile(
-                title: Text(t.securityChangePassword),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () {},
-              ),
-              const Divider(height: 1),
-              ListTile(
-                title: Text(t.securityActiveSessions),
-                subtitle: Text(
-                  'Manage your logged-in devices',
-                  style: TextStyle(color: colors.fgMuted, fontSize: 12),
+                ListTile(
+                  title: Text(t.securityChangePassword),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(t.securityChangePasswordComingSoon)),
+                  ),
                 ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.go('/v1/$lang/settings/sessions'),
-              ),
-            ],
+                const Divider(height: 1),
+                ListTile(
+                  title: Text(t.securityActiveSessions),
+                  subtitle: Text(
+                    'Manage your logged-in devices',
+                    style: TextStyle(color: colors.fgMuted, fontSize: 12),
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.go('/v1/$lang/settings/sessions'),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
