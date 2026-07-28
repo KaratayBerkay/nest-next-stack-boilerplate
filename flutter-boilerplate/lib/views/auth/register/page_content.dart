@@ -10,7 +10,7 @@ import '../../../components/auth/labeled_field.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../constants/theme.dart';
 import '../../../hooks/use_auth.dart';
-import '../../../hooks/use_theme.dart';
+
 import '../../../l10n/app_localizations.dart';
 import '../../../types/auth/auth_request_types.dart';
 

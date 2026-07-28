@@ -10,7 +10,7 @@ import '../../constants/theme.dart';
 import '../../hooks/use_auth.dart';
 import '../../hooks/use_biometric.dart';
 import '../../l10n/app_localizations.dart';
-import '../../lib/biometric_auth.dart';
+import 'package:flutter_boilerplate/lib/biometric_auth.dart';
 import '../../types/auth/user.dart';
 import 'mfa_enroll/page_content.dart';
 
