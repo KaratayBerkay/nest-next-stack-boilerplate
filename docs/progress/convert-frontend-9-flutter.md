@@ -1,8 +1,8 @@
 # convert-frontend-9-flutter — Strong auth: biometric unlock, real MFA management, and 6-digit email verification
 
-**Date:** 2026-07-28 · **Status:** ⚠️ **Verification round 2 (§5) found one NEW critical regression (T17/F3 — login now hard-fails for every non-MFA-enrolled user on an untrusted device, introduced silently in `9c987e66`) and corrected all three test-gate counts: backend hid 2 new-broken suites/9 tests inside a matching total, Flutter hid 17 new-broken tests (429 total unchanged), Web mis-diagnosed 1 real failure as "blocked by tooling." 3 status-table cells were also wrong in both directions (T57/T69 over-claimed, T66 under-claimed). Do not treat 59/73 as ship-ready — read §5 before acting on this doc.**
+**Date:** 2026-07-28 · **Status:** ✅ **Verification round 3 (§7) confirms all 9 of §6's prescribed fixes landed correctly and match spec exactly, including the critical T17/F3 login regression — closed with zero new regressions anywhere.** All three gates are genuinely clean now: backend `pnpm build` passes + `pnpm test` 369/383 (14 pre-existing/unrelated, matches the original round-1 claim for real this time), Flutter `flutter analyze` 0 issues + `flutter test` 411/429 (18 pre-existing/unrelated: 1 `card_test.dart` + 17 `realtime_provider_test.dart`, both out of this doc's scope), Web `tsc --noEmit` 0 errors + `vitest run` **312/312, fully green**. Remaining open items are only the ones §6 explicitly didn't attempt (T53 — see §6.10 for why) plus pre-existing low-priority gaps never in scope for rounds 2/3 (T11, T14, T19, T20/T21, T38) — see §7.
 
-Original round-1-fix claim (superseded by §5): 59/73 confirmed complete, 4 partial, 10 not completed, `pnpm build` passes, `flutter analyze` clean, `flutter test` 428/429, `tsc --noEmit` 0 errors.
+Original round-1-fix claim (superseded by §5, then corrected for real by §7): 59/73 confirmed complete, 4 partial, 10 not completed, `pnpm build` passes, `flutter analyze` clean, `flutter test` 428/429, `tsc --noEmit` 0 errors.
 
 ---
 
@@ -846,3 +846,47 @@ Two real options, pick one before implementing:
 ### 6.11 T66 / T59 — no code fix needed
 
 T66 (web sessions link + MFA status fetch) was already fixed in `9c987e66`; only the doc's own status cell was wrong (§5.3). T59's stated *reason* was wrong but its ❌ conclusion was right, for the actual reason fixed in §6.2. Nothing to implement for either beyond flipping the doc's own status tables, which is a documentation cleanup, not a code change.
+
+---
+
+## 7. Verification round 3 (2026-07-28, same day — checking commit `2f6f0c30` against §6)
+
+Requested as "I have implemented fixes can you check all completed." Commit `2f6f0c30` ("fix(strong-auth): address verification round 2 issues") applied §6's fixes almost verbatim across 13 files. Dispatched 3 parallel agents again (backend/Flutter/web), each told not to trust the commit message and to re-derive every claim from current code plus a fresh gate run, same skepticism level as rounds 1 and 2.
+
+**Result: everything checked out. This is the first fully-clean round out of three.**
+
+### 7.1 Fix-by-fix verdicts
+
+| Item | File | Verdict |
+|---|---|---|
+| T17/F3 — restored `user.mfaEnabled && !device?.trusted` (Option A) | `auth-login.service.ts:98` | ✅ Exact prescribed diff. Traced every writer of `mfaEnabled` in the codebase to confirm the revert doesn't reopen anything else — `mfaEnabled` only ever flips true alongside a verified TOTP factor, so `verifyLoginMfa`'s TOTP-branch assumption still holds. |
+| `resend()` — cooldown check moved before the delete | `email-otp.service.ts:98-119` | ✅ Exact match to §6.5. |
+| T10 — `email-otp.service.spec.ts` DI gap + `codeHash` shape | `email-otp.service.spec.ts` | ✅ `CryptoService` provided; all 4 `peekEmailOtp` mock sites updated, not just some. |
+| `auth-session.service.spec.ts` — `prisma.device` mock + assertion update | `auth-session.service.spec.ts:55-57,103` | ✅ Both halves landed (the mock alone wouldn't have been enough — see §6.4). |
+| Biometric gate — `isEnabled()` try/catch | `biometric_auth.dart:34-42` | ✅ Matches the file's existing fail-to-`false` convention exactly; confirmed the exception can no longer propagate past the caller in `app.dart:75`. |
+| T57/T59 — MFA disable wired with `InputOTP` confirmation | `PageContent.tsx` | ✅ Traced end-to-end: code capture → button gating → API call → BFF route's `code.length>=6` check → backend mutation. Genuinely functional now, not cosmetic. |
+| T69 — `privacyTwoFactor*` i18n keys removed | `messages/{en,tr}/settings/messages.json` | ✅ Deleted from both; whole-repo grep found zero remaining references anywhere. |
+| Generated i18n types | `src/generated/i18n-messages-*` | ✅ Regenerated fresh via `pnpm generate-i18n-types` and diffed byte-identical to the committed files — not stale/hand-edited. |
+| Stale MFA cache | `security/page.tsx:36` | ✅ `noCache: true` (5th arg) now passed. |
+| T72 — cooldown test | `login-form-cooldown.test.tsx` | ✅ Genuine behavioral test (not shallow), verified line-by-line against `login-form.tsx`'s real state machine, ran 3× isolated with no flakiness. |
+
+### 7.2 Gate numbers (fresh runs)
+
+| Gate | Round 2 | Round 3 (now) |
+|---|---|---|
+| Backend `pnpm build` | pass | pass |
+| Backend `pnpm test` | 360p / 23f / 383 | **369p / 14f / 383** — the 2 broken suites (email-otp, auth-session) are now 0 failures; remaining 14 confirmed to be the same 4 pre-existing/unrelated suites as before (`token-store.service.spec.ts` 6, `device.service.spec.ts` 3, `billing.service.spec.ts` 4, `messaging-dm.service.spec.ts` 1) |
+| Flutter `flutter analyze` | 0 issues | 0 issues |
+| Flutter `flutter test` | 411p / 18f / 429 | **411p / 18f / 429 — unchanged**, confirmed via real `+N -M` counters. Expected: this round's only Flutter change (biometric_auth.dart) is unrelated to the pre-existing `card_test.dart` (1) and `realtime_provider_test.dart` (17) failures, and didn't introduce any new ones. |
+| Web `tsc --noEmit` | 0 errors | 0 errors |
+| Web `vitest run` | 310p / 1f / 311 | **312p / 0f / 312 — fully green** (+1 new cooldown test, +1 previously-failing test now passes) |
+
+### 7.3 Confirmed still open (unchanged from §4/§6, correctly not touched this round)
+
+- **T53** — Flutter Security-tab reachability test. §6.10 explained why this needs real test infra (or a source-level tab-list refactor) rather than a quick diff; confirmed `page_view_test.dart`, `router.dart`, and `settings_shell.dart` are untouched by this commit, i.e. correctly deferred, not silently skipped.
+- **T11, T14, T19, T20/T21, T38** — pre-existing gaps from the original 73-item checklist, never in scope for §6/round 2/round 3 (these were about hardcoded OTP config, missing backend tests for `verifyEmailCode` and the EMAIL branch, and permanent (non-expiring) device trust). Still open.
+
+### 7.4 Minor, non-blocking observations (optional, not required)
+
+- `PageContent.tsx`'s disable-confirmation step (`confirmingDisable`) has no cancel affordance — once opened, a user must either complete or abandon it via navigation. Cosmetic, not a functional bug.
+- `mfa-handlers.ts` and `useAuthActions()`'s `enrollMfa`/`verifyMfaEnrollment`/`disableMfa`/`resendLoginCode` remain unused dead code (the "minimal fix" path was chosen over the "thorough fix" in §6.2, as expected). Worth a cleanup pass eventually, not urgent.
