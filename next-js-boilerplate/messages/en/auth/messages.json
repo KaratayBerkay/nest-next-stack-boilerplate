@@ -16,7 +16,11 @@
       "mfaTitle": "Two-Factor Authentication",
       "mfaCodeLabel": "Authentication code",
       "mfaVerify": "Verify",
-      "mfaVerifying": "Verifying..."
+      "mfaVerifying": "Verifying...",
+      "mfaEmailDescription": "Enter the 6-digit code sent to your email for {email}.",
+      "mfaTotpDescription": "Enter the 6-digit code from your authenticator app for {email}.",
+      "mfaResendCode": "Resend code",
+      "mfaResending": "Sending..."
     },
     "register": {
       "title": "Create your account",
@@ -61,7 +65,11 @@
       "title": "Verify Email",
       "verifying": "Verifying your email...",
       "success": "Your email has been verified. You can now sign in.",
-      "loginLink": "Sign In"
+      "loginLink": "Sign In",
+      "codeDescription": "Enter the 6-digit verification code sent to your email.",
+      "verify": "Verify Email",
+      "resendCode": "Resend code",
+      "resending": "Sending..."
     }
   },
   "social": {

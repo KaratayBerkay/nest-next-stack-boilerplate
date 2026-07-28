@@ -13,6 +13,8 @@ import { TokenDerivationService } from './token-derivation.service';
 import { TokenStoreService } from './token-store.service';
 import { SessionHydrationService } from './session-hydration.service';
 import { UsernameService } from './username.service';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
+import { EmailOtpService } from './email-otp.service';
 
 const mockPrisma = {
   verificationToken: {
@@ -23,7 +25,20 @@ const mockPrisma = {
     findUnique: jest.fn(),
     update: jest.fn(),
   },
+  mfaFactor: {
+    findFirst: jest.fn(),
+    update: jest.fn(),
+  },
+  mfaBackupCode: {
+    findFirst: jest.fn(),
+    update: jest.fn(),
+  },
   $transaction: jest.fn(),
+};
+
+const mockJwtService = {
+  signAsync: jest.fn(),
+  verifyAsync: jest.fn(),
 };
 
 const mockCrypto = {
@@ -53,16 +68,14 @@ const mockTokenStore = {
 
 describe('AuthService', () => {
   let service: AuthService;
+  let module: TestingModule;
 
   beforeAll(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         AuthService,
         { provide: PrismaService, useValue: mockPrisma },
-        {
-          provide: JwtService,
-          useValue: { signAsync: jest.fn(), verifyAsync: jest.fn() },
-        },
+        { provide: JwtService, useValue: mockJwtService },
         { provide: ConfigService, useValue: mockConfig },
         { provide: CryptoService, useValue: mockCrypto },
         { provide: OutboxService, useValue: mockOutbox },
@@ -75,6 +88,15 @@ describe('AuthService', () => {
           useValue: { deriveRbacToken: jest.fn(), deriveUserToken: jest.fn() },
         },
         { provide: UsernameService, useValue: { generate: jest.fn() } },
+        { provide: RealtimeGateway, useValue: { emitToUser: jest.fn() } },
+        {
+          provide: EmailOtpService,
+          useValue: {
+            generate: jest.fn().mockResolvedValue(undefined),
+            verify: jest.fn().mockResolvedValue(true),
+            resend: jest.fn().mockResolvedValue(undefined),
+          },
+        },
       ],
     }).compile();
 
@@ -219,6 +241,75 @@ describe('AuthService', () => {
     });
   });
 
+  describe('verifyLoginMfa — backup codes', () => {
+    const code = 'a1b2c3d4e5'; // 10 hex chars — valid backup code
+
+    beforeEach(() => {
+      mockJwtService.signAsync.mockResolvedValue('mock-jwt-token');
+
+      mockTokenStore.consumeMfaChallenge.mockResolvedValue({
+        userId: 'u4',
+        email: 'mfa@example.com',
+        role: 'USER',
+        tier: 'FREE',
+      });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u4',
+        mfaEnabled: true,
+        email: 'mfa@example.com',
+      });
+    });
+
+    it('accepts a 10-char backup code when TOTP fails', async () => {
+      mockPrisma.mfaFactor.findFirst.mockResolvedValue(null);
+      mockPrisma.mfaBackupCode.findFirst.mockResolvedValue({
+        id: 'bc1',
+        codeHash: `sha256(${code})`,
+        usedAt: null,
+      });
+      mockPrisma.mfaBackupCode.findFirst.mockResolvedValue({
+        id: 'bc1',
+        codeHash: `sha256(${code})`,
+        usedAt: null,
+      });
+
+      const result = await service.verifyLoginMfa('valid-token', code);
+
+      expect(result).toBeDefined();
+      expect(result.mfaRequired).toBeFalsy();
+      expect(mockPrisma.mfaBackupCode.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'bc1' },
+          data: { usedAt: expect.any(Date) },
+        }),
+      );
+    });
+
+    it('rejects a used backup code on second attempt (single-use)', async () => {
+      mockPrisma.mfaFactor.findFirst.mockResolvedValue(null);
+      mockPrisma.mfaBackupCode.findFirst.mockResolvedValueOnce({
+        id: 'bc1',
+        codeHash: `sha256(${code})`,
+        usedAt: null,
+      });
+      mockPrisma.mfaBackupCode.update.mockResolvedValueOnce({
+        id: 'bc1',
+        codeHash: `sha256(${code})`,
+        usedAt: new Date(),
+      });
+
+      // First use succeeds
+      await service.verifyLoginMfa('valid-token', code);
+
+      // Second use with same code — code already has usedAt set
+      mockPrisma.mfaBackupCode.findFirst.mockResolvedValueOnce(null);
+
+      await expect(
+        service.verifyLoginMfa('another-token', code),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
   describe('login', () => {
     it('blocks login when user status is PENDING_VERIFICATION', async () => {
       mockPrisma.user.findUnique.mockResolvedValue({
@@ -286,6 +377,86 @@ describe('AuthService', () => {
       expect(result.mfaToken).toBeDefined();
       expect(mockTokenStore.writeMfaChallenge).toHaveBeenCalled();
       // Should NOT issue full session tokens
+      expect(mockTokenStore.write).not.toHaveBeenCalled();
+    });
+
+    it('skips MFA challenge when device is trusted', async () => {
+      const realHash = await hash('pass123');
+
+      const mockCtx = {
+        req: { cookies: {}, headers: {}, res: { cookie: jest.fn() } },
+      } as any;
+      const deviceService = module.get<{ resolveForLogin: jest.Mock }>(DeviceService);
+      deviceService.resolveForLogin.mockResolvedValue({
+        deviceId: 'dev-trusted',
+        deviceToken: 'trusted-token',
+        changed: false,
+        ip: '127.0.0.1',
+        userAgent: 'test-agent',
+        trusted: true,
+      });
+
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u4',
+        email: 'mfa@example.com',
+        passwordHash: realHash,
+        status: 'ACTIVE',
+        mfaEnabled: true,
+        lockedUntil: null,
+        failedLoginCount: 0,
+        role: 'USER',
+        subscriptionTier: 'FREE',
+      });
+
+      mockJwtService.signAsync.mockResolvedValue('mock-jwt-token');
+
+      const result = await service.login(
+        { email: 'mfa@example.com', password: 'pass123' },
+        mockCtx,
+      );
+
+      expect(result.mfaRequired).toBeFalsy();
+      expect(mockTokenStore.writeMfaChallenge).not.toHaveBeenCalled();
+      expect(mockTokenStore.write).toHaveBeenCalled();
+    });
+
+    it('requires MFA when device is untrusted', async () => {
+      const realHash = await hash('pass123');
+
+      const mockCtx = {
+        req: { cookies: {}, headers: {}, res: { cookie: jest.fn() } },
+      } as any;
+      const deviceService = module.get<{ resolveForLogin: jest.Mock }>(DeviceService);
+      deviceService.resolveForLogin.mockResolvedValue({
+        deviceId: 'dev-untrusted',
+        deviceToken: 'untrusted-token',
+        changed: false,
+        ip: '127.0.0.1',
+        userAgent: 'test-agent',
+        trusted: false,
+      });
+
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u4',
+        email: 'mfa@example.com',
+        passwordHash: realHash,
+        status: 'ACTIVE',
+        mfaEnabled: true,
+        lockedUntil: null,
+        failedLoginCount: 0,
+        role: 'USER',
+        subscriptionTier: 'FREE',
+      });
+
+      mockTokenStore.writeMfaChallenge.mockResolvedValue(undefined);
+
+      const result = await service.login(
+        { email: 'mfa@example.com', password: 'pass123' },
+        mockCtx,
+      );
+
+      expect(result.mfaRequired).toBe(true);
+      expect(mockTokenStore.writeMfaChallenge).toHaveBeenCalled();
       expect(mockTokenStore.write).not.toHaveBeenCalled();
     });
   });

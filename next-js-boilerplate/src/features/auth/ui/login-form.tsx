@@ -1,6 +1,11 @@
 "use client";
 
-import { useState, type Dispatch, type SetStateAction } from "react";
+import {
+  useState,
+  useCallback,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { REGISTER_PATH, FORGOT_PASSWORD_PATH } from "@/constants/routes";
 import { LANG_COOKIE, LANGS, DEFAULT_LANG } from "@/constants/i18n";
@@ -10,9 +15,19 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { I18nMessages } from "@/generated/i18n-messages";
 import { loginFormSchema } from "@/validators/auth/schema";
 import { Input } from "@/components/ui/Input";
+import { InputOTP } from "@/components/ui/input-otp/input-otp";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
 import type { User } from "@/features/auth/hooks/useAuth";
+import type { MfaMethod } from "@/api/server/auth/login";
+import { resendLoginCodeServer } from "@/api/server/auth/mfa";
+import { trustDeviceServer } from "@/api/server/sessions/trust-device";
+
+type MfaState = {
+  mfaToken: string;
+  mfaMethod: MfaMethod;
+  user: User;
+};
 
 async function handleLoginSubmit(
   e: React.SyntheticEvent,
@@ -24,9 +39,7 @@ async function handleLoginSubmit(
   login: (email: string, password: string) => Promise<void>,
   router: ReturnType<typeof useRouter>,
   t: I18nMessages["auth"],
-  setMfaState: Dispatch<
-    SetStateAction<{ mfaToken: string; user: User } | null>
-  >,
+  setMfaState: Dispatch<SetStateAction<MfaState | null>>,
 ) {
   e.preventDefault();
   setFieldErrors({});
@@ -55,6 +68,8 @@ async function handleLoginSubmit(
     if ((err as Error & { mfaRequired?: boolean }).mfaRequired) {
       setMfaState({
         mfaToken: (err as Error & { mfaToken: string }).mfaToken,
+        mfaMethod:
+          (err as Error & { mfaMethod: MfaMethod }).mfaMethod ?? "TOTP",
         user: (err as Error & { user: User }).user,
       });
       return;
@@ -71,6 +86,42 @@ async function handleLoginSubmit(
   }
 }
 
+async function handleMfaSubmit(
+  e: React.SyntheticEvent,
+  mfaState: MfaState,
+  mfaCode: string,
+  trustDevice: boolean,
+  setError: Dispatch<SetStateAction<string | null>>,
+  setSubmitting: Dispatch<SetStateAction<boolean>>,
+  verifyMfa: (mfaToken: string, code: string) => Promise<void>,
+  router: ReturnType<typeof useRouter>,
+) {
+  e.preventDefault();
+  setError(null);
+  if (!mfaCode || mfaCode.length < 6) {
+    setError("Enter your 6-digit code");
+    return;
+  }
+  setSubmitting(true);
+  try {
+    await verifyMfa(mfaState.mfaToken, mfaCode);
+    if (trustDevice) {
+      await trustDeviceServer();
+    }
+    const match = document.cookie.match(new RegExp(`${LANG_COOKIE}=([^;]+)`));
+    const lang =
+      match && (LANGS as readonly string[]).includes(match[1])
+        ? match[1]
+        : DEFAULT_LANG;
+    router.push(`/v1/${lang}/feed`);
+  } catch (err) {
+    const msg = (err as { msg?: string }).msg;
+    setError(msg ?? "Invalid MFA code");
+  } finally {
+    setSubmitting(false);
+  }
+}
+
 export function LoginForm() {
   const t = useMessages("auth");
   const { login, verifyMfa, user, loading } = useAuth();
@@ -79,15 +130,28 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
-  const [mfaState, setMfaState] = useState<{
-    mfaToken: string;
-    user: User;
-  } | null>(null);
+  const [mfaState, setMfaState] = useState<MfaState | null>(null);
   const [mfaCode, setMfaCode] = useState("");
   const [mfaSubmitting, setMfaSubmitting] = useState(false);
   const [mfaError, setMfaError] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
+  const [trustDevice, setTrustDevice] = useState(false);
 
   const schema = loginFormSchema(t.errors);
+
+  const isEmailMethod = mfaState?.mfaMethod === "EMAIL";
+
+  const onResend = useCallback(async () => {
+    if (!mfaState) return;
+    setResending(true);
+    try {
+      await resendLoginCodeServer(mfaState.mfaToken);
+    } catch {
+      // ignore
+    } finally {
+      setResending(false);
+    }
+  }, [mfaState]);
 
   if (loading) {
     return <p className="text-muted text-sm">{t.loading}</p>;
@@ -108,58 +172,47 @@ export function LoginForm() {
 
   // MFA challenge form
   if (mfaState) {
-    async function handleMfaSubmit(e: React.SyntheticEvent) {
-      e.preventDefault();
-      setMfaError(null);
-      if (!mfaCode || mfaCode.length < 6) {
-        setMfaError("Enter your 6-digit code");
-        return;
-      }
-      if (!mfaState) return;
-      setMfaSubmitting(true);
-      try {
-        await verifyMfa(mfaState.mfaToken, mfaCode);
-        const match = document.cookie.match(
-          new RegExp(`${LANG_COOKIE}=([^;]+)`),
-        );
-        const lang =
-          match && (LANGS as readonly string[]).includes(match[1])
-            ? match[1]
-            : DEFAULT_LANG;
-        router.push(`/v1/${lang}/feed`);
-      } catch (err) {
-        const msg = (err as { msg?: string }).msg;
-        setMfaError(msg ?? "Invalid MFA code");
-      } finally {
-        setMfaSubmitting(false);
-      }
-    }
-
     return (
       <div className="flex flex-col gap-4 text-center">
         <h2 className="text-brand text-sm font-semibold">
           {t.form.login.mfaTitle}
         </h2>
         <p className="text-muted text-xs">
-          Enter the 6-digit code from your authenticator app for{" "}
-          {mfaState.user.email}.
+          {isEmailMethod
+            ? t.form.login.mfaEmailDescription.replace(
+                "{email}",
+                mfaState.user.email,
+              )
+            : t.form.login.mfaTotpDescription.replace(
+                "{email}",
+                mfaState.user.email,
+              )}
         </p>
 
-        <form onSubmit={handleMfaSubmit} className="flex flex-col gap-3">
+        <form
+          onSubmit={(e) =>
+            handleMfaSubmit(
+              e,
+              mfaState,
+              mfaCode,
+              trustDevice,
+              setMfaError,
+              setMfaSubmitting,
+              verifyMfa,
+              router,
+            )
+          }
+          className="flex flex-col gap-3"
+        >
           <div className="flex flex-col gap-1 text-left">
             <Label htmlFor="mfa-code-input" required>
               {t.form.login.mfaCodeLabel}
             </Label>
-            <Input
+            <InputOTP
               id="mfa-code-input"
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
               maxLength={6}
               value={mfaCode}
-              onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ""))}
-              placeholder="000000"
-              required
+              onChange={setMfaCode}
               // Sole field on a freshly-revealed MFA challenge screen, not initial page load.
               // eslint-disable-next-line jsx-a11y/no-autofocus
               autoFocus
@@ -172,6 +225,29 @@ export function LoginForm() {
               {mfaError}
             </p>
           )}
+
+          {isEmailMethod && (
+            <button
+              type="button"
+              onClick={onResend}
+              disabled={resending}
+              className="text-brand text-xs underline disabled:opacity-50"
+            >
+              {resending
+                ? t.form.login.mfaResending
+                : t.form.login.mfaResendCode}
+            </button>
+          )}
+
+          <label className="flex items-center gap-2 text-xs">
+            <input
+              type="checkbox"
+              checked={trustDevice}
+              onChange={(e) => setTrustDevice(e.target.checked)}
+              className="h-4 w-4"
+            />
+            Trust this device
+          </label>
 
           <Button
             type="submit"

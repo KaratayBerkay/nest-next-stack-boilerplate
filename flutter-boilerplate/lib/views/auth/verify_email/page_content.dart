@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -7,12 +8,19 @@ import '../../../api/client/auth/actions.dart';
 import '../../../components/auth/auth_layout.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../constants/theme.dart';
+import '../../../hooks/use_auth.dart';
+import '../../../hooks/use_locale.dart';
 import '../../../l10n/app_localizations.dart';
 
 class VerifyEmailPageContent extends ConsumerStatefulWidget {
   final String token;
+  final String userId;
 
-  const VerifyEmailPageContent({super.key, this.token = ''});
+  const VerifyEmailPageContent({
+    super.key,
+    this.token = '',
+    this.userId = '',
+  });
 
   @override
   ConsumerState<VerifyEmailPageContent> createState() =>
@@ -21,22 +29,22 @@ class VerifyEmailPageContent extends ConsumerStatefulWidget {
 
 class _VerifyEmailPageContentState
     extends ConsumerState<VerifyEmailPageContent> {
-  bool _verifying = true;
+  final _codeCtrl = TextEditingController();
+  bool _verifying = false;
   bool _success = false;
+  bool _resending = false;
   String? _error;
 
   @override
-  void initState() {
-    super.initState();
-    if (widget.token.isNotEmpty) {
-      _verify();
-    } else {
-      _verifying = false;
-      _error = null;
-    }
+  void dispose() {
+    _codeCtrl.dispose();
+    super.dispose();
   }
 
-  Future<void> _verify() async {
+  bool get _hasToken => widget.token.isNotEmpty;
+  bool get _codeMode => !_hasToken && widget.userId.isNotEmpty;
+
+  Future<void> _verifyWithToken() async {
     final t = AppLocalizations.of(context);
 
     setState(() {
@@ -60,6 +68,60 @@ class _VerifyEmailPageContentState
     }
   }
 
+  Future<void> _verifyWithCode() async {
+    final code = _codeCtrl.text.trim();
+    if (code.length < 6) return;
+
+    final t = AppLocalizations.of(context);
+
+    setState(() {
+      _verifying = true;
+      _error = null;
+    });
+
+    try {
+      final actions = ref.read(loginActionsProvider);
+      await actions.verifyEmailCode(widget.userId, code);
+      if (mounted) setState(() => _success = true);
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      final msg =
+          (data is Map && data['msg'] is String) ? data['msg'] as String : null;
+      if (mounted) {
+        setState(() => _error = msg ?? t.authErrorsVerifyEmailFailed);
+      }
+    } finally {
+      if (mounted) setState(() => _verifying = false);
+    }
+  }
+
+  Future<void> _resendCode() async {
+    setState(() => _resending = true);
+    try {
+      final actions = ref.read(loginActionsProvider);
+      await actions.resendEmailCode(
+        widget.userId,
+        ref.read(currentUserProvider)?.email ?? '',
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).authCodeResent)),
+        );
+      }
+    } on DioException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message ?? 'Failed to resend code'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _resending = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
@@ -67,52 +129,158 @@ class _VerifyEmailPageContentState
 
     Widget body;
 
-    if (widget.token.isEmpty) {
-      body = Padding(
-        padding: const EdgeInsets.symmetric(vertical: 32),
-        child: Text(
-          t.authErrorsVerifyEmailTokenMissing,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 14),
-        ),
-      );
-    } else if (_verifying) {
+    if (_hasToken && !_success && _error == null) {
+      _verifyWithToken();
       body = const Padding(
         padding: EdgeInsets.symmetric(vertical: 32),
         child: Center(child: CircularProgressIndicator()),
       );
     } else if (_success) {
-      body = Column(
+      body = _buildSuccess(t);
+    } else if (_codeMode) {
+      body = _buildCodeEntry(t, colors);
+    } else {
+      body = _buildError(t, colors);
+    }
+
+    return AuthLayout(child: body);
+  }
+
+  Widget _buildSuccess(AppLocalizations t) {
+    final colors = AppColors.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Icon(Icons.check_circle, color: colors.success, size: 48),
+        const SizedBox(height: 16),
+        Text(
+          t.authFormVerifyEmailSuccess,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 14),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 36,
+          child: Button(
+            onPressed: () => context.go('/auth/login'),
+            child: Text(t.authFormVerifyEmailLoginLink),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCodeEntry(AppLocalizations t, AppColors colors) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(Icons.check_circle, color: colors.success, size: 48),
-          const SizedBox(height: 16),
           Text(
-            t.authFormVerifyEmailSuccess,
+            t.authFormVerifyEmailTitle,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 14),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: colors.brand,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            t.authFormVerifyEmailCodeDescription,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12, color: colors.fgMuted),
+          ),
+          const SizedBox(height: 24),
+          TextField(
+            controller: _codeCtrl,
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(6),
+            ],
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 24, letterSpacing: 8),
+            decoration: InputDecoration(
+              hintText: '000000',
+              errorText: _error,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onSubmitted: (_) => _verifyWithCode(),
           ),
           const SizedBox(height: 16),
           SizedBox(
             height: 36,
             child: Button(
-              onPressed: () => context.go('/auth/login'),
-              child: Text(t.authFormVerifyEmailLoginLink),
+              fullWidth: true,
+              loading: _verifying,
+              onPressed: _verifyWithCode,
+              child: Text(t.authFormVerifyEmailVerify),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: _resending
+                ? SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colors.brand,
+                    ),
+                  )
+                : GestureDetector(
+                    onTap: _resendCode,
+                    child: Text(
+                      t.authFormVerifyEmailResendCode,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colors.brand,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+          ),
+          const SizedBox(height: 24),
+          Center(
+            child: GestureDetector(
+              onTap: () {
+                final locale = ref.read(localeProvider);
+                context.go('/v1/$locale/feed');
+              },
+              child: Text(
+                t.authFormVerifyEmailSkip,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: colors.fgMuted,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
             ),
           ),
         ],
-      );
-    } else {
-      body = Padding(
-        padding: const EdgeInsets.symmetric(vertical: 32),
-        child: Text(
-          _error ?? t.authErrorsVerifyEmailFailed,
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14, color: colors.danger),
-        ),
-      );
-    }
+      ),
+    );
+  }
 
-    return AuthLayout(child: body);
+  Widget _buildError(AppLocalizations t, AppColors colors) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 32),
+      child: Column(
+        children: [
+          if (_verifying)
+            const CircularProgressIndicator()
+          else
+            Text(
+              _error ?? t.authErrorsVerifyEmailTokenMissing,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: colors.danger),
+            ),
+        ],
+      ),
+    );
   }
 }

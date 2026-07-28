@@ -118,6 +118,28 @@ describe('MfaService', () => {
   describe('verify', () => {
     const factor = { id: 'f1', secret: Buffer.from('encrypted-secret-blob') };
 
+    it('succeeds on a pending factor created by enroll (enroll → verify flow)', async () => {
+      prisma.user.findUniqueOrThrow.mockResolvedValue({
+        id: 'u1',
+        email: 'alice@example.com',
+      });
+      await service.enroll('u1');
+
+      prisma.mfaFactor.findFirst.mockResolvedValue(factor);
+      mockedVerifyTotp.mockResolvedValue({ valid: true });
+
+      const result = await service.verify('u1', '123456');
+
+      expect(result.enabled).toBe(true);
+      expect(result.backupCodes).toHaveLength(10);
+
+      expect(prisma.mfaFactor.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ verifiedAt: null }),
+        }),
+      );
+    });
+
     it('confirms a valid TOTP code, enables MFA, and issues 10 hashed backup codes', async () => {
       prisma.mfaFactor.findFirst.mockResolvedValue(factor);
       mockedVerifyTotp.mockResolvedValue({ valid: true });

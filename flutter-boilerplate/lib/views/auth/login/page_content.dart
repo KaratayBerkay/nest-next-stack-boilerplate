@@ -33,6 +33,9 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
   bool _submitting = false;
   bool _mfaMode = false;
   String? _mfaToken;
+  String? _mfaMethod;
+  bool _resending = false;
+  bool _backupCodeMode = false;
   Map<String, String?> _fieldErrors = {};
 
   @override
@@ -102,10 +105,11 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
             final locale = ref.read(localeProvider);
             context.go('/v1/$locale/feed');
           }
-        case LoginMfaRequired(:final mfaToken):
+        case LoginMfaRequired(:final mfaToken, :final mfaMethod):
           setState(() {
             _mfaMode = true;
             _mfaToken = mfaToken;
+            _mfaMethod = mfaMethod;
           });
       }
     } on DioException catch (e) {
@@ -135,7 +139,9 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
     final code = _mfaCodeCtrl.text.trim();
     final t = AppLocalizations.of(context);
 
-    if (code.length < 6) {
+    final minLen = _backupCodeMode ? 6 : 6;
+    final maxLen = _backupCodeMode ? 10 : 6;
+    if (code.length < minLen || code.length > maxLen) {
       setState(() {
         _fieldErrors['mfa'] = t.authFormLoginMfaCodeLengthError;
       });
@@ -146,7 +152,7 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
 
     try {
       final actions = ref.read(loginActionsProvider);
-      final data = await actions.loginMfa(_mfaToken!, code);
+      final data = await actions.verifyLoginMfa(_mfaToken!, code);
       final response = LoginResponse.fromJson(data);
 
       await ref.read(authProvider.notifier).setSession(
@@ -172,12 +178,39 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
     }
   }
 
+  Future<void> _resendCode() async {
+    if (_mfaToken == null) return;
+    setState(() => _resending = true);
+    try {
+      final actions = ref.read(loginActionsProvider);
+      await actions.resendLoginCode(_mfaToken!);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).authCodeResent)),
+        );
+      }
+    } on DioException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message ?? 'Failed to resend code'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _resending = false);
+    }
+  }
+
   void _resetMfa() {
     setState(() {
       _mfaMode = false;
       _mfaToken = null;
+      _mfaMethod = null;
       _mfaCodeCtrl.clear();
       _fieldErrors = {};
+      _backupCodeMode = false;
     });
   }
 
@@ -312,6 +345,10 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
 
   Widget _buildMfaState(AppLocalizations t) {
     final colors = AppColors.of(context);
+    final isEmailMethod = _mfaMethod == 'EMAIL';
+    final description = isEmailMethod
+        ? t.authFormLoginMfaEmailDescription
+        : t.authFormLoginMfaDescription;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -327,23 +364,37 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
         ),
         const SizedBox(height: 8),
         Text(
-          t.authFormLoginMfaDescription,
+          description,
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 12, color: colors.fgMuted),
         ),
         const SizedBox(height: 16),
-        LabeledField(
-          label: t.authFormLoginMfaCodeLabel,
-          hint: t.authFormLoginMfaCodePlaceholder,
-          controller: _mfaCodeCtrl,
-          keyboardType: TextInputType.number,
-          autofocus: true,
-          maxLength: 6,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          errorText: _fieldErrors['mfa'],
-          textInputAction: TextInputAction.done,
-          onSubmitted: _verifyMfa,
-        ),
+        if (_backupCodeMode)
+          LabeledField(
+            label: t.authFormLoginMfaCodeLabel,
+            hint: t.authFormLoginMfaCodePlaceholder,
+            controller: _mfaCodeCtrl,
+            keyboardType: TextInputType.text,
+            autofocus: true,
+            maxLength: 10,
+            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-fA-F0-9]'))],
+            errorText: _fieldErrors['mfa'],
+            textInputAction: TextInputAction.done,
+            onSubmitted: _verifyMfa,
+          )
+        else
+          LabeledField(
+            label: t.authFormLoginMfaCodeLabel,
+            hint: t.authFormLoginMfaCodePlaceholder,
+            controller: _mfaCodeCtrl,
+            keyboardType: TextInputType.number,
+            autofocus: true,
+            maxLength: 6,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            errorText: _fieldErrors['mfa'],
+            textInputAction: TextInputAction.done,
+            onSubmitted: _verifyMfa,
+          ),
         if (_fieldErrors['form'] != null) ...[
           const SizedBox(height: 12),
           Text(
@@ -352,6 +403,21 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
             style: TextStyle(fontSize: 14, color: colors.danger),
           ),
         ],
+        const SizedBox(height: 8),
+        Center(
+          child: LinkText(
+            _backupCodeMode
+                ? t.authFormLoginMfaUseCode
+                : t.authFormLoginMfaUseBackupCode,
+            onTap: () {
+              setState(() {
+                _backupCodeMode = !_backupCodeMode;
+                _mfaCodeCtrl.clear();
+                _fieldErrors = {};
+              });
+            },
+          ),
+        ),
         const SizedBox(height: 12),
         SizedBox(
           height: 36,
@@ -366,6 +432,24 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
             ),
           ),
         ),
+        if (isEmailMethod) ...[
+          const SizedBox(height: 8),
+          Center(
+            child: _resending
+                ? SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colors.brand,
+                    ),
+                  )
+                : LinkText(
+                    t.authFormLoginMfaResendCode,
+                    onTap: _resendCode,
+                  ),
+          ),
+        ],
         const SizedBox(height: 12),
         Center(
           child: LinkText(

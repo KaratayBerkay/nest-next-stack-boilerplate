@@ -4,11 +4,14 @@ import { POST } from "@/constants/api/methods";
 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 import type { User } from "@/types/auth/User";
 
+export type MfaMethod = "TOTP" | "EMAIL";
+
 export interface LoginResult {
   user: User;
   accessToken?: string;
   mfaRequired?: boolean;
   mfaToken?: string;
+  mfaMethod?: MfaMethod;
 }
 
 export async function loginServer(
@@ -25,16 +28,19 @@ export async function loginServer(
   const data = (await res.json()) as LoginResult & {
     mfaRequired?: boolean;
     mfaToken?: string;
+    mfaMethod?: MfaMethod;
   };
 
   if ((res.status === 202 || !res.ok) && data.mfaRequired) {
     const err = new Error("MFA required") as Error & {
       mfaRequired: boolean;
       mfaToken: string;
+      mfaMethod: MfaMethod;
       user: User;
     };
     err.mfaRequired = true;
     err.mfaToken = data.mfaToken!;
+    err.mfaMethod = data.mfaMethod ?? "TOTP";
     err.user = data.user;
     throw err;
   }

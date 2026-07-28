@@ -54,6 +54,11 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthenticatedUser?>> {
     state = AsyncData(user);
   }
 
+  Future<void> updateUser(AuthenticatedUser user) async {
+    await _storage.write(key: _userKey, value: jsonEncode(user.toJson()));
+    state = AsyncData(user);
+  }
+
   Future<void> logout() async {
     await _storage.delete(key: _accessTokenKey);
     await _storage.delete(key: _rbacTokenKey);

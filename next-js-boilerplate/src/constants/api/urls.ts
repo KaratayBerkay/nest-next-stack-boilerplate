@@ -8,12 +8,21 @@ export const AUTH_DEVICE_HANDSHAKE_URL = "/api/auth/device-handshake" as const;
 export const AUTH_ME_URL = "/api/auth/me" as const;
 export const AUTH_LOGIN_URL = "/api/auth/login" as const;
 export const AUTH_LOGIN_MFA_URL = "/api/auth/login/mfa" as const;
+export const AUTH_LOGIN_MFA_RESEND_URL = "/api/auth/login/mfa/resend" as const;
+export const AUTH_TRUST_DEVICE_URL = "/api/auth/trust-device" as const;
 export const AUTH_REGISTER_URL = "/api/auth/register" as const;
 export const AUTH_LOGOUT_URL = "/api/auth/logout" as const;
 export const AUTH_VERIFY_EMAIL_URL = "/api/auth/verify-email" as const;
+export const AUTH_VERIFY_EMAIL_CODE_URL =
+  "/api/auth/verify-email/code" as const;
+export const AUTH_RESEND_EMAIL_CODE_URL =
+  "/api/auth/resend-email-code" as const;
 export const AUTH_REQUEST_PASSWORD_RESET_URL =
   "/api/auth/request-password-reset" as const;
 export const AUTH_RESET_PASSWORD_URL = "/api/auth/reset-password" as const;
+export const AUTH_MFA_ENROLL_URL = "/api/auth/mfa/enroll" as const;
+export const AUTH_MFA_VERIFY_URL = "/api/auth/mfa/verify" as const;
+export const AUTH_MFA_DISABLE_URL = "/api/auth/mfa/disable" as const;
 
 export const POSTS_URL = "/api/posts" as const;
 export const POSTS_PREFIX = "/api/posts/" as const;

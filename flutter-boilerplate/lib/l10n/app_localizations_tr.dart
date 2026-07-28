@@ -313,7 +313,23 @@ class AppLocalizationsTr extends AppLocalizations {
   String get authFormLoginMfaCodeLengthError => '6 haneli kodunuzu girin';
 
   @override
+  String get authFormLoginMfaUseBackupCode => 'Alternatif kod kullan';
+
+  @override
+  String get authFormLoginMfaUseCode => 'Doğrulama kodu kullan';
+
+  @override
   String get authFormLoginMfaVerified => 'MFA doğrulandı';
+
+  @override
+  String get authFormLoginMfaEmailDescription =>
+      'E-posta adresinize gönderilen 6 haneli kodu girin.';
+
+  @override
+  String get authFormLoginMfaResendCode => 'Kodu yeniden gönder';
+
+  @override
+  String get authCodeResent => 'Doğrulama kodu gönderildi';
 
   @override
   String get authFormLoginDifferentAccount => 'Farklı bir hesap kullan';
@@ -458,6 +474,19 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get authFormVerifyEmailSubmit => 'Doğrula';
+
+  @override
+  String get authFormVerifyEmailCodeDescription =>
+      'E-postanıza gönderilen 6 haneli doğrulama kodunu girin.';
+
+  @override
+  String get authFormVerifyEmailVerify => 'E-postayı Doğrula';
+
+  @override
+  String get authFormVerifyEmailResendCode => 'Kodu yeniden gönder';
+
+  @override
+  String get authFormVerifyEmailSkip => 'Atla, beslemeye git';
 
   @override
   String get authSocialContinueWith => 'veya devam et';
@@ -5144,10 +5173,91 @@ class AppLocalizationsTr extends AppLocalizations {
   String get securityTwoFactor => 'İki Faktörlü Kimlik Doğrulama';
 
   @override
+  String get securityTwoFactorEnabledSubtitle =>
+      'Hesabınız bir doğrulama uygulaması ile korunuyor';
+
+  @override
+  String get securityTwoFactorDisabledSubtitle =>
+      'Hesabınıza ekstra bir güvenlik katmanı ekleyin';
+
+  @override
   String get securityChangePassword => 'Şifre Değiştir';
 
   @override
   String get securityActiveSessions => 'Aktif Oturumlar';
+
+  @override
+  String get securitySetupTwoFactor => 'İki Faktörlü Doğrulama Kurulumu';
+
+  @override
+  String get securityScanQrTitle => 'Bu QR Kodunu Tarayın';
+
+  @override
+  String get securityScanQrDescription =>
+      'Doğrulama uygulamanızı (Google Authenticator, Authy vb.) kullanarak bu QR kodunu tarayın.';
+
+  @override
+  String get securityManualEntryKey => 'Veya bu anahtarı manuel olarak girin:';
+
+  @override
+  String get securityContinue => 'Devam Et';
+
+  @override
+  String get securityVerifyCodeTitle => 'Kodu Doğrulayın';
+
+  @override
+  String get securityVerifyCodeDescription =>
+      'Kurulumu onaylamak için doğrulama uygulamanızdaki 6 haneli kodu girin.';
+
+  @override
+  String get securityVerify => 'Doğrula';
+
+  @override
+  String get securityRegenerateQr => 'QR kodunu yeniden oluştur';
+
+  @override
+  String get securityTwoFactorEnabled =>
+      'İki Faktörlü Doğrulama Etkinleştirildi';
+
+  @override
+  String get securitySaveBackupCodes =>
+      'Bu yedek kodları güvenli bir yerde saklayın. Doğrulama uygulamanıza erişiminizi kaybederseniz, giriş yapmak için her kodu bir kez kullanabilirsiniz.';
+
+  @override
+  String get securityConfirmCodesSaved => 'Bu yedek kodları kaydettim';
+
+  @override
+  String get securityDone => 'Tamam';
+
+  @override
+  String get securityDisableTwoFactor =>
+      'İki Faktörlü Doğrulamayı Devre Dışı Bırak';
+
+  @override
+  String get securityDisableMfaDescription =>
+      'İki faktörlü doğrulamayı devre dışı bırakmak için mevcut TOTP kodunuzu girin.';
+
+  @override
+  String get securityDisable => 'Devre Dışı Bırak';
+
+  @override
+  String get securityMfaDisabled =>
+      'İki faktörlü doğrulama devre dışı bırakıldı';
+
+  @override
+  String get securityMfaDisableFailed =>
+      'İki faktörlü doğrulama devre dışı bırakılamadı';
+
+  @override
+  String get securityBiometric => 'Biyometrik Kilit';
+
+  @override
+  String get securityBiometricEnabledSubtitle =>
+      'Uygulamayı açmak için parmak izi veya yüz tanıma kullan';
+
+  @override
+  String get securityBiometricDisabledSubtitle =>
+      'Uygulamayı açmak için biyometrik doğrulama iste';
 
   @override
   String get settingsAddCard => 'Kart Ekle';

@@ -239,7 +239,7 @@ void main() {
 
       expect(find.text('Enter your 6-digit code'), findsOneWidget);
 
-      when(() => mockActions.loginMfa(any(), any())).thenAnswer(
+      when(() => mockActions.verifyLoginMfa(any(), any())).thenAnswer(
         (_) async => {
           'accessToken': 'token-mfa',
           'rbacToken': 'rbac-mfa',

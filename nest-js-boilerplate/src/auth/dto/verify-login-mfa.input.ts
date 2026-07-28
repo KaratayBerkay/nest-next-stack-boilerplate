@@ -8,6 +8,6 @@ export class VerifyLoginMfaInput {
   mfaToken!: string;
 
   @Field()
-  @Length(6, 8)
+  @Length(6, 10)
   code!: string;
 }

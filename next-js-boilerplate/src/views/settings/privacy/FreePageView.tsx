@@ -19,10 +19,8 @@ async function handleSave(
   hideProfilePicture: boolean,
   useNickname: boolean,
   nickname: string,
-  enable2FA: boolean,
 ) {
-  const payload = { hideProfilePicture, useNickname, nickname, enable2FA };
-  console.log("Saving privacy preferences:", payload);
+  const payload = { hideProfilePicture, useNickname, nickname };
   toast({ title: "Preferences saved", variant: "success" });
 }
 
@@ -34,7 +32,6 @@ export function FreePageView({ className }: ClassNameProps) {
   const [hideProfilePicture, setHideProfilePicture] = useState(false);
   const [useNickname, setUseNickname] = useState(false);
   const [nickname, setNickname] = useState("");
-  const [enable2FA, setEnable2FA] = useState(false);
 
   return (
     <div className={cn("flex h-full w-full flex-col gap-6", className)}>
@@ -66,17 +63,12 @@ export function FreePageView({ className }: ClassNameProps) {
             />
           )}
         </PrivacyToggleRow>
-
-        <PrivacyToggleRow
-          title={t.privacyTwoFactor}
-          description={t.privacyTwoFactorDesc}
-          checked={enable2FA}
-          onChange={setEnable2FA}
-        />
       </div>
 
       <Button
-        onClick={() => handleSave(toast, hideProfilePicture, useNickname, nickname, enable2FA)}
+        onClick={() =>
+          handleSave(toast, hideProfilePicture, useNickname, nickname)
+        }
         variant="primary"
         className="self-start"
       >

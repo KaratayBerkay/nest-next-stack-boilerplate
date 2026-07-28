@@ -7,6 +7,7 @@ class AuthenticatedUser {
   final String? avatarUrl;
   final String? language;
   final String? sessionId;
+  final bool mfaEnabled;
 
   const AuthenticatedUser({
     required this.id,
@@ -17,6 +18,7 @@ class AuthenticatedUser {
     this.avatarUrl,
     this.language,
     this.sessionId,
+    this.mfaEnabled = false,
   });
 
   factory AuthenticatedUser.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,21 @@ class AuthenticatedUser {
       avatarUrl: json['avatarUrl'] as String?,
       language: (json['language'] as String?) ?? (json['locale'] as String?),
       sessionId: json['sessionId'] as String?,
+      mfaEnabled: json['mfaEnabled'] as bool? ?? false,
+    );
+  }
+
+  AuthenticatedUser copyWith({bool? mfaEnabled}) {
+    return AuthenticatedUser(
+      id: id,
+      email: email,
+      name: name,
+      tier: tier,
+      role: role,
+      avatarUrl: avatarUrl,
+      language: language,
+      sessionId: sessionId,
+      mfaEnabled: mfaEnabled ?? this.mfaEnabled,
     );
   }
 
@@ -44,5 +61,6 @@ class AuthenticatedUser {
         'avatarUrl': avatarUrl,
         'language': language,
         'sessionId': sessionId,
+        'mfaEnabled': mfaEnabled,
       };
 }

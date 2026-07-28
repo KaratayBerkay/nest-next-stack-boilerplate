@@ -14,10 +14,12 @@ export default async function VerifyEmailPage({
 }: VerifyEmailPageProps) {
   const sp = await searchParams;
   const token = (sp.token as string) ?? "";
+  const userId = (sp.userId as string) ?? "";
+  const email = (sp.email as string) ?? "";
 
   return (
     <Suspense fallback={<VerifyEmailFallback />}>
-      <VerifyEmailForm token={token} />
+      <VerifyEmailForm token={token} userId={userId} email={email} />
     </Suspense>
   );
 }

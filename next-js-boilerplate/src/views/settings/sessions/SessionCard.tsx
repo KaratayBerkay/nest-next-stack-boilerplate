@@ -1,11 +1,20 @@
 "use client";
 
-import { IconDeviceDesktop, IconDeviceMobile, IconWorld } from "@tabler/icons-react";
+import {
+  IconDeviceDesktop,
+  IconDeviceMobile,
+  IconWorld,
+} from "@tabler/icons-react";
 import { formatDateTimeByPreference } from "@/lib/date-time";
 import { cn } from "@/lib/cn";
 import type { SessionCardProps } from "@/types/settings/SessionCard-types";
 
-export function SessionCard({ session, isCurrent, dateDisplay, onRevoke }: SessionCardProps) {
+export function SessionCard({
+  session,
+  isCurrent,
+  dateDisplay,
+  onRevoke,
+}: SessionCardProps) {
   const isMobile =
     session.userAgent?.toLowerCase().includes("mobile") ||
     session.userAgent?.toLowerCase().includes("android") ||
@@ -35,15 +44,18 @@ export function SessionCard({ session, isCurrent, dateDisplay, onRevoke }: Sessi
           <div className="flex items-center gap-2">
             <span className="truncate text-sm font-medium">
               {session.userAgent
-                ? session.userAgent
-                    .split(" ")
-                    .slice(0, 3)
-                    .join(" ") || session.userAgent.slice(0, 40)
+                ? session.userAgent.split(" ").slice(0, 3).join(" ") ||
+                  session.userAgent.slice(0, 40)
                 : "Unknown device"}
             </span>
             {isCurrent && (
               <span className="bg-brand/10 text-brand rounded-full px-2 py-0.5 text-[10px] font-medium whitespace-nowrap">
                 Current
+              </span>
+            )}
+            {session.trusted && (
+              <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium whitespace-nowrap text-green-700">
+                Trusted
               </span>
             )}
           </div>
@@ -56,7 +68,8 @@ export function SessionCard({ session, isCurrent, dateDisplay, onRevoke }: Sessi
             )}
             {session.issuedAt && (
               <span>
-                Started: {formatDateTimeByPreference(session.issuedAt, dateDisplay)}
+                Started:{" "}
+                {formatDateTimeByPreference(session.issuedAt, dateDisplay)}
               </span>
             )}
           </div>
@@ -67,7 +80,9 @@ export function SessionCard({ session, isCurrent, dateDisplay, onRevoke }: Sessi
               </summary>
               <div className="text-muted/50 mt-1 flex flex-col gap-0.5 text-[10px]">
                 <span>Device ID: {session.deviceId}</span>
-                <span className="break-all">User-Agent: {session.userAgent ?? "N/A"}</span>
+                <span className="break-all">
+                  User-Agent: {session.userAgent ?? "N/A"}
+                </span>
               </div>
             </details>
           )}

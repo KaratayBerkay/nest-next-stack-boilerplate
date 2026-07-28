@@ -6,6 +6,7 @@ import { RealtimeModule } from '../realtime/realtime.module';
 import { AuthContractsModule } from './auth-contracts.module';
 import { AuthResolver } from './auth.resolver';
 import { AuthService } from './auth.service';
+import { EmailOtpService } from './email-otp.service';
 import { OAuthController } from './oauth/oauth.controller';
 import { OAuthService } from './oauth/oauth.service';
 import { SessionHydrationService } from './session-hydration.service';
@@ -27,6 +28,7 @@ import { UsernameService } from './username.service';
   providers: [
     AuthService,
     AuthResolver,
+    EmailOtpService,
     SessionHydrationService,
     OAuthService,
     UsernameService,

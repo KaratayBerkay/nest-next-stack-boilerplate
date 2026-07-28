@@ -35,6 +35,7 @@ const LOGIN_QUERY = `
       userToken
       mfaRequired
       mfaToken
+      mfaMethod
       user {
         id
         email
@@ -93,6 +94,7 @@ export const POST = withLogging(async (request, log) => {
       userToken?: string;
       mfaRequired?: boolean;
       mfaToken?: string;
+      mfaMethod?: "TOTP" | "EMAIL";
       user: unknown;
     };
   }>(LOGIN_QUERY, {
@@ -111,7 +113,12 @@ export const POST = withLogging(async (request, log) => {
   if (loginData.mfaRequired) {
     log.info({ email }, "login requires MFA challenge");
     return NextResponse.json(
-      { mfaRequired: true, mfaToken: loginData.mfaToken, user: loginData.user },
+      {
+        mfaRequired: true,
+        mfaToken: loginData.mfaToken,
+        mfaMethod: loginData.mfaMethod,
+        user: loginData.user,
+      },
       { status: 202 },
     );
   }

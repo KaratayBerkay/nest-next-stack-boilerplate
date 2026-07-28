@@ -114,6 +114,30 @@ const templates: Record<
     };
   },
 
+  'email-otp': (vars) => {
+    const code = str(vars.code, '000000');
+    const purpose = str(vars.purpose, 'login');
+    const greeting = 'Hi,';
+    return {
+      subject:
+        purpose === 'registration'
+          ? 'Your email verification code'
+          : 'Your login verification code',
+      html: layout(
+        '<p>' +
+          greeting +
+          '</p>' +
+          '<p>Your verification code is:</p>' +
+          '<p style="text-align:center;margin:24px 0;font-size:32px;font-weight:700;letter-spacing:8px;color:#2563eb">' +
+          escape(code) +
+          '</p>' +
+          '<p>This code expires in 10 minutes.</p>' +
+          "<p>If you didn't request this code, you can ignore this email.</p>",
+      ),
+      text: 'Your verification code is: ' + code,
+    };
+  },
+
   'password-reset': (vars) => {
     const url = str(vars.url);
     return {

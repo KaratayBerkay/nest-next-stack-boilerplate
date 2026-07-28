@@ -41,7 +41,6 @@ class _PrivacySettingsState extends State<_PrivacySettings> {
   bool _hideProfilePicture = false;
   bool _useNickname = false;
   late TextEditingController _nicknameCtrl;
-  bool _enable2FA = false;
 
   @override
   void initState() {
@@ -92,13 +91,7 @@ class _PrivacySettingsState extends State<_PrivacySettings> {
                     ),
                   ),
                 ),
-              PrivacyToggleRow(
-                title: t.settingsPrivacyTwoFactor,
-                subtitle: t.settingsPrivacyTwoFactorDesc,
-                value: _enable2FA,
-                onChanged: (v) => setState(() => _enable2FA = v),
-                showDivider: false,
-              ),
+
             ],
           ),
         ),

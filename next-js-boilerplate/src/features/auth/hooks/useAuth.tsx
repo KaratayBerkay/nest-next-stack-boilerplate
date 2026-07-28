@@ -32,7 +32,11 @@ type AuthContextValue = {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   verifyMfa: (mfaToken: string, code: string) => Promise<void>;
-  register: (email: string, password: string, name?: string) => Promise<void>;
+  register: (
+    email: string,
+    password: string,
+    name?: string,
+  ) => Promise<{ userId: string; email: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 };
@@ -156,6 +160,7 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
         );
         setUser(data.user);
         if (data.accessToken) setToken(data.accessToken);
+        return { userId: data.user.id, email: data.user.email };
       } catch (err) {
         const exception = (err as Error & { exception?: unknown }).exception;
         if (exception) throw exception;

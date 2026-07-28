@@ -10,9 +10,14 @@ class LoginSuccess extends LoginResult {
 
 class LoginMfaRequired extends LoginResult {
   final String mfaToken;
+  final String? mfaMethod;
   final AuthenticatedUser user;
 
-  LoginMfaRequired({required this.mfaToken, required this.user});
+  LoginMfaRequired({
+    required this.mfaToken,
+    this.mfaMethod,
+    required this.user,
+  });
 }
 
 class LoginRequest {

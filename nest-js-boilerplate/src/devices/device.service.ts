@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import type { Request } from 'express';
 import { CryptoService } from '../common/crypto/crypto.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { parseDeviceType } from '../common/utils/device-type';
 import { deviceCookieName, deviceCookieOptions } from './device-cookie';
 
 // Passed from the resolver: we read the device cookie off `req` and write the refreshed cookie
@@ -21,6 +22,8 @@ export interface DeviceContext {
   changed: boolean;
   ip: string | null;
   userAgent: string | null;
+  /** Whether this device has been previously marked as trusted by the user. */
+  trusted: boolean;
 }
 
 // Minimal view of the cookie bag cookie-parser attaches (typed `any` on Express.Request).
@@ -28,6 +31,8 @@ interface CookieCarrier {
   cookies?: Record<string, string | undefined>;
   signedCookies?: Record<string, string | undefined>;
 }
+
+type PrismaDeviceType = 'WEB' | 'MOBILE_IOS' | 'MOBILE_ANDROID' | 'DESKTOP' | 'API' | 'CLI';
 
 @Injectable()
 export class DeviceService {
@@ -38,6 +43,26 @@ export class DeviceService {
     private readonly crypto: CryptoService,
     private readonly config: ConfigService,
   ) {}
+
+  private detectDeviceType(userAgent: string | null): PrismaDeviceType {
+    const parsed = parseDeviceType(userAgent ?? undefined);
+    switch (parsed) {
+      case 'mobile':
+        if (userAgent?.toLowerCase().includes('iphone') || userAgent?.toLowerCase().includes('ipad')) {
+          return 'MOBILE_IOS';
+        }
+        return 'MOBILE_ANDROID';
+      case 'tablet':
+        if (userAgent?.toLowerCase().includes('ipad')) {
+          return 'MOBILE_IOS';
+        }
+        return 'MOBILE_ANDROID';
+      case 'desktop':
+        return 'DESKTOP';
+      default:
+        return 'WEB';
+    }
+  }
 
   /**
    * Public handshake endpoint called on every page load (pre-auth).
@@ -104,7 +129,7 @@ export class DeviceService {
         device = await this.prisma.device.create({
           data: {
             userId,
-            type: 'WEB',
+            type: this.detectDeviceType(userAgent),
             token: presentedToken,
             fingerprint,
             ip,
@@ -130,7 +155,7 @@ export class DeviceService {
       device = await this.prisma.device.create({
         data: {
           userId,
-          type: 'WEB',
+          type: this.detectDeviceType(userAgent),
           token,
           fingerprint,
           ip,
@@ -143,7 +168,7 @@ export class DeviceService {
       device = await this.prisma.device.create({
         data: {
           userId,
-          type: 'WEB',
+          type: this.detectDeviceType(userAgent),
           token,
           fingerprint,
           ip,
@@ -165,6 +190,7 @@ export class DeviceService {
       changed: isNew,
       ip,
       userAgent,
+      trusted: existing?.userId === userId ? existing.trusted : false,
     };
   }
 

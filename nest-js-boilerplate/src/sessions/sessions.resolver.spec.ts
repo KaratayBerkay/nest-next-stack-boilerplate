@@ -35,6 +35,7 @@ describe('SessionsResolver', () => {
 
     resolver = new SessionsResolver(
       mockTokenStore as unknown as TokenStoreService,
+      { device: { findMany: jest.fn().mockResolvedValue([]), update: jest.fn().mockResolvedValue({}) } } as never,
       mockGateway as unknown as RealtimeGateway,
     );
   });
@@ -73,6 +74,7 @@ describe('SessionsResolver', () => {
         ip: '127.0.0.1',
         userAgent: 'Mozilla/5.0',
         issuedAt: '2026-01-01T00:00:00Z',
+        trusted: false,
       });
       expect(result[1]).toEqual({
         sessionId: 'sess-2',
@@ -80,6 +82,7 @@ describe('SessionsResolver', () => {
         ip: undefined,
         userAgent: undefined,
         issuedAt: undefined,
+        trusted: undefined,
       });
       expect(mockTokenStore.listSessionsWithKeys).toHaveBeenCalledWith('u1');
     });
@@ -115,6 +118,34 @@ describe('SessionsResolver', () => {
 
       expect(result).toBe(false);
       expect(mockGateway.closeSocketsForSession).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('trustCurrentDevice', () => {
+    it('marks the current device as trusted', async () => {
+      mockTokenStore.listSessionsWithKeys.mockResolvedValue([
+        {
+          key: 'token-key-1',
+          session: { sessionId: 'sess-1', deviceId: 'dev-1' },
+        },
+      ]);
+
+      const result = await resolver.trustCurrentDevice(mockUser);
+
+      expect(result).toBe(true);
+    });
+
+    it('returns false when session has no deviceId', async () => {
+      mockTokenStore.listSessionsWithKeys.mockResolvedValue([
+        {
+          key: 'token-key-1',
+          session: { sessionId: 'sess-1', deviceId: null },
+        },
+      ]);
+
+      const result = await resolver.trustCurrentDevice(mockUser);
+
+      expect(result).toBe(false);
     });
   });
 

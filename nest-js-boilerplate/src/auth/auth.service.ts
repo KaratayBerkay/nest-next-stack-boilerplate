@@ -15,6 +15,7 @@ import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { AuthTokenService } from './auth-token.service';
 import { AuthLoginService } from './auth-login.service';
 import { AuthRegistrationService } from './auth-registration.service';
+import { EmailOtpService } from './email-otp.service';
 import { AuthSessionService } from './auth-session.service';
 import { SessionHydrationService } from './session-hydration.service';
 import { TokenDerivationService } from './token-derivation.service';
@@ -54,6 +55,7 @@ export class AuthService {
     usernames: UsernameService,
     @Inject(forwardRef(() => RealtimeGateway))
     private readonly realtime: RealtimeGateway,
+    private readonly emailOtp: EmailOtpService,
   ) {
     this.authTokens = new AuthTokenService(
       jwt,
@@ -72,6 +74,7 @@ export class AuthService {
       usernames,
       mail,
       realtime,
+      emailOtp,
     );
     this.authRegistration = new AuthRegistrationService(
       prisma,
@@ -81,6 +84,7 @@ export class AuthService {
       config,
       usernames,
       devices,
+      emailOtp,
     );
     this.authSession = new AuthSessionService(
       prisma,
@@ -112,6 +116,40 @@ export class AuthService {
     return this.authLogin.login(input, ctx, this.boundIssueTokens);
   }
 
+  async resendLoginCode(mfaToken: string): Promise<string> {
+    const tokenHash = this.crypto.sha256(mfaToken);
+    const challenge =
+      await this.tokenStore.consumeMfaChallenge(tokenHash);
+    if (!challenge) {
+      throw new UnauthorizedException({
+        exc: 'EX_AUTH_MFA_EXPIRED',
+        msg: 'MFA challenge expired',
+        key: 'auth.errors.mfaChallengeExpired',
+      });
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: challenge.userId },
+    });
+    if (!user) {
+      throw new UnauthorizedException({
+        exc: 'EX_AUTH_USER_NOT_FOUND',
+        msg: 'User not found',
+        key: 'auth.errors.userNotFound',
+      });
+    }
+
+    await this.emailOtp.resend(user.id, user.email, 'LOGIN');
+
+    const newMfaToken = this.crypto.randomToken();
+    const newTokenHash = this.crypto.sha256(newMfaToken);
+    await this.tokenStore.writeMfaChallenge(newTokenHash, {
+      ...challenge,
+    });
+
+    return newMfaToken;
+  }
+
   async verifyLoginMfa(
     mfaToken: string,
     code: string,
@@ -127,6 +165,15 @@ export class AuthService {
 
   async verifyEmail(rawToken: string): Promise<User> {
     return this.authRegistration.verifyEmail(rawToken);
+  }
+
+  async verifyEmailCode(userId: string, code: string): Promise<User> {
+    return this.authRegistration.verifyEmailCode(userId, code);
+  }
+
+  async resendEmailCode(userId: string, email: string): Promise<boolean> {
+    await this.emailOtp.resend(userId, email, 'REGISTRATION');
+    return true;
   }
 
   async devActivateUser(email: string): Promise<boolean> {

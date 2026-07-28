@@ -312,7 +312,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authFormLoginMfaCodeLengthError => 'Enter your 6-digit code';
 
   @override
+  String get authFormLoginMfaUseBackupCode => 'Use a backup code instead';
+
+  @override
+  String get authFormLoginMfaUseCode => 'Use a verification code instead';
+
+  @override
   String get authFormLoginMfaVerified => 'MFA verified';
+
+  @override
+  String get authFormLoginMfaEmailDescription =>
+      'Enter the 6-digit code sent to your email address.';
+
+  @override
+  String get authFormLoginMfaResendCode => 'Resend code';
+
+  @override
+  String get authCodeResent => 'Verification code sent';
 
   @override
   String get authFormLoginDifferentAccount => 'Use a different account';
@@ -456,6 +472,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authFormVerifyEmailSubmit => 'Verify';
+
+  @override
+  String get authFormVerifyEmailCodeDescription =>
+      'Enter the 6-digit verification code sent to your email.';
+
+  @override
+  String get authFormVerifyEmailVerify => 'Verify Email';
+
+  @override
+  String get authFormVerifyEmailResendCode => 'Resend code';
+
+  @override
+  String get authFormVerifyEmailSkip => 'Skip, go to feed';
 
   @override
   String get authSocialContinueWith => 'Or continue with';
@@ -5132,10 +5161,88 @@ class AppLocalizationsEn extends AppLocalizations {
   String get securityTwoFactor => 'Two-Factor Authentication';
 
   @override
+  String get securityTwoFactorEnabledSubtitle =>
+      'Your account is protected by an authenticator app';
+
+  @override
+  String get securityTwoFactorDisabledSubtitle =>
+      'Add an extra layer of security to your account';
+
+  @override
   String get securityChangePassword => 'Change Password';
 
   @override
   String get securityActiveSessions => 'Active Sessions';
+
+  @override
+  String get securitySetupTwoFactor => 'Set Up Two-Factor Authentication';
+
+  @override
+  String get securityScanQrTitle => 'Scan this QR Code';
+
+  @override
+  String get securityScanQrDescription =>
+      'Use your authenticator app (e.g. Google Authenticator, Authy) to scan this QR code.';
+
+  @override
+  String get securityManualEntryKey => 'Or enter this key manually:';
+
+  @override
+  String get securityContinue => 'Continue';
+
+  @override
+  String get securityVerifyCodeTitle => 'Verify the Code';
+
+  @override
+  String get securityVerifyCodeDescription =>
+      'Enter the 6-digit code from your authenticator app to confirm setup.';
+
+  @override
+  String get securityVerify => 'Verify';
+
+  @override
+  String get securityRegenerateQr => 'Regenerate QR code';
+
+  @override
+  String get securityTwoFactorEnabled => 'Two-Factor Authentication Enabled';
+
+  @override
+  String get securitySaveBackupCodes =>
+      'Save these backup codes in a safe place. You can use each code once to log in if you lose access to your authenticator app.';
+
+  @override
+  String get securityConfirmCodesSaved => 'I have saved these backup codes';
+
+  @override
+  String get securityDone => 'Done';
+
+  @override
+  String get securityDisableTwoFactor => 'Disable Two-Factor Authentication';
+
+  @override
+  String get securityDisableMfaDescription =>
+      'Enter your current TOTP code to confirm disabling two-factor authentication.';
+
+  @override
+  String get securityDisable => 'Disable';
+
+  @override
+  String get securityMfaDisabled => 'Two-factor authentication disabled';
+
+  @override
+  String get securityMfaDisableFailed =>
+      'Failed to disable two-factor authentication';
+
+  @override
+  String get securityBiometric => 'Biometric Unlock';
+
+  @override
+  String get securityBiometricEnabledSubtitle =>
+      'Use fingerprint or face to unlock the app';
+
+  @override
+  String get securityBiometricDisabledSubtitle =>
+      'Require biometric authentication to unlock the app';
 
   @override
   String get settingsAddCard => 'Add Card';

@@ -47,6 +47,24 @@ export class AuthResolver {
     return this.auth.verifyEmail(token);
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Mutation(() => User)
+  verifyEmailCode(
+    @Args('userId') userId: string,
+    @Args('code') code: string,
+  ): Promise<User> {
+    return this.auth.verifyEmailCode(userId, code);
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Mutation(() => Boolean)
+  resendEmailCode(
+    @Args('userId') userId: string,
+    @Args('email') email: string,
+  ): Promise<boolean> {
+    return this.auth.resendEmailCode(userId, email);
+  }
+
   @UseGuards(CsrfGuard)
   @Mutation(() => AuthPayload)
   refresh(@Context() ctx: { req: Request }): Promise<AuthPayload> {
@@ -93,6 +111,14 @@ export class AuthResolver {
     return this.auth.verifyLoginMfa(input.mfaToken, input.code, {
       req: ctx.req,
     });
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Mutation(() => String)
+  resendLoginCode(
+    @Args('mfaToken') mfaToken: string,
+  ): Promise<string> {
+    return this.auth.resendLoginCode(mfaToken);
   }
 
   /**

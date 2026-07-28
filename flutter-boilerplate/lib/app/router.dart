@@ -162,7 +162,7 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       if (isRootRoute) return isLoggedIn ? '/v1/en/feed' : '/auth/login';
       if (!isLoggedIn && isV1Route) return '/auth/login';
-      if (isLoggedIn && isAuthRoute) return '/v1/en/feed';
+      if (isLoggedIn && isAuthRoute && !state.matchedLocation.startsWith('/auth/verify-email')) return '/v1/en/feed';
       return null;
     },
     routes: [
@@ -249,6 +249,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'verifyEmail',
         builder: (_, state) => VerifyEmailPageContent(
           token: state.uri.queryParameters['token'] ?? '',
+          userId: state.uri.queryParameters['userId'] ?? '',
         ),
       ),
       // V1 authenticated shell

@@ -107,6 +107,10 @@ export type I18nMessages = {
           "mfaCodeLabel": string;
           "mfaVerify": string;
           "mfaVerifying": string;
+          "mfaEmailDescription": string;
+          "mfaTotpDescription": string;
+          "mfaResendCode": string;
+          "mfaResending": string;
         };
         "register": {
           "title": string;
@@ -152,6 +156,10 @@ export type I18nMessages = {
           "verifying": string;
           "success": string;
           "loginLink": string;
+          "codeDescription": string;
+          "verify": string;
+          "resendCode": string;
+          "resending": string;
         };
       };
       "social": {
@@ -1177,6 +1185,7 @@ export type I18nMessages = {
       "invalidFileType": string;
       "fileTooLarge": string;
       "loading": string;
+      "navSecurity": string;
       "navApiKeys": string;
       "apiKeysHeading": string;
       "apiKeysDescription": string;
@@ -1213,6 +1222,29 @@ export type I18nMessages = {
       "deviceId": string;
       "userAgent": string;
       "revoke": string;
+      "securityHeading": string;
+      "securityTwoFactor": string;
+      "securityTwoFactorEnabled": string;
+      "securityTwoFactorDisabled": string;
+      "securitySetupTwoFactor": string;
+      "securityScanQrTitle": string;
+      "securityScanQrDescription": string;
+      "securityManualEntryKey": string;
+      "securityContinue": string;
+      "securityVerifyCodeTitle": string;
+      "securityVerifyCodeDescription": string;
+      "securityVerify": string;
+      "securityRegenerateQr": string;
+      "securityTwoFactorEnabledTitle": string;
+      "securitySaveBackupCodes": string;
+      "securityConfirmCodesSaved": string;
+      "securityDone": string;
+      "securityDisableTwoFactor": string;
+      "securityDisableMfaDescription": string;
+      "securityDisable": string;
+      "securityMfaDisabled": string;
+      "securityMfaDisableFailed": string;
+      "securityMfaVerifyCode": string;
       "errors": {
         "usernameTaken": string;
       };

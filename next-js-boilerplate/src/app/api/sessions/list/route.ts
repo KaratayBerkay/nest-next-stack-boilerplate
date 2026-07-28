@@ -11,6 +11,7 @@ const MY_SESSIONS_QUERY = `
       ip
       userAgent
       issuedAt
+      trusted
     }
   }
 `;
@@ -36,6 +37,7 @@ export async function GET() {
       ip?: string;
       userAgent?: string;
       issuedAt?: string;
+      trusted?: boolean;
     }>;
   }>(MY_SESSIONS_QUERY, {}, accessToken);
 

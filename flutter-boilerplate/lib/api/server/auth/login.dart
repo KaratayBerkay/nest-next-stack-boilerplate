@@ -18,6 +18,7 @@ const _loginMutation = '''
       userToken
       mfaRequired
       mfaToken
+      mfaMethod
       user {
         id
         email
@@ -26,6 +27,7 @@ const _loginMutation = '''
         locale
         subscriptionTier
         role
+        mfaEnabled
       }
     }
   }
@@ -66,6 +68,7 @@ class LoginServer {
     if (result['mfaRequired'] == true) {
       return LoginMfaRequired(
         mfaToken: result['mfaToken'] as String,
+        mfaMethod: result['mfaMethod'] as String?,
         user: AuthenticatedUser.fromJson(
           result['user'] as Map<String, dynamic>,
         ),

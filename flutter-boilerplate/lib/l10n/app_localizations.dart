@@ -662,11 +662,41 @@ abstract class AppLocalizations {
   /// **'Enter your 6-digit code'**
   String get authFormLoginMfaCodeLengthError;
 
+  /// No description provided for @authFormLoginMfaUseBackupCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a backup code instead'**
+  String get authFormLoginMfaUseBackupCode;
+
+  /// No description provided for @authFormLoginMfaUseCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a verification code instead'**
+  String get authFormLoginMfaUseCode;
+
   /// No description provided for @authFormLoginMfaVerified.
   ///
   /// In en, this message translates to:
   /// **'MFA verified'**
   String get authFormLoginMfaVerified;
+
+  /// No description provided for @authFormLoginMfaEmailDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit code sent to your email address.'**
+  String get authFormLoginMfaEmailDescription;
+
+  /// No description provided for @authFormLoginMfaResendCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend code'**
+  String get authFormLoginMfaResendCode;
+
+  /// No description provided for @authCodeResent.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification code sent'**
+  String get authCodeResent;
 
   /// No description provided for @authFormLoginDifferentAccount.
   ///
@@ -937,6 +967,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Verify'**
   String get authFormVerifyEmailSubmit;
+
+  /// No description provided for @authFormVerifyEmailCodeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit verification code sent to your email.'**
+  String get authFormVerifyEmailCodeDescription;
+
+  /// No description provided for @authFormVerifyEmailVerify.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify Email'**
+  String get authFormVerifyEmailVerify;
+
+  /// No description provided for @authFormVerifyEmailResendCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend code'**
+  String get authFormVerifyEmailResendCode;
+
+  /// No description provided for @authFormVerifyEmailSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip, go to feed'**
+  String get authFormVerifyEmailSkip;
 
   /// No description provided for @authSocialContinueWith.
   ///
@@ -9770,6 +9824,18 @@ abstract class AppLocalizations {
   /// **'Two-Factor Authentication'**
   String get securityTwoFactor;
 
+  /// No description provided for @securityTwoFactorEnabledSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account is protected by an authenticator app'**
+  String get securityTwoFactorEnabledSubtitle;
+
+  /// No description provided for @securityTwoFactorDisabledSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an extra layer of security to your account'**
+  String get securityTwoFactorDisabledSubtitle;
+
   /// No description provided for @securityChangePassword.
   ///
   /// In en, this message translates to:
@@ -9781,6 +9847,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Active Sessions'**
   String get securityActiveSessions;
+
+  /// No description provided for @securitySetupTwoFactor.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Up Two-Factor Authentication'**
+  String get securitySetupTwoFactor;
+
+  /// No description provided for @securityScanQrTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan this QR Code'**
+  String get securityScanQrTitle;
+
+  /// No description provided for @securityScanQrDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Use your authenticator app (e.g. Google Authenticator, Authy) to scan this QR code.'**
+  String get securityScanQrDescription;
+
+  /// No description provided for @securityManualEntryKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Or enter this key manually:'**
+  String get securityManualEntryKey;
+
+  /// No description provided for @securityContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get securityContinue;
+
+  /// No description provided for @securityVerifyCodeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify the Code'**
+  String get securityVerifyCodeTitle;
+
+  /// No description provided for @securityVerifyCodeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit code from your authenticator app to confirm setup.'**
+  String get securityVerifyCodeDescription;
+
+  /// No description provided for @securityVerify.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get securityVerify;
+
+  /// No description provided for @securityRegenerateQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate QR code'**
+  String get securityRegenerateQr;
+
+  /// No description provided for @securityTwoFactorEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Two-Factor Authentication Enabled'**
+  String get securityTwoFactorEnabled;
+
+  /// No description provided for @securitySaveBackupCodes.
+  ///
+  /// In en, this message translates to:
+  /// **'Save these backup codes in a safe place. You can use each code once to log in if you lose access to your authenticator app.'**
+  String get securitySaveBackupCodes;
+
+  /// No description provided for @securityConfirmCodesSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'I have saved these backup codes'**
+  String get securityConfirmCodesSaved;
+
+  /// No description provided for @securityDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get securityDone;
+
+  /// No description provided for @securityDisableTwoFactor.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable Two-Factor Authentication'**
+  String get securityDisableTwoFactor;
+
+  /// No description provided for @securityDisableMfaDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your current TOTP code to confirm disabling two-factor authentication.'**
+  String get securityDisableMfaDescription;
+
+  /// No description provided for @securityDisable.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable'**
+  String get securityDisable;
+
+  /// No description provided for @securityMfaDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Two-factor authentication disabled'**
+  String get securityMfaDisabled;
+
+  /// No description provided for @securityMfaDisableFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to disable two-factor authentication'**
+  String get securityMfaDisableFailed;
+
+  /// No description provided for @securityBiometric.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometric Unlock'**
+  String get securityBiometric;
+
+  /// No description provided for @securityBiometricEnabledSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Use fingerprint or face to unlock the app'**
+  String get securityBiometricEnabledSubtitle;
+
+  /// No description provided for @securityBiometricDisabledSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Require biometric authentication to unlock the app'**
+  String get securityBiometricDisabledSubtitle;
 
   /// No description provided for @settingsAddCard.
   ///

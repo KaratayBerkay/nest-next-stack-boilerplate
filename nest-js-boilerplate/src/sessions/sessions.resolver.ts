@@ -12,6 +12,7 @@ import type { JwtUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { TokenStoreService } from '../auth/token-store.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 
 @ObjectType()
@@ -30,6 +31,9 @@ class SessionInfo {
 
   @Field({ nullable: true })
   issuedAt?: string;
+
+  @Field({ nullable: true })
+  trusted?: boolean;
 }
 
 @UseGuards(SessionAuthGuard)
@@ -37,18 +41,37 @@ class SessionInfo {
 export class SessionsResolver {
   constructor(
     private readonly tokenStore: TokenStoreService,
+    private readonly prisma: PrismaService,
     private readonly gateway: RealtimeGateway,
   ) {}
 
   @Query(() => [SessionInfo])
   async mySessions(@CurrentUser() user: JwtUser) {
     const entries = await this.tokenStore.listSessionsWithKeys(user.userId);
+
+    const deviceIds = entries
+      .map((e) => e.session.deviceId)
+      .filter((id): id is string => !!id);
+    const devices = deviceIds.length
+      ? await this.prisma.device.findMany({
+          where: { id: { in: deviceIds } },
+          select: { id: true, trusted: true },
+        })
+      : [];
+    const trustedMap = new Map(
+      devices.map((d) => [d.id, d.trusted]),
+    );
+
     return entries.map(({ session }) => ({
       sessionId: session.sessionId,
       deviceId: session.deviceId ?? '',
       ip: session.ip ?? undefined,
       userAgent: session.userAgent ?? undefined,
       issuedAt: session.issuedAt ?? undefined,
+      trusted:
+        session.deviceId
+          ? trustedMap.get(session.deviceId) ?? false
+          : undefined,
     }));
   }
 
@@ -80,6 +103,24 @@ export class SessionsResolver {
     for (const { session } of toRevoke) {
       this.gateway.closeSocketsForSession(user.userId, session.sessionId);
     }
+    return true;
+  }
+
+  @Mutation(() => Boolean)
+  async trustCurrentDevice(@CurrentUser() user: JwtUser) {
+    const entries = await this.tokenStore.listSessionsWithKeys(
+      user.userId,
+    );
+    const current = entries.find(
+      (e) => e.session.sessionId === user.sessionId,
+    );
+    if (!current?.session.deviceId) return false;
+
+    await this.prisma.device.update({
+      where: { id: current.session.deviceId },
+      data: { trusted: true },
+    });
+
     return true;
   }
 }

@@ -11,6 +11,8 @@ const USER_SESS_PREFIX = 'user:';
 const REFRESH_INDEX_PREFIX = 'refresh_sess:';
 const MFA_CHALLENGE_PREFIX = 'mfa:challenge:';
 const MFA_CHALLENGE_TTL = 300; // 5 minutes
+const EMAIL_OTP_PREFIX = 'email_otp:';
+const EMAIL_OTP_TTL = 600; // 10 minutes
 
 function parseJsonField(raw: string | undefined): string[] {
   if (!raw) return [];
@@ -273,7 +275,13 @@ export class TokenStoreService {
   /** Store a short-lived MFA challenge keyed by the hashed mfaToken. */
   async writeMfaChallenge(
     tokenHash: string,
-    data: { userId: string; email: string; role: string; tier: string },
+    data: {
+      userId: string;
+      email: string;
+      role: string;
+      tier: string;
+      mfaMethod?: 'TOTP' | 'EMAIL';
+    },
   ): Promise<void> {
     const key = `${MFA_CHALLENGE_PREFIX}${tokenHash}`;
     await this.redis.set(key, JSON.stringify(data), 'EX', MFA_CHALLENGE_TTL);
@@ -285,6 +293,7 @@ export class TokenStoreService {
     email: string;
     role: string;
     tier: string;
+    mfaMethod?: 'TOTP' | 'EMAIL';
   } | null> {
     const key = `${MFA_CHALLENGE_PREFIX}${tokenHash}`;
     const raw = await this.redis.getdel(key);
@@ -295,9 +304,104 @@ export class TokenStoreService {
         email: string;
         role: string;
         tier: string;
+        mfaMethod?: 'TOTP' | 'EMAIL';
       };
     } catch {
       return null;
     }
+  }
+
+  /** Store a 6-digit email OTP with purpose-scoped key. */
+  async writeEmailOtp(
+    purpose: 'REGISTRATION' | 'LOGIN',
+    subjectId: string,
+    code: string,
+    email: string,
+  ): Promise<void> {
+    const key = `${EMAIL_OTP_PREFIX}${purpose}:${subjectId}`;
+    await this.redis.set(
+      key,
+      JSON.stringify({ code, email, attempts: 0 }),
+      'EX',
+      EMAIL_OTP_TTL,
+    );
+  }
+
+  /** Read and consume (delete) an email OTP. Returns null if expired or missing. */
+  async consumeEmailOtp(
+    purpose: 'REGISTRATION' | 'LOGIN',
+    subjectId: string,
+  ): Promise<{ code: string; email: string; attempts: number } | null> {
+    const key = `${EMAIL_OTP_PREFIX}${purpose}:${subjectId}`;
+    const raw = await this.redis.getdel(key);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as {
+        code: string;
+        email: string;
+        attempts: number;
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  /** Peek at an email OTP without consuming it (for rate-limit check). */
+  async peekEmailOtp(
+    purpose: 'REGISTRATION' | 'LOGIN',
+    subjectId: string,
+  ): Promise<{ code: string; email: string; attempts: number } | null> {
+    const key = `${EMAIL_OTP_PREFIX}${purpose}:${subjectId}`;
+    const raw = await this.redis.get(key);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as {
+        code: string;
+        email: string;
+        attempts: number;
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  /** Increment the attempt counter on an existing email OTP. */
+  async incrementOtpAttempts(
+    purpose: 'REGISTRATION' | 'LOGIN',
+    subjectId: string,
+  ): Promise<void> {
+    const key = `${EMAIL_OTP_PREFIX}${purpose}:${subjectId}`;
+    const raw = await this.redis.get(key);
+    if (!raw) return;
+    const data = JSON.parse(raw) as {
+      code: string;
+      email: string;
+      attempts: number;
+    };
+    data.attempts += 1;
+    await this.redis.set(key, JSON.stringify(data), 'EX', EMAIL_OTP_TTL, 'XX');
+  }
+
+  /** Invalidate an email OTP (used after max attempts reached). */
+  async deleteEmailOtp(
+    purpose: 'REGISTRATION' | 'LOGIN',
+    subjectId: string,
+  ): Promise<void> {
+    const key = `${EMAIL_OTP_PREFIX}${purpose}:${subjectId}`;
+    await this.redis.del(key);
+  }
+
+  /** Get the remaining resend cooldown in seconds (0 if no cooldown active). */
+  async getOtpResendCooldown(cooldownKey: string): Promise<number> {
+    const remaining = await this.redis.ttl(cooldownKey);
+    return remaining > 0 ? remaining : 0;
+  }
+
+  /** Set a resend cooldown marker key. */
+  async setOtpResendCooldown(
+    cooldownKey: string,
+    ttlSeconds: number,
+  ): Promise<void> {
+    await this.redis.set(cooldownKey, '1', 'EX', ttlSeconds);
   }
 }

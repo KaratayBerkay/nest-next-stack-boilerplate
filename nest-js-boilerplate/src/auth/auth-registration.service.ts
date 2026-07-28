@@ -15,6 +15,7 @@ import {
   type DeviceContext,
   type RequestContext,
 } from '../devices/device.service';
+import { EmailOtpService } from './email-otp.service';
 import { TokenStoreService } from './token-store.service';
 import { UsernameService } from './username.service';
 import type { AuthPayload } from './auth.types';
@@ -34,6 +35,7 @@ export class AuthRegistrationService {
     private readonly config: ConfigService,
     private readonly usernames: UsernameService,
     private readonly devices: DeviceService,
+    private readonly emailOtp: EmailOtpService,
   ) {}
 
   async register(
@@ -103,6 +105,14 @@ export class AuthRegistrationService {
       variables: { url: verifyUrl, name: user.name },
     });
 
+    try {
+      await this.emailOtp.generate(user.id, email, 'REGISTRATION');
+    } catch {
+      this.logger.warn(
+        `Failed to send email OTP for userId=${user.id}, link-only fallback`,
+      );
+    }
+
     const device = ctx
       ? await this.devices.resolveForLogin(user.id, ctx)
       : undefined;
@@ -121,6 +131,39 @@ export class AuthRegistrationService {
       data: { status: 'ACTIVE', emailVerifiedAt: new Date() },
     });
     return true;
+  }
+
+  async verifyEmailCode(userId: string, code: string): Promise<User> {
+    await this.emailOtp.verify(userId, code, 'REGISTRATION');
+
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.emailVerifiedAt) {
+      if (user?.emailVerifiedAt) return user;
+      throw new UnauthorizedException({
+        exc: 'EX_AUTH_USER_NOT_FOUND',
+        msg: 'User not found',
+        key: 'auth.errors.userNotFound',
+      });
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.user.update({
+        where: { id: userId },
+        data: { emailVerifiedAt: new Date(), status: 'ACTIVE' },
+      });
+      await this.outbox.emit(
+        {
+          aggregateType: 'User',
+          aggregateId: userId,
+          eventType: 'user.email_verified',
+          action: 'EMAIL_VERIFIED',
+          actorId: userId,
+          summary: `Email verified via code for ${updated.email}`,
+        },
+        tx,
+      );
+      return updated;
+    });
   }
 
   async verifyEmail(rawToken: string): Promise<User> {

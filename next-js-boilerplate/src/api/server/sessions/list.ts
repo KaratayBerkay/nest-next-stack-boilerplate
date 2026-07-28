@@ -8,6 +8,7 @@ export interface SessionInfo {
   deviceId?: string;
   issuedAt: string;
   expiresAt: string;
+  trusted?: boolean;
 }
 
 export async function listSessionsServer(): Promise<SessionInfo[]> {

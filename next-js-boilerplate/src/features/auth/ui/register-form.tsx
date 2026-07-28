@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type Dispatch, type SetStateAction } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { LOGIN_PATH } from "@/constants/routes";
 import Link from "next/link";
@@ -11,6 +12,8 @@ import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
 
+const VERIFY_EMAIL_PATH = "/auth/verify-email";
+
 async function handleRegisterSubmit(
   e: React.SyntheticEvent,
   schema: ReturnType<typeof registerFormSchema>,
@@ -19,8 +22,13 @@ async function handleRegisterSubmit(
   name: string,
   setFieldErrors: Dispatch<SetStateAction<Record<string, string>>>,
   setSubmitting: Dispatch<SetStateAction<boolean>>,
-  register: (email: string, password: string, name?: string) => Promise<void>,
+  register: (
+    email: string,
+    password: string,
+    name?: string,
+  ) => Promise<{ userId: string; email: string }>,
   t: I18nMessages["auth"],
+  push: (url: string) => void,
 ) {
   e.preventDefault();
   setFieldErrors({});
@@ -38,7 +46,10 @@ async function handleRegisterSubmit(
 
   setSubmitting(true);
   try {
-    await register(email, password, name || undefined);
+    const { userId } = await register(email, password, name || undefined);
+    push(
+      `${VERIFY_EMAIL_PATH}?userId=${userId}&email=${encodeURIComponent(email)}`,
+    );
   } catch (err) {
     const exc = (err as { exc?: string; field?: string; msg?: string }).exc;
     const field = (err as { field?: string }).field;
@@ -57,7 +68,8 @@ async function handleRegisterSubmit(
 
 export function RegisterForm() {
   const t = useMessages("auth");
-  const { register, user, loading } = useAuth();
+  const { register, loading } = useAuth();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -68,19 +80,6 @@ export function RegisterForm() {
 
   if (loading) {
     return <p className="text-muted text-sm">{t.loading}</p>;
-  }
-
-  if (user) {
-    return (
-      <div className="flex flex-col gap-3">
-        <p className="text-sm text-green-600">
-          {t.signedInAs.replace("{email}", user.email)}
-        </p>
-        <p className="text-muted text-xs">
-          {t.role} {user.role} &middot; {t.status} {user.status}
-        </p>
-      </div>
-    );
   }
 
   return (
@@ -101,6 +100,7 @@ export function RegisterForm() {
             setSubmitting,
             register,
             t,
+            router.push,
           )
         }
         className="flex flex-col gap-3"

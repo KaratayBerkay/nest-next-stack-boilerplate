@@ -10,6 +10,7 @@ import {
   type RequestContext,
 } from '../devices/device.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
+import { EmailOtpService } from './email-otp.service';
 import { TokenStoreService } from './token-store.service';
 import { UsernameService } from './username.service';
 import { MailService } from '../mail/mail.service';
@@ -35,6 +36,7 @@ export class AuthLoginService {
     private readonly usernames: UsernameService,
     private readonly mail: MailService,
     private readonly realtime: RealtimeGateway,
+    private readonly emailOtp: EmailOtpService,
   ) {}
 
   async login(
@@ -89,7 +91,17 @@ export class AuthLoginService {
       });
     }
 
-    if (user.mfaEnabled) {
+    const device = ctx
+      ? await this.devices.resolveForLogin(user.id, ctx)
+      : undefined;
+
+    if (user.mfaEnabled && !device?.trusted) {
+      const factor = await this.prisma.mfaFactor.findFirst({
+        where: { userId: user.id, method: 'TOTP', verifiedAt: { not: null } },
+        orderBy: { createdAt: 'desc' },
+      });
+      const mfaMethod: 'TOTP' | 'EMAIL' = factor ? 'TOTP' : 'EMAIL';
+
       const mfaToken = this.crypto.randomToken();
       const mfaTokenHash = this.crypto.sha256(mfaToken);
       await this.tokenStore.writeMfaChallenge(mfaTokenHash, {
@@ -97,8 +109,20 @@ export class AuthLoginService {
         email: user.email,
         role: user.role,
         tier: user.subscriptionTier ?? 'FREE',
+        mfaMethod,
       });
-      return { mfaRequired: true, mfaToken, user };
+
+      if (mfaMethod === 'EMAIL') {
+        try {
+          await this.emailOtp.generate(user.id, user.email, 'LOGIN');
+        } catch {
+          this.logger.warn(
+            `Failed to send login email OTP for userId=${user.id}`,
+          );
+        }
+      }
+
+      return { mfaRequired: true, mfaMethod, mfaToken, user };
     }
 
     await this.prisma.user.update({
@@ -110,10 +134,6 @@ export class AuthLoginService {
         ...(input.timezone ? { timezone: input.timezone } : {}),
       },
     });
-
-    const device = ctx
-      ? await this.devices.resolveForLogin(user.id, ctx)
-      : undefined;
     await this.outbox.emit({
       aggregateType: 'User',
       aggregateId: user.id,
@@ -160,15 +180,27 @@ export class AuthLoginService {
       });
     }
 
-    const totpVerified = await this.verifyTotpCode(user.id, code);
-    if (!totpVerified) {
-      const backupUsed = await this.verifyBackupCode(user.id, code);
-      if (!backupUsed)
+    if (challenge.mfaMethod === 'EMAIL') {
+      try {
+        await this.emailOtp.verify(user.id, code, 'LOGIN');
+      } catch {
         throw new UnauthorizedException({
           exc: 'EX_AUTH_MFA_INVALID_CODE',
-          msg: 'Invalid MFA code',
+          msg: 'Invalid verification code',
           key: 'auth.errors.mfaInvalidCode',
         });
+      }
+    } else {
+      const totpVerified = await this.verifyTotpCode(user.id, code);
+      if (!totpVerified) {
+        const backupUsed = await this.verifyBackupCode(user.id, code);
+        if (!backupUsed)
+          throw new UnauthorizedException({
+            exc: 'EX_AUTH_MFA_INVALID_CODE',
+            msg: 'Invalid MFA code',
+            key: 'auth.errors.mfaInvalidCode',
+          });
+      }
     }
 
     return issueTokens(user, ctx);

@@ -4,4 +4,5 @@ export interface SessionInfo {
   ip?: string;
   userAgent?: string;
   issuedAt?: string;
+  trusted?: boolean;
 }

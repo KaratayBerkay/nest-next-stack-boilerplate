@@ -9,12 +9,14 @@ import {
   IconCreditCard,
   IconDevices,
   IconKey,
+  IconShieldCheck,
 } from "@tabler/icons-react";
 
 const TABS = [
   { href: "general", labelKey: "navGeneral", Icon: IconAdjustments },
   { href: "account", labelKey: "navAccount", Icon: IconUser },
   { href: "privacy", labelKey: "navPrivacy", Icon: IconShieldLock },
+  { href: "security", labelKey: "navSecurity", Icon: IconShieldCheck },
   { href: "billing", labelKey: "navBilling", Icon: IconCreditCard },
   { href: "api-keys", labelKey: "navApiKeys", Icon: IconKey },
   { href: "sessions", labelKey: "navSessions", Icon: IconDevices },

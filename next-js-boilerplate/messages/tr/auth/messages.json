@@ -16,7 +16,11 @@
       "mfaTitle": "İki Faktörlü Doğrulama",
       "mfaCodeLabel": "Doğrulama kodu",
       "mfaVerify": "Doğrula",
-      "mfaVerifying": "Doğrulanıyor..."
+      "mfaVerifying": "Doğrulanıyor...",
+      "mfaEmailDescription": "{email} adresinize gönderilen 6 haneli kodu girin.",
+      "mfaTotpDescription": "Kimlik doğrulama uygulamanızdaki 6 haneli kodu {email} için girin.",
+      "mfaResendCode": "Kodu yeniden gönder",
+      "mfaResending": "Gönderiliyor..."
     },
     "register": {
       "title": "Hesabınızı oluşturun",
@@ -61,7 +65,11 @@
       "title": "E-posta Doğrulama",
       "verifying": "E-posta doğrulanıyor...",
       "success": "E-postanız doğrulandı. Şimdi giriş yapabilirsiniz.",
-      "loginLink": "Giriş Yap"
+      "loginLink": "Giriş Yap",
+      "codeDescription": "E-postanıza gönderilen 6 haneli doğrulama kodunu girin.",
+      "verify": "E-postayı Doğrula",
+      "resendCode": "Kodu yeniden gönder",
+      "resending": "Gönderiliyor..."
     }
   },
   "social": {

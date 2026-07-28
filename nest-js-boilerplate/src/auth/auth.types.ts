@@ -124,6 +124,10 @@ export class AuthPayload {
   @Field(() => Boolean, { nullable: true })
   mfaRequired?: boolean;
 
+  /** The method the client should use: 'TOTP' or 'EMAIL'. Only set when mfaRequired is true. */
+  @Field(() => String, { nullable: true })
+  mfaMethod?: 'TOTP' | 'EMAIL';
+
   /** Opaque one-time token the client passes back to verifyLoginMfa. Only set when mfaRequired is true. */
   @Field(() => String, { nullable: true })
   mfaToken?: string;

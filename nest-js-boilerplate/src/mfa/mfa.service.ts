@@ -51,7 +51,7 @@ export class MfaService {
 
   /** Confirm a TOTP code, enable MFA on the user, and issue one-time backup codes. */
   async verify(userId: string, code: string): Promise<MfaVerifyPayload> {
-    const factor = await this.findVerifiedFactor(userId);
+    const factor = await this.findPendingFactor(userId);
 
     await this.assertValidTotp(factor, code);
 
@@ -162,6 +162,19 @@ export class MfaService {
     });
     if (!factor?.secret) {
       throw new NotFoundException('No verified TOTP factor found');
+    }
+    return factor;
+  }
+
+  private async findPendingFactor(userId: string) {
+    const factor = await this.prisma.mfaFactor.findFirst({
+      where: { userId, method: 'TOTP', verifiedAt: null },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!factor?.secret) {
+      throw new NotFoundException(
+        'No pending TOTP factor found — enroll before verifying',
+      );
     }
     return factor;
   }

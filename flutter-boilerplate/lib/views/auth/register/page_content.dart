@@ -100,8 +100,7 @@ class _RegisterPageContentState extends ConsumerState<RegisterPageContent> {
       }
 
       if (mounted) {
-        final locale = ref.read(localeProvider);
-        context.go('/v1/$locale/feed');
+        context.go('/auth/verify-email?userId=${response.user.id}');
       }
     } on DioException catch (e) {
       _handleError(e);
