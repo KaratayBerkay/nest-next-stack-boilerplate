@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { UnauthorizedException } from '@nestjs/common';
 import { hash } from '@node-rs/argon2';
+import { verify as verifyTotp } from 'otplib';
 import { CryptoService } from '../common/crypto/crypto.service';
 import { DeviceService } from '../devices/device.service';
 import { MailService } from '../mail/mail.service';
@@ -15,6 +16,12 @@ import { SessionHydrationService } from './session-hydration.service';
 import { UsernameService } from './username.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { EmailOtpService } from './email-otp.service';
+
+jest.mock('otplib', () => ({
+  verify: jest.fn(),
+}));
+
+const mockedVerifyTotp = verifyTotp as jest.Mock;
 
 const mockPrisma = {
   verificationToken: {
@@ -44,6 +51,7 @@ const mockJwtService = {
 const mockCrypto = {
   sha256: jest.fn((s: string) => `sha256(${s})`),
   randomToken: jest.fn(() => 'rand_token'),
+  decrypt: jest.fn((buf: Buffer) => buf.toString()),
 };
 
 const mockOutbox = {
@@ -64,6 +72,8 @@ const mockTokenStore = {
   revokeAllForUser: jest.fn(),
   writeMfaChallenge: jest.fn(),
   consumeMfaChallenge: jest.fn(),
+  peekMfaChallenge: jest.fn(),
+  deleteMfaChallenge: jest.fn(),
 };
 
 describe('AuthService', () => {
@@ -247,7 +257,7 @@ describe('AuthService', () => {
     beforeEach(() => {
       mockJwtService.signAsync.mockResolvedValue('mock-jwt-token');
 
-      mockTokenStore.consumeMfaChallenge.mockResolvedValue({
+      mockTokenStore.peekMfaChallenge.mockResolvedValue({
         userId: 'u4',
         email: 'mfa@example.com',
         role: 'USER',
@@ -307,6 +317,57 @@ describe('AuthService', () => {
       await expect(
         service.verifyLoginMfa('another-token', code),
       ).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('verifyLoginMfa — TOTP retry', () => {
+    beforeEach(() => {
+      mockJwtService.signAsync.mockResolvedValue('mock-jwt-token');
+      mockCrypto.decrypt.mockReturnValue('BASE32SECRET');
+
+      mockTokenStore.peekMfaChallenge.mockResolvedValue({
+        userId: 'u5',
+        email: 'totp@example.com',
+        role: 'USER',
+        tier: 'FREE',
+        mfaMethod: 'TOTP',
+      });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u5',
+        mfaEnabled: true,
+        email: 'totp@example.com',
+      });
+      mockPrisma.mfaFactor.findFirst.mockResolvedValue({
+        secret: Buffer.from('encrypted-secret'),
+      });
+      mockPrisma.mfaBackupCode.findFirst.mockResolvedValue(null);
+    });
+
+    it('does not burn the challenge on a wrong code — a later correct code still works', async () => {
+      mockedVerifyTotp
+        .mockReturnValueOnce({ valid: false })
+        .mockReturnValueOnce({ valid: true });
+
+      await expect(
+        service.verifyLoginMfa('mfa-token', '000000'),
+      ).rejects.toThrow(UnauthorizedException);
+      expect(mockTokenStore.deleteMfaChallenge).not.toHaveBeenCalled();
+
+      const result = await service.verifyLoginMfa('mfa-token', '111111');
+
+      expect(result).toBeDefined();
+      expect(result.mfaRequired).toBeFalsy();
+      expect(mockTokenStore.peekMfaChallenge).toHaveBeenCalledTimes(2);
+    });
+
+    it('deletes the challenge only once verification actually succeeds', async () => {
+      mockedVerifyTotp.mockReturnValue({ valid: true });
+
+      await service.verifyLoginMfa('mfa-token', '111111');
+
+      expect(mockTokenStore.deleteMfaChallenge).toHaveBeenCalledWith(
+        'sha256(mfa-token)',
+      );
     });
   });
 
@@ -386,7 +447,9 @@ describe('AuthService', () => {
       const mockCtx = {
         req: { cookies: {}, headers: {}, res: { cookie: jest.fn() } },
       } as any;
-      const deviceService = module.get<{ resolveForLogin: jest.Mock }>(DeviceService);
+      const deviceService = module.get<{ resolveForLogin: jest.Mock }>(
+        DeviceService,
+      );
       deviceService.resolveForLogin.mockResolvedValue({
         deviceId: 'dev-trusted',
         deviceToken: 'trusted-token',
@@ -426,7 +489,9 @@ describe('AuthService', () => {
       const mockCtx = {
         req: { cookies: {}, headers: {}, res: { cookie: jest.fn() } },
       } as any;
-      const deviceService = module.get<{ resolveForLogin: jest.Mock }>(DeviceService);
+      const deviceService = module.get<{ resolveForLogin: jest.Mock }>(
+        DeviceService,
+      );
       deviceService.resolveForLogin.mockResolvedValue({
         deviceId: 'dev-untrusted',
         deviceToken: 'untrusted-token',

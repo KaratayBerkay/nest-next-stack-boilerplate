@@ -131,9 +131,22 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
   void _handleError(DioException err) {
     final t = AppLocalizations.of(context);
     final data = err.response?.data;
-    final msg =
-        (data is Map && data['msg'] is String) ? data['msg'] as String : null;
-    final field = (data is Map) ? data['field'] as String? : null;
+
+    String? msg;
+    String? field;
+    if (data is Map) {
+      final errors = data['errors'];
+      if (errors is List && errors.isNotEmpty && errors.first is Map) {
+        final first = errors.first as Map;
+        msg = first['message'] as String?;
+        final extensions = first['extensions'];
+        if (extensions is Map) {
+          field = extensions['field'] as String?;
+        }
+      }
+      msg ??= data['msg'] as String?;
+      field ??= data['field'] as String?;
+    }
 
     setState(() {
       if (field != null) {

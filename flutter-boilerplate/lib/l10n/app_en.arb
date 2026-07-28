@@ -1778,6 +1778,7 @@
   "securityRegenerateQr": "Regenerate QR code",
   "securityTwoFactorEnabled": "Two-Factor Authentication Enabled",
   "securitySaveBackupCodes": "Save these backup codes in a safe place. You can use each code once to log in if you lose access to your authenticator app.",
+  "securityDownloadBackupCodes": "Download backup codes",
   "securityConfirmCodesSaved": "I have saved these backup codes",
   "securityDone": "Done",
   "securityDisableTwoFactor": "Disable Two-Factor Authentication",

@@ -82,6 +82,7 @@ class MfaServer {
           .join(', ');
       throw DioException(
         requestOptions: response.requestOptions,
+        response: response,
         message: msgs.isNotEmpty ? msgs : 'MFA verification failed',
       );
     }
@@ -102,6 +103,7 @@ class MfaServer {
           .join(', ');
       throw DioException(
         requestOptions: response.requestOptions,
+        response: response,
         message: msgs.isNotEmpty ? msgs : 'MFA enroll failed',
       );
     }
@@ -127,6 +129,7 @@ class MfaServer {
           .join(', ');
       throw DioException(
         requestOptions: response.requestOptions,
+        response: response,
         message: msgs.isNotEmpty ? msgs : 'MFA verify failed',
       );
     }
@@ -152,6 +155,7 @@ class MfaServer {
           .join(', ');
       throw DioException(
         requestOptions: response.requestOptions,
+        response: response,
         message: msgs.isNotEmpty ? msgs : 'MFA disable failed',
       );
     }
@@ -174,6 +178,7 @@ class MfaServer {
           .join(', ');
       throw DioException(
         requestOptions: response.requestOptions,
+        response: response,
         message: msgs.isNotEmpty ? msgs : 'Resend login code failed',
       );
     }

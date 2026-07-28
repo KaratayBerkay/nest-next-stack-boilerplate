@@ -1,6 +1,7 @@
 import { Logger, UnauthorizedException } from '@nestjs/common';
 import { verify } from '@node-rs/argon2';
 import { User } from '@prisma/client';
+import { verify as verifyTotp } from 'otplib';
 import { PrismaService } from '../prisma/prisma.service';
 import { CryptoService } from '../common/crypto/crypto.service';
 import { OutboxService } from '../outbox/outbox.service';
@@ -160,7 +161,7 @@ export class AuthLoginService {
     ) => Promise<AuthPayload>,
   ): Promise<AuthPayload> {
     const tokenHash = this.crypto.sha256(mfaToken);
-    const challenge = await this.tokenStore.consumeMfaChallenge(tokenHash);
+    const challenge = await this.tokenStore.peekMfaChallenge(tokenHash);
     if (!challenge) {
       throw new UnauthorizedException({
         exc: 'EX_AUTH_MFA_EXPIRED',
@@ -203,6 +204,7 @@ export class AuthLoginService {
       }
     }
 
+    await this.tokenStore.deleteMfaChallenge(tokenHash);
     return issueTokens(user, ctx);
   }
 
@@ -327,9 +329,7 @@ export class AuthLoginService {
     if (!factor?.secret) return false;
 
     const secret = this.crypto.decrypt(Buffer.from(factor.secret));
-    const result = await import('otplib').then((m) =>
-      m.verify({ secret, token: code }),
-    );
+    const result = await verifyTotp({ secret, token: code });
     if (!result.valid) return false;
 
     await this.prisma.mfaFactor.update({

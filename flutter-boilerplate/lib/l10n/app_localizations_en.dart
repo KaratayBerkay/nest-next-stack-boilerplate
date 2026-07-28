@@ -5225,6 +5225,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Save these backup codes in a safe place. You can use each code once to log in if you lose access to your authenticator app.';
 
   @override
+  String get securityDownloadBackupCodes => 'Download backup codes';
+
+  @override
   String get securityConfirmCodesSaved => 'I have saved these backup codes';
 
   @override

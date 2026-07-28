@@ -1753,6 +1753,7 @@
   "securityRegenerateQr": "QR kodunu yeniden oluştur",
   "securityTwoFactorEnabled": "İki Faktörlü Doğrulama Etkinleştirildi",
   "securitySaveBackupCodes": "Bu yedek kodları güvenli bir yerde saklayın. Doğrulama uygulamanıza erişiminizi kaybederseniz, giriş yapmak için her kodu bir kez kullanabilirsiniz.",
+  "securityDownloadBackupCodes": "Yedek kodları indir",
   "securityConfirmCodesSaved": "Bu yedek kodları kaydettim",
   "securityDone": "Tamam",
   "securityDisableTwoFactor": "İki Faktörlü Doğrulamayı Devre Dışı Bırak",

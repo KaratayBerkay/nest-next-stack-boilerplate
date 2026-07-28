@@ -311,6 +311,39 @@ export class TokenStoreService {
     }
   }
 
+  /**
+   * Read an MFA challenge without consuming it, so a wrong code doesn't burn
+   * the client's only attempt. Returns null if expired or missing.
+   */
+  async peekMfaChallenge(tokenHash: string): Promise<{
+    userId: string;
+    email: string;
+    role: string;
+    tier: string;
+    mfaMethod?: 'TOTP' | 'EMAIL';
+  } | null> {
+    const key = `${MFA_CHALLENGE_PREFIX}${tokenHash}`;
+    const raw = await this.redis.get(key);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as {
+        userId: string;
+        email: string;
+        role: string;
+        tier: string;
+        mfaMethod?: 'TOTP' | 'EMAIL';
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  /** Delete an MFA challenge — call once it has actually been used successfully. */
+  async deleteMfaChallenge(tokenHash: string): Promise<void> {
+    const key = `${MFA_CHALLENGE_PREFIX}${tokenHash}`;
+    await this.redis.del(key);
+  }
+
   /** Store a 6-digit email OTP hash with purpose-scoped key. */
   async writeEmailOtp(
     purpose: 'REGISTRATION' | 'LOGIN',

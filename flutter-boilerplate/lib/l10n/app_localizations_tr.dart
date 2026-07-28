@@ -5239,6 +5239,9 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu yedek kodları güvenli bir yerde saklayın. Doğrulama uygulamanıza erişiminizi kaybederseniz, giriş yapmak için her kodu bir kez kullanabilirsiniz.';
 
   @override
+  String get securityDownloadBackupCodes => 'Yedek kodları indir';
+
+  @override
   String get securityConfirmCodesSaved => 'Bu yedek kodları kaydettim';
 
   @override

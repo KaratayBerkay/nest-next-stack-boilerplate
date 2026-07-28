@@ -40,12 +40,6 @@ class _FlutterBoilerplateAppState extends ConsumerState<FlutterBoilerplateApp>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initServices();
     });
-    ref.listen(biometricEnabledProvider, (prev, next) {
-      final enabled = next.asData?.value ?? false;
-      if (enabled && !_biometricChecked) {
-        setState(() => _biometricChecked = true);
-      }
-    });
   }
 
   @override
@@ -123,6 +117,13 @@ class _FlutterBoilerplateAppState extends ConsumerState<FlutterBoilerplateApp>
 
     ref.watch(useRealtimeProvider);
     ref.watch(stripeInitProvider);
+
+    ref.listen(biometricEnabledProvider, (prev, next) {
+      final enabled = next.asData?.value ?? false;
+      if (enabled && !_biometricChecked) {
+        setState(() => _biometricChecked = true);
+      }
+    });
 
     if (_biometricGatePending) {
       return MaterialApp(

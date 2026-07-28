@@ -9938,6 +9938,12 @@ abstract class AppLocalizations {
   /// **'Save these backup codes in a safe place. You can use each code once to log in if you lose access to your authenticator app.'**
   String get securitySaveBackupCodes;
 
+  /// No description provided for @securityDownloadBackupCodes.
+  ///
+  /// In en, this message translates to:
+  /// **'Download backup codes'**
+  String get securityDownloadBackupCodes;
+
   /// No description provided for @securityConfirmCodesSaved.
   ///
   /// In en, this message translates to:

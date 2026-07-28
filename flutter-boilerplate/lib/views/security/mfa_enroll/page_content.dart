@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../api/client/auth/actions.dart';
 import '../../../components/ui/button/button.dart';
@@ -73,6 +77,20 @@ class _MfaEnrollPageContentState extends ConsumerState<MfaEnrollPageContent> {
         _loading = false;
       });
     }
+  }
+
+  Future<void> _exportBackupCodes() async {
+    final codes = _verifyData!.backupCodes;
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/backup-codes.txt');
+    await file.writeAsString(codes.join('\n'));
+
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(file.path)],
+        subject: 'Two-factor backup codes',
+      ),
+    );
   }
 
   Future<void> _confirmComplete() async {
@@ -309,6 +327,17 @@ class _MfaEnrollPageContentState extends ConsumerState<MfaEnrollPageContent> {
                   ),
                 ],
               ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            height: 40,
+            child: Button(
+              variant: ButtonVariant.outline,
+              icon: Icons.ios_share,
+              onPressed: _exportBackupCodes,
+              child: Text(t.securityDownloadBackupCodes),
             ),
           ),
           const SizedBox(height: 16),

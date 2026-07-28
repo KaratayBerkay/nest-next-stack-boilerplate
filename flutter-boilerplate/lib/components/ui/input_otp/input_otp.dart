@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../constants/theme.dart';
+
 class InputOtp extends StatefulWidget {
   final int length;
   final String? value;
@@ -80,6 +82,8 @@ class _InputOtpState extends State<InputOtp> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: List.generate(widget.length, (i) {
@@ -95,9 +99,17 @@ class _InputOtpState extends State<InputOtp> {
               textAlign: TextAlign.center,
               keyboardType: TextInputType.number,
               maxLength: 1,
-              decoration: const InputDecoration(
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: colors.fg,
+              ),
+              decoration: InputDecoration(
                 counterText: '',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: colors.brand, width: 2),
+                ),
               ),
               onChanged: (v) => _onChanged(v, i),
             ),
