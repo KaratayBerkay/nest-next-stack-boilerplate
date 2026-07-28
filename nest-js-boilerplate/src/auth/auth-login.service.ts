@@ -205,7 +205,10 @@ export class AuthLoginService {
     }
 
     await this.tokenStore.deleteMfaChallenge(tokenHash);
-    return issueTokens(user, ctx);
+    const device = ctx
+      ? await this.devices.resolveForLogin(user.id, ctx)
+      : undefined;
+    return issueTokens(user, ctx, device);
   }
 
   async loginWithOAuth(
