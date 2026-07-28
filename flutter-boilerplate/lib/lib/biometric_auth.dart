@@ -33,8 +33,12 @@ class BiometricAuth implements BiometricAuthInterface {
 
   @override
   Future<bool> isEnabled() async {
-    final val = await _storage.read(key: _biometricEnabledKey);
-    return val == 'true';
+    try {
+      final val = await _storage.read(key: _biometricEnabledKey);
+      return val == 'true';
+    } catch (_) {
+      return false;
+    }
   }
 
   @override

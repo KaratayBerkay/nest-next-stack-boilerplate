@@ -1177,8 +1177,6 @@ export type I18nMessages = {
       "privacyNickname": string;
       "privacyNicknameDesc": string;
       "privacyNicknamePlaceholder": string;
-      "privacyTwoFactor": string;
-      "privacyTwoFactorDesc": string;
       "settingsLink": string;
       "navSettings": string;
       "settingsSectionLabel": string;

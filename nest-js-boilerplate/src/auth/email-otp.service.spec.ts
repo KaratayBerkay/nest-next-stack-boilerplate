@@ -6,10 +6,12 @@ import {
 import { EmailOtpService } from './email-otp.service';
 import { MailService } from '../mail/mail.service';
 import { TokenStoreService } from './token-store.service';
+import { CryptoService } from '../common/crypto/crypto.service';
 
 describe('EmailOtpService', () => {
   let service: EmailOtpService;
   let mail: { enqueue: jest.Mock };
+  let crypto: { sha256: jest.Mock };
   let tokenStore: {
     writeEmailOtp: jest.Mock;
     consumeEmailOtp: jest.Mock;
@@ -32,12 +34,14 @@ describe('EmailOtpService', () => {
     };
 
     mail = { enqueue: jest.fn().mockResolvedValue(undefined) };
+    crypto = { sha256: jest.fn((value: string) => `hashed-${value}`) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         EmailOtpService,
         { provide: TokenStoreService, useValue: tokenStore },
         { provide: MailService, useValue: mail },
+        { provide: CryptoService, useValue: crypto },
       ],
     }).compile();
 
@@ -51,7 +55,7 @@ describe('EmailOtpService', () => {
   describe('verify', () => {
     it('succeeds with a matching code', async () => {
       tokenStore.peekEmailOtp.mockResolvedValue({
-        code: '123456',
+        codeHash: 'hashed-123456',
         email,
         attempts: 0,
       });
@@ -76,7 +80,7 @@ describe('EmailOtpService', () => {
 
     it('throws on wrong code and increments attempts', async () => {
       tokenStore.peekEmailOtp.mockResolvedValue({
-        code: '123456',
+        codeHash: 'hashed-123456',
         email,
         attempts: 0,
       });
@@ -93,7 +97,7 @@ describe('EmailOtpService', () => {
 
     it('invalidates the OTP after max attempts', async () => {
       tokenStore.peekEmailOtp.mockResolvedValue({
-        code: '123456',
+        codeHash: 'hashed-123456',
         email,
         attempts: 5,
       });
@@ -122,7 +126,7 @@ describe('EmailOtpService', () => {
 
     it('deletes existing OTP before generating a new one', async () => {
       tokenStore.peekEmailOtp.mockResolvedValue({
-        code: '123456',
+        codeHash: 'hashed-123456',
         email,
         attempts: 0,
       });

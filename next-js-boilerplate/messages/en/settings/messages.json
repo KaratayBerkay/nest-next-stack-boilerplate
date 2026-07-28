@@ -73,8 +73,6 @@
   "privacyNickname": "Go to chat rooms with nickname",
   "privacyNicknameDesc": "Use a nickname instead of your real name in chat rooms",
   "privacyNicknamePlaceholder": "Enter your nickname",
-  "privacyTwoFactor": "Two-factor authentication (2FA)",
-  "privacyTwoFactorDesc": "Add an extra layer of security to your account",
   "settingsLink": "Settings",
   "navSettings": "Settings",
   "settingsSectionLabel": "Settings",

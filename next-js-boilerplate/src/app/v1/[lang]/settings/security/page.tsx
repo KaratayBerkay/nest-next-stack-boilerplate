@@ -33,6 +33,7 @@ export default async function SecurityPage({
         undefined,
         accessToken,
         await sessionTokenHeaders(),
+        true,
       );
       initialMfaEnabled = data?.me?.mfaEnabled ?? false;
     }

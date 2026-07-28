@@ -100,6 +100,16 @@ export class EmailOtpService {
     email: string,
     purpose: 'REGISTRATION' | 'LOGIN',
   ): Promise<void> {
+    const cooldownKey = `otp_cooldown:${purpose}:${userId}`;
+    const remaining = await this.tokenStore.getOtpResendCooldown(cooldownKey);
+    if (remaining > 0) {
+      throw new BadRequestException({
+        exc: 'EX_AUTH_OTP_RESEND_COOLDOWN',
+        msg: `Please wait ${remaining} seconds before requesting a new code`,
+        key: 'auth.errors.otpResendCooldown',
+      });
+    }
+
     const stored = await this.tokenStore.peekEmailOtp(purpose, userId);
     if (stored) {
       await this.tokenStore.deleteEmailOtp(purpose, userId);

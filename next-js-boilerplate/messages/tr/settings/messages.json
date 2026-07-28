@@ -73,8 +73,6 @@
   "privacyNickname": "Sohbet odalarına rumuzla gir",
   "privacyNicknameDesc": "Sohbet odalarında gerçek adınız yerine rumuz kullanın",
   "privacyNicknamePlaceholder": "Rumuzunuzu girin",
-  "privacyTwoFactor": "İki faktörlü kimlik doğrulama (2FA)",
-  "privacyTwoFactorDesc": "Hesabınıza ekstra bir güvenlik katmanı ekleyin",
   "settingsLink": "Ayarlar",
   "navSettings": "Ayarlar",
   "settingsSectionLabel": "Ayarlar",

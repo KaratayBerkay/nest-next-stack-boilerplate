@@ -52,6 +52,9 @@ describe('AuthSessionService.refresh', () => {
       'session' in (overrides ?? {}) ? overrides!.session : fakeSession;
     const prisma = {
       user: { findUnique: jest.fn().mockResolvedValue(fakeUser) },
+      device: {
+        findUnique: jest.fn().mockResolvedValue({ trusted: false }),
+      },
     };
     const tokenStore = {
       findByRefreshSessionId: jest.fn().mockResolvedValue(session),
@@ -97,6 +100,7 @@ describe('AuthSessionService.refresh', () => {
         changed: false,
         ip: '10.0.0.2',
         userAgent: 'renewing-agent',
+        trusted: false,
       },
     );
   });

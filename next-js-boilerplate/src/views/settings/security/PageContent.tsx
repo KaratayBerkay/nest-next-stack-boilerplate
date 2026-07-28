@@ -28,6 +28,8 @@ export default function SecurityPageContent({
   const [error, setError] = useState<string | null>(null);
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [codesSaved, setCodesSaved] = useState(false);
+  const [disableCode, setDisableCode] = useState("");
+  const [confirmingDisable, setConfirmingDisable] = useState(false);
 
   const handleEnroll = async () => {
     try {
@@ -63,9 +65,15 @@ export default function SecurityPageContent({
 
   const handleDisable = async () => {
     try {
-      const res = await fetch("/api/auth/mfa/disable", { method: "POST" });
+      const res = await fetch("/api/auth/mfa/disable", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: disableCode }),
+      });
       if (res.ok) {
         setMfaEnabled(false);
+        setConfirmingDisable(false);
+        setDisableCode("");
       } else {
         const data = await res.json();
         setError(data.msg ?? "Failed to disable MFA");
@@ -85,12 +93,29 @@ export default function SecurityPageContent({
             : t.securityTwoFactorDisabled}
         </p>
         {mfaEnabled ? (
-          <button
-            onClick={handleDisable}
-            className="w-full rounded-lg bg-red-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700"
-          >
-            {t.securityDisableTwoFactor}
-          </button>
+          confirmingDisable ? (
+            <div className="space-y-3">
+              <InputOTP
+                maxLength={6}
+                value={disableCode}
+                onChange={setDisableCode}
+              />
+              <button
+                onClick={handleDisable}
+                disabled={disableCode.length < 6}
+                className="w-full rounded-lg bg-red-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+              >
+                {t.securityDisableTwoFactor}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmingDisable(true)}
+              className="w-full rounded-lg bg-red-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700"
+            >
+              {t.securityDisableTwoFactor}
+            </button>
+          )
         ) : (
           <button
             onClick={handleEnroll}
