@@ -661,8 +661,13 @@ export class BillingService {
   }
 
   async getBillingHistory(userId: string) {
+    // Only real, invoiced charges belong in the Invoices tab — the
+    // ADJUSTMENT rows written for scheduled cancellations/tier changes are
+    // internal bookkeeping (amount 0, no Stripe invoice), surfaced to the
+    // user via `pendingTier`/`cancelAtPeriodEnd` instead (see PlanDetails).
     return this.prisma.walletTransaction.findMany({
       where: {
+        type: 'FEE',
         reference: { startsWith: 'subscription:' },
         OR: [{ fromWallet: { userId } }, { toWallet: { userId } }],
       },

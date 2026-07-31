@@ -725,6 +725,7 @@ describe('BillingService', () => {
       expect(mockPrisma.walletTransaction.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
+            type: 'FEE',
             OR: [
               { fromWallet: { userId: 'u1' } },
               { toWallet: { userId: 'u1' } },
