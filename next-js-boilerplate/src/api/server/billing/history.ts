@@ -1,20 +1,14 @@
 import { apiFetchJson } from "@/lib/api-client";
 import { BILLING_HISTORY_URL } from "@/constants/api/urls";
+import type { Transaction } from "@/types/billing/FreePageView-types";
 
-export interface BillingHistoryEntry {
-  id: string;
-  amount: number;
-  currency: string;
-  status: string;
-  description: string;
-  createdAt: string;
-}
+export type BillingHistoryEntry = Transaction;
 
 export async function fetchBillingHistoryServer(): Promise<
   BillingHistoryEntry[]
 > {
-  const data = await apiFetchJson<{ invoices: BillingHistoryEntry[] }>(
+  const data = await apiFetchJson<{ transactions: BillingHistoryEntry[] }>(
     BILLING_HISTORY_URL,
   );
-  return data.invoices;
+  return data.transactions;
 }

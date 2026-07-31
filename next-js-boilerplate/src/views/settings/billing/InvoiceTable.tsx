@@ -72,9 +72,7 @@ export function InvoiceTable({
               <th className="px-4 py-3 font-medium">
                 {t.invoiceNumber.replace("{number}", "#")}
               </th>
-              <th className="px-4 py-3 font-medium">
-                {t.dateDisplay || "Date"}
-              </th>
+              <th className="px-4 py-3 font-medium">{t.date}</th>
               <th className="px-4 py-3 font-medium">{t.price}</th>
               <th className="px-4 py-3 font-medium">{t.status || "Status"}</th>
               <th className="px-4 py-3 font-medium">{t.viewInvoice}</th>
@@ -95,7 +93,9 @@ export function InvoiceTable({
                   {formatDateByPreference(tx.createdAt, dateDisplay)}
                 </td>
                 <td className="px-4 py-3 text-sm">
-                  {tx.amount > 0 ? `$${(tx.amount / 100).toFixed(2)}` : "\u2014"}
+                  {tx.amount > 0
+                    ? `$${(tx.amount / 100).toFixed(2)}`
+                    : "\u2014"}
                 </td>
                 <td className="px-4 py-3">
                   <StatusBadge
@@ -115,7 +115,7 @@ export function InvoiceTable({
                       {t.viewInvoice}
                     </a>
                   ) : (
-                    <span className="text-muted text-sm">\u2014</span>
+                    <span className="text-muted text-sm">{"\u2014"}</span>
                   )}
                 </td>
               </tr>
