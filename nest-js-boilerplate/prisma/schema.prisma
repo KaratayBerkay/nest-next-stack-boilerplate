@@ -839,6 +839,10 @@ model WalletTransaction {
   currency       String          @default("USD")
   feeAmount      Decimal         @default(0) @db.Decimal(18, 4)
   idempotencyKey        String    @unique
+  // Client-supplied retry key (e.g. a UUID minted per subscribe flow): the
+  // same attempt reusing this key is recognized as a duplicate regardless of
+  // what idempotencyKey was derived from (e.g. a Stripe invoice id).
+  clientIdempotencyKey   String?
   reference             String?
   stripePaymentIntentId String?
   stripeInvoiceUrl      String?
@@ -849,6 +853,7 @@ model WalletTransaction {
   @@index([fromWalletId])
   @@index([toWalletId])
   @@index([status])
+  @@index([clientIdempotencyKey])
 }
 
 // ---------------------------------------------------------------------------

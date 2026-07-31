@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, useEffect, type Dispatch, type SetStateAction } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import {
   PaymentElement,
   useStripe,
@@ -60,6 +66,7 @@ async function handleStripeSubmit(
     paymentMethodId?: string,
     idempotencyKey?: string,
   ) => Promise<void>,
+  retryKeyRef: React.MutableRefObject<string | null>,
 ) {
   e.preventDefault();
   if (!stripe || !elements) return;
@@ -94,14 +101,18 @@ async function handleStripeSubmit(
   }
 
   try {
-    // Fresh retry key per attempt — retrying the same subscription after a
-    // timeout returns the prior result instead of charging again.
-    const retryKey = crypto.randomUUID();
+    // One idempotency key per subscribe flow: a retry after a network
+    // failure reuses it so the server can recognize (and dedupe) a charge
+    // that may already have committed. Cleared only on definitive success;
+    // kept on failure so a timeout-then-retry never double-charges.
+    const retryKey =
+      retryKeyRef.current ?? (retryKeyRef.current = crypto.randomUUID());
     await subscribe(
       tier,
       setupIntent.payment_method as string | undefined,
       retryKey,
     );
+    retryKeyRef.current = null;
     onSuccess();
   } catch (err) {
     onError((err as Error).message ?? "Subscription failed");
@@ -119,6 +130,11 @@ function StripeCardFormInner({
   const elements = useElements();
   const [submitting, setSubmitting] = useState(false);
   const { subscribe } = useBillingActions();
+  const retryKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    retryKeyRef.current = crypto.randomUUID();
+  }, [tier]);
 
   return (
     <form
@@ -132,6 +148,7 @@ function StripeCardFormInner({
           onSuccess,
           onError,
           subscribe,
+          retryKeyRef,
         )
       }
       className="flex flex-col gap-4"

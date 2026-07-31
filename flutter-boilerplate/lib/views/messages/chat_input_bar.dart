@@ -135,6 +135,10 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
   }
 
   Future<void> _sendMessage() async {
+    // Block send while the attachment upload is in flight — sending early
+    // silently drops the attachment. This also covers the keyboard/IME
+    // submit path, which bypasses the button-level disabled state (F35).
+    if (_attaching) return;
     final text = _controller.text.trim();
     if (text.isEmpty && _pendingAttachment == null) return;
 
@@ -155,9 +159,8 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     final t = AppLocalizations.of(context);
-    final canSend = _controller.text.trim().isNotEmpty ||
-        _pendingAttachment != null ||
-        _attaching;
+    final canSend = !_attaching &&
+        (_controller.text.trim().isNotEmpty || _pendingAttachment != null);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),

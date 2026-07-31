@@ -1,6 +1,7 @@
 import {
   Controller,
   FileTypeValidator,
+  FileValidator,
   MaxFileSizeValidator,
   ParseFilePipe,
   Post,
@@ -39,6 +40,39 @@ const ATTACHMENT_EXTENSIONS: Record<string, string> = {
     '.docx',
   'text/plain': '.txt',
 };
+
+// Legacy formats with no reliable magic bytes — validated by declared type
+// only, mirroring the pre-existing avatar endpoints' rigor for everything else
+// (F36).
+const LEGACY_DOC_TYPES =
+  /^(application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document|text\/plain)$/;
+
+class ChatAttachmentTypeValidator extends FileValidator<{
+  fileType: string | RegExp;
+}> {
+  private readonly strict = new FileTypeValidator({
+    fileType: ALLOWED_ATTACHMENT_TYPES,
+    skipMagicNumbersValidation: false,
+  });
+  private readonly declared = new FileTypeValidator({
+    fileType: ALLOWED_ATTACHMENT_TYPES,
+    skipMagicNumbersValidation: true,
+  });
+
+  isValid(file: Express.Multer.File): boolean | Promise<boolean> {
+    const validator = LEGACY_DOC_TYPES.test(file.mimetype)
+      ? this.declared
+      : this.strict;
+    return validator.isValid(file);
+  }
+
+  buildErrorMessage(file: Express.Multer.File): string {
+    const validator = LEGACY_DOC_TYPES.test(file.mimetype)
+      ? this.declared
+      : this.strict;
+    return validator.buildErrorMessage(file);
+  }
+}
 
 @UseGuards(SessionAuthGuard)
 @Controller('upload')
@@ -108,11 +142,11 @@ export class UploadController {
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: MAX_FILE_SIZE_BYTES }),
-          new FileTypeValidator({
+          // Images and PDFs are verified against their magic bytes (as strict
+          // as /upload/single); only the legacy doc formats (no reliable
+          // signature) fall back to declared-type validation (F36).
+          new ChatAttachmentTypeValidator({
             fileType: ALLOWED_ATTACHMENT_TYPES,
-            // Legacy formats (e.g. .doc) have no reliable magic bytes,
-            // so we validate by declared type only for chat attachments.
-            skipMagicNumbersValidation: true,
           }),
         ],
       }),

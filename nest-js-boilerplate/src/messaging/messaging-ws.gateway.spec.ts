@@ -35,6 +35,18 @@ function createMockWs(tier = 'FREE'): MockWs {
 type GatewayInternal = {
   handleJoinRoom: (ws: MockWs, data: { room: string }) => void;
   handleClaimJoinRoom: (ws: MockWs, params: Record<string, string>) => void;
+  handleDirectMessage: (
+    ws: MockWs,
+    data: {
+      recipientId: string;
+      text: string;
+      attachmentUrl?: string;
+    },
+  ) => Promise<void>;
+  handleRoomMessage: (
+    ws: MockWs,
+    data: { room: string; text?: string; attachmentUrl?: string },
+  ) => Promise<void>;
 };
 
 describe('MessagingWsGateway — VIP room tier gate', () => {
@@ -47,6 +59,9 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
     joinRoom: jest.Mock;
     leaveRoom: jest.Mock;
     getRoomCounts: jest.Mock;
+    sendMessage: jest.Mock;
+    deliverDirectMessage: jest.Mock;
+    saveRoomMessage: jest.Mock;
   };
 
   beforeEach(async () => {
@@ -58,6 +73,19 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
       joinRoom: jest.fn().mockReturnValue([]),
       leaveRoom: jest.fn().mockReturnValue([]),
       getRoomCounts: jest.fn().mockReturnValue({}),
+      sendMessage: jest
+        .fn()
+        .mockResolvedValue({ id: 'm1', senderId: 'u1', recipientId: 'u2' }),
+      deliverDirectMessage: jest.fn().mockResolvedValue(undefined),
+      saveRoomMessage: jest.fn().mockResolvedValue({
+        id: 'm1',
+        senderId: 'u1',
+        body: 'hello',
+        attachmentUrl: null,
+        attachmentType: null,
+        attachmentName: null,
+        createdAt: new Date(),
+      }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -129,6 +157,75 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
       expect(mockMs.joinRoom).toHaveBeenCalledWith(
         'general',
         expect.any(Object),
+      );
+    });
+  });
+
+  describe('F34 — text-or-attachment guard', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('rejects direct-message with empty text and no attachment', async () => {
+      const ws = createMockWs('MEDIUM');
+      await (
+        gateway as unknown as GatewayInternal
+      ).handleDirectMessage(ws, { text: '   ' });
+      expect(ws.send).toHaveBeenCalledWith(
+        expect.stringContaining('must contain either text or an attachment'),
+      );
+      expect(mockMs.sendMessage).not.toHaveBeenCalled();
+    });
+
+    it('rejects direct-message with omitted text and no attachment', async () => {
+      const ws = createMockWs('MEDIUM');
+      await (
+        gateway as unknown as GatewayInternal
+      ).handleDirectMessage(ws, {} as { text: string });
+      expect(mockMs.sendMessage).not.toHaveBeenCalled();
+    });
+
+    it('allows direct-message with attachment only', async () => {
+      const ws = createMockWs('MEDIUM');
+      await (
+        gateway as unknown as GatewayInternal
+      ).handleDirectMessage(ws, {
+        recipientId: 'u2',
+        text: '',
+        attachmentUrl: 'https://minio/x.png',
+        attachmentType: 'image/png',
+        attachmentName: 'x.png',
+      });
+      expect(mockMs.sendMessage).toHaveBeenCalledWith(
+        'u1',
+        'u2',
+        '',
+        undefined,
+        expect.objectContaining({ url: 'https://minio/x.png' }),
+      );
+    });
+
+    it('rejects room-message with empty text and no attachment', async () => {
+      const ws = createMockWs('FREE');
+      await (
+        gateway as unknown as GatewayInternal
+      ).handleRoomMessage(ws, { room: 'general', text: '' });
+      expect(ws.send).toHaveBeenCalledWith(
+        expect.stringContaining('must contain either text or an attachment'),
+      );
+      expect(mockMs.saveRoomMessage).not.toHaveBeenCalled();
+    });
+
+    it('allows room-message with text', async () => {
+      const ws = createMockWs('FREE');
+      await (
+        gateway as unknown as GatewayInternal
+      ).handleRoomMessage(ws, { room: 'general', text: 'hello' });
+      expect(mockMs.saveRoomMessage).toHaveBeenCalledWith(
+        'general',
+        'u1',
+        'hello',
+        undefined,
       );
     });
   });

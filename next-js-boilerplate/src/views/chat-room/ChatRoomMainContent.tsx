@@ -169,6 +169,7 @@ export function ChatRoomMainContent({
           onClick={onSend}
           disabled={
             connectionState !== "online" ||
+            attaching ||
             (!input.trim() && !pendingAttachment)
           }
           label={t.send}

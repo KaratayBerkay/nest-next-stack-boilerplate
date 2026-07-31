@@ -61,6 +61,9 @@ function ChatRoomContent({
   const { uploadAttachment } = useMessageUpload();
 
   const handleSend = useCallback(() => {
+    // Block send while the attachment upload is in flight — sending early
+    // silently drops the attachment (F35).
+    if (attaching) return;
     chatRoomHandleSend(
       input,
       realtime,
@@ -80,6 +83,7 @@ function ChatRoomContent({
     user,
     scrollToBottom,
     pendingAttachment,
+    attaching,
   ]);
 
   const handleAttachFile = useCallback(

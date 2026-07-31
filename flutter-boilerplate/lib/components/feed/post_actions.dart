@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../api/client/posts/query.dart';
 import '../../constants/theme.dart';
 import '../../types/feed/post.dart';
 import 'comment_section.dart';
 
-class PostActions extends StatefulWidget {
+class PostActions extends ConsumerStatefulWidget {
   final Post postData;
   final String? currentUserId;
   final VoidCallback? onCommentAdded;
@@ -27,15 +29,16 @@ class PostActions extends StatefulWidget {
   });
 
   @override
-  State<PostActions> createState() => _PostActionsState();
+  ConsumerState<PostActions> createState() => _PostActionsState();
 }
 
-class _PostActionsState extends State<PostActions> {
+class _PostActionsState extends ConsumerState<PostActions> {
   bool _isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final commentsAsync = ref.watch(postCommentsProvider(widget.postData.id));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -65,14 +68,28 @@ class _PostActionsState extends State<PostActions> {
         if (_isExpanded)
           Padding(
             padding: const EdgeInsets.only(top: 8),
-            child: CommentSection(
-              postId: widget.postData.id,
-              currentUserId: widget.currentUserId,
-              onCommentAdded: widget.onCommentAdded,
-              onCreateComment: widget.onCreateComment,
-              onUpdateComment: widget.onUpdateComment,
-              onDeleteComment: widget.onDeleteComment,
-              onToggleReaction: widget.onToggleReaction,
+            child: commentsAsync.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (e, _) => Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'Error: $e',
+                  style: TextStyle(color: colors.fgMuted, fontSize: 11),
+                ),
+              ),
+              data: (comments) => CommentSection(
+                postId: widget.postData.id,
+                comments: comments,
+                currentUserId: widget.currentUserId,
+                onCommentAdded: widget.onCommentAdded,
+                onCreateComment: widget.onCreateComment,
+                onUpdateComment: widget.onUpdateComment,
+                onDeleteComment: widget.onDeleteComment,
+                onToggleReaction: widget.onToggleReaction,
+              ),
             ),
           ),
       ],

@@ -229,7 +229,10 @@ class _CommentSectionState extends State<CommentSection> {
                       editingId: _editingId,
                       editController: _editController,
                       currentUserId: widget.currentUserId,
-                      onReply: () => setState(() => _replyTo = reply.id),
+                      // Replies are capped at one level (matching web): a
+                      // reply-to-a-reply would save server-side but render
+                      // nowhere, so the Reply affordance is hidden here.
+                      onReply: null,
                       onEditStart: () {
                         _editController.text = reply.body;
                         setState(() => _editingId = reply.id);
@@ -257,7 +260,7 @@ class _CommentTile extends StatelessWidget {
   final String? editingId;
   final TextEditingController editController;
   final String? currentUserId;
-  final VoidCallback onReply;
+  final VoidCallback? onReply;
   final VoidCallback onEditStart;
   final VoidCallback onEditCancel;
   final VoidCallback onEditSave;
@@ -337,7 +340,7 @@ class _CommentTile extends StatelessWidget {
                         comment.id,
                       ),
                     ),
-                    if (!isOwn)
+                    if (!isOwn && onReply != null)
                       TextButton(
                         onPressed: onReply,
                         style: TextButton.styleFrom(

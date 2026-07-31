@@ -3,13 +3,15 @@ import {
   IsOptional,
   IsUrl,
   MaxLength,
+  Validate,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { TextOrAttachmentConstraint } from './text-or-attachment.constraint';
 
 export class SendMessageRestDto {
   @IsString()
-  @IsOptional()
   @MaxLength(5000)
+  @Validate(TextOrAttachmentConstraint)
   @ApiProperty({
     description: 'Message body (required when no attachment is sent)',
     maxLength: 5000,

@@ -2,7 +2,94 @@ import { Logger, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TokenStoreService } from './token-store.service';
 import { AuthTokenService } from './auth-token.service';
+import type { SessionUser } from './auth.types';
 import type { DeviceContext, RequestContext } from '../devices/device.service';
+
+function unauthorized(exc: string, msg: string, key: string) {
+  return new UnauthorizedException({ exc, msg, key });
+}
+
+interface RefreshUser {
+  id: string;
+  email: string;
+  name: string | null;
+  avatarUrl: string | null;
+}
+
+type PrismaUser = NonNullable<
+  Awaited<ReturnType<PrismaService['user']['findUnique']>>
+>;
+
+interface RefreshContext {
+  refreshToken: string;
+  session: SessionUser;
+  user: PrismaUser;
+}
+
+async function resolveRefreshContext(
+  prisma: PrismaService,
+  tokenStore: TokenStoreService,
+  authTokens: AuthTokenService,
+  ctx: RequestContext,
+): Promise<RefreshContext> {
+  const refreshToken = authTokens.extractRefreshToken(ctx);
+  if (!refreshToken) {
+    throw unauthorized(
+      'EX_AUTH_INVALID_TOKEN',
+      'Missing refresh token',
+      'auth.errors.sessionExpired',
+    );
+  }
+
+  const session = await tokenStore.findByRefreshSessionId(refreshToken);
+  if (!session) {
+    throw unauthorized(
+      'EX_AUTH_INVALID_TOKEN',
+      'Invalid or expired refresh token',
+      'auth.errors.sessionExpired',
+    );
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: session.userId } });
+  if (!user) {
+    throw unauthorized(
+      'EX_AUTH_ACCOUNT_INACTIVE',
+      'User not found',
+      'auth.errors.accountInactive',
+    );
+  }
+
+  return { refreshToken, session, user };
+}
+
+async function resolveTrustedDevice(
+  prisma: PrismaService,
+  deviceId: string | null,
+): Promise<boolean> {
+  if (!deviceId) return false;
+  const record = await prisma.device.findUnique({
+    where: { id: deviceId },
+    select: { trusted: true },
+  });
+  return record?.trusted ?? false;
+}
+
+function buildDeviceContext(
+  deviceToken: string | null,
+  session: SessionUser,
+  ctx: RequestContext,
+  trusted: boolean,
+): DeviceContext | undefined {
+  if (!deviceToken) return undefined;
+  return {
+    deviceId: session.deviceId ?? '',
+    deviceToken,
+    changed: false,
+    ip: ctx.req.ip ?? null,
+    userAgent: ctx.req.headers['user-agent'] ?? null,
+    trusted,
+  };
+}
 
 export class AuthSessionService {
   private readonly logger = new Logger(AuthSessionService.name);
@@ -51,6 +138,10 @@ export class AuthSessionService {
 
   async refresh(ctx: RequestContext): Promise<{
     accessToken: string;
+    rbacToken?: string;
+    userToken?: string;
+    deviceId?: string;
+    deviceToken?: string;
     refreshToken: string;
     user: {
       id: string;
@@ -59,34 +150,12 @@ export class AuthSessionService {
       avatarUrl: string | null;
     };
   }> {
-    const refreshToken = this.authTokens.extractRefreshToken(ctx);
-    if (!refreshToken) {
-      throw new UnauthorizedException({
-        exc: 'EX_AUTH_INVALID_TOKEN',
-        msg: 'Missing refresh token',
-        key: 'auth.errors.sessionExpired',
-      });
-    }
-
-    const session = await this.tokenStore.findByRefreshSessionId(refreshToken);
-    if (!session) {
-      throw new UnauthorizedException({
-        exc: 'EX_AUTH_INVALID_TOKEN',
-        msg: 'Invalid or expired refresh token',
-        key: 'auth.errors.sessionExpired',
-      });
-    }
-
-    const user = await this.prisma.user.findUnique({
-      where: { id: session.userId },
-    });
-    if (!user) {
-      throw new UnauthorizedException({
-        exc: 'EX_AUTH_ACCOUNT_INACTIVE',
-        msg: 'User not found',
-        key: 'auth.errors.accountInactive',
-      });
-    }
+    const { refreshToken, session, user } = await resolveRefreshContext(
+      this.prisma,
+      this.tokenStore,
+      this.authTokens,
+      ctx,
+    );
 
     const rbacToken = this.authTokens.extractRbacToken(ctx) ?? '';
     const deviceToken = this.authTokens.extractDeviceToken(ctx);
@@ -105,28 +174,20 @@ export class AuthSessionService {
     // slot that the next real request — which always presents the actual
     // one — can never match, making every refresh unusable the instant
     // it's issued.
-    const deviceRecord = session.deviceId
-      ? await this.prisma.device.findUnique({
-          where: { id: session.deviceId },
-          select: { trusted: true },
-        })
-      : null;
-
-    const device: DeviceContext | undefined = deviceToken
-      ? {
-          deviceId: session.deviceId ?? '',
-          deviceToken,
-          changed: false,
-          ip: ctx.req.ip ?? null,
-          userAgent: ctx.req.headers['user-agent'] ?? null,
-          trusted: deviceRecord?.trusted ?? false,
-        }
-      : undefined;
+    const trusted = await resolveTrustedDevice(this.prisma, session.deviceId);
+    const device = buildDeviceContext(deviceToken, session, ctx, trusted);
 
     const payload = await this.authTokens.issueTokens(user, ctx, device);
 
+    // The rotated rbacToken/userToken/deviceId must reach the client — the
+    // whole point of a refresh is replacing the stale cookies that 401'd.
+    // The web BFF (app/api/auth/refresh/route.ts) sets them from these fields.
     return {
       accessToken: payload.accessToken ?? '',
+      rbacToken: payload.rbacToken,
+      userToken: payload.userToken,
+      deviceId: payload.deviceId,
+      deviceToken: payload.deviceToken,
       refreshToken: payload.refreshToken ?? '',
       user: {
         id: user.id,

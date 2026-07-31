@@ -22,6 +22,7 @@ const SUBSCRIBER_SELECT = {
   email: true,
   name: true,
   stripeSubscriptionId: true,
+  subscriptionPeriodEnd: true,
 } as const satisfies Prisma.UserSelect;
 
 type SubscriberState = Prisma.UserGetPayload<{
@@ -64,7 +65,6 @@ export class BillingService {
     if (targetRank > currentRank) {
       return this.handleUpgrade(
         userId,
-        user,
         targetTier,
         paymentMethodId,
         idempotencyKey,
@@ -76,7 +76,6 @@ export class BillingService {
 
   private async handleUpgrade(
     userId: string,
-    user: SubscriberState,
     targetTier: SubscriptionTier,
     paymentMethodId: string | undefined,
     idempotencyKey: string | undefined,
@@ -85,67 +84,114 @@ export class BillingService {
       throw new BadRequestException('paymentMethodId required for upgrades');
     }
 
-    const stripeCustomerId = await this.ensureStripeCustomer(userId, user);
+    // Serialize concurrent subscribe/upgrade attempts per user with a Postgres
+    // advisory lock: a double-click or two-tab first-time subscribe must never
+    // create two live Stripe subscriptions, regardless of whether
+    // stripeSubscriptionId is set yet. Held until the transaction commits.
+    let provisioned = false;
+    let result: { success: boolean; reason?: string; periodEnd?: Date } | null =
+      null;
 
-    const retryKey =
-      idempotencyKey?.trim() || this.generateIdempotencyKey(userId, targetTier);
-    const prior = await this.findRetryResult(retryKey);
-    if (prior) return prior;
+    await this.prisma.$transaction(
+      async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${userId}))`;
 
-    // A live subscription must never coexist with the replacement
-    // (duplicate-charge risk). Cancel the old one first — if Stripe rejects
-    // the cancel, abort the upgrade instead of creating a second subscription.
-    if (user.stripeSubscriptionId) {
-      await this.provider.cancelSubscriptionNow(user.stripeSubscriptionId);
-    }
+        // Re-read inside the lock: the pre-lock snapshot may be stale if a
+        // concurrent request already completed this upgrade.
+        const lockedUser = await tx.user.findUniqueOrThrow({
+          where: { id: userId },
+          select: SUBSCRIBER_SELECT,
+        });
+        if (
+          TIER_RANK[lockedUser.subscriptionTier] >= TIER_RANK[targetTier]
+        ) {
+          // Already provisioned (or higher) by a concurrent request — never
+          // cancel its live subscription or create a duplicate.
+          result = {
+            success: true,
+            periodEnd: lockedUser.subscriptionPeriodEnd ?? undefined,
+          };
+          return;
+        }
 
-    const chargeResult = await this.provider.createSubscription({
-      userId,
-      tier: targetTier,
-      paymentMethodId,
-      stripeCustomerId,
-      idempotencyKey: retryKey,
-    });
+        const retryKey =
+          idempotencyKey?.trim() ||
+          this.generateIdempotencyKey(userId, targetTier);
+        const prior = await this.findRetryResult(tx, retryKey);
+        if (prior) {
+          result = prior;
+          return;
+        }
 
-    if (!chargeResult.success) {
-      return { success: false, reason: chargeResult.reason };
-    }
+        const stripeCustomerId = await this.ensureStripeCustomer(
+          tx,
+          userId,
+          lockedUser,
+        );
 
-    // First-invoice row keyed by the invoice so the webhook reconciles into
-    // the same row instead of creating a duplicate.
-    const rowKey = chargeResult.latestInvoiceId
-      ? `stripe_invoice:${chargeResult.latestInvoiceId}`
-      : retryKey;
+        // A live subscription must never coexist with the replacement
+        // (duplicate-charge risk). Cancel the old one first — if Stripe
+        // rejects the cancel, abort the upgrade instead of creating a second
+        // subscription.
+        if (lockedUser.stripeSubscriptionId) {
+          await this.provider.cancelSubscriptionNow(
+            lockedUser.stripeSubscriptionId,
+          );
+        }
 
-    // Create initial WalletTransaction for the first invoice
-    const wallet = await this.wallet.ensureWallet(userId);
+        const chargeResult = await this.provider.createSubscription({
+          userId,
+          tier: targetTier,
+          paymentMethodId,
+          stripeCustomerId,
+          idempotencyKey: retryKey,
+        });
 
-    await this.persistUpgrade(
-      userId,
-      targetTier,
-      chargeResult,
-      rowKey,
-      wallet.id,
+        if (!chargeResult.success) {
+          result = { success: false, reason: chargeResult.reason };
+          return;
+        }
+
+        // First-invoice row keyed by the invoice so the webhook reconciles
+        // into the same row instead of creating a duplicate.
+        const rowKey = chargeResult.latestInvoiceId
+          ? `stripe_invoice:${chargeResult.latestInvoiceId}`
+          : retryKey;
+
+        const wallet = await this.wallet.ensureWallet(userId);
+
+        provisioned = await this.persistUpgrade(
+          tx,
+          userId,
+          targetTier,
+          chargeResult,
+          rowKey,
+          retryKey,
+          wallet.id,
+        );
+
+        result = { success: true, periodEnd: chargeResult.periodEnd };
+      },
+      { maxWait: 15_000, timeout: 120_000 },
     );
 
-    await this.tokenStore.rewriteFieldsForUser(userId, {
-      tier: targetTier,
-    });
-    this.realtime.updateUserTier(userId, targetTier);
+    if (provisioned) {
+      await this.tokenStore.rewriteFieldsForUser(userId, {
+        tier: targetTier,
+      });
+      this.realtime.updateUserTier(userId, targetTier);
+      await this.notifyUpgrade(userId, targetTier);
+    }
 
-    await this.notifyUpgrade(userId, targetTier);
-
-    return {
-      success: true,
-      periodEnd: chargeResult.periodEnd,
-    };
+    return result ?? { success: false, reason: 'subscription_failed' };
   }
 
   private async findRetryResult(
+    tx: Prisma.TransactionClient,
     retryKey: string,
   ): Promise<{ success: boolean; reason?: string } | null> {
-    const existing = await this.prisma.walletTransaction.findFirst({
-      where: { idempotencyKey: retryKey },
+    const existing = await tx.walletTransaction.findFirst({
+      where: { clientIdempotencyKey: retryKey },
     });
     if (!existing) return null;
     const meta = existing.metadata as Record<string, unknown> | null;
@@ -159,6 +205,7 @@ export class BillingService {
   }
 
   private async ensureStripeCustomer(
+    tx: Prisma.TransactionClient,
     userId: string,
     user: SubscriberState,
   ): Promise<string> {
@@ -167,7 +214,7 @@ export class BillingService {
       user.email,
       user.name ?? undefined,
     );
-    await this.prisma.user.update({
+    await tx.user.update({
       where: { id: userId },
       data: { stripeCustomerId: customer.id },
     });
@@ -195,6 +242,7 @@ export class BillingService {
   }
 
   private async persistUpgrade(
+    tx: Prisma.TransactionClient,
     userId: string,
     targetTier: SubscriptionTier,
     chargeResult: {
@@ -204,50 +252,98 @@ export class BillingService {
       latestInvoiceId?: string;
     },
     rowKey: string,
+    clientKey: string,
     walletId: string,
-  ) {
-    await this.prisma.$transaction(async (tx) => {
-      await tx.user.update({
-        where: { id: userId },
+  ): Promise<boolean> {
+    // Defense in depth: a live subscription provisioned by a concurrent
+    // request must never be overwritten — cancel the just-created one so the
+    // customer is never billed twice. (Unreachable under the advisory lock,
+    // kept as a hard guarantee regardless of future refactors.)
+    const existingSub = await tx.user.findUnique({
+      where: { id: userId },
+      select: { stripeSubscriptionId: true },
+    });
+    if (
+      existingSub?.stripeSubscriptionId &&
+      existingSub.stripeSubscriptionId !== chargeResult.stripeSubscriptionId
+    ) {
+      if (chargeResult.stripeSubscriptionId) {
+        await this.provider.cancelSubscriptionNow(
+          chargeResult.stripeSubscriptionId,
+        );
+      }
+      return false;
+    }
+
+    const data = {
+      type: 'FEE',
+      status: 'COMPLETED',
+      amount: 0,
+      currency: 'USD',
+      reference: `subscription:${targetTier}`,
+      stripePaymentIntentId: null,
+      fromWalletId: walletId,
+      metadata: {
+        tier: targetTier,
+        provider: 'stripe',
+        stripeSubscriptionId: chargeResult.stripeSubscriptionId,
+        latestInvoiceId: chargeResult.latestInvoiceId,
+      },
+    } as const;
+
+    // The async invoice.paid webhook may have won the race and already
+    // written the invoice-keyed row — reconcile into it instead of colliding
+    // on the unique constraint (which would roll back the whole transaction,
+    // including the tier upgrade, for a customer who was genuinely charged).
+    const existing = await tx.walletTransaction.findUnique({
+      where: { idempotencyKey: rowKey },
+    });
+
+    if (existing) {
+      await tx.walletTransaction.update({
+        where: { idempotencyKey: rowKey },
         data: {
-          subscriptionTier: targetTier,
-          stripeSubscriptionId: chargeResult.stripeSubscriptionId,
-          subscriptionPeriodStart: chargeResult.periodStart,
-          subscriptionPeriodEnd: chargeResult.periodEnd,
-          cancelAtPeriodEnd: false,
-        },
-      });
-      await tx.walletTransaction.create({
-        data: {
-          type: 'FEE',
-          status: 'COMPLETED',
-          amount: 0,
-          currency: 'USD',
-          idempotencyKey: rowKey,
-          reference: `subscription:${targetTier}`,
-          fromWalletId: walletId,
-          stripePaymentIntentId: null,
+          clientIdempotencyKey: existing.clientIdempotencyKey ?? clientKey,
+          reference: data.reference,
           metadata: {
-            tier: targetTier,
-            provider: 'stripe',
-            stripeSubscriptionId: chargeResult.stripeSubscriptionId,
-            latestInvoiceId: chargeResult.latestInvoiceId,
+            ...(existing.metadata as Record<string, unknown> | null),
+            ...data.metadata,
           },
         },
       });
-      await this.outbox.emit(
-        {
-          aggregateType: 'User',
-          aggregateId: userId,
-          eventType: 'billing.tier_upgraded',
-          action: 'UPDATE',
-          actorId: userId,
-          summary: `Subscription upgraded to ${targetTier}`,
-          after: { tier: targetTier },
+    } else {
+      await tx.walletTransaction.create({
+        data: {
+          ...data,
+          idempotencyKey: rowKey,
+          clientIdempotencyKey: clientKey,
         },
-        tx,
-      );
+      });
+    }
+
+    await tx.user.update({
+      where: { id: userId },
+      data: {
+        subscriptionTier: targetTier,
+        stripeSubscriptionId: chargeResult.stripeSubscriptionId,
+        subscriptionPeriodStart: chargeResult.periodStart,
+        subscriptionPeriodEnd: chargeResult.periodEnd,
+        cancelAtPeriodEnd: false,
+      },
     });
+    await this.outbox.emit(
+      {
+        aggregateType: 'User',
+        aggregateId: userId,
+        eventType: 'billing.tier_upgraded',
+        action: 'UPDATE',
+        actorId: userId,
+        summary: `Subscription upgraded to ${targetTier}`,
+        after: { tier: targetTier },
+      },
+      tx,
+    );
+    return true;
   }
 
   private async handleDowngrade(

@@ -6,8 +6,10 @@ import {
   IsUrl,
   IsUUID,
   MaxLength,
+  Validate,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { TextOrAttachmentConstraint } from './text-or-attachment.constraint';
 
 @InputType()
 export class SendMessageInput {
@@ -19,8 +21,8 @@ export class SendMessageInput {
 
   @Field({ nullable: true })
   @IsString()
-  @IsOptional()
   @MaxLength(5000)
+  @Validate(TextOrAttachmentConstraint)
   @ApiProperty({
     description: 'Message body (required when no attachment is sent)',
     maxLength: 5000,

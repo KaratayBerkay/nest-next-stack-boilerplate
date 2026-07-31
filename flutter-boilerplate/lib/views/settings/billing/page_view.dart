@@ -651,7 +651,9 @@ class _InvoiceHistorySectionState
                           color: colors.fgMuted,
                         ),
                         title: Text(
-                          '\$${inv.amount} ${inv.currency.toUpperCase()}',
+                          // amount is stored in cents (web's convention) —
+                          // divide for display, matching InvoiceTable.tsx.
+                          '\$${(inv.amount / 100).toStringAsFixed(2)} ${inv.currency.toUpperCase()}',
                         ),
                         subtitle: Text(
                           inv.createdAt.toLocal().toString().split(' ')[0],

@@ -112,9 +112,12 @@ export function ChatInputBar({
   );
 
   const doSend = useCallback(() => {
+    // Block send while the attachment upload is in flight — sending early
+    // silently drops the attachment (F35).
+    if (attaching) return;
     sendTypingStop();
     handleSend();
-  }, [sendTypingStop, handleSend]);
+  }, [attaching, sendTypingStop, handleSend]);
 
   const online = connectionState === "online";
 
@@ -196,7 +199,7 @@ export function ChatInputBar({
         variant="primary"
         size="md"
         onClick={doSend}
-        disabled={!online || (!input.trim() && !pendingAttachment)}
+        disabled={!online || attaching || (!input.trim() && !pendingAttachment)}
         className="flex shrink-0 items-center gap-2 rounded-lg px-4 py-3"
       >
         <span className="hidden sm:inline">Send</span>

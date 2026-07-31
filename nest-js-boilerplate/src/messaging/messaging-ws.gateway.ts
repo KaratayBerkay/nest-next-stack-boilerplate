@@ -48,6 +48,45 @@ function toAttachment(
   return undefined;
 }
 
+function hasTextOrAttachment(data: IncomingMessagePayload): boolean {
+  return Boolean((data.text ?? '').trim()) || Boolean(data.attachmentUrl);
+}
+
+interface SavedRoomMessage {
+  id: string;
+  senderId: string;
+  body: string | null;
+  attachmentUrl: string | null;
+  attachmentType: string | null;
+  attachmentName: string | null;
+  createdAt: Date;
+}
+
+function buildRoomMessagePayload(
+  saved: SavedRoomMessage,
+  ws: AuthWs,
+  data: IncomingMessagePayload & { room: string; tempId?: string },
+): Record<string, unknown> {
+  const senderName = ws.chatNickname || ws.userName || 'Unknown';
+  const payload: Record<string, unknown> = {
+    type: 'room-message',
+    room: data.room,
+    message: {
+      id: saved.id,
+      senderId: saved.senderId,
+      senderName,
+      avatar: initials(senderName),
+      body: saved.body,
+      attachmentUrl: saved.attachmentUrl,
+      attachmentType: saved.attachmentType,
+      attachmentName: saved.attachmentName,
+      createdAt: saved.createdAt.toISOString(),
+    },
+  };
+  if (data.tempId) payload.tempId = data.tempId;
+  return payload;
+}
+
 @Injectable()
 export class MessagingWsGateway implements OnModuleInit {
   private readonly logger = new Logger(MessagingWsGateway.name);
@@ -116,6 +155,15 @@ export class MessagingWsGateway implements OnModuleInit {
     data: IncomingMessagePayload & { recipientId: string },
   ) {
     if (!ws.userId) return;
+    if (!hasTextOrAttachment(data)) {
+      ws.send(
+        JSON.stringify({
+          type: 'error',
+          message: 'A message must contain either text or an attachment',
+        }),
+      );
+      return;
+    }
     const message = await this.ms.sendMessage(
       ws.userId,
       data.recipientId,
@@ -224,29 +272,25 @@ export class MessagingWsGateway implements OnModuleInit {
       ws.send(JSON.stringify({ type: 'error', message: 'Invalid room' }));
       return;
     }
+    if (!hasTextOrAttachment(data)) {
+      ws.send(
+        JSON.stringify({
+          type: 'error',
+          message: 'A message must contain either text or an attachment',
+        }),
+      );
+      return;
+    }
     const saved = await this.ms.saveRoomMessage(
       data.room,
       ws.userId,
       data.text ?? '',
       toAttachment(data),
     );
-    const payload: Record<string, unknown> = {
-      type: 'room-message',
-      room: data.room,
-      message: {
-        id: saved.id,
-        senderId: saved.senderId,
-        senderName: ws.chatNickname || ws.userName || 'Unknown',
-        avatar: initials(ws.chatNickname || ws.userName || 'Unknown'),
-        body: saved.body,
-        attachmentUrl: saved.attachmentUrl,
-        attachmentType: saved.attachmentType,
-        attachmentName: saved.attachmentName,
-        createdAt: saved.createdAt.toISOString(),
-      },
-    };
-    if (data.tempId) payload.tempId = data.tempId;
-    this.realtime.broadcastToRoom(data.room, payload);
+    this.realtime.broadcastToRoom(
+      data.room,
+      buildRoomMessagePayload(saved, ws, data),
+    );
   }
 
   private handleGetRoomCounts(ws: AuthWs) {

@@ -18,6 +18,7 @@ import { PrivacyToggleRow } from "./PrivacyToggleRow";
 
 async function handleSave(
   updateProfile: (data: { chatNickname?: string | null }) => Promise<void>,
+  refreshUser: () => Promise<void>,
   toast: ReturnType<typeof useToast>["toast"],
   t: { saveSuccess: string; saveFailed: string },
   useNickname: boolean,
@@ -27,6 +28,10 @@ async function handleSave(
     await updateProfile({
       chatNickname: useNickname && nickname.trim() ? nickname.trim() : null,
     });
+    // Re-seed the page (and the SSR session_user snapshot) from the server —
+    // without this, the saved nickname/toggle show stale values until next
+    // login, the exact bug class this page originally reported.
+    await refreshUser();
     toast({ title: t.saveSuccess, variant: "success" });
   } catch {
     toast({ title: t.saveFailed, variant: "destructive" });
@@ -37,7 +42,7 @@ export function FreePageView({ className }: ClassNameProps) {
   const params = useParams<{ lang: string }>();
   const t = useMessages("settings");
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { updateProfile } = useProfileActions();
 
   const [hideProfilePicture, setHideProfilePicture] = useState(false);
@@ -78,7 +83,14 @@ export function FreePageView({ className }: ClassNameProps) {
 
       <Button
         onClick={() =>
-          handleSave(updateProfile, toast, t, useNickname, nickname)
+          handleSave(
+            updateProfile,
+            refreshUser,
+            toast,
+            t,
+            useNickname,
+            nickname,
+          )
         }
         variant="primary"
         className="self-start"

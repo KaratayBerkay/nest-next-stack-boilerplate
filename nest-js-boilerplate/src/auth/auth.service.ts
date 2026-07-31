@@ -217,6 +217,10 @@ export class AuthService {
     const result = await this.authSession.refresh(ctx);
     return {
       accessToken: result.accessToken,
+      rbacToken: result.rbacToken,
+      userToken: result.userToken,
+      deviceId: result.deviceId,
+      deviceToken: result.deviceToken,
       refreshToken: result.refreshToken,
       user: result.user as AuthPayload['user'],
     };

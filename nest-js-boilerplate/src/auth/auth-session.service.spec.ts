@@ -133,6 +133,38 @@ describe('AuthSessionService.refresh', () => {
     );
   });
 
+  it('returns the rotated rbacToken/userToken so stale cookies can be replaced (F32 regression)', async () => {
+    const { service } = buildService();
+
+    const result = await service.refresh(buildCtx());
+
+    expect(result.accessToken).toBe('new-access-token');
+    expect(result.refreshToken).toBe('new-refresh-session-id');
+    expect(result.rbacToken).toBe('rbac-token-value');
+    expect(result.userToken).toBe('user-token-value');
+  });
+
+  it('returns a rbac token recomputed for the current tier after a tier change (F32/F23a regression)', async () => {
+    const { service, authTokens } = buildService();
+    authTokens.issueTokens.mockResolvedValue({
+      accessToken: 'new-access-token',
+      refreshToken: 'new-refresh-session-id',
+      // The user's tier changed since login — issueTokens derives a fresh
+      // rbac token from the current DB tier; refresh must surface it.
+      rbacToken: 'rbac-recomputed-for-MEDIUM',
+      userToken: 'user-token-value',
+      deviceId: 'device-1',
+      deviceToken: 'fresh-device-token',
+      user: fakeUser,
+    });
+
+    const result = await service.refresh(buildCtx());
+
+    expect(result.rbacToken).toBe('rbac-recomputed-for-MEDIUM');
+    expect(result.deviceId).toBe('device-1');
+    expect(result.deviceToken).toBe('fresh-device-token');
+  });
+
   it('throws when no refresh token is presented', async () => {
     const { service, authTokens } = buildService();
     authTokens.extractRefreshToken.mockReturnValue(null);

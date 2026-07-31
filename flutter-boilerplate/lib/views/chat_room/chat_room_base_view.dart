@@ -117,6 +117,10 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
   }
 
   void _handleSend() {
+    // Block send while the attachment upload is in flight — sending early
+    // silently drops the attachment. Covers the keyboard/IME submit path,
+    // which bypasses SendButton's disabled state (F35).
+    if (_attaching) return;
     final text = _messageController.text.trim();
     if (text.isEmpty && _pendingAttachment == null) return;
 

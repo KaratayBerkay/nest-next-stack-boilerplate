@@ -13,8 +13,11 @@ type MockPrisma = {
     create: jest.Mock;
     findMany: jest.Mock;
     findFirst: jest.Mock;
+    findUnique: jest.Mock;
+    update: jest.Mock;
   };
   $transaction: jest.Mock;
+  $executeRaw: jest.Mock;
 };
 
 interface MockPaymentProvider {
@@ -81,9 +84,12 @@ describe('BillingService', () => {
     const wtCreate = jest.fn();
     const wtFindMany = jest.fn();
     const wtFindFirst = jest.fn().mockResolvedValue(null);
+    const wtFindUnique = jest.fn().mockResolvedValue(null);
+    const wtUpdate = jest.fn();
     const transaction = jest.fn(
       (cb: (tx: MockPrisma) => Promise<unknown>) => cb(mockPrisma),
     );
+    const executeRaw = jest.fn().mockResolvedValue(0);
     mockPrisma = {
       user: { findUniqueOrThrow, findUnique, update },
       wallet: { findUnique: wFindUnique, create: wCreate },
@@ -91,8 +97,11 @@ describe('BillingService', () => {
         create: wtCreate,
         findMany: wtFindMany,
         findFirst: wtFindFirst,
+        findUnique: wtFindUnique,
+        update: wtUpdate,
       },
       $transaction: transaction,
+      $executeRaw: executeRaw,
     };
 
     const rewriteFieldsForUser = jest.fn();
@@ -263,9 +272,118 @@ describe('BillingService', () => {
         expect.objectContaining({
           data: expect.objectContaining({
             idempotencyKey: 'stripe_invoice:inv_1',
+            clientIdempotencyKey: 'retry-key-1',
           }) as never,
         }) as never,
       );
+    });
+
+    it('dedupes a real retry via the stored client idempotency key', async () => {
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue(SUB_USER);
+      mockPrisma.walletTransaction.findFirst.mockResolvedValue({
+        status: 'COMPLETED',
+        metadata: null,
+      });
+
+      const result = await service.subscribeToPlan(
+        'u1',
+        SubscriptionTier.PREMIUM,
+        'pm_card',
+        'retry-key-1',
+      );
+
+      expect(mockPrisma.walletTransaction.findFirst).toHaveBeenCalledWith({
+        where: { clientIdempotencyKey: 'retry-key-1' },
+      });
+      expect(result.success).toBe(true);
+      expect(mockProvider.createSubscription).not.toHaveBeenCalled();
+    });
+
+    it('serializes concurrent upgrades with an advisory lock and skips an already-provisioned tier', async () => {
+      mockPrisma.user.findUniqueOrThrow
+        .mockResolvedValueOnce(SUB_USER)
+        .mockResolvedValueOnce({
+          ...SUB_USER,
+          subscriptionTier: SubscriptionTier.BASIC,
+          stripeSubscriptionId: 'sub_other',
+          subscriptionPeriodEnd: new Date('2026-03-01'),
+        });
+
+      const result = await service.subscribeToPlan(
+        'u1',
+        SubscriptionTier.BASIC,
+        'pm_card',
+      );
+
+      expect(mockPrisma.$executeRaw).toHaveBeenCalledTimes(1);
+      expect(
+        String(mockPrisma.$executeRaw.mock.calls[0]?.[0]?.[0] ?? ''),
+      ).toContain('pg_advisory_xact_lock');
+      expect(result.success).toBe(true);
+      expect(result.periodEnd).toEqual(new Date('2026-03-01'));
+      expect(mockProvider.createSubscription).not.toHaveBeenCalled();
+      expect(mockProvider.cancelSubscriptionNow).not.toHaveBeenCalled();
+      expect(mockTokenStore.rewriteFieldsForUser).not.toHaveBeenCalled();
+    });
+
+    it('cancels a just-created subscription if a concurrent one was already persisted', async () => {
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue(SUB_USER);
+      mockPrisma.user.findUnique.mockResolvedValue({
+        stripeSubscriptionId: 'sub_other',
+      });
+      mockProvider.createSubscription.mockResolvedValue(SUB_RESULT);
+
+      const result = await service.subscribeToPlan(
+        'u1',
+        SubscriptionTier.PREMIUM,
+        'pm_card',
+      );
+
+      expect(mockProvider.cancelSubscriptionNow).toHaveBeenCalledWith(
+        'sub_abc',
+      );
+      expect(mockPrisma.walletTransaction.create).not.toHaveBeenCalled();
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+      expect(result.success).toBe(true);
+    });
+
+    it('reconciles into the webhook-written invoice row instead of colliding', async () => {
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue(SUB_USER);
+      mockProvider.createSubscription.mockResolvedValue(SUB_RESULT);
+      mockPrisma.walletTransaction.findUnique.mockResolvedValue({
+        id: 'tx_webhook',
+        idempotencyKey: 'stripe_invoice:inv_1',
+        clientIdempotencyKey: null,
+        status: 'COMPLETED',
+        amount: 1999,
+        metadata: { invoiceId: 'inv_1', tier: 'PREMIUM' },
+      });
+
+      const result = await service.subscribeToPlan(
+        'u1',
+        SubscriptionTier.PREMIUM,
+        'pm_card',
+        'retry-key-1',
+      );
+
+      expect(mockPrisma.walletTransaction.create).not.toHaveBeenCalled();
+      expect(mockPrisma.walletTransaction.update).toHaveBeenCalledWith({
+        where: { idempotencyKey: 'stripe_invoice:inv_1' },
+        data: expect.objectContaining({
+          clientIdempotencyKey: 'retry-key-1',
+          reference: 'subscription:PREMIUM',
+        }) as never,
+      });
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'u1' },
+          data: expect.objectContaining({
+            subscriptionTier: SubscriptionTier.PREMIUM,
+            stripeSubscriptionId: 'sub_abc',
+          }) as never,
+        }) as never,
+      );
+      expect(result.success).toBe(true);
     });
 
     it('returns the prior completed result for a duplicate idempotency key', async () => {
