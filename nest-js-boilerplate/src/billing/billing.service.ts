@@ -23,6 +23,9 @@ const SUBSCRIBER_SELECT = {
   name: true,
   stripeSubscriptionId: true,
   subscriptionPeriodEnd: true,
+  pendingTier: true,
+  pendingTierEffectiveAt: true,
+  stripeSubscriptionScheduleId: true,
 } as const satisfies Prisma.UserSelect;
 
 type SubscriberState = Prisma.UserGetPayload<{
@@ -62,8 +65,10 @@ export class BillingService {
       throw new BadRequestException('Already on this tier');
     }
 
-    if (targetRank > currentRank) {
-      return this.handleUpgrade(
+    // Establishing a brand-new live subscription — there's no current paid
+    // period to defer against, so this charges immediately as before.
+    if ((user.subscriptionTier as SubscriptionTier) === SubscriptionTier.FREE) {
+      return this.handleFirstSubscribe(
         userId,
         targetTier,
         paymentMethodId,
@@ -71,10 +76,20 @@ export class BillingService {
       );
     }
 
-    return this.handleDowngrade(userId, user, targetTier);
+    // Full cancellation: keep access through the current paid period, as
+    // before — the tier flips to FREE when Stripe's subscription.deleted
+    // webhook lands at period end.
+    if (targetTier === SubscriptionTier.FREE) {
+      return this.handleFullCancellation(userId, user);
+    }
+
+    // Paid <-> paid, either direction: defer the price change to the next
+    // renewal instead of charging or crediting mid-cycle. The user keeps
+    // `subscriptionTier` (and its features/access) until the boundary.
+    return this.handleTierChange(userId, user, targetTier);
   }
 
-  private async handleUpgrade(
+  private async handleFirstSubscribe(
     userId: string,
     targetTier: SubscriptionTier,
     paymentMethodId: string | undefined,
@@ -346,17 +361,19 @@ export class BillingService {
     return true;
   }
 
-  private async handleDowngrade(
+  private async handleFullCancellation(
     userId: string,
     user: SubscriberState,
-    targetTier: SubscriptionTier,
   ): Promise<{ success: boolean; reason?: string; periodEnd?: Date }> {
-    const idempotencyKey = this.generateIdempotencyKey(userId, targetTier);
-    const wallet = await this.wallet.ensureWallet(userId);
-
     // Paid -> FREE: keep access through the paid period. The tier stays until
     // the `customer.subscription.deleted` webhook flips it at period end.
-    if (targetTier === SubscriptionTier.FREE && user.stripeSubscriptionId) {
+    if (user.stripeSubscriptionId) {
+      const idempotencyKey = this.generateIdempotencyKey(
+        userId,
+        SubscriptionTier.FREE,
+      );
+      const wallet = await this.wallet.ensureWallet(userId);
+
       await this.provider.cancelSubscription(user.stripeSubscriptionId);
 
       await this.prisma.$transaction(async (tx) => {
@@ -412,25 +429,80 @@ export class BillingService {
       return { success: true };
     }
 
-    // Paid -> paid: switch the price on the existing subscription (prorated)
-    // so a replacement is provisioned without a second live subscription.
-    if (user.stripeSubscriptionId) {
-      const switchResult = await this.provider.switchSubscription({
-        stripeSubscriptionId: user.stripeSubscriptionId,
-        tier: targetTier,
-      });
-      if (!switchResult.success) {
-        return { success: false, reason: switchResult.reason };
-      }
+    // No Stripe subscription on record — fall back to a local tier change.
+    return this.applyLocalTierChange(userId, SubscriptionTier.FREE);
+  }
 
-      await this.prisma.$transaction(async (tx) => {
+  /**
+   * Paid <-> paid, either direction. Never charges or credits now: schedules
+   * the price change on the existing Stripe subscription for the next
+   * renewal (see `StripeService.scheduleSubscriptionChange`), so the user
+   * keeps `subscriptionTier`'s access/features until the boundary. The
+   * `pendingTier` set here is only cleared once the next `invoice.paid`
+   * webhook actually reconciles the tier — see
+   * `StripeWebhookController.handleInvoicePaid`.
+   */
+  private async handleTierChange(
+    userId: string,
+    user: SubscriberState,
+    targetTier: SubscriptionTier,
+  ): Promise<{ success: boolean; reason?: string; periodEnd?: Date }> {
+    if (!user.stripeSubscriptionId) {
+      return this.applyLocalTierChange(userId, targetTier);
+    }
+
+    // Serialize concurrent tier-change requests per user — a double-click
+    // must never create two competing subscription schedules.
+    let scheduled = false;
+    let result: { success: boolean; reason?: string; periodEnd?: Date } | null =
+      null;
+
+    await this.prisma.$transaction(
+      async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${userId}))`;
+
+        const lockedUser = await tx.user.findUniqueOrThrow({
+          where: { id: userId },
+          select: SUBSCRIBER_SELECT,
+        });
+
+        if ((lockedUser.subscriptionTier as SubscriptionTier) === targetTier) {
+          // A previous schedule already reconciled onto this tier.
+          result = {
+            success: true,
+            periodEnd: lockedUser.subscriptionPeriodEnd ?? undefined,
+          };
+          return;
+        }
+        if (lockedUser.pendingTier === targetTier) {
+          // Already scheduled by a concurrent request.
+          result = {
+            success: true,
+            periodEnd: lockedUser.pendingTierEffectiveAt ?? undefined,
+          };
+          return;
+        }
+
+        const scheduleResult = await this.provider.scheduleTierChange({
+          stripeSubscriptionId: lockedUser.stripeSubscriptionId!,
+          stripeSubscriptionScheduleId: lockedUser.stripeSubscriptionScheduleId,
+          tier: targetTier,
+        });
+        if (!scheduleResult.success) {
+          result = { success: false, reason: scheduleResult.reason };
+          return;
+        }
+
+        const wallet = await this.wallet.ensureWallet(userId);
+        const idempotencyKey = this.generateIdempotencyKey(userId, targetTier);
+
         await tx.user.update({
           where: { id: userId },
           data: {
-            subscriptionTier: targetTier,
-            subscriptionPeriodStart: switchResult.periodStart,
-            subscriptionPeriodEnd: switchResult.periodEnd,
-            cancelAtPeriodEnd: false,
+            pendingTier: targetTier,
+            pendingTierEffectiveAt: scheduleResult.effectiveAt,
+            stripeSubscriptionScheduleId:
+              scheduleResult.stripeSubscriptionScheduleId,
           },
         });
         await tx.walletTransaction.create({
@@ -445,7 +517,9 @@ export class BillingService {
             metadata: {
               tier: targetTier,
               provider: 'stripe',
-              switchedFrom: user.subscriptionTier,
+              scheduledChange: true,
+              switchedFrom: lockedUser.subscriptionTier,
+              effectiveAt: scheduleResult.effectiveAt,
             },
           },
         });
@@ -453,23 +527,29 @@ export class BillingService {
           {
             aggregateType: 'User',
             aggregateId: userId,
-            eventType: 'billing.tier_downgraded',
+            eventType: 'billing.tier_change_scheduled',
             action: 'UPDATE',
             actorId: userId,
-            summary: `Subscription changed to ${targetTier}`,
-            after: { tier: targetTier },
+            summary: `Subscription change to ${targetTier} scheduled for ${scheduleResult.effectiveAt?.toISOString() ?? 'next renewal'}`,
+            after: {
+              tier: lockedUser.subscriptionTier,
+              pendingTier: targetTier,
+            },
           },
           tx,
         );
-      });
 
-      await this.tokenStore.rewriteFieldsForUser(userId, { tier: targetTier });
-      this.realtime.updateUserTier(userId, targetTier);
+        scheduled = true;
+        result = { success: true, periodEnd: scheduleResult.effectiveAt };
+      },
+      { maxWait: 15_000, timeout: 120_000 },
+    );
 
+    if (scheduled) {
       await this.sendBillingNotification(
         userId,
-        `Downgraded to ${targetTier}`,
-        `Your subscription has been changed to ${targetTier}.`,
+        `Plan change scheduled`,
+        `Your plan will change to ${targetTier} at the start of your next billing period.`,
       ).catch((err: Error) =>
         this.logger.warn(
           {
@@ -480,11 +560,23 @@ export class BillingService {
           `Billing notification failed: ${err.message}`,
         ),
       );
-
-      return { success: true, periodEnd: switchResult.periodEnd };
     }
 
-    // No Stripe subscription on record — fall back to a local tier change.
+    return result ?? { success: false, reason: 'schedule_failed' };
+  }
+
+  /**
+   * No real Stripe subscription behind the current tier (e.g. set via an
+   * admin/dev shortcut) — nothing to schedule against, so apply the tier
+   * change locally and immediately.
+   */
+  private async applyLocalTierChange(
+    userId: string,
+    targetTier: SubscriptionTier,
+  ): Promise<{ success: boolean; periodEnd?: Date }> {
+    const idempotencyKey = this.generateIdempotencyKey(userId, targetTier);
+    const wallet = await this.wallet.ensureWallet(userId);
+
     await this.prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: userId },
@@ -512,10 +604,10 @@ export class BillingService {
         {
           aggregateType: 'User',
           aggregateId: userId,
-          eventType: 'billing.tier_downgraded',
+          eventType: 'billing.tier_changed',
           action: 'UPDATE',
           actorId: userId,
-          summary: `Subscription downgraded to ${targetTier}`,
+          summary: `Subscription changed to ${targetTier}`,
           after: { tier: targetTier },
         },
         tx,
@@ -527,7 +619,7 @@ export class BillingService {
 
     await this.sendBillingNotification(
       userId,
-      `Downgraded to ${targetTier}`,
+      `Plan changed to ${targetTier}`,
       `Your subscription has been changed to ${targetTier}.`,
     ).catch((err: Error) =>
       this.logger.warn(
@@ -588,6 +680,8 @@ export class BillingService {
         subscriptionPeriodEnd: true,
         cancelAtPeriodEnd: true,
         stripeSubscriptionId: true,
+        pendingTier: true,
+        pendingTierEffectiveAt: true,
       },
     });
     if (!user) return null;
@@ -610,6 +704,8 @@ export class BillingService {
       periodStart: user.subscriptionPeriodStart,
       periodEnd: user.subscriptionPeriodEnd,
       cancelAtPeriodEnd: user.cancelAtPeriodEnd,
+      pendingTier: user.pendingTier as SubscriptionTier | null,
+      pendingTierEffectiveAt: user.pendingTierEffectiveAt,
     };
   }
 

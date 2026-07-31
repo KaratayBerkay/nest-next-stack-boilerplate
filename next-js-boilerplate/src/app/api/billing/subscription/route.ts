@@ -12,6 +12,8 @@ const SUBSCRIPTION_QUERY = `
       periodStart
       periodEnd
       cancelAtPeriodEnd
+      pendingTier
+      pendingTierEffectiveAt
     }
   }
 `;
@@ -38,6 +40,8 @@ export async function GET() {
       periodStart: string;
       periodEnd: string;
       cancelAtPeriodEnd: boolean;
+      pendingTier?: string | null;
+      pendingTierEffectiveAt?: string | null;
     } | null;
   }>(SUBSCRIPTION_QUERY, {}, accessToken);
 

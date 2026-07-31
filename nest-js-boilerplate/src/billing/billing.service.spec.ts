@@ -24,7 +24,7 @@ interface MockPaymentProvider {
   createSubscription: jest.Mock;
   cancelSubscription: jest.Mock;
   cancelSubscriptionNow: jest.Mock;
-  switchSubscription: jest.Mock;
+  scheduleTierChange: jest.Mock;
 }
 
 type MockTokenStore = { rewriteFieldsForUser: jest.Mock };
@@ -66,12 +66,12 @@ describe('BillingService', () => {
     const createSubscription = jest.fn();
     const cancelSubscription = jest.fn().mockResolvedValue(undefined);
     const cancelSubscriptionNow = jest.fn().mockResolvedValue(undefined);
-    const switchSubscription = jest.fn();
+    const scheduleTierChange = jest.fn();
     mockProvider = {
       createSubscription,
       cancelSubscription,
       cancelSubscriptionNow,
-      switchSubscription,
+      scheduleTierChange,
     };
 
     const findUniqueOrThrow = jest.fn();
@@ -217,10 +217,12 @@ describe('BillingService', () => {
       expect(mockTokenStore.rewriteFieldsForUser).not.toHaveBeenCalled();
     });
 
-    it('cancels the existing live subscription before upgrading', async () => {
+    it('cancels a stray live subscription before establishing the first real one (defense in depth)', async () => {
+      // A FREE-tier user should never have a live stripeSubscriptionId, but
+      // this guards against corrupted/leftover state regardless.
       mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
         ...SUB_USER,
-        subscriptionTier: SubscriptionTier.BASIC,
+        subscriptionTier: SubscriptionTier.FREE,
         stripeSubscriptionId: 'sub_old',
       });
       mockProvider.createSubscription.mockResolvedValue(SUB_RESULT);
@@ -237,10 +239,10 @@ describe('BillingService', () => {
       expect(mockProvider.createSubscription).toHaveBeenCalled();
     });
 
-    it('aborts the upgrade if cancelling the old subscription fails', async () => {
+    it('aborts the first subscribe if cancelling a stray old subscription fails', async () => {
       mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
         ...SUB_USER,
-        subscriptionTier: SubscriptionTier.BASIC,
+        subscriptionTier: SubscriptionTier.FREE,
         stripeSubscriptionId: 'sub_old',
       });
       mockProvider.cancelSubscriptionNow.mockRejectedValue(
@@ -252,6 +254,46 @@ describe('BillingService', () => {
       ).rejects.toThrow('stripe down');
       expect(mockProvider.createSubscription).not.toHaveBeenCalled();
       expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('defers a paid<->paid upgrade instead of charging immediately', async () => {
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+        ...SUB_USER,
+        subscriptionTier: SubscriptionTier.BASIC,
+        stripeSubscriptionId: 'sub_old',
+      });
+      mockProvider.scheduleTierChange.mockResolvedValue({
+        success: true,
+        stripeSubscriptionScheduleId: 'sub_sched_1',
+        effectiveAt: new Date('2026-03-01'),
+      });
+
+      const result = await service.subscribeToPlan(
+        'u1',
+        SubscriptionTier.PREMIUM,
+        'pm_card',
+      );
+
+      expect(result.success).toBe(true);
+      expect(mockProvider.cancelSubscriptionNow).not.toHaveBeenCalled();
+      expect(mockProvider.createSubscription).not.toHaveBeenCalled();
+      expect(mockProvider.scheduleTierChange).toHaveBeenCalledWith({
+        stripeSubscriptionId: 'sub_old',
+        stripeSubscriptionScheduleId: undefined,
+        tier: SubscriptionTier.PREMIUM,
+      });
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            pendingTier: SubscriptionTier.PREMIUM,
+            pendingTierEffectiveAt: new Date('2026-03-01'),
+            stripeSubscriptionScheduleId: 'sub_sched_1',
+          }) as never,
+        }) as never,
+      );
+      // The tier itself (and access) must not change until the boundary.
+      expect(mockTokenStore.rewriteFieldsForUser).not.toHaveBeenCalled();
+      expect(mockRealtime.updateUserTier).not.toHaveBeenCalled();
     });
 
     it('passes a client idempotency key and keys the first-invoice row by invoice', async () => {
@@ -451,17 +493,16 @@ describe('BillingService', () => {
       expect(mockTokenStore.rewriteFieldsForUser).not.toHaveBeenCalled();
     });
 
-    it('switches the subscription when downgrading to another paid tier', async () => {
+    it('defers the change when downgrading to another paid tier instead of switching immediately', async () => {
       mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
         ...SUB_USER,
         subscriptionTier: SubscriptionTier.MEDIUM,
         stripeSubscriptionId: 'sub_m',
       });
-      mockProvider.switchSubscription.mockResolvedValue({
+      mockProvider.scheduleTierChange.mockResolvedValue({
         success: true,
-        stripeSubscriptionId: 'sub_m',
-        periodStart: new Date('2026-01-01'),
-        periodEnd: new Date('2026-02-01'),
+        stripeSubscriptionScheduleId: 'sub_sched_1',
+        effectiveAt: new Date('2026-02-01'),
       });
 
       const result = await service.subscribeToPlan(
@@ -470,37 +511,58 @@ describe('BillingService', () => {
       );
 
       expect(result.success).toBe(true);
-      expect(mockProvider.switchSubscription).toHaveBeenCalledWith({
+      expect(result.periodEnd).toEqual(new Date('2026-02-01'));
+      expect(mockProvider.scheduleTierChange).toHaveBeenCalledWith({
         stripeSubscriptionId: 'sub_m',
+        stripeSubscriptionScheduleId: undefined,
         tier: SubscriptionTier.BASIC,
       });
       expect(mockPrisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: 'u1' },
           data: expect.objectContaining({
-            subscriptionTier: SubscriptionTier.BASIC,
-            cancelAtPeriodEnd: false,
+            pendingTier: SubscriptionTier.BASIC,
+            pendingTierEffectiveAt: new Date('2026-02-01'),
+            stripeSubscriptionScheduleId: 'sub_sched_1',
           }) as never,
         }) as never,
       );
-      expect(mockTokenStore.rewriteFieldsForUser).toHaveBeenCalledWith('u1', {
-        tier: SubscriptionTier.BASIC,
-      });
-      expect(mockRealtime.updateUserTier).toHaveBeenCalledWith(
-        'u1',
-        SubscriptionTier.BASIC,
-      );
+      // Access/features stay on the current tier until the boundary.
+      expect(mockTokenStore.rewriteFieldsForUser).not.toHaveBeenCalled();
+      expect(mockRealtime.updateUserTier).not.toHaveBeenCalled();
     });
 
-    it('returns the failure when the paid downgrade switch fails', async () => {
+    it('reuses the existing schedule when a change is already pending', async () => {
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+        ...SUB_USER,
+        subscriptionTier: SubscriptionTier.MEDIUM,
+        stripeSubscriptionId: 'sub_m',
+        stripeSubscriptionScheduleId: 'sub_sched_existing',
+      });
+      mockProvider.scheduleTierChange.mockResolvedValue({
+        success: true,
+        stripeSubscriptionScheduleId: 'sub_sched_existing',
+        effectiveAt: new Date('2026-02-01'),
+      });
+
+      await service.subscribeToPlan('u1', SubscriptionTier.BASIC);
+
+      expect(mockProvider.scheduleTierChange).toHaveBeenCalledWith({
+        stripeSubscriptionId: 'sub_m',
+        stripeSubscriptionScheduleId: 'sub_sched_existing',
+        tier: SubscriptionTier.BASIC,
+      });
+    });
+
+    it('returns the failure when scheduling the paid<->paid change fails', async () => {
       mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
         ...SUB_USER,
         subscriptionTier: SubscriptionTier.MEDIUM,
         stripeSubscriptionId: 'sub_m',
       });
-      mockProvider.switchSubscription.mockResolvedValue({
+      mockProvider.scheduleTierChange.mockResolvedValue({
         success: false,
-        reason: 'subscription_switch_failed',
+        reason: 'subscription_schedule_failed',
       });
 
       const result = await service.subscribeToPlan(
@@ -509,7 +571,7 @@ describe('BillingService', () => {
       );
 
       expect(result.success).toBe(false);
-      expect(result.reason).toBe('subscription_switch_failed');
+      expect(result.reason).toBe('subscription_schedule_failed');
       expect(mockPrisma.user.update).not.toHaveBeenCalled();
     });
 
@@ -536,6 +598,56 @@ describe('BillingService', () => {
       expect(mockTokenStore.rewriteFieldsForUser).toHaveBeenCalledWith('u1', {
         tier: SubscriptionTier.FREE,
       });
+    });
+
+    it('applies a paid<->paid change immediately when there is no real stripe subscription', async () => {
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+        ...SUB_USER,
+        subscriptionTier: SubscriptionTier.PREMIUM,
+        stripeSubscriptionId: null,
+      });
+
+      const result = await service.subscribeToPlan(
+        'u1',
+        SubscriptionTier.BASIC,
+      );
+
+      expect(result.success).toBe(true);
+      expect(mockProvider.scheduleTierChange).not.toHaveBeenCalled();
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            subscriptionTier: SubscriptionTier.BASIC,
+          }) as never,
+        }) as never,
+      );
+      expect(mockTokenStore.rewriteFieldsForUser).toHaveBeenCalledWith('u1', {
+        tier: SubscriptionTier.BASIC,
+      });
+    });
+
+    it('skips scheduling a duplicate change already reconciled onto the target tier', async () => {
+      mockPrisma.user.findUniqueOrThrow
+        .mockResolvedValueOnce({
+          ...SUB_USER,
+          subscriptionTier: SubscriptionTier.MEDIUM,
+          stripeSubscriptionId: 'sub_m',
+        })
+        .mockResolvedValueOnce({
+          ...SUB_USER,
+          subscriptionTier: SubscriptionTier.BASIC,
+          stripeSubscriptionId: 'sub_m',
+          subscriptionPeriodEnd: new Date('2026-02-01'),
+        });
+
+      const result = await service.subscribeToPlan(
+        'u1',
+        SubscriptionTier.BASIC,
+      );
+
+      expect(result.success).toBe(true);
+      expect(result.periodEnd).toEqual(new Date('2026-02-01'));
+      expect(mockProvider.scheduleTierChange).not.toHaveBeenCalled();
     });
 
     it('throws if already on the target tier', async () => {

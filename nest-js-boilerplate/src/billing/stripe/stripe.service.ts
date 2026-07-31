@@ -60,16 +60,53 @@ export class StripeService {
     return this.stripe.subscriptions.cancel(stripeSubscriptionId);
   }
 
-  /** Switch the same subscription to a new price (prorated) — no second live subscription. */
-  async switchSubscription(
+  /**
+   * Schedule a price change on the existing subscription for the next
+   * renewal instead of applying it now: phase 1 keeps the current price
+   * through the current period, phase 2 starts the new price at the
+   * boundary with no proration. Reuses `existingScheduleId` if the
+   * subscription already has a pending change so repeated calls update the
+   * same schedule instead of creating a second one.
+   */
+  async scheduleSubscriptionChange(
     stripeSubscriptionId: string,
-    priceId: string,
-  ): Promise<Stripe.Subscription> {
-    return this.stripe.subscriptions.update(stripeSubscriptionId, {
-      items: [{ price: priceId }],
-      proration_behavior: 'create_prorations',
-      cancel_at_period_end: false,
-    });
+    existingScheduleId: string | null | undefined,
+    newPriceId: string,
+  ): Promise<{ scheduleId: string; effectiveAt: Date }> {
+    const subscription =
+      await this.stripe.subscriptions.retrieve(stripeSubscriptionId);
+    const currentItem = subscription.items.data[0];
+    const currentPriceId = currentItem.price.id;
+    const periodStart = currentItem.current_period_start;
+    const periodEnd = currentItem.current_period_end;
+
+    const schedule = existingScheduleId
+      ? await this.stripe.subscriptionSchedules.retrieve(existingScheduleId)
+      : await this.stripe.subscriptionSchedules.create({
+          from_subscription: stripeSubscriptionId,
+        });
+
+    const updated = await this.stripe.subscriptionSchedules.update(
+      schedule.id,
+      {
+        end_behavior: 'release',
+        phases: [
+          {
+            items: [{ price: currentPriceId }],
+            start_date: periodStart,
+            end_date: periodEnd,
+            proration_behavior: 'none',
+          },
+          {
+            items: [{ price: newPriceId }],
+            start_date: periodEnd,
+            proration_behavior: 'none',
+          },
+        ],
+      },
+    );
+
+    return { scheduleId: updated.id, effectiveAt: new Date(periodEnd * 1000) };
   }
 
   async getSubscription(

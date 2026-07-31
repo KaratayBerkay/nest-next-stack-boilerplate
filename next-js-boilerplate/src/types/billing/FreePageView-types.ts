@@ -16,4 +16,6 @@ export interface SubscriptionInfo {
   periodStart: string;
   periodEnd: string;
   cancelAtPeriodEnd: boolean;
+  pendingTier?: string;
+  pendingTierEffectiveAt?: string;
 }

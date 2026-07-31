@@ -75,6 +75,12 @@ export class SubscriptionInfo {
 
   @Field()
   cancelAtPeriodEnd!: boolean;
+
+  @Field(() => SubscriptionTier, { nullable: true })
+  pendingTier?: SubscriptionTier;
+
+  @Field(() => Date, { nullable: true })
+  pendingTierEffectiveAt?: Date;
 }
 
 @ObjectType()
@@ -205,6 +211,8 @@ export class BillingResolver {
       ...sub,
       periodStart: sub.periodStart ?? undefined,
       periodEnd: sub.periodEnd ?? undefined,
+      pendingTier: sub.pendingTier ?? undefined,
+      pendingTierEffectiveAt: sub.pendingTierEffectiveAt ?? undefined,
     };
   }
 

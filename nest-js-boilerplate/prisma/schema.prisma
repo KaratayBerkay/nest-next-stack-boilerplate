@@ -276,6 +276,14 @@ model User {
   subscriptionPeriodEnd   DateTime? @db.Timestamptz(6)
   cancelAtPeriodEnd      Boolean   @default(false)
 
+  /// A paid<->paid tier change already scheduled with Stripe (subscription
+  /// schedule) but not yet effective — access/features stay on
+  /// `subscriptionTier` until `pendingTierEffectiveAt`.
+  pendingTier            SubscriptionTier?
+  pendingTierEffectiveAt DateTime? @db.Timestamptz(6)
+  /// @HideField()
+  stripeSubscriptionScheduleId String?
+
   avatarUrl       String?
   bio             String?   @db.Text
   birthDate       DateTime? @db.Date

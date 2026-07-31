@@ -13,6 +13,8 @@ interface PlanDetailsProps {
   tier: Tier;
   periodEnd?: string;
   cancelAtPeriodEnd: boolean;
+  pendingTier?: string;
+  pendingTierEffectiveAt?: string;
 }
 
 async function handleCancel(
@@ -25,7 +27,8 @@ async function handleCancel(
 ) {
   if (!window.confirm(tConfirm)) return;
   try {
-    const { cancelSubscriptionServer } = await import("@/api/server/billing/cancel");
+    const { cancelSubscriptionServer } =
+      await import("@/api/server/billing/cancel");
     await cancelSubscriptionServer();
     toast({ title: tSuccess });
     queryClient.invalidateQueries({ queryKey: ["subscription"] });
@@ -34,24 +37,27 @@ async function handleCancel(
   }
 }
 
-export function PlanDetails({ tier, periodEnd, cancelAtPeriodEnd }: PlanDetailsProps) {
+export function PlanDetails({
+  tier,
+  periodEnd,
+  cancelAtPeriodEnd,
+  pendingTier,
+  pendingTierEffectiveAt,
+}: PlanDetailsProps) {
   const t = useMessages("settings") as unknown as Record<string, string>;
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const onCancel = useCallback(
-    () => {
-      handleCancel(
-        "",
-        queryClient,
-        toast,
-        t.cancelSubscriptionConfirm,
-        t.cancelSubscriptionSuccess,
-        t.cancelSubscriptionFailed,
-      );
-    },
-    [queryClient, toast, t],
-  );
+  const onCancel = useCallback(() => {
+    handleCancel(
+      "",
+      queryClient,
+      toast,
+      t.cancelSubscriptionConfirm,
+      t.cancelSubscriptionSuccess,
+      t.cancelSubscriptionFailed,
+    );
+  }, [queryClient, toast, t]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -75,7 +81,23 @@ export function PlanDetails({ tier, periodEnd, cancelAtPeriodEnd }: PlanDetailsP
             <span className="text-sm font-medium">{periodEnd}</span>
           </li>
         )}
+        {pendingTier && pendingTierEffectiveAt && (
+          <li className="flex items-center justify-between py-2.5">
+            <span className="text-muted text-sm">{t.planChangesOn}</span>
+            <span className="text-sm font-medium">
+              {tierLabel(pendingTier)} — {pendingTierEffectiveAt}
+            </span>
+          </li>
+        )}
       </ul>
+
+      {pendingTier && pendingTierEffectiveAt && (
+        <p className="text-warning text-xs">
+          {t.planChangeScheduled
+            .replace("{tier}", tierLabel(pendingTier))
+            .replace("{date}", pendingTierEffectiveAt)}
+        </p>
+      )}
 
       <div className="mt-4 flex items-center gap-2">
         {tier === "FREE" ? (

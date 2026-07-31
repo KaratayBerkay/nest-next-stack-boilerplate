@@ -5,7 +5,7 @@ type MockStripeService = {
   createSubscription: jest.Mock;
   cancelSubscription: jest.Mock;
   cancelSubscriptionNow: jest.Mock;
-  switchSubscription: jest.Mock;
+  scheduleSubscriptionChange: jest.Mock;
 };
 
 describe('StripePaymentProvider', () => {
@@ -18,7 +18,7 @@ describe('StripePaymentProvider', () => {
       createSubscription: jest.fn(),
       cancelSubscription: jest.fn().mockResolvedValue({}),
       cancelSubscriptionNow: jest.fn().mockResolvedValue({}),
-      switchSubscription: jest.fn(),
+      scheduleSubscriptionChange: jest.fn(),
     };
     provider = new StripePaymentProvider(stripeService as never);
   });
@@ -101,62 +101,76 @@ describe('StripePaymentProvider', () => {
     });
   });
 
-  describe('switchSubscription', () => {
-    it('switches the subscription to the mapped price', async () => {
-      stripeService.switchSubscription.mockResolvedValue({
-        id: 'sub_m',
-        items: {
-          data: [
-            {
-              current_period_start: 1769817600,
-              current_period_end: 1772496000,
-            },
-          ],
-        },
+  describe('scheduleTierChange', () => {
+    it('schedules the price change for the next renewal', async () => {
+      const effectiveAt = new Date(1772496000 * 1000);
+      stripeService.scheduleSubscriptionChange.mockResolvedValue({
+        scheduleId: 'sub_sched_1',
+        effectiveAt,
       });
 
-      const result = await provider.switchSubscription({
+      const result = await provider.scheduleTierChange({
         stripeSubscriptionId: 'sub_m',
+        stripeSubscriptionScheduleId: null,
         tier: 'BASIC' as never,
       });
 
-      expect(stripeService.switchSubscription).toHaveBeenCalledWith(
+      expect(stripeService.scheduleSubscriptionChange).toHaveBeenCalledWith(
         'sub_m',
+        null,
         'price_basic',
       );
       expect(result).toEqual({
         success: true,
-        stripeSubscriptionId: 'sub_m',
-        periodStart: new Date(1769817600 * 1000),
-        periodEnd: new Date(1772496000 * 1000),
+        stripeSubscriptionScheduleId: 'sub_sched_1',
+        effectiveAt,
       });
+    });
+
+    it('reuses an existing schedule id when one is already pending', async () => {
+      stripeService.scheduleSubscriptionChange.mockResolvedValue({
+        scheduleId: 'sub_sched_1',
+        effectiveAt: new Date(1772496000 * 1000),
+      });
+
+      await provider.scheduleTierChange({
+        stripeSubscriptionId: 'sub_m',
+        stripeSubscriptionScheduleId: 'sub_sched_1',
+        tier: 'BASIC' as never,
+      });
+
+      expect(stripeService.scheduleSubscriptionChange).toHaveBeenCalledWith(
+        'sub_m',
+        'sub_sched_1',
+        'price_basic',
+      );
     });
 
     it('returns a configuration error when no price is mapped', async () => {
       stripeService.getPriceIdForTier.mockReturnValue(null);
 
-      const result = await provider.switchSubscription({
+      const result = await provider.scheduleTierChange({
         stripeSubscriptionId: 'sub_m',
         tier: 'BASIC' as never,
       });
 
       expect(result).toEqual({ success: false, reason: 'configuration_error' });
-      expect(stripeService.switchSubscription).not.toHaveBeenCalled();
+      expect(stripeService.scheduleSubscriptionChange).not.toHaveBeenCalled();
     });
 
-    it('returns a failure when the switch throws', async () => {
-      stripeService.switchSubscription.mockRejectedValue(
+    it('returns a failure when the schedule call throws', async () => {
+      stripeService.scheduleSubscriptionChange.mockRejectedValue(
         new Error('subscription not found'),
       );
 
-      const result = await provider.switchSubscription({
+      const result = await provider.scheduleTierChange({
         stripeSubscriptionId: 'sub_m',
         tier: 'BASIC' as never,
       });
 
       expect(result).toEqual({
         success: false,
-        reason: 'subscription_switch_failed',
+        reason: 'subscription_schedule_failed',
       });
     });
   });

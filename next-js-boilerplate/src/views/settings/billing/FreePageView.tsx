@@ -19,10 +19,7 @@ import {
   billingHistoryQueryOptions,
 } from "@/api/client/billing/query";
 import { billingAddressQueryOptions } from "@/api/client/billing/address";
-import type {
-  Transaction,
-  SubscriptionInfo,
-} from "@/types/billing/FreePageView-types";
+import type { SubscriptionInfo } from "@/types/billing/FreePageView-types";
 import type { BillingAddress } from "@/api/server/billing/address";
 import { PlanDetails } from "./PlanDetails";
 import { PlanBenefits } from "./PlanBenefits";
@@ -43,7 +40,7 @@ export function FreePageView({ className }: ClassNameProps) {
     ...billingHistoryQueryOptions(),
     enabled: !!user,
   });
-  const transactions = (historyData as Transaction[] | undefined) ?? [];
+  const transactions = historyData ?? [];
 
   const { data: addressData } = useQuery(billingAddressQueryOptions());
   const address = (addressData as BillingAddress | null) ?? null;
@@ -75,6 +72,8 @@ export function FreePageView({ className }: ClassNameProps) {
                   tier={tier}
                   periodEnd={subscription?.periodEnd}
                   cancelAtPeriodEnd={subscription?.cancelAtPeriodEnd ?? false}
+                  pendingTier={subscription?.pendingTier}
+                  pendingTierEffectiveAt={subscription?.pendingTierEffectiveAt}
                 />
               </Card>
 

@@ -4,8 +4,8 @@ import {
   type PaymentProvider,
   type CreateSubscriptionInput,
   type CreateSubscriptionResult,
-  type SwitchSubscriptionInput,
-  type SwitchSubscriptionResult,
+  type ScheduleTierChangeInput,
+  type ScheduleTierChangeResult,
 } from './payment-provider.interface';
 
 @Injectable()
@@ -82,9 +82,9 @@ export class StripePaymentProvider implements PaymentProvider {
     await this.stripeService.cancelSubscriptionNow(stripeSubscriptionId);
   }
 
-  async switchSubscription(
-    input: SwitchSubscriptionInput,
-  ): Promise<SwitchSubscriptionResult> {
+  async scheduleTierChange(
+    input: ScheduleTierChangeInput,
+  ): Promise<ScheduleTierChangeResult> {
     const priceId = this.stripeService.getPriceIdForTier(input.tier);
     if (!priceId) {
       this.logger.error(
@@ -99,31 +99,27 @@ export class StripePaymentProvider implements PaymentProvider {
     }
 
     try {
-      const subscription = await this.stripeService.switchSubscription(
+      const result = await this.stripeService.scheduleSubscriptionChange(
         input.stripeSubscriptionId,
+        input.stripeSubscriptionScheduleId,
         priceId,
       );
       return {
         success: true,
-        stripeSubscriptionId: subscription.id,
-        periodStart: new Date(
-          subscription.items.data[0]?.current_period_start * 1000,
-        ),
-        periodEnd: new Date(
-          subscription.items.data[0]?.current_period_end * 1000,
-        ),
+        stripeSubscriptionScheduleId: result.scheduleId,
+        effectiveAt: result.effectiveAt,
       };
     } catch (err) {
-      const msg = (err as Error).message ?? 'subscription_switch_failed';
+      const msg = (err as Error).message ?? 'subscription_schedule_failed';
       this.logger.error(
         {
           category: 'payment',
-          event: 'payment.subscription_switch_failed',
+          event: 'payment.subscription_schedule_failed',
           error: msg,
         },
-        `Stripe subscription switch failed: ${msg}`,
+        `Stripe subscription schedule failed: ${msg}`,
       );
-      return { success: false, reason: 'subscription_switch_failed' };
+      return { success: false, reason: 'subscription_schedule_failed' };
     }
   }
 }

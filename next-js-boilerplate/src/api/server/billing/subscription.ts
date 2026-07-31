@@ -8,6 +8,8 @@ export interface SubscriptionInfo {
   periodStart?: string;
   periodEnd?: string;
   cancelAtPeriodEnd: boolean;
+  pendingTier?: string;
+  pendingTierEffectiveAt?: string;
 }
 
 type SubscriptionResponse = {
@@ -15,6 +17,8 @@ type SubscriptionResponse = {
 };
 
 export async function fetchSubscriptionServer(): Promise<SubscriptionInfo | null> {
-  const data = await apiFetchJson<SubscriptionResponse>(BILLING_SUBSCRIPTION_URL);
+  const data = await apiFetchJson<SubscriptionResponse>(
+    BILLING_SUBSCRIPTION_URL,
+  );
   return data.subscription;
 }

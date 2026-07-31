@@ -1168,6 +1168,8 @@ export type I18nMessages = {
       "price": string;
       "renewalDate": string;
       "cancelsOn": string;
+      "planChangesOn": string;
+      "planChangeScheduled": string;
       "editAddress": string;
       "updateAddress": string;
       "nameLabel": string;
@@ -1182,6 +1184,7 @@ export type I18nMessages = {
       "privacyNickname": string;
       "privacyNicknameDesc": string;
       "privacyNicknamePlaceholder": string;
+      "privacyNicknameCurrent": string;
       "settingsLink": string;
       "navSettings": string;
       "settingsSectionLabel": string;

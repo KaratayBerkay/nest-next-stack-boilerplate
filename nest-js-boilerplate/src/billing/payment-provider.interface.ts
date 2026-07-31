@@ -17,17 +17,17 @@ export interface CreateSubscriptionResult {
   latestInvoiceId?: string;
 }
 
-export interface SwitchSubscriptionInput {
+export interface ScheduleTierChangeInput {
   stripeSubscriptionId: string;
+  stripeSubscriptionScheduleId?: string | null;
   tier: SubscriptionTier;
 }
 
-export interface SwitchSubscriptionResult {
+export interface ScheduleTierChangeResult {
   success: boolean;
   reason?: string;
-  stripeSubscriptionId?: string;
-  periodStart?: Date;
-  periodEnd?: Date;
+  stripeSubscriptionScheduleId?: string;
+  effectiveAt?: Date;
 }
 
 export const PAYMENT_PROVIDER = 'PAYMENT_PROVIDER';
@@ -38,7 +38,8 @@ export interface PaymentProvider {
   ): Promise<CreateSubscriptionResult>;
   cancelSubscription(stripeSubscriptionId: string): Promise<void>;
   cancelSubscriptionNow(stripeSubscriptionId: string): Promise<void>;
-  switchSubscription(
-    input: SwitchSubscriptionInput,
-  ): Promise<SwitchSubscriptionResult>;
+  /** Schedules a paid<->paid tier change for the next renewal (no immediate charge). */
+  scheduleTierChange(
+    input: ScheduleTierChangeInput,
+  ): Promise<ScheduleTierChangeResult>;
 }

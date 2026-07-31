@@ -174,6 +174,16 @@ export class StripeWebhookController {
       );
     }
 
+    // A scheduled paid<->paid change (see BillingService.handleTierChange)
+    // has now been billed — clear the pending markers so the UI stops
+    // showing "changing to X on <date>".
+    if (user.pendingTier && billedTier && billedTier === user.pendingTier) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { pendingTier: null, pendingTierEffectiveAt: null },
+      });
+    }
+
     this.logger.log(
       {
         category: 'payment',
