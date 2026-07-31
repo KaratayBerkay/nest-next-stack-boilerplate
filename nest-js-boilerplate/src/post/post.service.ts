@@ -203,13 +203,14 @@ export class PostService {
               select: { id: true, name: true, email: true },
             },
             comments: {
-              where: { deletedAt: null, parentId: null },
-              take: 20,
+              where: { deletedAt: null },
+              take: 100,
               orderBy: { createdAt: 'desc' },
               select: {
                 id: true,
                 body: true,
                 createdAt: true,
+                parentId: true,
                 authorId: true,
                 author: {
                   select: { id: true, name: true, email: true },

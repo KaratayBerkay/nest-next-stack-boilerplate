@@ -22,6 +22,7 @@ export class SessionHydrationService {
     avatarUrl: string | null;
     locale: string;
     timezone: string;
+    chatNickname: string | null;
   }): Promise<Partial<SessionUserInput>> {
     const [friendIds, userAgg] = await Promise.all([
       this.friends.getFriendIds(user.id),
@@ -44,6 +45,7 @@ export class SessionHydrationService {
       avatarUrl: user.avatarUrl ?? '',
       locale: user.locale ?? 'en',
       timezone: user.timezone ?? 'UTC',
+      chatNickname: user.chatNickname ?? '',
       friends: friendIds,
       unread: userAgg?._count.notifications ?? 0,
       orgIds: userAgg?.memberships.map((m) => m.organizationId) ?? [],

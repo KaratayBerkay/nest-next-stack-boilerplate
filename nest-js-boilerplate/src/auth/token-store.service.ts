@@ -73,6 +73,7 @@ export class TokenStoreService {
       avatarUrl: data.avatarUrl ?? '',
       locale: data.locale ?? 'en',
       timezone: data.timezone ?? 'UTC',
+      chatNickname: data.chatNickname ?? '',
       friends: JSON.stringify(data.friends ?? []),
       unread: String(data.unread ?? 0),
       orgIds: JSON.stringify(data.orgIds ?? []),
@@ -80,6 +81,10 @@ export class TokenStoreService {
     });
     pipe.expire(key, this.ttl);
     pipe.sadd(this.reverseIndexKey(userId), key);
+    // Bound the reverse-index set's growth — without an expiry, revoked
+    // members' keys accumulate forever (dead members are filtered at read
+    // time, but the set never shrinks).
+    pipe.expire(this.reverseIndexKey(userId), this.ttl);
     if (data.sessionId) {
       const refreshKey = `${REFRESH_INDEX_PREFIX}${data.sessionId}`;
       pipe.set(refreshKey, key, 'EX', this.ttl);
@@ -114,6 +119,7 @@ export class TokenStoreService {
         avatarUrl: data.avatarUrl ?? '',
         locale: data.locale ?? 'en',
         timezone: data.timezone ?? 'UTC',
+        chatNickname: data.chatNickname ?? '',
         friends: parseJsonField(data.friends),
         unread: Number(data.unread) || 0,
         orgIds: parseJsonField(data.orgIds),
@@ -130,6 +136,7 @@ export class TokenStoreService {
       avatarUrl: '',
       locale: 'en',
       timezone: 'UTC',
+      chatNickname: '',
       friends: [],
       unread: 0,
       orgIds: [],
@@ -147,7 +154,16 @@ export class TokenStoreService {
 
   /** Extend TTL on the session key (sliding expiration — called on each authenticated request). */
   async extendTTL(key: string): Promise<void> {
-    await this.redis.expire(key, this.ttl);
+    const sessionId = await this.redis.hget(key, 'sessionId');
+    const pipe = this.redis.multi();
+    pipe.expire(key, this.ttl);
+    if (sessionId) {
+      // Slide the refresh reverse-index TTL together with the session hash —
+      // otherwise a continuously active session's refresh capability silently
+      // dies SESSION_TTL after login even though the session itself stays alive.
+      pipe.expire(`${REFRESH_INDEX_PREFIX}${sessionId}`, this.ttl);
+    }
+    await pipe.exec();
   }
 
   async revoke(key: string): Promise<void> {

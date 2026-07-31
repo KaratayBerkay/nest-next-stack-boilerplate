@@ -4,7 +4,6 @@
   "back": "Back",
   "breadcrumbLabel": "UI Components",
   "breadcrumbPattern": "/v1/:lang/ui/:component",
-
   "accordionTitle": "Accordion - Single State",
   "accordionDescription": "When a new accordion opens, the other open one closes.",
   "accordionText": "When a new accordion opens, the other open one closes.",
@@ -133,5 +132,7 @@
   "formErrorBannerTitle": "Form Error Banner",
   "formErrorBannerDescription": "Dismissable inline error alert for form-level errors",
   "stepIndicatorTitle": "Step Indicator",
-  "stepIndicatorDescription": "Multi-step wizard progress indicator"
+  "stepIndicatorDescription": "Multi-step wizard progress indicator",
+  "emojiPickerTitle": "Emoji Picker",
+  "emojiPickerDescription": "Emoji picker component demo"
 }

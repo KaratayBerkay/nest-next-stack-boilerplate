@@ -11,4 +11,5 @@ export interface InputProps extends React.ComponentPropsWithoutRef<"input"> {
   fontSize?: string;
   fontWeight?: string;
   fontFamily?: string;
+  ref?: React.Ref<HTMLInputElement>;
 }

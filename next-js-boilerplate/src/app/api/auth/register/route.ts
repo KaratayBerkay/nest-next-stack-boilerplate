@@ -3,6 +3,7 @@ import {
   accessTokenCookieOptions,
   deviceTokenCookieOptions,
   rbacTokenCookieOptions,
+  refreshTokenCookieOptions,
   sessionUserCookieOptions,
   userTokenCookieOptions,
 } from "@/lib/cookie";
@@ -16,6 +17,7 @@ const REGISTER_QUERY = `
       deviceId
       deviceToken
       userToken
+      refreshToken
       user {
         id
         email
@@ -74,6 +76,7 @@ export async function POST(request: Request) {
       deviceId?: string;
       deviceToken?: string;
       userToken?: string;
+      refreshToken?: string;
       user: unknown;
     };
   }>(REGISTER_QUERY, {
@@ -96,7 +99,7 @@ export async function POST(request: Request) {
     return NextResponse.json(body, { status: body.statusCode });
   }
 
-  const { accessToken, rbacToken, deviceToken, userToken, user } =
+  const { accessToken, rbacToken, deviceToken, userToken, refreshToken, user } =
     data.register;
 
   const response = NextResponse.json({ user, accessToken }, { status: 201 });
@@ -105,6 +108,8 @@ export async function POST(request: Request) {
   if (rbacToken) response.cookies.set(rbacTokenCookieOptions(rbacToken));
   if (deviceToken) response.cookies.set(deviceTokenCookieOptions(deviceToken));
   if (userToken) response.cookies.set(userTokenCookieOptions(userToken));
+  if (refreshToken)
+    response.cookies.set(refreshTokenCookieOptions(refreshToken));
   response.cookies.set(
     sessionUserCookieOptions(
       Buffer.from(JSON.stringify(user)).toString("base64url"),

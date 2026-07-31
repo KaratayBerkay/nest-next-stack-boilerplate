@@ -12,6 +12,7 @@ const _listQuery = '''
     postComments(postId: \$postId) {
       id
       body
+      parentId
       authorId
       postId
       createdAt
@@ -25,6 +26,7 @@ const _createMutation = '''
     createComment(data: \$data) {
       id
       body
+      parentId
       authorId
       postId
       createdAt
@@ -38,6 +40,7 @@ const _updateMutation = '''
     updateComment(id: \$id, data: \$data) {
       id
       body
+      parentId
       authorId
       postId
       createdAt
@@ -50,6 +53,7 @@ const _deleteMutation = '''
   mutation DeleteComment(\$id: ID!) {
     deleteComment(id: \$id) {
       id
+      postId
     }
   }
 ''';
@@ -80,13 +84,21 @@ class PostCommentsServer {
         .toList();
   }
 
-  Future<Comment> create(String postId, String bodyText) async {
+  Future<Comment> create(
+    String postId,
+    String bodyText, {
+    String? parentId,
+  }) async {
     final response = await _dio.post<dynamic>(
       '/graphql',
       data: {
         'query': _createMutation,
         'variables': {
-          'data': {'postId': postId, 'body': bodyText},
+          'data': {
+            'postId': postId,
+            'body': bodyText,
+            if (parentId != null) 'parentId': parentId,
+          },
         },
       },
     );
@@ -125,7 +137,7 @@ class PostCommentsServer {
     return Comment.fromJson(result);
   }
 
-  Future<void> delete(String commentId) async {
+  Future<Comment> delete(String commentId) async {
     final response = await _dio.post<dynamic>(
       '/graphql',
       data: {
@@ -140,5 +152,8 @@ class PostCommentsServer {
         message: 'Failed to delete comment',
       );
     }
+    final result = (body['data'] as Map<String, dynamic>)['deleteComment']
+        as Map<String, dynamic>;
+    return Comment.fromJson(result);
   }
 }

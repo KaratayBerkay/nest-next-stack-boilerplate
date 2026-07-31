@@ -78,9 +78,21 @@ export async function backendFetch<T = unknown>(
   return { ok: res.ok, status: res.status, data, headers: res.headers };
 }
 
+interface GraphQlErrorField {
+  field: string;
+  msg: string;
+  key: string;
+}
+
 interface GraphQlError {
   message: string;
-  extensions?: { code?: string };
+  extensions?: {
+    code?: string;
+    exc?: string;
+    msg?: string;
+    key?: string;
+    fields?: GraphQlErrorField[];
+  };
 }
 
 interface GraphQlResponse<T> {
@@ -214,23 +226,42 @@ const EXC_TO_STATUS: Record<string, number> = {
 
 /**
  * Build a unified error response body from a GraphQL error array.
- * Returns `{ statusCode, exc, msg, key }` matching the backend's
- * global APP_FILTER shape.
+ * Returns `{ statusCode, exc, msg, key, fields? }` matching the backend's
+ * global APP_FILTER shape — including the field-specific `fields` detail
+ * (e.g. class-validator constraints) so callers can show why validation
+ * failed instead of only the generic top-level message.
  */
 export function graphqlErrorBody(
-  errors:
-    | { message: string; extensions?: { code?: string; exc?: string } }[]
-    | undefined,
+  errors: GraphQlError[] | undefined,
   defaultMsg?: string,
-): { statusCode: number; exc: string; msg: string; key: string } {
-  const exc = errors?.[0]?.extensions?.exc ?? "EX_INTERNAL";
-  const msg = errors?.[0]?.message ?? defaultMsg ?? "Internal server error";
+): {
+  statusCode: number;
+  exc: string;
+  msg: string;
+  key: string;
+  fields?: GraphQlErrorField[];
+} {
+  const first = errors?.[0];
+  const ext = first?.extensions ?? {};
+  const exc = ext.exc ?? "EX_INTERNAL";
+  const fields = ext.fields;
+  let msg = first?.message ?? ext.msg ?? defaultMsg ?? "Internal server error";
+  if (fields?.length) {
+    const detail = fields.map((f) => f.msg).join(", ");
+    msg = msg === "Validation failed" ? detail : `${msg}: ${detail}`;
+  }
   const key = exc.toLowerCase().replace(/_/g, ".");
-  return { statusCode: graphqlErrorStatus(errors), exc, msg, key };
+  return {
+    statusCode: graphqlErrorStatus(errors),
+    exc,
+    msg,
+    key,
+    ...(fields?.length ? { fields } : {}),
+  };
 }
 
 export function graphqlErrorStatus(
-  errors: { extensions?: { code?: string; exc?: string } }[] | undefined,
+  errors: GraphQlError[] | undefined,
   fallback = 500,
 ): number {
   const exc = errors?.[0]?.extensions?.exc;

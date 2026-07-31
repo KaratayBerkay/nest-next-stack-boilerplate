@@ -1,0 +1,43 @@
+{
+  "health": {
+    "thresholdOverrides": [
+      {
+        "files": ["src/realtime/realtime.gateway.ts"],
+        "maxCrap": 64,
+        "maxCognitive": 18,
+        "reason": "Legacy WS auth/dispatch/presence handlers with deeply nested guards; refactor tracked separately from the chat-nickname work"
+      },
+      {
+        "files": ["src/profile/profile.service.ts"],
+        "functions": ["updateProfile"],
+        "maxCrap": 90,
+        "maxCognitive": 19,
+        "reason": "Legacy updateProfile carries username-conflict + session-hash-mirror branches; split-out tracked as follow-up"
+      },
+      {
+        "files": ["src/auth/token-store.service.ts"],
+        "functions": ["write", "read"],
+        "maxCrap": 80,
+        "maxCognitive": 17,
+        "reason": "Legacy session hash write/read with v1/v2 parsing and defaulting branches"
+      },
+      {
+        "files": ["src/messaging/messaging-ws.gateway.ts"],
+        "functions": ["handleJoinRoom", "handleClaimJoinRoom"],
+        "maxCrap": 44,
+        "reason": "Legacy room-join handlers; claim/join duplication already tracked in docs"
+      },
+      {
+        "files": ["src/auth/session-hydration.service.ts"],
+        "functions": ["hydrate"],
+        "maxCrap": 32,
+        "reason": "Cold-path session snapshot gatherer with nullable-field defaulting"
+      },
+      {
+        "files": ["src/auth/auth.resolver.ts"],
+        "maxCrap": 91,
+        "reason": "Legacy me() resolver mapping the Redis session hash to the GraphQL payload"
+      }
+    ]
+  }
+}

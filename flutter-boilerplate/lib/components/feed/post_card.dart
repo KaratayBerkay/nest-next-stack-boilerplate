@@ -46,7 +46,9 @@ class PostCard extends ConsumerWidget {
             currentUserId: user?.id,
             onCommentAdded: () => ref.invalidate(paginatedFeedProvider),
             onCreateComment: (String postId, String body, String? parentId) =>
-                ref.read(postActionsProvider).addComment(postId, body),
+                ref
+                    .read(postActionsProvider)
+                    .addComment(postId, body, parentId: parentId),
             onUpdateComment: (String commentId, String body) => ref
                 .read(postActionsProvider)
                 .updateComment(commentId, bodyText: body),

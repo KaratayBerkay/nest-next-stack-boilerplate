@@ -55,7 +55,11 @@ async function handleStripeSubmit(
   setSubmitting: Dispatch<SetStateAction<boolean>>,
   onSuccess: () => void,
   onError: (msg: string) => void,
-  subscribe: (tier: string, paymentMethodId?: string) => Promise<void>,
+  subscribe: (
+    tier: string,
+    paymentMethodId?: string,
+    idempotencyKey?: string,
+  ) => Promise<void>,
 ) {
   e.preventDefault();
   if (!stripe || !elements) return;
@@ -90,7 +94,14 @@ async function handleStripeSubmit(
   }
 
   try {
-    await subscribe(tier, setupIntent.payment_method as string | undefined);
+    // Fresh retry key per attempt — retrying the same subscription after a
+    // timeout returns the prior result instead of charging again.
+    const retryKey = crypto.randomUUID();
+    await subscribe(
+      tier,
+      setupIntent.payment_method as string | undefined,
+      retryKey,
+    );
     onSuccess();
   } catch (err) {
     onError((err as Error).message ?? "Subscription failed");
@@ -129,7 +140,7 @@ function StripeCardFormInner({
       <button
         type="submit"
         disabled={!stripe || submitting}
-        className="bg-brand mt-2 w-full rounded-lg px-4 py-2 text-sm font-medium text-brand-fg hover:opacity-90 disabled:opacity-50"
+        className="bg-brand text-brand-fg mt-2 w-full rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50"
       >
         {submitting ? "Processing..." : "Subscribe"}
       </button>

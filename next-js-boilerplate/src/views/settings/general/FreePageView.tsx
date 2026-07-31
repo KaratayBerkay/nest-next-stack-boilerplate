@@ -6,7 +6,6 @@ import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
-import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui";
@@ -14,9 +13,16 @@ import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsGeneralPageInfo } from "@/constants/page-info";
 import { useProfileActions } from "@/api/client/profile/actions";
 import { cn } from "@/lib/cn";
-import { readCurrencyCookie, readDateDisplayCookie } from "@/lib/settings/cookies";
+import {
+  readCurrencyCookie,
+  readDateDisplayCookie,
+} from "@/lib/settings/cookies";
 import { LOCALES, TIMEZONES, CURRENCY_OPTIONS } from "@/lib/settings/constants";
-import { setCurrency, setDateDisplay, saveSettings } from "@/lib/settings/handlers";
+import {
+  setCurrency,
+  setDateDisplay,
+  saveSettings,
+} from "@/lib/settings/handlers";
 import { SettingsSelect } from "./SettingsSelect";
 import { formatDateLong, formatDateShort, toISOString } from "@/lib/date-time";
 import type { CurrencyCode } from "@/constants/currency";
@@ -72,11 +78,6 @@ export function FreePageView({ className }: ClassNameProps) {
           onChange={setTimezone}
           options={TIMEZONES.map((tz) => ({ value: tz, label: tz }))}
         />
-
-        <div className="flex flex-col gap-1.5">
-          <Label>{t.theme}</Label>
-          <ThemeToggle />
-        </div>
 
         <SettingsSelect
           label={t.currency}

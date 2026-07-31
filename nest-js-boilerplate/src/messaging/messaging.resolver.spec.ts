@@ -40,8 +40,33 @@ describe('MessagingResolver', () => {
         'u1',
         'u2',
         'hello',
+        undefined,
+        undefined,
       );
       expect(result).toEqual({ id: 'm1', body: 'hello' });
+    });
+
+    it('passes attachment fields through as a MessageAttachment', async () => {
+      const user = { userId: 'u1', email: 'a@b.com' };
+      await resolver.sendMessage(user, {
+        recipientId: 'u2',
+        text: 'hello',
+        attachmentUrl: 'https://cdn.example.com/uuid.pdf',
+        attachmentType: 'application/pdf',
+        attachmentName: 'report.pdf',
+      });
+
+      expect(mockMs.sendAndDeliverMessage).toHaveBeenCalledWith(
+        'u1',
+        'u2',
+        'hello',
+        undefined,
+        {
+          url: 'https://cdn.example.com/uuid.pdf',
+          type: 'application/pdf',
+          name: 'report.pdf',
+        },
+      );
     });
   });
 

@@ -11,6 +11,7 @@ const MY_SESSIONS_QUERY = `
       ip
       userAgent
       issuedAt
+      deviceType
       trusted
     }
   }
@@ -37,9 +38,10 @@ export async function GET() {
       ip?: string;
       userAgent?: string;
       issuedAt?: string;
+      deviceType?: string;
       trusted?: boolean;
     }>;
-  }>(MY_SESSIONS_QUERY, {}, accessToken);
+  }>(MY_SESSIONS_QUERY, {}, accessToken, undefined, true);
 
   if (errors) {
     const body = graphqlErrorBody(errors, "Failed to load sessions");

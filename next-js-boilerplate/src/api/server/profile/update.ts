@@ -4,10 +4,11 @@ import { POST } from "@/constants/api/methods";
 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 
 export interface UpdateProfileParams {
-  name: string;
+  name?: string;
   username?: string;
   bio?: string;
   avatarUrl?: string;
+  chatNickname?: string | null;
 }
 
 export async function updateProfileServer(

@@ -3226,6 +3226,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get messagesFailedToLoad => 'Mesajlar yüklenemedi';
 
   @override
+  String get messagesAttachmentTooLarge => 'Dosya çok büyük (en fazla 10MB)';
+
+  @override
+  String get messagesAttachmentUploadFailed => 'Ek yüklenemedi';
+
+  @override
   String get messagesSignInRequired => 'Mesajlaşmaya başlamak için giriş yapın';
 
   @override
@@ -3567,6 +3573,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get settingsPlanBenefits => 'Plan Avantajları';
+
+  @override
+  String get settingsPlanTab => 'Plan ve Ödeme';
 
   @override
   String get settingsPaymentMethods => 'Ödeme Yöntemleri';
@@ -4520,6 +4529,12 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get chatRoomTypeMessage => 'Bir mesaj yazın...';
+
+  @override
+  String get chatRoomAttachFile => 'Dosya ekle';
+
+  @override
+  String get chatRoomOpenEmojiPicker => 'Emoji seçiciyi aç';
 
   @override
   String get chatRoomTabLocked => 'Sekme kilitli';

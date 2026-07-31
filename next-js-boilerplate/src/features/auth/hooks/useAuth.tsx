@@ -16,6 +16,7 @@ import { registerServer } from "@/api/server/auth/register";
 import { logoutServer } from "@/api/server/auth/logout";
 import { getMeServer } from "@/api/server/auth/me";
 import { refreshTokenServer } from "@/api/server/auth/token";
+import { refreshSession } from "@/lib/api-client";
 import { deviceHandshakeServer } from "@/api/server/auth/device-handshake";
 import { verifyMfaServer } from "@/api/server/auth/mfa";
 
@@ -42,6 +43,16 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+
+// Hard-navigate to the login page unless already on one. Shared by the
+// manual logout() and the automatic 401-handler so both end with the user
+// actually seeing the login form.
+function redirectToLoginIfNeeded(): void {
+  const path = window.location.pathname;
+  if (path !== "/auth/login" && !path.startsWith("/auth/")) {
+    window.location.href = "/auth/login";
+  }
+}
 
 // Internal channel for the SSR session bridge. Raw inline <script> tags in
 // the body (the old window.__INITIAL_USER__ approach) break React 19
@@ -112,15 +123,21 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
 
   // Listen for auth:logout events dispatched by apiFetch on 401.
   useEffect(() => {
-    function onAuthLogout() {
+    async function onAuthLogout() {
       if (logoutEventRef.current) return;
       logoutEventRef.current = true;
       setUser(null);
       setToken(null);
-      const path = window.location.pathname;
-      if (path !== "/auth/login" && !path.startsWith("/auth/")) {
-        window.location.href = "/auth/login";
+      try {
+        // Clear the BFF cookies *before* navigating. Without this, the stale
+        // session_user cookie survives into the next full page load, the
+        // login page's server-side check treats the user as logged in,
+        // bounces back to /v1/en/feed, which 401s again — the login loop.
+        await logoutServer();
+      } catch {
+        /* best-effort — never block the redirect */
       }
+      redirectToLoginIfNeeded();
     }
 
     window.addEventListener("auth:logout", onAuthLogout);
@@ -186,6 +203,7 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
     await logoutServer();
     setUser(null);
     setToken(null);
+    redirectToLoginIfNeeded();
   }, []);
 
   const refreshUser = useCallback(async () => {
@@ -198,12 +216,17 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
   }, []);
 
   // Listen for tier-changed events from the realtime WebSocket.
-  // After billing changes, the backend pushes a tier-changed frame which
-  // event-dispatch.ts converts to a CustomEvent. Refreshing the user keeps
-  // the header badge and settings page in sync without a full page reload.
+  // After billing changes, the backend rewrites every live session's tier in
+  // Redis — which invalidates the rbac_token cookie (derived from the OLD
+  // tier) for the very next authenticated request. Rotate the session so a
+  // fresh rbac token (derived from the current DB tier) lands in the cookie;
+  // the refresh-on-401 path is the safety net when this frame is missed.
   useEffect(() => {
     function onTierChanged() {
-      refreshUser();
+      // Rotate the session first; then refetch the display user. If the
+      // rotation failed, the refetch's own 401 → refresh → retry path takes
+      // over, so the badge still converges.
+      refreshSession().then(() => refreshUser());
     }
 
     window.addEventListener("tier-changed", onTierChanged);

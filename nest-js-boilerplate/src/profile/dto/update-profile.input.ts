@@ -31,9 +31,16 @@ export class UpdateProfileInput {
   @MaxLength(280)
   bio?: string;
 
+  /** Chat-room display name override (presence lists + room messages only). */
   @Field({ nullable: true })
   @IsOptional()
-  @IsUrl()
+  @MinLength(1)
+  @MaxLength(30)
+  chatNickname?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsUrl({ require_tld: false })
   avatarUrl?: string;
 
   @Field({ nullable: true })

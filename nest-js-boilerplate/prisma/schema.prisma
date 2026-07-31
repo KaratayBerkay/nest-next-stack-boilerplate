@@ -252,6 +252,13 @@ model User {
   /// @Validator.MaxLength(80)
   name String?
 
+  /// Chat-room display name shown in presence lists and room messages.
+  /// Optional override: when set, it replaces the real name in chat-room
+  /// contexts only (DMs keep showing name/email).
+  /// @Validator.IsOptional()
+  /// @Validator.MaxLength(30)
+  chatNickname String?
+
   // credentials auth (null for social-only users)
   /// @HideField()
   passwordHash  String?
@@ -750,27 +757,33 @@ model Friendship {
 }
 
 model Message {
-  id          String    @id @default(uuid(7)) @db.Uuid
-  senderId    String    @db.Uuid
-  sender      User      @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
-  recipientId String    @db.Uuid
-  recipient   User      @relation("MessageRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
-  body        String    @db.Text
-  deliveredAt DateTime? @db.Timestamptz(6)
-  readAt      DateTime? @db.Timestamptz(6)
-  createdAt   DateTime  @default(now()) @db.Timestamptz(6)
+  id             String    @id @default(uuid(7)) @db.Uuid
+  senderId       String    @db.Uuid
+  sender         User      @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipientId    String    @db.Uuid
+  recipient      User      @relation("MessageRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  body           String    @db.Text
+  attachmentUrl  String?
+  attachmentType String?
+  attachmentName String?
+  deliveredAt    DateTime? @db.Timestamptz(6)
+  readAt         DateTime? @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @db.Timestamptz(6)
 
   @@index([senderId, recipientId])
   @@index([recipientId, readAt])
 }
 
 model RoomMessage {
-  id        String   @id @default(uuid(7)) @db.Uuid
-  roomId    String
-  senderId  String   @db.Uuid
-  sender    User     @relation("RoomMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
-  body      String   @db.Text
-  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  id             String   @id @default(uuid(7)) @db.Uuid
+  roomId         String
+  senderId       String   @db.Uuid
+  sender         User     @relation("RoomMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  body           String   @db.Text
+  attachmentUrl  String?
+  attachmentType String?
+  attachmentName String?
+  createdAt      DateTime @default(now()) @db.Timestamptz(6)
 
   @@index([roomId, createdAt])
 }

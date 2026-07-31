@@ -2,6 +2,17 @@ export interface RoomMember {
   socketId: string;
   userId: string;
   name: string;
+  /** Chat-room display-name override — prefer over `name` when present. */
+  chatNickname?: string;
+}
+
+export interface MessageAttachment {
+  /** Public URL from POST /upload/attachment */
+  url: string;
+  /** MIME type, e.g. "application/pdf" */
+  type: string;
+  /** Original file name, e.g. "report.pdf" */
+  name: string;
 }
 
 export function initials(name: string): string {

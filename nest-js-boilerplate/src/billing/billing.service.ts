@@ -1,4 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
+import { Prisma } from '@prisma/client';
 import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
 import { TIER_RANK } from '../authorization/tier-rank';
 import { PrismaService } from '../prisma/prisma.service';
@@ -13,6 +15,18 @@ import {
   type PaymentProvider,
 } from './payment-provider.interface';
 import { Inject } from '@nestjs/common';
+
+const SUBSCRIBER_SELECT = {
+  subscriptionTier: true,
+  stripeCustomerId: true,
+  email: true,
+  name: true,
+  stripeSubscriptionId: true,
+} as const satisfies Prisma.UserSelect;
+
+type SubscriberState = Prisma.UserGetPayload<{
+  select: typeof SUBSCRIBER_SELECT;
+}>;
 
 @Injectable()
 export class BillingService {
@@ -33,15 +47,11 @@ export class BillingService {
     userId: string,
     targetTier: SubscriptionTier,
     paymentMethodId?: string,
+    idempotencyKey?: string,
   ): Promise<{ success: boolean; reason?: string; periodEnd?: Date }> {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
-      select: {
-        subscriptionTier: true,
-        stripeCustomerId: true,
-        email: true,
-        name: true,
-      },
+      select: SUBSCRIBER_SELECT,
     });
 
     const currentRank = TIER_RANK[user.subscriptionTier];
@@ -51,80 +61,226 @@ export class BillingService {
       throw new BadRequestException('Already on this tier');
     }
 
-    const isUpgrade = targetRank > currentRank;
-
-    if (isUpgrade) {
-      if (!paymentMethodId) {
-        throw new BadRequestException('paymentMethodId required for upgrades');
-      }
-
-      let stripeCustomerId = user.stripeCustomerId;
-      if (!stripeCustomerId) {
-        const customer = await this.stripeService.createCustomer(
-          user.email,
-          user.name ?? undefined,
-        );
-        stripeCustomerId = customer.id;
-        await this.prisma.user.update({
-          where: { id: userId },
-          data: { stripeCustomerId },
-        });
-      }
-
-      const idempotencyKey = this.generateIdempotencyKey(userId, targetTier);
-      const existing = await this.prisma.walletTransaction.findFirst({
-        where: { idempotencyKey },
-      });
-      if (existing) {
-        const meta = existing.metadata as Record<string, unknown> | null;
-        return existing.status === 'COMPLETED'
-          ? { success: true }
-          : {
-              success: false,
-              reason:
-                typeof meta?.reason === 'string' ? meta.reason : 'declined',
-            };
-      }
-
-      const chargeResult = await this.provider.createSubscription({
+    if (targetRank > currentRank) {
+      return this.handleUpgrade(
         userId,
-        tier: targetTier,
+        user,
+        targetTier,
         paymentMethodId,
-        stripeCustomerId,
+        idempotencyKey,
+      );
+    }
+
+    return this.handleDowngrade(userId, user, targetTier);
+  }
+
+  private async handleUpgrade(
+    userId: string,
+    user: SubscriberState,
+    targetTier: SubscriptionTier,
+    paymentMethodId: string | undefined,
+    idempotencyKey: string | undefined,
+  ): Promise<{ success: boolean; reason?: string; periodEnd?: Date }> {
+    if (!paymentMethodId) {
+      throw new BadRequestException('paymentMethodId required for upgrades');
+    }
+
+    const stripeCustomerId = await this.ensureStripeCustomer(userId, user);
+
+    const retryKey =
+      idempotencyKey?.trim() || this.generateIdempotencyKey(userId, targetTier);
+    const prior = await this.findRetryResult(retryKey);
+    if (prior) return prior;
+
+    // A live subscription must never coexist with the replacement
+    // (duplicate-charge risk). Cancel the old one first — if Stripe rejects
+    // the cancel, abort the upgrade instead of creating a second subscription.
+    if (user.stripeSubscriptionId) {
+      await this.provider.cancelSubscriptionNow(user.stripeSubscriptionId);
+    }
+
+    const chargeResult = await this.provider.createSubscription({
+      userId,
+      tier: targetTier,
+      paymentMethodId,
+      stripeCustomerId,
+      idempotencyKey: retryKey,
+    });
+
+    if (!chargeResult.success) {
+      return { success: false, reason: chargeResult.reason };
+    }
+
+    // First-invoice row keyed by the invoice so the webhook reconciles into
+    // the same row instead of creating a duplicate.
+    const rowKey = chargeResult.latestInvoiceId
+      ? `stripe_invoice:${chargeResult.latestInvoiceId}`
+      : retryKey;
+
+    // Create initial WalletTransaction for the first invoice
+    const wallet = await this.wallet.ensureWallet(userId);
+
+    await this.persistUpgrade(
+      userId,
+      targetTier,
+      chargeResult,
+      rowKey,
+      wallet.id,
+    );
+
+    await this.tokenStore.rewriteFieldsForUser(userId, {
+      tier: targetTier,
+    });
+    this.realtime.updateUserTier(userId, targetTier);
+
+    await this.notifyUpgrade(userId, targetTier);
+
+    return {
+      success: true,
+      periodEnd: chargeResult.periodEnd,
+    };
+  }
+
+  private async findRetryResult(
+    retryKey: string,
+  ): Promise<{ success: boolean; reason?: string } | null> {
+    const existing = await this.prisma.walletTransaction.findFirst({
+      where: { idempotencyKey: retryKey },
+    });
+    if (!existing) return null;
+    const meta = existing.metadata as Record<string, unknown> | null;
+    return existing.status === 'COMPLETED'
+      ? { success: true }
+      : {
+          success: false,
+          reason:
+            typeof meta?.reason === 'string' ? meta.reason : 'declined',
+        };
+  }
+
+  private async ensureStripeCustomer(
+    userId: string,
+    user: SubscriberState,
+  ): Promise<string> {
+    if (user.stripeCustomerId) return user.stripeCustomerId;
+    const customer = await this.stripeService.createCustomer(
+      user.email,
+      user.name ?? undefined,
+    );
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { stripeCustomerId: customer.id },
+    });
+    return customer.id;
+  }
+
+  private async notifyUpgrade(
+    userId: string,
+    targetTier: SubscriptionTier,
+  ) {
+    await this.sendBillingNotification(
+      userId,
+      `Upgraded to ${targetTier}`,
+      `Your subscription has been upgraded to ${targetTier}.`,
+    ).catch((err: Error) =>
+      this.logger.warn(
+        {
+          category: 'billing',
+          event: 'billing.notification_failed',
+          error: err.message,
+        },
+        `Billing notification failed: ${err.message}`,
+      ),
+    );
+  }
+
+  private async persistUpgrade(
+    userId: string,
+    targetTier: SubscriptionTier,
+    chargeResult: {
+      stripeSubscriptionId?: string;
+      periodStart?: Date;
+      periodEnd?: Date;
+      latestInvoiceId?: string;
+    },
+    rowKey: string,
+    walletId: string,
+  ) {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          subscriptionTier: targetTier,
+          stripeSubscriptionId: chargeResult.stripeSubscriptionId,
+          subscriptionPeriodStart: chargeResult.periodStart,
+          subscriptionPeriodEnd: chargeResult.periodEnd,
+          cancelAtPeriodEnd: false,
+        },
       });
+      await tx.walletTransaction.create({
+        data: {
+          type: 'FEE',
+          status: 'COMPLETED',
+          amount: 0,
+          currency: 'USD',
+          idempotencyKey: rowKey,
+          reference: `subscription:${targetTier}`,
+          fromWalletId: walletId,
+          stripePaymentIntentId: null,
+          metadata: {
+            tier: targetTier,
+            provider: 'stripe',
+            stripeSubscriptionId: chargeResult.stripeSubscriptionId,
+            latestInvoiceId: chargeResult.latestInvoiceId,
+          },
+        },
+      });
+      await this.outbox.emit(
+        {
+          aggregateType: 'User',
+          aggregateId: userId,
+          eventType: 'billing.tier_upgraded',
+          action: 'UPDATE',
+          actorId: userId,
+          summary: `Subscription upgraded to ${targetTier}`,
+          after: { tier: targetTier },
+        },
+        tx,
+      );
+    });
+  }
 
-      if (!chargeResult.success) {
-        return { success: false, reason: chargeResult.reason };
-      }
+  private async handleDowngrade(
+    userId: string,
+    user: SubscriberState,
+    targetTier: SubscriptionTier,
+  ): Promise<{ success: boolean; reason?: string; periodEnd?: Date }> {
+    const idempotencyKey = this.generateIdempotencyKey(userId, targetTier);
+    const wallet = await this.wallet.ensureWallet(userId);
 
-      // Create initial WalletTransaction for the first invoice
-      const wallet = await this.wallet.ensureWallet(userId);
+    // Paid -> FREE: keep access through the paid period. The tier stays until
+    // the `customer.subscription.deleted` webhook flips it at period end.
+    if (targetTier === SubscriptionTier.FREE && user.stripeSubscriptionId) {
+      await this.provider.cancelSubscription(user.stripeSubscriptionId);
 
       await this.prisma.$transaction(async (tx) => {
         await tx.user.update({
           where: { id: userId },
-          data: {
-            subscriptionTier: targetTier,
-            stripeSubscriptionId: chargeResult.stripeSubscriptionId,
-            subscriptionPeriodStart: chargeResult.periodStart,
-            subscriptionPeriodEnd: chargeResult.periodEnd,
-          },
+          data: { cancelAtPeriodEnd: true },
         });
         await tx.walletTransaction.create({
           data: {
-            type: 'FEE',
+            type: 'ADJUSTMENT',
             status: 'COMPLETED',
             amount: 0,
             currency: 'USD',
             idempotencyKey,
-            reference: `subscription:${targetTier}`,
+            reference: `subscription:${user.subscriptionTier}`,
             fromWalletId: wallet.id,
-            stripePaymentIntentId: null,
             metadata: {
-              tier: targetTier,
+              tier: user.subscriptionTier,
               provider: 'stripe',
-              stripeSubscriptionId: chargeResult.stripeSubscriptionId,
-              latestInvoiceId: chargeResult.latestInvoiceId,
+              scheduledCancel: true,
             },
           },
         });
@@ -132,25 +288,20 @@ export class BillingService {
           {
             aggregateType: 'User',
             aggregateId: userId,
-            eventType: 'billing.tier_upgraded',
+            eventType: 'billing.tier_downgraded',
             action: 'UPDATE',
             actorId: userId,
-            summary: `Subscription upgraded to ${targetTier}`,
-            after: { tier: targetTier },
+            summary: 'Subscription cancellation scheduled at period end',
+            after: { tier: user.subscriptionTier, cancelAtPeriodEnd: true },
           },
           tx,
         );
       });
 
-      await this.tokenStore.rewriteFieldsForUser(userId, {
-        tier: targetTier,
-      });
-      this.realtime.updateUserTier(userId, targetTier);
-
       await this.sendBillingNotification(
         userId,
-        `Upgraded to ${targetTier}`,
-        `Your subscription has been upgraded to ${targetTier}.`,
+        `Subscription cancelled`,
+        `Your subscription continues until the end of the current period, then reverts to FREE.`,
       ).catch((err: Error) =>
         this.logger.warn(
           {
@@ -162,38 +313,82 @@ export class BillingService {
         ),
       );
 
-      return {
-        success: true,
-        periodEnd: chargeResult.periodEnd,
-      };
+      return { success: true };
     }
 
-    // Downgrade
-    const idempotencyKey = this.generateIdempotencyKey(userId, targetTier);
-    const wallet = await this.wallet.ensureWallet(userId);
-
-    // Cancel Stripe subscription at period end
-    if (user.stripeCustomerId) {
-      const sub = await this.prisma.user.findUnique({
-        where: { id: userId },
-        select: { stripeSubscriptionId: true },
+    // Paid -> paid: switch the price on the existing subscription (prorated)
+    // so a replacement is provisioned without a second live subscription.
+    if (user.stripeSubscriptionId) {
+      const switchResult = await this.provider.switchSubscription({
+        stripeSubscriptionId: user.stripeSubscriptionId,
+        tier: targetTier,
       });
-      if (sub?.stripeSubscriptionId) {
-        await this.provider
-          .cancelSubscription(sub.stripeSubscriptionId)
-          .catch((err: Error) =>
-            this.logger.warn(
-              {
-                category: 'billing',
-                event: 'billing.cancel_failed',
-                error: err.message,
-              },
-              `Failed to cancel Stripe subscription: ${err.message}`,
-            ),
-          );
+      if (!switchResult.success) {
+        return { success: false, reason: switchResult.reason };
       }
+
+      await this.prisma.$transaction(async (tx) => {
+        await tx.user.update({
+          where: { id: userId },
+          data: {
+            subscriptionTier: targetTier,
+            subscriptionPeriodStart: switchResult.periodStart,
+            subscriptionPeriodEnd: switchResult.periodEnd,
+            cancelAtPeriodEnd: false,
+          },
+        });
+        await tx.walletTransaction.create({
+          data: {
+            type: 'ADJUSTMENT',
+            status: 'COMPLETED',
+            amount: 0,
+            currency: 'USD',
+            idempotencyKey,
+            reference: `subscription:${targetTier}`,
+            fromWalletId: wallet.id,
+            metadata: {
+              tier: targetTier,
+              provider: 'stripe',
+              switchedFrom: user.subscriptionTier,
+            },
+          },
+        });
+        await this.outbox.emit(
+          {
+            aggregateType: 'User',
+            aggregateId: userId,
+            eventType: 'billing.tier_downgraded',
+            action: 'UPDATE',
+            actorId: userId,
+            summary: `Subscription changed to ${targetTier}`,
+            after: { tier: targetTier },
+          },
+          tx,
+        );
+      });
+
+      await this.tokenStore.rewriteFieldsForUser(userId, { tier: targetTier });
+      this.realtime.updateUserTier(userId, targetTier);
+
+      await this.sendBillingNotification(
+        userId,
+        `Downgraded to ${targetTier}`,
+        `Your subscription has been changed to ${targetTier}.`,
+      ).catch((err: Error) =>
+        this.logger.warn(
+          {
+            category: 'billing',
+            event: 'billing.notification_failed',
+            error: err.message,
+          },
+          `Billing notification failed: ${err.message}`,
+        ),
+      );
+
+      return { success: true, periodEnd: switchResult.periodEnd };
     }
 
+    // No Stripe subscription on record — fall back to a local tier change.
     await this.prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: userId },
@@ -260,15 +455,10 @@ export class BillingService {
     if (!user) throw new Error('User not found');
     if (user.subscriptionTier === 'FREE') throw new Error('No active subscription');
 
+    // Fail loudly: a swallowed failure here would leave the user marked
+    // pending-cancel while Stripe keeps billing them.
     if (user.stripeSubscriptionId) {
-      await this.provider
-        .cancelSubscription(user.stripeSubscriptionId)
-        .catch((err: Error) => {
-          this.logger.warn(
-            { category: 'billing', event: 'billing.cancel_failed', error: err.message },
-            `Failed to cancel Stripe subscription: ${err.message}`,
-          );
-        });
+      await this.provider.cancelSubscription(user.stripeSubscriptionId);
     }
 
     await this.prisma.user.update({

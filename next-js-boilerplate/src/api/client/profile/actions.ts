@@ -1,28 +1,19 @@
-import { useQueryClient } from "@tanstack/react-query";
-
 export function useProfileActions() {
-  const queryClient = useQueryClient();
-
-  const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: ["profile"] });
-
   const updateProfile = async (data: {
-    name: string;
+    name?: string;
     username?: string;
     bio?: string;
     avatarUrl?: string;
+    chatNickname?: string | null;
   }) => {
     const { updateProfileServer } = await import("@/api/server/profile/update");
     await updateProfileServer(data);
-    await invalidate();
   };
 
   const uploadAvatar = async (file: File) => {
     const { uploadAvatarServer } =
       await import("@/api/server/profile/upload-avatar");
-    const result = await uploadAvatarServer(file);
-    await invalidate();
-    return result;
+    return uploadAvatarServer(file);
   };
 
   const checkUsername = async (username: string) => {

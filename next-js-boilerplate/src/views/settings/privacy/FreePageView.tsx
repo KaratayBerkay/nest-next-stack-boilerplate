@@ -8,30 +8,41 @@ import { useToast } from "@/components/ui/Toast";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import type { ClassNameProps } from "@/types/ui/ClassName-types";
 import { PageHeader } from "@/components/ui";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsPrivacyPageInfo } from "@/constants/page-info";
+import { useProfileActions } from "@/api/client/profile/actions";
 import { PrivacyToggleRow } from "./PrivacyToggleRow";
 
 async function handleSave(
+  updateProfile: (data: { chatNickname?: string | null }) => Promise<void>,
   toast: ReturnType<typeof useToast>["toast"],
-  hideProfilePicture: boolean,
+  t: { saveSuccess: string; saveFailed: string },
   useNickname: boolean,
   nickname: string,
 ) {
-  const payload = { hideProfilePicture, useNickname, nickname };
-  toast({ title: "Preferences saved", variant: "success" });
+  try {
+    await updateProfile({
+      chatNickname: useNickname && nickname.trim() ? nickname.trim() : null,
+    });
+    toast({ title: t.saveSuccess, variant: "success" });
+  } catch {
+    toast({ title: t.saveFailed, variant: "destructive" });
+  }
 }
 
 export function FreePageView({ className }: ClassNameProps) {
   const params = useParams<{ lang: string }>();
   const t = useMessages("settings");
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { updateProfile } = useProfileActions();
 
   const [hideProfilePicture, setHideProfilePicture] = useState(false);
-  const [useNickname, setUseNickname] = useState(false);
-  const [nickname, setNickname] = useState("");
+  const [useNickname, setUseNickname] = useState(!!user?.chatNickname);
+  const [nickname, setNickname] = useState(user?.chatNickname ?? "");
 
   return (
     <div className={cn("flex h-full w-full flex-col gap-6", className)}>
@@ -67,7 +78,7 @@ export function FreePageView({ className }: ClassNameProps) {
 
       <Button
         onClick={() =>
-          handleSave(toast, hideProfilePicture, useNickname, nickname)
+          handleSave(updateProfile, toast, t, useNickname, nickname)
         }
         variant="primary"
         className="self-start"

@@ -4,7 +4,10 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IconCrown } from "@tabler/icons-react";
 import { initials } from "@/lib/initials";
-import { SidebarCloseButton, RoomButton } from "@/views/chat-room/ChatRoomSubComponents";
+import {
+  SidebarCloseButton,
+  RoomButton,
+} from "@/views/chat-room/ChatRoomSubComponents";
 
 interface ChatRoomSidebarProps {
   useNativeControls: boolean;
@@ -13,7 +16,7 @@ interface ChatRoomSidebarProps {
   room: string;
   roomCounts: Record<string, number>;
   vipRooms: string[];
-  roomMembers: { id: string; name: string; avatar?: string }[];
+  roomMembers: { id: string; name: string; chatNickname?: string }[];
   user: { id: string; name?: string | null };
   showSelfCrown: boolean;
   t: Record<string, string>;
@@ -89,31 +92,34 @@ export function ChatRoomSidebar({
           {roomMembers.length === 0 ? (
             <p className="text-muted px-0.5 text-xs">{t.noOneHere}</p>
           ) : (
-            roomMembers.map((m) => (
-              <div
-                key={m.id}
-                className="flex items-center gap-3 rounded-lg px-3 py-2"
-              >
-                <div className="relative h-10 w-10 shrink-0">
-                  <Avatar
-                    fallback={initials(m.name)}
-                    className="bg-brand text-brand-fg ring-success ring-offset-bg h-10 w-10 text-[10px] ring-2 ring-offset-2"
-                  />
+            roomMembers.map((m) => {
+              const displayName = m.chatNickname || m.name;
+              return (
+                <div
+                  key={m.id}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2"
+                >
+                  <div className="relative h-10 w-10 shrink-0">
+                    <Avatar
+                      fallback={initials(displayName)}
+                      className="bg-brand text-brand-fg ring-success ring-offset-bg h-10 w-10 text-[10px] ring-2 ring-offset-2"
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className="text-fg truncate text-sm font-medium">
+                      {displayName}
+                    </span>
+                  </div>
+                  {showSelfCrown && m.id === user.id && (
+                    <IconCrown
+                      size={12}
+                      stroke={2}
+                      className="text-brand shrink-0"
+                    />
+                  )}
                 </div>
-                <div className="min-w-0 flex-1">
-                  <span className="text-fg truncate text-sm font-medium">
-                    {m.name}
-                  </span>
-                </div>
-                {showSelfCrown && m.id === user.id && (
-                  <IconCrown
-                    size={12}
-                    stroke={2}
-                    className="text-brand shrink-0"
-                  />
-                )}
-              </div>
-            ))
+              );
+            })
           )}
         </TabsContent>
       </Tabs>

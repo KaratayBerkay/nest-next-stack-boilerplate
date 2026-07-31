@@ -12,6 +12,7 @@ export interface JwtUser {
   avatarUrl?: string | null;
   locale?: string;
   timezone?: string;
+  chatNickname?: string;
   friends?: string[];
   unread?: number;
   orgIds?: string[];
@@ -47,6 +48,8 @@ export interface SessionUser {
   avatarUrl: string;
   locale: string;
   timezone: string;
+  /** Chat-room display-name override (empty string when unset). */
+  chatNickname: string;
   friends: string[];
   unread: number;
   orgIds: string[];
@@ -90,6 +93,10 @@ export class SessionUserPayload {
 
   @Field({ defaultValue: 'UTC' })
   timezone!: string;
+
+  /** Chat-room display-name override (empty string when unset). */
+  @Field({ nullable: true })
+  chatNickname?: string;
 
   @Field({ nullable: true })
   sessionId?: string;

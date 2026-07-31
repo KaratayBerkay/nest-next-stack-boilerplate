@@ -2,6 +2,7 @@
 
 import { Avatar } from "@/components/ui/Avatar";
 import { MessageTick } from "@/components/MessageTick";
+import { AttachmentPreview } from "@/components/AttachmentPreview";
 import { initials } from "@/lib/initials";
 import { formatMessageTime } from "@/views/messages/ChatView-utils";
 import type { ChatMessageBubbleProps } from "@/types/messages/ChatMessageBubble-types";
@@ -29,13 +30,22 @@ export function ChatMessageBubble({
       <div
         className={`flex max-w-[70%] flex-col gap-0.5 ${isMe ? "items-end" : ""}`}
       >
-        <span
-          className={`inline-block rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-            isMe ? "bg-brand text-brand-fg" : "bg-surface text-fg"
-          }`}
-        >
-          {msg.body}
-        </span>
+        {msg.attachmentUrl && (
+          <AttachmentPreview
+            url={msg.attachmentUrl}
+            type={msg.attachmentType}
+            name={msg.attachmentName}
+          />
+        )}
+        {msg.body && (
+          <span
+            className={`inline-block rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+              isMe ? "bg-brand text-brand-fg" : "bg-surface text-fg"
+            }`}
+          >
+            {msg.body}
+          </span>
+        )}
         <div
           className={`flex items-center gap-1 px-1 ${isMe ? "flex-row-reverse" : ""}`}
         >
@@ -45,11 +55,7 @@ export function ChatMessageBubble({
           {isMe && (
             <MessageTick
               status={
-                msg.readAt
-                  ? "read"
-                  : msg.deliveredAt
-                    ? "delivered"
-                    : "sent"
+                msg.readAt ? "read" : msg.deliveredAt ? "delivered" : "sent"
               }
             />
           )}

@@ -127,7 +127,9 @@ class _ChatRoomSidebarState extends State<ChatRoomSidebar>
                       )
                     : ListView(
                         children: widget.roomMembers.map((m) {
-                          final name = m['name'] ?? 'Unknown';
+                          final name =
+                              m['chatNickname'] ?? m['name'] ?? 'Unknown';
+                          final memberId = m['userId'] ?? m['id'];
                           return Padding(
                             padding: const EdgeInsets.symmetric(
                               vertical: 4,
@@ -149,7 +151,7 @@ class _ChatRoomSidebarState extends State<ChatRoomSidebar>
                                   ),
                                 ),
                                 if (widget.showSelfCrown &&
-                                    m['id'] == widget.currentUserId)
+                                    memberId == widget.currentUserId)
                                   Icon(
                                     Icons.workspace_premium,
                                     size: 14,

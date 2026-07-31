@@ -7,6 +7,7 @@ class AuthenticatedUser {
   final String? avatarUrl;
   final String? language;
   final String? sessionId;
+  final String? chatNickname;
   final bool mfaEnabled;
 
   const AuthenticatedUser({
@@ -18,6 +19,7 @@ class AuthenticatedUser {
     this.avatarUrl,
     this.language,
     this.sessionId,
+    this.chatNickname,
     this.mfaEnabled = false,
   });
 
@@ -34,11 +36,12 @@ class AuthenticatedUser {
       avatarUrl: json['avatarUrl'] as String?,
       language: (json['language'] as String?) ?? (json['locale'] as String?),
       sessionId: json['sessionId'] as String?,
+      chatNickname: json['chatNickname'] as String?,
       mfaEnabled: json['mfaEnabled'] as bool? ?? false,
     );
   }
 
-  AuthenticatedUser copyWith({bool? mfaEnabled}) {
+  AuthenticatedUser copyWith({bool? mfaEnabled, String? chatNickname}) {
     return AuthenticatedUser(
       id: id,
       email: email,
@@ -48,6 +51,7 @@ class AuthenticatedUser {
       avatarUrl: avatarUrl,
       language: language,
       sessionId: sessionId,
+      chatNickname: chatNickname ?? this.chatNickname,
       mfaEnabled: mfaEnabled ?? this.mfaEnabled,
     );
   }
@@ -61,6 +65,7 @@ class AuthenticatedUser {
         'avatarUrl': avatarUrl,
         'language': language,
         'sessionId': sessionId,
+        'chatNickname': chatNickname,
         'mfaEnabled': mfaEnabled,
       };
 }

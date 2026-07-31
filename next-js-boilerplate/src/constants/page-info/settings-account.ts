@@ -18,4 +18,8 @@ export const settingsAccountPageInfo: PageInfoContent = {
       description: "Set your preferred language for the application interface.",
     },
   ],
+  tips: [
+    "Keep your email address current - it is used for account recovery",
+    "Choose a strong, unique password for your account",
+  ],
 };

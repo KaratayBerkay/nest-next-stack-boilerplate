@@ -5,6 +5,7 @@ export const RBAC_TOKEN_COOKIE = "rbac_token";
 export const DEVICE_TOKEN_COOKIE = "device_token";
 export const USER_TOKEN_COOKIE = "user_token";
 export const SESSION_USER_COOKIE = "session_user";
+export const REFRESH_TOKEN_COOKIE = "refresh_token";
 /**
  * Determine the cookie Domain attribute. Priority:
  * 1. Explicit COOKIE_DOMAIN env var (e.g. ".eys.gen.tr")
@@ -146,6 +147,27 @@ export function sessionUserCookieOptions(
 export function clearSessionUserCookieOptions(): ResponseCookie {
   return baseOptions({
     name: SESSION_USER_COOKIE,
+    value: "",
+    maxAge: 0,
+  });
+}
+
+export function refreshTokenCookieOptions(
+  value: string,
+  maxAge?: number,
+): ResponseCookie {
+  return baseOptions({
+    name: REFRESH_TOKEN_COOKIE,
+    value,
+    // Mirrors the backend's 30-day refresh-cookie lifetime; the Redis session
+    // TTL is the real gate, this just keeps the capability from expiring first.
+    maxAge: maxAge ?? 60 * 60 * 24 * 30,
+  });
+}
+
+export function clearRefreshTokenCookieOptions(): ResponseCookie {
+  return baseOptions({
+    name: REFRESH_TOKEN_COOKIE,
     value: "",
     maxAge: 0,
   });

@@ -19,4 +19,8 @@ export const settingsPrivacyPageInfo: PageInfoContent = {
         "Manage your block list to prevent specific users from interacting with you.",
     },
   ],
+  tips: [
+    "Privacy choices apply instantly across the app",
+    "Blocking a user also hides their messages from your inbox",
+  ],
 };

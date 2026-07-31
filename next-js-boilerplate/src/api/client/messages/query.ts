@@ -2,7 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { infiniteQueryOptions } from "@tanstack/react-query";
 import type { Conversation } from "@/api/server/messages/conversations";
 import type { ConversationPage } from "@/api/server/messages/conversation-messages";
-import type { RoomMessage } from "@/api/server/messages/room-messages";
+import type { ChatRoomMessage } from "@/types/chat-room/ChatRoomMessage-types";
 
 async function fetchConversations(): Promise<Conversation[]> {
   const { fetchConversationsServer } =
@@ -19,7 +19,7 @@ async function fetchConversationMessages(
   return fetchConversationMessagesServer(peerId, before);
 }
 
-async function fetchRoomMessages(room: string): Promise<RoomMessage[]> {
+async function fetchRoomMessages(room: string): Promise<ChatRoomMessage[]> {
   const { fetchRoomMessagesServer } =
     await import("@/api/server/messages/room-messages");
   return fetchRoomMessagesServer(room);

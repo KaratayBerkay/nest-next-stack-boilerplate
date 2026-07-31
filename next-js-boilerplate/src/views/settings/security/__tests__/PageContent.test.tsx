@@ -6,6 +6,7 @@ vi.mock("qrcode.react", () => ({ QRCodeSVG: () => null }));
 vi.mock("@/components/ui/InputOTP", () => ({ InputOTP: () => null }));
 vi.mock("@/lib/i18n/MessagesProvider", () => ({
   useMessages: () => ({
+    securityHeading: "Security Settings",
     securityTwoFactor: "Two-Factor Authentication",
     securityTwoFactorEnabled: "Your account is protected",
     securityTwoFactorDisabled: "Add an extra layer of security",

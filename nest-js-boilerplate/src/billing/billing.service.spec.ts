@@ -20,8 +20,8 @@ type MockPrisma = {
 interface MockPaymentProvider {
   createSubscription: jest.Mock;
   cancelSubscription: jest.Mock;
-  chargeCredits?: jest.Mock;
-  getSubscriptionStatus?: jest.Mock;
+  cancelSubscriptionNow: jest.Mock;
+  switchSubscription: jest.Mock;
 }
 
 type MockTokenStore = { rewriteFieldsForUser: jest.Mock };
@@ -32,6 +32,22 @@ type MockStripeService = {
   createSetupIntent: jest.Mock;
 };
 type MockWallet = { ensureWallet: jest.Mock };
+
+const SUB_USER = {
+  subscriptionTier: SubscriptionTier.FREE,
+  stripeCustomerId: 'cus_existing',
+  email: 'user@example.com',
+  name: 'Test',
+  stripeSubscriptionId: null,
+};
+
+const SUB_RESULT = {
+  success: true,
+  stripeSubscriptionId: 'sub_abc',
+  periodStart: new Date('2026-01-01'),
+  periodEnd: new Date('2026-02-01'),
+  latestInvoiceId: 'inv_1',
+};
 
 describe('BillingService', () => {
   let service: BillingService;
@@ -46,7 +62,14 @@ describe('BillingService', () => {
   beforeEach(() => {
     const createSubscription = jest.fn();
     const cancelSubscription = jest.fn().mockResolvedValue(undefined);
-    mockProvider = { createSubscription, cancelSubscription };
+    const cancelSubscriptionNow = jest.fn().mockResolvedValue(undefined);
+    const switchSubscription = jest.fn();
+    mockProvider = {
+      createSubscription,
+      cancelSubscription,
+      cancelSubscriptionNow,
+      switchSubscription,
+    };
 
     const findUniqueOrThrow = jest.fn();
     const findUnique = jest.fn();
@@ -58,7 +81,9 @@ describe('BillingService', () => {
     const wtCreate = jest.fn();
     const wtFindMany = jest.fn();
     const wtFindFirst = jest.fn().mockResolvedValue(null);
-    const transaction = jest.fn((ops: unknown[]) => Promise.resolve(ops));
+    const transaction = jest.fn(
+      (cb: (tx: MockPrisma) => Promise<unknown>) => cb(mockPrisma),
+    );
     mockPrisma = {
       user: { findUniqueOrThrow, findUnique, update },
       wallet: { findUnique: wFindUnique, create: wCreate },
@@ -91,6 +116,8 @@ describe('BillingService', () => {
         .mockResolvedValue({ id: 'w1', userId: 'u1', currency: 'USD' }),
     };
 
+    const mockOutbox = { emit: jest.fn().mockResolvedValue(undefined) };
+
     service = new BillingService(
       mockPrisma as never,
       mockTokenStore as never,
@@ -98,25 +125,15 @@ describe('BillingService', () => {
       mockRealtime as never,
       mockStripe as never,
       mockWallet as never,
+      mockOutbox as never,
       mockProvider,
     );
   });
 
-  describe('subscribeToPlan', () => {
+  describe('subscribeToPlan — upgrades', () => {
     it('upgrades tier on approved subscription', async () => {
-      mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
-        subscriptionTier: SubscriptionTier.FREE,
-        stripeCustomerId: 'cus_existing',
-        email: 'user@example.com',
-        name: 'Test',
-      });
-      mockProvider.createSubscription.mockResolvedValue({
-        success: true,
-        stripeSubscriptionId: 'sub_abc',
-        periodStart: new Date('2026-01-01'),
-        periodEnd: new Date('2026-02-01'),
-        latestInvoiceId: 'inv_1',
-      });
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue(SUB_USER);
+      mockProvider.createSubscription.mockResolvedValue(SUB_RESULT);
 
       const result = await service.subscribeToPlan(
         'u1',
@@ -125,12 +142,15 @@ describe('BillingService', () => {
       );
 
       expect(result.success).toBe(true);
-      expect(mockProvider.createSubscription).toHaveBeenCalledWith({
-        userId: 'u1',
-        tier: SubscriptionTier.PREMIUM,
-        paymentMethodId: 'pm_card123',
-        stripeCustomerId: 'cus_existing',
-      } satisfies Record<string, unknown>);
+      expect(mockProvider.createSubscription).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'u1',
+          tier: SubscriptionTier.PREMIUM,
+          paymentMethodId: 'pm_card123',
+          stripeCustomerId: 'cus_existing',
+          idempotencyKey: expect.any(String) as never,
+        } satisfies Record<string, unknown>),
+      );
       expect(mockTokenStore.rewriteFieldsForUser).toHaveBeenCalledWith('u1', {
         tier: SubscriptionTier.PREMIUM,
       });
@@ -142,10 +162,8 @@ describe('BillingService', () => {
 
     it('creates Stripe customer if user has none', async () => {
       mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
-        subscriptionTier: SubscriptionTier.FREE,
+        ...SUB_USER,
         stripeCustomerId: null,
-        email: 'user@example.com',
-        name: 'Test',
       });
       mockProvider.createSubscription.mockResolvedValue({
         success: true,
@@ -172,12 +190,7 @@ describe('BillingService', () => {
     });
 
     it('returns declined without changing tier', async () => {
-      mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
-        subscriptionTier: SubscriptionTier.FREE,
-        stripeCustomerId: 'cus_existing',
-        email: 'user@example.com',
-        name: 'Test',
-      });
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue(SUB_USER);
       mockProvider.createSubscription.mockResolvedValue({
         success: false,
         reason: 'generic_decline',
@@ -195,22 +208,204 @@ describe('BillingService', () => {
       expect(mockTokenStore.rewriteFieldsForUser).not.toHaveBeenCalled();
     });
 
-    it('downgrades without calling the payment provider', async () => {
+    it('cancels the existing live subscription before upgrading', async () => {
       mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
-        subscriptionTier: SubscriptionTier.PREMIUM,
-        stripeCustomerId: 'cus_existing',
-        email: 'user@example.com',
-        name: 'Test',
+        ...SUB_USER,
+        subscriptionTier: SubscriptionTier.BASIC,
+        stripeSubscriptionId: 'sub_old',
       });
-      mockPrisma.user.findUnique.mockResolvedValue({
+      mockProvider.createSubscription.mockResolvedValue(SUB_RESULT);
+
+      await service.subscribeToPlan(
+        'u1',
+        SubscriptionTier.PREMIUM,
+        'pm_card',
+      );
+
+      expect(mockProvider.cancelSubscriptionNow).toHaveBeenCalledWith(
+        'sub_old',
+      );
+      expect(mockProvider.createSubscription).toHaveBeenCalled();
+    });
+
+    it('aborts the upgrade if cancelling the old subscription fails', async () => {
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+        ...SUB_USER,
+        subscriptionTier: SubscriptionTier.BASIC,
+        stripeSubscriptionId: 'sub_old',
+      });
+      mockProvider.cancelSubscriptionNow.mockRejectedValue(
+        new Error('stripe down'),
+      );
+
+      await expect(
+        service.subscribeToPlan('u1', SubscriptionTier.PREMIUM, 'pm_card'),
+      ).rejects.toThrow('stripe down');
+      expect(mockProvider.createSubscription).not.toHaveBeenCalled();
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('passes a client idempotency key and keys the first-invoice row by invoice', async () => {
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue(SUB_USER);
+      mockProvider.createSubscription.mockResolvedValue(SUB_RESULT);
+
+      await service.subscribeToPlan(
+        'u1',
+        SubscriptionTier.PREMIUM,
+        'pm_card',
+        'retry-key-1',
+      );
+
+      expect(mockProvider.createSubscription).toHaveBeenCalledWith(
+        expect.objectContaining({ idempotencyKey: 'retry-key-1' }),
+      );
+      expect(mockPrisma.walletTransaction.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            idempotencyKey: 'stripe_invoice:inv_1',
+          }) as never,
+        }) as never,
+      );
+    });
+
+    it('returns the prior completed result for a duplicate idempotency key', async () => {
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue(SUB_USER);
+      mockPrisma.walletTransaction.findFirst.mockResolvedValue({
+        status: 'COMPLETED',
+        metadata: null,
+      });
+
+      const result = await service.subscribeToPlan(
+        'u1',
+        SubscriptionTier.PREMIUM,
+        'pm_card',
+        'retry-key-1',
+      );
+
+      expect(result.success).toBe(true);
+      expect(mockProvider.createSubscription).not.toHaveBeenCalled();
+    });
+
+    it('returns the prior failed reason for a duplicate idempotency key', async () => {
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue(SUB_USER);
+      mockPrisma.walletTransaction.findFirst.mockResolvedValue({
+        status: 'FAILED',
+        metadata: { reason: 'declined' },
+      });
+
+      const result = await service.subscribeToPlan(
+        'u1',
+        SubscriptionTier.PREMIUM,
+        'pm_card',
+        'retry-key-1',
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.reason).toBe('declined');
+      expect(mockProvider.createSubscription).not.toHaveBeenCalled();
+    });
+
+    it('throws if upgrade requested without paymentMethodId', async () => {
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue(SUB_USER);
+
+      await expect(
+        service.subscribeToPlan('u1', SubscriptionTier.PREMIUM),
+      ).rejects.toThrow('paymentMethodId required for upgrades');
+    });
+  });
+
+  describe('subscribeToPlan — downgrades', () => {
+    it('schedules cancellation to FREE without cutting access', async () => {
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+        ...SUB_USER,
+        subscriptionTier: SubscriptionTier.PREMIUM,
         stripeSubscriptionId: 'sub_prem',
       });
 
       const result = await service.subscribeToPlan('u1', SubscriptionTier.FREE);
 
       expect(result.success).toBe(true);
-      expect(mockProvider.createSubscription).not.toHaveBeenCalled();
       expect(mockProvider.cancelSubscription).toHaveBeenCalledWith('sub_prem');
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        data: { cancelAtPeriodEnd: true },
+      });
+      expect(mockTokenStore.rewriteFieldsForUser).not.toHaveBeenCalled();
+    });
+
+    it('switches the subscription when downgrading to another paid tier', async () => {
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+        ...SUB_USER,
+        subscriptionTier: SubscriptionTier.MEDIUM,
+        stripeSubscriptionId: 'sub_m',
+      });
+      mockProvider.switchSubscription.mockResolvedValue({
+        success: true,
+        stripeSubscriptionId: 'sub_m',
+        periodStart: new Date('2026-01-01'),
+        periodEnd: new Date('2026-02-01'),
+      });
+
+      const result = await service.subscribeToPlan(
+        'u1',
+        SubscriptionTier.BASIC,
+      );
+
+      expect(result.success).toBe(true);
+      expect(mockProvider.switchSubscription).toHaveBeenCalledWith({
+        stripeSubscriptionId: 'sub_m',
+        tier: SubscriptionTier.BASIC,
+      });
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'u1' },
+          data: expect.objectContaining({
+            subscriptionTier: SubscriptionTier.BASIC,
+            cancelAtPeriodEnd: false,
+          }) as never,
+        }) as never,
+      );
+      expect(mockTokenStore.rewriteFieldsForUser).toHaveBeenCalledWith('u1', {
+        tier: SubscriptionTier.BASIC,
+      });
+      expect(mockRealtime.updateUserTier).toHaveBeenCalledWith(
+        'u1',
+        SubscriptionTier.BASIC,
+      );
+    });
+
+    it('returns the failure when the paid downgrade switch fails', async () => {
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+        ...SUB_USER,
+        subscriptionTier: SubscriptionTier.MEDIUM,
+        stripeSubscriptionId: 'sub_m',
+      });
+      mockProvider.switchSubscription.mockResolvedValue({
+        success: false,
+        reason: 'subscription_switch_failed',
+      });
+
+      const result = await service.subscribeToPlan(
+        'u1',
+        SubscriptionTier.BASIC,
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.reason).toBe('subscription_switch_failed');
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('falls back to a local tier change without a stripe subscription', async () => {
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+        ...SUB_USER,
+        subscriptionTier: SubscriptionTier.PREMIUM,
+        stripeSubscriptionId: null,
+      });
+
+      const result = await service.subscribeToPlan('u1', SubscriptionTier.FREE);
+
+      expect(result.success).toBe(true);
+      expect(mockProvider.cancelSubscription).not.toHaveBeenCalled();
       expect(mockPrisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: 'u1' },
@@ -227,28 +422,60 @@ describe('BillingService', () => {
 
     it('throws if already on the target tier', async () => {
       mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+        ...SUB_USER,
         subscriptionTier: SubscriptionTier.BASIC,
-        stripeCustomerId: 'cus_existing',
-        email: 'user@example.com',
-        name: 'Test',
       });
 
       await expect(
         service.subscribeToPlan('u1', SubscriptionTier.BASIC),
       ).rejects.toThrow(BadRequestException);
     });
+  });
 
-    it('throws if upgrade requested without paymentMethodId', async () => {
-      mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
-        subscriptionTier: SubscriptionTier.FREE,
-        stripeCustomerId: 'cus_existing',
-        email: 'user@example.com',
-        name: 'Test',
+  describe('cancelSubscription', () => {
+    it('schedules cancellation at period end', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        stripeSubscriptionId: 'sub_x',
+        subscriptionTier: SubscriptionTier.PREMIUM,
       });
 
-      await expect(
-        service.subscribeToPlan('u1', SubscriptionTier.PREMIUM),
-      ).rejects.toThrow('paymentMethodId required for upgrades');
+      await service.cancelSubscription('u1');
+
+      expect(mockProvider.cancelSubscription).toHaveBeenCalledWith('sub_x');
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        data: { cancelAtPeriodEnd: true },
+      });
+    });
+
+    it('propagates provider failures instead of swallowing them', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        stripeSubscriptionId: 'sub_x',
+        subscriptionTier: SubscriptionTier.PREMIUM,
+      });
+      mockProvider.cancelSubscription.mockRejectedValue(
+        new Error('stripe down'),
+      );
+
+      await expect(service.cancelSubscription('u1')).rejects.toThrow(
+        'stripe down',
+      );
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('marks cancelAtPeriodEnd without a stripe subscription', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        stripeSubscriptionId: null,
+        subscriptionTier: SubscriptionTier.PREMIUM,
+      });
+
+      await service.cancelSubscription('u1');
+
+      expect(mockProvider.cancelSubscription).not.toHaveBeenCalled();
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        data: { cancelAtPeriodEnd: true },
+      });
     });
   });
 

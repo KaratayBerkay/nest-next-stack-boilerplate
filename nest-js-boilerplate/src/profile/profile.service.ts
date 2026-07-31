@@ -30,6 +30,8 @@ export class ProfileService {
     const data: Prisma.UserUpdateInput = {};
     if (input.name !== undefined) data.name = input.name;
     if (input.bio !== undefined) data.bio = input.bio;
+    if (input.chatNickname !== undefined)
+      data.chatNickname = input.chatNickname;
     if (input.avatarUrl !== undefined) data.avatarUrl = input.avatarUrl;
     if (input.locale !== undefined) data.locale = input.locale;
     if (input.timezone !== undefined) data.timezone = input.timezone;
@@ -56,6 +58,8 @@ export class ProfileService {
 
     const redisFields: Record<string, string> = {};
     if (input.name !== undefined) redisFields.name = input.name;
+    if (input.chatNickname !== undefined)
+      redisFields.chatNickname = input.chatNickname;
     if (input.username !== undefined)
       redisFields.username = user.username ?? '';
     if (input.avatarUrl !== undefined) redisFields.avatarUrl = input.avatarUrl;

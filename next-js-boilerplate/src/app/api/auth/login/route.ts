@@ -3,6 +3,7 @@ import {
   accessTokenCookieOptions,
   deviceTokenCookieOptions,
   rbacTokenCookieOptions,
+  refreshTokenCookieOptions,
   sessionUserCookieOptions,
   userTokenCookieOptions,
 } from "@/lib/cookie";
@@ -33,6 +34,7 @@ const LOGIN_QUERY = `
       deviceId
       deviceToken
       userToken
+      refreshToken
       mfaRequired
       mfaToken
       mfaMethod
@@ -92,6 +94,7 @@ export const POST = withLogging(async (request, log) => {
       deviceId?: string;
       deviceToken?: string;
       userToken?: string;
+      refreshToken?: string;
       mfaRequired?: boolean;
       mfaToken?: string;
       mfaMethod?: "TOTP" | "EMAIL";
@@ -123,7 +126,8 @@ export const POST = withLogging(async (request, log) => {
     );
   }
 
-  const { accessToken, rbacToken, deviceToken, userToken, user } = loginData;
+  const { accessToken, rbacToken, deviceToken, userToken, refreshToken, user } =
+    loginData;
 
   const response = NextResponse.json({ user, accessToken }, { status: 200 });
 
@@ -131,6 +135,8 @@ export const POST = withLogging(async (request, log) => {
   if (rbacToken) response.cookies.set(rbacTokenCookieOptions(rbacToken));
   if (deviceToken) response.cookies.set(deviceTokenCookieOptions(deviceToken));
   if (userToken) response.cookies.set(userTokenCookieOptions(userToken));
+  if (refreshToken)
+    response.cookies.set(refreshTokenCookieOptions(refreshToken));
   response.cookies.set(
     sessionUserCookieOptions(
       Buffer.from(JSON.stringify(user)).toString("base64url"),

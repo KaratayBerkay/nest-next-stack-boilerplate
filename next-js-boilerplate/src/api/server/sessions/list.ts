@@ -1,15 +1,6 @@
 import { apiFetchJson } from "@/lib/api-client";
 import { SESSIONS_LIST_URL } from "@/constants/api/urls";
-
-export interface SessionInfo {
-  sessionId: string;
-  ip?: string;
-  userAgent?: string;
-  deviceId?: string;
-  issuedAt: string;
-  expiresAt: string;
-  trusted?: boolean;
-}
+import type { SessionInfo } from "@/types/settings/SessionInfo-types";
 
 export async function listSessionsServer(): Promise<SessionInfo[]> {
   const data = await apiFetchJson<{ sessions: SessionInfo[] }>(

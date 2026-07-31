@@ -6098,6 +6098,18 @@ abstract class AppLocalizations {
   /// **'Failed to load messages'**
   String get messagesFailedToLoad;
 
+  /// No description provided for @messagesAttachmentTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'File is too large (max 10MB)'**
+  String get messagesAttachmentTooLarge;
+
+  /// No description provided for @messagesAttachmentUploadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to upload attachment'**
+  String get messagesAttachmentUploadFailed;
+
   /// No description provided for @messagesSignInRequired.
   ///
   /// In en, this message translates to:
@@ -6757,6 +6769,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Plan Benefits'**
   String get settingsPlanBenefits;
+
+  /// No description provided for @settingsPlanTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan & Payment'**
+  String get settingsPlanTab;
 
   /// No description provided for @settingsPaymentMethods.
   ///
@@ -8581,6 +8599,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Type a message...'**
   String get chatRoomTypeMessage;
+
+  /// No description provided for @chatRoomAttachFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach a file'**
+  String get chatRoomAttachFile;
+
+  /// No description provided for @chatRoomOpenEmojiPicker.
+  ///
+  /// In en, this message translates to:
+  /// **'Open emoji picker'**
+  String get chatRoomOpenEmojiPicker;
 
   /// No description provided for @chatRoomTabLocked.
   ///

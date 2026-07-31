@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { paymentMethodsQueryOptions } from "@/api/client/billing/payment-methods";
+import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/cn";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { PaymentMethodsProps } from "@/types/billing/PaymentMethods-types";
@@ -74,9 +75,10 @@ export function PaymentMethods({ className }: PaymentMethodsProps) {
       <h3 className="text-sm font-medium">{t.paymentMethods}</h3>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {methods.map((method) => (
-          <div
+          <Card
             key={method.id}
-            className="border-border bg-surface flex items-center gap-3 rounded-xl border p-3"
+            variant="surface"
+            className="flex items-center gap-3 p-3"
           >
             <CardIcon brand={method.brand} />
             <div className="flex-1">
@@ -95,7 +97,7 @@ export function PaymentMethods({ className }: PaymentMethodsProps) {
                 {t.expires || "Expires"} {method.expMonth}/{method.expYear}
               </p>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </div>

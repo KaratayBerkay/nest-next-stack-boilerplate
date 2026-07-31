@@ -1,12 +1,17 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { trackTempId } from "@/lib/realtime/event-dispatch";
+import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
 
 export function useMessageActions() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const sendMessage = async (recipientId: string, text: string) => {
+  const sendMessage = async (
+    recipientId: string,
+    text: string,
+    attachment?: MessageAttachment,
+  ) => {
     const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     if (user?.id) {
@@ -25,6 +30,9 @@ export function useMessageActions() {
             senderId: user.id,
             recipientId,
             body: text,
+            attachmentUrl: attachment?.url,
+            attachmentType: attachment?.type,
+            attachmentName: attachment?.name,
             createdAt: new Date().toISOString(),
             pending: true,
           },
@@ -38,7 +46,7 @@ export function useMessageActions() {
     try {
       const { sendMessageServer } =
         await import("@/api/server/messages/send-message");
-      message = await sendMessageServer(recipientId, text, tempId);
+      message = await sendMessageServer(recipientId, text, tempId, attachment);
     } catch {
       if (user?.id) {
         queryClient.setQueryData(["messages", recipientId], (old: unknown) => {
@@ -96,4 +104,13 @@ export function useMessageActions() {
   };
 
   return { sendMessage, markRead };
+}
+
+export function useMessageUpload() {
+  const uploadAttachment = async (file: File): Promise<MessageAttachment> => {
+    const { uploadAttachmentServer, toMessageAttachment } =
+      await import("@/api/server/messages/upload-attachment");
+    return toMessageAttachment(await uploadAttachmentServer(file));
+  };
+  return { uploadAttachment };
 }

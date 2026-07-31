@@ -1,10 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../types/messages/message_attachment.dart';
 import '../../server/messages/accept_friend_request.dart';
 import '../../server/messages/decline_friend_request.dart';
 import '../../server/messages/mark_read.dart';
 import '../../server/messages/send_friend_request.dart';
 import '../../server/messages/send_message.dart';
+import '../../server/messages/upload_attachment.dart';
 
 final messageActionsProvider = Provider((ref) => MessageActions(ref));
 
@@ -13,9 +15,21 @@ class MessageActions {
 
   MessageActions(this._ref);
 
-  Future<void> sendMessage(String conversationId, String content) async {
+  Future<void> sendMessage(
+    String conversationId,
+    String content, {
+    MessageAttachment? attachment,
+  }) async {
     final server = _ref.read(sendMessageServerProvider);
-    await server.call(conversationId, content);
+    await server.call(conversationId, content, attachment);
+  }
+
+  Future<MessageAttachment> uploadAttachment(
+    String filePath,
+    String fileName,
+  ) async {
+    final server = _ref.read(uploadAttachmentServerProvider);
+    return server.call(filePath, fileName);
   }
 
   Future<void> markRead(String conversationId) async {

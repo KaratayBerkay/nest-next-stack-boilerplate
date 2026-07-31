@@ -6,6 +6,7 @@ import type { useQueryClient } from "@tanstack/react-query";
 import type { useRouter } from "next/navigation";
 import { nowMs } from "@/lib/date-time";
 import { trackTempId } from "@/lib/realtime/event-dispatch";
+import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
 
 export function chatRoomHandleSend(
   input: string,
@@ -15,8 +16,10 @@ export function chatRoomHandleSend(
   user: { id: string; name?: string | null } | null,
   setInput: Dispatch<SetStateAction<string>>,
   scrollToBottom: () => void,
+  attachment?: MessageAttachment,
 ) {
-  if (!input.trim() || !realtime) return;
+  const text = input.trim();
+  if ((!text && !attachment) || !realtime) return;
   const tempId = `temp-${nowMs()}`;
 
   if (user?.id) {
@@ -33,7 +36,10 @@ export function chatRoomHandleSend(
             id: tempId,
             senderId: user.id,
             senderName: user.name ?? "Unknown",
-            body: input.trim(),
+            body: text,
+            attachmentUrl: attachment?.url,
+            attachmentType: attachment?.type,
+            attachmentName: attachment?.name,
             createdAt: new Date().toISOString(),
             pending: true,
           },
@@ -45,8 +51,15 @@ export function chatRoomHandleSend(
   realtime.send({
     type: "room-message",
     room,
-    text: input.trim(),
+    text,
     tempId,
+    ...(attachment
+      ? {
+          attachmentUrl: attachment.url,
+          attachmentType: attachment.type,
+          attachmentName: attachment.name,
+        }
+      : {}),
   });
   setInput("");
   scrollToBottom();

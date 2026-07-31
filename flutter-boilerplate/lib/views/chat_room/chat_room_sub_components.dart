@@ -184,6 +184,45 @@ class MessageInput extends StatelessWidget {
   }
 }
 
+class ComposerIconButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final bool disabled;
+  final bool loading;
+  final VoidCallback? onPressed;
+
+  const ComposerIconButton({
+    super.key,
+    required this.icon,
+    required this.tooltip,
+    this.disabled = false,
+    this.loading = false,
+    this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+
+    if (loading) {
+      return const Padding(
+        padding: EdgeInsets.all(8),
+        child: SizedBox(
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+
+    return IconButton(
+      icon: Icon(icon, size: 22, color: colors.fgMuted),
+      onPressed: disabled ? null : onPressed,
+      tooltip: tooltip,
+    );
+  }
+}
+
 class SendButton extends StatelessWidget {
   final bool useNativeControls;
   final VoidCallback? onClick;

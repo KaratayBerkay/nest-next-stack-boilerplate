@@ -162,11 +162,13 @@ export class BillingResolver {
     @CurrentUser() user: JwtUser,
     @Args('tier', { type: () => SubscriptionTier }) tier: SubscriptionTier,
     @Args('paymentMethodId', { nullable: true }) paymentMethodId?: string,
+    @Args('idempotencyKey', { nullable: true }) idempotencyKey?: string,
   ): Promise<SubscribeResult> {
     const result = await this.billing.subscribeToPlan(
       user.userId,
       tier,
       paymentMethodId,
+      idempotencyKey,
     );
     return {
       success: result.success,

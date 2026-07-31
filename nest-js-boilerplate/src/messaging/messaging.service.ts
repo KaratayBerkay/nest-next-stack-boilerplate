@@ -11,7 +11,7 @@ import { REDIS_CLIENT } from '../redis/redis.tokens';
 import { MessagingRoomService } from './messaging-room.service';
 import { MessagingDmService } from './messaging-dm.service';
 import { MessagingFriendService } from './messaging-friend.service';
-import type { RoomMember } from './messaging.types';
+import type { RoomMember, MessageAttachment } from './messaging.types';
 
 @Injectable()
 export class MessagingService {
@@ -66,8 +66,9 @@ export class MessagingService {
   sendMessage(
     senderId: string,
     recipientId: string,
-    text: string,
+    text = '',
     friends?: string[],
+    attachment?: MessageAttachment,
   ) {
     return this.dm.sendMessage(
       senderId,
@@ -75,14 +76,16 @@ export class MessagingService {
       text,
       (a, b) => this.friends.areFriends(a, b),
       friends,
+      attachment,
     );
   }
 
   sendAndDeliverMessage(
     senderId: string,
     recipientId: string,
-    text: string,
+    text = '',
     tempId?: string,
+    attachment?: MessageAttachment,
   ) {
     return this.dm.sendAndDeliverMessage(
       senderId,
@@ -91,6 +94,7 @@ export class MessagingService {
       (a, b) => this.friends.areFriends(a, b),
       undefined,
       tempId,
+      attachment,
     );
   }
 
@@ -178,8 +182,13 @@ export class MessagingService {
     return this.rooms.getRoomMembers(room);
   }
 
-  saveRoomMessage(roomId: string, senderId: string, body: string) {
-    return this.rooms.saveRoomMessage(roomId, senderId, body);
+  saveRoomMessage(
+    roomId: string,
+    senderId: string,
+    body: string,
+    attachment?: MessageAttachment,
+  ) {
+    return this.rooms.saveRoomMessage(roomId, senderId, body, attachment);
   }
 
   getRoomMessages(roomId: string, before?: string, take?: number) {

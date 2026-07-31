@@ -4,6 +4,8 @@ import {
   type PaymentProvider,
   type CreateSubscriptionInput,
   type CreateSubscriptionResult,
+  type SwitchSubscriptionInput,
+  type SwitchSubscriptionResult,
 } from './payment-provider.interface';
 
 @Injectable()
@@ -34,6 +36,7 @@ export class StripePaymentProvider implements PaymentProvider {
         customerId,
         priceId,
         input.paymentMethodId,
+        input.idempotencyKey,
       );
 
       return {
@@ -62,7 +65,7 @@ export class StripePaymentProvider implements PaymentProvider {
       );
       return {
         success: false,
-        reason: msg.includes('insufficient_funds')
+        reason: msg.includes('insufficient funds')
           ? 'insufficient_funds'
           : msg.includes('card_declined')
             ? 'declined'
@@ -73,5 +76,54 @@ export class StripePaymentProvider implements PaymentProvider {
 
   async cancelSubscription(stripeSubscriptionId: string): Promise<void> {
     await this.stripeService.cancelSubscription(stripeSubscriptionId);
+  }
+
+  async cancelSubscriptionNow(stripeSubscriptionId: string): Promise<void> {
+    await this.stripeService.cancelSubscriptionNow(stripeSubscriptionId);
+  }
+
+  async switchSubscription(
+    input: SwitchSubscriptionInput,
+  ): Promise<SwitchSubscriptionResult> {
+    const priceId = this.stripeService.getPriceIdForTier(input.tier);
+    if (!priceId) {
+      this.logger.error(
+        {
+          category: 'payment',
+          event: 'payment.missing_price',
+          tier: input.tier,
+        },
+        `No Stripe price ID configured for tier ${input.tier}`,
+      );
+      return { success: false, reason: 'configuration_error' };
+    }
+
+    try {
+      const subscription = await this.stripeService.switchSubscription(
+        input.stripeSubscriptionId,
+        priceId,
+      );
+      return {
+        success: true,
+        stripeSubscriptionId: subscription.id,
+        periodStart: new Date(
+          subscription.items.data[0]?.current_period_start * 1000,
+        ),
+        periodEnd: new Date(
+          subscription.items.data[0]?.current_period_end * 1000,
+        ),
+      };
+    } catch (err) {
+      const msg = (err as Error).message ?? 'subscription_switch_failed';
+      this.logger.error(
+        {
+          category: 'payment',
+          event: 'payment.subscription_switch_failed',
+          error: msg,
+        },
+        `Stripe subscription switch failed: ${msg}`,
+      );
+      return { success: false, reason: 'subscription_switch_failed' };
+    }
   }
 }

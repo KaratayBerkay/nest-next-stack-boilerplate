@@ -5,6 +5,7 @@ import {
   clearAccessTokenCookieOptions,
   clearDeviceCookieOptions,
   clearRbacTokenCookieOptions,
+  clearRefreshTokenCookieOptions,
   clearSessionUserCookieOptions,
   clearUserTokenCookieOptions,
 } from "@/lib/cookie";
@@ -44,5 +45,6 @@ export async function POST() {
   response.cookies.set(clearDeviceCookieOptions());
   response.cookies.set(clearUserTokenCookieOptions());
   response.cookies.set(clearSessionUserCookieOptions());
+  response.cookies.set(clearRefreshTokenCookieOptions());
   return response;
 }

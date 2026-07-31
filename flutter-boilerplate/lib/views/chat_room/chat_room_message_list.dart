@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../components/ui/attachment_preview/attachment_preview.dart';
 import '../../components/ui/avatar/avatar.dart';
 import '../../constants/theme.dart';
 import '../../types/messages/message.dart';
@@ -111,31 +112,41 @@ class ChatRoomMessageList extends StatelessWidget {
                           ),
                         ),
                       ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isMe ? colors.brand : colors.surfaceAlt,
-                        borderRadius: BorderRadius.circular(12).copyWith(
-                          bottomRight:
-                              isMe ? Radius.zero : const Radius.circular(12),
-                          bottomLeft:
-                              !isMe ? Radius.zero : const Radius.circular(12),
+                    if (msg.attachmentUrl != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: AttachmentPreview(
+                          url: msg.attachmentUrl!,
+                          type: msg.attachmentType,
+                          name: msg.attachmentName,
                         ),
                       ),
-                      constraints: BoxConstraints(
-                        maxWidth: MediaQuery.of(context).size.width * 0.7,
-                      ),
-                      child: Text(
-                        msg.content,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: isMe ? colors.surface : colors.fg,
+                    if (msg.content.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isMe ? colors.brand : colors.surfaceAlt,
+                          borderRadius: BorderRadius.circular(12).copyWith(
+                            bottomRight:
+                                isMe ? Radius.zero : const Radius.circular(12),
+                            bottomLeft:
+                                !isMe ? Radius.zero : const Radius.circular(12),
+                          ),
+                        ),
+                        constraints: BoxConstraints(
+                          maxWidth: MediaQuery.of(context).size.width * 0.7,
+                        ),
+                        child: Text(
+                          msg.content,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: isMe ? colors.surface : colors.fg,
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),

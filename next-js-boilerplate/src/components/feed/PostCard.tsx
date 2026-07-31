@@ -2,41 +2,24 @@
 
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/components/ui/Toast";
+import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { usePostActions } from "@/api/client/posts/actions";
-import type { PostCardProps, Post } from "@/types/feed/PostCard-types";
+import { singlePostQueryOptions } from "@/api/client/posts/query";
+import type { PostCardProps } from "@/types/feed/PostCard-types";
 import { PostHeader } from "./PostHeader";
 import { PostContent } from "./PostContent";
 import { PostActions } from "./PostActions";
-
-async function refreshPostData(
-  postId: string,
-  toast: ReturnType<typeof useToast>["toast"],
-  setPostData: Dispatch<SetStateAction<Post>>,
-  refreshPost: (id: string) => Promise<Post>,
-) {
-  try {
-    const post = await refreshPost(postId);
-    setPostData(post);
-  } catch {
-    toast({ title: "Network error loading post", variant: "destructive" });
-  }
-}
 
 async function handleEditPost(
   postDataId: string,
   editTitle: string,
   editContent: string,
-  setPostData: Dispatch<SetStateAction<Post>>,
   setEditing: Dispatch<SetStateAction<boolean>>,
   updatePost: (id: string, title: string, content: string) => Promise<void>,
-  refreshPost: (id: string) => Promise<Post>,
 ) {
   if (!editTitle.trim() || !editContent.trim()) return;
   try {
     await updatePost(postDataId, editTitle.trim(), editContent.trim());
-    const post = await refreshPost(postDataId);
-    setPostData(post);
     setEditing(false);
   } catch {
     // silent
@@ -60,13 +43,13 @@ function handleToggle(
   isExpanded: boolean,
   onToggle: (() => void) | undefined,
   postId: string,
-  toast: ReturnType<typeof useToast>["toast"],
-  setPostData: Dispatch<SetStateAction<Post>>,
-  refreshPost: (id: string) => Promise<Post>,
+  queryClient: ReturnType<typeof useQueryClient>,
 ) {
   const willExpand = !isExpanded;
   onToggle?.();
-  if (willExpand) refreshPostData(postId, toast, setPostData, refreshPost);
+  if (willExpand) {
+    queryClient.invalidateQueries({ queryKey: ["posts", postId] });
+  }
 }
 
 export function PostCard({
@@ -76,13 +59,17 @@ export function PostCard({
   onDelete,
 }: PostCardProps) {
   const { user } = useAuth();
-  const [postData, setPostData] = useState(post);
+  const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
+  const { data: postData } = useSuspenseQuery({
+    ...singlePostQueryOptions(post.id),
+    initialData: post,
+    staleTime: 30_000,
+  });
   const isOwn = user && postData.author.id === user.id;
-  const { toast } = useToast();
-  const { updatePost, deletePost, refreshPost } = usePostActions();
+  const { updatePost, deletePost } = usePostActions();
 
   return (
     <div
@@ -94,7 +81,7 @@ export function PostCard({
         isOwn={!!isOwn}
         editing={editing}
         onRefresh={() =>
-          refreshPostData(postData.id, toast, setPostData, refreshPost)
+          queryClient.invalidateQueries({ queryKey: ["posts", postData.id] })
         }
         onEditStart={() => {
           setEditTitle(postData.title);
@@ -123,13 +110,11 @@ export function PostCard({
                 postData.id,
                 editTitle,
                 editContent,
-                setPostData,
                 setEditing,
                 updatePost,
-                refreshPost,
               )
             }
-            className="bg-brand rounded-lg px-3 py-1 text-xs font-medium text-brand-fg"
+            className="bg-brand text-brand-fg rounded-lg px-3 py-1 text-xs font-medium"
           >
             Save
           </button>
@@ -146,18 +131,11 @@ export function PostCard({
         isExpanded={isExpanded}
         postData={postData}
         onToggle={() =>
-          handleToggle(
-            isExpanded,
-            onToggle,
-            postData.id,
-            toast,
-            setPostData,
-            refreshPost,
-          )
+          handleToggle(isExpanded, onToggle, postData.id, queryClient)
         }
         currentUserId={user?.id}
         onCommentAdded={() =>
-          refreshPostData(postData.id, toast, setPostData, refreshPost)
+          queryClient.invalidateQueries({ queryKey: ["posts", postData.id] })
         }
       />
     </div>

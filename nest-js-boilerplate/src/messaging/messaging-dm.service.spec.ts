@@ -77,8 +77,22 @@ describe('MessagingDmService', () => {
       );
 
       expect(mockPrisma.message.create).toHaveBeenCalledWith({
-        data: { senderId: 'u1', recipientId: 'u2', body: 'hello' },
-        include: { sender: { select: { id: true, name: true, email: true } } },
+        data: {
+          senderId: 'u1',
+          recipientId: 'u2',
+          body: 'hello',
+          attachmentUrl: undefined,
+          attachmentType: undefined,
+          attachmentName: undefined,
+        },
+        include: {
+          sender: {
+            select: { id: true, name: true, email: true, avatarUrl: true },
+          },
+          recipient: {
+            select: { id: true, name: true, email: true, avatarUrl: true },
+          },
+        },
       });
       expect(mockRealtime.emitToService).toHaveBeenCalled();
       expect(mockRealtime.emitToPage).toHaveBeenCalled();

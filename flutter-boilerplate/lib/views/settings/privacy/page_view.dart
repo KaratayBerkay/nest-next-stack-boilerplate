@@ -3,8 +3,10 @@ import 'package:flutter_boilerplate/lib/tier_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../api/client/profile/actions.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/toast/toast.dart';
+import '../../../hooks/use_auth.dart';
 import '../../../l10n/app_localizations.dart';
 import '../settings_shell.dart';
 import 'privacy_toggle_row.dart';
@@ -28,16 +30,16 @@ class SettingsPrivacyPageContent extends ConsumerWidget {
   }
 }
 
-class _PrivacySettings extends StatefulWidget {
+class _PrivacySettings extends ConsumerStatefulWidget {
   final String lang;
 
   const _PrivacySettings({required this.lang});
 
   @override
-  State<_PrivacySettings> createState() => _PrivacySettingsState();
+  ConsumerState<_PrivacySettings> createState() => _PrivacySettingsState();
 }
 
-class _PrivacySettingsState extends State<_PrivacySettings> {
+class _PrivacySettingsState extends ConsumerState<_PrivacySettings> {
   bool _hideProfilePicture = false;
   bool _useNickname = false;
   late TextEditingController _nicknameCtrl;
@@ -45,7 +47,9 @@ class _PrivacySettingsState extends State<_PrivacySettings> {
   @override
   void initState() {
     super.initState();
-    _nicknameCtrl = TextEditingController();
+    final user = ref.read(currentUserProvider);
+    _useNickname = user?.chatNickname?.isNotEmpty ?? false;
+    _nicknameCtrl = TextEditingController(text: user?.chatNickname ?? '');
   }
 
   @override
@@ -54,8 +58,18 @@ class _PrivacySettingsState extends State<_PrivacySettings> {
     super.dispose();
   }
 
-  void _save() {
-    showToast(context, 'Privacy settings saved');
+  Future<void> _save() async {
+    final t = AppLocalizations.of(context);
+    final trimmed = _nicknameCtrl.text.trim();
+    final chatNickname = _useNickname && trimmed.isNotEmpty ? trimmed : '';
+    try {
+      await ref.read(profileActionsProvider).update(chatNickname: chatNickname);
+      if (!mounted) return;
+      showToast(context, t.settingsSaveSuccess, type: ToastType.success);
+    } catch (_) {
+      if (!mounted) return;
+      showToast(context, t.settingsSaveFailed, type: ToastType.error);
+    }
   }
 
   @override

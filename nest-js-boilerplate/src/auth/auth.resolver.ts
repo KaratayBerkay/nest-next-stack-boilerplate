@@ -161,6 +161,7 @@ export class AuthResolver {
       avatarUrl: user.avatarUrl ?? undefined,
       locale: user.locale ?? 'en',
       timezone: user.timezone ?? 'UTC',
+      chatNickname: user.chatNickname ?? undefined,
       sessionId: user.sessionId,
       mfaEnabled: dbUser?.mfaEnabled ?? false,
     };

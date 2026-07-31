@@ -1,18 +1,12 @@
 import { apiFetch } from "@/lib/api-client";
 import { MESSAGES_ROOM_MESSAGES_PREFIX } from "@/constants/api/urls";
 
-export interface RoomMessage {
-  id: string;
-  senderId: string;
-  senderName: string;
-  avatar: string;
-  body: string;
-  createdAt: string;
-}
+export type { ChatRoomMessage } from "@/types/chat-room/ChatRoomMessage-types";
+import type { ChatRoomMessage } from "@/types/chat-room/ChatRoomMessage-types";
 
 export async function fetchRoomMessagesServer(
   room: string,
-): Promise<RoomMessage[]> {
+): Promise<ChatRoomMessage[]> {
   const res = await apiFetch(
     `${MESSAGES_ROOM_MESSAGES_PREFIX}${room}/messages`,
   );

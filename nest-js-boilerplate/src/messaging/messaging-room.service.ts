@@ -2,7 +2,11 @@ import { NotFoundException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import Redis from 'ioredis';
 import { PrismaService } from '../prisma/prisma.service';
-import { type RoomMember, initials } from './messaging.types';
+import {
+  type RoomMember,
+  type MessageAttachment,
+  initials,
+} from './messaging.types';
 
 const ROOM_MEMBERS_PREFIX = 'room:';
 
@@ -94,11 +98,23 @@ export class MessagingRoomService {
     return result;
   }
 
-  async saveRoomMessage(roomId: string, senderId: string, body: string) {
+  async saveRoomMessage(
+    roomId: string,
+    senderId: string,
+    body = '',
+    attachment?: MessageAttachment,
+  ) {
     if (!isValidRoom(roomId))
       throw new NotFoundException(`Unknown room: ${roomId}`);
     return this.prisma.roomMessage.create({
-      data: { roomId, senderId, body },
+      data: {
+        roomId,
+        senderId,
+        body: body ?? '',
+        attachmentUrl: attachment?.url,
+        attachmentType: attachment?.type,
+        attachmentName: attachment?.name,
+      },
       include: { sender: { select: { name: true, email: true } } },
     });
   }
@@ -121,6 +137,9 @@ export class MessagingRoomService {
         senderName: m.sender.name || m.sender.email || 'Unknown',
         avatar: initials(m.sender.name || m.sender.email || 'Unknown'),
         body: m.body,
+        attachmentUrl: m.attachmentUrl,
+        attachmentType: m.attachmentType,
+        attachmentName: m.attachmentName,
         createdAt: m.createdAt.toISOString(),
       })),
       hasMore: messages.length === take,

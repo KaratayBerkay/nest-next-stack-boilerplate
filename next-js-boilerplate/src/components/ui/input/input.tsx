@@ -23,6 +23,7 @@ export function Input({
   fontSize,
   fontWeight,
   fontFamily,
+  ref,
   ...props
 }: InputProps) {
   const effectiveVariant = useComponentVariant(variant);
@@ -46,6 +47,7 @@ export function Input({
           <div className="text-muted absolute left-3">{leftIcon}</div>
         )}
         <input
+          ref={ref}
           className={cn(
             inputBaseClasses,
             variantClass,

@@ -16,7 +16,13 @@ export async function GET(request: Request) {
 
   const { data, errors } = await graphqlFetch<{
     postList: Array<{ id: string }>;
-  }>(POSTS_QUERY, { cursor: cursor || undefined, take, search }, token);
+  }>(
+    POSTS_QUERY,
+    { cursor: cursor || undefined, take, search },
+    token,
+    undefined,
+    true,
+  );
 
   if (errors) {
     return NextResponse.json(
@@ -30,14 +36,7 @@ export async function GET(request: Request) {
   const posts = hasMore ? all.slice(0, take) : all;
   const nextCursor = hasMore ? posts[posts.length - 1]?.id : null;
 
-  return NextResponse.json(
-    { posts, hasMore, nextCursor },
-    {
-      headers: {
-        "Cache-Control": "public, max-age=30, stale-while-revalidate=60",
-      },
-    },
-  );
+  return NextResponse.json({ posts, hasMore, nextCursor });
 }
 
 export async function POST(request: Request) {

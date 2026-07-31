@@ -52,21 +52,20 @@ export function usePostActions() {
     await invalidate();
   };
 
-  const updateComment = async (commentId: string, body: string) => {
+  const updateComment = async (
+    commentId: string,
+    body: string,
+  ): Promise<{ id: string; body: string }> => {
     const { updateCommentServer } = await import("@/api/server/posts/comments");
-    await updateCommentServer(commentId, body);
+    const updated = await updateCommentServer(commentId, body);
     await invalidate();
+    return updated;
   };
 
   const deleteComment = async (commentId: string) => {
     const { deleteCommentServer } = await import("@/api/server/posts/comments");
     await deleteCommentServer(commentId);
     await invalidate();
-  };
-
-  const refreshPost = async (id: string) => {
-    const { fetchSinglePostServer } = await import("@/api/server/posts/single");
-    return fetchSinglePostServer(id);
   };
 
   return {
@@ -77,6 +76,5 @@ export function usePostActions() {
     createComment,
     updateComment,
     deleteComment,
-    refreshPost,
   };
 }

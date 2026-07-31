@@ -13,5 +13,9 @@
   "countOnline": "{count} online",
   "signInRequired": "Sign in to join chat rooms",
   "roomMembers": "Members",
-  "loadEarlier": "Load earlier messages"
+  "loadEarlier": "Load earlier messages",
+  "attachFile": "Attach file",
+  "openEmojiPicker": "Insert emoji",
+  "removeAttachment": "Remove attachment",
+  "uploading": "Uploading…"
 }

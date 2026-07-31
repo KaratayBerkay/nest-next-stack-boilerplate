@@ -3,6 +3,7 @@ import {
   accessTokenCookieOptions,
   deviceTokenCookieOptions,
   rbacTokenCookieOptions,
+  refreshTokenCookieOptions,
   sessionUserCookieOptions,
   userTokenCookieOptions,
 } from "@/lib/cookie";
@@ -24,6 +25,7 @@ const VERIFY_MFA_MUTATION = `
       deviceId
       deviceToken
       userToken
+      refreshToken
       user {
         id
         email
@@ -78,6 +80,7 @@ export const POST = withLogging(async (request, log) => {
       deviceId?: string;
       deviceToken?: string;
       userToken?: string;
+      refreshToken?: string;
       user: unknown;
     };
   }>(VERIFY_MFA_MUTATION, {
@@ -90,7 +93,7 @@ export const POST = withLogging(async (request, log) => {
     return NextResponse.json(body, { status: body.statusCode });
   }
 
-  const { accessToken, rbacToken, deviceToken, userToken, user } =
+  const { accessToken, rbacToken, deviceToken, userToken, refreshToken, user } =
     data.verifyLoginMfa;
 
   const response = NextResponse.json({ user, accessToken }, { status: 200 });
@@ -99,6 +102,8 @@ export const POST = withLogging(async (request, log) => {
   if (rbacToken) response.cookies.set(rbacTokenCookieOptions(rbacToken));
   if (deviceToken) response.cookies.set(deviceTokenCookieOptions(deviceToken));
   if (userToken) response.cookies.set(userTokenCookieOptions(userToken));
+  if (refreshToken)
+    response.cookies.set(refreshTokenCookieOptions(refreshToken));
   response.cookies.set(
     sessionUserCookieOptions(
       Buffer.from(JSON.stringify(user)).toString("base64url"),

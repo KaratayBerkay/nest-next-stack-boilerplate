@@ -48,6 +48,7 @@ dependencies:
   qr_flutter: ^4.1.0
   local_auth: ^2.3.0
   share_plus: ^13.3.0
+  emoji_picker_flutter: ^4.5.3
 
 dev_dependencies:
   flutter_test:

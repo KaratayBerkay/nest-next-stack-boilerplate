@@ -1,29 +1,36 @@
 "use client";
 
-import { HamburgerButton, MessageInput, SendButton } from "@/views/chat-room/ChatRoomSubComponents";
+import { useRef } from "react";
+import {
+  HamburgerButton,
+  MessageInput,
+  SendButton,
+  AttachButton,
+  EmojiButton,
+  PendingAttachmentChip,
+} from "@/views/chat-room/ChatRoomSubComponents";
 import { ChatRoomMessageList } from "@/views/chat-room/ChatRoomMessageList";
 import { ScrollToBottomButton } from "@/components/ui/ScrollToBottomButton";
 import { ConnectionUnstable } from "@/components/ConnectionUnstable";
+import type { ChatRoomMainContentProps } from "@/types/chat-room/ChatRoomMainContent-types";
 
-interface ChatRoomMainContentProps {
-  useNativeControls: boolean;
-  room: string;
-  roomCounts: Record<string, number>;
-  connectionState: string;
-  messages: { id: string; senderId: string; senderName: string; body: string }[];
-  userId: string;
-  onlineUserIds: Set<string>;
-  msgsLoading: boolean;
-  msgsError: boolean;
-  input: string;
-  bottomRef: React.RefObject<HTMLDivElement | null>;
-  messagesRef: React.RefObject<HTMLDivElement | null>;
-  isAtBottom: boolean;
-  t: Record<string, string>;
-  tErr: Record<string, string>;
-  onSetSidebarOpen: (open: boolean) => void;
-  onSetInput: (value: string) => void;
-  onSend: () => void;
+function insertEmojiAtCursor(
+  input: string,
+  setInput: (value: string) => void,
+  inputRef: React.RefObject<HTMLInputElement | null>,
+  emoji: string,
+) {
+  const el = inputRef.current;
+  const start = el?.selectionStart ?? input.length;
+  const end = el?.selectionEnd ?? start;
+  const next = input.slice(0, start) + emoji + input.slice(end);
+  setInput(next);
+  requestAnimationFrame(() => {
+    const node = inputRef.current;
+    if (!node) return;
+    const pos = start + emoji.length;
+    node.setSelectionRange(pos, pos);
+  });
 }
 
 export function ChatRoomMainContent({
@@ -37,6 +44,8 @@ export function ChatRoomMainContent({
   msgsLoading,
   msgsError,
   input,
+  attaching,
+  pendingAttachment,
   bottomRef,
   messagesRef,
   isAtBottom,
@@ -45,7 +54,11 @@ export function ChatRoomMainContent({
   onSetSidebarOpen,
   onSetInput,
   onSend,
+  onAttachFile,
+  onRemoveAttachment,
 }: ChatRoomMainContentProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
   if (connectionState === "locked") {
     return (
       <ConnectionUnstable
@@ -56,10 +69,7 @@ export function ChatRoomMainContent({
   }
   if (connectionState === "unstable") {
     return (
-      <ConnectionUnstable
-        title={t.disconnected}
-        description={t.connecting}
-      />
+      <ConnectionUnstable title={t.disconnected} description={t.connecting} />
     );
   }
 
@@ -79,10 +89,7 @@ export function ChatRoomMainContent({
         <div className="hidden items-center gap-2 md:flex">
           <span className="text-sm font-semibold"># {room}</span>
           <span className="text-muted text-xs">
-            {t.countOnline.replace(
-              "{count}",
-              String(roomCounts[room] ?? 0),
-            )}
+            {t.countOnline.replace("{count}", String(roomCounts[room] ?? 0))}
           </span>
         </div>
       </div>
@@ -94,16 +101,48 @@ export function ChatRoomMainContent({
         onlineUserIds={onlineUserIds}
         msgsLoading={msgsLoading}
         msgsError={msgsError}
+        bottomRef={bottomRef}
         t={t}
       />
-      <div ref={bottomRef} className="h-px" />
 
       {!isAtBottom && messages.length > 0 && (
-        <ScrollToBottomButton onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })} />
+        <ScrollToBottomButton
+          onClick={() =>
+            bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+          }
+        />
       )}
 
       <div className="flex gap-2 border-t p-2">
+        <AttachButton
+          useNativeControls={useNativeControls}
+          disabled={connectionState !== "online" || attaching}
+          onAttachFile={onAttachFile}
+          label={t.attachFile}
+        />
+        <EmojiButton
+          useNativeControls={useNativeControls}
+          disabled={connectionState !== "online"}
+          onEmojiSelect={(emoji) =>
+            insertEmojiAtCursor(input, onSetInput, inputRef, emoji)
+          }
+          label={t.openEmojiPicker}
+        />
         <div className="flex flex-1 flex-col">
+          {pendingAttachment && (
+            <div className="mb-1 flex items-center gap-2">
+              <PendingAttachmentChip
+                attachment={pendingAttachment}
+                onRemove={onRemoveAttachment}
+                label={t.removeAttachment}
+              />
+              {attaching && (
+                <span className="text-muted animate-pulse text-xs">
+                  {t.uploading}
+                </span>
+              )}
+            </div>
+          )}
           <MessageInput
             useNativeControls={useNativeControls}
             value={input}
@@ -122,12 +161,16 @@ export function ChatRoomMainContent({
                   : t.disconnected
             }
             disabled={connectionState !== "online"}
+            inputRef={inputRef}
           />
         </div>
         <SendButton
           useNativeControls={useNativeControls}
           onClick={onSend}
-          disabled={connectionState !== "online" || !input.trim()}
+          disabled={
+            connectionState !== "online" ||
+            (!input.trim() && !pendingAttachment)
+          }
           label={t.send}
         />
       </div>

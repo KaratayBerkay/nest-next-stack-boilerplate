@@ -4,7 +4,6 @@
   "back": "Geri",
   "breadcrumbLabel": "UI Bileşenleri",
   "breadcrumbPattern": "/v1/:lang/ui/:component",
-
   "accordionTitle": "Akordiyon - Tek Durum",
   "accordionDescription": "Yeni bir akordiyon açıldığında diğer açık olan kapanır.",
   "accordionText": "Yeni bir akordiyon açıldığında diğer açık olan kapanır.",
@@ -133,5 +132,7 @@
   "formErrorBannerTitle": "Form Hata Bildirimi",
   "formErrorBannerDescription": "Form düzeyindeki hatalar için kapatılabilir uyarı",
   "stepIndicatorTitle": "Adım Göstergesi",
-  "stepIndicatorDescription": "Çok adımlı sihirbaz ilerleme göstergesi"
+  "stepIndicatorDescription": "Çok adımlı sihirbaz ilerleme göstergesi",
+  "emojiPickerTitle": "Emoji Seçici",
+  "emojiPickerDescription": "Emoji seçici bileşeni gösterimi"
 }

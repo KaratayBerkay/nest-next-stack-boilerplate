@@ -16,7 +16,7 @@ export async function GET(
 
   const { data, errors } = await graphqlFetch<{
     post: unknown;
-  }>(POST_QUERY, { id }, token);
+  }>(POST_QUERY, { id }, token, undefined, true);
 
   if (errors) {
     const body = graphqlErrorBody(errors, "GraphQL error");
@@ -35,14 +35,7 @@ export async function GET(
     );
   }
 
-  return NextResponse.json(
-    { post: data.post },
-    {
-      headers: {
-        "Cache-Control": "public, max-age=60, stale-while-revalidate=120",
-      },
-    },
-  );
+  return NextResponse.json({ post: data.post });
 }
 
 async function mutationHeaders() {

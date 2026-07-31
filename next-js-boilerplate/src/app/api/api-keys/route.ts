@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
 import { csrfEchoHeaders, graphqlFetch, graphqlErrorBody } from "@/lib/backend";
-import { MY_API_KEYS_QUERY, CREATE_API_KEY_MUTATION } from "@/lib/graphql/api-keys";
+import {
+  MY_API_KEYS_QUERY,
+  CREATE_API_KEY_MUTATION,
+} from "@/lib/graphql/api-keys";
 
 export async function GET() {
   const accessToken = (await cookies()).get(ACCESS_TOKEN_COOKIE)?.value;
@@ -14,6 +17,8 @@ export async function GET() {
     MY_API_KEYS_QUERY,
     {},
     accessToken,
+    undefined,
+    true,
   );
   if (errors) {
     const body = graphqlErrorBody(errors, "Failed to load API keys");

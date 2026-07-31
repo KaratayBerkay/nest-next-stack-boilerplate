@@ -29,16 +29,20 @@ export class StripeService {
     customerId: string,
     priceId: string,
     paymentMethodId: string,
+    idempotencyKey?: string,
   ): Promise<Stripe.Subscription> {
     await this.stripe.paymentMethods.attach(paymentMethodId, {
       customer: customerId,
     });
-    return this.stripe.subscriptions.create({
-      customer: customerId,
-      items: [{ price: priceId }],
-      default_payment_method: paymentMethodId,
-      off_session: true,
-    });
+    return this.stripe.subscriptions.create(
+      {
+        customer: customerId,
+        items: [{ price: priceId }],
+        default_payment_method: paymentMethodId,
+        off_session: true,
+      },
+      idempotencyKey ? { idempotencyKey } : undefined,
+    );
   }
 
   async cancelSubscription(
@@ -47,6 +51,35 @@ export class StripeService {
     return this.stripe.subscriptions.update(stripeSubscriptionId, {
       cancel_at_period_end: true,
     });
+  }
+
+  /** Immediately cancel — used when a replacement subscription is being created. */
+  async cancelSubscriptionNow(
+    stripeSubscriptionId: string,
+  ): Promise<Stripe.Subscription> {
+    return this.stripe.subscriptions.cancel(stripeSubscriptionId);
+  }
+
+  /** Switch the same subscription to a new price (prorated) — no second live subscription. */
+  async switchSubscription(
+    stripeSubscriptionId: string,
+    priceId: string,
+  ): Promise<Stripe.Subscription> {
+    return this.stripe.subscriptions.update(stripeSubscriptionId, {
+      items: [{ price: priceId }],
+      proration_behavior: 'create_prorations',
+      cancel_at_period_end: false,
+    });
+  }
+
+  async getSubscription(
+    subscriptionId: string,
+  ): Promise<Stripe.Subscription | null> {
+    try {
+      return await this.stripe.subscriptions.retrieve(subscriptionId);
+    } catch {
+      return null;
+    }
   }
 
   async getInvoice(invoiceId: string): Promise<Stripe.Invoice> {
@@ -67,6 +100,15 @@ export class StripeService {
   getPriceIdForTier(tier: string): string | null {
     const key = `STRIPE_PRICE_${tier}`;
     return this.config.get<string>(key) ?? null;
+  }
+
+  /** Reverse lookup: which tier does a price belong to? */
+  getTierForPriceId(priceId: string): string | null {
+    const tiers = ['FREE', 'BASIC', 'MEDIUM', 'PREMIUM'];
+    for (const tier of tiers) {
+      if (this.getPriceIdForTier(tier) === priceId) return tier;
+    }
+    return null;
   }
 
   async listPaymentMethods(

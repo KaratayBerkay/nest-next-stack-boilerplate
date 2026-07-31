@@ -22,7 +22,7 @@ export async function createCommentServer(
 export async function updateCommentServer(
   commentId: string,
   body: string,
-): Promise<void> {
+): Promise<{ id: string; body: string }> {
   const res = await apiFetch(COMMENTS_PREFIX + commentId, {
     method: PUT,
     headers: JSON_CONTENT_TYPE_HEADER,
@@ -32,6 +32,8 @@ export async function updateCommentServer(
     const data = await res.json().catch(() => ({}));
     throw new Error(data.error ?? "Failed to update comment");
   }
+  const data = await res.json();
+  return data.updateComment as { id: string; body: string };
 }
 
 export async function deleteCommentServer(commentId: string): Promise<void> {

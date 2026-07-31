@@ -5,6 +5,7 @@ export interface CreateSubscriptionInput {
   tier: SubscriptionTier;
   paymentMethodId: string;
   stripeCustomerId: string;
+  idempotencyKey?: string;
 }
 
 export interface CreateSubscriptionResult {
@@ -16,6 +17,19 @@ export interface CreateSubscriptionResult {
   latestInvoiceId?: string;
 }
 
+export interface SwitchSubscriptionInput {
+  stripeSubscriptionId: string;
+  tier: SubscriptionTier;
+}
+
+export interface SwitchSubscriptionResult {
+  success: boolean;
+  reason?: string;
+  stripeSubscriptionId?: string;
+  periodStart?: Date;
+  periodEnd?: Date;
+}
+
 export const PAYMENT_PROVIDER = 'PAYMENT_PROVIDER';
 
 export interface PaymentProvider {
@@ -23,4 +37,8 @@ export interface PaymentProvider {
     input: CreateSubscriptionInput,
   ): Promise<CreateSubscriptionResult>;
   cancelSubscription(stripeSubscriptionId: string): Promise<void>;
+  cancelSubscriptionNow(stripeSubscriptionId: string): Promise<void>;
+  switchSubscription(
+    input: SwitchSubscriptionInput,
+  ): Promise<SwitchSubscriptionResult>;
 }

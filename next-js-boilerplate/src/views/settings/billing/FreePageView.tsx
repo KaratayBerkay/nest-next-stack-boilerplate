@@ -9,7 +9,9 @@ import { type Tier } from "@/lib/tier";
 import { cn } from "@/lib/cn";
 import type { ClassNameProps } from "@/types/ui/ClassName-types";
 import { PageHeader } from "@/components/ui";
+import { Card } from "@/components/ui/card";
 import { PageInfoButton } from "@/components/ui/page-info";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { settingsBillingPageInfo } from "@/constants/page-info";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -17,7 +19,10 @@ import {
   billingHistoryQueryOptions,
 } from "@/api/client/billing/query";
 import { billingAddressQueryOptions } from "@/api/client/billing/address";
-import type { Transaction, SubscriptionInfo } from "@/types/billing/FreePageView-types";
+import type {
+  Transaction,
+  SubscriptionInfo,
+} from "@/types/billing/FreePageView-types";
 import type { BillingAddress } from "@/api/server/billing/address";
 import { PlanDetails } from "./PlanDetails";
 import { PlanBenefits } from "./PlanBenefits";
@@ -56,46 +61,60 @@ export function FreePageView({ className }: ClassNameProps) {
         actions={<PageInfoButton content={settingsBillingPageInfo} />}
       />
 
-      <div className="flex flex-col gap-6 xl:flex-row">
-        <div className="flex flex-1 flex-col gap-6">
-          <div className="border-border bg-surface rounded-xl border p-5">
-            <PlanDetails
-              tier={tier}
-              periodEnd={subscription?.periodEnd}
-              cancelAtPeriodEnd={subscription?.cancelAtPeriodEnd ?? false}
+      <Tabs defaultValue="plan" className="flex w-full flex-col gap-6">
+        <TabsList className="w-fit">
+          <TabsTrigger value="plan">{t.billingPlanTab}</TabsTrigger>
+          <TabsTrigger value="invoices">{t.invoices}</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="plan" className="flex flex-col gap-6">
+          <div className="flex flex-col gap-6 xl:flex-row">
+            <div className="flex flex-1 flex-col gap-6">
+              <Card variant="surface" className="p-5">
+                <PlanDetails
+                  tier={tier}
+                  periodEnd={subscription?.periodEnd}
+                  cancelAtPeriodEnd={subscription?.cancelAtPeriodEnd ?? false}
+                />
+              </Card>
+
+              <Card variant="surface" className="p-5">
+                <PlanBenefits currentTier={tier} />
+              </Card>
+
+              <Card variant="surface" className="p-5">
+                <PaymentMethods />
+              </Card>
+            </div>
+
+            <div className="flex w-full flex-col gap-6 xl:w-80">
+              <Card variant="surface" className="p-5">
+                {isEditingAddress ? (
+                  <BillingAddressForm
+                    address={address}
+                    onSave={() => setIsEditingAddress(false)}
+                    onCancel={() => setIsEditingAddress(false)}
+                  />
+                ) : (
+                  <BillingInfoDisplay
+                    address={address}
+                    onEdit={() => setIsEditingAddress(true)}
+                  />
+                )}
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="invoices" className="flex flex-col gap-6">
+          <Card variant="surface" className="p-5">
+            <InvoiceTable
+              transactions={transactions}
+              isLoading={loadingHistory}
             />
-          </div>
-
-          <div className="border-border bg-surface rounded-xl border p-5">
-            <PlanBenefits currentTier={tier} />
-          </div>
-
-          <div className="border-border bg-surface rounded-xl border p-5">
-            <PaymentMethods />
-          </div>
-        </div>
-
-        <div className="flex w-full flex-col gap-6 xl:w-80">
-          <div className="border-border bg-surface rounded-xl border p-5">
-            {isEditingAddress ? (
-              <BillingAddressForm
-                address={address}
-                onSave={() => setIsEditingAddress(false)}
-                onCancel={() => setIsEditingAddress(false)}
-              />
-            ) : (
-              <BillingInfoDisplay
-                address={address}
-                onEdit={() => setIsEditingAddress(true)}
-              />
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="border-border bg-surface rounded-xl border p-5">
-        <InvoiceTable transactions={transactions} isLoading={loadingHistory} />
-      </div>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -1,12 +1,16 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/realtime/realtime_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../api/client/messages/actions.dart';
 import '../../api/client/messages/query.dart';
+import '../../components/ui/toast/toast.dart';
 import '../../constants/chat.dart';
 import '../../hooks/use_auth.dart';
 import '../../l10n/app_localizations.dart';
 import '../../types/messages/message.dart';
+import '../../types/messages/message_attachment.dart';
 import 'chat_room_header.dart';
 import 'chat_room_main_content.dart';
 import 'chat_room_sidebar.dart';
@@ -34,6 +38,9 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
   final _scrollController = ScrollController();
   bool _isAtBottom = true;
   String? _lastMessageLastId;
+  MessageAttachment? _pendingAttachment;
+  bool _attaching = false;
+  bool _emojiOpen = false;
 
   List<String> get vipRooms => const [];
   bool get useNativeControls => false;
@@ -111,19 +118,84 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
 
   void _handleSend() {
     final text = _messageController.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty && _pendingAttachment == null) return;
 
     final user = ref.read(currentUserProvider);
     if (user == null) return;
 
     final client = ref.read(realtimeProvider);
+    final attachment = _pendingAttachment;
     client.send(
       _isNamedRoom
-          ? {'type': 'room-message', 'room': _room, 'text': text}
-          : {'type': 'direct-message', 'recipientId': _room, 'text': text},
+          ? {
+              'type': 'room-message',
+              'room': _room,
+              'text': text,
+              if (attachment != null) 'attachmentUrl': attachment.url,
+              if (attachment != null) 'attachmentType': attachment.type,
+              if (attachment != null) 'attachmentName': attachment.name,
+            }
+          : {
+              'type': 'direct-message',
+              'recipientId': _room,
+              'text': text,
+              if (attachment != null) 'attachmentUrl': attachment.url,
+              if (attachment != null) 'attachmentType': attachment.type,
+              if (attachment != null) 'attachmentName': attachment.name,
+            },
     );
     _messageController.clear();
+    setState(() {
+      _pendingAttachment = null;
+      _emojiOpen = false;
+    });
     _scrollToBottom();
+  }
+
+  Future<void> _pickAttachment() async {
+    final result = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const [
+        'jpg',
+        'jpeg',
+        'png',
+        'webp',
+        'gif',
+        'avif',
+        'pdf',
+        'doc',
+        'docx',
+        'txt',
+      ],
+    );
+    if (result == null || result.files.isEmpty) return;
+    if (!mounted) return;
+
+    final file = result.files.first;
+    final path = file.path;
+    if (path == null) return;
+
+    final t = AppLocalizations.of(context);
+    if (file.size > ChatConstants.maxAttachmentSize) {
+      showToast(context, t.messagesAttachmentTooLarge);
+      return;
+    }
+
+    setState(() => _attaching = true);
+    try {
+      final attachment = await ref
+          .read(messageActionsProvider)
+          .uploadAttachment(path, file.name);
+      if (!mounted) return;
+      setState(() {
+        _pendingAttachment = attachment;
+        _attaching = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _attaching = false);
+      showToast(context, t.messagesAttachmentUploadFailed);
+    }
   }
 
   void _scrollToBottom() {
@@ -172,6 +244,9 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
                       senderName: m.senderName,
                       senderAvatarUrl: m.avatar,
                       content: m.body,
+                      attachmentUrl: m.attachmentUrl,
+                      attachmentType: m.attachmentType,
+                      attachmentName: m.attachmentName,
                       createdAt: DateTime.parse(m.createdAt),
                       isRead: true,
                     ),
@@ -233,8 +308,14 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
         messageController: _messageController,
         scrollController: _scrollController,
         isAtBottom: _isAtBottom,
+        attaching: _attaching,
+        emojiOpen: _emojiOpen,
+        pendingAttachment: _pendingAttachment,
         onSetSidebarOpen: (v) => setState(() => _sidebarOpen = v),
         onSend: _handleSend,
+        onAttachFile: _pickAttachment,
+        onRemoveAttachment: () => setState(() => _pendingAttachment = null),
+        onToggleEmoji: () => setState(() => _emojiOpen = !_emojiOpen),
       ),
     );
 

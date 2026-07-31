@@ -6,6 +6,8 @@ import { TokenStoreService } from './token-store.service';
 function createRedisMock() {
   const store = new Map<string, Record<string, string>>();
   const reverse = new Map<string, Set<string>>();
+  const strings = new Map<string, string>();
+  const expires: string[] = [];
 
   return {
     multi: jest.fn(() => {
@@ -28,12 +30,19 @@ function createRedisMock() {
             }
           });
         },
-        expire: () => ops.push(() => {}),
+        expire: (key: string) => {
+          ops.push(() => {
+            expires.push(key);
+          });
+        },
         sadd: (key: string, member: string) => {
           ops.push(() => {
             if (!reverse.has(key)) reverse.set(key, new Set());
             reverse.get(key)!.add(member);
           });
+        },
+        set: (key: string, value: string) => {
+          ops.push(() => strings.set(key, value));
         },
         del: (key: string) => ops.push(() => store.delete(key)),
         srem: (key: string, member: string) =>
@@ -61,6 +70,10 @@ function createRedisMock() {
       },
     ),
     exists: jest.fn((key: string) => Promise.resolve(store.has(key) ? 1 : 0)),
+    hget: jest.fn((key: string, field: string) =>
+      Promise.resolve(store.get(key)?.[field] ?? null),
+    ),
+    get: jest.fn((key: string) => Promise.resolve(strings.get(key) ?? null)),
     del: jest.fn((key: string) => {
       const ok = store.has(key);
       store.delete(key);
@@ -68,6 +81,7 @@ function createRedisMock() {
     }),
     _store: store,
     _reverse: reverse,
+    _expires: expires,
   };
 }
 
@@ -158,6 +172,21 @@ describe('TokenStoreService', () => {
     expect(await service.read('sess:nonexistent')).toBeNull();
   });
 
+  it('expires the user reverse-index set alongside the session', async () => {
+    const key = service.buildKey('a', 'b', 'c');
+    await service.write(key, {
+      userId: 'u3',
+      email: 'u3@test.com',
+      role: 'USER',
+      tier: 'FREE',
+      sessionId: 's3',
+    });
+    expect(redis._expires).toEqual([
+      key,
+      'user:u3:sessions',
+    ]);
+  });
+
   it('revokes a compound key', async () => {
     const key = service.buildKey('a', 'b', 'c');
     await service.write(key, {
@@ -170,6 +199,35 @@ describe('TokenStoreService', () => {
     expect(await service.read(key)).not.toBeNull();
     await service.revoke(key);
     expect(await service.read(key)).toBeNull();
+  });
+
+  it('slides the refresh index TTL alongside the session key', async () => {
+    const key = service.buildKey('a', 'b', 'c');
+    await service.write(key, {
+      userId: 'u9',
+      email: 'u9@t.com',
+      role: 'USER',
+      tier: 'FREE',
+      sessionId: 's9',
+    });
+    redis._expires.length = 0;
+    await service.extendTTL(key);
+    expect(redis._expires).toEqual(
+      expect.arrayContaining([key, 'refresh_sess:s9']),
+    );
+  });
+
+  it('extends only the session key when no sessionId is stored', async () => {
+    const key = service.buildKey('a', 'b', 'c');
+    await service.write(key, {
+      userId: 'u10',
+      email: 'u10@t.com',
+      role: 'USER',
+      tier: 'FREE',
+    });
+    redis._expires.length = 0;
+    await service.extendTTL(key);
+    expect(redis._expires).toEqual([key]);
   });
 
   it('revokes all sessions for a user', async () => {

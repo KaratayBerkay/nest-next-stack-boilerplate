@@ -5,13 +5,18 @@ export function useBillingActions() {
     return createSetupIntentServer(tier);
   };
 
-  const subscribe = async (tier: string, paymentMethodId?: string) => {
+  const subscribe = async (
+    tier: string,
+    paymentMethodId?: string,
+    idempotencyKey?: string,
+  ) => {
     const { subscribeServer } = await import("@/api/server/billing/stripe");
-    await subscribeServer(tier, paymentMethodId);
+    await subscribeServer(tier, paymentMethodId, idempotencyKey);
   };
 
   const cancelSubscription = async () => {
-    const { cancelSubscriptionServer } = await import("@/api/server/billing/cancel");
+    const { cancelSubscriptionServer } =
+      await import("@/api/server/billing/cancel");
     await cancelSubscriptionServer();
   };
 

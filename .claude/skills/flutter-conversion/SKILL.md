@@ -102,8 +102,12 @@ some older server files still define them inline — follow the types/ rule for 
 
 The shared Dio instance is `dioProvider` in `lib/lib/api_client.dart`:
 `AppConfig.apiBaseUrl` base URL, JSON headers, `AuthInterceptor` (Bearer token from
-secure storage; 401 → logout). There is no token-refresh flow yet — if you add one,
-mirror `POST /api/auth/token` from the web app.
+secure storage; on 401 it calls `refreshAccessToken()` against the backend's real
+refresh endpoint, retries the original request once, and only logs out if the refresh
+fails). Do not re-introduce a "logout on 401" shortcut — the interceptor already
+implements the refresh flow correctly. Note: `_isRefreshing` is a plain boolean, not a
+queue, so concurrent 401s beyond the first fail without retrying; and the backend's
+`refresh_sess` Redis TTL only slides when `extendTTL` runs on an authenticated request.
 
 ## Auth & session
 

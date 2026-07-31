@@ -15,14 +15,13 @@ export const settingsGeneralPageInfo: PageInfoContent = {
         "Choose your preferred currency for displaying prices and billing information.",
     },
     {
-      title: "Theme",
-      description:
-        "Customize the appearance of the application with light or dark mode.",
-    },
-    {
       title: "Date Display",
       description:
         "Choose how dates are shown throughout the app: long form, ISO timestamp, or short numeric.",
     },
+  ],
+  tips: [
+    "Save your preferences after making changes - they persist in your profile",
+    "Timezone and date display apply everywhere dates are shown",
   ],
 };

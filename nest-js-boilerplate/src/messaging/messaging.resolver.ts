@@ -48,6 +48,14 @@ export class MessagingResolver {
       user.userId,
       input.recipientId,
       input.text,
+      undefined,
+      input.attachmentUrl && input.attachmentType && input.attachmentName
+        ? {
+            url: input.attachmentUrl,
+            type: input.attachmentType,
+            name: input.attachmentName,
+          }
+        : undefined,
     );
   }
 

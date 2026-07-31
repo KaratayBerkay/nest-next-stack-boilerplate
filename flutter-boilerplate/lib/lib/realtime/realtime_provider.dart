@@ -95,6 +95,7 @@ void handleRenewFrame(Ref ref, String renew, Map<String, dynamic> frame) {
       if (subtype == 'PendingList') {
         ref.invalidate(friendRequestsProvider);
       }
+      ref.invalidate(friendsListProvider);
   }
 }
 

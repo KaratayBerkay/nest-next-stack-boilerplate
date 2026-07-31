@@ -14,12 +14,17 @@ import { useRoom } from "@/lib/realtime/useRoom";
 import { useConnectionState } from "@/hooks/useConnectionState";
 import { useRouter } from "next/navigation";
 import { ChatRoomFallback } from "@/fallbacks";
-import { chatRoomHandleSend, selectChatRoom } from "@/views/chat-room/ChatRoomHandlers";
+import {
+  chatRoomHandleSend,
+  selectChatRoom,
+} from "@/views/chat-room/ChatRoomHandlers";
 import { useChatRoomRealtime } from "@/views/chat-room/useChatRoomRealtime";
+import { useMessageUpload } from "@/api/client/messages/actions";
 import { ChatRoomHeader } from "@/views/chat-room/ChatRoomHeader";
 import { ChatRoomSidebar } from "@/views/chat-room/ChatRoomSidebar";
 import { ChatRoomMainContent } from "@/views/chat-room/ChatRoomMainContent";
 import type { ChatRoomBaseViewProps } from "@/types/chat-room/ChatRoomBaseView-types";
+import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
 
 function ChatRoomContent({
   initialRoom = "general",
@@ -37,9 +42,12 @@ function ChatRoomContent({
   const [room, setRoom] = useState<string>(initialRoom);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [input, setInput] = useState("");
+  const [pendingAttachment, setPendingAttachment] =
+    useState<MessageAttachment | null>(null);
+  const [attaching, setAttaching] = useState(false);
   const [roomCounts, setRoomCounts] = useState<Record<string, number>>({});
   const [roomMembers, setRoomMembers] = useState<
-    { id: string; name: string; avatar?: string }[]
+    { id: string; name: string; chatNickname?: string }[]
   >([]);
 
   const realtime = useChatRoomRealtime(room, setRoomCounts, setRoomMembers);
@@ -50,14 +58,49 @@ function ChatRoomContent({
   } = useRoom(room);
   const messagesRef = useYSwipeGesture<HTMLDivElement>();
   const { bottomRef, scrollToBottom, isAtBottom } = useAutoScroll(messages);
+  const { uploadAttachment } = useMessageUpload();
 
-  const handleSend = useCallback(
-    () =>
-      chatRoomHandleSend(
-        input, realtime, room, queryClient, user, setInput, scrollToBottom,
-      ),
-    [input, realtime, room, queryClient, user, scrollToBottom],
+  const handleSend = useCallback(() => {
+    chatRoomHandleSend(
+      input,
+      realtime,
+      room,
+      queryClient,
+      user,
+      setInput,
+      scrollToBottom,
+      pendingAttachment ?? undefined,
+    );
+    setPendingAttachment(null);
+  }, [
+    input,
+    realtime,
+    room,
+    queryClient,
+    user,
+    scrollToBottom,
+    pendingAttachment,
+  ]);
+
+  const handleAttachFile = useCallback(
+    async (file: File) => {
+      if (!user) return;
+      setAttaching(true);
+      try {
+        const attachment = await uploadAttachment(file);
+        setPendingAttachment(attachment);
+      } catch {
+        setPendingAttachment(null);
+      } finally {
+        setAttaching(false);
+      }
+    },
+    [user, uploadAttachment],
   );
+
+  const handleRemoveAttachment = useCallback(() => {
+    setPendingAttachment(null);
+  }, []);
 
   const connectionState = useConnectionState();
   const onlineUserIds = useMemo(
@@ -76,8 +119,18 @@ function ChatRoomContent({
   if (!user) return <UnauthenticatedMessage message={t.signInRequired} />;
 
   return (
-    <div className={cn("flex min-h-0 w-full flex-1 flex-col gap-6 overflow-hidden", className)}>
-      <ChatRoomHeader user={user} connectionState={connectionState} showPageInfo={showPageInfo} t={t} />
+    <div
+      className={cn(
+        "flex min-h-0 w-full flex-1 flex-col gap-6 overflow-hidden",
+        className,
+      )}
+    >
+      <ChatRoomHeader
+        user={user}
+        connectionState={connectionState}
+        showPageInfo={showPageInfo}
+        t={t}
+      />
 
       <div className="relative flex min-h-0 flex-1 gap-4">
         {sidebarOpen && (
@@ -114,14 +167,20 @@ function ChatRoomContent({
           msgsLoading={msgsLoading}
           msgsError={msgsError}
           input={input}
+          attaching={attaching}
+          pendingAttachment={pendingAttachment}
           bottomRef={bottomRef}
-          messagesRef={messagesRef as unknown as React.RefObject<HTMLDivElement | null>}
+          messagesRef={
+            messagesRef as unknown as React.RefObject<HTMLDivElement | null>
+          }
           isAtBottom={isAtBottom}
           t={t}
           tErr={tErr}
           onSetSidebarOpen={setSidebarOpen}
           onSetInput={setInput}
           onSend={handleSend}
+          onAttachFile={handleAttachFile}
+          onRemoveAttachment={handleRemoveAttachment}
         />
       </div>
     </div>

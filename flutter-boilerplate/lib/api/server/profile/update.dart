@@ -32,6 +32,7 @@ class ProfileUpdateServer {
     String? avatarUrl,
     String? locale,
     String? timezone,
+    String? chatNickname,
   }) async {
     final data = <String, dynamic>{};
     if (name != null) data['name'] = name;
@@ -40,6 +41,11 @@ class ProfileUpdateServer {
     if (avatarUrl != null) data['avatarUrl'] = avatarUrl;
     if (locale != null) data['locale'] = locale;
     if (timezone != null) data['timezone'] = timezone;
+    // Empty string means "clear the nickname" — the backend rejects blank
+    // values, so map to explicit null (which UpdateProfileInput accepts).
+    if (chatNickname != null) {
+      data['chatNickname'] = chatNickname.isEmpty ? null : chatNickname;
+    }
 
     final response = await _dio.post<dynamic>(
       '/graphql',

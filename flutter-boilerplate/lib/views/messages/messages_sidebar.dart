@@ -42,7 +42,7 @@ class _MessagesSidebarState extends ConsumerState<MessagesSidebar> {
           Expanded(
             child: _activeTab == 0
                 ? MessagesSidebarConversations(searchQuery: _searchQuery)
-                : const MessagesSidebarFriends(),
+                : MessagesSidebarFriends(searchQuery: _searchQuery),
           ),
         ],
       ),

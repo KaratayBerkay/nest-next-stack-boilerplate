@@ -2,14 +2,21 @@ import { apiFetch } from "@/lib/api-client";
 import { MESSAGES_CONVERSATIONS_PREFIX } from "@/constants/api/urls";
 import { POST } from "@/constants/api/methods";
 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
+import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
 
 export async function sendMessageServer(
   recipientId: string,
   text: string,
   tempId?: string,
+  attachment?: MessageAttachment,
 ): Promise<Record<string, unknown>> {
   const body: Record<string, unknown> = { text };
   if (tempId) body._tempId = tempId;
+  if (attachment) {
+    body.attachmentUrl = attachment.url;
+    body.attachmentType = attachment.type;
+    body.attachmentName = attachment.name;
+  }
   const res = await apiFetch(
     `${MESSAGES_CONVERSATIONS_PREFIX}${recipientId}/messages`,
     {

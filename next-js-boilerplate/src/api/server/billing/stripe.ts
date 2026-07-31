@@ -22,10 +22,11 @@ export async function createSetupIntentServer(
 export async function subscribeServer(
   tier: string,
   paymentMethodId?: string,
+  idempotencyKey?: string,
 ): Promise<void> {
   await apiFetchJson(STRIPE_SUBSCRIBE_URL, {
     method: POST,
     headers: JSON_CONTENT_TYPE_HEADER,
-    body: JSON.stringify({ tier, paymentMethodId }),
+    body: JSON.stringify({ tier, paymentMethodId, idempotencyKey }),
   });
 }

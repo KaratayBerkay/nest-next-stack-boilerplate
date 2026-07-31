@@ -15,10 +15,14 @@ export function SessionCard({
   dateDisplay,
   onRevoke,
 }: SessionCardProps) {
+  const deviceType = session.deviceType?.toUpperCase();
   const isMobile =
-    session.userAgent?.toLowerCase().includes("mobile") ||
-    session.userAgent?.toLowerCase().includes("android") ||
-    session.userAgent?.toLowerCase().includes("iphone");
+    deviceType === "MOBILE_IOS" ||
+    deviceType === "MOBILE_ANDROID" ||
+    (!deviceType &&
+      (session.userAgent?.toLowerCase().includes("mobile") ||
+        session.userAgent?.toLowerCase().includes("android") ||
+        session.userAgent?.toLowerCase().includes("iphone")));
 
   return (
     <div

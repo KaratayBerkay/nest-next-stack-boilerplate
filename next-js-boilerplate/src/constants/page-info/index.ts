@@ -15,6 +15,7 @@ export { settingsAccountPageInfo } from "./settings-account";
 export { settingsBillingPageInfo } from "./settings-billing";
 export { settingsGeneralPageInfo } from "./settings-general";
 export { settingsPrivacyPageInfo } from "./settings-privacy";
+export { settingsSecurityPageInfo } from "./settings-security";
 export { settingsSessionsPageInfo } from "./settings-sessions";
 export { settingsApiKeysPageInfo } from "./settings-api-keys";
 export { adminPageInfo } from "./admin";

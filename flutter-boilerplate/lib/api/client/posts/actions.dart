@@ -1,11 +1,13 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_boilerplate/lib/riverpod_compat.dart';
 
+import '../../../types/feed/comment.dart';
 import '../../server/posts/comments.dart';
 import '../../server/posts/create.dart';
 import '../../server/posts/delete.dart';
 import '../../server/posts/reactions.dart';
 import '../../server/posts/update.dart';
 import '../../server/posts/upload.dart';
+import 'query.dart';
 
 final postActionsProvider = Provider((ref) => PostActions(ref));
 
@@ -48,22 +50,32 @@ class PostActions {
     await server.toggle(postId, type: type);
   }
 
-  Future<void> addComment(String postId, String bodyText) async {
+  Future<Comment> addComment(
+    String postId,
+    String bodyText, {
+    String? parentId,
+  }) async {
     final server = _ref.read(postCommentsServerProvider);
-    await server.create(postId, bodyText);
+    final comment = await server.create(postId, bodyText, parentId: parentId);
+    _ref.invalidate(postCommentsProvider(comment.postId));
+    return comment;
   }
 
-  Future<void> updateComment(
+  Future<Comment> updateComment(
     String commentId, {
     required String bodyText,
   }) async {
     final server = _ref.read(postCommentsServerProvider);
-    await server.update(commentId, bodyText: bodyText);
+    final comment = await server.update(commentId, bodyText: bodyText);
+    _ref.invalidate(postCommentsProvider(comment.postId));
+    return comment;
   }
 
-  Future<void> deleteComment(String commentId) async {
+  Future<Comment> deleteComment(String commentId) async {
     final server = _ref.read(postCommentsServerProvider);
-    await server.delete(commentId);
+    final comment = await server.delete(commentId);
+    _ref.invalidate(postCommentsProvider(comment.postId));
+    return comment;
   }
 
   Future<void> toggleCommentReaction(

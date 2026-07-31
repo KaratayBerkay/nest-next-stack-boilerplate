@@ -15,6 +15,12 @@ export type Message = {
   createdAt: string;
   readAt: string | null;
   deliveredAt: string | null;
+  attachmentUrl?: string | null;
+  attachmentType?: string | null;
+  attachmentName?: string | null;
+  _tempId?: string;
+  pending?: boolean;
+  failed?: boolean;
 };
 
 export interface ChatViewProps {

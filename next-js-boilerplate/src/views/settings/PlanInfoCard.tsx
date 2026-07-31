@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Card } from "@/components/ui/card";
 import { TIER_PRICES_CENTS, tierLabel } from "@/lib/tier";
 import { formatPrice } from "@/lib/currency";
 import { formatDateByPreference } from "@/lib/date-time";
@@ -16,7 +17,7 @@ export default function PlanInfoCard({
   lang,
 }: PlanInfoCardProps) {
   return (
-    <div className="border-border bg-surface flex items-center justify-between rounded-lg border p-4">
+    <Card variant="surface" className="flex items-center justify-between p-4">
       <div>
         <p className="text-lg font-bold">{tierLabel(tier)}</p>
         <p className="text-muted text-sm">
@@ -36,6 +37,6 @@ export default function PlanInfoCard({
       >
         {t.navBilling}
       </Link>
-    </div>
+    </Card>
   );
 }

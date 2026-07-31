@@ -3,10 +3,26 @@
 import { useEffect, type Dispatch, type SetStateAction } from "react";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 
+type RoomMemberState = { id: string; name: string; chatNickname?: string };
+
+type RawRoomMember = {
+  userId: string;
+  name: string;
+  chatNickname?: string;
+};
+
+function toRoomMembers(members: unknown): RoomMemberState[] {
+  return (members as RawRoomMember[]).map((m) => ({
+    id: m.userId,
+    name: m.name,
+    chatNickname: m.chatNickname || undefined,
+  }));
+}
+
 export function useChatRoomRealtime(
   room: string,
   setRoomCounts: Dispatch<SetStateAction<Record<string, number>>>,
-  setRoomMembers: Dispatch<SetStateAction<{ id: string; name: string; avatar?: string }[]>>,
+  setRoomMembers: Dispatch<SetStateAction<RoomMemberState[]>>,
 ) {
   const realtime = useRealtime();
 
@@ -29,9 +45,7 @@ export function useChatRoomRealtime(
       "user-joined",
       (frame: Record<string, unknown>) => {
         if (frame.room === room) {
-          setRoomMembers(
-            frame.members as { id: string; name: string; avatar?: string }[],
-          );
+          setRoomMembers(toRoomMembers(frame.members));
         }
       },
     );
@@ -40,9 +54,7 @@ export function useChatRoomRealtime(
       "user-left",
       (frame: Record<string, unknown>) => {
         if (frame.room === room) {
-          setRoomMembers(
-            frame.members as { id: string; name: string; avatar?: string }[],
-          );
+          setRoomMembers(toRoomMembers(frame.members));
         }
       },
     );
@@ -52,7 +64,7 @@ export function useChatRoomRealtime(
       unsubJoined();
       unsubLeft();
     };
-  }, [realtime, room]);
+  }, [realtime, room, setRoomCounts, setRoomMembers]);
 
   return realtime;
 }

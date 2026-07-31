@@ -5,7 +5,7 @@ import { CacheAsideService } from '../caching/cache-aside.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { PushNotificationService } from '../push-notification/push-notification.service';
 import { displayName } from '../common/utils/display-name';
-import { initials } from './messaging.types';
+import { initials, type MessageAttachment } from './messaging.types';
 
 export class MessagingDmService {
   private readonly logger = new Logger(MessagingDmService.name);
@@ -149,9 +149,10 @@ export class MessagingDmService {
   async sendMessage(
     senderId: string,
     recipientId: string,
-    text: string,
+    text = '',
     areFriends: (a: string, b: string) => Promise<boolean>,
     friends?: string[],
+    attachment?: MessageAttachment,
   ) {
     if (senderId === recipientId) {
       this.logger.warn(`User ${senderId} attempted to message self`);
@@ -167,7 +168,14 @@ export class MessagingDmService {
       throw new ForbiddenException('You can only send messages to friends');
     }
     const message = await this.prisma.message.create({
-      data: { senderId, recipientId, body: text },
+      data: {
+        senderId,
+        recipientId,
+        body: text ?? '',
+        attachmentUrl: attachment?.url,
+        attachmentType: attachment?.type,
+        attachmentName: attachment?.name,
+      },
       include: {
         sender: {
           select: { id: true, name: true, email: true, avatarUrl: true },
@@ -279,10 +287,11 @@ export class MessagingDmService {
   async sendAndDeliverMessage(
     senderId: string,
     recipientId: string,
-    text: string,
+    text = '',
     areFriends: (a: string, b: string) => Promise<boolean>,
     friends?: string[],
     tempId?: string,
+    attachment?: MessageAttachment,
   ) {
     const message = await this.sendMessage(
       senderId,
@@ -290,6 +299,7 @@ export class MessagingDmService {
       text,
       areFriends,
       friends,
+      attachment,
     );
     if (tempId) (message as Record<string, unknown>)._tempId = tempId;
     await this.deliverDirectMessage(message);

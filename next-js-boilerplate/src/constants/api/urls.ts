@@ -4,6 +4,7 @@ export const STRIPE_SUBSCRIBE_URL = "/api/billing/subscribe" as const;
 
 export const AUTH_OAUTH_PREFIX = "/api/auth/oauth/" as const;
 export const AUTH_TOKEN_URL = "/api/auth/token" as const;
+export const AUTH_REFRESH_URL = "/api/auth/refresh" as const;
 export const AUTH_DEVICE_HANDSHAKE_URL = "/api/auth/device-handshake" as const;
 export const AUTH_ME_URL = "/api/auth/me" as const;
 export const AUTH_LOGIN_URL = "/api/auth/login" as const;
@@ -38,6 +39,7 @@ export const PUSH_SUBSCRIBE_URL = "/api/push/subscribe" as const;
 export const PUSH_UNSUBSCRIBE_URL = "/api/push/unsubscribe" as const;
 
 export const UPLOAD_URL = "/api/upload" as const;
+export const UPLOAD_ATTACHMENT_URL = "/api/upload/attachment" as const;
 
 export const GQL_URL = "/api/gql" as const;
 

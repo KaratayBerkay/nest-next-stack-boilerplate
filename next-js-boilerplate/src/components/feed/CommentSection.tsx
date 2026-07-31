@@ -21,19 +21,20 @@ async function handleEditComment(
   setEditingBody: Dispatch<SetStateAction<string>>,
   setLocalEdits: Dispatch<SetStateAction<Record<string, string>>>,
   onCommentAdded: (() => void) | undefined,
-  updateComment: (commentId: string, body: string) => Promise<void>,
+  updateComment: (
+    commentId: string,
+    body: string,
+  ) => Promise<{ id: string; body: string }>,
 ) {
   if (!editingBody.trim()) return;
   setLocalEdits((prev) => ({ ...prev, [commentId]: editingBody.trim() }));
   try {
-    await updateComment(commentId, editingBody.trim());
+    const updated = await updateComment(commentId, editingBody.trim());
     setEditingId(null);
     setEditingBody("");
-    setLocalEdits((prev) => {
-      const next = { ...prev };
-      delete next[commentId];
-      return next;
-    });
+    if (updated?.body) {
+      setLocalEdits((prev) => ({ ...prev, [commentId]: updated.body }));
+    }
     onCommentAdded?.();
   } catch {
     setLocalEdits((prev) => {
@@ -179,7 +180,7 @@ export function CommentSection({
         <button
           type="submit"
           disabled={!body.trim() || submitting}
-          className="bg-brand rounded-lg px-4 py-2 text-xs font-medium text-brand-fg transition-opacity hover:opacity-90 disabled:opacity-40"
+          className="bg-brand text-brand-fg rounded-lg px-4 py-2 text-xs font-medium transition-opacity hover:opacity-90 disabled:opacity-40"
         >
           {replyTo ? "Reply" : "Send"}
         </button>
@@ -297,7 +298,7 @@ export function CommentSection({
                         updateComment,
                       )
                     }
-                    className="bg-brand rounded-lg px-3 py-1.5 text-xs font-medium text-brand-fg"
+                    className="bg-brand text-brand-fg rounded-lg px-3 py-1.5 text-xs font-medium"
                   >
                     Save
                   </button>
@@ -406,7 +407,7 @@ export function CommentSection({
                             updateComment,
                           )
                         }
-                        className="bg-brand rounded-lg px-3 py-1.5 text-xs font-medium text-brand-fg"
+                        className="bg-brand text-brand-fg rounded-lg px-3 py-1.5 text-xs font-medium"
                       >
                         Save
                       </button>

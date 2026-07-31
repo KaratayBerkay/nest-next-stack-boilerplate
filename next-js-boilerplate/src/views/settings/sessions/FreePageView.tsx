@@ -16,6 +16,25 @@ import { SessionCard } from "./SessionCard";
 import { SessionSkeleton } from "./SessionSkeleton";
 import { EmptySessions } from "./EmptySessions";
 
+async function loadSessions(
+  setSessions: React.Dispatch<React.SetStateAction<SessionInfo[]>>,
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  setError: React.Dispatch<React.SetStateAction<boolean>>,
+) {
+  try {
+    const { listSessionsServer } = await import("@/api/server/sessions/list");
+    const data = await listSessionsServer();
+    setSessions(data);
+    setError(false);
+  } catch (err) {
+    console.error("Failed to load sessions", err);
+    setSessions([]);
+    setError(true);
+  } finally {
+    setLoading(false);
+  }
+}
+
 async function handleRevokeSessionModule(
   sessionId: string,
   revokeSession: (sessionId: string) => Promise<void>,
@@ -24,8 +43,7 @@ async function handleRevokeSessionModule(
   try {
     await revokeSession(sessionId);
     setSessions((prev) => prev.filter((s) => s.sessionId !== sessionId));
-  } catch {
-  }
+  } catch {}
 }
 
 async function handleRevokeAllOtherSessionsModule(
@@ -36,8 +54,7 @@ async function handleRevokeAllOtherSessionsModule(
   try {
     await revokeOtherSessions();
     setSessions((prev) => prev.filter((s) => s.sessionId === currentSessionId));
-  } catch {
-  }
+  } catch {}
 }
 
 export function FreePageView({ className }: { className?: string }) {
@@ -45,43 +62,46 @@ export function FreePageView({ className }: { className?: string }) {
   const t = useMessages("settings");
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [loadingSessions, setLoadingSessions] = useState(true);
+  const [sessionsError, setSessionsError] = useState(false);
   const dateDisplay = useDateDisplayCookie();
   const { revokeSession, revokeOtherSessions } = useSessionActions();
 
   useEffect(() => {
     if (!user) return;
-    (async () => {
-      try {
-        const { listSessionsServer } = await import("@/api/server/sessions/list");
-        const data = await listSessionsServer();
-        setSessions(data as unknown as SessionInfo[]);
-      } catch {
-        setSessions([]);
-      } finally {
-        setLoadingSessions(false);
-      }
-    })();
+    void loadSessions(setSessions, setLoadingSessions, setSessionsError);
   }, [user]);
 
+  const handleRetry = useCallback(() => {
+    setLoadingSessions(true);
+    void loadSessions(setSessions, setLoadingSessions, setSessionsError);
+  }, []);
+
   const handleRevokeSession = useCallback(
-    (sessionId: string) => handleRevokeSessionModule(sessionId, revokeSession, setSessions),
+    (sessionId: string) =>
+      handleRevokeSessionModule(sessionId, revokeSession, setSessions),
     [revokeSession],
   );
 
   const handleRevokeAllOtherSessions = useCallback(
-    () => handleRevokeAllOtherSessionsModule(revokeOtherSessions, user?.sessionId, setSessions),
+    () =>
+      handleRevokeAllOtherSessionsModule(
+        revokeOtherSessions,
+        user?.sessionId,
+        setSessions,
+      ),
     [revokeOtherSessions, user?.sessionId],
   );
 
   if (loading) return <LoadingAuth />;
-  if (!user) return <UnauthenticatedMessage message={t.signInToManageSessions} />;
+  if (!user)
+    return <UnauthenticatedMessage message={t.signInToManageSessions} />;
 
   const currentSessionId = user.sessionId;
 
   return (
     <div className={cn("flex h-full w-full flex-col gap-6", className)}>
       <PageHeader
-        title="Sessions & Devices"
+        title={t.sessionsHeading}
         titleClassName="text-brand text-sm"
         actions={
           <>
@@ -90,7 +110,7 @@ export function FreePageView({ className }: { className?: string }) {
                 onClick={handleRevokeAllOtherSessions}
                 className="text-xs text-red-600 transition-colors hover:text-red-700"
               >
-                Log out all other sessions
+                {t.logOutAllOtherSessions}
               </button>
             )}
             <PageInfoButton content={settingsSessionsPageInfo} />
@@ -100,6 +120,16 @@ export function FreePageView({ className }: { className?: string }) {
 
       {loadingSessions ? (
         <SessionSkeleton />
+      ) : sessionsError ? (
+        <div className="flex flex-col items-start gap-3">
+          <p className="text-sm text-red-600">{t.sessionsLoadFailed}</p>
+          <button
+            onClick={handleRetry}
+            className="border-border bg-surface text-fg hover:bg-surface-hover rounded-md border px-3 py-1.5 text-xs transition-colors"
+          >
+            {t.sessionsRetry}
+          </button>
+        </div>
       ) : sessions.length === 0 ? (
         <EmptySessions />
       ) : (

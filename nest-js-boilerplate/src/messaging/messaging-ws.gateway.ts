@@ -7,7 +7,7 @@ import {
   VIP_ROOM_PREFIX,
 } from './messaging.service';
 import type { RoomMember } from './messaging.types';
-import { initials } from './messaging.types';
+import { initials, type MessageAttachment } from './messaging.types';
 import { PushNotificationService } from '../push-notification/push-notification.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { tierRank, MIN_TIER_FOR_VIP } from '../authorization/tier-rank';
@@ -15,6 +15,7 @@ import { tierRank, MIN_TIER_FOR_VIP } from '../authorization/tier-rank';
 type AuthWs = WebSocket & {
   userId?: string;
   userName?: string;
+  chatNickname?: string;
   tier?: string;
   socketId?: string;
   room?: string;
@@ -26,6 +27,26 @@ type AuthWs = WebSocket & {
   watchedTopics?: string[];
   pendingIp?: string;
 };
+
+interface IncomingMessagePayload {
+  text: string;
+  attachmentUrl?: string;
+  attachmentType?: string;
+  attachmentName?: string;
+}
+
+function toAttachment(
+  data: IncomingMessagePayload,
+): MessageAttachment | undefined {
+  if (data.attachmentUrl && data.attachmentType && data.attachmentName) {
+    return {
+      url: data.attachmentUrl,
+      type: data.attachmentType,
+      name: data.attachmentName,
+    };
+  }
+  return undefined;
+}
 
 @Injectable()
 export class MessagingWsGateway implements OnModuleInit {
@@ -42,7 +63,7 @@ export class MessagingWsGateway implements OnModuleInit {
     this.realtime.registerHandler('direct-message', (ws, data) =>
       this.handleDirectMessage(
         ws as AuthWs,
-        data as unknown as { recipientId: string; text: string },
+        data as unknown as IncomingMessagePayload & { recipientId: string },
       ),
     );
     this.realtime.registerHandler('delivered-ack', (ws, data) =>
@@ -60,7 +81,10 @@ export class MessagingWsGateway implements OnModuleInit {
     this.realtime.registerHandler('room-message', (ws, data) =>
       this.handleRoomMessage(
         ws as AuthWs,
-        data as unknown as { room: string; text: string; tempId?: string },
+        data as unknown as IncomingMessagePayload & {
+          room: string;
+          tempId?: string;
+        },
       ),
     );
     this.realtime.registerHandler('get-room-counts', (ws) =>
@@ -89,13 +113,15 @@ export class MessagingWsGateway implements OnModuleInit {
 
   private async handleDirectMessage(
     ws: AuthWs,
-    data: { recipientId: string; text: string },
+    data: IncomingMessagePayload & { recipientId: string },
   ) {
     if (!ws.userId) return;
     const message = await this.ms.sendMessage(
       ws.userId,
       data.recipientId,
       data.text,
+      undefined,
+      toAttachment(data),
     );
     await this.ms.deliverDirectMessage(message);
   }
@@ -159,6 +185,7 @@ export class MessagingWsGateway implements OnModuleInit {
       socketId: ws.socketId,
       userId: ws.userId,
       name: ws.userName ?? 'Unknown',
+      chatNickname: ws.chatNickname || undefined,
     };
     const members = this.ms.joinRoom(data.room, member);
     this.realtime.broadcastToRoom(data.room, {
@@ -190,7 +217,7 @@ export class MessagingWsGateway implements OnModuleInit {
 
   private async handleRoomMessage(
     ws: AuthWs,
-    data: { room: string; text: string; tempId?: string },
+    data: IncomingMessagePayload & { room: string; tempId?: string },
   ) {
     if (!ws.userId) return;
     if (!isValidRoom(data.room)) {
@@ -200,7 +227,8 @@ export class MessagingWsGateway implements OnModuleInit {
     const saved = await this.ms.saveRoomMessage(
       data.room,
       ws.userId,
-      data.text,
+      data.text ?? '',
+      toAttachment(data),
     );
     const payload: Record<string, unknown> = {
       type: 'room-message',
@@ -208,9 +236,12 @@ export class MessagingWsGateway implements OnModuleInit {
       message: {
         id: saved.id,
         senderId: saved.senderId,
-        senderName: ws.userName ?? 'Unknown',
-        avatar: initials(ws.userName ?? 'Unknown'),
+        senderName: ws.chatNickname || ws.userName || 'Unknown',
+        avatar: initials(ws.chatNickname || ws.userName || 'Unknown'),
         body: saved.body,
+        attachmentUrl: saved.attachmentUrl,
+        attachmentType: saved.attachmentType,
+        attachmentName: saved.attachmentName,
         createdAt: saved.createdAt.toISOString(),
       },
     };
@@ -261,6 +292,7 @@ export class MessagingWsGateway implements OnModuleInit {
       socketId: ws.socketId,
       userId: ws.userId,
       name: ws.userName ?? 'Unknown',
+      chatNickname: ws.chatNickname || undefined,
     };
     const members = this.ms.joinRoom(room, member);
     this.realtime.broadcastToRoom(room, {

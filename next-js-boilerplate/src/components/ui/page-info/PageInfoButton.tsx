@@ -4,6 +4,7 @@ import { useState } from "react";
 import { IconInfoCircle } from "@tabler/icons-react";
 import { cn } from "@/lib/cn";
 import { IconButton } from "@/components/ui/button/icon-button";
+import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -43,7 +44,7 @@ export function PageInfoButton({ content, className }: PageInfoButtonProps) {
           ))}
 
           {content.tips && content.tips.length > 0 && (
-            <div className="border-border bg-surface rounded-lg border p-3">
+            <Card variant="surface" className="w-full p-3">
               <p className="text-fg mb-1.5 text-xs font-medium">Tips</p>
               <ul className="flex flex-col gap-1">
                 {content.tips.map((tip) => (
@@ -52,7 +53,7 @@ export function PageInfoButton({ content, className }: PageInfoButtonProps) {
                   </li>
                 ))}
               </ul>
-            </div>
+            </Card>
           )}
         </div>
       </DialogContent>

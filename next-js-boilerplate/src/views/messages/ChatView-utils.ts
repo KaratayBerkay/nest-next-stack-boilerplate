@@ -3,14 +3,21 @@ import { sendMessageSchema } from "@/validators/messages/schema";
 import { formatDateByPreference } from "@/lib/date-time";
 import type { DateDisplayFormat } from "@/constants/date-display";
 import type { Message } from "@/types/messages/ChatView-types";
+import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
 
 export async function chatViewHandleSend(
   selectedUser: { id: string } | null,
   input: string,
-  sendMessage: (recipientId: string, text: string) => Promise<void>,
+  sendMessage: (
+    recipientId: string,
+    text: string,
+    attachment?: MessageAttachment,
+  ) => Promise<void>,
   setInput: Dispatch<SetStateAction<string>>,
   setMessageError: Dispatch<SetStateAction<string | null>>,
   scrollToBottom: () => void,
+  setPendingAttachment: Dispatch<SetStateAction<MessageAttachment | null>>,
+  attachment?: MessageAttachment,
 ) {
   if (!selectedUser) return;
   const parsed = sendMessageSchema.safeParse({ text: input });
@@ -18,10 +25,15 @@ export async function chatViewHandleSend(
     setMessageError(parsed.error.issues[0]?.message ?? "Invalid message");
     return;
   }
+  if (!parsed.data.text && !attachment) {
+    setMessageError("Message cannot be empty");
+    return;
+  }
   setMessageError(null);
   try {
-    await sendMessage(selectedUser.id, parsed.data.text);
+    await sendMessage(selectedUser.id, parsed.data.text, attachment);
     setInput("");
+    setPendingAttachment(null);
     scrollToBottom();
   } catch {
     setMessageError("Failed to send message. Try again.");

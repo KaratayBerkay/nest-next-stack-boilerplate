@@ -1,4 +1,4 @@
-import { UseGuards } from '@nestjs/common';
+import { Logger, UseGuards } from '@nestjs/common';
 import {
   Args,
   Field,
@@ -8,7 +8,7 @@ import {
   Query,
   Resolver,
 } from '@nestjs/graphql';
-import type { JwtUser } from '../auth/auth.types';
+import type { JwtUser, SessionUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { TokenStoreService } from '../auth/token-store.service';
@@ -33,12 +33,41 @@ class SessionInfo {
   issuedAt?: string;
 
   @Field({ nullable: true })
+  deviceType?: string;
+
+  @Field({ nullable: true })
   trusted?: boolean;
+}
+
+interface DeviceEnrichment {
+  id: string;
+  trusted: boolean;
+  type: string | null;
+}
+
+function mapSessionInfo(
+  session: SessionUser,
+  deviceMap: Map<string, DeviceEnrichment>,
+) {
+  const device = session.deviceId
+    ? deviceMap.get(session.deviceId)
+    : undefined;
+  return {
+    sessionId: session.sessionId,
+    deviceId: session.deviceId ?? '',
+    ip: session.ip ?? undefined,
+    userAgent: session.userAgent ?? undefined,
+    issuedAt: session.issuedAt ?? undefined,
+    deviceType: device?.type ?? undefined,
+    trusted: device?.trusted,
+  };
 }
 
 @UseGuards(SessionAuthGuard)
 @Resolver()
 export class SessionsResolver {
+  private readonly logger = new Logger(SessionsResolver.name);
+
   constructor(
     private readonly tokenStore: TokenStoreService,
     private readonly prisma: PrismaService,
@@ -52,27 +81,29 @@ export class SessionsResolver {
     const deviceIds = entries
       .map((e) => e.session.deviceId)
       .filter((id): id is string => !!id);
-    const devices = deviceIds.length
-      ? await this.prisma.device.findMany({
+    let devices: Array<{ id: string; trusted: boolean; type: string | null }> =
+      [];
+    if (deviceIds.length) {
+      try {
+        devices = await this.prisma.device.findMany({
           where: { id: { in: deviceIds } },
-          select: { id: true, trusted: true },
-        })
-      : [];
-    const trustedMap = new Map(
-      devices.map((d) => [d.id, d.trusted]),
-    );
+          select: { id: true, trusted: true, type: true },
+        });
+      } catch (err) {
+        // Best-effort enrichment — a device lookup failure must never take
+        // down the whole sessions list (F9).
+        this.logger.warn(
+          `device enrichment failed for user ${user.userId}: ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+        );
+      }
+    }
+    const deviceMap = new Map(devices.map((d) => [d.id, d]));
 
-    return entries.map(({ session }) => ({
-      sessionId: session.sessionId,
-      deviceId: session.deviceId ?? '',
-      ip: session.ip ?? undefined,
-      userAgent: session.userAgent ?? undefined,
-      issuedAt: session.issuedAt ?? undefined,
-      trusted:
-        session.deviceId
-          ? trustedMap.get(session.deviceId) ?? false
-          : undefined,
-    }));
+    return entries.map(({ session }) =>
+      mapSessionInfo(session, deviceMap),
+    );
   }
 
   @Mutation(() => Boolean)

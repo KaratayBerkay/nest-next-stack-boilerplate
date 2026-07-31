@@ -88,12 +88,16 @@ export class MessagingController {
     @Param('userId') addresseeId: string,
   ) {
     const result = await this.ms.sendFriendRequest(user.userId, addresseeId);
-    // Pending-list renew for friend-request page viewers
-    this.realtime.emitToPage(user.userId, 'friend-request', {
+    // Pending-list renew for both parties. Service-scoped (not emitToPage):
+    // page-scoping only reaches sockets claiming the "friend-request" page,
+    // so a user sitting on /messages never sees the frame — the exact bug
+    // this replaced. Every client registers for the MESSAGE service, and
+    // dispatchRenew's "Friends" case invalidates the list regardless of page.
+    this.realtime.emitToService(user.userId, 'MESSAGE', {
       renew: 'Friends',
       type: 'PendingList',
     });
-    this.realtime.emitToPage(addresseeId, 'friend-request', {
+    this.realtime.emitToService(addresseeId, 'MESSAGE', {
       renew: 'Friends',
       type: 'PendingList',
     });
@@ -107,11 +111,11 @@ export class MessagingController {
     @Param('userId') requesterId: string,
   ) {
     const result = await this.ms.acceptFriendRequest(user.userId, requesterId);
-    this.realtime.emitToPage(user.userId, 'friend-request', {
+    this.realtime.emitToService(user.userId, 'MESSAGE', {
       renew: 'Friends',
       type: 'PendingList',
     });
-    this.realtime.emitToPage(requesterId, 'friend-request', {
+    this.realtime.emitToService(requesterId, 'MESSAGE', {
       renew: 'Friends',
       type: 'PendingList',
     });
@@ -125,11 +129,11 @@ export class MessagingController {
     @Param('userId') requesterId: string,
   ) {
     const result = await this.ms.declineFriendRequest(user.userId, requesterId);
-    this.realtime.emitToPage(user.userId, 'friend-request', {
+    this.realtime.emitToService(user.userId, 'MESSAGE', {
       renew: 'Friends',
       type: 'PendingList',
     });
-    this.realtime.emitToPage(requesterId, 'friend-request', {
+    this.realtime.emitToService(requesterId, 'MESSAGE', {
       renew: 'Friends',
       type: 'PendingList',
     });
@@ -188,6 +192,13 @@ export class MessagingController {
       recipientId,
       body.text,
       body._tempId,
+      body.attachmentUrl && body.attachmentType && body.attachmentName
+        ? {
+            url: body.attachmentUrl,
+            type: body.attachmentType,
+            name: body.attachmentName,
+          }
+        : undefined,
     );
   }
 

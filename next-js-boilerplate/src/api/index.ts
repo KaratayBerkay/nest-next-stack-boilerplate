@@ -10,7 +10,7 @@ export type {
   Message,
   ConversationPage,
 } from "./server/messages/conversation-messages";
-export type { RoomMessage } from "./server/messages/room-messages";
+export type { ChatRoomMessage } from "./server/messages/room-messages";
 export type { FriendUser } from "./server/messages/friends";
 export type { FriendRequest as ServerFriendRequest } from "./server/messages/friend-requests";
 export type { FeedPost, FeedListResult } from "./server/posts/list";
@@ -24,7 +24,7 @@ export type { SubscriptionInfo } from "./server/billing/subscription";
 export type { BillingHistoryEntry } from "./server/billing/history";
 export type { PremiumStats } from "./server/premium/stats";
 export type { GrowthStats } from "./server/premium/growth-stats";
-export type { SessionInfo } from "./server/sessions/list";
+export type { SessionInfo } from "@/types/settings/SessionInfo-types";
 export type { ApiKeyInfo } from "./server/api-keys/list";
 export type { CreateApiKeyResult } from "./server/api-keys/create";
 export type { SuggestedFriend } from "./server/friends/suggested";

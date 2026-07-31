@@ -3220,6 +3220,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get messagesFailedToLoad => 'Failed to load messages';
 
   @override
+  String get messagesAttachmentTooLarge => 'File is too large (max 10MB)';
+
+  @override
+  String get messagesAttachmentUploadFailed => 'Failed to upload attachment';
+
+  @override
   String get messagesSignInRequired => 'Sign in to start messaging';
 
   @override
@@ -3557,6 +3563,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsPlanBenefits => 'Plan Benefits';
+
+  @override
+  String get settingsPlanTab => 'Plan & Payment';
 
   @override
   String get settingsPaymentMethods => 'Payment Methods';
@@ -4508,6 +4517,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chatRoomTypeMessage => 'Type a message...';
+
+  @override
+  String get chatRoomAttachFile => 'Attach a file';
+
+  @override
+  String get chatRoomOpenEmojiPicker => 'Open emoji picker';
 
   @override
   String get chatRoomTabLocked => 'Tab locked';

@@ -3,6 +3,7 @@ import 'package:flutter_boilerplate/lib/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../types/messages/message.dart';
+import '../../../types/messages/message_attachment.dart';
 
 final sendMessageServerProvider =
     Provider((ref) => SendMessageServer(ref.read(dioProvider)));
@@ -16,6 +17,9 @@ const _mutation = '''
       recipientId
       sender { id name avatarUrl }
       recipient { id name avatarUrl }
+      attachmentUrl
+      attachmentType
+      attachmentName
       createdAt
       readAt
     }
@@ -27,7 +31,11 @@ class SendMessageServer {
 
   SendMessageServer(this._dio);
 
-  Future<ChatMessage> call(String recipientId, String text) async {
+  Future<ChatMessage> call(
+    String recipientId,
+    String text,
+    MessageAttachment? attachment,
+  ) async {
     final response = await _dio.post<dynamic>(
       '/graphql',
       data: {
@@ -36,6 +44,9 @@ class SendMessageServer {
           'input': {
             'recipientId': recipientId,
             'text': text,
+            'attachmentUrl': attachment?.url,
+            'attachmentType': attachment?.type,
+            'attachmentName': attachment?.name,
           },
         },
       },
@@ -57,6 +68,9 @@ class SendMessageServer {
       senderName: sender?['name'] as String? ?? '',
       senderAvatarUrl: sender?['avatarUrl'] as String?,
       content: result['body'] as String,
+      attachmentUrl: result['attachmentUrl'] as String?,
+      attachmentType: result['attachmentType'] as String?,
+      attachmentName: result['attachmentName'] as String?,
       createdAt: DateTime.parse(result['createdAt'] as String),
       isRead: result['readAt'] != null,
     );

@@ -6,6 +6,12 @@ import { cn } from "@/lib/cn";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { PlanBenefitsProps } from "@/types/billing/PlanBenefits-types";
 import type { ClassNameProps } from "@/types/ui/ClassName-types";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
 
 function CheckIcon({ className }: ClassNameProps) {
   return (
@@ -72,24 +78,37 @@ export function PlanBenefits({ currentTier, className }: PlanBenefitsProps) {
 
   return (
     <div className={cn("flex flex-col gap-3", className)}>
-      <h3 className="text-sm font-medium">{t.planBenefits}</h3>
-      <ul className="flex flex-col gap-2.5">
-        {allBenefits.map(({ feature, included }) => (
-          <li key={feature} className="flex items-center gap-2.5">
-            {included ? <CheckIcon /> : <XIcon />}
-            <span
-              className={cn("text-sm", !included && "text-muted line-through")}
-            >
-              {feature}
-            </span>
-          </li>
-        ))}
-        {allBenefits.length === 0 && (
-          <li className="text-muted text-sm">
-            {t.planBenefitsEmpty || "No benefits available for this tier."}
-          </li>
-        )}
-      </ul>
+      {/* Collapsed by default: no defaultValue passed to the Accordion. */}
+      <Accordion type="single" collapsible className="w-full">
+        <AccordionItem value="plan-benefits">
+          <AccordionTrigger value="plan-benefits">
+            <span className="text-sm font-medium">{t.planBenefits}</span>
+          </AccordionTrigger>
+          <AccordionContent>
+            <ul className="flex flex-col gap-2.5">
+              {allBenefits.map(({ feature, included }) => (
+                <li key={feature} className="flex items-center gap-2.5">
+                  {included ? <CheckIcon /> : <XIcon />}
+                  <span
+                    className={cn(
+                      "text-sm",
+                      !included && "text-muted line-through",
+                    )}
+                  >
+                    {feature}
+                  </span>
+                </li>
+              ))}
+              {allBenefits.length === 0 && (
+                <li className="text-muted text-sm">
+                  {t.planBenefitsEmpty ||
+                    "No benefits available for this tier."}
+                </li>
+              )}
+            </ul>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 }

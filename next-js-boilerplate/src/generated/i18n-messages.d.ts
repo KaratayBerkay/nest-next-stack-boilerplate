@@ -209,6 +209,10 @@ export type I18nMessages = {
       "signInRequired": string;
       "roomMembers": string;
       "loadEarlier": string;
+      "attachFile": string;
+      "openEmojiPicker": string;
+      "removeAttachment": string;
+      "uploading": string;
     }
 
   "checkout": {
@@ -1128,6 +1132,7 @@ export type I18nMessages = {
       "dateDisplayIso": string;
       "dateDisplayShort": string;
       "billingHeading": string;
+      "billingPlanTab": string;
       "currentPlan": string;
       "upgradePlan": string;
       "billingHistory": string;
@@ -1217,6 +1222,8 @@ export type I18nMessages = {
       "logOutAllOtherSessions": string;
       "loadingSessions": string;
       "noSessions": string;
+      "sessionsLoadFailed": string;
+      "sessionsRetry": string;
       "currentSession": string;
       "unknownDevice": string;
       "moreDeviceInfo": string;
@@ -1407,6 +1414,8 @@ export type I18nMessages = {
       "formErrorBannerDescription": string;
       "stepIndicatorTitle": string;
       "stepIndicatorDescription": string;
+      "emojiPickerTitle": string;
+      "emojiPickerDescription": string;
     }
 
   "users": {

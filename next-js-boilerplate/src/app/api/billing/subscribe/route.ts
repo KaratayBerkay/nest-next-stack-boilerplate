@@ -19,10 +19,12 @@ const SUBSCRIBE_MUTATION = `
   mutation SubscribeToPlan(
     $tier: SubscriptionTier!
     $paymentMethodId: String
+    $idempotencyKey: String
   ) {
     subscribeToPlan(
       tier: $tier
       paymentMethodId: $paymentMethodId
+      idempotencyKey: $idempotencyKey
     ) {
       success
       reason
@@ -46,7 +48,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let body: { tier: string; paymentMethodId?: string };
+  let body: { tier: string; paymentMethodId?: string; idempotencyKey?: string };
   try {
     body = await request.json();
   } catch {
@@ -94,6 +96,7 @@ export async function POST(request: NextRequest) {
     {
       tier: body.tier,
       paymentMethodId: body.paymentMethodId ?? null,
+      idempotencyKey: body.idempotencyKey ?? null,
     },
     accessToken,
     extraHeaders ?? undefined,

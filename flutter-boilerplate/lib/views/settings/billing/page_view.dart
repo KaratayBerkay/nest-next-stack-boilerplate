@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart' hide Badge;
+import 'package:flutter_boilerplate/lib/tier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:go_router/go_router.dart';
@@ -9,12 +10,14 @@ import '../../../api/client/billing/actions.dart';
 import '../../../api/client/billing/query.dart';
 import '../../../api/server/billing/address.dart';
 import '../../../api/server/billing/subscription.dart';
+import '../../../components/ui/accordion/accordion.dart';
 import '../../../components/ui/badge/badge.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/card/card.dart';
 import '../../../components/ui/card/card_content.dart';
 import '../../../components/ui/card/card_header.dart';
 import '../../../components/ui/stripe_card_form.dart';
+import '../../../components/ui/tabs/tabs.dart';
 import '../../../components/ui/toast/toast.dart';
 import '../../../constants/theme.dart';
 import '../../../l10n/app_localizations.dart';
@@ -39,20 +42,149 @@ class SettingsBillingPageContent extends ConsumerWidget {
         loading: () => const SettingsLoadingFallback(),
         error: (e, _) => Center(child: Text(t.notificationLoadFailed)),
         data: (sub) {
-          if (sub.plan == 'free') return _FreeBillingView(lang: lang);
-          return ListView(
-            padding: const EdgeInsets.all(16),
+          return TabsWidget(
+            tabs: [
+              Tab(text: t.settingsPlanTab),
+              Tab(text: t.settingsInvoices),
+            ],
             children: [
-              _SubscriptionCard(sub: sub, lang: lang),
-              const SizedBox(height: 16),
-              _BillingAddressSection(),
-              const SizedBox(height: 16),
-              _PaymentMethodsSection(),
-              const SizedBox(height: 16),
-              _InvoiceHistorySection(),
+              ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  _SubscriptionCard(sub: sub, lang: lang),
+                  const SizedBox(height: 16),
+                  _PlanBenefitsSection(currentTier: sub.plan),
+                  const SizedBox(height: 16),
+                  _PaymentMethodsSection(),
+                  const SizedBox(height: 16),
+                  _BillingAddressSection(),
+                ],
+              ),
+              ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  _InvoiceHistorySection(),
+                ],
+              ),
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+List<String> _tierFeatures(AppLocalizations t, String tier) {
+  switch (tier) {
+    case Tier.basic:
+      return [t.pricingFeaturesBasic0, t.pricingFeaturesBasic1];
+    case Tier.medium:
+      return [
+        t.pricingFeaturesMedium0,
+        t.pricingFeaturesMedium1,
+        t.pricingFeaturesMedium2,
+      ];
+    case Tier.premium:
+      return [
+        t.pricingFeaturesPremium0,
+        t.pricingFeaturesPremium1,
+        t.pricingFeaturesPremium2,
+        t.pricingFeaturesPremium3,
+      ];
+    default:
+      return const [];
+  }
+}
+
+List<({String feature, bool included})> _buildBenefits(
+  AppLocalizations t,
+  String currentTier,
+) {
+  final all = <({String feature, bool included})>[];
+  final currentTierIndex = Tier.tierOrder[currentTier] ?? 0;
+
+  for (var i = 1; i <= currentTierIndex; i++) {
+    final tier = Tier.all[i];
+    for (final feature in _tierFeatures(t, tier)) {
+      if (!all.any((b) => b.feature == feature)) {
+        all.add((feature: feature, included: true));
+      }
+    }
+  }
+
+  final nextTierIndex = currentTierIndex + 1;
+  if (nextTierIndex < Tier.all.length) {
+    for (final feature in _tierFeatures(t, Tier.all[nextTierIndex])) {
+      if (!all.any((b) => b.feature == feature)) {
+        all.add((feature: feature, included: false));
+      }
+    }
+  }
+
+  return all;
+}
+
+class _PlanBenefitsSection extends ConsumerWidget {
+  final String currentTier;
+
+  const _PlanBenefitsSection({required this.currentTier});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
+    final benefits = _buildBenefits(t, currentTier);
+
+    return CardWidget(
+      child: AccordionWidget(
+        items: [
+          AccordionItem(
+            title: t.settingsPlanBenefits,
+            icon: Icons.checklist,
+            content: benefits.isEmpty
+                ? Text(
+                    t.settingsPlanBenefitsEmpty,
+                    style: TextStyle(color: colors.fgMuted, fontSize: 13),
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final benefit in benefits)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            children: [
+                              Icon(
+                                benefit.included
+                                    ? Icons.check_circle
+                                    : Icons.cancel,
+                                size: 18,
+                                color: benefit.included
+                                    ? colors.success
+                                    : colors.fgMuted,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  benefit.feature,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: benefit.included
+                                        ? colors.fg
+                                        : colors.fgMuted,
+                                    decoration: benefit.included
+                                        ? TextDecoration.none
+                                        : TextDecoration.lineThrough,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+          ),
+        ],
       ),
     );
   }
@@ -551,45 +683,6 @@ class _InvoiceHistorySectionState
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _FreeBillingView extends StatelessWidget {
-  final String lang;
-
-  const _FreeBillingView({required this.lang});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-    final t = AppLocalizations.of(context);
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.credit_card_outlined, size: 48, color: colors.fgMuted),
-            const SizedBox(height: 16),
-            Text(
-              t.settingsNoBillingInfo,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              t.settingsBillingUpgradePrompt,
-              style: TextStyle(color: colors.fgMuted),
-            ),
-            const SizedBox(height: 24),
-            Button(
-              child: Text(t.settingsViewPlans),
-              onPressed: () => context.go('/v1/$lang/plans'),
-            ),
-          ],
-        ),
       ),
     );
   }

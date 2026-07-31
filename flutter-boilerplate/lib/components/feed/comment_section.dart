@@ -198,24 +198,51 @@ class _CommentSectionState extends State<CommentSection> {
           )
         else
           ..._topLevel.map(
-            (comment) => _CommentTile(
-              comment: comment,
-              colors: colors,
-              isOwn: _isOwn(comment),
-              replies: _replies(comment.id),
-              editingId: _editingId,
-              editController: _editController,
-              currentUserId: widget.currentUserId,
-              onReply: () => setState(() => _replyTo = comment.id),
-              onEditStart: () {
-                _editController.text = comment.body;
-                setState(() => _editingId = comment.id);
-              },
-              onEditCancel: () => setState(() => _editingId = null),
-              onEditSave: () => _handleEdit(comment.id),
-              onDelete: () => _handleDelete(comment.id),
-              onToggleReaction: widget.onToggleReaction,
-              onCommentAdded: widget.onCommentAdded,
+            (comment) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _CommentTile(
+                  comment: comment,
+                  colors: colors,
+                  isOwn: _isOwn(comment),
+                  editingId: _editingId,
+                  editController: _editController,
+                  currentUserId: widget.currentUserId,
+                  onReply: () => setState(() => _replyTo = comment.id),
+                  onEditStart: () {
+                    _editController.text = comment.body;
+                    setState(() => _editingId = comment.id);
+                  },
+                  onEditCancel: () => setState(() => _editingId = null),
+                  onEditSave: () => _handleEdit(comment.id),
+                  onDelete: () => _handleDelete(comment.id),
+                  onToggleReaction: widget.onToggleReaction,
+                  onCommentAdded: widget.onCommentAdded,
+                ),
+                ..._replies(comment.id).map(
+                  (reply) => Padding(
+                    padding: const EdgeInsets.only(left: 16, top: 2),
+                    child: _CommentTile(
+                      comment: reply,
+                      colors: colors,
+                      isOwn: _isOwn(reply),
+                      editingId: _editingId,
+                      editController: _editController,
+                      currentUserId: widget.currentUserId,
+                      onReply: () => setState(() => _replyTo = reply.id),
+                      onEditStart: () {
+                        _editController.text = reply.body;
+                        setState(() => _editingId = reply.id);
+                      },
+                      onEditCancel: () => setState(() => _editingId = null),
+                      onEditSave: () => _handleEdit(reply.id),
+                      onDelete: () => _handleDelete(reply.id),
+                      onToggleReaction: widget.onToggleReaction,
+                      onCommentAdded: widget.onCommentAdded,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
       ],
@@ -227,7 +254,6 @@ class _CommentTile extends StatelessWidget {
   final Comment comment;
   final AppColors colors;
   final bool isOwn;
-  final List<Comment> replies;
   final String? editingId;
   final TextEditingController editController;
   final String? currentUserId;
@@ -244,7 +270,6 @@ class _CommentTile extends StatelessWidget {
     required this.comment,
     required this.colors,
     required this.isOwn,
-    required this.replies,
     required this.editingId,
     required this.editController,
     this.currentUserId,
@@ -424,30 +449,6 @@ class _CommentTile extends StatelessWidget {
                     ),
                   ),
               ],
-            ),
-          ),
-          ...replies.map(
-            (reply) => Padding(
-              padding: const EdgeInsets.only(left: 16, top: 2),
-              child: _CommentTile(
-                comment: reply,
-                colors: colors,
-                isOwn: isOwn,
-                replies: const [],
-                editingId: editingId,
-                editController: editController,
-                currentUserId: currentUserId,
-                onReply: onReply,
-                onEditStart: () {
-                  editController.text = reply.body;
-                  onEditStart;
-                },
-                onEditCancel: onEditCancel,
-                onEditSave: () => onEditSave,
-                onDelete: onDelete,
-                onToggleReaction: onToggleReaction,
-                onCommentAdded: onCommentAdded,
-              ),
             ),
           ),
         ],

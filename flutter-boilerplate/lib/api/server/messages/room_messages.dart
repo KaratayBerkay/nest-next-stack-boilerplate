@@ -38,6 +38,9 @@ class RoomMessage {
   final String senderName;
   final String avatar;
   final String body;
+  final String? attachmentUrl;
+  final String? attachmentType;
+  final String? attachmentName;
   final String createdAt;
 
   const RoomMessage({
@@ -46,6 +49,9 @@ class RoomMessage {
     required this.senderName,
     required this.avatar,
     required this.body,
+    this.attachmentUrl,
+    this.attachmentType,
+    this.attachmentName,
     required this.createdAt,
   });
 
@@ -56,6 +62,9 @@ class RoomMessage {
       senderName: json['senderName'] as String,
       avatar: json['avatar'] as String,
       body: json['body'] as String,
+      attachmentUrl: json['attachmentUrl'] as String?,
+      attachmentType: json['attachmentType'] as String?,
+      attachmentName: json['attachmentName'] as String?,
       createdAt: json['createdAt'] as String,
     );
   }

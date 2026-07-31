@@ -10,8 +10,11 @@ describe('SessionsResolver', () => {
     revokeSessionBySessionId: jest.Mock;
     revoke: jest.Mock;
   };
-  let mockGateway: {
-    closeSocketsForSession: jest.Mock;
+  let mockPrisma: {
+    device: {
+      findMany: jest.Mock;
+      update: jest.Mock;
+    };
   };
 
   const mockUser: JwtUser = {
@@ -32,10 +35,16 @@ describe('SessionsResolver', () => {
     mockGateway = {
       closeSocketsForSession: jest.fn(),
     };
+    mockPrisma = {
+      device: {
+        findMany: jest.fn().mockResolvedValue([]),
+        update: jest.fn().mockResolvedValue({}),
+      },
+    };
 
     resolver = new SessionsResolver(
       mockTokenStore as unknown as TokenStoreService,
-      { device: { findMany: jest.fn().mockResolvedValue([]), update: jest.fn().mockResolvedValue({}) } } as never,
+      mockPrisma as never,
       mockGateway as unknown as RealtimeGateway,
     );
   });
@@ -64,9 +73,16 @@ describe('SessionsResolver', () => {
           },
         },
       ]);
+      mockPrisma.device.findMany.mockResolvedValue([
+        { id: 'dev-1', trusted: true, type: 'MOBILE_ANDROID' },
+      ]);
 
       const result = await resolver.mySessions(mockUser);
 
+      expect(mockPrisma.device.findMany).toHaveBeenCalledWith({
+        where: { id: { in: ['dev-1'] } },
+        select: { id: true, trusted: true, type: true },
+      });
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual({
         sessionId: 'sess-1',
@@ -74,7 +90,8 @@ describe('SessionsResolver', () => {
         ip: '127.0.0.1',
         userAgent: 'Mozilla/5.0',
         issuedAt: '2026-01-01T00:00:00Z',
-        trusted: false,
+        deviceType: 'MOBILE_ANDROID',
+        trusted: true,
       });
       expect(result[1]).toEqual({
         sessionId: 'sess-2',
@@ -82,9 +99,41 @@ describe('SessionsResolver', () => {
         ip: undefined,
         userAgent: undefined,
         issuedAt: undefined,
+        deviceType: undefined,
         trusted: undefined,
       });
       expect(mockTokenStore.listSessionsWithKeys).toHaveBeenCalledWith('u1');
+    });
+
+    it('returns sessions even when device enrichment fails', async () => {
+      mockTokenStore.listSessionsWithKeys.mockResolvedValue([
+        {
+          key: 'token-key-1',
+          session: {
+            sessionId: 'sess-1',
+            deviceId: 'dev-1',
+            ip: '127.0.0.1',
+            userAgent: 'Mozilla/5.0',
+            issuedAt: '2026-01-01T00:00:00Z',
+          },
+        },
+      ]);
+      mockPrisma.device.findMany.mockRejectedValue(
+        new Error('db connection lost'),
+      );
+
+      const result = await resolver.mySessions(mockUser);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        sessionId: 'sess-1',
+        deviceId: 'dev-1',
+        ip: '127.0.0.1',
+        userAgent: 'Mozilla/5.0',
+        issuedAt: '2026-01-01T00:00:00Z',
+        deviceType: undefined,
+        trusted: undefined,
+      });
     });
 
     it('returns empty array when no sessions', async () => {

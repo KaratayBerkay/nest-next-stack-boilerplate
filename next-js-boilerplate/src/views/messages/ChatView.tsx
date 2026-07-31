@@ -9,7 +9,10 @@ import { ConnectionUnstable } from "@/components/ConnectionUnstable";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import type { ChatViewProps } from "@/types/messages/ChatView-types";
-import { useMessageActions } from "@/api/client/messages/actions";
+import {
+  useMessageActions,
+  useMessageUpload,
+} from "@/api/client/messages/actions";
 import { useTypingUsers } from "@/hooks/useTypingUsers";
 import {
   chatViewHandleSend,
@@ -18,6 +21,7 @@ import {
 import { ChatViewHeader } from "@/views/messages/ChatViewHeader";
 import { ChatInputBar } from "@/views/messages/ChatInputBar";
 import { ChatMessageList } from "@/views/messages/ChatMessageList";
+import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
 
 export function ChatView({
   selectedUser,
@@ -32,6 +36,9 @@ export function ChatView({
   const messagesRef = useYSwipeGesture<HTMLDivElement>();
   const [input, setInput] = useState("");
   const [messageError, setMessageError] = useState<string | null>(null);
+  const [pendingAttachment, setPendingAttachment] =
+    useState<MessageAttachment | null>(null);
+  const [attaching, setAttaching] = useState(false);
 
   const {
     data: conversationData,
@@ -54,6 +61,7 @@ export function ChatView({
 
   const { sendMessage } = useMessageActions();
   const { typingUsers, sendTypingStart, sendTypingStop } = useTypingUsers();
+  const { uploadAttachment } = useMessageUpload();
 
   const handleSend = useCallback(
     () =>
@@ -64,9 +72,31 @@ export function ChatView({
         setInput,
         setMessageError,
         scrollToBottom,
+        setPendingAttachment,
+        pendingAttachment ?? undefined,
       ),
-    [selectedUser, input, sendMessage, scrollToBottom],
+    [selectedUser, input, sendMessage, scrollToBottom, pendingAttachment],
   );
+
+  const handleAttachFile = useCallback(
+    async (file: File) => {
+      if (!selectedUser) return;
+      setAttaching(true);
+      try {
+        const attachment = await uploadAttachment(file);
+        setPendingAttachment(attachment);
+      } catch {
+        setMessageError("Upload failed. Try again.");
+      } finally {
+        setAttaching(false);
+      }
+    },
+    [selectedUser, uploadAttachment],
+  );
+
+  const handleRemoveAttachment = useCallback(() => {
+    setPendingAttachment(null);
+  }, []);
 
   const groupedMessages = useMemo(
     () => groupMessagesByDate(conversationMessages),
@@ -127,6 +157,10 @@ export function ChatView({
         recipientId={selectedUser.id}
         onTypingStart={sendTypingStart}
         onTypingStop={sendTypingStop}
+        attaching={attaching}
+        pendingAttachment={pendingAttachment}
+        onAttachFile={handleAttachFile}
+        onRemoveAttachment={handleRemoveAttachment}
       />
     </div>
   );

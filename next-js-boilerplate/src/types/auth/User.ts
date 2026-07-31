@@ -6,6 +6,7 @@ export type User = {
   avatarUrl?: string;
   locale?: string;
   timezone?: string;
+  chatNickname?: string;
   status?: string;
   role: string;
   tier?: string;

@@ -13,5 +13,9 @@
   "countOnline": "{count} çevrimiçi",
   "signInRequired": "Sohbet odalarına katılmak için giriş yapın",
   "roomMembers": "Üyeler",
-  "loadEarlier": "Önceki mesajları yükle"
+  "loadEarlier": "Önceki mesajları yükle",
+  "attachFile": "Dosya ekle",
+  "openEmojiPicker": "Emoji ekle",
+  "removeAttachment": "Eki kaldır",
+  "uploading": "Yükleniyor…"
 }

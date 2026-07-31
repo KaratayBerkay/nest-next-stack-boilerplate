@@ -109,6 +109,7 @@ export {
   DropdownMenuLabel,
 } from "./dropdown-menu";
 export { Empty } from "./empty";
+export { EmojiPickerButton } from "./emoji-picker";
 export { ErrorBoundary } from "./error-boundary";
 export { FieldInfoButton } from "./field-info-button";
 export { FileUpload } from "./file-upload";
@@ -155,7 +156,7 @@ export {
   PaginationNext,
   PaginationEllipsis,
 } from "./pagination";
-export { Popover, PopoverTrigger, PopoverContent } from "./popover";
+export { Popover, PopoverTrigger, PopoverContent, usePopover } from "./popover";
 export { Progress } from "./progress";
 export { RadioGroup, RadioGroupItem } from "./radio-group";
 export {

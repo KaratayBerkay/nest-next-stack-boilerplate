@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/date_time.dart';
 
+import '../../components/ui/attachment_preview/attachment_preview.dart';
 import '../../constants/theme.dart';
 import '../../types/messages/message.dart';
 
@@ -36,35 +37,45 @@ class ChatMessageBubble extends StatelessWidget {
                 ),
               ),
             ),
+          if (message.attachmentUrl != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: AttachmentPreview(
+                url: message.attachmentUrl!,
+                type: message.attachmentType,
+                name: message.attachmentName,
+              ),
+            ),
           Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment:
                 isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Flexible(
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isMe ? colors.brand : colors.surfaceAlt,
-                    borderRadius: BorderRadius.circular(12).copyWith(
-                      bottomRight: isMe ? const Radius.circular(2) : null,
-                      bottomLeft: !isMe ? const Radius.circular(2) : null,
+              if (message.content.isNotEmpty)
+                Flexible(
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isMe ? colors.brand : colors.surfaceAlt,
+                      borderRadius: BorderRadius.circular(12).copyWith(
+                        bottomRight: isMe ? const Radius.circular(2) : null,
+                        bottomLeft: !isMe ? const Radius.circular(2) : null,
+                      ),
                     ),
-                  ),
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 0.65,
-                  ),
-                  child: Text(
-                    message.content,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: isMe ? colors.surface : colors.fg,
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width * 0.65,
+                    ),
+                    child: Text(
+                      message.content,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isMe ? colors.surface : colors.fg,
+                      ),
                     ),
                   ),
                 ),
-              ),
               const SizedBox(width: 4),
               Text(
                 DateTimeHelper.formatTime(message.createdAt),

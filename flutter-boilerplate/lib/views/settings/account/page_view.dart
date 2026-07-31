@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../fallbacks/index.dart';
 import '../../../api/client/profile/actions.dart';
+import '../../../api/server/auth/me.dart';
 import '../../../api/server/profile/get.dart';
 import '../../../components/ui/avatar/avatar.dart';
 import '../../../components/ui/button/button.dart';
@@ -168,6 +169,13 @@ class _AccountFormState extends State<_AccountForm> {
           .read(profileActionsProvider)
           .uploadAvatar(file.path!);
       await widget.ref.read(profileActionsProvider).update(avatarUrl: url);
+      widget.ref.invalidate(_profileProvider);
+      try {
+        final me = await widget.ref.read(meServerProvider).call();
+        await widget.ref.read(authProvider.notifier).updateUser(me);
+      } catch (_) {
+        // Non-fatal: the page refetch above already reflects the new avatar.
+      }
       if (mounted) showToast(context, t.settingsSaveSuccess);
     } catch (e) {
       if (mounted) showToast(context, 'Failed: $e');
