@@ -670,6 +670,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get checkoutRedirecting => 'Redirecting to pricing...';
 
   @override
+  String checkoutConfirmChange(Object tier) {
+    return 'Confirm change to $tier';
+  }
+
+  @override
+  String checkoutChangeScheduled(Object date, Object tier) {
+    return 'Your plan will change to $tier on $date.';
+  }
+
+  @override
+  String get checkoutScheduledAtRenewal =>
+      'Your plan will change at your next renewal. No charge today.';
+
+  @override
   String checkoutConfirmDowngrade(Object tier) {
     return 'Confirm downgrade to $tier';
   }

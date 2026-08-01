@@ -2,24 +2,22 @@ import 'package:flutter/material.dart';
 
 import '../../components/ui/button/button.dart';
 import '../../constants/theme.dart';
-import '../../l10n/app_localizations.dart';
 
 class DowngradeSection extends StatelessWidget {
-  final String targetTier;
   final String? error;
   final VoidCallback onConfirm;
+  final String confirmLabel;
 
   const DowngradeSection({
     super.key,
-    required this.targetTier,
     this.error,
     required this.onConfirm,
+    required this.confirmLabel,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    final t = AppLocalizations.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -37,7 +35,7 @@ class DowngradeSection extends StatelessWidget {
           fullWidth: true,
           variant: ButtonVariant.outline,
           onPressed: onConfirm,
-          child: Text(t.checkoutConfirmDowngradeSimple),
+          child: Text(confirmLabel),
         ),
       ],
     );

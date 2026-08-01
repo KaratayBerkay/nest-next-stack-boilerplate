@@ -1328,6 +1328,24 @@ abstract class AppLocalizations {
   /// **'Redirecting to pricing...'**
   String get checkoutRedirecting;
 
+  /// No description provided for @checkoutConfirmChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm change to {tier}'**
+  String checkoutConfirmChange(Object tier);
+
+  /// No description provided for @checkoutChangeScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'Your plan will change to {tier} on {date}.'**
+  String checkoutChangeScheduled(Object date, Object tier);
+
+  /// No description provided for @checkoutScheduledAtRenewal.
+  ///
+  /// In en, this message translates to:
+  /// **'Your plan will change at your next renewal. No charge today.'**
+  String get checkoutScheduledAtRenewal;
+
   /// No description provided for @checkoutConfirmDowngrade.
   ///
   /// In en, this message translates to:

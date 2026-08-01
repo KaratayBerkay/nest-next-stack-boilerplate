@@ -673,6 +673,20 @@ class AppLocalizationsTr extends AppLocalizations {
   String get checkoutRedirecting => 'Fiyat sayfasına yönlendiriliyor...';
 
   @override
+  String checkoutConfirmChange(Object tier) {
+    return '$tier planına geçişi onaylayın';
+  }
+
+  @override
+  String checkoutChangeScheduled(Object date, Object tier) {
+    return 'Planınız $date tarihinde $tier olarak değişecek.';
+  }
+
+  @override
+  String get checkoutScheduledAtRenewal =>
+      'Planınız bir sonraki yenilemede değişecek. Bugün ücret alınmaz.';
+
+  @override
   String checkoutConfirmDowngrade(Object tier) {
     return '$tier planına düşmeyi onaylayın';
   }

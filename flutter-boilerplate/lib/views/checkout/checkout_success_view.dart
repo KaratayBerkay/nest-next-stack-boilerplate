@@ -4,6 +4,7 @@ import '../../constants/theme.dart';
 
 class CheckoutSuccessView extends StatelessWidget {
   final bool isDowngrade;
+  final String? message;
   final String downgradeMsg;
   final String upgradeMsg;
   final String redirectingMsg;
@@ -11,6 +12,7 @@ class CheckoutSuccessView extends StatelessWidget {
   const CheckoutSuccessView({
     super.key,
     required this.isDowngrade,
+    this.message,
     required this.downgradeMsg,
     required this.upgradeMsg,
     required this.redirectingMsg,
@@ -19,6 +21,7 @@ class CheckoutSuccessView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final msg = message ?? (isDowngrade ? downgradeMsg : upgradeMsg);
 
     return Center(
       child: Padding(
@@ -33,7 +36,7 @@ class CheckoutSuccessView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              isDowngrade ? downgradeMsg : upgradeMsg,
+              msg,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,

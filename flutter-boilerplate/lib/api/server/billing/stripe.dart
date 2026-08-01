@@ -14,6 +14,8 @@ const _subscribeMutation = '''
       success
       reason
       periodEnd
+      pendingTier
+      pendingTierEffectiveAt
     }
   }
 ''';
