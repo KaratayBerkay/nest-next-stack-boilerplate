@@ -14,6 +14,7 @@ import {
 } from "@stripe/react-stripe-js";
 import { StripeElements } from "@/components/StripeProvider";
 import type { StripeCardFormProps } from "@/types/billing/StripeCardForm-types";
+import type { SubscribeResult } from "@/api/server/billing/stripe";
 import { useBillingActions } from "@/api/client/billing/actions";
 
 export function StripeCardForm({
@@ -59,13 +60,13 @@ async function handleStripeSubmit(
   elements: ReturnType<typeof useElements>,
   tier: string,
   setSubmitting: Dispatch<SetStateAction<boolean>>,
-  onSuccess: () => void,
+  onSuccess: (result: SubscribeResult) => void,
   onError: (msg: string) => void,
   subscribe: (
     tier: string,
     paymentMethodId?: string,
     idempotencyKey?: string,
-  ) => Promise<void>,
+  ) => Promise<SubscribeResult>,
   retryKeyRef: React.MutableRefObject<string | null>,
 ) {
   e.preventDefault();
@@ -107,13 +108,13 @@ async function handleStripeSubmit(
     // kept on failure so a timeout-then-retry never double-charges.
     const retryKey =
       retryKeyRef.current ?? (retryKeyRef.current = crypto.randomUUID());
-    await subscribe(
+    const result = await subscribe(
       tier,
       setupIntent.payment_method as string | undefined,
       retryKey,
     );
     retryKeyRef.current = null;
-    onSuccess();
+    onSuccess(result);
   } catch (err) {
     onError((err as Error).message ?? "Subscription failed");
   } finally {

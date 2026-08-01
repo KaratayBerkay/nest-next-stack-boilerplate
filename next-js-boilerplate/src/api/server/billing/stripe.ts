@@ -19,12 +19,19 @@ export async function createSetupIntentServer(
   );
 }
 
+export interface SubscribeResult {
+  ok: boolean;
+  periodEnd: string | null;
+  pendingTier: string | null;
+  pendingTierEffectiveAt: string | null;
+}
+
 export async function subscribeServer(
   tier: string,
   paymentMethodId?: string,
   idempotencyKey?: string,
-): Promise<void> {
-  await apiFetchJson(STRIPE_SUBSCRIBE_URL, {
+): Promise<SubscribeResult> {
+  return apiFetchJson<SubscribeResult>(STRIPE_SUBSCRIBE_URL, {
     method: POST,
     headers: JSON_CONTENT_TYPE_HEADER,
     body: JSON.stringify({ tier, paymentMethodId, idempotencyKey }),

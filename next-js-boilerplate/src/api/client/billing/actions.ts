@@ -11,7 +11,7 @@ export function useBillingActions() {
     idempotencyKey?: string,
   ) => {
     const { subscribeServer } = await import("@/api/server/billing/stripe");
-    await subscribeServer(tier, paymentMethodId, idempotencyKey);
+    return subscribeServer(tier, paymentMethodId, idempotencyKey);
   };
 
   const cancelSubscription = async () => {

@@ -29,6 +29,8 @@ const SUBSCRIBE_MUTATION = `
       success
       reason
       periodEnd
+      pendingTier
+      pendingTierEffectiveAt
     }
   }
 `;
@@ -90,7 +92,13 @@ export async function POST(request: NextRequest) {
 
   const extraHeaders = await csrfEchoHeaders();
   const { data, errors } = await graphqlFetch<{
-    subscribeToPlan: { success: boolean; reason?: string; periodEnd?: string };
+    subscribeToPlan: {
+      success: boolean;
+      reason?: string;
+      periodEnd?: string;
+      pendingTier?: string;
+      pendingTierEffectiveAt?: string;
+    };
   }>(
     SUBSCRIBE_MUTATION,
     {
@@ -135,5 +143,10 @@ export async function POST(request: NextRequest) {
     event: "subscription.upgraded",
   });
 
-  return NextResponse.json({ ok: true, periodEnd: result.periodEnd ?? null });
+  return NextResponse.json({
+    ok: true,
+    periodEnd: result.periodEnd ?? null,
+    pendingTier: result.pendingTier ?? null,
+    pendingTierEffectiveAt: result.pendingTierEffectiveAt ?? null,
+  });
 }

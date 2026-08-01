@@ -222,6 +222,9 @@ export type I18nMessages = {
       "checkout": string;
       "enterCardDetails": string;
       "changedImmediately": string;
+      "scheduledAtRenewal": string;
+      "changeScheduled": string;
+      "confirmChange": string;
       "alreadyOnPlan": string;
       "upgradeSuccess": string;
       "planChanged": string;

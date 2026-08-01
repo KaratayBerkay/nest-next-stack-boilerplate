@@ -7,6 +7,7 @@ interface CheckoutSuccessViewProps {
   downgradeMsg: string;
   upgradeMsg: string;
   redirectingMsg: string;
+  message?: string;
   className?: string;
 }
 
@@ -15,6 +16,7 @@ export function CheckoutSuccessView({
   downgradeMsg,
   upgradeMsg,
   redirectingMsg,
+  message,
   className,
 }: CheckoutSuccessViewProps) {
   return (
@@ -25,7 +27,7 @@ export function CheckoutSuccessView({
       )}
     >
       <p className="text-lg font-medium text-green-600">
-        {isDowngrade ? downgradeMsg : upgradeMsg}
+        {message ?? (isDowngrade ? downgradeMsg : upgradeMsg)}
       </p>
       <p className="text-muted text-sm">{redirectingMsg}</p>
     </div>

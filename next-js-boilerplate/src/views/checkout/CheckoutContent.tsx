@@ -22,6 +22,37 @@ const StripeCardForm = dynamic(
   { ssr: false },
 );
 
+export type CheckoutChangeType = "immediate" | "scheduled" | "cancel";
+
+export function resolveChangeType(
+  currentTier: string | undefined,
+  targetTier: string,
+): CheckoutChangeType {
+  if (!currentTier || currentTier === "FREE") return "immediate";
+  if (targetTier === "FREE") return "cancel";
+  return "scheduled";
+}
+
+export function buildSuccessMessage(
+  changeType: CheckoutChangeType,
+  scheduledEffectiveAt: string | null,
+  targetTier: string,
+  lang: string,
+  t: { changeScheduled: string; planChanged: string; upgradeSuccess: string },
+): string {
+  if (changeType !== "scheduled") {
+    return changeType === "cancel" ? t.planChanged : t.upgradeSuccess;
+  }
+  if (!scheduledEffectiveAt) return t.planChanged;
+  return t.changeScheduled
+    .replace("{tier}", tierLabel(targetTier))
+    .replace("{date}", formatEffectiveDate(scheduledEffectiveAt, lang));
+}
+
+function formatEffectiveDate(iso: string, lang: string): string {
+  return new Date(iso).toLocaleDateString(lang);
+}
+
 function onUpgradeSuccess(
   setSuccess: Dispatch<SetStateAction<boolean>>,
   router: ReturnType<typeof useRouter>,
@@ -33,6 +64,15 @@ function onUpgradeSuccess(
   });
 }
 
+function onChangeApplied(
+  setScheduledEffectiveAt: Dispatch<SetStateAction<string | null>>,
+  setSuccess: Dispatch<SetStateAction<boolean>>,
+  effectiveAt: string | null,
+) {
+  setScheduledEffectiveAt(effectiveAt);
+  setSuccess(true);
+}
+
 export default function CheckoutPage({ params, className }: CheckoutPageProps) {
   const { lang: _lang, tier: targetTier } = use(params);
   const { user, refreshUser } = useAuth();
@@ -41,19 +81,31 @@ export default function CheckoutPage({ params, className }: CheckoutPageProps) {
   const currency = useCurrencyCookie();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [scheduledEffectiveAt, setScheduledEffectiveAt] = useState<
+    string | null
+  >(null);
 
   const currentRank = TIER_ORDER[user!.tier as Tier] ?? 0;
   const targetRank = TIER_ORDER[targetTier as Tier] ?? 0;
-  const isUpgrade = targetRank > currentRank;
   const isDowngrade = targetRank < currentRank;
   const isCurrent = targetRank === currentRank;
+  const changeType = resolveChangeType(user?.tier, targetTier);
+  const isScheduled = changeType === "scheduled";
 
   if (success) {
+    const message = buildSuccessMessage(
+      changeType,
+      scheduledEffectiveAt,
+      targetTier,
+      _lang,
+      t,
+    );
     return (
       <CheckoutSuccessView
         isDowngrade={isDowngrade}
         downgradeMsg={t.planChanged}
         upgradeMsg={t.upgradeSuccess}
+        message={message}
         redirectingMsg={t.redirecting}
         className={className}
       />
@@ -64,15 +116,15 @@ export default function CheckoutPage({ params, className }: CheckoutPageProps) {
     <div className={cn("flex h-full w-full flex-col gap-6 py-8", className)}>
       <div>
         <h1 className="text-xl font-bold">
-          {isUpgrade ? t.upgrade : isDowngrade ? t.changePlan : t.checkout} to{" "}
+          {changeType === "immediate" ? t.upgrade : t.changePlan} to{" "}
           {tierLabel(targetTier)}
         </h1>
         <p className="text-muted mt-1 text-sm">
-          {isUpgrade
+          {changeType === "immediate"
             ? t.enterCardDetails
-            : isDowngrade
-              ? t.changedImmediately
-              : t.alreadyOnPlan}
+            : isScheduled
+              ? t.scheduledAtRenewal
+              : t.changedImmediately}
         </p>
       </div>
 
@@ -80,7 +132,7 @@ export default function CheckoutPage({ params, className }: CheckoutPageProps) {
 
       {isCurrent && <p className="text-muted text-sm">{t.alreadyOnPlan}</p>}
 
-      {isUpgrade && (
+      {changeType === "immediate" && (
         <StripeCardForm
           tier={targetTier}
           onSuccess={() => onUpgradeSuccess(setSuccess, router, refreshUser)}
@@ -88,17 +140,23 @@ export default function CheckoutPage({ params, className }: CheckoutPageProps) {
         />
       )}
 
-      {isDowngrade && (
+      {changeType !== "immediate" && (
         <DowngradeSection
           targetTier={targetTier}
           error={error}
           setError={setError}
-          setSuccess={setSuccess}
-          confirmLabel={t.confirmDowngrade.replace("{tier}", tierLabel(targetTier))}
+          onSuccess={(effectiveAt) =>
+            onChangeApplied(setScheduledEffectiveAt, setSuccess, effectiveAt)
+          }
+          confirmLabel={(isScheduled
+            ? t.confirmChange
+            : t.confirmDowngrade
+          ).replace("{tier}", tierLabel(targetTier))}
+          redirectDelayMs={isScheduled ? 5000 : 2000}
         />
       )}
 
-      {isUpgrade && error && (
+      {changeType === "immediate" && error && (
         <p className="text-sm text-red-600" data-testid="checkout-error">
           {error}
         </p>

@@ -4,22 +4,27 @@ import { type Dispatch, type SetStateAction } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useBillingActions } from "@/api/client/billing/actions";
+import type { SubscribeResult } from "@/api/server/billing/stripe";
 import { PRICING_PATH } from "@/constants/routes";
 
 async function handleDowngrade(
   targetTier: string,
   setError: Dispatch<SetStateAction<string | null>>,
-  setSuccess: Dispatch<SetStateAction<boolean>>,
+  onSuccess: (effectiveAt: string | null) => void,
   router: ReturnType<typeof useRouter>,
-  subscribe: (tier: string, paymentMethodId?: string) => Promise<void>,
+  subscribe: (
+    tier: string,
+    paymentMethodId?: string,
+  ) => Promise<SubscribeResult>,
   refreshUser: () => Promise<void>,
+  redirectDelayMs: number,
 ) {
   setError(null);
   try {
-    await subscribe(targetTier);
+    const result = await subscribe(targetTier);
     await refreshUser();
-    setSuccess(true);
-    setTimeout(() => router.push(PRICING_PATH), 2000);
+    onSuccess(result.pendingTierEffectiveAt ?? null);
+    setTimeout(() => router.push(PRICING_PATH), redirectDelayMs);
   } catch (err) {
     setError((err as Error).message ?? "Failed to change plan");
   }
@@ -29,16 +34,18 @@ interface DowngradeSectionProps {
   targetTier: string;
   error: string | null;
   setError: Dispatch<SetStateAction<string | null>>;
-  setSuccess: Dispatch<SetStateAction<boolean>>;
+  onSuccess: (effectiveAt: string | null) => void;
   confirmLabel: string;
+  redirectDelayMs: number;
 }
 
 export function DowngradeSection({
   targetTier,
   error,
   setError,
-  setSuccess,
+  onSuccess,
   confirmLabel,
+  redirectDelayMs,
 }: DowngradeSectionProps) {
   const router = useRouter();
   const { subscribe } = useBillingActions();
@@ -56,10 +63,11 @@ export function DowngradeSection({
           handleDowngrade(
             targetTier,
             setError,
-            setSuccess,
+            onSuccess,
             router,
             subscribe,
             refreshUser,
+            redirectDelayMs,
           )
         }
         data-testid="confirm-downgrade"

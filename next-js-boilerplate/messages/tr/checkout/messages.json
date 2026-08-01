@@ -30,5 +30,8 @@
   "testCards": "Test kartları:",
   "month": "Ay",
   "year": "Yıl",
-  "paymentFailedGeneric": "Ödeme başarısız oldu. Lütfen tekrar deneyin."
+  "paymentFailedGeneric": "Ödeme başarısız oldu. Lütfen tekrar deneyin.",
+  "scheduledAtRenewal": "Planınız bir sonraki yenilemede değişecek. Bugün ücret alınmaz.",
+  "changeScheduled": "Planınız {date} tarihinde {tier} olarak değişecek.",
+  "confirmChange": "{tier} planına geçişi onaylayın"
 }
