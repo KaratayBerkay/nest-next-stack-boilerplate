@@ -8,7 +8,7 @@ import type { ToastOptions } from "@/types/ui/Toast-types";
 type ToastFn = (opts: ToastOptions) => string;
 
 type UpdateProfileFn = (data: {
-  name: string;
+  name?: string;
   username?: string;
   bio?: string;
   avatarUrl?: string;
@@ -44,7 +44,7 @@ export async function saveSettings(
 ) {
   setSaving(true);
   try {
-    await updateProfile({ name: "", locale, timezone });
+    await updateProfile({ locale, timezone });
     toast({ title: saveSuccess, variant: "success" });
     await refreshUser();
   } catch (err) {
