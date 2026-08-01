@@ -44,6 +44,20 @@ type SubscriberState = Prisma.UserGetPayload<{
   select: typeof SUBSCRIBER_SELECT;
 }>;
 
+/** Every subscribeToPlan branch returns this shape. pendingTier/
+ * pendingTierEffectiveAt are only ever populated by the paid<->paid
+ * schedule path (handleTierChange) and explicitly nulled by the
+ * escape-hatch release (releasePendingChange) — every other branch
+ * leaves them undefined, which the GraphQL layer treats the same as
+ * omitted. */
+interface SubscribeOutcome {
+  success: boolean;
+  reason?: string;
+  periodEnd?: Date;
+  pendingTier?: SubscriptionTier | null;
+  pendingTierEffectiveAt?: Date | null;
+}
+
 @Injectable()
 export class BillingService {
   private readonly logger = new Logger(BillingService.name);
@@ -65,7 +79,7 @@ export class BillingService {
     paymentMethodId?: string,
     idempotencyKey?: string,
     currency?: string,
-  ): Promise<{ success: boolean; reason?: string; periodEnd?: Date }> {
+  ): Promise<SubscribeOutcome> {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
       select: SUBSCRIBER_SELECT,
@@ -118,7 +132,7 @@ export class BillingService {
     paymentMethodId: string | undefined,
     idempotencyKey: string | undefined,
     currency: string,
-  ): Promise<{ success: boolean; reason?: string; periodEnd?: Date }> {
+  ): Promise<SubscribeOutcome> {
     if (!paymentMethodId) {
       throw new BadRequestException('paymentMethodId required for upgrades');
     }
@@ -128,8 +142,7 @@ export class BillingService {
     // create two live Stripe subscriptions, regardless of whether
     // stripeSubscriptionId is set yet. Held until the transaction commits.
     let provisioned = false;
-    let result: { success: boolean; reason?: string; periodEnd?: Date } | null =
-      null;
+    let result: SubscribeOutcome | null = null;
 
     await this.prisma.$transaction(
       async (tx) => {
@@ -390,7 +403,7 @@ export class BillingService {
   private async handleFullCancellation(
     userId: string,
     user: SubscriberState,
-  ): Promise<{ success: boolean; reason?: string; periodEnd?: Date }> {
+  ): Promise<SubscribeOutcome> {
     // Paid -> FREE: keep access through the paid period. The tier stays until
     // the `customer.subscription.deleted` webhook flips it at period end.
     if (user.stripeSubscriptionId) {
@@ -486,7 +499,7 @@ export class BillingService {
   private async releasePendingChange(
     userId: string,
     user: SubscriberState,
-  ): Promise<{ success: boolean; reason: string }> {
+  ): Promise<SubscribeOutcome> {
     if (user.stripeSubscriptionScheduleId) {
       await this.provider.releaseSubscriptionSchedule(
         user.stripeSubscriptionScheduleId,
@@ -508,7 +521,12 @@ export class BillingService {
       },
       `Released pending tier change for user ${userId}`,
     );
-    return { success: true, reason: 'pending_change_cancelled' };
+    return {
+      success: true,
+      reason: 'pending_change_cancelled',
+      pendingTier: null,
+      pendingTierEffectiveAt: null,
+    };
   }
 
   /**
@@ -524,7 +542,7 @@ export class BillingService {
     userId: string,
     user: SubscriberState,
     targetTier: SubscriptionTier,
-  ): Promise<{ success: boolean; reason?: string; periodEnd?: Date }> {
+  ): Promise<SubscribeOutcome> {
     if (!user.stripeSubscriptionId) {
       return this.applyLocalTierChange(userId, targetTier);
     }
@@ -532,8 +550,7 @@ export class BillingService {
     // Serialize concurrent tier-change requests per user — a double-click
     // must never create two competing subscription schedules.
     let scheduled = false;
-    let result: { success: boolean; reason?: string; periodEnd?: Date } | null =
-      null;
+    let result: SubscribeOutcome | null = null;
 
     await this.prisma.$transaction(
       async (tx) => {
@@ -545,10 +562,13 @@ export class BillingService {
         });
 
         if ((lockedUser.subscriptionTier as SubscriptionTier) === targetTier) {
-          // A previous schedule already reconciled onto this tier.
+          // A previous schedule already reconciled onto this tier — nothing
+          // pending anymore.
           result = {
             success: true,
             periodEnd: lockedUser.subscriptionPeriodEnd ?? undefined,
+            pendingTier: null,
+            pendingTierEffectiveAt: null,
           };
           return;
         }
@@ -557,6 +577,8 @@ export class BillingService {
           result = {
             success: true,
             periodEnd: lockedUser.pendingTierEffectiveAt ?? undefined,
+            pendingTier: lockedUser.pendingTier as SubscriptionTier,
+            pendingTierEffectiveAt: lockedUser.pendingTierEffectiveAt,
           };
           return;
         }
@@ -618,7 +640,12 @@ export class BillingService {
         );
 
         scheduled = true;
-        result = { success: true, periodEnd: scheduleResult.effectiveAt };
+        result = {
+          success: true,
+          periodEnd: scheduleResult.effectiveAt,
+          pendingTier: targetTier,
+          pendingTierEffectiveAt: scheduleResult.effectiveAt,
+        };
       },
       { maxWait: 15_000, timeout: 120_000 },
     );
@@ -651,7 +678,7 @@ export class BillingService {
   private async applyLocalTierChange(
     userId: string,
     targetTier: SubscriptionTier,
-  ): Promise<{ success: boolean; periodEnd?: Date }> {
+  ): Promise<SubscribeOutcome> {
     const idempotencyKey = this.generateIdempotencyKey(userId, targetTier);
     const wallet = await this.wallet.ensureWallet(userId);
 
@@ -795,6 +822,35 @@ export class BillingService {
       pendingTier: user.pendingTier as SubscriptionTier | null,
       pendingTierEffectiveAt: user.pendingTierEffectiveAt,
     };
+  }
+
+  /**
+   * Real price for every tier in one currency — what the Plans/Checkout
+   * pages need (all 4 cards, whatever currency is selected) and
+   * getSubscription above doesn't provide (that's just the caller's own
+   * current tier). Backed by the same live Stripe Price + currency_options
+   * as getSubscription, not the old static TIER_PRICES_CENTS table the web
+   * app formats client-side.
+   */
+  async getPlanPrices(
+    currency?: string,
+  ): Promise<Array<{ tier: SubscriptionTier; priceCents: number; currency: string }>> {
+    const normalized = normalizeCurrency(currency);
+    const tiers = [
+      SubscriptionTier.FREE,
+      SubscriptionTier.BASIC,
+      SubscriptionTier.MEDIUM,
+      SubscriptionTier.PREMIUM,
+    ];
+    return Promise.all(
+      tiers.map(async (tier) => {
+        const info = await this.stripeService.getPriceInfoForTier(
+          tier,
+          normalized,
+        );
+        return { tier, priceCents: info.cents, currency: info.currency };
+      }),
+    );
   }
 
   async createSetupIntent(userId: string) {

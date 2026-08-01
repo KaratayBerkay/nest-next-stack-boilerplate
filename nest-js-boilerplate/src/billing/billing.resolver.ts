@@ -24,6 +24,12 @@ export class SubscribeResult {
 
   @Field(() => Date, { nullable: true })
   periodEnd?: Date;
+
+  @Field(() => SubscriptionTier, { nullable: true })
+  pendingTier?: SubscriptionTier | null;
+
+  @Field(() => Date, { nullable: true })
+  pendingTierEffectiveAt?: Date | null;
 }
 
 @ObjectType()
@@ -81,6 +87,18 @@ export class SubscriptionInfo {
 
   @Field(() => Date, { nullable: true })
   pendingTierEffectiveAt?: Date;
+}
+
+@ObjectType()
+export class PlanPriceInfo {
+  @Field(() => SubscriptionTier)
+  tier!: SubscriptionTier;
+
+  @Field()
+  priceCents!: number;
+
+  @Field()
+  currency!: string;
 }
 
 @ObjectType()
@@ -185,6 +203,8 @@ export class BillingResolver {
       success: result.success,
       reason: result.reason,
       periodEnd: result.periodEnd,
+      pendingTier: result.pendingTier,
+      pendingTierEffectiveAt: result.pendingTierEffectiveAt,
     };
   }
 
@@ -219,6 +239,13 @@ export class BillingResolver {
       pendingTier: sub.pendingTier ?? undefined,
       pendingTierEffectiveAt: sub.pendingTierEffectiveAt ?? undefined,
     };
+  }
+
+  @Query(() => [PlanPriceInfo])
+  async planPrices(
+    @Args('currency', { nullable: true }) currency?: string,
+  ): Promise<PlanPriceInfo[]> {
+    return this.billing.getPlanPrices(currency);
   }
 
   @Mutation(() => SetupIntentResult)

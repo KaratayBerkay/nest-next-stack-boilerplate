@@ -575,6 +575,53 @@ describe('BillingService', () => {
     });
   });
 
+  describe('getPlanPrices', () => {
+    it('returns all 4 tiers priced in the requested currency, not the static USD table', async () => {
+      mockStripe.getPriceInfoForTier.mockImplementation(
+        (tier: SubscriptionTier) =>
+          Promise.resolve(
+            {
+              [SubscriptionTier.FREE]: { cents: 0, currency: 'TRY' },
+              [SubscriptionTier.BASIC]: { cents: 34999, currency: 'TRY' },
+              [SubscriptionTier.MEDIUM]: { cents: 69999, currency: 'TRY' },
+              [SubscriptionTier.PREMIUM]: { cents: 174999, currency: 'TRY' },
+            }[tier],
+          ),
+      );
+
+      const result = await service.getPlanPrices('try');
+
+      expect(mockStripe.getPriceInfoForTier).toHaveBeenCalledWith(
+        SubscriptionTier.BASIC,
+        'TRY',
+      );
+      expect(result).toEqual([
+        { tier: SubscriptionTier.FREE, priceCents: 0, currency: 'TRY' },
+        { tier: SubscriptionTier.BASIC, priceCents: 34999, currency: 'TRY' },
+        { tier: SubscriptionTier.MEDIUM, priceCents: 69999, currency: 'TRY' },
+        {
+          tier: SubscriptionTier.PREMIUM,
+          priceCents: 174999,
+          currency: 'TRY',
+        },
+      ]);
+    });
+
+    it('falls back to USD for an unsupported currency', async () => {
+      mockStripe.getPriceInfoForTier.mockResolvedValue({
+        cents: 999,
+        currency: 'USD',
+      });
+
+      await service.getPlanPrices('GBP');
+
+      expect(mockStripe.getPriceInfoForTier).toHaveBeenCalledWith(
+        expect.any(String) as never,
+        'USD',
+      );
+    });
+  });
+
   describe('subscribeToPlan — downgrades', () => {
     it('schedules cancellation to FREE without cutting access', async () => {
       mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
@@ -657,6 +704,31 @@ describe('BillingService', () => {
         stripeSubscriptionId: 'sub_m',
         stripeSubscriptionScheduleId: 'sub_sched_existing',
         tier: SubscriptionTier.BASIC,
+      });
+    });
+
+    it('returns pendingTier/pendingTierEffectiveAt on a successful schedule — the GraphQL layer needs these to exist on the result', async () => {
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+        ...SUB_USER,
+        subscriptionTier: SubscriptionTier.MEDIUM,
+        stripeSubscriptionId: 'sub_m',
+      });
+      const effectiveAt = new Date('2026-02-01');
+      mockProvider.scheduleTierChange.mockResolvedValue({
+        success: true,
+        stripeSubscriptionScheduleId: 'sub_sched_1',
+        effectiveAt,
+      });
+
+      const result = await service.subscribeToPlan(
+        'u1',
+        SubscriptionTier.PREMIUM,
+      );
+
+      expect(result).toMatchObject({
+        success: true,
+        pendingTier: SubscriptionTier.PREMIUM,
+        pendingTierEffectiveAt: effectiveAt,
       });
     });
 
@@ -787,6 +859,11 @@ describe('BillingService', () => {
 
       expect(result.success).toBe(true);
       expect(result.reason).toBe('pending_change_cancelled');
+      // Explicit null, not just omitted — the frontend needs to see the
+      // pending change is actually cleared, not merely absent from this
+      // particular response.
+      expect(result.pendingTier).toBeNull();
+      expect(result.pendingTierEffectiveAt).toBeNull();
       expect(mockProvider.releaseSubscriptionSchedule).toHaveBeenCalledWith(
         'sub_sched_1',
       );
