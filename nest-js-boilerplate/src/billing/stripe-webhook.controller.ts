@@ -367,8 +367,11 @@ export class StripeWebhookController {
     const customerId = subscription['customer'] as string;
     const cancelAtPeriodEnd =
       (subscription['cancel_at_period_end'] as boolean) ?? false;
-    const periodEnd = (subscription['current_period_end'] as number)
-      ? new Date((subscription['current_period_end'] as number) * 1000)
+    const currentItem = (
+      subscription['items'] as { data?: Array<{ current_period_end?: number }> }
+    )?.data?.[0];
+    const periodEnd = currentItem?.current_period_end
+      ? new Date(currentItem.current_period_end * 1000)
       : null;
 
     await this.prisma.user.updateMany({

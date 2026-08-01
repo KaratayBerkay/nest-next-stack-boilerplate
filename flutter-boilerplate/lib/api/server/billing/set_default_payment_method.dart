@@ -6,8 +6,8 @@ final setDefaultPaymentMethodServerProvider =
     Provider((ref) => SetDefaultPaymentMethodServer(ref.read(dioProvider)));
 
 const _mutation = '''
-  mutation SetDefaultPaymentMethod(\$id: ID!) {
-    setDefaultPaymentMethod(id: \$id)
+  mutation SetDefaultPaymentMethod(\$paymentMethodId: String!) {
+    setDefaultPaymentMethod(paymentMethodId: \$paymentMethodId)
   }
 ''';
 
@@ -21,7 +21,7 @@ class SetDefaultPaymentMethodServer {
       '/graphql',
       data: {
         'query': _mutation,
-        'variables': {'id': paymentMethodId},
+        'variables': {'paymentMethodId': paymentMethodId},
       },
     );
     final body = response.data as Map<String, dynamic>;

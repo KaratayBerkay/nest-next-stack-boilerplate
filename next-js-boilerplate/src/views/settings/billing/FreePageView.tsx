@@ -18,7 +18,10 @@ import {
   subscriptionQueryOptions,
   billingHistoryQueryOptions,
 } from "@/api/client/billing/query";
-import { billingAddressQueryOptions } from "@/api/client/billing/address";
+import {
+  billingAddressQueryOptions,
+  useUpsertBillingAddress,
+} from "@/api/client/billing/address";
 import type { SubscriptionInfo } from "@/types/billing/FreePageView-types";
 import type { BillingAddress } from "@/api/server/billing/address";
 import { PlanDetails } from "./PlanDetails";
@@ -28,10 +31,19 @@ import { InvoiceTable } from "./InvoiceTable";
 import { BillingAddressForm } from "./BillingAddressForm";
 import { BillingInfoDisplay } from "./BillingInfoDisplay";
 
+export function handleAddressSave(
+  data: Partial<BillingAddress>,
+  mutation: ReturnType<typeof useUpsertBillingAddress>,
+  onSaved: () => void,
+) {
+  mutation.mutate(data, { onSuccess: () => onSaved() });
+}
+
 export function FreePageView({ className }: ClassNameProps) {
   const { user, loading } = useAuth();
   const t = useMessages("settings");
   const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const upsertAddress = useUpsertBillingAddress();
 
   const { data: subData } = useQuery(subscriptionQueryOptions(user?.id));
   const subscription = (subData as unknown as SubscriptionInfo | null) ?? null;
@@ -91,7 +103,12 @@ export function FreePageView({ className }: ClassNameProps) {
                 {isEditingAddress ? (
                   <BillingAddressForm
                     address={address}
-                    onSave={() => setIsEditingAddress(false)}
+                    isSaving={upsertAddress.isPending}
+                    onSave={(data) =>
+                      handleAddressSave(data, upsertAddress, () =>
+                        setIsEditingAddress(false),
+                      )
+                    }
                     onCancel={() => setIsEditingAddress(false)}
                   />
                 ) : (

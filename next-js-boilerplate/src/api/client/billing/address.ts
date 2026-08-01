@@ -3,6 +3,7 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
+import type { BillingAddress } from "@/api/server/billing/address";
 
 export function billingAddressQueryOptions() {
   return queryOptions({
@@ -18,15 +19,7 @@ export function billingAddressQueryOptions() {
 export function useUpsertBillingAddress() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: {
-      name?: string;
-      street?: string;
-      city?: string;
-      state?: string;
-      country?: string;
-      zipCode?: string;
-      vatNumber?: string;
-    }) => {
+    mutationFn: async (input: Partial<BillingAddress>) => {
       const { upsertBillingAddressServer } =
         await import("@/api/server/billing/address");
       return upsertBillingAddressServer(input);

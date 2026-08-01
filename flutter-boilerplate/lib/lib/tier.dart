@@ -35,4 +35,9 @@ class Tier {
         return 'Free';
     }
   }
+
+  /// Maps a plan slug ('basic') to the backend's GraphQL enum value ('BASIC').
+  /// The backend's `SubscriptionTier` enum only accepts
+  /// FREE|BASIC|MEDIUM|PREMIUM — never Stripe price IDs.
+  static String graphQlEnum(String? plan) => plan?.toUpperCase() ?? '';
 }

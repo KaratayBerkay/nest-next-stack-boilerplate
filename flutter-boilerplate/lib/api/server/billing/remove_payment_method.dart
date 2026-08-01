@@ -6,8 +6,8 @@ final removePaymentMethodServerProvider =
     Provider((ref) => RemovePaymentMethodServer(ref.read(dioProvider)));
 
 const _mutation = '''
-  mutation RemovePaymentMethod(\$id: ID!) {
-    removePaymentMethod(id: \$id)
+  mutation RemovePaymentMethod(\$paymentMethodId: String!) {
+    removePaymentMethod(paymentMethodId: \$paymentMethodId)
   }
 ''';
 
@@ -21,7 +21,7 @@ class RemovePaymentMethodServer {
       '/graphql',
       data: {
         'query': _mutation,
-        'variables': {'id': paymentMethodId},
+        'variables': {'paymentMethodId': paymentMethodId},
       },
     );
     final body = response.data as Map<String, dynamic>;

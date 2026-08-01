@@ -4,11 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_stripe/flutter_stripe.dart' hide Card;
 import 'package:go_router/go_router.dart';
 
+import '../../app_config.dart';
 import '../../components/ui/stripe_card_form.dart';
 import '../../components/ui/toast/toast.dart';
 import '../../constants/theme.dart';
 import '../../hooks/use_billing.dart';
 import '../../l10n/app_localizations.dart';
+import 'stripe_elements.dart';
 
 class CheckoutPageContent extends ConsumerStatefulWidget {
   final String lang;
@@ -33,18 +35,7 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
     super.dispose();
   }
 
-  String get _priceId {
-    switch (widget.plan) {
-      case 'basic':
-        return 'price_basic';
-      case 'medium':
-        return 'price_medium';
-      case 'premium':
-        return 'price_premium';
-      default:
-        return '';
-    }
-  }
+  String get _tier => Tier.graphQlEnum(widget.plan);
 
   String get _price {
     switch (widget.plan) {
@@ -59,7 +50,7 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
     }
   }
 
-  bool get _canSubmit => _cardComplete && !_loading && _priceId.isNotEmpty;
+  bool get _canSubmit => _cardComplete && !_loading && _tier.isNotEmpty;
 
   Future<void> _handleSubscribe() async {
     setState(() {
@@ -81,7 +72,7 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
         ),
       );
 
-      await billing.subscribe(_priceId);
+      await billing.subscribe(_tier);
       billing.invalidate();
 
       if (mounted) {
@@ -133,10 +124,13 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 12),
-        StripeCardFormField(
-          nameController: _nameController,
-          onCompletionChanged: (complete) =>
-              setState(() => _cardComplete = complete),
+        StripeElementsConfig(
+          publishableKey: AppConfig.stripePublishableKey,
+          child: StripeCardFormField(
+            nameController: _nameController,
+            onCompletionChanged: (complete) =>
+                setState(() => _cardComplete = complete),
+          ),
         ),
         if (_error != null)
           Padding(

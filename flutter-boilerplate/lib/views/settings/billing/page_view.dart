@@ -10,6 +10,7 @@ import '../../../api/client/billing/actions.dart';
 import '../../../api/client/billing/query.dart';
 import '../../../api/server/billing/address.dart';
 import '../../../api/server/billing/subscription.dart';
+import '../../../app_config.dart';
 import '../../../components/ui/accordion/accordion.dart';
 import '../../../components/ui/badge/badge.dart';
 import '../../../components/ui/button/button.dart';
@@ -21,6 +22,7 @@ import '../../../components/ui/tabs/tabs.dart';
 import '../../../components/ui/toast/toast.dart';
 import '../../../constants/theme.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../checkout/stripe_elements.dart';
 import '../../settings/billing/billing_address_form.dart';
 import '../../settings/billing/billing_info_display.dart';
 import '../../settings/billing/invoice_pagination.dart';
@@ -267,17 +269,18 @@ class _SubscriptionCard extends ConsumerWidget {
                         onPressed: () async {
                           final confirm = await showDialog<bool>(
                             context: context,
-                            builder: (_) => AlertDialog(
+                            builder: (dialogContext) => AlertDialog(
                               title: Text(t.settingsCancelSubscriptionTitle),
                               content: Text(t.settingsCancelSubscriptionBody),
                               actions: [
                                 TextButton(
                                   onPressed: () =>
-                                      Navigator.pop(context, false),
+                                      Navigator.pop(dialogContext, false),
                                   child: Text(t.settingsKeep),
                                 ),
                                 FilledButton(
-                                  onPressed: () => Navigator.pop(context, true),
+                                  onPressed: () =>
+                                      Navigator.pop(dialogContext, true),
                                   child: Text(t.settingsCancelButton),
                                 ),
                               ],
@@ -462,9 +465,12 @@ class _PaymentMethodsSectionState
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              StripeCardFormField(
-                nameController: nameCtrl,
-                onCompletionChanged: (v) {},
+              StripeElementsConfig(
+                publishableKey: AppConfig.stripePublishableKey,
+                child: StripeCardFormField(
+                  nameController: nameCtrl,
+                  onCompletionChanged: (v) {},
+                ),
               ),
             ],
           ),

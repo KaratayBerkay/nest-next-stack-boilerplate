@@ -8,7 +8,11 @@ type MockStripeService = {
 };
 type MockWallet = { ensureWallet: jest.Mock };
 type MockPrisma = {
-  user: { findUnique: jest.Mock; update: jest.Mock };
+  user: {
+    findUnique: jest.Mock;
+    update: jest.Mock;
+    updateMany: jest.Mock;
+  };
   walletTransaction: {
     findUnique: jest.Mock;
     create: jest.Mock;
@@ -51,11 +55,16 @@ function setup() {
     stripeCustomerId: 'cus_1',
   });
   const userUpdate = jest.fn().mockResolvedValue({});
+  const userUpdateMany = jest.fn().mockResolvedValue({ count: 1 });
   const wtFindUnique = jest.fn().mockResolvedValue(null);
   const wtCreate = jest.fn().mockResolvedValue({});
   const wtUpdate = jest.fn().mockResolvedValue({});
   const prisma = {
-    user: { findUnique: userFindUnique, update: userUpdate },
+    user: {
+      findUnique: userFindUnique,
+      update: userUpdate,
+      updateMany: userUpdateMany,
+    },
     walletTransaction: {
       findUnique: wtFindUnique,
       create: wtCreate,
@@ -237,6 +246,57 @@ describe('StripeWebhookController', () => {
         (periodUpdate[0] as { data: Record<string, unknown> }).data
           .stripeSubscriptionId,
       ).toBeUndefined();
+    });
+  });
+
+  describe('customer.subscription.updated', () => {
+    it('reads current_period_end from items.data[0], not the top level', async () => {
+      const { controller, req, res, mocks } = setup();
+      await dispatch(
+        controller,
+        req,
+        res,
+        mocks,
+        'customer.subscription.updated',
+        {
+          customer: 'cus_1',
+          cancel_at_period_end: false,
+          items: {
+            data: [{ current_period_end: 1769817600 }],
+          },
+        },
+      );
+
+      expect(mocks.prisma.user.updateMany).toHaveBeenCalledWith({
+        where: { stripeCustomerId: 'cus_1' },
+        data: expect.objectContaining({
+          subscriptionPeriodEnd: new Date(1769817600 * 1000),
+        }) as never,
+      });
+    });
+
+    it('keeps periodEnd null when items.data is empty or missing', async () => {
+      const { controller, req, res, mocks } = setup();
+      await dispatch(
+        controller,
+        req,
+        res,
+        mocks,
+        'customer.subscription.updated',
+        {
+          customer: 'cus_1',
+          cancel_at_period_end: true,
+          items: { data: [] },
+        },
+      );
+
+      expect(mocks.prisma.user.updateMany).toHaveBeenCalledWith({
+        where: { stripeCustomerId: 'cus_1' },
+        data: expect.objectContaining({
+          cancelAtPeriodEnd: true,
+          subscriptionPeriodEnd: null,
+        }) as never,
+      });
     });
   });
 

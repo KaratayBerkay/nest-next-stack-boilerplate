@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/tier.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../constants/theme.dart';
+import '../../hooks/use_auth.dart';
 
-class PlansPageContent extends StatelessWidget {
+class PlansPageContent extends ConsumerWidget {
   final String lang;
 
   const PlansPageContent({super.key, required this.lang});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final userTier = ref.watch(userTierProvider);
 
     List<_PlanCard> buildCards(double width) => [
           _PlanCard(
@@ -19,7 +22,7 @@ class PlansPageContent extends StatelessWidget {
             price: '\$0',
             features: const ['Basic feed', '5 messages/day', '1 device'],
             color: colors.surfaceAlt,
-            onSelect: () {},
+            userTier: userTier,
             width: width,
           ),
           _PlanCard(
@@ -32,6 +35,7 @@ class PlansPageContent extends StatelessWidget {
               'Basic stats',
             ],
             color: colors.info,
+            userTier: userTier,
             onSelect: () => context.go('/v1/$lang/checkout/basic'),
             width: width,
           ),
@@ -46,6 +50,7 @@ class PlansPageContent extends StatelessWidget {
               'Priority support',
             ],
             color: colors.brand,
+            userTier: userTier,
             onSelect: () => context.go('/v1/$lang/checkout/medium'),
             width: width,
           ),
@@ -61,6 +66,7 @@ class PlansPageContent extends StatelessWidget {
               'Dedicated support',
             ],
             color: colors.warning,
+            userTier: userTier,
             isPremium: true,
             onSelect: () => context.go('/v1/$lang/checkout/premium'),
             width: width,
@@ -121,7 +127,8 @@ class _PlanCard extends StatelessWidget {
   final String price;
   final List<String> features;
   final Color color;
-  final VoidCallback onSelect;
+  final String userTier;
+  final VoidCallback? onSelect;
   final bool isPremium;
   final double width;
 
@@ -130,14 +137,18 @@ class _PlanCard extends StatelessWidget {
     required this.price,
     required this.features,
     required this.color,
-    required this.onSelect,
+    required this.userTier,
     required this.width,
+    this.onSelect,
     this.isPremium = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+
+    final isCurrent = tier == userTier;
+    final included = !isCurrent && Tier.hasAccess(userTier, tier);
 
     return Container(
       width: width,
@@ -146,8 +157,8 @@ class _PlanCard extends StatelessWidget {
         color: isPremium ? color.withValues(alpha: 0.1) : colors.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isPremium ? color : colors.border,
-          width: isPremium ? 2 : 1,
+          color: isCurrent ? colors.brand : (isPremium ? color : colors.border),
+          width: (isCurrent || isPremium) ? 2 : 1,
         ),
       ),
       child: Column(
@@ -196,13 +207,30 @@ class _PlanCard extends StatelessWidget {
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
-            child: FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: isPremium ? color : null,
-              ),
-              onPressed: onSelect,
-              child: Text(isPremium ? 'Subscribe' : 'Get Started'),
-            ),
+            child: isCurrent || included
+                ? Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: colors.surfaceAlt,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      isCurrent ? 'Current Plan' : 'Included',
+                      style: TextStyle(
+                        color: colors.fgMuted,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  )
+                : FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: isPremium ? color : null,
+                    ),
+                    onPressed: onSelect,
+                    child: Text(isPremium ? 'Subscribe' : 'Get Started'),
+                  ),
           ),
         ],
       ),
