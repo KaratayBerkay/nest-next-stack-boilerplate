@@ -4,9 +4,16 @@ import { use, useState, type Dispatch, type SetStateAction } from "react";
 import type { CheckoutPageProps } from "@/types/checkout/CheckoutPage-types";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { TIER_ORDER, tierLabel, type Tier } from "@/lib/tier";
+import {
+  TIER_ORDER,
+  TIER_PRICES_CENTS,
+  tierLabel,
+  type Tier,
+} from "@/lib/tier";
 import { useCurrencyCookie } from "@/hooks/useCurrencyCookie";
+import { planPricesQueryOptions } from "@/api/client/billing/query";
 import { PRICING_PATH } from "@/constants/routes";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { cn } from "@/lib/cn";
@@ -79,6 +86,13 @@ export default function CheckoutPage({ params, className }: CheckoutPageProps) {
   const router = useRouter();
   const t = useMessages("checkout");
   const currency = useCurrencyCookie();
+  const { data: priceData } = useQuery(
+    planPricesQueryOptions(currency, user?.id),
+  );
+  const priceCents =
+    priceData?.find((p) => p.tier === targetTier)?.priceCents ??
+    TIER_PRICES_CENTS[targetTier as Tier] ??
+    0;
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [scheduledEffectiveAt, setScheduledEffectiveAt] = useState<
@@ -128,7 +142,11 @@ export default function CheckoutPage({ params, className }: CheckoutPageProps) {
         </p>
       </div>
 
-      <PlanSummaryCard targetTier={targetTier} currency={currency} />
+      <PlanSummaryCard
+        targetTier={targetTier}
+        currency={currency}
+        priceCents={priceCents}
+      />
 
       {isCurrent && <p className="text-muted text-sm">{t.alreadyOnPlan}</p>}
 

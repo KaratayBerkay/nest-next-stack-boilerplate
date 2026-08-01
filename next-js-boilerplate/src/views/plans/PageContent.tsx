@@ -22,11 +22,15 @@ import { plansPageInfo } from "@/constants/page-info";
 import { cn } from "@/lib/cn";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { subscriptionQueryOptions } from "@/api/client/billing/query";
+import {
+  subscriptionQueryOptions,
+  planPricesQueryOptions,
+} from "@/api/client/billing/query";
 
 function buildTierCards(
   user: { tier?: string } | null,
   currency: CurrencyCode,
+  priceCents: Record<Tier, number>,
   lang: string,
   FEATURES: Record<Tier, string[]>,
   t: Record<string, string | string[]>,
@@ -45,7 +49,7 @@ function buildTierCards(
       <TierCard
         key={tier}
         tier={tier}
-        price={formatPrice(TIER_PRICES_CENTS[tier], currency)}
+        price={formatPrice(priceCents[tier], currency)}
         features={FEATURES[tier]}
         current={isCurrent}
         currentLabel={t.currentPlan as string}
@@ -124,6 +128,18 @@ export default function PageContent({ params, className }: PlansPageProps) {
   const t = useMessages("pricing");
   const currency = useCurrencyCookie();
   const { data: subData } = useQuery(subscriptionQueryOptions(user?.id));
+  const { data: priceData } = useQuery(
+    planPricesQueryOptions(currency, user?.id),
+  );
+
+  // Real per-currency amounts once loaded; TIER_PRICES_CENTS (USD cents,
+  // stale as a currency-specific number) is just a same-shape placeholder
+  // for the render before the query resolves, not a fallback source of truth.
+  const priceCents: Record<Tier, number> = priceData
+    ? (Object.fromEntries(
+        priceData.map((p) => [p.tier, p.priceCents]),
+      ) as Record<Tier, number>)
+    : TIER_PRICES_CENTS;
 
   const pendingTier =
     (subData as { pendingTier?: string } | null)?.pendingTier ?? undefined;
@@ -142,6 +158,7 @@ export default function PageContent({ params, className }: PlansPageProps) {
   const tierCards = buildTierCards(
     user,
     currency,
+    priceCents,
     lang,
     FEATURES,
     t,

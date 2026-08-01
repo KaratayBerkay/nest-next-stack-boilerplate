@@ -12,6 +12,18 @@ export function subscriptionQueryOptions(userId?: string) {
   });
 }
 
+export function planPricesQueryOptions(currency: string, userId?: string) {
+  return queryOptions({
+    queryKey: ["billing", "plan-prices", currency],
+    queryFn: async () => {
+      const { fetchPlanPricesServer } =
+        await import("@/api/server/billing/plan-prices");
+      return fetchPlanPricesServer(currency);
+    },
+    enabled: !!userId,
+  });
+}
+
 export function billingHistoryQueryOptions() {
   return queryOptions({
     queryKey: ["billing", "history"],
