@@ -1,5 +1,29 @@
 # convert-frontend-11-flutter — Payments & subscriptions, full-stack hammer pass
 
+## Implementation status (updated 2026-08-01)
+
+| Task | Stage | Status |
+|---|---|---|
+| T1, T2, T3, T4 | A | ✅ Done — `6e2ecd26` (with doc-10 T93-T95 baseline) |
+| T5, T6, T7 | B | ✅ Done — `3389152b` |
+| T8 | B | ✅ Done — `0dda4703` |
+| T9 | B | ✅ Done — `e33543a0` |
+| T10 | B | ✅ Done — `6fae0fd2` |
+| T11 | B | ✅ Done — `8f74d514` |
+| T12 | C | ⏳ Decision made (§3.1 → option (b), real multi-currency); not started — sized as its own phase |
+| T13, T14, T15 | C | ❌ Not started |
+| T16–T24 | D | ❌ Not started |
+| T25–T30 | E | ❌ Not started |
+| T31–T33 | F | ❌ Not started |
+| T34–T36 | G | ❌ Not started |
+
+Stages A and B are fully implemented and committed (all `§5` gate checks pass: backend jest 55/55 `src/billing`,
+web typecheck/eslint + new vitest green, Flutter analyze/format + new widget tests green). Stages C–G are still
+queued in order — work has proceeded stage-by-stage and T12's option-(b) decision explicitly re-sizes it as a
+follow-up phase; nothing in C–G has been started yet. See §4 checkboxes below for per-task notes.
+
+---
+
 ## 0. How to read this doc
 
 Berkay asked for a dedicated, maximally thorough pass over payments/subscriptions across the whole
@@ -8,8 +32,10 @@ live-testing tail (§11.4, §12) turned up a string of real billing bugs (F44 ca
 Stripe-init race, F46 Plans page tier-blindness) and a further, still-undocumented webhook fix appeared
 uncommitted in the working tree while this doc was being written (see §2.2's note on F9/the
 `current_period_end` fix). This doc is **investigation + fix plan only**, per this project's established
-convention ([[phased-roadmap-workflow]]) — nothing in §2 has been implemented yet. §4 is the proposed,
-staged build plan; implementation starts only when Berkay says go.
+convention ([[phased-roadmap-workflow]]) — nothing in §2 was implemented at the time of writing; §4 is the
+proposed, staged build plan. **Implementation status as of 2026-08-01: Stages A and B (§4.1-§4.2, T1-T11)
+are fully implemented and committed; Stages C-G (T12-T36) remain queued** — see the status table at the top
+of this doc and the per-stage status notes in §4.
 
 **Methodology:** four parallel agents each went deep on one slice — backend write-path
 (`billing.service.ts`), backend webhook path (`stripe-webhook.controller.ts`), Next.js frontend+BFF, and
@@ -478,6 +504,9 @@ per tier per currency, a currency-aware `getPriceIdForTier`, and Stripe Checkout
 currency-presentment handling — correct, but materially larger scope than anything else in this doc. This
 doc's fix plan (§4) assumes (a) as the default unless Berkay picks (b), since (a) is the only option that
 can ship this week.
+**Status (2026-08-01):** resolved → option **(b)**, real multi-currency. T12 is planned as its own follow-up
+phase (per this doc's own sizing note in T12); the web currency cookie/provider and `formatPrice` remain live
+until then.
 
 **3.2 Dunning policy on a failed renewal or failed scheduled-change charge (blocks T7, F9).** Once
 `handleInvoiceFailed` actually does something, what should the something be? Options: immediate downgrade to
@@ -486,18 +515,25 @@ retries before downgrading (needs a new scheduled job — nothing in this codeba
 or notify-only, leaving Stripe's own retry schedule as the sole timer and just fixing the currently-stuck
 `pendingTier` cleanup + adding a user-facing "payment failed" notification. This doc's fix plan defaults to
 the last option (smallest surface area, no new infra) unless Berkay wants a real grace-period mechanism.
+**Status (2026-08-01):** resolved → **immediate downgrade to FREE on first failed charge** (with
+notification + `pendingTier`/schedule cleanup), implemented in T7 (`3389152b`).
 
 **3.3 Admin `setUserTier` vs. live Stripe state (blocks T24, F1).** Should this mutation be blocked outright
 when the target user has a `stripeSubscriptionId` (forcing admins through real billing changes), just log a
 warning and proceed (current behavior plus visibility), or actually drive a real Stripe change so the
 override is durable across the next renewal? Smallest fix is the warning; most correct is driving a real
 Stripe call.
+**Status (2026-08-01):** decided → **warn-and-proceed** (option ii). Not yet implemented — it lands with T24,
+which is still queued; `setUserTier` today still writes the local tier with no Stripe awareness and still has
+no spec file.
 
 **3.4 Cancellation-path unification (blocks T5, F2).** Proposed: consolidate onto `handleFullCancellation`'s
 richer behavior (ledger row + outbox event + notification) and have the `cancelSubscription` mutation call
 it directly, retiring the standalone method. Flagging in case either call site's current lighter-weight
 behavior is intentional rather than an oversight — nothing in the code or prior docs suggests it is, but
 worth a explicit yes before deleting a code path.
+**Status (2026-08-01):** resolved → yes, unify onto `handleFullCancellation`'s richer behavior. Implemented
+in T5 (`3389152b`); the standalone `cancelSubscription` method is gone.
 
 ---
 
@@ -513,32 +549,19 @@ against the installed `stripe` SDK version's types since this doc wasn't written
 
 ### 4.1 Stage A — Ship today: critical, trivial, independent, zero design ambiguity
 
-- [ ] **T1 — Flutter: send the real tier enum on subscribe.** File:
-  `flutter-boilerplate/lib/views/checkout/page_content.dart:38-49`. Current code:
-  ```dart
-  String get _priceId {
-    switch (widget.plan) {
-      case 'basic': return 'price_basic';
-      case 'medium': return 'price_medium';
-      case 'premium': return 'price_premium';
-      default: return '';
-    }
-  }
-  ```
-  Replace the whole getter with `String get _tier => widget.plan?.toUpperCase() ?? '';` (rename the
-  getter — it was never actually a Stripe price ID, and the misleading name is very likely *why* this went
-  unnoticed) and update its one call site at line 86 (`await billing.subscribe(_tier);`). No change needed
-  in `api/server/billing/stripe.dart` — its `subscribe(String priceId)` parameter already forwards
-  whatever string it's given straight into `variables: {'tier': priceId}`, which is correct once the
-  caller sends `'BASIC'`/`'MEDIUM'`/`'PREMIUM'`. Don't touch the separate `_price` getter two lines below
-  (line 51-62) — it's a *different* hardcoded-display-string bug, covered by T15. **Test:** add a unit test
-  around `_priceId`/`_tier` (or an integration-style test using a `MockAdapter` on the Dio client) that
-  asserts the GraphQL `variables` map sent for each of `'basic'/'medium'/'premium'` is exactly
-  `{'tier': 'BASIC'}` / `{'tier': 'MEDIUM'}` / `{'tier': 'PREMIUM'}` — this exact class of bug (a hand-written
-  mutation string never checked against the real schema) is what let this ship silently, so the regression
-  test needs to actually inspect the outgoing request, not just that no exception was thrown.
+- [x] **T1 — Flutter: send the real tier enum on subscribe.** ✅ Implemented (`6e2ecd26`): the misleading
+  `_priceId` getter (returned `'price_basic'`/`'price_medium'`/`'price_premium'`) was replaced with
+  `String get _tier => Tier.graphQlEnum(widget.plan)` (uppercases the plan slug → `'BASIC'`/`'MEDIUM'`/
+  `'PREMIUM'`) and its call site updated. Per the spec's own requirement, the regression test asserts the
+  literal outgoing `variables` map per tier (not just "no exception") via a Dio `MockAdapter` in
+  `test/api/server/billing/stripe_test.dart`. The separate `_price` display getter was left untouched for T15.
 
-- [ ] **T2 — Flutter: fix the payment-method GraphQL argument name.** Files:
+- [x] **T2 — Flutter: fix the payment-method GraphQL argument name.** ✅ Implemented (`6e2ecd26`): both
+  `remove_payment_method.dart` and `set_default_payment_method.dart` now declare
+  `$paymentMethodId: String!` and send `{'paymentMethodId': ...}` matching the resolver; regression tests
+  in `test/api/server/billing/payment_methods_test.dart` assert the literal variables map. Original spec
+  (pre-fix state) below for reference:
+  Files:
   `flutter-boilerplate/lib/api/server/billing/remove_payment_method.dart` and
   `set_default_payment_method.dart`. Current code in both (only the mutation name differs):
   ```dart
@@ -567,7 +590,12 @@ against the installed `stripe` SDK version's types since this doc wasn't written
   to match exactly. **Test:** same shape as T1 — assert the literal `variables` map sent is
   `{'paymentMethodId': '<id>'}`, not `{'id': '<id>'}`, for both files.
 
-- [ ] **T3 — Web: wire the billing-address Save button to the real mutation.** File:
+- [x] **T3 — Web: wire the billing-address Save button to the real mutation.** ✅ Implemented (`6e2ecd26`):
+  `FreePageView.tsx` now calls `useUpsertBillingAddress` and `mutation.mutate(data, { onSuccess: () =>
+  onSaved() })` on save (editor stays open on failure); component test
+  `billingAddressSave.test.ts` asserts the real `graphqlFetch` fires with the entered field values, not
+  just that the editor closed. Original spec (pre-fix state) below for reference:
+  File:
   `next-js-boilerplate/src/views/settings/billing/FreePageView.tsx:91-96`. Current code:
   ```tsx
   <BillingAddressForm
@@ -597,10 +625,11 @@ against the installed `stripe` SDK version's types since this doc wasn't written
   values — not just that the editor closed, since "the editor closes" is exactly what the current broken
   no-op already does.
 
-- [ ] **T4 — Housekeeping: commit everything already sitting correct-but-uncommitted in the tree.** No
-  design work — this is `git add` + `git commit` for code already written and gate-verified in a prior
-  session, so this doc's own Stage A-G work lands on a clean baseline instead of stacking on top of a
-  week-old uncommitted diff. Files: `flutter-boilerplate/lib/views/checkout/page_content.dart`,
+- [x] **T4 — Housekeeping: commit everything already sitting correct-but-uncommitted in the tree.** ✅ Done
+  (`6e2ecd26`): the uncommitted baseline (webhook `current_period_end` fix + spec, Flutter checkout/plans/
+  settings-billing pages, `test_helpers.dart`, plans tests, `.fallowrc.json`, messaging gateway) was
+  committed fresh after re-running the gates, before any of T1-T3's follow-up edits landed in the same
+  files. Original spec below for reference — the commit list is exactly as written here:
   `flutter-boilerplate/lib/views/plans/page_content.dart`,
   `flutter-boilerplate/lib/views/settings/billing/page_view.dart`,
   `flutter-boilerplate/test/test_helpers.dart`, the new `flutter-boilerplate/test/views/plans/` directory,
@@ -615,7 +644,12 @@ method, and save a billing address — all three currently cannot, at all, on an
 
 ### 4.2 Stage B — Close the deferred-billing (Subscription Schedule) lifecycle end-to-end
 
-- [ ] **T5 — Backend: unify the two cancellation code paths.** Files:
+- [x] **T5 — Backend: unify the two cancellation code paths.** ✅ Implemented (`3389152b`): the
+  `cancelSubscription` mutation now delegates to `handleFullCancellation` (single `billing.service.ts:703`
+  method; the standalone duplicate was removed), so cancellation always emits the `ADJUSTMENT` ledger row +
+  `OutboxEvent` + notification; `billing.service.spec.ts` covers the unified path. Original spec below for
+  reference:
+  Files:
   `nest-js-boilerplate/src/billing/billing.resolver.ts:269-275` (the `cancelSubscription` mutation) and
   `billing.service.ts:638-661` (the standalone `cancelSubscription` method) vs. `:364-434`
   (`handleFullCancellation`, the richer implementation — ledger row + `OutboxEvent` + notification).
@@ -629,7 +663,16 @@ method, and save a billing address — all three currently cannot, at all, on an
   resolver-reachable cancellation path now also produces the `ADJUSTMENT` ledger row + `OutboxEvent` +
   notification that only `handleFullCancellation` used to produce.
 
-- [ ] **T6 — Backend: close every exit path of the Subscription Schedule lifecycle.** This is the fix for
+- [x] **T6 — Backend: close every exit path of the Subscription Schedule lifecycle.** ✅ Implemented
+  (`3389152b`): (1) `subscription_schedule.released`/`.canceled`/`.aborted` cases added to the webhook
+  switch, nulling `stripeSubscriptionScheduleId` by schedule id (spec cases at
+  `stripe-webhook.controller.spec.ts:441`); (2) the unified cancellation path now calls
+  `provider.releaseSubscriptionSchedule(...)` and clears `pendingTier`/`pendingTierEffectiveAt`/
+  `stripeSubscriptionScheduleId` together; (3) re-selecting the current tier while a change is pending
+  releases it and returns `reason: 'pending_change_cancelled'` instead of throwing — the frontends
+  (web T9, Flutter T11) consume that path. Original spec below for reference — all three parts shipped as
+  described:
+  This is the fix for
   F15a/F15b/F15c/F3 — the doc's headline bug. Three separate changes, all needed together:
   1. **Handle the schedule-released webhook.** File: `stripe-webhook.controller.ts`, add a new case to the
      event switch (alongside the existing `customer.subscription.updated`/`.deleted` cases) for
@@ -661,7 +704,15 @@ method, and save a billing address — all three currently cannot, at all, on an
   three fields clear; (c) a tier-change spec case asserting re-selecting the current tier while a change is
   pending releases it instead of throwing `BadRequestException`.
 
-- [ ] **T7 — Backend: handle `invoice.payment_failed` and `past_due`/`unpaid` status.** [Decision-gated —
+- [x] **T7 — Backend: handle `invoice.payment_failed` and `past_due`/`unpaid` status.** ✅ Implemented
+  (`3389152b`). §3.2 resolved toward the **immediate-downgrade** policy (not the doc's notify-only default):
+  `handleInvoiceFailed` looks the user up by `stripeCustomerId`, clears `pendingTier`/`pendingTierEffectiveAt`
+  and releases the schedule when a pending change's charge fails, writes a `FAILED`-flagged handling +
+  `NotificationType.BILLING` notification, and downgrades the tier to FREE on renewal failure; spec cases
+  cover the pending-change vs. plain-renewal branches. `handleSubscriptionUpdated` now reads
+  `subscription['status']` and logs `past_due`/`unpaid` (`billing.subscription_payment_delinquent`). Original
+  spec below for reference:
+  [Decision-gated —
   see §3.2; guidance below assumes the smallest-scope "notify-only" option unless Berkay picks otherwise.]
   File: `stripe-webhook.controller.ts:200-216` (`handleInvoiceFailed`, currently only `logger.warn`).
   Look up the user by `stripeCustomerId` (mirror the exact lookup pattern already used in
@@ -678,7 +729,12 @@ method, and save a billing address — all three currently cannot, at all, on an
   asserting the field-clearing + notification only fires in the pending-change case (a plain renewal
   failure with no pending change shouldn't touch `pendingTier` since there isn't one).
 
-- [ ] **T8 — Web: branch checkout messaging on the actual change type.** Files:
+- [x] **T8 — Web: branch checkout messaging on the actual change type.** ✅ Implemented (`0dda4703`):
+  `SUBSCRIBE_MUTATION` now selects `pendingTier`/`pendingTierEffectiveAt`; `CheckoutContent.tsx` derives a
+  three-way `changeType` (`immediate`/`scheduled`/`cancel`), shows "changes on `<date>`" copy from the
+  mutation's own `pendingTierEffectiveAt` with a lengthened 5s redirect for scheduled, 2s otherwise; 8
+  vitest cases in `checkoutContent.test.ts`. Original spec below for reference:
+  Files:
   `next-js-boilerplate/src/views/checkout/CheckoutContent.tsx:45-49,66-76,25-34`, the BFF's subscribe route
   and whatever GraphQL document defines `SUBSCRIBE_MUTATION` (`src/api/server/billing/stripe.ts` or
   co-located). First, add `pendingTier`/`pendingTierEffectiveAt` to `SUBSCRIBE_MUTATION`'s selection set —
@@ -693,7 +749,12 @@ method, and save a billing address — all three currently cannot, at all, on an
   implementation rather than assume. **Test:** a `CheckoutContent` test per branch asserting the correct
   copy renders for a FREE→paid vs. paid→paid subscribe response.
 
-- [ ] **T9 — Web: gate Cancel/Upgrade controls on an existing pending change.** File:
+- [x] **T9 — Web: gate Cancel/Upgrade controls on an existing pending change.** ✅ Implemented (`e33543a0`):
+  `PlanDetails` replaces Cancel/Upgrade with a single cancel-pending-change affordance when `pendingTier` is
+  set (re-selection escape hatch per T6); `views/plans/PageContent.tsx` fetches `subscriptionQueryOptions`
+  and shows a `planChangeScheduled` banner + gated upgrade CTAs; 2 vitest cases in
+  `planDetails.test.tsx`. Original spec below for reference:
+  File:
   `next-js-boilerplate/src/views/settings/billing/PlanDetails.tsx` (already receives `pendingTier`/
   `pendingTierEffectiveAt` as props, confirmed — the gap is purely in how they're used). Currently the
   Cancel button only checks `cancelAtPeriodEnd` and the Upgrade-Plan link is unconditionally active. Add a
@@ -705,7 +766,12 @@ method, and save a billing address — all three currently cannot, at all, on an
   second change. **Test:** a `PlanDetails` test asserting Cancel/Upgrade are replaced by the pending-change
   affordance when `pendingTier` is non-null.
 
-- [ ] **T10 — Flutter: fetch and render `pendingTier`.** Files:
+- [x] **T10 — Flutter: fetch and render `pendingTier`.** ✅ Implemented (`6fae0fd2`): the `mySubscription`
+  query and `SubscriptionInfo` model gained `pendingTier`/`pendingTierEffectiveAt`; `_SubscriptionCard`
+  renders the scheduled-change notice, gates Upgrade/Cancel behind a single cancel-pending-change button,
+  and the dead duplicate `mySubscription` query in `api/server/billing/stripe.dart` was deleted; 2 widget
+  tests in `subscription_card_test.dart`. Original spec below for reference:
+  Files:
   `flutter-boilerplate/lib/api/server/billing/subscription.dart` (the `_subscriptionQuery` string and
   whatever model class parses its response — confirm the exact class name in this file, referred to as
   `SubscriptionInfo` in this audit's notes) and `lib/views/settings/billing/page_view.dart`'s
@@ -720,7 +786,15 @@ method, and save a billing address — all three currently cannot, at all, on an
   `_SubscriptionCard`, asserting the pending-change notice renders and buttons are gated when a test fixture
   sets `pendingTier`.
 
-- [ ] **T11 — Flutter: wire real upgrade/downgrade/current-plan branching into checkout.** File:
+- [x] **T11 — Flutter: wire real upgrade/downgrade/current-plan branching into checkout.** ✅ Implemented
+  (`8f74d514`): `CheckoutPageContent` reads `userTierProvider` and branches via a module-level
+  `_resolveChangeType` (FREE→paid = SetupIntent/card flow; paid→paid = scheduled; paid→FREE = cancel; both
+  non-charging branches share `DowngradeSection` with a generalized `confirmLabel`, resolving F33's
+  "hardcoded downgrade wording" caveat); already-on-tier renders `PlanSummaryCard(alreadySubscribed: true)`;
+  success routes through `CheckoutSuccessView` (new `message` override) with a delayed redirect; the Flutter
+  subscribe mutation selects `pendingTier`/`pendingTierEffectiveAt`; 4 branch widget tests in
+  `test/views/checkout/page_content_test.dart`. Original spec below for reference:
+  File:
   `flutter-boilerplate/lib/views/checkout/page_content.dart`, wiring in the three currently-dead
   `downgrade_section.dart`, `plan_summary_card.dart`, `checkout_success_view.dart`. Make
   `CheckoutPageContent` read `userTierProvider` (same provider T10/doc-10's T95 already established the
@@ -745,7 +819,14 @@ change on top of a pending one; a pending change can be cancelled back to the cu
 
 ### 4.3 Stage C — Currency & pricing correctness
 
-- [ ] **T12 — Resolve the cosmetic-currency-selector problem.** [Decision-gated — see §3.1.] **If option
+> **Stage status (2026-08-01):** not started. T12 is decision-gated and resolved toward option (b) (real
+> multi-currency), which the doc itself sizes as its own follow-up phase — so nothing in this stage can
+> land before that phase is scoped. T13/T14/T15 (unhardcode `$`/`"USD"` on web, unify the backend's two
+> price sources, wire Flutter's existing ARB prices) are straightforward once T12's data model exists;
+> they are queued in order.
+
+- [ ] **T12 — Resolve the cosmetic-currency-selector problem.** [Decision-gated — see §3.1. **Resolved:
+  option (b)**, real multi-currency — planned as its own phase.] **If option
   (a) (gate to USD):** find the currency selector component (`useCurrencyCookie`/`CurrencyProvider` per
   Agent C's citations) and either hide it entirely on Plans/Checkout/Billing routes, or restrict its option
   list to USD only on those routes specifically — don't rip out the cookie/provider wholesale if it's used
@@ -796,6 +877,15 @@ cents amount and currency Stripe will actually charge — no hand-rolled `$`/`"U
 remains at any billing call site.
 
 ### 4.4 Stage D — Webhook & write-path financial-integrity hardening
+
+> **Stage status (2026-08-01):** not started. This stage changes the concurrency-control and webhook
+> integrity shape of the billing write path (T21/T22 are explicitly flagged as the riskiest structural
+> changes in the whole doc), so it is being deliberately sequenced after C rather than rushed — nothing in
+> this stage has been implemented yet. Verified still-open: no refund/dispute cases (T16), no webhook
+> dedup model (T17), no price-ID warn (T18), no `updateMany` count check (T19), no `@SkipThrottle` and the
+> redelivery log can still say "replacement subscription null is active" (T20), no advisory lock on
+> cancellation (T21), Stripe calls still inside the open transaction (T22), no `FAILED` wallet row written
+> (T23), `setUserTier` unchanged with no spec (T24 — decision recorded in §3.3).
 
 - [ ] **T16 — Backend: handle refunds and disputes.** File: `stripe-webhook.controller.ts`, add cases for
   `charge.refunded` and `charge.dispute.created`. For `charge.refunded`: the event's Charge object carries
@@ -882,6 +972,13 @@ timeout can no longer leave a real Stripe charge with zero local record.
 
 ### 4.5 Stage E — UX correctness & double-submit/error-fidelity hardening
 
+> **Stage status (2026-08-01):** not started. Verified still-open: web PaymentMethods is read-only (T25),
+> web `DowngradeSection` has no submitting guard/idempotency key (T26), address-form cancel still reuses
+> `cancelSubscription` and the default-card badge still reads "Make default" (T27), Flutter subscribe has
+> no `$idempotencyKey` variable and billing buttons lack busy-guards (T28), Flutter still throws fixed
+> `'Failed to subscribe'`-style literals (T29), `Stripe.urlScheme = 'flutterstripe'` still mismatches the
+> native `flutterboilerplate` registration and `confirmSetupIntent` has no timeout (T30).
+
 - [ ] **T25 — Web: wire up PaymentMethods' set-default/remove controls.** File:
   `views/settings/billing/PaymentMethods.tsx`. Add interactive buttons to the card list, calling the
   already-implemented `useSetDefaultPaymentMethod`/`useRemovePaymentMethod` hooks
@@ -937,6 +1034,11 @@ timeout can no longer leave a real Stripe charge with zero local record.
 
 ### 4.6 Stage F — i18n completion (keys already exist in almost every case — this is "wire it up" work)
 
+> **Stage status (2026-08-01):** not started. Verified still-open: web `StripeCardForm.tsx` has no
+> `useMessages` (T31); Flutter's card-entry form, billing-address form, and invoice pagination still use
+> hardcoded strings despite existing ARB keys, and "Page X of Y" needs a new key (T32); Flutter Plans page
+> still hardcodes "Current Plan"/"Included" (T33).
+
 - [ ] **T31 — Web: localize `StripeCardForm`.** File: `features/billing/ui/StripeCardForm.tsx` — no
   `useMessages` import at all today. Add it (matching the hook/pattern other billing components use),
   replace the ~6 hardcoded strings ("Initializing payment...", "Processing...", "Subscribe", error
@@ -958,6 +1060,12 @@ timeout can no longer leave a real Stripe charge with zero local record.
   them in during the same pass rather than a separate one.
 
 ### 4.7 Stage G — Low-priority hygiene
+
+> **Stage status (2026-08-01):** not started. Verified still-open: web `cancelsOn` dangling fragment in
+> `PlanDetails` (T34, plus the `FreePageView` loading-flash and dead i18n keys), Flutter dead files
+> `settings/billing/payment_methods.dart`, `types/plans/plan_tier.dart`,
+> `types/premium/premium_tier.dart`, `hooks/use_min_tier.dart` all still present (T35), and the Flutter
+> billing-address form still has no validation (T36).
 
 - [ ] **T34 — Web: four small fixes.** `PlanDetails.tsx:119` — `{t.cancelsOn}` renders as a dangling
   sentence fragment with no date; fix to interpolate the real `cancelAtPeriodEnd`/`subscriptionPeriodEnd`
