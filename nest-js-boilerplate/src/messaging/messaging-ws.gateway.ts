@@ -129,6 +129,12 @@ export class MessagingWsGateway implements OnModuleInit {
     this.realtime.registerHandler('get-room-counts', (ws) =>
       this.handleGetRoomCounts(ws as AuthWs),
     );
+    this.realtime.registerHandler('get-room-members', (ws, data) =>
+      this.handleGetRoomMembers(
+        ws as AuthWs,
+        data as unknown as { room: string },
+      ),
+    );
     this.realtime.registerHandler('typing-start', (ws, data) =>
       this.handleTypingStart(
         ws as AuthWs,
@@ -202,32 +208,37 @@ export class MessagingWsGateway implements OnModuleInit {
     });
   }
 
-  private handleJoinRoom(ws: AuthWs, data: { room: string }) {
-    if (!ws.userId || !ws.socketId) return;
-    if (!isValidRoom(data.room)) {
-      ws.send(JSON.stringify({ type: 'error', message: 'Invalid room' }));
-      return;
-    }
+  // Returns an error message if ws may not join room, null if it's allowed.
+  private roomJoinError(ws: AuthWs, room: string): string | null {
+    if (!isValidRoom(room)) return 'Invalid room';
     if (
-      data.room.startsWith(VIP_ROOM_PREFIX) &&
+      room.startsWith(VIP_ROOM_PREFIX) &&
       tierRank(ws.tier ?? 'FREE') < MIN_TIER_FOR_VIP
     ) {
-      ws.send(
-        JSON.stringify({
-          type: 'error',
-          message: 'VIP rooms require MEDIUM tier or above',
-        }),
-      );
+      return 'VIP rooms require MEDIUM tier or above';
+    }
+    return null;
+  }
+
+  // Leaves+broadcasts the previously-joined room, if any and different.
+  private leavePreviousRoom(ws: AuthWs, nextRoom: string): void {
+    if (!ws.room || ws.room === nextRoom || !ws.socketId) return;
+    const oldMembers = this.ms.leaveRoom(ws.room, ws.socketId);
+    this.realtime.broadcastToRoom(ws.room, {
+      type: 'user-left',
+      room: ws.room,
+      members: oldMembers,
+    });
+  }
+
+  private handleJoinRoom(ws: AuthWs, data: { room: string }) {
+    if (!ws.userId || !ws.socketId) return;
+    const error = this.roomJoinError(ws, data.room);
+    if (error) {
+      ws.send(JSON.stringify({ type: 'error', message: error }));
       return;
     }
-    if (ws.room && ws.room !== data.room) {
-      const oldMembers = this.ms.leaveRoom(ws.room, ws.socketId);
-      this.realtime.broadcastToRoom(ws.room, {
-        type: 'user-left',
-        room: ws.room,
-        members: oldMembers,
-      });
-    }
+    this.leavePreviousRoom(ws, data.room);
     ws.room = data.room;
     const member: RoomMember = {
       socketId: ws.socketId,
@@ -298,6 +309,26 @@ export class MessagingWsGateway implements OnModuleInit {
       JSON.stringify({
         type: 'room-counts',
         rooms: this.ms.getRoomCounts(),
+      }),
+    );
+  }
+
+  // On-demand pull for the current member list, mirroring get-room-counts.
+  // user-joined/user-left broadcasts alone aren't enough: a client that
+  // joins a room after another client is already present never receives a
+  // broadcast for that pre-existing member (nothing re-fires on their
+  // behalf), so the online list silently stays empty until someone else's
+  // join/leave happens to fire one. Also covers the join-broadcast-vs-
+  // subscription race — the page-claim's own join can complete and
+  // broadcast before the component that renders the list has finished
+  // registering its 'user-joined' listener.
+  private handleGetRoomMembers(ws: AuthWs, data: { room: string }) {
+    if (!data.room || !isValidRoom(data.room)) return;
+    ws.send(
+      JSON.stringify({
+        type: 'room-members',
+        room: data.room,
+        members: this.ms.getRoomMembers(data.room),
       }),
     );
   }

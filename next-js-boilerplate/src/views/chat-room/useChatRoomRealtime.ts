@@ -41,6 +41,23 @@ export function useChatRoomRealtime(
       },
     );
 
+    // Pull the current member list on mount/room-change instead of relying
+    // solely on user-joined/user-left broadcasts: a client that joins a
+    // room after someone else is already present never gets a broadcast
+    // for that pre-existing member (nothing re-fires on their behalf), and
+    // the page-claim's own join can complete and broadcast before this
+    // effect has finished subscribing — either way the online list stays
+    // stuck on "no one here" until some other join/leave happens to fire.
+    const unsubMembers = realtime.subscribe(
+      "room-members",
+      (frame: Record<string, unknown>) => {
+        if (frame.room === room) {
+          setRoomMembers(toRoomMembers(frame.members));
+        }
+      },
+    );
+    realtime.send({ type: "get-room-members", room });
+
     const unsubJoined = realtime.subscribe(
       "user-joined",
       (frame: Record<string, unknown>) => {
@@ -61,6 +78,7 @@ export function useChatRoomRealtime(
 
     return () => {
       unsubCounts();
+      unsubMembers();
       unsubJoined();
       unsubLeft();
     };

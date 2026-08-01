@@ -35,6 +35,7 @@ function createMockWs(tier = 'FREE'): MockWs {
 type GatewayInternal = {
   handleJoinRoom: (ws: MockWs, data: { room: string }) => void;
   handleClaimJoinRoom: (ws: MockWs, params: Record<string, string>) => void;
+  handleGetRoomMembers: (ws: MockWs, data: { room: string }) => void;
   handleDirectMessage: (
     ws: MockWs,
     data: {
@@ -59,6 +60,7 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
     joinRoom: jest.Mock;
     leaveRoom: jest.Mock;
     getRoomCounts: jest.Mock;
+    getRoomMembers: jest.Mock;
     sendMessage: jest.Mock;
     deliverDirectMessage: jest.Mock;
     saveRoomMessage: jest.Mock;
@@ -73,6 +75,7 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
       joinRoom: jest.fn().mockReturnValue([]),
       leaveRoom: jest.fn().mockReturnValue([]),
       getRoomCounts: jest.fn().mockReturnValue({}),
+      getRoomMembers: jest.fn().mockReturnValue([]),
       sendMessage: jest
         .fn()
         .mockResolvedValue({ id: 'm1', senderId: 'u1', recipientId: 'u2' }),
@@ -158,6 +161,39 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
         'general',
         expect.any(Object),
       );
+    });
+  });
+
+  describe('handleGetRoomMembers', () => {
+    it('replies with the current member list for a valid room', () => {
+      const members = [{ socketId: 'u2:x', userId: 'u2', name: 'Two' }];
+      mockMs.getRoomMembers.mockReturnValue(members);
+      const ws = createMockWs('FREE');
+      (gateway as unknown as GatewayInternal).handleGetRoomMembers(ws, {
+        room: 'general',
+      });
+      expect(mockMs.getRoomMembers).toHaveBeenCalledWith('general');
+      expect(ws.send).toHaveBeenCalledWith(
+        JSON.stringify({ type: 'room-members', room: 'general', members }),
+      );
+    });
+
+    it('does not reply for an invalid room', () => {
+      const ws = createMockWs('FREE');
+      (gateway as unknown as GatewayInternal).handleGetRoomMembers(ws, {
+        room: 'not-a-real-room',
+      });
+      expect(ws.send).not.toHaveBeenCalled();
+      expect(mockMs.getRoomMembers).not.toHaveBeenCalled();
+    });
+
+    it('does not reply when room is missing', () => {
+      const ws = createMockWs('FREE');
+      (gateway as unknown as GatewayInternal).handleGetRoomMembers(
+        ws,
+        {} as { room: string },
+      );
+      expect(ws.send).not.toHaveBeenCalled();
     });
   });
 
