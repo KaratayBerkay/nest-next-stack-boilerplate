@@ -21,6 +21,8 @@ import { PageInfoButton } from "@/components/ui/page-info";
 import { plansPageInfo } from "@/constants/page-info";
 import { cn } from "@/lib/cn";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import { subscriptionQueryOptions } from "@/api/client/billing/query";
 
 function buildTierCards(
   user: { tier?: string } | null,
@@ -28,11 +30,16 @@ function buildTierCards(
   lang: string,
   FEATURES: Record<Tier, string[]>,
   t: Record<string, string | string[]>,
+  pendingTier?: string,
+  pendingTierEffectiveAt?: string,
 ) {
+  const hasPendingChange = Boolean(pendingTier && pendingTierEffectiveAt);
+
   return TIERS.map((tier) => {
     const isCurrent = tier === user?.tier;
     const hasAccess = user?.tier && tierAtLeast(user.tier, tier);
     const isUpgrade = user?.tier && !hasAccess && tier !== user.tier;
+    const changePending = Boolean(hasPendingChange && isUpgrade);
 
     return (
       <TierCard
@@ -43,11 +50,13 @@ function buildTierCards(
         current={isCurrent}
         currentLabel={t.currentPlan as string}
         ctaLabel={
-          isCurrent
-            ? (t.currentPlan as string)
-            : hasAccess
-              ? (t.included as string)
-              : (t.upgrade as string)
+          changePending
+            ? (t.changePending as string)
+            : isCurrent
+              ? (t.currentPlan as string)
+              : hasAccess
+                ? (t.included as string)
+                : (t.upgrade as string)
         }
         ctaHref={
           isUpgrade && user
@@ -56,6 +65,7 @@ function buildTierCards(
               ? LOGIN_PATH
               : undefined
         }
+        changePending={changePending}
       />
     );
   });
@@ -69,6 +79,7 @@ function TierCard({
   ctaLabel,
   ctaHref,
   currentLabel,
+  changePending,
 }: TierCardProps) {
   return (
     <div
@@ -90,7 +101,7 @@ function TierCard({
           <span className="bg-surface text-muted block rounded-lg px-4 py-2 text-center text-sm font-medium">
             {currentLabel}
           </span>
-        ) : ctaHref ? (
+        ) : ctaHref && !changePending ? (
           <Link
             href={ctaHref}
             className="bg-brand hover:bg-brand/90 text-brand-fg block rounded-lg px-4 py-2 text-center text-sm font-medium"
@@ -112,6 +123,14 @@ export default function PageContent({ params, className }: PlansPageProps) {
   const { user } = useAuth();
   const t = useMessages("pricing");
   const currency = useCurrencyCookie();
+  const { data: subData } = useQuery(subscriptionQueryOptions(user?.id));
+
+  const pendingTier =
+    (subData as { pendingTier?: string } | null)?.pendingTier ?? undefined;
+  const pendingTierEffectiveAt =
+    (subData as { pendingTierEffectiveAt?: string } | null)
+      ?.pendingTierEffectiveAt ?? undefined;
+  const hasPendingChange = Boolean(pendingTier && pendingTierEffectiveAt);
 
   const FEATURES: Record<Tier, string[]> = {
     FREE: t.featuresBasic,
@@ -120,7 +139,15 @@ export default function PageContent({ params, className }: PlansPageProps) {
     PREMIUM: t.featuresPro,
   };
 
-  const tierCards = buildTierCards(user, currency, lang, FEATURES, t);
+  const tierCards = buildTierCards(
+    user,
+    currency,
+    lang,
+    FEATURES,
+    t,
+    pendingTier,
+    pendingTierEffectiveAt,
+  );
 
   return (
     <div className={cn("flex h-full w-full flex-col gap-6", className)}>
@@ -131,6 +158,14 @@ export default function PageContent({ params, className }: PlansPageProps) {
         </div>
         <PageInfoButton content={plansPageInfo} />
       </div>
+
+      {hasPendingChange && (
+        <p className="text-warning text-xs">
+          {t.planChangeScheduled
+            .replace("{tier}", tierLabel(pendingTier ?? ""))
+            .replace("{date}", pendingTierEffectiveAt ?? "")}
+        </p>
+      )}
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {tierCards}

@@ -1107,6 +1107,8 @@ export type I18nMessages = {
       "priceBasic": string;
       "priceMedium": string;
       "pricePremium": string;
+      "changePending": string;
+      "planChangeScheduled": string;
     }
 
   "settings": {
@@ -1262,6 +1264,9 @@ export type I18nMessages = {
       "errors": {
         "usernameTaken": string;
       };
+      "cancelPendingChange": string;
+      "cancelPendingChangeSuccess": string;
+      "cancelPendingChangeFailed": string;
     }
 
   "share": {

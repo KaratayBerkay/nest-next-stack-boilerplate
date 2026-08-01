@@ -150,5 +150,8 @@
   "securityMfaVerifyCode": "Verify Code",
   "errors": {
     "usernameTaken": "Username is already taken"
-  }
+  },
+  "cancelPendingChange": "You have a change to {tier} scheduled for {date} — cancel that first",
+  "cancelPendingChangeSuccess": "Pending plan change cancelled",
+  "cancelPendingChangeFailed": "Failed to cancel pending plan change"
 }

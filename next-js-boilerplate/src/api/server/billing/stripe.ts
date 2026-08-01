@@ -30,10 +30,16 @@ export async function subscribeServer(
   tier: string,
   paymentMethodId?: string,
   idempotencyKey?: string,
+  currentTier?: string,
 ): Promise<SubscribeResult> {
   return apiFetchJson<SubscribeResult>(STRIPE_SUBSCRIBE_URL, {
     method: POST,
     headers: JSON_CONTENT_TYPE_HEADER,
-    body: JSON.stringify({ tier, paymentMethodId, idempotencyKey }),
+    body: JSON.stringify({
+      tier,
+      paymentMethodId,
+      idempotencyKey,
+      currentTier,
+    }),
   });
 }

@@ -50,7 +50,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let body: { tier: string; paymentMethodId?: string; idempotencyKey?: string };
+  let body: {
+    tier: string;
+    paymentMethodId?: string;
+    idempotencyKey?: string;
+    currentTier?: string;
+  };
   try {
     body = await request.json();
   } catch {
@@ -77,8 +82,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Re-selecting the current tier is the pending-change escape hatch (T6):
+  // the backend releases the schedule without charging, so no card is needed.
   const isUpgrade = ["BASIC", "MEDIUM", "PREMIUM"].includes(body.tier);
-  if (isUpgrade && !body.paymentMethodId) {
+  const isReSelection = body.tier === body.currentTier;
+  if (isUpgrade && !isReSelection && !body.paymentMethodId) {
     return NextResponse.json(
       {
         statusCode: 400,

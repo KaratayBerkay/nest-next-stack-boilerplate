@@ -22,5 +22,7 @@
   "priceFree": "$0",
   "priceBasic": "$9.99/ay",
   "priceMedium": "$19.99/ay",
-  "pricePremium": "$49.99/ay"
+  "pricePremium": "$49.99/ay",
+  "changePending": "Değişiklik bekliyor",
+  "planChangeScheduled": "Planınız {date} tarihinde {tier} olarak değişecek."
 }

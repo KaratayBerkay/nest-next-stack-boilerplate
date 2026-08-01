@@ -150,5 +150,8 @@
   "securityMfaVerifyCode": "Kodu Doğrula",
   "errors": {
     "usernameTaken": "Bu kullanıcı adı zaten alınmış"
-  }
+  },
+  "cancelPendingChange": "{date} tarihinde {tier} planına geçişiniz planlandı — önce bunu iptal edin",
+  "cancelPendingChangeSuccess": "Planlanan plan değişikliği iptal edildi",
+  "cancelPendingChangeFailed": "Planlanan plan değişikliği iptal edilemedi"
 }

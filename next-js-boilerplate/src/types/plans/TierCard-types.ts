@@ -8,4 +8,5 @@ export interface TierCardProps {
   ctaLabel: string;
   ctaHref?: string;
   currentLabel: string;
+  changePending?: boolean;
 }
