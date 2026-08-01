@@ -188,7 +188,19 @@ services:
         condition: service_healthy
     env_file: ./.vault-envs/backend.env
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:3000/health/ready"]
+      # curl isn't installed in the runtime image (only openssl/ca-certificates/
+      # python3/build-essential, see nest-js-boilerplate/Dockerfile) — every
+      # check silently failed with "exec: curl: executable file not found",
+      # making the container report unhealthy regardless of real app health.
+      # Use the same node-http probe the Dockerfile's own HEALTHCHECK already
+      # gets right, just against /health/ready (checks DB/Redis, not just liveness).
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://127.0.0.1:3000/health/ready',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))",
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -220,7 +232,12 @@ services:
         condition: service_started
     env_file: ./.vault-envs/frontend.env
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:3100"]
+      # Same issue as the app service: curl isn't in this Alpine image (only
+      # tini is apk-installed, see next-js-boilerplate/Dockerfile) — every
+      # check failed immediately, unrelated to whether Next.js was actually
+      # up. wget is busybox-provided on Alpine and is what the Dockerfile's
+      # own HEALTHCHECK already correctly uses.
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3100"]
       interval: 10s
       timeout: 5s
       retries: 10
