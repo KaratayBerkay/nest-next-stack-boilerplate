@@ -287,7 +287,11 @@ services:
       elasticsearch:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "pidof fluent-bit || exit 1"]
+      # Not `pidof fluent-bit` — the process exists well before the forward
+      # input plugin finishes binding 24224 (parsers/lua/ES-output-worker
+      # init all happen after fork), so that check reports healthy while
+      # app/nextjs's fluentd logging driver still gets connection refused.
+      test: ["CMD-SHELL", "nc -z localhost 24224 || exit 1"]
       interval: 5s
       retries: 6
       start_period: 10s
