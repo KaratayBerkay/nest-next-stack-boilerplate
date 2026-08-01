@@ -10,17 +10,24 @@
 | T9 | B | ✅ Done — `e33543a0` |
 | T10 | B | ✅ Done — `6fae0fd2` |
 | T11 | B | ✅ Done — `8f74d514` |
-| T12 | C | ⏳ Decision made (§3.1 → option (b), real multi-currency); not started — sized as its own phase |
-| T13, T14, T15 | C | ❌ Not started |
+| T14 | C | ✅ Done — implemented first as T12's foundation (see §4.3 note); uncommitted |
+| T12 | C | ✅ Done — real multi-currency (option (b)) implemented via Stripe `currency_options` on the existing 3 Prices, not per-currency Price IDs; uncommitted |
+| T13 | C | ✅ Done — uncommitted |
+| T15 | C | ✅ Done — uncommitted |
 | T16–T24 | D | ❌ Not started |
 | T25–T30 | E | ❌ Not started |
 | T31–T33 | F | ❌ Not started |
 | T34–T36 | G | ❌ Not started |
 
 Stages A and B are fully implemented and committed (all `§5` gate checks pass: backend jest 55/55 `src/billing`,
-web typecheck/eslint + new vitest green, Flutter analyze/format + new widget tests green). Stages C–G are still
-queued in order — work has proceeded stage-by-stage and T12's option-(b) decision explicitly re-sizes it as a
-follow-up phase; nothing in C–G has been started yet. See §4 checkboxes below for per-task notes.
+web typecheck/eslint + new vitest green, Flutter analyze/format + new widget tests green). **Stage C is now
+implemented (2026-08-01, same day) and gate-verified — backend jest 69/69 `src/billing` (+14 new), web
+typecheck/eslint clean + vitest 341 passed (3 pre-existing unrelated failures, matches baseline), Flutter
+analyze/format clean + full test 435/18 (all 18 failures pre-existing and unrelated, matches baseline) —
+but
+**nothing in Stage C is committed yet**, pending Berkay's go-ahead. See §4.3 for the implementation notes and
+the architecture decision (single Price + `currency_options`, not N Price IDs per tier). Stages D–G remain
+queued, not started.
 
 ---
 
@@ -819,13 +826,38 @@ change on top of a pending one; a pending change can be cancelled back to the cu
 
 ### 4.3 Stage C — Currency & pricing correctness
 
-> **Stage status (2026-08-01):** not started. T12 is decision-gated and resolved toward option (b) (real
-> multi-currency), which the doc itself sizes as its own follow-up phase — so nothing in this stage can
-> land before that phase is scoped. T13/T14/T15 (unhardcode `$`/`"USD"` on web, unify the backend's two
-> price sources, wire Flutter's existing ARB prices) are straightforward once T12's data model exists;
-> they are queued in order.
+> **Stage status (2026-08-01, later the same day):** ✅ implemented and gate-verified end-to-end, **not yet
+> committed**. Order actually landed: T14 first (foundation), then T12 (currency selection built on it),
+> then T13 and T15 (display fixes, now trivial once T12/T14 exist). **Architecture decision made during
+> implementation, not previously specified:** option (b) is built as **one Stripe Price per tier with
+> `currency_options` for EUR/TRY added to the existing 3 test-mode Prices**, not N separate Price IDs per
+> tier per currency — this keeps `STRIPE_PRICE_BASIC/MEDIUM/PREMIUM` as the only env vars (no new ones) and
+> is Stripe's own recommended mechanism for exactly this case. Consequence worth flagging: **currency
+> selection only takes effect on a brand-new subscription (FREE→paid)** — once a subscription exists,
+> Stripe fixes its currency for the subscription's lifetime, so a paid↔paid tier change (T6's Subscription
+> Schedule) always inherits the existing subscription's currency regardless of the cookie; this is a Stripe
+> platform constraint, not a scope cut. `ScheduleTierChangeInput`/downgrade UI were deliberately left
+> without a currency param for this reason.
 
-- [ ] **T12 — Resolve the cosmetic-currency-selector problem.** [Decision-gated — see §3.1. **Resolved:
+- [x] **T12 — Resolve the cosmetic-currency-selector problem.** ✅ Implemented (uncommitted): `currency_options`
+  (EUR/TRY) added to the 3 existing test-mode Stripe Prices via a one-off script (verified live via
+  `prices.retrieve` with `expand: ['currency_options']`); `StripeService.createSubscription` takes an
+  optional `currency` passed straight to `stripe.subscriptions.create`; `BillingService.subscribeToPlan`
+  gained a `currency` param (normalized against `['USD','EUR','TRY']`, default `USD`) threaded only into
+  `handleFirstSubscribe` — see the stage-status note above for why paid↔paid changes don't take one;
+  `billing.resolver.ts`'s `subscribeToPlan` mutation gained a matching optional `currency: String` arg. All
+  4 ledger `currency: 'USD'` hardcodes in `billing.service.ts` were re-examined: 3 fixed to use the real
+  charged/subscription currency (`persistUpgrade` via the provider's `CreateSubscriptionResult.currency`,
+  `handleFullCancellation` via `provider.cancelSubscription`'s now-returned `{currency}`,
+  `handleTierChange` via `scheduleTierChange`'s now-returned `currency`); the 4th
+  (`applyLocalTierChange`, the no-real-Stripe-subscription admin/dev-shortcut path) intentionally left as
+  `'USD'` since there is no real currency to read there. Web: `StripeCardForm.tsx` reads
+  `useCurrencyCookie()` and threads it through `subscribe()` → `subscribeServer()` → the BFF route's
+  `SUBSCRIBE_MUTATION` `$currency` variable; `DowngradeSection.tsx` deliberately not touched (paid↔paid,
+  same currency-fixed-at-creation reason). **Tests:** `stripe.service.spec.ts` (new file, 8 tests) +
+  `stripe-payment.provider.spec.ts` (+3) + `billing.service.spec.ts` (+4, incl. malformed-currency
+  fallback) — backend `npx jest src/billing` 69/69. Original spec (pre-implementation) below for reference:
+  [Decision-gated — see §3.1. **Resolved:
   option (b)**, real multi-currency — planned as its own phase.] **If option
   (a) (gate to USD):** find the currency selector component (`useCurrencyCookie`/`CurrencyProvider` per
   Agent C's citations) and either hide it entirely on Plans/Checkout/Billing routes, or restrict its option
@@ -840,7 +872,22 @@ change on top of a pending one; a pending change can be cancelled back to the cu
   charged currency instead. Treat (b) as its own follow-up phase rather than a task inside this one if
   chosen — it's sized differently from everything else in this stage.
 
-- [ ] **T13 — Web: use real currency instead of hardcoded `$`/`"USD"`.** Two call sites: (1)
+- [x] **T13 — Web: use real currency instead of hardcoded `$`/`"USD"`.** ✅ Implemented (uncommitted), with
+  a scope addition found during implementation: `formatPrice()` unconditionally appended a `/mo` cadence
+  suffix, correct for a recurring plan price but wrong for a one-time invoice amount — reusing it verbatim
+  on `InvoiceTable` would have rendered e.g. "$19.99/mo" next to a specific dated past charge. Fixed by
+  splitting `lib/currency.ts` into `formatCurrency(cents, currency)` (no suffix, for one-time amounts) and
+  `formatPrice()` (thin wrapper, adds `/mo` + the `Free` zero-case) — `formatPrice`'s own behavior is
+  unchanged, existing call sites (Plans/Checkout/PlanDetails) untouched. Also added `toCurrencyCode(string)`
+  to safely narrow an API-sourced currency string to the app's `CurrencyCode` union (falls back to USD),
+  reused at both call sites below. (1) `InvoiceTable.tsx:97` → `formatCurrency(tx.amount,
+  toCurrencyCode(tx.currency))`. (2) `PlanDetails.tsx` gained `priceCents`/`currency` props (threaded from
+  `FreePageView.tsx`'s already-fetched `subscription` object) replacing `formatPrice(TIER_PRICES_CENTS[tier]
+  ?? 0, "USD")` with `formatPrice(priceCents, toCurrencyCode(currency))`. **Tests:** new `currency.test.ts`
+  (6 tests for the split + the guard), new `invoiceTable.test.tsx` (3 tests, incl. asserting no stray `/mo`
+  on an invoice row), `planDetails.test.tsx` extended (+1, non-USD fixture) — web `vitest run` full suite
+  341 passed (3 pre-existing unrelated failures, matches baseline), `tsc --noEmit` and `eslint` both clean.
+  Original spec (pre-implementation) below for reference: Two call sites: (1)
   `InvoiceTable.tsx:98`, currently `` `$${(tx.amount / 100).toFixed(2)}` `` — replace with
   `formatPrice(tx.amount, tx.currency)` using the existing helper from `lib/currency.ts` (the route already
   fetches `tx.currency` per `history/route.ts:13`, just never uses it). (2) `PlanDetails.tsx:72-74`,
@@ -850,7 +897,23 @@ change on top of a pending one; a pending change can be cancelled back to the cu
   update `InvoiceTable`/`PlanDetails` tests with a non-USD fixture transaction/subscription and assert the
   correct currency symbol/format renders, not just USD.
 
-- [ ] **T14 — Backend: unify the two independent price sources.** File: `billing.service.ts:694-703`
+- [x] **T14 — Backend: unify the two independent price sources.** ✅ Implemented (uncommitted), matching the
+  spec closely: `StripeService.getPriceInfoForTier(tier, currency?)` retrieves the real Stripe Price
+  (`expand: ['currency_options']`, required since that field isn't returned by default), cached in-memory
+  per Price ID (a rejected lookup isn't cached, so a transient Stripe error doesn't poison later reads).
+  `getSubscription` extended beyond the original spec once T12 introduced per-subscriber currency choice: a
+  user with an active subscription reads their real charged amount/currency straight off the live Stripe
+  Subscription object (`stripeService.getSubscription`, already existed) rather than the tier's canonical
+  Price — more correct, since two BASIC subscribers could be on different currencies. `getPriceInfoForTier`
+  is used for the no-active-subscription case (FREE, or an admin-set tier with no real Stripe backing) and
+  as Checkout's pre-subscribe quote. The `PRICE_*` env var fallback table is gone; grepped both the repo and
+  every `.env`/Vault/compose file first — it was never actually declared anywhere, only read via
+  `process.env` with a hardcoded literal fallback, so there was nothing to delete from config. **Test:** new
+  `stripe.service.spec.ts` covers `getPriceInfoForTier` (no price configured, default currency, matched
+  currency_options entry, unmatched-currency fallback, caching) plus `createSubscription`/
+  `scheduleSubscriptionChange`'s currency handling; `billing.service.spec.ts` adds a `getSubscription`
+  describe block (live-subscription path vs. tier-fallback path). Original spec (pre-implementation) below
+  for reference: File: `billing.service.ts:694-703`
   (`getSubscription`'s `priceCents`, currently reads `PRICE_${tier}` env vars with a hardcoded fallback
   table) vs. `stripe/stripe.service.ts:137-140` (`getPriceIdForTier`, reads `STRIPE_PRICE_${tier}`, the
   actual charged Price). Add a `getPriceInfoForTier(tier): Promise<{cents: number; currency: string}>`
@@ -862,7 +925,22 @@ change on top of a pending one; a pending change can be cancelled back to the cu
   two. **Test:** a `getSubscription` spec asserting `priceCents` matches a mocked Stripe Price's
   `unit_amount`, not an env var.
 
-- [ ] **T15 — Flutter: fix hardcoded Plans/Checkout prices.** Files:
+- [x] **T15 — Flutter: fix hardcoded Plans/Checkout prices.** ✅ Implemented (uncommitted). Both files now
+  read `AppLocalizations.of(context)` (import added to `plans/page_content.dart`, already present in
+  `checkout/page_content.dart`) and use `t.pricingPriceFree/Basic/Medium/Premium` in place of the hardcoded
+  literals. **Double-cadence bug found and fixed in the same pass, not called out in the original spec:**
+  the ARB strings already end in `/mo` (`"$9.99/mo"`, etc.) — the Plans page separately rendered its own
+  hardcoded `Text('/mo', ...)` next to the price, and Checkout's Subscribe button built
+  `'${t.checkoutUpgrade} — $_price/month'`; both would have shown a doubled suffix (`$9.99/mo/mo`,
+  `$9.99/mo/month`) if the ARB values had been substituted in without also removing these. Removed the
+  separate Plans-page `/mo` Text widget and the Checkout button's trailing `/month` literal. **Tests:**
+  `test/views/plans/page_content_test.dart` gained a new group asserting the 4 correct ARB-sourced strings
+  render and the old flat-dollar strings don't;
+  `test/views/checkout/page_content_test.dart`'s existing `'Upgrade — \$49/month'` assertion (itself
+  encoding the pre-fix bug) updated to `'Upgrade — \$49.99/mo'`. `flutter analyze` clean, `dart format
+  --set-exit-if-changed .` clean repo-wide, full `flutter test` 435/18 (all 18 failures pre-existing —
+  the established `realtime_provider_test.dart` flake (17) + `card_test.dart`'s onTap failure (1), zero new
+  regressions). Files:
   `views/plans/page_content.dart:22,31,45,60` and `views/checkout/page_content.dart:51-62` (the `_price`
   getter — distinct from T1's `_priceId`/`_tier` fix). Replace the hardcoded `'\$0'/'\$9'/'\$19'/'\$49'`
   strings with the already-correct, already-localized ARB getters: `t.pricingPriceBasic` ("$9.99/mo"),
