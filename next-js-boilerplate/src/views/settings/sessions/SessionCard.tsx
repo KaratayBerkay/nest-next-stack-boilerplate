@@ -6,6 +6,7 @@ import {
   IconWorld,
 } from "@tabler/icons-react";
 import { formatDateTimeByPreference } from "@/lib/date-time";
+import { deviceLabel } from "@/lib/sessions/device-label";
 import { cn } from "@/lib/cn";
 import type { SessionCardProps } from "@/types/settings/SessionCard-types";
 
@@ -47,10 +48,7 @@ export function SessionCard({
         <div className="flex min-w-0 flex-col gap-1">
           <div className="flex items-center gap-2">
             <span className="truncate text-sm font-medium">
-              {session.userAgent
-                ? session.userAgent.split(" ").slice(0, 3).join(" ") ||
-                  session.userAgent.slice(0, 40)
-                : "Unknown device"}
+              {deviceLabel(session.userAgent, session.deviceType)}
             </span>
             {isCurrent && (
               <span className="bg-brand/10 text-brand rounded-full px-2 py-0.5 text-[10px] font-medium whitespace-nowrap">
