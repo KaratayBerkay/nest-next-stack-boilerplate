@@ -337,31 +337,13 @@ export class MessagingWsGateway implements OnModuleInit {
 
   private handleClaimJoinRoom(ws: AuthWs, params: Record<string, string>) {
     if (!ws.userId || !ws.socketId || !params.room) return;
-    if (!isValidRoom(params.room)) {
-      ws.send(JSON.stringify({ type: 'error', message: 'Invalid room' }));
-      return;
-    }
-    if (
-      params.room.startsWith(VIP_ROOM_PREFIX) &&
-      tierRank(ws.tier ?? 'FREE') < MIN_TIER_FOR_VIP
-    ) {
-      ws.send(
-        JSON.stringify({
-          type: 'error',
-          message: 'VIP rooms require MEDIUM tier or above',
-        }),
-      );
-      return;
-    }
     const room = params.room;
-    if (ws.room && ws.room !== room) {
-      const oldMembers = this.ms.leaveRoom(ws.room, ws.socketId);
-      this.realtime.broadcastToRoom(ws.room, {
-        type: 'user-left',
-        room: ws.room,
-        members: oldMembers,
-      });
+    const error = this.roomJoinError(ws, room);
+    if (error) {
+      ws.send(JSON.stringify({ type: 'error', message: error }));
+      return;
     }
+    this.leavePreviousRoom(ws, room);
     ws.room = room;
     const member: RoomMember = {
       socketId: ws.socketId,

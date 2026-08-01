@@ -22,12 +22,6 @@
         "reason": "Legacy session hash write/read with v1/v2 parsing and defaulting branches"
       },
       {
-        "files": ["src/messaging/messaging-ws.gateway.ts"],
-        "functions": ["handleJoinRoom", "handleClaimJoinRoom"],
-        "maxCrap": 44,
-        "reason": "Legacy room-join handlers; claim/join duplication already tracked in docs"
-      },
-      {
         "files": ["src/auth/session-hydration.service.ts"],
         "functions": ["hydrate"],
         "maxCrap": 32,
