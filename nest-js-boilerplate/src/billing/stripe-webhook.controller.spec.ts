@@ -5,6 +5,7 @@ type MockStripeService = {
   constructWebhookEvent: jest.Mock;
   getSubscription: jest.Mock;
   getTierForPriceId: jest.Mock;
+  releaseSubscriptionSchedule: jest.Mock;
 };
 type MockWallet = { ensureWallet: jest.Mock };
 type MockPrisma = {
@@ -21,6 +22,7 @@ type MockPrisma = {
   $transaction: jest.Mock;
 };
 type MockTokenStore = { rewriteFieldsForUser: jest.Mock };
+type MockNotification = { create: jest.Mock };
 type MockConfig = { get: jest.Mock };
 type MockOutbox = { emit: jest.Mock };
 
@@ -41,7 +43,13 @@ function setup() {
     items: { data: [{ price: { id: 'price_premium' } }] },
   });
   const getTierForPriceId = jest.fn().mockReturnValue('PREMIUM');
-  const stripeService = { constructWebhookEvent, getSubscription, getTierForPriceId };
+  const releaseSubscriptionSchedule = jest.fn().mockResolvedValue({});
+  const stripeService = {
+    constructWebhookEvent,
+    getSubscription,
+    getTierForPriceId,
+    releaseSubscriptionSchedule,
+  };
 
   const ensureWallet = jest
     .fn()
@@ -78,6 +86,9 @@ function setup() {
   const rewriteFieldsForUser = jest.fn().mockResolvedValue(undefined);
   const tokenStore = { rewriteFieldsForUser };
 
+  const createNotification = jest.fn().mockResolvedValue(undefined);
+  const notification = { create: createNotification };
+
   const get = jest.fn().mockImplementation((key: string) => {
     if (key === 'STRIPE_PRICE_PREMIUM') return 'price_premium';
     return null;
@@ -92,6 +103,7 @@ function setup() {
     wallet as never,
     prisma as never,
     tokenStore as never,
+    notification as never,
     config as never,
     outbox as never,
   );
@@ -116,6 +128,7 @@ function setup() {
       tokenStore,
       config,
       outbox,
+      notification,
     },
   };
 }
@@ -249,6 +262,109 @@ describe('StripeWebhookController', () => {
     });
   });
 
+  describe('invoice.payment_failed', () => {
+    it('immediately downgrades a paid user to FREE and notifies them', async () => {
+      const { controller, req, res, mocks } = setup();
+      mocks.prisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        subscriptionTier: 'PREMIUM',
+        stripeCustomerId: 'cus_1',
+        stripeSubscriptionId: 'sub_1',
+        stripeSubscriptionScheduleId: null,
+        pendingTier: null,
+      });
+
+      await dispatch(
+        controller,
+        req,
+        res,
+        mocks,
+        'invoice.payment_failed',
+        { id: 'inv_fail1', customer: 'cus_1' },
+      );
+
+      expect(mocks.prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        data: {
+          subscriptionTier: 'FREE',
+          cancelAtPeriodEnd: false,
+          pendingTier: null,
+          pendingTierEffectiveAt: null,
+          stripeSubscriptionScheduleId: null,
+        },
+      });
+      expect(mocks.tokenStore.rewriteFieldsForUser).toHaveBeenCalledWith(
+        'u1',
+        { tier: 'FREE' },
+      );
+      expect(mocks.notification.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'u1',
+          type: 'BILLING',
+          title: 'Payment failed',
+        }) as never,
+      );
+    });
+
+    it('releases the pending schedule and clears pending markers when the failed charge was a scheduled change', async () => {
+      const { controller, req, res, mocks } = setup();
+      mocks.prisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        subscriptionTier: 'MEDIUM',
+        stripeCustomerId: 'cus_1',
+        stripeSubscriptionId: 'sub_1',
+        stripeSubscriptionScheduleId: 'sub_sched_1',
+        pendingTier: 'PREMIUM',
+        pendingTierEffectiveAt: new Date('2026-03-01'),
+      });
+
+      await dispatch(
+        controller,
+        req,
+        res,
+        mocks,
+        'invoice.payment_failed',
+        { id: 'inv_fail2', customer: 'cus_1' },
+      );
+
+      expect(mocks.stripeService.releaseSubscriptionSchedule).toHaveBeenCalledWith(
+        'sub_sched_1',
+      );
+      expect(mocks.prisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            subscriptionTier: 'FREE',
+            pendingTier: null,
+            pendingTierEffectiveAt: null,
+            stripeSubscriptionScheduleId: null,
+          }) as never,
+        }) as never,
+      );
+    });
+
+    it('does nothing for a FREE user with no paid access to lose', async () => {
+      const { controller, req, res, mocks } = setup();
+      mocks.prisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        subscriptionTier: 'FREE',
+        stripeCustomerId: 'cus_1',
+      });
+
+      await dispatch(
+        controller,
+        req,
+        res,
+        mocks,
+        'invoice.payment_failed',
+        { id: 'inv_fail3', customer: 'cus_1' },
+      );
+
+      expect(mocks.prisma.user.update).not.toHaveBeenCalled();
+      expect(mocks.tokenStore.rewriteFieldsForUser).not.toHaveBeenCalled();
+      expect(mocks.notification.create).not.toHaveBeenCalled();
+    });
+  });
+
   describe('customer.subscription.updated', () => {
     it('reads current_period_end from items.data[0], not the top level', async () => {
       const { controller, req, res, mocks } = setup();
@@ -296,6 +412,67 @@ describe('StripeWebhookController', () => {
           cancelAtPeriodEnd: true,
           subscriptionPeriodEnd: null,
         }) as never,
+      });
+    });
+
+    it('keeps updating period data on past_due status (dunning visibility only)', async () => {
+      const { controller, req, res, mocks } = setup();
+      await dispatch(
+        controller,
+        req,
+        res,
+        mocks,
+        'customer.subscription.updated',
+        {
+          customer: 'cus_1',
+          status: 'past_due',
+          cancel_at_period_end: false,
+          items: {
+            data: [{ current_period_end: 1769817600 }],
+          },
+        },
+      );
+
+      expect(mocks.prisma.user.updateMany).toHaveBeenCalled();
+      expect(mocks.stripeService.releaseSubscriptionSchedule).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('subscription_schedule.released / .canceled / .aborted', () => {
+    it('clears the stored schedule id when a schedule ends', async () => {
+      const { controller, req, res, mocks } = setup();
+      await dispatch(
+        controller,
+        req,
+        res,
+        mocks,
+        'subscription_schedule.released',
+        { id: 'sub_sched_1' },
+      );
+
+      expect(mocks.prisma.user.updateMany).toHaveBeenCalledWith({
+        where: { stripeSubscriptionScheduleId: 'sub_sched_1' },
+        data: { stripeSubscriptionScheduleId: null },
+      });
+    });
+
+    it('handles canceled and aborted schedules the same way', async () => {
+      const { controller, req, res, mocks } = setup();
+      for (const type of [
+        'subscription_schedule.canceled',
+        'subscription_schedule.aborted',
+      ]) {
+        mocks.stripeService.constructWebhookEvent.mockReturnValue({
+          type,
+          data: { object: { id: 'sub_sched_2' } },
+        });
+        await controller.handleWebhook(req, res);
+      }
+
+      expect(mocks.prisma.user.updateMany).toHaveBeenCalledTimes(2);
+      expect(mocks.prisma.user.updateMany).toHaveBeenLastCalledWith({
+        where: { stripeSubscriptionScheduleId: 'sub_sched_2' },
+        data: { stripeSubscriptionScheduleId: null },
       });
     });
   });

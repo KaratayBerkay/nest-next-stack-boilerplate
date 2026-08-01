@@ -62,6 +62,15 @@ export class BillingService {
     const targetRank = TIER_RANK[targetTier];
 
     if (targetRank === currentRank) {
+      // Escape hatch from a pending change: re-selecting the tier you're
+      // already on while a change is scheduled means "never mind, cancel it"
+      // rather than the generic error.
+      if (
+        user.pendingTier &&
+        (user.subscriptionTier as SubscriptionTier) === targetTier
+      ) {
+        return this.releasePendingChange(userId, user);
+      }
       throw new BadRequestException('Already on this tier');
     }
 
@@ -376,10 +385,25 @@ export class BillingService {
 
       await this.provider.cancelSubscription(user.stripeSubscriptionId);
 
+      // A pending scheduled change is now moot — release the schedule back to
+      // normal subscription management (the cancellation itself is expressed
+      // via cancel_at_period_end above, so releasing, not cancelling, is the
+      // right call) and clear its local bookkeeping in the same write.
+      if (user.stripeSubscriptionScheduleId) {
+        await this.provider.releaseSubscriptionSchedule(
+          user.stripeSubscriptionScheduleId,
+        );
+      }
+
       await this.prisma.$transaction(async (tx) => {
         await tx.user.update({
           where: { id: userId },
-          data: { cancelAtPeriodEnd: true },
+          data: {
+            cancelAtPeriodEnd: true,
+            pendingTier: null,
+            pendingTierEffectiveAt: null,
+            stripeSubscriptionScheduleId: null,
+          },
         });
         await tx.walletTransaction.create({
           data: {
@@ -431,6 +455,41 @@ export class BillingService {
 
     // No Stripe subscription on record — fall back to a local tier change.
     return this.applyLocalTierChange(userId, SubscriptionTier.FREE);
+  }
+
+  /**
+   * Escape hatch (F3): the user re-selected the tier they're already on while
+   * a scheduled change is pending, meaning "never mind" — release the Stripe
+   * schedule and clear the pending fields. Surfaces a distinct `reason` so the
+   * frontend can show "your scheduled change was cancelled" rather than a
+   * generic success.
+   */
+  private async releasePendingChange(
+    userId: string,
+    user: SubscriberState,
+  ): Promise<{ success: boolean; reason: string }> {
+    if (user.stripeSubscriptionScheduleId) {
+      await this.provider.releaseSubscriptionSchedule(
+        user.stripeSubscriptionScheduleId,
+      );
+    }
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        pendingTier: null,
+        pendingTierEffectiveAt: null,
+        stripeSubscriptionScheduleId: null,
+      },
+    });
+    this.logger.log(
+      {
+        category: 'billing',
+        event: 'billing.pending_change_cancelled',
+        userId,
+      },
+      `Released pending tier change for user ${userId}`,
+    );
+    return { success: true, reason: 'pending_change_cancelled' };
   }
 
   /**
@@ -635,29 +694,22 @@ export class BillingService {
     return { success: true };
   }
 
+  /**
+   * Single cancellation path: delegates to `handleFullCancellation` so every
+   * cancellation (whether via `subscribeToPlan(FREE)` or the
+   * `cancelSubscription` mutation) produces the same ledger row, outbox event,
+   * and notification.
+   */
   async cancelSubscription(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { stripeSubscriptionId: true, subscriptionTier: true },
+      select: SUBSCRIBER_SELECT,
     });
     if (!user) throw new Error('User not found');
-    if (user.subscriptionTier === 'FREE') throw new Error('No active subscription');
+    if (user.subscriptionTier === 'FREE')
+      throw new Error('No active subscription');
 
-    // Fail loudly: a swallowed failure here would leave the user marked
-    // pending-cancel while Stripe keeps billing them.
-    if (user.stripeSubscriptionId) {
-      await this.provider.cancelSubscription(user.stripeSubscriptionId);
-    }
-
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { cancelAtPeriodEnd: true },
-    });
-
-    this.logger.log(
-      { category: 'billing', event: 'billing.subscription.canceled', userId },
-      `Subscription cancel scheduled for user ${userId}`,
-    );
+    await this.handleFullCancellation(userId, user);
   }
 
   async getBillingHistory(userId: string) {

@@ -82,6 +82,14 @@ export class StripePaymentProvider implements PaymentProvider {
     await this.stripeService.cancelSubscriptionNow(stripeSubscriptionId);
   }
 
+  async releaseSubscriptionSchedule(
+    stripeSubscriptionScheduleId: string,
+  ): Promise<void> {
+    await this.stripeService.releaseSubscriptionSchedule(
+      stripeSubscriptionScheduleId,
+    );
+  }
+
   async scheduleTierChange(
     input: ScheduleTierChangeInput,
   ): Promise<ScheduleTierChangeResult> {

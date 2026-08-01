@@ -61,6 +61,19 @@ export class StripeService {
   }
 
   /**
+   * Release a pending subscription schedule back to normal subscription
+   * management (keeps the subscription alive — unlike `.cancel()`, which
+   * would also cancel the underlying subscription).
+   */
+  async releaseSubscriptionSchedule(
+    stripeSubscriptionScheduleId: string,
+  ): Promise<Stripe.SubscriptionSchedule> {
+    return this.stripe.subscriptionSchedules.release(
+      stripeSubscriptionScheduleId,
+    );
+  }
+
+  /**
    * Schedule a price change on the existing subscription for the next
    * renewal instead of applying it now: phase 1 keeps the current price
    * through the current period, phase 2 starts the new price at the

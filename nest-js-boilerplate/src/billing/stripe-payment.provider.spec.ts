@@ -6,6 +6,7 @@ type MockStripeService = {
   cancelSubscription: jest.Mock;
   cancelSubscriptionNow: jest.Mock;
   scheduleSubscriptionChange: jest.Mock;
+  releaseSubscriptionSchedule: jest.Mock;
 };
 
 describe('StripePaymentProvider', () => {
@@ -19,6 +20,7 @@ describe('StripePaymentProvider', () => {
       cancelSubscription: jest.fn().mockResolvedValue({}),
       cancelSubscriptionNow: jest.fn().mockResolvedValue({}),
       scheduleSubscriptionChange: jest.fn(),
+      releaseSubscriptionSchedule: jest.fn().mockResolvedValue({}),
     };
     provider = new StripePaymentProvider(stripeService as never);
   });
@@ -97,6 +99,15 @@ describe('StripePaymentProvider', () => {
       await provider.cancelSubscriptionNow('sub_old');
       expect(stripeService.cancelSubscriptionNow).toHaveBeenCalledWith(
         'sub_old',
+      );
+    });
+  });
+
+  describe('releaseSubscriptionSchedule', () => {
+    it('delegates to the Stripe schedule release', async () => {
+      await provider.releaseSubscriptionSchedule('sub_sched_1');
+      expect(stripeService.releaseSubscriptionSchedule).toHaveBeenCalledWith(
+        'sub_sched_1',
       );
     });
   });

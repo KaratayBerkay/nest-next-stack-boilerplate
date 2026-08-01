@@ -5,6 +5,7 @@ import { StripeService } from './stripe/stripe.service';
 import { WalletService } from './wallet.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { TokenStoreService } from '../auth/token-store.service';
+import { NotificationService } from '../notification/notification.service';
 import { ConfigService } from '@nestjs/config';
 import { OutboxService } from '../outbox/outbox.service';
 
@@ -19,6 +20,7 @@ export class StripeWebhookController {
     private readonly wallet: WalletService,
     private readonly prisma: PrismaService,
     private readonly tokenStore: TokenStoreService,
+    private readonly notification: NotificationService,
     private readonly config: ConfigService,
     private readonly outbox: OutboxService,
   ) {}
@@ -70,6 +72,14 @@ export class StripeWebhookController {
         }
         case 'customer.subscription.updated': {
           await this.handleSubscriptionUpdated(
+            event.data.object as unknown as Record<string, unknown>,
+          );
+          break;
+        }
+        case 'subscription_schedule.released':
+        case 'subscription_schedule.canceled':
+        case 'subscription_schedule.aborted': {
+          await this.handleScheduleEnded(
             event.data.object as unknown as Record<string, unknown>,
           );
           break;
@@ -202,17 +212,84 @@ export class StripeWebhookController {
     const user = await this.prisma.user.findUnique({
       where: { stripeCustomerId: customerId },
     });
-    if (user) {
+    if (!user) {
       this.logger.warn(
         {
           category: 'payment',
-          event: 'payment.invoice_failed',
-          userId: user.id,
-          invoiceId: invoice['id'],
+          event: 'payment.customer_not_found',
+          customerId,
         },
-        `Payment failed for user ${user.id} on invoice ${String(invoice['id'])}`,
+        `No user found for Stripe customer ${customerId}`,
       );
+      return;
     }
+
+    // Immediate-downgrade dunning policy: a failed renewal charge cuts paid
+    // access now. Stripe keeps its own retry schedule running, so a later
+    // successful retry reconciles the tier back up via invoice.paid.
+    if (user.subscriptionTier === 'FREE') {
+      return;
+    }
+
+    // If the failed charge was a scheduled change's own renewal, the change is
+    // definitively dead — release its schedule and clear the pending markers
+    // so the UI stops claiming it is still coming.
+    if (user.stripeSubscriptionScheduleId) {
+      await this.stripeService
+        .releaseSubscriptionSchedule(user.stripeSubscriptionScheduleId)
+        .catch((err: Error) =>
+          this.logger.warn(
+            {
+              category: 'billing',
+              event: 'billing.schedule_release_failed',
+              userId: user.id,
+              error: err.message,
+            },
+            `Failed to release schedule for user ${user.id}: ${err.message}`,
+          ),
+        );
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        subscriptionTier: 'FREE',
+        cancelAtPeriodEnd: false,
+        pendingTier: null,
+        pendingTierEffectiveAt: null,
+        stripeSubscriptionScheduleId: null,
+      },
+    });
+    await this.tokenStore.rewriteFieldsForUser(user.id, { tier: 'FREE' });
+
+    await this.notification
+      .create({
+        userId: user.id,
+        actorId: null,
+        type: 'BILLING',
+        title: 'Payment failed',
+        body: 'Your recent payment failed — your subscription has been downgraded to FREE.',
+      })
+      .catch((err: Error) =>
+        this.logger.warn(
+          {
+            category: 'billing',
+            event: 'billing.notification_failed',
+            error: err.message,
+          },
+          `Billing notification failed: ${err.message}`,
+        ),
+      );
+
+    this.logger.warn(
+      {
+        category: 'payment',
+        event: 'payment.invoice_failed',
+        userId: user.id,
+        invoiceId: invoice['id'],
+      },
+      `Payment failed for user ${user.id} on invoice ${String(invoice['id'])} — downgraded to FREE`,
+    );
   }
 
   private async getBilledTier(
@@ -374,6 +451,23 @@ export class StripeWebhookController {
       ? new Date(currentItem.current_period_end * 1000)
       : null;
 
+    // Dunning visibility: Stripe also delivers past_due/unpaid transitions via
+    // this event. The actual downgrade is driven by invoice.payment_failed
+    // (see handleInvoiceFailed) — surface these here so the failure is at
+    // least observable in logs.
+    const status = subscription['status'] as string | undefined;
+    if (status === 'past_due' || status === 'unpaid') {
+      this.logger.warn(
+        {
+          category: 'billing',
+          event: 'billing.subscription_payment_delinquent',
+          customerId,
+          status,
+        },
+        `Subscription for customer ${customerId} is ${status}`,
+      );
+    }
+
     await this.prisma.user.updateMany({
       where: { stripeCustomerId: customerId },
       data: {
@@ -381,5 +475,29 @@ export class StripeWebhookController {
         subscriptionPeriodEnd: periodEnd,
       },
     });
+  }
+
+  /**
+   * A Subscription Schedule has ended (released, cancelled, or aborted) —
+   * clear the locally-stored schedule id so the pending-change bookkeeping
+   * can't go stale. Matches on the schedule's own id rather than the customer
+   * id so an out-of-order event can never clobber a newer schedule.
+   */
+  private async handleScheduleEnded(schedule: Record<string, unknown>) {
+    const scheduleId = schedule['id'] as string;
+    if (!scheduleId) return;
+
+    await this.prisma.user.updateMany({
+      where: { stripeSubscriptionScheduleId: scheduleId },
+      data: { stripeSubscriptionScheduleId: null },
+    });
+    this.logger.log(
+      {
+        category: 'billing',
+        event: 'billing.subscription_schedule_ended',
+        scheduleId,
+      },
+      `Subscription schedule ${scheduleId} ended, cleared stored schedule id`,
+    );
   }
 }

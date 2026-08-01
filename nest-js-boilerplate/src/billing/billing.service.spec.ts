@@ -25,6 +25,7 @@ interface MockPaymentProvider {
   cancelSubscription: jest.Mock;
   cancelSubscriptionNow: jest.Mock;
   scheduleTierChange: jest.Mock;
+  releaseSubscriptionSchedule: jest.Mock;
 }
 
 type MockTokenStore = { rewriteFieldsForUser: jest.Mock };
@@ -61,17 +62,20 @@ describe('BillingService', () => {
   let mockRealtime: MockRealtime;
   let mockStripe: MockStripeService;
   let mockWallet: MockWallet;
+  let mockOutbox: { emit: jest.Mock };
 
   beforeEach(() => {
     const createSubscription = jest.fn();
     const cancelSubscription = jest.fn().mockResolvedValue(undefined);
     const cancelSubscriptionNow = jest.fn().mockResolvedValue(undefined);
     const scheduleTierChange = jest.fn();
+    const releaseSubscriptionSchedule = jest.fn().mockResolvedValue(undefined);
     mockProvider = {
       createSubscription,
       cancelSubscription,
       cancelSubscriptionNow,
       scheduleTierChange,
+      releaseSubscriptionSchedule,
     };
 
     const findUniqueOrThrow = jest.fn();
@@ -107,7 +111,7 @@ describe('BillingService', () => {
     const rewriteFieldsForUser = jest.fn();
     mockTokenStore = { rewriteFieldsForUser };
 
-    const createNotify = jest.fn();
+    const createNotify = jest.fn().mockResolvedValue(undefined);
     mockNotification = { create: createNotify };
 
     const updateUserTier = jest.fn();
@@ -125,7 +129,7 @@ describe('BillingService', () => {
         .mockResolvedValue({ id: 'w1', userId: 'u1', currency: 'USD' }),
     };
 
-    const mockOutbox = { emit: jest.fn().mockResolvedValue(undefined) };
+    mockOutbox = { emit: jest.fn().mockResolvedValue(undefined) };
 
     service = new BillingService(
       mockPrisma as never,
@@ -488,7 +492,12 @@ describe('BillingService', () => {
       expect(mockProvider.cancelSubscription).toHaveBeenCalledWith('sub_prem');
       expect(mockPrisma.user.update).toHaveBeenCalledWith({
         where: { id: 'u1' },
-        data: { cancelAtPeriodEnd: true },
+        data: {
+          cancelAtPeriodEnd: true,
+          pendingTier: null,
+          pendingTierEffectiveAt: null,
+          stripeSubscriptionScheduleId: null,
+        },
       });
       expect(mockTokenStore.rewriteFieldsForUser).not.toHaveBeenCalled();
     });
@@ -660,13 +669,54 @@ describe('BillingService', () => {
         service.subscribeToPlan('u1', SubscriptionTier.BASIC),
       ).rejects.toThrow(BadRequestException);
     });
+
+    it('releases the pending change when re-selecting the current tier (escape hatch)', async () => {
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+        subscriptionTier: SubscriptionTier.PREMIUM,
+        stripeCustomerId: 'cus_1',
+        email: 'user@example.com',
+        name: 'Test',
+        stripeSubscriptionId: 'sub_x',
+        subscriptionPeriodEnd: new Date('2026-02-01'),
+        pendingTier: SubscriptionTier.BASIC,
+        pendingTierEffectiveAt: new Date('2026-03-01'),
+        stripeSubscriptionScheduleId: 'sub_sched_1',
+      });
+
+      const result = await service.subscribeToPlan(
+        'u1',
+        SubscriptionTier.PREMIUM,
+      );
+
+      expect(result.success).toBe(true);
+      expect(result.reason).toBe('pending_change_cancelled');
+      expect(mockProvider.releaseSubscriptionSchedule).toHaveBeenCalledWith(
+        'sub_sched_1',
+      );
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        data: {
+          pendingTier: null,
+          pendingTierEffectiveAt: null,
+          stripeSubscriptionScheduleId: null,
+        },
+      });
+      expect(mockTokenStore.rewriteFieldsForUser).not.toHaveBeenCalled();
+    });
   });
 
   describe('cancelSubscription', () => {
-    it('schedules cancellation at period end', async () => {
+    it('runs the rich cancellation path: ledger row + outbox event + notification', async () => {
       mockPrisma.user.findUnique.mockResolvedValue({
-        stripeSubscriptionId: 'sub_x',
         subscriptionTier: SubscriptionTier.PREMIUM,
+        stripeCustomerId: 'cus_1',
+        email: 'user@example.com',
+        name: 'Test',
+        stripeSubscriptionId: 'sub_x',
+        subscriptionPeriodEnd: new Date('2026-02-01'),
+        pendingTier: null,
+        pendingTierEffectiveAt: null,
+        stripeSubscriptionScheduleId: null,
       });
 
       await service.cancelSubscription('u1');
@@ -674,14 +724,96 @@ describe('BillingService', () => {
       expect(mockProvider.cancelSubscription).toHaveBeenCalledWith('sub_x');
       expect(mockPrisma.user.update).toHaveBeenCalledWith({
         where: { id: 'u1' },
-        data: { cancelAtPeriodEnd: true },
+        data: {
+          cancelAtPeriodEnd: true,
+          pendingTier: null,
+          pendingTierEffectiveAt: null,
+          stripeSubscriptionScheduleId: null,
+        },
       });
+      expect(mockPrisma.walletTransaction.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            type: 'ADJUSTMENT',
+            status: 'COMPLETED',
+            reference: 'subscription:PREMIUM',
+          }) as never,
+        }) as never,
+      );
+      expect(mockOutbox.emit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          eventType: 'billing.tier_downgraded',
+          aggregateId: 'u1',
+        }) as never,
+        mockPrisma,
+      );
+      expect(mockNotification.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'u1',
+          type: 'BILLING',
+          title: 'Subscription cancelled',
+        }) as never,
+      );
+    });
+
+    it('releases a pending schedule and clears all three pending fields at cancel time', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        subscriptionTier: SubscriptionTier.PREMIUM,
+        stripeCustomerId: 'cus_1',
+        email: 'user@example.com',
+        name: 'Test',
+        stripeSubscriptionId: 'sub_x',
+        subscriptionPeriodEnd: new Date('2026-02-01'),
+        pendingTier: SubscriptionTier.BASIC,
+        pendingTierEffectiveAt: new Date('2026-03-01'),
+        stripeSubscriptionScheduleId: 'sub_sched_1',
+      });
+
+      await service.cancelSubscription('u1');
+
+      expect(mockProvider.releaseSubscriptionSchedule).toHaveBeenCalledWith(
+        'sub_sched_1',
+      );
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        data: {
+          cancelAtPeriodEnd: true,
+          pendingTier: null,
+          pendingTierEffectiveAt: null,
+          stripeSubscriptionScheduleId: null,
+        },
+      });
+    });
+
+    it('does not release a schedule when none is stored', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        subscriptionTier: SubscriptionTier.PREMIUM,
+        stripeCustomerId: 'cus_1',
+        email: 'user@example.com',
+        name: 'Test',
+        stripeSubscriptionId: 'sub_x',
+        subscriptionPeriodEnd: new Date('2026-02-01'),
+        pendingTier: null,
+        pendingTierEffectiveAt: null,
+        stripeSubscriptionScheduleId: null,
+      });
+
+      await service.cancelSubscription('u1');
+
+      expect(mockProvider.releaseSubscriptionSchedule).not.toHaveBeenCalled();
     });
 
     it('propagates provider failures instead of swallowing them', async () => {
       mockPrisma.user.findUnique.mockResolvedValue({
-        stripeSubscriptionId: 'sub_x',
         subscriptionTier: SubscriptionTier.PREMIUM,
+        stripeCustomerId: 'cus_1',
+        email: 'user@example.com',
+        name: 'Test',
+        stripeSubscriptionId: 'sub_x',
+        subscriptionPeriodEnd: new Date('2026-02-01'),
+        pendingTier: null,
+        pendingTierEffectiveAt: null,
+        stripeSubscriptionScheduleId: null,
       });
       mockProvider.cancelSubscription.mockRejectedValue(
         new Error('stripe down'),
@@ -691,12 +823,20 @@ describe('BillingService', () => {
         'stripe down',
       );
       expect(mockPrisma.user.update).not.toHaveBeenCalled();
+      expect(mockPrisma.walletTransaction.create).not.toHaveBeenCalled();
     });
 
-    it('marks cancelAtPeriodEnd without a stripe subscription', async () => {
+    it('applies a local FREE downgrade when there is no stripe subscription', async () => {
       mockPrisma.user.findUnique.mockResolvedValue({
-        stripeSubscriptionId: null,
         subscriptionTier: SubscriptionTier.PREMIUM,
+        stripeCustomerId: 'cus_1',
+        email: 'user@example.com',
+        name: 'Test',
+        stripeSubscriptionId: null,
+        subscriptionPeriodEnd: new Date('2026-02-01'),
+        pendingTier: null,
+        pendingTierEffectiveAt: null,
+        stripeSubscriptionScheduleId: null,
       });
 
       await service.cancelSubscription('u1');
@@ -704,8 +844,39 @@ describe('BillingService', () => {
       expect(mockProvider.cancelSubscription).not.toHaveBeenCalled();
       expect(mockPrisma.user.update).toHaveBeenCalledWith({
         where: { id: 'u1' },
-        data: { cancelAtPeriodEnd: true },
+        data: {
+          subscriptionTier: SubscriptionTier.FREE,
+          cancelAtPeriodEnd: true,
+        },
       });
+      expect(mockTokenStore.rewriteFieldsForUser).toHaveBeenCalledWith('u1', {
+        tier: SubscriptionTier.FREE,
+      });
+      expect(mockRealtime.updateUserTier).toHaveBeenCalledWith(
+        'u1',
+        SubscriptionTier.FREE,
+      );
+      expect(mockOutbox.emit).toHaveBeenCalled();
+      expect(mockNotification.create).toHaveBeenCalled();
+    });
+
+    it('throws when the user is already FREE', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        subscriptionTier: SubscriptionTier.FREE,
+        stripeCustomerId: null,
+        email: 'user@example.com',
+        name: 'Test',
+        stripeSubscriptionId: null,
+        subscriptionPeriodEnd: null,
+        pendingTier: null,
+        pendingTierEffectiveAt: null,
+        stripeSubscriptionScheduleId: null,
+      });
+
+      await expect(service.cancelSubscription('u1')).rejects.toThrow(
+        'No active subscription',
+      );
+      expect(mockProvider.cancelSubscription).not.toHaveBeenCalled();
     });
   });
 
