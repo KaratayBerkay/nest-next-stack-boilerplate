@@ -34,6 +34,8 @@ type MockRealtime = { updateUserTier: jest.Mock };
 type MockStripeService = {
   createCustomer: jest.Mock;
   createSetupIntent: jest.Mock;
+  getSubscription: jest.Mock;
+  getPriceInfoForTier: jest.Mock;
 };
 type MockWallet = { ensureWallet: jest.Mock };
 
@@ -66,7 +68,9 @@ describe('BillingService', () => {
 
   beforeEach(() => {
     const createSubscription = jest.fn();
-    const cancelSubscription = jest.fn().mockResolvedValue(undefined);
+    const cancelSubscription = jest
+      .fn()
+      .mockResolvedValue({ currency: 'USD' });
     const cancelSubscriptionNow = jest.fn().mockResolvedValue(undefined);
     const scheduleTierChange = jest.fn();
     const releaseSubscriptionSchedule = jest.fn().mockResolvedValue(undefined);
@@ -121,7 +125,16 @@ describe('BillingService', () => {
     const createSetupIntent = jest
       .fn()
       .mockResolvedValue({ client_secret: 'si_secret' });
-    mockStripe = { createCustomer, createSetupIntent };
+    const getSubscription = jest.fn().mockResolvedValue(null);
+    const getPriceInfoForTier = jest
+      .fn()
+      .mockResolvedValue({ cents: 999, currency: 'USD' });
+    mockStripe = {
+      createCustomer,
+      createSetupIntent,
+      getSubscription,
+      getPriceInfoForTier,
+    };
 
     mockWallet = {
       ensureWallet: jest
@@ -170,6 +183,46 @@ describe('BillingService', () => {
       expect(mockRealtime.updateUserTier).toHaveBeenCalledWith(
         'u1',
         SubscriptionTier.PREMIUM,
+      );
+    });
+
+    it('normalizes and forwards the chosen currency on a first-time subscribe', async () => {
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue(SUB_USER);
+      mockProvider.createSubscription.mockResolvedValue(SUB_RESULT);
+
+      await service.subscribeToPlan(
+        'u1',
+        SubscriptionTier.PREMIUM,
+        'pm_card123',
+        undefined,
+        'eur',
+      );
+
+      expect(mockProvider.createSubscription).toHaveBeenCalledWith(
+        expect.objectContaining({ currency: 'EUR' } satisfies Record<
+          string,
+          unknown
+        >),
+      );
+    });
+
+    it('falls back to USD for an unsupported/malformed currency', async () => {
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue(SUB_USER);
+      mockProvider.createSubscription.mockResolvedValue(SUB_RESULT);
+
+      await service.subscribeToPlan(
+        'u1',
+        SubscriptionTier.PREMIUM,
+        'pm_card123',
+        undefined,
+        'not-a-currency',
+      );
+
+      expect(mockProvider.createSubscription).toHaveBeenCalledWith(
+        expect.objectContaining({ currency: 'USD' } satisfies Record<
+          string,
+          unknown
+        >),
       );
     });
 
@@ -475,6 +528,50 @@ describe('BillingService', () => {
       await expect(
         service.subscribeToPlan('u1', SubscriptionTier.PREMIUM),
       ).rejects.toThrow('paymentMethodId required for upgrades');
+    });
+  });
+
+  describe('getSubscription', () => {
+    it('reads the real charged amount/currency off the live Stripe subscription when one exists', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        subscriptionTier: SubscriptionTier.MEDIUM,
+        subscriptionPeriodStart: new Date('2026-01-01'),
+        subscriptionPeriodEnd: new Date('2026-02-01'),
+        cancelAtPeriodEnd: false,
+        stripeSubscriptionId: 'sub_live',
+        pendingTier: null,
+        pendingTierEffectiveAt: null,
+      });
+      mockStripe.getSubscription.mockResolvedValue({
+        currency: 'try',
+        items: { data: [{ price: { unit_amount: 69999 } }] },
+      });
+
+      const result = await service.getSubscription('u1');
+
+      expect(mockStripe.getSubscription).toHaveBeenCalledWith('sub_live');
+      expect(result).toMatchObject({ priceCents: 69999, currency: 'TRY' });
+      expect(mockStripe.getPriceInfoForTier).not.toHaveBeenCalled();
+    });
+
+    it('falls back to the tier canonical price when there is no live subscription', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        subscriptionTier: SubscriptionTier.FREE,
+        subscriptionPeriodStart: null,
+        subscriptionPeriodEnd: null,
+        cancelAtPeriodEnd: false,
+        stripeSubscriptionId: null,
+        pendingTier: null,
+        pendingTierEffectiveAt: null,
+      });
+
+      const result = await service.getSubscription('u1');
+
+      expect(mockStripe.getSubscription).not.toHaveBeenCalled();
+      expect(mockStripe.getPriceInfoForTier).toHaveBeenCalledWith(
+        SubscriptionTier.FREE,
+      );
+      expect(result).toMatchObject({ priceCents: 999, currency: 'USD' });
     });
   });
 

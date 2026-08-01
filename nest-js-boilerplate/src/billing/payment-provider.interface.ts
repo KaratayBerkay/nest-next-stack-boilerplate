@@ -6,6 +6,10 @@ export interface CreateSubscriptionInput {
   paymentMethodId: string;
   stripeCustomerId: string;
   idempotencyKey?: string;
+  /** ISO 4217 code (e.g. "USD"/"EUR"/"TRY"). Only meaningful here — an
+   * existing subscription's currency is fixed for its lifetime, so
+   * ScheduleTierChangeInput below never takes one. */
+  currency?: string;
 }
 
 export interface CreateSubscriptionResult {
@@ -15,6 +19,9 @@ export interface CreateSubscriptionResult {
   periodStart?: Date;
   periodEnd?: Date;
   latestInvoiceId?: string;
+  /** The currency actually charged, per Stripe's response — always present
+   * on success. */
+  currency?: string;
 }
 
 export interface ScheduleTierChangeInput {
@@ -28,6 +35,9 @@ export interface ScheduleTierChangeResult {
   reason?: string;
   stripeSubscriptionScheduleId?: string;
   effectiveAt?: Date;
+  /** The subscription's existing (fixed-at-creation) currency — not a new
+   * selection, just surfaced so ledger writes can record it accurately. */
+  currency?: string;
 }
 
 export const PAYMENT_PROVIDER = 'PAYMENT_PROVIDER';
@@ -36,7 +46,11 @@ export interface PaymentProvider {
   createSubscription(
     input: CreateSubscriptionInput,
   ): Promise<CreateSubscriptionResult>;
-  cancelSubscription(stripeSubscriptionId: string): Promise<void>;
+  /** Returns the subscription's currency so the caller's ledger write can
+   * record it accurately instead of assuming USD. */
+  cancelSubscription(
+    stripeSubscriptionId: string,
+  ): Promise<{ currency: string }>;
   cancelSubscriptionNow(stripeSubscriptionId: string): Promise<void>;
   /**
    * Release a pending subscription schedule without cancelling the underlying

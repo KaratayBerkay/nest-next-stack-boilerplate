@@ -38,6 +38,7 @@ describe('StripePaymentProvider', () => {
           ],
         },
         latest_invoice: 'inv_1',
+        currency: 'usd',
       });
 
       const result = await provider.createSubscription({
@@ -54,6 +55,7 @@ describe('StripePaymentProvider', () => {
         'price_basic',
         'pm_1',
         'retry-key-1',
+        undefined,
       );
       expect(result).toEqual({
         success: true,
@@ -61,7 +63,42 @@ describe('StripePaymentProvider', () => {
         periodStart: new Date(1769817600 * 1000),
         periodEnd: new Date(1772496000 * 1000),
         latestInvoiceId: 'inv_1',
+        currency: 'USD',
       });
+    });
+
+    it('forwards a non-default currency and returns it uppercased', async () => {
+      stripeService.createSubscription.mockResolvedValue({
+        id: 'sub_1',
+        items: {
+          data: [
+            {
+              current_period_start: 1769817600,
+              current_period_end: 1772496000,
+            },
+          ],
+        },
+        latest_invoice: 'inv_1',
+        currency: 'eur',
+      });
+
+      const result = await provider.createSubscription({
+        userId: 'u1',
+        tier: 'BASIC' as never,
+        paymentMethodId: 'pm_1',
+        stripeCustomerId: 'cus_1',
+        idempotencyKey: 'retry-key-1',
+        currency: 'EUR',
+      });
+
+      expect(stripeService.createSubscription).toHaveBeenCalledWith(
+        'cus_1',
+        'price_basic',
+        'pm_1',
+        'retry-key-1',
+        'EUR',
+      );
+      expect(result.currency).toBe('EUR');
     });
 
     it('returns a configuration error when no price is mapped', async () => {
@@ -94,6 +131,21 @@ describe('StripePaymentProvider', () => {
     });
   });
 
+  describe('cancelSubscription', () => {
+    it('returns the subscription currency so callers can record it on the ledger', async () => {
+      stripeService.cancelSubscription = jest
+        .fn()
+        .mockResolvedValue({ id: 'sub_old', currency: 'try' });
+
+      const result = await provider.cancelSubscription('sub_old');
+
+      expect(stripeService.cancelSubscription).toHaveBeenCalledWith(
+        'sub_old',
+      );
+      expect(result).toEqual({ currency: 'TRY' });
+    });
+  });
+
   describe('cancelSubscriptionNow', () => {
     it('delegates to the immediate cancel', async () => {
       await provider.cancelSubscriptionNow('sub_old');
@@ -118,6 +170,7 @@ describe('StripePaymentProvider', () => {
       stripeService.scheduleSubscriptionChange.mockResolvedValue({
         scheduleId: 'sub_sched_1',
         effectiveAt,
+        currency: 'USD',
       });
 
       const result = await provider.scheduleTierChange({
@@ -135,6 +188,7 @@ describe('StripePaymentProvider', () => {
         success: true,
         stripeSubscriptionScheduleId: 'sub_sched_1',
         effectiveAt,
+        currency: 'USD',
       });
     });
 

@@ -7,6 +7,16 @@ export class StripeService {
   private readonly logger = new Logger(StripeService.name);
   readonly stripe: Stripe;
 
+  // Stripe Prices are effectively immutable at runtime (currency_options can
+  // be added but existing amounts never change), so a per-tier cache avoids
+  // a live API round-trip on every price read (e.g. every getSubscription
+  // call) while still being the single real source of truth instead of a
+  // hand-maintained env var table.
+  private readonly priceInfoCache = new Map<
+    string,
+    Promise<Stripe.Price>
+  >();
+
   constructor(private readonly config: ConfigService) {
     const key = this.config.getOrThrow<string>('STRIPE_SECRET_KEY');
     this.stripe = new Stripe(key, {
@@ -30,6 +40,7 @@ export class StripeService {
     priceId: string,
     paymentMethodId: string,
     idempotencyKey?: string,
+    currency?: string,
   ): Promise<Stripe.Subscription> {
     await this.stripe.paymentMethods.attach(paymentMethodId, {
       customer: customerId,
@@ -40,6 +51,11 @@ export class StripeService {
         items: [{ price: priceId }],
         default_payment_method: paymentMethodId,
         off_session: true,
+        // Selects which of the Price's currency_options to bill in. Only
+        // meaningful at subscription-creation time — once a subscription
+        // exists its currency is fixed, so tier changes on the same
+        // subscription (scheduleSubscriptionChange below) never pass this.
+        ...(currency ? { currency: currency.toLowerCase() } : {}),
       },
       idempotencyKey ? { idempotencyKey } : undefined,
     );
@@ -85,7 +101,7 @@ export class StripeService {
     stripeSubscriptionId: string,
     existingScheduleId: string | null | undefined,
     newPriceId: string,
-  ): Promise<{ scheduleId: string; effectiveAt: Date }> {
+  ): Promise<{ scheduleId: string; effectiveAt: Date; currency: string }> {
     const subscription =
       await this.stripe.subscriptions.retrieve(stripeSubscriptionId);
     const currentItem = subscription.items.data[0];
@@ -119,7 +135,11 @@ export class StripeService {
       },
     );
 
-    return { scheduleId: updated.id, effectiveAt: new Date(periodEnd * 1000) };
+    return {
+      scheduleId: updated.id,
+      effectiveAt: new Date(periodEnd * 1000),
+      currency: subscription.currency.toUpperCase(),
+    };
   }
 
   async getSubscription(
@@ -150,6 +170,52 @@ export class StripeService {
   getPriceIdForTier(tier: string): string | null {
     const key = `STRIPE_PRICE_${tier}`;
     return this.config.get<string>(key) ?? null;
+  }
+
+  private retrievePrice(priceId: string): Promise<Stripe.Price> {
+    let cached = this.priceInfoCache.get(priceId);
+    if (!cached) {
+      // currency_options is an expandable field — omitted from the response
+      // by default.
+      cached = this.stripe.prices.retrieve(priceId, {
+        expand: ['currency_options'],
+      });
+      this.priceInfoCache.set(priceId, cached);
+      // Don't cache a rejected lookup — a transient Stripe/network error
+      // shouldn't poison every subsequent read for the process lifetime.
+      cached.catch(() => this.priceInfoCache.delete(priceId));
+    }
+    return cached;
+  }
+
+  /**
+   * The single real source of truth for what a tier actually costs — reads
+   * the live Stripe Price instead of a hand-maintained env var table (see
+   * doc-11 F6). Pass `currency` to price it in a specific currency via the
+   * Price's `currency_options`; falls back to the Price's own default
+   * currency if that option isn't configured.
+   */
+  async getPriceInfoForTier(
+    tier: string,
+    currency?: string,
+  ): Promise<{ cents: number; currency: string }> {
+    const priceId = this.getPriceIdForTier(tier);
+    if (!priceId) return { cents: 0, currency: (currency ?? 'USD').toUpperCase() };
+
+    const price = await this.retrievePrice(priceId);
+    const wanted = currency?.toLowerCase();
+    const option =
+      wanted && wanted !== price.currency
+        ? price.currency_options?.[wanted]
+        : undefined;
+
+    if (option?.unit_amount != null) {
+      return { cents: option.unit_amount, currency: wanted!.toUpperCase() };
+    }
+    return {
+      cents: price.unit_amount ?? 0,
+      currency: price.currency.toUpperCase(),
+    };
   }
 
   /** Reverse lookup: which tier does a price belong to? */

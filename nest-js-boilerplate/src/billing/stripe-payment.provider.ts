@@ -37,6 +37,7 @@ export class StripePaymentProvider implements PaymentProvider {
         priceId,
         input.paymentMethodId,
         input.idempotencyKey,
+        input.currency,
       );
 
       return {
@@ -52,6 +53,7 @@ export class StripePaymentProvider implements PaymentProvider {
           typeof subscription.latest_invoice === 'string'
             ? subscription.latest_invoice
             : subscription.latest_invoice?.id,
+        currency: subscription.currency.toUpperCase(),
       };
     } catch (err) {
       const msg = (err as Error).message ?? 'subscription_failed';
@@ -74,8 +76,12 @@ export class StripePaymentProvider implements PaymentProvider {
     }
   }
 
-  async cancelSubscription(stripeSubscriptionId: string): Promise<void> {
-    await this.stripeService.cancelSubscription(stripeSubscriptionId);
+  async cancelSubscription(
+    stripeSubscriptionId: string,
+  ): Promise<{ currency: string }> {
+    const subscription =
+      await this.stripeService.cancelSubscription(stripeSubscriptionId);
+    return { currency: subscription.currency.toUpperCase() };
   }
 
   async cancelSubscriptionNow(stripeSubscriptionId: string): Promise<void> {
@@ -116,6 +122,7 @@ export class StripePaymentProvider implements PaymentProvider {
         success: true,
         stripeSubscriptionScheduleId: result.scheduleId,
         effectiveAt: result.effectiveAt,
+        currency: result.currency,
       };
     } catch (err) {
       const msg = (err as Error).message ?? 'subscription_schedule_failed';

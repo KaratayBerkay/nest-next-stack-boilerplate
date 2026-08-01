@@ -169,12 +169,17 @@ export class BillingResolver {
     @Args('tier', { type: () => SubscriptionTier }) tier: SubscriptionTier,
     @Args('paymentMethodId', { nullable: true }) paymentMethodId?: string,
     @Args('idempotencyKey', { nullable: true }) idempotencyKey?: string,
+    // Only takes effect on a brand-new subscription (FREE -> paid) — an
+    // existing subscription's currency can't change without cancelling it,
+    // so this is a no-op on upgrade/downgrade between paid tiers.
+    @Args('currency', { nullable: true }) currency?: string,
   ): Promise<SubscribeResult> {
     const result = await this.billing.subscribeToPlan(
       user.userId,
       tier,
       paymentMethodId,
       idempotencyKey,
+      currency,
     );
     return {
       success: result.success,

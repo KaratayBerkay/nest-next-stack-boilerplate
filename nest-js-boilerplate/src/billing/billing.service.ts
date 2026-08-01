@@ -16,6 +16,18 @@ import {
 } from './payment-provider.interface';
 import { Inject } from '@nestjs/common';
 
+// Kept in sync with next-js-boilerplate's CURRENCIES constant
+// (src/constants/currency.ts) and flutter-boilerplate's USD-only display —
+// the only currencies with currency_options configured on the Stripe Prices.
+const SUPPORTED_CURRENCIES = ['USD', 'EUR', 'TRY'] as const;
+
+function normalizeCurrency(currency: string | undefined): string {
+  const upper = currency?.trim().toUpperCase();
+  return upper && (SUPPORTED_CURRENCIES as readonly string[]).includes(upper)
+    ? upper
+    : 'USD';
+}
+
 const SUBSCRIBER_SELECT = {
   subscriptionTier: true,
   stripeCustomerId: true,
@@ -52,6 +64,7 @@ export class BillingService {
     targetTier: SubscriptionTier,
     paymentMethodId?: string,
     idempotencyKey?: string,
+    currency?: string,
   ): Promise<{ success: boolean; reason?: string; periodEnd?: Date }> {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
@@ -82,6 +95,7 @@ export class BillingService {
         targetTier,
         paymentMethodId,
         idempotencyKey,
+        normalizeCurrency(currency),
       );
     }
 
@@ -103,6 +117,7 @@ export class BillingService {
     targetTier: SubscriptionTier,
     paymentMethodId: string | undefined,
     idempotencyKey: string | undefined,
+    currency: string,
   ): Promise<{ success: boolean; reason?: string; periodEnd?: Date }> {
     if (!paymentMethodId) {
       throw new BadRequestException('paymentMethodId required for upgrades');
@@ -169,6 +184,7 @@ export class BillingService {
           paymentMethodId,
           stripeCustomerId,
           idempotencyKey: retryKey,
+          currency,
         });
 
         if (!chargeResult.success) {
@@ -274,6 +290,7 @@ export class BillingService {
       periodStart?: Date;
       periodEnd?: Date;
       latestInvoiceId?: string;
+      currency?: string;
     },
     rowKey: string,
     clientKey: string,
@@ -303,7 +320,7 @@ export class BillingService {
       type: 'FEE',
       status: 'COMPLETED',
       amount: 0,
-      currency: 'USD',
+      currency: chargeResult.currency ?? 'USD',
       reference: `subscription:${targetTier}`,
       stripePaymentIntentId: null,
       fromWalletId: walletId,
@@ -383,7 +400,9 @@ export class BillingService {
       );
       const wallet = await this.wallet.ensureWallet(userId);
 
-      await this.provider.cancelSubscription(user.stripeSubscriptionId);
+      const { currency } = await this.provider.cancelSubscription(
+        user.stripeSubscriptionId,
+      );
 
       // A pending scheduled change is now moot — release the schedule back to
       // normal subscription management (the cancellation itself is expressed
@@ -410,7 +429,7 @@ export class BillingService {
             type: 'ADJUSTMENT',
             status: 'COMPLETED',
             amount: 0,
-            currency: 'USD',
+            currency,
             idempotencyKey,
             reference: `subscription:${user.subscriptionTier}`,
             fromWalletId: wallet.id,
@@ -569,7 +588,7 @@ export class BillingService {
             type: 'ADJUSTMENT',
             status: 'COMPLETED',
             amount: 0,
-            currency: 'USD',
+            currency: scheduleResult.currency ?? 'USD',
             idempotencyKey,
             reference: `subscription:${targetTier}`,
             fromWalletId: wallet.id,
@@ -743,21 +762,33 @@ export class BillingService {
     });
     if (!user) return null;
 
-    const priceCents = Number(
-      process.env[`PRICE_${user.subscriptionTier}`] ??
-        {
-          FREE: '0',
-          BASIC: '999',
-          MEDIUM: '1999',
-          PREMIUM: '4999',
-        }[user.subscriptionTier] ??
-        0,
-    );
+    // An active subscription's currency is fixed at creation — read it (and
+    // its real charged amount) straight off the live Stripe object rather
+    // than a tier-keyed guess, since a subscriber may have picked a
+    // non-default currency at subscribe time. No active subscription (FREE,
+    // or an admin-set tier with no real Stripe backing): fall back to the
+    // tier's canonical Price in its default currency.
+    let priceCents = 0;
+    let currency = 'USD';
+    const liveSubscription = user.stripeSubscriptionId
+      ? await this.stripeService.getSubscription(user.stripeSubscriptionId)
+      : null;
+    const liveItem = liveSubscription?.items.data[0];
+    if (liveItem) {
+      priceCents = liveItem.price.unit_amount ?? 0;
+      currency = liveSubscription!.currency.toUpperCase();
+    } else {
+      const info = await this.stripeService.getPriceInfoForTier(
+        user.subscriptionTier,
+      );
+      priceCents = info.cents;
+      currency = info.currency;
+    }
 
     return {
       tier: user.subscriptionTier as SubscriptionTier,
       priceCents,
-      currency: 'USD',
+      currency,
       periodStart: user.subscriptionPeriodStart,
       periodEnd: user.subscriptionPeriodEnd,
       cancelAtPeriodEnd: user.cancelAtPeriodEnd,
