@@ -472,7 +472,11 @@ export class StripeWebhookController {
       where: { stripeCustomerId: customerId },
       data: {
         cancelAtPeriodEnd,
-        subscriptionPeriodEnd: periodEnd,
+        // Only overwrite when we actually resolved a real date — never
+        // clobber an existing correct value with null because this one
+        // event's payload didn't have it (confirmed live: subscriptionPeriodEnd
+        // was getting nulled on events with no item-level period data).
+        ...(periodEnd ? { subscriptionPeriodEnd: periodEnd } : {}),
       },
     });
   }

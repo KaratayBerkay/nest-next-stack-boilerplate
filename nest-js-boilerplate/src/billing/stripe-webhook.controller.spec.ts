@@ -391,7 +391,7 @@ describe('StripeWebhookController', () => {
       });
     });
 
-    it('keeps periodEnd null when items.data is empty or missing', async () => {
+    it('does not clobber an existing subscriptionPeriodEnd when items.data is empty or missing', async () => {
       const { controller, req, res, mocks } = setup();
       await dispatch(
         controller,
@@ -406,13 +406,10 @@ describe('StripeWebhookController', () => {
         },
       );
 
-      expect(mocks.prisma.user.updateMany).toHaveBeenCalledWith({
-        where: { stripeCustomerId: 'cus_1' },
-        data: expect.objectContaining({
-          cancelAtPeriodEnd: true,
-          subscriptionPeriodEnd: null,
-        }) as never,
-      });
+      const [call] = mocks.prisma.user.updateMany.mock.calls;
+      const data = (call[0] as { data: Record<string, unknown> }).data;
+      expect(data.cancelAtPeriodEnd).toBe(true);
+      expect('subscriptionPeriodEnd' in data).toBe(false);
     });
 
     it('keeps updating period data on past_due status (dunning visibility only)', async () => {
