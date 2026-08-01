@@ -31,6 +31,7 @@ export async function subscribeServer(
   paymentMethodId?: string,
   idempotencyKey?: string,
   currentTier?: string,
+  currency?: string,
 ): Promise<SubscribeResult> {
   return apiFetchJson<SubscribeResult>(STRIPE_SUBSCRIBE_URL, {
     method: POST,
@@ -40,6 +41,7 @@ export async function subscribeServer(
       paymentMethodId,
       idempotencyKey,
       currentTier,
+      currency,
     }),
   });
 }

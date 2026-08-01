@@ -4,6 +4,7 @@ import { useState } from "react";
 import { formatDateByPreference } from "@/lib/date-time";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { cn } from "@/lib/cn";
+import { formatCurrency, toCurrencyCode } from "@/lib/currency";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { InvoiceTableProps } from "@/types/billing/InvoiceTable-types";
 import { StatusBadge } from "./StatusBadge";
@@ -94,7 +95,7 @@ export function InvoiceTable({
                 </td>
                 <td className="px-4 py-3 text-sm">
                   {tx.amount > 0
-                    ? `$${(tx.amount / 100).toFixed(2)}`
+                    ? formatCurrency(tx.amount, toCurrencyCode(tx.currency))
                     : "\u2014"}
                 </td>
                 <td className="px-4 py-3">

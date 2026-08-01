@@ -82,6 +82,8 @@ export function FreePageView({ className }: ClassNameProps) {
               <Card variant="surface" className="p-5">
                 <PlanDetails
                   tier={tier}
+                  priceCents={subscription?.priceCents ?? 0}
+                  currency={subscription?.currency ?? "USD"}
                   periodEnd={subscription?.periodEnd}
                   cancelAtPeriodEnd={subscription?.cancelAtPeriodEnd ?? false}
                   pendingTier={subscription?.pendingTier}

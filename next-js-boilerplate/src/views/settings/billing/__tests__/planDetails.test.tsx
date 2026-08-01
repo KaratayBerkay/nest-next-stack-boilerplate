@@ -46,6 +46,8 @@ describe("PlanDetails pending-change gating", () => {
     render(
       <PlanDetails
         tier="BASIC"
+        priceCents={999}
+        currency="USD"
         periodEnd="Aug 1, 2026"
         cancelAtPeriodEnd={false}
         pendingTier="PREMIUM"
@@ -67,6 +69,8 @@ describe("PlanDetails pending-change gating", () => {
     render(
       <PlanDetails
         tier="BASIC"
+        priceCents={999}
+        currency="USD"
         periodEnd="Aug 1, 2026"
         cancelAtPeriodEnd={false}
       />,
@@ -78,5 +82,22 @@ describe("PlanDetails pending-change gating", () => {
     expect(
       screen.queryByRole("button", { name: /cancel that first/i }),
     ).toBeNull();
+  });
+});
+
+describe("PlanDetails price display", () => {
+  it("renders the real subscription price/currency, not a static USD table", () => {
+    render(
+      <PlanDetails
+        tier="MEDIUM"
+        priceCents={1899}
+        currency="EUR"
+        periodEnd="Aug 1, 2026"
+        cancelAtPeriodEnd={false}
+      />,
+    );
+    expect(
+      screen.getByText((text) => text.includes("18,99") && text.includes("€")),
+    ).toBeTruthy();
   });
 });

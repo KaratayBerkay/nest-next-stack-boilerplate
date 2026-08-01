@@ -1,4 +1,4 @@
-import type { CurrencyCode } from "@/constants/currency";
+import { CURRENCIES, type CurrencyCode } from "@/constants/currency";
 
 const LOCALE_MAP: Record<CurrencyCode, string> = {
   USD: "en-US",
@@ -6,12 +6,27 @@ const LOCALE_MAP: Record<CurrencyCode, string> = {
   TRY: "tr-TR",
 };
 
-export function formatPrice(cents: number, currency: CurrencyCode): string {
-  if (cents === 0) return "Free";
+/** Narrows a currency string from an API response to a known CurrencyCode,
+ * falling back to USD for anything this app doesn't have a locale for. */
+export function toCurrencyCode(currency: string): CurrencyCode {
+  const upper = currency.toUpperCase();
+  return (CURRENCIES as readonly string[]).includes(upper)
+    ? (upper as CurrencyCode)
+    : "USD";
+}
+
+export function formatCurrency(cents: number, currency: CurrencyCode): string {
   const locale = LOCALE_MAP[currency];
-  const amount = new Intl.NumberFormat(locale, {
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
   }).format(cents / 100);
-  return `${amount}/mo`;
+}
+
+/** A recurring plan price — same formatting as formatCurrency, plus the
+ * "/mo" cadence and a "Free" special case. Not for one-time amounts like
+ * invoice line items; use formatCurrency for those. */
+export function formatPrice(cents: number, currency: CurrencyCode): string {
+  if (cents === 0) return "Free";
+  return `${formatCurrency(cents, currency)}/mo`;
 }

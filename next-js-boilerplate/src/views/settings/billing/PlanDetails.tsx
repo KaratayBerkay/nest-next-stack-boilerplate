@@ -3,8 +3,8 @@
 import { useCallback } from "react";
 import Link from "next/link";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
-import { TIER_PRICES_CENTS, tierLabel, type Tier } from "@/lib/tier";
-import { formatPrice } from "@/lib/currency";
+import { tierLabel, type Tier } from "@/lib/tier";
+import { formatPrice, toCurrencyCode } from "@/lib/currency";
 import { plansPath } from "@/constants/routes";
 import { useToast } from "@/components/ui/Toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -12,6 +12,8 @@ import { useBillingActions } from "@/api/client/billing/actions";
 
 interface PlanDetailsProps {
   tier: Tier;
+  priceCents: number;
+  currency: string;
   periodEnd?: string;
   cancelAtPeriodEnd: boolean;
   pendingTier?: string;
@@ -64,6 +66,8 @@ async function handleCancelPendingChange(
 
 export function PlanDetails({
   tier,
+  priceCents,
+  currency,
   periodEnd,
   cancelAtPeriodEnd,
   pendingTier,
@@ -109,7 +113,7 @@ export function PlanDetails({
         <li className="flex items-center justify-between py-2.5">
           <span className="text-muted text-sm">{t.price}</span>
           <span className="text-sm font-medium">
-            {formatPrice(TIER_PRICES_CENTS[tier] ?? 0, "USD")}
+            {formatPrice(priceCents, toCurrencyCode(currency))}
           </span>
         </li>
         {tier !== "FREE" && periodEnd && (

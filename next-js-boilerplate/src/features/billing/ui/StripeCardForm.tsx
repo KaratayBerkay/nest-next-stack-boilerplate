@@ -16,6 +16,7 @@ import { StripeElements } from "@/components/StripeProvider";
 import type { StripeCardFormProps } from "@/types/billing/StripeCardForm-types";
 import type { SubscribeResult } from "@/api/server/billing/stripe";
 import { useBillingActions } from "@/api/client/billing/actions";
+import { useCurrencyCookie } from "@/hooks/useCurrencyCookie";
 
 export function StripeCardForm({
   tier,
@@ -66,8 +67,11 @@ async function handleStripeSubmit(
     tier: string,
     paymentMethodId?: string,
     idempotencyKey?: string,
+    currentTier?: string,
+    currency?: string,
   ) => Promise<SubscribeResult>,
   retryKeyRef: React.MutableRefObject<string | null>,
+  currency: string,
 ) {
   e.preventDefault();
   if (!stripe || !elements) return;
@@ -112,6 +116,8 @@ async function handleStripeSubmit(
       tier,
       setupIntent.payment_method as string | undefined,
       retryKey,
+      undefined,
+      currency,
     );
     retryKeyRef.current = null;
     onSuccess(result);
@@ -132,6 +138,7 @@ function StripeCardFormInner({
   const [submitting, setSubmitting] = useState(false);
   const { subscribe } = useBillingActions();
   const retryKeyRef = useRef<string | null>(null);
+  const currency = useCurrencyCookie();
 
   useEffect(() => {
     retryKeyRef.current = crypto.randomUUID();
@@ -150,6 +157,7 @@ function StripeCardFormInner({
           onError,
           subscribe,
           retryKeyRef,
+          currency,
         )
       }
       className="flex flex-col gap-4"
