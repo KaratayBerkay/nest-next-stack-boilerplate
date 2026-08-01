@@ -186,6 +186,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      fluent-bit:
+        condition: service_healthy
     env_file: ./.vault-envs/backend.env
     healthcheck:
       # curl isn't installed in the runtime image (only openssl/ca-certificates/
@@ -231,6 +233,8 @@ services:
         condition: service_completed_successfully
       app:
         condition: service_started
+      fluent-bit:
+        condition: service_healthy
     env_file: ./.vault-envs/frontend.env
     healthcheck:
       # Same issue as the app service: curl isn't in this Alpine image (only
