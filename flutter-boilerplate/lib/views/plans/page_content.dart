@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../constants/theme.dart';
 import '../../hooks/use_auth.dart';
+import '../../l10n/app_localizations.dart';
 
 class PlansPageContent extends ConsumerWidget {
   final String lang;
@@ -14,12 +15,13 @@ class PlansPageContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
     final userTier = ref.watch(userTierProvider);
 
     List<_PlanCard> buildCards(double width) => [
           _PlanCard(
             tier: Tier.free,
-            price: '\$0',
+            price: t.pricingPriceFree,
             features: const ['Basic feed', '5 messages/day', '1 device'],
             color: colors.surfaceAlt,
             userTier: userTier,
@@ -27,7 +29,7 @@ class PlansPageContent extends ConsumerWidget {
           ),
           _PlanCard(
             tier: Tier.basic,
-            price: '\$9',
+            price: t.pricingPriceBasic,
             features: const [
               'Enhanced feed',
               '50 messages/day',
@@ -41,7 +43,7 @@ class PlansPageContent extends ConsumerWidget {
           ),
           _PlanCard(
             tier: Tier.medium,
-            price: '\$19',
+            price: t.pricingPriceMedium,
             features: const [
               'Full feed',
               'Unlimited messages',
@@ -56,7 +58,7 @@ class PlansPageContent extends ConsumerWidget {
           ),
           _PlanCard(
             tier: Tier.premium,
-            price: '\$49',
+            price: t.pricingPricePremium,
             features: const [
               'Everything',
               'Unlimited',
@@ -173,21 +175,16 @@ class _PlanCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Row(
-            textBaseline: TextBaseline.alphabetic,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            children: [
-              Text(
-                price,
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: isPremium ? color : colors.fg,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Text('/mo', style: TextStyle(color: colors.fgMuted)),
-            ],
+          // price already carries its own cadence suffix where one applies
+          // (ARB pricingPriceBasic/Medium/Premium = "$9.99/mo" etc.;
+          // pricingPriceFree = "$0", no cadence) — no separate "/mo" text.
+          Text(
+            price,
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: isPremium ? color : colors.fg,
+            ),
           ),
           const SizedBox(height: 24),
           ...features.map(

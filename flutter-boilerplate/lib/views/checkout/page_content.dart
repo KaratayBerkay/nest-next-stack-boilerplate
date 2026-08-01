@@ -53,15 +53,16 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
   String get _tier => Tier.graphQlEnum(widget.plan);
 
   String get _price {
+    final t = AppLocalizations.of(context);
     switch (widget.plan) {
       case 'basic':
-        return '\$9';
+        return t.pricingPriceBasic;
       case 'medium':
-        return '\$19';
+        return t.pricingPriceMedium;
       case 'premium':
-        return '\$49';
+        return t.pricingPricePremium;
       default:
-        return '\$0';
+        return t.pricingPriceFree;
     }
   }
 
@@ -233,7 +234,7 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
                         color: Colors.white,
                       ),
                     )
-                  : Text('${t.checkoutUpgrade} — $_price/month'),
+                  : Text('${t.checkoutUpgrade} — $_price'),
             ),
           ] else ...[
             DowngradeSection(

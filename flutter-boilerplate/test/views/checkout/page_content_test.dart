@@ -103,7 +103,7 @@ void main() {
         (tester) async {
       await pumpCheckout(tester, userTier: Tier.free, plan: 'premium');
 
-      expect(find.text('Upgrade — \$49/month'), findsOneWidget);
+      expect(find.text('Upgrade — \$49.99/mo'), findsOneWidget);
       expect(find.byType(DowngradeSection), findsNothing);
       expect(find.text('Confirm change to Premium'), findsNothing);
       expect(fake.setupIntentCalls, isEmpty);

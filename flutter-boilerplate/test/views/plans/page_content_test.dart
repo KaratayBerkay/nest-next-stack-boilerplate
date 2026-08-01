@@ -52,4 +52,20 @@ void main() {
       expect(find.widgetWithText(FilledButton, 'Subscribe'), findsNothing);
     });
   });
+
+  group('PlansPageContent pricing', () {
+    testWidgets(
+        'renders the real ARB-sourced prices, with cents, not the old flat-dollar strings',
+        (tester) async {
+      await pumpPlans(tester, Tier.free);
+
+      expect(find.text('\$0'), findsOneWidget);
+      expect(find.text('\$9.99/mo'), findsOneWidget);
+      expect(find.text('\$19.99/mo'), findsOneWidget);
+      expect(find.text('\$49.99/mo'), findsOneWidget);
+      expect(find.text('\$9'), findsNothing);
+      expect(find.text('\$19'), findsNothing);
+      expect(find.text('\$49'), findsNothing);
+    });
+  });
 }
