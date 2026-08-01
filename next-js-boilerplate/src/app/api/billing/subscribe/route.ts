@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
+import {
+  ACCESS_TOKEN_COOKIE,
+  SESSION_USER_COOKIE,
+  sessionUserCookieOptions,
+} from "@/lib/cookie";
 import { csrfEchoHeaders, graphqlErrorBody, graphqlFetch } from "@/lib/backend";
 import { publishEvent } from "@/lib/kafka";
 import { tierLabel } from "@/lib/tier";
-
-const ME_QUERY = `
-  query Me {
-    me {
-      id
-      email
-      name
-    }
-  }
-`;
+import { ME_QUERY } from "@/lib/graphql/queries";
 
 const SUBSCRIBE_MUTATION = `
   mutation SubscribeToPlan(
@@ -39,7 +34,8 @@ const SUBSCRIBE_MUTATION = `
 
 // fallow-ignore-next-line complexity
 export async function POST(request: NextRequest) {
-  const accessToken = (await cookies()).get(ACCESS_TOKEN_COOKIE)?.value;
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get(ACCESS_TOKEN_COOKIE)?.value;
   if (!accessToken) {
     return NextResponse.json(
       {
@@ -141,7 +137,7 @@ export async function POST(request: NextRequest) {
   }
 
   const meData = await graphqlFetch<{
-    me: { id: string; email: string; name?: string };
+    me: Record<string, unknown> & { id: string; email: string; name?: string };
   }>(ME_QUERY, {}, accessToken);
   const user = meData?.data?.me;
 
@@ -155,10 +151,41 @@ export async function POST(request: NextRequest) {
     event: "subscription.upgraded",
   });
 
-  return NextResponse.json({
+  const response = NextResponse.json({
     ok: true,
     periodEnd: result.periodEnd ?? null,
     pendingTier: result.pendingTier ?? null,
     pendingTierEffectiveAt: result.pendingTierEffectiveAt ?? null,
   });
+
+  // session_user is a denormalized snapshot (see /api/auth/me's fast path
+  // and getSessionUser()) that's otherwise only written at login/register.
+  // A tier change is real and immediate here for FREE<->paid; for a
+  // paid<->paid schedule the tier hasn't actually moved yet either, so
+  // re-syncing from this fresh `me` read is correct either way — no need
+  // to special-case immediate vs. deferred. Without this, the account's own
+  // Pricing/Billing pages keep showing the pre-upgrade tier until the next
+  // full login, even though the charge succeeded and Postgres/Redis are
+  // already correct (same bug class as the profile-update cookie fix
+  // above it, just for tier instead of chatNickname/name/etc).
+  if (user) {
+    const encoded = cookieStore.get(SESSION_USER_COOKIE)?.value;
+    try {
+      const current = encoded
+        ? (JSON.parse(
+            Buffer.from(encoded, "base64url").toString("utf-8"),
+          ) as Record<string, unknown>)
+        : {};
+      const merged = { ...current, ...user };
+      response.cookies.set(
+        sessionUserCookieOptions(
+          Buffer.from(JSON.stringify(merged)).toString("base64url"),
+        ),
+      );
+    } catch {
+      // Malformed cookie — leave it be; ME_QUERY's GraphQL fallback covers it.
+    }
+  }
+
+  return response;
 }
