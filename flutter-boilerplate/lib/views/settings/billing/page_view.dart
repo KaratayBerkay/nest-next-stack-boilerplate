@@ -202,6 +202,14 @@ class _SubscriptionCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
     final t = AppLocalizations.of(context);
+    final hasPendingChange =
+        sub.pendingTier != null && sub.pendingTierEffectiveAt != null;
+    final pendingTierLabel = sub.pendingTier != null
+        ? Tier.displayName(sub.pendingTier!.toLowerCase())
+        : '';
+    final pendingDate = sub.pendingTierEffectiveAt != null
+        ? sub.pendingTierEffectiveAt!.toLocal().toString().split(' ')[0]
+        : '';
 
     return CardWidget(
       child: Column(
@@ -253,59 +261,106 @@ class _SubscriptionCard extends ConsumerWidget {
                       style: TextStyle(color: colors.warning, fontSize: 13),
                     ),
                   ),
+                if (hasPendingChange)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      t.settingsPlanChangeScheduled(
+                        pendingDate,
+                        pendingTierLabel,
+                      ),
+                      style: TextStyle(color: colors.warning, fontSize: 13),
+                    ),
+                  ),
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    Button(
-                      child: Text(t.settingsUpgradePlan),
-                      onPressed: () => context.go('/v1/$lang/plans'),
-                    ),
-                    if (!sub.cancelAtPeriodEnd)
+                    if (hasPendingChange)
                       Button(
                         variant: ButtonVariant.outline,
-                        child: Text(t.settingsCancelSubscription),
+                        child: Text(
+                          t.settingsCancelPendingChange(
+                            pendingDate,
+                            pendingTierLabel,
+                          ),
+                        ),
                         onPressed: () async {
-                          final confirm = await showDialog<bool>(
-                            context: context,
-                            builder: (dialogContext) => AlertDialog(
-                              title: Text(t.settingsCancelSubscriptionTitle),
-                              content: Text(t.settingsCancelSubscriptionBody),
-                              actions: [
-                                TextButton(
-                                  onPressed: () =>
-                                      Navigator.pop(dialogContext, false),
-                                  child: Text(t.settingsKeep),
-                                ),
-                                FilledButton(
-                                  onPressed: () =>
-                                      Navigator.pop(dialogContext, true),
-                                  child: Text(t.settingsCancelButton),
-                                ),
-                              ],
-                            ),
-                          );
-                          if (confirm == true) {
-                            try {
-                              await ref
-                                  .read(billingActionsProvider)
-                                  .cancelSubscription();
-                              ref.invalidate(subscriptionProvider);
-                              if (context.mounted) {
-                                context.go('/v1/$lang/plans');
-                              }
-                            } catch (e) {
-                              if (context.mounted) {
-                                showToast(
-                                  context,
-                                  t.settingsCancelSubscriptionFailed,
-                                );
-                              }
+                          try {
+                            // Re-selecting the current tier while a change is
+                            // pending releases the Stripe schedule and clears
+                            // the pending fields (T6 escape hatch).
+                            await ref
+                                .read(billingActionsProvider)
+                                .subscribe(Tier.graphQlEnum(sub.plan));
+                            ref.invalidate(subscriptionProvider);
+                            if (context.mounted) {
+                              showToast(
+                                context,
+                                t.settingsCancelPendingChangeSuccess,
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              showToast(
+                                context,
+                                t.settingsCancelPendingChangeFailed,
+                              );
                             }
                           }
                         },
+                      )
+                    else ...[
+                      Button(
+                        child: Text(t.settingsUpgradePlan),
+                        onPressed: () => context.go('/v1/$lang/plans'),
                       ),
+                      if (!sub.cancelAtPeriodEnd)
+                        Button(
+                          variant: ButtonVariant.outline,
+                          child: Text(t.settingsCancelSubscription),
+                          onPressed: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (dialogContext) => AlertDialog(
+                                title: Text(t.settingsCancelSubscriptionTitle),
+                                content: Text(t.settingsCancelSubscriptionBody),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(dialogContext, false),
+                                    child: Text(t.settingsKeep),
+                                  ),
+                                  FilledButton(
+                                    onPressed: () =>
+                                        Navigator.pop(dialogContext, true),
+                                    child: Text(t.settingsCancelButton),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirm == true) {
+                              try {
+                                await ref
+                                    .read(billingActionsProvider)
+                                    .cancelSubscription();
+                                ref.invalidate(subscriptionProvider);
+                                if (context.mounted) {
+                                  context.go('/v1/$lang/plans');
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  showToast(
+                                    context,
+                                    t.settingsCancelSubscriptionFailed,
+                                  );
+                                }
+                              }
+                            }
+                          },
+                        ),
+                    ],
                   ],
                 ),
               ],

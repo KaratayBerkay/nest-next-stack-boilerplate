@@ -32,28 +32,42 @@ void main() {
   group('RemovePaymentMethodServer', () {
     test('sends the paymentMethodId argument name, not id', () async {
       final adapter = _CapturingAdapter();
-      final server = RemovePaymentMethodServer(Dio()..httpClientAdapter = adapter);
+      final server =
+          RemovePaymentMethodServer(Dio()..httpClientAdapter = adapter);
 
       await server.call('pm_123');
 
       final data = adapter.requests.single as Map<String, dynamic>;
       expect(data['variables'], {'paymentMethodId': 'pm_123'});
-      expect((data['query'] as String), contains('removePaymentMethod(paymentMethodId:'));
-      expect((data['query'] as String), isNot(contains('removePaymentMethod(id:')));
+      expect(
+        (data['query'] as String),
+        contains('removePaymentMethod(paymentMethodId:'),
+      );
+      expect(
+        (data['query'] as String),
+        isNot(contains('removePaymentMethod(id:')),
+      );
     });
   });
 
   group('SetDefaultPaymentMethodServer', () {
     test('sends the paymentMethodId argument name, not id', () async {
       final adapter = _CapturingAdapter();
-      final server = SetDefaultPaymentMethodServer(Dio()..httpClientAdapter = adapter);
+      final server =
+          SetDefaultPaymentMethodServer(Dio()..httpClientAdapter = adapter);
 
       await server.call('pm_456');
 
       final data = adapter.requests.single as Map<String, dynamic>;
       expect(data['variables'], {'paymentMethodId': 'pm_456'});
-      expect((data['query'] as String), contains('setDefaultPaymentMethod(paymentMethodId:'));
-      expect((data['query'] as String), isNot(contains('setDefaultPaymentMethod(id:')));
+      expect(
+        (data['query'] as String),
+        contains('setDefaultPaymentMethod(paymentMethodId:'),
+      );
+      expect(
+        (data['query'] as String),
+        isNot(contains('setDefaultPaymentMethod(id:')),
+      );
     });
   });
 }

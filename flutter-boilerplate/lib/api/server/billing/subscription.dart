@@ -9,6 +9,8 @@ class SubscriptionInfo {
   final bool cancelAtPeriodEnd;
   final int? priceCents;
   final String? currency;
+  final String? pendingTier;
+  final DateTime? pendingTierEffectiveAt;
 
   const SubscriptionInfo({
     required this.plan,
@@ -17,6 +19,8 @@ class SubscriptionInfo {
     this.cancelAtPeriodEnd = false,
     this.priceCents,
     this.currency,
+    this.pendingTier,
+    this.pendingTierEffectiveAt,
   });
 
   factory SubscriptionInfo.fromJson(Map<String, dynamic> json) {
@@ -31,6 +35,10 @@ class SubscriptionInfo {
       cancelAtPeriodEnd: json['cancelAtPeriodEnd'] as bool? ?? false,
       priceCents: json['priceCents'] as int?,
       currency: json['currency'] as String?,
+      pendingTier: json['pendingTier'] as String?,
+      pendingTierEffectiveAt: json['pendingTierEffectiveAt'] != null
+          ? DateTime.tryParse(json['pendingTierEffectiveAt'] as String)
+          : null,
     );
   }
 }
@@ -47,6 +55,8 @@ const _query = '''
       periodStart
       periodEnd
       cancelAtPeriodEnd
+      pendingTier
+      pendingTierEffectiveAt
     }
   }
 ''';

@@ -5618,4 +5618,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get uiFileInputTap => 'Tap to select file';
+
+  @override
+  String settingsPlanChangeScheduled(Object date, Object tier) {
+    return 'Your plan will change to $tier on $date.';
+  }
+
+  @override
+  String settingsCancelPendingChange(Object date, Object tier) {
+    return 'You have a change to $tier scheduled for $date — cancel that first';
+  }
+
+  @override
+  String get settingsCancelPendingChangeSuccess =>
+      'Pending plan change cancelled';
+
+  @override
+  String get settingsCancelPendingChangeFailed =>
+      'Failed to cancel pending plan change';
 }

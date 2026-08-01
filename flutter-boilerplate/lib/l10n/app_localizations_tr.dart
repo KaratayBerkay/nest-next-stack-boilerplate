@@ -5633,4 +5633,22 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get uiFileInputTap => 'Dosya seçmek için dokunun';
+
+  @override
+  String settingsPlanChangeScheduled(Object date, Object tier) {
+    return 'Planınız $date tarihinde $tier olarak değişecek.';
+  }
+
+  @override
+  String settingsCancelPendingChange(Object date, Object tier) {
+    return '$date tarihinde $tier planına geçişiniz planlandı — önce bunu iptal edin';
+  }
+
+  @override
+  String get settingsCancelPendingChangeSuccess =>
+      'Planlanan plan değişikliği iptal edildi';
+
+  @override
+  String get settingsCancelPendingChangeFailed =>
+      'Planlanan plan değişikliği iptal edilemedi';
 }

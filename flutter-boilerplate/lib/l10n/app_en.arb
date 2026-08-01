@@ -1927,5 +1927,9 @@
   "formsFiltersStatusPending": "Pending",
   "formsFiltersStatusArchived": "Archived",
   "uiFileInputLabel": "Upload file",
-  "uiFileInputTap": "Tap to select file"
+  "uiFileInputTap": "Tap to select file",
+  "settingsPlanChangeScheduled": "Your plan will change to {tier} on {date}.",
+  "settingsCancelPendingChange": "You have a change to {tier} scheduled for {date} — cancel that first",
+  "settingsCancelPendingChangeSuccess": "Pending plan change cancelled",
+  "settingsCancelPendingChangeFailed": "Failed to cancel pending plan change"
 }

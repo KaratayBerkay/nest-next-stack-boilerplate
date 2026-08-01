@@ -1896,5 +1896,9 @@
   "formsFiltersStatusPending": "Beklemede",
   "formsFiltersStatusArchived": "Arşivlenmiş",
   "uiFileInputLabel": "Dosya yükle",
-  "uiFileInputTap": "Dosya seçmek için dokunun"
+  "uiFileInputTap": "Dosya seçmek için dokunun",
+  "settingsPlanChangeScheduled": "Planınız {date} tarihinde {tier} olarak değişecek.",
+  "settingsCancelPendingChange": "{date} tarihinde {tier} planına geçişiniz planlandı — önce bunu iptal edin",
+  "settingsCancelPendingChangeSuccess": "Planlanan plan değişikliği iptal edildi",
+  "settingsCancelPendingChangeFailed": "Planlanan plan değişikliği iptal edilemedi"
 }

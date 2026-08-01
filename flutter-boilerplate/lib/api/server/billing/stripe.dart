@@ -18,19 +18,6 @@ const _subscribeMutation = '''
   }
 ''';
 
-const _subscriptionQuery = '''
-  query MySubscription {
-    mySubscription {
-      tier
-      priceCents
-      currency
-      periodStart
-      periodEnd
-      cancelAtPeriodEnd
-    }
-  }
-''';
-
 class StripeServer {
   final Dio _dio;
 
@@ -68,22 +55,6 @@ class StripeServer {
       );
     }
     return (body['data'] as Map<String, dynamic>)['subscribeToPlan']
-        as Map<String, dynamic>;
-  }
-
-  Future<Map<String, dynamic>> retrieveSubscription() async {
-    final response = await _dio.post<dynamic>(
-      '/graphql',
-      data: {'query': _subscriptionQuery},
-    );
-    final body = response.data as Map<String, dynamic>;
-    if (body['errors'] != null) {
-      throw DioException(
-        requestOptions: response.requestOptions,
-        message: 'Failed to retrieve subscription',
-      );
-    }
-    return (body['data'] as Map<String, dynamic>)['mySubscription']
         as Map<String, dynamic>;
   }
 }

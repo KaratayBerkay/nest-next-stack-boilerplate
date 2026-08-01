@@ -10651,6 +10651,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tap to select file'**
   String get uiFileInputTap;
+
+  /// No description provided for @settingsPlanChangeScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'Your plan will change to {tier} on {date}.'**
+  String settingsPlanChangeScheduled(Object date, Object tier);
+
+  /// No description provided for @settingsCancelPendingChange.
+  ///
+  /// In en, this message translates to:
+  /// **'You have a change to {tier} scheduled for {date} — cancel that first'**
+  String settingsCancelPendingChange(Object date, Object tier);
+
+  /// No description provided for @settingsCancelPendingChangeSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending plan change cancelled'**
+  String get settingsCancelPendingChangeSuccess;
+
+  /// No description provided for @settingsCancelPendingChangeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to cancel pending plan change'**
+  String get settingsCancelPendingChangeFailed;
 }
 
 class _AppLocalizationsDelegate
