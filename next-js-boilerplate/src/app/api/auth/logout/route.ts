@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import {
   ACCESS_TOKEN_COOKIE,
   clearAccessTokenCookieOptions,
-  clearDeviceCookieOptions,
   clearRbacTokenCookieOptions,
   clearRefreshTokenCookieOptions,
   clearSessionUserCookieOptions,
@@ -39,10 +38,17 @@ export async function POST() {
   }
 
   // Clear the BFF cookies regardless — never strand the user logged in locally.
+  // Deliberately NOT clearing device_token: it identifies this physical
+  // browser (1-year lifetime, reused across logins via resolveForLogin), not
+  // the session itself — clearing it on every logout meant every sign-out +
+  // sign-back-in on the same device minted a brand-new Device row, which is
+  // why Settings->Sessions showed multiple "sessions" for one real device.
+  // There is no separate "forget this device" action anywhere that operates
+  // on the Device table (Revoke/Revoke-others only touch Redis session keys),
+  // so this cookie should outlive a routine logout.
   const response = NextResponse.json({ ok: true, revoked }, { status: 200 });
   response.cookies.set(clearAccessTokenCookieOptions());
   response.cookies.set(clearRbacTokenCookieOptions());
-  response.cookies.set(clearDeviceCookieOptions());
   response.cookies.set(clearUserTokenCookieOptions());
   response.cookies.set(clearSessionUserCookieOptions());
   response.cookies.set(clearRefreshTokenCookieOptions());

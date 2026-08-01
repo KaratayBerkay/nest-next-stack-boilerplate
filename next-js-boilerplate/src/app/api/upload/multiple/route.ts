@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { serverEnv } from "@/lib/env";
+import { backendFormFetch } from "@/lib/backend";
 import { POST as POST_METHOD } from "@/constants/api/methods";
 import { MAX_UPLOAD_SIZE } from "@/constants/upload";
 
@@ -45,20 +45,20 @@ export async function POST(request: Request) {
       backendFormData.append("files", file as File);
     }
 
-    const res = await fetch(`${serverEnv().APP_URL}/upload/multiple`, {
-      method: POST_METHOD,
-      body: backendFormData,
-    });
+    const backend = await backendFormFetch(
+      "/upload/multiple",
+      backendFormData,
+      { method: POST_METHOD },
+    );
 
-    if (!res.ok) {
+    if (!backend.ok) {
       return NextResponse.json(
         { error: "Upload failed" },
-        { status: res.status },
+        { status: backend.status },
       );
     }
 
-    const data = await res.json();
-    return NextResponse.json(data, { status: 201 });
+    return NextResponse.json(backend.data, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }

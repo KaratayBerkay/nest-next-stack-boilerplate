@@ -7,6 +7,7 @@ import {
   JSON_CONTENT_TYPE_HEADER,
   POST,
   RBAC_TOKEN_HEADER,
+  USER_AGENT_HEADER,
   USER_TOKEN_HEADER,
   X_FORWARDED_FOR_HEADER,
   bearerAuthHeader,
@@ -36,6 +37,12 @@ export async function forwardedForHeader(): Promise<Record<string, string>> {
   return forwarded ? { [X_FORWARDED_FOR_HEADER]: forwarded } : {};
 }
 
+export async function userAgentHeader(): Promise<Record<string, string>> {
+  const reqHeaders = await nextHeaders();
+  const userAgent = reqHeaders.get(USER_AGENT_HEADER);
+  return userAgent ? { [USER_AGENT_HEADER]: userAgent } : {};
+}
+
 export async function sessionTokenHeaders(): Promise<Record<string, string>> {
   const cookieStore = await cookies();
   const rbac = cookieStore.get(RBAC_TOKEN_COOKIE)?.value;
@@ -63,6 +70,46 @@ export async function backendFetch<T = unknown>(
       ...JSON_CONTENT_TYPE_HEADER,
       ...(cookieHeader ? { Cookie: cookieHeader } : {}),
       ...(await forwardedForHeader()),
+      ...(await userAgentHeader()),
+      ...(await sessionTokenHeaders()),
+      ...options.headers,
+    },
+  });
+
+  let data: T;
+  try {
+    data = (await res.json()) as T;
+  } catch {
+    data = null as unknown as T;
+  }
+
+  return { ok: res.ok, status: res.status, data, headers: res.headers };
+}
+
+/**
+ * Like `backendFetch`, but for multipart/form-data uploads: deliberately
+ * omits a Content-Type header so `fetch` can generate the correct
+ * `multipart/form-data; boundary=...` value itself — setting one manually
+ * (as `backendFetch`'s JSON default would) breaks the backend's multipart
+ * parsing. Still forwards cookies/session tokens/IP/UA like `backendFetch`.
+ */
+export async function backendFormFetch<T = unknown>(
+  path: string,
+  formData: FormData,
+  options: Omit<RequestInit, "body"> = {},
+): Promise<BackendResponse<T>> {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+
+  const url = `${backendBaseUrl()}${path}`;
+  const res = await fetch(url, {
+    method: POST,
+    ...options,
+    body: formData,
+    headers: {
+      ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      ...(await forwardedForHeader()),
+      ...(await userAgentHeader()),
       ...(await sessionTokenHeaders()),
       ...options.headers,
     },
@@ -293,6 +340,7 @@ export async function graphqlFetch<T>(
       ...(cookieHeader ? { Cookie: cookieHeader } : {}),
       ...(bearerToken ? bearerAuthHeader(bearerToken) : {}),
       ...(await forwardedForHeader()),
+      ...(await userAgentHeader()),
       ...(await sessionTokenHeaders()),
       ...(extraHeaders ?? {}),
     },

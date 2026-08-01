@@ -49,6 +49,21 @@ export function FreePageView({ className }: ClassNameProps) {
   const [useNickname, setUseNickname] = useState(!!user?.chatNickname);
   const [nickname, setNickname] = useState(user?.chatNickname ?? "");
 
+  // `user` can populate/update after this component's first render (SSR
+  // hydration timing, or `refreshUser()` elsewhere) — the useState
+  // initializers above only run once at mount, so without this re-sync the
+  // toggle and field silently fall out of sync with the actual saved value
+  // on any reload where `user` wasn't already populated at first paint.
+  // Adjusting state during render (React's documented pattern for this,
+  // not an effect) instead of useEffect, to stay clean of this codebase's
+  // set-state-in-effect lint rule.
+  const [seededNickname, setSeededNickname] = useState(user?.chatNickname);
+  if (user?.chatNickname !== seededNickname) {
+    setSeededNickname(user?.chatNickname);
+    setUseNickname(!!user?.chatNickname);
+    setNickname(user?.chatNickname ?? "");
+  }
+
   return (
     <div className={cn("flex h-full w-full flex-col gap-6", className)}>
       <PageHeader
@@ -70,6 +85,12 @@ export function FreePageView({ className }: ClassNameProps) {
           checked={useNickname}
           onChange={setUseNickname}
         >
+          {user?.chatNickname && (
+            <p className="text-muted mt-3 text-xs">
+              {t.privacyNicknameCurrent}:{" "}
+              <span className="text-fg font-medium">{user.chatNickname}</span>
+            </p>
+          )}
           {useNickname && (
             <Input
               value={nickname}
