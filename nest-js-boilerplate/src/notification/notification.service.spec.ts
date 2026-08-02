@@ -135,6 +135,35 @@ describe('NotificationService', () => {
       );
     });
 
+    it("withholds the actor's avatarUrl when the actor has hideAvatar set", async () => {
+      service = await createService();
+      prisma.notification.create.mockResolvedValue({
+        id: 'n3',
+        type: 'LIKE',
+        title: 'New like',
+        body: null,
+        payload: {},
+        createdAt: new Date('2026-01-01T00:00:00Z'),
+        actor: {
+          id: 'a1',
+          name: 'Alice',
+          email: 'alice@example.com',
+          avatarUrl: '/alice.jpg',
+          hideAvatar: true,
+        },
+      });
+      prisma.notification.count.mockResolvedValue(1);
+
+      const result = await service.create({
+        userId: 'u1',
+        actorId: 'a1',
+        type: 'LIKE',
+        title: 'New like',
+      });
+
+      expect(result.actor?.avatarUrl).toBeNull();
+    });
+
     it('skips push when user has live NOTIFICATION socket', async () => {
       service = await createService();
       prisma.notification.create.mockResolvedValue({

@@ -103,6 +103,10 @@ export class SessionUserPayload {
 
   @Field({ defaultValue: false })
   mfaEnabled!: boolean;
+
+  /** Owner's own preference — withholds avatarUrl from other users when true. */
+  @Field({ defaultValue: false })
+  hideAvatar!: boolean;
 }
 
 @ObjectType()

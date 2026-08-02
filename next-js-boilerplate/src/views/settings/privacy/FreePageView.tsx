@@ -17,16 +17,21 @@ import { useProfileActions } from "@/api/client/profile/actions";
 import { PrivacyToggleRow } from "./PrivacyToggleRow";
 
 async function handleSave(
-  updateProfile: (data: { chatNickname?: string | null }) => Promise<void>,
+  updateProfile: (data: {
+    chatNickname?: string | null;
+    hideAvatar?: boolean;
+  }) => Promise<void>,
   refreshUser: () => Promise<void>,
   toast: ReturnType<typeof useToast>["toast"],
   t: { saveSuccess: string; saveFailed: string },
   useNickname: boolean,
   nickname: string,
+  hideAvatar: boolean,
 ) {
   try {
     await updateProfile({
       chatNickname: useNickname && nickname.trim() ? nickname.trim() : null,
+      hideAvatar,
     });
     // Re-seed the page (and the SSR session_user snapshot) from the server —
     // without this, the saved nickname/toggle show stale values until next
@@ -45,7 +50,9 @@ export function FreePageView({ className }: ClassNameProps) {
   const { user, refreshUser } = useAuth();
   const { updateProfile } = useProfileActions();
 
-  const [hideProfilePicture, setHideProfilePicture] = useState(false);
+  const [hideProfilePicture, setHideProfilePicture] = useState(
+    !!user?.hideAvatar,
+  );
   const [useNickname, setUseNickname] = useState(!!user?.chatNickname);
   const [nickname, setNickname] = useState(user?.chatNickname ?? "");
 
@@ -58,10 +65,15 @@ export function FreePageView({ className }: ClassNameProps) {
   // not an effect) instead of useEffect, to stay clean of this codebase's
   // set-state-in-effect lint rule.
   const [seededNickname, setSeededNickname] = useState(user?.chatNickname);
+  const [seededHideAvatar, setSeededHideAvatar] = useState(user?.hideAvatar);
   if (user?.chatNickname !== seededNickname) {
     setSeededNickname(user?.chatNickname);
     setUseNickname(!!user?.chatNickname);
     setNickname(user?.chatNickname ?? "");
+  }
+  if (user?.hideAvatar !== seededHideAvatar) {
+    setSeededHideAvatar(user?.hideAvatar);
+    setHideProfilePicture(!!user?.hideAvatar);
   }
 
   return (
@@ -111,6 +123,7 @@ export function FreePageView({ className }: ClassNameProps) {
             t,
             useNickname,
             nickname,
+            hideProfilePicture,
           )
         }
         variant="primary"

@@ -68,6 +68,22 @@ describe('FriendsResolver', () => {
       expect(excludeIds.has('f2')).toBe(true);
     });
 
+    it('withholds avatarUrl for candidates with hideAvatar set', async () => {
+      mockFriends.getMutualCounts.mockResolvedValue(new Map([['c1', 2]]));
+      mockPrisma.user.findMany.mockResolvedValue([
+        {
+          id: 'c1',
+          name: 'Hidden',
+          email: 'c@test.com',
+          avatarUrl: '/hidden.jpg',
+          hideAvatar: true,
+        },
+      ]);
+
+      const result = await resolver.suggestedFriends({ userId: 'u1' } as never);
+      expect(result[0].avatarUrl).toBeUndefined();
+    });
+
     it('maps null name to undefined', async () => {
       mockFriends.getMutualCounts.mockResolvedValue(new Map([['c1', 2]]));
       mockPrisma.user.findMany.mockResolvedValue([

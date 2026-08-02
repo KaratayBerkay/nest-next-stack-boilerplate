@@ -5,6 +5,7 @@ export function useProfileActions() {
     bio?: string;
     avatarUrl?: string;
     chatNickname?: string | null;
+    hideAvatar?: boolean;
   }) => {
     const { updateProfileServer } = await import("@/api/server/profile/update");
     await updateProfileServer(data);

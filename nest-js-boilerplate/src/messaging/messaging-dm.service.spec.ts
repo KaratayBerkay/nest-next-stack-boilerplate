@@ -63,7 +63,18 @@ describe('MessagingDmService', () => {
         recipientId: 'u2',
         body: 'hello',
         createdAt: new Date(),
-        sender: { id: 'u1', name: 'Alice', email: 'a@b.com' },
+        sender: {
+          id: 'u1',
+          name: 'Alice',
+          email: 'a@b.com',
+          hideAvatar: false,
+        },
+        recipient: {
+          id: 'u2',
+          name: 'Bob',
+          email: 'b@b.com',
+          hideAvatar: false,
+        },
       };
       mockPrisma.message.create.mockResolvedValue(fakeMessage);
       areFriendsMock.mockResolvedValue(true);
@@ -87,16 +98,70 @@ describe('MessagingDmService', () => {
         },
         include: {
           sender: {
-            select: { id: true, name: true, email: true, avatarUrl: true },
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatarUrl: true,
+              hideAvatar: true,
+            },
           },
           recipient: {
-            select: { id: true, name: true, email: true, avatarUrl: true },
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatarUrl: true,
+              hideAvatar: true,
+            },
           },
         },
       });
       expect(mockRealtime.emitToService).toHaveBeenCalled();
       expect(mockRealtime.emitToPage).toHaveBeenCalled();
       expect(result.id).toBe('m1');
+    });
+
+    it('withholds the recipient avatarUrl when the recipient has hideAvatar set', async () => {
+      const fakeMessage = {
+        id: 'm2',
+        senderId: 'u1',
+        recipientId: 'u2',
+        body: 'hi',
+        createdAt: new Date(),
+        sender: {
+          id: 'u1',
+          name: 'Alice',
+          email: 'a@b.com',
+          avatarUrl: 'https://x/alice.png',
+          hideAvatar: false,
+        },
+        recipient: {
+          id: 'u2',
+          name: 'Bob',
+          email: 'b@b.com',
+          avatarUrl: 'https://x/bob.png',
+          hideAvatar: true,
+        },
+      };
+      mockPrisma.message.create.mockResolvedValue(fakeMessage);
+      areFriendsMock.mockResolvedValue(true);
+      mockPrisma.message.count.mockResolvedValue(0);
+
+      const result = await service.sendAndDeliverMessage(
+        'u1',
+        'u2',
+        'hi',
+        areFriendsMock,
+      );
+
+      expect(result.recipient.avatarUrl).toBeNull();
+      expect(result.sender.avatarUrl).toBe('https://x/alice.png');
+      // This service backs a plain REST controller with no GraphQL-style
+      // schema filtering — the raw preference flag must never reach the
+      // JSON response, only its effect on avatarUrl.
+      expect(result.recipient).not.toHaveProperty('hideAvatar');
+      expect(result.sender).not.toHaveProperty('hideAvatar');
     });
 
     it('does not deliver when sendMessage throws', async () => {
@@ -107,6 +172,46 @@ describe('MessagingDmService', () => {
         service.sendAndDeliverMessage('u1', 'u2', 'hello', areFriendsMock),
       ).rejects.toThrow('DB fail');
       expect(mockRealtime.emitToService).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getMessages', () => {
+    it('withholds avatarUrl and the raw hideAvatar flag for a peer who has hidden it', async () => {
+      areFriendsMock.mockResolvedValue(true);
+      mockPrisma.message.findMany.mockResolvedValue([
+        {
+          id: 'm1',
+          senderId: 'u2',
+          recipientId: 'u1',
+          body: 'hi',
+          createdAt: new Date(),
+          sender: {
+            id: 'u2',
+            name: 'Bob',
+            email: 'b@b.com',
+            avatarUrl: 'https://x/bob.png',
+            hideAvatar: true,
+          },
+          recipient: {
+            id: 'u1',
+            name: 'Alice',
+            email: 'a@b.com',
+            avatarUrl: 'https://x/alice.png',
+            hideAvatar: false,
+          },
+        },
+      ]);
+
+      const { messages } = await service.getMessages(
+        'u1',
+        'u2',
+        areFriendsMock,
+      );
+
+      expect(messages[0].sender.avatarUrl).toBeNull();
+      expect(messages[0].sender).not.toHaveProperty('hideAvatar');
+      expect(messages[0].recipient.avatarUrl).toBe('https://x/alice.png');
+      expect(messages[0].recipient).not.toHaveProperty('hideAvatar');
     });
   });
 

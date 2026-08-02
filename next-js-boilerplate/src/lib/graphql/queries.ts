@@ -14,6 +14,7 @@ export const ME_QUERY = `
       locale
       timezone
       chatNickname
+      hideAvatar
       sessionId
     }
   }

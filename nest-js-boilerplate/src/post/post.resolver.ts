@@ -75,8 +75,15 @@ export class PostResolver {
   ) {}
 
   @ResolveField(() => User)
-  async author(@Parent() post: Post): Promise<User | null> {
-    return this.dataloader.getUserLoader().load(post.authorId);
+  async author(
+    @Parent() post: Post,
+    @CurrentUser() viewer: JwtUser,
+  ): Promise<User | null> {
+    const author = await this.dataloader.getUserLoader().load(post.authorId);
+    if (!author) return null;
+    return author.hideAvatar && author.id !== viewer.userId
+      ? { ...author, avatarUrl: null }
+      : author;
   }
 
   @ResolveField(() => String, { nullable: true })

@@ -70,8 +70,12 @@ export class NotificationService {
             id: notification.actor.id,
             name: notification.actor.name,
             email: notification.actor.email,
-            avatarUrl: (notification.actor as Record<string, unknown>)
-              .avatarUrl as string | null,
+            avatarUrl:
+              notification.actor.id !== params.userId &&
+              (notification.actor as Record<string, unknown>).hideAvatar
+                ? null
+                : ((notification.actor as Record<string, unknown>).avatarUrl as
+                    string | null),
           }
         : null,
     };
@@ -107,7 +111,7 @@ export class NotificationService {
         });
     }
 
-    return notification;
+    return dto;
   }
 
   async findByUser(userId: string, cursor?: string, take = 20) {

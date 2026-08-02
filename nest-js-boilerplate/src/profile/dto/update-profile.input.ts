@@ -1,5 +1,6 @@
 import { Field, InputType } from '@nestjs/graphql';
 import {
+  IsBoolean,
   IsIn,
   IsOptional,
   IsUrl,
@@ -42,6 +43,12 @@ export class UpdateProfileInput {
   @IsOptional()
   @IsUrl({ require_tld: false })
   avatarUrl?: string;
+
+  /** When true, avatarUrl is withheld from every other-user-facing query. */
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsBoolean()
+  hideAvatar?: boolean;
 
   @Field({ nullable: true })
   @IsOptional()

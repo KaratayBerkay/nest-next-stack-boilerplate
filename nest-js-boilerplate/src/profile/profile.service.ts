@@ -33,6 +33,7 @@ export class ProfileService {
     if (input.chatNickname !== undefined)
       data.chatNickname = input.chatNickname;
     if (input.avatarUrl !== undefined) data.avatarUrl = input.avatarUrl;
+    if (input.hideAvatar !== undefined) data.hideAvatar = input.hideAvatar;
     if (input.locale !== undefined) data.locale = input.locale;
     if (input.timezone !== undefined) data.timezone = input.timezone;
 

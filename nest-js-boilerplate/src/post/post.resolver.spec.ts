@@ -32,6 +32,50 @@ describe('PostResolver', () => {
     resolver = new PostResolver({ getMyPostStats: jest.fn() } as never);
   });
 
+  describe('author', () => {
+    it('withholds avatarUrl when the author has hidden it from the viewer', async () => {
+      const author = {
+        id: 'u1',
+        name: 'Author',
+        email: 'author@test.com',
+        avatarUrl: '/author.jpg',
+        hideAvatar: true,
+      };
+      const load = jest.fn().mockResolvedValue(author);
+      const resolverWithLoader = new PostResolver(
+        { getMyPostStats: jest.fn() } as never,
+        { getUserLoader: () => ({ load }) } as never,
+      );
+
+      const result = await resolverWithLoader.author(makePost(), {
+        userId: 'viewer',
+      } as never);
+
+      expect(result?.avatarUrl).toBeNull();
+    });
+
+    it('keeps avatarUrl when the viewer is the author themselves', async () => {
+      const author = {
+        id: 'u1',
+        name: 'Author',
+        email: 'author@test.com',
+        avatarUrl: '/author.jpg',
+        hideAvatar: true,
+      };
+      const load = jest.fn().mockResolvedValue(author);
+      const resolverWithLoader = new PostResolver(
+        { getMyPostStats: jest.fn() } as never,
+        { getUserLoader: () => ({ load }) } as never,
+      );
+
+      const result = await resolverWithLoader.author(makePost(), {
+        userId: 'u1',
+      } as never);
+
+      expect(result?.avatarUrl).toBe('/author.jpg');
+    });
+  });
+
   describe('reactionBreakdown', () => {
     it('returns empty array when no reactions', () => {
       const result = resolver.reactionBreakdown(makePost());

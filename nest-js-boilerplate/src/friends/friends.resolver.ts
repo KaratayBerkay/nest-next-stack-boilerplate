@@ -58,7 +58,13 @@ export class FriendsResolver {
 
     const candidates = await this.prisma.user.findMany({
       where: { id: { in: topCandidateIds } },
-      select: { id: true, name: true, email: true, avatarUrl: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatarUrl: true,
+        hideAvatar: true,
+      },
     });
 
     return candidates
@@ -66,7 +72,7 @@ export class FriendsResolver {
         id: c.id,
         name: c.name ?? undefined,
         email: c.email,
-        avatarUrl: c.avatarUrl ?? undefined,
+        avatarUrl: c.hideAvatar ? undefined : (c.avatarUrl ?? undefined),
         mutualFriends: mutualCounts.get(c.id) ?? 0,
       }))
       .sort((a, b) => b.mutualFriends - a.mutualFriends);

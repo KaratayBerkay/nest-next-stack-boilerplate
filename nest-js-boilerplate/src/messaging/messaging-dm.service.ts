@@ -17,6 +17,22 @@ export class MessagingDmService {
     private readonly push: PushNotificationService,
   ) {}
 
+  /**
+   * Withholds avatarUrl when its owner has hidden it from everyone but
+   * themselves. Always strips the raw hideAvatar flag from the result too —
+   * this service is read by a plain REST controller with no GraphQL-style
+   * schema filtering, so anything left on the object goes straight to JSON.
+   */
+  private redactAvatar<
+    T extends { id: string; avatarUrl: string | null; hideAvatar: boolean },
+  >(user: T, viewerId: string): Omit<T, 'hideAvatar'> {
+    const { hideAvatar, ...rest } = user;
+    if (hideAvatar && user.id !== viewerId) {
+      return { ...rest, avatarUrl: null };
+    }
+    return rest;
+  }
+
   async getConversations(
     userId: string,
     getFriendIds: (userId: string) => Promise<string[]>,
@@ -136,14 +152,31 @@ export class MessagingDmService {
       take,
       include: {
         sender: {
-          select: { id: true, name: true, email: true, avatarUrl: true },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatarUrl: true,
+            hideAvatar: true,
+          },
         },
         recipient: {
-          select: { id: true, name: true, email: true, avatarUrl: true },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatarUrl: true,
+            hideAvatar: true,
+          },
         },
       },
     });
-    return { messages: messages.reverse(), hasMore: messages.length === take };
+    const redacted = messages.map((m) => ({
+      ...m,
+      sender: this.redactAvatar(m.sender, userId),
+      recipient: this.redactAvatar(m.recipient, userId),
+    }));
+    return { messages: redacted.reverse(), hasMore: messages.length === take };
   }
 
   async sendMessage(
@@ -178,10 +211,22 @@ export class MessagingDmService {
       },
       include: {
         sender: {
-          select: { id: true, name: true, email: true, avatarUrl: true },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatarUrl: true,
+            hideAvatar: true,
+          },
         },
         recipient: {
-          select: { id: true, name: true, email: true, avatarUrl: true },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatarUrl: true,
+            hideAvatar: true,
+          },
         },
       },
     });
@@ -192,12 +237,14 @@ export class MessagingDmService {
       this.cache.del(`conversations:${senderId}`),
       this.cache.del(`conversations:${recipientId}`),
     ]);
+    const { hideAvatar: _senderHideAvatar, ...senderRest } = message.sender;
     return {
       ...message,
       sender: {
-        ...message.sender,
+        ...senderRest,
         avatar: initials(message.sender.name || message.sender.email),
       },
+      recipient: this.redactAvatar(message.recipient, senderId),
     };
   }
 
