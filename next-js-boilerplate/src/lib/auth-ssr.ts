@@ -25,7 +25,9 @@ export const getSessionUser = cache(async (): Promise<User | null> => {
 
   // Fallback: no session cookie, query backend me query (old sessions).
   const accessToken = await getAccessToken();
-  if (!accessToken) return null;
+  if (!accessToken) {
+    return null;
+  }
 
   const { data, errors } = await graphqlFetch<{ me: User }>(
     ME_QUERY,
@@ -34,7 +36,9 @@ export const getSessionUser = cache(async (): Promise<User | null> => {
     await sessionTokenHeaders(),
   );
 
-  if (errors || !data?.me) return null;
+  if (errors || !data?.me) {
+    return null;
+  }
 
   return data.me;
 });
