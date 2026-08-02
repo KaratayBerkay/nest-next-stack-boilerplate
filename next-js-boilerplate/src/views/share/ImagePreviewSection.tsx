@@ -21,11 +21,13 @@ export function ImagePreviewSection({
     setFile(null);
     setPreview(null);
     setUploadError(false);
+    // eslint-disable-next-line react-compiler/react-compiler
     if (fileRef.current) fileRef.current.value = "";
   }
 
   function handleRetry() {
     setUploadError(false);
+
     coverImageRef.current = undefined;
   }
 
@@ -41,9 +43,24 @@ export function ImagePreviewSection({
       {uploading && (
         <div className="bg-overlay/30 absolute inset-0 flex items-center justify-center rounded-lg">
           <div className="bg-overlay/60 flex items-center gap-2 rounded-full px-3 py-1.5 text-xs text-white">
-            <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            <svg
+              className="h-3 w-3 animate-spin"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+              />
             </svg>
             {t.uploading}
           </div>
@@ -55,7 +72,14 @@ export function ImagePreviewSection({
           onClick={handleRemove}
           className="bg-overlay/50 absolute top-1 right-1 rounded-full p-1 text-white"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <path d="M18 6 6 18M6 6l12 12" />
           </svg>
         </button>

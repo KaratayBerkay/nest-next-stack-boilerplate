@@ -33,8 +33,8 @@ export function RegisterForm({
           {formError && <FieldMessages error={formError} />}
 
           <div>
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             <form.Subscribe
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               selector={(s: any) => [s.canSubmit, s.isSubmitting]}
             >
               {([canSubmit, isSubmitting]: [boolean, boolean]) => (
