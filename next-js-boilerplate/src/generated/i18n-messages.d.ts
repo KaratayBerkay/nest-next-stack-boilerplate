@@ -1439,6 +1439,10 @@ export type I18nMessages = {
       "pageHeaderDescription": string;
       "pageInfoTitle": string;
       "pageInfoDescription": string;
+      "chartTitle": string;
+      "chartDescription": string;
+      "dataTableTitle": string;
+      "dataTableDescription": string;
     }
 
   "users": {

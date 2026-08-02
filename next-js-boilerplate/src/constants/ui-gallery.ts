@@ -303,6 +303,18 @@ export const UI_COMPONENTS = [
     description: "Image/content carousel",
   },
   {
+    name: "Chart",
+    slug: "chart",
+    category: "Data",
+    description: "Charts built on Recharts",
+  },
+  {
+    name: "Data Table",
+    slug: "data-table",
+    category: "Data",
+    description: "Sortable, filterable table",
+  },
+  {
     name: "Table",
     slug: "table",
     category: "Data",

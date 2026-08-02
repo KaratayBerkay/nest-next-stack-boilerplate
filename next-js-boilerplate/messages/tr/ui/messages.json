@@ -146,5 +146,9 @@
   "pageHeaderTitle": "Sayfa Başlığı",
   "pageHeaderDescription": "İsteğe bağlı eylemler ve breadcrumb'lar ile sayfa başlığı",
   "pageInfoTitle": "Sayfa Bilgisi",
-  "pageInfoDescription": "Sayfa bölümünü açıklayan bilgi düğmesi"
+  "pageInfoDescription": "Sayfa bölümünü açıklayan bilgi düğmesi",
+  "chartTitle": "Grafik",
+  "chartDescription": "Recharts ile oluşturulmuş grafikler",
+  "dataTableTitle": "Veri Tablosu",
+  "dataTableDescription": "Sıralanabilir ve filtrelenebilir veri tablosu"
 }

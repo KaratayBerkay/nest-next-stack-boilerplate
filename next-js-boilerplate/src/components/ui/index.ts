@@ -49,6 +49,8 @@ export {
   CarouselPrevious,
   CarouselNext,
 } from "./carousel";
+export { Chart, type ChartProps, type ChartType } from "./chart";
+export { DataTable, type DataTableProps } from "./data-table";
 export {
   Checkbox,
   CheckboxGroup,

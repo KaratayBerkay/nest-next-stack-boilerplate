@@ -146,5 +146,9 @@
   "pageHeaderTitle": "Page Header",
   "pageHeaderDescription": "Page title with optional actions and breadcrumbs",
   "pageInfoTitle": "Page Info",
-  "pageInfoDescription": "Info button that explains a page section"
+  "pageInfoDescription": "Info button that explains a page section",
+  "chartTitle": "Chart",
+  "chartDescription": "Charts built on Recharts",
+  "dataTableTitle": "Data Table",
+  "dataTableDescription": "Sortable, filterable data table"
 }
