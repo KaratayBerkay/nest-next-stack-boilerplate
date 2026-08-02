@@ -1,5 +1,6 @@
 import { cn } from "@/lib/cn";
 import { tiers, sections } from "./PricingTiers-data";
+import type { FeatureComparisonTableProps } from "@/types/views/ui/CardDemo-types";
 
 function CheckIcon() {
   return (
@@ -29,10 +30,6 @@ function MinusIcon() {
       <path d="M4 10a.75.75 0 0 1 .75-.75h10.5a.75.75 0 0 1 0 1.5H4.75A.75.75 0 0 1 4 10Z" />
     </svg>
   );
-}
-
-interface FeatureComparisonTableProps {
-  selectedTier: string | null;
 }
 
 export function FeatureComparisonTable({

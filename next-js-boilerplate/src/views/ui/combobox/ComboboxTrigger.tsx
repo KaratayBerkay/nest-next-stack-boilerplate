@@ -1,8 +1,4 @@
-interface ComboboxTriggerProps {
-  selectedLabel: string;
-  placeholder: string;
-  onToggle: () => void;
-}
+import type { ComboboxTriggerProps } from "@/types/views/ui/ComboboxDemo-types";
 
 export function ComboboxTrigger({
   selectedLabel,
@@ -15,9 +11,7 @@ export function ComboboxTrigger({
       onClick={onToggle}
       className="focus-visible:ring-brand border-border bg-bg text-fg flex h-9 w-full items-center justify-between rounded-md border px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
     >
-      <span className="truncate">
-        {selectedLabel || placeholder}
-      </span>
+      <span className="truncate">{selectedLabel || placeholder}</span>
       <svg
         width="16"
         height="16"

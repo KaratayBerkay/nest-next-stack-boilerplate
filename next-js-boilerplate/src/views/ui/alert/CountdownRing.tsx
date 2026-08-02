@@ -1,15 +1,14 @@
 "use client";
 
+import type { CountdownRingProps } from "@/types/views/ui/AlertDemo-types";
+
 const RING_RADIUS = 20;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 export function CountdownRing({
   remainingMs,
   totalSeconds,
-}: {
-  remainingMs: number;
-  totalSeconds: number;
-}) {
+}: CountdownRingProps) {
   const fraction = Math.min(
     1,
     Math.max(0, remainingMs / (totalSeconds * 1000)),

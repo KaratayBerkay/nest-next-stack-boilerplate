@@ -2,14 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/Alert";
-
-interface DismissibleAlertSectionProps {
-  alertVariant: "default" | "info" | "success" | "warning" | "error";
-  onVariantChange: (v: "default" | "info" | "success" | "warning" | "error") => void;
-  dismissed: boolean;
-  onDismiss: () => void;
-  onReset: () => void;
-}
+import type { DismissibleAlertSectionProps } from "@/types/views/ui/AlertDemo-types";
 
 const variants = ["default", "info", "success", "warning", "error"] as const;
 
@@ -64,7 +57,9 @@ export function DismissibleAlertSection({
             <div className="flex items-start justify-between gap-4">
               <div>
                 <AlertTitle>{titles[alertVariant]}</AlertTitle>
-                <AlertDescription>{descriptions[alertVariant]}</AlertDescription>
+                <AlertDescription>
+                  {descriptions[alertVariant]}
+                </AlertDescription>
               </div>
               <button
                 onClick={onDismiss}

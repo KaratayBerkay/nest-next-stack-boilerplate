@@ -7,35 +7,7 @@ import { FieldMessages } from "@/components/ui/field-messages";
 import type { z } from "zod";
 import { FormInputField } from "./FormInputField";
 import { SocialButtons } from "./SocialButtons";
-
-interface LoginFormProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  form: any;
-  loginSchema: z.ZodObject<{
-    email: z.ZodString;
-    password: z.ZodString;
-  }>;
-  rememberMe: boolean;
-  setRememberMe: (value: boolean) => void;
-  formError: string | null;
-  t: {
-    form: {
-      login: {
-        emailLabel: string;
-        emailPlaceholder: string;
-        passwordLabel: string;
-        passwordPlaceholder: string;
-        rememberMe: string;
-        forgotPassword: string;
-        submitting: string;
-        submit: string;
-      };
-    };
-    social: {
-      continueWith: string;
-    };
-  };
-}
+import type { LoginFormProps } from "@/types/views/ui/CardDemo-types";
 
 function getFieldError(
   errors: (string | { message?: string } | undefined)[],
@@ -128,7 +100,9 @@ export function LoginForm({
 
           <div>
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            <form.Subscribe selector={(s: any) => [s.canSubmit, s.isSubmitting]}>
+            <form.Subscribe
+              selector={(s: any) => [s.canSubmit, s.isSubmitting]}
+            >
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {([canSubmit, isSubmitting]: [any, any]) => (
                 <Button
@@ -137,9 +111,7 @@ export function LoginForm({
                   loading={isSubmitting}
                   disabled={!canSubmit}
                 >
-                  {isSubmitting
-                    ? t.form.login.submitting
-                    : t.form.login.submit}
+                  {isSubmitting ? t.form.login.submitting : t.form.login.submit}
                 </Button>
               )}
             </form.Subscribe>

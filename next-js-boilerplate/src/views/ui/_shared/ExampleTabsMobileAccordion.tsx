@@ -1,6 +1,6 @@
 "use client";
 import { cn } from "@/lib/cn";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { ExampleTabsMobileAccordionProps } from "@/types/views/ui/ExampleTabsShared-types";
 
 export function ExampleTabsMobileAccordion({
   examples,
@@ -8,13 +8,7 @@ export function ExampleTabsMobileAccordion({
   onChange,
   accordionOpen,
   onToggle,
-}: {
-  examples: UIExample[];
-  currentValue: string;
-  onChange: (value: string) => void;
-  accordionOpen: boolean;
-  onToggle: () => void;
-}) {
+}: ExampleTabsMobileAccordionProps) {
   return (
     <div className="flex flex-col gap-2 md:hidden">
       <button

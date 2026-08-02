@@ -4,15 +4,7 @@ import {
   CommandList,
   CommandItem,
 } from "@/components/ui/Command";
-
-interface CreatableDropdownProps {
-  query: string;
-  onQueryChange: (value: string) => void;
-  filtered: { value: string; label: string }[];
-  showCreate: boolean;
-  onSelect: (value: string) => void;
-  onCreate: () => void;
-}
+import type { CreatableDropdownProps } from "@/types/views/ui/ComboboxDemo-types";
 
 export function CreatableDropdown({
   query,
@@ -48,10 +40,7 @@ export function CreatableDropdown({
             </CommandItem>
           ))}
           {showCreate && (
-            <CommandItem
-              value={`create:${query}`}
-              onSelect={onCreate}
-            >
+            <CommandItem value={`create:${query}`} onSelect={onCreate}>
               Add &apos;{query}&apos;&hellip;
             </CommandItem>
           )}

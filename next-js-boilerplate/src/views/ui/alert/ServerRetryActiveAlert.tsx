@@ -3,20 +3,13 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { cn } from "@/lib/cn";
-import { handleMouseEnter, handleMouseLeave, handleRetry } from "@/views/ui/alert/ServerRetryTimer";
+import {
+  handleMouseEnter,
+  handleMouseLeave,
+  handleRetry,
+} from "@/views/ui/alert/ServerRetryTimer";
 import type { ServerRetryStatus } from "@/types/ui/ServerRetryTab-types";
-
-interface ServerRetryActiveAlertProps {
-  status: ServerRetryStatus;
-  countdown: number;
-  retryCount: number;
-  timerRef: React.MutableRefObject<ReturnType<typeof setInterval> | null>;
-  remainingRef: React.MutableRefObject<number>;
-  startTimeRef: React.MutableRefObject<number>;
-  setCountdown: React.Dispatch<React.SetStateAction<number>>;
-  setRetryCount: React.Dispatch<React.SetStateAction<number>>;
-  setStatus: React.Dispatch<React.SetStateAction<ServerRetryStatus>>;
-}
+import type { ServerRetryActiveAlertProps } from "@/types/views/ui/AlertDemo-types";
 
 export function ServerRetryActiveAlert({
   status,

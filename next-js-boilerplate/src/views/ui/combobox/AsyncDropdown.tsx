@@ -5,15 +5,7 @@ import {
   CommandList,
   CommandItem,
 } from "@/components/ui/Command";
-
-interface AsyncDropdownProps {
-  query: string;
-  onQueryChange: (value: string) => void;
-  results: { value: string; label: string }[];
-  loading: boolean;
-  debouncedQuery: string;
-  onSelect: (value: string) => void;
-}
+import type { AsyncDropdownProps } from "@/types/views/ui/ComboboxDemo-types";
 
 export function AsyncDropdown({
   query,

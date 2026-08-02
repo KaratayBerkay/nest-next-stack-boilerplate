@@ -1,19 +1,14 @@
 "use client";
 import { useCallback } from "react";
 import { cn } from "@/lib/cn";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { ExampleTabsDesktopBarProps } from "@/types/views/ui/ExampleTabsShared-types";
 
 export function ExampleTabsDesktopBar({
   examples,
   currentValue,
   onChange,
   baseId,
-}: {
-  examples: UIExample[];
-  currentValue: string;
-  onChange: (value: string) => void;
-  baseId: string;
-}) {
+}: ExampleTabsDesktopBarProps) {
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       const ids = examples.map((ex) => ex.id);

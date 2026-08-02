@@ -2,16 +2,13 @@
 "use client";
 
 import { FormInputField } from "./FormInputField";
+import type { RegisterFormFieldsProps } from "@/types/views/ui/CardDemo-types";
 
 export function RegisterFormFields({
   form,
   registerSchema,
   t,
-}: {
-  form: any;
-  registerSchema: any;
-  t: any;
-}) {
+}: RegisterFormFieldsProps) {
   return (
     <>
       <div className="grid grid-cols-2 gap-4">

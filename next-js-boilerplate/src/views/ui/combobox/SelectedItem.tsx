@@ -1,7 +1,4 @@
-interface SelectedItemProps {
-  selectedLabel: string;
-  onClear: () => void;
-}
+import type { SelectedItemProps } from "@/types/views/ui/ComboboxDemo-types";
 
 export function SelectedItem({ selectedLabel, onClear }: SelectedItemProps) {
   return (

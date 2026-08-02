@@ -1,8 +1,9 @@
 import { Card, CardContent } from "@/components/ui/Card";
 import { cn } from "@/lib/cn";
 import type { sizes } from "./variant-gallery-data";
+import type { SizeCardProps } from "@/types/views/ui/CardDemo-types";
 
-export function SizeCard({ size }: { size: (typeof sizes)[number] }) {
+export function SizeCard({ size }: SizeCardProps) {
   return (
     <Card key={size} className="min-w-40">
       <CardContent

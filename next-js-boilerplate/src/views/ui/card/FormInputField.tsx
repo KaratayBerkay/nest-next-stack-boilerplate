@@ -1,15 +1,7 @@
 import type { AnyFieldApi } from "@tanstack/react-form";
 import { Input } from "@/components/ui/Input";
 import { FieldInfo } from "./FieldInfo";
-
-interface FormInputFieldProps {
-  field: AnyFieldApi;
-  label: string;
-  type?: string;
-  placeholder?: string;
-  autoComplete?: string;
-  error?: string;
-}
+import type { FormInputFieldProps } from "@/types/views/ui/CardDemo-types";
 
 export function FormInputField({
   field,

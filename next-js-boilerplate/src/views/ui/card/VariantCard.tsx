@@ -7,8 +7,9 @@ import {
 } from "@/components/ui/Card";
 import { variantDescriptions, variantUseCases } from "./variant-gallery-data";
 import type { variants } from "./variant-gallery-data";
+import type { VariantCardProps } from "@/types/views/ui/CardDemo-types";
 
-export function VariantCard({ variant }: { variant: (typeof variants)[number] }) {
+export function VariantCard({ variant }: VariantCardProps) {
   return (
     <Card key={variant} variant={variant}>
       <CardHeader>
