@@ -168,6 +168,7 @@ describe('SessionAuthGuard', () => {
       avatarUrl: '',
       locale: 'en',
       timezone: 'UTC',
+      chatNickname: 'ducky',
       friends: [],
       unread: 0,
       orgIds: [],
@@ -186,6 +187,12 @@ describe('SessionAuthGuard', () => {
     expect(req.user).toBeDefined();
     expect(req.user!.userId).toBe('u1');
     expect(req.user!.tier).toBe('FREE');
+    // Regression: the widened req.user object is built field-by-field from
+    // the Redis session hash, not spread — chatNickname was added to
+    // SessionUser/JwtUser but the copy site here was never updated, so `me`
+    // (and anything else reading req.user.chatNickname) silently always got
+    // undefined even though Redis and Postgres both had the real value.
+    expect(req.user!.chatNickname).toBe('ducky');
   });
 
   it('throws 401 when access token is missing', async () => {

@@ -77,6 +77,7 @@ export class OptionalAuthGuard implements CanActivate {
               avatarUrl: sessionUser.avatarUrl,
               locale: sessionUser.locale || 'en',
               timezone: sessionUser.timezone || 'UTC',
+              chatNickname: sessionUser.chatNickname,
               friends: sessionUser.friends,
               unread: sessionUser.unread,
               orgIds: sessionUser.orgIds,
