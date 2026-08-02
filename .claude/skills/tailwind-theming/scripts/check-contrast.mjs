@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * WCAG contrast checker for the .theme-* palettes in globals.css.
+ * WCAG contrast checker for the .style-* palettes in globals.css.
  *
  * Usage (from repo root):
  *   node .claude/skills/tailwind-theming/scripts/check-contrast.mjs [themeName] [--strict]
  *
- * Parses every `.theme-<name> { --var: #hex; ... }` block and reports the
+ * Parses every `.style-<name> { --var: #hex; ... }` block and reports the
  * contrast ratio for each critical pair. `--strict` exits 1 if any hard
  * requirement (marked ✗) fails — useful in CI.
  */
@@ -22,7 +22,7 @@ const themeFilter = args.find((a) => !a.startsWith("--"));
 
 const css = readFileSync(cssPath, "utf8");
 
-// Collect .theme-* blocks (`:root, .theme-light { ... }` also matches).
+// Collect .style-* blocks (`:root, .style-light { ... }` also matches).
 const themes = {};
 const blockRe = /\.style-([a-z0-9-]+)\s*\{([^}]*)\}/g;
 for (const m of css.matchAll(blockRe)) {
@@ -71,13 +71,13 @@ const PAIRS = [
 let hardFailures = 0;
 const names = Object.keys(themes).filter((n) => !themeFilter || n === themeFilter);
 if (!names.length) {
-  console.error(themeFilter ? `No theme named "${themeFilter}" found.` : "No .theme-* blocks found.");
+  console.error(themeFilter ? `No theme named "${themeFilter}" found.` : "No .style-* blocks found.");
   process.exit(2);
 }
 
 for (const name of names) {
   const t = themes[name];
-  console.log(`\n.theme-${name}`);
+  console.log(`\n.style-${name}`);
   for (const [fgVar, bgVar, min, hard] of PAIRS) {
     const fg = t[fgVar];
     const bg = t[bgVar];

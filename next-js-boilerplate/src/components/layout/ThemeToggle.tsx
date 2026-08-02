@@ -5,6 +5,7 @@ import { useTheme, THEMES, type ThemeName } from "@/hooks/useTheme";
 import {
   IconSun,
   IconMoon,
+  IconMoonStars,
   IconSparkles,
   IconGlass,
   IconBolt,
@@ -16,6 +17,7 @@ import { useClickOutside } from "@/hooks/useClickOutside";
 const THEME_ICONS: Record<ThemeName, typeof IconSun> = {
   light: IconSun,
   dark: IconMoon,
+  moonnote: IconMoonStars,
   shiny: IconSparkles,
   glass: IconGlass,
   neon: IconBolt,

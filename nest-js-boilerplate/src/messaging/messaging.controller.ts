@@ -25,6 +25,7 @@ import { SendMessageRestDto } from './dto/send-message-rest.dto';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { JwtUser } from '../auth/auth.types';
+
 @ApiTags('Messaging')
 @ApiBearerAuth()
 @Controller('api')

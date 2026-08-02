@@ -58,6 +58,33 @@
   --overlay: #000000;
 }
 
+/* ── Moon Note (moonlit night, notes-app calm) ───────────────────── */
+/*
+ * Deep indigo night sky + pale moon-gold accent. Neutrals come from one
+ * hue family (cool indigo); brand is the only warm hue (moonlight).
+ * Dark theme: accent and status colors are lightened/softened.
+ */
+.style-moonnote {
+  --bg: #0b0e1c;
+  --fg: #eceef8;
+  --brand: #f2d48a;
+  --brand-fg: #241c08;
+  --muted: #9aa3c7;
+  --muted-fg: #9aa3c7;
+  --border: #2a3054;
+  --surface: #131730;
+  --surface-hover: #1c2142;
+  --success: #8fd0a8;
+  --success-fg: #0d2417;
+  --warning: #e8a94f;
+  --warning-fg: #2a1a04;
+  --error: #ee9c9c;
+  --error-fg: #2e0e0e;
+  --info: #93b5ef;
+  --info-fg: #0e1f3a;
+  --overlay: #000000;
+}
+
 /* ── Component style system ──────────────────────────────────────── */
 /*
  * The active component style class is set on <html> by the ThemeProvider.

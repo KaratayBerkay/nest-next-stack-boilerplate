@@ -1,6 +1,6 @@
 ---
 name: tailwind-theming
-description: Tailwind CSS v4 setup and the multi-theme color system for this repo's frontend (next-js-boilerplate). Use for ANY styling, CSS, or Tailwind work here, and whenever the user mentions colors, palettes, color harmony or arrangement, themes, dark mode, design tokens, shadows, fonts, globals.css, or adding/changing a theme. Covers the CSS-first v4 config (@theme, @custom-variant), the .theme-* token architecture, semantic utilities like bg-surface and text-fg, how to add themes and tokens, and color-harmony rules with a bundled WCAG contrast checker script.
+description: Tailwind CSS v4 setup and the multi-theme color system for this repo's frontend (next-js-boilerplate). Use for ANY styling, CSS, or Tailwind work here, and whenever the user mentions colors, palettes, color harmony or arrangement, themes, dark mode, design tokens, shadows, fonts, globals.css, or adding/changing a theme. Covers the CSS-first v4 config (@theme, @custom-variant), the .style-* token architecture, semantic utilities like bg-surface and text-fg, how to add themes and tokens, and color-harmony rules with a bundled WCAG contrast checker script.
 ---
 
 # Tailwind v4 + Theme System
@@ -13,7 +13,7 @@ Three layers, all in `globals.css`:
 
 ```css
 /* 1. Each theme defines raw palette vars */
-.theme-dark { --bg: #0a0a0a; --fg: #ededed; --brand: #818cf8; ... }
+.style-dark { --bg: #0a0a0a; --fg: #ededed; --brand: #818cf8; ... }
 
 /* 2. @theme inline maps raw vars to Tailwind color tokens */
 @theme inline { --color-bg: var(--bg); --color-brand: var(--brand); ... }
@@ -22,7 +22,7 @@ Three layers, all in `globals.css`:
 /* bg-bg  text-fg  bg-brand  text-brand-fg  border-border ... */
 ```
 
-The ThemeProvider (`src/hooks/useTheme.tsx`) puts the active `theme-*` class on `<html>`, persists the choice in a cookie, and *also* toggles a bare `dark` class for themes listed in `DARK_THEMES` — that is what powers the `dark:` variant. The theme list itself lives in `@/constants/theme` (`THEMES`, `DARK_THEMES`).
+The ThemeProvider (`src/hooks/useTheme.tsx`) puts the active `style-*` class on `<html>`, persists the choice in a cookie, and *also* toggles a bare `dark` class for every theme except `"light"` — that is what powers the `dark:` variant. The theme list itself lives in `@/constants/theme` (`THEMES`).
 
 Custom variants defined at the top of globals.css:
 
@@ -47,12 +47,12 @@ Plus theme-aware shadows (`shadow-xs`…`shadow-xl`, `shadow-elevated`, `shadow-
 
 ## Adding a theme
 
-1. Copy an existing `.theme-*` block in globals.css (light and dark variants of each var — pick the closest starting point) and define **every** token.
-2. Register it in `THEMES` in `@/constants/theme`; add to `DARK_THEMES` if backgrounds are dark so `dark:` and syntax themes follow.
+1. Copy an existing `.style-*` block in globals.css (pick the closest starting point) and define **every** token.
+2. Register it in `THEMES` in `@/constants/theme` (name, label). Update `themeToComponentStyle` if it maps to `"default"` (non-component-style themes). Add it to the `getInitialTheme` checks in `useTheme.tsx`, the removal list in `applyTheme`, the `THEMES` array in `theme-init.js`, the `THEME_NAMES` array in `app/layout.tsx`, and the `THEME_ICONS` map in `ThemeToggle.tsx`.
 3. Run the contrast checker (below) and fix failures.
 4. No component changes should be needed — if a component looks broken in the new theme, the component is hardcoding colors and that's the bug to fix.
 
-**Adding a token** is the reverse: add the var to *every* `.theme-*` block, map it in `@theme inline` (`--color-<name>: var(--<name>)`), and keep the `-fg` pairing convention if anything will ever sit on top of it.
+**Adding a token** is the reverse: add the var to *every* `.style-*` block, map it in `@theme inline` (`--color-<name>: var(--<name>)`), and keep the `-fg` pairing convention if anything will ever sit on top of it.
 
 ## Color arrangement & harmony
 
@@ -62,7 +62,7 @@ Rules that keep a palette coherent — derived from the four shipped themes, whi
 
 **Proportion: ~60/30/10.** Neutrals dominate (bg/surface), secondary tones support (borders, muted text), brand appears sparingly (primary actions, focus rings, links). A theme where brand covers large areas will feel loud in every component at once.
 
-**One accent hue family.** `brand` is the only free-choice hue. For tinted themes, pull the *neutrals* from the same hue family instead of adding more accents — theme-ocean does exactly this (sky-tinted bg `#f0f9ff`, borders `#bae6fd`, fg `#0c4a6e`, all analogous to brand `#0284c7`). That is analogous harmony: one hue, varied lightness/saturation.
+**One accent hue family.** `brand` is the only free-choice hue. For tinted themes, pull the *neutrals* from the same hue family instead of adding more accents — moonnote does exactly this (indigo-tinted bg `#0b0e1c`, borders `#2a3054`, fg `#eceef8`, all analogous to the night-sky palette, with moon-gold brand as the sole warm accent). That is analogous harmony: one hue, varied lightness/saturation.
 
 **Dark themes lighten the accent.** On dark backgrounds, raise the brand's lightness (and let saturation drop slightly) or it loses contrast and vibrancy: light uses indigo-600 `#4f46e5`, dark uses indigo-400 `#818cf8`. Same relationship for status colors (`#16a34a` → `#22c55e`, etc.).
 
@@ -74,11 +74,11 @@ Rules that keep a palette coherent — derived from the four shipped themes, whi
 
 ```bash
 node .claude/skills/tailwind-theming/scripts/check-contrast.mjs           # all themes
-node .claude/skills/tailwind-theming/scripts/check-contrast.mjs ocean    # one theme
+node .claude/skills/tailwind-theming/scripts/check-contrast.mjs moonnote  # one theme
 node .claude/skills/tailwind-theming/scripts/check-contrast.mjs --strict # exit 1 on hard fails
 ```
 
-Run it (from the repo root) after any palette change — it parses the `.theme-*` blocks straight out of globals.css and prints WCAG ratios for every critical pair. Don't eyeball contrast; the script is the arbiter.
+Run it (from the repo root) after any palette change — it parses the `.style-*` blocks straight out of globals.css and prints WCAG ratios for every critical pair. Don't eyeball contrast; the script is the arbiter.
 
 ## Scroll-fade affordances
 

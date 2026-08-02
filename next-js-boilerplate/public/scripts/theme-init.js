@@ -1,5 +1,13 @@
 (function () {
-  var THEMES = ["light", "dark", "shiny", "glass", "neon", "gradient"];
+  var THEMES = [
+    "light",
+    "dark",
+    "moonnote",
+    "shiny",
+    "glass",
+    "neon",
+    "gradient",
+  ];
   var STYLES = ["default", "shiny", "glass", "neon", "gradient"];
   var match = document.cookie.match(/(?:^|;\s*)theme=([^;]*)/);
   var theme = match && THEMES.indexOf(match[1]) !== -1 ? match[1] : null;

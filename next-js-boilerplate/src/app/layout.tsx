@@ -53,6 +53,7 @@ export const metadata: Metadata = {
 const THEME_NAMES = [
   "light",
   "dark",
+  "moonnote",
   "shiny",
   "glass",
   "neon",

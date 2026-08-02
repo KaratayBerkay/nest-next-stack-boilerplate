@@ -50,6 +50,7 @@ function getInitialTheme(): ThemeName {
   if (root.classList.contains("style-neon")) return "neon";
   if (root.classList.contains("style-glass")) return "glass";
   if (root.classList.contains("style-shiny")) return "shiny";
+  if (root.classList.contains("style-moonnote")) return "moonnote";
   if (root.classList.contains("style-dark")) return "dark";
   if (root.classList.contains("style-light")) return "light";
   // Check legacy componentStyle cookie
@@ -75,6 +76,7 @@ function applyTheme(theme: ThemeName) {
     "light",
     "dark",
     "default",
+    "moonnote",
     "shiny",
     "glass",
     "neon",

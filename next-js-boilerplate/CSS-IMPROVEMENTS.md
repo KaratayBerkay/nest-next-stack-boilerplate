@@ -37,41 +37,42 @@ The active `style-<name>` class is set on `<html>` by `useTheme` (via `ThemeProv
 
 ## Theme System
 
-Six themes in a single dropdown (`ThemeToggle`), persisted as a `theme` cookie. Internally `themeToComponentStyle()` maps light/dark → `"default"` for `useComponentVariant()`; shiny/glass/neon/gradient keep their name.
+Seven themes in a single dropdown (`ThemeToggle`), persisted as a `theme` cookie. Internally `themeToComponentStyle()` maps light/dark/moonnote → `"default"` for `useComponentVariant()`; shiny/glass/neon/gradient keep their name.
 
 ### Available Themes
 
-| Theme | CSS class | Description |
-|---|---|---|
-| `light` | `.style-light` | Light bg, dark text (default browser palette) |
-| `dark` | `.style-dark` | Pure black bg, light text |
-| `shiny` | `.style-shiny` | Dark navy, gradient surfaces + buttons |
-| `glass` | `.style-glass` | Translucent surfaces with backdrop blur |
-| `neon` | `.style-neon` | Dark with cyan accents and glow |
-| `gradient` | `.style-gradient` | Dark purple with gradient surfaces + text |
+| Theme      | CSS class         | Description                                          |
+| ---------- | ----------------- | ---------------------------------------------------- |
+| `light`    | `.style-light`    | Light bg, dark text (default browser palette)        |
+| `dark`     | `.style-dark`     | Pure black bg, light text                            |
+| `moonnote` | `.style-moonnote` | Deep indigo night, moon-gold accent — notes-app calm |
+| `shiny`    | `.style-shiny`    | Dark navy, gradient surfaces + buttons               |
+| `glass`    | `.style-glass`    | Translucent surfaces with backdrop blur              |
+| `neon`     | `.style-neon`     | Dark with cyan accents and glow                      |
+| `gradient` | `.style-gradient` | Dark purple with gradient surfaces + text            |
 
 ### Semantic Token Reference (all themes)
 
-| Token | Light (#ffffff) | Dark (#000000) |
-|---|---|---|
-| `--bg` | `#ffffff` | `#000000` |
-| `--fg` | `#171717` | `#e5e5e5` |
-| `--brand` | `#4f46e5` | `#818cf8` |
-| `--brand-fg` | `#ffffff` | `#0b0b1a` |
-| `--surface` | `#f5f5f5` | `#171717` |
-| `--surface-hover` | `#e5e5e5` | `#262626` |
-| `--border` | `#d4d4d4` | `#262626` |
-| `--muted` | `#737373` | `#a3a3a3` |
-| `--muted-fg` | `#52525b` | `#a3a3a3` |
-| `--success` | `#15803d` | `#22c55e` |
-| `--success-fg` | `#ffffff` | `#052e16` |
-| `--warning` | `#b45309` | `#f59e0b` |
-| `--warning-fg` | `#ffffff` | `#451a03` |
-| `--error` | `#dc2626` | `#ef4444` |
-| `--error-fg` | `#ffffff` | `#2a0808` |
-| `--info` | `#0369a1` | `#38bdf8` |
-| `--info-fg` | `#ffffff` | `#082f49` |
-| `--overlay` | `#000000` | `#000000` |
+| Token             | Light (#ffffff) | Dark (#000000) |
+| ----------------- | --------------- | -------------- |
+| `--bg`            | `#ffffff`       | `#000000`      |
+| `--fg`            | `#171717`       | `#e5e5e5`      |
+| `--brand`         | `#4f46e5`       | `#818cf8`      |
+| `--brand-fg`      | `#ffffff`       | `#0b0b1a`      |
+| `--surface`       | `#f5f5f5`       | `#171717`      |
+| `--surface-hover` | `#e5e5e5`       | `#262626`      |
+| `--border`        | `#d4d4d4`       | `#262626`      |
+| `--muted`         | `#737373`       | `#a3a3a3`      |
+| `--muted-fg`      | `#52525b`       | `#a3a3a3`      |
+| `--success`       | `#15803d`       | `#22c55e`      |
+| `--success-fg`    | `#ffffff`       | `#052e16`      |
+| `--warning`       | `#b45309`       | `#f59e0b`      |
+| `--warning-fg`    | `#ffffff`       | `#451a03`      |
+| `--error`         | `#dc2626`       | `#ef4444`      |
+| `--error-fg`      | `#ffffff`       | `#2a0808`      |
+| `--info`          | `#0369a1`       | `#38bdf8`      |
+| `--info-fg`       | `#ffffff`       | `#082f49`      |
+| `--overlay`       | `#000000`       | `#000000`      |
 
 Shiny/glass/neon/gradient override all tokens above — their exact values are in `globals.css`.
 
@@ -103,21 +104,21 @@ Components accept an explicit `variant` prop that overrides the global component
 
 Shiny, glass, neon, and gradient themes define `--comp-*` tokens for component-specific overrides:
 
-| Token | Purpose |
-|---|---|
-| `--comp-card-bg` | Card background (solid or gradient) |
-| `--comp-card-border` | Card border color |
-| `--comp-card-shadow` | Card box-shadow |
-| `--comp-btn-bg` | Button primary background (solid or gradient) |
-| `--comp-btn-text` | Button primary text |
-| `--comp-btn-border` | Button primary border |
-| `--comp-btn-shadow` | Button primary shadow |
-| `--comp-input-bg` | Input background |
-| `--comp-input-border` | Input border color |
-| `--comp-badge-bg` | Badge background (solid or gradient) |
-| `--comp-badge-text` | Badge text color |
-| `--comp-alert-bg` | Alert background |
-| `--comp-alert-border` | Alert border color |
+| Token                 | Purpose                                       |
+| --------------------- | --------------------------------------------- |
+| `--comp-card-bg`      | Card background (solid or gradient)           |
+| `--comp-card-border`  | Card border color                             |
+| `--comp-card-shadow`  | Card box-shadow                               |
+| `--comp-btn-bg`       | Button primary background (solid or gradient) |
+| `--comp-btn-text`     | Button primary text                           |
+| `--comp-btn-border`   | Button primary border                         |
+| `--comp-btn-shadow`   | Button primary shadow                         |
+| `--comp-input-bg`     | Input background                              |
+| `--comp-input-border` | Input border color                            |
+| `--comp-badge-bg`     | Badge background (solid or gradient)          |
+| `--comp-badge-text`   | Badge text color                              |
+| `--comp-alert-bg`     | Alert background                              |
+| `--comp-alert-border` | Alert border color                            |
 
 These are consumed by component CSS classes (`.card`, `.btn-primary`, `.badge`, etc.) or inline in component code. `light` and `dark` themes don't define `--comp-*` tokens — components fall back to their base styles.
 
@@ -376,7 +377,9 @@ import { getContainerClass } from "@/lib/container";
 ```html
 <div class="card">Default card (rounded-xl, hover lift)</div>
 <div class="card-elevated">Elevated card (shadow-elevated, no hover)</div>
-<div class="card-interactive">Interactive card (pointer cursor, hover lift + translateY)</div>
+<div class="card-interactive">
+  Interactive card (pointer cursor, hover lift + translateY)
+</div>
 ```
 
 ### Scroll-Fade Affordance
