@@ -1,257 +1,306 @@
-# shadcn/ui Components
+# UI Components
 
-## Accordion
+Custom component library built on Radix primitives and Tailwind CSS v4.
+All components live in `src/components/ui/`, use `useComponentVariant` for
+style presets, and follow the kebab-folder + PascalCase shim anatomy.
 
-A vertically stacked set of interactive headings that each reveal a section of content.
+---
 
-## Alert
+## Feedback
 
-Displays a callout for user attention.
+### Alert
 
-## Alert Dialog
+Contextual feedback messages with variants (default, success, warning, error, info).
 
-A modal dialog that interrupts the user with important content and expects a response.
+### Empty
 
-## Aspect Ratio
+Empty state placeholder with icon, title, and description.
 
-Displays content within a desired ratio.
+### Progress
 
-## Attachment
+Task completion indicator bar.
 
-Displays a file or image attachment with media, metadata, upload state, and actions.
+### Skeleton
 
-## Avatar
+Loading content placeholder with line, message, and chat shapes.
 
-An image element with a fallback for representing the user.
+### Spinner
 
-## Badge
+Loading spinner with size variants.
 
-Displays a badge or a component that looks like a badge.
+### Toast
 
-## Breadcrumb
+Timed notification popup with action buttons and stacking.
 
-Displays the path to the current resource using a hierarchy of links.
+### Logo Spinner
 
-## Bubble
+Brand loading indicator for full-page transitions.
 
-Displays conversational content in a message bubble.
+---
 
-## Button
+## Overlays
 
-Displays a button or a component that looks like a button.
+### Alert Dialog
 
-## Button Group
+Modal confirmation dialog built on `@radix-ui/react-alert-dialog`.
 
-A container that groups related buttons together with consistent styling.
+### Confirm Dialog
 
-## Calendar
+Yes/no confirmation modal with customizable buttons.
 
-A calendar component that allows users to select a date or a range of dates.
+### Dialog
 
-## Card
+Modal dialog window built on a custom headless implementation with
+`Dialog`, `DialogTrigger`, `DialogContent`, `DialogHeader`, `DialogTitle`,
+`DialogDescription`, `DialogBody`, `DialogFooter`.
 
-Displays a card with header, content, and footer.
+### Drawer
 
-## Carousel
+Slide-in panel from any edge.
 
-A carousel with motion and swipe built using Embla.
+### Dropdown
 
-## Chart
+Floating dropdown wrapper for positioning content.
 
-Beautiful charts. Built using Recharts. Copy and paste into your apps.
+### Dropdown Menu
 
-## Checkbox
+Contextual action menu built on `@radix-ui/react-dropdown-menu`.
 
-A control that allows the user to toggle between checked and not checked.
+### Hover Card
 
-## Collapsible
+Preview content on hover, built on `@radix-ui/react-hover-card`.
 
-An interactive component which expands/collapses a panel.
+### Popover
 
-## Combobox
+Floating content panel built on a custom headless implementation.
 
-Autocomplete input with a list of suggestions.
+### Sheet
 
-## Command
+Slide-in side panel built on a custom headless implementation.
 
-Command menu for search and quick actions.
+### Tooltip
 
-## Context Menu
+Hover hint text built on a custom headless implementation.
 
-Displays a menu of actions triggered by a right click.
+### Context Menu
 
-## Data Table
+Right-click context menu built on `@radix-ui/react-context-menu`.
 
-Powerful table and datagrids built using TanStack Table.
+### Emoji Picker
 
-## Date Picker
+Emoji selection popover using `emoji-mart` with category icons.
 
-A date picker component with range and presets.
+---
 
-## Dialog
+## Forms
 
-A window overlaid on either the primary window or another dialog window, rendering the content underneath inert.
+### Button
 
-## Direction
+Clickable action button with variants (default, secondary, outline, ghost,
+destructive), sizes (sm, md, lg), and icon support.
 
-A provider component that sets the text direction for your application.
+### Checkbox
 
-## Drawer
+Toggle checkbox built on `@radix-ui/react-checkbox`.
 
-A drawer component for React.
+### Combobox
 
-## Dropdown Menu
+Searchable select input with command palette integration.
 
-Displays a menu to the user — such as a set of actions or functions — triggered by a button.
+### Counter
 
-## Empty
+Numeric stepper with increment/decrement buttons.
 
-Use the Empty component to display an empty state.
+### Date Picker
 
-## Field
+Calendar date selector built on `react-day-picker` v10.
 
-Combine labels, controls, and help text to compose accessible form fields and grouped inputs.
+### Field Info Button
 
-## Hover Card
+Info tooltip for form fields using `Tooltip`.
 
-For sighted users to preview content available behind a link.
+### File Upload
 
-## Input
+File drag-and-drop zone with preview.
 
-A text input component for forms and user data entry with built-in styling and accessibility features.
+### Form Error Banner
 
-## Input Group
+Dismissable inline error alert for form-level errors.
 
-Add addons, buttons, and helper content to inputs.
+### Form Field Info
 
-## Input OTP
+Error text and validating spinner for individual form fields.
 
-Accessible one-time password component with copy-paste functionality.
+### Form Level Error
 
-## Item
+Error message displayed at the form level using TanStack Form.
 
-A versatile component for displaying content with media, title, description, and actions.
+### Image Upload
 
-## Kbd
+Image upload with preview and crop.
 
-Used to display textual user input from keyboard.
+### Input
 
-## Label
+Text input with validation, left/right icons, error states, and font
+customization. Variants via `useComponentVariant`.
 
-Renders an accessible label associated with controls.
+### Input Group
 
-## Marker
+Labeled input cluster with addons.
 
-Displays an inline status, system note, bordered row, or labeled separator in a conversation.
+### Input OTP
 
-## Menubar
+One-time password input with paste support.
 
-A visually persistent menu common in desktop applications that provides quick access to a consistent set of commands.
+### Kbd
 
-## Message
+Keyboard shortcut display element.
 
-Displays a message in a conversation, with optional avatar, header, footer, and alignment.
+### Label
 
-## Message Scroller
+Form field label built on `@radix-ui/react-label`.
 
-A chat scroll container that anchors turns, opens saved transcripts, follows streamed responses, loads history without jumping, and jumps to any message.
+### Native Select
 
-## Native Select
+Native HTML `<select>` with consistent styling.
 
-A styled native HTML select element with consistent design system integration.
+### Radio Group
 
-## Navigation Menu
+Radio button group built on `@radix-ui/react-radio-group`.
 
-A collection of links for navigating websites.
+### Select
 
-## Pagination
+Custom dropdown select built on a custom headless implementation with
+keyboard navigation and search.
 
-Pagination with page navigation, next and previous links.
+### Slider
 
-## Popover
+Range slider input built on `@radix-ui/react-slider`.
 
-Displays rich content in a portal, triggered by a button.
+### Step Indicator
 
-## Progress
+Multi-step wizard progress indicator with click navigation.
 
-Displays an indicator showing the completion progress of a task, typically displayed as a progress bar.
+### Switch
 
-## Radio Group
+Toggle switch built on `@radix-ui/react-switch`.
 
-A set of checkable buttons — known as radio buttons — where no more than one of the buttons can be checked at a time.
+### Textarea
 
-## Resizable
+Multi-line text input with error states and auto-resize.
 
-Accessible resizable panel groups and layouts with keyboard support.
+### Time Input
 
-## Scroll Area
+Time picker with hour/minute dropdowns and timezone support.
 
-Augments native scroll functionality for custom, cross-browser styling.
+### Toggle
 
-## Select
+On/off toggle button built on `@radix-ui/react-toggle`.
 
-Displays a list of options for the user to pick from — triggered by a button.
+### Toggle Group
 
-## Separator
+Group of toggle buttons built on `@radix-ui/react-toggle-group`.
 
-Visually or semantically separates content.
+---
 
-## Sheet
+## Data Display
 
-Extends the Dialog component to display content that complements the main content of the screen.
+### Avatar
 
-## Sidebar
+User image with fallback built on `@radix-ui/react-avatar`.
 
-A composable, themeable and customizable sidebar component.
+### Badge
 
-## Skeleton
+Status and label badge with variants and sizes.
 
-Use to show a placeholder while content is loading.
+### Card
 
-## Slider
+Content container with `CardHeader`, `CardContent`, `CardFooter`,
+`CardTitle`, `CardDescription`.
 
-An input where the user selects a value from within a given range.
+### Carousel
 
-## Sonner
+Image/content carousel built on Embla Carousel.
 
-An opinionated toast component for React.
+### Table
 
-## Spinner
+Data table with `Table`, `TableHeader`, `TableBody`, `TableFooter`,
+`TableRow`, `TableHead`, `TableCell`, `TableCaption`.
 
-An indicator that can be used to show a loading state.
+### Typography
 
-## Switch
+Text style primitives for headings, paragraphs, and lists.
 
-A control that allows the user to toggle between checked and not checked.
+---
 
-## Table
+## Navigation
 
-A responsive table component.
+### Accordion
 
-## Tabs
+Collapsible content panels built on `@radix-ui/react-accordion` with
+`AccordionItemComplex` for rich slot-based content.
 
-A set of layered sections of content — known as tab panels — that are displayed one at a time.
+### Breadcrumb
 
-## Textarea
+Page hierarchy trail.
 
-Displays a form textarea or a component that looks like a textarea.
+### Collapsible
 
-## Toast
+Show/hide content built on `@radix-ui/react-collapsible`.
 
-A succinct message that is displayed temporarily.
+### Command
 
-## Toggle
+Command palette with search, groups, and keyboard navigation.
 
-A two-state button that can be either on or off.
+### Menubar
 
-## Toggle Group
+Application menu bar built on `@radix-ui/react-menubar`.
 
-A set of two-state buttons that can be toggled on or off.
+### Navigation Menu
 
-## Tooltip
+Site navigation links built on `@radix-ui/react-navigation-menu`.
 
-A popup that displays information related to an element when the element receives keyboard focus or the mouse hovers over it.
+### Pagination
 
-## Typography
+Page number controls with previous/next.
 
-Styles for headings, paragraphs, lists, etc.
+### Tabs
+
+Tabbed content panels built on a custom headless implementation with
+`?tab=` URL sync.
+
+### Scroll Area
+
+Custom scrollbar container built on `@radix-ui/react-scroll-area`.
+
+### Scroll To Bottom Button
+
+Jump-to-bottom action for scrollable containers.
+
+---
+
+## Layout
+
+### Aspect Ratio
+
+Responsive aspect ratio container built on `@radix-ui/react-aspect-ratio`.
+
+### Error Boundary
+
+Error fallback UI with reset action.
+
+### Page Header
+
+Page title with optional description and action buttons.
+
+### Page Info
+
+Info dialog that explains a page section with structured content.
+
+### Resizable
+
+Draggable split panes built on `react-resizable-panels`.
+
+### Separator
+
+Visual content divider built on `@radix-ui/react-separator`.
