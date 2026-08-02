@@ -46,6 +46,12 @@ const examples: UIExample[] = [
         )}
       />
     ),
+    code: `import { Badge } from "@/components/ui/Badge";
+
+<Badge variant="default" size="md">Default</Badge>
+<Badge variant="success" size="md">Success</Badge>
+<Badge variant="error" size="lg">Error</Badge>
+<Badge variant="outline" size="sm">Outline</Badge>`,
   },
 ];
 

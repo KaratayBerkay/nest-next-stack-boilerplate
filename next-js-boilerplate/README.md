@@ -78,6 +78,37 @@ Routes with multiple subscription tiers (Free, Basic, Medium, Premium) use the `
 - `page.tsx` (server) calls `getTierView(user.tier, VIEWS)`
 - Each tier renders its own `FreePageView`/`BasicPageView`/`MediumPageView`/`PremiumPageView`
 
+## Component Conventions
+
+### Ref forwarding
+
+Components follow two patterns depending on when they were written:
+
+- **Legacy (Radix wrappers):** `React.forwardRef` — used by accordion, sheet, slider, table, and other Radix-backed components.
+- **Current (React 19):** Ref-as-prop — newer custom components pass `ref` directly without `forwardRef`.
+
+Both work. If you copy a component into a new project, keep whichever pattern the original uses.
+
+### Theming & overrides
+
+Styling uses Tailwind CSS v4 with semantic tokens (`bg-surface`, `text-fg`, `border-border`, etc.)
+and a CSS-first theme system (`.style-*` classes on `<html>`). See `CSS-THEME-SYSTEM.md` for
+the full token reference.
+
+**`cn()` is non-merging.** It uses `twMerge` under the hood, which _replaces_ conflicting classes
+rather than stacking them. This means a child's `className` can silently override a parent's:
+
+```tsx
+// The child's "bg-surface" wins — parent's "bg-surface-hover" is dropped
+<Parent className="bg-surface-hover">
+  <Child className="bg-surface" /> // cn("bg-surface-hover", "bg-surface") →
+  "bg-surface"
+</Parent>
+```
+
+The intended escape hatch is the **prop-knob API**: `fontSize`, `fontWeight`, `fontFamily` props
+on Button, Input, and similar components. Use those instead of `className` for font overrides.
+
 ## Testing
 
 - **Unit**: `pnpm test` (Vitest + jsdom)

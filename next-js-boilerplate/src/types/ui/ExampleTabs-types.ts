@@ -5,6 +5,7 @@ export interface UIExample {
   title: string;
   description: string;
   render: () => ReactNode;
+  code?: string;
 }
 
 export interface ExampleTabsProps {

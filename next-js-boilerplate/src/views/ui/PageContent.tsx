@@ -4,8 +4,11 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { UI_COMPONENTS } from "@/constants/ui-gallery";
+import { THEMES } from "@/constants/theme";
+import { useTheme } from "@/hooks/useTheme";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { IconSearch } from "@tabler/icons-react";
+import { cn } from "@/lib/cn";
 
 const CATEGORY_ORDER = [
   "Feedback",
@@ -20,6 +23,7 @@ export default function UIPage() {
   const params = useParams();
   const lang = (params?.lang as string) ?? "en";
   const t = useMessages("ui");
+  const { theme, setTheme } = useTheme();
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -47,6 +51,24 @@ export default function UIPage() {
       <div>
         <h2 className="text-sm font-semibold">{t.pageTitle}</h2>
         <p className="text-muted text-xs">{t.pageDescription}</p>
+      </div>
+
+      <div className="flex flex-wrap gap-1.5">
+        {THEMES.map((th) => (
+          <button
+            key={th.name}
+            type="button"
+            onClick={() => setTheme(th.name)}
+            className={cn(
+              "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+              theme === th.name
+                ? "bg-fg text-bg"
+                : "bg-surface hover:bg-surface-hover text-muted",
+            )}
+          >
+            {th.label}
+          </button>
+        ))}
       </div>
 
       <div className="relative">
