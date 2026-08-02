@@ -9,7 +9,7 @@ import { csrfEchoHeaders, graphqlErrorBody, graphqlFetch } from "@/lib/backend";
 
 const UPDATE_PROFILE = `
   mutation UpdateProfile($input: UpdateProfileInput!) {
-    updateProfile(input: $input) { id name username bio avatarUrl hideAvatar chatNickname locale timezone }
+    updateProfile(input: $input) { id name username bio avatarUrl chatNickname locale timezone }
   }
 `;
 
@@ -60,6 +60,13 @@ export async function POST(req: Request) {
         Buffer.from(encoded, "base64url").toString("utf-8"),
       ) as Record<string, unknown>;
       const merged = { ...current, ...data.updateProfile };
+      // hideAvatar isn't queryable on the mutation's own return type (it's
+      // withheld from the generated User type everywhere but `me`, since
+      // other users must never see it) — the mutation succeeding is proof
+      // enough that whatever was requested is now the persisted value.
+      if (typeof input.hideAvatar === "boolean") {
+        merged.hideAvatar = input.hideAvatar;
+      }
       response.cookies.set(
         sessionUserCookieOptions(
           Buffer.from(JSON.stringify(merged)).toString("base64url"),
