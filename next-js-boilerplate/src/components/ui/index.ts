@@ -5,6 +5,8 @@ export {
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
+  AccordionItemComplex,
+  AccordionUpperSection,
 } from "./accordion";
 export { Alert, AlertTitle, AlertDescription } from "./alert";
 export {
@@ -20,7 +22,7 @@ export {
 } from "./alert-dialog";
 export { AspectRatio } from "./aspect-ratio";
 export { Avatar, AvatarGroup } from "./avatar";
-export { Badge, BadgeButton } from "./badge";
+export { Badge, BadgeButton, BadgeCount } from "./badge";
 export {
   Breadcrumb,
   BreadcrumbList,
@@ -88,6 +90,8 @@ export {
   DialogDescription,
   DialogFooter,
   DialogClose,
+  DialogBody,
+  useDialog,
 } from "./dialog";
 export {
   Drawer,
@@ -172,6 +176,7 @@ export {
   SelectValue,
   SelectContent,
   SelectItem,
+  useSelect,
 } from "./select";
 export { Separator } from "./separator";
 export {
@@ -205,7 +210,13 @@ export {
   TableCell,
   TableCaption,
 } from "./table";
-export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs";
+export {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  useTabsContext,
+} from "./tabs";
 export { Textarea, AutoResizeTextarea } from "./textarea";
 export { TimeInput } from "./time-input";
 export {
@@ -219,7 +230,7 @@ export {
 } from "./toast";
 export { Toggle } from "./toggle";
 export { ToggleGroup, ToggleGroupItem } from "./toggle-group";
-export { Tooltip, TooltipTrigger, TooltipContent } from "./tooltip";
+export { Tooltip, TooltipTrigger, TooltipContent, useTooltip } from "./tooltip";
 export {
   Typography,
   H1,

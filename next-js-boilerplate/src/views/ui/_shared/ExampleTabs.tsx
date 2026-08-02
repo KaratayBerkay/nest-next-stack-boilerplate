@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useId,
   useCallback,
   useState,
   type Dispatch,
@@ -38,6 +39,7 @@ export function ExampleTabs({
 }: ExampleTabsProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const baseId = useId();
 
   const validIds = examples.map((e) => e.id);
   const defaultTab =
@@ -75,12 +77,19 @@ export function ExampleTabs({
         examples={examples}
         currentValue={currentValue}
         onChange={handleChange}
+        baseId={baseId}
       />
 
       <div className="hidden md:block">
         {examples.map((example) =>
           example.id === currentValue ? (
-            <div key={example.id} className="space-y-4">
+            <div
+              key={example.id}
+              id={`${baseId}-panel-${example.id}`}
+              role="tabpanel"
+              aria-labelledby={`${baseId}-tab-${example.id}`}
+              className="space-y-4"
+            >
               <p className="text-muted text-sm italic">{example.description}</p>
               <div>{example.render()}</div>
             </div>

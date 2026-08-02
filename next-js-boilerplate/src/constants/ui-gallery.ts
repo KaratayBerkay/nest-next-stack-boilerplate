@@ -26,6 +26,7 @@ export const UI_COMPONENTS = [
   { name: "Dropdown", slug: "dropdown" },
   { name: "Dropdown Menu", slug: "dropdown-menu" },
   { name: "Empty", slug: "empty" },
+  { name: "Emoji Picker", slug: "emoji-picker" },
   { name: "Form Error Banner", slug: "form-error-banner" },
   { name: "Form Field Info", slug: "form-field-info" },
   { name: "File Upload", slug: "file-upload" },

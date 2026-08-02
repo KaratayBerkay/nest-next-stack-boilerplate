@@ -1,1 +1,1 @@
-export { StepIndicator } from "@/components/ui/step-indicator";
+export { StepIndicator } from "./step-indicator";

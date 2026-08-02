@@ -1,1 +1,1 @@
-export { PageInfoButton } from "./PageInfoButton";
+export { PageInfoButton } from "./page-info-button";

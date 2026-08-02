@@ -1,4 +1,4 @@
-export { Dialog } from "./dialog";
+export { Dialog, useDialog } from "./dialog";
 export { DialogTrigger } from "./dialog-trigger";
 export { DialogContent } from "./dialog-content";
 export { DialogHeader } from "./dialog-header";

@@ -1,4 +1,4 @@
-export { Select } from "./select";
+export { Select, useSelect } from "./select";
 export { SelectTrigger } from "./select-trigger";
 export { SelectValue } from "./select-value";
 export { SelectContent } from "./select-content";
