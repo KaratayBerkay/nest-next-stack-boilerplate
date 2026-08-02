@@ -1,10 +1,17 @@
 import { cn } from "@/lib/cn";
+import type {
+  SkeletonLineProps,
+  SkeletonMessageProps,
+  SkeletonChatMessageProps,
+  SkeletonConversationSidebarProps,
+  SkeletonFeedListProps,
+} from "@/types/ui/SkeletonShapes-types";
 
 export function SkeletonLine({
   className,
   width,
   ...props
-}: React.ComponentPropsWithoutRef<"div"> & { width?: string }) {
+}: SkeletonLineProps) {
   return (
     <div
       className={cn(
@@ -18,10 +25,7 @@ export function SkeletonLine({
   );
 }
 
-export function SkeletonMessage({
-  className,
-  ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+export function SkeletonMessage({ className, ...props }: SkeletonMessageProps) {
   return (
     <div
       className={cn("flex animate-pulse flex-col gap-2", className)}
@@ -37,7 +41,7 @@ export function SkeletonChatMessage({
   className,
   isMe,
   ...props
-}: React.ComponentPropsWithoutRef<"div"> & { isMe?: boolean }) {
+}: SkeletonChatMessageProps) {
   return (
     <div
       className={cn(
@@ -59,7 +63,7 @@ export function SkeletonChatMessage({
 export function SkeletonConversationSidebar({
   className,
   ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+}: SkeletonConversationSidebarProps) {
   return (
     <div
       className={cn("flex animate-pulse flex-col gap-3", className)}
@@ -75,7 +79,7 @@ export function SkeletonConversationSidebar({
 export function SkeletonFeedList({
   className,
   ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+}: SkeletonFeedListProps) {
   return (
     <div
       className={cn("flex animate-pulse flex-col gap-4", className)}

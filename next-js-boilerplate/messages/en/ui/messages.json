@@ -134,5 +134,17 @@
   "stepIndicatorTitle": "Step Indicator",
   "stepIndicatorDescription": "Multi-step wizard progress indicator",
   "emojiPickerTitle": "Emoji Picker",
-  "emojiPickerDescription": "Emoji picker component demo"
+  "emojiPickerDescription": "Emoji picker component demo",
+  "tableTitle": "Table",
+  "tableDescription": "Data table with headers, rows, and formatting",
+  "inputTitle": "Input",
+  "inputDescription": "Text input with validation, icons, and states",
+  "formLevelErrorTitle": "Form Level Error",
+  "formLevelErrorDescription": "Error message displayed at the form level",
+  "fieldInfoButtonTitle": "Field Info Button",
+  "fieldInfoButtonDescription": "Info button that explains a form field",
+  "pageHeaderTitle": "Page Header",
+  "pageHeaderDescription": "Page title with optional actions and breadcrumbs",
+  "pageInfoTitle": "Page Info",
+  "pageInfoDescription": "Info button that explains a page section"
 }

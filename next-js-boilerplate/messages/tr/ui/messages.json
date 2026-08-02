@@ -134,5 +134,17 @@
   "stepIndicatorTitle": "Adım Göstergesi",
   "stepIndicatorDescription": "Çok adımlı sihirbaz ilerleme göstergesi",
   "emojiPickerTitle": "Emoji Seçici",
-  "emojiPickerDescription": "Emoji seçici bileşeni gösterimi"
+  "emojiPickerDescription": "Emoji seçici bileşeni gösterimi",
+  "tableTitle": "Tablo",
+  "tableDescription": "Başlıklar, satırlar ve biçimlendirme ile veri tablosu",
+  "inputTitle": "Giriş",
+  "inputDescription": "Doğrulama, simge ve durumlarla metin girişi",
+  "formLevelErrorTitle": "Form Düzeyi Hatası",
+  "formLevelErrorDescription": "Form düzeyinde görüntülenen hata mesajı",
+  "fieldInfoButtonTitle": "Alan Bilgi Düğmesi",
+  "fieldInfoButtonDescription": "Form alanını açıklayan bilgi düğmesi",
+  "pageHeaderTitle": "Sayfa Başlığı",
+  "pageHeaderDescription": "İsteğe bağlı eylemler ve breadcrumb'lar ile sayfa başlığı",
+  "pageInfoTitle": "Sayfa Bilgisi",
+  "pageInfoDescription": "Sayfa bölümünü açıklayan bilgi düğmesi"
 }

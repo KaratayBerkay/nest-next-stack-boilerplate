@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { FormErrorBanner } from "@/components/ui/FormErrorBanner";
 
 export default function FormErrorBannerPage() {
-  const [_visible, setVisible] = useState(true);
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -18,7 +16,7 @@ export default function FormErrorBannerPage() {
           <p className="text-xs font-medium">With dismiss</p>
           <FormErrorBanner
             message="This is an error message"
-            onDismiss={() => setVisible(false)}
+            onDismiss={() => {}}
           />
         </div>
         <div className="surface border-border flex flex-col gap-2 rounded-lg border p-4">
@@ -26,7 +24,7 @@ export default function FormErrorBannerPage() {
           <FormErrorBanner message="Non-dismissable error" />
         </div>
         <div className="surface border-border flex flex-col gap-2 rounded-lg border p-4">
-          <p className="text-xs font-medium">Hidden (null message)</p>
+          <p className="text-xs font-medium">Null message (renders nothing)</p>
           <FormErrorBanner message={null} />
         </div>
       </div>

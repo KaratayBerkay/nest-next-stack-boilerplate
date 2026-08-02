@@ -1427,6 +1427,18 @@ export type I18nMessages = {
       "stepIndicatorDescription": string;
       "emojiPickerTitle": string;
       "emojiPickerDescription": string;
+      "tableTitle": string;
+      "tableDescription": string;
+      "inputTitle": string;
+      "inputDescription": string;
+      "formLevelErrorTitle": string;
+      "formLevelErrorDescription": string;
+      "fieldInfoButtonTitle": string;
+      "fieldInfoButtonDescription": string;
+      "pageHeaderTitle": string;
+      "pageHeaderDescription": string;
+      "pageInfoTitle": string;
+      "pageInfoDescription": string;
     }
 
   "users": {

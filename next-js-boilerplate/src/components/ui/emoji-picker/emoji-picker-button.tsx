@@ -25,6 +25,7 @@ import {
 import { useTheme } from "@/hooks/useTheme";
 import { cn } from "@/lib/cn";
 import type { EmojiPickerButtonProps } from "@/types/ui/EmojiPickerButton-types";
+import type { EmojiPickerInlineProps } from "@/types/ui/SkeletonShapes-types";
 
 // emoji-mart's own stock category icons (esp. its combined heart/note/camera
 // glyph for "symbols") don't match this app's icon language. Swap in the
@@ -49,11 +50,7 @@ const categoryIcons = {
   flags: { svg: renderToStaticMarkup(<IconFlagFilled size={18} />) },
 };
 
-interface EmojiPickerProps {
-  onEmojiSelect: (emoji: string) => void;
-}
-
-function EmojiPicker({ onEmojiSelect }: EmojiPickerProps) {
+function EmojiPicker({ onEmojiSelect }: EmojiPickerInlineProps) {
   const { theme } = useTheme();
   const { close } = usePopover();
   const containerRef = useRef<HTMLDivElement>(null);

@@ -16,7 +16,7 @@ const variants = {
     "data-[state=active]:border-b-2 data-[state=active]:border-brand rounded-none",
   pills:
     "data-[state=active]:bg-brand data-[state=active]:text-brand-fg rounded-full",
-};
+} as const;
 
 export function TabsTrigger({
   value,
