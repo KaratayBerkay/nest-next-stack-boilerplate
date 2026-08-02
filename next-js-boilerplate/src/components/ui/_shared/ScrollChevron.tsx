@@ -2,13 +2,9 @@
 
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/cn";
+import type { ScrollChevronProps } from "@/types/ui/ScrollChevron-types";
 
 const SCROLL_REPEAT_MS = 60;
-
-interface ScrollChevronProps {
-  direction: "up" | "down";
-  onScroll: () => void;
-}
 
 export function ScrollChevron({ direction, onScroll }: ScrollChevronProps) {
   const repeatRef = useRef<ReturnType<typeof setInterval> | undefined>(

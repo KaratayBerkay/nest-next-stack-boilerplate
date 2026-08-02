@@ -1,15 +1,6 @@
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import type { Draft } from "./draft-utils";
-
-interface DraftAlertProps {
-  draft: Draft;
-  restoreLabel: string;
-  discardLabel: string;
-  discardConfirmLabel: string;
-  onRestore: () => void;
-  onDiscard: () => void;
-}
+import type { DraftAlertProps } from "@/types/views/forms/DraftAlert-types";
 
 export function DraftAlert({
   draft,

@@ -6,7 +6,6 @@ import {
   getSortedRowModel,
   getFilteredRowModel,
   flexRender,
-  type ColumnDef,
   type SortingState,
   type ColumnFiltersState,
 } from "@tanstack/react-table";
@@ -22,13 +21,7 @@ import {
 } from "@/components/ui/Table";
 import { Input } from "@/components/ui/Input";
 import { IconSearch } from "@tabler/icons-react";
-
-export interface DataTableProps<T> {
-  columns: ColumnDef<T>[];
-  data: T[];
-  searchPlaceholder?: string;
-  searchKey?: string;
-}
+import type { DataTableProps } from "@/types/ui/DataTable-types";
 
 export function DataTable<T>({
   columns,

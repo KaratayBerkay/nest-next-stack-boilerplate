@@ -1,1 +1,2 @@
-export { DataTable, type DataTableProps } from "./data-table";
+export { DataTable } from "./data-table";
+export type { DataTableProps } from "@/types/ui/DataTable-types";

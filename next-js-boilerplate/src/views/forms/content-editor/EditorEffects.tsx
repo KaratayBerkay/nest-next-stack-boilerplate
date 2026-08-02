@@ -1,17 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import type { DraftValues } from "./draft-utils";
+import type { EditorEffectsProps } from "@/types/views/forms/EditorEffects-types";
 import { deriveSlug, saveDraft, clearDraft } from "./draft-utils";
-
-interface EditorEffectsProps {
-  draftKey: string;
-  values: DraftValues;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  formSetFieldValue: any;
-  dirtyRef: React.MutableRefObject<boolean>;
-  slugEditedByUser: React.MutableRefObject<boolean>;
-}
 
 export function EditorEffects({
   draftKey,

@@ -2,9 +2,7 @@ import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
 import { FilterSection } from "./FilterSection";
 import { ALL_CATEGORIES, SORT_OPTIONS } from "./constants";
-import type { useFiltersForm } from "./useFiltersForm";
-
-type FiltersFormProps = ReturnType<typeof useFiltersForm>;
+import type { FiltersFormProps } from "@/types/views/forms/FiltersForm-types";
 
 export function FiltersForm({
   form,
@@ -115,12 +113,7 @@ export function FiltersForm({
 
       <div className="flex items-center justify-between">
         <span className="text-xxs text-muted">{t.filters.results}</span>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={handleReset}
-        >
+        <Button type="button" variant="outline" size="sm" onClick={handleReset}>
           {t.filters.reset}
         </Button>
       </div>

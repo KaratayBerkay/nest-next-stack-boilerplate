@@ -1,13 +1,6 @@
 import { Label } from "@/components/ui/Label";
 import { cn } from "@/lib/cn";
-import type { ClassNameProps } from "@/types/ui/ClassName-types";
-
-interface SettingsSelectProps extends ClassNameProps {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: readonly { value: string; label: string }[];
-}
+import type { SettingsSelectProps } from "@/types/views/settings/SettingsSelect-types";
 
 export function SettingsSelect({
   label,

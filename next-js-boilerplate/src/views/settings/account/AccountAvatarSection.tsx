@@ -2,16 +2,7 @@ import type { RefObject } from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { initials } from "@/lib/initials";
-
-interface AccountAvatarSectionProps {
-  avatarUrl: string;
-  name: string;
-  email: string;
-  fileInputRef: RefObject<HTMLInputElement | null>;
-  onFileSelect: (file: File) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  t: any;
-}
+import type { AccountAvatarSectionProps } from "@/types/views/settings/AccountAvatarSection-types";
 
 export function AccountAvatarSection({
   avatarUrl,

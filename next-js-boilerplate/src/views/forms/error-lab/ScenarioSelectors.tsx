@@ -4,21 +4,7 @@ import { NativeSelect } from "@/components/ui/NativeSelect";
 import { ERROR_SCENARIOS } from "@/lib/forms/error-scenarios";
 import { getSurface } from "@/lib/exception-handler";
 import { GROUPS, NETWORK_OPTIONS } from "./trigger-handler";
-interface ScenarioSelectorsProps {
-  selectedScenario: string;
-  setSelectedScenario: (v: string) => void;
-  locale: "en" | "tr";
-  setLocale: (v: "en" | "tr") => void;
-  network: string;
-  setNetwork: (v: string) => void;
-  t: {
-    errorLab: {
-      scenarioLabel: string;
-      localeLabel: string;
-      networkLabel: string;
-    };
-  };
-}
+import type { ScenarioSelectorsProps } from "@/types/views/forms/ScenarioSelectors-types";
 
 export function ScenarioSelectors({
   selectedScenario,

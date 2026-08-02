@@ -1,12 +1,5 @@
 import { Button } from "@/components/ui/Button";
-
-interface EditorHeaderProps {
-  heading: string;
-  editLabel: string;
-  previewLabel: string;
-  preview: boolean;
-  onToggle: (preview: boolean) => void;
-}
+import type { EditorHeaderProps } from "@/types/views/forms/EditorHeader-types";
 
 export function EditorHeader({
   heading,

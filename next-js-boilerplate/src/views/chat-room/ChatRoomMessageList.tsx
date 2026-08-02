@@ -5,17 +5,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { SkeletonChatMessage } from "@/components/ui/skeleton-shapes";
 import { AttachmentPreview } from "@/components/AttachmentPreview";
 import { initials } from "@/lib/initials";
-import type { ChatRoomMessage } from "@/types/chat-room/ChatRoomMessage-types";
-
-interface ChatRoomMessageListProps {
-  messages: ChatRoomMessage[];
-  userId: string;
-  onlineUserIds: Set<string>;
-  msgsLoading: boolean;
-  msgsError: boolean;
-  bottomRef: React.RefObject<HTMLDivElement | null>;
-  t: Record<string, string>;
-}
+import type { ChatRoomMessageListProps } from "@/types/views/chat-room/ChatRoomMessageList-types";
 
 export const ChatRoomMessageList = forwardRef<
   HTMLDivElement,

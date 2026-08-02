@@ -4,6 +4,7 @@
 
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import type { EmailsStepProps } from "@/types/views/forms/EmailsStep-types";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MEMBER_EMAILS = new Set(["alice@example.com", "bob@example.com"]);
@@ -19,13 +20,6 @@ function validateEmail(
   if (emails.includes(trimmed)) return t.emailDuplicate as string;
   if (MEMBER_EMAILS.has(trimmed)) return t.emailAlreadyMember as string;
   return null;
-}
-
-interface EmailsStepProps {
-  form: any;
-  t: Record<string, unknown>;
-  emailInputError: string | null;
-  setEmailInputError: (error: string | null) => void;
 }
 
 export function EmailsStep({
@@ -54,17 +48,16 @@ export function EmailsStep({
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
-                    const error = validateEmail(
-                      field.state.value,
-                      emails,
-                      t,
-                    );
+                    const error = validateEmail(field.state.value, emails, t);
                     if (error) {
                       setEmailInputError(error);
                       return;
                     }
                     setEmailInputError(null);
-                    form.pushFieldValue("emails", field.state.value.trim().toLowerCase());
+                    form.pushFieldValue(
+                      "emails",
+                      field.state.value.trim().toLowerCase(),
+                    );
                     field.handleChange("");
                   }
                 }}
@@ -80,7 +73,10 @@ export function EmailsStep({
                     return;
                   }
                   setEmailInputError(null);
-                  form.pushFieldValue("emails", field.state.value.trim().toLowerCase());
+                  form.pushFieldValue(
+                    "emails",
+                    field.state.value.trim().toLowerCase(),
+                  );
                   field.handleChange("");
                 }}
               >
@@ -111,9 +107,7 @@ export function EmailsStep({
                 </button>
               </span>
               {chipError && (
-                <p className="text-xxs text-error">
-                  {chipError as string}
-                </p>
+                <p className="text-xxs text-error">{chipError as string}</p>
               )}
             </div>
           );

@@ -4,13 +4,20 @@ import { formatDateByPreference } from "@/lib/date-time";
 import { notificationTarget } from "@/lib/notifications/target";
 import type { DateDisplayFormat } from "@/constants/date-display";
 import type { NotificationItem as NotificationItemType } from "@/lib/realtime/useNotifications";
+import type { NotificationItemProps } from "@/types/views/notification/NotificationItem-types";
 
-interface NotificationItemProps {
-  notification: NotificationItemType;
-  onRead: (id: string) => void;
-  onNavigate: (target: string) => void;
-  lang: string;
-  dateDisplay: DateDisplayFormat;
+function handleNotificationClick(
+  n: NotificationItemType,
+  onRead: (id: string) => void,
+  onNavigate: (target: string) => void,
+  lang: string,
+) {
+  onRead(n.id);
+  const target = notificationTarget(
+    n.payload as Record<string, unknown> | undefined,
+    lang,
+  );
+  if (target) onNavigate(target);
 }
 
 export function NotificationItem({
@@ -22,14 +29,7 @@ export function NotificationItem({
 }: NotificationItemProps) {
   return (
     <button
-      onClick={() => {
-        onRead(n.id);
-        const target = notificationTarget(
-          n.payload as Record<string, unknown> | undefined,
-          lang,
-        );
-        if (target) onNavigate(target);
-      }}
+      onClick={() => handleNotificationClick(n, onRead, onNavigate, lang)}
       className={`hover:bg-surface-hover flex items-start gap-2.5 rounded-xl px-3 py-3 text-left ${
         !n.readAt ? "bg-brand/5" : ""
       }`}

@@ -1,14 +1,13 @@
 "use client";
 
 import { cn } from "@/lib/cn";
+import type { StatusBadgeProps } from "@/types/views/settings/StatusBadge-types";
 
-interface StatusBadgeProps {
-  status: string;
-  paidLabel: string;
-  unpaidLabel: string;
-}
-
-export function StatusBadge({ status, paidLabel, unpaidLabel }: StatusBadgeProps) {
+export function StatusBadge({
+  status,
+  paidLabel,
+  unpaidLabel,
+}: StatusBadgeProps) {
   const isPaid = status === "COMPLETED";
   return (
     <span

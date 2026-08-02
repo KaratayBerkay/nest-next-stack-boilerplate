@@ -3,26 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { handleCreateApiKey } from "./api-key-handlers";
-import type { useToast } from "@/components/ui/Toast";
-import type { useApiKeyActions } from "@/api/client/api-keys/actions";
-import type { Dispatch, SetStateAction } from "react";
-
-type ToastFn = ReturnType<typeof useToast>["toast"];
-type CreateApiKey = ReturnType<typeof useApiKeyActions>["createApiKey"];
-
-interface CreateApiKeyFormProps {
-  creating: boolean;
-  setCreating: Dispatch<SetStateAction<boolean>>;
-  newName: string;
-  setNewName: Dispatch<SetStateAction<string>>;
-  newExpiry: string;
-  setNewExpiry: Dispatch<SetStateAction<string>>;
-  setNewKeyResult: Dispatch<SetStateAction<string | null>>;
-  toast: ToastFn;
-  loadKeys: () => Promise<void>;
-  createApiKey: CreateApiKey;
-  onCancel: () => void;
-}
+import type { CreateApiKeyFormProps } from "@/types/views/settings/CreateApiKeyForm-types";
 
 const EXPIRY_OPTIONS = [
   { value: "", label: "No expiry" },

@@ -4,21 +4,7 @@ import { formatDateByPreference } from "@/lib/date-time";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { Button } from "@/components/ui/Button";
 import { handleRevokeApiKey } from "./api-key-handlers";
-import type { ApiKeyInfo } from "@/api/server/api-keys/list";
-import type { useToast } from "@/components/ui/Toast";
-import type { useApiKeyActions } from "@/api/client/api-keys/actions";
-
-type ApiKey = ApiKeyInfo;
-type ToastFn = ReturnType<typeof useToast>["toast"];
-type RevokeApiKey = ReturnType<typeof useApiKeyActions>["revokeApiKey"];
-
-interface ApiKeyListProps {
-  keys: ApiKey[];
-  loadingKeys: boolean;
-  toast: ToastFn;
-  loadKeys: () => Promise<void>;
-  revokeApiKey: RevokeApiKey;
-}
+import type { ApiKeyListProps } from "@/types/views/settings/ApiKeyList-types";
 
 export function ApiKeyList({
   keys,
@@ -76,8 +62,7 @@ export function ApiKeyList({
               )}
               {key.expiresAt && (
                 <span>
-                  Expires{" "}
-                  {formatDateByPreference(key.expiresAt, dateDisplay)}
+                  Expires {formatDateByPreference(key.expiresAt, dateDisplay)}
                 </span>
               )}
               {!key.expiresAt && <span>No expiry</span>}
@@ -87,7 +72,13 @@ export function ApiKeyList({
             variant="destructive"
             size="sm"
             onClick={() =>
-              handleRevokeApiKey(key.id, key.name, toast, loadKeys, revokeApiKey)
+              handleRevokeApiKey(
+                key.id,
+                key.name,
+                toast,
+                loadKeys,
+                revokeApiKey,
+              )
             }
           >
             Revoke

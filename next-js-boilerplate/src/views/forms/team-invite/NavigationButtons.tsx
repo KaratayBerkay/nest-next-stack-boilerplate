@@ -1,16 +1,7 @@
 "use client";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { Button } from "@/components/ui/Button";
-
-interface NavigationButtonsProps {
-  step: number;
-  setStep: (updater: (prev: number) => number) => void;
-  canNext: boolean;
-  t: Record<string, unknown>;
-  form: any;
-}
+import type { NavigationButtonsProps } from "@/types/views/forms/NavigationButtons-types";
 
 export function NavigationButtons({
   step,

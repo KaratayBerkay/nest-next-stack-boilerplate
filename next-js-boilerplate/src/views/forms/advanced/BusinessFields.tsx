@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Separator } from "@/components/ui/Separator";
 import { FieldInfoButton } from "@/components/ui/FieldInfoButton";
-import type { AdvancedFormType } from "@/types/forms/AdvancedPage-types";
+import type { BusinessFieldsProps } from "@/types/views/forms/BusinessFields-types";
 
 const INDUSTRY_OPTIONS = (t: Record<string, string>) => [
   { value: "technology", label: t.industryTechnology },
@@ -11,12 +11,6 @@ const INDUSTRY_OPTIONS = (t: Record<string, string>) => [
   { value: "ecommerce", label: t.industryEcommerce },
   { value: "other", label: t.industryOther },
 ];
-
-interface BusinessFieldsProps {
-  form: AdvancedFormType;
-  fieldSchemas: Record<string, unknown>;
-  t: Record<string, string>;
-}
 
 export function BusinessFields({ form, fieldSchemas, t }: BusinessFieldsProps) {
   return (
@@ -41,10 +35,7 @@ export function BusinessFields({ form, fieldSchemas, t }: BusinessFieldsProps) {
         )}
       </form.AppField>
 
-      <form.AppField
-        name="taxId"
-        validators={{ onChange: fieldSchemas.taxId }}
-      >
+      <form.AppField name="taxId" validators={{ onChange: fieldSchemas.taxId }}>
         {(field: any) => (
           <div className="flex items-center gap-1">
             <field.TextField

@@ -2,10 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-interface MessageStepProps {
-  form: any;
-  t: Record<string, unknown>;
-}
+import type { MessageStepProps } from "@/types/views/forms/MessageStep-types";
 
 export function MessageStep({ form, t }: MessageStepProps) {
   return (

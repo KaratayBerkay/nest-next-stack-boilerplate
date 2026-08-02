@@ -6,17 +6,9 @@ import {
   PieChart,
 } from "recharts";
 import { cn } from "@/lib/cn";
+import type { ChartProps } from "@/types/ui/Chart-types";
 
-export type ChartType = "line" | "bar" | "area" | "pie";
-
-export interface ChartProps {
-  type: ChartType;
-  data: Record<string, unknown>[];
-  width?: number | `${number}%`;
-  height?: number;
-  className?: string;
-  children: React.ReactNode;
-}
+export type { ChartType } from "@/types/ui/Chart-types";
 
 export function Chart({
   type,

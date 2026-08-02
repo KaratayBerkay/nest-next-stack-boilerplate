@@ -1,16 +1,12 @@
-import type { BuilderField } from "@/types/forms/BuilderField-types";
-import type { useMessages } from "@/lib/i18n/MessagesProvider";
-import type { useAppForm } from "@/features/forms/form-hook";
 import { Button } from "@/components/ui/Button";
+import type { FormPreviewProps } from "@/types/views/forms/FormPreview-types";
 
-interface FormPreviewProps {
-  fields: BuilderField[];
-  dynamicForm: ReturnType<typeof useAppForm>;
-  onSubmit: () => void;
-  t: ReturnType<typeof useMessages<"forms">>;
-}
-
-export function FormPreview({ fields, dynamicForm, onSubmit, t }: FormPreviewProps) {
+export function FormPreview({
+  fields,
+  dynamicForm,
+  onSubmit,
+  t,
+}: FormPreviewProps) {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-xxs text-muted">
@@ -41,9 +37,7 @@ export function FormPreview({ fields, dynamicForm, onSubmit, t }: FormPreviewPro
           )}
         </dynamicForm.AppField>
       ))}
-      <Button onClick={onSubmit}>
-        {t.formBuilder.submitPreview}
-      </Button>
+      <Button onClick={onSubmit}>{t.formBuilder.submitPreview}</Button>
     </div>
   );
 }

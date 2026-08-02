@@ -8,26 +8,7 @@ import {
   SidebarCloseButton,
   RoomButton,
 } from "@/views/chat-room/ChatRoomSubComponents";
-
-interface ChatRoomSidebarProps {
-  useNativeControls: boolean;
-  sidebarOpen: boolean;
-  rooms: string[];
-  room: string;
-  roomCounts: Record<string, number>;
-  vipRooms: string[];
-  roomMembers: {
-    id: string;
-    name: string;
-    chatNickname?: string;
-    avatarUrl?: string | null;
-  }[];
-  user: { id: string; name?: string | null };
-  showSelfCrown: boolean;
-  t: Record<string, string>;
-  onSetSidebarOpen: (open: boolean) => void;
-  onSelectRoom: (r: string) => void;
-}
+import type { ChatRoomSidebarProps } from "@/types/views/chat-room/ChatRoomSidebar-types";
 
 export function ChatRoomSidebar({
   useNativeControls,

@@ -2,14 +2,8 @@
 
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { FileUpload } from "@/components/ui/FileUpload";
-import type { UploadFile } from "@/types/ui/FileUpload-types";
+import type { GalleryUploadSectionProps } from "@/types/views/forms/GalleryUploadSection-types";
 import { MAX_UPLOAD_SIZE } from "@/constants/upload";
-
-interface GalleryUploadSectionProps {
-  files: UploadFile[];
-  onFilesChange: (files: UploadFile[]) => void;
-  onUpload: (file: File, reportProgress: (pct: number) => void) => Promise<void>;
-}
 
 export function GalleryUploadSection({
   files,

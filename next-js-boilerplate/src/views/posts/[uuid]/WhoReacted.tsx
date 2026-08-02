@@ -2,10 +2,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { initials } from "@/lib/initials";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { Post } from "@/types/posts/Post-types";
-
-interface WhoReactedProps {
-  post: Post;
-}
+import type { WhoReactedProps } from "@/types/views/posts/WhoReacted-types";
 
 export function WhoReacted({ post }: WhoReactedProps) {
   const t = useMessages("posts");

@@ -1,9 +1,4 @@
-interface EditorPreviewProps {
-  title: string;
-  tags: string[];
-  body: string;
-  untitledLabel: string;
-}
+import type { EditorPreviewProps } from "@/types/views/forms/EditorPreview-types";
 
 export function EditorPreview({
   title,

@@ -3,13 +3,8 @@
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useProfileActions } from "@/api/client/profile/actions";
 import { ImageUpload } from "@/components/ui/ImageUpload";
-import type { UploadFile } from "@/types/ui/FileUpload-types";
+import type { AvatarUploadSectionProps } from "@/types/views/forms/AvatarUploadSection-types";
 import { MAX_UPLOAD_SIZE } from "@/constants/upload";
-
-interface AvatarUploadSectionProps {
-  files: UploadFile[];
-  onChange: (files: UploadFile[]) => void;
-}
 
 export function AvatarUploadSection({
   files,
@@ -28,8 +23,7 @@ export function AvatarUploadSection({
         onChange={(nextFiles) => {
           const newFile = nextFiles.find(
             (f) =>
-              f.status === "pending" &&
-              !files.some((af) => af.id === f.id),
+              f.status === "pending" && !files.some((af) => af.id === f.id),
           );
           if (newFile) {
             uploadAvatar(newFile.file)
@@ -37,7 +31,12 @@ export function AvatarUploadSection({
                 onChange(
                   nextFiles.map((f) =>
                     f.id === newFile.id
-                      ? { ...f, status: "done", progress: 100, preview: result.urls?.full }
+                      ? {
+                          ...f,
+                          status: "done",
+                          progress: 100,
+                          preview: result.urls?.full,
+                        }
                       : f,
                   ),
                 );

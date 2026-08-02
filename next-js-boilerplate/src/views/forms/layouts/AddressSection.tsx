@@ -3,10 +3,7 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { FieldInfoButton } from "@/components/ui/FieldInfoButton";
 import { NativeSelect } from "@/components/ui/NativeSelect";
 import { Label } from "@/components/ui/Label";
-
-interface AddressSectionProps {
-  form: any;
-}
+import type { AddressSectionProps } from "@/types/views/forms/AddressSection-types";
 
 export function AddressSection({ form }: AddressSectionProps) {
   const t = useMessages("forms");
@@ -23,9 +20,7 @@ export function AddressSection({ form }: AddressSectionProps) {
               label={t.layouts.sectionedStreet_label}
               placeholder={t.layouts.sectionedStreet_placeholder}
             />
-            <FieldInfoButton
-              description={t.layouts.sectionedStreet_info}
-            />
+            <FieldInfoButton description={t.layouts.sectionedStreet_info} />
           </div>
         )}
       </form.AppField>
@@ -37,9 +32,7 @@ export function AddressSection({ form }: AddressSectionProps) {
                 label={t.layouts.sectionedCity_label}
                 placeholder={t.layouts.sectionedCity_placeholder}
               />
-              <FieldInfoButton
-                description={t.layouts.sectionedCity_info}
-              />
+              <FieldInfoButton description={t.layouts.sectionedCity_info} />
             </div>
           )}
         </form.AppField>
@@ -50,9 +43,7 @@ export function AddressSection({ form }: AddressSectionProps) {
                 label={t.layouts.sectionedState_label}
                 placeholder={t.layouts.sectionedState_placeholder}
               />
-              <FieldInfoButton
-                description={t.layouts.sectionedState_info}
-              />
+              <FieldInfoButton description={t.layouts.sectionedState_info} />
             </div>
           )}
         </form.AppField>
@@ -63,9 +54,7 @@ export function AddressSection({ form }: AddressSectionProps) {
                 label={t.layouts.sectionedZip_label}
                 placeholder={t.layouts.sectionedZip_placeholder}
               />
-              <FieldInfoButton
-                description={t.layouts.sectionedZip_info}
-              />
+              <FieldInfoButton description={t.layouts.sectionedZip_info} />
             </div>
           )}
         </form.AppField>
@@ -73,17 +62,13 @@ export function AddressSection({ form }: AddressSectionProps) {
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-1">
           <Label>{t.layouts.sectionedCountry_label}</Label>
-          <FieldInfoButton
-            description={t.layouts.sectionedCountry_info}
-          />
+          <FieldInfoButton description={t.layouts.sectionedCountry_info} />
         </div>
         <NativeSelect
           value={form.getFieldValue("country")}
           onChange={(e) => form.setFieldValue("country", e.target.value)}
         >
-          <option value="">
-            {t.layouts.sectionedCountry_placeholder}
-          </option>
+          <option value="">{t.layouts.sectionedCountry_placeholder}</option>
           <option value="us">{t.layouts.sectionedCountry_us}</option>
           <option value="ca">{t.layouts.sectionedCountry_ca}</option>
           <option value="uk">{t.layouts.sectionedCountry_uk}</option>

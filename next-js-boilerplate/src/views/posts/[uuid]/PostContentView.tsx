@@ -3,10 +3,7 @@ import { IconMessageCircle } from "@tabler/icons-react";
 import { imageUrl } from "@/lib/image";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { Post } from "@/types/posts/Post-types";
-
-interface PostContentViewProps {
-  post: Post;
-}
+import type { PostContentViewProps } from "@/types/views/posts/PostContentView-types";
 
 export function PostContentView({ post }: PostContentViewProps) {
   const t = useMessages("posts");

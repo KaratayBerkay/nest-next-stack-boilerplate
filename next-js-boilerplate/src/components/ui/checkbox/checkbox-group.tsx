@@ -7,6 +7,30 @@ import { Checkbox } from "./checkbox";
 import { IndeterminateCheckbox } from "./indeterminate-checkbox";
 import type { CheckboxGroupProps } from "@/types/ui/Checkbox-types";
 
+function handleToggle(
+  itemValue: string,
+  values: string[],
+  onValueChange: (values: string[]) => void,
+) {
+  if (values.includes(itemValue)) {
+    onValueChange(values.filter((v) => v !== itemValue));
+  } else {
+    onValueChange([...values, itemValue]);
+  }
+}
+
+function handleSelectAll(
+  allSelected: boolean,
+  items: { value: string }[],
+  onValueChange: (values: string[]) => void,
+) {
+  if (allSelected) {
+    onValueChange([]);
+  } else {
+    onValueChange(items.map((item) => item.value));
+  }
+}
+
 export function CheckboxGroup({
   values,
   onValueChange,
@@ -25,22 +49,6 @@ export function CheckboxGroup({
   const allSelected = items.every((item) => values.includes(item.value));
   const someSelected = items.some((item) => values.includes(item.value));
 
-  const handleToggle = (itemValue: string) => {
-    if (values.includes(itemValue)) {
-      onValueChange(values.filter((v) => v !== itemValue));
-    } else {
-      onValueChange([...values, itemValue]);
-    }
-  };
-
-  const handleSelectAll = () => {
-    if (allSelected) {
-      onValueChange([]);
-    } else {
-      onValueChange(items.map((item) => item.value));
-    }
-  };
-
   return (
     <div className={cn("flex flex-col gap-2", className)}>
       {label && (
@@ -58,7 +66,7 @@ export function CheckboxGroup({
           <IndeterminateCheckbox
             checked={allSelected}
             indeterminate={someSelected && !allSelected}
-            onChange={handleSelectAll}
+            onChange={() => handleSelectAll(allSelected, items, onValueChange)}
             label="Select all"
             fontSize={fontSize}
             fontWeight={fontWeight}
@@ -71,7 +79,7 @@ export function CheckboxGroup({
             id={`${autoId}-${item.value}`}
             checked={values.includes(item.value)}
             disabled={item.disabled}
-            onChange={() => handleToggle(item.value)}
+            onChange={() => handleToggle(item.value, values, onValueChange)}
             label={item.label}
             fontSize={fontSize}
             fontWeight={fontWeight}

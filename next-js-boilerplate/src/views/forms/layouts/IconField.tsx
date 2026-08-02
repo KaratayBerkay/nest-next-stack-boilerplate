@@ -1,17 +1,7 @@
-import type { ReactNode } from "react";
-import type { AnyFieldApi } from "@tanstack/react-form";
 import { Label } from "@/components/ui/Label";
 import { Input } from "@/components/ui/Input";
 import { FieldInfoButton } from "@/components/ui/FieldInfoButton";
-
-interface IconFieldProps {
-  field: AnyFieldApi;
-  label: string;
-  info: string;
-  placeholder: string;
-  leftIcon: ReactNode;
-  type?: string;
-}
+import type { IconFieldProps } from "@/types/views/forms/IconField-types";
 
 export function IconField({
   field,

@@ -1,14 +1,6 @@
 "use client";
 
-import type { PremiumGrowthStats } from "@/types/premium/PremiumPageView-types";
-import type { I18nMessages } from "@/generated/i18n-messages";
-
-interface GrowthStatsSectionProps {
-  growthStats: PremiumGrowthStats | null;
-  loadingGrowth: boolean;
-  onLoadGrowthStats: () => void;
-  t: I18nMessages["premium"];
-}
+import type { GrowthStatsSectionProps } from "@/types/views/premium/GrowthStatsSection-types";
 
 export function GrowthStatsSection({
   growthStats,
@@ -40,9 +32,7 @@ export function GrowthStatsSection({
             <p className="text-muted text-xs font-medium tracking-wide uppercase">
               {t.totalPosts}
             </p>
-            <p className="mt-1 text-2xl font-bold">
-              {growthStats.totalPosts}
-            </p>
+            <p className="mt-1 text-2xl font-bold">{growthStats.totalPosts}</p>
           </div>
           <div className="border-border rounded-xl border p-4">
             <p className="text-muted text-xs font-medium tracking-wide uppercase">
@@ -56,9 +46,7 @@ export function GrowthStatsSection({
             <p className="text-muted text-xs font-medium tracking-wide uppercase">
               {t.totalUsers}
             </p>
-            <p className="mt-1 text-2xl font-bold">
-              {growthStats.totalUsers}
-            </p>
+            <p className="mt-1 text-2xl font-bold">{growthStats.totalUsers}</p>
           </div>
         </div>
       )}

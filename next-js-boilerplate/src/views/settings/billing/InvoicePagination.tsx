@@ -1,14 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/cn";
-
-interface InvoicePaginationProps {
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-  previousLabel: string;
-  nextLabel: string;
-}
+import type { InvoicePaginationProps } from "@/types/views/settings/InvoicePagination-types";
 
 export function InvoicePagination({
   currentPage,

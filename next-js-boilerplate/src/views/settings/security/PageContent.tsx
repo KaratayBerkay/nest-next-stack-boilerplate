@@ -7,10 +7,69 @@ import { PageHeader } from "@/components/ui";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsSecurityPageInfo } from "@/constants/page-info";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import {
+  enrollMfaServer,
+  verifyMfaEnrollmentServer,
+  disableMfaServer,
+} from "@/api/server/auth/mfa";
+import type { SecurityPageContentProps } from "@/types/views/settings/SecurityPageContent-types";
 
-interface SecurityPageContentProps {
-  initialMfaEnabled?: boolean;
-  lang?: string;
+async function handleEnroll(
+  setEnrollData: (data: { otpauthUrl: string; secret: string }) => void,
+  setStep: (step: "idle" | "qr-code" | "verify" | "backup-codes") => void,
+  setEnrolling: (enrolling: boolean) => void,
+  setError: (error: string | null) => void,
+) {
+  try {
+    const data = await enrollMfaServer();
+    setEnrollData(data);
+    setStep("qr-code");
+    setEnrolling(true);
+  } catch {
+    setError("Failed to start enrollment");
+  }
+}
+
+async function handleVerify(
+  verifyCode: string,
+  setBackupCodes: (codes: string[]) => void,
+  setStep: (step: "idle" | "qr-code" | "verify" | "backup-codes") => void,
+  setMfaEnabled: (enabled: boolean) => void,
+  setError: (error: string | null) => void,
+) {
+  try {
+    const data = await verifyMfaEnrollmentServer(verifyCode);
+    if (data.backupCodes) {
+      setBackupCodes(data.backupCodes);
+      setStep("backup-codes");
+      setMfaEnabled(true);
+    } else {
+      setError("Verification failed");
+    }
+  } catch {
+    setError("Verification failed");
+  }
+}
+
+async function handleDisable(
+  disableCode: string,
+  setMfaEnabled: (enabled: boolean) => void,
+  setConfirmingDisable: (confirming: boolean) => void,
+  setDisableCode: (code: string) => void,
+  setError: (error: string | null) => void,
+) {
+  try {
+    const data = await disableMfaServer(disableCode);
+    if (data.success) {
+      setMfaEnabled(false);
+      setConfirmingDisable(false);
+      setDisableCode("");
+    } else {
+      setError("Failed to disable MFA");
+    }
+  } catch {
+    setError("Failed to disable MFA");
+  }
 }
 
 export default function SecurityPageContent({
@@ -34,58 +93,6 @@ export default function SecurityPageContent({
   const [disableCode, setDisableCode] = useState("");
   const [confirmingDisable, setConfirmingDisable] = useState(false);
 
-  const handleEnroll = async () => {
-    try {
-      const res = await fetch("/api/auth/mfa/enroll", { method: "POST" });
-      const data = await res.json();
-      setEnrollData(data);
-      setStep("qr-code");
-      setEnrolling(true);
-    } catch {
-      setError("Failed to start enrollment");
-    }
-  };
-
-  const handleVerify = async () => {
-    try {
-      const res = await fetch("/api/auth/mfa/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: verifyCode }),
-      });
-      const data = await res.json();
-      if (data.backupCodes) {
-        setBackupCodes(data.backupCodes);
-        setStep("backup-codes");
-        setMfaEnabled(true);
-      } else {
-        setError(data.msg ?? "Verification failed");
-      }
-    } catch {
-      setError("Verification failed");
-    }
-  };
-
-  const handleDisable = async () => {
-    try {
-      const res = await fetch("/api/auth/mfa/disable", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: disableCode }),
-      });
-      if (res.ok) {
-        setMfaEnabled(false);
-        setConfirmingDisable(false);
-        setDisableCode("");
-      } else {
-        const data = await res.json();
-        setError(data.msg ?? "Failed to disable MFA");
-      }
-    } catch {
-      setError("Failed to disable MFA");
-    }
-  };
-
   if (!enrolling) {
     return (
       <div className="flex flex-col gap-6">
@@ -108,7 +115,15 @@ export default function SecurityPageContent({
                   onChange={setDisableCode}
                 />
                 <button
-                  onClick={handleDisable}
+                  onClick={() =>
+                    handleDisable(
+                      disableCode,
+                      setMfaEnabled,
+                      setConfirmingDisable,
+                      setDisableCode,
+                      setError,
+                    )
+                  }
                   disabled={disableCode.length < 6}
                   className="w-full rounded-lg bg-red-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
                 >
@@ -125,7 +140,9 @@ export default function SecurityPageContent({
             )
           ) : (
             <button
-              onClick={handleEnroll}
+              onClick={() =>
+                handleEnroll(setEnrollData, setStep, setEnrolling, setError)
+              }
               className="bg-brand hover:bg-brand-hover w-full rounded-lg py-2.5 text-sm font-medium text-white transition-colors"
             >
               {t.securitySetupTwoFactor}
@@ -190,14 +207,24 @@ export default function SecurityPageContent({
             />
             {error && <p className="text-sm text-red-500">{error}</p>}
             <button
-              onClick={handleVerify}
+              onClick={() =>
+                handleVerify(
+                  verifyCode,
+                  setBackupCodes,
+                  setStep,
+                  setMfaEnabled,
+                  setError,
+                )
+              }
               disabled={verifyCode.length < 6}
               className="bg-brand hover:bg-brand-hover disabled:bg-brand/50 w-full rounded-lg py-2.5 text-sm font-medium text-white transition-colors"
             >
               {t.securityVerify}
             </button>
             <button
-              onClick={handleEnroll}
+              onClick={() =>
+                handleEnroll(setEnrollData, setStep, setEnrolling, setError)
+              }
               className="text-brand w-full text-sm underline"
             >
               {t.securityRegenerateQr}

@@ -1,5 +1,7 @@
 import { apiFetchJson } from "@/lib/api-client";
 import { BILLING_ADDRESS_URL } from "@/constants/api/urls";
+import { POST } from "@/constants/api/methods";
+import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 
 export interface BillingAddress {
   name: string | null;
@@ -24,8 +26,8 @@ export async function upsertBillingAddressServer(
   const data = await apiFetchJson<{ address: BillingAddress }>(
     BILLING_ADDRESS_URL,
     {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: POST,
+      headers: JSON_CONTENT_TYPE_HEADER,
       body: JSON.stringify({ input }),
     },
   );

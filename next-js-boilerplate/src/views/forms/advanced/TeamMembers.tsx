@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FieldInfoButton } from "@/components/ui/FieldInfoButton";
 import { Button } from "@/components/ui/Button";
-import type { AdvancedFormType } from "@/types/forms/AdvancedPage-types";
+import type { TeamMembersProps } from "@/types/views/forms/TeamMembers-types";
 
 const EMPTY_MEMBER = { name: "", email: "", role: "" };
 
@@ -12,14 +12,12 @@ const ROLE_OPTIONS = (t: Record<string, string>) => [
   { value: "viewer", label: t.roleViewer },
 ];
 
-interface TeamMembersProps {
-  form: AdvancedFormType;
-  fieldSchemas: Record<string, unknown>;
-  members: Array<{ name: string; email: string; role: string }>;
-  t: Record<string, string>;
-}
-
-export function TeamMembers({ form, fieldSchemas, members, t }: TeamMembersProps) {
+export function TeamMembers({
+  form,
+  fieldSchemas,
+  members,
+  t,
+}: TeamMembersProps) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-1">

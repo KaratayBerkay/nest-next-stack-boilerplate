@@ -4,10 +4,7 @@ import { FieldInfoButton } from "@/components/ui/FieldInfoButton";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { sectionedFieldSchemas } from "@/validators/forms/layouts-validation";
-
-interface PersonalInfoSectionProps {
-  form: any;
-}
+import type { PersonalInfoSectionProps } from "@/types/views/forms/PersonalInfoSection-types";
 
 export function PersonalInfoSection({ form }: PersonalInfoSectionProps) {
   const t = useMessages("forms");
@@ -44,9 +41,7 @@ export function PersonalInfoSection({ form }: PersonalInfoSectionProps) {
                 label={t.layouts.sectionedLastName_label}
                 placeholder={t.layouts.sectionedLastName_placeholder}
               />
-              <FieldInfoButton
-                description={t.layouts.sectionedLastName_info}
-              />
+              <FieldInfoButton description={t.layouts.sectionedLastName_info} />
             </div>
           )}
         </form.AppField>
@@ -63,9 +58,7 @@ export function PersonalInfoSection({ form }: PersonalInfoSectionProps) {
           <Input
             type="date"
             value={form.getFieldValue("dateOfBirth")}
-            onChange={(e) =>
-              form.setFieldValue("dateOfBirth", e.target.value)
-            }
+            onChange={(e) => form.setFieldValue("dateOfBirth", e.target.value)}
           />
         </div>
       </div>
@@ -97,9 +90,7 @@ export function PersonalInfoSection({ form }: PersonalInfoSectionProps) {
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-1">
           <Label>{t.layouts.sectionedCategory_label}</Label>
-          <FieldInfoButton
-            description={t.layouts.sectionedCategory_info}
-          />
+          <FieldInfoButton description={t.layouts.sectionedCategory_info} />
         </div>
         <div className="flex gap-4">
           {[
@@ -107,10 +98,7 @@ export function PersonalInfoSection({ form }: PersonalInfoSectionProps) {
             { value: "design" as const, label: "Design" },
             { value: "business" as const, label: "Business" },
           ].map((c) => (
-            <label
-              key={c.value}
-              className="flex items-center gap-2 text-sm"
-            >
+            <label key={c.value} className="flex items-center gap-2 text-sm">
               <input
                 type="radio"
                 name="category"

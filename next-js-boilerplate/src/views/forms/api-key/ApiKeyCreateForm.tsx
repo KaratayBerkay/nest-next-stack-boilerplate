@@ -4,7 +4,7 @@
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/Button";
 import { FormLevelError } from "@/components/ui/FormLevelError";
-import type { ApiKeyInfo } from "@/api/server/api-keys/list";
+import type { ApiKeyCreateFormProps } from "@/types/views/forms/ApiKeyCreateForm-types";
 
 const PERMISSION_OPTIONS = [
   { value: "read:users", label: "Read Users" },
@@ -22,13 +22,6 @@ const EXPIRY_OPTIONS = [
   { value: "90", label: "90 Days" },
   { value: "never", label: "No Expiry" },
 ];
-
-interface ApiKeyCreateFormProps {
-  form: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-  keys: ApiKeyInfo[] | undefined;
-  t: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-  onSubmit: (e: React.FormEvent) => void;
-}
 
 export function ApiKeyCreateForm({
   form,
@@ -61,13 +54,20 @@ export function ApiKeyCreateForm({
         name="name"
         validators={{
           onChange: ({ value }: { value: string }) => {
-            if (!value?.trim()) return t.apiKey.nameRequired ?? "Key name is required";
-            if (value.length > 60) return t.apiKey.nameTooLong ?? "Key name must be 60 characters or fewer";
+            if (!value?.trim())
+              return t.apiKey.nameRequired ?? "Key name is required";
+            if (value.length > 60)
+              return (
+                t.apiKey.nameTooLong ??
+                "Key name must be 60 characters or fewer"
+              );
             return undefined;
           },
           onBlur: ({ value }: { value: string }) => {
             if (!value?.trim()) return undefined;
-            return keys?.some((k) => k.name === value.trim()) ? (t.apiKey.nameExists ?? "You already have a key with this name") : undefined;
+            return keys?.some((k) => k.name === value.trim())
+              ? (t.apiKey.nameExists ?? "You already have a key with this name")
+              : undefined;
           },
         }}
       >
@@ -97,24 +97,44 @@ export function ApiKeyCreateForm({
       </form.AppField>
 
       <div className="flex flex-col gap-1">
-        <span className="text-xxs text-muted font-medium">{t.apiKey.ipWhitelistLabel}</span>
+        <span className="text-xxs text-muted font-medium">
+          {t.apiKey.ipWhitelistLabel}
+        </span>
         <div className="flex gap-2">
           <input
             className="border-border bg-field flex-1 rounded border px-2 py-1.5 text-xs"
             placeholder={t.apiKey.ipPlaceholder}
             value={ipInput}
             onChange={(e) => setIpInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddIp(); } }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleAddIp();
+              }
+            }}
           />
-          <Button size="sm" variant="outline" type="button" onClick={handleAddIp}>
+          <Button
+            size="sm"
+            variant="outline"
+            type="button"
+            onClick={handleAddIp}
+          >
             {t.apiKey.addIp}
           </Button>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {ipWhitelist.map((ip) => (
-            <span key={ip} className="bg-emphasis text-xxs flex items-center gap-1 rounded px-2 py-1">
+            <span
+              key={ip}
+              className="bg-emphasis text-xxs flex items-center gap-1 rounded px-2 py-1"
+            >
               {ip}
-              <button type="button" onClick={() => handleRemoveIp(ip)} className="text-destructive" aria-label={`${t.apiKey.removeIp} ${ip}`}>
+              <button
+                type="button"
+                onClick={() => handleRemoveIp(ip)}
+                className="text-destructive"
+                aria-label={`${t.apiKey.removeIp} ${ip}`}
+              >
                 &times;
               </button>
             </span>

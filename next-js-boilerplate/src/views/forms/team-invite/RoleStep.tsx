@@ -2,17 +2,13 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import type { RoleStepProps } from "@/types/views/forms/RoleStep-types";
+
 const ROLE_OPTIONS = [
   { value: "member", label: "Member" },
   { value: "admin", label: "Admin" },
   { value: "owner", label: "Owner" },
 ];
-
-interface RoleStepProps {
-  form: any;
-  t: Record<string, unknown>;
-  roleSchema: any;
-}
 
 export function RoleStep({ form, t, roleSchema }: RoleStepProps) {
   return (

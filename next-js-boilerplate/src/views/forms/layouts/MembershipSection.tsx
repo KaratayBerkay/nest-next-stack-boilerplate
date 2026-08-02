@@ -1,12 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { FieldInfoButton } from "@/components/ui/FieldInfoButton";
 import { Switch } from "@/components/ui/Switch";
 import { Label } from "@/components/ui/Label";
-
-interface MembershipSectionProps {
-  form: any;
-}
+import type { MembershipSectionProps } from "@/types/views/forms/MembershipSection-types";
 
 export function MembershipSection({ form }: MembershipSectionProps) {
   const t = useMessages("forms");
@@ -27,10 +23,7 @@ export function MembershipSection({ form }: MembershipSectionProps) {
             { value: "basic" as const, label: "Basic" },
             { value: "premium" as const, label: "Premium" },
           ].map((p) => (
-            <label
-              key={p.value}
-              className="flex items-center gap-2 text-sm"
-            >
+            <label key={p.value} className="flex items-center gap-2 text-sm">
               <input
                 type="radio"
                 name="plan"

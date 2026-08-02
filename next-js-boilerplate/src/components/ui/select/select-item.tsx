@@ -6,6 +6,19 @@ import { useEffect, useRef } from "react";
 import { useSelect } from "./select";
 import type { SelectItemProps } from "@/types/ui/Select-types";
 
+function handleClick(
+  disabled: boolean | undefined,
+  itemValue: string,
+  onValueChange: (value: string) => void,
+  setOpen: (open: boolean) => void,
+  triggerRef: React.RefObject<HTMLButtonElement | null>,
+) {
+  if (disabled) return;
+  onValueChange(itemValue);
+  setOpen(false);
+  triggerRef.current?.focus();
+}
+
 export function SelectItem({
   className,
   value: itemValue,
@@ -30,13 +43,6 @@ export function SelectItem({
     };
   }, [itemValue, children, labelMap]);
 
-  const handleClick = () => {
-    if (disabled) return;
-    onValueChange(itemValue);
-    setOpen(false);
-    triggerRef.current?.focus();
-  };
-
   return (
     <button
       ref={itemRef}
@@ -55,7 +61,8 @@ export function SelectItem({
       )}
       onClick={(e) => {
         onClick?.(e);
-        if (!e.defaultPrevented) handleClick();
+        if (!e.defaultPrevented)
+          handleClick(disabled, itemValue, onValueChange, setOpen, triggerRef);
       }}
       tabIndex={-1}
       {...props}

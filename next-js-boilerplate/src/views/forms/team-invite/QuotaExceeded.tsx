@@ -1,13 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
-
-interface QuotaExceededProps {
-  heading: string;
-  quotaTitle: string;
-  quotaBody: string;
-  onReset: () => void;
-}
+import type { QuotaExceededProps } from "@/types/views/forms/QuotaExceeded-types";
 
 export function QuotaExceeded({
   heading,

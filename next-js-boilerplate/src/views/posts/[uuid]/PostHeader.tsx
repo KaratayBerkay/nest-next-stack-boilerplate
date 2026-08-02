@@ -11,16 +11,7 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { postsPageInfo } from "@/constants/page-info";
 import type { Post } from "@/types/posts/Post-types";
-
-interface PostHeaderProps {
-  post: Post;
-  uuid: string;
-  editing: boolean;
-  currentUserId?: string;
-  showPageInfo?: boolean;
-  onStartEdit: () => void;
-  onDelete: () => void;
-}
+import type { PostHeaderProps } from "@/types/views/posts/PostHeader-types";
 
 export function PostHeader({
   post,

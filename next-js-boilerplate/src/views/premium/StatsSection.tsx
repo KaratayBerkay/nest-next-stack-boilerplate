@@ -1,15 +1,6 @@
 "use client";
 
-import type { PremiumStats } from "@/types/premium/PremiumPageView-types";
-import type { I18nMessages } from "@/generated/i18n-messages";
-
-interface StatsSectionProps {
-  stats: PremiumStats | null;
-  loadingStats: boolean;
-  onLoadStats: () => void;
-  onExportCSV?: () => void;
-  t: I18nMessages["premium"];
-}
+import type { StatsSectionProps } from "@/types/views/premium/StatsSection-types";
 
 export function StatsSection({
   stats,
@@ -24,7 +15,7 @@ export function StatsSection({
         <button
           onClick={onLoadStats}
           disabled={loadingStats}
-          className="bg-brand self-start rounded-lg px-4 py-2 text-sm font-medium text-brand-fg transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="bg-brand text-brand-fg self-start rounded-lg px-4 py-2 text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {loadingStats ? t.loading : t.loadStats}
         </button>

@@ -1,12 +1,6 @@
 "use client";
 
-import type { ExceptionResponse } from "@/lib/api-client";
-import type { ClientException } from "@/lib/exception-handler";
-
-interface ErrorResultDisplayProps {
-  result: ExceptionResponse | ClientException | null;
-  label: string;
-}
+import type { ErrorResultDisplayProps } from "@/types/views/forms/ErrorResultDisplay-types";
 
 export function ErrorResultDisplay({ result, label }: ErrorResultDisplayProps) {
   if (!result) return null;

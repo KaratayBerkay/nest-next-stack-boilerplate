@@ -1,9 +1,6 @@
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { Post } from "@/types/posts/Post-types";
-
-interface ReactionBreakdownProps {
-  post: Post;
-}
+import type { ReactionBreakdownProps } from "@/types/views/posts/ReactionBreakdown-types";
 
 export function ReactionBreakdown({ post }: ReactionBreakdownProps) {
   const t = useMessages("posts");

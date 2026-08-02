@@ -3,23 +3,15 @@
 import { useCallback } from "react";
 import Link from "next/link";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
-import { tierLabel, type Tier } from "@/lib/tier";
+import type { Tier } from "@/lib/tier";
+import { tierLabel } from "@/lib/tier";
 import { formatPrice, toCurrencyCode } from "@/lib/currency";
 import { plansPath } from "@/constants/routes";
 import { useToast } from "@/components/ui/Toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useBillingActions } from "@/api/client/billing/actions";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-
-interface PlanDetailsProps {
-  tier: Tier;
-  priceCents: number;
-  currency: string;
-  periodEnd?: string;
-  cancelAtPeriodEnd: boolean;
-  pendingTier?: string;
-  pendingTierEffectiveAt?: string;
-}
+import type { PlanDetailsProps } from "@/types/views/settings/PlanDetails-types";
 
 async function handleCancel(
   queryClient: ReturnType<typeof useQueryClient>,

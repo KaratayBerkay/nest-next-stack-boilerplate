@@ -1,17 +1,12 @@
 "use client";
 
+import type { ReviewStepProps } from "@/types/views/forms/ReviewStep-types";
+
 const ROLE_OPTIONS = [
   { value: "member", label: "Member" },
   { value: "admin", label: "Admin" },
   { value: "owner", label: "Owner" },
 ];
-
-interface ReviewStepProps {
-  emails: string[];
-  role: string;
-  message: string;
-  t: Record<string, unknown>;
-}
 
 export function ReviewStep({ emails, role, message, t }: ReviewStepProps) {
   return (

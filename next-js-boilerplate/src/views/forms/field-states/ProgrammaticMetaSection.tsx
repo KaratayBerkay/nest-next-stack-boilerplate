@@ -6,34 +6,46 @@ import { Button } from "@/components/ui/Button";
 import { Label } from "@/components/ui/Label";
 import { StateCard } from "./StateCard";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function handleSetError(form: any) {
+  form.setFieldMeta(
+    "metaField",
+    (prev: { errors: string[]; isValidating: boolean }) => ({
+      ...prev,
+      errors: ["Server rejected this value"],
+      isValidating: false,
+    }),
+  );
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function handleSetValidating(form: any) {
+  form.setFieldMeta(
+    "metaField",
+    (prev: { errors: string[]; isValidating: boolean }) => ({
+      ...prev,
+      errors: [],
+      isValidating: true,
+    }),
+  );
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function handleClear(form: any) {
+  form.setFieldMeta(
+    "metaField",
+    (prev: { errors: string[]; isValidating: boolean }) => ({
+      ...prev,
+      errors: [],
+      isValidating: false,
+    }),
+  );
+}
+
 export function ProgrammaticMetaSection() {
   const form = useAppForm({
     defaultValues: { metaField: "" },
   });
-
-  const handleSetError = () => {
-    form.setFieldMeta("metaField", (prev) => ({
-      ...prev,
-      errors: ["Server rejected this value"],
-      isValidating: false,
-    }));
-  };
-
-  const handleSetValidating = () => {
-    form.setFieldMeta("metaField", (prev) => ({
-      ...prev,
-      errors: [],
-      isValidating: true,
-    }));
-  };
-
-  const handleClear = () => {
-    form.setFieldMeta("metaField", (prev) => ({
-      ...prev,
-      errors: [],
-      isValidating: false,
-    }));
-  };
 
   return (
     <div className="surface border-border flex flex-col gap-4 rounded-lg border p-4">
@@ -52,7 +64,7 @@ export function ProgrammaticMetaSection() {
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={handleSetError}
+                onClick={() => handleSetError(form)}
               >
                 Set Error
               </Button>
@@ -60,7 +72,7 @@ export function ProgrammaticMetaSection() {
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={handleSetValidating}
+                onClick={() => handleSetValidating(form)}
               >
                 Set Validating
               </Button>
@@ -68,7 +80,7 @@ export function ProgrammaticMetaSection() {
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={handleClear}
+                onClick={() => handleClear(form)}
               >
                 Clear
               </Button>

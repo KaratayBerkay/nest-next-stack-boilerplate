@@ -2,18 +2,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Textarea } from "@/components/ui/Textarea";
-
-interface AccountFormFieldsProps {
-  name: string;
-  onNameChange: Dispatch<SetStateAction<string>>;
-  username: string;
-  onUsernameChange: Dispatch<SetStateAction<string>>;
-  bio: string;
-  onBioChange: Dispatch<SetStateAction<string>>;
-  availability: "idle" | "checking" | "available" | "taken";
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  t: any;
-}
+import type { AccountFormFieldsProps } from "@/types/views/settings/AccountFormFields-types";
 
 export function AccountFormFields({
   name,
@@ -46,9 +35,7 @@ export function AccountFormFields({
           <span className="text-muted text-xs">{t.usernameChecking}</span>
         )}
         {availability === "available" && (
-          <span className="text-xs text-green-600">
-            {t.usernameAvailable}
-          </span>
+          <span className="text-xs text-green-600">{t.usernameAvailable}</span>
         )}
         {availability === "taken" && (
           <span className="text-xs text-red-600">{t.usernameTaken}</span>

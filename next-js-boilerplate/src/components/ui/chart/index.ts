@@ -1,4 +1,5 @@
-export { Chart, type ChartProps, type ChartType } from "./chart";
+export { Chart } from "./chart";
+export type { ChartProps, ChartType } from "@/types/ui/Chart-types";
 export {
   XAxis,
   YAxis,

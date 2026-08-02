@@ -8,6 +8,14 @@ import { cn } from "@/lib/cn";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { ChatViewHeaderProps } from "@/types/messages/ChatViewHeader-types";
 
+function handleBack(
+  setSelectedUser: (user: null) => void,
+  setSidebarOpen: (open: boolean) => void,
+) {
+  setSelectedUser(null);
+  setSidebarOpen(true);
+}
+
 export function ChatViewHeader({
   selectedUser,
   setSelectedUser,
@@ -25,10 +33,7 @@ export function ChatViewHeader({
         label="Back to conversations"
         variant="ghost"
         size="icon-sm"
-        onClick={() => {
-          setSelectedUser(null);
-          setSidebarOpen(true);
-        }}
+        onClick={() => handleBack(setSelectedUser, setSidebarOpen)}
         className="mr-1 md:hidden"
       />
       <Avatar

@@ -1,7 +1,4 @@
-interface FormBannerProps {
-  type: "success" | "error";
-  messages: string[];
-}
+import type { FormBannerProps } from "@/types/views/demos/FormBanner-types";
 
 export function FormBanner({ type, messages }: FormBannerProps) {
   if (messages.length === 0) return null;

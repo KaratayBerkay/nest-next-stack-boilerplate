@@ -1,18 +1,7 @@
-import type { BuilderField } from "@/types/forms/BuilderField-types";
-import type { useMessages } from "@/lib/i18n/MessagesProvider";
 import { FIELD_TYPES } from "@/types/forms/BuilderField-types";
+import type { BuilderField } from "@/types/forms/BuilderField-types";
 import { Button } from "@/components/ui/Button";
-
-interface FieldEditorProps {
-  field: BuilderField;
-  idx: number;
-  fieldsLength: number;
-  onMoveUp: (idx: number) => void;
-  onMoveDown: (idx: number) => void;
-  onRemove: (id: string) => void;
-  onUpdate: (id: string, patch: Partial<BuilderField>) => void;
-  t: ReturnType<typeof useMessages<"forms">>;
-}
+import type { FieldEditorProps } from "@/types/views/forms/FieldEditor-types";
 
 export function FieldEditor({
   field,
@@ -58,9 +47,7 @@ export function FieldEditor({
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div className="flex flex-col gap-1">
-          <span className="text-xxs text-muted">
-            {t.formBuilder.fieldType}
-          </span>
+          <span className="text-xxs text-muted">{t.formBuilder.fieldType}</span>
           <select
             className="border-border bg-field rounded border px-2 py-1 text-xs"
             value={field.type}
@@ -84,9 +71,7 @@ export function FieldEditor({
           <input
             className="border-border bg-field rounded border px-2 py-1 text-xs"
             value={field.label}
-            onChange={(e) =>
-              onUpdate(field.id, { label: e.target.value })
-            }
+            onChange={(e) => onUpdate(field.id, { label: e.target.value })}
           />
         </div>
       </div>
@@ -114,9 +99,7 @@ export function FieldEditor({
         <input
           type="checkbox"
           checked={field.required}
-          onChange={(e) =>
-            onUpdate(field.id, { required: e.target.checked })
-          }
+          onChange={(e) => onUpdate(field.id, { required: e.target.checked })}
         />
         {t.formBuilder.fieldRequired}
       </label>

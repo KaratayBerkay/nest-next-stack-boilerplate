@@ -4,15 +4,14 @@ import { Avatar } from "@/components/ui/Avatar";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { initials } from "@/lib/initials";
 import { chatRoomPageInfo } from "@/constants/page-info";
+import type { ChatRoomHeaderProps } from "@/types/views/chat-room/ChatRoomHeader-types";
 
-interface ChatRoomHeaderProps {
-  user: { id: string; name?: string | null; email?: string | null };
-  connectionState: string;
-  showPageInfo: boolean;
-  t: Record<string, string>;
-}
-
-export function ChatRoomHeader({ user, connectionState, showPageInfo, t }: ChatRoomHeaderProps) {
+export function ChatRoomHeader({
+  user,
+  connectionState,
+  showPageInfo,
+  t,
+}: ChatRoomHeaderProps) {
   return (
     <div className="flex shrink-0 items-center justify-between">
       <div className="flex items-center gap-3">

@@ -1,15 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/cn";
-
-interface BillingAddressFieldProps {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-  spanCol2?: boolean;
-}
+import type { BillingAddressFieldProps } from "@/types/views/settings/BillingAddressField-types";
 
 export function BillingAddressField({
   id,

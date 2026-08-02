@@ -2,13 +2,12 @@
 
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { BillingAddress } from "@/api/server/billing/address";
+import type { BillingInfoDisplayProps } from "@/types/views/settings/BillingInfoDisplay-types";
 
-interface BillingInfoDisplayProps {
-  address: BillingAddress | null;
-  onEdit: () => void;
-}
-
-export function BillingInfoDisplay({ address, onEdit }: BillingInfoDisplayProps) {
+export function BillingInfoDisplay({
+  address,
+  onEdit,
+}: BillingInfoDisplayProps) {
   const t = useMessages("settings") as unknown as Record<string, string>;
   return (
     <div className="flex flex-col gap-3">

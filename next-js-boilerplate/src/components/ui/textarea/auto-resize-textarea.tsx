@@ -4,6 +4,18 @@ import { useRef, useEffect, useState } from "react";
 import { cn } from "@/lib/cn";
 import type { AutoResizeTextareaProps } from "@/types/ui/AutoResizeTextarea-types";
 
+function handleChange(
+  e: React.ChangeEvent<HTMLTextAreaElement>,
+  value: string | number | readonly string[] | undefined,
+  setInternalValue: (value: string) => void,
+  onChange?: React.ChangeEventHandler<HTMLTextAreaElement>,
+) {
+  if (value === undefined) {
+    setInternalValue(e.target.value);
+  }
+  onChange?.(e);
+}
+
 export function AutoResizeTextarea({
   className,
   error,
@@ -25,13 +37,6 @@ export function AutoResizeTextarea({
     textarea.style.height = `${newHeight}px`;
   }, [currentValue, maxHeight]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    if (value === undefined) {
-      setInternalValue(e.target.value);
-    }
-    props.onChange?.(e);
-  };
-
   return (
     <textarea
       ref={textareaRef}
@@ -42,7 +47,7 @@ export function AutoResizeTextarea({
       )}
       aria-invalid={!!error}
       value={currentValue}
-      onChange={handleChange}
+      onChange={(e) => handleChange(e, value, setInternalValue, props.onChange)}
       {...props}
     />
   );
