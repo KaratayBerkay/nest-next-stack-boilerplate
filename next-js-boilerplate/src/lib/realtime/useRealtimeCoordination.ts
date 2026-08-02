@@ -63,6 +63,7 @@ export function useRealtimeCoordination() {
 
     if (typeof navigator !== "undefined" && navigator.locks) {
       let client: RealtimeClient | null = null;
+      let onUnload: (() => void) | null = null;
 
       const onAuthenticated = () => {
         resyncAfterConnect(queryClient, claimRef.current);
@@ -108,12 +109,19 @@ export function useRealtimeCoordination() {
           "rt-leader",
           { mode: "exclusive", signal: ac.signal },
           async () => {
+            // The lock can still be granted after cleanup already ran (e.g.
+            // a logout mid-acquisition) — aborting the signal only cancels a
+            // *queued* request, not one the browser already decided to grant.
+            // Without this guard, createLeader() below builds a client whose
+            // callbacks close over the just-closed `bc`, and its first
+            // connect() immediately throws postMessage-on-closed-channel.
+            if (!alive) return;
             client = createLeader();
             clientRef.current = client;
 
             await new Promise<void>((resolve) => {
               lockResolveRef.current = resolve;
-              const onUnload = () => {
+              onUnload = () => {
                 client?.disconnect();
                 resolve();
                 lockResolveRef.current = null;
@@ -178,6 +186,10 @@ export function useRealtimeCoordination() {
           clientRef.current = null;
           bc.close();
           channelRef.current = null;
+          if (onUnload) {
+            window.removeEventListener("beforeunload", onUnload);
+            onUnload = null;
+          }
           if (lockResolveRef.current) {
             lockResolveRef.current();
             lockResolveRef.current = null;
@@ -193,6 +205,10 @@ export function useRealtimeCoordination() {
           client.disconnect();
         }
         clientRef.current = null;
+        if (onUnload) {
+          window.removeEventListener("beforeunload", onUnload);
+          onUnload = null;
+        }
         if (lockResolveRef.current) {
           lockResolveRef.current();
           lockResolveRef.current = null;

@@ -7,8 +7,8 @@ export type RealtimeStatus =
   | "down"
   | "waiting";
 
-import { AUTH_TOKEN_URL } from "@/constants/api/urls";
-import { GET } from "@/constants/api/methods";
+import { AUTH_REFRESH_URL } from "@/constants/api/urls";
+import { POST } from "@/constants/api/methods";
 
 const TOPIC_ALLOWLIST = /^(feed|post:[a-z0-9]+)$/;
 
@@ -200,7 +200,12 @@ export class RealtimeClient {
   > | null> {
     this.onBustTokenCache?.();
     try {
-      const res = await fetch(AUTH_TOKEN_URL, { method: GET });
+      // AUTH_REFRESH_URL actually rotates the session (see its route's own
+      // doc comment) — AUTH_TOKEN_URL just echoes back whatever cookies are
+      // already there, so calling it here to "recover" from an auth failure
+      // was a no-op that re-presented the same stale, already-rejected token
+      // forever (ws.connect -> ws.auth_fail -> ws.disconnect on a loop).
+      const res = await fetch(AUTH_REFRESH_URL, { method: POST });
       if (!res.ok) return null;
     } catch {
       return null;
