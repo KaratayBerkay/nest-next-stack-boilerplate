@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { backendFormFetch } from "@/lib/backend";
+import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
 import { POST as POST_METHOD } from "@/constants/api/methods";
 import { MAX_UPLOAD_SIZE } from "@/constants/upload";
 
@@ -7,6 +9,11 @@ const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 export async function POST(request: Request) {
   try {
+    const accessToken = (await cookies()).get(ACCESS_TOKEN_COOKIE)?.value;
+    if (!accessToken) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const formData = await request.formData();
     const file = formData.get("file");
 
@@ -31,9 +38,12 @@ export async function POST(request: Request) {
     const backendFormData = new FormData();
     backendFormData.set("file", file);
 
-    const backend = await backendFormFetch("/upload/single", backendFormData, {
-      method: POST_METHOD,
-    });
+    const backend = await backendFormFetch(
+      "/upload/single",
+      backendFormData,
+      { method: POST_METHOD },
+      accessToken,
+    );
 
     if (!backend.ok) {
       return NextResponse.json(

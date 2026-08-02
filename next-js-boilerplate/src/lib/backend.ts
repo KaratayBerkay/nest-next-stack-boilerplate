@@ -91,12 +91,17 @@ export async function backendFetch<T = unknown>(
  * omits a Content-Type header so `fetch` can generate the correct
  * `multipart/form-data; boundary=...` value itself — setting one manually
  * (as `backendFetch`'s JSON default would) breaks the backend's multipart
- * parsing. Still forwards cookies/session tokens/IP/UA like `backendFetch`.
+ * parsing. Also forwards cookies/session tokens/IP/UA like `backendFetch`,
+ * plus an explicit bearerToken -> Authorization header (mirroring
+ * graphqlFetch) since SessionAuthGuard's cookie fallback doesn't reliably
+ * see the access_token cookie forwarded this way; all 3 upload routes were
+ * 401ing with "Missing access token" on every call before this was added.
  */
 export async function backendFormFetch<T = unknown>(
   path: string,
   formData: FormData,
   options: Omit<RequestInit, "body"> = {},
+  bearerToken?: string,
 ): Promise<BackendResponse<T>> {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
@@ -108,6 +113,7 @@ export async function backendFormFetch<T = unknown>(
     body: formData,
     headers: {
       ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      ...(bearerToken ? bearerAuthHeader(bearerToken) : {}),
       ...(await forwardedForHeader()),
       ...(await userAgentHeader()),
       ...(await sessionTokenHeaders()),
