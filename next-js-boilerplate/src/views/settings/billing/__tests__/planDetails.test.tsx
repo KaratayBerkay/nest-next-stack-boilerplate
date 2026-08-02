@@ -41,6 +41,22 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+// The real ConfirmDialog renders Dialog/Button, which need a ThemeProvider
+// this unit test doesn't set up (same gap as this repo's other component-
+// tree tests). PlanDetails' own behavior under test is just "renders the
+// trigger, wires onConfirm to the cancel flow" — not the dialog's own open/
+// close UI, which is that component's own concern — so the trigger firing
+// onConfirm directly is a faithful enough stand-in here.
+vi.mock("@/components/ui/ConfirmDialog", () => ({
+  ConfirmDialog: ({
+    onConfirm,
+    children,
+  }: {
+    onConfirm: () => void;
+    children: (open: () => void) => React.ReactNode;
+  }) => children(onConfirm),
+}));
+
 describe("PlanDetails pending-change gating", () => {
   it("replaces Upgrade and Cancel with the pending-change affordance when pendingTier is set", () => {
     render(

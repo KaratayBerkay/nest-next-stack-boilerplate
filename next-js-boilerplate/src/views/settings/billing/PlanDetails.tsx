@@ -9,6 +9,7 @@ import { plansPath } from "@/constants/routes";
 import { useToast } from "@/components/ui/Toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useBillingActions } from "@/api/client/billing/actions";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 interface PlanDetailsProps {
   tier: Tier;
@@ -21,14 +22,11 @@ interface PlanDetailsProps {
 }
 
 async function handleCancel(
-  userId: string,
   queryClient: ReturnType<typeof useQueryClient>,
   toast: ReturnType<typeof useToast>["toast"],
-  tConfirm: string,
   tSuccess: string,
   tFailed: string,
 ) {
-  if (!window.confirm(tConfirm)) return;
   try {
     const { cancelSubscriptionServer } =
       await import("@/api/server/billing/cancel");
@@ -79,11 +77,9 @@ export function PlanDetails({
   const { subscribe } = useBillingActions();
 
   const onCancel = useCallback(() => {
-    handleCancel(
-      "",
+    return handleCancel(
       queryClient,
       toast,
-      t.cancelSubscriptionConfirm,
       t.cancelSubscriptionSuccess,
       t.cancelSubscriptionFailed,
     );
@@ -171,13 +167,22 @@ export function PlanDetails({
             {cancelAtPeriodEnd ? (
               <p className="text-warning text-xs">{t.cancelsOn}</p>
             ) : (
-              <button
-                type="button"
-                onClick={onCancel}
-                className="border-border hover:bg-surface-hover rounded-lg border px-4 py-2 text-sm font-medium"
+              <ConfirmDialog
+                title={t.cancelSubscription}
+                description={t.cancelSubscriptionConfirm}
+                confirmLabel={t.cancelSubscription}
+                onConfirm={onCancel}
               >
-                {t.cancelSubscription}
-              </button>
+                {(open) => (
+                  <button
+                    type="button"
+                    onClick={open}
+                    className="border-border hover:bg-surface-hover rounded-lg border px-4 py-2 text-sm font-medium"
+                  >
+                    {t.cancelSubscription}
+                  </button>
+                )}
+              </ConfirmDialog>
             )}
           </>
         )}
