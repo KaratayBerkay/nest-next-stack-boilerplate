@@ -54,7 +54,7 @@ export async function GET() {
       zipCode: string | null;
       vatNumber: string | null;
     } | null;
-  }>(BILLING_ADDRESS_QUERY, {}, accessToken);
+  }>(BILLING_ADDRESS_QUERY, {}, accessToken, undefined, true);
 
   if (errors) {
     const body = graphqlErrorBody(errors, "Failed to load billing address");

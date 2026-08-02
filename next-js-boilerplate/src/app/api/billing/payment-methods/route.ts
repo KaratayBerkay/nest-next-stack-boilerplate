@@ -50,7 +50,7 @@ export async function GET() {
       expYear: number;
       isDefault: boolean;
     }>;
-  }>(PAYMENT_METHODS_QUERY, {}, accessToken);
+  }>(PAYMENT_METHODS_QUERY, {}, accessToken, undefined, true);
 
   if (errors) {
     const body = graphqlErrorBody(errors, "Failed to load payment methods");

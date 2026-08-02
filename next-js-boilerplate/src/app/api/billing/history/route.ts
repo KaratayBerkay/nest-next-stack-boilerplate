@@ -46,7 +46,7 @@ export async function GET() {
       metadata?: string;
       createdAt: string;
     }>;
-  }>(BILLING_HISTORY_QUERY, {}, accessToken);
+  }>(BILLING_HISTORY_QUERY, {}, accessToken, undefined, true);
 
   if (errors) {
     const body = graphqlErrorBody(errors, "Failed to load billing history");

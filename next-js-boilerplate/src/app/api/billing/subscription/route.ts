@@ -43,7 +43,7 @@ export async function GET() {
       pendingTier?: string | null;
       pendingTierEffectiveAt?: string | null;
     } | null;
-  }>(SUBSCRIPTION_QUERY, {}, accessToken);
+  }>(SUBSCRIPTION_QUERY, {}, accessToken, undefined, true);
 
   if (errors) {
     const body = graphqlErrorBody(errors, "Failed to load subscription");
