@@ -151,6 +151,9 @@ describe('TokenStoreService', () => {
       avatarUrl: '',
       locale: 'en',
       timezone: 'UTC',
+      chatNickname: '',
+      useNickname: false,
+      hideAvatar: false,
       friends: ['f1', 'f2'],
       unread: 3,
       orgIds: ['org1'],
@@ -180,6 +183,9 @@ describe('TokenStoreService', () => {
       role: 'USER',
       tier: 'FREE',
       sessionId: 's3',
+      chatNickname: '',
+      useNickname: false,
+      hideAvatar: false,
     });
     expect(redis._expires).toEqual([
       key,
@@ -195,6 +201,9 @@ describe('TokenStoreService', () => {
       role: 'USER',
       tier: 'BASIC',
       sessionId: 's2',
+      chatNickname: '',
+      useNickname: false,
+      hideAvatar: false,
     });
     expect(await service.read(key)).not.toBeNull();
     await service.revoke(key);
@@ -209,6 +218,9 @@ describe('TokenStoreService', () => {
       role: 'USER',
       tier: 'FREE',
       sessionId: 's9',
+      chatNickname: '',
+      useNickname: false,
+      hideAvatar: false,
     });
     redis._expires.length = 0;
     await service.extendTTL(key);
@@ -224,6 +236,9 @@ describe('TokenStoreService', () => {
       email: 'u10@t.com',
       role: 'USER',
       tier: 'FREE',
+      chatNickname: '',
+      useNickname: false,
+      hideAvatar: false,
     });
     redis._expires.length = 0;
     await service.extendTTL(key);
@@ -238,12 +253,18 @@ describe('TokenStoreService', () => {
       email: 'u3@t.com',
       role: 'USER',
       sessionId: 's3',
+      chatNickname: '',
+      useNickname: false,
+      hideAvatar: false,
     });
     await service.write(k2, {
       userId: 'u3',
       email: 'u3@t.com',
       role: 'USER',
       sessionId: 's4',
+      chatNickname: '',
+      useNickname: false,
+      hideAvatar: false,
     });
     expect(await service.read(k1)).not.toBeNull();
     expect(await service.read(k2)).not.toBeNull();
@@ -260,6 +281,9 @@ describe('TokenStoreService', () => {
       role: 'USER',
       tier: 'FREE',
       sessionId: 's5',
+      chatNickname: '',
+      useNickname: false,
+      hideAvatar: false,
     });
 
     const count = await service.rewriteFieldsForUser('u4', {
@@ -281,6 +305,9 @@ describe('TokenStoreService', () => {
       role: 'USER',
       tier: 'FREE',
       sessionId: 's6',
+      chatNickname: '',
+      useNickname: false,
+      hideAvatar: false,
     });
     redis._store.delete(key);
     expect(await service.rewriteFieldsForUser('u5', { tier: 'BASIC' })).toBe(0);
@@ -294,12 +321,18 @@ describe('TokenStoreService', () => {
       email: 'u6@t.com',
       role: 'USER',
       sessionId: 's7',
+      chatNickname: '',
+      useNickname: false,
+      hideAvatar: false,
     });
     await service.write(k2, {
       userId: 'u6',
       email: 'u6@t.com',
       role: 'USER',
       sessionId: 's8',
+      chatNickname: '',
+      useNickname: false,
+      hideAvatar: false,
     });
 
     await service.incrUnreadForUser('u6', 1);

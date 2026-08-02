@@ -101,7 +101,13 @@ export class MessagingDmService {
     const peerIds = Array.from(latestPerPeer.keys());
     const peerUsers = await this.prisma.user.findMany({
       where: { id: { in: peerIds } },
-      select: { id: true, email: true, name: true },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        avatarUrl: true,
+        hideAvatar: true,
+      },
     });
     const userMap = new Map(peerUsers.map((u) => [u.id, u]));
 
@@ -112,10 +118,12 @@ export class MessagingDmService {
           id: peerId,
           email: 'unknown',
           name: null as string | null,
+          avatarUrl: null as string | null,
+          hideAvatar: false,
         };
         return {
           user: {
-            ...user,
+            ...this.redactAvatar(user, userId),
             name: displayName(user),
             avatar: initials(displayName(user)),
           },

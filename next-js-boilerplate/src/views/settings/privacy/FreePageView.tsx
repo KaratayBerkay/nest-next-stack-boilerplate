@@ -19,6 +19,7 @@ import { PrivacyToggleRow } from "./PrivacyToggleRow";
 async function handleSave(
   updateProfile: (data: {
     chatNickname?: string | null;
+    useNickname?: boolean;
     hideAvatar?: boolean;
   }) => Promise<void>,
   refreshUser: () => Promise<void>,
@@ -30,7 +31,10 @@ async function handleSave(
 ) {
   try {
     await updateProfile({
-      chatNickname: useNickname && nickname.trim() ? nickname.trim() : null,
+      // Only an explicitly cleared input erases the saved nickname —
+      // toggling useNickname off/on must not lose it (T: preserve-on-disable).
+      chatNickname: nickname.trim() ? nickname.trim() : null,
+      useNickname,
       hideAvatar,
     });
     // Re-seed the page (and the SSR session_user snapshot) from the server —
@@ -53,7 +57,7 @@ export function FreePageView({ className }: ClassNameProps) {
   const [hideProfilePicture, setHideProfilePicture] = useState(
     !!user?.hideAvatar,
   );
-  const [useNickname, setUseNickname] = useState(!!user?.chatNickname);
+  const [useNickname, setUseNickname] = useState(!!user?.useNickname);
   const [nickname, setNickname] = useState(user?.chatNickname ?? "");
 
   // `user` can populate/update after this component's first render (SSR
@@ -65,11 +69,15 @@ export function FreePageView({ className }: ClassNameProps) {
   // not an effect) instead of useEffect, to stay clean of this codebase's
   // set-state-in-effect lint rule.
   const [seededNickname, setSeededNickname] = useState(user?.chatNickname);
+  const [seededUseNickname, setSeededUseNickname] = useState(user?.useNickname);
   const [seededHideAvatar, setSeededHideAvatar] = useState(user?.hideAvatar);
   if (user?.chatNickname !== seededNickname) {
     setSeededNickname(user?.chatNickname);
-    setUseNickname(!!user?.chatNickname);
     setNickname(user?.chatNickname ?? "");
+  }
+  if (user?.useNickname !== seededUseNickname) {
+    setSeededUseNickname(user?.useNickname);
+    setUseNickname(!!user?.useNickname);
   }
   if (user?.hideAvatar !== seededHideAvatar) {
     setSeededHideAvatar(user?.hideAvatar);

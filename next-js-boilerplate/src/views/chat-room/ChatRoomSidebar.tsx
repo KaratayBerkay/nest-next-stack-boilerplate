@@ -16,7 +16,12 @@ interface ChatRoomSidebarProps {
   room: string;
   roomCounts: Record<string, number>;
   vipRooms: string[];
-  roomMembers: { id: string; name: string; chatNickname?: string }[];
+  roomMembers: {
+    id: string;
+    name: string;
+    chatNickname?: string;
+    avatarUrl?: string | null;
+  }[];
   user: { id: string; name?: string | null };
   showSelfCrown: boolean;
   t: Record<string, string>;
@@ -101,6 +106,7 @@ export function ChatRoomSidebar({
                 >
                   <div className="relative h-10 w-10 shrink-0">
                     <Avatar
+                      src={m.avatarUrl ?? undefined}
                       fallback={initials(displayName)}
                       className="bg-brand text-brand-fg ring-success ring-offset-bg h-10 w-10 text-[10px] ring-2 ring-offset-2"
                     />

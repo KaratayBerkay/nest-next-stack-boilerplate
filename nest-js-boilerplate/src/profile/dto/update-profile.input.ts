@@ -39,6 +39,13 @@ export class UpdateProfileInput {
   @MaxLength(30)
   chatNickname?: string;
 
+  /** Whether chatNickname is actually used in chat rooms, independent of
+   *  whether one is saved — toggling this off must not erase chatNickname. */
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsBoolean()
+  useNickname?: boolean;
+
   @Field({ nullable: true })
   @IsOptional()
   @IsUrl({ require_tld: false })

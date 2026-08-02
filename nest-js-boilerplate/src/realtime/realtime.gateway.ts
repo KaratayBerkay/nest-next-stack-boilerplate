@@ -409,6 +409,8 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     ws.sessionId = hash.sessionId;
     ws.userName = displayName(hash);
     ws.chatNickname = hash.chatNickname ?? '';
+    ws.useNickname = hash.useNickname ?? false;
+    ws.avatarUrl = hash.hideAvatar ? null : hash.avatarUrl || null;
     ws.tier = hash.tier || 'FREE';
     ws.deviceTokenHash = crypto
       .createHash('sha256')

@@ -6,5 +6,6 @@ export interface ChatMessageBubbleProps {
   isMe: boolean;
   userName: string;
   userEmail: string;
+  userAvatarUrl?: string | null;
   dateDisplay: DateDisplayFormat;
 }

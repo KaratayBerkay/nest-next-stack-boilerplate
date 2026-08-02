@@ -21,9 +21,7 @@ export function MessagesSidebarConversations({
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
       {convsError && (
-        <p className="text-error py-16 text-center text-sm">
-          {t.failedToLoad}
-        </p>
+        <p className="text-error py-16 text-center text-sm">{t.failedToLoad}</p>
       )}
       {!convsError && conversations.length === 0 && (
         <p className="text-muted py-16 text-center text-sm">
@@ -46,6 +44,7 @@ export function MessagesSidebarConversations({
             >
               <div className="relative h-12 w-12 shrink-0">
                 <Avatar
+                  src={c.user.avatarUrl ?? undefined}
                   fallback={initials(c.user.name ?? c.user.email ?? "?")}
                   className={cn(
                     "bg-brand text-brand-fg h-12 w-12 text-sm",

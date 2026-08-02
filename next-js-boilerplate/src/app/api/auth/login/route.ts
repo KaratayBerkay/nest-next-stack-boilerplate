@@ -8,6 +8,12 @@ import {
   userTokenCookieOptions,
 } from "@/lib/cookie";
 import { graphqlFetch, graphqlErrorBody } from "@/lib/backend";
+import { ME_QUERY } from "@/lib/graphql/queries";
+import {
+  DEVICE_TOKEN_HEADER,
+  RBAC_TOKEN_HEADER,
+  USER_TOKEN_HEADER,
+} from "@/constants";
 import { withLogging } from "@/lib/request-logger";
 
 /**
@@ -129,7 +135,35 @@ export const POST = withLogging(async (request, log) => {
   const { accessToken, rbacToken, deviceToken, userToken, refreshToken, user } =
     loginData;
 
-  const response = NextResponse.json({ user, accessToken }, { status: 200 });
+  // LOGIN_QUERY's `user` selection is deliberately partial (it can't select
+  // hideAvatar at all — @HideField()'d on the User type — and omits
+  // chatNickname). Overlay the real `me` snapshot so the session_user cookie
+  // (and the login response the client hydrates from) isn't born stale —
+  // same bug class fixed for tier in /api/billing/subscribe.
+  let sessionUser: unknown = user;
+  if (accessToken && rbacToken && userToken) {
+    const meResult = await graphqlFetch<{ me: Record<string, unknown> }>(
+      ME_QUERY,
+      undefined,
+      accessToken,
+      {
+        [RBAC_TOKEN_HEADER]: rbacToken,
+        ...(deviceToken ? { [DEVICE_TOKEN_HEADER]: deviceToken } : {}),
+        [USER_TOKEN_HEADER]: userToken,
+      },
+    );
+    if (meResult.data?.me) {
+      sessionUser = {
+        ...(user as Record<string, unknown>),
+        ...meResult.data.me,
+      };
+    }
+  }
+
+  const response = NextResponse.json(
+    { user: sessionUser, accessToken },
+    { status: 200 },
+  );
 
   if (accessToken) response.cookies.set(accessTokenCookieOptions(accessToken));
   if (rbacToken) response.cookies.set(rbacTokenCookieOptions(rbacToken));
@@ -139,7 +173,7 @@ export const POST = withLogging(async (request, log) => {
     response.cookies.set(refreshTokenCookieOptions(refreshToken));
   response.cookies.set(
     sessionUserCookieOptions(
-      Buffer.from(JSON.stringify(user)).toString("base64url"),
+      Buffer.from(JSON.stringify(sessionUser)).toString("base64url"),
     ),
   );
 

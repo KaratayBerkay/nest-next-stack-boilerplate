@@ -49,6 +49,7 @@ export function ChatMessageList({
               isMe={msg.senderId === user.id}
               userName={selectedUser.name ?? selectedUser.email ?? "?"}
               userEmail={selectedUser.email ?? "?"}
+              userAvatarUrl={selectedUser.avatarUrl}
               dateDisplay={dateDisplay}
             />
           ))}

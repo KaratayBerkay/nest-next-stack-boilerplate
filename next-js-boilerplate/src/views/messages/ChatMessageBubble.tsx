@@ -12,6 +12,7 @@ export function ChatMessageBubble({
   isMe,
   userName,
   userEmail,
+  userAvatarUrl,
   dateDisplay,
 }: ChatMessageBubbleProps) {
   return (
@@ -22,6 +23,7 @@ export function ChatMessageBubble({
       {!isMe && (
         <div className="relative mb-5 shrink-0">
           <Avatar
+            src={userAvatarUrl ?? undefined}
             fallback={initials(userName ?? userEmail ?? "?")}
             className="bg-brand text-brand-fg h-7 w-7 text-[9px]"
           />

@@ -5,6 +5,7 @@ import {
   useRef,
   useEffect,
   useCallback,
+  useMemo,
   startTransition,
 } from "react";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
@@ -36,7 +37,7 @@ export function useMessagesPage({
   const t = useMessages("messages");
   const { user, loading } = useAuth();
 
-  const [selectedUser, setSelectedUser] = useState<UserInfo | null>(null);
+  const [selectedUserState, setSelectedUser] = useState<UserInfo | null>(null);
 
   const { friends, conversations, convsError } = useMessagesData(
     initialFriends,
@@ -81,10 +82,28 @@ export function useMessagesPage({
     }
   }, [initialUser, conversations, markMessagesRead]);
 
+  // selectedUserState is a point-in-time snapshot taken on click/URL-match,
+  // not a live view — it never updates on its own when the underlying user's
+  // profile changes (e.g. a peer toggling hideAvatar mid-conversation while
+  // the WS "renew" refetch keeps `conversations`/`friends` fresh). Overlay
+  // the live record on every render instead of syncing via effect: without
+  // this, the sidebar (rendered straight from those live lists) updates
+  // immediately while the open chat's header and message-bubble avatars keep
+  // showing the stale, pre-toggle avatarUrl until the conversation is
+  // reselected or the page reloads.
+  const selectedUser = useMemo(() => {
+    if (!selectedUserState) return null;
+    return (
+      conversations.find((c) => c.user.id === selectedUserState.id)?.user ??
+      friends.find((f) => f.id === selectedUserState.id) ??
+      selectedUserState
+    );
+  }, [selectedUserState, conversations, friends]);
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    if (!selectedUser) setSidebarOpen(true);
+    if (!selectedUser) startTransition(() => setSidebarOpen(true));
   }, [selectedUser]);
 
   useEffect(() => {

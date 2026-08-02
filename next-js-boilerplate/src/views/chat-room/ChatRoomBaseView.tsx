@@ -47,7 +47,12 @@ function ChatRoomContent({
   const [attaching, setAttaching] = useState(false);
   const [roomCounts, setRoomCounts] = useState<Record<string, number>>({});
   const [roomMembers, setRoomMembers] = useState<
-    { id: string; name: string; chatNickname?: string }[]
+    {
+      id: string;
+      name: string;
+      chatNickname?: string;
+      avatarUrl?: string | null;
+    }[]
   >([]);
 
   const realtime = useChatRoomRealtime(room, setRoomCounts, setRoomMembers);

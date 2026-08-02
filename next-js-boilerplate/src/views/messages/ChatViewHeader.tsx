@@ -32,6 +32,7 @@ export function ChatViewHeader({
         className="mr-1 md:hidden"
       />
       <Avatar
+        src={selectedUser.avatarUrl ?? undefined}
         fallback={initials(selectedUser.name ?? selectedUser.email ?? "?")}
         className={cn(
           "bg-brand text-brand-fg h-10 w-10 shrink-0 text-xs",

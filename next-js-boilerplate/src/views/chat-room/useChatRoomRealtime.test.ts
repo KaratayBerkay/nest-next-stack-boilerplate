@@ -50,11 +50,25 @@ describe("useChatRoomRealtime", () => {
     handler!({
       type: "room-members",
       room: "general",
-      members: [{ userId: "u1", name: "Alice", chatNickname: "" }],
+      members: [
+        { userId: "u1", name: "Alice", chatNickname: "", avatarUrl: null },
+        {
+          userId: "u2",
+          name: "Bob",
+          chatNickname: "",
+          avatarUrl: "https://example.com/bob.png",
+        },
+      ],
     });
 
     expect(setRoomMembers).toHaveBeenCalledWith([
-      { id: "u1", name: "Alice", chatNickname: undefined },
+      { id: "u1", name: "Alice", chatNickname: undefined, avatarUrl: null },
+      {
+        id: "u2",
+        name: "Bob",
+        chatNickname: undefined,
+        avatarUrl: "https://example.com/bob.png",
+      },
     ]);
   });
 

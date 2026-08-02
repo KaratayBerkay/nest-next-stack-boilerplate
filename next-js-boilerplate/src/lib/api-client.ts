@@ -53,6 +53,7 @@ export function refreshSession(): Promise<boolean> {
 export async function apiFetch(
   input: RequestInfo | URL,
   init?: RequestInit,
+  options?: { suppressGlobalLogout?: boolean },
 ): Promise<Response> {
   let res = await fetch(input, init);
 
@@ -64,7 +65,11 @@ export async function apiFetch(
     if (refreshed) {
       res = await fetch(input, init);
     }
-    if (res.status === 401) {
+    // Background/best-effort widgets (unread badges, etc.) opt out: a single
+    // failed poll shouldn't nuke a session that's otherwise fine — this was
+    // observed forcing a full logout seconds after a successful login when
+    // the conversations badge's very first fetch raced the fresh session.
+    if (res.status === 401 && !options?.suppressGlobalLogout) {
       window.dispatchEvent(new CustomEvent("auth:logout"));
     }
   }

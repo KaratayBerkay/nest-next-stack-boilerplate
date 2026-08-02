@@ -15,7 +15,9 @@ export interface Conversation {
 }
 
 export async function fetchConversationsServer(): Promise<Conversation[]> {
-  const res = await apiFetch(MESSAGES_CONVERSATIONS_URL);
+  const res = await apiFetch(MESSAGES_CONVERSATIONS_URL, undefined, {
+    suppressGlobalLogout: true,
+  });
   if (!res.ok) throw new Error("Failed to fetch conversations");
   return res.json();
 }

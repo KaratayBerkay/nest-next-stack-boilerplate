@@ -4,6 +4,8 @@ export interface RoomMember {
   name: string;
   /** Chat-room display-name override — prefer over `name` when present. */
   chatNickname?: string;
+  /** Already withheld (null) server-side when the member's own hideAvatar is set. */
+  avatarUrl?: string | null;
 }
 
 export interface MessageAttachment {

@@ -65,6 +65,7 @@ export function MessagesSidebarSearch({
                 className="hover:bg-surface-hover flex items-center gap-3 rounded-lg px-3 py-2"
               >
                 <Avatar
+                  src={u.avatarUrl ?? undefined}
                   fallback={initials(u.name ?? u.email ?? "?")}
                   className="bg-brand text-brand-fg h-8 w-8 shrink-0 text-[10px]"
                 />

@@ -16,6 +16,8 @@ type AuthWs = WebSocket & {
   userId?: string;
   userName?: string;
   chatNickname?: string;
+  useNickname?: boolean;
+  avatarUrl?: string | null;
   tier?: string;
   socketId?: string;
   room?: string;
@@ -67,7 +69,7 @@ function buildRoomMessagePayload(
   ws: AuthWs,
   data: IncomingMessagePayload & { room: string; tempId?: string },
 ): Record<string, unknown> {
-  const senderName = ws.chatNickname || ws.userName || 'Unknown';
+  const senderName = (ws.useNickname && ws.chatNickname) || ws.userName || 'Unknown';
   const payload: Record<string, unknown> = {
     type: 'room-message',
     room: data.room,
@@ -244,7 +246,8 @@ export class MessagingWsGateway implements OnModuleInit {
       socketId: ws.socketId,
       userId: ws.userId,
       name: ws.userName ?? 'Unknown',
-      chatNickname: ws.chatNickname || undefined,
+      chatNickname: (ws.useNickname && ws.chatNickname) || undefined,
+      avatarUrl: ws.avatarUrl ?? null,
     };
     const members = this.ms.joinRoom(data.room, member);
     this.realtime.broadcastToRoom(data.room, {
@@ -349,7 +352,8 @@ export class MessagingWsGateway implements OnModuleInit {
       socketId: ws.socketId,
       userId: ws.userId,
       name: ws.userName ?? 'Unknown',
-      chatNickname: ws.chatNickname || undefined,
+      chatNickname: (ws.useNickname && ws.chatNickname) || undefined,
+      avatarUrl: ws.avatarUrl ?? null,
     };
     const members = this.ms.joinRoom(room, member);
     this.realtime.broadcastToRoom(room, {

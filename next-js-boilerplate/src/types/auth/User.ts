@@ -7,6 +7,7 @@ export type User = {
   locale?: string;
   timezone?: string;
   chatNickname?: string;
+  useNickname?: boolean;
   hideAvatar?: boolean;
   status?: string;
   role: string;

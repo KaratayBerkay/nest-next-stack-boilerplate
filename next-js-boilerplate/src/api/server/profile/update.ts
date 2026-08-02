@@ -9,6 +9,7 @@ export interface UpdateProfileParams {
   bio?: string;
   avatarUrl?: string;
   chatNickname?: string | null;
+  useNickname?: boolean;
   hideAvatar?: boolean;
 }
 

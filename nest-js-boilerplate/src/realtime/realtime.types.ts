@@ -5,6 +5,8 @@ export type AuthWs = WebSocket & {
   sessionId?: string;
   userName?: string;
   chatNickname?: string;
+  useNickname?: boolean;
+  avatarUrl?: string | null;
   tier?: string;
   socketId?: string;
   room?: string;

@@ -8,6 +8,12 @@ import {
   userTokenCookieOptions,
 } from "@/lib/cookie";
 import { graphqlFetch, graphqlErrorBody } from "@/lib/backend";
+import { ME_QUERY } from "@/lib/graphql/queries";
+import {
+  DEVICE_TOKEN_HEADER,
+  RBAC_TOKEN_HEADER,
+  USER_TOKEN_HEADER,
+} from "@/constants";
 
 const REGISTER_QUERY = `
   mutation Register($input: RegisterInput!) {
@@ -102,7 +108,33 @@ export async function POST(request: Request) {
   const { accessToken, rbacToken, deviceToken, userToken, refreshToken, user } =
     data.register;
 
-  const response = NextResponse.json({ user, accessToken }, { status: 201 });
+  // See /api/auth/login: REGISTER_QUERY's `user` selection can't carry
+  // hideAvatar (@HideField()'d) and omits chatNickname, so overlay the real
+  // `me` snapshot before it's born stale in the session_user cookie.
+  let sessionUser: unknown = user;
+  if (accessToken && rbacToken && userToken) {
+    const meResult = await graphqlFetch<{ me: Record<string, unknown> }>(
+      ME_QUERY,
+      undefined,
+      accessToken,
+      {
+        [RBAC_TOKEN_HEADER]: rbacToken,
+        ...(deviceToken ? { [DEVICE_TOKEN_HEADER]: deviceToken } : {}),
+        [USER_TOKEN_HEADER]: userToken,
+      },
+    );
+    if (meResult.data?.me) {
+      sessionUser = {
+        ...(user as Record<string, unknown>),
+        ...meResult.data.me,
+      };
+    }
+  }
+
+  const response = NextResponse.json(
+    { user: sessionUser, accessToken },
+    { status: 201 },
+  );
 
   response.cookies.set(accessTokenCookieOptions(accessToken));
   if (rbacToken) response.cookies.set(rbacTokenCookieOptions(rbacToken));
@@ -112,7 +144,7 @@ export async function POST(request: Request) {
     response.cookies.set(refreshTokenCookieOptions(refreshToken));
   response.cookies.set(
     sessionUserCookieOptions(
-      Buffer.from(JSON.stringify(user)).toString("base64url"),
+      Buffer.from(JSON.stringify(sessionUser)).toString("base64url"),
     ),
   );
 

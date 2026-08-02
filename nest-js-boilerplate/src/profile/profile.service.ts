@@ -32,6 +32,7 @@ export class ProfileService {
     if (input.bio !== undefined) data.bio = input.bio;
     if (input.chatNickname !== undefined)
       data.chatNickname = input.chatNickname;
+    if (input.useNickname !== undefined) data.useNickname = input.useNickname;
     if (input.avatarUrl !== undefined) data.avatarUrl = input.avatarUrl;
     if (input.hideAvatar !== undefined) data.hideAvatar = input.hideAvatar;
     if (input.locale !== undefined) data.locale = input.locale;
@@ -61,9 +62,13 @@ export class ProfileService {
     if (input.name !== undefined) redisFields.name = input.name;
     if (input.chatNickname !== undefined)
       redisFields.chatNickname = input.chatNickname;
+    if (input.useNickname !== undefined)
+      redisFields.useNickname = input.useNickname ? '1' : '0';
     if (input.username !== undefined)
       redisFields.username = user.username ?? '';
     if (input.avatarUrl !== undefined) redisFields.avatarUrl = input.avatarUrl;
+    if (input.hideAvatar !== undefined)
+      redisFields.hideAvatar = input.hideAvatar ? '1' : '0';
     if (input.locale !== undefined) redisFields.locale = input.locale;
     if (input.timezone !== undefined) redisFields.timezone = input.timezone;
     if (Object.keys(redisFields).length > 0) {

@@ -23,9 +23,7 @@ export function MessagesSidebarFriends({
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
       {filtered.length === 0 ? (
-        <p className="text-muted py-16 text-center text-sm">
-          {t.noFriends}
-        </p>
+        <p className="text-muted py-16 text-center text-sm">{t.noFriends}</p>
       ) : (
         <div className="flex flex-col">
           {filtered.map((u, i) => (
@@ -37,6 +35,7 @@ export function MessagesSidebarFriends({
             >
               <div className="relative h-12 w-12 shrink-0">
                 <Avatar
+                  src={u.avatarUrl ?? undefined}
                   fallback={initials(u.name ?? u.email ?? "?")}
                   className={cn(
                     "bg-brand text-brand-fg h-12 w-12 text-sm",

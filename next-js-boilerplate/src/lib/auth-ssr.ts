@@ -13,20 +13,28 @@ function decodeBase64(value: string): string {
 
 export const getSessionUser = cache(async (): Promise<User | null> => {
   // Fast path: read session_user cookie set at login/register time.
+  let cookieUser: User | null = null;
   try {
     const cookieStore = await cookies();
     const encoded = cookieStore.get(SESSION_USER_COOKIE)?.value;
     if (encoded) {
-      return JSON.parse(decodeBase64(encoded)) as User;
+      cookieUser = JSON.parse(decodeBase64(encoded)) as User;
+      // Cookies minted before login/register/mfa started overlaying the real
+      // `me` snapshot never carry hideAvatar (it can't even be selected on
+      // the login/register mutation's `user` type — @HideField()'d). Rather
+      // than trust that partial snapshot for the rest of the session, treat
+      // a missing hideAvatar as a signal to self-heal from `me` below.
+      if (cookieUser.hideAvatar !== undefined) {
+        return cookieUser;
+      }
     }
   } catch {
     // Malformed cookie — fall through to GraphQL.
   }
 
-  // Fallback: no session cookie, query backend me query (old sessions).
   const accessToken = await getAccessToken();
   if (!accessToken) {
-    return null;
+    return cookieUser;
   }
 
   const { data, errors } = await graphqlFetch<{ me: User }>(
@@ -37,8 +45,8 @@ export const getSessionUser = cache(async (): Promise<User | null> => {
   );
 
   if (errors || !data?.me) {
-    return null;
+    return cookieUser;
   }
 
-  return data.me;
+  return cookieUser ? { ...cookieUser, ...data.me } : data.me;
 });

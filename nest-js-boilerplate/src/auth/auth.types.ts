@@ -13,6 +13,7 @@ export interface JwtUser {
   locale?: string;
   timezone?: string;
   chatNickname?: string;
+  useNickname?: boolean;
   friends?: string[];
   unread?: number;
   orgIds?: string[];
@@ -50,6 +51,10 @@ export interface SessionUser {
   timezone: string;
   /** Chat-room display-name override (empty string when unset). */
   chatNickname: string;
+  /** Whether chatNickname is actually used in chat rooms right now. */
+  useNickname: boolean;
+  /** Owner's own preference — withholds avatarUrl from other users when true. */
+  hideAvatar: boolean;
   friends: string[];
   unread: number;
   orgIds: string[];
@@ -97,6 +102,10 @@ export class SessionUserPayload {
   /** Chat-room display-name override (empty string when unset). */
   @Field({ nullable: true })
   chatNickname?: string;
+
+  /** Whether chatNickname is actually used in chat rooms right now. */
+  @Field({ defaultValue: false })
+  useNickname!: boolean;
 
   @Field({ nullable: true })
   sessionId?: string;

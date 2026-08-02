@@ -259,6 +259,12 @@ model User {
   /// @Validator.MaxLength(30)
   chatNickname String?
 
+  /// Whether chatNickname is actually used in chat rooms right now. Kept
+  /// independent of chatNickname's text so turning this off doesn't erase
+  /// the saved nickname — re-enabling restores it instead of forcing a
+  /// re-type.
+  useNickname Boolean @default(false)
+
   // credentials auth (null for social-only users)
   /// @HideField()
   passwordHash  String?

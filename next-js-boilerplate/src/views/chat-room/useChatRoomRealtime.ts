@@ -3,12 +3,18 @@
 import { useEffect, type Dispatch, type SetStateAction } from "react";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 
-type RoomMemberState = { id: string; name: string; chatNickname?: string };
+type RoomMemberState = {
+  id: string;
+  name: string;
+  chatNickname?: string;
+  avatarUrl?: string | null;
+};
 
 type RawRoomMember = {
   userId: string;
   name: string;
   chatNickname?: string;
+  avatarUrl?: string | null;
 };
 
 function toRoomMembers(members: unknown): RoomMemberState[] {
@@ -16,6 +22,7 @@ function toRoomMembers(members: unknown): RoomMemberState[] {
     id: m.userId,
     name: m.name,
     chatNickname: m.chatNickname || undefined,
+    avatarUrl: m.avatarUrl ?? null,
   }));
 }
 
