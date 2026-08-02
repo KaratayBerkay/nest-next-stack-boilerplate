@@ -1,6 +1,9 @@
 import { useCarousel } from "@/components/ui/Carousel";
 import { cn } from "@/lib/cn";
-import type { DotsProps, StarsProps } from "@/types/ui/CarouselComponent-types";
+import type {
+  DotsProps,
+  StarsProps,
+} from "@/types/views/ui/CarouselComponent-types";
 
 export function Stars({ rating }: StarsProps) {
   return (

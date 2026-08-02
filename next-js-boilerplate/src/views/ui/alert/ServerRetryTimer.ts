@@ -1,4 +1,4 @@
-import type { ServerRetryStatus } from "@/types/ui/ServerRetryTab-types";
+import type { ServerRetryStatus } from "@/types/views/ui/ServerRetryTab-types";
 
 type TimerRef = React.MutableRefObject<ReturnType<typeof setInterval> | null>;
 type RemainingRef = React.MutableRefObject<number>;

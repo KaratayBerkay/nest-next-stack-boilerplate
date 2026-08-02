@@ -7,8 +7,8 @@ import { StickyErrorContent } from "@/views/ui/toast/StickyErrorContent";
 import { HoverPauseContent } from "@/views/ui/toast/HoverPauseContent";
 import { NotificationCenterContent } from "@/views/ui/toast/NotificationCenterContent";
 import { ToastGalleryContent } from "@/views/ui/toast/ToastGalleryContent";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
-import type { InitialTabProps } from "@/types/ui/PageContent-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/views/ui/PageContent-types";
 
 const examples: UIExample[] = [
   {

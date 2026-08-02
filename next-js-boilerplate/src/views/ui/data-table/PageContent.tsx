@@ -4,8 +4,8 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
-import type { InitialTabProps } from "@/types/ui/PageContent-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/views/ui/PageContent-types";
 
 interface Invoice {
   id: string;

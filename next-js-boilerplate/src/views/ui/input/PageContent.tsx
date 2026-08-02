@@ -3,8 +3,8 @@
 import { Input } from "@/components/ui/Input";
 import { IconSearch, IconMail, IconLock } from "@tabler/icons-react";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
-import type { InitialTabProps } from "@/types/ui/PageContent-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/views/ui/PageContent-types";
 
 function BasicInput() {
   return (

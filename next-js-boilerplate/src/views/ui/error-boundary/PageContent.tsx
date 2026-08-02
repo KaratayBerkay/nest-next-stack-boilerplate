@@ -5,9 +5,9 @@ import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { useToast } from "@/components/ui/Toast";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { ErrorBoundaryCustomFallback } from "@/fallbacks/views/error-boundary/ErrorBoundaryCustomFallback";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
-import type { BombProps } from "@/types/ui/Bomb-types";
-import type { InitialTabProps } from "@/types/ui/PageContent-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
+import type { BombProps } from "@/types/views/ui/Bomb-types";
+import type { InitialTabProps } from "@/types/views/ui/PageContent-types";
 
 function Bomb({ label = "Throw Error" }: BombProps) {
   const [shouldThrow, setShouldThrow] = useState(false);
@@ -70,9 +70,7 @@ const examples: UIExample[] = [
     description: "Error boundary with a branded fallback and retry button.",
     render: () => (
       <div className="border-border bg-surface rounded-lg border p-4">
-        <ErrorBoundary
-          fallback={<ErrorBoundaryCustomFallback />}
-        >
+        <ErrorBoundary fallback={<ErrorBoundaryCustomFallback />}>
           <Bomb label="Throw (Custom)" />
         </ErrorBoundary>
       </div>
@@ -91,9 +89,7 @@ const examples: UIExample[] = [
   },
 ];
 
-export default function ErrorBoundaryPage({
-  initialTab,
-}: InitialTabProps) {
+export default function ErrorBoundaryPage({ initialTab }: InitialTabProps) {
   return (
     <ExampleTabs
       title="Error Boundary"

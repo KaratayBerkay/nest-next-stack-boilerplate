@@ -99,8 +99,8 @@ export function LoginForm({
           {formError && <FieldMessages error={formError} />}
 
           <div>
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             <form.Subscribe
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               selector={(s: any) => [s.canSubmit, s.isSubmitting]}
             >
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}

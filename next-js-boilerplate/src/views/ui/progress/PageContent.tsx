@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Card, CardTitle, CardContent } from "@/components/ui/Card";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
-import type { InitialTabProps } from "@/types/ui/PageContent-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/views/ui/PageContent-types";
 
 interface KpiItem {
   id: string;

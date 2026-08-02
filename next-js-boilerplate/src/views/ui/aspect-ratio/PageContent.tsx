@@ -4,7 +4,7 @@ import { useState } from "react";
 import { AspectRatio } from "@/components/ui/AspectRatio";
 import { cn } from "@/lib/cn";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 
 function ImageWithSkeleton({
   src,

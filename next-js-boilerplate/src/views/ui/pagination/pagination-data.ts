@@ -1,4 +1,7 @@
-import type { Invoice, Friend } from "@/types/ui/PaginationPageContent-types";
+import type {
+  Invoice,
+  Friend,
+} from "@/types/views/ui/PaginationPageContent-types";
 
 export const TOTAL_PAGES = 10;
 export const PAGE_SIZE = 5;

@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { ScrollToBottomButton } from "@/components/ui/ScrollToBottomButton";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 
 interface Message {
   id: string;

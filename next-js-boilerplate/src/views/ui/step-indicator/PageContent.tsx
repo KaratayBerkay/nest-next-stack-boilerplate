@@ -4,8 +4,8 @@ import { useState } from "react";
 import { StepIndicator } from "@/components/ui/StepIndicator";
 import { Button } from "@/components/ui/Button";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
-import type { InitialTabProps } from "@/types/ui/PageContent-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/views/ui/PageContent-types";
 
 const STEPS = ["Email", "Role", "Message", "Review"];
 

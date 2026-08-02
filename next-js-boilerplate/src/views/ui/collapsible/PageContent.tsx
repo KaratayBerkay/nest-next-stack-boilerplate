@@ -13,7 +13,7 @@ import { OrderSummaryTab } from "@/views/ui/collapsible/OrderSummaryTab";
 import { AdvancedSettingsTab } from "@/views/ui/collapsible/AdvancedSettingsTab";
 import { StarredReposTab } from "@/views/ui/collapsible/StarredReposTab";
 import type { GlobalVariant } from "@/components/ui/global-style-variants";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {

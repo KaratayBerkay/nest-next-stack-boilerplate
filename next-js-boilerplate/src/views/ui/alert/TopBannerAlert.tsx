@@ -3,12 +3,16 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
-import type { PopupAlertProps } from "@/types/ui/PopupAlert-types";
+import type { PopupAlertProps } from "@/types/views/ui/PopupAlert-types";
 import { AUTO_DISMISS_SECONDS } from "./PopupAlertsExample";
 import { CountdownRing } from "./CountdownRing";
 import { handleKeyDownModuleLevel } from "./popupAlertHandlers";
 
-export function TopBannerAlert({ phase, remainingMs, onDismiss }: PopupAlertProps) {
+export function TopBannerAlert({
+  phase,
+  remainingMs,
+  onDismiss,
+}: PopupAlertProps) {
   useEffect(() => {
     if (phase !== "open") return;
     const handleKeyDown = (e: KeyboardEvent) =>

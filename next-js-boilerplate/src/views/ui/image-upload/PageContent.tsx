@@ -5,7 +5,7 @@ import { ProfileFormTab } from "@/views/ui/image-upload/ProfileFormTab";
 import { AvatarTab } from "@/views/ui/image-upload/AvatarTab";
 import { GalleryTab } from "@/views/ui/image-upload/GalleryTab";
 import { CoverPhotoTab } from "@/views/ui/image-upload/CoverPhotoTab";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {

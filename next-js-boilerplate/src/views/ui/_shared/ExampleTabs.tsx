@@ -12,7 +12,10 @@ import { IconCode, IconEye } from "@tabler/icons-react";
 import { ExampleTabsDesktopBar } from "./ExampleTabsDesktopBar";
 import { ExampleTabsMobileAccordion } from "./ExampleTabsMobileAccordion";
 import { CodeBlock } from "./CodeBlock";
-import type { ExampleTabsProps, UIExample } from "@/types/ui/ExampleTabs-types";
+import type {
+  ExampleTabsProps,
+  UIExample,
+} from "@/types/views/ui/ExampleTabs-types";
 
 function handleChangeModuleLevel(
   newValue: string,

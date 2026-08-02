@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { NativeSelect } from "@/components/ui/NativeSelect";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 
 function ComponentsTab() {
   const [fruit, setFruit] = useState("");

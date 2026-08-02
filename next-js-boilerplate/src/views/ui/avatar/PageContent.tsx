@@ -2,7 +2,7 @@
 
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { avatarExamples } from "@/views/ui/avatar/examples";
-import type { InitialTabProps } from "@/types/ui/PageContent-types";
+import type { InitialTabProps } from "@/types/views/ui/PageContent-types";
 
 export default function AvatarPage({ initialTab }: InitialTabProps) {
   return (

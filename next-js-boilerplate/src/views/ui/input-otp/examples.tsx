@@ -1,6 +1,6 @@
 import { InputOTPWrapper } from "./InputOTPWrapper";
 import { TwoFactorVerification } from "./TwoFactorVerification";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 
 export const examples: UIExample[] = [
   {

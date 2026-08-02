@@ -9,7 +9,7 @@ import {
   NavigationMenuLink,
 } from "@/components/ui/NavigationMenu";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {

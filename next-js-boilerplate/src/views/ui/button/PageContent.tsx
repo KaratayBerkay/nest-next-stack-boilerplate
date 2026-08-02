@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  Button,
-  ButtonGroup,
-  ButtonGroupItem,
-} from "@/components/ui/Button";
+import { Button, ButtonGroup, ButtonGroupItem } from "@/components/ui/Button";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
 import { FormActionsTab } from "@/views/ui/button/FormActionsTab";
@@ -13,8 +9,8 @@ import { SignInButtonsTab } from "@/views/ui/button/SignInButtonsTab";
 import { IconButtonsTab } from "@/views/ui/button/IconButtonsTab";
 import { ButtonGroupsTab } from "@/views/ui/button/ButtonGroupsTab";
 import type { Variant, Size } from "@/components/ui/button-styles";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
-import type { InitialTabProps } from "@/types/ui/PageContent-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/views/ui/PageContent-types";
 
 export default function ButtonPage({ initialTab }: InitialTabProps) {
   const examples: UIExample[] = [

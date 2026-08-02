@@ -1,7 +1,7 @@
 "use client";
 
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 import { VerticalSwipeDemo } from "@/views/ui/scroll-area/VerticalSwipeDemo";
 import { HorizontalTagsDemo } from "@/views/ui/scroll-area/HorizontalTagsDemo";
 import { ChatPaneDemo } from "@/views/ui/scroll-area/ChatPaneDemo";

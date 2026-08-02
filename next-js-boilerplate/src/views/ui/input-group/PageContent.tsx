@@ -2,7 +2,7 @@
 import { InputGroup } from "@/components/ui/InputGroup";
 import { Input } from "@/components/ui/Input";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {
@@ -15,7 +15,7 @@ const examples: UIExample[] = [
           <h3 className="text-lg font-semibold">Default</h3>
           <InputGroup>
             <Input placeholder="Search..." />
-            <button className="bg-brand rounded px-4 py-2 text-sm text-brand-fg">
+            <button className="bg-brand text-brand-fg rounded px-4 py-2 text-sm">
               Go
             </button>
           </InputGroup>

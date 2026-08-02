@@ -2,7 +2,7 @@ import { Avatar, AvatarGroup } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
 import { ComponentsTab } from "@/views/ui/avatar/ComponentsTab";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 
 const teamMembers = [
   {

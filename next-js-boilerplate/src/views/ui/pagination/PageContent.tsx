@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 import { ComponentsTab } from "./ComponentsTab";
 import { ExamplesTab } from "./ExamplesTab";
 import { InvoiceTableTab } from "./InvoiceTableTab";

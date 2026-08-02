@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { FileUpload } from "@/components/ui/FileUpload";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 import type { UploadFile } from "@/types/ui/FileUpload-types";
 
 function simulateUpload(file: File, reportProgress: (pct: number) => void) {

@@ -8,7 +8,7 @@ import {
   handleMouseLeave,
   handleRetry,
 } from "@/views/ui/alert/ServerRetryTimer";
-import type { ServerRetryStatus } from "@/types/ui/ServerRetryTab-types";
+import type { ServerRetryStatus } from "@/types/views/ui/ServerRetryTab-types";
 import type { ServerRetryActiveAlertProps } from "@/types/views/ui/AlertDemo-types";
 
 export function ServerRetryActiveAlert({

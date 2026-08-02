@@ -8,7 +8,7 @@ import { BirthdateTab } from "@/views/ui/date-picker/BirthdateTab";
 import { YearOnlyTab } from "@/views/ui/date-picker/YearOnlyTab";
 import { CompactFormatTab } from "@/views/ui/date-picker/CompactFormatTab";
 import type { DatePickerVariant } from "@/types/ui/DatePicker-types";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 import { DatePicker } from "@/components/ui/DatePicker";
 
 const examples: UIExample[] = [

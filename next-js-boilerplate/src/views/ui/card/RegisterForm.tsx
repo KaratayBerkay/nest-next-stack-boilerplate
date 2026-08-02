@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { FieldMessages } from "@/components/ui/field-messages";
 import { RegisterFormFields } from "./RegisterFormFields";
 import { SocialButtons } from "./SocialButtons";
-import type { RegisterFormProps } from "@/types/ui/RegisterForm-types";
+import type { RegisterFormProps } from "@/types/views/ui/RegisterForm-types";
 
 export function RegisterForm({
   form,
@@ -24,13 +24,19 @@ export function RegisterForm({
           }}
           className="space-y-5"
         >
-          <RegisterFormFields form={form} registerSchema={registerSchema} t={t} />
+          <RegisterFormFields
+            form={form}
+            registerSchema={registerSchema}
+            t={t}
+          />
 
           {formError && <FieldMessages error={formError} />}
 
           <div>
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            <form.Subscribe selector={(s: any) => [s.canSubmit, s.isSubmitting]}>
+            <form.Subscribe
+              selector={(s: any) => [s.canSubmit, s.isSubmitting]}
+            >
               {([canSubmit, isSubmitting]: [boolean, boolean]) => (
                 <Button
                   type="submit"

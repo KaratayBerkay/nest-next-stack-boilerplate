@@ -1,7 +1,7 @@
 "use client";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { examples } from "./examples";
-import type { InitialTabProps } from "@/types/ui/PageContent-types";
+import type { InitialTabProps } from "@/types/views/ui/PageContent-types";
 
 export default function DropdownPage({ initialTab }: InitialTabProps) {
   return (

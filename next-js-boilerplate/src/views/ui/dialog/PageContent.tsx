@@ -5,8 +5,8 @@ import { EditProfileTab } from "@/views/ui/dialog/EditProfileTab";
 import { SizeScaleTab } from "@/views/ui/dialog/SizeScaleTab";
 import { TermsScrollTab } from "@/views/ui/dialog/TermsScrollTab";
 import { NestedConfirmTab } from "@/views/ui/dialog/NestedConfirmTab";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
-import type { InitialTabProps } from "@/types/ui/PageContent-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/views/ui/PageContent-types";
 
 const examples: UIExample[] = [
   {

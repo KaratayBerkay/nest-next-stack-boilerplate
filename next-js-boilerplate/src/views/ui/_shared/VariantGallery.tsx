@@ -1,7 +1,7 @@
 "use client";
 
 import { globalStyleVariants } from "@/components/ui/global-style-variants";
-import type { VariantGalleryProps } from "@/types/ui/VariantGallery-types";
+import type { VariantGalleryProps } from "@/types/views/ui/VariantGallery-types";
 
 const ALL_VARIANTS = ["default", ...Object.keys(globalStyleVariants)];
 

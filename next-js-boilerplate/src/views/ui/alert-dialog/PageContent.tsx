@@ -13,7 +13,7 @@ import {
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { UnsavedChangesContent } from "@/views/ui/alert-dialog/UnsavedChangesContent";
 import { SizeScaleContent } from "@/views/ui/alert-dialog/SizeScaleContent";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {
@@ -25,7 +25,7 @@ const examples: UIExample[] = [
         <section className="flex flex-col gap-3">
           <h3 className="text-lg font-semibold">Default</h3>
           <AlertDialog>
-            <AlertDialogTrigger className="bg-brand rounded px-4 py-2 text-sm font-medium text-brand-fg hover:opacity-90">
+            <AlertDialogTrigger className="bg-brand text-brand-fg rounded px-4 py-2 text-sm font-medium hover:opacity-90">
               Open Alert Dialog
             </AlertDialogTrigger>
             <AlertDialogContent>

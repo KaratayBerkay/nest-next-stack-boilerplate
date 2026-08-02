@@ -4,7 +4,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { TypedConfirmationDemo } from "@/views/ui/confirm-dialog/TypedConfirmationDemo";
 import { AsyncConfirmDemo } from "@/views/ui/confirm-dialog/AsyncConfirmDemo";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 
 const examples: UIExample[] = [
   {

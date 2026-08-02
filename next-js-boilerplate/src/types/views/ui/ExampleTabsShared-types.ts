@@ -1,4 +1,4 @@
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 
 export interface ExampleTabsDesktopBarProps {
   examples: UIExample[];

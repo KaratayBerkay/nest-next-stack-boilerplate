@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import type { ServerRetryStatus } from "@/types/ui/ServerRetryTab-types";
+import type { ServerRetryStatus } from "@/types/views/ui/ServerRetryTab-types";
 import { clearTimer } from "@/views/ui/alert/ServerRetryTimer";
 import { ServerRetryIdleView } from "@/views/ui/alert/ServerRetryIdleView";
 import { ServerRetryActiveAlert } from "@/views/ui/alert/ServerRetryActiveAlert";

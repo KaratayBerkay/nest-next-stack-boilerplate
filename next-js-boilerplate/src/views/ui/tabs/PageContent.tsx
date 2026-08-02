@@ -1,16 +1,11 @@
 "use client";
 
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/Tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
 import type { TabsTriggerVariant } from "@/types/ui/TabsTrigger-types";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
-import type { InitialTabProps } from "@/types/ui/PageContent-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/views/ui/PageContent-types";
 import { UnderlineNavTab } from "@/views/ui/tabs/UnderlineNavTab";
 import { PillFiltersTab } from "@/views/ui/tabs/PillFiltersTab";
 import { SettingsSectionsTab } from "@/views/ui/tabs/SettingsSections";

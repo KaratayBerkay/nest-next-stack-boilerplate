@@ -1,6 +1,6 @@
 "use client";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 import { ProductGallery } from "@/views/ui/carousel/ProductGallery";
 import { TestimonialCarousel } from "@/views/ui/carousel/TestimonialCarousel";
 import { LogoCarousel } from "@/views/ui/carousel/LogoCarousel";

@@ -12,8 +12,8 @@ import {
   Area,
 } from "@/components/ui/Chart";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
-import type { InitialTabProps } from "@/types/ui/PageContent-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/views/ui/PageContent-types";
 
 const revenueData = [
   { month: "Jan", revenue: 4000, expenses: 2400 },

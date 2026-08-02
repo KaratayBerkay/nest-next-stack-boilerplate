@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { handleSimulate } from "@/views/ui/alert/ServerRetryTimer";
-import type { ServerRetryStatus } from "@/types/ui/ServerRetryTab-types";
+import type { ServerRetryStatus } from "@/types/views/ui/ServerRetryTab-types";
 import type { ServerRetryIdleViewProps } from "@/types/views/ui/AlertDemo-types";
 
 export function ServerRetryIdleView({

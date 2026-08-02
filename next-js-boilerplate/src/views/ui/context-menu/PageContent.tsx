@@ -8,7 +8,7 @@ import {
   ContextMenuLabel,
 } from "@/components/ui/ContextMenu";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 import { AnimationsScenario } from "./AnimationsScenario";
 import { TextSelectionScenario } from "./TextSelectionScenario";
 import { FileTableScenario } from "./FileTableScenario";

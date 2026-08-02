@@ -4,8 +4,8 @@ import { NotificationMuteTab } from "./NotificationMuteTab";
 import { Toggle } from "@/components/ui/Toggle";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
-import type { InitialTabProps } from "@/types/ui/PageContent-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/views/ui/PageContent-types";
 import type { ToggleVariant, ToggleSize } from "@/types/ui/Toggle-types";
 
 const examples: UIExample[] = [

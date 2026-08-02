@@ -5,7 +5,7 @@ import { PaymentMethodTab } from "./PaymentMethodTab";
 import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
 import { Dropdown } from "@/components/ui/Dropdown";
 import type { DropdownVariant } from "@/types/ui/Dropdown-types";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 
 export const examples: UIExample[] = [
   {

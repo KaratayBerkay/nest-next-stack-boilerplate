@@ -1,7 +1,7 @@
 import { RouteTransitionTab } from "./RouteTransitionTab";
 import { DataPaneTab } from "./DataPaneTab";
 import { SplashTab } from "./SplashTab";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 
 export const examples: UIExample[] = [
   {

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
-import type { PopupAlertProps } from "@/types/ui/PopupAlert-types";
+import type { PopupAlertProps } from "@/types/views/ui/PopupAlert-types";
 import { AUTO_DISMISS_SECONDS } from "./PopupAlertsExample";
 import { FullWidthModalStyles } from "./FullWidthModalStyles";
 import {

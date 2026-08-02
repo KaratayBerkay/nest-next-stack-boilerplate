@@ -8,8 +8,8 @@ import { SelectAllTab } from "@/views/ui/checkbox/SelectAllTab";
 import { PlanCardsTab } from "@/views/ui/checkbox/PlanCardsTab";
 import { InterestChipsTab } from "@/views/ui/checkbox/InterestChipsTab";
 import type { CheckboxVariant, CheckboxSize } from "@/types/ui/Checkbox-types";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
-import type { InitialTabProps } from "@/types/ui/PageContent-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/views/ui/PageContent-types";
 
 const examples: UIExample[] = [
   {

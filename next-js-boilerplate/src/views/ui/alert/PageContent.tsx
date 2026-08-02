@@ -8,8 +8,8 @@ import { ComponentsTab } from "@/views/ui/alert/ComponentsTab";
 import { ExamplesTab } from "@/views/ui/alert/ExamplesTab";
 import { ServerRetryTab } from "@/views/ui/alert/ServerRetryTab";
 import type { AlertVariant } from "@/types/ui/Alert-types";
-import type { UIExample } from "@/types/ui/ExampleTabs-types";
-import type { InitialTabProps } from "@/types/ui/PageContent-types";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/views/ui/PageContent-types";
 
 const examples: UIExample[] = [
   {
