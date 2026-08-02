@@ -1,34 +1,58 @@
 "use client";
 
 import { FormFieldInfo } from "@/components/ui/FormFieldInfo";
+import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
+import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/ui/PageContent-types";
 
-export default function FormFieldInfoPage() {
+function ErrorState() {
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-sm font-semibold">Form Field Info</h2>
-        <p className="text-muted text-xs">
-          Error text and validating spinner for form fields
-        </p>
-      </div>
-      <div className="flex flex-col gap-4">
-        <div className="surface border-border flex flex-col gap-2 rounded-lg border p-4">
-          <p className="text-xs font-medium">Error state</p>
-          <FormFieldInfo
-            field={{ state: { meta: { errors: ["This field is required"] } } }}
-          />
-        </div>
-        <div className="surface border-border flex flex-col gap-2 rounded-lg border p-4">
-          <p className="text-xs font-medium">Validating state</p>
-          <FormFieldInfo
-            field={{ state: { meta: { errors: [], isValidating: true } } }}
-          />
-        </div>
-        <div className="surface border-border flex flex-col gap-2 rounded-lg border p-4">
-          <p className="text-xs font-medium">Idle state (no output)</p>
-          <FormFieldInfo field={{ state: { meta: { errors: [] } } }} />
-        </div>
-      </div>
-    </div>
+    <FormFieldInfo
+      field={{ state: { meta: { errors: ["This field is required"] } } }}
+    />
+  );
+}
+
+function ValidatingState() {
+  return (
+    <FormFieldInfo
+      field={{ state: { meta: { errors: [], isValidating: true } } }}
+    />
+  );
+}
+
+function IdleState() {
+  return <FormFieldInfo field={{ state: { meta: { errors: [] } } }} />;
+}
+
+const examples: UIExample[] = [
+  {
+    id: "error",
+    title: "Error State",
+    description: "Shows error text below the field.",
+    render: () => <ErrorState />,
+  },
+  {
+    id: "validating",
+    title: "Validating State",
+    description: "Shows a spinner while validating.",
+    render: () => <ValidatingState />,
+  },
+  {
+    id: "idle",
+    title: "Idle State",
+    description: "Renders nothing when there are no errors.",
+    render: () => <IdleState />,
+  },
+];
+
+export default function FormFieldInfoPage({ initialTab }: InitialTabProps) {
+  return (
+    <ExampleTabs
+      title="Form Field Info"
+      intro="Error text and validating spinner for form fields."
+      examples={examples}
+      initialTab={initialTab}
+    />
   );
 }

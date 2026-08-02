@@ -1,33 +1,52 @@
 "use client";
 
 import { FormErrorBanner } from "@/components/ui/FormErrorBanner";
+import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
+import type { UIExample } from "@/types/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/ui/PageContent-types";
 
-export default function FormErrorBannerPage() {
+function WithDismiss() {
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-sm font-semibold">Form Error Banner</h2>
-        <p className="text-muted text-xs">
-          Dismissable inline error alert for form-level errors
-        </p>
-      </div>
-      <div className="flex flex-col gap-4">
-        <div className="surface border-border flex flex-col gap-2 rounded-lg border p-4">
-          <p className="text-xs font-medium">With dismiss</p>
-          <FormErrorBanner
-            message="This is an error message"
-            onDismiss={() => {}}
-          />
-        </div>
-        <div className="surface border-border flex flex-col gap-2 rounded-lg border p-4">
-          <p className="text-xs font-medium">Without dismiss</p>
-          <FormErrorBanner message="Non-dismissable error" />
-        </div>
-        <div className="surface border-border flex flex-col gap-2 rounded-lg border p-4">
-          <p className="text-xs font-medium">Null message (renders nothing)</p>
-          <FormErrorBanner message={null} />
-        </div>
-      </div>
-    </div>
+    <FormErrorBanner message="This is an error message" onDismiss={() => {}} />
+  );
+}
+
+function WithoutDismiss() {
+  return <FormErrorBanner message="Non-dismissable error" />;
+}
+
+function NullMessage() {
+  return <FormErrorBanner message={null} />;
+}
+
+const examples: UIExample[] = [
+  {
+    id: "with-dismiss",
+    title: "With Dismiss",
+    description: "Error banner with a close button.",
+    render: () => <WithDismiss />,
+  },
+  {
+    id: "without-dismiss",
+    title: "Without Dismiss",
+    description: "Error banner without a close button.",
+    render: () => <WithoutDismiss />,
+  },
+  {
+    id: "null-message",
+    title: "Null Message",
+    description: "Renders nothing when message is null.",
+    render: () => <NullMessage />,
+  },
+];
+
+export default function FormErrorBannerPage({ initialTab }: InitialTabProps) {
+  return (
+    <ExampleTabs
+      title="Form Error Banner"
+      intro="Dismissable inline error alert for form-level errors."
+      examples={examples}
+      initialTab={initialTab}
+    />
   );
 }
