@@ -25,6 +25,7 @@ import { ChatRoomSidebar } from "@/views/chat-room/ChatRoomSidebar";
 import { ChatRoomMainContent } from "@/views/chat-room/ChatRoomMainContent";
 import type { ChatRoomBaseViewProps } from "@/types/chat-room/ChatRoomBaseView-types";
 import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
+import { useE2eeIdentity } from "@/hooks/messages/useE2eeIdentity";
 
 function ChatRoomContent({
   initialRoom = "general",
@@ -37,6 +38,7 @@ function ChatRoomContent({
   const t = useMessages("chat-room");
   const tErr = useMessages("error");
   const { user, loading } = useAuth();
+  useE2eeIdentity();
   const queryClient = useQueryClient();
   const router = useRouter();
   const [room, setRoom] = useState<string>(initialRoom);

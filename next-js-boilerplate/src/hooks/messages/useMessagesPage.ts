@@ -19,6 +19,7 @@ import type { UserInfo } from "@/types/messages/FreePageView-types";
 import { openConversationAction } from "@/views/messages/FreePageView-utils";
 import { useMessagesSearch } from "@/hooks/messages/useMessagesSearch";
 import { useMessagesData } from "@/hooks/messages/useMessagesData";
+import { useE2eeIdentity } from "@/hooks/messages/useE2eeIdentity";
 
 type UseMessagesPageInput = {
   initialUser?: string | null;
@@ -36,6 +37,7 @@ export function useMessagesPage({
 }: UseMessagesPageInput) {
   const t = useMessages("messages");
   const { user, loading } = useAuth();
+  useE2eeIdentity();
 
   const [selectedUserState, setSelectedUser] = useState<UserInfo | null>(null);
 
