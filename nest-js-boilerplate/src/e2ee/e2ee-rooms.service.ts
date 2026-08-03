@@ -15,17 +15,26 @@ export class E2eeRoomsService {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Resolves the externally-used room slug to its internal UUID id — every
+   * other room-facing identifier in this app (WS frames, RoomMessage.roomId)
+   * is the plain slug, so these endpoints accept that too rather than
+   * requiring callers to separately know the Room row's id. */
+  private async resolveRoomId(roomSlug: string): Promise<string | null> {
+    const room = await this.prisma.room.findUnique({
+      where: { slug: roomSlug },
+      select: { id: true },
+    });
+    return room?.id ?? null;
+  }
+
   async publishSenderKeys(
-    roomId: string,
+    roomSlug: string,
     senderDeviceId: string,
     epoch: number,
     keys: Omit<WrappedSenderKey, 'senderDeviceId' | 'epoch'>[],
   ): Promise<number> {
-    const room = await this.prisma.room.findUnique({
-      where: { id: roomId },
-      select: { id: true },
-    });
-    if (!room) return 0;
+    const roomId = await this.resolveRoomId(roomSlug);
+    if (!roomId) return 0;
 
     const result = await this.prisma.roomSenderKeyDistribution.createMany({
       data: keys.map((k) => ({
@@ -40,16 +49,19 @@ export class E2eeRoomsService {
     });
 
     this.logger.debug(
-      `publishSenderKeys room=${roomId} epoch=${epoch} count=${result.count}`,
+      `publishSenderKeys room=${roomSlug} epoch=${epoch} count=${result.count}`,
     );
     return result.count;
   }
 
   async fetchSenderKeys(
-    roomId: string,
+    roomSlug: string,
     recipientDeviceId: string,
     afterEpoch?: number,
   ) {
+    const roomId = await this.resolveRoomId(roomSlug);
+    if (!roomId) return [];
+
     const where: Record<string, unknown> = {
       roomId,
       recipientDeviceId,
@@ -76,6 +88,7 @@ export class E2eeRoomsService {
       where: { slug: roomId },
       select: {
         id: true,
+        membershipVersion: true,
         participants: {
           where: { leftAt: null },
           select: {
@@ -87,9 +100,12 @@ export class E2eeRoomsService {
         },
       },
     });
-    if (!room) return [];
+    if (!room) return { membershipVersion: 0, members: [] };
 
-    return room.participants;
+    return {
+      membershipVersion: room.membershipVersion,
+      members: room.participants,
+    };
   }
 
   async deleteSenderKeysForEpoch(

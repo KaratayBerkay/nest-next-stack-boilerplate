@@ -42,6 +42,7 @@ describe('MessagingResolver', () => {
         'hello',
         undefined,
         undefined,
+        undefined,
       );
       expect(result).toEqual({ id: 'm1', body: 'hello' });
     });
@@ -66,6 +67,7 @@ describe('MessagingResolver', () => {
           type: 'application/pdf',
           name: 'report.pdf',
         },
+        undefined,
       );
     });
   });

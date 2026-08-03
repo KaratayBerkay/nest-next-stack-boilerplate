@@ -73,7 +73,7 @@ export async function encryptForSend(
     },
     bundle,
     recipientUserId,
-    oneTimePrekey?.publicKey,
+    oneTimePrekey,
   );
 
   return { envelope, plaintext };
@@ -126,9 +126,10 @@ export async function decryptMessage(
         signingPrivateKey: identity.signingPrivateKey,
         agreementPrivateKey: identity.agreementPrivateKey,
         signedPrekeyPrivateKey: identity.signedPrekeyPrivateKey,
-        oneTimePrekeyPrivateKey: identity.oneTimePrekeyPrivateKey,
+        signedPrekeyPublicKey: identity.signedPrekeyPublicKey,
       },
       senderUserId,
+      ownUserId,
     );
 
     const result: DecryptedMessageResult = {
@@ -188,9 +189,10 @@ export async function decryptMessages(
           signingPrivateKey: identity.signingPrivateKey,
           agreementPrivateKey: identity.agreementPrivateKey,
           signedPrekeyPrivateKey: identity.signedPrekeyPrivateKey,
-          oneTimePrekeyPrivateKey: identity.oneTimePrekeyPrivateKey,
+          signedPrekeyPublicKey: identity.signedPrekeyPublicKey,
         },
         senderUserId,
+        ownUserId,
       );
 
       const result: DecryptedMessageResult = {
@@ -237,9 +239,10 @@ export async function decryptConversationPreview(
         signingPrivateKey: identity.signingPrivateKey,
         agreementPrivateKey: identity.agreementPrivateKey,
         signedPrekeyPrivateKey: identity.signedPrekeyPrivateKey,
-        oneTimePrekeyPrivateKey: identity.oneTimePrekeyPrivateKey,
+        signedPrekeyPublicKey: identity.signedPrekeyPublicKey,
       },
       senderUserId,
+      ownUserId,
     );
 
     return plaintext.text ?? "";
@@ -267,7 +270,7 @@ async function getIdentityWithPrivateKeys(deviceId: string): Promise<{
   signingPrivateKey: string;
   agreementPrivateKey: string;
   signedPrekeyPrivateKey: string;
-  oneTimePrekeyPrivateKey?: string;
+  signedPrekeyPublicKey: string;
 }> {
   const { ensureIdentity } = await import("./identity");
   const { getIdentitySigningPrivateKey, getIdentityAgreementPrivateKey } =
@@ -281,11 +284,13 @@ async function getIdentityWithPrivateKeys(deviceId: string): Promise<{
 
   const spk = await getSignedPrekey(0);
   const signedPrekeyPrivateKey = spk?.privateKey ?? "";
+  const signedPrekeyPublicKey = spk?.publicKey ?? "";
 
   return {
     identity,
     signingPrivateKey,
     agreementPrivateKey,
     signedPrekeyPrivateKey,
+    signedPrekeyPublicKey,
   };
 }

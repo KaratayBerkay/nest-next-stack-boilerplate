@@ -11,6 +11,7 @@ import { initials, type MessageAttachment } from './messaging.types';
 import { PushNotificationService } from '../push-notification/push-notification.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { tierRank, MIN_TIER_FOR_VIP } from '../authorization/tier-rank';
+import { MAX_ENVELOPE_JSON_BYTES } from './dto/envelope-size.constraint';
 
 type AuthWs = WebSocket & {
   userId?: string;
@@ -54,6 +55,24 @@ function toAttachment(
 function hasTextOrAttachmentOrEnvelope(data: IncomingMessagePayload): boolean {
   if (data.envelope && typeof data.envelope === 'object') return true;
   return Boolean((data.text ?? '').trim()) || Boolean(data.attachmentUrl);
+}
+
+/**
+ * WS frames bypass the REST/GraphQL DTO pipeline entirely (no
+ * ValidationPipe / EnvelopeSizeConstraint runs on a raw parsed WS
+ * message), so this same cap has to be enforced by hand here — otherwise
+ * a malicious or buggy client could send an arbitrarily large `envelope`
+ * over the socket straight into Postgres and every connected tab's relay.
+ */
+function isEnvelopeTooLarge(data: IncomingMessagePayload): boolean {
+  if (!data.envelope || typeof data.envelope !== 'object') return false;
+  let serialized: string;
+  try {
+    serialized = JSON.stringify(data.envelope);
+  } catch {
+    return true;
+  }
+  return serialized.length > MAX_ENVELOPE_JSON_BYTES;
 }
 
 function hasTextOrAttachment(data: IncomingMessagePayload): boolean {
@@ -187,6 +206,12 @@ export class MessagingWsGateway implements OnModuleInit {
       );
       return;
     }
+    if (isEnvelopeTooLarge(data)) {
+      ws.send(
+        JSON.stringify({ type: 'error', message: 'envelope too large' }),
+      );
+      return;
+    }
     const message = await this.ms.sendMessage(
       ws.userId,
       data.recipientId,
@@ -310,6 +335,12 @@ export class MessagingWsGateway implements OnModuleInit {
           type: 'error',
           message: 'A message must contain either text, an attachment, or an envelope',
         }),
+      );
+      return;
+    }
+    if (isEnvelopeTooLarge(data)) {
+      ws.send(
+        JSON.stringify({ type: 'error', message: 'envelope too large' }),
       );
       return;
     }

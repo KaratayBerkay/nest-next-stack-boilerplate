@@ -8,6 +8,7 @@ import {
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { TextOrAttachmentConstraint } from './text-or-attachment.constraint';
+import { EnvelopeSizeConstraint } from './envelope-size.constraint';
 
 export class SendMessageRestDto {
   @IsString()
@@ -56,6 +57,7 @@ export class SendMessageRestDto {
 
   @IsObject()
   @IsOptional()
+  @Validate(EnvelopeSizeConstraint)
   @ApiProperty({
     description:
       'E2EE envelope (MessageEnvelopeV1). When present, body is stored as null and the message is encrypted.',

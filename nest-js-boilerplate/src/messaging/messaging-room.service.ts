@@ -20,9 +20,25 @@ export const CHAT_ROOMS = [
 export type ChatRoom = (typeof CHAT_ROOMS)[number];
 export const VIP_ROOM_PREFIX = 'vip-';
 
+/**
+ * Cache of DB-registered room slugs (Room.slug), refreshed from Postgres.
+ * isValidRoom() stays synchronous for its callers on the WS hot path (every
+ * join/leave/send goes through it), so this is populated by a background
+ * refresh (kicked off from MessagingRoomService's constructor and re-run
+ * whenever membership is mutated) rather than queried inline.
+ */
+let dbRoomSlugs = new Set<string>();
+
+export async function refreshDbRoomSlugs(prisma: PrismaService): Promise<void> {
+  const rooms = await prisma.room.findMany({ select: { slug: true } });
+  dbRoomSlugs = new Set(rooms.map((r) => r.slug));
+}
+
 export function isValidRoom(room: string): boolean {
   return (
-    CHAT_ROOMS.includes(room as ChatRoom) || room.startsWith(VIP_ROOM_PREFIX)
+    CHAT_ROOMS.includes(room as ChatRoom) ||
+    room.startsWith(VIP_ROOM_PREFIX) ||
+    dbRoomSlugs.has(room)
   );
 }
 
@@ -39,7 +55,9 @@ export class MessagingRoomService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly redis: Redis | null,
-  ) {}
+  ) {
+    void refreshDbRoomSlugs(this.prisma).catch(() => undefined);
+  }
 
   private redisRoomKey(room: string): string {
     return `${ROOM_MEMBERS_PREFIX}${room}:members`;
@@ -180,7 +198,7 @@ export class MessagingRoomService {
         senderId: m.senderId,
         senderName: m.sender.name || m.sender.email || 'Unknown',
         avatar: initials(m.sender.name || m.sender.email || 'Unknown'),
-        body: m.body as string | null,
+        body: m.body,
         encrypted: m.encrypted,
         algVersion: m.algVersion,
         envelope: m.envelope as Record<string, unknown> | null,

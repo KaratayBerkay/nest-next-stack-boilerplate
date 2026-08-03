@@ -65,7 +65,8 @@ async function fetchRoomMessages(room: string): Promise<ChatRoomMessage[]> {
     try {
       const { isE2eeDmEnabled } = await import("@/lib/crypto/chat");
       if (isE2eeDmEnabled()) {
-        const { decryptRoomMessage } = await import("@/lib/crypto/sender-keys");
+        const { decryptRoomMessage, ensureReceivedSenderKey } =
+          await import("@/lib/crypto/sender-keys");
         const { getSenderKeyChain } = await import("@/lib/crypto/store");
 
         const decrypted = await Promise.all(
@@ -80,9 +81,18 @@ async function fetchRoomMessages(room: string): Promise<ChatRoomMessage[]> {
               chainIndex: number;
             };
 
-            // Look up the sender's chain key for this room
+            // Look up the sender's chain key for this room, fetching and
+            // unwrapping it from the server first if we don't have it yet.
             const chainKeyKey = `${room}:${m.senderId}`;
-            const stored = await getSenderKeyChain(chainKeyKey);
+            let stored = await getSenderKeyChain(chainKeyKey);
+            if (!stored || stored.epoch < envelope.senderKeyEpoch) {
+              await ensureReceivedSenderKey(
+                room,
+                m.senderId,
+                envelope.senderDeviceId,
+              ).catch(() => undefined);
+              stored = await getSenderKeyChain(chainKeyKey);
+            }
             if (!stored) return { ...m, body: "[Encrypted]" };
 
             try {

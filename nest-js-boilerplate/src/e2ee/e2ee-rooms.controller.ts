@@ -4,7 +4,6 @@ import {
   Controller,
   Get,
   Param,
-  ParseUUIDPipe,
   Post,
   UseGuards,
   UseInterceptors,
@@ -16,16 +15,7 @@ import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { JwtUser } from '../auth/auth.types';
 import { E2eeRoomsService } from './e2ee-rooms.service';
-
-class PublishSenderKeysDto {
-  senderDeviceId!: string;
-  epoch!: number;
-  keys!: Array<{
-    recipientDeviceId: string;
-    wrappedKey: string;
-    wrapNonce: string;
-  }>;
-}
+import { PublishSenderKeysDto } from './dto/publish-sender-keys.dto';
 
 @ApiTags('E2EE Rooms')
 @ApiBearerAuth()
@@ -39,9 +29,11 @@ export class E2eeRoomsController {
   ) {}
 
   @Post(':roomId/sender-keys')
-  @ApiOperation({ summary: 'Publish wrapped sender-key copies for a room epoch' })
+  @ApiOperation({
+    summary: 'Publish wrapped sender-key copies for a room epoch',
+  })
   async publishSenderKeys(
-    @Param('roomId', ParseUUIDPipe) roomId: string,
+    @Param('roomId') roomId: string,
     @CurrentUser() user: JwtUser,
     @Body() dto: PublishSenderKeysDto,
   ) {
@@ -52,9 +44,13 @@ export class E2eeRoomsController {
       throw new BadRequestException('At least one wrapped key is required');
     }
 
+    // senderDeviceId always comes from the authenticated session, never the
+    // request body — otherwise any caller could publish (or pre-emptively
+    // poison, via the unique-constraint skip-duplicate insert) sender-key
+    // rows impersonating another member's device.
     const count = await this.rooms.publishSenderKeys(
       roomId,
-      dto.senderDeviceId,
+      user.deviceId,
       dto.epoch,
       dto.keys.map((k) => ({
         recipientDeviceId: k.recipientDeviceId,
@@ -68,7 +64,7 @@ export class E2eeRoomsController {
   @Get(':roomId/sender-keys')
   @ApiOperation({ summary: 'Fetch wrapped sender keys for the current device' })
   async fetchSenderKeys(
-    @Param('roomId', ParseUUIDPipe) roomId: string,
+    @Param('roomId') roomId: string,
     @CurrentUser() user: JwtUser,
   ) {
     if (!user.deviceId) {
@@ -85,9 +81,7 @@ export class E2eeRoomsController {
 
   @Get(':roomId/members')
   @ApiOperation({ summary: 'Get durable room membership list' })
-  async getRoomMembers(
-    @Param('roomId', ParseUUIDPipe) roomId: string,
-  ) {
+  async getRoomMembers(@Param('roomId') roomId: string) {
     return this.rooms.getRoomMembers(roomId);
   }
 }

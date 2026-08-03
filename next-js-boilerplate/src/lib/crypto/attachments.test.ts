@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { xchachaEncrypt, xchachaDecrypt } from "./primitives";
+import { xchachaEncrypt, xchachaDecrypt, toBase64 } from "./primitives";
 import {
   encryptAttachmentForUpload,
   buildAttachmentPlaintext,
@@ -106,6 +106,36 @@ describe("attachment encryption", () => {
       originalType: "application/pdf",
       originalSize: 100,
     });
+  });
+
+  it("round-trips a large file without hitting the max-call-arguments limit", async () => {
+    // Regression test: toBase64() previously did
+    // btoa(String.fromCharCode(...data)), which spreads the whole typed
+    // array as individual function arguments — throwing "Maximum call
+    // stack size exceeded" / "too many function arguments" for anything
+    // past roughly 64K-128K elements (engine-dependent). Every existing
+    // test above uses inputs of a few bytes, so this never surfaced. Real
+    // attachments are explicitly expected to be megabytes (§4 of the
+    // plan) — comfortably over that threshold, e.g. any phone photo.
+    const size = 300_000; // ~293 KB — well past the unsafe threshold
+    const content = new Uint8Array(size);
+    for (let i = 0; i < size; i++) content[i] = i % 256;
+    const file = new File([content], "large.bin", {
+      type: "application/octet-stream",
+    });
+
+    const { encryptedBlob, metadata } = await encryptAttachmentForUpload(file);
+
+    const encryptedBytes = new Uint8Array(await encryptedBlob.arrayBuffer());
+    const ciphertextB64 = toBase64(encryptedBytes);
+    const decrypted = xchachaDecrypt(
+      metadata.key,
+      ciphertextB64,
+      metadata.nonce,
+    );
+
+    expect(decrypted.length).toBe(size);
+    expect(Array.from(decrypted)).toEqual(Array.from(content));
   });
 
   it("different files produce different ciphertext with different keys", async () => {

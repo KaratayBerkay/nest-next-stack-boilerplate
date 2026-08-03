@@ -23,8 +23,19 @@ function fromHex(hex: string): Uint8Array {
   return hexToBytes(hex);
 }
 
+// Spreading a whole typed array into String.fromCharCode(...data) blows
+// the JS engine's max-call-arguments limit (~64K-128K depending on engine)
+// for anything larger than that — attachments are explicitly expected to
+// be megabytes (§4 of the plan), so this must chunk rather than spread.
+const TO_BASE64_CHUNK_SIZE = 8192;
+
 function toBase64(data: Uint8Array): string {
-  return btoa(String.fromCharCode(...data));
+  let binary = "";
+  for (let i = 0; i < data.length; i += TO_BASE64_CHUNK_SIZE) {
+    const chunk = data.subarray(i, i + TO_BASE64_CHUNK_SIZE);
+    binary += String.fromCharCode(...chunk);
+  }
+  return btoa(binary);
 }
 
 function fromBase64(b64: string): Uint8Array {

@@ -7,7 +7,10 @@ import type { useRouter } from "next/navigation";
 import { nowMs } from "@/lib/date-time";
 import { trackTempId } from "@/lib/realtime/event-dispatch";
 import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
-import { encryptRoomMessage } from "@/lib/crypto/sender-keys";
+import {
+  encryptRoomMessage,
+  distributeSenderKeyIfNeeded,
+} from "@/lib/crypto/sender-keys";
 import { getIdentity } from "@/lib/crypto/store";
 
 export async function chatRoomHandleSend(
@@ -35,6 +38,10 @@ export async function chatRoomHandleSend(
     try {
       const identity = await getIdentity();
       if (identity) {
+        // Rotate/redistribute our room sender-key first if membership has
+        // moved on since we last did (§1.5: lazy, per-sender, before send).
+        await distributeSenderKeyIfNeeded(room, user.id, identity.deviceId);
+
         // Build plaintext with optional attachment metadata
         const plaintext: Record<string, unknown> = { text };
         if (attachment?.cryptoMetadata) {

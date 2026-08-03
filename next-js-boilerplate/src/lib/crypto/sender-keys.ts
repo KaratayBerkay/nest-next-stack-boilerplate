@@ -10,11 +10,18 @@
 import { hmac } from "@noble/hashes/hmac.js";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js";
-import { xchachaEncrypt, xchachaDecrypt } from "./primitives.js";
-import { getSenderKeyChain, setSenderKeyChain } from "./store.js";
-import type { SenderKeyChain, RoomMessageEnvelopeV1 } from "./types.js";
+import {
+  xchachaEncrypt,
+  xchachaDecrypt,
+  x25519SharedSecret,
+  hkdfDerive,
+} from "./primitives";
+import { getSenderKeyChain, setSenderKeyChain } from "./store";
+import type { SenderKeyChain, RoomMessageEnvelopeV1 } from "./types";
 
 // ── Constants ──────────────────────────────────────────────────────────
+
+const MAX_CHAIN_ADVANCE = 100_000;
 
 const CHAIN_KEY_LABEL = new TextEncoder().encode("SK-CRK");
 const MESSAGE_KEY_LABEL = new TextEncoder().encode("SK-MK");
@@ -158,6 +165,15 @@ export async function decryptRoomMessage(
   roomId: string,
   senderId: string,
 ): Promise<string> {
+  // envelope.chainIndex is wire-supplied and unauthenticated until the AEAD
+  // tag check below — cap how far we'll fast-forward so a malicious or
+  // corrupted envelope can't force an unbounded synchronous HMAC loop.
+  if (envelope.chainIndex > MAX_CHAIN_ADVANCE) {
+    throw new Error(
+      `Refusing to advance sender-key chain ${envelope.chainIndex} steps (max ${MAX_CHAIN_ADVANCE})`,
+    );
+  }
+
   // Advance the chain to the right position
   let chainKey = senderChainKey;
   let chainIndex = 0;
@@ -191,10 +207,33 @@ export async function decryptRoomMessage(
 // ── Key wrapping for distribution (§1.5) ──────────────────────────────
 
 /**
- * Wrap a sender key chain for distribution to a recipient device.
- * The wrapping uses XChaCha20 with a derived shared key.
- * In the full protocol this would use the pairwise DM ratchet session;
- * for now we use a simplified key-wrapping approach.
+ * Derive the per-recipient secret used to wrap a room sender-key chain,
+ * via a static X25519 DH between both parties' identity agreement keys
+ * (the same stable keys used to bootstrap X3DH), HKDF'd with a distinct
+ * domain-separation label so this secret can never collide with an actual
+ * DM ratchet/X3DH derivation even if computed from the same DH output.
+ * By DH symmetry, the sender and the recipient each compute the identical
+ * value from their own private key + the other's public key — no round
+ * trip, no consumed one-time-prekey, since both agreement keys are stable
+ * public values fetched via the non-consuming identity/status endpoints.
+ */
+export function deriveRoomWrapSecret(
+  myAgreementPrivateKey: string,
+  peerAgreementPublicKey: string,
+): string {
+  const dh = x25519SharedSecret(myAgreementPrivateKey, peerAgreementPublicKey);
+  return hkdfDerive(
+    hexToBytes(dh),
+    new Uint8Array(32),
+    "E2EE-room-sender-key-wrap-v1",
+  );
+}
+
+/**
+ * Wrap a sender key chain for distribution to a recipient device, using a
+ * secret only the sender and that specific recipient can derive (see
+ * deriveRoomWrapSecret) — the server that stores/relays the wrapped blob
+ * never has access to it.
  */
 export function wrapSenderKey(
   chainKey: string,
@@ -218,4 +257,142 @@ export function unwrapSenderKey(
 ): { chainKey: string; epoch: number } {
   const plaintext = xchachaDecrypt(wrappingKeyHex, wrappedKey, wrapNonce);
   return JSON.parse(new TextDecoder().decode(plaintext));
+}
+
+// ── Distribution orchestration (§1.5, §3) ──────────────────────────────
+
+/**
+ * Rotate (if membership has moved on) and (re-)distribute this device's
+ * room sender-key chain to every other current member, wrapped
+ * per-recipient-device. Client-initiated, lazy, per-sender: called right
+ * before a send; a no-op if nothing has changed since the last time this
+ * device distributed for this room.
+ */
+export async function distributeSenderKeyIfNeeded(
+  roomSlug: string,
+  ownUserId: string,
+  ownDeviceId: string,
+): Promise<void> {
+  const { fetchRoomMembersServer } =
+    await import("@/api/server/e2ee/room-members");
+  const { membershipVersion, members } = await fetchRoomMembersServer(roomSlug);
+
+  const existingChain = await getSenderKeyChain(roomSlug);
+  const lastDistributed = existingChain?.lastDistributedMembershipVersion;
+  if (
+    existingChain &&
+    lastDistributed !== undefined &&
+    lastDistributed >= membershipVersion
+  ) {
+    return; // already distributed for the current membership state
+  }
+
+  const chain = existingChain
+    ? (await rotateSenderKeyChain(roomSlug)).newChain
+    : await getOrCreateSenderKeyChain(roomSlug);
+
+  const { getIdentityAgreementPrivateKey } = await import("./identity");
+  const myAgreementPrivateKey = await getIdentityAgreementPrivateKey();
+
+  const { fetchPeerAgreementKey } =
+    await import("@/api/server/e2ee/peer-identity");
+  const { getBundleStatusServer } =
+    await import("@/api/server/e2ee/bundle-status");
+  const { publishSenderKeysServer } =
+    await import("@/api/server/e2ee/publish-sender-keys");
+
+  const otherMembers = members.filter((m) => m.userId !== ownUserId);
+  const wrapped: Array<{
+    recipientDeviceId: string;
+    wrappedKey: string;
+    wrapNonce: string;
+  }> = [];
+
+  for (const member of otherMembers) {
+    // Both lookups are the non-consuming endpoints — no one-time-prekey is
+    // spent just to distribute a room key (only a real DM handshake does).
+    const [peerAgreementKey, status] = await Promise.all([
+      fetchPeerAgreementKey(member.userId),
+      getBundleStatusServer(member.userId),
+    ]);
+    if (!peerAgreementKey || !status.registered || !status.deviceId) {
+      continue; // member hasn't enabled secure messaging yet — they'll
+      // catch up next time this device rotates after they register.
+    }
+
+    const secret = deriveRoomWrapSecret(
+      myAgreementPrivateKey,
+      peerAgreementKey,
+    );
+    const { wrappedKey, wrapNonce } = wrapSenderKey(
+      chain.chainKey,
+      chain.epoch,
+      secret,
+    );
+    wrapped.push({ recipientDeviceId: status.deviceId, wrappedKey, wrapNonce });
+  }
+
+  if (wrapped.length > 0) {
+    await publishSenderKeysServer(roomSlug, {
+      senderDeviceId: ownDeviceId,
+      epoch: chain.epoch,
+      keys: wrapped,
+    });
+  }
+
+  chain.lastDistributedMembershipVersion = membershipVersion;
+  await setSenderKeyChain(chain);
+}
+
+// ── Reception orchestration (§1.5, §4) ─────────────────────────────────
+
+/**
+ * Ensure we have a locally-stored copy of `senderUserId`'s current room
+ * sender-key chain, fetching and unwrapping any wrapped copies addressed
+ * to this device that we haven't already applied. No-op if we're already
+ * caught up. Call this before attempting to decrypt a room message from a
+ * sender we don't yet have (or might have a stale epoch for).
+ */
+export async function ensureReceivedSenderKey(
+  roomSlug: string,
+  senderUserId: string,
+  senderDeviceId: string,
+): Promise<void> {
+  const storeKey = `${roomSlug}:${senderUserId}`;
+  const existing = await getSenderKeyChain(storeKey);
+
+  const { fetchSenderKeysServer } =
+    await import("@/api/server/e2ee/fetch-sender-keys");
+  const wrappedEntries = await fetchSenderKeysServer(roomSlug);
+
+  const candidates = wrappedEntries
+    .filter((e) => e.senderDeviceId === senderDeviceId)
+    .filter((e) => existing === null || e.epoch > existing.epoch)
+    .sort((a, b) => b.epoch - a.epoch); // newest epoch first
+  if (candidates.length === 0) return;
+
+  const latest = candidates[0];
+
+  const { fetchPeerAgreementKey } =
+    await import("@/api/server/e2ee/peer-identity");
+  const { getIdentityAgreementPrivateKey } = await import("./identity");
+  const [peerAgreementKey, myAgreementPrivateKey] = await Promise.all([
+    fetchPeerAgreementKey(senderUserId),
+    getIdentityAgreementPrivateKey(),
+  ]);
+  if (!peerAgreementKey) return;
+
+  const secret = deriveRoomWrapSecret(myAgreementPrivateKey, peerAgreementKey);
+  const { chainKey, epoch } = unwrapSenderKey(
+    latest.wrappedKey,
+    latest.wrapNonce,
+    secret,
+  );
+
+  await setSenderKeyChain({
+    roomId: storeKey,
+    epoch,
+    chainKey,
+    chainIndex: 0,
+  });
 }

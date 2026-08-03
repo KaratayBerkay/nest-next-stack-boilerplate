@@ -55,8 +55,8 @@ export function x3dhInitiate(
   bobBundle: DeviceBundle,
   /** Alice's ephemeral keypair (generate with generateEphemeralKey()). */
   ephemeral: { publicKey: string; privateKey: string },
-  /** The OPK public key hex that was consumed, if any. */
-  oneTimePrekeyPublicKey?: string,
+  /** The OPK that was claimed/consumed from the server, if any. */
+  oneTimePrekey?: { keyId: string; publicKey: string },
 ): X3dhHandshakeResult {
   // 1. Verify SPK signature: sig(IK_sig_B, SPK_pub) must verify
   const spkValid = ed25519Verify(
@@ -92,8 +92,8 @@ export function x3dhInitiate(
   const dh3 = x25519SharedSecret(ephemeral.privateKey, bobBundle.signedPrekey);
 
   let dh4: string | undefined;
-  if (oneTimePrekeyPublicKey && ephemeral.privateKey) {
-    dh4 = x25519SharedSecret(ephemeral.privateKey, oneTimePrekeyPublicKey);
+  if (oneTimePrekey) {
+    dh4 = x25519SharedSecret(ephemeral.privateKey, oneTimePrekey.publicKey);
   }
 
   // 4. Derive session key
@@ -104,9 +104,7 @@ export function x3dhInitiate(
     identityKey: aliceIdentity.publicKey,
     ephemeralKey: ephemeral.publicKey,
     usedSignedPrekeyId: bobBundle.signedPrekeyId,
-    usedOneTimePrekeyId: oneTimePrekeyPublicKey
-      ? `otpk-${Date.now()}-0` // placeholder — resolved by OPK tracking
-      : undefined,
+    usedOneTimePrekeyId: oneTimePrekey?.keyId,
   };
 
   return { sessionKey, init };

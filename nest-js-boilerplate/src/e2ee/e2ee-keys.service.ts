@@ -72,9 +72,7 @@ export class E2eeKeysService implements E2eeLifecycleHook {
     return { deviceId, superseded };
   }
 
-  async claimBundle(
-    targetUserId: string,
-  ): Promise<{
+  async claimBundle(targetUserId: string): Promise<{
     deviceId: string;
     bundle: Record<string, unknown>;
     oneTimePrekey?: { keyId: string; publicKey: string };
@@ -144,9 +142,7 @@ export class E2eeKeysService implements E2eeLifecycleHook {
     pipe.del(this.otpkKey(deviceId));
     pipe.del(this.activeKey(userId));
     await pipe.exec();
-    this.logger.debug(
-      `deleteForSession userId=${userId} deviceId=${deviceId}`,
-    );
+    this.logger.debug(`deleteForSession userId=${userId} deviceId=${deviceId}`);
   }
 
   async deleteForUser(userId: string): Promise<void> {
@@ -161,19 +157,28 @@ export class E2eeKeysService implements E2eeLifecycleHook {
     this.logger.debug(`deleteForUser userId=${userId} deviceId=${deviceId}`);
   }
 
-  async getIdentityKey(
-    userId: string,
-  ): Promise<{ identitySigningKey: string } | null> {
+  async getIdentityKey(userId: string): Promise<{
+    identitySigningKey: string;
+    identityAgreementKey: string;
+  } | null> {
     const deviceId = await this.redis.get(this.activeKey(userId));
     if (!deviceId) return null;
 
     const bundleRaw = await this.redis.get(this.bundleKey(deviceId));
     if (!bundleRaw) return null;
 
-    const bundle = JSON.parse(bundleRaw);
-    if (!bundle.identitySigningKey) return null;
+    const bundle = JSON.parse(bundleRaw) as {
+      identitySigningKey?: string;
+      identityAgreementKey?: string;
+    };
+    if (!bundle.identitySigningKey || !bundle.identityAgreementKey) {
+      return null;
+    }
 
-    return { identitySigningKey: bundle.identitySigningKey };
+    return {
+      identitySigningKey: bundle.identitySigningKey,
+      identityAgreementKey: bundle.identityAgreementKey,
+    };
   }
 
   async wipeDevice(

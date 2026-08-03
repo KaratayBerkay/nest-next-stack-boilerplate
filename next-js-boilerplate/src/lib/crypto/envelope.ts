@@ -60,7 +60,7 @@ export async function encryptDmMessage(
   },
   recipientBundle: DeviceBundle,
   recipientUserId: string,
-  recipientOneTimePrekeyPublicKey?: string,
+  recipientOneTimePrekey?: { keyId: string; publicKey: string },
 ): Promise<EncryptResult> {
   const plaintextBytes = new TextEncoder().encode(JSON.stringify(plaintext));
 
@@ -81,14 +81,17 @@ export async function encryptDmMessage(
       },
       recipientBundle,
       ephemeral,
-      recipientOneTimePrekeyPublicKey,
+      recipientOneTimePrekey,
     );
 
-    // Initialize sender ratchet session
+    // Initialize sender ratchet session — the sending chain is seeded via
+    // a real DH against the peer's signed prekey (see ratchet.ts), which
+    // the responder mirrors in initReceiverSession.
     await initSenderSession(
       recipientUserId,
       recipientBundle.identitySigningKey, // placeholder — real device ID comes from server
       sessionKey,
+      recipientBundle.signedPrekey,
     );
 
     init = x3dhInit;
@@ -128,38 +131,64 @@ export async function decryptDmMessage(
     signingPrivateKey: string;
     agreementPrivateKey: string;
     signedPrekeyPrivateKey: string;
-    oneTimePrekeyPrivateKey?: string;
+    signedPrekeyPublicKey: string;
   },
   senderUserId: string,
+  /** The current user's own id — i.e. the actual recipient of this
+   * message. Must match the recipientUserId encryptDmMessage used to
+   * build its AAD, or every decrypt fails with an auth-tag mismatch. */
+  recipientUserId: string,
 ): Promise<DecryptResult> {
-  const wasHandshake = !!envelope.x3dhInit;
+  // envelope.x3dhInit is a permanent property of a conversation's first
+  // stored message — re-fetching/re-rendering history (pagination, a cache
+  // refetch, a page reload) will see it again indefinitely. Only treat it
+  // as an actual handshake to (re-)bootstrap if we don't already have a
+  // session: otherwise this would silently roll back and corrupt a live,
+  // already-advanced ratchet session every time that old message is viewed
+  // again, breaking every message after it too.
+  const { getRatchetSession } = await import("./store");
+  const existingSession = await getRatchetSession(senderUserId);
+  const wasHandshake = !!envelope.x3dhInit && !existingSession;
 
   if (wasHandshake) {
-    // First message — perform X3DH responder handshake
+    // First message — look up the actual claimed one-time-prekey's private
+    // half (by its real id, carried in the preamble) before responding.
+    const usedOneTimePrekeyId = envelope.x3dhInit!.usedOneTimePrekeyId;
+    let oneTimePrekeyPrivateKey: string | undefined;
+    if (usedOneTimePrekeyId) {
+      const { getOneTimePrekey } = await import("./store");
+      const stored = await getOneTimePrekey(usedOneTimePrekeyId);
+      oneTimePrekeyPrivateKey = stored?.privateKey;
+    }
+
+    // Perform X3DH responder handshake
     const responderInput: X3dhResponderInput = {
       identitySigningPrivateKey: recipientIdentity.signingPrivateKey,
       identityAgreementPrivateKey: recipientIdentity.agreementPrivateKey,
       signedPrekeyPrivateKey: recipientIdentity.signedPrekeyPrivateKey,
-      oneTimePrekeyPrivateKey: recipientIdentity.oneTimePrekeyPrivateKey,
+      oneTimePrekeyPrivateKey,
       init: envelope.x3dhInit!,
     };
 
     const sessionKey = x3dhRespond(responderInput);
 
-    // Initialize receiver ratchet session
+    // Initialize receiver ratchet session using the sender's actual ratchet
+    // key from the message header (NOT the X3DH ephemeral key — those are
+    // two different keys; the header's dhPub is what every subsequent
+    // message will be ratcheted against).
     await initReceiverSession(
       senderUserId,
       envelope.senderDeviceId,
       sessionKey,
-      envelope.x3dhInit!.ephemeralKey,
+      envelope.header.dhPub,
+      recipientIdentity.signedPrekeyPrivateKey,
+      recipientIdentity.signedPrekeyPublicKey,
     );
 
     // Delete consumed OPK from IndexedDB
-    if (recipientIdentity.oneTimePrekeyPrivateKey) {
+    if (usedOneTimePrekeyId && oneTimePrekeyPrivateKey) {
       const { deleteOneTimePrekey } = await import("./store");
-      await deleteOneTimePrekey(
-        envelope.x3dhInit!.usedOneTimePrekeyId ?? "unknown",
-      );
+      await deleteOneTimePrekey(usedOneTimePrekeyId);
     }
   }
 
@@ -170,7 +199,7 @@ export async function decryptDmMessage(
     envelope.nonce,
     envelope.header,
     envelope.senderDeviceId,
-    senderUserId, // recipient is us
+    recipientUserId,
   );
 
   const plaintext: MessagePlaintextV1 = JSON.parse(

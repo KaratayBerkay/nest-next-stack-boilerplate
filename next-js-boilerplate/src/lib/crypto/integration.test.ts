@@ -72,6 +72,7 @@ vi.mock("./store", () => ({
 import {
   generateIdentitySigningKey,
   generateIdentityAgreementKey,
+  generateEphemeralKey,
   ed25519Sign,
   generateSignedPrekey,
   generateOneTimePrekeys,
@@ -161,8 +162,6 @@ describe("Two-party E2EE integration", () => {
     ephemeral.privateKey = eph.privateKey;
     ephemeral.publicKey = eph.publicKey;
 
-    const opkPublicKey = bob.opks[0].publicKey;
-
     const { sessionKey, init } = x3dhInitiate(
       {
         publicKey: alice.identity.identityAgreementKey,
@@ -170,7 +169,7 @@ describe("Two-party E2EE integration", () => {
       },
       bob.bundle,
       ephemeral,
-      opkPublicKey,
+      bob.opks[0],
     );
 
     expect(sessionKey).toHaveLength(64);
@@ -189,12 +188,19 @@ describe("Two-party E2EE integration", () => {
     expect(bobSessionKey).toBe(sessionKey);
 
     // ── Step 3: Initialize ratchet sessions ──
-    // Alice initializes sender session
-    await initSenderSession("bob", "bob-device-1", sessionKey);
+    // Alice initializes sender session — her sending chain is seeded via a
+    // real DH against Bob's signed prekey (already used in X3DH above).
+    await initSenderSession(
+      "bob",
+      "bob-device-1",
+      sessionKey,
+      bob.bundle.signedPrekey,
+    );
 
     // Bob initializes receiver session using Alice's ratchet DH public key
     // (In production, Bob gets this from Alice's first message header;
-    //  for the test, we read it directly from the session store.)
+    //  for the test, we read it directly from the session store.) and his
+    // own signed-prekey keypair (mirrors Alice's derivation by DH symmetry).
     const aliceSession = await getRatchetSession("bob");
     const aliceRatchetDhPub = (aliceSession as { dhPub: string }).dhPub;
 
@@ -203,6 +209,8 @@ describe("Two-party E2EE integration", () => {
       "alice-device-1",
       sessionKey,
       aliceRatchetDhPub,
+      bob.spkPrivateKey,
+      bob.bundle.signedPrekey,
     );
 
     // ── Step 4: Alice sends first message ──
@@ -327,7 +335,13 @@ describe("Two-party E2EE integration", () => {
   it("handles out-of-order messages", async () => {
     // Set up session (simplified — just init sender for 'bob')
     const sessionKey = "0".repeat(64); // dummy session key for testing
-    await initSenderSession("bob", "bob-device-1", sessionKey);
+    const bobSpk = generateEphemeralKey();
+    await initSenderSession(
+      "bob",
+      "bob-device-1",
+      sessionKey,
+      bobSpk.publicKey,
+    );
 
     // Encrypt 3 messages from Alice to Bob
     const envelopes = [];
@@ -349,6 +363,8 @@ describe("Two-party E2EE integration", () => {
       "alice-device-1",
       sessionKey,
       envelopes[0].header.dhPub,
+      bobSpk.privateKey,
+      bobSpk.publicKey,
     );
 
     // Receive in reverse order: msg-2, msg-0, msg-1
@@ -385,7 +401,13 @@ describe("Two-party E2EE integration", () => {
 
   it("rejects decryption with wrong AAD", async () => {
     const sessionKey = "0".repeat(64);
-    await initSenderSession("bob", "bob-device-1", sessionKey);
+    const bobSpk = generateEphemeralKey();
+    await initSenderSession(
+      "bob",
+      "bob-device-1",
+      sessionKey,
+      bobSpk.publicKey,
+    );
 
     const pt: MessagePlaintextV1 = { text: "secret" };
     const ptBytes = new TextEncoder().encode(JSON.stringify(pt));
@@ -403,6 +425,8 @@ describe("Two-party E2EE integration", () => {
       "alice-device-1",
       sessionKey,
       header.dhPub,
+      bobSpk.privateKey,
+      bobSpk.publicKey,
     );
 
     // Try to decrypt with wrong sender/recipient IDs (wrong AAD)
@@ -416,5 +440,169 @@ describe("Two-party E2EE integration", () => {
         "bob-device-1",
       ),
     ).rejects.toThrow();
+  });
+
+  it("round-trips through the real encryptDmMessage/decryptDmMessage glue (not just raw ratchet calls)", async () => {
+    // This exercises envelope.ts directly — the production code path that
+    // wires X3DH + the ratchet together. Every other test in this file
+    // calls initSenderSession/initReceiverSession/ratchetEncrypt/
+    // ratchetDecrypt directly with manually-supplied correct values, which
+    // is exactly how a real bug in the glue code (envelope.ts previously
+    // passed the X3DH ephemeral key instead of the message header's actual
+    // ratchet key into initReceiverSession — two different keys) could hide
+    // behind a fully green suite.
+    const { encryptDmMessage, decryptDmMessage } = await import("./envelope");
+    const { setOneTimePrekey } = await import("./store");
+
+    // Register Bob's claimed one-time-prekey under its real id, exactly as
+    // it would exist in his local IndexedDB before it was ever claimed.
+    await setOneTimePrekey(bob.opks[0].keyId, bob.opks[0]);
+
+    const { envelope } = await encryptDmMessage(
+      { text: "hello via envelope" },
+      {
+        identity: alice.identity,
+        signingPrivateKey: alice.signingPrivateKey,
+        agreementPrivateKey: alice.agreementPrivateKey,
+      },
+      bob.bundle,
+      "bob",
+      bob.opks[0],
+    );
+
+    // The real (not fabricated) claimed-prekey id must ride along so the
+    // responder can look up the matching private half and compute dh4.
+    expect(envelope.x3dhInit?.usedOneTimePrekeyId).toBe(bob.opks[0].keyId);
+
+    const { plaintext, wasHandshake } = await decryptDmMessage(
+      envelope,
+      {
+        signingPrivateKey: bob.signingPrivateKey,
+        agreementPrivateKey: bob.agreementPrivateKey,
+        signedPrekeyPrivateKey: bob.spkPrivateKey,
+        signedPrekeyPublicKey: bob.bundle.signedPrekey,
+      },
+      "alice",
+      "bob",
+    );
+
+    expect(wasHandshake).toBe(true);
+    expect(plaintext.text).toBe("hello via envelope");
+
+    // A follow-up message needs no X3DH preamble and must still decrypt via
+    // the now-established ratchet session.
+    const { envelope: envelope2 } = await encryptDmMessage(
+      { text: "second message" },
+      {
+        identity: alice.identity,
+        signingPrivateKey: alice.signingPrivateKey,
+        agreementPrivateKey: alice.agreementPrivateKey,
+      },
+      bob.bundle,
+      "bob",
+    );
+    expect(envelope2.x3dhInit).toBeUndefined();
+
+    const { plaintext: plaintext2 } = await decryptDmMessage(
+      envelope2,
+      {
+        signingPrivateKey: bob.signingPrivateKey,
+        agreementPrivateKey: bob.agreementPrivateKey,
+        signedPrekeyPrivateKey: bob.spkPrivateKey,
+        signedPrekeyPublicKey: bob.bundle.signedPrekey,
+      },
+      "alice",
+      "bob",
+    );
+    expect(plaintext2.text).toBe("second message");
+  });
+
+  it("re-viewing an old first-message envelope (history reload, pagination) does not corrupt the live session", async () => {
+    // The very first message of a conversation permanently carries
+    // x3dhInit in its stored envelope. Re-fetching/re-rendering history —
+    // pagination, a cache refetch, a page reload — decrypts it again. If
+    // decryptDmMessage naively re-bootstraps (re-runs X3DH +
+    // initReceiverSession) every time it sees x3dhInit, it silently rolls
+    // back the receiver's already-advanced ratchet session, breaking every
+    // message after it — no attacker required, just normal history
+    // browsing. This must be a no-op once a session already exists.
+    const { encryptDmMessage, decryptDmMessage } = await import("./envelope");
+    const { setOneTimePrekey } = await import("./store");
+    await setOneTimePrekey(bob.opks[0].keyId, bob.opks[0]);
+
+    const bobIdentity = {
+      signingPrivateKey: bob.signingPrivateKey,
+      agreementPrivateKey: bob.agreementPrivateKey,
+      signedPrekeyPrivateKey: bob.spkPrivateKey,
+      signedPrekeyPublicKey: bob.bundle.signedPrekey,
+    };
+    const aliceIdentity = {
+      identity: alice.identity,
+      signingPrivateKey: alice.signingPrivateKey,
+      agreementPrivateKey: alice.agreementPrivateKey,
+    };
+
+    // Message 1 (the handshake) — Bob bootstraps his session.
+    const { envelope: firstEnvelope } = await encryptDmMessage(
+      { text: "hi" },
+      aliceIdentity,
+      bob.bundle,
+      "bob",
+      bob.opks[0],
+    );
+    await decryptDmMessage(firstEnvelope, bobIdentity, "alice", "bob");
+
+    // A reply and another message advance Bob's session well past epoch 0.
+    const { envelope: replyEnvelope } = await encryptDmMessage(
+      { text: "reply" },
+      {
+        identity: bob.identity,
+        signingPrivateKey: bob.signingPrivateKey,
+        agreementPrivateKey: bob.agreementPrivateKey,
+      },
+      alice.bundle,
+      "alice",
+    );
+    await decryptDmMessage(
+      replyEnvelope,
+      {
+        signingPrivateKey: alice.signingPrivateKey,
+        agreementPrivateKey: alice.agreementPrivateKey,
+        signedPrekeyPrivateKey: alice.spkPrivateKey,
+        signedPrekeyPublicKey: alice.bundle.signedPrekey,
+      },
+      "bob",
+      "alice",
+    );
+    const { envelope: secondEnvelope } = await encryptDmMessage(
+      { text: "second" },
+      aliceIdentity,
+      bob.bundle,
+      "bob",
+    );
+    await decryptDmMessage(secondEnvelope, bobIdentity, "alice", "bob");
+
+    // Simulate re-viewing history: decrypt the ORIGINAL first envelope
+    // again. It's fine if this particular (already-consumed) message fails
+    // to decrypt — what matters is that it must not reset Bob's session.
+    await decryptDmMessage(firstEnvelope, bobIdentity, "alice", "bob").catch(
+      () => undefined,
+    );
+
+    // A brand-new message must still decrypt correctly after the replay —
+    // proving the live session survived untouched.
+    const { envelope: thirdEnvelope } = await encryptDmMessage(
+      { text: "still working after replay" },
+      aliceIdentity,
+      bob.bundle,
+      "bob",
+    );
+    const { plaintext: thirdPlaintext } = await decryptDmMessage(
+      thirdEnvelope,
+      bobIdentity,
+      "alice",
+      "bob",
+    );
+    expect(thirdPlaintext.text).toBe("still working after replay");
   });
 });

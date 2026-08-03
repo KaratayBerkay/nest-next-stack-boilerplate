@@ -110,18 +110,37 @@ export interface RatchetSession {
   peerDeviceId: string;
   /** Root key (HKDF output). */
   rootKey: string;
-  /** Sending chain key. */
-  sendingChainKey: string;
-  /** Receiving chain key. */
-  receivingChainKey: string;
+  /**
+   * Sending chain key. Null when our sending direction hasn't been
+   * (re-)established yet — lazily derived via a fresh DH-ratchet the next
+   * time we actually send (see ratchetEncrypt).
+   */
+  sendingChainKey: string | null;
+  /**
+   * Receiving chain key. Null only for a freshly-initiated sender session
+   * that hasn't received a reply yet — always non-null once any message
+   * has been received.
+   */
+  receivingChainKey: string | null;
   /** Our current DH ratchet public key. */
   dhPub: string;
   /** Our current DH ratchet private key (hex). */
   dhPriv: string;
-  /** The last DH ratchet public key we received from the peer. */
-  peerDhPub: string;
+  /**
+   * The last DH ratchet public key we received from the peer. Null until
+   * the first message/reply from the peer has been processed.
+   */
+  peerDhPub: string | null;
   /** Number of messages sent in current sending chain. */
   sendingChainIndex: number;
+  /**
+   * Length of the PREVIOUS sending chain, frozen at the moment of the last
+   * DH-ratchet (0 before any ratchet has happened). Sent as the header's
+   * `pn` field so a peer who is missing trailing messages from the old
+   * chain knows how far to fast-forward and cache before that chain's
+   * state is discarded.
+   */
+  previousSendingChainLength: number;
   /** Highest receiving chain index seen. */
   receivingChainIndex: number;
   /** Number of messages received in current receiving chain. */
@@ -139,4 +158,12 @@ export interface SenderKeyChain {
   epoch: number;
   chainKey: string;
   chainIndex: number;
+  /**
+   * The room's membershipVersion (§2.2) as of the last time this chain was
+   * distributed to other members. Only meaningful for a device's OWN
+   * outgoing chain — compared against the room's current membershipVersion
+   * to decide whether a rotation + re-distribution is due before the next
+   * send (§1.5's "client-initiated, lazy, per-sender" rotation).
+   */
+  lastDistributedMembershipVersion?: number;
 }

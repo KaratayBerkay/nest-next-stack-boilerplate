@@ -7,8 +7,13 @@
  * or MIME type for encrypted attachments.
  */
 
-import { xchachaEncrypt, xchachaDecrypt } from "./primitives.js";
-import type { MessagePlaintextV1 } from "./types.js";
+import {
+  xchachaEncrypt,
+  xchachaDecrypt,
+  toBase64,
+  fromBase64,
+} from "./primitives";
+import type { MessagePlaintextV1 } from "./types";
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -57,10 +62,13 @@ export async function encryptAttachmentForUpload(
   const { ciphertext, nonce } = xchachaEncrypt(symmetricKeyHex, plaintextBytes);
 
   // Build the encrypted blob as a File (preserves original name for debugging)
-  const ciphertextBytes = Uint8Array.from(atob(ciphertext), (c) =>
-    c.charCodeAt(0),
-  );
-  const encryptedBlob = new File([ciphertextBytes], file.name, {
+  // Copied into a fresh ArrayBuffer-backed view: BlobPart requires a
+  // concrete ArrayBuffer, not the wider ArrayBufferLike a decoded typed
+  // array is generically typed with.
+  const decoded = fromBase64(ciphertext);
+  const ciphertextBuffer = new ArrayBuffer(decoded.length);
+  new Uint8Array(ciphertextBuffer).set(decoded);
+  const encryptedBlob = new File([ciphertextBuffer], file.name, {
     type: "application/octet-stream",
   });
 
@@ -90,7 +98,7 @@ export async function decryptAttachment(
     throw new Error(`Failed to fetch encrypted attachment: ${res.status}`);
 
   const ciphertextBytes = new Uint8Array(await res.arrayBuffer());
-  const ciphertextB64 = btoa(String.fromCharCode(...ciphertextBytes));
+  const ciphertextB64 = toBase64(ciphertextBytes);
 
   const plaintext = xchachaDecrypt(metadata.key, ciphertextB64, metadata.nonce);
 

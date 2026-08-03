@@ -11,6 +11,7 @@ import {
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { TextOrAttachmentConstraint } from './text-or-attachment.constraint';
+import { EnvelopeSizeConstraint } from './envelope-size.constraint';
 
 @InputType()
 export class SendMessageInput {
@@ -57,6 +58,7 @@ export class SendMessageInput {
   @Field(() => String, { nullable: true })
   @IsObject()
   @IsOptional()
+  @Validate(EnvelopeSizeConstraint)
   @ApiProperty({
     description:
       'E2EE envelope as JSON string (MessageEnvelopeV1). When present, body is stored as null and the message is encrypted.',

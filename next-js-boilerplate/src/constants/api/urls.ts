@@ -120,3 +120,6 @@ export const E2EE_KEYS_STATUS_PREFIX = "/api/e2ee/keys/status/" as const;
 export const E2EE_KEYS_OTPK_URL = "/api/e2ee/keys/one-time-prekeys" as const;
 export const E2EE_KEYS_IDENTITY_PREFIX = "/api/e2ee/keys/identity/" as const;
 export const E2EE_KEYS_WIPE_URL = "/api/e2ee/keys/wipe" as const;
+
+// ── E2EE rooms ─────────────────────────────────────────────────────────
+export const E2EE_ROOMS_PREFIX = "/api/e2ee/rooms/" as const;

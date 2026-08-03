@@ -42,11 +42,17 @@ type GatewayInternal = {
       recipientId: string;
       text: string;
       attachmentUrl?: string;
+      envelope?: Record<string, unknown>;
     },
   ) => Promise<void>;
   handleRoomMessage: (
     ws: MockWs,
-    data: { room: string; text?: string; attachmentUrl?: string },
+    data: {
+      room: string;
+      text?: string;
+      attachmentUrl?: string;
+      envelope?: Record<string, unknown>;
+    },
   ) => Promise<void>;
 };
 
@@ -64,6 +70,8 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
     sendMessage: jest.Mock;
     deliverDirectMessage: jest.Mock;
     saveRoomMessage: jest.Mock;
+    persistJoin: jest.Mock;
+    persistLeave: jest.Mock;
   };
 
   beforeEach(async () => {
@@ -76,6 +84,8 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
       leaveRoom: jest.fn().mockReturnValue([]),
       getRoomCounts: jest.fn().mockReturnValue({}),
       getRoomMembers: jest.fn().mockReturnValue([]),
+      persistJoin: jest.fn().mockResolvedValue(undefined),
+      persistLeave: jest.fn().mockResolvedValue(undefined),
       sendMessage: jest
         .fn()
         .mockResolvedValue({ id: 'm1', senderId: 'u1', recipientId: 'u2' }),
@@ -204,28 +214,27 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
 
     it('rejects direct-message with empty text and no attachment', async () => {
       const ws = createMockWs('MEDIUM');
-      await (
-        gateway as unknown as GatewayInternal
-      ).handleDirectMessage(ws, { text: '   ' });
+      await (gateway as unknown as GatewayInternal).handleDirectMessage(ws, {
+        text: '   ',
+      });
       expect(ws.send).toHaveBeenCalledWith(
-        expect.stringContaining('must contain either text or an attachment'),
+        expect.stringContaining('an attachment, or an envelope'),
       );
       expect(mockMs.sendMessage).not.toHaveBeenCalled();
     });
 
     it('rejects direct-message with omitted text and no attachment', async () => {
       const ws = createMockWs('MEDIUM');
-      await (
-        gateway as unknown as GatewayInternal
-      ).handleDirectMessage(ws, {} as { text: string });
+      await (gateway as unknown as GatewayInternal).handleDirectMessage(
+        ws,
+        {} as { text: string },
+      );
       expect(mockMs.sendMessage).not.toHaveBeenCalled();
     });
 
     it('allows direct-message with attachment only', async () => {
       const ws = createMockWs('MEDIUM');
-      await (
-        gateway as unknown as GatewayInternal
-      ).handleDirectMessage(ws, {
+      await (gateway as unknown as GatewayInternal).handleDirectMessage(ws, {
         recipientId: 'u2',
         text: '',
         attachmentUrl: 'https://minio/x.png',
@@ -238,31 +247,63 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
         '',
         undefined,
         expect.objectContaining({ url: 'https://minio/x.png' }),
+        undefined,
       );
     });
 
     it('rejects room-message with empty text and no attachment', async () => {
       const ws = createMockWs('FREE');
-      await (
-        gateway as unknown as GatewayInternal
-      ).handleRoomMessage(ws, { room: 'general', text: '' });
+      await (gateway as unknown as GatewayInternal).handleRoomMessage(ws, {
+        room: 'general',
+        text: '',
+      });
       expect(ws.send).toHaveBeenCalledWith(
-        expect.stringContaining('must contain either text or an attachment'),
+        expect.stringContaining('an attachment, or an envelope'),
       );
       expect(mockMs.saveRoomMessage).not.toHaveBeenCalled();
     });
 
     it('allows room-message with text', async () => {
       const ws = createMockWs('FREE');
-      await (
-        gateway as unknown as GatewayInternal
-      ).handleRoomMessage(ws, { room: 'general', text: 'hello' });
+      await (gateway as unknown as GatewayInternal).handleRoomMessage(ws, {
+        room: 'general',
+        text: 'hello',
+      });
       expect(mockMs.saveRoomMessage).toHaveBeenCalledWith(
         'general',
         'u1',
         'hello',
         undefined,
+        undefined,
       );
+    });
+
+    it('rejects a direct-message envelope over the size cap (WS bypasses the DTO pipeline)', async () => {
+      const ws = createMockWs('MEDIUM');
+      const oversized = { text: 'x'.repeat(40_000) };
+      await (gateway as unknown as GatewayInternal).handleDirectMessage(ws, {
+        recipientId: 'u2',
+        text: '',
+        envelope: oversized,
+      });
+      expect(ws.send).toHaveBeenCalledWith(
+        expect.stringContaining('envelope too large'),
+      );
+      expect(mockMs.sendMessage).not.toHaveBeenCalled();
+    });
+
+    it('rejects a room-message envelope over the size cap (WS bypasses the DTO pipeline)', async () => {
+      const ws = createMockWs('FREE');
+      const oversized = { text: 'x'.repeat(40_000) };
+      await (gateway as unknown as GatewayInternal).handleRoomMessage(ws, {
+        room: 'general',
+        text: '',
+        envelope: oversized,
+      });
+      expect(ws.send).toHaveBeenCalledWith(
+        expect.stringContaining('envelope too large'),
+      );
+      expect(mockMs.saveRoomMessage).not.toHaveBeenCalled();
     });
   });
 });

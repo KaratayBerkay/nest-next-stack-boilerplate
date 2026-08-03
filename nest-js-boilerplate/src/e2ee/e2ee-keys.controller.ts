@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ForbiddenException,
   Get,
   NotFoundException,
   Param,
@@ -16,6 +17,7 @@ import { LoggingInterceptor } from '../interceptors/logging.interceptor';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { JwtUser } from '../auth/auth.types';
+import { FriendsService } from '../friends/friends.service';
 import { E2eeKeysService } from './e2ee-keys.service';
 import { RegisterBundleDto } from './dto/register-bundle.dto';
 import { AddOneTimePrekeysDto } from './dto/add-one-time-prekeys.dto';
@@ -28,6 +30,7 @@ import { AddOneTimePrekeysDto } from './dto/add-one-time-prekeys.dto';
 export class E2eeKeysController {
   constructor(
     private readonly keys: E2eeKeysService,
+    private readonly friends: FriendsService,
     private readonly logger: Logger,
   ) {}
 
@@ -56,6 +59,21 @@ export class E2eeKeysController {
   ) {
     if (!user.deviceId) {
       throw new BadRequestException('No device bound to session');
+    }
+    // Claiming consumes a scarce, finite one-time-prekey — gate it behind
+    // the same friendship requirement DM sending itself enforces, so a
+    // non-friend can't grief a user's OTPK pool for a conversation they
+    // could never actually have.
+    if (targetUserId !== user.userId) {
+      const isFriend = await this.friends.areFriends(
+        user.userId,
+        targetUserId,
+      );
+      if (!isFriend) {
+        throw new ForbiddenException(
+          'You can only exchange E2EE keys with friends',
+        );
+      }
     }
     const result = await this.keys.claimBundle(targetUserId);
     if (!result) {

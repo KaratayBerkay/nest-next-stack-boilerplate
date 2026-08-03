@@ -72,14 +72,16 @@ export async function dispatchEvent(
     }
     qc.setQueryData(["messages", peerId], (old: unknown) => {
       const data = old as
-        { pages: { messages: Record<string, unknown>[] }[] } | undefined;
+        | { pages: { messages: Record<string, unknown>[] }[] }
+        | undefined;
       if (!data?.pages?.length) return old;
       const pages = [...data.pages];
       const first = { ...pages[0] };
       if (first.messages.some((m) => m.id === msg.id)) return old;
       // Replace temp entry if this is the server's echo of our own send
       const echoTempId = (msg as Record<string, unknown>)._tempId as
-        string | undefined;
+        | string
+        | undefined;
       if (echoTempId && sentTempIds.has(echoTempId)) {
         sentTempIds.delete(echoTempId);
         first.messages = first.messages.map((m) =>
@@ -122,7 +124,8 @@ export async function dispatchEvent(
     }
     qc.setQueryData(["messages", peerId], (old: unknown) => {
       const data = old as
-        { pages: { messages: Record<string, unknown>[] }[] } | undefined;
+        | { pages: { messages: Record<string, unknown>[] }[] }
+        | undefined;
       if (!data?.pages?.length) return old;
       const pages = data.pages.map((page) => ({
         ...page,
@@ -144,7 +147,8 @@ export async function dispatchEvent(
     }
     qc.setQueryData(["messages", peerId], (old: unknown) => {
       const data = old as
-        { pages: { messages: Record<string, unknown>[] }[] } | undefined;
+        | { pages: { messages: Record<string, unknown>[] }[] }
+        | undefined;
       if (!data?.pages?.length) return old;
       const pages = data.pages.map((page) => ({
         ...page,
@@ -178,7 +182,7 @@ export async function dispatchEvent(
       try {
         const { isE2eeDmEnabled } = await import("@/lib/crypto/chat");
         if (isE2eeDmEnabled()) {
-          const { decryptRoomMessage } =
+          const { decryptRoomMessage, ensureReceivedSenderKey } =
             await import("@/lib/crypto/sender-keys");
           const { getSenderKeyChain } = await import("@/lib/crypto/store");
           const envelope = msg.envelope as {
@@ -190,7 +194,15 @@ export async function dispatchEvent(
             chainIndex: number;
           };
           const chainKeyKey = `${room}:${msg.senderId}`;
-          const stored = await getSenderKeyChain(chainKeyKey);
+          let stored = await getSenderKeyChain(chainKeyKey);
+          if (!stored || stored.epoch < envelope.senderKeyEpoch) {
+            await ensureReceivedSenderKey(
+              room,
+              msg.senderId as string,
+              envelope.senderDeviceId,
+            ).catch(() => undefined);
+            stored = await getSenderKeyChain(chainKeyKey);
+          }
           if (stored) {
             try {
               const plaintext = await decryptRoomMessage(

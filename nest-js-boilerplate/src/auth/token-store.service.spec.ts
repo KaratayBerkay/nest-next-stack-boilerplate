@@ -73,6 +73,9 @@ function createRedisMock() {
     hget: jest.fn((key: string, field: string) =>
       Promise.resolve(store.get(key)?.[field] ?? null),
     ),
+    hmget: jest.fn((key: string, ...fields: string[]) =>
+      Promise.resolve(fields.map((f) => store.get(key)?.[f] ?? null)),
+    ),
     get: jest.fn((key: string) => Promise.resolve(strings.get(key) ?? null)),
     del: jest.fn((key: string) => {
       const ok = store.has(key);
@@ -187,10 +190,7 @@ describe('TokenStoreService', () => {
       useNickname: false,
       hideAvatar: false,
     });
-    expect(redis._expires).toEqual([
-      key,
-      'user:u3:sessions',
-    ]);
+    expect(redis._expires).toEqual([key, 'user:u3:sessions']);
   });
 
   it('revokes a compound key', async () => {

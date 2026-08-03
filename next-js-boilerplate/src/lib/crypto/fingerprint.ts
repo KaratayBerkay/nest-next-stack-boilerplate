@@ -6,29 +6,59 @@
  * both parties' fingerprints in canonical order.
  */
 
-import { computeFingerprint } from "./primitives";
+import { computeFingerprint, fromHex } from "./primitives";
+
+/**
+ * Encode raw hash bytes as decimal digits, 5 digits per big-endian 16-bit
+ * chunk (0-65535, zero-padded) — the same shape Signal's own safety-number
+ * display uses. This is injective (each 2-byte chunk maps to exactly one
+ * 5-digit group) and preserves the hash's full entropy across every digit.
+ *
+ * This deliberately replaces a naive "map each hex nibble to its decimal
+ * value" approach, which is neither: nibbles 0-9 contribute one digit while
+ * a-f contribute two, so the digit count varies per hash and the output had
+ * to be zero-padded to a fixed length — meaning most displayed digits were
+ * constant padding, not actual key material — and the mapping isn't even
+ * unique (hex nibbles [10, 1] and [1, 0, 1] both produce the digit string
+ * "101"), so two different keys could display an identical fingerprint.
+ */
+function bytesToDigits(bytes: Uint8Array): string {
+  let digits = "";
+  for (let i = 0; i < bytes.length; i += 2) {
+    const high = bytes[i];
+    const low = i + 1 < bytes.length ? bytes[i + 1] : 0;
+    const chunk = (high << 8) | low;
+    digits += chunk.toString().padStart(5, "0");
+  }
+  return digits;
+}
 
 /**
  * Compute a user's fingerprint: SHA-256(userId || identitySigningKey).
- * Returns a string of decimal digits (120 digits = 40 groups of 3).
+ * Returns an 80-digit decimal string (16 chunks of 2 bytes, 5 digits each).
  */
 export function computeUserFingerprint(
   userId: string,
   identitySigningKey: string,
 ): string {
   const hex = computeFingerprint(userId, identitySigningKey);
-  // Convert hex to decimal digits
-  let decimal = "";
-  for (let i = 0; i < hex.length; i++) {
-    decimal += parseInt(hex[i], 16).toString();
-  }
-  // Pad to 120 digits
-  return decimal.padEnd(120, "0").slice(0, 120);
+  return bytesToDigits(fromHex(hex));
 }
 
 /**
- * Compute a DM safety number: both parties' fingerprints in canonical order.
- * The canonical order is: lexicographic sort of (userId_A, userId_B).
+ * Compute a DM safety number: both parties' fingerprints, concatenated in
+ * canonical order (lexicographic sort of (userId_A, userId_B)) so both
+ * sides display the identical combined string.
+ *
+ * This is a plain concatenation, not a re-hash of the two fingerprints —
+ * combining them through a further (especially a non-cryptographic,
+ * fixed-width) hash would collapse their combined entropy down to
+ * whatever that hash's output space is. A 32-bit hash, for instance, has
+ * only ~4.3 billion possible outputs — trivially brute-forceable — which
+ * would let an attacker who has substituted a peer's identity key search
+ * for a fake key that happens to produce the SAME displayed safety
+ * number, defeating the one feature (§1.6) that exists specifically to
+ * catch that substitution.
  */
 export function computeDmSafetyNumber(
   userIdA: string,
@@ -40,16 +70,7 @@ export function computeDmSafetyNumber(
     userIdA < userIdB
       ? [fingerprintA, fingerprintB]
       : [fingerprintB, fingerprintA];
-  // Concatenate and take SHA-256 for a combined fingerprint
-  const combined = first + second;
-  // Simple hash of the combined string
-  let hash = 0;
-  for (let i = 0; i < combined.length; i++) {
-    const char = combined.charCodeAt(i);
-    hash = ((hash << 5) - hash + char) | 0;
-  }
-  // Convert to stable hex-like display
-  return Math.abs(hash).toString().padEnd(60, "0").slice(0, 60);
+  return first + second;
 }
 
 /**

@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { AuthContractsModule } from '../auth/auth-contracts.module';
+import { FriendsModule } from '../friends/friends.module';
 import { E2eeKeysService } from './e2ee-keys.service';
 import { E2eeKeysController } from './e2ee-keys.controller';
 import { E2eeRoomsService } from './e2ee-rooms.service';
@@ -9,6 +10,7 @@ import { E2EE_LIFECYCLE_HOOK } from './e2ee-lifecycle.tokens';
 @Module({
   imports: [
     forwardRef(() => AuthContractsModule),
+    forwardRef(() => FriendsModule),
   ],
   controllers: [E2eeKeysController, E2eeRoomsController],
   providers: [
