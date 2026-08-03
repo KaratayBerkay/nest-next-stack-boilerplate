@@ -1,6 +1,6 @@
 # End-to-end encryption for chat (DMs + rooms)
 
-*Drafted locally, then refined via Ultraplan (cloud session `012KdksJyCLXZkkVUA7ooruU`). Planning only — no code written for this tracker yet.*
+*Drafted locally, refined via Ultraplan (cloud session `012KdksJyCLXZkkVUA7ooruU`), then independently re-verified line-by-line against the local tree before merging (see corrections below). Planning only — no code written for this tracker yet.*
 
 ## Context
 
@@ -15,11 +15,23 @@ This plan was produced by two full-repo research passes (backend + frontend) plu
 
 ---
 
+## Corrections from independent re-verification
+
+This plan went through Ultraplan for a refinement pass, which flagged two real errors and added useful line-number precision. I independently re-checked all of it directly against this local working tree before merging anything in — two corrections held up exactly as stated; the third needed a correction of its own.
+
+1. **CSP reasoning for `@noble/*` over `libsodium-wrappers` was backwards — confirmed.** `next-js-boilerplate/src/proxy.ts`'s strict nonce-based CSP (`buildCsp()`) is gated to `pathname.startsWith("/security")` only (verified at `proxy.ts:169`) — a demo route, not Messages/Chat Rooms. The CSP that actually governs every route including chat comes from `next-js-boilerplate/next.config.ts`'s `headers()` (`source: "/(.*)"`, lines 18-50), which unconditionally includes `'unsafe-eval'`/`'unsafe-inline'` in `script-src` for every environment (verified: it's a static header value, no dev/prod branching). Loading a WASM crypto library on the chat pages would not require loosening anything. The `@noble/*` recommendation itself stands — just for engineering-simplicity reasons (no async WASM init on the send/receive path, no `.wasm` asset to serve, easier to audit line-by-line), not a CSP constraint.
+2. **`@noble/curves`/`@noble/ciphers`/`@noble/hashes` are not installed — confirmed.** Zero matches for `@noble/curves` or `@noble/ciphers` anywhere in `next-js-boilerplate/pnpm-lock.yaml`; `@noble/hashes` appears only as an unresolved optional peer-dependency reference of unrelated packages, never an actual resolved version, and none of the three are in `package.json`. Treat all three as brand-new dependencies (`pnpm add @noble/curves @noble/ciphers @noble/hashes` in `next-js-boilerplate/`), not "already present."
+3. **The e2e-spec template citation needed a correction, but not the one proposed.** `test/realtime-ws-auth.e2e-spec.ts` genuinely exists in this local working tree with exactly the right content (a real cookie-based `RealtimeGateway`/`SessionValidatorService` auth test using the raw `ws` package) — but `git ls-files` confirms it's **untracked**, so a fresh checkout (what a cloud review environment would see) wouldn't have it, and correctly reported it missing from *that* vantage point. The proposed replacement, `test/ws.e2e-spec.ts`, is a worse fit despite being tracked: it exercises `src/ws/chat.gateway.ts`, an unrelated generic socket.io-based NestJS-docs demo module with no cookie/session auth at all — not the real `RealtimeGateway`. **Keep citing `realtime-ws-auth.e2e-spec.ts` as the template** (it's referenced below), and get it committed — it's part of the auth/realtime work already sitting uncommitted in this tree — before Phase 1 needs it.
+
+Everything else — schema shapes, the two plaintext-leak sites, the outbox `relayPendingEvents()` claim pattern (`outbox.service.ts:88`), and every other specific line number/identifier added below (`VIP_ROOM_PREFIX` at `messaging-room.service.ts:21`, `verifyClient`/`verifyUpgrade` at `realtime.gateway.ts:106`/`:340`, the push-preview and conversation-renew leak sites) — checked out exactly against the live tree.
+
+---
+
 ## 1. Cryptographic design
 
 ### 1.1 Library: `@noble/curves` + `@noble/ciphers` + `@noble/hashes` (not libsodium-wrappers)
 
-`next-js-boilerplate/src/proxy.ts` builds a strict nonce-based CSP (`script-src 'self' 'nonce-...' 'strict-dynamic'`, with `'unsafe-eval'` added **only in dev**). Verified: production ships with no `'unsafe-eval'`/`'wasm-unsafe-eval'`. `libsodium-wrappers` ships WASM and would force loosening this security-sensitive middleware (which already has its own CSP regression test) for a chat feature. `@noble/*` is pure TS/JS — no WASM, no eval, tree-shakeable, Cure53-audited, and already present transitively in the lockfile. This is the one dependency choice that's load-bearing on this repo's specifics rather than a generic preference.
+New dependencies — none of the three are installed today (`pnpm add @noble/curves @noble/ciphers @noble/hashes` in `next-js-boilerplate/`; see the corrections section above). `@noble/*` is pure TS/JS — no WASM, no eval, tree-shakeable, Cure53-audited. This is **not** a CSP-driven choice: `next-js-boilerplate/src/proxy.ts`'s strict nonce-based CSP only applies to the `/security/*` demo route, not to Messages/Chat Rooms — the CSP that actually governs chat pages is `next.config.ts`'s global `headers()` (lines 18-50), which already permits `'unsafe-eval'`/`'unsafe-inline'` everywhere, so a WASM crypto library would need no CSP changes to run there either. The real justification is engineering simplicity: synchronous calls with no async `.ready()`/WASM-init step to sequence key generation behind, no `.wasm` asset to serve/cache, and code that's easier to read/audit line-by-line since we're hand-rolling the protocol around it anyway.
 
 | Purpose | Primitive |
 |---|---|
@@ -134,6 +146,15 @@ model OneTimePrekey {
 ```
 `OneTimePrekey` is keyed directly by `deviceId` (not routed through the bundle) — deliberate future-proofing for multi-device. **Single-active-device is enforced at the service layer, not the schema**: `E2eeKeysService.registerBundle()` deletes any other `DeviceKeyBundle` for the same `userId` before inserting a new one (cascade-deletes its OPKs too) — a single, clearly-commented call that becomes a no-op once multi-device ships, not a rewrite. It also composes for free with the existing `DeviceService.enforceDeviceLimit()` LRU-eviction (`src/devices/device.service.ts`): an evicted `Device` row cascades away its key material automatically.
 
+**Required, easy to miss**: `Device` (`schema.prisma:411-426`) needs the reverse relation fields added at the same time — Prisma validation fails at `prisma generate` if a `@relation` exists on only one side:
+```prisma
+model Device {
+  // ...existing fields...
+  keyBundle      DeviceKeyBundle?
+  oneTimePrekeys OneTimePrekey[]
+}
+```
+
 `Message`/`RoomMessage` both gain: `encrypted Boolean @default(false)`, `algVersion Int?`, `envelope Json? @db.JsonB`; `body` becomes nullable (legacy plaintext rows keep using it; new rows leave it null and use `envelope`). Purely additive/loosening migrations — safe against a live table, no backfill. `Json @db.JsonB` matches existing precedent (`User.metadata`, `AuditLog.before/after`) and needs no new GraphQL plumbing (`graphql-type-json` is already wired up).
 
 Room-membership prerequisite (currently nonexistent — today's membership is an in-memory `Map`, explicitly documented in the code as not replica-safe):
@@ -197,15 +218,15 @@ New endpoints, all REST, all behind the existing `SessionAuthGuard`:
 | `GET /api/rooms/:roomId/members` | Durable membership (distinct from the existing presence-only WS query) |
 | `POST /api/e2ee/rooms/:roomId/sender-keys` / `GET .../sender-keys` | Publish / fetch wrapped sender-key copies |
 
-**Why REST, not new WS frame types**: the WS handshake (`RealtimeGateway.verifyUpgrade()`) authenticates purely from httpOnly cookies before a socket exists — there's no client-sent payload at any point in the upgrade to piggyback on. Key operations are also inherently low-frequency (once per device, once per new conversation, occasional top-ups), never on the message-send hot path, and REST gives free DTO validation + OpenAPI docs that the hand-rolled WS frame dispatch doesn't have. (Optional later polish: a nudge-only `{renew:'E2eeKeys', type:'RoomKeyRotationRequired', roomId}` frame using this codebase's existing `renew` convention, carrying no key material — purely to shave latency off an already-lazy rotation check.)
+**Why REST, not new WS frame types**: the WS handshake (`RealtimeGateway.verifyUpgrade()`, `realtime.gateway.ts:340`, wired via `verifyClient` at `realtime.gateway.ts:106`) authenticates purely from httpOnly cookies before a socket exists — there's no client-sent payload at any point in the upgrade to piggyback on. Key operations are also inherently low-frequency (once per device, once per new conversation, occasional top-ups), never on the message-send hot path, and REST gives free DTO validation + OpenAPI docs that the hand-rolled WS frame dispatch doesn't have. (Optional later polish: a nudge-only `{renew:'E2eeKeys', type:'RoomKeyRotationRequired', roomId}` frame using this codebase's existing `renew` convention, carrying no key material — purely to shave latency off an already-lazy rotation check.)
 
 **Two mandatory fixes to existing plaintext reads**, both in `nest-js-boilerplate/src/messaging/messaging-dm.service.ts`:
-1. `deliverDirectMessage()`'s push-notification path currently truncates the plaintext body to 120 chars as the push preview — must branch on `encrypted` and send a generic "New message" label for encrypted messages (legacy plaintext messages keep today's behavior).
-2. `getConversations()`'s raw SQL and the live `{renew:'Messages', type:'Conversation', ...}` WS push both currently carry a plaintext `lastMessage` string — for encrypted rows, hand the client the raw `envelope` instead and let the client's own decrypt function (the same one used for full messages) produce the preview.
+1. `deliverDirectMessage()`'s push-notification path (lines 315-316) currently truncates the plaintext body to 120 chars as the push preview — must branch on `encrypted` and send a generic "New message" label for encrypted messages (legacy plaintext messages keep today's behavior).
+2. `getConversations()`'s raw SQL (lines 68-81) and the live `{renew:'Messages', type:'Conversation', ...}` WS push (line 289, `lastMessage: message.body`) both currently carry a plaintext `lastMessage` string — for encrypted rows, hand the client the raw `envelope` instead and let the client's own decrypt function (the same one used for full messages) produce the preview.
 
 DTO changes: `send-message-rest.dto.ts` / `send-message.input.ts` gain an optional `envelope` field (validated as a size-capped opaque object, not deep-validated — its shape will evolve); `text-or-attachment.constraint.ts` must accept "has an envelope" as satisfying the existing text-or-attachment requirement.
 
-Room membership wiring: `MessagingRoomService.isValidRoom()` moves from the hardcoded `CHAT_ROOMS` array to a cached DB lookup against `Room.slug`; `joinRoom()`/`leaveRoom()` additionally upsert a durable `RoomParticipant` row and bump `membershipVersion`, **alongside** (not replacing) the existing in-memory presence map — presence and durable membership are genuinely different concerns and both are still needed.
+Room membership wiring: `MessagingRoomService.isValidRoom()` (currently the hardcoded `CHAT_ROOMS` array plus the `VIP_ROOM_PREFIX = 'vip-'` check, `messaging-room.service.ts:21-27`) moves to a cached DB lookup against `Room.slug`; `joinRoom()`/`leaveRoom()` additionally upsert a durable `RoomParticipant` row and bump `membershipVersion`, **alongside** (not replacing) the existing in-memory presence map — presence and durable membership are genuinely different concerns and both are still needed.
 
 ---
 
@@ -233,8 +254,26 @@ New module `next-js-boilerplate/src/lib/crypto/`: `primitives.ts` (the only file
 
 Each phase is independently shippable and the DM phases fully soak in production before the room phases start (rooms structurally depend on the membership schema landing first).
 
+```mermaid
+flowchart TD
+    P0["Phase 0 — Key infrastructure only\nDeviceKeyBundle/OneTimePrekey schema,\ne2ee/ module, identity generation.\nMessages still plaintext."]
+    P1["Phase 1 — Handshake + ratchet engine\nMessage/RoomMessage gain envelope column.\nProven correct in isolation. Nothing live."]
+    P2["Phase 2 — DM encryption goes live\nEnvelope threaded through send/receive,\nleak fixes applied, feature-flagged."]
+    P3["Phase 3 — Room membership schema\nRoom/RoomParticipant, DB-backed isValidRoom().\nRooms still plaintext."]
+    P4["Phase 4 — Room encryption goes live\nRoomSenderKeyDistribution, sender-keys.ts,\nrotation on leave/next-send."]
+    P5["Phase 5 — Attachment encryption"]
+    P6["Phase 6 — Hardening\nSafety-number UI, ADR, docs."]
+
+    P0 --> P1 --> P2
+    P2 --> P4
+    P3 --> P4
+    P2 --> P5
+    P4 --> P6
+    P5 --> P6
+```
+
 - **Phase 0 — Key infrastructure only, messages still plaintext.** Schema: `DeviceKeyBundle`, `OneTimePrekey`. New `src/e2ee/` module with register/claim/status/replenish endpoints and the atomic-claim query. Frontend: `lib/crypto/primitives.ts|types.ts|store.ts|identity.ts|fingerprint.ts`, `useE2eeIdentity()`, the three-layer key-registration API files. New e2e-spec proving the OPK race is closed (two concurrent claims, exactly one wins). *Exit criteria: every fresh login + first Messages visit produces a valid, self-signed key bundle; zero user-visible behavior change.*
-- **Phase 1 — Handshake + ratchet engine exist and are proven correct in isolation; nothing live yet.** Schema: `Message`/`RoomMessage` gain `encrypted`/`algVersion`/`envelope` (nullable `body`). `lib/crypto/x3dh.ts|ratchet.ts|envelope.ts` plus known-answer unit tests (fixed inputs, pinned output bytes, so a future refactor can't silently drift the wire format) and a pure in-memory two-party integration test. Backend: a headless two-client e2e-spec modeled on `test/realtime-ws-auth.e2e-spec.ts`'s existing scaffolding, asserting the raw Postgres row is `body IS NULL` with no plaintext substring anywhere in the envelope. *Exit criteria: full protocol round-trips correctly under test; zero change to live send/receive.*
+- **Phase 1 — Handshake + ratchet engine exist and are proven correct in isolation; nothing live yet.** Schema: `Message`/`RoomMessage` gain `encrypted`/`algVersion`/`envelope` (nullable `body`). `lib/crypto/x3dh.ts|ratchet.ts|envelope.ts` plus known-answer unit tests (fixed inputs, pinned output bytes, so a future refactor can't silently drift the wire format) and a pure in-memory two-party integration test. Backend: a headless two-client e2e-spec modeled on `test/realtime-ws-auth.e2e-spec.ts`'s existing scaffolding (currently uncommitted locally — commit it first; see corrections above, and don't substitute `test/ws.e2e-spec.ts`, which tests an unrelated demo gateway with no session auth), asserting the raw Postgres row is `body IS NULL` with no plaintext substring anywhere in the envelope. *Exit criteria: full protocol round-trips correctly under test; zero change to live send/receive.*
 - **Phase 2 — DM encryption goes live.** Thread `envelope` through `sendMessage`/`sendAndDeliverMessage` across REST/GraphQL/WS; apply the two mandatory plaintext-leak fixes (§3); wire the frontend encrypt/decrypt hook points (§4); add the "recipient not E2EE-ready" blocking UI; feature-flag with `NEXT_PUBLIC_E2EE_DM_ENABLED` (client-only — backend needs no flag, it unconditionally supports both shapes once this phase lands). Playwright test: two real browser contexts exchange a real message, assert decrypted rendering on both sides, then assert via a new dev/test-gated diagnostic read (mirroring the existing `ALLOW_DEV_ACTIVATE`-gated `devActivateUser` pattern in `auth.resolver.ts`) that the stored row is genuinely ciphertext. *Ship and stabilize before starting Phase 3.*
 - **Phase 3 — Room membership schema (prerequisite; rooms still plaintext).** `Room`/`RoomParticipant`, seeded with today's 5 room slugs. `MessagingRoomService` gains DB-backed `isValidRoom()` and durable join/leave alongside the existing presence map. No frontend changes needed — this piggybacks on existing WS join/leave frames.
 - **Phase 4 — Room encryption goes live.** `RoomSenderKeyDistribution` schema; `e2ee-rooms.controller/service`; `lib/crypto/sender-keys.ts`; `ChatRoomHandlers.tsx` rotates/distributes before sending. Test coverage specifically for: rotation-on-leave, rotation-on-next-send, and "a joining member cannot decrypt pre-join history but can decrypt everything after."
@@ -257,14 +296,16 @@ Each phase is independently shippable and the DM phases fully soak in production
 ## 7. Verification plan
 
 1. **Unit/known-answer tests** for every crypto primitive and the ratchet/sender-key state machines (`lib/crypto/*.test.ts`) — fixed keypairs and nonces, pinned expected output bytes, so a future refactor can't silently drift the wire format without a failing test. This is the primary defense against self-rolled-crypto regressions.
-2. **Headless two-client integration tests**: a pure in-memory Vitest test proving the protocol math is self-consistent, and a real backend e2e-spec (`nest-js-boilerplate/test/e2ee-dm-handshake.e2e-spec.ts`, modeled on the existing `test/realtime-ws-auth.e2e-spec.ts`) proving the real HTTP/Postgres plumbing is correct, including a direct assertion that the stored row contains no plaintext.
+2. **Headless two-client integration tests**: a pure in-memory Vitest test proving the protocol math is self-consistent, and a real backend e2e-spec (`nest-js-boilerplate/test/e2ee-dm-handshake.e2e-spec.ts`, modeled on `test/realtime-ws-auth.e2e-spec.ts` — the real cookie-based `RealtimeGateway` auth test, not the unrelated generic `test/ws.e2e-spec.ts`) proving the real HTTP/Postgres plumbing is correct, including a direct assertion that the stored row contains no plaintext.
 3. **Playwright cross-browser proof tests** (`e2e/e2ee-dm.spec.ts`, `e2e/e2ee-room.spec.ts`): drive two/three real browser contexts through a real conversation, assert correctly decrypted rendering on every side, *and* — via a new dev/test-only gated diagnostic read — that the raw stored DB row is genuinely ciphertext. This is the concrete "prove E2EE actually happened" regression test, run for both the DM and room phases.
 4. Run this repo's standard gates (lint, typecheck, existing unit/e2e suites) after each phase to confirm no regression to the plaintext-legacy path, which must keep working unchanged throughout.
 
 ### Critical files
-- `nest-js-boilerplate/prisma/schema.prisma` — every new model/column across all phases.
-- `nest-js-boilerplate/src/messaging/messaging-dm.service.ts` — both mandatory plaintext-leak fixes plus the Phase 2 send/receive plumbing.
-- `nest-js-boilerplate/src/outbox/outbox.service.ts` — not modified, but its `FOR UPDATE SKIP LOCKED` claim pattern (lines ~102-112) is the template the OPK atomic-consume logic must mirror.
+- `nest-js-boilerplate/prisma/schema.prisma` — every new model/column across all phases; remember the `Device` back-relation fields (§2) or `prisma generate` fails validation.
+- `nest-js-boilerplate/src/messaging/messaging-dm.service.ts` — both mandatory plaintext-leak fixes (lines 289, 315-316) plus the Phase 2 send/receive plumbing.
+- `nest-js-boilerplate/src/outbox/outbox.service.ts` — not modified, but its `relayPendingEvents()` method's `FOR UPDATE SKIP LOCKED` claim pattern (lines 88-112) is the template the OPK atomic-consume logic must mirror.
+- `nest-js-boilerplate/test/realtime-ws-auth.e2e-spec.ts` — currently uncommitted locally; the real template for the new backend e2e-specs (not the tracked-but-unrelated `test/ws.e2e-spec.ts`) — see corrections above.
 - `next-js-boilerplate/src/lib/crypto/ratchet.ts` (new) — highest-risk, highest-value file; the correctness of the entire DM story lives here.
 - `next-js-boilerplate/src/lib/realtime/event-dispatch.ts` and `renew-dispatch.ts` — the two live-frame decrypt hook points; trivial to fix one and miss the other.
 - `next-js-boilerplate/src/api/client/messages/query.ts` — the history-load decrypt hook point for both DMs and rooms.
+- `next-js-boilerplate/next.config.ts` (lines 18-50) — the CSP that actually governs the chat pages; check this, not `proxy.ts`, for any future CSP-related question on this feature.
