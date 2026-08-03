@@ -101,7 +101,7 @@ export class MessagingDmService {
     for (const msg of sentMessages)
       latestPerPeer.set(msg.recipientId, {
         lastMessage: msg.encrypted
-          ? (msg.envelope as Record<string, unknown>) ?? ''
+          ? ((msg.envelope as Record<string, unknown>) ?? '')
           : (msg.body ?? ''),
         lastTime: msg.createdAt,
       });
@@ -110,7 +110,7 @@ export class MessagingDmService {
       if (!existing || msg.createdAt > existing.lastTime)
         latestPerPeer.set(msg.senderId, {
           lastMessage: msg.encrypted
-            ? (msg.envelope as Record<string, unknown>) ?? ''
+            ? ((msg.envelope as Record<string, unknown>) ?? '')
             : (msg.body ?? ''),
           lastTime: msg.createdAt,
         });
@@ -234,7 +234,7 @@ export class MessagingDmService {
         recipientId,
         body: isEncrypted ? null : (text ?? ''),
         encrypted: isEncrypted,
-        algVersion: isEncrypted ? (envelope.v as number) ?? 1 : null,
+        algVersion: isEncrypted ? ((envelope.v as number) ?? 1) : null,
         envelope: isEncrypted ? (envelope as Prisma.InputJsonValue) : undefined,
         attachmentUrl: attachment?.url,
         attachmentType: attachment?.type,
@@ -285,7 +285,7 @@ export class MessagingDmService {
     recipientId: string;
     body: string | Record<string, unknown> | null;
     encrypted?: boolean;
-    envelope?: Record<string, unknown> | unknown;
+    envelope?: unknown;
     createdAt: Date;
     sender?: {
       id?: string;
@@ -305,7 +305,7 @@ export class MessagingDmService {
     // For encrypted messages, send the envelope as the conversation preview
     // so the client can decrypt it; for plaintext, send body as-is.
     const lastMessage = message.encrypted
-      ? (message.envelope as Record<string, unknown>) ?? message.body
+      ? ((message.envelope as Record<string, unknown>) ?? message.body)
       : message.body;
 
     this.realtime.emitToService(message.recipientId, 'MESSAGE', {
@@ -351,7 +351,9 @@ export class MessagingDmService {
         .sendToUser(
           message.recipientId,
           `New message from ${senderName}`,
-          pushBody.length > 120 ? pushBody.slice(0, 117) + '...' : (pushBody || 'New message'),
+          pushBody.length > 120
+            ? pushBody.slice(0, 117) + '...'
+            : pushBody || 'New message',
           undefined,
           {
             kind: 'direct-message',

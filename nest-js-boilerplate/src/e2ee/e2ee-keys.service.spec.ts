@@ -1,4 +1,5 @@
 import { ConfigService } from '@nestjs/config';
+import type { Redis } from 'ioredis';
 import { E2eeKeysService } from './e2ee-keys.service';
 
 function createRedisMock() {
@@ -6,10 +7,8 @@ function createRedisMock() {
   const lists = new Map<string, string[]>();
 
   return {
-    get: jest.fn((key: string) =>
-      Promise.resolve(strings.get(key) ?? null),
-    ),
-    set: jest.fn((key: string, value: string, ...args: string[]) => {
+    get: jest.fn((key: string) => Promise.resolve(strings.get(key) ?? null)),
+    set: jest.fn((key: string, value: string, ..._args: string[]) => {
       strings.set(key, value);
       return Promise.resolve('OK');
     }),
@@ -38,7 +37,7 @@ function createRedisMock() {
     multi: jest.fn(() => {
       const ops: Array<() => void> = [];
       return {
-        set: (key: string, value: string, ...args: string[]) => {
+        set: (key: string, value: string, ..._args: string[]) => {
           ops.push(() => strings.set(key, value));
         },
         del: (key: string) =>
@@ -76,7 +75,7 @@ describe('E2eeKeysService', () => {
   beforeEach(() => {
     redis = createRedisMock();
     service = new E2eeKeysService(
-      redis as unknown as any,
+      redis as unknown as Redis,
       stubConfig({ SESSION_TTL: '900s' }),
     );
   });
@@ -136,7 +135,9 @@ describe('E2eeKeysService', () => {
       ]);
 
       // Exactly one should have gotten the OPK
-      const opks = [claim1?.oneTimePrekey, claim2?.oneTimePrekey].filter(Boolean);
+      const opks = [claim1?.oneTimePrekey, claim2?.oneTimePrekey].filter(
+        Boolean,
+      );
       expect(opks).toHaveLength(1);
       expect(opks[0]).toEqual({ keyId: 'opk-single', publicKey: 'pub-single' });
     });
@@ -214,11 +215,9 @@ describe('E2eeKeysService', () => {
       const userId = 'user-6';
 
       await service.registerBundle(userId, 'old-device', { spk: 'old' });
-      const result = await service.registerBundle(
-        userId,
-        'new-device',
-        { spk: 'new' },
-      );
+      const result = await service.registerBundle(userId, 'new-device', {
+        spk: 'new',
+      });
 
       expect(result.superseded).toBe(true);
 

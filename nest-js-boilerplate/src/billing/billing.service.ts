@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
 import { TIER_RANK } from '../authorization/tier-rank';
@@ -154,9 +153,7 @@ export class BillingService {
           where: { id: userId },
           select: SUBSCRIBER_SELECT,
         });
-        if (
-          TIER_RANK[lockedUser.subscriptionTier] >= TIER_RANK[targetTier]
-        ) {
+        if (TIER_RANK[lockedUser.subscriptionTier] >= TIER_RANK[targetTier]) {
           // Already provisioned (or higher) by a concurrent request — never
           // cancel its live subscription or create a duplicate.
           result = {
@@ -252,8 +249,7 @@ export class BillingService {
       ? { success: true }
       : {
           success: false,
-          reason:
-            typeof meta?.reason === 'string' ? meta.reason : 'declined',
+          reason: typeof meta?.reason === 'string' ? meta.reason : 'declined',
         };
   }
 
@@ -274,10 +270,7 @@ export class BillingService {
     return customer.id;
   }
 
-  private async notifyUpgrade(
-    userId: string,
-    targetTier: SubscriptionTier,
-  ) {
+  private async notifyUpgrade(userId: string, targetTier: SubscriptionTier) {
     await this.sendBillingNotification(
       userId,
       `Upgraded to ${targetTier}`,
@@ -803,7 +796,7 @@ export class BillingService {
     const liveItem = liveSubscription?.items.data[0];
     if (liveItem) {
       priceCents = liveItem.price.unit_amount ?? 0;
-      currency = liveSubscription!.currency.toUpperCase();
+      currency = liveSubscription.currency.toUpperCase();
     } else {
       const info = await this.stripeService.getPriceInfoForTier(
         user.subscriptionTier,
@@ -834,7 +827,9 @@ export class BillingService {
    */
   async getPlanPrices(
     currency?: string,
-  ): Promise<Array<{ tier: SubscriptionTier; priceCents: number; currency: string }>> {
+  ): Promise<
+    Array<{ tier: SubscriptionTier; priceCents: number; currency: string }>
+  > {
     const normalized = normalizeCurrency(currency);
     const tiers = [
       SubscriptionTier.FREE,

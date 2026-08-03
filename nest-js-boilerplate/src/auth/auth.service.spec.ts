@@ -6,6 +6,7 @@ import { hash } from '@node-rs/argon2';
 import { verify as verifyTotp } from 'otplib';
 import { CryptoService } from '../common/crypto/crypto.service';
 import { DeviceService } from '../devices/device.service';
+import type { RequestContext } from '../devices/device.service';
 import { MailService } from '../mail/mail.service';
 import { OutboxService } from '../outbox/outbox.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -297,7 +298,7 @@ describe('AuthService', () => {
       expect(mockPrisma.mfaBackupCode.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: 'bc1' },
-          data: { usedAt: expect.any(Date) },
+          data: { usedAt: expect.any(Date) as never },
         }),
       );
     });
@@ -453,7 +454,7 @@ describe('AuthService', () => {
 
       const mockCtx = {
         req: { cookies: {}, headers: {}, res: { cookie: jest.fn() } },
-      } as any;
+      } as unknown as RequestContext;
       const deviceService = module.get<{ resolveForLogin: jest.Mock }>(
         DeviceService,
       );
@@ -495,7 +496,7 @@ describe('AuthService', () => {
 
       const mockCtx = {
         req: { cookies: {}, headers: {}, res: { cookie: jest.fn() } },
-      } as any;
+      } as unknown as RequestContext;
       const deviceService = module.get<{ resolveForLogin: jest.Mock }>(
         DeviceService,
       );

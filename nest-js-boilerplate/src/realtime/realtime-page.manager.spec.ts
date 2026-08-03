@@ -185,10 +185,11 @@ describe('RealtimePageManager', () => {
 
   describe('emitToPage', () => {
     it('sends frame to sockets matching page key and userId', () => {
-      const ws = makeWs() as unknown as Parameters<
-        typeof manager.handlePage
-      >[0];
-      manager.handlePage(ws, { page: 'messages', params: { peer: 'u2' } });
+      const ws = makeWs();
+      manager.handlePage(
+        ws as unknown as Parameters<typeof manager.handlePage>[0],
+        { page: 'messages', params: { peer: 'u2' } },
+      );
 
       const sent = manager.emitToPage('u1', 'messages', {
         type: 'direct-message',

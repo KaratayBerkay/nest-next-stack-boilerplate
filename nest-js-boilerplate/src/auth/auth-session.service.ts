@@ -2,7 +2,6 @@ import { Logger, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TokenStoreService } from './token-store.service';
 import { AuthTokenService } from './auth-token.service';
-import { E2EE_LIFECYCLE_HOOK } from '../e2ee/e2ee-lifecycle.tokens';
 import type { E2eeLifecycleHook } from '../e2ee/e2ee-lifecycle.tokens';
 import type { SessionUser } from './auth.types';
 import type { DeviceContext, RequestContext } from '../devices/device.service';
@@ -10,13 +9,6 @@ import { RealtimeGateway } from '../realtime/realtime.gateway';
 
 function unauthorized(exc: string, msg: string, key: string) {
   return new UnauthorizedException({ exc, msg, key });
-}
-
-interface RefreshUser {
-  id: string;
-  email: string;
-  name: string | null;
-  avatarUrl: string | null;
 }
 
 type PrismaUser = NonNullable<
@@ -164,7 +156,7 @@ export class AuthSessionService {
       avatarUrl: string | null;
     };
   }> {
-    const { refreshToken, session, user } = await resolveRefreshContext(
+    const { session, user } = await resolveRefreshContext(
       this.prisma,
       this.tokenStore,
       this.authTokens,

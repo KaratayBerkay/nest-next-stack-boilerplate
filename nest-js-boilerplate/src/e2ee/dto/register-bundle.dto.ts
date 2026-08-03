@@ -1,11 +1,9 @@
 import {
   IsArray,
-  IsInt,
   IsNotEmpty,
   IsObject,
   IsOptional,
   IsString,
-  Min,
   ValidateNested,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
@@ -26,13 +24,18 @@ export class OneTimePrekeyDto {
 export class RegisterBundleDto {
   @IsObject()
   @IsNotEmpty()
-  @ApiProperty({ description: 'Opaque key-bundle object (identity + signed prekey + sigs)' })
+  @ApiProperty({
+    description: 'Opaque key-bundle object (identity + signed prekey + sigs)',
+  })
   bundle!: Record<string, unknown>;
 
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => OneTimePrekeyDto)
-  @ApiProperty({ required: false, description: 'Initial one-time prekeys (consumed once each)' })
+  @ApiProperty({
+    required: false,
+    description: 'Initial one-time prekeys (consumed once each)',
+  })
   oneTimePrekeys?: OneTimePrekeyDto[];
 }

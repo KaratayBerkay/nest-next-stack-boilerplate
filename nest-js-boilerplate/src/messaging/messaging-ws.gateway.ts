@@ -75,17 +75,13 @@ function isEnvelopeTooLarge(data: IncomingMessagePayload): boolean {
   return serialized.length > MAX_ENVELOPE_JSON_BYTES;
 }
 
-function hasTextOrAttachment(data: IncomingMessagePayload): boolean {
-  return Boolean((data.text ?? '').trim()) || Boolean(data.attachmentUrl);
-}
-
 interface SavedRoomMessage {
   id: string;
   senderId: string;
   body: string | null;
   encrypted: boolean;
   algVersion: number | null;
-  envelope: Record<string, unknown> | null | unknown;
+  envelope: unknown;
   attachmentUrl: string | null;
   attachmentType: string | null;
   attachmentName: string | null;
@@ -97,7 +93,8 @@ function buildRoomMessagePayload(
   ws: AuthWs,
   data: IncomingMessagePayload & { room: string; tempId?: string },
 ): Record<string, unknown> {
-  const senderName = (ws.useNickname && ws.chatNickname) || ws.userName || 'Unknown';
+  const senderName =
+    (ws.useNickname && ws.chatNickname) || ws.userName || 'Unknown';
   const message: Record<string, unknown> = {
     id: saved.id,
     senderId: saved.senderId,
@@ -207,9 +204,7 @@ export class MessagingWsGateway implements OnModuleInit {
       return;
     }
     if (isEnvelopeTooLarge(data)) {
-      ws.send(
-        JSON.stringify({ type: 'error', message: 'envelope too large' }),
-      );
+      ws.send(JSON.stringify({ type: 'error', message: 'envelope too large' }));
       return;
     }
     const message = await this.ms.sendMessage(
@@ -333,15 +328,14 @@ export class MessagingWsGateway implements OnModuleInit {
       ws.send(
         JSON.stringify({
           type: 'error',
-          message: 'A message must contain either text, an attachment, or an envelope',
+          message:
+            'A message must contain either text, an attachment, or an envelope',
         }),
       );
       return;
     }
     if (isEnvelopeTooLarge(data)) {
-      ws.send(
-        JSON.stringify({ type: 'error', message: 'envelope too large' }),
-      );
+      ws.send(JSON.stringify({ type: 'error', message: 'envelope too large' }));
       return;
     }
     const saved = await this.ms.saveRoomMessage(
@@ -435,10 +429,7 @@ export class MessagingWsGateway implements OnModuleInit {
     });
   }
 
-  private handleTypingStart(
-    ws: AuthWs,
-    data: { recipientId: string },
-  ) {
+  private handleTypingStart(ws: AuthWs, data: { recipientId: string }) {
     if (!ws.userId) return;
     this.realtime.emitToPage(data.recipientId, 'messages', {
       type: 'typing-start',
@@ -446,10 +437,7 @@ export class MessagingWsGateway implements OnModuleInit {
     });
   }
 
-  private handleTypingStop(
-    ws: AuthWs,
-    data: { recipientId: string },
-  ) {
+  private handleTypingStop(ws: AuthWs, data: { recipientId: string }) {
     if (!ws.userId) return;
     this.realtime.emitToPage(data.recipientId, 'messages', {
       type: 'typing-stop',

@@ -68,9 +68,7 @@ describe('BillingService', () => {
 
   beforeEach(() => {
     const createSubscription = jest.fn();
-    const cancelSubscription = jest
-      .fn()
-      .mockResolvedValue({ currency: 'USD' });
+    const cancelSubscription = jest.fn().mockResolvedValue({ currency: 'USD' });
     const cancelSubscriptionNow = jest.fn().mockResolvedValue(undefined);
     const scheduleTierChange = jest.fn();
     const releaseSubscriptionSchedule = jest.fn().mockResolvedValue(undefined);
@@ -94,8 +92,8 @@ describe('BillingService', () => {
     const wtFindFirst = jest.fn().mockResolvedValue(null);
     const wtFindUnique = jest.fn().mockResolvedValue(null);
     const wtUpdate = jest.fn();
-    const transaction = jest.fn(
-      (cb: (tx: MockPrisma) => Promise<unknown>) => cb(mockPrisma),
+    const transaction = jest.fn((cb: (tx: MockPrisma) => Promise<unknown>) =>
+      cb(mockPrisma),
     );
     const executeRaw = jest.fn().mockResolvedValue(0);
     mockPrisma = {
@@ -284,11 +282,7 @@ describe('BillingService', () => {
       });
       mockProvider.createSubscription.mockResolvedValue(SUB_RESULT);
 
-      await service.subscribeToPlan(
-        'u1',
-        SubscriptionTier.PREMIUM,
-        'pm_card',
-      );
+      await service.subscribeToPlan('u1', SubscriptionTier.PREMIUM, 'pm_card');
 
       expect(mockProvider.cancelSubscriptionNow).toHaveBeenCalledWith(
         'sub_old',
@@ -415,9 +409,10 @@ describe('BillingService', () => {
       );
 
       expect(mockPrisma.$executeRaw).toHaveBeenCalledTimes(1);
-      expect(
-        String(mockPrisma.$executeRaw.mock.calls[0]?.[0]?.[0] ?? ''),
-      ).toContain('pg_advisory_xact_lock');
+      const firstCall = mockPrisma.$executeRaw.mock.calls[0] as
+        | readonly string[]
+        | undefined;
+      expect(String(firstCall?.[0] ?? '')).toContain('pg_advisory_xact_lock');
       expect(result.success).toBe(true);
       expect(result.periodEnd).toEqual(new Date('2026-03-01'));
       expect(mockProvider.createSubscription).not.toHaveBeenCalled();

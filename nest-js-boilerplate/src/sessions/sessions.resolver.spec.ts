@@ -10,6 +10,7 @@ describe('SessionsResolver', () => {
     revokeSessionBySessionId: jest.Mock;
     revoke: jest.Mock;
   };
+  let mockGateway: { closeSocketsForSession: jest.Mock };
   let mockPrisma: {
     device: {
       findMany: jest.Mock;

@@ -87,8 +87,10 @@ export class E2eeKeysService implements E2eeLifecycleHook {
 
     return {
       deviceId,
-      bundle: JSON.parse(bundleRaw),
-      oneTimePrekey: opkRaw ? JSON.parse(opkRaw) : undefined,
+      bundle: JSON.parse(bundleRaw) as Record<string, unknown>,
+      oneTimePrekey: opkRaw
+        ? (JSON.parse(opkRaw) as { keyId: string; publicKey: string })
+        : undefined,
     };
   }
 

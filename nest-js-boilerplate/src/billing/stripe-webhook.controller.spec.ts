@@ -1,13 +1,6 @@
 import { StripeWebhookController } from './stripe-webhook.controller';
 import type { Request, Response } from 'express';
 
-type MockStripeService = {
-  constructWebhookEvent: jest.Mock;
-  getSubscription: jest.Mock;
-  getTierForPriceId: jest.Mock;
-  releaseSubscriptionSchedule: jest.Mock;
-};
-type MockWallet = { ensureWallet: jest.Mock };
 type MockPrisma = {
   user: {
     findUnique: jest.Mock;
@@ -21,10 +14,6 @@ type MockPrisma = {
   };
   $transaction: jest.Mock;
 };
-type MockTokenStore = { rewriteFieldsForUser: jest.Mock };
-type MockNotification = { create: jest.Mock };
-type MockConfig = { get: jest.Mock };
-type MockOutbox = { emit: jest.Mock };
 
 const PAID_INVOICE = {
   id: 'inv_paid1',
@@ -67,7 +56,7 @@ function setup() {
   const wtFindUnique = jest.fn().mockResolvedValue(null);
   const wtCreate = jest.fn().mockResolvedValue({});
   const wtUpdate = jest.fn().mockResolvedValue({});
-  const prisma = {
+  const prisma: MockPrisma = {
     user: {
       findUnique: userFindUnique,
       update: userUpdate,
@@ -154,7 +143,9 @@ describe('StripeWebhookController', () => {
     const { controller, req, res } = setup();
     delete (req.headers as Record<string, string>)['stripe-signature'];
     await controller.handleWebhook(req, res);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Missing stripe-signature header' });
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'Missing stripe-signature header',
+    });
   });
 
   describe('invoice.paid', () => {
@@ -230,10 +221,9 @@ describe('StripeWebhookController', () => {
           }) as never,
         }) as never,
       );
-      expect(mocks.tokenStore.rewriteFieldsForUser).toHaveBeenCalledWith(
-        'u1',
-        { tier: 'PREMIUM' },
-      );
+      expect(mocks.tokenStore.rewriteFieldsForUser).toHaveBeenCalledWith('u1', {
+        tier: 'PREMIUM',
+      });
     });
 
     it('does not overwrite the subscription id with a non-subscription invoice', async () => {
@@ -246,7 +236,7 @@ describe('StripeWebhookController', () => {
         period_end: 1769817600,
       });
 
-      const updateCalls = mocks.prisma.user.update.mock.calls;
+      const updateCalls = mocks.prisma.user.update.mock.calls as unknown[][];
       const periodUpdate = updateCalls.find(
         (call: unknown[]) =>
           (call[0] as { data?: unknown }).data &&
@@ -256,7 +246,7 @@ describe('StripeWebhookController', () => {
       );
       expect(periodUpdate).toBeDefined();
       expect(
-        (periodUpdate[0] as { data: Record<string, unknown> }).data
+        (periodUpdate?.[0] as { data: Record<string, unknown> }).data
           .stripeSubscriptionId,
       ).toBeUndefined();
     });
@@ -274,14 +264,10 @@ describe('StripeWebhookController', () => {
         pendingTier: null,
       });
 
-      await dispatch(
-        controller,
-        req,
-        res,
-        mocks,
-        'invoice.payment_failed',
-        { id: 'inv_fail1', customer: 'cus_1' },
-      );
+      await dispatch(controller, req, res, mocks, 'invoice.payment_failed', {
+        id: 'inv_fail1',
+        customer: 'cus_1',
+      });
 
       expect(mocks.prisma.user.update).toHaveBeenCalledWith({
         where: { id: 'u1' },
@@ -293,10 +279,9 @@ describe('StripeWebhookController', () => {
           stripeSubscriptionScheduleId: null,
         },
       });
-      expect(mocks.tokenStore.rewriteFieldsForUser).toHaveBeenCalledWith(
-        'u1',
-        { tier: 'FREE' },
-      );
+      expect(mocks.tokenStore.rewriteFieldsForUser).toHaveBeenCalledWith('u1', {
+        tier: 'FREE',
+      });
       expect(mocks.notification.create).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: 'u1',
@@ -318,18 +303,14 @@ describe('StripeWebhookController', () => {
         pendingTierEffectiveAt: new Date('2026-03-01'),
       });
 
-      await dispatch(
-        controller,
-        req,
-        res,
-        mocks,
-        'invoice.payment_failed',
-        { id: 'inv_fail2', customer: 'cus_1' },
-      );
+      await dispatch(controller, req, res, mocks, 'invoice.payment_failed', {
+        id: 'inv_fail2',
+        customer: 'cus_1',
+      });
 
-      expect(mocks.stripeService.releaseSubscriptionSchedule).toHaveBeenCalledWith(
-        'sub_sched_1',
-      );
+      expect(
+        mocks.stripeService.releaseSubscriptionSchedule,
+      ).toHaveBeenCalledWith('sub_sched_1');
       expect(mocks.prisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
@@ -350,14 +331,10 @@ describe('StripeWebhookController', () => {
         stripeCustomerId: 'cus_1',
       });
 
-      await dispatch(
-        controller,
-        req,
-        res,
-        mocks,
-        'invoice.payment_failed',
-        { id: 'inv_fail3', customer: 'cus_1' },
-      );
+      await dispatch(controller, req, res, mocks, 'invoice.payment_failed', {
+        id: 'inv_fail3',
+        customer: 'cus_1',
+      });
 
       expect(mocks.prisma.user.update).not.toHaveBeenCalled();
       expect(mocks.tokenStore.rewriteFieldsForUser).not.toHaveBeenCalled();
@@ -406,8 +383,11 @@ describe('StripeWebhookController', () => {
         },
       );
 
-      const [call] = mocks.prisma.user.updateMany.mock.calls;
-      const data = (call[0] as { data: Record<string, unknown> }).data;
+      const updateManyCalls = mocks.prisma.user.updateMany.mock
+        .calls as unknown[][];
+      const data = (
+        updateManyCalls[0]?.[0] as { data: Record<string, unknown> }
+      ).data;
       expect(data.cancelAtPeriodEnd).toBe(true);
       expect('subscriptionPeriodEnd' in data).toBe(false);
     });
@@ -431,7 +411,9 @@ describe('StripeWebhookController', () => {
       );
 
       expect(mocks.prisma.user.updateMany).toHaveBeenCalled();
-      expect(mocks.stripeService.releaseSubscriptionSchedule).not.toHaveBeenCalled();
+      expect(
+        mocks.stripeService.releaseSubscriptionSchedule,
+      ).not.toHaveBeenCalled();
     });
   });
 
@@ -475,7 +457,7 @@ describe('StripeWebhookController', () => {
   });
 
   describe('customer.subscription.deleted', () => {
-    it('downgrades to FREE when the deleted subscription is the user\'s', async () => {
+    it("downgrades to FREE when the deleted subscription is the user's", async () => {
       const { controller, req, res, mocks } = setup();
       await dispatch(
         controller,

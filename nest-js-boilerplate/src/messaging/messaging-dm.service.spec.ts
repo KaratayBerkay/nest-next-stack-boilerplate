@@ -242,7 +242,7 @@ describe('MessagingDmService', () => {
           recipientId: 'u1',
           readAt: null,
         },
-        data: { readAt: expect.any(Date) },
+        data: { readAt: expect.any(Date) as never },
       });
       // Full fan-out assertions
       expect(mockRealtime.emitToPage).toHaveBeenCalledWith('u2', 'messages', {

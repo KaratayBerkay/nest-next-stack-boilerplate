@@ -21,21 +21,22 @@ describe('StripeService', () => {
 
     it('returns the Price default amount/currency when no currency override is given', async () => {
       const service = buildService({ STRIPE_PRICE_BASIC: 'price_basic' });
-      jest.spyOn(service.stripe.prices, 'retrieve').mockResolvedValue({
-        unit_amount: 999,
-        currency: 'usd',
-        currency_options: {
-          eur: { unit_amount: 929 },
-          try: { unit_amount: 34999 },
-        },
-      } as never);
+      const retrieve = jest
+        .spyOn(service.stripe.prices, 'retrieve')
+        .mockResolvedValue({
+          unit_amount: 999,
+          currency: 'usd',
+          currency_options: {
+            eur: { unit_amount: 929 },
+            try: { unit_amount: 34999 },
+          },
+        } as never);
 
       const result = await service.getPriceInfoForTier('BASIC');
 
-      expect(service.stripe.prices.retrieve).toHaveBeenCalledWith(
-        'price_basic',
-        { expand: ['currency_options'] },
-      );
+      expect(retrieve).toHaveBeenCalledWith('price_basic', {
+        expand: ['currency_options'],
+      });
       expect(result).toEqual({ cents: 999, currency: 'USD' });
     });
 
@@ -70,10 +71,12 @@ describe('StripeService', () => {
 
     it('caches the Price lookup across repeated calls for the same tier', async () => {
       const service = buildService({ STRIPE_PRICE_BASIC: 'price_basic' });
-      const retrieve = jest.spyOn(service.stripe.prices, 'retrieve').mockResolvedValue({
-        unit_amount: 999,
-        currency: 'usd',
-      } as never);
+      const retrieve = jest
+        .spyOn(service.stripe.prices, 'retrieve')
+        .mockResolvedValue({
+          unit_amount: 999,
+          currency: 'usd',
+        } as never);
 
       await service.getPriceInfoForTier('BASIC');
       await service.getPriceInfoForTier('BASIC', 'EUR');
@@ -85,7 +88,9 @@ describe('StripeService', () => {
   describe('createSubscription', () => {
     it('omits the currency param when none is given', async () => {
       const service = buildService();
-      jest.spyOn(service.stripe.paymentMethods, 'attach').mockResolvedValue({} as never);
+      jest
+        .spyOn(service.stripe.paymentMethods, 'attach')
+        .mockResolvedValue({} as never);
       const create = jest
         .spyOn(service.stripe.subscriptions, 'create')
         .mockResolvedValue({} as never);
@@ -93,14 +98,16 @@ describe('StripeService', () => {
       await service.createSubscription('cus_1', 'price_basic', 'pm_1');
 
       expect(create).toHaveBeenCalledWith(
-        expect.not.objectContaining({ currency: expect.anything() }),
+        expect.not.objectContaining({ currency: expect.anything() as unknown }),
         undefined,
       );
     });
 
     it('lowercases and forwards a given currency', async () => {
       const service = buildService();
-      jest.spyOn(service.stripe.paymentMethods, 'attach').mockResolvedValue({} as never);
+      jest
+        .spyOn(service.stripe.paymentMethods, 'attach')
+        .mockResolvedValue({} as never);
       const create = jest
         .spyOn(service.stripe.subscriptions, 'create')
         .mockResolvedValue({} as never);
@@ -137,12 +144,16 @@ describe('StripeService', () => {
           ],
         },
       } as never);
-      jest.spyOn(service.stripe.subscriptionSchedules, 'create').mockResolvedValue({
-        id: 'sched_1',
-      } as never);
-      jest.spyOn(service.stripe.subscriptionSchedules, 'update').mockResolvedValue({
-        id: 'sched_1',
-      } as never);
+      jest
+        .spyOn(service.stripe.subscriptionSchedules, 'create')
+        .mockResolvedValue({
+          id: 'sched_1',
+        } as never);
+      jest
+        .spyOn(service.stripe.subscriptionSchedules, 'update')
+        .mockResolvedValue({
+          id: 'sched_1',
+        } as never);
 
       const result = await service.scheduleSubscriptionChange(
         'sub_1',

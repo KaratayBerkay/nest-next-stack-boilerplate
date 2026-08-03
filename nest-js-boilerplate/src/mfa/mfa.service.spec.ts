@@ -135,7 +135,7 @@ describe('MfaService', () => {
 
       expect(prisma.mfaFactor.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({ verifiedAt: null }),
+          where: expect.objectContaining({ verifiedAt: null }) as never,
         }),
       );
     });

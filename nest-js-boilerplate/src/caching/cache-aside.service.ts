@@ -23,7 +23,7 @@ export class CacheAsideService {
       // that still holds plain strings crashes every Date field as non-null
       // violations. Without this, cached objects diverge in type from a
       // fresh Prisma read even though the data is identical.
-      return JSON.parse(raw, (_key, value) =>
+      return JSON.parse(raw, (_key: string, value: unknown) =>
         typeof value === 'string' && ISO_DATE_RE.test(value)
           ? new Date(value)
           : value,

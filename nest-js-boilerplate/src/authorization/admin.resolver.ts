@@ -12,7 +12,6 @@ import {
 import { UserRole } from '../@generated/prisma/user-role.enum';
 import { UserStatus } from '../@generated/prisma/user-status.enum';
 import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
-import { AuditAction } from '../@generated/prisma/audit-action.enum';
 import type { JwtUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { SessionAuthGuard } from '../auth/session-auth.guard';

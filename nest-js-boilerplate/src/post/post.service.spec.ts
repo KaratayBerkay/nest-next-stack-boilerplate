@@ -37,8 +37,8 @@ describe('PostService', () => {
       },
     };
     cache = {
-      getOrFetch: jest.fn(
-        async (_key: string, fn: () => Promise<unknown>) => fn(),
+      getOrFetch: jest.fn(async (_key: string, fn: () => Promise<unknown>) =>
+        fn(),
       ),
     };
     service = new PostService(
@@ -57,18 +57,18 @@ describe('PostService', () => {
         id: 'p1',
         comments: [
           {
+            ...commentSelect,
             id: 'c1',
             body: 'Top-level',
             parentId: null,
             authorId: 'u1',
-            ...commentSelect,
           },
           {
+            ...commentSelect,
             id: 'c2',
             body: 'A reply',
             parentId: 'c1',
             authorId: 'u2',
-            ...commentSelect,
           },
         ],
       };
@@ -77,7 +77,15 @@ describe('PostService', () => {
       const result = await service.findOne('p1');
 
       expect(result).toEqual(postWithReplies);
-      const args = prisma.post.findFirst.mock.calls[0][0];
+      const args = (prisma.post.findFirst.mock.calls[0] as unknown[])[0] as {
+        select: {
+          comments: {
+            where: { deletedAt: Date | null };
+            take: number;
+            select: { parentId: boolean };
+          };
+        };
+      };
       expect(args.select.comments.where).toEqual({ deletedAt: null });
       expect(args.select.comments.take).toBeGreaterThan(20);
       expect(args.select.comments.select.parentId).toBe(true);
