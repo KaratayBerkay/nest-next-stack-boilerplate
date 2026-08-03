@@ -5,8 +5,8 @@ CREATE TABLE "RoomSenderKeyDistribution" (
     "senderDeviceId" UUID NOT NULL,
     "epoch" INTEGER NOT NULL,
     "recipientDeviceId" UUID NOT NULL,
-    "wrappedKey" BYTES NOT NULL,
-    "wrapNonce" BYTES NOT NULL,
+    "wrappedKey" BYTEA NOT NULL,
+    "wrapNonce" BYTEA NOT NULL,
     "createdAt" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "RoomSenderKeyDistribution_pkey" PRIMARY KEY ("id")
