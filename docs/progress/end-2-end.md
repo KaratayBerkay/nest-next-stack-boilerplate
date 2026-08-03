@@ -105,55 +105,33 @@ The attachment's symmetric key travels **inside** the encrypted payload, not as 
 
 ---
 
-## 2. Data model changes (`nest-js-boilerplate/prisma/schema.prisma`)
+## 2. Data model changes
 
-New models:
-```prisma
-enum E2eeAlgVersion { V1 }
+Public key material now splits across two stores instead of living entirely in Postgres: **Redis**, session-scoped and keyed per-device, for the device identity/prekey material that an earlier draft of this plan had as a durable `DeviceKeyBundle`/`OneTimePrekey` table pair (§2.1); **Postgres** (`nest-js-boilerplate/prisma/schema.prisma`) for everything that isn't key material — the message-envelope columns and the room-membership tables (§2.2).
 
-model DeviceKeyBundle {
-  id                            String @id @default(uuid(7)) @db.Uuid
-  deviceId                      String @unique @db.Uuid
-  device                        Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  userId                        String @db.Uuid
-  identitySigningKey            Bytes  // Ed25519 pub
-  identityAgreementKey          Bytes  // X25519 pub
-  identityAgreementKeySignature Bytes
-  signedPrekey                  Bytes
-  signedPrekeySignature         Bytes
-  signedPrekeyId                Int
-  previousSignedPrekey          Bytes?   // grace window for in-flight X3DH inits against a just-rotated SPK
-  previousSignedPrekeyId        Int?
-  algVersion                    E2eeAlgVersion @default(V1)
-  oneTimePrekeys                OneTimePrekey[]
-  createdAt DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt DateTime @updatedAt @db.Timestamptz(6)
-  @@index([userId])
-}
+### 2.1 Public key material — Redis, session-scoped, per-device
 
-model OneTimePrekey {
-  id         String  @id @default(uuid(7)) @db.Uuid
-  deviceId   String  @db.Uuid
-  device     Device  @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  keyId      Int
-  publicKey  Bytes
-  consumedAt DateTime? @db.Timestamptz(6)
-  consumedBy String?   @db.Uuid
-  createdAt  DateTime  @default(now()) @db.Timestamptz(6)
-  @@unique([deviceId, keyId])
-  @@index([deviceId, consumedAt])
-}
-```
-`OneTimePrekey` is keyed directly by `deviceId` (not routed through the bundle) — deliberate future-proofing for multi-device. **Single-active-device is enforced at the service layer, not the schema**: `E2eeKeysService.registerBundle()` deletes any other `DeviceKeyBundle` for the same `userId` before inserting a new one (cascade-deletes its OPKs too) — a single, clearly-commented call that becomes a no-op once multi-device ships, not a rewrite. It also composes for free with the existing `DeviceService.enforceDeviceLimit()` LRU-eviction (`src/devices/device.service.ts`): an evicted `Device` row cascades away its key material automatically.
+No Prisma models for key material at all anymore. Three Redis key shapes, all under `E2eeKeysService` (new, `src/e2ee/`):
 
-**Required, easy to miss**: `Device` (`schema.prisma:411-426`) needs the reverse relation fields added at the same time — Prisma validation fails at `prisma generate` if a `@relation` exists on only one side:
-```prisma
-model Device {
-  // ...existing fields...
-  keyBundle      DeviceKeyBundle?
-  oneTimePrekeys OneTimePrekey[]
-}
-```
+| Redis key | Type | Holds |
+|---|---|---|
+| `e2ee:bundle:<deviceId>` | String (JSON) | `{userId, identitySigningKey, identityAgreementKey, identityAgreementKeySignature, signedPrekey, signedPrekeySignature, signedPrekeyId, previousSignedPrekey?, previousSignedPrekeyId?, algVersion}` — public halves + signatures only |
+| `e2ee:otpk:<deviceId>` | List (JSON elements) | One-time prekeys, each `{keyId, publicKey}`; claimed via `LPOP` |
+| `e2ee:active-device:<userId>` | String | The `deviceId` currently holding this user's bundle — resolves a "claim this user's bundle" request (addressed by `userId`) to the right per-device key |
+
+`E2eeKeysService` injects `@Inject(REDIS_CLIENT) private readonly redis: Redis` from `src/redis/redis.module.ts` (`redis.tokens.ts`) — the same token `RealtimeGateway` already injects (`realtime.gateway.ts:72`), and the `e2ee:active-device:<userId>` secondary index mirrors `TokenStoreService`'s existing `user:<userId>:sessions` indexing pattern (`token-store.service.ts`).
+
+**Lifecycle — tied to the session, as requested**: all three key shapes get the session's own sliding TTL, refreshed in lockstep with `TokenStoreService.extendTTL()` (`token-store.service.ts:162`) on every authenticated request, and are explicitly `DEL`eted — not just left to expire — wherever a session actually ends (`AuthSessionService.logout()`, `revokeSessionBySessionId()`, `revokeAllForUser()`), so logging out removes that device's discoverable public keys immediately rather than waiting out the TTL. Known edge case, acceptable given single-active-device scope: a user with two concurrent sessions on the *same* device (rare, but possible under the existing session model) would have their keys deleted when either session logs out.
+
+**Single-active-device enforcement, still service-layer**: `registerBundle()` reads `e2ee:active-device:<userId>` first; if it names a different `deviceId`, that device's `bundle`/`otpk` keys are deleted before the new ones are written, so a superseded device's keys stop being discoverable immediately rather than lingering until its own session times out.
+
+**One-time-prekey claiming is simpler than a Postgres version would need**: a durable Postgres table would need a raw `FOR UPDATE SKIP LOCKED` query (mirroring `outbox.service.ts`'s `relayPendingEvents()`, `outbox.service.ts:88-112`) purely to make "claim exactly one row" race-free. Redis doesn't need that trick — `LPOP e2ee:otpk:<deviceId>` is atomic by construction (Redis executes one command at a time), so two concurrent claims against the same device can never return the same prekey. `E2eeKeysService.claimOneTimePrekey()` is a single `LPOP` call, no locking logic to write.
+
+**This is a real behavioral change from a durable design, not just a storage swap — flagged prominently in §6**: a device's public keys are now only discoverable while some session for that device is alive. If a user is fully logged out, claiming their bundle finds nothing, and no one can start a *new* encrypted conversation with them until they log back in.
+
+**Deliberately not moved**: `RoomSenderKeyDistribution` (§2.2) stays in Postgres, durable. It stores *wrapped ciphertext* (a symmetric room key encrypted for one recipient device), not a public key, and — unlike a device's own identity bundle — it specifically needs to outlive the *sender's* session, since the point is for a possibly-offline recipient to fetch it whenever they next come online. Tying it to session lifetime would break that property outright.
+
+### 2.2 Everything else — still Postgres (`prisma/schema.prisma`)
 
 `Message`/`RoomMessage` both gain: `encrypted Boolean @default(false)`, `algVersion Int?`, `envelope Json? @db.JsonB`; `body` becomes nullable (legacy plaintext rows keep using it; new rows leave it null and use `envelope`). Purely additive/loosening migrations — safe against a live table, no backfill. `Json @db.JsonB` matches existing precedent (`User.metadata`, `AuditLog.before/after`) and needs no new GraphQL plumbing (`graphql-type-json` is already wired up).
 
@@ -197,15 +175,13 @@ model RoomSenderKeyDistribution {
   @@index([roomId, recipientDeviceId])
 }
 ```
-`RoomMessage.roomId` **stays the plain slug string it is today**, gaining a `@relation(fields:[roomId], references:[slug])` to `Room.slug` — makes room existence DB-enforced with zero changes to the WS wire protocol or any `room: string` call site. `RoomParticipant` (new, no legacy baggage) uses a clean `Room.id` FK instead.
-
-**One-time-prekey race condition, closed**: naive "SELECT unconsumed row, then UPDATE it" lets two concurrent senders claim the same OPK, permanently breaking the second handshake (Bob's device only has one copy of the matching private key). Fix mirrors an existing pattern in this exact codebase — `nest-js-boilerplate/src/outbox/outbox.service.ts` already solves "atomically claim exactly one row under concurrency" for `OutboxEvent` via one `UPDATE ... WHERE id = (SELECT ... FOR UPDATE SKIP LOCKED) RETURNING ...` statement (verified at lines ~102-112). `E2eeKeysService.claimOneTimePrekey()` uses the identical shape.
+`RoomMessage.roomId` **stays the plain slug string it is today**, gaining a `@relation(fields:[roomId], references:[slug])` to `Room.slug` — makes room existence DB-enforced with zero changes to the WS wire protocol or any `room: string` call site. `RoomParticipant` (new, no legacy baggage) uses a clean `Room.id` FK instead. Note `RoomSenderKeyDistribution.senderDeviceId`/`recipientDeviceId` are plain `String @db.Uuid` columns, not `@relation`s to a `DeviceKeyBundle` row — there's nothing in Postgres for them to relate to anymore (§2.1), only to `Device.id`, which is untouched by this plan.
 
 ---
 
 ## 3. Backend changes
 
-New module `nest-js-boilerplate/src/e2ee/` (mirrors the one-module-per-domain convention of `src/devices/`, `src/messaging/`): `e2ee.module.ts`, `e2ee-keys.controller.ts` + `.service.ts` (device key material), `e2ee-rooms.controller.ts` + `.service.ts` (sender-key distribution, added in the rooms phase), DTOs. Room **membership** (join/leave/durable list) stays in the existing `src/messaging/` module — it's a messaging concern, not a key-material concern.
+New module `nest-js-boilerplate/src/e2ee/` (mirrors the one-module-per-domain convention of `src/devices/`, `src/messaging/`): `e2ee.module.ts`, `e2ee-keys.controller.ts` + `.service.ts` (device key material — Redis-backed, §2.1, not Prisma), `e2ee-rooms.controller.ts` + `.service.ts` (sender-key distribution, Postgres-backed, added in the rooms phase), DTOs. Room **membership** (join/leave/durable list) stays in the existing `src/messaging/` module — it's a messaging concern, not a key-material concern.
 
 New endpoints, all REST, all behind the existing `SessionAuthGuard`:
 
@@ -256,7 +232,7 @@ Each phase is independently shippable and the DM phases fully soak in production
 
 ```mermaid
 flowchart TD
-    P0["Phase 0 — Key infrastructure only\nDeviceKeyBundle/OneTimePrekey schema,\ne2ee/ module, identity generation.\nMessages still plaintext."]
+    P0["Phase 0 — Key infrastructure only\nRedis-backed bundle/OTPK storage,\ne2ee/ module, identity generation.\nMessages still plaintext."]
     P1["Phase 1 — Handshake + ratchet engine\nMessage/RoomMessage gain envelope column.\nProven correct in isolation. Nothing live."]
     P2["Phase 2 — DM encryption goes live\nEnvelope threaded through send/receive,\nleak fixes applied, feature-flagged."]
     P3["Phase 3 — Room membership schema\nRoom/RoomParticipant, DB-backed isValidRoom().\nRooms still plaintext."]
@@ -272,7 +248,7 @@ flowchart TD
     P5 --> P6
 ```
 
-- **Phase 0 — Key infrastructure only, messages still plaintext.** Schema: `DeviceKeyBundle`, `OneTimePrekey`. New `src/e2ee/` module with register/claim/status/replenish endpoints and the atomic-claim query. Frontend: `lib/crypto/primitives.ts|types.ts|store.ts|identity.ts|fingerprint.ts`, `useE2eeIdentity()`, the three-layer key-registration API files. New e2e-spec proving the OPK race is closed (two concurrent claims, exactly one wins). *Exit criteria: every fresh login + first Messages visit produces a valid, self-signed key bundle; zero user-visible behavior change.*
+- **Phase 0 — Key infrastructure only, messages still plaintext.** Redis key design: `e2ee:bundle:<deviceId>`, `e2ee:otpk:<deviceId>`, `e2ee:active-device:<userId>` (§2.1), all session-TTL'd via `TokenStoreService.extendTTL()` and explicitly cleared on logout. New `src/e2ee/` module with register/claim/status/replenish endpoints and the `LPOP`-based atomic claim. Frontend: `lib/crypto/primitives.ts|types.ts|store.ts|identity.ts|fingerprint.ts`, `useE2eeIdentity()`, the three-layer key-registration API files. New e2e-spec proving the OPK race is closed (two concurrent claims, exactly one wins) and a second proving logout removes the bundle (a subsequent claim finds nothing). *Exit criteria: every fresh login + first Messages visit produces a valid, self-signed key bundle; logging out makes that bundle unclaimable; zero user-visible behavior change.*
 - **Phase 1 — Handshake + ratchet engine exist and are proven correct in isolation; nothing live yet.** Schema: `Message`/`RoomMessage` gain `encrypted`/`algVersion`/`envelope` (nullable `body`). `lib/crypto/x3dh.ts|ratchet.ts|envelope.ts` plus known-answer unit tests (fixed inputs, pinned output bytes, so a future refactor can't silently drift the wire format) and a pure in-memory two-party integration test. Backend: a headless two-client e2e-spec modeled on `test/realtime-ws-auth.e2e-spec.ts`'s existing scaffolding (currently uncommitted locally — commit it first; see corrections above, and don't substitute `test/ws.e2e-spec.ts`, which tests an unrelated demo gateway with no session auth), asserting the raw Postgres row is `body IS NULL` with no plaintext substring anywhere in the envelope. *Exit criteria: full protocol round-trips correctly under test; zero change to live send/receive.*
 - **Phase 2 — DM encryption goes live.** Thread `envelope` through `sendMessage`/`sendAndDeliverMessage` across REST/GraphQL/WS; apply the two mandatory plaintext-leak fixes (§3); wire the frontend encrypt/decrypt hook points (§4); add the "recipient not E2EE-ready" blocking UI; feature-flag with `NEXT_PUBLIC_E2EE_DM_ENABLED` (client-only — backend needs no flag, it unconditionally supports both shapes once this phase lands). Playwright test: two real browser contexts exchange a real message, assert decrypted rendering on both sides, then assert via a new dev/test-gated diagnostic read (mirroring the existing `ALLOW_DEV_ACTIVATE`-gated `devActivateUser` pattern in `auth.resolver.ts`) that the stored row is genuinely ciphertext. *Ship and stabilize before starting Phase 3.*
 - **Phase 3 — Room membership schema (prerequisite; rooms still plaintext).** `Room`/`RoomParticipant`, seeded with today's 5 room slugs. `MessagingRoomService` gains DB-backed `isValidRoom()` and durable join/leave alongside the existing presence map. No frontend changes needed — this piggybacks on existing WS join/leave frames.
@@ -286,6 +262,8 @@ flowchart TD
 
 - **Existing plaintext rows are left as-is**, distinguished forever by `encrypted = false` — never retroactively re-encrypted. The server already saw them in plaintext at write time (and at read time, via the two leaks this plan fixes); re-encrypting server-side would require the server to hold a key it shouldn't have, for zero real confidentiality benefit.
 - **No silent downgrade.** A recipient with no registered keys blocks the send with a visible "hasn't enabled secure messaging yet" state, rather than falling back to plaintext — a silent fallback would let a compromised server force plaintext by always claiming "recipient not ready."
+- **Public keys are only discoverable while a session is live (§2.1), by design of this update.** Moving key storage to session-scoped Redis means you can only start a *new* encrypted conversation with someone while they (or at least one of their sessions) is currently logged in — a fully logged-out user's keys are gone until they log back in and re-register. This is a deliberate tradeoff, not a side effect: it trades away offline conversation-initiation (Signal/WhatsApp's model, where anyone can message anyone asynchronously at any time) for keys that can never be read out of a data-at-rest breach of Postgres, and for automatic cleanup with no separate expiry job. It does **not** block sending within an *already-established* session — the Double Ratchet state for an existing conversation lives entirely in each side's IndexedDB (§4) and never needs to re-fetch the peer's bundle. Worth an explicit product sign-off before Phase 0 ships, since it changes what "message someone" means for anyone not currently online.
+- **Redis is not being asked to be more durable than it already is for sessions.** Key bundles now share fate with whatever this deployment's Redis persistence/eviction policy already is for session data — if Redis restarts or evicts, currently-registered devices simply re-register their bundle next time they touch Messages/Chat Rooms (self-healing, not data loss, since the source of truth for the actual private keys is each device's own IndexedDB). Worth confirming this deployment's Redis persistence settings match that assumption before relying on it operationally.
 - **Search/moderation over message content becomes permanently impossible.** Nothing exists today (confirmed by exhaustive grep), so nothing regresses immediately — but this is a one-way architectural door worth a conscious go/no-go before Phase 2 ships.
 - **Push-notification previews degrade** from a content excerpt to a generic "New message" label for every encrypted conversation — a real, user-visible, unavoidable consequence of closing the one genuine server-side plaintext read that exists today.
 - **Device loss is unrecoverable by design in this single-device-first phase** — no backup mechanism. Losing the browser/profile holding IndexedDB permanently loses that device's message history; a new device starts a fresh identity and peers must re-verify. A future optional encrypted-backup phase (passphrase-derived key wrapping the identity, uploaded as opaque bytes) is sketched but deliberately not designed here — it reopens real UX questions (forgotten-passphrase recovery) that don't have a good answer without weakening the guarantee.
@@ -301,9 +279,10 @@ flowchart TD
 4. Run this repo's standard gates (lint, typecheck, existing unit/e2e suites) after each phase to confirm no regression to the plaintext-legacy path, which must keep working unchanged throughout.
 
 ### Critical files
-- `nest-js-boilerplate/prisma/schema.prisma` — every new model/column across all phases; remember the `Device` back-relation fields (§2) or `prisma generate` fails validation.
+- `nest-js-boilerplate/prisma/schema.prisma` — only the Room-membership tables and the `Message`/`RoomMessage` envelope columns (§2.2); no key-material models live here anymore (§2.1).
 - `nest-js-boilerplate/src/messaging/messaging-dm.service.ts` — both mandatory plaintext-leak fixes (lines 289, 315-316) plus the Phase 2 send/receive plumbing.
-- `nest-js-boilerplate/src/outbox/outbox.service.ts` — not modified, but its `relayPendingEvents()` method's `FOR UPDATE SKIP LOCKED` claim pattern (lines 88-112) is the template the OPK atomic-consume logic must mirror.
+- `nest-js-boilerplate/src/redis/redis.module.ts` (`redis.tokens.ts`) — not modified, but `REDIS_CLIENT` is the injection token `E2eeKeysService` uses for all key-bundle/OTPK storage (§2.1).
+- `nest-js-boilerplate/src/auth/token-store.service.ts` — not modified, but its sliding-TTL pattern (`extendTTL()`, line 162) is exactly what key-bundle TTL refresh must mirror; `AuthSessionService`'s logout/revoke paths are where the explicit key `DEL` calls belong.
 - `nest-js-boilerplate/test/realtime-ws-auth.e2e-spec.ts` — currently uncommitted locally; the real template for the new backend e2e-specs (not the tracked-but-unrelated `test/ws.e2e-spec.ts`) — see corrections above.
 - `next-js-boilerplate/src/lib/crypto/ratchet.ts` (new) — highest-risk, highest-value file; the correctness of the entire DM story lives here.
 - `next-js-boilerplate/src/lib/realtime/event-dispatch.ts` and `renew-dispatch.ts` — the two live-frame decrypt hook points; trivial to fix one and miss the other.
