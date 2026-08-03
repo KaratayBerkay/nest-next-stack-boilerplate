@@ -12,21 +12,59 @@ export function setActivePeerId(peerId: string | null): void {
   activePeerId = peerId;
 }
 
-export function dispatchEvent(
+/**
+ * Decrypt a direct-message frame's body if E2EE is enabled.
+ * Returns the message with `body` populated from decryption when needed.
+ */
+async function maybeDecryptDm(
+  msg: Record<string, unknown> & {
+    id: string;
+    senderId: string;
+    body?: string | null;
+    encrypted?: boolean;
+    envelope?: Record<string, unknown> | null;
+  },
+  ownUserId: string,
+): Promise<Record<string, unknown>> {
+  if (!msg.encrypted || !msg.envelope) return msg;
+  try {
+    const { isE2eeDmEnabled, decryptMessage } =
+      await import("@/lib/crypto/chat");
+    if (!isE2eeDmEnabled()) return msg;
+    const result = await decryptMessage(msg, ownUserId);
+    const out: Record<string, unknown> = {
+      ...msg,
+      body: result.body,
+      encrypted: false,
+    };
+    if (result.decryptedAttachment) {
+      out.decryptedAttachment = result.decryptedAttachment;
+    }
+    return out;
+  } catch {
+    return msg;
+  }
+}
+
+export async function dispatchEvent(
   qc: ReturnType<typeof useQueryClient>,
   frame: Record<string, unknown>,
   ownUserId?: string,
   sendFrame?: (data: Record<string, unknown>) => void,
-): void {
+): Promise<void> {
   const t = frame.type as string;
 
   if (t === "direct-message" && ownUserId) {
-    const msg = frame.message as Record<string, unknown> & {
+    let msg = frame.message as Record<string, unknown> & {
       id: string;
       senderId: string;
       recipientId: string;
     };
     if (!msg?.id) return;
+
+    // Decrypt if encrypted
+    msg = (await maybeDecryptDm(msg, ownUserId)) as typeof msg;
+
     const peerId = msg.senderId === ownUserId ? msg.recipientId : msg.senderId;
     if (!qc.getQueryData(["messages", peerId])) {
       qc.invalidateQueries({ queryKey: ["messages", peerId] });
@@ -131,9 +169,65 @@ export function dispatchEvent(
 
   if (t === "room-message") {
     const room = frame.room as string;
-    const msg = frame.message as Record<string, unknown>;
+    let msg = frame.message as Record<string, unknown>;
     const tempId = frame.tempId as string | undefined;
     if (!room || !msg) return;
+
+    // Decrypt encrypted room messages
+    if (msg.encrypted && msg.envelope) {
+      try {
+        const { isE2eeDmEnabled } = await import("@/lib/crypto/chat");
+        if (isE2eeDmEnabled()) {
+          const { decryptRoomMessage } =
+            await import("@/lib/crypto/sender-keys");
+          const { getSenderKeyChain } = await import("@/lib/crypto/store");
+          const envelope = msg.envelope as {
+            v: 1;
+            senderDeviceId: string;
+            ciphertext: string;
+            nonce: string;
+            senderKeyEpoch: number;
+            chainIndex: number;
+          };
+          const chainKeyKey = `${room}:${msg.senderId}`;
+          const stored = await getSenderKeyChain(chainKeyKey);
+          if (stored) {
+            try {
+              const plaintext = await decryptRoomMessage(
+                envelope,
+                stored.chainKey,
+                room,
+                msg.senderId as string,
+              );
+              // Room plaintext may be a JSON string containing attachment metadata
+              let bodyText = plaintext;
+              let decryptedAttachment: Record<string, unknown> | undefined;
+              try {
+                const parsed = JSON.parse(plaintext);
+                if (
+                  parsed.attachment &&
+                  typeof parsed.attachment === "object"
+                ) {
+                  decryptedAttachment = parsed.attachment;
+                  bodyText = parsed.text ?? "";
+                }
+              } catch {
+                // Not JSON — use as-is
+              }
+              msg = { ...msg, body: bodyText, encrypted: false };
+              if (decryptedAttachment) {
+                msg.decryptedAttachment = decryptedAttachment;
+              }
+            } catch {
+              msg = { ...msg, body: "[Encrypted]" };
+            }
+          }
+        }
+      } catch {
+        // crypto unavailable — leave as-is
+      }
+    }
+
     if (!qc.getQueryData(["room", room])) {
       qc.invalidateQueries({ queryKey: ["room", room] });
       return;

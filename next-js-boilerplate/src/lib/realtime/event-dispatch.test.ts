@@ -14,13 +14,13 @@ describe("dispatchEvent", () => {
   });
 
   describe("direct-message", () => {
-    it("appends message to pages[0] when conversation is cached", () => {
+    it("appends message to pages[0] when conversation is cached", async () => {
       qc.setQueryData(["messages", "peer-1"], {
         pages: [{ messages: [{ id: "m1", text: "hello" }] }],
         pageParams: [undefined],
       });
 
-      dispatchEvent(
+      await dispatchEvent(
         qc,
         {
           type: "direct-message",
@@ -36,14 +36,14 @@ describe("dispatchEvent", () => {
       expect(data.pages[0].messages[1].id).toBe("m2");
     });
 
-    it("sends delivered-ack when current user is the recipient", () => {
+    it("sends delivered-ack when current user is the recipient", async () => {
       qc.setQueryData(["messages", "sender-1"], {
         pages: [{ messages: [] }],
         pageParams: [undefined],
       });
 
       const sendFrame = vi.fn();
-      dispatchEvent(
+      await dispatchEvent(
         qc,
         {
           type: "direct-message",
@@ -59,13 +59,13 @@ describe("dispatchEvent", () => {
       });
     });
 
-    it("deduplicates by message id", () => {
+    it("deduplicates by message id", async () => {
       qc.setQueryData(["messages", "peer-1"], {
         pages: [{ messages: [{ id: "m1", text: "hello" }] }],
         pageParams: [undefined],
       });
 
-      dispatchEvent(
+      await dispatchEvent(
         qc,
         {
           type: "direct-message",
@@ -80,10 +80,10 @@ describe("dispatchEvent", () => {
       expect(data.pages[0].messages).toHaveLength(1);
     });
 
-    it("invalidates query when conversation is not cached", () => {
+    it("invalidates query when conversation is not cached", async () => {
       const invalidateSpy = vi.spyOn(qc, "invalidateQueries");
 
-      dispatchEvent(
+      await dispatchEvent(
         qc,
         {
           type: "direct-message",
@@ -97,13 +97,13 @@ describe("dispatchEvent", () => {
       });
     });
 
-    it("does nothing when ownUserId is not provided", () => {
+    it("does nothing when ownUserId is not provided", async () => {
       qc.setQueryData(["messages", "peer-1"], {
         pages: [{ messages: [{ id: "m1" }] }],
         pageParams: [undefined],
       });
 
-      dispatchEvent(qc, {
+      await dispatchEvent(qc, {
         type: "direct-message",
         message: { id: "m2", senderId: "peer-1", recipientId: "user-1" },
       });
@@ -114,13 +114,13 @@ describe("dispatchEvent", () => {
       expect(data.pages[0].messages).toHaveLength(1);
     });
 
-    it("computes peerId correctly when current user is the sender", () => {
+    it("computes peerId correctly when current user is the sender", async () => {
       qc.setQueryData(["messages", "recip-1"], {
         pages: [{ messages: [{ id: "m1" }] }],
         pageParams: [undefined],
       });
 
-      dispatchEvent(
+      await dispatchEvent(
         qc,
         {
           type: "direct-message",
@@ -135,7 +135,7 @@ describe("dispatchEvent", () => {
   });
 
   describe("message-read", () => {
-    it("updates readAt on matching messages", () => {
+    it("updates readAt on matching messages", async () => {
       qc.setQueryData(["messages", "peer-1"], {
         pages: [
           {
@@ -148,7 +148,7 @@ describe("dispatchEvent", () => {
         pageParams: [undefined],
       });
 
-      dispatchEvent(
+      await dispatchEvent(
         qc,
         {
           type: "message-read",
@@ -165,10 +165,10 @@ describe("dispatchEvent", () => {
       expect(data.pages[0].messages[1].readAt).toBeNull();
     });
 
-    it("invalidates when conversation is not cached", () => {
+    it("invalidates when conversation is not cached", async () => {
       const invalidateSpy = vi.spyOn(qc, "invalidateQueries");
 
-      dispatchEvent(
+      await dispatchEvent(
         qc,
         {
           type: "message-read",
@@ -185,7 +185,7 @@ describe("dispatchEvent", () => {
   });
 
   describe("message-delivered", () => {
-    it("updates deliveredAt on matching message", () => {
+    it("updates deliveredAt on matching message", async () => {
       qc.setQueryData(["messages", "peer-1"], {
         pages: [
           {
@@ -198,7 +198,7 @@ describe("dispatchEvent", () => {
         pageParams: [undefined],
       });
 
-      dispatchEvent(
+      await dispatchEvent(
         qc,
         {
           type: "message-delivered",
@@ -218,10 +218,10 @@ describe("dispatchEvent", () => {
       expect(data.pages[0].messages[1].deliveredAt).toBeNull();
     });
 
-    it("invalidates when conversation is not cached", () => {
+    it("invalidates when conversation is not cached", async () => {
       const invalidateSpy = vi.spyOn(qc, "invalidateQueries");
 
-      dispatchEvent(
+      await dispatchEvent(
         qc,
         {
           type: "message-delivered",
@@ -239,10 +239,10 @@ describe("dispatchEvent", () => {
   });
 
   describe("room-message", () => {
-    it("appends message to cached room messages", () => {
+    it("appends message to cached room messages", async () => {
       qc.setQueryData(["room", "general"], [{ id: "m1", body: "hello" }]);
 
-      dispatchEvent(qc, {
+      await dispatchEvent(qc, {
         type: "room-message",
         room: "general",
         message: { id: "m2", body: "world" },
@@ -253,10 +253,10 @@ describe("dispatchEvent", () => {
       expect(data[1].id).toBe("m2");
     });
 
-    it("deduplicates by message id", () => {
+    it("deduplicates by message id", async () => {
       qc.setQueryData(["room", "general"], [{ id: "m1", body: "hello" }]);
 
-      dispatchEvent(qc, {
+      await dispatchEvent(qc, {
         type: "room-message",
         room: "general",
         message: { id: "m1", body: "hello" },
@@ -266,10 +266,10 @@ describe("dispatchEvent", () => {
       expect(data).toHaveLength(1);
     });
 
-    it("invalidates when room is not cached", () => {
+    it("invalidates when room is not cached", async () => {
       const invalidateSpy = vi.spyOn(qc, "invalidateQueries");
 
-      dispatchEvent(qc, {
+      await dispatchEvent(qc, {
         type: "room-message",
         room: "general",
         message: { id: "m1", body: "hello" },
@@ -280,14 +280,14 @@ describe("dispatchEvent", () => {
       });
     });
 
-    it("reconciles tempId by replacing pending entry", () => {
+    it("reconciles tempId by replacing pending entry", async () => {
       trackTempId("temp-123");
       qc.setQueryData(
         ["room", "general"],
         [{ id: "temp-123", body: "hello", pending: true }],
       );
 
-      dispatchEvent(qc, {
+      await dispatchEvent(qc, {
         type: "room-message",
         room: "general",
         tempId: "temp-123",
@@ -303,27 +303,27 @@ describe("dispatchEvent", () => {
       expect(data[0].pending).toBe(false);
     });
 
-    it("does nothing when room or message is missing", () => {
+    it("does nothing when room or message is missing", async () => {
       const invalidateSpy = vi.spyOn(qc, "invalidateQueries");
 
-      dispatchEvent(qc, { type: "room-message" });
+      await dispatchEvent(qc, { type: "room-message" });
 
       expect(invalidateSpy).not.toHaveBeenCalled();
     });
   });
 
-  it("ignores unknown frame types", () => {
+  it("ignores unknown frame types", async () => {
     const invalidateSpy = vi.spyOn(qc, "invalidateQueries");
 
-    dispatchEvent(qc, { type: "unknown-type" }, "user-1");
+    await dispatchEvent(qc, { type: "unknown-type" }, "user-1");
 
     expect(invalidateSpy).not.toHaveBeenCalled();
   });
 
-  it("ignores direct-message without message id", () => {
+  it("ignores direct-message without message id", async () => {
     const invalidateSpy = vi.spyOn(qc, "invalidateQueries");
 
-    dispatchEvent(
+    await dispatchEvent(
       qc,
       {
         type: "direct-message",

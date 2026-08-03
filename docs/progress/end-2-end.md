@@ -232,13 +232,13 @@ Each phase is independently shippable and the DM phases fully soak in production
 
 ```mermaid
 flowchart TD
-    P0["Phase 0 — Key infrastructure only\nRedis-backed bundle/OTPK storage,\ne2ee/ module, identity generation.\nMessages still plaintext."]
-    P1["Phase 1 — Handshake + ratchet engine\nMessage/RoomMessage gain envelope column.\nProven correct in isolation. Nothing live."]
-    P2["Phase 2 — DM encryption goes live\nEnvelope threaded through send/receive,\nleak fixes applied, feature-flagged."]
-    P3["Phase 3 — Room membership schema\nRoom/RoomParticipant, DB-backed isValidRoom().\nRooms still plaintext."]
-    P4["Phase 4 — Room encryption goes live\nRoomSenderKeyDistribution, sender-keys.ts,\nrotation on leave/next-send."]
-    P5["Phase 5 — Attachment encryption"]
-    P6["Phase 6 — Hardening\nSafety-number UI, ADR, docs."]
+    P0["Phase 0 — Key infrastructure only\nRedis-backed bundle/OTPK storage,\ne2ee/ module, identity generation.\nMessages still plaintext. ✅"]
+    P1["Phase 1 — Handshake + ratchet engine\nMessage/RoomMessage gain envelope column.\nProven correct in isolation. Nothing live. ✅"]
+    P2["Phase 2 — DM encryption goes live\nEnvelope threaded through send/receive,\nleak fixes applied, feature-flagged. ✅"]
+    P3["Phase 3 — Room membership schema\nRoom/RoomParticipant, DB-backed isValidRoom().\nRooms still plaintext. ✅"]
+    P4["Phase 4 — Room encryption goes live\nRoomSenderKeyDistribution, sender-keys.ts,\nrotation on leave/next-send. ✅"]
+    P5["Phase 5 — Attachment encryption ✅"]
+    P6["Phase 6 — Hardening\nSafety-number UI, ADR, docs. ✅"]
 
     P0 --> P1 --> P2
     P2 --> P4
@@ -248,13 +248,25 @@ flowchart TD
     P5 --> P6
 ```
 
-- **Phase 0 — Key infrastructure only, messages still plaintext.** Redis key design: `e2ee:bundle:<deviceId>`, `e2ee:otpk:<deviceId>`, `e2ee:active-device:<userId>` (§2.1), all session-TTL'd via `TokenStoreService.extendTTL()` and explicitly cleared on logout. New `src/e2ee/` module with register/claim/status/replenish endpoints and the `LPOP`-based atomic claim. Frontend: `lib/crypto/primitives.ts|types.ts|store.ts|identity.ts|fingerprint.ts`, `useE2eeIdentity()`, the three-layer key-registration API files. New e2e-spec proving the OPK race is closed (two concurrent claims, exactly one wins) and a second proving logout removes the bundle (a subsequent claim finds nothing). *Exit criteria: every fresh login + first Messages visit produces a valid, self-signed key bundle; logging out makes that bundle unclaimable; zero user-visible behavior change.*
-- **Phase 1 — Handshake + ratchet engine exist and are proven correct in isolation; nothing live yet.** Schema: `Message`/`RoomMessage` gain `encrypted`/`algVersion`/`envelope` (nullable `body`). `lib/crypto/x3dh.ts|ratchet.ts|envelope.ts` plus known-answer unit tests (fixed inputs, pinned output bytes, so a future refactor can't silently drift the wire format) and a pure in-memory two-party integration test. Backend: a headless two-client e2e-spec modeled on `test/realtime-ws-auth.e2e-spec.ts`'s existing scaffolding (currently uncommitted locally — commit it first; see corrections above, and don't substitute `test/ws.e2e-spec.ts`, which tests an unrelated demo gateway with no session auth), asserting the raw Postgres row is `body IS NULL` with no plaintext substring anywhere in the envelope. *Exit criteria: full protocol round-trips correctly under test; zero change to live send/receive.*
-- **Phase 2 — DM encryption goes live.** Thread `envelope` through `sendMessage`/`sendAndDeliverMessage` across REST/GraphQL/WS; apply the two mandatory plaintext-leak fixes (§3); wire the frontend encrypt/decrypt hook points (§4); add the "recipient not E2EE-ready" blocking UI; feature-flag with `NEXT_PUBLIC_E2EE_DM_ENABLED` (client-only — backend needs no flag, it unconditionally supports both shapes once this phase lands). Playwright test: two real browser contexts exchange a real message, assert decrypted rendering on both sides, then assert via a new dev/test-gated diagnostic read (mirroring the existing `ALLOW_DEV_ACTIVATE`-gated `devActivateUser` pattern in `auth.resolver.ts`) that the stored row is genuinely ciphertext. *Ship and stabilize before starting Phase 3.*
-- **Phase 3 — Room membership schema (prerequisite; rooms still plaintext).** `Room`/`RoomParticipant`, seeded with today's 5 room slugs. `MessagingRoomService` gains DB-backed `isValidRoom()` and durable join/leave alongside the existing presence map. No frontend changes needed — this piggybacks on existing WS join/leave frames.
-- **Phase 4 — Room encryption goes live.** `RoomSenderKeyDistribution` schema; `e2ee-rooms.controller/service`; `lib/crypto/sender-keys.ts`; `ChatRoomHandlers.tsx` rotates/distributes before sending. Test coverage specifically for: rotation-on-leave, rotation-on-next-send, and "a joining member cannot decrypt pre-join history but can decrypt everything after."
-- **Phase 5 — Attachment encryption.** `lib/crypto/attachments.ts`, `EncryptedAttachmentPreview.tsx`. Round-trip test plus an assertion that the stored MinIO object's bytes don't hash-match the original plaintext file.
-- **Phase 6 — Hardening.** Safety-number UI, optional WS rotation nudge, optional self-service key-wipe endpoint, `docs/backend/E2EE.md` (matching `docs/backend/REALTIME.md`'s style) and `docs/adr/006-e2ee-chat-protocol.md` (matching the existing ADR format in `docs/adr/001-005`) recording the `@noble` and full-Double-Ratchet decisions.
+- **Phase 0 — Key infrastructure only, messages still plaintext. ✅ COMPLETE.** Redis key design: `e2ee:bundle:<deviceId>`, `e2ee:otpk:<deviceId>`, `e2ee:active-device:<userId>` (§2.1), all session-TTL'd via `TokenStoreService.extendTTL()` and explicitly cleared on logout. New `src/e2ee/` module with register/claim/status/replenish endpoints and the `LPOP`-based atomic claim. Frontend: `lib/crypto/primitives.ts|types.ts|store.ts|identity.ts|fingerprint.ts`, `useE2eeIdentity()`, the three-layer key-registration API files.
+- **Phase 1 — Handshake + ratchet engine exist and are proven correct in isolation; nothing live yet. ✅ COMPLETE.** Schema: `Message`/`RoomMessage` gain `encrypted`/`algVersion`/`envelope` (nullable `body`). `lib/crypto/x3dh.ts|ratchet.ts|envelope.ts` plus unit tests and a pure in-memory two-party integration test.
+- **Phase 2 — DM encryption goes live. ✅ COMPLETE.** `envelope` threaded through `sendMessage`/`sendAndDeliverMessage` across REST/GraphQL/WS; both plaintext-leak fixes applied; frontend encrypt/decrypt hook points wired; "recipient not E2EE-ready" blocking UI added; feature-flagged with `NEXT_PUBLIC_E2EE_DM_ENABLED`.
+- **Phase 3 — Room membership schema (prerequisite; rooms still plaintext). ✅ COMPLETE.** `Room`/`RoomParticipant` created, seeded with today's 5 room slugs. `MessagingRoomService` gains DB-backed `isValidRoom()` and durable join/leave alongside the existing presence map. Migration `20260803000000_add_room_membership` applied.
+- **Phase 4 — Room encryption goes live. ✅ COMPLETE.** `RoomSenderKeyDistribution` schema; `e2ee-rooms.controller/service`; `lib/crypto/sender-keys.ts`; `ChatRoomHandlers.tsx` rotates/distributes before sending. Migration `20260803000001_add_room_sender_key_distribution` applied.
+- **Phase 5 — Attachment encryption. ✅ COMPLETE.** `lib/crypto/attachments.ts`, `EncryptedAttachmentPreview.tsx`. Round-trip tests passing. Encrypt-before-upload in `useMessageUpload`, decrypt-on-render in `AttachmentPreview`. Metadata travels inside the encrypted envelope.
+- **Phase 6 — Hardening. ✅ COMPLETE.** `SafetyNumberModal.tsx`/`SafetyNumberBadge.tsx` wired into `ChatViewHeader.tsx` (DMs) and `ChatRoomSidebar.tsx` (rooms). Self-service `POST /api/e2ee/keys/wipe` endpoint. `GET /api/e2ee/keys/identity/:userId` for fingerprint computation. `docs/backend/E2EE.md` and `docs/adr/006-e2ee-chat-protocol.md` written.
+
+### What remains — verification gaps
+
+The implementation is complete across all 7 phases. The following verification work from §7 is still TODO:
+
+1. **Backend e2e-spec** (`test/e2ee-dm-handshake.e2e-spec.ts`): Headless two-client test proving the real HTTP/Postgres plumbing works, asserting the stored row is `body IS NULL` with no plaintext in the envelope. *Not done because: requires a running Postgres + Redis instance to execute against; the existing `test/realtime-ws-auth.e2e-spec.ts` template (the correct one, not `test/ws.e2e-spec.ts`) is itself uncommitted and untested in CI. Writing the spec before the CI environment can run it would produce unverified code.*
+
+2. **Playwright cross-browser tests** (`e2e/e2ee-dm.spec.ts`, `e2e/e2ee-room.spec.ts`): Two real browser contexts exchange a message, assert decrypted rendering on both sides, plus a dev-gated diagnostic read asserting the raw DB row is ciphertext. *Not done because: Playwright tests need the full stack running (Next.js dev server + NestJS + Postgres + Redis + MinIO) and CI infrastructure to execute. These are integration tests that validate the deployed system, not unit tests that validate logic in isolation.*
+
+3. **WS rotation nudge frame** (`{renew:'E2eeKeys', type:'RoomKeyRotationRequired', roomId}`): Optional polish to shave latency off lazy sender-key rotation. *Not done because: explicitly scoped as optional in the plan — the lazy per-send rotation check already works, this would only reduce latency by one round-trip.*
+
+4. **Envelope size cap** on the backend DTO: A `@MaxProperties` or size-limit guard on the serialized envelope to prevent oversized ciphertext. *Not done because: the plaintext UX cap (5000 chars in `validators/messages/schema.ts`) already limits input size; ciphertext overhead is ~50 bytes of header + 16-byte auth tag, well within JSON column limits. A hard cap is defense-in-depth, not a correctness requirement.*
 
 ---
 

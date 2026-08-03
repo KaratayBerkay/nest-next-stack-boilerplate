@@ -7,4 +7,7 @@ export interface ChatViewHeaderProps {
   setSidebarOpen: Dispatch<SetStateAction<boolean>>;
   onlineUsers: Set<string>;
   isTyping: boolean;
+  ownUserId?: string;
+  ownFingerprint?: string;
+  peerFingerprint?: string;
 }

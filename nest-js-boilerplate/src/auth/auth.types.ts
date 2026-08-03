@@ -19,6 +19,8 @@ export interface JwtUser {
   orgIds?: string[];
   teamIds?: string[];
   sessionId?: string;
+  /** Auth-device UUID — used as the E2EE device identifier. */
+  deviceId?: string | null;
 }
 
 /** JWT payload we sign on login/register. */

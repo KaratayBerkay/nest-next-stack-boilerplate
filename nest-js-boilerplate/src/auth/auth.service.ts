@@ -12,6 +12,8 @@ import { MailService } from '../mail/mail.service';
 import { OutboxService } from '../outbox/outbox.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
+import { E2EE_LIFECYCLE_HOOK } from '../e2ee/e2ee-lifecycle.tokens';
+import type { E2eeLifecycleHook } from '../e2ee/e2ee-lifecycle.tokens';
 import { AuthTokenService } from './auth-token.service';
 import { AuthLoginService } from './auth-login.service';
 import { AuthRegistrationService } from './auth-registration.service';
@@ -56,6 +58,8 @@ export class AuthService {
     @Inject(forwardRef(() => RealtimeGateway))
     private readonly realtime: RealtimeGateway,
     private readonly emailOtp: EmailOtpService,
+    @Inject(E2EE_LIFECYCLE_HOOK)
+    private readonly e2eeHook?: E2eeLifecycleHook,
   ) {
     this.authTokens = new AuthTokenService(
       jwt,
@@ -90,6 +94,7 @@ export class AuthService {
       prisma,
       tokenStore,
       this.authTokens,
+      this.e2eeHook,
     );
   }
 

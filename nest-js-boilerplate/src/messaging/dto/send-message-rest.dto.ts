@@ -2,6 +2,7 @@ import {
   IsString,
   IsOptional,
   IsUrl,
+  IsObject,
   MaxLength,
   Validate,
 } from 'class-validator';
@@ -13,7 +14,7 @@ export class SendMessageRestDto {
   @MaxLength(5000)
   @Validate(TextOrAttachmentConstraint)
   @ApiProperty({
-    description: 'Message body (required when no attachment is sent)',
+    description: 'Message body (required when no attachment or envelope is sent)',
     maxLength: 5000,
     required: false,
   })
@@ -52,4 +53,13 @@ export class SendMessageRestDto {
     required: false,
   })
   attachmentName?: string;
+
+  @IsObject()
+  @IsOptional()
+  @ApiProperty({
+    description:
+      'E2EE envelope (MessageEnvelopeV1). When present, body is stored as null and the message is encrypted.',
+    required: false,
+  })
+  envelope?: Record<string, unknown>;
 }

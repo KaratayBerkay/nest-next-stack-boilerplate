@@ -66,34 +66,52 @@ export class MessagingDmService {
     );
 
     const sentMessages = await this.prisma.$queryRawUnsafe<
-      Array<{ id: string; body: string; recipientId: string; createdAt: Date }>
+      Array<{
+        id: string;
+        body: string | null;
+        recipientId: string;
+        createdAt: Date;
+        encrypted: boolean;
+        envelope: unknown;
+      }>
     >(
-      `SELECT DISTINCT ON ("recipientId") id, body, "recipientId", "createdAt" FROM "Message" WHERE "senderId" = $1::uuid AND "recipientId" = ANY($2::uuid[]) ORDER BY "recipientId", "createdAt" DESC`,
+      `SELECT DISTINCT ON ("recipientId") id, body, "recipientId", "createdAt", encrypted, envelope FROM "Message" WHERE "senderId" = $1::uuid AND "recipientId" = ANY($2::uuid[]) ORDER BY "recipientId", "createdAt" DESC`,
       userId,
       friendIds,
     );
     const receivedMessages = await this.prisma.$queryRawUnsafe<
-      Array<{ id: string; body: string; senderId: string; createdAt: Date }>
+      Array<{
+        id: string;
+        body: string | null;
+        senderId: string;
+        createdAt: Date;
+        encrypted: boolean;
+        envelope: unknown;
+      }>
     >(
-      `SELECT DISTINCT ON ("senderId") id, body, "senderId", "createdAt" FROM "Message" WHERE "recipientId" = $1::uuid AND "senderId" = ANY($2::uuid[]) ORDER BY "senderId", "createdAt" DESC`,
+      `SELECT DISTINCT ON ("senderId") id, body, "senderId", "createdAt", encrypted, envelope FROM "Message" WHERE "recipientId" = $1::uuid AND "senderId" = ANY($2::uuid[]) ORDER BY "senderId", "createdAt" DESC`,
       userId,
       friendIds,
     );
 
     const latestPerPeer = new Map<
       string,
-      { lastMessage: string; lastTime: Date }
+      { lastMessage: string | Record<string, unknown>; lastTime: Date }
     >();
     for (const msg of sentMessages)
       latestPerPeer.set(msg.recipientId, {
-        lastMessage: msg.body,
+        lastMessage: msg.encrypted
+          ? (msg.envelope as Record<string, unknown>) ?? ''
+          : (msg.body ?? ''),
         lastTime: msg.createdAt,
       });
     for (const msg of receivedMessages) {
       const existing = latestPerPeer.get(msg.senderId);
       if (!existing || msg.createdAt > existing.lastTime)
         latestPerPeer.set(msg.senderId, {
-          lastMessage: msg.body,
+          lastMessage: msg.encrypted
+            ? (msg.envelope as Record<string, unknown>) ?? ''
+            : (msg.body ?? ''),
           lastTime: msg.createdAt,
         });
     }
@@ -194,6 +212,7 @@ export class MessagingDmService {
     areFriends: (a: string, b: string) => Promise<boolean>,
     friends?: string[],
     attachment?: MessageAttachment,
+    envelope?: Record<string, unknown>,
   ) {
     if (senderId === recipientId) {
       this.logger.warn(`User ${senderId} attempted to message self`);
@@ -208,11 +227,15 @@ export class MessagingDmService {
       );
       throw new ForbiddenException('You can only send messages to friends');
     }
+    const isEncrypted = envelope && typeof envelope === 'object';
     const message = await this.prisma.message.create({
       data: {
         senderId,
         recipientId,
-        body: text ?? '',
+        body: isEncrypted ? null : (text ?? ''),
+        encrypted: isEncrypted,
+        algVersion: isEncrypted ? (envelope.v as number) ?? 1 : null,
+        envelope: isEncrypted ? envelope : undefined,
         attachmentUrl: attachment?.url,
         attachmentType: attachment?.type,
         attachmentName: attachment?.name,
@@ -261,6 +284,8 @@ export class MessagingDmService {
     senderId: string;
     recipientId: string;
     body: string | Record<string, unknown>;
+    encrypted?: boolean;
+    envelope?: Record<string, unknown> | unknown;
     createdAt: Date;
     sender?: {
       id?: string;
@@ -276,6 +301,13 @@ export class MessagingDmService {
     const senderName = displayName(message.sender ?? {});
     const senderAvatar = message.sender?.avatar ?? '';
     const senderEmail = message.sender?.email ?? '';
+
+    // For encrypted messages, send the envelope as the conversation preview
+    // so the client can decrypt it; for plaintext, send body as-is.
+    const lastMessage = message.encrypted
+      ? (message.envelope as Record<string, unknown>) ?? message.body
+      : message.body;
+
     this.realtime.emitToService(message.recipientId, 'MESSAGE', {
       renew: 'Messages',
       type: 'Conversation',
@@ -286,7 +318,7 @@ export class MessagingDmService {
           name: senderName,
           avatar: senderAvatar,
         },
-        lastMessage: message.body,
+        lastMessage,
         lastTime: message.createdAt,
         unread: unread + 1,
       },
@@ -308,12 +340,18 @@ export class MessagingDmService {
       !this.realtime.hasServiceConnection(message.recipientId, 'MESSAGE') &&
       !this.realtime.hasServiceConnection(message.recipientId, 'NOTIFICATION')
     ) {
-      const body = typeof message.body === 'string' ? message.body : '';
+      // Encrypted messages: generic preview (no plaintext leak)
+      // Plaintext messages: truncated body (legacy behavior)
+      const pushBody = message.encrypted
+        ? ''
+        : typeof message.body === 'string'
+          ? message.body
+          : '';
       this.push
         .sendToUser(
           message.recipientId,
           `New message from ${senderName}`,
-          body.length > 120 ? body.slice(0, 117) + '...' : body,
+          pushBody.length > 120 ? pushBody.slice(0, 117) + '...' : (pushBody || 'New message'),
           undefined,
           {
             kind: 'direct-message',
@@ -347,6 +385,7 @@ export class MessagingDmService {
     friends?: string[],
     tempId?: string,
     attachment?: MessageAttachment,
+    envelope?: Record<string, unknown>,
   ) {
     const message = await this.sendMessage(
       senderId,
@@ -355,6 +394,7 @@ export class MessagingDmService {
       areFriends,
       friends,
       attachment,
+      envelope,
     );
     if (tempId) (message as Record<string, unknown>)._tempId = tempId;
     await this.deliverDirectMessage(message);

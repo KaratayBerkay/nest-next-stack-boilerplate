@@ -1,9 +1,32 @@
 import type { useQueryClient } from "@tanstack/react-query";
 
-export function dispatchRenew(
+/**
+ * Decrypt a conversation preview (lastMessage) if it's an encrypted envelope.
+ * Returns the plaintext string for display.
+ */
+async function maybeDecryptPreview(
+  lastMessage: string | Record<string, unknown>,
+  peerUserId: string,
+): Promise<string> {
+  if (typeof lastMessage === "string") return lastMessage;
+  try {
+    const { isE2eeDmEnabled, decryptConversationPreview } =
+      await import("@/lib/crypto/chat");
+    if (!isE2eeDmEnabled()) return "[Encrypted]";
+    // We need ownUserId for decryption — use a module-level cache
+    const { getOwnUserId } = await import("@/api/client/messages/query");
+    const ownUserId = await getOwnUserId();
+    if (!ownUserId) return "[Encrypted]";
+    return decryptConversationPreview(lastMessage, peerUserId, ownUserId);
+  } catch {
+    return "[Encrypted]";
+  }
+}
+
+export async function dispatchRenew(
   qc: ReturnType<typeof useQueryClient>,
   frame: Record<string, unknown>,
-): void {
+): Promise<void> {
   if (!frame.renew) return;
   switch (frame.renew as string) {
     case "Notifications": {
@@ -37,11 +60,21 @@ export function dispatchRenew(
       // Companion to event-dispatch.ts's direct-message handler which patches
       // the open thread's cache and auto-marks-read for the active conversation.
       if (frame.type === "Conversation") {
+        const conv = frame.conversation as Record<string, unknown> & {
+          user: { id: string };
+          lastMessage: string | Record<string, unknown>;
+        };
+
+        // Decrypt the lastMessage if it's an encrypted envelope
+        const decryptedLastMessage = await maybeDecryptPreview(
+          conv.lastMessage,
+          conv.user.id,
+        );
+
+        const decryptedConv = { ...conv, lastMessage: decryptedLastMessage };
+
         qc.setQueryData(["conversations"], (old: unknown[] | undefined) => {
           const list = (old ?? []) as Record<string, unknown>[];
-          const conv = frame.conversation as Record<string, unknown> & {
-            user: { id: string };
-          };
           const idx = list.findIndex(
             (c) => (c.user as Record<string, unknown>)?.id === conv.user.id,
           );
@@ -50,7 +83,7 @@ export function dispatchRenew(
             const merged: Record<string, unknown> = {
               ...(updated[idx] as Record<string, unknown>),
             };
-            for (const [k, v] of Object.entries(conv)) {
+            for (const [k, v] of Object.entries(decryptedConv)) {
               if (v !== undefined && v !== null && v !== "") {
                 merged[k] = v;
               }
@@ -62,7 +95,7 @@ export function dispatchRenew(
                 (new Date((a.lastTime as string) ?? "").getTime() || 0),
             );
           }
-          return [conv, ...list];
+          return [decryptedConv, ...list];
         });
       }
       break;

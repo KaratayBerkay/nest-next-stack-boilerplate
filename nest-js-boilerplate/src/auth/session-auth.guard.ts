@@ -176,6 +176,7 @@ export class SessionAuthGuard implements CanActivate {
       orgIds: sessionUser.orgIds,
       teamIds: sessionUser.teamIds,
       sessionId: sessionUser.sessionId,
+      deviceId: sessionUser.deviceId,
     };
 
     // Step 9: Slide Redis TTL so active sessions survive JWT lifetime.

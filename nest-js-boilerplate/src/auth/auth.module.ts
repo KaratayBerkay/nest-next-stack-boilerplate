@@ -1,5 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { DevicesModule } from '../devices/devices.module';
+import { E2eeModule } from '../e2ee/e2ee.module';
 import { FriendsModule } from '../friends/friends.module';
 import { MailModule } from '../mail/mail.module';
 import { RealtimeModule } from '../realtime/realtime.module';
@@ -17,6 +18,7 @@ import { UsernameService } from './username.service';
     AuthContractsModule,
     MailModule,
     DevicesModule,
+    E2eeModule,
     // SessionHydrationService needs FriendsService for friend-list hydration;
     // forwardRef avoids a module cycle (FriendsModule → AuthContractsModule → AuthModule).
     forwardRef(() => FriendsModule),

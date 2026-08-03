@@ -2,7 +2,7 @@ import type { UserInfo } from "./ChatView-types";
 
 type Conversation = {
   user: UserInfo;
-  lastMessage: string;
+  lastMessage: string | Record<string, unknown>;
   lastTime: string;
   unread: number;
 };

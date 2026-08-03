@@ -67,15 +67,29 @@ export const ChatRoomMessageList = forwardRef<
                   url={msg.attachmentUrl}
                   type={msg.attachmentType}
                   name={msg.attachmentName}
+                  cryptoMetadata={
+                    (msg as unknown as Record<string, unknown>)
+                      .decryptedAttachment as
+                      | import("@/lib/crypto/attachments").AttachmentCryptoMetadata
+                      | undefined
+                  }
                 />
               )}
-              {msg.body && (
+              {msg.body != null && msg.body !== "" ? (
                 <span
                   className={`inline-block rounded-xl px-3 py-1.5 text-sm ${
                     isMe ? "bg-brand text-brand-fg" : "bg-surface text-fg"
                   }`}
                 >
                   {msg.body}
+                </span>
+              ) : (
+                <span
+                  className={`inline-block rounded-xl px-3 py-1.5 text-sm italic ${
+                    isMe ? "bg-brand text-brand-fg" : "bg-surface text-fg"
+                  }`}
+                >
+                  [Encrypted]
                 </span>
               )}
             </div>

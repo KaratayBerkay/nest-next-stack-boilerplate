@@ -2,6 +2,8 @@ import { Logger, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TokenStoreService } from './token-store.service';
 import { AuthTokenService } from './auth-token.service';
+import { E2EE_LIFECYCLE_HOOK } from '../e2ee/e2ee-lifecycle.tokens';
+import type { E2eeLifecycleHook } from '../e2ee/e2ee-lifecycle.tokens';
 import type { SessionUser } from './auth.types';
 import type { DeviceContext, RequestContext } from '../devices/device.service';
 
@@ -98,6 +100,7 @@ export class AuthSessionService {
     private readonly prisma: PrismaService,
     private readonly tokenStore: TokenStoreService,
     private readonly authTokens: AuthTokenService,
+    private readonly e2ee?: E2eeLifecycleHook,
   ) {}
 
   async logout(ctx: RequestContext): Promise<boolean> {
@@ -128,6 +131,15 @@ export class AuthSessionService {
         });
       }
       await this.tokenStore.revoke(key);
+
+      // Wipe E2EE keys for this session's device so the bundle is
+      // immediately unclaimable (§2.1 of the plan).
+      if (session?.userId) {
+        await this.e2ee?.deleteForSession(
+          session.userId,
+          session.deviceId,
+        );
+      }
     }
 
     this.authTokens.clearRbacCookie(ctx);

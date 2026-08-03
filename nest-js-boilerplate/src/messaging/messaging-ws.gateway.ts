@@ -35,6 +35,7 @@ interface IncomingMessagePayload {
   attachmentUrl?: string;
   attachmentType?: string;
   attachmentName?: string;
+  envelope?: Record<string, unknown>;
 }
 
 function toAttachment(
@@ -50,6 +51,11 @@ function toAttachment(
   return undefined;
 }
 
+function hasTextOrAttachmentOrEnvelope(data: IncomingMessagePayload): boolean {
+  if (data.envelope && typeof data.envelope === 'object') return true;
+  return Boolean((data.text ?? '').trim()) || Boolean(data.attachmentUrl);
+}
+
 function hasTextOrAttachment(data: IncomingMessagePayload): boolean {
   return Boolean((data.text ?? '').trim()) || Boolean(data.attachmentUrl);
 }
@@ -58,6 +64,9 @@ interface SavedRoomMessage {
   id: string;
   senderId: string;
   body: string | null;
+  encrypted: boolean;
+  algVersion: number | null;
+  envelope: Record<string, unknown> | null | unknown;
   attachmentUrl: string | null;
   attachmentType: string | null;
   attachmentName: string | null;
@@ -70,20 +79,26 @@ function buildRoomMessagePayload(
   data: IncomingMessagePayload & { room: string; tempId?: string },
 ): Record<string, unknown> {
   const senderName = (ws.useNickname && ws.chatNickname) || ws.userName || 'Unknown';
+  const message: Record<string, unknown> = {
+    id: saved.id,
+    senderId: saved.senderId,
+    senderName,
+    avatar: initials(senderName),
+    body: saved.body,
+    encrypted: saved.encrypted,
+    attachmentUrl: saved.attachmentUrl,
+    attachmentType: saved.attachmentType,
+    attachmentName: saved.attachmentName,
+    createdAt: saved.createdAt.toISOString(),
+  };
+  if (saved.encrypted && saved.envelope) {
+    message.envelope = saved.envelope;
+    message.algVersion = saved.algVersion;
+  }
   const payload: Record<string, unknown> = {
     type: 'room-message',
     room: data.room,
-    message: {
-      id: saved.id,
-      senderId: saved.senderId,
-      senderName,
-      avatar: initials(senderName),
-      body: saved.body,
-      attachmentUrl: saved.attachmentUrl,
-      attachmentType: saved.attachmentType,
-      attachmentName: saved.attachmentName,
-      createdAt: saved.createdAt.toISOString(),
-    },
+    message,
   };
   if (data.tempId) payload.tempId = data.tempId;
   return payload;
@@ -163,11 +178,11 @@ export class MessagingWsGateway implements OnModuleInit {
     data: IncomingMessagePayload & { recipientId: string },
   ) {
     if (!ws.userId) return;
-    if (!hasTextOrAttachment(data)) {
+    if (!hasTextOrAttachmentOrEnvelope(data)) {
       ws.send(
         JSON.stringify({
           type: 'error',
-          message: 'A message must contain either text or an attachment',
+          message: 'A message must contain text, an attachment, or an envelope',
         }),
       );
       return;
@@ -178,6 +193,7 @@ export class MessagingWsGateway implements OnModuleInit {
       data.text,
       undefined,
       toAttachment(data),
+      data.envelope,
     );
     await this.ms.deliverDirectMessage(message);
   }
@@ -250,6 +266,7 @@ export class MessagingWsGateway implements OnModuleInit {
       avatarUrl: ws.avatarUrl ?? null,
     };
     const members = this.ms.joinRoom(data.room, member);
+    void this.ms.persistJoin(data.room, ws.userId);
     this.realtime.broadcastToRoom(data.room, {
       type: 'user-joined',
       room: data.room,
@@ -266,6 +283,7 @@ export class MessagingWsGateway implements OnModuleInit {
     if (!ws.userId || !ws.socketId) return;
     ws.room = undefined;
     const members = this.ms.leaveRoom(data.room, ws.socketId);
+    void this.ms.persistLeave(data.room, ws.userId);
     this.realtime.broadcastToRoom(data.room, {
       type: 'user-left',
       room: data.room,
@@ -286,11 +304,11 @@ export class MessagingWsGateway implements OnModuleInit {
       ws.send(JSON.stringify({ type: 'error', message: 'Invalid room' }));
       return;
     }
-    if (!hasTextOrAttachment(data)) {
+    if (!hasTextOrAttachmentOrEnvelope(data)) {
       ws.send(
         JSON.stringify({
           type: 'error',
-          message: 'A message must contain either text or an attachment',
+          message: 'A message must contain either text, an attachment, or an envelope',
         }),
       );
       return;
@@ -300,6 +318,7 @@ export class MessagingWsGateway implements OnModuleInit {
       ws.userId,
       data.text ?? '',
       toAttachment(data),
+      data.envelope,
     );
     this.realtime.broadcastToRoom(
       data.room,
@@ -356,6 +375,7 @@ export class MessagingWsGateway implements OnModuleInit {
       avatarUrl: ws.avatarUrl ?? null,
     };
     const members = this.ms.joinRoom(room, member);
+    void this.ms.persistJoin(room, ws.userId);
     this.realtime.broadcastToRoom(room, {
       type: 'user-joined',
       room,
@@ -372,6 +392,7 @@ export class MessagingWsGateway implements OnModuleInit {
     if (!ws.userId || !ws.socketId || !params.room) return;
     ws.room = undefined;
     const members = this.ms.leaveRoom(params.room, ws.socketId);
+    void this.ms.persistLeave(params.room, ws.userId);
     this.realtime.broadcastToRoom(params.room, {
       type: 'user-left',
       room: params.room,

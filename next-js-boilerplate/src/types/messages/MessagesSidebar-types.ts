@@ -11,7 +11,7 @@ export interface MessagesSidebarProps {
   user: UserInfo;
   conversations: Array<{
     user: UserInfo;
-    lastMessage: string;
+    lastMessage: string | Record<string, unknown>;
     lastTime: string;
     unread: number;
   }>;

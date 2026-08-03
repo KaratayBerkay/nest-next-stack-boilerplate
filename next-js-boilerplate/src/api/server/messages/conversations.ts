@@ -9,7 +9,7 @@ export interface Conversation {
     avatarUrl: string | null;
     online: boolean;
   };
-  lastMessage: string;
+  lastMessage: string | Record<string, unknown>;
   lastTime: string;
   unread: number;
 }

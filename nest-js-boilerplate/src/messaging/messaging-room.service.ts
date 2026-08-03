@@ -98,19 +98,63 @@ export class MessagingRoomService {
     return result;
   }
 
+  async persistJoin(roomSlug: string, userId: string): Promise<void> {
+    const room = await this.prisma.room.findUnique({
+      where: { slug: roomSlug },
+      select: { id: true },
+    });
+    if (!room) return;
+
+    await this.prisma.$transaction([
+      this.prisma.roomParticipant.upsert({
+        where: { roomId_userId: { roomId: room.id, userId } },
+        update: { leftAt: null, joinedAt: new Date() },
+        create: { roomId: room.id, userId },
+      }),
+      this.prisma.room.update({
+        where: { id: room.id },
+        data: { membershipVersion: { increment: 1 } },
+      }),
+    ]);
+  }
+
+  async persistLeave(roomSlug: string, userId: string): Promise<void> {
+    const room = await this.prisma.room.findUnique({
+      where: { slug: roomSlug },
+      select: { id: true },
+    });
+    if (!room) return;
+
+    await this.prisma.$transaction([
+      this.prisma.roomParticipant.updateMany({
+        where: { roomId: room.id, userId, leftAt: null },
+        data: { leftAt: new Date() },
+      }),
+      this.prisma.room.update({
+        where: { id: room.id },
+        data: { membershipVersion: { increment: 1 } },
+      }),
+    ]);
+  }
+
   async saveRoomMessage(
     roomId: string,
     senderId: string,
     body = '',
     attachment?: MessageAttachment,
+    envelope?: Record<string, unknown>,
   ) {
     if (!isValidRoom(roomId))
       throw new NotFoundException(`Unknown room: ${roomId}`);
+    const encrypted = !!envelope;
     return this.prisma.roomMessage.create({
       data: {
         roomId,
         senderId,
-        body: body ?? '',
+        body: encrypted ? null : (body ?? ''),
+        encrypted,
+        algVersion: encrypted ? 1 : null,
+        envelope: (envelope as Prisma.InputJsonValue) ?? undefined,
         attachmentUrl: attachment?.url,
         attachmentType: attachment?.type,
         attachmentName: attachment?.name,
@@ -136,7 +180,10 @@ export class MessagingRoomService {
         senderId: m.senderId,
         senderName: m.sender.name || m.sender.email || 'Unknown',
         avatar: initials(m.sender.name || m.sender.email || 'Unknown'),
-        body: m.body,
+        body: m.body as string | null,
+        encrypted: m.encrypted,
+        algVersion: m.algVersion,
+        envelope: m.envelope as Record<string, unknown> | null,
         attachmentUrl: m.attachmentUrl,
         attachmentType: m.attachmentType,
         attachmentName: m.attachmentName,

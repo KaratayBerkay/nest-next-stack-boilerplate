@@ -5,12 +5,15 @@ export interface Message {
   id: string;
   senderId: string;
   recipientId: string;
-  body: string;
+  body: string | null;
+  encrypted?: boolean;
+  algVersion?: number | null;
+  envelope?: Record<string, unknown> | null;
   createdAt: string;
   readAt: string | null;
   deliveredAt: string | null;
 }
 
-export function useConversation(peerId: string | null) {
-  return useInfiniteQuery(conversationMessagesQueryOptions(peerId));
+export function useConversation(peerId: string | null, ownUserId?: string) {
+  return useInfiniteQuery(conversationMessagesQueryOptions(peerId, ownUserId));
 }

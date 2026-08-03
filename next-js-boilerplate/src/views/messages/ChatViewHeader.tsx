@@ -6,6 +6,7 @@ import { IconChevronLeft } from "@tabler/icons-react";
 import { initials } from "@/lib/initials";
 import { cn } from "@/lib/cn";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { SafetyNumberBadge } from "@/components/SafetyNumberBadge";
 import type { ChatViewHeaderProps } from "@/types/messages/ChatViewHeader-types";
 
 function handleBack(
@@ -22,6 +23,9 @@ export function ChatViewHeader({
   setSidebarOpen,
   onlineUsers,
   isTyping,
+  ownUserId,
+  ownFingerprint,
+  peerFingerprint,
 }: ChatViewHeaderProps) {
   const t = useMessages("messages");
   const isOnline = onlineUsers.has(selectedUser.id);
@@ -51,6 +55,15 @@ export function ChatViewHeader({
           </span>
           {isOnline && (
             <span className="bg-success h-2 w-2 shrink-0 rounded-full" />
+          )}
+          {ownUserId && ownFingerprint && peerFingerprint && (
+            <SafetyNumberBadge
+              peerUserId={selectedUser.id}
+              peerName={selectedUser.name ?? selectedUser.email ?? "Peer"}
+              ownUserId={ownUserId}
+              ownFingerprint={ownFingerprint}
+              peerFingerprint={peerFingerprint}
+            />
           )}
         </div>
         <p className="text-xs">

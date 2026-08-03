@@ -1,9 +1,11 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { CryptoService } from '../common/crypto/crypto.service';
 import { parseDurationToSeconds } from '../common/utils/parse-duration';
 import { REDIS_CLIENT } from '../redis/redis.module';
+import { E2EE_LIFECYCLE_HOOK } from '../e2ee/e2ee-lifecycle.tokens';
+import type { E2eeLifecycleHook } from '../e2ee/e2ee-lifecycle.tokens';
 import type { SessionUser, SessionUserInput } from './auth.types';
 
 const SESS_PREFIX = 'sess:';
@@ -32,6 +34,9 @@ export class TokenStoreService {
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
     private readonly crypto: CryptoService,
     private readonly config: ConfigService,
+    @Optional()
+    @Inject(E2EE_LIFECYCLE_HOOK)
+    private readonly e2ee?: E2eeLifecycleHook,
   ) {
     const raw = this.config.get<string>('SESSION_TTL', '900s');
     this.ttl = parseDurationToSeconds(raw);
@@ -160,7 +165,12 @@ export class TokenStoreService {
 
   /** Extend TTL on the session key (sliding expiration — called on each authenticated request). */
   async extendTTL(key: string): Promise<void> {
-    const sessionId = await this.redis.hget(key, 'sessionId');
+    const [sessionId, userId, deviceId] = await this.redis.hmget(
+      key,
+      'sessionId',
+      'userId',
+      'deviceId',
+    );
     const pipe = this.redis.multi();
     pipe.expire(key, this.ttl);
     if (sessionId) {
@@ -170,6 +180,12 @@ export class TokenStoreService {
       pipe.expire(`${REFRESH_INDEX_PREFIX}${sessionId}`, this.ttl);
     }
     await pipe.exec();
+
+    // Mirror the TTL slide onto E2EE key material for this device so
+    // the bundle stays discoverable exactly as long as the session lives.
+    if (userId) {
+      await this.e2ee?.touchTTL(userId, deviceId || null);
+    }
   }
 
   async revoke(key: string): Promise<void> {
@@ -224,6 +240,8 @@ export class TokenStoreService {
       const session = await this.read(key);
       if (session?.sessionId === sessionId) {
         await this.revoke(key);
+        // Clean up E2EE keys for the revoked session's device.
+        await this.e2ee?.deleteForSession(userId, session.deviceId);
         return true;
       }
     }
@@ -240,6 +258,9 @@ export class TokenStoreService {
     }
     pipe.del(reverseKey);
     await pipe.exec();
+    // Wipe all E2EE keys for this user (single-active-device: only one
+    // device's bundle exists at a time).
+    await this.e2ee?.deleteForUser(userId);
     return keys.length;
   }
 

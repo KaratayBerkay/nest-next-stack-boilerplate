@@ -7,8 +7,10 @@ import type { useRouter } from "next/navigation";
 import { nowMs } from "@/lib/date-time";
 import { trackTempId } from "@/lib/realtime/event-dispatch";
 import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
+import { encryptRoomMessage } from "@/lib/crypto/sender-keys";
+import { getIdentity } from "@/lib/crypto/store";
 
-export function chatRoomHandleSend(
+export async function chatRoomHandleSend(
   input: string,
   realtime: ReturnType<typeof useRealtime> | null,
   room: string,
@@ -22,6 +24,43 @@ export function chatRoomHandleSend(
   if ((!text && !attachment) || !realtime) return;
   const tempId = `temp-${nowMs()}`;
 
+  const isE2eeEnabled =
+    typeof window !== "undefined" &&
+    process.env.NEXT_PUBLIC_E2EE_DM_ENABLED === "true";
+
+  let envelope: Record<string, unknown> | undefined;
+  let displayText = text;
+
+  if (isE2eeEnabled && (text || attachment?.cryptoMetadata) && user?.id) {
+    try {
+      const identity = await getIdentity();
+      if (identity) {
+        // Build plaintext with optional attachment metadata
+        const plaintext: Record<string, unknown> = { text };
+        if (attachment?.cryptoMetadata) {
+          plaintext.attachment = {
+            key: attachment.cryptoMetadata.key,
+            nonce: attachment.cryptoMetadata.nonce,
+            originalName: attachment.cryptoMetadata.originalName,
+            originalType: attachment.cryptoMetadata.originalType,
+            originalSize: attachment.cryptoMetadata.originalSize,
+          };
+        }
+        const result = await encryptRoomMessage(
+          room,
+          identity.deviceId,
+          JSON.stringify(plaintext),
+          user.id,
+        );
+        envelope = result.envelope as unknown as Record<string, unknown>;
+        displayText = ""; // encrypted messages have body=null
+      }
+    } catch {
+      // E2EE failed — block send rather than fall back to plaintext
+      return;
+    }
+  }
+
   if (user?.id) {
     trackTempId(tempId);
     queryClient.setQueryData(
@@ -30,20 +69,23 @@ export function chatRoomHandleSend(
         const msgs = old ?? [];
         if (msgs.some((m) => (m as Record<string, unknown>).id === tempId))
           return old;
-        return [
-          ...msgs,
-          {
-            id: tempId,
-            senderId: user.id,
-            senderName: user.name ?? "Unknown",
-            body: text,
-            attachmentUrl: attachment?.url,
-            attachmentType: attachment?.type,
-            attachmentName: attachment?.name,
-            createdAt: new Date().toISOString(),
-            pending: true,
-          },
-        ];
+        const entry: Record<string, unknown> = {
+          id: tempId,
+          senderId: user.id,
+          senderName: user.name ?? "Unknown",
+          body: envelope ? null : displayText,
+          encrypted: !!envelope,
+          envelope,
+          attachmentUrl: attachment?.url,
+          attachmentType: attachment?.type,
+          attachmentName: attachment?.name,
+          createdAt: new Date().toISOString(),
+          pending: true,
+        };
+        if (attachment?.cryptoMetadata) {
+          entry.decryptedAttachment = attachment.cryptoMetadata;
+        }
+        return [...msgs, entry];
       },
     );
   }
@@ -51,13 +93,19 @@ export function chatRoomHandleSend(
   realtime.send({
     type: "room-message",
     room,
-    text,
+    text: envelope ? "" : displayText,
+    envelope,
     tempId,
     ...(attachment
       ? {
+          // For encrypted attachments, only send the URL (type/name are in the envelope)
           attachmentUrl: attachment.url,
-          attachmentType: attachment.type,
-          attachmentName: attachment.name,
+          ...(attachment.cryptoMetadata
+            ? {}
+            : {
+                attachmentType: attachment.type,
+                attachmentName: attachment.name,
+              }),
         }
       : {}),
   });

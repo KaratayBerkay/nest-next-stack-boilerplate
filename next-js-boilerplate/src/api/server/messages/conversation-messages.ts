@@ -5,7 +5,10 @@ export interface Message {
   id: string;
   senderId: string;
   recipientId: string;
-  body: string;
+  body: string | null;
+  encrypted?: boolean;
+  algVersion?: number | null;
+  envelope?: Record<string, unknown> | null;
   createdAt: string;
   readAt: string | null;
   deliveredAt: string | null;

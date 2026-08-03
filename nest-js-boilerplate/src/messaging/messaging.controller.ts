@@ -200,6 +200,7 @@ export class MessagingController {
             name: body.attachmentName,
           }
         : undefined,
+      body.envelope,
     );
   }
 

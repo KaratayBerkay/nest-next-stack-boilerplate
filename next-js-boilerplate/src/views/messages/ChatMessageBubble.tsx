@@ -37,6 +37,11 @@ export function ChatMessageBubble({
             url={msg.attachmentUrl}
             type={msg.attachmentType}
             name={msg.attachmentName}
+            cryptoMetadata={
+              (msg as Record<string, unknown>).decryptedAttachment as
+                | import("@/lib/crypto/attachments").AttachmentCryptoMetadata
+                | undefined
+            }
           />
         )}
         {msg.body && (

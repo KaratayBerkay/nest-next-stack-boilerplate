@@ -69,6 +69,7 @@ export class MessagingService {
     text = '',
     friends?: string[],
     attachment?: MessageAttachment,
+    envelope?: Record<string, unknown>,
   ) {
     return this.dm.sendMessage(
       senderId,
@@ -77,6 +78,7 @@ export class MessagingService {
       (a, b) => this.friends.areFriends(a, b),
       friends,
       attachment,
+      envelope,
     );
   }
 
@@ -86,6 +88,7 @@ export class MessagingService {
     text = '',
     tempId?: string,
     attachment?: MessageAttachment,
+    envelope?: Record<string, unknown>,
   ) {
     return this.dm.sendAndDeliverMessage(
       senderId,
@@ -95,6 +98,7 @@ export class MessagingService {
       undefined,
       tempId,
       attachment,
+      envelope,
     );
   }
 
@@ -166,8 +170,16 @@ export class MessagingService {
     return this.rooms.joinRoom(room, member);
   }
 
+  persistJoin(roomSlug: string, userId: string) {
+    return this.rooms.persistJoin(roomSlug, userId);
+  }
+
   leaveRoom(room: string, socketId: string) {
     return this.rooms.leaveRoom(room, socketId);
+  }
+
+  persistLeave(roomSlug: string, userId: string) {
+    return this.rooms.persistLeave(roomSlug, userId);
   }
 
   leaveAllRooms(socketId: string) {
@@ -187,8 +199,9 @@ export class MessagingService {
     senderId: string,
     body: string,
     attachment?: MessageAttachment,
+    envelope?: Record<string, unknown>,
   ) {
-    return this.rooms.saveRoomMessage(roomId, senderId, body, attachment);
+    return this.rooms.saveRoomMessage(roomId, senderId, body, attachment, envelope);
   }
 
   getRoomMessages(roomId: string, before?: string, take?: number) {

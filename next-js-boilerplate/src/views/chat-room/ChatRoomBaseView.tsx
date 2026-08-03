@@ -69,7 +69,7 @@ function ChatRoomContent({
     // Block send while the attachment upload is in flight — sending early
     // silently drops the attachment (F35).
     if (attaching) return;
-    chatRoomHandleSend(
+    void chatRoomHandleSend(
       input,
       realtime,
       room,

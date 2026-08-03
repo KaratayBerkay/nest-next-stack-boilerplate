@@ -14,13 +14,17 @@ describe("dispatchRenew", () => {
   });
 
   describe("Notifications", () => {
-    it("Count: sets query data for notifications count", () => {
-      dispatchRenew(qc, { renew: "Notifications", type: "Count", value: 5 });
+    it("Count: sets query data for notifications count", async () => {
+      await dispatchRenew(qc, {
+        renew: "Notifications",
+        type: "Count",
+        value: 5,
+      });
       expect(qc.getQueryData(["notifications", "count"])).toBe(5);
     });
 
-    it("DmCount: sets query data for dm count", () => {
-      dispatchRenew(qc, {
+    it("DmCount: sets query data for dm count", async () => {
+      await dispatchRenew(qc, {
         renew: "Notifications",
         type: "DmCount",
         value: 3,
@@ -28,12 +32,12 @@ describe("dispatchRenew", () => {
       expect(qc.getQueryData(["notifications", "dm-count"])).toBe(3);
     });
 
-    it("Item: prepends item to notifications list when cached", () => {
+    it("Item: prepends item to notifications list when cached", async () => {
       qc.setQueryData(["notifications", "list"], {
         items: [{ id: "n1", text: "old" }],
       });
 
-      dispatchRenew(qc, {
+      await dispatchRenew(qc, {
         renew: "Notifications",
         type: "Item",
         item: { id: "n2", text: "new" },
@@ -46,10 +50,10 @@ describe("dispatchRenew", () => {
       expect(data.items[0].id).toBe("n2");
     });
 
-    it("Item: invalidates when notifications list is not cached", () => {
+    it("Item: invalidates when notifications list is not cached", async () => {
       const invalidateSpy = vi.spyOn(qc, "invalidateQueries");
 
-      dispatchRenew(qc, {
+      await dispatchRenew(qc, {
         renew: "Notifications",
         type: "Item",
         item: { id: "n1", text: "new" },
@@ -60,12 +64,12 @@ describe("dispatchRenew", () => {
       });
     });
 
-    it("Item: deduplicates by id", () => {
+    it("Item: deduplicates by id", async () => {
       qc.setQueryData(["notifications", "list"], {
         items: [{ id: "n1", text: "dup" }],
       });
 
-      dispatchRenew(qc, {
+      await dispatchRenew(qc, {
         renew: "Notifications",
         type: "Item",
         item: { id: "n1", text: "dup" },
@@ -77,10 +81,10 @@ describe("dispatchRenew", () => {
       expect(data.items).toHaveLength(1);
     });
 
-    it("Read: invalidates all notification queries", () => {
+    it("Read: invalidates all notification queries", async () => {
       const invalidateSpy = vi.spyOn(qc, "invalidateQueries");
 
-      dispatchRenew(qc, { renew: "Notifications", type: "Read" });
+      await dispatchRenew(qc, { renew: "Notifications", type: "Read" });
 
       expect(invalidateSpy).toHaveBeenCalledWith({
         queryKey: ["notifications"],
@@ -89,7 +93,7 @@ describe("dispatchRenew", () => {
   });
 
   describe("Messages", () => {
-    it("Conversation: upserts conversation at correct position sorted by lastTime", () => {
+    it("Conversation: upserts conversation at correct position sorted by lastTime", async () => {
       qc.setQueryData(
         ["conversations"],
         [
@@ -102,7 +106,7 @@ describe("dispatchRenew", () => {
         ],
       );
 
-      dispatchRenew(qc, {
+      await dispatchRenew(qc, {
         renew: "Messages",
         type: "Conversation",
         conversation: {
@@ -121,7 +125,7 @@ describe("dispatchRenew", () => {
       expect(data[0].user.id).toBe("u2"); // Bob's later message first
     });
 
-    it("Conversation: merges fields on existing conversation", () => {
+    it("Conversation: merges fields on existing conversation", async () => {
       qc.setQueryData(
         ["conversations"],
         [
@@ -134,7 +138,7 @@ describe("dispatchRenew", () => {
         ],
       );
 
-      dispatchRenew(qc, {
+      await dispatchRenew(qc, {
         renew: "Messages",
         type: "Conversation",
         conversation: {
@@ -153,15 +157,15 @@ describe("dispatchRenew", () => {
   });
 
   describe("Feed", () => {
-    it("New: sets new-flag to true", () => {
-      dispatchRenew(qc, { renew: "Feed", type: "New" });
+    it("New: sets new-flag to true", async () => {
+      await dispatchRenew(qc, { renew: "Feed", type: "New" });
       expect(qc.getQueryData(["feed", "new-flag"])).toBe(true);
     });
 
-    it("Post: invalidates posts and feed list queries", () => {
+    it("Post: invalidates posts and feed list queries", async () => {
       const invalidateSpy = vi.spyOn(qc, "invalidateQueries");
 
-      dispatchRenew(qc, {
+      await dispatchRenew(qc, {
         renew: "Feed",
         type: "Post",
         id: "post-1",
@@ -179,10 +183,10 @@ describe("dispatchRenew", () => {
   });
 
   describe("Friends", () => {
-    it("PendingList: invalidates friend requests and list", () => {
+    it("PendingList: invalidates friend requests and list", async () => {
       const invalidateSpy = vi.spyOn(qc, "invalidateQueries");
 
-      dispatchRenew(qc, {
+      await dispatchRenew(qc, {
         renew: "Friends",
         type: "PendingList",
       });
@@ -196,10 +200,10 @@ describe("dispatchRenew", () => {
     });
   });
 
-  it("ignores frames without renew field", () => {
+  it("ignores frames without renew field", async () => {
     const invalidateSpy = vi.spyOn(qc, "invalidateQueries");
 
-    dispatchRenew(qc, { type: "some-frame" });
+    await dispatchRenew(qc, { type: "some-frame" });
 
     expect(invalidateSpy).not.toHaveBeenCalled();
   });

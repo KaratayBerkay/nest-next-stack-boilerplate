@@ -49,13 +49,17 @@ export function MessageDropdown({ conversations, lang }: MessageDropdownProps) {
             >
               <Avatar
                 fallback={initials(c.user.name)}
-                className="bg-brand h-8 w-8 shrink-0 text-[10px] text-brand-fg"
+                className="bg-brand text-brand-fg h-8 w-8 shrink-0 text-[10px]"
               />
               <div className="min-w-0 flex-1">
                 <p className="text-fg truncate text-sm font-medium">
                   {c.user.name}
                 </p>
-                <p className="text-muted truncate text-xs">{c.lastMessage}</p>
+                <p className="text-muted truncate text-xs">
+                  {typeof c.lastMessage === "string"
+                    ? c.lastMessage
+                    : "[Encrypted]"}
+                </p>
               </div>
               <span className="bg-error flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white">
                 {c.unread > 99 ? "99+" : c.unread}
@@ -80,7 +84,12 @@ export function MessageDropdown({ conversations, lang }: MessageDropdownProps) {
   return (
     <div ref={ref} className="relative">
       <IconButton
-        icon={<><IconMail size={20} stroke={1.5} /><Badge count={unread.length} /></>}
+        icon={
+          <>
+            <IconMail size={20} stroke={1.5} />
+            <Badge count={unread.length} />
+          </>
+        }
         label={t.toggleSidebar}
         onClick={() => setOpen((p) => !p)}
       />

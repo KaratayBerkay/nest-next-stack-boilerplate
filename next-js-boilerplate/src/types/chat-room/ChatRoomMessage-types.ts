@@ -3,7 +3,10 @@ export interface ChatRoomMessage {
   senderId: string;
   senderName: string;
   avatar?: string;
-  body: string;
+  body: string | null;
+  encrypted?: boolean;
+  algVersion?: number | null;
+  envelope?: Record<string, unknown> | null;
   attachmentUrl?: string | null;
   attachmentType?: string | null;
   attachmentName?: string | null;

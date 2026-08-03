@@ -41,8 +41,8 @@ export function useRealtimeCoordination() {
 
     const process = (frame: Record<string, unknown>) => {
       if (!alive) return;
-      dispatchRenew(queryClient, frame);
-      dispatchEvent(queryClient, frame, userIdRef.current, (data) => {
+      void dispatchRenew(queryClient, frame);
+      void dispatchEvent(queryClient, frame, userIdRef.current, (data) => {
         if (clientRef.current) {
           clientRef.current.send(data);
         } else {

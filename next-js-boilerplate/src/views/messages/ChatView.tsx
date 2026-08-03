@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
 import { useConversation } from "@/lib/realtime/useConversation";
@@ -22,6 +22,7 @@ import { ChatViewHeader } from "@/views/messages/ChatViewHeader";
 import { ChatInputBar } from "@/views/messages/ChatInputBar";
 import { ChatMessageList } from "@/views/messages/ChatMessageList";
 import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
+import { computeUserFingerprint } from "@/lib/crypto/fingerprint";
 
 export function ChatView({
   selectedUser,
@@ -45,7 +46,7 @@ export function ChatView({
     fetchNextPage,
     hasNextPage,
     isError: msgsError,
-  } = useConversation(selectedUser?.id ?? null);
+  } = useConversation(selectedUser?.id ?? null, user?.id);
   const conversationMessages = useMemo(
     () =>
       [...(conversationData?.pages ?? [])]
@@ -62,6 +63,45 @@ export function ChatView({
   const { sendMessage } = useMessageActions();
   const { typingUsers, sendTypingStart, sendTypingStop } = useTypingUsers();
   const { uploadAttachment } = useMessageUpload();
+
+  // Safety number fingerprints
+  const [ownFingerprint, setOwnFingerprint] = useState<string | null>(null);
+  const [peerFingerprint, setPeerFingerprint] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user?.id || !selectedUser?.id) return;
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const { getIdentity } = await import("@/lib/crypto/store");
+        const identity = await getIdentity();
+        if (cancelled || !identity) return;
+
+        const own = computeUserFingerprint(
+          user.id,
+          identity.identitySigningKey,
+        );
+        if (!cancelled) setOwnFingerprint(own);
+
+        // Fetch peer's public identity key from the server
+        const { fetchPeerIdentityKey } =
+          await import("@/api/server/e2ee/peer-identity");
+        const peerKey = await fetchPeerIdentityKey(selectedUser.id);
+        if (!cancelled && peerKey) {
+          const peer = computeUserFingerprint(selectedUser.id, peerKey);
+          setPeerFingerprint(peer);
+        }
+      } catch {
+        // E2EE not available — fingerprints stay null
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, selectedUser?.id]);
 
   const handleSend = useCallback(
     () =>
@@ -126,6 +166,9 @@ export function ChatView({
         setSidebarOpen={setSidebarOpen}
         onlineUsers={onlineUsers}
         isTyping={typingUsers.has(selectedUser.id)}
+        ownUserId={user?.id}
+        ownFingerprint={ownFingerprint ?? undefined}
+        peerFingerprint={peerFingerprint ?? undefined}
       />
 
       <ChatMessageList

@@ -1,6 +1,7 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import { E2eeModule } from '../e2ee/e2ee.module';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { SessionAuthGuard } from './session-auth.guard';
 import { TokenDerivationService } from './token-derivation.service';
@@ -20,6 +21,7 @@ import { TokenStoreService } from './token-store.service';
         },
       }),
     }),
+    forwardRef(() => E2eeModule),
   ],
   providers: [
     JwtAuthGuard,

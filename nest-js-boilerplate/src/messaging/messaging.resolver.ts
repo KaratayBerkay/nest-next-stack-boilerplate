@@ -56,6 +56,7 @@ export class MessagingResolver {
             name: input.attachmentName,
           }
         : undefined,
+      input.envelope,
     );
   }
 

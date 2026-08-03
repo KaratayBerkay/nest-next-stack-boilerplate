@@ -9,6 +9,7 @@ export async function sendMessageServer(
   text: string,
   tempId?: string,
   attachment?: MessageAttachment,
+  envelope?: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {
   const body: Record<string, unknown> = { text };
   if (tempId) body._tempId = tempId;
@@ -16,6 +17,9 @@ export async function sendMessageServer(
     body.attachmentUrl = attachment.url;
     body.attachmentType = attachment.type;
     body.attachmentName = attachment.name;
+  }
+  if (envelope) {
+    body.envelope = envelope;
   }
   const res = await apiFetch(
     `${MESSAGES_CONVERSATIONS_PREFIX}${recipientId}/messages`,

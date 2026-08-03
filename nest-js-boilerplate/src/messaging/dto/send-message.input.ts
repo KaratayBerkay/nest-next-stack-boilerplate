@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsUrl,
   IsUUID,
+  IsObject,
   MaxLength,
   Validate,
 } from 'class-validator';
@@ -24,7 +25,7 @@ export class SendMessageInput {
   @MaxLength(5000)
   @Validate(TextOrAttachmentConstraint)
   @ApiProperty({
-    description: 'Message body (required when no attachment is sent)',
+    description: 'Message body (required when no attachment or envelope is sent)',
     maxLength: 5000,
     required: false,
   })
@@ -52,4 +53,14 @@ export class SendMessageInput {
   @IsOptional()
   @ApiProperty({ description: 'Original attachment file name', required: false })
   attachmentName?: string;
+
+  @Field(() => String, { nullable: true })
+  @IsObject()
+  @IsOptional()
+  @ApiProperty({
+    description:
+      'E2EE envelope as JSON string (MessageEnvelopeV1). When present, body is stored as null and the message is encrypted.',
+    required: false,
+  })
+  envelope?: Record<string, unknown>;
 }

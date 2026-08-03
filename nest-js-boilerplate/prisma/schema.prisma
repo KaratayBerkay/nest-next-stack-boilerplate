@@ -167,6 +167,16 @@ enum FriendshipStatus {
   BLOCKED
 }
 
+enum RoomType {
+  PUBLIC
+  PRIVATE
+}
+
+enum RoomMemberRole {
+  OWNER
+  MEMBER
+}
+
 enum NotificationType {
   MENTION
   COMMENT
@@ -275,18 +285,18 @@ model User {
   subscriptionTier SubscriptionTier @default(FREE)
 
   /// @HideField()
-  stripeCustomerId       String?   @unique
+  stripeCustomerId        String?   @unique
   /// @HideField()
-  stripeSubscriptionId   String?
+  stripeSubscriptionId    String?
   subscriptionPeriodStart DateTime? @db.Timestamptz(6)
   subscriptionPeriodEnd   DateTime? @db.Timestamptz(6)
-  cancelAtPeriodEnd      Boolean   @default(false)
+  cancelAtPeriodEnd       Boolean   @default(false)
 
   /// A paid<->paid tier change already scheduled with Stripe (subscription
   /// schedule) but not yet effective — access/features stay on
   /// `subscriptionTier` until `pendingTierEffectiveAt`.
-  pendingTier            SubscriptionTier?
-  pendingTierEffectiveAt DateTime? @db.Timestamptz(6)
+  pendingTier                  SubscriptionTier?
+  pendingTierEffectiveAt       DateTime?         @db.Timestamptz(6)
   /// @HideField()
   stripeSubscriptionScheduleId String?
 
@@ -308,8 +318,8 @@ model User {
 
   /// @Validator.IsOptional()
   /// @Validator.IsPhoneNumber()
-  phoneNumber   String?  @unique
-  phoneVerified Boolean  @default(false)
+  phoneNumber   String? @unique
+  phoneVerified Boolean @default(false)
 
   mfaEnabled Boolean @default(false)
 
@@ -354,16 +364,17 @@ model User {
   reactions Reaction[]
 
   // social graph (multiple FKs back to User)
-  following      Follow[]       @relation("Follower")
-  followers      Follow[]       @relation("Following")
-  sentFriendReqs Friendship[]   @relation("FriendshipRequester")
-  recvFriendReqs Friendship[]   @relation("FriendshipAddressee")
-  sentMessages   Message[]      @relation("MessageSender")
-  recvMessages   Message[]      @relation("MessageRecipient")
-  roomMessages   RoomMessage[]  @relation("RoomMessageSender")
-  notifications     Notification[]      @relation("NotificationRecipient")
-  triggered         Notification[]      @relation("NotificationActor")
-  pushSubscriptions PushSubscription[]
+  following          Follow[]           @relation("Follower")
+  followers          Follow[]           @relation("Following")
+  sentFriendReqs     Friendship[]       @relation("FriendshipRequester")
+  recvFriendReqs     Friendship[]       @relation("FriendshipAddressee")
+  sentMessages       Message[]          @relation("MessageSender")
+  recvMessages       Message[]          @relation("MessageRecipient")
+  roomMessages       RoomMessage[]      @relation("RoomMessageSender")
+  roomParticipations RoomParticipant[]
+  notifications      Notification[]     @relation("NotificationRecipient")
+  triggered          Notification[]     @relation("NotificationActor")
+  pushSubscriptions  PushSubscription[]
 
   // money
   wallets Wallet[]
@@ -413,7 +424,9 @@ model Device {
   userId      String     @db.Uuid
   user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   name        String?
-  /** Cryptographically-random, ≥90-char token stored in the device_token cookie. */
+  /**
+   * Cryptographically-random, ≥90-char token stored in the device_token cookie.
+   */
   token       String     @unique
   type        DeviceType @default(WEB)
   ip          String?    @db.Inet
@@ -537,11 +550,11 @@ model Organization {
 }
 
 model Membership {
-  id             String       @id @default(uuid(7)) @db.Uuid
-  organizationId String       @db.Uuid
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  userId         String       @db.Uuid
-  user           User         @relation("MembershipUser", fields: [userId], references: [id], onDelete: Cascade)
+  id             String           @id @default(uuid(7)) @db.Uuid
+  organizationId String           @db.Uuid
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String           @db.Uuid
+  user           User             @relation("MembershipUser", fields: [userId], references: [id], onDelete: Cascade)
   // second FK to User (multiple FKs to the same table)
   invitedById    String?          @db.Uuid
   invitedBy      User?            @relation("MembershipInviter", fields: [invitedById], references: [id], onDelete: SetNull)
@@ -709,14 +722,14 @@ model Post {
 }
 
 model Comment {
-  id       String  @id @default(uuid(7)) @db.Uuid
-  postId   String  @db.Uuid
-  post     Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
-  authorId String  @db.Uuid
-  author   User    @relation("CommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  id       String    @id @default(uuid(7)) @db.Uuid
+  postId   String    @db.Uuid
+  post     Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId String    @db.Uuid
+  author   User      @relation("CommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
   // self-relation: threaded replies
-  parentId String? @db.Uuid
-  parent   Comment? @relation("CommentThread", fields: [parentId], references: [id], onDelete: Cascade)
+  parentId String?   @db.Uuid
+  parent   Comment?  @relation("CommentThread", fields: [parentId], references: [id], onDelete: Cascade)
   replies  Comment[] @relation("CommentThread")
 
   body      String     @db.Text
@@ -778,13 +791,61 @@ model Friendship {
   @@index([addresseeId])
 }
 
+// ---------------------------------------------------------------------------
+// Rooms  (durable membership; replaces in-memory Map for E2EE key rotation)
+// ---------------------------------------------------------------------------
+model Room {
+  id                     String                      @id @default(uuid(7)) @db.Uuid
+  slug                   String                      @unique
+  type                   RoomType                    @default(PUBLIC)
+  membershipVersion      Int                         @default(0)
+  participants           RoomParticipant[]
+  senderKeyDistributions RoomSenderKeyDistribution[]
+  createdAt              DateTime                    @default(now()) @db.Timestamptz(6)
+  updatedAt              DateTime                    @updatedAt @db.Timestamptz(6)
+  roomMessages           RoomMessage[]
+}
+
+model RoomParticipant {
+  id       String         @id @default(uuid(7)) @db.Uuid
+  roomId   String         @db.Uuid
+  room     Room           @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId   String         @db.Uuid
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role     RoomMemberRole @default(MEMBER)
+  joinedAt DateTime       @default(now()) @db.Timestamptz(6)
+  leftAt   DateTime?      @db.Timestamptz(6)
+
+  @@unique([roomId, userId])
+  @@index([roomId, leftAt])
+  @@index([userId])
+}
+
+model RoomSenderKeyDistribution {
+  id                String   @id @default(uuid(7)) @db.Uuid
+  roomId            String   @db.Uuid
+  room              Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  senderDeviceId    String   @db.Uuid
+  epoch             Int
+  recipientDeviceId String   @db.Uuid
+  wrappedKey        Bytes
+  wrapNonce         Bytes
+  createdAt         DateTime @default(now()) @db.Timestamptz(6)
+
+  @@unique([roomId, senderDeviceId, epoch, recipientDeviceId])
+  @@index([roomId, recipientDeviceId])
+}
+
 model Message {
   id             String    @id @default(uuid(7)) @db.Uuid
   senderId       String    @db.Uuid
   sender         User      @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
   recipientId    String    @db.Uuid
   recipient      User      @relation("MessageRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
-  body           String    @db.Text
+  body           String?   @db.Text
+  encrypted      Boolean   @default(false)
+  algVersion     Int?
+  envelope       Json?     @db.JsonB
   attachmentUrl  String?
   attachmentType String?
   attachmentName String?
@@ -799,9 +860,13 @@ model Message {
 model RoomMessage {
   id             String   @id @default(uuid(7)) @db.Uuid
   roomId         String
+  room           Room?    @relation(fields: [roomId], references: [slug], onDelete: Restrict)
   senderId       String   @db.Uuid
   sender         User     @relation("RoomMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
-  body           String   @db.Text
+  body           String?  @db.Text
+  encrypted      Boolean  @default(false)
+  algVersion     Int?
+  envelope       Json?    @db.JsonB
   attachmentUrl  String?
   attachmentType String?
   attachmentName String?
@@ -811,17 +876,17 @@ model RoomMessage {
 }
 
 model Notification {
-  id      String           @id @default(uuid(7)) @db.Uuid
-  userId  String           @db.Uuid
-  user    User             @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
-  actorId String?          @db.Uuid
-  actor   User?            @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
-  type    NotificationType
-  title   String
-  body    String?          @db.Text
-  payload Json?            @db.JsonB
-  readAt  DateTime?        @db.Timestamptz(6)
-  createdAt DateTime       @default(now()) @db.Timestamptz(6)
+  id        String           @id @default(uuid(7)) @db.Uuid
+  userId    String           @db.Uuid
+  user      User             @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  actorId   String?          @db.Uuid
+  actor     User?            @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+  type      NotificationType
+  title     String
+  body      String?          @db.Text
+  payload   Json?            @db.JsonB
+  readAt    DateTime?        @db.Timestamptz(6)
+  createdAt DateTime         @default(now()) @db.Timestamptz(6)
 
   @@index([userId, readAt])
   @@index([userId, createdAt(sort: Desc)])
@@ -855,22 +920,22 @@ model WalletTransaction {
   toWalletId   String? @db.Uuid
   toWallet     Wallet? @relation("TransferTo", fields: [toWalletId], references: [id], onDelete: SetNull)
 
-  type           WalletTxnType
-  status         WalletTxnStatus @default(PENDING)
-  amount         Decimal         @db.Decimal(18, 4)
-  currency       String          @default("USD")
-  feeAmount      Decimal         @default(0) @db.Decimal(18, 4)
-  idempotencyKey        String    @unique
+  type                  WalletTxnType
+  status                WalletTxnStatus @default(PENDING)
+  amount                Decimal         @db.Decimal(18, 4)
+  currency              String          @default("USD")
+  feeAmount             Decimal         @default(0) @db.Decimal(18, 4)
+  idempotencyKey        String          @unique
   // Client-supplied retry key (e.g. a UUID minted per subscribe flow): the
   // same attempt reusing this key is recognized as a duplicate regardless of
   // what idempotencyKey was derived from (e.g. a Stripe invoice id).
-  clientIdempotencyKey   String?
+  clientIdempotencyKey  String?
   reference             String?
   stripePaymentIntentId String?
   stripeInvoiceUrl      String?
-  metadata              Json?     @db.JsonB
-  postedAt              DateTime? @db.Timestamptz(6)
-  createdAt      DateTime        @default(now()) @db.Timestamptz(6)
+  metadata              Json?           @db.JsonB
+  postedAt              DateTime?       @db.Timestamptz(6)
+  createdAt             DateTime        @default(now()) @db.Timestamptz(6)
 
   @@index([fromWalletId])
   @@index([toWalletId])
@@ -882,20 +947,20 @@ model WalletTransaction {
 // API Keys — programmatic access to the API
 // ---------------------------------------------------------------------------
 model ApiKey {
-  id          String   @id @default(uuid(7)) @db.Uuid
-  createdAt   DateTime @default(now()) @db.Timestamptz(6)
-  lastUsedAt  DateTime? @db.Timestamptz(6)
-  expiresAt   DateTime? @db.Timestamptz(6)
-  name        String   @db.VarChar(80)
-  keyPrefix   String   @db.VarChar(16)
-  keyHash     String   @unique @db.VarChar(128)
-  userId      String   @db.Uuid
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role        UserRole @default(USER)
-  tier        SubscriptionTier @default(FREE)
-  scopes      Json?    @db.JsonB
-  enabled     Boolean  @default(true)
-  deletedAt   DateTime? @db.Timestamptz(6)
+  id         String           @id @default(uuid(7)) @db.Uuid
+  createdAt  DateTime         @default(now()) @db.Timestamptz(6)
+  lastUsedAt DateTime?        @db.Timestamptz(6)
+  expiresAt  DateTime?        @db.Timestamptz(6)
+  name       String           @db.VarChar(80)
+  keyPrefix  String           @db.VarChar(16)
+  keyHash    String           @unique @db.VarChar(128)
+  userId     String           @db.Uuid
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       UserRole         @default(USER)
+  tier       SubscriptionTier @default(FREE)
+  scopes     Json?            @db.JsonB
+  enabled    Boolean          @default(true)
+  deletedAt  DateTime?        @db.Timestamptz(6)
 
   @@index([userId])
   @@index([keyPrefix])
@@ -905,9 +970,9 @@ model ApiKey {
 // Billing Address  (one-to-one with User)
 // ---------------------------------------------------------------------------
 model BillingAddress {
-  id        String  @id @default(uuid(7)) @db.Uuid
-  userId    String  @unique @db.Uuid
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid(7)) @db.Uuid
+  userId    String   @unique @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String?
   street    String?
   city      String?
