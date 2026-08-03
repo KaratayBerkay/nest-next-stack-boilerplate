@@ -1,4 +1,6 @@
+import type { IncomingMessage } from 'http';
 import { WebSocket } from 'ws';
+import type { SessionUser } from '../auth/auth.types';
 
 export type AuthWs = WebSocket & {
   userId?: string;
@@ -13,10 +15,8 @@ export type AuthWs = WebSocket & {
   authenticated: boolean;
   isAlive: boolean;
   deviceTokenHash?: string;
-  userToken?: string;
   registeredServices?: string[];
   watchedTopics?: string[];
-  pendingIp?: string;
   clientIp?: string;
   page?: string | null;
   pageParams?: Record<string, string>;
@@ -26,12 +26,16 @@ export type AuthWs = WebSocket & {
   >;
 };
 
-export interface AuthTokens {
-  accessToken: string;
-  rbacToken: string;
-  deviceToken: string;
-  userToken: string;
-}
+/**
+ * The upgrade request, carrying the session `verifyUpgrade` already validated
+ * (plus the raw device-token cookie, needed for `deviceTokenHash`) — stashed
+ * there because `ws` hands the very same object reference to the `connection`
+ * event, so there's nothing to re-derive or re-check.
+ */
+export type VerifiedUpgradeRequest = IncomingMessage & {
+  sessionUser?: SessionUser;
+  deviceToken?: string | null;
+};
 
 export type FrameHandler = (
   ws: WebSocket,

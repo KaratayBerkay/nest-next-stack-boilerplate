@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { E2eeModule } from '../e2ee/e2ee.module';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { SessionAuthGuard } from './session-auth.guard';
+import { SessionValidatorService } from './session-validator.service';
 import { TokenDerivationService } from './token-derivation.service';
 import { TokenStoreService } from './token-store.service';
 
@@ -26,6 +27,7 @@ import { TokenStoreService } from './token-store.service';
   providers: [
     JwtAuthGuard,
     SessionAuthGuard,
+    SessionValidatorService,
     TokenStoreService,
     TokenDerivationService,
   ],
@@ -33,6 +35,7 @@ import { TokenStoreService } from './token-store.service';
     JwtModule,
     JwtAuthGuard,
     SessionAuthGuard,
+    SessionValidatorService,
     TokenStoreService,
     TokenDerivationService,
   ],

@@ -23,7 +23,13 @@ export class RealtimeClient {
     { page: string | null; params?: Record<string, string> }
   > = new Map();
   private authFailRetries = 0;
-  private pendingAuthFail = false;
+  // Set when a connection attempt closes without ever opening — the WS
+  // handshake now authenticates via cookies (see realtime.gateway.ts's
+  // verifyClient), so a rejection is invisible to this client: onopen simply
+  // never fires and onclose carries no reason, indistinguishable from a
+  // network blip. Treating "never opened" as "cookies might be stale" and
+  // rotating them once before the next attempt is the only signal available.
+  private pendingRefresh = false;
   private static readonly MAX_AUTH_FAIL_RETRIES = 3;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private backoffTimer: ReturnType<typeof setTimeout> | null = null;
@@ -35,69 +41,65 @@ export class RealtimeClient {
 
   constructor(
     private readonly url: string,
-    private readonly getTokens: () => Promise<Record<string, string> | null>,
     private readonly onStatusChange: (status: RealtimeStatus) => void,
     private readonly onFrame: (frame: Record<string, unknown>) => void,
     private readonly onAuthenticated?: () => void,
-    private readonly onBustTokenCache?: () => void,
   ) {}
 
   connect(): void {
     if (this.destroyed) return;
     this.setStatus("connecting");
-    const ws = new WebSocket(this.url);
-    this.ws = ws;
 
-    ws.onopen = async () => {
+    const open = () => {
       if (this.destroyed) return;
-      this.setStatus("authenticating");
+      let didOpen = false;
+      const ws = new WebSocket(this.url);
+      this.ws = ws;
 
-      // If we're retrying after an auth failure, bust the token cache first
-      let tokens: Record<string, string> | null = null;
-      if (this.pendingAuthFail) {
-        this.pendingAuthFail = false;
-        tokens = await this.refreshAndFetchTokens();
-      } else {
-        tokens = await this.getTokens();
-      }
+      ws.onopen = () => {
+        if (this.destroyed) return;
+        didOpen = true;
+        this.setStatus("authenticating");
+      };
 
-      if (!tokens || this.destroyed) {
-        ws.close();
-        return;
-      }
-      ws.send(JSON.stringify({ type: "auth", tokens }));
-    };
-
-    ws.onmessage = (e) => {
-      if (this.destroyed) return;
-      try {
-        const data = JSON.parse(e.data) as Record<string, unknown>;
-        if (data.type === "error" && /auth/i.test(String(data.message ?? ""))) {
-          this.pendingAuthFail = true;
-          ws.close();
-          return;
+      ws.onmessage = (e) => {
+        if (this.destroyed) return;
+        try {
+          const data = JSON.parse(e.data) as Record<string, unknown>;
+          if (data.type === "authenticated") {
+            this.authFailRetries = 0;
+            this.setStatus("open");
+            this.flushQueue();
+            this.replaySubscriptions();
+            this.replayClaim();
+            this.onAuthenticated?.();
+            return;
+          }
+          this.onFrame(data);
+        } catch {
+          /* ignore malformed frames */
         }
-        if (data.type === "authenticated") {
-          this.authFailRetries = 0;
-          this.pendingAuthFail = false;
-          this.setStatus("open");
-          this.flushQueue();
-          this.replaySubscriptions();
-          this.replayClaim();
-          this.onAuthenticated?.();
-          return;
-        }
-        this.onFrame(data);
-      } catch {
-        /* ignore malformed frames */
-      }
+      };
+
+      ws.onclose = () => {
+        if (this.destroyed) return;
+        this.ws = null;
+        if (!didOpen) this.pendingRefresh = true;
+        this.handleDisconnect();
+      };
     };
 
-    ws.onclose = () => {
-      if (this.destroyed) return;
-      this.ws = null;
-      if (!this.destroyed) this.handleDisconnect();
-    };
+    if (this.pendingRefresh) {
+      this.pendingRefresh = false;
+      fetch(AUTH_REFRESH_URL, { method: POST })
+        .catch(() => {
+          /* a genuinely dead session fails the next handshake too — the
+             existing backoff/retry ceiling bounds how long this repeats */
+        })
+        .finally(open);
+    } else {
+      open();
+    }
   }
 
   disconnect(): void {
@@ -192,25 +194,6 @@ export class RealtimeClient {
         tabId,
       });
     }
-  }
-
-  private async refreshAndFetchTokens(): Promise<Record<
-    string,
-    string
-  > | null> {
-    this.onBustTokenCache?.();
-    try {
-      // AUTH_REFRESH_URL actually rotates the session (see its route's own
-      // doc comment) — AUTH_TOKEN_URL just echoes back whatever cookies are
-      // already there, so calling it here to "recover" from an auth failure
-      // was a no-op that re-presented the same stale, already-rejected token
-      // forever (ws.connect -> ws.auth_fail -> ws.disconnect on a loop).
-      const res = await fetch(AUTH_REFRESH_URL, { method: POST });
-      if (!res.ok) return null;
-    } catch {
-      return null;
-    }
-    return this.getTokens();
   }
 
   private handleDisconnect(): void {

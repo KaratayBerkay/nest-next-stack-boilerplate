@@ -10,13 +10,15 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GqlExecutionContext } from '@nestjs/graphql';
-import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
 import { accessCookieName } from './access-cookie';
-import { JwtPayload, JwtUser } from './auth.types';
+import { JwtUser, SessionUser } from './auth.types';
 import { rbacCookieName } from './rbac-cookie';
 import { userCookieName } from './user-cookie';
-import { TokenDerivationService } from './token-derivation.service';
+import {
+  SessionValidationFailureReason,
+  SessionValidatorService,
+} from './session-validator.service';
 import { TokenStoreService } from './token-store.service';
 import { deviceCookieName } from '../devices/device-cookie';
 import { parseDeviceType } from '../common/utils/device-type';
@@ -28,28 +30,39 @@ interface AuthedRequest extends Request {
   _authenticatedByApiKey?: boolean;
 }
 
+const FAILURE_MESSAGES: Record<SessionValidationFailureReason, string> = {
+  missing_access_token: 'Missing access token',
+  invalid_jwt: 'Invalid or expired access token',
+  missing_rbac_token: 'Missing RBAC token',
+  missing_user_token: 'Missing user token',
+  user_token_expired: 'Daily token expired',
+  redis_unavailable: 'Service unavailable',
+  session_miss: 'Session expired or revoked',
+  user_mismatch: 'Token mismatch',
+  rbac_mismatch: 'RBAC token expired or tier changed',
+};
+
 /**
  * Session-based auth guard — Phase 3 design.
  *
- * Ordered checks (fastest first):
- * 1. JWT signature/expiry check (zero I/O)
- * 2. Extract rbac + device + user tokens; missing rbac or user -> 401
- * 3. Midnight cutoff, pre-Redis: recompute userToken(payload.sub), timing-safe compare -> 401
- * 4. Build 4-segment key -> HGETALL (Redis error -> 503, miss -> 401)
- * 5. payload.sub === hash.userId sanity
- * 6. rbac derivation check, post-read: deriveRbacToken(userId, hash.tier) vs presented -> 401
+ * Steps 1-6 (JWT verify, token extraction, midnight cutoff, Redis compound-key
+ * lookup, sub/userId sanity, rbac derivation) live in SessionValidatorService,
+ * shared with the WS handshake check so the two paths can't drift apart again.
+ *
+ * Ordered checks here (fastest first):
  * 7. IP policy unchanged (WARN / AUTH_IP_STRICT)
  * 8. Attach widened req.user = { userId, email, role, tier, name, friends, unread, orgIds, teamIds }
+ * 9. Slide Redis TTL
+ * 10. CSRF check for mutations
  */
 @Injectable()
 export class SessionAuthGuard implements CanActivate {
   private readonly logger = new Logger(SessionAuthGuard.name);
 
   constructor(
-    private readonly jwt: JwtService,
     private readonly config: ConfigService,
     private readonly tokenStore: TokenStoreService,
-    private readonly derivation: TokenDerivationService,
+    private readonly validator: SessionValidatorService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -62,69 +75,25 @@ export class SessionAuthGuard implements CanActivate {
       return true;
     }
 
-    const accessToken = this.extractAccessToken(req);
-    if (!accessToken) {
-      throw new UnauthorizedException('Missing access token');
+    const result = await this.validator.validate({
+      accessToken: this.extractAccessToken(req),
+      rbacToken: this.extractRbacToken(req),
+      deviceToken: this.extractDeviceToken(req),
+      userToken: this.extractUserToken(req),
+    });
+
+    if (!result.ok) {
+      if (result.reason === 'redis_unavailable') {
+        throw new HttpException(
+          FAILURE_MESSAGES[result.reason],
+          HttpStatus.SERVICE_UNAVAILABLE,
+        );
+      }
+      throw new UnauthorizedException(FAILURE_MESSAGES[result.reason]);
     }
 
-    // Step 1: JWT signature/expiry check (zero I/O).
-    let payload: JwtPayload;
-    try {
-      payload = await this.jwt.verifyAsync<JwtPayload>(accessToken);
-    } catch {
-      throw new UnauthorizedException('Invalid or expired access token');
-    }
-
-    // Step 2: Extract rbac + device + user tokens.
-    const rbacToken = this.extractRbacToken(req);
-    const deviceToken = this.extractDeviceToken(req);
-    const userToken = this.extractUserToken(req);
-    if (!rbacToken) {
-      throw new UnauthorizedException('Missing RBAC token');
-    }
-    if (!userToken) {
-      throw new UnauthorizedException('Missing user token');
-    }
-
-    // Step 3: Midnight cutoff — recompute today's userToken, pre-Redis.
-    const expectedUserToken = this.derivation.deriveUserToken(payload.sub);
-    if (!this.derivation.timingSafeEqual(userToken, expectedUserToken)) {
-      throw new UnauthorizedException('Daily token expired');
-    }
-
-    // Step 4: Build 4-segment key -> HGETALL from Redis. Fail closed.
-    const compoundKey = this.tokenStore.buildKey(
-      accessToken,
-      rbacToken,
-      deviceToken ?? '',
-      userToken,
-    );
-    let sessionUser: Awaited<ReturnType<typeof this.tokenStore.read>>;
-    try {
-      sessionUser = await this.tokenStore.read(compoundKey);
-    } catch {
-      throw new HttpException(
-        'Service unavailable',
-        HttpStatus.SERVICE_UNAVAILABLE,
-      );
-    }
-    if (!sessionUser) {
-      throw new UnauthorizedException('Session expired or revoked');
-    }
-
-    // Step 5: Sanity — payload.sub === hash.userId
-    if (payload.sub !== sessionUser.userId) {
-      throw new UnauthorizedException('Token mismatch');
-    }
-
-    // Step 6: rbac derivation check — derive from hash.tier, compare vs presented.
-    const expectedRbacToken = this.derivation.deriveRbacToken(
-      payload.sub,
-      sessionUser.tier,
-    );
-    if (!this.derivation.timingSafeEqual(rbacToken, expectedRbacToken)) {
-      throw new UnauthorizedException('RBAC token expired or tier changed');
-    }
+    const sessionUser: SessionUser = result.session;
+    const compoundKey = result.compoundKey;
 
     // Step 7: IP / device change detection
     const reqIp = req.ip ?? null;

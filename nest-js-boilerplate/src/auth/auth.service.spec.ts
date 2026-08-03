@@ -16,6 +16,7 @@ import { SessionHydrationService } from './session-hydration.service';
 import { UsernameService } from './username.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { EmailOtpService } from './email-otp.service';
+import { E2EE_LIFECYCLE_HOOK } from '../e2ee/e2ee-lifecycle.tokens';
 
 jest.mock('otplib', () => ({
   verify: jest.fn(),
@@ -105,6 +106,12 @@ describe('AuthService', () => {
             generate: jest.fn().mockResolvedValue(undefined),
             verify: jest.fn().mockResolvedValue(true),
             resend: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: E2EE_LIFECYCLE_HOOK,
+          useValue: {
+            deleteForSession: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],

@@ -5,6 +5,7 @@ import { ExecutionContext } from '@nestjs/common';
 import { CryptoService } from '../common/crypto/crypto.service';
 import { TokenDerivationService } from './token-derivation.service';
 import { SessionAuthGuard } from './session-auth.guard';
+import { SessionValidatorService } from './session-validator.service';
 import type { TokenStoreService } from './token-store.service';
 
 const cryptoConfig = {
@@ -134,11 +135,15 @@ describe('SessionAuthGuard', () => {
 
   beforeEach(() => {
     tokenStore = mockTokenStore();
-    guard = new SessionAuthGuard(
+    const validator = new SessionValidatorService(
       jwtService,
-      config,
       tokenStore as unknown as TokenStoreService,
       derivation,
+    );
+    guard = new SessionAuthGuard(
+      config,
+      tokenStore as unknown as TokenStoreService,
+      validator,
     );
   });
 
@@ -382,11 +387,15 @@ describe('SessionAuthGuard', () => {
         return def ?? null;
       },
     } as unknown as ConfigService;
-    const strictGuard = new SessionAuthGuard(
+    const strictValidator = new SessionValidatorService(
       jwtService,
-      strictConfig,
       tokenStore as unknown as TokenStoreService,
       derivation,
+    );
+    const strictGuard = new SessionAuthGuard(
+      strictConfig,
+      tokenStore as unknown as TokenStoreService,
+      strictValidator,
     );
     await expect(
       strictGuard.canActivate(
@@ -402,11 +411,15 @@ describe('SessionAuthGuard', () => {
       buildKey: jest.fn(() => 'sess:key'),
       read: jest.fn(() => Promise.reject(new Error('ECONNREFUSED'))),
     };
-    const brokenGuard = new SessionAuthGuard(
+    const brokenValidator = new SessionValidatorService(
       jwtService,
-      config,
       brokenStore as unknown as TokenStoreService,
       derivation,
+    );
+    const brokenGuard = new SessionAuthGuard(
+      config,
+      brokenStore as unknown as TokenStoreService,
+      brokenValidator,
     );
     const accessToken = await jwtService.signAsync(validPayload);
     const rbacToken = derivation.deriveRbacToken('u1', 'FREE');

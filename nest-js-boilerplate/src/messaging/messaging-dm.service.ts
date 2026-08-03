@@ -235,7 +235,7 @@ export class MessagingDmService {
         body: isEncrypted ? null : (text ?? ''),
         encrypted: isEncrypted,
         algVersion: isEncrypted ? (envelope.v as number) ?? 1 : null,
-        envelope: isEncrypted ? envelope : undefined,
+        envelope: isEncrypted ? (envelope as Prisma.InputJsonValue) : undefined,
         attachmentUrl: attachment?.url,
         attachmentType: attachment?.type,
         attachmentName: attachment?.name,
@@ -283,7 +283,7 @@ export class MessagingDmService {
     id: string;
     senderId: string;
     recipientId: string;
-    body: string | Record<string, unknown>;
+    body: string | Record<string, unknown> | null;
     encrypted?: boolean;
     envelope?: Record<string, unknown> | unknown;
     createdAt: Date;

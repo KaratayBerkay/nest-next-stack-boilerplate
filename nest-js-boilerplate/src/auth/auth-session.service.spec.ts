@@ -63,6 +63,10 @@ describe('AuthSessionService.refresh', () => {
       findByRefreshSessionId: jest.fn().mockResolvedValue(session),
       buildKey: jest.fn().mockReturnValue('compound-key'),
       revoke: jest.fn().mockResolvedValue(undefined),
+      read: jest.fn().mockResolvedValue(session),
+    };
+    const realtime = {
+      closeSocketsForSession: jest.fn().mockReturnValue(0),
     };
     const authTokens = {
       extractRefreshToken: jest.fn().mockReturnValue('refresh-token-value'),
@@ -85,8 +89,9 @@ describe('AuthSessionService.refresh', () => {
       prisma as never,
       tokenStore as never,
       authTokens as never,
+      realtime as never,
     );
-    return { service, tokenStore, authTokens, prisma };
+    return { service, tokenStore, authTokens, prisma, realtime };
   }
 
   it('carries the renewing device identity into issueTokens', async () => {
@@ -183,5 +188,121 @@ describe('AuthSessionService.refresh', () => {
     await expect(service.refresh(buildCtx())).rejects.toThrow(
       UnauthorizedException,
     );
+  });
+});
+
+describe('AuthSessionService.logout', () => {
+  const fakeSession: SessionUser = {
+    userId: 'user-1',
+    email: 'user@example.com',
+    role: 'USER',
+    tier: 'FREE',
+    deviceId: 'device-1',
+    ip: '10.0.0.1',
+    userAgent: 'original-agent',
+    issuedAt: new Date().toISOString(),
+    sessionId: 'session-1',
+    v: '2',
+    name: 'User One',
+    username: 'userone',
+    avatarUrl: '',
+    locale: 'en',
+    timezone: 'UTC',
+    chatNickname: '',
+    useNickname: false,
+    hideAvatar: false,
+    friends: [],
+    unread: 0,
+    orgIds: [],
+    teamIds: [],
+  };
+
+  function buildService(overrides?: {
+    accessToken?: string | null;
+    rbacToken?: string | null;
+    session?: SessionUser | null;
+  }) {
+    const accessToken =
+      'accessToken' in (overrides ?? {})
+        ? overrides!.accessToken
+        : 'access-token-value';
+    const rbacToken =
+      'rbacToken' in (overrides ?? {})
+        ? overrides!.rbacToken
+        : 'rbac-token-value';
+    const session =
+      'session' in (overrides ?? {}) ? overrides!.session : fakeSession;
+
+    const tokenStore = {
+      buildKey: jest.fn().mockReturnValue('compound-key'),
+      read: jest.fn().mockResolvedValue(session),
+      revoke: jest.fn().mockResolvedValue(undefined),
+    };
+    const authTokens = {
+      extractAccessToken: jest.fn().mockReturnValue(accessToken),
+      extractRbacToken: jest.fn().mockReturnValue(rbacToken),
+      extractDeviceToken: jest.fn().mockReturnValue('device-token-value'),
+      extractUserToken: jest.fn().mockReturnValue('user-token-value'),
+      clearRbacCookie: jest.fn(),
+      clearUserCookie: jest.fn(),
+      clearRefreshCookie: jest.fn(),
+    };
+    const realtime = {
+      closeSocketsForSession: jest.fn().mockReturnValue(0),
+    };
+
+    const service = new AuthSessionService(
+      {} as never,
+      tokenStore as never,
+      authTokens as never,
+      realtime as never,
+    );
+    return { service, tokenStore, authTokens, realtime };
+  }
+
+  const ctx = {} as RequestContext;
+
+  it('closes any live sockets for the session being logged out', async () => {
+    const { service, tokenStore, realtime } = buildService();
+
+    await service.logout(ctx);
+
+    expect(tokenStore.revoke).toHaveBeenCalledWith('compound-key');
+    expect(realtime.closeSocketsForSession).toHaveBeenCalledWith(
+      'user-1',
+      'session-1',
+    );
+  });
+
+  it('does not attempt to close sockets when no session is found', async () => {
+    const { service, tokenStore, realtime } = buildService({
+      session: null,
+    });
+
+    await service.logout(ctx);
+
+    expect(tokenStore.revoke).toHaveBeenCalledWith('compound-key');
+    expect(realtime.closeSocketsForSession).not.toHaveBeenCalled();
+  });
+
+  it('does not attempt to close sockets when the access/rbac tokens are missing', async () => {
+    const { service, tokenStore, realtime } = buildService({
+      accessToken: null,
+    });
+
+    await service.logout(ctx);
+
+    expect(tokenStore.revoke).not.toHaveBeenCalled();
+    expect(realtime.closeSocketsForSession).not.toHaveBeenCalled();
+  });
+
+  it('still clears cookies regardless of whether a session was found', async () => {
+    const { service, authTokens } = buildService({ session: null });
+
+    await service.logout(ctx);
+
+    expect(authTokens.clearRbacCookie).toHaveBeenCalled();
+    expect(authTokens.clearUserCookie).toHaveBeenCalled();
+    expect(authTokens.clearRefreshCookie).toHaveBeenCalled();
   });
 });

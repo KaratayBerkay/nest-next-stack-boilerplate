@@ -1,4 +1,10 @@
-import { Inject, Injectable, Logger, UnauthorizedException, forwardRef } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+  forwardRef,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AuthProviderType, User } from '@prisma/client';
@@ -94,6 +100,7 @@ export class AuthService {
       prisma,
       tokenStore,
       this.authTokens,
+      realtime,
       this.e2eeHook,
     );
   }
@@ -123,8 +130,7 @@ export class AuthService {
 
   async resendLoginCode(mfaToken: string): Promise<string> {
     const tokenHash = this.crypto.sha256(mfaToken);
-    const challenge =
-      await this.tokenStore.consumeMfaChallenge(tokenHash);
+    const challenge = await this.tokenStore.consumeMfaChallenge(tokenHash);
     if (!challenge) {
       throw new UnauthorizedException({
         exc: 'EX_AUTH_MFA_EXPIRED',

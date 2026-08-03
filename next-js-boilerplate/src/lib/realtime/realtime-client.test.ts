@@ -76,41 +76,27 @@ afterEach(() => {
 
 function createClient(
   overrides: {
-    tokens?: Record<string, string> | null;
     onStatusChange?: (s: RealtimeStatus) => void;
     onFrame?: (f: Record<string, unknown>) => void;
     onAuthenticated?: () => void;
-    onBustTokenCache?: () => void;
   } = {},
 ) {
-  const tokens = overrides.tokens ?? {
-    access_token: "at",
-    rbac_token: "rb",
-    device_token: "dt",
-    user_token: "ut",
-  };
-  const getTokens = vi.fn().mockResolvedValue(tokens);
   const onStatusChange = overrides.onStatusChange ?? vi.fn();
   const onFrame = overrides.onFrame ?? vi.fn();
   const onAuthenticated = overrides.onAuthenticated ?? vi.fn();
-  const onBustTokenCache = overrides.onBustTokenCache ?? vi.fn();
 
   const client = new RealtimeClient(
     "ws://localhost:3000",
-    getTokens,
     onStatusChange,
     onFrame,
     onAuthenticated,
-    onBustTokenCache,
   );
 
   return {
     client,
-    getTokens,
     onStatusChange,
     onFrame,
     onAuthenticated,
-    onBustTokenCache,
   };
 }
 
@@ -199,35 +185,52 @@ describe("RealtimeClient", () => {
   });
 
   describe("auth failure handling", () => {
-    it("sets pendingAuthFail on auth error frame", () => {
-      const { client, onBustTokenCache } = createClient();
+    // The WS handshake now authenticates via cookies at connect time (see
+    // realtime.gateway.ts's verifyClient) — a rejection is invisible to this
+    // client (onopen never fires, onclose carries no reason), so "never
+    // opened" is the only signal available that cookies might be stale.
+    it("calls /api/auth/refresh before retrying a connection that never opened", async () => {
+      vi.useFakeTimers();
+      const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+      vi.stubGlobal("fetch", fetchMock);
+      const { client } = createClient();
       client.connect();
-      const ws = MockWebSocket.instances[0];
-      ws.simulateOpen();
-      ws.simulateMessage({ type: "error", message: "Authentication failed" });
-      // onclose fires → handleDisconnect → backoff
-      expect(onBustTokenCache).not.toHaveBeenCalled();
+      const ws1 = MockWebSocket.instances[0];
+      ws1.close(); // rejected before ever opening
+      vi.advanceTimersByTime(2000);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/auth/refresh",
+        expect.objectContaining({ method: "POST" }),
+      );
+      expect(MockWebSocket.instances.length).toBeGreaterThanOrEqual(2);
+      vi.useRealTimers();
     });
 
-    it("busts token cache on reconnection after auth failure", async () => {
+    it("does not call /api/auth/refresh before retrying a connection that previously opened", async () => {
       vi.useFakeTimers();
-      const { client, getTokens, onBustTokenCache } = createClient();
+      const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+      vi.stubGlobal("fetch", fetchMock);
+      const { client } = createClient();
       client.connect();
       const ws1 = MockWebSocket.instances[0];
       ws1.simulateOpen();
-      ws1.simulateMessage({ type: "error", message: "auth" });
-      // ws1 closes → handleDisconnect → startBackoff → setTimeout(connect, delay)
-      // Advance past the backoff delay to trigger reconnect
+      ws1.simulateMessage({ type: "authenticated" });
+      ws1.close(); // a normal disconnect after a successful open
       vi.advanceTimersByTime(2000);
       await vi.advanceTimersByTimeAsync(0);
+      expect(fetchMock).not.toHaveBeenCalled();
       expect(MockWebSocket.instances.length).toBeGreaterThanOrEqual(2);
-      const ws2 = MockWebSocket.instances[1];
-      ws2.simulateOpen();
-      // onopen calls refreshAndFetchTokens → bustTokenCache + fetch + getTokens
-      await vi.advanceTimersByTimeAsync(0);
-      expect(onBustTokenCache).toHaveBeenCalledOnce();
-      expect(getTokens).toHaveBeenCalledTimes(2); // once in initial connect, once after bust
       vi.useRealTimers();
+    });
+
+    it("never sends a client-side auth message", () => {
+      const { client } = createClient();
+      client.connect();
+      const ws = MockWebSocket.instances[0];
+      ws.simulateOpen();
+      ws.simulateMessage({ type: "authenticated" });
+      expect(ws.sent.every((s) => JSON.parse(s).type !== "auth")).toBe(true);
     });
 
     it("resets auth fail retries on successful authentication", () => {

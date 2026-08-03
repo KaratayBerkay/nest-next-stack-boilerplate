@@ -45,14 +45,12 @@ describe('RealtimeGateway — public methods', () => {
     const mockRedis = { publish: jest.fn().mockResolvedValue(0) };
     gateway = new RealtimeGateway(
       {} as never, // HttpAdapterHost
-      {} as never, // JwtService
-      {} as never, // TokenStoreService
-      {} as never, // TokenDerivationService
       {} as never, // CryptoService
       mockPresenceService(),
       { get: jest.fn().mockReturnValue(5) } as never, // ConfigService
       mockRedis as never, // REDIS_CLIENT
       {} as never, // REDIS_SUBSCRIBER
+      {} as never, // SessionValidatorService
     );
   });
 

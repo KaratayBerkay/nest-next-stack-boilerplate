@@ -6,21 +6,25 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpAdapterHost } from '@nestjs/core';
-import { JwtService } from '@nestjs/jwt';
 import { WebSocketServer, WebSocket } from 'ws';
+import type { VerifyClientCallbackAsync } from 'ws';
 import { Server } from 'http';
 import { IncomingMessage } from 'http';
 import crypto from 'crypto';
+import { parseCookie } from 'cookie';
 import Redis from 'ioredis';
 import { Inject } from '@nestjs/common';
 import { REDIS_CLIENT, REDIS_SUBSCRIBER } from '../redis/redis.module';
-import { TokenStoreService } from '../auth/token-store.service';
-import { TokenDerivationService } from '../auth/token-derivation.service';
+import { SessionValidatorService } from '../auth/session-validator.service';
 import { CryptoService } from '../common/crypto/crypto.service';
 import { displayName } from '../common/utils/display-name';
 import { parseDeviceType } from '../common/utils/device-type';
 import type { ExceptionCode } from '../common/exceptions/exception-code';
-import type { AuthWs, AuthTokens, FrameHandler } from './realtime.types';
+import type {
+  AuthWs,
+  FrameHandler,
+  VerifiedUpgradeRequest,
+} from './realtime.types';
 import { RealtimePresenceService } from './realtime-presence.service';
 import { RealtimePageManager } from './realtime-page.manager';
 
@@ -28,8 +32,23 @@ import { RealtimePageManager } from './realtime-page.manager';
 export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
   private static readonly MAX_SOCKETS_PER_USER = 20;
   private static readonly MAX_PENDING_PER_IP = 50;
-  private static readonly AUTH_TIMEOUT_MS = 15_000;
   private static readonly WS_CHANNEL = 'ws:broadcast';
+
+  // Deliberately NOT this app's own env-prefixed cookie-name helpers
+  // (access-cookie.ts etc. return __Secure-prefixed names in production).
+  // Those are only ever exercised when this backend sets/reads cookies on
+  // its own direct responses (e2e tests); real browser traffic goes through
+  // the Next.js BFF, which sets these four cookies with plain, unprefixed
+  // names in every environment (see next-js-boilerplate/src/lib/cookie.ts)
+  // and forwards them to this backend as headers/Bearer, never as raw
+  // cookies — so this is the only code path that ever reads the browser's
+  // actual cookie jar directly, and it has to match what's really there.
+  private static readonly SESSION_COOKIE_NAMES = {
+    access: 'access_token',
+    rbac: 'rbac_token',
+    device: 'device_token',
+    user: 'user_token',
+  } as const;
 
   private readonly logger = new Logger(RealtimeGateway.name);
   private wss!: WebSocketServer;
@@ -47,14 +66,12 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
 
   constructor(
     private readonly adapterHost: HttpAdapterHost,
-    private readonly jwt: JwtService,
-    private readonly tokenStore: TokenStoreService,
-    private readonly derivation: TokenDerivationService,
     private readonly crypto: CryptoService,
     private readonly presence: RealtimePresenceService,
     private readonly config: ConfigService,
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
     @Inject(REDIS_SUBSCRIBER) private readonly subscriber: Redis,
+    private readonly validator: SessionValidatorService,
   ) {}
 
   private safeRedis<T>(
@@ -82,24 +99,29 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       server: httpServer,
       path: '/ws',
       maxPayload: 64 * 1024,
+      // Must stay a plain 2-param arrow — `ws` picks sync vs. async verifyClient
+      // by checking Function.prototype.length; anything else silently falls
+      // back to the sync path, where a truthy Promise return accepts every
+      // connection unconditionally (see verifyUpgrade's own doc comment).
+      verifyClient: ((info, cb) => {
+        void this.verifyUpgrade(info, cb);
+      }) as VerifyClientCallbackAsync,
     });
 
-    this.wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
+    this.wss.on('connection', (ws: WebSocket, req: VerifiedUpgradeRequest) => {
       const authWs = ws as AuthWs;
-      authWs.authenticated = false;
-      authWs.isAlive = true;
-      authWs.tabClaims = new Map();
+      const session = req.sessionUser;
+      if (!session) {
+        // Unreachable in practice — verifyClient rejects the upgrade before
+        // a socket exists whenever validation fails. Defensive close only.
+        ws.close(1011, 'Internal error');
+        return;
+      }
 
       const ip = this.clientIp(req);
       authWs.clientIp = ip;
-      const pending = this.pendingByIp.get(ip) || 0;
-      if (pending >= RealtimeGateway.MAX_PENDING_PER_IP) {
-        this.logger.warn(`WS pending-connection limit for ${ip}, closing`);
-        ws.close(1013, 'Too many pending connections');
-        return;
-      }
-      authWs.pendingIp = ip;
-      this.pendingByIp.set(ip, pending + 1);
+      authWs.isAlive = true;
+      authWs.tabClaims = new Map();
 
       this.logger.log({
         category: 'session',
@@ -113,15 +135,61 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         authWs.isAlive = true;
       });
 
-      const authTimer = setTimeout(() => {
-        if (!authWs.authenticated) {
-          this.logger.warn('WS auth timeout, closing');
-          ws.close();
-        }
-      }, RealtimeGateway.AUTH_TIMEOUT_MS);
+      authWs.userId = session.userId;
+      authWs.sessionId = session.sessionId;
+      authWs.userName = displayName(session);
+      authWs.chatNickname = session.chatNickname ?? '';
+      authWs.useNickname = session.useNickname ?? false;
+      authWs.avatarUrl = session.hideAvatar ? null : session.avatarUrl || null;
+      authWs.tier = session.tier || 'FREE';
+      authWs.deviceTokenHash = crypto
+        .createHash('sha256')
+        .update(req.deviceToken ?? '')
+        .digest('hex');
+      authWs.registeredServices = [];
+      authWs.watchedTopics = [];
+      authWs.socketId =
+        session.userId +
+        ':' +
+        Date.now().toString(36) +
+        this.crypto.randomToken(5);
+      authWs.authenticated = true;
+
+      this.logger.log({
+        category: 'session',
+        event: 'ws.auth_success',
+        token: session.sessionId,
+        userId: session.userId,
+        socketId: authWs.socketId,
+      });
+
+      let sockets = this.userSockets.get(session.userId);
+      if (!sockets) {
+        sockets = new Set<AuthWs>();
+        this.userSockets.set(session.userId, sockets);
+      }
+      sockets.add(authWs);
+      while (sockets.size > RealtimeGateway.MAX_SOCKETS_PER_USER) {
+        const oldest = sockets.values().next().value as AuthWs;
+        sockets.delete(oldest);
+        this.logger.warn(
+          `WS per-user connection limit for ${session.userId}, closing oldest`,
+        );
+        oldest.close(1013, 'Connection limit reached');
+      }
+
+      this.trackUserIp(session.userId, authWs.clientIp);
+
+      authWs.send(JSON.stringify({ type: 'authenticated' }));
+      authWs.send(JSON.stringify({ type: 'room-counts', rooms: {} }));
+      const onlineUsers = Array.from(this.onlineCount.keys())
+        .filter((id) => id !== session.userId)
+        .map((id) => ({ id }));
+      authWs.send(JSON.stringify({ type: 'online-users', users: onlineUsers }));
+      this.handleOnline(authWs);
 
       ws.on('message', (raw: Buffer) => {
-        this.handleMessage(authWs, raw, authTimer).catch((err) =>
+        this.handleMessage(authWs, raw).catch((err) =>
           this.logger.error('WS message handler error', err),
         );
       });
@@ -145,7 +213,6 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
           userId: uid,
           socketId: authWs.socketId,
         });
-        this.releasePending(authWs);
         this.cleanupServiceConnections(authWs);
         this.pageManager.cleanupPageClaim(authWs);
         this.pageManager.cleanupTopicWatches(authWs);
@@ -258,6 +325,94 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     this.wss?.close();
   }
 
+  // ==================== Handshake auth ====================
+
+  /**
+   * Validates the WS handshake using the same httpOnly session cookies any
+   * normal HTTP request presents — never a client-sent token message. Runs
+   * before a socket is ever created: rejection here means the client never
+   * gets to speak the WebSocket protocol at all.
+   *
+   * Cheapest checks first (mirrors SessionAuthGuard's own "fastest first"
+   * ordering): Origin, then the per-IP concurrency cap, then cookie parsing,
+   * then the one Redis/JWT-touching step.
+   */
+  private async verifyUpgrade(
+    info: { origin: string; secure: boolean; req: VerifiedUpgradeRequest },
+    cb: (res: boolean, code?: number, message?: string) => void,
+  ): Promise<void> {
+    const { req } = info;
+
+    if (!this.isAllowedOrigin(info.origin)) {
+      cb(false, 403, 'Forbidden');
+      return;
+    }
+
+    const ip = this.clientIp(req);
+    const pending = this.pendingByIp.get(ip) || 0;
+    if (pending >= RealtimeGateway.MAX_PENDING_PER_IP) {
+      this.logger.warn(`WS pending-connection limit for ${ip}, closing`);
+      cb(false, 429, 'Too Many Requests');
+      return;
+    }
+    this.pendingByIp.set(ip, pending + 1);
+
+    try {
+      const cookies = parseCookie(req.headers.cookie ?? '');
+      const names = RealtimeGateway.SESSION_COOKIE_NAMES;
+      const deviceToken = cookies[names.device] ?? null;
+      const result = await this.validator.validate({
+        accessToken: cookies[names.access] ?? null,
+        rbacToken: cookies[names.rbac] ?? null,
+        deviceToken,
+        userToken: cookies[names.user] ?? null,
+      });
+
+      if (!result.ok) {
+        this.logger.log({
+          category: 'session',
+          event: 'ws.auth_fail',
+          reason: result.reason,
+          ip,
+        });
+        cb(
+          false,
+          result.reason === 'redis_unavailable' ? 503 : 401,
+          'Unauthorized',
+        );
+        return;
+      }
+
+      req.sessionUser = result.session;
+      req.deviceToken = deviceToken;
+      cb(true);
+    } finally {
+      const count = this.pendingByIp.get(ip) || 0;
+      if (count <= 1) this.pendingByIp.delete(ip);
+      else this.pendingByIp.set(ip, count - 1);
+    }
+  }
+
+  /**
+   * A real browser always sends Origin on a WS handshake (no JS API can
+   * suppress it), so a missing header can only come from a non-browser
+   * client — pass those through rather than break first-party tooling.
+   * An unset/empty CORS_ORIGIN disables the check entirely: WS handshakes
+   * aren't covered by app.enableCors() (that only wraps the HTTP pipeline),
+   * so this is net-new, WS-specific protection, not inherited elsewhere —
+   * and CORS_ORIGIN isn't configured in local dev, so treating unset as
+   * "reject everything" would break every local WS connection by default.
+   */
+  private isAllowedOrigin(origin: string | undefined): boolean {
+    const allowList = this.config
+      .get<string>('CORS_ORIGIN')
+      ?.split(',')
+      .map((o) => o.trim())
+      .filter(Boolean);
+    if (!allowList?.length || !origin) return true;
+    return allowList.includes(origin);
+  }
+
   registerHandler(type: string, handler: FrameHandler): void {
     if (this.handlers.has(type)) {
       throw new Error(`Handler for frame type "${type}" is already registered`);
@@ -267,29 +422,11 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
 
   // ==================== Message routing ====================
 
-  private async handleMessage(
-    authWs: AuthWs,
-    raw: Buffer,
-    authTimer: ReturnType<typeof setTimeout>,
-  ): Promise<void> {
+  private async handleMessage(authWs: AuthWs, raw: Buffer): Promise<void> {
     let data: Record<string, unknown>;
     try {
       data = JSON.parse(raw.toString()) as Record<string, unknown>;
     } catch {
-      return;
-    }
-
-    if (!authWs.authenticated) {
-      if (data.type !== 'auth' || !data.tokens) {
-        this.sendWsError(
-          authWs,
-          'EX_AUTH_INVALID_CREDENTIALS',
-          'Authenticate first',
-        );
-        authWs.close();
-        return;
-      }
-      await this.handleAuth(authWs, data.tokens as AuthTokens, authTimer);
       return;
     }
 
@@ -329,134 +466,6 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
 
     const handler = this.handlers.get(data.type as string);
     if (handler) await handler(authWs, data);
-  }
-
-  // ==================== Auth ====================
-
-  private async handleAuth(
-    ws: AuthWs,
-    tokens: AuthTokens,
-    authTimer: ReturnType<typeof setTimeout>,
-  ): Promise<void> {
-    let payload: { sub: string };
-    try {
-      payload = this.jwt.verify<{ sub: string }>(tokens.accessToken);
-    } catch {
-      this.logger.log({
-        category: 'session',
-        event: 'ws.auth_fail',
-        reason: 'invalid_jwt',
-      });
-      this.sendWsError(ws, 'EX_AUTH_INVALID_CREDENTIALS', 'Auth failed');
-      ws.close();
-      return;
-    }
-
-    const expectedUserToken = this.derivation.deriveUserToken(payload.sub);
-    if (!this.crypto.timingSafeEqual(tokens.userToken, expectedUserToken)) {
-      this.logger.log({
-        category: 'session',
-        event: 'ws.auth_fail',
-        reason: 'user_token_mismatch',
-        userId: payload.sub,
-      });
-      this.sendWsError(ws, 'EX_AUTH_INVALID_CREDENTIALS', 'Auth failed');
-      ws.close();
-      return;
-    }
-
-    const key = this.tokenStore.buildKey(
-      tokens.accessToken,
-      tokens.rbacToken,
-      tokens.deviceToken,
-      tokens.userToken,
-    );
-    let hash: Awaited<ReturnType<typeof this.tokenStore.read>> = null;
-    try {
-      hash = await this.tokenStore.read(key);
-    } catch {
-      /* Redis error */
-    }
-    if (!hash?.userId || hash.userId !== payload.sub) {
-      this.logger.log({
-        category: 'session',
-        event: 'ws.auth_fail',
-        reason: 'session_miss',
-        userId: payload.sub,
-      });
-      this.sendWsError(ws, 'EX_AUTH_INVALID_CREDENTIALS', 'Auth failed');
-      ws.close();
-      return;
-    }
-
-    const expectedRbac = this.derivation.deriveRbacToken(
-      hash.userId,
-      hash.tier || 'FREE',
-    );
-    if (!this.crypto.timingSafeEqual(tokens.rbacToken, expectedRbac)) {
-      this.logger.log({
-        category: 'session',
-        event: 'ws.auth_fail',
-        reason: 'rbac_mismatch',
-        userId: payload.sub,
-      });
-      this.sendWsError(ws, 'EX_AUTH_INVALID_CREDENTIALS', 'Auth failed');
-      ws.close();
-      return;
-    }
-
-    ws.userId = hash.userId;
-    ws.sessionId = hash.sessionId;
-    ws.userName = displayName(hash);
-    ws.chatNickname = hash.chatNickname ?? '';
-    ws.useNickname = hash.useNickname ?? false;
-    ws.avatarUrl = hash.hideAvatar ? null : hash.avatarUrl || null;
-    ws.tier = hash.tier || 'FREE';
-    ws.deviceTokenHash = crypto
-      .createHash('sha256')
-      .update(tokens.deviceToken)
-      .digest('hex');
-    ws.userToken = this.derivation.deriveUserToken(hash.userId);
-    ws.registeredServices = [];
-    ws.watchedTopics = [];
-    ws.socketId =
-      hash.userId + ':' + Date.now().toString(36) + this.crypto.randomToken(5);
-    ws.authenticated = true;
-    this.releasePending(ws);
-    clearTimeout(authTimer);
-
-    this.logger.log({
-      category: 'session',
-      event: 'ws.auth_success',
-      token: hash.sessionId,
-      userId: hash.userId,
-      socketId: ws.socketId,
-    });
-
-    let sockets = this.userSockets.get(hash.userId);
-    if (!sockets) {
-      sockets = new Set<AuthWs>();
-      this.userSockets.set(hash.userId, sockets);
-    }
-    sockets.add(ws);
-    while (sockets.size > RealtimeGateway.MAX_SOCKETS_PER_USER) {
-      const oldest = sockets.values().next().value as AuthWs;
-      sockets.delete(oldest);
-      this.logger.warn(
-        `WS per-user connection limit for ${hash.userId}, closing oldest`,
-      );
-      oldest.close(1013, 'Connection limit reached');
-    }
-
-    this.trackUserIp(hash.userId, ws.clientIp);
-
-    ws.send(JSON.stringify({ type: 'authenticated' }));
-    ws.send(JSON.stringify({ type: 'room-counts', rooms: {} }));
-    const onlineUsers = Array.from(this.onlineCount.keys())
-      .filter((id) => id !== hash.userId)
-      .map((id) => ({ id }));
-    ws.send(JSON.stringify({ type: 'online-users', users: onlineUsers }));
-    this.handleOnline(ws);
   }
 
   // ==================== Register, Online, Cleanup ====================
@@ -731,15 +740,6 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     ws.send(
       JSON.stringify({ type: 'error', exc, msg, key: key ?? 'error.ws' }),
     );
-  }
-
-  private releasePending(ws: AuthWs) {
-    const ip = ws.pendingIp;
-    if (!ip) return;
-    ws.pendingIp = undefined;
-    const count = this.pendingByIp.get(ip) || 0;
-    if (count <= 1) this.pendingByIp.delete(ip);
-    else this.pendingByIp.set(ip, count - 1);
   }
 
   private trackUserIp(userId: string, ip?: string): void {

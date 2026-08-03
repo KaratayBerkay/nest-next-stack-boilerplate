@@ -3,10 +3,12 @@ import { cookies } from "next/headers";
 import {
   ACCESS_TOKEN_COOKIE,
   REFRESH_TOKEN_COOKIE,
+  SESSION_USER_COOKIE,
   accessTokenCookieOptions,
   deviceTokenCookieOptions,
   rbacTokenCookieOptions,
   refreshTokenCookieOptions,
+  sessionUserCookieOptions,
   userTokenCookieOptions,
 } from "@/lib/cookie";
 import { csrfEchoHeaders, graphqlFetch } from "@/lib/backend";
@@ -26,8 +28,13 @@ import { withLogging } from "@/lib/request-logger";
  * (double-submit). The old access token travels as Bearer so the backend can
  * revoke the compound key it was issued under.
  *
- * session_user is deliberately left untouched: a refresh rotates the session
- * keys, not the user's identity snapshot.
+ * session_user's *content* is left untouched here — a refresh rotates the
+ * session keys, not the user's identity snapshot — but its expiry is
+ * re-armed to match the other session cookies. Its default maxAge (15min) is
+ * far shorter than a session kept alive by refreshes, so without this it
+ * expires out from under a still-active session; getSessionUser() then falls
+ * onto its uncached, retry-less live `me` lookup on every request, and any
+ * transient hiccup in that call bounces the user to /auth/login.
  */
 
 const REFRESH_MUTATION = `
@@ -113,6 +120,9 @@ export const POST = withLogging(async (_request, log) => {
   if (r.userToken) response.cookies.set(userTokenCookieOptions(r.userToken));
   if (r.refreshToken)
     response.cookies.set(refreshTokenCookieOptions(r.refreshToken));
+
+  const sessionUser = cookieStore.get(SESSION_USER_COOKIE)?.value;
+  if (sessionUser) response.cookies.set(sessionUserCookieOptions(sessionUser));
 
   log.info({}, "session refreshed");
   return response;

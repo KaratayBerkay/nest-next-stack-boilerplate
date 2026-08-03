@@ -4,7 +4,6 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { clientEnv } from "@/lib/env";
 import { RealtimeClient, type RealtimeStatus } from "./realtime-client";
-import { cachedFetchTokens, bustTokenCache } from "./token-cache";
 import { openBc, type Cmd } from "./tab-coordinator";
 import { routeToPageClaim } from "./route-mapping";
 import { dispatchEvent } from "./event-dispatch";
@@ -72,10 +71,6 @@ export function useRealtimeCoordination() {
       const createLeader = (): RealtimeClient => {
         const c = new RealtimeClient(
           clientEnv.NEXT_PUBLIC_REALTIME_WS_URL,
-          () => {
-            if (!alive) return Promise.resolve(null);
-            return cachedFetchTokens(token);
-          },
           (s) => {
             setStatus(s);
             bc?.postMessage({ type: "st", status: s } satisfies Cmd);
@@ -85,7 +80,6 @@ export function useRealtimeCoordination() {
             bc?.postMessage({ type: "frame", data: frame } satisfies Cmd);
           },
           onAuthenticated,
-          bustTokenCache,
         );
         c.registerServices(["MESSAGE", "NOTIFICATION"]);
         if (claimRef.current) {
@@ -219,16 +213,11 @@ export function useRealtimeCoordination() {
 
     const client = new RealtimeClient(
       clientEnv.NEXT_PUBLIC_REALTIME_WS_URL,
-      () => {
-        if (!alive) return Promise.resolve(null);
-        return cachedFetchTokens(token);
-      },
       setStatus,
       process,
       () => {
         resyncAfterConnect(queryClient, claimRef.current);
       },
-      bustTokenCache,
     );
     client.registerServices(["MESSAGE", "NOTIFICATION"]);
     if (claimRef.current?.page) {

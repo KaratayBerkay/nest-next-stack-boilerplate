@@ -11,6 +11,22 @@ function decodeBase64(value: string): string {
   return Buffer.from(value, "base64url").toString("utf-8");
 }
 
+async function fetchMe(accessToken: string): Promise<User | null> {
+  try {
+    const { data, errors } = await graphqlFetch<{ me: User }>(
+      ME_QUERY,
+      undefined,
+      accessToken,
+      await sessionTokenHeaders(),
+    );
+    return errors || !data?.me ? null : data.me;
+  } catch {
+    // A thrown network/parse error is just as transient as a GraphQL error
+    // — treat it the same instead of letting it bubble past this check.
+    return null;
+  }
+}
+
 export const getSessionUser = cache(async (): Promise<User | null> => {
   // Fast path: read session_user cookie set at login/register time.
   let cookieUser: User | null = null;
@@ -37,16 +53,13 @@ export const getSessionUser = cache(async (): Promise<User | null> => {
     return cookieUser;
   }
 
-  const { data, errors } = await graphqlFetch<{ me: User }>(
-    ME_QUERY,
-    undefined,
-    accessToken,
-    await sessionTokenHeaders(),
-  );
-
-  if (errors || !data?.me) {
+  // One flaky call on this live check must not read as "logged out" — retry
+  // once before falling back to the (possibly stale/absent) cookie snapshot,
+  // so a single transient hiccup can't bounce the user to /auth/login.
+  const me = (await fetchMe(accessToken)) ?? (await fetchMe(accessToken));
+  if (!me) {
     return cookieUser;
   }
 
-  return cookieUser ? { ...cookieUser, ...data.me } : data.me;
+  return cookieUser ? { ...cookieUser, ...me } : me;
 });
