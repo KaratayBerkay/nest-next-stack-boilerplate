@@ -11,6 +11,7 @@ import { REDIS_CLIENT } from '../redis/redis.tokens';
 import { MessagingRoomService } from './messaging-room.service';
 import { MessagingDmService } from './messaging-dm.service';
 import { MessagingFriendService } from './messaging-friend.service';
+import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
 import type { RoomMember, MessageAttachment } from './messaging.types';
 
 @Injectable()
@@ -28,9 +29,10 @@ export class MessagingService {
     realtime: RealtimeGateway,
     push: PushNotificationService,
     @Inject(REDIS_CLIENT) redis: Redis,
+    storageCrypto: StorageCryptoService,
   ) {
     this.rooms = new MessagingRoomService(prisma, redis);
-    this.dm = new MessagingDmService(prisma, cache, realtime, push);
+    this.dm = new MessagingDmService(prisma, cache, realtime, push, storageCrypto);
     this.friends = new MessagingFriendService(
       prisma,
       cache,

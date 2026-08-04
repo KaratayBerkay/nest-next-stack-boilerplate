@@ -42,10 +42,9 @@ export async function dispatchRenew(
           lastMessage?: string | Record<string, unknown>;
         };
 
-        // Never decrypt previews here — it consumes ratchet keys that
-        // decryptMessages still needs when the conversation is opened.
-        // Encrypted envelopes stay as objects; the sidebar renders them
-        // as "🔒 Encrypted".
+        // Never decrypt previews here — the server delivers plaintext
+        // bodies in the conversation list. Encrypted envelopes stay as
+        // objects; the sidebar renders them as "🔒 Encrypted".
         const rawLastMessage = conv.lastMessage;
 
         qc.setQueryData(["conversations"], (old: unknown[] | undefined) => {

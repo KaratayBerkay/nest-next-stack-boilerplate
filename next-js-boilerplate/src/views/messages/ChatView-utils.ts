@@ -35,15 +35,8 @@ export async function chatViewHandleSend(
     setInput("");
     setPendingAttachment(null);
     scrollToBottom();
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "Failed to send message";
-    if (msg.includes("hasn't set up encrypted")) {
-      setMessageError(msg);
-    } else if (msg.includes("Encryption failed")) {
-      setMessageError("Failed to send. Keys resyncing — try again.");
-    } else {
-      setMessageError("Failed to send message. Try again.");
-    }
+  } catch {
+    setMessageError("Failed to send message. Try again.");
   }
 }
 

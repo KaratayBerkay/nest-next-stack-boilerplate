@@ -13,7 +13,6 @@ export type Message = {
   recipientId: string;
   body: string | null;
   encrypted?: boolean;
-  needsRekey?: boolean;
   algVersion?: number | null;
   envelope?: Record<string, unknown> | null;
   createdAt: string;

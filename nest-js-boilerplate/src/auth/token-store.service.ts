@@ -180,8 +180,6 @@ export class TokenStoreService {
     }
     await pipe.exec();
 
-    // Mirror the TTL slide onto E2EE key material for this device too —
-    // still on its own longer-lived TTL (E2eeKeysService), this just keeps
     // Slide the per-session wire-crypto key TTL in lockstep (same SESSION_TTL).
     if (sessionId) {
       await this.wireCrypto?.touchTTL(sessionId);

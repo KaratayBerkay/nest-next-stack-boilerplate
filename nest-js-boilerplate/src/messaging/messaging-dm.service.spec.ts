@@ -52,6 +52,7 @@ describe('MessagingDmService', () => {
       mockCache as never,
       mockRealtime as never,
       mockPush as never,
+      { decryptFromStorage: jest.fn() } as never,
     );
   });
 

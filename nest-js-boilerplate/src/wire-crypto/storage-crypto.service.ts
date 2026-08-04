@@ -6,6 +6,7 @@ import { sha256 } from '@noble/hashes/sha2.js';
 import { createHash, randomBytes } from 'node:crypto';
 import type { StorageEnvelopeV1 } from './wire-crypto.types';
 
+// Legacy prefix kept for backward compatibility with existing encrypted data.
 const STORAGE_CONTEXT = 'e2ee-storage-v1';
 
 /**

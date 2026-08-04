@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CacheAsideService } from '../caching/cache-aside.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { PushNotificationService } from '../push-notification/push-notification.service';
+import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
 import { displayName } from '../common/utils/display-name';
 import { initials, type MessageAttachment } from './messaging.types';
 
@@ -15,6 +16,7 @@ export class MessagingDmService {
     private readonly cache: CacheAsideService,
     private readonly realtime: RealtimeGateway,
     private readonly push: PushNotificationService,
+    private readonly storageCrypto: StorageCryptoService,
   ) {}
 
   /**
@@ -31,6 +33,25 @@ export class MessagingDmService {
       return { ...rest, avatarUrl: null };
     }
     return rest;
+  }
+
+  private decryptPreview(
+    msg: { body: string | null; encrypted: boolean; envelope: unknown },
+    userId: string,
+  ): string {
+    if (msg.body) return msg.body;
+    if (msg.encrypted && msg.envelope) {
+      try {
+        const decrypted = this.storageCrypto.decryptFromStorage(
+          userId,
+          msg.envelope,
+        ) as { text?: string };
+        return decrypted.text ?? '';
+      } catch {
+        return '';
+      }
+    }
+    return '';
   }
 
   async getConversations(
@@ -100,14 +121,14 @@ export class MessagingDmService {
     >();
     for (const msg of sentMessages)
       latestPerPeer.set(msg.recipientId, {
-        lastMessage: msg.body ?? '',
+        lastMessage: this.decryptPreview(msg, userId),
         lastTime: msg.createdAt,
       });
     for (const msg of receivedMessages) {
       const existing = latestPerPeer.get(msg.senderId);
       if (!existing || msg.createdAt > existing.lastTime)
         latestPerPeer.set(msg.senderId, {
-          lastMessage: msg.body ?? '',
+          lastMessage: this.decryptPreview(msg, userId),
           lastTime: msg.createdAt,
         });
     }
