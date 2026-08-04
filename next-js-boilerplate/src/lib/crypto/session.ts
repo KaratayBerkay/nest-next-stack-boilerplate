@@ -2,7 +2,7 @@
  * Per-session wire encryption (trusted-server model).
  *
  * After WS connection the client generates an X25519 keypair, posts the
- * public half to `POST /api/crypto/handshake`, and receives the server's
+ * public half to `POST /api/rest/crypto/handshake` (proxied to backend), and receives the server's
  * public half. Both sides derive the same shared secret via ECDH + HKDF.
  *
  * Every message body crossing the wire is XChaCha20-Poly1305 ciphertext
@@ -48,7 +48,7 @@ const WIRE_CRYPTO_CONTEXT = "session-crypto-v1";
  * is authenticated and you have the `sessionId`.
  *
  * 1. Generate an ephemeral X25519 keypair.
- * 2. POST the public key to `/api/crypto/handshake`.
+ * 2. POST the public key to `/api/rest/crypto/handshake`.
  * 3. Derive the shared secret via ECDH + HKDF.
  */
 export async function performHandshake(
@@ -58,9 +58,9 @@ export async function performHandshake(
   const pubKey = x25519.getPublicKey(privKey);
   const clientPubHex = bytesToHex(pubKey);
 
-  // Exchange public keys with the server.
+  // Exchange public keys with the server via the REST proxy.
   const { serverPublicKey } = await apiFetchJson<{ serverPublicKey: string }>(
-    "/api/crypto/handshake",
+    "/api/rest/crypto/handshake",
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },

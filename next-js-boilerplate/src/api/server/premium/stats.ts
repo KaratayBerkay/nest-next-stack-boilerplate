@@ -4,7 +4,7 @@ import { PREMIUM_STATS_URL } from "@/constants/api/urls";
 export interface PremiumStats {
   totalUsers: number;
   activeUsers: number;
-  premiumUsers: number;
+  revenue: number;
 }
 
 export async function fetchPremiumStatsServer(): Promise<PremiumStats> {

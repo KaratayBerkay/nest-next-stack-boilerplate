@@ -34,5 +34,5 @@ export async function GET() {
     );
   }
 
-  return NextResponse.json({ stats: data?.premiumStats });
+  return NextResponse.json(data?.premiumStats);
 }

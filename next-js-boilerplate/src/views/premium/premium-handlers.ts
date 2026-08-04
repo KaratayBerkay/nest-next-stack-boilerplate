@@ -17,10 +17,8 @@ export async function loadPremiumStats(
 ) {
   setLoadingStats(true);
   try {
-    const data = (await fetchPremiumStatsServer()) as unknown as {
-      stats: PremiumStats;
-    };
-    setStats(data.stats);
+    const data = await fetchPremiumStatsServer();
+    setStats(data);
   } catch {
     toast({ description: t.networkError, variant: "destructive" });
   } finally {

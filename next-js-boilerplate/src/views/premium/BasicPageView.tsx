@@ -27,10 +27,8 @@ async function loadStats(
 ) {
   setLoadingStats(true);
   try {
-    const data = (await fetchPremiumStatsServer()) as unknown as {
-      stats: { totalUsers: number; activeUsers: number; revenue: number };
-    };
-    setStats(data.stats);
+    const data = await fetchPremiumStatsServer();
+    setStats(data);
   } catch {
     toast({ description: t.networkError, variant: "destructive" });
   } finally {
@@ -56,7 +54,7 @@ export function BasicPageView() {
         <button
           onClick={() => loadStats(setLoadingStats, setStats, toast, t)}
           disabled={loadingStats}
-          className="bg-brand self-start rounded-lg px-4 py-2 text-sm font-medium text-brand-fg transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="bg-brand text-brand-fg self-start rounded-lg px-4 py-2 text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {loadingStats ? t.loading : t.loadStats}
         </button>
