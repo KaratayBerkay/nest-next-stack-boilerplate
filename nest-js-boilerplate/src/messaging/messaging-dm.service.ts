@@ -279,21 +279,27 @@ export class MessagingDmService {
     };
   }
 
-  async deliverDirectMessage(message: {
-    id: string;
-    senderId: string;
-    recipientId: string;
-    body: string | Record<string, unknown> | null;
-    encrypted?: boolean;
-    envelope?: unknown;
-    createdAt: Date;
-    sender?: {
-      id?: string;
-      name?: string | null;
-      email?: string;
-      avatar?: string;
-    };
-  }) {
+  async deliverDirectMessage(
+    message: {
+      id: string;
+      senderId: string;
+      recipientId: string;
+      body: string | Record<string, unknown> | null;
+      encrypted?: boolean;
+      envelope?: unknown;
+      createdAt: Date;
+      sender?: {
+        id?: string;
+        name?: string | null;
+        email?: string;
+        avatar?: string;
+      };
+    },
+    deliveryPlaintext?: { text?: string; attachment?: unknown },
+  ): Promise<{
+    recipientPayload: Record<string, unknown>;
+    senderPayload: Record<string, unknown>;
+  }> {
     const [unread, totalDmUnread] = await Promise.all([
       this.getUnreadCount(message.recipientId, message.senderId),
       this.getTotalUnreadCount(message.recipientId),
@@ -302,11 +308,11 @@ export class MessagingDmService {
     const senderAvatar = message.sender?.avatar ?? '';
     const senderEmail = message.sender?.email ?? '';
 
-    // For encrypted messages, send the envelope as the conversation preview
-    // so the client can decrypt it; for plaintext, send body as-is.
-    const lastMessage = message.encrypted
-      ? ((message.envelope as Record<string, unknown>) ?? message.body)
-      : message.body;
+    // Preview: use plaintext when available (server is trusted), else legacy
+    const lastMessage = deliveryPlaintext?.text
+      ?? (message.encrypted
+        ? ((message.envelope as Record<string, unknown>) ?? message.body)
+        : message.body);
 
     this.realtime.emitToService(message.recipientId, 'MESSAGE', {
       renew: 'Messages',
@@ -328,25 +334,25 @@ export class MessagingDmService {
       type: 'DmCount',
       value: totalDmUnread,
     });
-    this.realtime.emitToPage(message.recipientId, 'messages', {
-      type: 'direct-message',
-      message,
-    });
-    this.realtime.emitToPage(message.senderId, 'messages', {
-      type: 'direct-message',
-      message,
-    });
+
+    // Page-scoped payloads — the gateway encrypts these per-connection.
+    // Include the plaintext body so the recipient can display it directly
+    // after wire-decryption (no need to decrypt the storage envelope).
+    const baseMessage: Record<string, unknown> = {
+      id: message.id,
+      senderId: message.senderId,
+      sender: message.sender,
+      body: deliveryPlaintext?.text ?? (typeof message.body === 'string' ? message.body : null),
+      encrypted: false,
+      createdAt: message.createdAt,
+    };
+
     if (
       !this.realtime.hasServiceConnection(message.recipientId, 'MESSAGE') &&
       !this.realtime.hasServiceConnection(message.recipientId, 'NOTIFICATION')
     ) {
-      // Encrypted messages: generic preview (no plaintext leak)
-      // Plaintext messages: truncated body (legacy behavior)
-      const pushBody = message.encrypted
-        ? ''
-        : typeof message.body === 'string'
-          ? message.body
-          : '';
+      const pushBody = deliveryPlaintext?.text
+        ?? (typeof message.body === 'string' ? message.body : '');
       this.push
         .sendToUser(
           message.recipientId,
@@ -365,6 +371,11 @@ export class MessagingDmService {
           this.logger.warn(`Offline push failed: ${err.message}`),
         );
     }
+
+    return {
+      recipientPayload: { type: 'direct-message', message: baseMessage },
+      senderPayload: { type: 'direct-message', message: baseMessage },
+    };
   }
 
   async getUnreadCount(userId: string, peerId: string): Promise<number> {
@@ -387,7 +398,8 @@ export class MessagingDmService {
     friends?: string[],
     tempId?: string,
     attachment?: MessageAttachment,
-    envelope?: Record<string, unknown>,
+    storageEnvelope?: Record<string, unknown>,
+    deliveryPlaintext?: { text?: string; attachment?: unknown },
   ) {
     const message = await this.sendMessage(
       senderId,
@@ -396,11 +408,11 @@ export class MessagingDmService {
       areFriends,
       friends,
       attachment,
-      envelope,
+      storageEnvelope,
     );
     if (tempId) (message as Record<string, unknown>)._tempId = tempId;
-    await this.deliverDirectMessage(message);
-    return message;
+    const delivery = await this.deliverDirectMessage(message, deliveryPlaintext);
+    return { message, delivery };
   }
 
   async markConversationRead(

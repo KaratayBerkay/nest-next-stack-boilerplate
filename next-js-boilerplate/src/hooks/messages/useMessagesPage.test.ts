@@ -43,18 +43,6 @@ vi.mock("@/hooks/messages/useMessagesSearch", () => ({
 vi.mock("@/hooks/messages/useMessagesData", () => ({
   useMessagesData: (...args: unknown[]) => mockUseMessagesData(...args),
 }));
-vi.mock("@/hooks/messages/useE2eeIdentity", () => ({
-  useE2eeIdentity: () => ({
-    identity: null,
-    bundle: null,
-    loading: false,
-    error: null,
-    registered: false,
-    ready: true,
-    refresh: vi.fn(),
-  }),
-}));
-
 const PEER_ID = "peer-1";
 
 function conversation(avatarUrl: string | null) {

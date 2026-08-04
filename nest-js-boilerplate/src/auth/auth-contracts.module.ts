@@ -1,7 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
-import { E2eeModule } from '../e2ee/e2ee.module';
+import { WireCryptoModule } from '../wire-crypto/wire-crypto.module';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { SessionAuthGuard } from './session-auth.guard';
 import { SessionValidatorService } from './session-validator.service';
@@ -22,7 +22,7 @@ import { TokenStoreService } from './token-store.service';
         },
       }),
     }),
-    forwardRef(() => E2eeModule),
+    forwardRef(() => WireCryptoModule),
   ],
   providers: [
     JwtAuthGuard,

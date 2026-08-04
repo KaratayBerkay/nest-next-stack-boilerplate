@@ -30,7 +30,7 @@ import { CryptoModule } from './common/crypto/crypto.module';
 import { DataloaderModule } from './common/dataloader/dataloader.module';
 import { CqrsExampleModule } from './cqrs/cqrs.module';
 import { CsrfModule } from './csrf/csrf.module';
-import { E2eeModule } from './e2ee/e2ee.module';
+import { WireCryptoModule } from './wire-crypto/wire-crypto.module';
 import { ExceptionFiltersModule } from './exception-filters/exception-filters.module';
 import { GlobalHttpExceptionFilter } from './exception-filters/global-http-exception.filter';
 import { toExceptionResponse } from './common/exceptions/to-exception-response';
@@ -163,7 +163,7 @@ const CORE_MODULES = [
   ProfileModule,
   SessionsModule,
   ApiKeysModule,
-  E2eeModule,
+  WireCryptoModule,
   UploadModule,
   VaultModule,
   HealthModule,

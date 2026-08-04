@@ -9,7 +9,7 @@ import { csrfEchoHeaders, graphqlErrorBody, graphqlFetch } from "@/lib/backend";
 
 const UPDATE_PROFILE = `
   mutation UpdateProfile($input: UpdateProfileInput!) {
-    updateProfile(input: $input) { id name username bio avatarUrl chatNickname useNickname e2eeEnabled locale timezone }
+    updateProfile(input: $input) { id name username bio avatarUrl chatNickname useNickname locale timezone }
   }
 `;
 

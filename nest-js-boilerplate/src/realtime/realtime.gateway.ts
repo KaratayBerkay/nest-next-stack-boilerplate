@@ -180,7 +180,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
 
       this.trackUserIp(session.userId, authWs.clientIp);
 
-      authWs.send(JSON.stringify({ type: 'authenticated' }));
+      authWs.send(JSON.stringify({ type: 'authenticated', sessionId: authWs.sessionId }));
       authWs.send(JSON.stringify({ type: 'room-counts', rooms: {} }));
       const onlineUsers = Array.from(this.onlineCount.keys())
         .filter((id) => id !== session.userId)
@@ -630,6 +630,21 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       );
     }
     return local;
+  }
+
+  /**
+   * Per-connection encrypted emit: calls `encryptFn(sessionId)` for each
+   * connection claiming this page for the user, and sends the resulting
+   * frame. For cross-instance fan-out the plaintext payload is carried in
+   * the Redis pub/sub message and each instance encrypts for its local
+   * connections.
+   */
+  async emitToPageEncrypted(
+    userId: string,
+    pageKey: string,
+    encryptFn: (sessionId: string) => Promise<Record<string, unknown>>,
+  ): Promise<number> {
+    return this.pageManager.emitToPageWith(userId, pageKey, encryptFn);
   }
 
   hasServiceConnection(userId: string, service: string): boolean {

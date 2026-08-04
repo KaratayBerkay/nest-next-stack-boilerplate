@@ -309,10 +309,6 @@ model User {
   /// this only to decide whether to null out avatarUrl, never to return it.
   /// @HideField()
   hideAvatar      Boolean   @default(false)
-  /// Owner's own preference — when true, this device encrypts DM/room
-  /// messages it sends. Decryption of anything received is unaffected by
-  /// this setting (see next-js-boilerplate/src/lib/crypto/e2ee-preference.ts).
-  e2eeEnabled     Boolean   @default(true)
   bio             String?   @db.Text
   birthDate       DateTime? @db.Date
   quietHoursStart DateTime? @db.Time(6)
@@ -804,7 +800,6 @@ model Room {
   type                   RoomType                    @default(PUBLIC)
   membershipVersion      Int                         @default(0)
   participants           RoomParticipant[]
-  senderKeyDistributions RoomSenderKeyDistribution[]
   createdAt              DateTime                    @default(now()) @db.Timestamptz(6)
   updatedAt              DateTime                    @updatedAt @db.Timestamptz(6)
   roomMessages           RoomMessage[]
@@ -823,21 +818,6 @@ model RoomParticipant {
   @@unique([roomId, userId])
   @@index([roomId, leftAt])
   @@index([userId])
-}
-
-model RoomSenderKeyDistribution {
-  id                String   @id @default(uuid(7)) @db.Uuid
-  roomId            String   @db.Uuid
-  room              Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  senderDeviceId    String   @db.Uuid
-  epoch             Int
-  recipientDeviceId String   @db.Uuid
-  wrappedKey        Bytes
-  wrapNonce         Bytes
-  createdAt         DateTime @default(now()) @db.Timestamptz(6)
-
-  @@unique([roomId, senderDeviceId, epoch, recipientDeviceId])
-  @@index([roomId, recipientDeviceId])
 }
 
 model Message {

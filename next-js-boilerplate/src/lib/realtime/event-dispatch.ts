@@ -12,43 +12,6 @@ export function setActivePeerId(peerId: string | null): void {
   activePeerId = peerId;
 }
 
-/**
- * Decrypt a direct-message frame's body when it carries an envelope.
- * Always attempted regardless of the viewer's own "encrypt what I send"
- * preference — a viewer with the identity keys needed to decrypt already
- * holds them independent of that setting.
- * Returns the message with `body` populated from decryption when needed.
- */
-async function maybeDecryptDm(
-  msg: Record<string, unknown> & {
-    id: string;
-    senderId: string;
-    body?: string | null;
-    encrypted?: boolean;
-    envelope?: Record<string, unknown> | null;
-  },
-  ownUserId: string,
-): Promise<Record<string, unknown>> {
-  if (!msg.encrypted || !msg.envelope) return msg;
-  try {
-    const { decryptMessage } = await import("@/lib/crypto/chat");
-    const result = await decryptMessage(msg, ownUserId);
-    const out: Record<string, unknown> = {
-      ...msg,
-      body: result.body,
-      // Keep encrypted=true when body is null (decryption failed, resyncing)
-      // so the UI shows a loading skeleton instead of an empty bubble.
-      encrypted: result.body === null ? true : false,
-    };
-    if (result.decryptedAttachment) {
-      out.decryptedAttachment = result.decryptedAttachment;
-    }
-    return out;
-  } catch {
-    return msg;
-  }
-}
-
 export async function dispatchEvent(
   qc: ReturnType<typeof useQueryClient>,
   frame: Record<string, unknown>,
@@ -58,15 +21,12 @@ export async function dispatchEvent(
   const t = frame.type as string;
 
   if (t === "direct-message" && ownUserId) {
-    let msg = frame.message as Record<string, unknown> & {
+    const msg = frame.message as Record<string, unknown> & {
       id: string;
       senderId: string;
       recipientId: string;
     };
     if (!msg?.id) return;
-
-    // Decrypt if encrypted
-    msg = (await maybeDecryptDm(msg, ownUserId)) as typeof msg;
 
     const peerId = msg.senderId === ownUserId ? msg.recipientId : msg.senderId;
     if (!qc.getQueryData(["messages", peerId])) {
@@ -80,7 +40,6 @@ export async function dispatchEvent(
       const pages = [...data.pages];
       const first = { ...pages[0] };
       if (first.messages.some((m) => m.id === msg.id)) return old;
-      // Replace temp entry if this is the server's echo of our own send
       const echoTempId = (msg as Record<string, unknown>)._tempId as
         string | undefined;
       if (echoTempId && sentTempIds.has(echoTempId)) {
@@ -97,7 +56,6 @@ export async function dispatchEvent(
     if (msg.recipientId === ownUserId && sendFrame) {
       sendFrame({ type: "delivered-ack", messageId: msg.id });
     }
-    // Auto-zero unread + mark read only when actively viewing the sender's conversation
     if (
       msg.recipientId === ownUserId &&
       msg.senderId &&
@@ -170,91 +128,11 @@ export async function dispatchEvent(
     }
   }
 
-  // Peer lost their ratchet session (e.g. cleared site data). Delete ours
-  // too so the next message triggers a fresh X3DH handshake. Also invalidate
-  // the conversation so messages re-fetch and re-decrypt with the fresh
-  // session (or fall back to cache).
-  if (t === "e2ee-rekey" && ownUserId) {
-    const peerId = frame.peerId as string | undefined;
-    if (peerId) {
-      try {
-        const { deleteRatchetSession } = await import("@/lib/crypto/store");
-        await deleteRatchetSession(ownUserId, peerId);
-        // Invalidate the conversation so messages re-fetch and re-decrypt
-        // with the fresh session (the sender's next message will carry x3dhInit).
-        qc.invalidateQueries({ queryKey: ["messages", peerId] });
-      } catch {
-        // Best-effort — if IndexedDB fails, the next decrypt attempt
-        // will also fail and trigger cleanup then.
-      }
-    }
-  }
-
   if (t === "room-message") {
     const room = frame.room as string;
-    let msg = frame.message as Record<string, unknown>;
+    const msg = frame.message as Record<string, unknown>;
     const tempId = frame.tempId as string | undefined;
     if (!room || !msg) return;
-
-    // Decrypt encrypted room messages. Always attempted when an envelope is
-    // present — see maybeDecryptDm's comment above for why this isn't gated
-    // by the viewer's own "encrypt what I send" preference.
-    if (msg.encrypted && msg.envelope && ownUserId) {
-      try {
-        const { decryptRoomMessage, ensureReceivedSenderKey } =
-          await import("@/lib/crypto/sender-keys");
-        const { getSenderKeyChain } = await import("@/lib/crypto/store");
-        const envelope = msg.envelope as {
-          v: 1;
-          senderDeviceId: string;
-          ciphertext: string;
-          nonce: string;
-          senderKeyEpoch: number;
-          chainIndex: number;
-        };
-        const chainKeyKey = `${room}:${msg.senderId}`;
-        let stored = await getSenderKeyChain(ownUserId, chainKeyKey);
-        if (!stored || stored.epoch < envelope.senderKeyEpoch) {
-          await ensureReceivedSenderKey(
-            ownUserId,
-            room,
-            msg.senderId as string,
-            envelope.senderDeviceId,
-          ).catch(() => undefined);
-          stored = await getSenderKeyChain(ownUserId, chainKeyKey);
-        }
-        if (stored) {
-          try {
-            const plaintext = await decryptRoomMessage(
-              envelope,
-              stored.chainKey,
-              room,
-              msg.senderId as string,
-            );
-            // Room plaintext may be a JSON string containing attachment metadata
-            let bodyText = plaintext;
-            let decryptedAttachment: Record<string, unknown> | undefined;
-            try {
-              const parsed = JSON.parse(plaintext);
-              if (parsed.attachment && typeof parsed.attachment === "object") {
-                decryptedAttachment = parsed.attachment;
-                bodyText = parsed.text ?? "";
-              }
-            } catch {
-              // Not JSON — use as-is
-            }
-            msg = { ...msg, body: bodyText, encrypted: false };
-            if (decryptedAttachment) {
-              msg.decryptedAttachment = decryptedAttachment;
-            }
-          } catch {
-            msg = { ...msg, body: "[Encrypted]" };
-          }
-        }
-      } catch {
-        // crypto unavailable — leave as-is
-      }
-    }
 
     if (!qc.getQueryData(["room", room])) {
       qc.invalidateQueries({ queryKey: ["room", room] });
@@ -265,7 +143,6 @@ export async function dispatchEvent(
       (old: Record<string, unknown>[] | undefined) => {
         const msgs = old ?? [];
         if (msgs.some((m) => m.id === msg.id)) return old;
-        // Replace temp entry if this is the server's response to our send
         if (tempId && sentTempIds.has(tempId)) {
           sentTempIds.delete(tempId);
           return msgs.map((m) =>

@@ -14,6 +14,6 @@ export interface Message {
   deliveredAt: string | null;
 }
 
-export function useConversation(peerId: string | null, ownUserId?: string) {
-  return useInfiniteQuery(conversationMessagesQueryOptions(peerId, ownUserId));
+export function useConversation(peerId: string | null) {
+  return useInfiniteQuery(conversationMessagesQueryOptions(peerId));
 }

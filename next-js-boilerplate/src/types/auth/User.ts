@@ -9,7 +9,6 @@ export type User = {
   chatNickname?: string;
   useNickname?: boolean;
   hideAvatar?: boolean;
-  e2eeEnabled?: boolean;
   status?: string;
   role: string;
   tier?: string;

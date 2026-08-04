@@ -88,7 +88,8 @@ export class MessagingService {
     text = '',
     tempId?: string,
     attachment?: MessageAttachment,
-    envelope?: Record<string, unknown>,
+    storageEnvelope?: Record<string, unknown>,
+    deliveryPlaintext?: { text?: string; attachment?: unknown },
   ) {
     return this.dm.sendAndDeliverMessage(
       senderId,
@@ -98,7 +99,8 @@ export class MessagingService {
       undefined,
       tempId,
       attachment,
-      envelope,
+      storageEnvelope,
+      deliveryPlaintext,
     );
   }
 
@@ -110,8 +112,9 @@ export class MessagingService {
 
   deliverDirectMessage(
     message: Parameters<MessagingDmService['deliverDirectMessage']>[0],
+    deliveryPlaintext?: Parameters<MessagingDmService['deliverDirectMessage']>[1],
   ) {
-    return this.dm.deliverDirectMessage(message);
+    return this.dm.deliverDirectMessage(message, deliveryPlaintext);
   }
 
   getUnreadCount(userId: string, peerId: string) {

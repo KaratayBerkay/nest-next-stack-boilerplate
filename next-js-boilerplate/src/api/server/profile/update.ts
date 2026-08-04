@@ -11,7 +11,6 @@ export interface UpdateProfileParams {
   chatNickname?: string | null;
   useNickname?: boolean;
   hideAvatar?: boolean;
-  e2eeEnabled?: boolean;
 }
 
 export async function updateProfileServer(

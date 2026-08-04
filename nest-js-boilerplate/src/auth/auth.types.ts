@@ -118,10 +118,6 @@ export class SessionUserPayload {
   /** Owner's own preference — withholds avatarUrl from other users when true. */
   @Field({ defaultValue: false })
   hideAvatar!: boolean;
-
-  /** Owner's own preference — encrypts DMs/room messages this device sends. */
-  @Field({ defaultValue: true })
-  e2eeEnabled!: boolean;
 }
 
 @ObjectType()
@@ -164,4 +160,12 @@ export class AuthPayload {
   /** Opaque refresh token (sessionId) delivered as both a body field and an httpOnly cookie. */
   @Field(() => String, { nullable: true })
   refreshToken?: string;
+
+  /**
+   * Per-session X25519 server public key (hex) for wire encryption. The
+   * client ECDH's this with its IndexedDB device key to encrypt message
+   * bodies on the wire; the private half never leaves Redis.
+   */
+  @Field(() => String, { nullable: true })
+  serverPublicKey?: string;
 }

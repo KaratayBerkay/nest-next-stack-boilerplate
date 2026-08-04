@@ -16,7 +16,6 @@ export const ME_QUERY = `
       chatNickname
       useNickname
       hideAvatar
-      e2eeEnabled
       sessionId
     }
   }

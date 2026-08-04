@@ -19,7 +19,6 @@ import type { UserInfo } from "@/types/messages/FreePageView-types";
 import { openConversationAction } from "@/views/messages/FreePageView-utils";
 import { useMessagesSearch } from "@/hooks/messages/useMessagesSearch";
 import { useMessagesData } from "@/hooks/messages/useMessagesData";
-import { useE2eeIdentity } from "@/hooks/messages/useE2eeIdentity";
 
 type UseMessagesPageInput = {
   initialUser?: string | null;
@@ -37,11 +36,6 @@ export function useMessagesPage({
 }: UseMessagesPageInput) {
   const t = useMessages("messages");
   const { user, loading } = useAuth();
-  const {
-    ready: e2eeReady,
-    error: e2eeError,
-    refresh: e2eeRefresh,
-  } = useE2eeIdentity();
 
   const [selectedUserState, setSelectedUser] = useState<UserInfo | null>(null);
 
@@ -175,8 +169,5 @@ export function useMessagesPage({
     isSwiping,
     connectionState,
     messagesUser,
-    e2eeReady,
-    e2eeError,
-    e2eeRefresh,
   };
 }

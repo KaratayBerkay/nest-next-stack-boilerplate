@@ -35,7 +35,6 @@ export class ProfileService {
     if (input.useNickname !== undefined) data.useNickname = input.useNickname;
     if (input.avatarUrl !== undefined) data.avatarUrl = input.avatarUrl;
     if (input.hideAvatar !== undefined) data.hideAvatar = input.hideAvatar;
-    if (input.e2eeEnabled !== undefined) data.e2eeEnabled = input.e2eeEnabled;
     if (input.locale !== undefined) data.locale = input.locale;
     if (input.timezone !== undefined) data.timezone = input.timezone;
 

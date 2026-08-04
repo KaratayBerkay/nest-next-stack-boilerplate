@@ -8,11 +8,15 @@ import { User } from '../@generated/user/user.model';
 import { MessagingService } from './messaging.service';
 import { Conversation } from './models/conversation.model';
 import { SendMessageInput } from './dto/send-message.input';
+import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
 
 @UseGuards(SessionAuthGuard)
 @Resolver()
 export class MessagingResolver {
-  constructor(private readonly ms: MessagingService) {}
+  constructor(
+    private readonly ms: MessagingService,
+    private readonly storageCrypto: StorageCryptoService,
+  ) {}
 
   @Query(() => [User])
   async users(
@@ -44,19 +48,31 @@ export class MessagingResolver {
     @CurrentUser() user: JwtUser,
     @Args('input') input: SendMessageInput,
   ) {
-    return this.ms.sendAndDeliverMessage(
-      user.userId,
-      input.recipientId,
-      input.text,
-      undefined,
+    const attachment =
       input.attachmentUrl && input.attachmentType && input.attachmentName
         ? {
             url: input.attachmentUrl,
             type: input.attachmentType,
             name: input.attachmentName,
           }
-        : undefined,
-      input.envelope,
+        : undefined;
+
+    const storageEnvelope = input.envelope
+      ? input.envelope
+      : input.text || attachment
+        ? await this.storageCrypto.encryptForStorage(user.userId, {
+            text: input.text,
+            attachment,
+          })
+        : undefined;
+
+    return this.ms.sendAndDeliverMessage(
+      user.userId,
+      input.recipientId,
+      input.text,
+      undefined,
+      attachment,
+      storageEnvelope as Record<string, unknown> | undefined,
     );
   }
 

@@ -13,6 +13,7 @@ import { SessionHydrationService } from './session-hydration.service';
 import { TokenDerivationService } from './token-derivation.service';
 import { TokenStoreService } from './token-store.service';
 import { CryptoService } from '../common/crypto/crypto.service';
+import { WireCryptoService } from '../wire-crypto/wire-crypto.service';
 import type { AuthPayload, SessionUserInput } from './auth.types';
 
 export class AuthTokenService {
@@ -25,6 +26,7 @@ export class AuthTokenService {
     private readonly hydration: SessionHydrationService,
     private readonly tokenStore: TokenStoreService,
     private readonly crypto: CryptoService,
+    private readonly wireCrypto: WireCryptoService,
   ) {}
 
   async issueTokens(
@@ -44,6 +46,9 @@ export class AuthTokenService {
     const userToken = this.derivation.deriveUserToken(user.id);
     const snapshot = await this.hydration.hydrate(user);
     const sessionId = this.crypto.randomToken();
+    // Per-session X25519 keypair for wire encryption — private half stays in
+    // Redis, public half rides the auth payload so the client can ECDH.
+    const serverPublicKey = await this.wireCrypto.createSessionKeys(sessionId);
     const compoundKey = this.tokenStore.buildKey(
       accessToken,
       rbacToken,
@@ -87,6 +92,7 @@ export class AuthTokenService {
       deviceToken: device?.deviceToken,
       user,
       refreshToken: sessionId,
+      serverPublicKey,
     };
   }
 

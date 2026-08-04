@@ -9,6 +9,14 @@ export type RealtimeStatus =
 
 import { AUTH_REFRESH_URL } from "@/constants/api/urls";
 import { POST } from "@/constants/api/methods";
+import {
+  performHandshake,
+  encryptForServer,
+  decryptFromServer,
+  destroySession,
+  hasSession,
+  type WireEnvelopeV2,
+} from "@/lib/crypto/session";
 
 const TOPIC_ALLOWLIST = /^(feed|post:[a-z0-9]+)$/;
 
@@ -23,12 +31,6 @@ export class RealtimeClient {
     { page: string | null; params?: Record<string, string> }
   > = new Map();
   private authFailRetries = 0;
-  // Set when a connection attempt closes without ever opening — the WS
-  // handshake now authenticates via cookies (see realtime.gateway.ts's
-  // verifyClient), so a rejection is invisible to this client: onopen simply
-  // never fires and onclose carries no reason, indistinguishable from a
-  // network blip. Treating "never opened" as "cookies might be stale" and
-  // rotating them once before the next attempt is the only signal available.
   private pendingRefresh = false;
   private static readonly MAX_AUTH_FAIL_RETRIES = 3;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -65,17 +67,35 @@ export class RealtimeClient {
       ws.onmessage = (e) => {
         if (this.destroyed) return;
         try {
-          const data = JSON.parse(e.data) as Record<string, unknown>;
-          if (data.type === "authenticated") {
-            this.authFailRetries = 0;
-            this.setStatus("open");
-            this.flushQueue();
-            this.replaySubscriptions();
-            this.replayClaim();
-            this.onAuthenticated?.();
+          const raw = JSON.parse(e.data) as Record<string, unknown>;
+
+          // Server→client wire-encrypted frames: { v: 2, nonce, ct }
+          if (
+            raw.v === 2 &&
+            typeof raw.nonce === "string" &&
+            typeof raw.ct === "string"
+          ) {
+            if (!hasSession()) return;
+            try {
+              const frame = decryptFromServer(raw as unknown as WireEnvelopeV2);
+              if (frame && typeof frame === "object") {
+                this.onFrame(frame as Record<string, unknown>);
+              }
+            } catch {
+              /* decryption failure — stale session or tampered frame */
+            }
             return;
           }
-          this.onFrame(data);
+
+          // Control frames (unencrypted)
+          if (raw.type === "authenticated") {
+            const sessionId = raw.sessionId as string | undefined;
+            this.authFailRetries = 0;
+            this.performHandshakeAfterAuth(sessionId);
+            return;
+          }
+
+          this.onFrame(raw);
         } catch {
           /* ignore malformed frames */
         }
@@ -85,6 +105,7 @@ export class RealtimeClient {
         if (this.destroyed) return;
         this.ws = null;
         if (!didOpen) this.pendingRefresh = true;
+        destroySession();
         this.handleDisconnect();
       };
     };
@@ -92,10 +113,7 @@ export class RealtimeClient {
     if (this.pendingRefresh) {
       this.pendingRefresh = false;
       fetch(AUTH_REFRESH_URL, { method: POST })
-        .catch(() => {
-          /* a genuinely dead session fails the next handshake too — the
-             existing backoff/retry ceiling bounds how long this repeats */
-        })
+        .catch(() => {})
         .finally(open);
     } else {
       open();
@@ -110,6 +128,7 @@ export class RealtimeClient {
       window.removeEventListener("online", this.onlineHandler);
       this.onlineHandler = null;
     }
+    destroySession();
     this.ws?.close();
     this.ws = null;
     this.sendQueue = [];
@@ -117,9 +136,24 @@ export class RealtimeClient {
   }
 
   send(data: Record<string, unknown>): void {
-    if (this.status === "open" && this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(data));
-    } else {
+    // Control frames are never encrypted — the server routes them.
+    const isControl =
+      data.type === "watch" ||
+      data.type === "unwatch" ||
+      data.type === "register" ||
+      data.type === "page";
+
+    if (isControl || !hasSession()) {
+      this.rawSend(data);
+      return;
+    }
+
+    // Message frames: encrypt the entire payload as WireEnvelopeV2.
+    try {
+      const envelope = encryptForServer(data);
+      this.rawSend(envelope as unknown as Record<string, unknown>);
+    } catch {
+      /* session not ready yet — queue as-is (will be replayed after handshake) */
       this.sendQueue.push(data);
     }
   }
@@ -160,6 +194,41 @@ export class RealtimeClient {
   }
 
   // ---- Private ----
+
+  private async performHandshakeAfterAuth(
+    sessionId: string | undefined,
+  ): Promise<void> {
+    if (!sessionId) {
+      // No session ID — treat as authenticated without wire-crypto.
+      this.setStatus("open");
+      this.flushQueue();
+      this.replaySubscriptions();
+      this.replayClaim();
+      this.onAuthenticated?.();
+      return;
+    }
+
+    try {
+      await performHandshake(sessionId);
+    } catch {
+      // Handshake failed — continue without wire-crypto.
+      // Messages will be sent/received as plaintext.
+    }
+
+    this.setStatus("open");
+    this.flushQueue();
+    this.replaySubscriptions();
+    this.replayClaim();
+    this.onAuthenticated?.();
+  }
+
+  private rawSend(data: Record<string, unknown>): void {
+    if (this.status === "open" && this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify(data));
+    } else {
+      this.sendQueue.push(data);
+    }
+  }
 
   private setStatus(s: RealtimeStatus): void {
     this.status = s;

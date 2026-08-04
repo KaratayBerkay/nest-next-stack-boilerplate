@@ -8,7 +8,6 @@ import {
   SidebarCloseButton,
   RoomButton,
 } from "@/views/chat-room/ChatRoomSubComponents";
-import { SafetyNumberBadge } from "@/components/SafetyNumberBadge";
 import type { ChatRoomSidebarProps } from "@/types/views/chat-room/ChatRoomSidebar-types";
 
 export function ChatRoomSidebar({
@@ -103,13 +102,6 @@ export function ChatRoomSidebar({
                       size={12}
                       stroke={2}
                       className="text-brand shrink-0"
-                    />
-                  )}
-                  {m.id !== user.id && (
-                    <SafetyNumberBadge
-                      peerUserId={m.id}
-                      peerName={displayName}
-                      ownUserId={user.id}
                     />
                   )}
                 </div>

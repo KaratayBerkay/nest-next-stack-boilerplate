@@ -4,8 +4,7 @@ import Redis from 'ioredis';
 import { CryptoService } from '../common/crypto/crypto.service';
 import { parseDurationToSeconds } from '../common/utils/parse-duration';
 import { REDIS_CLIENT } from '../redis/redis.module';
-import { E2EE_LIFECYCLE_HOOK } from '../e2ee/e2ee-lifecycle.tokens';
-import type { E2eeLifecycleHook } from '../e2ee/e2ee-lifecycle.tokens';
+import { WireCryptoService } from '../wire-crypto/wire-crypto.service';
 import type { SessionUser, SessionUserInput } from './auth.types';
 
 const SESS_PREFIX = 'sess:';
@@ -35,8 +34,8 @@ export class TokenStoreService {
     private readonly crypto: CryptoService,
     private readonly config: ConfigService,
     @Optional()
-    @Inject(E2EE_LIFECYCLE_HOOK)
-    private readonly e2ee?: E2eeLifecycleHook,
+    @Inject(WireCryptoService)
+    private readonly wireCrypto?: WireCryptoService,
   ) {
     const raw = this.config.get<string>('SESSION_TTL', '900s');
     this.ttl = parseDurationToSeconds(raw);
@@ -183,9 +182,9 @@ export class TokenStoreService {
 
     // Mirror the TTL slide onto E2EE key material for this device too —
     // still on its own longer-lived TTL (E2eeKeysService), this just keeps
-    // an active session's bundle from ever being the first thing to expire.
-    if (userId) {
-      await this.e2ee?.touchTTL(userId, deviceId || null);
+    // Slide the per-session wire-crypto key TTL in lockstep (same SESSION_TTL).
+    if (sessionId) {
+      await this.wireCrypto?.touchTTL(sessionId);
     }
   }
 
@@ -200,6 +199,10 @@ export class TokenStoreService {
       pipe.del(`${REFRESH_INDEX_PREFIX}${data.sessionId}`);
     }
     await pipe.exec();
+    // Drop the per-session wire-crypto keypair with the session itself.
+    if (data.sessionId) {
+      await this.wireCrypto?.deleteForSession(data.sessionId);
+    }
   }
 
   async findByRefreshSessionId(sessionId: string): Promise<SessionUser | null> {
@@ -241,8 +244,7 @@ export class TokenStoreService {
       const session = await this.read(key);
       if (session?.sessionId === sessionId) {
         await this.revoke(key);
-        // Clean up E2EE keys for the revoked session's device.
-        await this.e2ee?.deleteForSession(userId, session.deviceId);
+        // Wire-crypto cleanup happens inside revoke() (sessionId-scoped).
         return true;
       }
     }
@@ -251,18 +253,23 @@ export class TokenStoreService {
 
   async revokeAllForUser(userId: string): Promise<number> {
     const reverseKey = this.reverseIndexKey(userId);
-    const keys = await this.redis.smembers(reverseKey);
-    if (keys.length === 0) return 0;
+    const sessions = await this.listSessionsWithKeys(userId);
     const pipe = this.redis.multi();
-    for (const key of keys) {
+    for (const { key, session } of sessions) {
       pipe.del(key);
+      if (session.sessionId) {
+        pipe.del(`${REFRESH_INDEX_PREFIX}${session.sessionId}`);
+      }
     }
     pipe.del(reverseKey);
     await pipe.exec();
-    // Wipe all E2EE keys for this user (single-active-device: only one
-    // device's bundle exists at a time).
-    await this.e2ee?.deleteForUser(userId);
-    return keys.length;
+    // Drop per-session wire-crypto keypairs together with their sessions.
+    for (const { session } of sessions) {
+      if (session.sessionId) {
+        await this.wireCrypto?.deleteForSession(session.sessionId);
+      }
+    }
+    return sessions.length;
   }
 
   async rewriteFieldsForUser(

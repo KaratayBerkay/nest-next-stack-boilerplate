@@ -121,8 +121,9 @@ describe('MessagingDmService', () => {
         },
       });
       expect(mockRealtime.emitToService).toHaveBeenCalled();
-      expect(mockRealtime.emitToPage).toHaveBeenCalled();
-      expect(result.id).toBe('m1');
+      expect(result.message.id).toBe('m1');
+      expect(result.delivery).toHaveProperty('recipientPayload');
+      expect(result.delivery).toHaveProperty('senderPayload');
     });
 
     it('withholds the recipient avatarUrl when the recipient has hideAvatar set', async () => {
@@ -158,13 +159,13 @@ describe('MessagingDmService', () => {
         areFriendsMock,
       );
 
-      expect(result.recipient.avatarUrl).toBeNull();
-      expect(result.sender.avatarUrl).toBe('https://x/alice.png');
+      expect(result.message.recipient.avatarUrl).toBeNull();
+      expect(result.message.sender.avatarUrl).toBe('https://x/alice.png');
       // This service backs a plain REST controller with no GraphQL-style
       // schema filtering — the raw preference flag must never reach the
       // JSON response, only its effect on avatarUrl.
-      expect(result.recipient).not.toHaveProperty('hideAvatar');
-      expect(result.sender).not.toHaveProperty('hideAvatar');
+      expect(result.message.recipient).not.toHaveProperty('hideAvatar');
+      expect(result.message.sender).not.toHaveProperty('hideAvatar');
     });
 
     it('does not deliver when sendMessage throws', async () => {

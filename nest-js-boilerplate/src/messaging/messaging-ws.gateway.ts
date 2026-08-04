@@ -12,9 +12,12 @@ import { PushNotificationService } from '../push-notification/push-notification.
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { tierRank, MIN_TIER_FOR_VIP } from '../authorization/tier-rank';
 import { MAX_ENVELOPE_JSON_BYTES } from './dto/envelope-size.constraint';
+import { WireCryptoService } from '../wire-crypto/wire-crypto.service';
+import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
 
 type AuthWs = WebSocket & {
   userId?: string;
+  sessionId?: string;
   userName?: string;
   chatNickname?: string;
   useNickname?: boolean;
@@ -129,6 +132,8 @@ export class MessagingWsGateway implements OnModuleInit {
     private readonly prisma: PrismaService,
     private readonly ms: MessagingService,
     private readonly push: PushNotificationService,
+    private readonly wireCrypto: WireCryptoService,
+    private readonly storageCrypto: StorageCryptoService,
   ) {}
 
   onModuleInit() {
@@ -210,15 +215,54 @@ export class MessagingWsGateway implements OnModuleInit {
       ws.send(JSON.stringify({ type: 'error', message: 'envelope too large' }));
       return;
     }
+
+    // Decrypt the incoming wire envelope to get plaintext.
+    let plaintext: { text?: string; attachment?: unknown };
+    if (data.envelope && typeof data.envelope === 'object') {
+      try {
+        const sessionId = ws.sessionId!;
+        plaintext = (await this.wireCrypto.decryptFromClient(
+          sessionId,
+          data.envelope,
+        )) as { text?: string; attachment?: unknown };
+      } catch {
+        ws.send(
+          JSON.stringify({ type: 'error', message: 'Message decryption failed' }),
+        );
+        return;
+      }
+    } else {
+      // Legacy plaintext path (will be removed when all clients encrypt).
+      plaintext = { text: data.text, attachment: toAttachment(data) };
+    }
+
+    // Encrypt for at-rest storage.
+    const storageEnvelope =
+      plaintext.text || plaintext.attachment
+        ? await this.storageCrypto.encryptForStorage(ws.userId, plaintext)
+        : undefined;
+
     const message = await this.ms.sendMessage(
       ws.userId,
       data.recipientId,
-      data.text,
+      plaintext.text ?? '',
       undefined,
-      toAttachment(data),
-      data.envelope,
+      toAttachment(data as IncomingMessagePayload),
+      storageEnvelope as unknown as Record<string, unknown>,
     );
-    await this.ms.deliverDirectMessage(message);
+    const delivery = await this.ms.deliverDirectMessage(message, plaintext);
+
+    // Per-connection encrypted emit — each connection has its own shared key.
+    await this.realtime.emitToPageEncrypted(
+      message.recipientId,
+      'messages',
+      (sid) => this.wireCrypto.encryptForSession(sid, delivery.recipientPayload) as unknown as Promise<Record<string, unknown>>,
+    );
+    await this.realtime.emitToPageEncrypted(
+      message.senderId,
+      'messages',
+      (sid) => this.wireCrypto.encryptForSession(sid, delivery.senderPayload) as unknown as Promise<Record<string, unknown>>,
+    );
   }
 
   private async handleDeliveredAck(ws: AuthWs, data: { messageId: string }) {
@@ -341,17 +385,73 @@ export class MessagingWsGateway implements OnModuleInit {
       ws.send(JSON.stringify({ type: 'error', message: 'envelope too large' }));
       return;
     }
+
+    // Decrypt incoming wire envelope.
+    let plaintext: { text?: string; attachment?: unknown };
+    if (data.envelope && typeof data.envelope === 'object') {
+      try {
+        const sessionId = ws.sessionId!;
+        plaintext = (await this.wireCrypto.decryptFromClient(
+          sessionId,
+          data.envelope,
+        )) as { text?: string; attachment?: unknown };
+      } catch {
+        ws.send(
+          JSON.stringify({ type: 'error', message: 'Message decryption failed' }),
+        );
+        return;
+      }
+    } else {
+      plaintext = { text: data.text, attachment: toAttachment(data) };
+    }
+
+    // Encrypt for at-rest storage.
+    const storageEnvelope =
+      plaintext.text || plaintext.attachment
+        ? await this.storageCrypto.encryptForStorage(ws.userId, plaintext)
+        : undefined;
+
     const saved = await this.ms.saveRoomMessage(
       data.room,
       ws.userId,
-      data.text ?? '',
-      toAttachment(data),
-      data.envelope,
+      plaintext.text ?? '',
+      toAttachment(data as IncomingMessagePayload),
+      storageEnvelope as unknown as Record<string, unknown>,
     );
-    this.realtime.broadcastToRoom(
-      data.room,
-      buildRoomMessagePayload(saved, ws, data),
-    );
+
+    // Broadcast per-connection encrypted to all room members.
+    const senderName =
+      (ws.useNickname && ws.chatNickname) || ws.userName || 'Unknown';
+    const buildPayload = (): Record<string, unknown> => ({
+      type: 'room-message',
+      room: data.room,
+      message: {
+        id: saved.id,
+        senderId: saved.senderId,
+        senderName,
+        avatar: initials(senderName),
+        body: plaintext.text ?? null,
+        encrypted: false,
+        attachmentUrl: saved.attachmentUrl,
+        attachmentType: saved.attachmentType,
+        attachmentName: saved.attachmentName,
+        createdAt: saved.createdAt.toISOString(),
+      },
+      ...(data.tempId ? { tempId: data.tempId } : {}),
+    });
+
+    // For room messages, encrypt per room-member connection.
+    // broadcastToRoom sends to all connections in the room — we iterate
+    // connections manually via emitToPageEncrypted-like pattern.
+    const roomMembers = this.ms.getRoomMembers(data.room);
+    const basePayload = buildPayload();
+    for (const member of roomMembers) {
+      await this.realtime.emitToPageEncrypted(
+        member.userId,
+        'messages',
+        (sid) => this.wireCrypto.encryptForSession(sid, basePayload) as unknown as Promise<Record<string, unknown>>,
+      );
+    }
   }
 
   private handleGetRoomCounts(ws: AuthWs) {

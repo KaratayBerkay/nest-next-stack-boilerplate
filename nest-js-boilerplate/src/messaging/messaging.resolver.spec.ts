@@ -9,6 +9,9 @@ describe('MessagingResolver', () => {
     sendAndDeliverMessage: jest.Mock;
     markConversationRead: jest.Mock;
   };
+  let mockStorageCrypto: {
+    encryptForStorage: jest.Mock;
+  };
 
   beforeEach(() => {
     mockMs = {
@@ -24,8 +27,16 @@ describe('MessagingResolver', () => {
         .fn()
         .mockResolvedValue({ readAt: '2026-01-01T00:00:00.000Z' }),
     };
+    mockStorageCrypto = {
+      encryptForStorage: jest
+        .fn()
+        .mockResolvedValue({ v: 'storage-v1', nonce: 'sn', ct: 'sc' }),
+    };
 
-    resolver = new MessagingResolver(mockMs as never);
+    resolver = new MessagingResolver(
+      mockMs as never,
+      mockStorageCrypto as never,
+    );
   });
 
   describe('sendMessage', () => {
@@ -36,13 +47,17 @@ describe('MessagingResolver', () => {
         text: 'hello',
       });
 
+      expect(mockStorageCrypto.encryptForStorage).toHaveBeenCalledWith(
+        'u1',
+        { text: 'hello', attachment: undefined },
+      );
       expect(mockMs.sendAndDeliverMessage).toHaveBeenCalledWith(
         'u1',
         'u2',
         'hello',
         undefined,
         undefined,
-        undefined,
+        expect.objectContaining({ v: 'storage-v1' }),
       );
       expect(result).toEqual({ id: 'm1', body: 'hello' });
     });
@@ -67,7 +82,7 @@ describe('MessagingResolver', () => {
           type: 'application/pdf',
           name: 'report.pdf',
         },
-        undefined,
+        expect.objectContaining({ v: 'storage-v1' }),
       );
     });
   });

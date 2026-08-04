@@ -234,6 +234,31 @@ export class RealtimePageManager {
     return sent;
   }
 
+  /**
+   * Per-connection async emit: calls `encryptFn(sessionId)` for each connection
+   * claiming this page for the user, and sends the resulting frame. Used for
+   * wire-encryption where each connection has its own shared secret.
+   */
+  async emitToPageWith(
+    userId: string,
+    pageKey: string,
+    encryptFn: (sessionId: string) => Promise<Record<string, unknown>>,
+  ): Promise<number> {
+    const prefix = `page:${pageKey}:${userId}:`;
+    let sent = 0;
+    for (const [key, sockets] of this.pageClaims) {
+      if (!key.startsWith(prefix)) continue;
+      for (const ws of sockets) {
+        if (ws.readyState === WebSocket.OPEN && ws.sessionId) {
+          const frame = await encryptFn(ws.sessionId);
+          ws.send(JSON.stringify(frame));
+          sent++;
+        }
+      }
+    }
+    return sent;
+  }
+
   buildPageKey(page: string, params?: Record<string, string>): string {
     const entry = PAGE_ALLOWLIST[page];
     const keyParams = entry?.key ?? [];

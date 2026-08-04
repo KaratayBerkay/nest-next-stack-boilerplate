@@ -2,7 +2,7 @@ import { Logger, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TokenStoreService } from './token-store.service';
 import { AuthTokenService } from './auth-token.service';
-import type { E2eeLifecycleHook } from '../e2ee/e2ee-lifecycle.tokens';
+import { WireCryptoService } from '../wire-crypto/wire-crypto.service';
 import type { SessionUser } from './auth.types';
 import type { DeviceContext, RequestContext } from '../devices/device.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
@@ -94,7 +94,7 @@ export class AuthSessionService {
     private readonly tokenStore: TokenStoreService,
     private readonly authTokens: AuthTokenService,
     private readonly realtime: RealtimeGateway,
-    private readonly e2ee?: E2eeLifecycleHook,
+    private readonly wireCrypto?: WireCryptoService,
   ) {}
 
   async logout(ctx: RequestContext): Promise<boolean> {
@@ -126,12 +126,9 @@ export class AuthSessionService {
       }
       await this.tokenStore.revoke(key);
 
-      // Wipe E2EE keys for this session's device so the bundle is
-      // immediately unclaimable (§2.1 of the plan).
-      if (session?.userId) {
-        await this.e2ee?.deleteForSession(session.userId, session.deviceId);
-      }
       if (session?.sessionId) {
+        // Wipe the per-session wire-crypto keypair from Redis on logout.
+        await this.wireCrypto?.deleteForSession(session.sessionId);
         this.realtime.closeSocketsForSession(session.userId, session.sessionId);
       }
     }

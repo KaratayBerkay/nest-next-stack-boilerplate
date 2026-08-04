@@ -25,6 +25,7 @@ import { SendMessageRestDto } from './dto/send-message-rest.dto';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { JwtUser } from '../auth/auth.types';
+import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
 
 @ApiTags('Messaging')
 @ApiBearerAuth()
@@ -37,6 +38,7 @@ export class MessagingController {
     private readonly realtime: RealtimeGateway,
     private readonly push: PushNotificationService,
     private readonly logger: Logger,
+    private readonly storageCrypto: StorageCryptoService,
   ) {}
 
   @Get('messages/unread-count')
@@ -188,19 +190,31 @@ export class MessagingController {
     @Body(new ValidationPipe({ transform: true, whitelist: true }))
     body: SendMessageRestDto,
   ) {
-    return this.ms.sendAndDeliverMessage(
-      user.userId,
-      recipientId,
-      body.text,
-      body._tempId,
+    const attachment =
       body.attachmentUrl && body.attachmentType && body.attachmentName
         ? {
             url: body.attachmentUrl,
             type: body.attachmentType,
             name: body.attachmentName,
           }
-        : undefined,
-      body.envelope,
+        : undefined;
+
+    const storageEnvelope = body.envelope
+      ? body.envelope
+      : body.text || attachment
+        ? await this.storageCrypto.encryptForStorage(user.userId, {
+            text: body.text,
+            attachment,
+          })
+        : undefined;
+
+    return this.ms.sendAndDeliverMessage(
+      user.userId,
+      recipientId,
+      body.text,
+      body._tempId,
+      attachment,
+      storageEnvelope as Record<string, unknown> | undefined,
     );
   }
 

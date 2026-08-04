@@ -4,9 +4,12 @@ import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { PrismaService } from '../prisma/prisma.service';
 import { MessagingService } from './messaging.service';
 import { PushNotificationService } from '../push-notification/push-notification.service';
+import { WireCryptoService } from '../wire-crypto/wire-crypto.service';
+import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
 
 interface MockWs {
   userId: string;
+  sessionId: string;
   userName: string;
   tier: string;
   socketId: string;
@@ -21,6 +24,7 @@ function createMockWs(tier = 'FREE'): MockWs {
   const sent: string[] = [];
   return {
     userId: 'u1',
+    sessionId: 'sess-123',
     userName: 'Test',
     tier,
     socketId: 'u1:abc',
@@ -39,9 +43,11 @@ type GatewayInternal = {
   handleDirectMessage: (
     ws: MockWs,
     data: {
-      recipientId: string;
-      text: string;
+      recipientId?: string;
+      text?: string;
       attachmentUrl?: string;
+      attachmentType?: string;
+      attachmentName?: string;
       envelope?: Record<string, unknown>;
     },
   ) => Promise<void>;
@@ -61,6 +67,7 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
   let mockRealtime: {
     broadcastToRoom: jest.Mock;
     broadcastAll: jest.Mock;
+    emitToPageEncrypted: jest.Mock;
   };
   let mockMs: {
     joinRoom: jest.Mock;
@@ -78,6 +85,7 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
     mockRealtime = {
       broadcastToRoom: jest.fn(),
       broadcastAll: jest.fn(),
+      emitToPageEncrypted: jest.fn().mockResolvedValue(1),
     };
     mockMs = {
       joinRoom: jest.fn().mockReturnValue([]),
@@ -89,7 +97,10 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
       sendMessage: jest
         .fn()
         .mockResolvedValue({ id: 'm1', senderId: 'u1', recipientId: 'u2' }),
-      deliverDirectMessage: jest.fn().mockResolvedValue(undefined),
+      deliverDirectMessage: jest.fn().mockResolvedValue({
+        recipientPayload: { type: 'message', peerId: 'u2' },
+        senderPayload: { type: 'message', peerId: 'u1' },
+      }),
       saveRoomMessage: jest.fn().mockResolvedValue({
         id: 'm1',
         senderId: 'u1',
@@ -108,6 +119,19 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
         { provide: PrismaService, useValue: {} },
         { provide: MessagingService, useValue: mockMs },
         { provide: PushNotificationService, useValue: {} },
+        {
+          provide: WireCryptoService,
+          useValue: {
+            decryptFromClient: jest.fn().mockResolvedValue({ text: 'hello' }),
+            encryptForSession: jest.fn().mockResolvedValue({ v: 2, nonce: 'bn', ct: 'bc' }),
+          },
+        },
+        {
+          provide: StorageCryptoService,
+          useValue: {
+            encryptForStorage: jest.fn().mockResolvedValue({ v: 'storage-v1', nonce: 'sn', ct: 'sc' }),
+          },
+        },
       ],
     }).compile();
 
@@ -247,8 +271,9 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
         '',
         undefined,
         expect.objectContaining({ url: 'https://minio/x.png' }),
-        undefined,
+        expect.objectContaining({ v: 'storage-v1' }),
       );
+      expect(mockMs.deliverDirectMessage).toHaveBeenCalled();
     });
 
     it('rejects room-message with empty text and no attachment', async () => {
@@ -274,7 +299,7 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
         'u1',
         'hello',
         undefined,
-        undefined,
+        expect.objectContaining({ v: 'storage-v1' }),
       );
     });
 
