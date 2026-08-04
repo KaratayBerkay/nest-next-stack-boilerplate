@@ -41,6 +41,51 @@ async function resetConversationForPeer(
   }
 }
 
+async function exportKeysBackup(ownUserId: string) {
+  try {
+    const { exportE2eeKeys, downloadKeyBackup } =
+      await import("@/lib/crypto/key-recovery");
+    const backup = await exportE2eeKeys(ownUserId);
+    downloadKeyBackup(backup);
+  } catch {
+    // Best-effort — nothing to export or download failed.
+  }
+}
+
+async function importKeysBackup(
+  ownUserId: string,
+  file: File,
+  qc: QueryClient,
+) {
+  try {
+    const { parseKeyBackupFile, importE2eeKeys } =
+      await import("@/lib/crypto/key-recovery");
+    const { getDeviceId } = await import("@/lib/crypto/chat");
+    const { ensureIdentity } = await import("@/lib/crypto/identity");
+    const { registerBundleServer } =
+      await import("@/api/server/e2ee/register-bundle");
+
+    const backup = await parseKeyBackupFile(file);
+    await importE2eeKeys(ownUserId, backup);
+
+    // Re-register the restored public bundle so the server matches the
+    // imported identity (a fresh identity may have replaced it in the
+    // window between the wipe and the import).
+    const { identity, bundle, serverPrekeys } = await ensureIdentity(
+      ownUserId,
+      getDeviceId(ownUserId),
+    );
+    if (identity) {
+      await registerBundleServer({ bundle, oneTimePrekeys: serverPrekeys });
+    }
+
+    // Re-run decryption on open conversations using the restored cache.
+    qc.invalidateQueries({ queryKey: ["messages"] });
+  } catch {
+    // Best-effort — invalid backup files fail silently.
+  }
+}
+
 export function ChatView({
   selectedUser,
   user,
@@ -321,6 +366,12 @@ export function ChatView({
         peerFingerprint={peerFingerprint ?? undefined}
         allEncrypted={allEncrypted}
         onResetConversation={handleResetConversation}
+        onExportKeys={user?.id ? () => exportKeysBackup(user.id) : undefined}
+        onImportKeys={
+          user?.id
+            ? (file) => importKeysBackup(user.id, file, queryClient)
+            : undefined
+        }
       />
 
       <ChatMessageList

@@ -230,6 +230,14 @@ export async function deleteRatchetSession(
   await db.delete(RATCHET_STORE, peerUserId);
 }
 
+/** Enumerate every ratchet session — used for key backup/export. */
+export async function getAllRatchetSessions(
+  ownUserId: string,
+): Promise<RatchetSession[]> {
+  const db = await getDb(ownUserId);
+  return db.getAll(RATCHET_STORE);
+}
+
 // ── Sender key chains (rooms, §1.5) ─────────────────────────────────────
 
 export async function getSenderKeyChain(
@@ -254,6 +262,14 @@ export async function deleteSenderKeyChain(
 ): Promise<void> {
   const db = await getDb(ownUserId);
   await db.delete(SENDER_KEY_STORE, roomId);
+}
+
+/** Enumerate every sender key chain — used for key backup/export. */
+export async function getAllSenderKeyChains(
+  ownUserId: string,
+): Promise<SenderKeyChain[]> {
+  const db = await getDb(ownUserId);
+  return db.getAll(SENDER_KEY_STORE);
 }
 
 // ── Safety numbers (§1.6) ───────────────────────────────────────────────
@@ -281,6 +297,21 @@ export async function deleteSafetyNumber(
 ): Promise<void> {
   const db = await getDb(ownUserId);
   await db.delete(SAFETY_NUMBERS_STORE, peerUserId);
+}
+
+/** Enumerate every stored safety number — used for key backup/export. */
+export async function getAllSafetyNumbers(
+  ownUserId: string,
+): Promise<Record<string, string>> {
+  const db = await getDb(ownUserId);
+  const allKeys = await db.getAllKeys(SAFETY_NUMBERS_STORE);
+  const result: Record<string, string> = {};
+  for (const key of allKeys) {
+    if (typeof key !== "string") continue;
+    const value = await db.get(SAFETY_NUMBERS_STORE, key);
+    if (value) result[key] = value;
+  }
+  return result;
 }
 
 // ── Decrypted message cache ────────────────────────────────────────────
@@ -382,4 +413,12 @@ export async function clearCachedDecryptedMessages(
   } else {
     await db.clear(DECRYPTED_MESSAGES_STORE);
   }
+}
+
+/** Enumerate every cached decrypted message — used for key backup/export. */
+export async function getAllCachedDecryptedMessages(
+  ownUserId: string,
+): Promise<CachedDecryptedMessage[]> {
+  const db = await getDb(ownUserId);
+  return db.getAll(DECRYPTED_MESSAGES_STORE);
 }

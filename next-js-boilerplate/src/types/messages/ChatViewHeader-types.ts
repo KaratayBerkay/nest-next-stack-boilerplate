@@ -14,4 +14,8 @@ export interface ChatViewHeaderProps {
   allEncrypted?: boolean;
   /** Called when the user clicks "Reset Encryption". */
   onResetConversation?: () => void;
+  /** Called when the user clicks "Export keys" (downloads a backup file). */
+  onExportKeys?: () => void;
+  /** Called with the selected file when the user imports a key backup. */
+  onImportKeys?: (file: File) => void;
 }

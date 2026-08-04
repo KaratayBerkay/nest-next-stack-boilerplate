@@ -1,8 +1,14 @@
 "use client";
 
+import { useRef } from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { IconButton } from "@/components/ui/button/icon-button";
-import { IconChevronLeft, IconRefresh } from "@tabler/icons-react";
+import {
+  IconChevronLeft,
+  IconDownload,
+  IconRefresh,
+  IconUpload,
+} from "@tabler/icons-react";
 import { initials } from "@/lib/initials";
 import { cn } from "@/lib/cn";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
@@ -17,6 +23,15 @@ function handleBack(
   setSidebarOpen(true);
 }
 
+function handleBackupFileSelected(
+  event: React.ChangeEvent<HTMLInputElement>,
+  onImportKeys?: (file: File) => void,
+) {
+  const file = event.target.files?.[0];
+  if (file) onImportKeys?.(file);
+  event.target.value = "";
+}
+
 export function ChatViewHeader({
   selectedUser,
   setSelectedUser,
@@ -28,9 +43,12 @@ export function ChatViewHeader({
   peerFingerprint,
   allEncrypted,
   onResetConversation,
+  onExportKeys,
+  onImportKeys,
 }: ChatViewHeaderProps) {
   const t = useMessages("messages");
   const isOnline = onlineUsers.has(selectedUser.id);
+  const backupFileInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <div className="flex items-center gap-3 border-b px-5 py-3">
@@ -67,6 +85,26 @@ export function ChatViewHeader({
               peerFingerprint={peerFingerprint}
             />
           )}
+          {ownUserId && (
+            <>
+              <IconButton
+                icon={<IconDownload size={14} />}
+                label="Export encryption keys"
+                variant="ghost"
+                size="icon-sm"
+                onClick={onExportKeys}
+                className="text-muted hover:text-fg ml-auto shrink-0"
+              />
+              <IconButton
+                icon={<IconUpload size={14} />}
+                label="Import encryption keys"
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => backupFileInputRef.current?.click()}
+                className="text-muted hover:text-fg shrink-0"
+              />
+            </>
+          )}
           {allEncrypted && onResetConversation && (
             <IconButton
               icon={<IconRefresh size={14} />}
@@ -74,9 +112,16 @@ export function ChatViewHeader({
               variant="ghost"
               size="icon-sm"
               onClick={onResetConversation}
-              className="text-muted hover:text-fg ml-auto shrink-0"
+              className="text-muted hover:text-fg shrink-0"
             />
           )}
+          <input
+            ref={backupFileInputRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={(event) => handleBackupFileSelected(event, onImportKeys)}
+          />
         </div>
         <p className="text-xs">
           {isTyping ? (
