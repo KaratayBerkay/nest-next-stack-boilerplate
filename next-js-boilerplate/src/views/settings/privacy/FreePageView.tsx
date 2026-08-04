@@ -21,6 +21,7 @@ async function handleSave(
     chatNickname?: string | null;
     useNickname?: boolean;
     hideAvatar?: boolean;
+    e2eeEnabled?: boolean;
   }) => Promise<void>,
   refreshUser: () => Promise<void>,
   toast: ReturnType<typeof useToast>["toast"],
@@ -28,6 +29,7 @@ async function handleSave(
   useNickname: boolean,
   nickname: string,
   hideAvatar: boolean,
+  e2eeEnabled: boolean,
 ) {
   try {
     await updateProfile({
@@ -36,6 +38,7 @@ async function handleSave(
       chatNickname: nickname.trim() ? nickname.trim() : null,
       useNickname,
       hideAvatar,
+      e2eeEnabled,
     });
     // Re-seed the page (and the SSR session_user snapshot) from the server —
     // without this, the saved nickname/toggle show stale values until next
@@ -59,6 +62,11 @@ export function FreePageView({ className }: ClassNameProps) {
   );
   const [useNickname, setUseNickname] = useState(!!user?.useNickname);
   const [nickname, setNickname] = useState(user?.chatNickname ?? "");
+  // Defaults to true (opt-out, not opt-in) — unlike the toggles above, `??`
+  // not `!!`, so an unhydrated/undefined user doesn't render this as off.
+  const [encryptMessages, setEncryptMessages] = useState(
+    user?.e2eeEnabled ?? true,
+  );
 
   // `user` can populate/update after this component's first render (SSR
   // hydration timing, or `refreshUser()` elsewhere) — the useState
@@ -71,6 +79,7 @@ export function FreePageView({ className }: ClassNameProps) {
   const [seededNickname, setSeededNickname] = useState(user?.chatNickname);
   const [seededUseNickname, setSeededUseNickname] = useState(user?.useNickname);
   const [seededHideAvatar, setSeededHideAvatar] = useState(user?.hideAvatar);
+  const [seededE2eeEnabled, setSeededE2eeEnabled] = useState(user?.e2eeEnabled);
   if (user?.chatNickname !== seededNickname) {
     setSeededNickname(user?.chatNickname);
     setNickname(user?.chatNickname ?? "");
@@ -82,6 +91,10 @@ export function FreePageView({ className }: ClassNameProps) {
   if (user?.hideAvatar !== seededHideAvatar) {
     setSeededHideAvatar(user?.hideAvatar);
     setHideProfilePicture(!!user?.hideAvatar);
+  }
+  if (user?.e2eeEnabled !== seededE2eeEnabled) {
+    setSeededE2eeEnabled(user?.e2eeEnabled);
+    setEncryptMessages(user?.e2eeEnabled ?? true);
   }
 
   return (
@@ -120,6 +133,13 @@ export function FreePageView({ className }: ClassNameProps) {
             />
           )}
         </PrivacyToggleRow>
+
+        <PrivacyToggleRow
+          title={t.privacyEncryptMessages}
+          description={t.privacyEncryptMessagesDesc}
+          checked={encryptMessages}
+          onChange={setEncryptMessages}
+        />
       </div>
 
       <Button
@@ -132,6 +152,7 @@ export function FreePageView({ className }: ClassNameProps) {
             useNickname,
             nickname,
             hideProfilePicture,
+            encryptMessages,
           )
         }
         variant="primary"

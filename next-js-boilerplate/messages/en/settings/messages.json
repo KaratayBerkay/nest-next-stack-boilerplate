@@ -77,6 +77,8 @@
   "privacyNicknameDesc": "Use a nickname instead of your real name in chat rooms",
   "privacyNicknamePlaceholder": "Enter your nickname",
   "privacyNicknameCurrent": "Current nickname",
+  "privacyEncryptMessages": "Encrypt my messages",
+  "privacyEncryptMessagesDesc": "End-to-end encrypt the messages and files you send in DMs and chat rooms. You can always read messages others send you, even with this off.",
   "settingsLink": "Settings",
   "navSettings": "Settings",
   "settingsSectionLabel": "Settings",

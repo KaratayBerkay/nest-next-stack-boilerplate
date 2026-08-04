@@ -12,6 +12,7 @@ import {
   distributeSenderKeyIfNeeded,
 } from "@/lib/crypto/sender-keys";
 import { getIdentity } from "@/lib/crypto/store";
+import { isE2eeDmEnabled } from "@/lib/crypto/chat";
 
 export async function chatRoomHandleSend(
   input: string,
@@ -27,16 +28,12 @@ export async function chatRoomHandleSend(
   if ((!text && !attachment) || !realtime) return;
   const tempId = `temp-${nowMs()}`;
 
-  const isE2eeEnabled =
-    typeof window !== "undefined" &&
-    process.env.NEXT_PUBLIC_E2EE_DM_ENABLED === "true";
-
   let envelope: Record<string, unknown> | undefined;
   let displayText = text;
 
-  if (isE2eeEnabled && (text || attachment?.cryptoMetadata) && user?.id) {
+  if (isE2eeDmEnabled() && (text || attachment?.cryptoMetadata) && user?.id) {
     try {
-      const identity = await getIdentity();
+      const identity = await getIdentity(user.id);
       if (identity) {
         // Rotate/redistribute our room sender-key first if membership has
         // moved on since we last did (§1.5: lazy, per-sender, before send).

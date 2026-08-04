@@ -28,10 +28,11 @@ export const GET = withLogging(async (_request, log) => {
     if (encoded) {
       cookieUser = JSON.parse(decodeBase64(encoded)) as User;
       // Cookies minted before login/register/mfa started overlaying the real
-      // `me` snapshot never carry hideAvatar (@HideField()'d on the
-      // login/register mutation's user type). Self-heal instead of trusting
-      // that partial snapshot for the rest of the session.
-      if (cookieUser.hideAvatar !== undefined) {
+      // `me` snapshot never carry the newest SessionUserPayload fields (e.g.
+      // e2eeEnabled). Self-heal instead of trusting that partial snapshot
+      // for the rest of the session. Keep this canary pointed at whichever
+      // field was added most recently.
+      if (cookieUser.e2eeEnabled !== undefined) {
         return NextResponse.json(
           { user: cookieUser, accessToken },
           { status: 200 },

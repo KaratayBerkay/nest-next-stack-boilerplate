@@ -180,6 +180,9 @@ export class MessagingWsGateway implements OnModuleInit {
         data as unknown as { recipientId: string },
       ),
     );
+    this.realtime.registerHandler('e2ee-rekey', (ws, data) =>
+      this.handleE2eeRekey(ws as AuthWs, data as unknown as { peerId: string }),
+    );
 
     // Page-claim callbacks for chat-room (Phase 7 D1/D2)
     this.realtime.registerPageCallbacks(
@@ -442,6 +445,14 @@ export class MessagingWsGateway implements OnModuleInit {
     this.realtime.emitToPage(data.recipientId, 'messages', {
       type: 'typing-stop',
       senderId: ws.userId,
+    });
+  }
+
+  private handleE2eeRekey(ws: AuthWs, data: { peerId: string }) {
+    if (!ws.userId) return;
+    this.realtime.emitToPage(data.peerId, 'messages', {
+      type: 'e2ee-rekey',
+      peerId: ws.userId,
     });
   }
 }

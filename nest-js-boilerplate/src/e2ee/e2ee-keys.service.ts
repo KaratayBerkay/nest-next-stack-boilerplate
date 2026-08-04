@@ -18,7 +18,11 @@ export class E2eeKeysService implements E2eeLifecycleHook {
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
     private readonly config: ConfigService,
   ) {
-    const raw = this.config.get<string>('SESSION_TTL', '900s');
+    // Deliberately its own config, not SESSION_TTL: a bundle must stay
+    // claimable by *other* users even while its owner is merely idle (no
+    // requests of their own to slide the TTL via touchTTL), so it needs a
+    // much longer base life than the per-request session timeout.
+    const raw = this.config.get<string>('E2EE_BUNDLE_TTL', '30d');
     this.ttl = parseDurationToSeconds(raw);
   }
 

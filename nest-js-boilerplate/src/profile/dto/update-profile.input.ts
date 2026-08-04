@@ -57,6 +57,12 @@ export class UpdateProfileInput {
   @IsBoolean()
   hideAvatar?: boolean;
 
+  /** Owner's own preference — encrypts DMs/room messages this device sends. */
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsBoolean()
+  e2eeEnabled?: boolean;
+
   @Field({ nullable: true })
   @IsOptional()
   @IsIn(['en', 'tr'])

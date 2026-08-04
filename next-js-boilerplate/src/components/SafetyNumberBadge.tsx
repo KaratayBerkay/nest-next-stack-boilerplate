@@ -22,7 +22,7 @@ export function SafetyNumberBadge({
     let cancelled = false;
 
     async function check() {
-      const stored = await getSafetyNumber(peerUserId);
+      const stored = await getSafetyNumber(ownUserId, peerUserId);
       if (!cancelled) {
         setVerified(
           !!stored && (!peerFingerprint || stored === peerFingerprint),
@@ -34,7 +34,7 @@ export function SafetyNumberBadge({
     return () => {
       cancelled = true;
     };
-  }, [peerUserId, peerFingerprint]);
+  }, [peerUserId, peerFingerprint, ownUserId]);
 
   return (
     <>

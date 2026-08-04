@@ -181,8 +181,9 @@ export class TokenStoreService {
     }
     await pipe.exec();
 
-    // Mirror the TTL slide onto E2EE key material for this device so
-    // the bundle stays discoverable exactly as long as the session lives.
+    // Mirror the TTL slide onto E2EE key material for this device too —
+    // still on its own longer-lived TTL (E2eeKeysService), this just keeps
+    // an active session's bundle from ever being the first thing to expire.
     if (userId) {
       await this.e2ee?.touchTTL(userId, deviceId || null);
     }

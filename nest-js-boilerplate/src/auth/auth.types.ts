@@ -118,6 +118,10 @@ export class SessionUserPayload {
   /** Owner's own preference — withholds avatarUrl from other users when true. */
   @Field({ defaultValue: false })
   hideAvatar!: boolean;
+
+  /** Owner's own preference — encrypts DMs/room messages this device sends. */
+  @Field({ defaultValue: true })
+  e2eeEnabled!: boolean;
 }
 
 @ObjectType()

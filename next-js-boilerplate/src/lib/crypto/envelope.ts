@@ -52,6 +52,7 @@ export interface DecryptResult {
  * attaches the init preamble.  On subsequent messages, uses the ratchet.
  */
 export async function encryptDmMessage(
+  ownUserId: string,
   plaintext: MessagePlaintextV1,
   senderIdentity: {
     identity: DeviceIdentity;
@@ -66,7 +67,7 @@ export async function encryptDmMessage(
 
   // Check if we already have a ratchet session for this peer
   const { getRatchetSession } = await import("./store");
-  const existingSession = await getRatchetSession(recipientUserId);
+  const existingSession = await getRatchetSession(ownUserId, recipientUserId);
 
   let init: X3dhInit | undefined;
   const isFirstMessage = !existingSession;
@@ -88,6 +89,7 @@ export async function encryptDmMessage(
     // a real DH against the peer's signed prekey (see ratchet.ts), which
     // the responder mirrors in initReceiverSession.
     await initSenderSession(
+      ownUserId,
       recipientUserId,
       recipientBundle.identitySigningKey, // placeholder — real device ID comes from server
       sessionKey,
@@ -99,6 +101,7 @@ export async function encryptDmMessage(
 
   // Encrypt with ratchet
   const { ciphertext, nonce, header } = await ratchetEncrypt(
+    ownUserId,
     recipientUserId,
     plaintextBytes,
     senderIdentity.identity.deviceId,
@@ -147,7 +150,10 @@ export async function decryptDmMessage(
   // already-advanced ratchet session every time that old message is viewed
   // again, breaking every message after it too.
   const { getRatchetSession } = await import("./store");
-  const existingSession = await getRatchetSession(senderUserId);
+  const existingSession = await getRatchetSession(
+    recipientUserId,
+    senderUserId,
+  );
   const wasHandshake = !!envelope.x3dhInit && !existingSession;
 
   if (wasHandshake) {
@@ -157,7 +163,10 @@ export async function decryptDmMessage(
     let oneTimePrekeyPrivateKey: string | undefined;
     if (usedOneTimePrekeyId) {
       const { getOneTimePrekey } = await import("./store");
-      const stored = await getOneTimePrekey(usedOneTimePrekeyId);
+      const stored = await getOneTimePrekey(
+        recipientUserId,
+        usedOneTimePrekeyId,
+      );
       oneTimePrekeyPrivateKey = stored?.privateKey;
     }
 
@@ -177,6 +186,7 @@ export async function decryptDmMessage(
     // two different keys; the header's dhPub is what every subsequent
     // message will be ratcheted against).
     await initReceiverSession(
+      recipientUserId,
       senderUserId,
       envelope.senderDeviceId,
       sessionKey,
@@ -188,12 +198,13 @@ export async function decryptDmMessage(
     // Delete consumed OPK from IndexedDB
     if (usedOneTimePrekeyId && oneTimePrekeyPrivateKey) {
       const { deleteOneTimePrekey } = await import("./store");
-      await deleteOneTimePrekey(usedOneTimePrekeyId);
+      await deleteOneTimePrekey(recipientUserId, usedOneTimePrekeyId);
     }
   }
 
   // Decrypt with ratchet
   const plaintextBytes = await ratchetDecrypt(
+    recipientUserId,
     senderUserId,
     envelope.ciphertext,
     envelope.nonce,

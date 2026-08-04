@@ -85,11 +85,14 @@ export const ChatRoomMessageList = forwardRef<
                 </span>
               ) : (
                 <span
-                  className={`inline-block rounded-xl px-3 py-1.5 text-sm italic ${
+                  className={`inline-block rounded-xl px-3 py-1.5 text-sm ${
                     isMe ? "bg-brand text-brand-fg" : "bg-surface text-fg"
                   }`}
                 >
-                  [Encrypted]
+                  <span className="text-muted inline-flex items-center gap-1.5 text-xs italic">
+                    <span>{"\uD83D\uDD12"}</span>
+                    <span>Encrypted</span>
+                  </span>
                 </span>
               )}
             </div>

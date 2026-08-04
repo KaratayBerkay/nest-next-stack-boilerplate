@@ -8,6 +8,7 @@ import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
+import { E2eeErrorState } from "@/components/E2eeErrorState";
 import { cn } from "@/lib/cn";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRoom } from "@/lib/realtime/useRoom";
@@ -38,7 +39,11 @@ function ChatRoomContent({
   const t = useMessages("chat-room");
   const tErr = useMessages("error");
   const { user, loading } = useAuth();
-  useE2eeIdentity();
+  const {
+    ready: e2eeReady,
+    error: e2eeError,
+    refresh: e2eeRefresh,
+  } = useE2eeIdentity();
   const queryClient = useQueryClient();
   const router = useRouter();
   const [room, setRoom] = useState<string>(initialRoom);
@@ -128,6 +133,10 @@ function ChatRoomContent({
 
   if (loading) return <LoadingAuth />;
   if (!user) return <UnauthenticatedMessage message={t.signInRequired} />;
+  if (!e2eeReady && !e2eeError) return <ChatRoomFallback />;
+  if (e2eeError) {
+    return <E2eeErrorState error={e2eeError} onRetry={e2eeRefresh} />;
+  }
 
   return (
     <div

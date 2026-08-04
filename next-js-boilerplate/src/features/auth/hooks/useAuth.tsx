@@ -19,6 +19,8 @@ import { refreshTokenServer } from "@/api/server/auth/token";
 import { refreshSession } from "@/lib/api-client";
 import { deviceHandshakeServer } from "@/api/server/auth/device-handshake";
 import { verifyMfaServer } from "@/api/server/auth/mfa";
+import { setE2eeEnabled } from "@/lib/crypto/e2ee-preference";
+import { setOwnUserId } from "@/api/client/messages/query";
 
 // Session snapshot fields arrive via /api/auth/me (Redis, zero-PG).
 // Login/register return a subset from AuthPayload; the snapshot is the
@@ -120,6 +122,24 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
 
     load();
   }, [initialUser]);
+
+  // Keep the non-React e2ee-preference bridge (read by chat.ts/query.ts/
+  // event-dispatch.ts, which can't call useAuth()) in sync with the
+  // authoritative user object — covers every path that changes `user`
+  // (SSR hydration, login, register, MFA verify, settings-page refreshUser).
+  useEffect(() => {
+    setE2eeEnabled(user?.e2eeEnabled ?? true);
+  }, [user?.e2eeEnabled]);
+
+  // Same idea for the _ownUserId bridge query.ts's decrypt helpers rely on.
+  // Previously only ever set as a side effect of opening a specific DM
+  // (conversationMessagesQueryOptions), which raced the conversations list
+  // itself — that list's own decrypt (fetchConversations) needs this before
+  // its very first fetch, which happens on Messages/shell mount, well before
+  // any conversation is opened.
+  useEffect(() => {
+    setOwnUserId(user?.id ?? null);
+  }, [user?.id]);
 
   // Listen for auth:logout events dispatched by apiFetch on 401.
   useEffect(() => {

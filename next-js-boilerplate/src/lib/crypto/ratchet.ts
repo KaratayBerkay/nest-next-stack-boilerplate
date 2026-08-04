@@ -57,6 +57,7 @@ const MAX_SKIPPED_KEYS = 200;
  * stays unset (null) until Bob's first reply triggers a DH-ratchet step.
  */
 export async function initSenderSession(
+  ownUserId: string,
   peerUserId: string,
   peerDeviceId: string,
   sessionKey: string,
@@ -83,7 +84,7 @@ export async function initSenderSession(
     updatedAt: new Date().toISOString(),
   };
 
-  await setRatchetSession(session);
+  await setRatchetSession(ownUserId, session);
 }
 
 /**
@@ -99,6 +100,7 @@ export async function initSenderSession(
  * copying the receiving chain.
  */
 export async function initReceiverSession(
+  ownUserId: string,
   peerUserId: string,
   peerDeviceId: string,
   sessionKey: string,
@@ -129,7 +131,7 @@ export async function initReceiverSession(
     updatedAt: new Date().toISOString(),
   };
 
-  await setRatchetSession(session);
+  await setRatchetSession(ownUserId, session);
 }
 
 /**
@@ -143,6 +145,7 @@ export async function initReceiverSession(
  * ciphertext, nonce, and header (which goes on the wire in the clear).
  */
 export async function ratchetEncrypt(
+  ownUserId: string,
   peerUserId: string,
   plaintext: Uint8Array,
   senderId: string,
@@ -152,7 +155,7 @@ export async function ratchetEncrypt(
   nonce: string;
   header: RatchetHeader;
 }> {
-  const session = await getRatchetSession(peerUserId);
+  const session = await getRatchetSession(ownUserId, peerUserId);
   if (!session) {
     throw new Error(`No ratchet session for peer ${peerUserId}`);
   }
@@ -195,7 +198,7 @@ export async function ratchetEncrypt(
   session.sendingChainKey = nextChainKey;
   session.sendingChainIndex += 1;
   session.updatedAt = new Date().toISOString();
-  await setRatchetSession(session);
+  await setRatchetSession(ownUserId, session);
 
   return {
     ciphertext: cipherInput.ciphertext,
@@ -216,6 +219,7 @@ export async function ratchetEncrypt(
  * peerDhPub starts null).  Returns the plaintext Uint8Array.
  */
 export async function ratchetDecrypt(
+  ownUserId: string,
   peerUserId: string,
   ciphertext: string,
   nonce: string,
@@ -223,7 +227,7 @@ export async function ratchetDecrypt(
   senderId: string,
   recipientId: string,
 ): Promise<Uint8Array> {
-  const session = await getRatchetSession(peerUserId);
+  const session = await getRatchetSession(ownUserId, peerUserId);
   if (!session) {
     throw new Error(`No ratchet session for peer ${peerUserId}`);
   }
@@ -252,7 +256,7 @@ export async function ratchetDecrypt(
     delete session.skippedMessageKeys[skipKey];
     session.receivingChainCount += 1;
     session.updatedAt = new Date().toISOString();
-    await setRatchetSession(session);
+    await setRatchetSession(ownUserId, session);
     return plaintext;
   }
 
@@ -329,7 +333,7 @@ export async function ratchetDecrypt(
   Object.assign(session.skippedMessageKeys, scratchSkipped);
   evictOldestSkippedKeys(session);
   session.updatedAt = new Date().toISOString();
-  await setRatchetSession(session);
+  await setRatchetSession(ownUserId, session);
 
   return plaintext;
 }

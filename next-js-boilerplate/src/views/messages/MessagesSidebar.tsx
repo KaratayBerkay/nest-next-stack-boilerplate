@@ -31,6 +31,7 @@ export function MessagesSidebar({
   debouncedSearch,
   onlineUsers,
   convsError,
+  convsLoading,
   progress,
   direction,
   isSwiping,
@@ -99,6 +100,7 @@ export function MessagesSidebar({
           openConversation={openConversation}
           onlineUsers={onlineUsers}
           convsError={convsError}
+          convsLoading={convsLoading}
         />
       ) : (
         <MessagesSidebarFriends

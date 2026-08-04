@@ -29,43 +29,51 @@ const sessions = new Map<string, unknown>();
 const safetyNumbers = new Map<string, string>();
 
 vi.mock("./store", () => ({
-  getIdentity: vi.fn(() => Promise.resolve(identities.get("current") ?? null)),
-  setIdentity: vi.fn((id: StoredIdentity) => {
+  getIdentity: vi.fn((_ownUserId: string) =>
+    Promise.resolve(identities.get("current") ?? null),
+  ),
+  setIdentity: vi.fn((_ownUserId: string, id: StoredIdentity) => {
     identities.set("current", id);
     return Promise.resolve();
   }),
-  getSignedPrekey: vi.fn((_keyId: number) => {
+  getSignedPrekey: vi.fn((_ownUserId: string, _keyId: number) => {
     return Promise.resolve(prekeys.get(`spk-${_keyId}`) ?? null);
   }),
-  setSignedPrekey: vi.fn((_keyId: number, spk: unknown) => {
+  setSignedPrekey: vi.fn((_ownUserId: string, _keyId: number, spk: unknown) => {
     prekeys.set(`spk-${_keyId}`, spk);
     return Promise.resolve();
   }),
-  getOneTimePrekey: vi.fn((_keyId: string) => {
+  getOneTimePrekey: vi.fn((_ownUserId: string, _keyId: string) => {
     return Promise.resolve(prekeys.get(`otpk-${_keyId}`) ?? null);
   }),
-  setOneTimePrekey: vi.fn((_keyId: string, opk: unknown) => {
-    prekeys.set(`otpk-${_keyId}`, opk);
-    return Promise.resolve();
-  }),
-  deleteOneTimePrekey: vi.fn((_keyId: string) => {
+  setOneTimePrekey: vi.fn(
+    (_ownUserId: string, _keyId: string, opk: unknown) => {
+      prekeys.set(`otpk-${_keyId}`, opk);
+      return Promise.resolve();
+    },
+  ),
+  deleteOneTimePrekey: vi.fn((_ownUserId: string, _keyId: string) => {
     prekeys.delete(`otpk-${_keyId}`);
     return Promise.resolve();
   }),
-  getRatchetSession: vi.fn((peerUserId: string) => {
+  getRatchetSession: vi.fn((_ownUserId: string, peerUserId: string) => {
     return Promise.resolve(sessions.get(peerUserId) ?? null);
   }),
-  setRatchetSession: vi.fn((session: { peerUserId: string }) => {
-    sessions.set(session.peerUserId, session);
-    return Promise.resolve();
-  }),
-  getSafetyNumber: vi.fn((peerUserId: string) => {
+  setRatchetSession: vi.fn(
+    (_ownUserId: string, session: { peerUserId: string }) => {
+      sessions.set(session.peerUserId, session);
+      return Promise.resolve();
+    },
+  ),
+  getSafetyNumber: vi.fn((_ownUserId: string, peerUserId: string) => {
     return Promise.resolve(safetyNumbers.get(peerUserId) ?? null);
   }),
-  setSafetyNumber: vi.fn((peerUserId: string, fp: string) => {
-    safetyNumbers.set(peerUserId, fp);
-    return Promise.resolve();
-  }),
+  setSafetyNumber: vi.fn(
+    (_ownUserId: string, peerUserId: string, fp: string) => {
+      safetyNumbers.set(peerUserId, fp);
+      return Promise.resolve();
+    },
+  ),
 }));
 
 // Re-import after mock
@@ -191,6 +199,7 @@ describe("Two-party E2EE integration", () => {
     // Alice initializes sender session — her sending chain is seeded via a
     // real DH against Bob's signed prekey (already used in X3DH above).
     await initSenderSession(
+      "alice",
       "bob",
       "bob-device-1",
       sessionKey,
@@ -201,10 +210,11 @@ describe("Two-party E2EE integration", () => {
     // (In production, Bob gets this from Alice's first message header;
     //  for the test, we read it directly from the session store.) and his
     // own signed-prekey keypair (mirrors Alice's derivation by DH symmetry).
-    const aliceSession = await getRatchetSession("bob");
+    const aliceSession = await getRatchetSession("alice", "bob");
     const aliceRatchetDhPub = (aliceSession as { dhPub: string }).dhPub;
 
     await initReceiverSession(
+      "bob",
       "alice",
       "alice-device-1",
       sessionKey,
@@ -224,6 +234,7 @@ describe("Two-party E2EE integration", () => {
       nonce: n1,
       header: h1,
     } = await ratchetEncrypt(
+      "alice",
       "bob",
       plaintext1Bytes,
       "alice-device-1",
@@ -236,6 +247,7 @@ describe("Two-party E2EE integration", () => {
 
     // ── Step 5: Bob decrypts first message ──
     const decrypted1 = await ratchetDecrypt(
+      "bob",
       "alice",
       ct1,
       n1,
@@ -260,6 +272,7 @@ describe("Two-party E2EE integration", () => {
       nonce: n2,
       header: h2,
     } = await ratchetEncrypt(
+      "bob",
       "alice",
       plaintext2Bytes,
       "bob-device-1",
@@ -268,6 +281,7 @@ describe("Two-party E2EE integration", () => {
 
     // ── Step 7: Alice decrypts Bob's reply ──
     const decrypted2 = await ratchetDecrypt(
+      "alice",
       "bob",
       ct2,
       n2,
@@ -310,6 +324,7 @@ describe("Two-party E2EE integration", () => {
       // The decryptor's session is keyed by the sender's userId
       const decryptSessionPeer = msg.from;
       const { ciphertext, nonce, header } = await ratchetEncrypt(
+        msg.from,
         msg.toPeer,
         ptBytes,
         fromDevice,
@@ -317,6 +332,7 @@ describe("Two-party E2EE integration", () => {
       );
 
       const decrypted = await ratchetDecrypt(
+        msg.toPeer,
         decryptSessionPeer,
         ciphertext,
         nonce,
@@ -337,6 +353,7 @@ describe("Two-party E2EE integration", () => {
     const sessionKey = "0".repeat(64); // dummy session key for testing
     const bobSpk = generateEphemeralKey();
     await initSenderSession(
+      "alice",
       "bob",
       "bob-device-1",
       sessionKey,
@@ -349,6 +366,7 @@ describe("Two-party E2EE integration", () => {
       const pt: MessagePlaintextV1 = { text: `msg-${i}` };
       const ptBytes = new TextEncoder().encode(JSON.stringify(pt));
       const env = await ratchetEncrypt(
+        "alice",
         "bob",
         ptBytes,
         "alice-device-1",
@@ -359,6 +377,7 @@ describe("Two-party E2EE integration", () => {
 
     // Initialize receiver with the same session key
     await initReceiverSession(
+      "bob",
       "alice",
       "alice-device-1",
       sessionKey,
@@ -369,6 +388,7 @@ describe("Two-party E2EE integration", () => {
 
     // Receive in reverse order: msg-2, msg-0, msg-1
     const pt2 = await ratchetDecrypt(
+      "bob",
       "alice",
       envelopes[2].ciphertext,
       envelopes[2].nonce,
@@ -379,6 +399,7 @@ describe("Two-party E2EE integration", () => {
     expect(JSON.parse(new TextDecoder().decode(pt2)).text).toBe("msg-2");
 
     const pt0 = await ratchetDecrypt(
+      "bob",
       "alice",
       envelopes[0].ciphertext,
       envelopes[0].nonce,
@@ -389,6 +410,7 @@ describe("Two-party E2EE integration", () => {
     expect(JSON.parse(new TextDecoder().decode(pt0)).text).toBe("msg-0");
 
     const pt1 = await ratchetDecrypt(
+      "bob",
       "alice",
       envelopes[1].ciphertext,
       envelopes[1].nonce,
@@ -403,6 +425,7 @@ describe("Two-party E2EE integration", () => {
     const sessionKey = "0".repeat(64);
     const bobSpk = generateEphemeralKey();
     await initSenderSession(
+      "alice",
       "bob",
       "bob-device-1",
       sessionKey,
@@ -413,6 +436,7 @@ describe("Two-party E2EE integration", () => {
     const ptBytes = new TextEncoder().encode(JSON.stringify(pt));
 
     const { ciphertext, nonce, header } = await ratchetEncrypt(
+      "alice",
       "bob",
       ptBytes,
       "alice-device-1",
@@ -421,6 +445,7 @@ describe("Two-party E2EE integration", () => {
 
     // Initialize receiver with correct session
     await initReceiverSession(
+      "bob",
       "alice",
       "alice-device-1",
       sessionKey,
@@ -432,6 +457,7 @@ describe("Two-party E2EE integration", () => {
     // Try to decrypt with wrong sender/recipient IDs (wrong AAD)
     await expect(
       ratchetDecrypt(
+        "bob",
         "alice",
         ciphertext,
         nonce,
@@ -456,9 +482,10 @@ describe("Two-party E2EE integration", () => {
 
     // Register Bob's claimed one-time-prekey under its real id, exactly as
     // it would exist in his local IndexedDB before it was ever claimed.
-    await setOneTimePrekey(bob.opks[0].keyId, bob.opks[0]);
+    await setOneTimePrekey("bob", bob.opks[0].keyId, bob.opks[0]);
 
     const { envelope } = await encryptDmMessage(
+      "alice",
       { text: "hello via envelope" },
       {
         identity: alice.identity,
@@ -492,6 +519,7 @@ describe("Two-party E2EE integration", () => {
     // A follow-up message needs no X3DH preamble and must still decrypt via
     // the now-established ratchet session.
     const { envelope: envelope2 } = await encryptDmMessage(
+      "alice",
       { text: "second message" },
       {
         identity: alice.identity,
@@ -528,7 +556,7 @@ describe("Two-party E2EE integration", () => {
     // browsing. This must be a no-op once a session already exists.
     const { encryptDmMessage, decryptDmMessage } = await import("./envelope");
     const { setOneTimePrekey } = await import("./store");
-    await setOneTimePrekey(bob.opks[0].keyId, bob.opks[0]);
+    await setOneTimePrekey("bob", bob.opks[0].keyId, bob.opks[0]);
 
     const bobIdentity = {
       signingPrivateKey: bob.signingPrivateKey,
@@ -544,6 +572,7 @@ describe("Two-party E2EE integration", () => {
 
     // Message 1 (the handshake) — Bob bootstraps his session.
     const { envelope: firstEnvelope } = await encryptDmMessage(
+      "alice",
       { text: "hi" },
       aliceIdentity,
       bob.bundle,
@@ -554,6 +583,7 @@ describe("Two-party E2EE integration", () => {
 
     // A reply and another message advance Bob's session well past epoch 0.
     const { envelope: replyEnvelope } = await encryptDmMessage(
+      "bob",
       { text: "reply" },
       {
         identity: bob.identity,
@@ -575,6 +605,7 @@ describe("Two-party E2EE integration", () => {
       "alice",
     );
     const { envelope: secondEnvelope } = await encryptDmMessage(
+      "alice",
       { text: "second" },
       aliceIdentity,
       bob.bundle,
@@ -592,6 +623,7 @@ describe("Two-party E2EE integration", () => {
     // A brand-new message must still decrypt correctly after the replay —
     // proving the live session survived untouched.
     const { envelope: thirdEnvelope } = await encryptDmMessage(
+      "alice",
       { text: "still working after replay" },
       aliceIdentity,
       bob.bundle,

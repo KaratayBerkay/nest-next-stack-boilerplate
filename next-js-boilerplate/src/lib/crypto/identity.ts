@@ -19,17 +19,21 @@ import {
   getSignedPrekey,
   setSignedPrekey,
   setOneTimePrekey,
+  getAllOneTimePrekeys,
+  deleteOneTimePrekey,
+  getIdentitySigningPrivateKey as storeGetIdentitySigningPrivateKey,
+  setIdentitySigningPrivateKey,
+  getIdentityAgreementPrivateKey as storeGetIdentityAgreementPrivateKey,
+  setIdentityAgreementPrivateKey,
 } from "./store";
-import type {
-  DeviceIdentity,
-  DeviceBundle,
-  SignedPrekey,
-  OneTimePrekey,
-} from "./types";
+import type { DeviceIdentity, DeviceBundle, SignedPrekey } from "./types";
 
 const ALG_VERSION = 1;
-const PREKEY_BATCH_SIZE = 10;
 const PREKEY_SERVER_BATCH = 10;
+/** Keep at most this many OTPKs in IndexedDB to prevent unbounded growth. */
+const MAX_OTPK_COUNT = 20;
+/** Replenish when OTPK count drops below this threshold. */
+const MIN_OTPK_COUNT = 5;
 
 /**
  * Ensure a device identity exists.  Returns the identity and the server
@@ -38,12 +42,15 @@ const PREKEY_SERVER_BATCH = 10;
  * If no identity exists in IndexedDB, generates one.  If an identity
  * already exists, returns it along with the current signed prekey.
  */
-export async function ensureIdentity(deviceId: string): Promise<{
+export async function ensureIdentity(
+  ownUserId: string,
+  deviceId: string,
+): Promise<{
   identity: DeviceIdentity;
   bundle: DeviceBundle;
   serverPrekeys: Array<{ keyId: string; publicKey: string }>;
 }> {
-  let identity = await getIdentity();
+  let identity = await getIdentity(ownUserId);
 
   if (!identity) {
     // Generate fresh identity keypairs
@@ -60,23 +67,18 @@ export async function ensureIdentity(deviceId: string): Promise<{
       createdAt: new Date().toISOString(),
     };
 
-    // Persist private key material (for signing + DH)
-    await setIdentity({
-      ...identity,
-      // Store private keys alongside (non-enumerable in the public type)
-    } as DeviceIdentity & Record<string, unknown>);
-
-    // Store private keys separately in prekeys store for reference
-    // (identity signing key private key is stored via the identity store)
-    const db = await import("./store").then((m) => m.getIdentity());
-    // We store the private keys as extra fields on the identity
-    await persistIdentityPrivateKeys(ikSig.privateKey, ikDh.privateKey);
+    await setIdentity(ownUserId, identity);
+    await persistIdentityPrivateKeys(
+      ownUserId,
+      ikSig.privateKey,
+      ikDh.privateKey,
+    );
   }
 
   // Generate or retrieve signed prekey
-  let spk = await getCurrentSignedPrekey();
+  let spk = await getCurrentSignedPrekey(ownUserId);
   if (!spk) {
-    const signingKeyHex = await getIdentitySigningPrivateKey();
+    const signingKeyHex = await getIdentitySigningPrivateKey(ownUserId);
     const raw = generateSignedPrekey(signingKeyHex);
     spk = {
       keyId: 0,
@@ -85,13 +87,32 @@ export async function ensureIdentity(deviceId: string): Promise<{
       createdAt: new Date().toISOString(),
       privateKey: raw.privateKey,
     };
-    await setSignedPrekey(0, spk);
+    await setSignedPrekey(ownUserId, 0, spk);
   }
 
-  // Generate one-time prekeys for initial upload
-  const serverPrekeys = generateOneTimePrekeys(PREKEY_SERVER_BATCH);
-  for (const opk of serverPrekeys) {
-    await setOneTimePrekey(opk.keyId, opk);
+  // Only generate one-time prekeys if we're running low
+  const existingOpks = await getAllOneTimePrekeys(ownUserId);
+  let serverPrekeys: Array<{ keyId: string; publicKey: string }> = [];
+
+  if (existingOpks.length < MIN_OTPK_COUNT) {
+    const newOpks = generateOneTimePrekeys(PREKEY_SERVER_BATCH);
+    for (const opk of newOpks) {
+      await setOneTimePrekey(ownUserId, opk.keyId, opk);
+    }
+    serverPrekeys = newOpks.map(({ keyId, publicKey }) => ({
+      keyId,
+      publicKey,
+    }));
+
+    // Clean up excess OTPKs — keep only the newest MAX_OTPK_COUNT
+    const allOpks = await getAllOneTimePrekeys(ownUserId);
+    if (allOpks.length > MAX_OTPK_COUNT) {
+      const sorted = allOpks.sort((a, b) => a.keyId.localeCompare(b.keyId));
+      const toDelete = sorted.slice(0, allOpks.length - MAX_OTPK_COUNT);
+      for (const opk of toDelete) {
+        await deleteOneTimePrekey(ownUserId, opk.keyId);
+      }
+    }
   }
 
   // Build the public bundle for server registration
@@ -118,40 +139,33 @@ export async function ensureIdentity(deviceId: string): Promise<{
 // ── Private key access (for signing operations) ─────────────────────────
 
 /** Retrieve the identity signing private key from IndexedDB. */
-export async function getIdentitySigningPrivateKey(): Promise<string> {
-  const db = await import("idb").then((m) =>
-    m
-      .openDB("e2ee", 1)
-      .then((d) => d.get("prekeys", "identity-signing-privkey")),
-  );
-  return db as unknown as string;
+export async function getIdentitySigningPrivateKey(
+  ownUserId: string,
+): Promise<string> {
+  return (await storeGetIdentitySigningPrivateKey(ownUserId)) as string;
 }
 
 /** Retrieve the identity agreement private key from IndexedDB. */
-export async function getIdentityAgreementPrivateKey(): Promise<string> {
-  const db = await import("idb").then((m) =>
-    m
-      .openDB("e2ee", 1)
-      .then((d) => d.get("prekeys", "identity-agreement-privkey")),
-  );
-  return db as unknown as string;
+export async function getIdentityAgreementPrivateKey(
+  ownUserId: string,
+): Promise<string> {
+  return (await storeGetIdentityAgreementPrivateKey(ownUserId)) as string;
 }
 
 async function persistIdentityPrivateKeys(
+  ownUserId: string,
   signingPrivkey: string,
   agreementPrivkey: string,
 ): Promise<void> {
-  const { openDB } = await import("idb");
-  const db = await openDB("e2ee", 1);
-  await db.put("prekeys", signingPrivkey, "identity-signing-privkey");
-  await db.put("prekeys", agreementPrivkey, "identity-agreement-privkey");
+  await setIdentitySigningPrivateKey(ownUserId, signingPrivkey);
+  await setIdentityAgreementPrivateKey(ownUserId, agreementPrivkey);
 }
 
-async function getCurrentSignedPrekey(): Promise<
-  (SignedPrekey & { privateKey: string }) | null
-> {
+async function getCurrentSignedPrekey(
+  ownUserId: string,
+): Promise<(SignedPrekey & { privateKey: string }) | null> {
   // Try keyId 0 (current), fall back to null
-  return getSignedPrekey(0);
+  return getSignedPrekey(ownUserId, 0);
 }
 
 // ── Helper ──────────────────────────────────────────────────────────────

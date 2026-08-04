@@ -7,12 +7,15 @@ import { friendsQueryOptions } from "@/api/client/friends/query";
 import type { UserInfo } from "@/types/messages/FreePageView-types";
 
 export function useMessagesData(
-  initialFriends: Array<{
-    id: string;
-    name: string;
-    email: string;
-    avatarUrl: string | null;
-  }> | null | undefined,
+  initialFriends:
+    | Array<{
+        id: string;
+        name: string;
+        email: string;
+        avatarUrl: string | null;
+      }>
+    | null
+    | undefined,
   hasUser: boolean,
 ) {
   const { data: friendsData } = useQuery({
@@ -33,11 +36,12 @@ export function useMessagesData(
     data: conversationsData,
     refetch: _refetchConversations,
     isError: convsError,
+    isPending: convsLoading,
   } = useConversations();
   const conversations = useMemo(
     () => conversationsData ?? [],
     [conversationsData],
   );
 
-  return { friends, conversations, convsError };
+  return { friends, conversations, convsError, convsLoading };
 }

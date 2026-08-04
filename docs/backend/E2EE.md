@@ -15,7 +15,7 @@ Related: [REALTIME.md](REALTIME.md) (WebSocket transport), `docs/progress/end-2-
 | Key agreement curves | X25519 |
 | KDF / MAC | HKDF-SHA256, HMAC-SHA256 |
 | Crypto library | `@noble/curves`, `@noble/ciphers`, `@noble/hashes` (Cure53-audited, pure TS) |
-| Feature flag | `NEXT_PUBLIC_E2EE_DM_ENABLED` (client-only; backend is flag-agnostic) |
+| Enable/disable | Per-user `User.e2eeEnabled` (default on), toggled at Settings → Privacy. Gates encryption of outgoing messages only — decryption of anything received is always attempted regardless of the viewer's own setting, since a viewer with the identity keys needed to decrypt already holds them independent of it. Backend is otherwise flag-agnostic. |
 
 ## 2 — Per-device identity and prekey bundle
 
@@ -40,9 +40,14 @@ Private keys never leave IndexedDB. Only public halves + signatures are POSTed t
 | `e2ee:otpk:<deviceId>` | List (JSON elements) | One-time prekeys, claimed via atomic `LPOP` |
 | `e2ee:active-device:<userId>` | String | Device ID holding this user's active bundle |
 
-All keys share the session's sliding TTL (`TokenStoreService.extendTTL()`), refreshed on
-every authenticated request. Explicitly `DEL`eted on logout (`AuthSessionService` lifecycle
-hooks) so keys are removed immediately, not left to expire.
+All keys share a dedicated `E2EE_BUNDLE_TTL` (default 30d) — deliberately *not* the
+session's own `SESSION_TTL` (900s): a bundle must stay claimable by other users through
+ordinary idle periods where its owner makes no requests of their own to slide it. It's
+still refreshed opportunistically on every authenticated request
+(`TokenStoreService.extendTTL()` → `E2eeKeysService.touchTTL()`), so an active session's
+bundle effectively never expires — the long default is the floor for an idle-but-not-logged-out
+device. Explicitly `DEL`eted on logout (`AuthSessionService` lifecycle hooks) so keys are
+removed immediately, not left to expire.
 
 ### 3.2 Client-side (IndexedDB, `e2ee` database)
 

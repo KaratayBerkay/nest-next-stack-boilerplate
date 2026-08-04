@@ -36,11 +36,14 @@ export const getSessionUser = cache(async (): Promise<User | null> => {
     if (encoded) {
       cookieUser = JSON.parse(decodeBase64(encoded)) as User;
       // Cookies minted before login/register/mfa started overlaying the real
-      // `me` snapshot never carry hideAvatar (it can't even be selected on
-      // the login/register mutation's `user` type — @HideField()'d). Rather
-      // than trust that partial snapshot for the rest of the session, treat
-      // a missing hideAvatar as a signal to self-heal from `me` below.
-      if (cookieUser.hideAvatar !== undefined) {
+      // `me` snapshot never carry the newest `SessionUserPayload` fields
+      // (e.g. e2eeEnabled — added after hideAvatar, which itself can't be
+      // selected on the login/register mutation's `user` type, @HideField()'d).
+      // Rather than trust that partial snapshot for the rest of the session,
+      // treat a missing e2eeEnabled as a signal to self-heal from `me` below.
+      // Keep this canary pointed at whichever SessionUserPayload field was
+      // added most recently.
+      if (cookieUser.e2eeEnabled !== undefined) {
         return cookieUser;
       }
     }

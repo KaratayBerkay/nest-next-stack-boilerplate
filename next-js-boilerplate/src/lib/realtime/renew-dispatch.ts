@@ -1,28 +1,5 @@
 import type { useQueryClient } from "@tanstack/react-query";
 
-/**
- * Decrypt a conversation preview (lastMessage) if it's an encrypted envelope.
- * Returns the plaintext string for display.
- */
-async function maybeDecryptPreview(
-  lastMessage: string | Record<string, unknown>,
-  peerUserId: string,
-): Promise<string> {
-  if (typeof lastMessage === "string") return lastMessage;
-  try {
-    const { isE2eeDmEnabled, decryptConversationPreview } =
-      await import("@/lib/crypto/chat");
-    if (!isE2eeDmEnabled()) return "[Encrypted]";
-    // We need ownUserId for decryption — use a module-level cache
-    const { getOwnUserId } = await import("@/api/client/messages/query");
-    const ownUserId = await getOwnUserId();
-    if (!ownUserId) return "[Encrypted]";
-    return decryptConversationPreview(lastMessage, peerUserId, ownUserId);
-  } catch {
-    return "[Encrypted]";
-  }
-}
-
 export async function dispatchRenew(
   qc: ReturnType<typeof useQueryClient>,
   frame: Record<string, unknown>,
@@ -62,16 +39,14 @@ export async function dispatchRenew(
       if (frame.type === "Conversation") {
         const conv = frame.conversation as Record<string, unknown> & {
           user: { id: string };
-          lastMessage: string | Record<string, unknown>;
+          lastMessage?: string | Record<string, unknown>;
         };
 
-        // Decrypt the lastMessage if it's an encrypted envelope
-        const decryptedLastMessage = await maybeDecryptPreview(
-          conv.lastMessage,
-          conv.user.id,
-        );
-
-        const decryptedConv = { ...conv, lastMessage: decryptedLastMessage };
+        // Never decrypt previews here — it consumes ratchet keys that
+        // decryptMessages still needs when the conversation is opened.
+        // Encrypted envelopes stay as objects; the sidebar renders them
+        // as "🔒 Encrypted".
+        const rawLastMessage = conv.lastMessage;
 
         qc.setQueryData(["conversations"], (old: unknown[] | undefined) => {
           const list = (old ?? []) as Record<string, unknown>[];
@@ -83,7 +58,7 @@ export async function dispatchRenew(
             const merged: Record<string, unknown> = {
               ...(updated[idx] as Record<string, unknown>),
             };
-            for (const [k, v] of Object.entries(decryptedConv)) {
+            for (const [k, v] of Object.entries(conv)) {
               if (v !== undefined && v !== null && v !== "") {
                 merged[k] = v;
               }
@@ -95,7 +70,12 @@ export async function dispatchRenew(
                 (new Date((a.lastTime as string) ?? "").getTime() || 0),
             );
           }
-          return [decryptedConv, ...list];
+          // A partial update for a peer not yet in the cached list (e.g.
+          // the unread-reset push above, which has no lastMessage/lastTime)
+          // isn't enough to render a real conversation row — drop it rather
+          // than inserting a broken stub.
+          if (rawLastMessage === undefined) return list;
+          return [conv, ...list];
         });
       }
       break;

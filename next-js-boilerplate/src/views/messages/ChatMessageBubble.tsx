@@ -44,7 +44,7 @@ export function ChatMessageBubble({
             }
           />
         )}
-        {msg.body && (
+        {msg.body != null && msg.body !== "" ? (
           <span
             className={`inline-block rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
               isMe ? "bg-brand text-brand-fg" : "bg-surface text-fg"
@@ -52,7 +52,20 @@ export function ChatMessageBubble({
           >
             {msg.body}
           </span>
-        )}
+        ) : msg.encrypted ? (
+          <span
+            className={`inline-block rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+              isMe ? "bg-brand text-brand-fg" : "bg-surface text-fg"
+            }`}
+          >
+            <span className="text-muted inline-flex items-center gap-1.5 text-xs italic">
+              <span>{"\uD83D\uDD12"}</span>
+              <span>
+                {msg.needsRekey ? "Re-syncing keys\u2026" : "Encrypted"}
+              </span>
+            </span>
+          </span>
+        ) : null}
         <div
           className={`flex items-center gap-1 px-1 ${isMe ? "flex-row-reverse" : ""}`}
         >

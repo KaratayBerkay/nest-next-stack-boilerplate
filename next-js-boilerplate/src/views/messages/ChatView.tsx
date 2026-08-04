@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
 import { useConversation } from "@/lib/realtime/useConversation";
@@ -23,6 +23,7 @@ import { ChatInputBar } from "@/views/messages/ChatInputBar";
 import { ChatMessageList } from "@/views/messages/ChatMessageList";
 import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
 import { computeUserFingerprint } from "@/lib/crypto/fingerprint";
+import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 
 export function ChatView({
   selectedUser,
@@ -55,6 +56,25 @@ export function ChatView({
     [conversationData],
   );
 
+  // If any message needs re-keying (ratchet session missing/stale), send a
+  // single e2ee-rekey request to that peer so their next message triggers
+  // a fresh X3DH handshake. One request per peer per conversation open.
+  const realtime = useRealtime();
+  const rekeySentRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!realtime || realtime.status !== "open") return;
+    for (const msg of conversationMessages) {
+      if (
+        "needsRekey" in msg &&
+        (msg as { needsRekey?: boolean }).needsRekey &&
+        !rekeySentRef.current.has(msg.senderId)
+      ) {
+        rekeySentRef.current.add(msg.senderId);
+        realtime.send({ type: "e2ee-rekey", peerId: msg.senderId });
+      }
+    }
+  }, [conversationMessages, realtime]);
+
   const { bottomRef, scrollToBottom, isAtBottom } = useAutoScroll(
     conversationMessages,
     !!selectedUser,
@@ -70,16 +90,17 @@ export function ChatView({
 
   useEffect(() => {
     if (!user?.id || !selectedUser?.id) return;
+    const ownUserId = user.id;
     let cancelled = false;
 
     async function load() {
       try {
         const { getIdentity } = await import("@/lib/crypto/store");
-        const identity = await getIdentity();
+        const identity = await getIdentity(ownUserId);
         if (cancelled || !identity) return;
 
         const own = computeUserFingerprint(
-          user.id,
+          ownUserId,
           identity.identitySigningKey,
         );
         if (!cancelled) setOwnFingerprint(own);

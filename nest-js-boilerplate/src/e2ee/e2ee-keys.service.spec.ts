@@ -76,7 +76,7 @@ describe('E2eeKeysService', () => {
     redis = createRedisMock();
     service = new E2eeKeysService(
       redis as unknown as Redis,
-      stubConfig({ SESSION_TTL: '900s' }),
+      stubConfig({ E2EE_BUNDLE_TTL: '900s' }),
     );
   });
 

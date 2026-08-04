@@ -5,6 +5,7 @@ import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { MessagesViewFallback } from "@/fallbacks";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
+import { E2eeErrorState } from "@/components/E2eeErrorState";
 import { cn } from "@/lib/cn";
 import type { MessagesViewProps } from "@/types/messages/MessagesView-types";
 import { useMessagesPage } from "@/hooks/messages/useMessagesPage";
@@ -58,15 +59,23 @@ function MessagesPageContent({
     debouncedSearch,
     onlineUsers,
     convsError,
+    convsLoading,
     progress,
     direction,
     isSwiping,
     connectionState,
     messagesUser,
+    e2eeReady,
+    e2eeError,
+    e2eeRefresh,
   } = useMessagesPage({ initialUser, initialFriends });
 
   if (loading) return <LoadingAuth />;
   if (!user) return <UnauthenticatedMessage message={t.signInRequired} />;
+  if (!e2eeReady && !e2eeError) return <MessagesViewFallback />;
+  if (e2eeError) {
+    return <E2eeErrorState error={e2eeError} onRetry={e2eeRefresh} />;
+  }
 
   return (
     <div
@@ -100,6 +109,7 @@ function MessagesPageContent({
         debouncedSearch={debouncedSearch}
         onlineUsers={onlineUsers}
         convsError={convsError}
+        convsLoading={convsLoading}
         progress={progress}
         direction={direction ?? "right"}
         isSwiping={isSwiping}

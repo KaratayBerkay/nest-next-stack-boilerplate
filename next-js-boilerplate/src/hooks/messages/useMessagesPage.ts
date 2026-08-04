@@ -37,11 +37,15 @@ export function useMessagesPage({
 }: UseMessagesPageInput) {
   const t = useMessages("messages");
   const { user, loading } = useAuth();
-  useE2eeIdentity();
+  const {
+    ready: e2eeReady,
+    error: e2eeError,
+    refresh: e2eeRefresh,
+  } = useE2eeIdentity();
 
   const [selectedUserState, setSelectedUser] = useState<UserInfo | null>(null);
 
-  const { friends, conversations, convsError } = useMessagesData(
+  const { friends, conversations, convsError, convsLoading } = useMessagesData(
     initialFriends,
     !!user,
   );
@@ -165,10 +169,14 @@ export function useMessagesPage({
     debouncedSearch,
     onlineUsers,
     convsError,
+    convsLoading,
     progress,
     direction,
     isSwiping,
     connectionState,
     messagesUser,
+    e2eeReady,
+    e2eeError,
+    e2eeRefresh,
   };
 }

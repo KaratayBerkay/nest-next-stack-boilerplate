@@ -13,4 +13,5 @@ export interface MessagesSidebarConversationsProps {
   openConversation: (u: UserInfo) => void;
   onlineUsers: Set<string>;
   convsError: boolean;
+  convsLoading: boolean;
 }

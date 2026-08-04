@@ -6,6 +6,7 @@ import { initials } from "@/lib/initials";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { formatDateByPreference } from "@/lib/date-time";
+import { SkeletonConversationSidebar } from "@/components/ui/skeleton-shapes";
 import type { MessagesSidebarConversationsProps } from "@/types/messages/MessagesSidebarConversations-types";
 
 export function MessagesSidebarConversations({
@@ -14,9 +15,18 @@ export function MessagesSidebarConversations({
   openConversation,
   onlineUsers,
   convsError,
+  convsLoading,
 }: MessagesSidebarConversationsProps) {
   const t = useMessages("messages");
   const dateDisplay = useDateDisplayCookie();
+
+  if (convsLoading) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-5">
+        <SkeletonConversationSidebar />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
@@ -65,8 +75,10 @@ export function MessagesSidebarConversations({
                 <div className="mt-0.5 flex items-center justify-between gap-2">
                   <p className="text-muted min-w-0 truncate text-sm">
                     {typeof c.lastMessage === "string"
-                      ? c.lastMessage
-                      : "[Encrypted]"}
+                      ? c.lastMessage === "[Encrypted]"
+                        ? "\uD83D\uDD12 Encrypted"
+                        : c.lastMessage
+                      : "\uD83D\uDD12 Encrypted"}
                   </p>
                   {c.unread > 0 && (
                     <span className="bg-error flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white">

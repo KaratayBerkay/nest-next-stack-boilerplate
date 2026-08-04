@@ -64,9 +64,10 @@ function buildRoomAad(
  * Caller must check membershipVersion before using this — if stale, rotate first.
  */
 export async function getOrCreateSenderKeyChain(
+  ownUserId: string,
   roomId: string,
 ): Promise<SenderKeyChain> {
-  const existing = await getSenderKeyChain(roomId);
+  const existing = await getSenderKeyChain(ownUserId, roomId);
   if (existing) return existing;
 
   // Generate a random initial chain key
@@ -78,7 +79,7 @@ export async function getOrCreateSenderKeyChain(
     chainKey,
     chainIndex: 0,
   };
-  await setSenderKeyChain(chain);
+  await setSenderKeyChain(ownUserId, chain);
   return chain;
 }
 
@@ -89,9 +90,10 @@ export async function getOrCreateSenderKeyChain(
  * Returns the new chain and the old chain's key material (for distribution).
  */
 export async function rotateSenderKeyChain(
+  ownUserId: string,
   roomId: string,
 ): Promise<{ newChain: SenderKeyChain; previousEpoch: number }> {
-  const oldChain = await getSenderKeyChain(roomId);
+  const oldChain = await getSenderKeyChain(ownUserId, roomId);
   const previousEpoch = oldChain?.epoch ?? 0;
 
   const newChainKey = bytesToHex(crypto.getRandomValues(new Uint8Array(32)));
@@ -102,7 +104,7 @@ export async function rotateSenderKeyChain(
     chainKey: newChainKey,
     chainIndex: 0,
   };
-  await setSenderKeyChain(newChain);
+  await setSenderKeyChain(ownUserId, newChain);
 
   return { newChain, previousEpoch };
 }
@@ -123,7 +125,28 @@ export async function encryptRoomMessage(
   envelope: RoomMessageEnvelopeV1;
   chain: SenderKeyChain;
 }> {
-  const chain = await getOrCreateSenderKeyChain(roomId);
+  const chain = await getOrCreateSenderKeyChain(senderId, roomId);
+
+  // Decrypting our own echoed-back messages (history reload, the WS delivery
+  // of our own send) looks up the chain under `${roomId}:${senderId}` — the
+  // same key ensureReceivedSenderKey uses for chains received from other
+  // members — never under the bare `roomId` this function's own send-state
+  // lives under. A sender never wraps a copy of its key for itself (it
+  // already has it), so without this there is nothing for that lookup to
+  // ever find and every self-sent message is permanently undecryptable to
+  // its own sender. Mirror the received-chain convention: once per epoch,
+  // at chainIndex 0 (before this call advances chain.chainKey past it),
+  // snapshot the epoch-start key under the self-keyed slot so decrypt can
+  // fast-forward it exactly like a chain received from someone else.
+  if (chain.chainIndex === 0) {
+    await setSenderKeyChain(senderId, {
+      roomId: `${roomId}:${senderId}`,
+      epoch: chain.epoch,
+      chainKey: chain.chainKey,
+      chainIndex: 0,
+    });
+  }
+
   const { messageKey, nextChainKey } = chainStep(chain.chainKey);
 
   const aad = buildRoomAad(
@@ -147,7 +170,7 @@ export async function encryptRoomMessage(
   // Advance the chain
   chain.chainKey = nextChainKey;
   chain.chainIndex += 1;
-  await setSenderKeyChain(chain);
+  await setSenderKeyChain(senderId, chain);
 
   return { envelope, chain };
 }
@@ -277,7 +300,7 @@ export async function distributeSenderKeyIfNeeded(
     await import("@/api/server/e2ee/room-members");
   const { membershipVersion, members } = await fetchRoomMembersServer(roomSlug);
 
-  const existingChain = await getSenderKeyChain(roomSlug);
+  const existingChain = await getSenderKeyChain(ownUserId, roomSlug);
   const lastDistributed = existingChain?.lastDistributedMembershipVersion;
   if (
     existingChain &&
@@ -288,11 +311,11 @@ export async function distributeSenderKeyIfNeeded(
   }
 
   const chain = existingChain
-    ? (await rotateSenderKeyChain(roomSlug)).newChain
-    : await getOrCreateSenderKeyChain(roomSlug);
+    ? (await rotateSenderKeyChain(ownUserId, roomSlug)).newChain
+    : await getOrCreateSenderKeyChain(ownUserId, roomSlug);
 
   const { getIdentityAgreementPrivateKey } = await import("./identity");
-  const myAgreementPrivateKey = await getIdentityAgreementPrivateKey();
+  const myAgreementPrivateKey = await getIdentityAgreementPrivateKey(ownUserId);
 
   const { fetchPeerAgreementKey } =
     await import("@/api/server/e2ee/peer-identity");
@@ -341,7 +364,7 @@ export async function distributeSenderKeyIfNeeded(
   }
 
   chain.lastDistributedMembershipVersion = membershipVersion;
-  await setSenderKeyChain(chain);
+  await setSenderKeyChain(ownUserId, chain);
 }
 
 // ── Reception orchestration (§1.5, §4) ─────────────────────────────────
@@ -354,12 +377,13 @@ export async function distributeSenderKeyIfNeeded(
  * sender we don't yet have (or might have a stale epoch for).
  */
 export async function ensureReceivedSenderKey(
+  ownUserId: string,
   roomSlug: string,
   senderUserId: string,
   senderDeviceId: string,
 ): Promise<void> {
   const storeKey = `${roomSlug}:${senderUserId}`;
-  const existing = await getSenderKeyChain(storeKey);
+  const existing = await getSenderKeyChain(ownUserId, storeKey);
 
   const { fetchSenderKeysServer } =
     await import("@/api/server/e2ee/fetch-sender-keys");
@@ -378,7 +402,7 @@ export async function ensureReceivedSenderKey(
   const { getIdentityAgreementPrivateKey } = await import("./identity");
   const [peerAgreementKey, myAgreementPrivateKey] = await Promise.all([
     fetchPeerAgreementKey(senderUserId),
-    getIdentityAgreementPrivateKey(),
+    getIdentityAgreementPrivateKey(ownUserId),
   ]);
   if (!peerAgreementKey) return;
 
@@ -389,7 +413,7 @@ export async function ensureReceivedSenderKey(
     secret,
   );
 
-  await setSenderKeyChain({
+  await setSenderKeyChain(ownUserId, {
     roomId: storeKey,
     epoch,
     chainKey,

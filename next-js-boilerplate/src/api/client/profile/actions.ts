@@ -7,6 +7,7 @@ export function useProfileActions() {
     chatNickname?: string | null;
     useNickname?: boolean;
     hideAvatar?: boolean;
+    e2eeEnabled?: boolean;
   }) => {
     const { updateProfileServer } = await import("@/api/server/profile/update");
     await updateProfileServer(data);

@@ -33,6 +33,7 @@ export interface MessagesSidebarProps {
   debouncedSearch: (val: string) => void;
   onlineUsers: Set<string>;
   convsError: boolean;
+  convsLoading: boolean;
   progress: number;
   direction: "left" | "right";
   isSwiping: boolean;

@@ -150,9 +150,30 @@ describe("dispatchRenew", () => {
       const data = qc.getQueryData(["conversations"]) as {
         user: { id: string };
         unread: number;
+        lastMessage: string;
       }[];
       expect(data).toHaveLength(1);
       expect(data[0].unread).toBe(0);
+      // A partial push (no lastMessage in the frame, e.g. the unread-reset
+      // markConversationRead sends the reader) must not clobber the
+      // existing cached preview with "[Decryption failed]".
+      expect(data[0].lastMessage).toBe("old");
+    });
+
+    it("Conversation: partial update for a peer not yet cached is dropped rather than inserted as a broken stub", async () => {
+      qc.setQueryData(["conversations"], []);
+
+      await dispatchRenew(qc, {
+        renew: "Messages",
+        type: "Conversation",
+        conversation: {
+          user: { id: "u1", name: "Alice" },
+          unread: 0,
+        },
+      });
+
+      const data = qc.getQueryData(["conversations"]) as unknown[];
+      expect(data).toHaveLength(0);
     });
   });
 

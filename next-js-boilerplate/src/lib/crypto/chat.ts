@@ -14,12 +14,19 @@ import type {
 } from "./types";
 import { claimBundleServer } from "@/api/server/e2ee/claim-bundle";
 import type { AttachmentCryptoMetadata } from "./attachments";
+import { getE2eeEnabled } from "./e2ee-preference";
 
 // ── Feature flag ────────────────────────────────────────────────────────
 
+/**
+ * Whether THIS device should encrypt messages it sends — the current
+ * user's own Settings > Privacy preference (default on). Does not gate
+ * decryption: incoming messages are always decrypted when possible,
+ * regardless of the viewer's own send preference.
+ */
 export function isE2eeDmEnabled(): boolean {
   if (typeof window === "undefined") return false;
-  return process.env.NEXT_PUBLIC_E2EE_DM_ENABLED === "true";
+  return getE2eeEnabled();
 }
 
 // ── Encrypt ─────────────────────────────────────────────────────────────
@@ -34,17 +41,17 @@ export function isE2eeDmEnabled(): boolean {
  * plaintext for the optimistic cache.
  */
 export async function encryptForSend(
+  ownUserId: string,
   text: string,
   recipientUserId: string,
   attachmentMetadata?: AttachmentCryptoMetadata,
 ): Promise<{ envelope: MessageEnvelopeV1; plaintext: MessagePlaintextV1 }> {
-  const { ensureIdentity } = await import("./identity");
   const { encryptDmMessage } = await import("./envelope");
 
   // Get or generate our device identity
-  const deviceId = getDeviceId();
+  const deviceId = getDeviceId(ownUserId);
   const { identity, signingPrivateKey, agreementPrivateKey } =
-    await getIdentityWithPrivateKeys(deviceId);
+    await getIdentityWithPrivateKeys(ownUserId, deviceId);
 
   // Fetch recipient's prekey bundle
   const {
@@ -65,6 +72,7 @@ export async function encryptForSend(
   }
 
   const { envelope } = await encryptDmMessage(
+    ownUserId,
     plaintext,
     {
       identity,
@@ -86,9 +94,13 @@ export async function encryptForSend(
  * body as-is. If encrypted, decrypts and returns the plaintext string.
  */
 export type DecryptedMessageResult = {
-  body: string;
+  /** Decrypted text, or null when decryption failed (UI shows a resyncing skeleton). */
+  body: string | null;
   encrypted?: boolean;
   id: string;
+  /** True when decrypt failed because the ratchet session is missing or stale.
+   *  The UI should request a re-key from the peer. */
+  needsRekey?: boolean;
   decryptedAttachment?: {
     key: string;
     nonce: string;
@@ -113,8 +125,8 @@ export async function decryptMessage(
 
   try {
     const { decryptDmMessage } = await import("./envelope");
-    const deviceId = getDeviceId();
-    const identity = await getIdentityWithPrivateKeys(deviceId);
+    const deviceId = getDeviceId(ownUserId);
+    const identity = await getIdentityWithPrivateKeys(ownUserId, deviceId);
 
     const envelope = message.envelope as unknown as MessageEnvelopeV1;
     const senderUserId =
@@ -141,8 +153,23 @@ export async function decryptMessage(
     }
     return result;
   } catch (err) {
-    console.warn("[E2EE] Failed to decrypt message:", err);
-    return { body: "[Decryption failed]", id: "" };
+    console.warn("[E2EE] Failed to decrypt message, resyncing session:", err);
+    const errMsg = err instanceof Error ? err.message : "";
+    const needsRekey =
+      errMsg.includes("No ratchet session") ||
+      errMsg.includes("Receiving chain not established");
+    // Delete the corrupted/stale ratchet session so the next message
+    // triggers a fresh X3DH handshake instead of permanently failing.
+    try {
+      const { deleteRatchetSession } = await import("./store");
+      const senderUserId =
+        message.senderId === ownUserId ? ownUserId : message.senderId;
+      await deleteRatchetSession(ownUserId, senderUserId);
+    } catch {
+      // Best-effort cleanup — if IndexedDB write fails, the next
+      // successful decrypt will overwrite the session anyway.
+    }
+    return { body: null, id: "", needsRekey };
   }
 }
 
@@ -167,8 +194,8 @@ export async function decryptMessages(
   }
 
   const { decryptDmMessage } = await import("./envelope");
-  const deviceId = getDeviceId();
-  const identity = await getIdentityWithPrivateKeys(deviceId);
+  const deviceId = getDeviceId(ownUserId);
+  const identity = await getIdentityWithPrivateKeys(ownUserId, deviceId);
 
   const results: Array<DecryptedMessageResult> = [];
 
@@ -204,8 +231,25 @@ export async function decryptMessages(
       }
       results.push(result);
     } catch (err) {
-      console.warn(`[E2EE] Failed to decrypt message ${msg.id}:`, err);
-      results.push({ ...msg, body: "[Decryption failed]" });
+      console.warn(
+        `[E2EE] Failed to decrypt message ${msg.id}, resyncing session:`,
+        err,
+      );
+      const errMsg = err instanceof Error ? err.message : "";
+      const needsRekey =
+        errMsg.includes("No ratchet session") ||
+        errMsg.includes("Receiving chain not established");
+      // Delete the corrupted/stale ratchet session for this peer so
+      // subsequent messages trigger a fresh X3DH handshake.
+      try {
+        const { deleteRatchetSession } = await import("./store");
+        const senderUserId =
+          msg.senderId === ownUserId ? ownUserId : msg.senderId;
+        await deleteRatchetSession(ownUserId, senderUserId);
+      } catch {
+        // Best-effort cleanup.
+      }
+      results.push({ ...msg, body: null, needsRekey });
     }
   }
 
@@ -224,11 +268,19 @@ export async function decryptConversationPreview(
 ): Promise<string> {
   if (typeof lastMessage === "string") return lastMessage;
 
-  // It's an envelope object — decrypt it
+  // Don't create a ratchet session here — that would consume message keys
+  // that decryptMessages still needs. Only decrypt if a session already
+  // exists (i.e. the user has already opened this conversation).
   try {
+    const { getRatchetSession } = await import("./store");
+    const existingSession = await getRatchetSession(ownUserId, peerUserId);
+    if (!existingSession) {
+      return "[Encrypted]";
+    }
+
     const { decryptDmMessage } = await import("./envelope");
-    const deviceId = getDeviceId();
-    const identity = await getIdentityWithPrivateKeys(deviceId);
+    const deviceId = getDeviceId(ownUserId);
+    const identity = await getIdentityWithPrivateKeys(ownUserId, deviceId);
 
     const envelope = lastMessage as unknown as MessageEnvelopeV1;
     const senderUserId = peerUserId;
@@ -247,25 +299,43 @@ export async function decryptConversationPreview(
 
     return plaintext.text ?? "";
   } catch (err) {
-    console.warn("[E2EE] Failed to decrypt conversation preview:", err);
-    return "[Decryption failed]";
+    console.warn(
+      "[E2EE] Failed to decrypt conversation preview, resyncing session:",
+      err,
+    );
+    // Delete the corrupted session so next open triggers fresh handshake.
+    try {
+      const { deleteRatchetSession } = await import("./store");
+      await deleteRatchetSession(ownUserId, peerUserId);
+    } catch {
+      // Best-effort cleanup.
+    }
+    return "[Encrypted]";
   }
 }
 
 // ── Internal helpers ────────────────────────────────────────────────────
 
-const DEVICE_ID_KEY = "e2ee:deviceId";
-
-function getDeviceId(): string {
+/**
+ * Stable per-(browser, account) device ID, persisted in localStorage under
+ * a key scoped by `ownUserId` — a bare "e2ee:deviceId" key would be shared
+ * by every account ever logged into this browser, exactly the storage
+ * bug this scoping exists to avoid (see the store.ts module docstring).
+ */
+export function getDeviceId(ownUserId: string): string {
   if (typeof window === "undefined") return "server-side";
-  const existing = localStorage.getItem(DEVICE_ID_KEY);
+  const key = `e2ee:deviceId:${ownUserId}`;
+  const existing = localStorage.getItem(key);
   if (existing) return existing;
   const id = `device-${crypto.randomUUID()}`;
-  localStorage.setItem(DEVICE_ID_KEY, id);
+  localStorage.setItem(key, id);
   return id;
 }
 
-async function getIdentityWithPrivateKeys(deviceId: string): Promise<{
+async function getIdentityWithPrivateKeys(
+  ownUserId: string,
+  deviceId: string,
+): Promise<{
   identity: DeviceIdentity;
   signingPrivateKey: string;
   agreementPrivateKey: string;
@@ -277,12 +347,12 @@ async function getIdentityWithPrivateKeys(deviceId: string): Promise<{
     await import("./identity");
   const { getSignedPrekey } = await import("./store");
 
-  const { identity } = await ensureIdentity(deviceId);
+  const { identity } = await ensureIdentity(ownUserId, deviceId);
 
-  const signingPrivateKey = await getIdentitySigningPrivateKey();
-  const agreementPrivateKey = await getIdentityAgreementPrivateKey();
+  const signingPrivateKey = await getIdentitySigningPrivateKey(ownUserId);
+  const agreementPrivateKey = await getIdentityAgreementPrivateKey(ownUserId);
 
-  const spk = await getSignedPrekey(0);
+  const spk = await getSignedPrekey(ownUserId, 0);
   const signedPrekeyPrivateKey = spk?.privateKey ?? "";
   const signedPrekeyPublicKey = spk?.publicKey ?? "";
 

@@ -13,10 +13,10 @@ import type { RatchetSession } from "./types";
 const sessions = new Map<string, RatchetSession>();
 
 vi.mock("./store", () => ({
-  getRatchetSession: vi.fn((peerUserId: string) =>
+  getRatchetSession: vi.fn((_ownUserId: string, peerUserId: string) =>
     Promise.resolve(sessions.get(peerUserId) ?? null),
   ),
-  setRatchetSession: vi.fn((session: RatchetSession) => {
+  setRatchetSession: vi.fn((_ownUserId: string, session: RatchetSession) => {
     sessions.set(session.peerUserId, session);
     return Promise.resolve();
   }),
@@ -41,6 +41,7 @@ describe("Double Ratchet", () => {
       const sessionKey = toHex(new Uint8Array(32).fill(0x01));
       const peerSpk = generateEphemeralKey(); // stand-in for peer's signed prekey
       await initSenderSession(
+        "self",
         "peer-1",
         "device-1",
         sessionKey,
@@ -70,6 +71,7 @@ describe("Double Ratchet", () => {
       const mySpk = generateEphemeralKey(); // Bob's signed-prekey keypair
 
       await initReceiverSession(
+        "bob",
         "alice",
         "device-a",
         sessionKey,
@@ -97,10 +99,17 @@ describe("Double Ratchet", () => {
       const sessionKey = toHex(new Uint8Array(32).fill(0x03));
       const bobSpk = generateEphemeralKey();
 
-      await initSenderSession("bob", "device-b", sessionKey, bobSpk.publicKey);
+      await initSenderSession(
+        "alice",
+        "bob",
+        "device-b",
+        sessionKey,
+        bobSpk.publicKey,
+      );
       const aliceSession = sessions.get("bob")!;
 
       await initReceiverSession(
+        "bob",
         "alice",
         "device-a",
         sessionKey,
@@ -123,6 +132,7 @@ describe("Double Ratchet", () => {
 
       // Alice initializes sender session
       await initSenderSession(
+        "alice",
         peerUserId,
         "device-b",
         sessionKey,
@@ -132,6 +142,7 @@ describe("Double Ratchet", () => {
       // Alice encrypts
       const plaintext = new TextEncoder().encode("hello bob");
       const { ciphertext, nonce, header } = await ratchetEncrypt(
+        "alice",
         peerUserId,
         plaintext,
         "alice",
@@ -147,6 +158,7 @@ describe("Double Ratchet", () => {
       // Bob initializes receiver session using his own SPK keypair and
       // Alice's ratchet public key from the message header.
       await initReceiverSession(
+        "bob",
         "alice",
         "device-a",
         sessionKey,
@@ -157,6 +169,7 @@ describe("Double Ratchet", () => {
 
       // Bob decrypts
       const decrypted = await ratchetDecrypt(
+        "bob",
         "alice",
         ciphertext,
         nonce,
@@ -172,9 +185,16 @@ describe("Double Ratchet", () => {
       const sessionKey = toHex(new Uint8Array(32).fill(0x01));
       const bobSpk = generateEphemeralKey();
 
-      await initSenderSession("bob", "device-b", sessionKey, bobSpk.publicKey);
+      await initSenderSession(
+        "alice",
+        "bob",
+        "device-b",
+        sessionKey,
+        bobSpk.publicKey,
+      );
       const firstHeader = { dhPub: sessions.get("bob")!.dhPub, pn: 0, n: 0 };
       await initReceiverSession(
+        "bob",
         "alice",
         "device-a",
         sessionKey,
@@ -188,6 +208,7 @@ describe("Double Ratchet", () => {
       for (const msg of messages) {
         const plaintext = new TextEncoder().encode(msg);
         const { ciphertext, nonce, header } = await ratchetEncrypt(
+          "alice",
           "bob",
           plaintext,
           "alice",
@@ -195,6 +216,7 @@ describe("Double Ratchet", () => {
         );
 
         const decrypted = await ratchetDecrypt(
+          "bob",
           "alice",
           ciphertext,
           nonce,
@@ -212,13 +234,20 @@ describe("Double Ratchet", () => {
       const bobSpk = generateEphemeralKey();
 
       // Alice -> Bob first message (X3DH)
-      await initSenderSession("bob", "device-b", sessionKey, bobSpk.publicKey);
+      await initSenderSession(
+        "alice",
+        "bob",
+        "device-b",
+        sessionKey,
+        bobSpk.publicKey,
+      );
       const aliceSessionBefore = sessions.get("bob")!;
       // Session objects are mutated in place by the ratchet functions, so
       // snapshot the primitive values we compare later rather than holding
       // a reference to the (still-live) session object.
       const aliceRootKeyBefore = aliceSessionBefore.rootKey;
       await initReceiverSession(
+        "bob",
         "alice",
         "device-a",
         sessionKey,
@@ -233,6 +262,7 @@ describe("Double Ratchet", () => {
         nonce: n1,
         header: h1,
       } = await ratchetEncrypt(
+        "alice",
         "bob",
         new TextEncoder().encode("hello bob"),
         "alice",
@@ -240,7 +270,15 @@ describe("Double Ratchet", () => {
       );
 
       // Bob decrypts
-      const pt1 = await ratchetDecrypt("alice", ct1, n1, h1, "alice", "bob");
+      const pt1 = await ratchetDecrypt(
+        "bob",
+        "alice",
+        ct1,
+        n1,
+        h1,
+        "alice",
+        "bob",
+      );
       expect(new TextDecoder().decode(pt1)).toBe("hello bob");
 
       // Bob replies
@@ -249,6 +287,7 @@ describe("Double Ratchet", () => {
         nonce: n2,
         header: h2,
       } = await ratchetEncrypt(
+        "bob",
         "alice",
         new TextEncoder().encode("hi alice"),
         "bob",
@@ -262,7 +301,15 @@ describe("Double Ratchet", () => {
       expect(h2.dhPub).not.toBe(h1.dhPub);
 
       // Alice decrypts
-      const pt2 = await ratchetDecrypt("bob", ct2, n2, h2, "bob", "alice");
+      const pt2 = await ratchetDecrypt(
+        "alice",
+        "bob",
+        ct2,
+        n2,
+        h2,
+        "bob",
+        "alice",
+      );
       expect(new TextDecoder().decode(pt2)).toBe("hi alice");
 
       // Regression check: Alice must have actually performed a DH-ratchet
@@ -278,12 +325,21 @@ describe("Double Ratchet", () => {
         nonce: n3,
         header: h3,
       } = await ratchetEncrypt(
+        "alice",
         "bob",
         new TextEncoder().encode("still there?"),
         "alice",
         "bob",
       );
-      const pt3 = await ratchetDecrypt("alice", ct3, n3, h3, "alice", "bob");
+      const pt3 = await ratchetDecrypt(
+        "bob",
+        "alice",
+        ct3,
+        n3,
+        h3,
+        "alice",
+        "bob",
+      );
       expect(new TextDecoder().decode(pt3)).toBe("still there?");
     });
 
@@ -291,9 +347,16 @@ describe("Double Ratchet", () => {
       const sessionKey = toHex(new Uint8Array(32).fill(0x01));
       const bobSpk = generateEphemeralKey();
 
-      await initSenderSession("bob", "device-b", sessionKey, bobSpk.publicKey);
+      await initSenderSession(
+        "alice",
+        "bob",
+        "device-b",
+        sessionKey,
+        bobSpk.publicKey,
+      );
       const aliceInitialDh = sessions.get("bob")!.dhPub;
       await initReceiverSession(
+        "bob",
         "alice",
         "device-a",
         sessionKey,
@@ -304,18 +367,21 @@ describe("Double Ratchet", () => {
 
       // Alice sends two messages; only the first reaches Bob right away.
       const envA0 = await ratchetEncrypt(
+        "alice",
         "bob",
         new TextEncoder().encode("a0"),
         "alice",
         "bob",
       );
       const envA1 = await ratchetEncrypt(
+        "alice",
         "bob",
         new TextEncoder().encode("a1"),
         "alice",
         "bob",
       );
       await ratchetDecrypt(
+        "bob",
         "alice",
         envA0.ciphertext,
         envA0.nonce,
@@ -327,12 +393,14 @@ describe("Double Ratchet", () => {
 
       // Bob replies; Alice receiving it invalidates her sending chain.
       const replyB0 = await ratchetEncrypt(
+        "bob",
         "alice",
         new TextEncoder().encode("b0"),
         "bob",
         "alice",
       );
       await ratchetDecrypt(
+        "alice",
         "bob",
         replyB0.ciphertext,
         replyB0.nonce,
@@ -345,6 +413,7 @@ describe("Double Ratchet", () => {
       // that her previous chain (envA0 + envA1) had 2 messages, so Bob can
       // still recover envA1's key before that chain state is discarded.
       const envA2 = await ratchetEncrypt(
+        "alice",
         "bob",
         new TextEncoder().encode("a2"),
         "alice",
@@ -355,6 +424,7 @@ describe("Double Ratchet", () => {
 
       // Bob receives the ratcheted message first, then the delayed one.
       const decrypted2 = await ratchetDecrypt(
+        "bob",
         "alice",
         envA2.ciphertext,
         envA2.nonce,
@@ -365,6 +435,7 @@ describe("Double Ratchet", () => {
       expect(new TextDecoder().decode(decrypted2)).toBe("a2");
 
       const decrypted1 = await ratchetDecrypt(
+        "bob",
         "alice",
         envA1.ciphertext,
         envA1.nonce,
@@ -381,9 +452,16 @@ describe("Double Ratchet", () => {
       const sessionKey = toHex(new Uint8Array(32).fill(0x01));
       const bobSpk = generateEphemeralKey();
 
-      await initSenderSession("bob", "device-b", sessionKey, bobSpk.publicKey);
+      await initSenderSession(
+        "alice",
+        "bob",
+        "device-b",
+        sessionKey,
+        bobSpk.publicKey,
+      );
       const firstHeader = { dhPub: sessions.get("bob")!.dhPub, pn: 0, n: 0 };
       await initReceiverSession(
+        "bob",
         "alice",
         "device-a",
         sessionKey,
@@ -396,6 +474,7 @@ describe("Double Ratchet", () => {
       const envelopes = [];
       for (let i = 0; i < 3; i++) {
         const { ciphertext, nonce, header } = await ratchetEncrypt(
+          "alice",
           "bob",
           new TextEncoder().encode(`msg-${i}`),
           "alice",
@@ -406,6 +485,7 @@ describe("Double Ratchet", () => {
 
       // Bob receives in reverse order (out of order)
       const pt2 = await ratchetDecrypt(
+        "bob",
         "alice",
         envelopes[2].ciphertext,
         envelopes[2].nonce,
@@ -416,6 +496,7 @@ describe("Double Ratchet", () => {
       expect(new TextDecoder().decode(pt2)).toBe("msg-2");
 
       const pt0 = await ratchetDecrypt(
+        "bob",
         "alice",
         envelopes[0].ciphertext,
         envelopes[0].nonce,
@@ -426,6 +507,7 @@ describe("Double Ratchet", () => {
       expect(new TextDecoder().decode(pt0)).toBe("msg-0");
 
       const pt1 = await ratchetDecrypt(
+        "bob",
         "alice",
         envelopes[1].ciphertext,
         envelopes[1].nonce,
@@ -441,6 +523,7 @@ describe("Double Ratchet", () => {
     it("throws when no session exists for decryption", async () => {
       await expect(
         ratchetDecrypt(
+          "self",
           "unknown-peer",
           "ciphertext",
           "nonce",
@@ -454,6 +537,7 @@ describe("Double Ratchet", () => {
     it("throws when no session exists for encryption", async () => {
       await expect(
         ratchetEncrypt(
+          "self",
           "unknown-peer",
           new Uint8Array(5),
           "sender",

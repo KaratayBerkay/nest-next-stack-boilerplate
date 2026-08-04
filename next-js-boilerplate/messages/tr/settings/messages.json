@@ -77,6 +77,8 @@
   "privacyNicknameDesc": "Sohbet odalarında gerçek adınız yerine rumuz kullanın",
   "privacyNicknamePlaceholder": "Rumuzunuzu girin",
   "privacyNicknameCurrent": "Geçerli rumuz",
+  "privacyEncryptMessages": "Mesajlarımı şifrele",
+  "privacyEncryptMessagesDesc": "DM'lerde ve sohbet odalarında gönderdiğiniz mesaj ve dosyaları uçtan uca şifreleyin. Bu kapalıyken bile başkalarının size gönderdiği mesajları her zaman okuyabilirsiniz.",
   "settingsLink": "Ayarlar",
   "navSettings": "Ayarlar",
   "settingsSectionLabel": "Ayarlar",

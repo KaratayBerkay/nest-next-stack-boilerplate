@@ -51,7 +51,7 @@ export function SafetyNumberModal({
     async function load() {
       // Own fingerprint from IndexedDB identity
       if (!ownFingerprintProp) {
-        const identity = await getIdentity();
+        const identity = await getIdentity(ownUserId);
         if (cancelled || !identity) return;
         const own = computeUserFingerprint(
           ownUserId,
@@ -95,7 +95,7 @@ export function SafetyNumberModal({
     let cancelled = false;
 
     async function check() {
-      const stored = await getSafetyNumber(peerUserId);
+      const stored = await getSafetyNumber(ownUserId, peerUserId);
       if (cancelled) return;
 
       if (!stored) {
@@ -114,14 +114,14 @@ export function SafetyNumberModal({
     return () => {
       cancelled = true;
     };
-  }, [open, peerUserId, fingerprintB]);
+  }, [open, ownUserId, peerUserId, fingerprintB]);
 
   const handleVerify = useCallback(async () => {
     if (!fingerprintB) return;
-    await setSafetyNumber(peerUserId, fingerprintB);
+    await setSafetyNumber(ownUserId, peerUserId, fingerprintB);
     setVerified(true);
     setChanged(false);
-  }, [peerUserId, fingerprintB]);
+  }, [ownUserId, peerUserId, fingerprintB]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

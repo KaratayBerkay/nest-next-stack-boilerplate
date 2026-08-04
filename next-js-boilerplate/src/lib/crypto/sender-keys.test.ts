@@ -79,16 +79,16 @@ vi.mock("@/api/server/e2ee/fetch-sender-keys", () => ({
 let currentUserAgreementPrivateKey = "";
 vi.mock("./identity", () => ({
   getIdentityAgreementPrivateKey: vi.fn(
-    async () => currentUserAgreementPrivateKey,
+    async (_ownUserId: string) => currentUserAgreementPrivateKey,
   ),
 }));
 
 const chains = new Map<string, SenderKeyChain>();
 vi.mock("./store", () => ({
-  getSenderKeyChain: vi.fn((roomId: string) =>
+  getSenderKeyChain: vi.fn((_ownUserId: string, roomId: string) =>
     Promise.resolve(chains.get(roomId) ?? null),
   ),
-  setSenderKeyChain: vi.fn((chain: SenderKeyChain) => {
+  setSenderKeyChain: vi.fn((_ownUserId: string, chain: SenderKeyChain) => {
     chains.set(chain.roomId, { ...chain });
     return Promise.resolve();
   }),
@@ -153,7 +153,7 @@ describe("Room sender-key distribution", () => {
 
     // Bob receives: fetches + unwraps Alice's chain into his own store.
     currentUserAgreementPrivateKey = bob.privateKey;
-    await ensureReceivedSenderKey("general", "alice", "alice-device-1");
+    await ensureReceivedSenderKey("bob", "general", "alice", "alice-device-1");
 
     const bobsCopyOfAlicesChain = chains.get("general:alice");
     expect(bobsCopyOfAlicesChain).toBeDefined();
@@ -183,6 +183,79 @@ describe("Room sender-key distribution", () => {
     await distributeSenderKeyIfNeeded("general", "alice", "alice-device-1");
 
     expect(publishedBatches).toHaveLength(1);
+  });
+
+  it("the sender can decrypt her own room message (self-echo via WS/history reload)", async () => {
+    // No distribution/Bob involved at all — this reproduces exactly what
+    // query.ts/event-dispatch.ts do when a message comes back with
+    // senderId === ownUserId: look up `${room}:${senderId}`, the same slot
+    // a *received* chain from someone else would live under.
+    const alice = generateIdentityAgreementKey();
+    currentUserAgreementPrivateKey = alice.privateKey;
+
+    const { envelope } = await encryptRoomMessage(
+      "general",
+      "alice-device-1",
+      "hello from me",
+      "alice",
+    );
+
+    const selfChain = chains.get("general:alice");
+    expect(selfChain).toBeDefined();
+    expect(selfChain!.chainIndex).toBe(0);
+
+    const plaintext = await decryptRoomMessage(
+      envelope,
+      selfChain!.chainKey,
+      "general",
+      "alice",
+    );
+    expect(plaintext).toBe("hello from me");
+  });
+
+  it("self-decrypt keeps working across multiple sends in the same epoch", async () => {
+    const alice = generateIdentityAgreementKey();
+    currentUserAgreementPrivateKey = alice.privateKey;
+
+    const first = await encryptRoomMessage(
+      "general",
+      "alice-device-1",
+      "message one",
+      "alice",
+    );
+    const second = await encryptRoomMessage(
+      "general",
+      "alice-device-1",
+      "message two",
+      "alice",
+    );
+    const third = await encryptRoomMessage(
+      "general",
+      "alice-device-1",
+      "message three",
+      "alice",
+    );
+    expect(third.envelope.chainIndex).toBe(2);
+
+    // The self-keyed snapshot is written once (at chainIndex 0) and never
+    // mutated again by subsequent sends — decrypt fast-forwards it fresh
+    // each time, exactly like a chain received from another member.
+    const selfChain = chains.get("general:alice");
+    expect(selfChain!.chainIndex).toBe(0);
+
+    for (const [envelope, expected] of [
+      [first.envelope, "message one"],
+      [second.envelope, "message two"],
+      [third.envelope, "message three"],
+    ] as const) {
+      const plaintext = await decryptRoomMessage(
+        envelope,
+        selfChain!.chainKey,
+        "general",
+        "alice",
+      );
+      expect(plaintext).toBe(expected);
+    }
   });
 
   it("rotates to a new epoch and re-publishes when membershipVersion advances", async () => {

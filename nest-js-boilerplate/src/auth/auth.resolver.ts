@@ -148,7 +148,7 @@ export class AuthResolver {
   async me(@CurrentUser() user: JwtUser): Promise<SessionUserPayload> {
     const dbUser = await this.prisma.user.findUnique({
       where: { id: user.userId },
-      select: { mfaEnabled: true, hideAvatar: true },
+      select: { mfaEnabled: true, hideAvatar: true, e2eeEnabled: true },
     });
 
     return {
@@ -166,6 +166,7 @@ export class AuthResolver {
       sessionId: user.sessionId,
       mfaEnabled: dbUser?.mfaEnabled ?? false,
       hideAvatar: dbUser?.hideAvatar ?? false,
+      e2eeEnabled: dbUser?.e2eeEnabled ?? true,
     };
   }
 }
