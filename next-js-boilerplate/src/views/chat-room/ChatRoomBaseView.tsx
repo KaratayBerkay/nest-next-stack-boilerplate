@@ -3,7 +3,8 @@
 import { useState, useCallback, Suspense, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
-import { CHAT_ROOMS } from "@/constants/chat";
+import { useQuery } from "@tanstack/react-query";
+import { roomsQueryOptions } from "@/api/client/messages/rooms";
 import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { LoadingAuth } from "@/components/LoadingAuth";
@@ -116,7 +117,11 @@ function ChatRoomContent({
     () => new Set(roomMembers.map((m) => m.id)),
     [roomMembers],
   );
-  const rooms = useMemo(() => [...CHAT_ROOMS, ...vipRooms], [vipRooms]);
+  const { data: dbRooms = [] } = useQuery(roomsQueryOptions());
+  const rooms = useMemo(
+    () => [...dbRooms.map((r) => r.slug), ...vipRooms],
+    [dbRooms, vipRooms],
+  );
 
   const selectRoom = useCallback(
     (r: string) =>

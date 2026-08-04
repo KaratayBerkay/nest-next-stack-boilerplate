@@ -71,6 +71,13 @@ export class MessagingRoomService {
     }
   }
 
+  async listRooms(): Promise<{ slug: string }[]> {
+    return this.prisma.room.findMany({
+      select: { slug: true },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
   private redisRoomKey(room: string): string {
     return `${ROOM_MEMBERS_PREFIX}${room}:members`;
   }

@@ -238,6 +238,12 @@ export class MessagingController {
     return { ok: true, readAt: result.readAt };
   }
 
+  @Get('rooms')
+  @ApiOperation({ summary: 'List available chat rooms' })
+  async getRooms() {
+    return this.ms.rooms.listRooms();
+  }
+
   @Get('rooms/:roomId/messages')
   @ApiOperation({ summary: 'Get paginated room messages' })
   @ApiQuery({ name: 'before', required: false })
