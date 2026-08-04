@@ -15,6 +15,7 @@ import {
   decryptFromServer,
   destroySession,
   hasSession,
+  reKey,
   type WireEnvelopeV2,
 } from "@/lib/crypto/session";
 
@@ -38,6 +39,8 @@ export class RealtimeClient {
   private destroyed = false;
   private hasConnectedBefore = false;
   private onlineHandler: (() => void) | null = null;
+  private rekeyInProgress = false;
+  private lastSessionId: string | null = null;
   private static readonly BACKOFF_BASE_MS = 1000;
   private static readonly BACKOFF_CAP_MS = 30_000;
 
@@ -82,7 +85,18 @@ export class RealtimeClient {
                 this.onFrame(frame as Record<string, unknown>);
               }
             } catch {
-              /* decryption failure — stale session or tampered frame */
+              /* Decryption failure — stale keys or server flush.
+                 Flush client keys and re-handshake. */
+              if (!this.rekeyInProgress && this.lastSessionId) {
+                this.rekeyInProgress = true;
+                reKey(this.lastSessionId)
+                  .then(() => {
+                    this.rekeyInProgress = false;
+                  })
+                  .catch(() => {
+                    this.rekeyInProgress = false;
+                  });
+              }
             }
             return;
           }
@@ -207,6 +221,8 @@ export class RealtimeClient {
       this.onAuthenticated?.();
       return;
     }
+
+    this.lastSessionId = sessionId;
 
     try {
       await performHandshake(sessionId);

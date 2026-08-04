@@ -109,7 +109,7 @@ export const POST = withLogging(async (_request, log) => {
 
   const r = data.refresh;
   const response = NextResponse.json(
-    { accessToken: r.accessToken ?? "" },
+    { accessToken: r.accessToken ?? "", deviceToken: r.deviceToken ?? "" },
     { status: 200 },
   );
 

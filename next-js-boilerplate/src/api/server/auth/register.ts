@@ -7,6 +7,7 @@ import type { User } from "@/types/auth/User";
 export interface RegisterResult {
   user: User;
   accessToken?: string;
+  deviceToken?: string;
 }
 
 export async function registerServer(

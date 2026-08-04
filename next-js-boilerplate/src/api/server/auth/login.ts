@@ -9,6 +9,7 @@ export type MfaMethod = "TOTP" | "EMAIL";
 export interface LoginResult {
   user: User;
   accessToken?: string;
+  deviceToken?: string;
   mfaRequired?: boolean;
   mfaToken?: string;
   mfaMethod?: MfaMethod;

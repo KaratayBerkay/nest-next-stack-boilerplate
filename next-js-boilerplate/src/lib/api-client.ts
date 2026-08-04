@@ -33,6 +33,18 @@ function attemptRefresh(): Promise<boolean> {
     refreshInFlight = (async () => {
       try {
         const res = await fetch(AUTH_REFRESH_URL, { method: POST });
+        if (res.ok) {
+          try {
+            const body = (await res.json()) as { deviceToken?: string };
+            if (body.deviceToken) {
+              const { setDeviceToken } =
+                await import("@/lib/crypto/device-storage");
+              setDeviceToken(body.deviceToken);
+            }
+          } catch {
+            /* non-critical — device token may not be present */
+          }
+        }
         return res.ok;
       } catch {
         return false;
@@ -55,7 +67,22 @@ export async function apiFetch(
   init?: RequestInit,
   options?: { suppressGlobalLogout?: boolean },
 ): Promise<Response> {
-  let res = await fetch(input, init);
+  const mergedInit = { ...init };
+  if (typeof window !== "undefined") {
+    try {
+      const { getDeviceToken } = await import("@/lib/crypto/device-storage");
+      const dt = getDeviceToken();
+      if (dt) {
+        mergedInit.headers = {
+          ...(mergedInit.headers as Record<string, string>),
+          "x-device-token": dt,
+        };
+      }
+    } catch {
+      /* non-critical — proceed without device header */
+    }
+  }
+  let res = await fetch(input, mergedInit);
 
   if (res.status === 401 && typeof window !== "undefined") {
     // One silent refresh-and-retry before declaring the session dead. The 401
@@ -63,7 +90,7 @@ export async function apiFetch(
     // request is safe to re-issue exactly as-is (it never reached a handler).
     const refreshed = await attemptRefresh();
     if (refreshed) {
-      res = await fetch(input, init);
+      res = await fetch(input, mergedInit);
     }
     // Background/best-effort widgets (unread badges, etc.) opt out: a single
     // failed poll shouldn't nuke a session that's otherwise fine — this was

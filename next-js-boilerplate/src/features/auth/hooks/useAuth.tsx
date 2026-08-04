@@ -169,6 +169,10 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
       const data = await loginServer(email, password, readTimezone());
       setUser(data.user);
       if (data.accessToken) setToken(data.accessToken);
+      if (data.deviceToken) {
+        const { setDeviceToken } = await import("@/lib/crypto/device-storage");
+        setDeviceToken(data.deviceToken);
+      }
     } catch (err) {
       if ((err as Error & { mfaRequired?: boolean }).mfaRequired) throw err;
       const exception = (err as Error & { exception?: unknown }).exception;
@@ -188,6 +192,11 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
         );
         setUser(data.user);
         if (data.accessToken) setToken(data.accessToken);
+        if (data.deviceToken) {
+          const { setDeviceToken } =
+            await import("@/lib/crypto/device-storage");
+          setDeviceToken(data.deviceToken);
+        }
         return { userId: data.user.id, email: data.user.email };
       } catch (err) {
         const exception = (err as Error & { exception?: unknown }).exception;
@@ -203,6 +212,10 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
       const data = await verifyMfaServer(mfaToken, code);
       setUser(data.user);
       if (data.accessToken) setToken(data.accessToken);
+      if (data.deviceToken) {
+        const { setDeviceToken } = await import("@/lib/crypto/device-storage");
+        setDeviceToken(data.deviceToken);
+      }
     } catch (err) {
       const exception = (err as Error & { exception?: unknown }).exception;
       if (exception) throw exception;
@@ -212,6 +225,8 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
 
   const logout = useCallback(async () => {
     await logoutServer();
+    const { flushAll } = await import("@/lib/crypto/device-storage");
+    await flushAll();
     setUser(null);
     setToken(null);
     redirectToLoginIfNeeded();

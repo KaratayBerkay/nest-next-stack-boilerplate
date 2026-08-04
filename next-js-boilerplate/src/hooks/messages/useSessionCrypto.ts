@@ -5,7 +5,6 @@ import {
   hasSession,
   encryptForServer,
   decryptFromServer,
-  getSessionId,
   type WireEnvelopeV2,
 } from "@/lib/crypto/session";
 
@@ -33,7 +32,6 @@ export function useSessionCrypto() {
 
   return {
     active,
-    sessionId: active ? getSessionId() : null,
     encrypt,
     decrypt,
   };

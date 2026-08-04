@@ -132,7 +132,7 @@ export async function POST(request: Request) {
   }
 
   const response = NextResponse.json(
-    { user: sessionUser, accessToken },
+    { user: sessionUser, accessToken, deviceToken },
     { status: 201 },
   );
 

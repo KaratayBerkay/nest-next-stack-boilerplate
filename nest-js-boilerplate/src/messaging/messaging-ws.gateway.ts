@@ -241,12 +241,12 @@ export class MessagingWsGateway implements OnModuleInit {
     await this.realtime.emitToPageEncrypted(
       message.recipientId,
       'messages',
-      (sid) => this.wireCrypto.encryptForSession(sid, delivery.recipientPayload) as unknown as Promise<Record<string, unknown>>,
+      (sid, dth) => this.wireCrypto.encryptForSession(sid, delivery.recipientPayload, dth) as unknown as Promise<Record<string, unknown>>,
     );
     await this.realtime.emitToPageEncrypted(
       message.senderId,
       'messages',
-      (sid) => this.wireCrypto.encryptForSession(sid, delivery.senderPayload) as unknown as Promise<Record<string, unknown>>,
+      (sid, dth) => this.wireCrypto.encryptForSession(sid, delivery.senderPayload, dth) as unknown as Promise<Record<string, unknown>>,
     );
   }
 
@@ -421,7 +421,7 @@ export class MessagingWsGateway implements OnModuleInit {
       await this.realtime.emitToPageEncrypted(
         member.userId,
         'chat-room',
-        (sid) => this.wireCrypto.encryptForSession(sid, basePayload) as unknown as Promise<Record<string, unknown>>,
+        (sid, dth) => this.wireCrypto.encryptForSession(sid, basePayload, dth) as unknown as Promise<Record<string, unknown>>,
       );
     }
   }

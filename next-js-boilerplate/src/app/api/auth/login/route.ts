@@ -161,7 +161,7 @@ export const POST = withLogging(async (request, log) => {
   }
 
   const response = NextResponse.json(
-    { user: sessionUser, accessToken },
+    { user: sessionUser, accessToken, deviceToken },
     { status: 200 },
   );
 

@@ -446,6 +446,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         const decrypted = (await this.wireCrypto.decryptFromClient(
           authWs.sessionId,
           data as unknown as WireEnvelopeV2,
+          authWs.deviceTokenHash,
         )) as Record<string, unknown>;
         if (decrypted && typeof decrypted === 'object') {
           data = decrypted;
@@ -669,7 +670,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
   async emitToPageEncrypted(
     userId: string,
     pageKey: string,
-    encryptFn: (sessionId: string) => Promise<Record<string, unknown>>,
+    encryptFn: (sessionId: string, deviceHash?: string) => Promise<Record<string, unknown>>,
   ): Promise<number> {
     return this.pageManager.emitToPageWith(userId, pageKey, encryptFn);
   }

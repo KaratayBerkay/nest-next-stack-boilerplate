@@ -13,6 +13,7 @@ import type { User } from "@/types/auth/User";
 export type MfaResult = {
   user: User;
   accessToken?: string;
+  deviceToken?: string;
 };
 
 export type EnrollMfaResult = {
