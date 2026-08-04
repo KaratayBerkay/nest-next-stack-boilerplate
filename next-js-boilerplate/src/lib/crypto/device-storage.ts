@@ -19,6 +19,10 @@ const DB_VERSION = 1;
 export interface DeviceKeyPair {
   clientPrivKey: string; // hex
   clientPubKey: string; // hex
+  /** Monotonic wire-crypto seq counters, persisted so page reloads don't
+   *  desync from the server's Redis-backed counters. */
+  sendSeq?: number;
+  recvSeq?: number;
 }
 
 // ── IndexedDB helpers ────────────────────────────────────────────────────

@@ -37,6 +37,7 @@ export interface WireEnvelopeV2 {
 
 interface SessionState {
   deviceToken: string;
+  deviceHash: string;
   sharedKey: Uint8Array;
   clientPubKey: string;
   sendSeq: number;
@@ -116,6 +117,12 @@ export async function performHandshake(
 
   const clientPubHex = bytesToHex(pubKey);
 
+  // The server derives keys under sha256(deviceToken) as its address/context.
+  // Must match hashDeviceToken() in wire-crypto.controller.ts exactly, or
+  // both the HKDF info below and the AAD never line up and every frame is
+  // dropped by decryptFromClient().
+  const deviceHash = bytesToHex(sha256(new TextEncoder().encode(deviceToken)));
+
   // Exchange public keys with the server via the REST proxy.
   const { serverPublicKey } = await apiFetchJson<{ serverPublicKey: string }>(
     "/api/rest/crypto/handshake",
@@ -131,17 +138,16 @@ export async function performHandshake(
 
   // Derive the shared secret — must match server's setDevicePeerPublicKey().
   const shared = x25519.getSharedSecret(privKey, hexToBytes(serverPublicKey));
-  const info = new TextEncoder().encode(
-    `${WIRE_CRYPTO_CONTEXT}:${deviceToken}`,
-  );
+  const info = new TextEncoder().encode(`${WIRE_CRYPTO_CONTEXT}:${deviceHash}`);
   const derived = hkdf(sha256, shared, new Uint8Array(0), info, 32);
 
   state = {
     deviceToken,
+    deviceHash,
     sharedKey: derived,
     clientPubKey: clientPubHex,
-    sendSeq: 0,
-    recvSeq: 0,
+    sendSeq: keys?.sendSeq ?? 0,
+    recvSeq: keys?.recvSeq ?? 0,
   };
 
   // Notify React hooks that a session is now active.
@@ -163,12 +169,14 @@ export function encryptForServer(payload: unknown): WireEnvelopeV2 {
     throw new Error("No wire-crypto session — call performHandshake first");
 
   const seq = ++state.sendSeq;
-  const aad = buildAad(state.deviceToken, "c2s", seq);
+  const aad = buildAad(state.deviceHash, "c2s", seq);
   const nonce = crypto.getRandomValues(new Uint8Array(24));
 
   const cipher = xchacha20poly1305(state.sharedKey, nonce, aad);
   const plaintext = new TextEncoder().encode(JSON.stringify(payload));
   const ct = cipher.encrypt(plaintext);
+
+  persistSeq();
 
   return {
     v: 2,
@@ -190,13 +198,15 @@ export function decryptFromServer(envelope: WireEnvelopeV2): unknown {
     throw new Error(`Unsupported wire envelope version: ${envelope.v}`);
 
   const seq = ++state.recvSeq;
-  const aad = buildAad(state.deviceToken, "s2c", seq);
+  const aad = buildAad(state.deviceHash, "s2c", seq);
 
   const nonce = base64ToUint8(envelope.nonce);
   const ct = base64ToUint8(envelope.ct);
 
   const cipher = xchacha20poly1305(state.sharedKey, nonce, aad);
   const plain = cipher.decrypt(ct);
+
+  persistSeq();
 
   return JSON.parse(new TextDecoder().decode(plain));
 }
@@ -211,6 +221,27 @@ export function hasSession(): boolean {
 /** Get the current device token (or null). */
 export function getActiveDeviceToken(): string | null {
   return state?.deviceToken ?? null;
+}
+
+// Throttle seq persistence so rapid-fire sends (e.g. messenger frames) don't
+// hammer IndexedDB on every keystroke. The seq counters must eventually reach
+// storage so a page reload resumes at the right offset.
+let persistTimer: ReturnType<typeof setTimeout> | null = null;
+
+function persistSeq(): void {
+  if (!state) return;
+  const { deviceToken, sendSeq, recvSeq } = state;
+  if (persistTimer) clearTimeout(persistTimer);
+  persistTimer = setTimeout(() => {
+    void loadKeys(deviceToken).then((keys) => {
+      void storeKeys(deviceToken, {
+        clientPrivKey: keys?.clientPrivKey ?? "",
+        clientPubKey: keys?.clientPubKey ?? "",
+        sendSeq,
+        recvSeq,
+      });
+    });
+  }, 500);
 }
 
 /** Tear down the session (on logout / disconnect). */

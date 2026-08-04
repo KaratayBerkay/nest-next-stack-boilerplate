@@ -480,7 +480,15 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         } else {
           return;
         }
-      } catch {
+      } catch (err) {
+        this.logger.warn({
+          category: 'websocket-exception',
+          event: 'wire.decrypt_fail',
+          userId: authWs.userId,
+          sessionId: authWs.sessionId,
+          deviceHash: authWs.deviceTokenHash,
+          reason: (err as Error)?.message,
+        });
         return;
       }
     }
