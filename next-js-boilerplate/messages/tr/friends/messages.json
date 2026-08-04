@@ -1,0 +1,10 @@
+{
+  "title": "Arkadaşlar",
+  "description": "Arkadaş listiniz",
+  "findFriends": "Arkadaş Bul",
+  "message": "Mesaj",
+  "noFriends": "Henüz arkadaşınız yok",
+  "noFriendsDescription": "Arkadaş olarak ekleyecek kişiler bulun ve sohbete başlayın.",
+  "signInRequired": "Arkadaşlarınızı görmek için giriş yapın",
+  "loading": "Arkadaşlar yükleniyor..."
+}

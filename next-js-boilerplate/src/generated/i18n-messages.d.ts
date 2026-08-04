@@ -1016,6 +1016,17 @@ export type I18nMessages = {
       };
     }
 
+  "friends": {
+      "title": string;
+      "description": string;
+      "findFriends": string;
+      "message": string;
+      "noFriends": string;
+      "noFriendsDescription": string;
+      "signInRequired": string;
+      "loading": string;
+    }
+
   "home": {
       "signIn": string;
       "register": string;

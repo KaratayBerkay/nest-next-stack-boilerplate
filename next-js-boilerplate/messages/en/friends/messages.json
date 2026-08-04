@@ -1,0 +1,10 @@
+{
+  "title": "Friends",
+  "description": "Your friends list",
+  "findFriends": "Find Friends",
+  "message": "Message",
+  "noFriends": "No friends yet",
+  "noFriendsDescription": "Find people to add as friends and start chatting.",
+  "signInRequired": "Sign in to view your friends",
+  "loading": "Loading friends..."
+}
