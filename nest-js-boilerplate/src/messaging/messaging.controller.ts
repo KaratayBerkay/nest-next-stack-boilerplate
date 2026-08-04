@@ -238,7 +238,7 @@ export class MessagingController {
     return { ok: true, readAt: result.readAt };
   }
 
-  @Get('messages/rooms')
+  @Get('rooms')
   @ApiOperation({ summary: 'List available chat rooms' })
   async getRooms() {
     return this.ms.rooms.listRooms();
