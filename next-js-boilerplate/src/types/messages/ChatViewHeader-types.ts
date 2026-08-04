@@ -10,4 +10,8 @@ export interface ChatViewHeaderProps {
   ownUserId?: string;
   ownFingerprint?: string;
   peerFingerprint?: string;
+  /** True when ALL messages in the conversation are stuck encrypted. */
+  allEncrypted?: boolean;
+  /** Called when the user clicks "Reset Encryption". */
+  onResetConversation?: () => void;
 }

@@ -2,7 +2,7 @@
 
 import { Avatar } from "@/components/ui/Avatar";
 import { IconButton } from "@/components/ui/button/icon-button";
-import { IconChevronLeft } from "@tabler/icons-react";
+import { IconChevronLeft, IconRefresh } from "@tabler/icons-react";
 import { initials } from "@/lib/initials";
 import { cn } from "@/lib/cn";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
@@ -26,6 +26,8 @@ export function ChatViewHeader({
   ownUserId,
   ownFingerprint,
   peerFingerprint,
+  allEncrypted,
+  onResetConversation,
 }: ChatViewHeaderProps) {
   const t = useMessages("messages");
   const isOnline = onlineUsers.has(selectedUser.id);
@@ -65,10 +67,24 @@ export function ChatViewHeader({
               peerFingerprint={peerFingerprint}
             />
           )}
+          {allEncrypted && onResetConversation && (
+            <IconButton
+              icon={<IconRefresh size={14} />}
+              label="Reset encryption"
+              variant="ghost"
+              size="icon-sm"
+              onClick={onResetConversation}
+              className="text-muted hover:text-fg ml-auto shrink-0"
+            />
+          )}
         </div>
         <p className="text-xs">
           {isTyping ? (
             <span className="text-brand animate-pulse">{t.typing}</span>
+          ) : allEncrypted ? (
+            <span className="text-warning">
+              Encryption keys lost — click ↻ to reset
+            </span>
           ) : isOnline ? (
             <span className="text-muted">{t.connected}</span>
           ) : (

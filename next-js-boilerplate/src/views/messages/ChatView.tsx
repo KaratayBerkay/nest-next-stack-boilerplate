@@ -25,6 +25,21 @@ import { ChatMessageList } from "@/views/messages/ChatMessageList";
 import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
 import { computeUserFingerprint } from "@/lib/crypto/fingerprint";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
+import type { QueryClient } from "@tanstack/react-query";
+
+async function resetConversationForPeer(
+  ownUserId: string,
+  peerUserId: string,
+  qc: QueryClient,
+) {
+  try {
+    const { resetConversation } = await import("@/lib/crypto/chat");
+    await resetConversation(ownUserId, peerUserId);
+    qc.invalidateQueries({ queryKey: ["messages", peerUserId] });
+  } catch {
+    // Best-effort.
+  }
+}
 
 export function ChatView({
   selectedUser,
@@ -262,6 +277,22 @@ export function ChatView({
     [conversationMessages],
   );
 
+  // Detect when ALL messages in the conversation are stuck encrypted
+  // (permanently broken — keys were cross-contaminated before the fix).
+  const allEncrypted = useMemo(() => {
+    if (conversationMessages.length === 0) return false;
+    return conversationMessages.every(
+      (m) => m.encrypted && (!m.body || m.body === ""),
+    );
+  }, [conversationMessages]);
+
+  // One-click conversation reset: clears ratchet session + cache so the
+  // next message triggers a fresh X3DH handshake.
+  const handleResetConversation = () => {
+    if (!user?.id || !selectedUser?.id) return;
+    resetConversationForPeer(user.id, selectedUser.id, queryClient);
+  };
+
   if (connectionState === "unstable") {
     return (
       <ConnectionUnstable title={t.disconnected} description={t.connecting} />
@@ -288,6 +319,8 @@ export function ChatView({
         ownUserId={user?.id}
         ownFingerprint={ownFingerprint ?? undefined}
         peerFingerprint={peerFingerprint ?? undefined}
+        allEncrypted={allEncrypted}
+        onResetConversation={handleResetConversation}
       />
 
       <ChatMessageList
