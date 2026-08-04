@@ -75,16 +75,14 @@ export async function dispatchEvent(
     }
     qc.setQueryData(["messages", peerId], (old: unknown) => {
       const data = old as
-        | { pages: { messages: Record<string, unknown>[] }[] }
-        | undefined;
+        { pages: { messages: Record<string, unknown>[] }[] } | undefined;
       if (!data?.pages?.length) return old;
       const pages = [...data.pages];
       const first = { ...pages[0] };
       if (first.messages.some((m) => m.id === msg.id)) return old;
       // Replace temp entry if this is the server's echo of our own send
       const echoTempId = (msg as Record<string, unknown>)._tempId as
-        | string
-        | undefined;
+        string | undefined;
       if (echoTempId && sentTempIds.has(echoTempId)) {
         sentTempIds.delete(echoTempId);
         first.messages = first.messages.map((m) =>
@@ -127,8 +125,7 @@ export async function dispatchEvent(
     }
     qc.setQueryData(["messages", peerId], (old: unknown) => {
       const data = old as
-        | { pages: { messages: Record<string, unknown>[] }[] }
-        | undefined;
+        { pages: { messages: Record<string, unknown>[] }[] } | undefined;
       if (!data?.pages?.length) return old;
       const pages = data.pages.map((page) => ({
         ...page,
@@ -150,8 +147,7 @@ export async function dispatchEvent(
     }
     qc.setQueryData(["messages", peerId], (old: unknown) => {
       const data = old as
-        | { pages: { messages: Record<string, unknown>[] }[] }
-        | undefined;
+        { pages: { messages: Record<string, unknown>[] }[] } | undefined;
       if (!data?.pages?.length) return old;
       const pages = data.pages.map((page) => ({
         ...page,
@@ -175,7 +171,9 @@ export async function dispatchEvent(
   }
 
   // Peer lost their ratchet session (e.g. cleared site data). Delete ours
-  // too so the next message triggers a fresh X3DH handshake.
+  // too so the next message triggers a fresh X3DH handshake. Also invalidate
+  // the conversation so messages re-fetch and re-decrypt with the fresh
+  // session (or fall back to cache).
   if (t === "e2ee-rekey" && ownUserId) {
     const peerId = frame.peerId as string | undefined;
     if (peerId) {

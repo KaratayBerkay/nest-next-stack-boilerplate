@@ -61,7 +61,9 @@ export function ChatMessageBubble({
             <span className="text-muted inline-flex items-center gap-1.5 text-xs italic">
               <span>{"\uD83D\uDD12"}</span>
               <span>
-                {msg.needsRekey ? "Re-syncing keys\u2026" : "Encrypted"}
+                {msg.needsRekey
+                  ? "Re-syncing keys\u2026"
+                  : "Waiting for key exchange\u2026"}
               </span>
             </span>
           </span>

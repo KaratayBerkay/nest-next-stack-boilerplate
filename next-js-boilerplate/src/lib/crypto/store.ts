@@ -26,7 +26,7 @@ import type {
   SignedPrekey,
 } from "./types";
 
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 // ── Store names ─────────────────────────────────────────────────────────
 
@@ -35,6 +35,7 @@ const PREKEYS_STORE = "prekeys";
 const RATCHET_STORE = "ratchet";
 const SENDER_KEY_STORE = "senderKeys";
 const SAFETY_NUMBERS_STORE = "safetyNumbers";
+const DECRYPTED_MESSAGES_STORE = "decryptedMessages";
 
 // ── Database singleton (one per user) ───────────────────────────────────
 
@@ -44,7 +45,7 @@ function getDb(ownUserId: string): Promise<IDBPDatabase> {
   let dbPromise = dbPromises.get(ownUserId);
   if (!dbPromise) {
     dbPromise = openDB(`e2ee:${ownUserId}`, DB_VERSION, {
-      upgrade(db) {
+      upgrade(db, _oldVersion, _newVersion, _transaction) {
         if (!db.objectStoreNames.contains(IDENTITY_STORE)) {
           db.createObjectStore(IDENTITY_STORE);
         }
@@ -59,6 +60,13 @@ function getDb(ownUserId: string): Promise<IDBPDatabase> {
         }
         if (!db.objectStoreNames.contains(SAFETY_NUMBERS_STORE)) {
           db.createObjectStore(SAFETY_NUMBERS_STORE);
+        }
+        if (!db.objectStoreNames.contains(DECRYPTED_MESSAGES_STORE)) {
+          const store = db.createObjectStore(DECRYPTED_MESSAGES_STORE, {
+            keyPath: "messageId",
+          });
+          store.createIndex("peerUserId", "peerUserId");
+          store.createIndex("createdAt", "createdAt");
         }
       },
     });
@@ -273,4 +281,105 @@ export async function deleteSafetyNumber(
 ): Promise<void> {
   const db = await getDb(ownUserId);
   await db.delete(SAFETY_NUMBERS_STORE, peerUserId);
+}
+
+// ── Decrypted message cache ────────────────────────────────────────────
+//
+// Persist the plaintext of successfully decrypted messages so they survive
+// page reloads and ratchet session loss. The cache is keyed by messageId
+// and indexed by peerUserId for efficient conversation lookups. This is
+// the same strategy Signal/WhatsApp use — decrypted plaintext is stored
+// locally while ciphertext lives on the server.
+
+export interface CachedDecryptedMessage {
+  messageId: string;
+  peerUserId: string;
+  body: string;
+  senderId: string;
+  recipientId: string;
+  createdAt: string;
+  decryptedAttachment?: {
+    key: string;
+    nonce: string;
+    originalName: string;
+    originalType: string;
+    originalSize: number;
+  };
+}
+
+/**
+ * Cache a successfully decrypted message. Called after every successful
+ * ratchet decrypt so that the plaintext survives page reloads and session
+ * loss.
+ */
+export async function cacheDecryptedMessage(
+  ownUserId: string,
+  message: CachedDecryptedMessage,
+): Promise<void> {
+  const db = await getDb(ownUserId);
+  await db.put(DECRYPTED_MESSAGES_STORE, message);
+}
+
+/**
+ * Retrieve a single cached decrypted message by its ID.
+ */
+export async function getCachedDecryptedMessage(
+  ownUserId: string,
+  messageId: string,
+): Promise<CachedDecryptedMessage | null> {
+  const db = await getDb(ownUserId);
+  return (await db.get(DECRYPTED_MESSAGES_STORE, messageId)) ?? null;
+}
+
+/**
+ * Retrieve all cached decrypted messages for a specific conversation,
+ * sorted by createdAt ascending (oldest first).
+ */
+export async function getCachedDecryptedMessagesForPeer(
+  ownUserId: string,
+  peerUserId: string,
+): Promise<CachedDecryptedMessage[]> {
+  const db = await getDb(ownUserId);
+  const index = db
+    .transaction(DECRYPTED_MESSAGES_STORE)
+    .store.index("peerUserId");
+  return index.getAll(peerUserId);
+}
+
+/**
+ * Get a Map of messageId → CachedDecryptedMessage for a peer, for fast
+ * lookup when merging with server messages.
+ */
+export async function getCachedDecryptedMessagesMap(
+  ownUserId: string,
+  peerUserId: string,
+): Promise<Map<string, CachedDecryptedMessage>> {
+  const messages = await getCachedDecryptedMessagesForPeer(
+    ownUserId,
+    peerUserId,
+  );
+  return new Map(messages.map((m) => [m.messageId, m]));
+}
+
+/**
+ * Clear the decrypted message cache for a specific peer, or all peers
+ * if peerUserId is omitted. Called on conversation reset or logout.
+ */
+export async function clearCachedDecryptedMessages(
+  ownUserId: string,
+  peerUserId?: string,
+): Promise<void> {
+  const db = await getDb(ownUserId);
+  if (peerUserId) {
+    const index = db
+      .transaction(DECRYPTED_MESSAGES_STORE, "readwrite")
+      .store.index("peerUserId");
+    let cursor = await index.openCursor(peerUserId);
+    while (cursor) {
+      await cursor.delete();
+      cursor = await cursor.continue();
+    }
+  } else {
+    await db.clear(DECRYPTED_MESSAGES_STORE);
+  }
 }

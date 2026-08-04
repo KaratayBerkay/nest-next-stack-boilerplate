@@ -15,6 +15,11 @@ import type {
 import { claimBundleServer } from "@/api/server/e2ee/claim-bundle";
 import type { AttachmentCryptoMetadata } from "./attachments";
 import { getE2eeEnabled } from "./e2ee-preference";
+import {
+  cacheDecryptedMessage,
+  getCachedDecryptedMessagesMap,
+  type CachedDecryptedMessage,
+} from "./store";
 
 // ── Feature flag ────────────────────────────────────────────────────────
 
@@ -112,15 +117,18 @@ export type DecryptedMessageResult = {
 
 export async function decryptMessage(
   message: {
+    id: string;
     body?: string | null;
     encrypted?: boolean;
     envelope?: Record<string, unknown> | null;
     senderId: string;
+    recipientId?: string;
+    createdAt?: string;
   },
   ownUserId: string,
 ): Promise<DecryptedMessageResult> {
   if (!message.encrypted || !message.envelope) {
-    return { body: message.body ?? "", id: "" };
+    return { body: message.body ?? "", id: message.id };
   }
 
   try {
@@ -146,11 +154,34 @@ export async function decryptMessage(
 
     const result: DecryptedMessageResult = {
       body: plaintext.text ?? "",
-      id: "",
+      id: message.id,
     };
     if (plaintext.attachment) {
       result.decryptedAttachment = plaintext.attachment;
     }
+
+    // Persist the decrypted plaintext so it survives page reloads and
+    // ratchet session loss (Signal/WhatsApp strategy).
+    try {
+      const peerUserId =
+        message.senderId === ownUserId
+          ? (message.recipientId ?? "")
+          : message.senderId;
+      await cacheDecryptedMessage(ownUserId, {
+        messageId: message.id,
+        peerUserId,
+        body: result.body ?? "",
+        senderId: message.senderId,
+        recipientId: message.recipientId ?? ownUserId,
+        createdAt: message.createdAt ?? new Date().toISOString(),
+        ...(result.decryptedAttachment
+          ? { decryptedAttachment: result.decryptedAttachment }
+          : {}),
+      });
+    } catch {
+      // Best-effort — caching failure must not break decryption.
+    }
+
     return result;
   } catch (err) {
     console.warn("[E2EE] Failed to decrypt message, resyncing session:", err);
@@ -169,21 +200,33 @@ export async function decryptMessage(
       // Best-effort cleanup — if IndexedDB write fails, the next
       // successful decrypt will overwrite the session anyway.
     }
-    return { body: null, id: "", needsRekey };
+    return { body: null, id: message.id, needsRekey };
   }
 }
 
 /**
  * Decrypt a batch of messages (for history loads).
  * Returns a new array with `body` populated from decryption where needed.
+ *
+ * Strategy:
+ *   1. Try ratchet decryption for each encrypted message.
+ *   2. On success → cache plaintext, return it.
+ *   3. On failure → fall back to cached plaintext (from a prior session).
+ *   4. If no cache either → return null body + needsRekey flag.
+ *
+ * This means messages survive page reloads, browser restarts, and even
+ * ratchet session loss — as long as they were decrypted at least once
+ * before the session was lost.
  */
 export async function decryptMessages(
   messages: Array<{
+    id: string;
     body?: string | null;
     encrypted?: boolean;
     envelope?: Record<string, unknown> | null;
     senderId: string;
-    id: string;
+    recipientId?: string;
+    createdAt?: string;
   }>,
   ownUserId: string,
 ): Promise<Array<DecryptedMessageResult>> {
@@ -191,6 +234,21 @@ export async function decryptMessages(
   const hasEncrypted = messages.some((m) => m.encrypted && m.envelope);
   if (!hasEncrypted) {
     return messages.map((m) => ({ ...m, body: m.body ?? "" }));
+  }
+
+  // Pre-fetch the cache for the conversation partner so we can fall back
+  // to it when ratchet decryption fails. We determine the peer from the
+  // first encrypted message (all messages in a DM conversation share the
+  // same peer).
+  const peerUserId =
+    messages.find((m) => m.encrypted)?.senderId === ownUserId
+      ? (messages.find((m) => m.encrypted)?.recipientId ?? "")
+      : (messages.find((m) => m.encrypted)?.senderId ?? "");
+  let cacheMap = new Map<string, CachedDecryptedMessage>();
+  try {
+    cacheMap = await getCachedDecryptedMessagesMap(ownUserId, peerUserId);
+  } catch {
+    // Cache unavailable — proceed without fallback.
   }
 
   const { decryptDmMessage } = await import("./envelope");
@@ -205,6 +263,7 @@ export async function decryptMessages(
       continue;
     }
 
+    // ── Ratchet decryption attempt ──────────────────────────────────
     try {
       const envelope = msg.envelope as unknown as MessageEnvelopeV1;
       const senderUserId =
@@ -229,8 +288,45 @@ export async function decryptMessages(
       if (plaintext.attachment) {
         result.decryptedAttachment = plaintext.attachment;
       }
+
+      // Cache the successfully decrypted plaintext.
+      try {
+        const peer =
+          msg.senderId === ownUserId ? (msg.recipientId ?? "") : msg.senderId;
+        await cacheDecryptedMessage(ownUserId, {
+          messageId: msg.id,
+          peerUserId: peer,
+          body: result.body ?? "",
+          senderId: msg.senderId,
+          recipientId: msg.recipientId ?? ownUserId,
+          createdAt: msg.createdAt ?? new Date().toISOString(),
+          ...(result.decryptedAttachment
+            ? { decryptedAttachment: result.decryptedAttachment }
+            : {}),
+        });
+      } catch {
+        // Best-effort caching.
+      }
+
       results.push(result);
     } catch (err) {
+      // ── Ratchet failed — try cache fallback ─────────────────────
+      const cached = cacheMap.get(msg.id);
+      if (cached) {
+        // Message was decrypted in a previous session — use cached plaintext.
+        const result: DecryptedMessageResult = {
+          ...msg,
+          body: cached.body,
+          id: msg.id,
+        };
+        if (cached.decryptedAttachment) {
+          result.decryptedAttachment = cached.decryptedAttachment;
+        }
+        results.push(result);
+        continue;
+      }
+
+      // ── No cache either — mark as needing re-key ────────────────
       console.warn(
         `[E2EE] Failed to decrypt message ${msg.id}, resyncing session:`,
         err,
@@ -260,6 +356,9 @@ export async function decryptMessages(
  * Decrypt a conversation preview (lastMessage).
  * If lastMessage is an envelope object, decrypts it.
  * If it's a plain string, returns it as-is.
+ *
+ * Uses cached plaintext as fallback when the ratchet session is missing.
+ * This ensures the sidebar always shows readable text, not "🔒 Encrypted".
  */
 export async function decryptConversationPreview(
   lastMessage: string | Record<string, unknown>,
@@ -272,32 +371,64 @@ export async function decryptConversationPreview(
   // that decryptMessages still needs. Only decrypt if a session already
   // exists (i.e. the user has already opened this conversation).
   try {
-    const { getRatchetSession } = await import("./store");
+    const { getRatchetSession, getCachedDecryptedMessagesForPeer } =
+      await import("./store");
     const existingSession = await getRatchetSession(ownUserId, peerUserId);
-    if (!existingSession) {
-      return "[Encrypted]";
+
+    // Try ratchet decryption if a session exists.
+    if (existingSession) {
+      try {
+        const { decryptDmMessage } = await import("./envelope");
+        const deviceId = getDeviceId(ownUserId);
+        const identity = await getIdentityWithPrivateKeys(ownUserId, deviceId);
+
+        const envelope = lastMessage as unknown as MessageEnvelopeV1;
+        const senderUserId = peerUserId;
+
+        const { plaintext } = await decryptDmMessage(
+          envelope,
+          {
+            signingPrivateKey: identity.signingPrivateKey,
+            agreementPrivateKey: identity.agreementPrivateKey,
+            signedPrekeyPrivateKey: identity.signedPrekeyPrivateKey,
+            signedPrekeyPublicKey: identity.signedPrekeyPublicKey,
+          },
+          senderUserId,
+          ownUserId,
+        );
+
+        return plaintext.text ?? "";
+      } catch (err) {
+        // Ratchet decrypt failed — fall through to cache lookup.
+        console.warn(
+          "[E2EE] Ratchet decrypt of preview failed, trying cache:",
+          err,
+        );
+      }
     }
 
-    const { decryptDmMessage } = await import("./envelope");
-    const deviceId = getDeviceId(ownUserId);
-    const identity = await getIdentityWithPrivateKeys(ownUserId, deviceId);
+    // Fallback: check the cache for the most recent decrypted message
+    // from this peer. The envelope's messageId isn't available here (it's
+    // just the raw envelope object), so we fetch the most recent cached
+    // message and return its body. This is a best-effort approximation —
+    // the sidebar preview may not match the absolute latest message if
+    // that message hasn't been decrypted yet, but it's vastly better
+    // than showing "🔒 Encrypted" permanently.
+    try {
+      const cachedMessages = await getCachedDecryptedMessagesForPeer(
+        ownUserId,
+        peerUserId,
+      );
+      if (cachedMessages.length > 0) {
+        // Return the most recent cached message body.
+        const latest = cachedMessages[cachedMessages.length - 1];
+        return latest.body || "[Encrypted]";
+      }
+    } catch {
+      // Cache unavailable.
+    }
 
-    const envelope = lastMessage as unknown as MessageEnvelopeV1;
-    const senderUserId = peerUserId;
-
-    const { plaintext } = await decryptDmMessage(
-      envelope,
-      {
-        signingPrivateKey: identity.signingPrivateKey,
-        agreementPrivateKey: identity.agreementPrivateKey,
-        signedPrekeyPrivateKey: identity.signedPrekeyPrivateKey,
-        signedPrekeyPublicKey: identity.signedPrekeyPublicKey,
-      },
-      senderUserId,
-      ownUserId,
-    );
-
-    return plaintext.text ?? "";
+    return "[Encrypted]";
   } catch (err) {
     console.warn(
       "[E2EE] Failed to decrypt conversation preview, resyncing session:",
@@ -363,4 +494,60 @@ async function getIdentityWithPrivateKeys(
     signedPrekeyPrivateKey,
     signedPrekeyPublicKey,
   };
+}
+
+// ── Conversation reset ─────────────────────────────────────────────────
+
+/**
+ * Reset all E2EE state for a specific conversation. Clears:
+ *   - The ratchet session (so next message triggers fresh X3DH)
+ *   - The decrypted message cache (so messages show as "Encrypted" until
+ *     re-decrypted with the new session)
+ *
+ * Use this when a conversation is permanently stuck showing "Encrypted"
+ * (e.g. after account-sharing key contamination). The next message sent
+ * or received will re-establish encryption from scratch.
+ */
+export async function resetConversation(
+  ownUserId: string,
+  peerUserId: string,
+): Promise<void> {
+  const { deleteRatchetSession, clearCachedDecryptedMessages } =
+    await import("./store");
+  await Promise.all([
+    deleteRatchetSession(ownUserId, peerUserId).catch(() => {}),
+    clearCachedDecryptedMessages(ownUserId, peerUserId).catch(() => {}),
+  ]);
+}
+
+/**
+ * Attempt to re-decrypt all messages in a conversation using the current
+ * session. Called after a fresh X3DH handshake is established to update
+ * any messages that were previously shown as "Encrypted" or "Re-syncing".
+ *
+ * Returns the updated messages array — the caller should patch the query
+ * cache with the result.
+ */
+export async function tryRedecryptConversation(
+  messages: Array<{
+    id: string;
+    body?: string | null;
+    encrypted?: boolean;
+    envelope?: Record<string, unknown> | null;
+    senderId: string;
+    recipientId?: string;
+    createdAt?: string;
+  }>,
+  ownUserId: string,
+): Promise<Array<DecryptedMessageResult>> {
+  // Only re-process messages that are still encrypted (body is null or empty)
+  const needsRedecrypt = messages.filter(
+    (m) => m.encrypted && (!m.body || m.body === ""),
+  );
+  if (needsRedecrypt.length === 0) {
+    return messages.map((m) => ({ ...m, body: m.body ?? "" }));
+  }
+
+  // Use decryptMessages which already handles cache fallback
+  return decryptMessages(messages, ownUserId);
 }

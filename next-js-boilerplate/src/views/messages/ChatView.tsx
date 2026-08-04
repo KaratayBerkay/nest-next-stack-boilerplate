@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
 import { useConversation } from "@/lib/realtime/useConversation";
@@ -74,6 +75,103 @@ export function ChatView({
       }
     }
   }, [conversationMessages, realtime]);
+
+  // After a fresh X3DH handshake re-keys the conversation, try to re-decrypt
+  // any messages that were previously stuck as "Encrypted" / "Re-syncing keys".
+  // This watches for messages that are still encrypted and retries decryption
+  // using the now-available session + cache.
+  const queryClient = useQueryClient();
+  const reDecryptAttemptedRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!user?.id || conversationMessages.length === 0) return;
+    const ownUserId = user.id;
+    const peerId = selectedUser?.id;
+    if (!peerId) return;
+
+    const stillEncrypted = conversationMessages.filter(
+      (m) =>
+        m.encrypted &&
+        (!m.body || m.body === "") &&
+        !reDecryptAttemptedRef.current.has(m.id),
+    );
+    if (stillEncrypted.length === 0) return;
+
+    let cancelled = false;
+
+    async function tryReDecrypt() {
+      try {
+        const { tryRedecryptConversation } = await import("@/lib/crypto/chat");
+        const results = await tryRedecryptConversation(
+          conversationMessages as Array<{
+            id: string;
+            body?: string | null;
+            encrypted?: boolean;
+            envelope?: Record<string, unknown> | null;
+            senderId: string;
+            recipientId?: string;
+            createdAt?: string;
+          }>,
+          ownUserId,
+        );
+
+        if (cancelled) return;
+
+        // Check if any messages were successfully re-decrypted
+        const anyUpdated = results.some(
+          (r, i) =>
+            r.body &&
+            r.body !== "" &&
+            (!conversationMessages[i]?.body ||
+              conversationMessages[i]?.body === ""),
+        );
+
+        if (anyUpdated) {
+          // Patch the query cache with the re-decrypted results
+          queryClient.setQueryData(["messages", peerId], (old: unknown) => {
+            const data = old as
+              | {
+                  pages: {
+                    messages: Record<string, unknown>[];
+                  }[];
+                }
+              | undefined;
+            if (!data?.pages?.length) return old;
+            const pages = data.pages.map((page) => ({
+              ...page,
+              messages: page.messages.map((msg) => {
+                const result = results.find((r) => r.id === msg.id);
+                if (result?.body && result.body !== "" && !msg.body) {
+                  return {
+                    ...msg,
+                    body: result.body,
+                    encrypted: false,
+                    needsRekey: false,
+                    ...(result.decryptedAttachment
+                      ? { decryptedAttachment: result.decryptedAttachment }
+                      : {}),
+                  };
+                }
+                return msg;
+              }),
+            }));
+            return { ...data, pages };
+          });
+        }
+
+        // Mark attempted so we don't retry endlessly
+        for (const msg of stillEncrypted) {
+          reDecryptAttemptedRef.current.add(msg.id);
+        }
+      } catch {
+        // Best-effort — don't break the UI.
+      }
+    }
+
+    tryReDecrypt();
+    return () => {
+      cancelled = true;
+    };
+  }, [conversationMessages, user?.id, selectedUser?.id, queryClient]);
 
   const { bottomRef, scrollToBottom, isAtBottom } = useAutoScroll(
     conversationMessages,

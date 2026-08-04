@@ -8,7 +8,38 @@ import type { DecryptedMessageResult } from "@/lib/crypto/chat";
 async function fetchConversations(): Promise<Conversation[]> {
   const { fetchConversationsServer } =
     await import("@/api/server/messages/conversations");
-  return fetchConversationsServer();
+  const conversations = await fetchConversationsServer();
+
+  // Decrypt conversation previews. Each conversation's lastMessage may be
+  // an encrypted envelope object — use the cache to show readable text
+  // instead of "🔒 Encrypted" in the sidebar.
+  const ownUserId = await getOwnUserId();
+  if (!ownUserId) return conversations;
+
+  const { decryptConversationPreview } =
+    await import("@/lib/crypto/chat").catch(() => ({
+      decryptConversationPreview: async (
+        msg: string | Record<string, unknown>,
+      ): Promise<string> => (typeof msg === "string" ? msg : "[Encrypted]"),
+    }));
+
+  const decrypted = await Promise.all(
+    conversations.map(async (conv) => {
+      if (typeof conv.lastMessage === "string") return conv;
+      try {
+        const preview = await decryptConversationPreview(
+          conv.lastMessage,
+          conv.user.id,
+          ownUserId,
+        );
+        return { ...conv, lastMessage: preview };
+      } catch {
+        return conv;
+      }
+    }),
+  );
+
+  return decrypted;
 }
 
 async function fetchConversationMessages(
