@@ -4,6 +4,13 @@
  * Lazy generation: called on first mount of the Messages page via
  * useE2eeIdentity().  The identity is persisted in IndexedDB and
  * reused across sessions on the same browser/device.
+ *
+ * Key-recovery interplay (see key-recovery.ts): when a backup has been
+ * imported, the restored identity is already in IndexedDB — ensureIdentity
+ * returns it as-is and never regenerates over it. The caller is expected
+ * to re-register the returned public bundle after an import so the server
+ * matches the restored keys (the client layer does this in
+ * api/client/e2ee/backup.ts#reestablishE2eeRegistration).
  */
 
 import {

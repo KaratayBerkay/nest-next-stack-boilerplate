@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   ForbiddenException,
   Get,
   NotFoundException,
@@ -21,6 +22,7 @@ import { FriendsService } from '../friends/friends.service';
 import { E2eeKeysService } from './e2ee-keys.service';
 import { RegisterBundleDto } from './dto/register-bundle.dto';
 import { AddOneTimePrekeysDto } from './dto/add-one-time-prekeys.dto';
+import { SaveKeyBackupDto } from './dto/save-key-backup.dto';
 
 @ApiTags('E2EE Keys')
 @ApiBearerAuth()
@@ -127,5 +129,24 @@ export class E2eeKeysController {
       throw new BadRequestException('No device bound to session');
     }
     return this.keys.wipeDevice(user.userId, user.deviceId);
+  }
+
+  @Post('backup')
+  @ApiOperation({ summary: 'Store a password-encrypted key backup for this account' })
+  async saveBackup(@CurrentUser() user: JwtUser, @Body() dto: SaveKeyBackupDto) {
+    return this.keys.saveKeyBackup(user.userId, dto);
+  }
+
+  @Get('backup')
+  @ApiOperation({ summary: 'Fetch this account encrypted key backup' })
+  async getBackup(@CurrentUser() user: JwtUser) {
+    const backup = await this.keys.getKeyBackup(user.userId);
+    return { backup };
+  }
+
+  @Delete('backup')
+  @ApiOperation({ summary: 'Delete this account encrypted key backup' })
+  async deleteBackup(@CurrentUser() user: JwtUser) {
+    return this.keys.deleteKeyBackup(user.userId);
   }
 }

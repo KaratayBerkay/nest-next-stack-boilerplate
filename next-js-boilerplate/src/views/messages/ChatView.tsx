@@ -25,7 +25,13 @@ import { ChatMessageList } from "@/views/messages/ChatMessageList";
 import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
 import { computeUserFingerprint } from "@/lib/crypto/fingerprint";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
+import {
+  useKeyBackupStatus,
+  useRestoreKeyBackup,
+  useSaveKeyBackup,
+} from "@/api/client/e2ee/backup";
 import type { QueryClient } from "@tanstack/react-query";
+import type { EncryptedKeyBackup } from "@/api/server/e2ee/backup";
 
 async function resetConversationForPeer(
   ownUserId: string,
@@ -41,48 +47,71 @@ async function resetConversationForPeer(
   }
 }
 
-async function exportKeysBackup(ownUserId: string) {
+async function exportKeysBackup(
+  ownUserId: string,
+  saveBackup: (encrypted: EncryptedKeyBackup) => Promise<unknown>,
+) {
   try {
-    const { exportE2eeKeys, downloadKeyBackup } =
-      await import("@/lib/crypto/key-recovery");
+    const {
+      exportE2eeKeys,
+      encryptKeyBackup,
+      downloadKeyBackup,
+      downloadEncryptedKeyBackup,
+    } = await import("@/lib/crypto/key-recovery");
+
     const backup = await exportE2eeKeys(ownUserId);
-    downloadKeyBackup(backup);
+    const password = window.prompt(
+      "Optional backup password — protects the copy stored on the server",
+    );
+    if (password) {
+      const encrypted = await encryptKeyBackup(backup, password);
+      downloadEncryptedKeyBackup(encrypted, backup.deviceId);
+      await saveBackup(encrypted);
+    } else {
+      downloadKeyBackup(backup);
+    }
   } catch {
     // Best-effort — nothing to export or download failed.
   }
 }
 
-async function importKeysBackup(
+async function importKeysBackupFromFile(
   ownUserId: string,
   file: File,
   qc: QueryClient,
 ) {
   try {
-    const { parseKeyBackupFile, importE2eeKeys } =
+    const { parseKeyBackupFile, importE2eeKeys, decryptKeyBackup } =
       await import("@/lib/crypto/key-recovery");
-    const { getDeviceId } = await import("@/lib/crypto/chat");
-    const { ensureIdentity } = await import("@/lib/crypto/identity");
-    const { registerBundleServer } =
-      await import("@/api/server/e2ee/register-bundle");
+    const { reestablishE2eeRegistration } =
+      await import("@/api/client/e2ee/backup");
 
-    const backup = await parseKeyBackupFile(file);
-    await importE2eeKeys(ownUserId, backup);
-
-    // Re-register the restored public bundle so the server matches the
-    // imported identity (a fresh identity may have replaced it in the
-    // window between the wipe and the import).
-    const { identity, bundle, serverPrekeys } = await ensureIdentity(
-      ownUserId,
-      getDeviceId(ownUserId),
-    );
-    if (identity) {
-      await registerBundleServer({ bundle, oneTimePrekeys: serverPrekeys });
+    const parsed = await parseKeyBackupFile(file);
+    if (parsed.kind === "encrypted") {
+      const password = window.prompt("Backup password");
+      if (!password) return;
+      const backup = await decryptKeyBackup(parsed.encrypted, password);
+      await importE2eeKeys(ownUserId, backup);
+    } else {
+      await importE2eeKeys(ownUserId, parsed.backup);
     }
 
-    // Re-run decryption on open conversations using the restored cache.
+    await reestablishE2eeRegistration(ownUserId);
     qc.invalidateQueries({ queryKey: ["messages"] });
   } catch {
     // Best-effort — invalid backup files fail silently.
+  }
+}
+
+async function restoreKeysBackupFromServer(
+  restore: (password: string) => Promise<unknown>,
+) {
+  const password = window.prompt("Backup password");
+  if (!password) return;
+  try {
+    await restore(password);
+  } catch {
+    // Best-effort — wrong password or no backup fails silently.
   }
 }
 
@@ -338,6 +367,28 @@ export function ChatView({
     resetConversationForPeer(user.id, selectedUser.id, queryClient);
   };
 
+  // Key backup/recovery: export encrypts + uploads a copy to the server,
+  // import restores from a file, restore-from-server fetches the uploaded
+  // copy (e.g. after clearing site data wiped the local IndexedDB).
+  const keyBackupStatus = useKeyBackupStatus();
+  const saveBackupMutation = useSaveKeyBackup();
+  const restoreBackupMutation = useRestoreKeyBackup(user?.id ?? "");
+  const canManageKeys = !!user?.id;
+
+  const handleExportKeys = () => {
+    if (!user?.id) return;
+    exportKeysBackup(user.id, saveBackupMutation.mutateAsync);
+  };
+
+  const handleImportKeysFile = (file: File) => {
+    if (!user?.id) return;
+    importKeysBackupFromFile(user.id, file, queryClient);
+  };
+
+  const handleRestoreFromServer = () => {
+    restoreKeysBackupFromServer(restoreBackupMutation.mutateAsync);
+  };
+
   if (connectionState === "unstable") {
     return (
       <ConnectionUnstable title={t.disconnected} description={t.connecting} />
@@ -366,10 +417,12 @@ export function ChatView({
         peerFingerprint={peerFingerprint ?? undefined}
         allEncrypted={allEncrypted}
         onResetConversation={handleResetConversation}
-        onExportKeys={user?.id ? () => exportKeysBackup(user.id) : undefined}
-        onImportKeys={
-          user?.id
-            ? (file) => importKeysBackup(user.id, file, queryClient)
+        onExportKeys={canManageKeys ? handleExportKeys : undefined}
+        onImportKeys={canManageKeys ? handleImportKeysFile : undefined}
+        hasServerBackup={keyBackupStatus.data ?? false}
+        onRestoreFromServer={
+          canManageKeys && keyBackupStatus.data
+            ? handleRestoreFromServer
             : undefined
         }
       />

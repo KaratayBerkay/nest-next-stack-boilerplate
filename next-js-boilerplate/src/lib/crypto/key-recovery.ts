@@ -16,6 +16,7 @@
  * treat it like a password.
  */
 
+import { fromHex, toHex, xchachaDecrypt, xchachaEncrypt } from "./primitives";
 import type { CachedDecryptedMessage } from "./store";
 import type {
   DeviceIdentity,
@@ -63,6 +64,73 @@ export interface KeyBackupData {
   senderKeyChains: SenderKeyChain[];
   safetyNumbers: Record<string, string>;
   cachedDecryptedMessages: CachedDecryptedMessage[];
+}
+
+/**
+ * A password-encrypted backup. The payload is XChaCha20-Poly1305 over a
+ * PBKDF2-SHA256-derived key; the salt is stored alongside so the key can
+ * be re-derived on import. Safe to store on the server — the plaintext
+ * backup never leaves the client unencrypted.
+ */
+export interface EncryptedKeyBackup {
+  ciphertext: string;
+  nonce: string;
+  salt: string;
+}
+
+/** PBKDF2 iteration count for backup password derivation. */
+const PBKDF2_ITERATIONS = 200_000;
+
+async function deriveBackupKey(
+  password: string,
+  salt: Uint8Array<ArrayBuffer>,
+): Promise<string> {
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"],
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", hash: "SHA-256", salt, iterations: PBKDF2_ITERATIONS },
+    keyMaterial,
+    256,
+  );
+  return toHex(new Uint8Array(bits));
+}
+
+/** Encrypt a backup with a password-derived key. */
+export async function encryptKeyBackup(
+  backup: KeyBackupData,
+  password: string,
+): Promise<EncryptedKeyBackup> {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const key = await deriveBackupKey(password, salt);
+  const { ciphertext, nonce } = xchachaEncrypt(
+    key,
+    new TextEncoder().encode(JSON.stringify(backup)),
+  );
+  return { ciphertext, nonce, salt: toHex(salt) };
+}
+
+/** Decrypt a password-encrypted backup. Throws on wrong password or corrupt data. */
+export async function decryptKeyBackup(
+  encrypted: EncryptedKeyBackup,
+  password: string,
+): Promise<KeyBackupData> {
+  const key = await deriveBackupKey(
+    password,
+    new Uint8Array(fromHex(encrypted.salt)),
+  );
+  const plaintext = xchachaDecrypt(key, encrypted.ciphertext, encrypted.nonce);
+  const parsed = JSON.parse(
+    new TextDecoder().decode(plaintext),
+  ) as Partial<KeyBackupData>;
+  if (parsed.version !== 1) {
+    throw new Error("Unsupported backup version");
+  }
+  return parsed as KeyBackupData;
 }
 
 /**
@@ -186,28 +254,64 @@ export async function hasE2eeKeys(ownUserId: string): Promise<boolean> {
 
 /** Trigger a browser download of the backup as a JSON file. */
 export function downloadKeyBackup(backup: KeyBackupData): void {
-  const blob = new Blob([JSON.stringify(backup, null, 2)], {
+  downloadJsonFile(backup, `eys-e2ee-backup-${backup.deviceId}.json`);
+}
+
+/** Trigger a browser download of a password-encrypted backup file. */
+export function downloadEncryptedKeyBackup(
+  encrypted: EncryptedKeyBackup,
+  deviceId: string,
+): void {
+  downloadJsonFile(encrypted, `eys-e2ee-backup-${deviceId}.encrypted.json`);
+}
+
+function downloadJsonFile(data: unknown, filename: string): void {
+  const blob = new Blob([JSON.stringify(data, null, 2)], {
     type: "application/json",
   });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = `eys-e2ee-backup-${backup.deviceId}.json`;
+  anchor.download = filename;
   anchor.click();
   URL.revokeObjectURL(url);
 }
 
+export type ParsedKeyBackupFile =
+  | { kind: "plain"; backup: KeyBackupData }
+  | { kind: "encrypted"; encrypted: EncryptedKeyBackup };
+
 /**
- * Read a backup file picked by the user and validate its shape. Throws on
+ * Read a backup file picked by the user and validate its shape. Accepts
+ * both plaintext (version-1) and password-encrypted backups. Throws on
  * unsupported versions or malformed content.
  */
-export async function parseKeyBackupFile(file: File): Promise<KeyBackupData> {
-  const parsed = JSON.parse(await file.text()) as Partial<KeyBackupData>;
+export async function parseKeyBackupFile(
+  file: File,
+): Promise<ParsedKeyBackupFile> {
+  const parsed = JSON.parse(await file.text()) as Partial<KeyBackupData> &
+    Partial<EncryptedKeyBackup>;
+
+  if (
+    typeof parsed.ciphertext === "string" &&
+    typeof parsed.nonce === "string" &&
+    typeof parsed.salt === "string"
+  ) {
+    return {
+      kind: "encrypted",
+      encrypted: {
+        ciphertext: parsed.ciphertext,
+        nonce: parsed.nonce,
+        salt: parsed.salt,
+      },
+    };
+  }
+
   if (parsed.version !== 1) {
     throw new Error("Unsupported backup version");
   }
   if (!parsed.ownUserId || !parsed.identity) {
     throw new Error("Invalid backup file");
   }
-  return parsed as KeyBackupData;
+  return { kind: "plain", backup: parsed as KeyBackupData };
 }

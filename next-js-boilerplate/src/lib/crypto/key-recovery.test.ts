@@ -117,8 +117,9 @@ import {
   importE2eeKeys,
   hasE2eeKeys,
   parseKeyBackupFile,
+  encryptKeyBackup,
+  decryptKeyBackup,
 } from "./key-recovery";
-import type { KeyBackupData } from "./key-recovery";
 
 const OWN_USER_ID = "user-1";
 const PEER_USER_ID = "user-2";
@@ -280,14 +281,31 @@ describe("hasE2eeKeys", () => {
 });
 
 describe("parseKeyBackupFile", () => {
-  it("parses a valid version-1 backup", async () => {
+  it("parses a valid version-1 backup as plain", async () => {
     const backup = await exportE2eeKeys(OWN_USER_ID);
     const file = new File([JSON.stringify(backup)], "backup.json", {
       type: "application/json",
     });
-    const parsed: KeyBackupData = await parseKeyBackupFile(file);
-    expect(parsed.version).toBe(1);
-    expect(parsed.ownUserId).toBe(OWN_USER_ID);
+    const parsed = await parseKeyBackupFile(file);
+    expect(parsed.kind).toBe("plain");
+    if (parsed.kind === "plain") {
+      expect(parsed.backup.version).toBe(1);
+      expect(parsed.backup.ownUserId).toBe(OWN_USER_ID);
+    }
+  });
+
+  it("detects a password-encrypted backup as encrypted", async () => {
+    const backup = await exportE2eeKeys(OWN_USER_ID);
+    const encrypted = await encryptKeyBackup(backup, "s3cret-pass");
+    const file = new File(
+      [JSON.stringify(encrypted)],
+      "backup.encrypted.json",
+      {
+        type: "application/json",
+      },
+    );
+    const parsed = await parseKeyBackupFile(file);
+    expect(parsed.kind).toBe("encrypted");
   });
 
   it("rejects an unsupported version", async () => {
@@ -299,5 +317,34 @@ describe("parseKeyBackupFile", () => {
     await expect(parseKeyBackupFile(file)).rejects.toThrow(
       "Unsupported backup version",
     );
+  });
+});
+
+describe("encryptKeyBackup / decryptKeyBackup", () => {
+  it("round-trips a backup with the correct password", async () => {
+    const backup = await exportE2eeKeys(OWN_USER_ID);
+    const encrypted = await encryptKeyBackup(backup, "hunter2");
+
+    expect(encrypted.ciphertext).toBeTruthy();
+    expect(encrypted.nonce).toBeTruthy();
+    expect(encrypted.salt).toBeTruthy();
+    expect(JSON.stringify(encrypted)).not.toContain("ik-sig-priv");
+
+    const restored = await decryptKeyBackup(encrypted, "hunter2");
+    expect(restored.ownUserId).toBe(OWN_USER_ID);
+    expect(restored.identitySigningPrivateKey).toBe("ik-sig-priv");
+    expect(restored.oneTimePrekeys).toHaveLength(2);
+    expect(restored.ratchetSessions[0].peerUserId).toBe(PEER_USER_ID);
+    expect(restored.cachedDecryptedMessages[0].body).toBe(
+      "hello from the cache",
+    );
+  });
+
+  it("fails with the wrong password", async () => {
+    const backup = await exportE2eeKeys(OWN_USER_ID);
+    const encrypted = await encryptKeyBackup(backup, "right-password");
+    await expect(
+      decryptKeyBackup(encrypted, "wrong-password"),
+    ).rejects.toThrow();
   });
 });

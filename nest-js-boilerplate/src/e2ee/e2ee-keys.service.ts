@@ -8,6 +8,7 @@ import type { E2eeLifecycleHook } from './e2ee-lifecycle.tokens';
 const BUNDLE_PREFIX = 'e2ee:bundle:';
 const OTPK_PREFIX = 'e2ee:otpk:';
 const ACTIVE_PREFIX = 'e2ee:active-device:';
+const BACKUP_PREFIX = 'e2ee:key-backup:';
 
 @Injectable()
 export class E2eeKeysService implements E2eeLifecycleHook {
@@ -36,6 +37,10 @@ export class E2eeKeysService implements E2eeLifecycleHook {
 
   private activeKey(userId: string) {
     return `${ACTIVE_PREFIX}${userId}`;
+  }
+
+  private backupKey(userId: string) {
+    return `${BACKUP_PREFIX}${userId}`;
   }
 
   async registerBundle(
@@ -201,5 +206,46 @@ export class E2eeKeysService implements E2eeLifecycleHook {
     await pipe.exec();
     this.logger.debug(`wipeDevice userId=${userId} deviceId=${deviceId}`);
     return { wiped: true };
+  }
+
+  // ── Key backup (site-data-clearing recovery) ──────────────────────────
+  //
+  // The client POSTs a password-encrypted snapshot of its key material
+  // (XChaCha20-Poly1305 over a PBKDF2-derived key). The server stores it
+  // opaquely — it can never read the plaintext backup, only return it to
+  // the same account after a wipe. One backup per account, latest wins.
+
+  async saveKeyBackup(
+    userId: string,
+    backup: { ciphertext: string; nonce: string; salt: string },
+  ): Promise<{ saved: boolean }> {
+    await this.redis.set(
+      this.backupKey(userId),
+      JSON.stringify(backup),
+      'EX',
+      this.ttl,
+    );
+    this.logger.debug(`saveKeyBackup userId=${userId}`);
+    return { saved: true };
+  }
+
+  async getKeyBackup(userId: string): Promise<{
+    ciphertext: string;
+    nonce: string;
+    salt: string;
+  } | null> {
+    const raw = await this.redis.get(this.backupKey(userId));
+    if (!raw) return null;
+    return JSON.parse(raw) as {
+      ciphertext: string;
+      nonce: string;
+      salt: string;
+    };
+  }
+
+  async deleteKeyBackup(userId: string): Promise<{ deleted: boolean }> {
+    await this.redis.del(this.backupKey(userId));
+    this.logger.debug(`deleteKeyBackup userId=${userId}`);
+    return { deleted: true };
   }
 }

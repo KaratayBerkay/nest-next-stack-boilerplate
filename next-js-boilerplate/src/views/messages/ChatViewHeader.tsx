@@ -5,6 +5,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { IconButton } from "@/components/ui/button/icon-button";
 import {
   IconChevronLeft,
+  IconCloudDownload,
   IconDownload,
   IconRefresh,
   IconUpload,
@@ -45,6 +46,8 @@ export function ChatViewHeader({
   onResetConversation,
   onExportKeys,
   onImportKeys,
+  hasServerBackup,
+  onRestoreFromServer,
 }: ChatViewHeaderProps) {
   const t = useMessages("messages");
   const isOnline = onlineUsers.has(selectedUser.id);
@@ -103,6 +106,16 @@ export function ChatViewHeader({
                 onClick={() => backupFileInputRef.current?.click()}
                 className="text-muted hover:text-fg shrink-0"
               />
+              {hasServerBackup && onRestoreFromServer && (
+                <IconButton
+                  icon={<IconCloudDownload size={14} />}
+                  label="Restore encryption keys from server"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={onRestoreFromServer}
+                  className="text-muted hover:text-fg shrink-0"
+                />
+              )}
             </>
           )}
           {allEncrypted && onResetConversation && (

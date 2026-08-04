@@ -18,4 +18,8 @@ export interface ChatViewHeaderProps {
   onExportKeys?: () => void;
   /** Called with the selected file when the user imports a key backup. */
   onImportKeys?: (file: File) => void;
+  /** True when a password-encrypted backup exists on the server. */
+  hasServerBackup?: boolean;
+  /** Called when the user clicks "Restore from server". */
+  onRestoreFromServer?: () => void;
 }
