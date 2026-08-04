@@ -26,5 +26,6 @@
   "navPremium": "Premium",
   "navAdmin": "Yönetici",
   "navAuditLog": "Denetim Günlüğü",
-  "skipToContent": "İçeriğe atla"
+  "skipToContent": "İçeriğe atla",
+  "decryptionFailed": "Deşifre edilemedi. Çıkış yapıp tekrar giriş yapın."
 }

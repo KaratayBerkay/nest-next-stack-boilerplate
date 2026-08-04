@@ -5,6 +5,7 @@ import { MessageTick } from "@/components/MessageTick";
 import { AttachmentPreview } from "@/components/AttachmentPreview";
 import { initials } from "@/lib/initials";
 import { formatMessageTime } from "@/views/messages/ChatView-utils";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { ChatMessageBubbleProps } from "@/types/messages/ChatMessageBubble-types";
 
 export function ChatMessageBubble({
@@ -15,6 +16,9 @@ export function ChatMessageBubble({
   userAvatarUrl,
   dateDisplay,
 }: ChatMessageBubbleProps) {
+  const t = useMessages("messages");
+  const decryptionFailed =
+    msg.encrypted && (msg.body == null || msg.body === "");
   return (
     <div
       className={`animate-fade-in-up flex items-end gap-2 ${isMe ? "flex-row-reverse" : ""}`}
@@ -47,15 +51,17 @@ export function ChatMessageBubble({
           >
             {msg.body}
           </span>
-        ) : msg.encrypted ? (
+        ) : decryptionFailed ? (
           <span
             className={`inline-block rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-              isMe ? "bg-brand text-brand-fg" : "bg-surface text-fg"
+              isMe
+                ? "bg-warning/10 text-warning-foreground"
+                : "bg-warning/10 text-warning-foreground"
             }`}
           >
-            <span className="text-muted inline-flex items-center gap-1.5 text-xs italic">
+            <span className="inline-flex items-center gap-1.5 text-xs italic">
               <span>{"\uD83D\uDD12"}</span>
-              <span>Encrypted</span>
+              <span>{t.decryptionFailed}</span>
             </span>
           </span>
         ) : null}

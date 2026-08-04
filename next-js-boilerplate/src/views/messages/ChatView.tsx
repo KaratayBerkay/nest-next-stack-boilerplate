@@ -139,7 +139,11 @@ export function ChatView({
         selectedUser={selectedUser}
         dateDisplay={dateDisplay}
         bottomRef={bottomRef}
-        t={{ failedToLoad: t.failedToLoad, noMessages: t.noMessages }}
+        t={{
+          failedToLoad: t.failedToLoad,
+          noMessages: t.noMessages,
+          decryptionFailed: t.decryptionFailed,
+        }}
       />
 
       {!isAtBottom && !input && conversationMessages.length > 0 && (

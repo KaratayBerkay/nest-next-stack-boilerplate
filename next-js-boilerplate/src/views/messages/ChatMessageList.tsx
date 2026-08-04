@@ -17,6 +17,10 @@ export function ChatMessageList({
   bottomRef,
   t,
 }: ChatMessageListProps) {
+  const hasDecryptionFailure = conversationMessages.some(
+    (m) => m.encrypted && (m.body == null || m.body === ""),
+  );
+
   return (
     <div
       ref={messagesRef}
@@ -30,6 +34,11 @@ export function ChatMessageList({
       {!msgsError && conversationMessages.length === 0 && (
         <div className="flex flex-1 items-center justify-center">
           <p className="text-muted text-sm">{t.noMessages}</p>
+        </div>
+      )}
+      {!msgsError && hasDecryptionFailure && (
+        <div className="bg-warning/10 border-warning/30 text-warning-foreground rounded-lg border px-3 py-2 text-center text-xs">
+          {t.decryptionFailed}
         </div>
       )}
       {hasNextPage && <LoadEarlierButton onClick={() => onFetchNextPage()} />}

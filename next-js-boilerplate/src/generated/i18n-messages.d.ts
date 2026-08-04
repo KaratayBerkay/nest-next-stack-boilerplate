@@ -213,6 +213,7 @@ export type I18nMessages = {
       "openEmojiPicker": string;
       "removeAttachment": string;
       "uploading": string;
+      "decryptionFailed": string;
     }
 
   "checkout": {
@@ -1049,6 +1050,7 @@ export type I18nMessages = {
       "loading": string;
       "failedToLoad": string;
       "signInRequired": string;
+      "decryptionFailed": string;
     }
 
   "notification": {
@@ -1492,5 +1494,6 @@ export type I18nMessages = {
       "navAdmin": string;
       "navAuditLog": string;
       "skipToContent": string;
+      "decryptionFailed": string;
     }
 };

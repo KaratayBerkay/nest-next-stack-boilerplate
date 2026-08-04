@@ -75,10 +75,10 @@ export function MessagesSidebarConversations({
                 <div className="mt-0.5 flex items-center justify-between gap-2">
                   <p className="text-muted min-w-0 truncate text-sm">
                     {typeof c.lastMessage === "string"
-                      ? c.lastMessage === "[Encrypted]"
-                        ? "\uD83D\uDD12 Encrypted"
+                      ? c.lastMessage === "[Encrypted]" || c.lastMessage === ""
+                        ? "\uD83D\uDD12 " + t.decryptionFailed
                         : c.lastMessage
-                      : "\uD83D\uDD12 Encrypted"}
+                      : "\uD83D\uDD12 " + t.decryptionFailed}
                   </p>
                   {c.unread > 0 && (
                     <span className="bg-error flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white">

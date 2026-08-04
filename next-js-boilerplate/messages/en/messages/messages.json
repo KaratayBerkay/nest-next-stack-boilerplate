@@ -17,5 +17,6 @@
   "send": "Send",
   "loading": "Loading...",
   "failedToLoad": "Failed to load messages",
-  "signInRequired": "Sign in to start messaging"
+  "signInRequired": "Sign in to start messaging",
+  "decryptionFailed": "Could not decrypt messages. Sign out and back in to restore messaging."
 }

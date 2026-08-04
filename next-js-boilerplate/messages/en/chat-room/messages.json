@@ -17,5 +17,6 @@
   "attachFile": "Attach file",
   "openEmojiPicker": "Insert emoji",
   "removeAttachment": "Remove attachment",
-  "uploading": "Uploading…"
+  "uploading": "Uploading…",
+  "decryptionFailed": "Could not decrypt messages. Sign out and back in to restore messaging."
 }

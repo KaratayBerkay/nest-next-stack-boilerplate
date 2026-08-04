@@ -17,5 +17,6 @@
   "attachFile": "Dosya ekle",
   "openEmojiPicker": "Emoji ekle",
   "removeAttachment": "Eki kaldır",
-  "uploading": "Yükleniyor…"
+  "uploading": "Yükleniyor…",
+  "decryptionFailed": "Mesajlar deşifre edilemedi. Mesajlaşmayı geri yüklemek için çıkış yapıp tekrar giriş yapın."
 }
