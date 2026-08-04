@@ -36,20 +36,33 @@ export class MessagingDmService {
   }
 
   private decryptPreview(
-    msg: { body: string | null; encrypted: boolean; envelope: unknown },
+    msg: { body: string | null; encrypted: boolean; envelope: unknown; senderId?: string },
     userId: string,
   ): string {
     if (msg.body) return msg.body;
     if (msg.encrypted && msg.envelope) {
+      try {
+        const decrypted = this.storageCrypto.decryptForRoom(
+          msg.envelope,
+        ) as { text?: string };
+        return decrypted.text ?? '';
+      } catch {}
+      try {
+        const senderId = msg.senderId || userId;
+        const decrypted = this.storageCrypto.decryptFromStorage(
+          senderId,
+          msg.envelope,
+        ) as { text?: string };
+        return decrypted.text ?? '';
+      } catch {}
       try {
         const decrypted = this.storageCrypto.decryptFromStorage(
           userId,
           msg.envelope,
         ) as { text?: string };
         return decrypted.text ?? '';
-      } catch {
-        return '';
-      }
+      } catch {}
+      return '';
     }
     return '';
   }

@@ -89,13 +89,29 @@ export class MessagingResolver {
   ): Record<string, unknown> {
     if (message.encrypted && message.envelope && !message.body) {
       try {
-        const decrypted = this.storageCrypto.decryptFromStorage(
-          userId,
+        const decrypted = this.storageCrypto.decryptForRoom(
           message.envelope,
         ) as { text?: string; attachment?: unknown };
         return { ...message, body: decrypted.text ?? '', envelope: undefined };
       } catch {
-        return message;
+        try {
+          const senderId = (message.senderId as string) || userId;
+          const decrypted = this.storageCrypto.decryptFromStorage(
+            senderId,
+            message.envelope,
+          ) as { text?: string; attachment?: unknown };
+          return { ...message, body: decrypted.text ?? '', envelope: undefined };
+        } catch {
+          try {
+            const decrypted = this.storageCrypto.decryptFromStorage(
+              userId,
+              message.envelope,
+            ) as { text?: string; attachment?: unknown };
+            return { ...message, body: decrypted.text ?? '', envelope: undefined };
+          } catch {
+            return message;
+          }
+        }
       }
     }
     return message;

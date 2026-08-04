@@ -282,14 +282,25 @@ export class MessagingController {
         return { ...message, body: decrypted.text ?? '', envelope: undefined };
       } catch {
         try {
-          // Fall back to per-user key (DMs use encryptForStorage).
+          // Fall back to sender's per-user key (legacy room messages or DMs
+          // encrypted with encryptForStorage(senderId, ...)).
+          const senderId = (message.senderId as string) || userId;
           const decrypted = this.storageCrypto.decryptFromStorage(
-            userId,
+            senderId,
             message.envelope,
           ) as { text?: string; attachment?: unknown };
           return { ...message, body: decrypted.text ?? '', envelope: undefined };
         } catch {
-          return message;
+          try {
+            // Last resort: try reader's per-user key (DMs where reader is sender).
+            const decrypted = this.storageCrypto.decryptFromStorage(
+              userId,
+              message.envelope,
+            ) as { text?: string; attachment?: unknown };
+            return { ...message, body: decrypted.text ?? '', envelope: undefined };
+          } catch {
+            return message;
+          }
         }
       }
     }
