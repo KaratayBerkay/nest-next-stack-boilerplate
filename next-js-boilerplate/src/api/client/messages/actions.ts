@@ -34,9 +34,6 @@ export function useMessageActions() {
           createdAt: new Date().toISOString(),
           pending: true,
         };
-        if (attachment?.cryptoMetadata) {
-          entry.cryptoMetadata = attachment.cryptoMetadata;
-        }
         first.messages = [...first.messages, entry];
         pages[0] = first;
         return { ...data, pages };

@@ -174,12 +174,16 @@ export class MessagingController {
     @Query('before') before?: string,
     @Query('take') take?: string,
   ) {
-    return this.ms.getMessages(
+    const result = await this.ms.getMessages(
       user.userId,
       otherUserId,
       before,
       take ? Math.min(parseInt(take, 10), 100) : 30,
     );
+    return {
+      ...result,
+      messages: result.messages.map((m) => this.decryptMessageBody(m, user.userId)),
+    };
   }
 
   @Post('conversations/:userId/messages')
@@ -239,15 +243,41 @@ export class MessagingController {
   @ApiQuery({ name: 'before', required: false })
   @ApiQuery({ name: 'take', required: false })
   async getRoomMessages(
-    @CurrentUser() _user: JwtUser,
+    @CurrentUser() user: JwtUser,
     @Param('roomId') roomId: string,
     @Query('before') before?: string,
     @Query('take') take?: string,
   ) {
-    return this.ms.getRoomMessages(
+    const result = await this.ms.getRoomMessages(
       roomId,
       before,
       take ? Math.min(parseInt(take, 10), 100) : 30,
     );
+    return {
+      ...result,
+      messages: result.messages.map((m: Record<string, unknown>) => this.decryptMessageBody(m, user.userId)),
+    };
+  }
+
+  /**
+   * Decrypt a storage envelope in-place so HTTP clients receive plaintext
+   * bodies instead of raw StorageEnvelopeV1 ciphertext.
+   */
+  private decryptMessageBody(
+    message: Record<string, unknown>,
+    userId: string,
+  ): Record<string, unknown> {
+    if (message.encrypted && message.envelope && !message.body) {
+      try {
+        const decrypted = this.storageCrypto.decryptFromStorage(
+          userId,
+          message.envelope,
+        ) as { text?: string; attachment?: unknown };
+        return { ...message, body: decrypted.text ?? '', envelope: undefined };
+      } catch {
+        return message;
+      }
+    }
+    return message;
   }
 }

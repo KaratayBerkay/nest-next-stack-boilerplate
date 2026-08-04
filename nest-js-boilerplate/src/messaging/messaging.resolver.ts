@@ -36,11 +36,8 @@ export class MessagingResolver {
     @CurrentUser() user: JwtUser,
     @Args('userId') otherUserId: string,
   ) {
-    // `getMessages` returns `{ messages, hasMore }` (the REST controller at
-    // messaging.controller.ts needs `hasMore` for pagination) but this field
-    // is declared `[Message!]!` — a bare list — so only the array belongs here.
     const { messages } = await this.ms.getMessages(user.userId, otherUserId);
-    return messages;
+    return messages.map((m) => this.decryptMessageBody(m, user.userId));
   }
 
   @Mutation(() => Message)
@@ -84,5 +81,23 @@ export class MessagingResolver {
   ) {
     await this.ms.markConversationRead(user.userId, otherUserId);
     return true;
+  }
+
+  private decryptMessageBody(
+    message: Record<string, unknown>,
+    userId: string,
+  ): Record<string, unknown> {
+    if (message.encrypted && message.envelope && !message.body) {
+      try {
+        const decrypted = this.storageCrypto.decryptFromStorage(
+          userId,
+          message.envelope,
+        ) as { text?: string; attachment?: unknown };
+        return { ...message, body: decrypted.text ?? '', envelope: undefined };
+      } catch {
+        return message;
+      }
+    }
+    return message;
   }
 }

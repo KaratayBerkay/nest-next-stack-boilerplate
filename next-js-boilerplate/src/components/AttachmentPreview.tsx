@@ -1,24 +1,12 @@
 import { IconFileText, IconExternalLink } from "@tabler/icons-react";
 import type { AttachmentPreviewProps } from "@/types/components/AttachmentPreview-types";
-import { EncryptedAttachmentPreview } from "./EncryptedAttachmentPreview";
 
 export function AttachmentPreview({
   url,
   type,
   name,
   className,
-  cryptoMetadata,
 }: AttachmentPreviewProps) {
-  if (cryptoMetadata) {
-    return (
-      <EncryptedAttachmentPreview
-        url={url}
-        cryptoMetadata={cryptoMetadata}
-        className={className}
-      />
-    );
-  }
-
   const label = name || "Attachment";
   const isImage = type?.startsWith("image/");
 
