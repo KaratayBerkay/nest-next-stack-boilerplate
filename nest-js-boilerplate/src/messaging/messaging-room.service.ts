@@ -56,7 +56,19 @@ export class MessagingRoomService {
     private readonly prisma: PrismaService,
     private readonly redis: Redis | null,
   ) {
-    void refreshDbRoomSlugs(this.prisma).catch(() => undefined);
+    void this.seedRooms().then(() =>
+      refreshDbRoomSlugs(this.prisma),
+    );
+  }
+
+  private async seedRooms(): Promise<void> {
+    for (const slug of CHAT_ROOMS) {
+      await this.prisma.room.upsert({
+        where: { slug },
+        update: {},
+        create: { slug },
+      });
+    }
   }
 
   private redisRoomKey(room: string): string {
