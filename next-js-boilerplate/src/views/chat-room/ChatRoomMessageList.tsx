@@ -14,6 +14,10 @@ export const ChatRoomMessageList = forwardRef<
   { messages, userId, onlineUserIds, msgsLoading, msgsError, bottomRef, t },
   ref,
 ) {
+  const hasDecryptionFailure = messages.some(
+    (m) => m.encrypted && (m.body == null || m.body === ""),
+  );
+
   return (
     <div
       ref={ref}
@@ -37,8 +41,15 @@ export const ChatRoomMessageList = forwardRef<
           <p className="text-muted text-xs">{t.noMessages}</p>
         </div>
       )}
+      {!msgsLoading && !msgsError && hasDecryptionFailure && (
+        <div className="bg-warning/10 border-warning/30 text-warning-foreground rounded-lg border px-3 py-2 text-center text-xs">
+          {t.decryptionFailed}
+        </div>
+      )}
       {messages.map((msg, i) => {
         const isMe = msg.senderId === userId;
+        const decryptionFailed =
+          msg.encrypted && (msg.body == null || msg.body === "");
         return (
           <div
             key={msg.id}
@@ -80,12 +91,16 @@ export const ChatRoomMessageList = forwardRef<
               ) : (
                 <span
                   className={`inline-block rounded-xl px-3 py-1.5 text-sm ${
-                    isMe ? "bg-brand text-brand-fg" : "bg-surface text-fg"
+                    decryptionFailed
+                      ? "bg-warning/10 text-warning-foreground"
+                      : isMe
+                        ? "bg-brand text-brand-fg"
+                        : "bg-surface text-fg"
                   }`}
                 >
-                  <span className="text-muted inline-flex items-center gap-1.5 text-xs italic">
+                  <span className="inline-flex items-center gap-1.5 text-xs italic">
                     <span>{"\uD83D\uDD12"}</span>
-                    <span>Encrypted</span>
+                    <span>{decryptionFailed ? t.decryptionFailed : ""}</span>
                   </span>
                 </span>
               )}
