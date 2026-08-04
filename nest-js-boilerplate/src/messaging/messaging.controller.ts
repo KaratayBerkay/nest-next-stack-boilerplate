@@ -275,13 +275,22 @@ export class MessagingController {
   ): Record<string, unknown> {
     if (message.encrypted && message.envelope && !message.body) {
       try {
-        const decrypted = this.storageCrypto.decryptFromStorage(
-          userId,
+        // Try shared room key first (room messages use encryptForRoom).
+        const decrypted = this.storageCrypto.decryptForRoom(
           message.envelope,
         ) as { text?: string; attachment?: unknown };
         return { ...message, body: decrypted.text ?? '', envelope: undefined };
       } catch {
-        return message;
+        try {
+          // Fall back to per-user key (DMs use encryptForStorage).
+          const decrypted = this.storageCrypto.decryptFromStorage(
+            userId,
+            message.envelope,
+          ) as { text?: string; attachment?: unknown };
+          return { ...message, body: decrypted.text ?? '', envelope: undefined };
+        } catch {
+          return message;
+        }
       }
     }
     return message;

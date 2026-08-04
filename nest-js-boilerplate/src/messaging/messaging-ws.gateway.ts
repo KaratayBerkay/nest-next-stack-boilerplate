@@ -377,10 +377,10 @@ export class MessagingWsGateway implements OnModuleInit {
       attachment: toAttachment(data),
     };
 
-    // Encrypt for at-rest storage.
+    // Encrypt for at-rest storage (shared room key, readable by all members).
     const storageEnvelope =
       plaintext.text || plaintext.attachment
-        ? await this.storageCrypto.encryptForStorage(ws.userId, plaintext)
+        ? this.storageCrypto.encryptForRoom(plaintext)
         : undefined;
 
     const saved = await this.ms.saveRoomMessage(
@@ -420,7 +420,7 @@ export class MessagingWsGateway implements OnModuleInit {
     for (const member of roomMembers) {
       await this.realtime.emitToPageEncrypted(
         member.userId,
-        'messages',
+        'chat-room',
         (sid) => this.wireCrypto.encryptForSession(sid, basePayload) as unknown as Promise<Record<string, unknown>>,
       );
     }

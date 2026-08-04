@@ -14,7 +14,7 @@ const PAGE_ALLOWLIST: Record<string, PageAllowlistEntry> = {
   notification: { allowed: [], key: [] },
   feed: { allowed: [], key: [] },
   post: { allowed: ['id'], key: ['id'] },
-  'chat-room': { allowed: ['room'], key: ['room'] },
+  'chat-room': { allowed: ['room'], key: [] },
 };
 
 export class RealtimePageManager {

@@ -8,6 +8,7 @@ import type { StorageEnvelopeV1 } from './wire-crypto.types';
 
 // Legacy prefix kept for backward compatibility with existing encrypted data.
 const STORAGE_CONTEXT = 'e2ee-storage-v1';
+const ROOM_STORAGE_CONTEXT = 'room-storage-v1';
 
 /**
  * At-rest encryption for message bodies stored in Postgres.
@@ -46,6 +47,16 @@ export class StorageCryptoService {
       this.masterKey,
       new Uint8Array(0),
       new TextEncoder().encode(`${STORAGE_CONTEXT}:${userId}`),
+      32,
+    );
+  }
+
+  private roomKey(): Uint8Array {
+    return hkdf(
+      sha256,
+      this.masterKey,
+      new Uint8Array(0),
+      new TextEncoder().encode(ROOM_STORAGE_CONTEXT),
       32,
     );
   }
@@ -126,6 +137,47 @@ export class StorageCryptoService {
       return cipher.decrypt(Buffer.from(storage.ct, 'base64'));
     } catch {
       throw new UnauthorizedException('At-rest file decryption failed');
+    }
+  }
+
+  /** Encrypt a room message (shared key, readable by all room members). */
+  encryptForRoom(payload: unknown): StorageEnvelopeV1 {
+    const nonce = randomBytes(24);
+    const cipher = xchacha20poly1305(
+      this.roomKey(),
+      nonce,
+      new TextEncoder().encode(ROOM_STORAGE_CONTEXT),
+    );
+    const ct = cipher.encrypt(
+      new TextEncoder().encode(JSON.stringify(payload)),
+    );
+    return {
+      v: 'storage-v1',
+      nonce: nonce.toString('base64'),
+      ct: Buffer.from(ct).toString('base64'),
+    };
+  }
+
+  /** Decrypt a room message envelope (shared key). */
+  decryptForRoom(envelope: unknown): unknown {
+    const storage = envelope as Partial<StorageEnvelopeV1>;
+    if (
+      storage?.v !== 'storage-v1' ||
+      typeof storage?.nonce !== 'string' ||
+      typeof storage?.ct !== 'string'
+    ) {
+      throw new UnauthorizedException('Malformed at-rest envelope');
+    }
+    try {
+      const cipher = xchacha20poly1305(
+        this.roomKey(),
+        Buffer.from(storage.nonce, 'base64'),
+        new TextEncoder().encode(ROOM_STORAGE_CONTEXT),
+      );
+      const plain = cipher.decrypt(Buffer.from(storage.ct, 'base64'));
+      return JSON.parse(Buffer.from(plain).toString('utf8')) as unknown;
+    } catch {
+      throw new UnauthorizedException('At-rest room message decryption failed');
     }
   }
 }
