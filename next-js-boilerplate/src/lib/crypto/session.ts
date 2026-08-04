@@ -20,6 +20,7 @@ import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js";
 import { apiFetch, apiFetchJson } from "@/lib/api-client";
 import {
   getDeviceToken,
+  setDeviceToken,
   loadKeys,
   storeKeys,
   flushKeys,
@@ -67,7 +68,29 @@ const WIRE_CRYPTO_CONTEXT = "session-crypto-v1";
 export async function performHandshake(
   sessionId: string,
 ): Promise<{ clientPublicKey: string }> {
-  const deviceToken = getDeviceToken();
+  let deviceToken = getDeviceToken();
+
+  // If the device token isn't in localStorage yet (race with
+  // deviceHandshakeServer on first load), fetch it from the BFF endpoint
+  // directly. This is a quick POST that slides the cookie and returns the
+  // token value.
+  if (!deviceToken) {
+    try {
+      const res = await fetch("/api/auth/device-handshake", {
+        method: "POST",
+      });
+      if (res.ok) {
+        const body = (await res.json()) as { deviceToken?: string };
+        if (body.deviceToken) {
+          setDeviceToken(body.deviceToken);
+          deviceToken = body.deviceToken;
+        }
+      }
+    } catch {
+      /* ignore — will throw below if still null */
+    }
+  }
+
   if (!deviceToken) {
     throw new Error("No device token — cannot perform device handshake");
   }

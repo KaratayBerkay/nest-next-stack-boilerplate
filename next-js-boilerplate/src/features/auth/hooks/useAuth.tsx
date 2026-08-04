@@ -96,6 +96,10 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
     if (ssrHydratedRef.current) return;
 
     if (initialUser) {
+      // Fire-and-forget: ensure device token is in localStorage for the
+      // wire-crypto handshake. The cookie already exists from login, but
+      // localStorage may be empty on first SSR load after deploy/re-login.
+      deviceHandshakeServer();
       refreshTokenServer()
         .then((t) => {
           if (t?.accessToken) setToken(t.accessToken);
