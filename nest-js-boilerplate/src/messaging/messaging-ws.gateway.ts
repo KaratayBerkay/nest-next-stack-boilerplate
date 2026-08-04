@@ -241,12 +241,12 @@ export class MessagingWsGateway implements OnModuleInit {
     await this.realtime.emitToPageEncrypted(
       message.recipientId,
       'messages',
-      (sid, dth) => this.wireCrypto.encryptForSession(sid, delivery.recipientPayload, dth) as unknown as Promise<Record<string, unknown>>,
+      delivery.recipientPayload,
     );
     await this.realtime.emitToPageEncrypted(
       message.senderId,
       'messages',
-      (sid, dth) => this.wireCrypto.encryptForSession(sid, delivery.senderPayload, dth) as unknown as Promise<Record<string, unknown>>,
+      delivery.senderPayload,
     );
   }
 
@@ -413,15 +413,14 @@ export class MessagingWsGateway implements OnModuleInit {
     });
 
     // For room messages, encrypt per room-member connection.
-    // broadcastToRoom sends to all connections in the room — we iterate
-    // connections manually via emitToPageEncrypted-like pattern.
-    const roomMembers = this.ms.getRoomMembers(data.room);
+    // Use getRoomUserIds (Redis-backed) for cross-instance delivery.
+    const userIds = await this.ms.getRoomUserIds(data.room);
     const basePayload = buildPayload();
-    for (const member of roomMembers) {
+    for (const uid of userIds) {
       await this.realtime.emitToPageEncrypted(
-        member.userId,
+        uid,
         'chat-room',
-        (sid, dth) => this.wireCrypto.encryptForSession(sid, basePayload, dth) as unknown as Promise<Record<string, unknown>>,
+        basePayload,
       );
     }
   }

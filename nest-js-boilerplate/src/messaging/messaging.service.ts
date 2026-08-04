@@ -199,6 +199,10 @@ export class MessagingService {
     return this.rooms.getRoomMembers(room);
   }
 
+  getRoomUserIds(room: string) {
+    return this.rooms.getRoomUserIds(room);
+  }
+
   saveRoomMessage(
     roomId: string,
     senderId: string,

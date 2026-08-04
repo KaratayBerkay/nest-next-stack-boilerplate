@@ -44,13 +44,14 @@ export function isValidRoom(room: string): boolean {
 
 export class MessagingRoomService {
   /**
-   * Chat-room membership is in-memory only (not replica-safe).
-   * Running multiple backend instances will produce inconsistent
-   * member lists and counts. To scale horizontally, make Redis
-   * Sets the authoritative source (read back from SISMEMBER/SMEMBERS
-   * in getRoomMembers/getRoomCounts instead of only writing via SADD).
+   * Chat-room membership uses Redis Sets as the authoritative source for
+   * user IDs (cross-instance safe). The in-memory Map stores full
+   * RoomMember objects for local display (names, avatars) and reference
+   * counting (socketCount per userId).
    */
   private rooms = new Map<string, Map<string, RoomMember>>();
+  /** Per-room userId → number of local sockets (for refcounted leave). */
+  private userSocketCounts = new Map<string, Map<string, number>>();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -82,20 +83,48 @@ export class MessagingRoomService {
     return `${ROOM_MEMBERS_PREFIX}${room}:members`;
   }
 
+  private redisUserKey(room: string): string {
+    return `${ROOM_MEMBERS_PREFIX}${room}:userIds`;
+  }
+
   joinRoom(room: string, member: RoomMember) {
     if (!this.rooms.has(room)) this.rooms.set(room, new Map());
     this.rooms.get(room)!.set(member.socketId, member);
     void this.redis?.sadd(this.redisRoomKey(room), member.socketId);
+
+    // Track userId refcount locally and in Redis.
+    if (!this.userSocketCounts.has(room))
+      this.userSocketCounts.set(room, new Map());
+    const counts = this.userSocketCounts.get(room)!;
+    counts.set(member.userId, (counts.get(member.userId) ?? 0) + 1);
+    void this.redis?.sadd(this.redisUserKey(room), member.userId);
+
     return this.getRoomMembers(room);
   }
 
   leaveRoom(room: string, socketId: string) {
     const roomMap = this.rooms.get(room);
     if (roomMap) {
+      const member = roomMap.get(socketId);
       roomMap.delete(socketId);
+      void this.redis?.srem(this.redisRoomKey(room), socketId);
+
+      // Decrement userId refcount; remove from Redis when last socket leaves.
+      if (member) {
+        const counts = this.userSocketCounts.get(room);
+        if (counts) {
+          const prev = counts.get(member.userId) ?? 0;
+          if (prev <= 1) {
+            counts.delete(member.userId);
+            void this.redis?.srem(this.redisUserKey(room), member.userId);
+          } else {
+            counts.set(member.userId, prev - 1);
+          }
+        }
+      }
+
       if (roomMap.size === 0) this.rooms.delete(room);
     }
-    void this.redis?.srem(this.redisRoomKey(room), socketId);
     return this.getRoomMembers(room);
   }
 
@@ -103,9 +132,22 @@ export class MessagingRoomService {
     const affected: string[] = [];
     for (const [room, members] of this.rooms) {
       if (members.has(socketId)) {
+        const member = members.get(socketId)!;
         members.delete(socketId);
         affected.push(room);
         void this.redis?.srem(this.redisRoomKey(room), socketId);
+
+        const counts = this.userSocketCounts.get(room);
+        if (counts) {
+          const prev = counts.get(member.userId) ?? 0;
+          if (prev <= 1) {
+            counts.delete(member.userId);
+            void this.redis?.srem(this.redisUserKey(room), member.userId);
+          } else {
+            counts.set(member.userId, prev - 1);
+          }
+        }
+
         if (members.size === 0) this.rooms.delete(room);
       }
     }
@@ -133,6 +175,17 @@ export class MessagingRoomService {
       result.push(m);
     }
     return result;
+  }
+
+  /**
+   * Returns userIds of all members in a room across ALL instances.
+   * Uses the Redis Set as the source of truth for cross-instance safety.
+   */
+  async getRoomUserIds(room: string): Promise<string[]> {
+    if (!this.redis) {
+      return this.getRoomMembers(room).map((m) => m.userId);
+    }
+    return this.redis.smembers(this.redisUserKey(room));
   }
 
   async persistJoin(roomSlug: string, userId: string): Promise<void> {

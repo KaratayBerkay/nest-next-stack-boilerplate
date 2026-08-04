@@ -273,7 +273,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
 
     this.subscriber.on('message', (_channel, raw) => {
       try {
-        const { target, userId, service, room, topic, page, frame } =
+            const { target, userId, service, room, topic, page, frame } =
           JSON.parse(raw) as {
             target:
               | 'broadcastAll'
@@ -281,7 +281,8 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
               | 'emitToTopic'
               | 'emitToService'
               | 'emitToUser'
-              | 'emitToPage';
+              | 'emitToPage'
+              | 'emitToPageEncrypted';
             frame: Record<string, unknown>;
             userId?: string;
             service?: string;
@@ -309,6 +310,20 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
               break;
             case 'emitToPage':
               if (userId && page) this.emitToPage(userId, page, frame);
+              break;
+            case 'emitToPageEncrypted':
+              if (userId && page && frame) {
+                void this.pageManager.emitToPageWith(
+                  userId,
+                  page,
+                  (sid, dth) =>
+                    this.wireCrypto.encryptForSession(
+                      sid,
+                      frame,
+                      dth,
+                    ) as unknown as Promise<Record<string, unknown>>,
+                );
+              }
               break;
           }
         } finally {
@@ -661,18 +676,40 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Per-connection encrypted emit: calls `encryptFn(sessionId)` for each
-   * connection claiming this page for the user, and sends the resulting
-   * frame. For cross-instance fan-out the plaintext payload is carried in
-   * the Redis pub/sub message and each instance encrypts for its local
-   * connections.
+   * Per-connection encrypted emit: encrypts `payload` with each connection's
+   * own wire-crypto key and sends the resulting frame. Publishes the
+   * plaintext payload to Redis so other instances can encrypt and deliver
+   * to their local connections.
    */
   async emitToPageEncrypted(
     userId: string,
     pageKey: string,
-    encryptFn: (sessionId: string, deviceHash?: string) => Promise<Record<string, unknown>>,
+    payload: Record<string, unknown>,
   ): Promise<number> {
-    return this.pageManager.emitToPageWith(userId, pageKey, encryptFn);
+    const local = await this.pageManager.emitToPageWith(
+      userId,
+      pageKey,
+      (sid, dth) =>
+        this.wireCrypto.encryptForSession(
+          sid,
+          payload,
+          dth,
+        ) as unknown as Promise<Record<string, unknown>>,
+    );
+    if (!this.forwardingFromRedis) {
+      void this.safeRedis('publish', () =>
+        this.redis.publish(
+          RealtimeGateway.WS_CHANNEL,
+          JSON.stringify({
+            target: 'emitToPageEncrypted',
+            userId,
+            page: pageKey,
+            frame: payload,
+          }),
+        ),
+      );
+    }
+    return local;
   }
 
   hasServiceConnection(userId: string, service: string): boolean {
