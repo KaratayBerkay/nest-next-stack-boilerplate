@@ -5,7 +5,9 @@
 # Add a profile: make up PROFILE=all
 # Target one service: make rebuild SERVICE=nextjs
 
-PROFILE ?=
+# tools enabled by default so dev tools like redis-commander (localhost:8081)
+# come up with the core stack. Override: PROFILE=all, or PROFILE= to disable.
+PROFILE ?= tools
 SERVICE ?=
 PROFILE_FLAG := $(if $(PROFILE),--profile $(PROFILE),)
 COMPOSE := docker compose $(PROFILE_FLAG)

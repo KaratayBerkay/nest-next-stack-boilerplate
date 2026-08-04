@@ -59,6 +59,9 @@ services:
     image: rediscommander/redis-commander:latest
     profiles: ["tools", "all"]
     restart: unless-stopped
+    # env file is fetched from Vault by vault-init (see docker/vault-init/
+    # entrypoint.sh — redis-commander is in the SERVICES list). It contains:
+    #   REDIS_HOSTS=local:redis:6379
     depends_on:
       vault-init:
         condition: service_completed_successfully
