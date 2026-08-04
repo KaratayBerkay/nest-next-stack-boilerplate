@@ -17,6 +17,9 @@ export async function sendMessageServer(
     body.attachmentUrl = attachment.url;
     body.attachmentType = attachment.type;
     body.attachmentName = attachment.name;
+    if (attachment.storageEnvelope) {
+      body.attachmentEnvelope = attachment.storageEnvelope;
+    }
   }
   if (envelope) {
     body.envelope = envelope;

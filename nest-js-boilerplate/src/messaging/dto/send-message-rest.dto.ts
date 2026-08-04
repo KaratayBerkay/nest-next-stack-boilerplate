@@ -57,6 +57,14 @@ export class SendMessageRestDto {
 
   @IsObject()
   @IsOptional()
+  @ApiProperty({
+    description: 'Server-side at-rest encryption envelope for the attachment blob',
+    required: false,
+  })
+  attachmentEnvelope?: Record<string, unknown>;
+
+  @IsObject()
+  @IsOptional()
   @Validate(EnvelopeSizeConstraint)
   @ApiProperty({
     description:

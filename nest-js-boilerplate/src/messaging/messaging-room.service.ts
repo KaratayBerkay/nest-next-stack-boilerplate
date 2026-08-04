@@ -176,6 +176,7 @@ export class MessagingRoomService {
         attachmentUrl: attachment?.url,
         attachmentType: attachment?.type,
         attachmentName: attachment?.name,
+        attachmentEnvelope: attachment?.storageEnvelope as Prisma.InputJsonValue | undefined,
       },
       include: { sender: { select: { name: true, email: true } } },
     });

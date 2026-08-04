@@ -81,6 +81,11 @@ export async function performHandshake(
     recvSeq: 0,
   };
 
+  // Notify React hooks that a session is now active.
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("session-crypto-change"));
+  }
+
   return { clientPublicKey: clientPubHex };
 }
 
@@ -148,6 +153,9 @@ export function getSessionId(): string | null {
 /** Tear down the session (on logout / disconnect). */
 export function destroySession(): void {
   state = null;
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("session-crypto-change"));
+  }
 }
 
 // ── AAD construction ──────────────────────────────────────────────────────

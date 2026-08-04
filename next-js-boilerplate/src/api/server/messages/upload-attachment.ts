@@ -8,6 +8,7 @@ export interface UploadAttachmentResult {
   originalname: string;
   mimetype: string;
   size: number;
+  envelope?: { v: string; nonce: string; ct: string };
 }
 
 export async function uploadAttachmentServer(
@@ -28,5 +29,6 @@ export function toMessageAttachment(
     url: result.url,
     type: result.mimetype,
     name: result.originalname,
+    storageEnvelope: result.envelope ?? null,
   };
 }

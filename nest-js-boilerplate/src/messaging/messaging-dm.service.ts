@@ -100,18 +100,14 @@ export class MessagingDmService {
     >();
     for (const msg of sentMessages)
       latestPerPeer.set(msg.recipientId, {
-        lastMessage: msg.encrypted
-          ? ((msg.envelope as Record<string, unknown>) ?? '')
-          : (msg.body ?? ''),
+        lastMessage: msg.body ?? '',
         lastTime: msg.createdAt,
       });
     for (const msg of receivedMessages) {
       const existing = latestPerPeer.get(msg.senderId);
       if (!existing || msg.createdAt > existing.lastTime)
         latestPerPeer.set(msg.senderId, {
-          lastMessage: msg.encrypted
-            ? ((msg.envelope as Record<string, unknown>) ?? '')
-            : (msg.body ?? ''),
+          lastMessage: msg.body ?? '',
           lastTime: msg.createdAt,
         });
     }
@@ -239,6 +235,7 @@ export class MessagingDmService {
         attachmentUrl: attachment?.url,
         attachmentType: attachment?.type,
         attachmentName: attachment?.name,
+        attachmentEnvelope: attachment?.storageEnvelope as Prisma.InputJsonValue | undefined,
       },
       include: {
         sender: {
@@ -309,10 +306,7 @@ export class MessagingDmService {
     const senderEmail = message.sender?.email ?? '';
 
     // Preview: use plaintext when available (server is trusted), else legacy
-    const lastMessage = deliveryPlaintext?.text
-      ?? (message.encrypted
-        ? ((message.envelope as Record<string, unknown>) ?? message.body)
-        : message.body);
+    const lastMessage = deliveryPlaintext?.text ?? message.body ?? '';
 
     this.realtime.emitToService(message.recipientId, 'MESSAGE', {
       renew: 'Messages',

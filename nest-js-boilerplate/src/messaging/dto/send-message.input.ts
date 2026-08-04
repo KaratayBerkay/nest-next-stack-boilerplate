@@ -58,6 +58,15 @@ export class SendMessageInput {
   @Field(() => String, { nullable: true })
   @IsObject()
   @IsOptional()
+  @ApiProperty({
+    description: 'Server-side at-rest encryption envelope for the attachment blob',
+    required: false,
+  })
+  attachmentEnvelope?: Record<string, unknown>;
+
+  @Field(() => String, { nullable: true })
+  @IsObject()
+  @IsOptional()
   @Validate(EnvelopeSizeConstraint)
   @ApiProperty({
     description:

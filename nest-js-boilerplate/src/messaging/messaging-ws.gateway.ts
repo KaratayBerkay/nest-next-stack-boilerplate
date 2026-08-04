@@ -39,6 +39,7 @@ interface IncomingMessagePayload {
   attachmentUrl?: string;
   attachmentType?: string;
   attachmentName?: string;
+  attachmentEnvelope?: Record<string, unknown>;
   envelope?: Record<string, unknown>;
 }
 
@@ -50,6 +51,7 @@ function toAttachment(
       url: data.attachmentUrl,
       type: data.attachmentType,
       name: data.attachmentName,
+      storageEnvelope: (data.attachmentEnvelope as MessageAttachment['storageEnvelope']) ?? null,
     };
   }
   return undefined;

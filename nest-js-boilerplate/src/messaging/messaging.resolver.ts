@@ -54,6 +54,7 @@ export class MessagingResolver {
             url: input.attachmentUrl,
             type: input.attachmentType,
             name: input.attachmentName,
+            storageEnvelope: input.attachmentEnvelope as { v: string; nonce: string; ct: string } | null | undefined,
           }
         : undefined;
 

@@ -196,6 +196,7 @@ export class MessagingController {
             url: body.attachmentUrl,
             type: body.attachmentType,
             name: body.attachmentName,
+            storageEnvelope: body.attachmentEnvelope as { v: string; nonce: string; ct: string } | null | undefined,
           }
         : undefined;
 

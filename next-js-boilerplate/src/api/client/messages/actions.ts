@@ -111,26 +111,6 @@ export function useMessageUpload() {
   const uploadAttachment = async (file: File): Promise<MessageAttachment> => {
     const { uploadAttachmentServer, toMessageAttachment } =
       await import("@/api/server/messages/upload-attachment");
-
-    // Always attempt attachment encryption when available
-    const { encryptAttachmentForUpload } =
-      await import("@/lib/crypto/attachments").catch(() => ({
-        encryptAttachmentForUpload: undefined,
-      }));
-
-    if (encryptAttachmentForUpload) {
-      const { encryptedBlob, metadata } =
-        await encryptAttachmentForUpload(file);
-      const result = await uploadAttachmentServer(encryptedBlob);
-      const attachment = toMessageAttachment(result);
-      return {
-        ...attachment,
-        name: metadata.originalName,
-        type: metadata.originalType,
-        cryptoMetadata: metadata,
-      };
-    }
-
     return toMessageAttachment(await uploadAttachmentServer(file));
   };
   return { uploadAttachment };

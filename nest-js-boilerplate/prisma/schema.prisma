@@ -830,31 +830,33 @@ model Message {
   encrypted      Boolean   @default(false)
   algVersion     Int?
   envelope       Json?     @db.JsonB
-  attachmentUrl  String?
-  attachmentType String?
-  attachmentName String?
-  deliveredAt    DateTime? @db.Timestamptz(6)
-  readAt         DateTime? @db.Timestamptz(6)
-  createdAt      DateTime  @default(now()) @db.Timestamptz(6)
+   attachmentUrl  String?
+   attachmentType String?
+   attachmentName String?
+   attachmentEnvelope Json? @db.JsonB
+   deliveredAt    DateTime? @db.Timestamptz(6)
+   readAt         DateTime? @db.Timestamptz(6)
+   createdAt      DateTime  @default(now()) @db.Timestamptz(6)
 
-  @@index([senderId, recipientId])
-  @@index([recipientId, readAt])
-}
+   @@index([senderId, recipientId])
+   @@index([recipientId, readAt])
+ }
 
-model RoomMessage {
-  id             String   @id @default(uuid(7)) @db.Uuid
-  roomId         String
-  room           Room?    @relation(fields: [roomId], references: [slug], onDelete: Restrict)
-  senderId       String   @db.Uuid
-  sender         User     @relation("RoomMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
-  body           String?  @db.Text
-  encrypted      Boolean  @default(false)
-  algVersion     Int?
-  envelope       Json?    @db.JsonB
-  attachmentUrl  String?
-  attachmentType String?
-  attachmentName String?
-  createdAt      DateTime @default(now()) @db.Timestamptz(6)
+ model RoomMessage {
+   id             String   @id @default(uuid(7)) @db.Uuid
+   roomId         String
+   room           Room?    @relation(fields: [roomId], references: [slug], onDelete: Restrict)
+   senderId       String   @db.Uuid
+   sender         User     @relation("RoomMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+   body           String?  @db.Text
+   encrypted      Boolean  @default(false)
+   algVersion     Int?
+   envelope       Json?    @db.JsonB
+   attachmentUrl  String?
+   attachmentType String?
+   attachmentName String?
+   attachmentEnvelope Json? @db.JsonB
+   createdAt      DateTime @default(now()) @db.Timestamptz(6)
 
   @@index([roomId, createdAt])
 }

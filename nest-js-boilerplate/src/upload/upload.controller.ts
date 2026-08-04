@@ -15,6 +15,9 @@ import { randomUUID } from 'node:crypto';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { ImageService, IMAGE_SIZES } from './image.service';
 import { MinioService } from './minio.service';
+import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
+import { CurrentUser } from '../auth/current-user.decorator';
+import type { JwtUser } from '../auth/auth.types';
 
 interface ImageUrls {
   badge: string;
@@ -80,6 +83,7 @@ export class UploadController {
   constructor(
     private readonly minio: MinioService,
     private readonly images: ImageService,
+    private readonly storageCrypto: StorageCryptoService,
   ) {}
 
   @Post('single')
@@ -138,6 +142,7 @@ export class UploadController {
   @Post('attachment')
   @UseInterceptors(FileInterceptor('file'))
   async attachment(
+    @CurrentUser() user: JwtUser,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
@@ -157,21 +162,29 @@ export class UploadController {
     originalname: string;
     mimetype: string;
     size: number;
+    envelope?: { v: string; nonce: string; ct: string };
   }> {
     const extension =
       ATTACHMENT_EXTENSIONS[file.mimetype] ?? this.extFromName(file.originalname);
     const objectName = `${randomUUID()}${extension}`;
+
+    const envelope = this.storageCrypto.encryptBytes(
+      user.userId,
+      new Uint8Array(file.buffer),
+    );
+
     const url = await this.minio.upload(
       objectName,
-      file.buffer,
+      Buffer.from(envelope.ct, 'base64'),
       undefined,
-      file.mimetype,
+      'application/octet-stream',
     );
     return {
       url,
       originalname: file.originalname,
       mimetype: file.mimetype,
       size: file.size,
+      envelope,
     };
   }
 

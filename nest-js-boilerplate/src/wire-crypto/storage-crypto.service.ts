@@ -89,4 +89,42 @@ export class StorageCryptoService {
       throw new UnauthorizedException('At-rest message decryption failed');
     }
   }
+
+  /** Encrypt raw bytes (e.g. attachment files) for at-rest storage. */
+  encryptBytes(userId: string, data: Uint8Array): StorageEnvelopeV1 {
+    const nonce = randomBytes(24);
+    const cipher = xchacha20poly1305(
+      this.userKey(userId),
+      nonce,
+      new TextEncoder().encode(STORAGE_CONTEXT),
+    );
+    const ct = cipher.encrypt(data);
+    return {
+      v: 'storage-v1',
+      nonce: nonce.toString('base64'),
+      ct: Buffer.from(ct).toString('base64'),
+    };
+  }
+
+  /** Decrypt raw bytes from an at-rest envelope. */
+  decryptBytes(userId: string, envelope: unknown): Uint8Array {
+    const storage = envelope as Partial<StorageEnvelopeV1>;
+    if (
+      storage?.v !== 'storage-v1' ||
+      typeof storage?.nonce !== 'string' ||
+      typeof storage?.ct !== 'string'
+    ) {
+      throw new UnauthorizedException('Malformed at-rest envelope');
+    }
+    try {
+      const cipher = xchacha20poly1305(
+        this.userKey(userId),
+        Buffer.from(storage.nonce, 'base64'),
+        new TextEncoder().encode(STORAGE_CONTEXT),
+      );
+      return cipher.decrypt(Buffer.from(storage.ct, 'base64'));
+    } catch {
+      throw new UnauthorizedException('At-rest file decryption failed');
+    }
+  }
 }
