@@ -1483,6 +1483,7 @@ export type I18nMessages = {
       "navChatRoom": string;
       "navMessages": string;
       "navFindFriends": string;
+      "navFriends": string;
       "navUiComponents": string;
       "navForms": string;
       "navErrorTest": string;

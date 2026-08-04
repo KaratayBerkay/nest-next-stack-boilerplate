@@ -5,7 +5,7 @@ import type { V1NavProps } from "@/types/v1/V1Nav-types";
 import { useParams, usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
-import { FIND_FRIENDS_PATH } from "@/constants/routes";
+import { FIND_FRIENDS_PATH, FRIENDS_PATH } from "@/constants/routes";
 import {
   IconHome,
   IconUsers,
@@ -29,6 +29,7 @@ const AUTH_REQUIRED_HREFS = [
   "/chat-room",
   "/messages",
   FIND_FRIENDS_PATH,
+  FRIENDS_PATH,
   "/premium",
   "/settings/general",
   "/admin",
@@ -50,6 +51,7 @@ export function V1Nav({ onNav }: V1NavProps) {
     { href: "/chat-room", label: t.navChatRoom, Icon: IconMessage },
     { href: "/messages", label: t.navMessages, Icon: IconMail },
     { href: FIND_FRIENDS_PATH, label: t.navFindFriends, Icon: IconUserPlus },
+    { href: FRIENDS_PATH, label: t.navFriends, Icon: IconUsers },
     { href: "/premium", label: t.navPremium, Icon: IconShield, auth: true },
     {
       href: "/settings/general",
