@@ -238,6 +238,7 @@ export class RealtimePageManager {
    * Per-connection async emit: calls `encryptFn(sessionId)` for each connection
    * claiming this page for the user, and sends the resulting frame. Used for
    * wire-encryption where each connection has its own shared secret.
+   * Per-connection failures are caught so one missing key doesn't block all recipients.
    */
   async emitToPageWith(
     userId: string,
@@ -250,9 +251,13 @@ export class RealtimePageManager {
       if (!key.startsWith(prefix)) continue;
       for (const ws of sockets) {
         if (ws.readyState === WebSocket.OPEN && ws.sessionId) {
-          const frame = await encryptFn(ws.sessionId);
-          ws.send(JSON.stringify(frame));
-          sent++;
+          try {
+            const frame = await encryptFn(ws.sessionId);
+            ws.send(JSON.stringify(frame));
+            sent++;
+          } catch {
+            /* connection has no crypto keys yet — skip silently */
+          }
         }
       }
     }

@@ -51,6 +51,7 @@ describe('RealtimeGateway — public methods', () => {
       mockRedis as never, // REDIS_CLIENT
       {} as never, // REDIS_SUBSCRIBER
       {} as never, // SessionValidatorService
+      {} as never, // WireCryptoService
     );
   });
 

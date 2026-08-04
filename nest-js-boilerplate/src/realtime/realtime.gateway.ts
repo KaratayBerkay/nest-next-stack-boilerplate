@@ -27,6 +27,8 @@ import type {
 } from './realtime.types';
 import { RealtimePresenceService } from './realtime-presence.service';
 import { RealtimePageManager } from './realtime-page.manager';
+import { WireCryptoService } from '../wire-crypto/wire-crypto.service';
+import type { WireEnvelopeV2 } from '../wire-crypto/wire-crypto.types';
 
 @Injectable()
 export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
@@ -72,6 +74,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
     @Inject(REDIS_SUBSCRIBER) private readonly subscriber: Redis,
     private readonly validator: SessionValidatorService,
+    private readonly wireCrypto: WireCryptoService,
   ) {}
 
   private safeRedis<T>(
@@ -428,6 +431,30 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       data = JSON.parse(raw.toString()) as Record<string, unknown>;
     } catch {
       return;
+    }
+
+    // Wire-encrypted frames: detect WireEnvelopeV2, decrypt, then route on the
+    // decrypted payload's type. Control frames (watch/unwatch/register/page)
+    // are always sent as plaintext by the client.
+    if (
+      data.v === 2 &&
+      typeof data.nonce === 'string' &&
+      typeof data.ct === 'string'
+    ) {
+      if (!authWs.sessionId) return;
+      try {
+        const decrypted = (await this.wireCrypto.decryptFromClient(
+          authWs.sessionId,
+          data as unknown as WireEnvelopeV2,
+        )) as Record<string, unknown>;
+        if (decrypted && typeof decrypted === 'object') {
+          data = decrypted;
+        } else {
+          return;
+        }
+      } catch {
+        return;
+      }
     }
 
     if (data.type === 'register') {

@@ -185,9 +185,6 @@ export class MessagingWsGateway implements OnModuleInit {
         data as unknown as { recipientId: string },
       ),
     );
-    this.realtime.registerHandler('e2ee-rekey', (ws, data) =>
-      this.handleE2eeRekey(ws as AuthWs, data as unknown as { peerId: string }),
-    );
 
     // Page-claim callbacks for chat-room (Phase 7 D1/D2)
     this.realtime.registerPageCallbacks(
@@ -216,25 +213,11 @@ export class MessagingWsGateway implements OnModuleInit {
       return;
     }
 
-    // Decrypt the incoming wire envelope to get plaintext.
-    let plaintext: { text?: string; attachment?: unknown };
-    if (data.envelope && typeof data.envelope === 'object') {
-      try {
-        const sessionId = ws.sessionId!;
-        plaintext = (await this.wireCrypto.decryptFromClient(
-          sessionId,
-          data.envelope,
-        )) as { text?: string; attachment?: unknown };
-      } catch {
-        ws.send(
-          JSON.stringify({ type: 'error', message: 'Message decryption failed' }),
-        );
-        return;
-      }
-    } else {
-      // Legacy plaintext path (will be removed when all clients encrypt).
-      plaintext = { text: data.text, attachment: toAttachment(data) };
-    }
+    // Data is already decrypted by the gateway's centralized handleMessage.
+    const plaintext: { text?: string; attachment?: unknown } = {
+      text: data.text,
+      attachment: toAttachment(data),
+    };
 
     // Encrypt for at-rest storage.
     const storageEnvelope =
@@ -386,24 +369,11 @@ export class MessagingWsGateway implements OnModuleInit {
       return;
     }
 
-    // Decrypt incoming wire envelope.
-    let plaintext: { text?: string; attachment?: unknown };
-    if (data.envelope && typeof data.envelope === 'object') {
-      try {
-        const sessionId = ws.sessionId!;
-        plaintext = (await this.wireCrypto.decryptFromClient(
-          sessionId,
-          data.envelope,
-        )) as { text?: string; attachment?: unknown };
-      } catch {
-        ws.send(
-          JSON.stringify({ type: 'error', message: 'Message decryption failed' }),
-        );
-        return;
-      }
-    } else {
-      plaintext = { text: data.text, attachment: toAttachment(data) };
-    }
+    // Data is already decrypted by the gateway's centralized handleMessage.
+    const plaintext: { text?: string; attachment?: unknown } = {
+      text: data.text,
+      attachment: toAttachment(data),
+    };
 
     // Encrypt for at-rest storage.
     const storageEnvelope =
@@ -545,14 +515,6 @@ export class MessagingWsGateway implements OnModuleInit {
     this.realtime.emitToPage(data.recipientId, 'messages', {
       type: 'typing-stop',
       senderId: ws.userId,
-    });
-  }
-
-  private handleE2eeRekey(ws: AuthWs, data: { peerId: string }) {
-    if (!ws.userId) return;
-    this.realtime.emitToPage(data.peerId, 'messages', {
-      type: 'e2ee-rekey',
-      peerId: ws.userId,
     });
   }
 }
