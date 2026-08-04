@@ -65,6 +65,10 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
   private handlers = new Map<string, FrameHandler>();
   private redisFailureCount = 0;
   private userIps = new Map<string, Map<string, number>>();
+  /** IDs of emitToPageEncrypted messages published by THIS instance.
+   *  Used to skip redundant local delivery when the subscriber echoes
+   *  the message back. Entries auto-expire after 5 s. */
+  private recentlyPublished = new Map<string, ReturnType<typeof setTimeout>>();
 
   constructor(
     private readonly adapterHost: HttpAdapterHost,
@@ -273,7 +277,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
 
     this.subscriber.on('message', (_channel, raw) => {
       try {
-            const { target, userId, service, room, topic, page, frame } =
+            const { target, userId, service, room, topic, page, frame, eid } =
           JSON.parse(raw) as {
             target:
               | 'broadcastAll'
@@ -289,6 +293,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
             room?: string;
             topic?: string;
             page?: string;
+            eid?: string;
           };
         this.forwardingFromRedis = true;
         try {
@@ -313,6 +318,13 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
               break;
             case 'emitToPageEncrypted':
               if (userId && page && frame) {
+                // Skip if this instance already delivered locally (eid present
+                // in recentlyPublished → published by us → local delivery done).
+                if (eid && this.recentlyPublished.has(eid)) {
+                  clearTimeout(this.recentlyPublished.get(eid));
+                  this.recentlyPublished.delete(eid);
+                  break;
+                }
                 void this.pageManager.emitToPageWith(
                   userId,
                   page,
@@ -680,6 +692,11 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
    * own wire-crypto key and sends the resulting frame. Publishes the
    * plaintext payload to Redis so other instances can encrypt and deliver
    * to their local connections.
+   *
+   * Each published message carries a unique `eid`. When the Redis subscriber
+   * echoes the message back to this instance, it sees the `eid` in the
+   * `recentlyPublished` set and skips redundant local delivery — preventing
+   * duplicate frames to connections on the originating instance.
    */
   async emitToPageEncrypted(
     userId: string,
@@ -697,6 +714,11 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         ) as unknown as Promise<Record<string, unknown>>,
     );
     if (!this.forwardingFromRedis) {
+      const eid = crypto.randomBytes(8).toString('hex');
+      const timer = setTimeout(() => {
+        this.recentlyPublished.delete(eid);
+      }, 5_000);
+      this.recentlyPublished.set(eid, timer);
       void this.safeRedis('publish', () =>
         this.redis.publish(
           RealtimeGateway.WS_CHANNEL,
@@ -705,6 +727,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
             userId,
             page: pageKey,
             frame: payload,
+            eid,
           }),
         ),
       );

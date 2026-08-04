@@ -76,7 +76,7 @@ export class MessagingFriendService {
       if (rel.addresseeId !== currentUserId) excludeIds.add(rel.addresseeId);
     }
     const where: Prisma.UserWhereInput = {
-      status: 'ACTIVE',
+      status: { in: ['ACTIVE', 'PENDING_VERIFICATION'] },
       id: { notIn: Array.from(excludeIds) },
     };
     if (search)
@@ -136,7 +136,7 @@ export class MessagingFriendService {
     if (friendIds.length === 0) return [];
     const where: Prisma.UserWhereInput = {
       id: { in: friendIds },
-      status: 'ACTIVE',
+      status: { in: ['ACTIVE', 'PENDING_VERIFICATION'] },
     };
     if (search)
       where.OR = [
@@ -242,6 +242,10 @@ export class MessagingFriendService {
         });
         void this.refreshFriendIds(requesterId);
         void this.refreshFriendIds(addresseeId);
+        void this.cache.del(`friends:${requesterId}:`);
+        void this.cache.del(`friends:${addresseeId}:`);
+        void this.cache.del(`conversations:${requesterId}`);
+        void this.cache.del(`conversations:${addresseeId}`);
         this.notifyFriendEvent(
           addresseeId,
           requesterId,

@@ -179,13 +179,19 @@ export class MessagingRoomService {
 
   /**
    * Returns userIds of all members in a room across ALL instances.
-   * Uses the Redis Set as the source of truth for cross-instance safety.
+   * Merges local in-memory members (always up-to-date on this instance)
+   * with the Redis Set (cross-instance safety).  If Redis is down or the
+   * SET hasn't been populated yet, the local Map is the fallback.
    */
   async getRoomUserIds(room: string): Promise<string[]> {
-    if (!this.redis) {
-      return this.getRoomMembers(room).map((m) => m.userId);
+    const localIds = this.getRoomMembers(room).map((m) => m.userId);
+    if (!this.redis) return localIds;
+    try {
+      const remoteIds = await this.redis.smembers(this.redisUserKey(room));
+      return [...new Set([...localIds, ...remoteIds])];
+    } catch {
+      return localIds;
     }
-    return this.redis.smembers(this.redisUserKey(room));
   }
 
   async persistJoin(roomSlug: string, userId: string): Promise<void> {

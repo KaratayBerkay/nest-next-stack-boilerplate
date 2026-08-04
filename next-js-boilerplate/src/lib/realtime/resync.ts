@@ -5,6 +5,7 @@ export function resyncAfterConnect(
   currentClaim: { page: string | null; params?: Record<string, string> } | null,
 ): void {
   qc.invalidateQueries({ queryKey: ["conversations"] });
+  qc.invalidateQueries({ queryKey: ["friends", "list"] });
   qc.invalidateQueries({ queryKey: ["notifications", "list"] });
   qc.invalidateQueries({ queryKey: ["notifications", "count"] });
   qc.invalidateQueries({ queryKey: ["notifications", "dm-count"] });
