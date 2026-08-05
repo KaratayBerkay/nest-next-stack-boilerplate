@@ -72,7 +72,7 @@ export class MessagingService {
     recipientId: string,
     text = '',
     friends?: string[],
-    attachment?: MessageAttachment,
+    attachments?: MessageAttachment[],
     envelope?: Record<string, unknown>,
   ) {
     return this.dm.sendMessage(
@@ -81,7 +81,7 @@ export class MessagingService {
       text,
       (a, b) => this.friends.areFriends(a, b),
       friends,
-      attachment,
+      attachments,
       envelope,
     );
   }
@@ -91,9 +91,9 @@ export class MessagingService {
     recipientId: string,
     text = '',
     tempId?: string,
-    attachment?: MessageAttachment,
+    attachments?: MessageAttachment[],
     storageEnvelope?: Record<string, unknown>,
-    deliveryPlaintext?: { text?: string; attachment?: unknown },
+    deliveryPlaintext?: { text?: string; attachments?: unknown },
   ) {
     const result = await this.dm.sendAndDeliverMessage(
       senderId,
@@ -102,7 +102,7 @@ export class MessagingService {
       (a, b) => this.friends.areFriends(a, b),
       undefined,
       tempId,
-      attachment,
+      attachments,
       storageEnvelope,
       deliveryPlaintext,
     );
@@ -221,10 +221,16 @@ export class MessagingService {
     roomId: string,
     senderId: string,
     body: string,
-    attachment?: MessageAttachment,
+    attachments?: MessageAttachment[],
     envelope?: Record<string, unknown>,
   ) {
-    return this.rooms.saveRoomMessage(roomId, senderId, body, attachment, envelope);
+    return this.rooms.saveRoomMessage(
+      roomId,
+      senderId,
+      body,
+      attachments,
+      envelope,
+    );
   }
 
   getRoomMessages(roomId: string, before?: string, take?: number) {

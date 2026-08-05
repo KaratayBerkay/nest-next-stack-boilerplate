@@ -12,7 +12,7 @@ export function useMessageActions() {
   const sendMessage = async (
     recipientId: string,
     text: string,
-    attachment?: MessageAttachment,
+    attachments?: MessageAttachment[],
   ) => {
     const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -30,9 +30,7 @@ export function useMessageActions() {
           senderId: user.id,
           recipientId,
           body: text,
-          attachmentUrl: attachment?.url,
-          attachmentType: attachment?.type,
-          attachmentName: attachment?.name,
+          attachments,
           createdAt: new Date().toISOString(),
           pending: true,
         };
@@ -52,13 +50,7 @@ export function useMessageActions() {
         recipientId,
         text,
         tempId,
-        ...(attachment
-          ? {
-              attachmentUrl: attachment.url,
-              attachmentType: attachment.type,
-              attachmentName: attachment.name,
-            }
-          : {}),
+        ...(attachments && attachments.length > 0 ? { attachments } : {}),
       });
       return;
     }
@@ -67,7 +59,7 @@ export function useMessageActions() {
     try {
       const { sendMessageServer } =
         await import("@/api/server/messages/send-message");
-      message = await sendMessageServer(recipientId, text, tempId, attachment);
+      message = await sendMessageServer(recipientId, text, tempId, attachments);
     } catch {
       if (user?.id) {
         queryClient.setQueryData(["messages", recipientId], (old: unknown) => {

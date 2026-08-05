@@ -15,7 +15,7 @@ export const ChatRoomMessageList = forwardRef<
   ref,
 ) {
   const hasDecryptionFailure = messages.some(
-    (m) => m.body == null || m.body === "",
+    (m) => (m.body == null || m.body === "") && !m.attachments?.length,
   );
 
   return (
@@ -48,7 +48,8 @@ export const ChatRoomMessageList = forwardRef<
       )}
       {messages.map((msg, i) => {
         const isMe = msg.senderId === userId;
-        const decryptionFailed = msg.body == null || msg.body === "";
+        const decryptionFailed =
+          (msg.body == null || msg.body === "") && !msg.attachments?.length;
         return (
           <div
             key={msg.id}
@@ -72,13 +73,14 @@ export const ChatRoomMessageList = forwardRef<
                   {msg.senderName}
                 </p>
               )}
-              {msg.attachmentUrl && (
+              {msg.attachments?.map((att) => (
                 <AttachmentPreview
-                  url={msg.attachmentUrl}
-                  type={msg.attachmentType}
-                  name={msg.attachmentName}
+                  key={att.url}
+                  url={att.url}
+                  type={att.type}
+                  name={att.name}
                 />
-              )}
+              ))}
               {msg.body != null && msg.body !== "" ? (
                 <span
                   className={`inline-block rounded-xl px-3 py-1.5 text-sm ${

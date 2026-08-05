@@ -45,16 +45,6 @@ export class MessagingResolver {
     @CurrentUser() user: JwtUser,
     @Args('input') input: SendMessageInput,
   ) {
-    const attachment =
-      input.attachmentUrl && input.attachmentType && input.attachmentName
-        ? {
-            url: input.attachmentUrl,
-            type: input.attachmentType,
-            name: input.attachmentName,
-            storageEnvelope: input.attachmentEnvelope as { v: string; nonce: string; ct: string } | null | undefined,
-          }
-        : undefined;
-
     // Client E2EE envelope passes through; when absent the service encrypts
     // the plaintext for at-rest storage itself (never plaintext).
     return this.ms.sendAndDeliverMessage(
@@ -62,9 +52,9 @@ export class MessagingResolver {
       input.recipientId,
       input.text,
       undefined,
-      attachment,
+      input.attachments,
       input.envelope,
-      { text: input.text, attachment },
+      { text: input.text, attachments: input.attachments },
     );
   }
 
@@ -81,33 +71,36 @@ export class MessagingResolver {
     message: Record<string, unknown>,
     userId: string,
   ): Record<string, unknown> {
-    if (message.envelope && !message.body) {
+    const envelope = this.storageCrypto.toEnvelope(message as {
+      v: string | null;
+      ct: string | null;
+      nonce: string | null;
+    });
+    if (!envelope) return message;
+    const { v: _v, ct: _ct, nonce: _nonce, ...rest } = message;
+    const attempt = (
+      decrypt: (e: unknown) => unknown,
+    ): Record<string, unknown> | null => {
       try {
-        const decrypted = this.storageCrypto.decryptForRoom(
-          message.envelope,
-        ) as { text?: string; attachment?: unknown };
-        return { ...message, body: decrypted.text ?? '', envelope: undefined };
+        const decrypted = decrypt(envelope) as {
+          text?: string;
+          attachments?: unknown;
+        };
+        return { ...rest, body: decrypted.text ?? '' };
       } catch {
-        try {
-          const senderId = (message.senderId as string) || userId;
-          const decrypted = this.storageCrypto.decryptFromStorage(
-            senderId,
-            message.envelope,
-          ) as { text?: string; attachment?: unknown };
-          return { ...message, body: decrypted.text ?? '', envelope: undefined };
-        } catch {
-          try {
-            const decrypted = this.storageCrypto.decryptFromStorage(
-              userId,
-              message.envelope,
-            ) as { text?: string; attachment?: unknown };
-            return { ...message, body: decrypted.text ?? '', envelope: undefined };
-          } catch {
-            return message;
-          }
-        }
+        return null;
       }
-    }
-    return message;
+    };
+    return (
+      attempt((e) => this.storageCrypto.decryptForRoom(e)) ??
+      attempt((e) =>
+        this.storageCrypto.decryptFromStorage(
+          (message.senderId as string) || userId,
+          e,
+        ),
+      ) ??
+      attempt((e) => this.storageCrypto.decryptFromStorage(userId, e)) ??
+      message
+    );
   }
 }

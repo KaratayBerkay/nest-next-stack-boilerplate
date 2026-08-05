@@ -6,12 +6,12 @@ import {
 
 interface TextOrAttachmentObject {
   text?: string | null;
-  attachmentUrl?: string | null;
+  attachments?: { url?: string }[] | null;
   envelope?: Record<string, unknown> | null;
 }
 
 /**
- * Cross-field guard for chat sends: at least one of `text` / `attachmentUrl` /
+ * Cross-field guard for chat sends: at least one of `text` / `attachments` /
  * `envelope` must be provided, otherwise an empty message is persisted (F34).
  * Applied via `@Validate` on the `text` field of every send DTO; `text` must
  * therefore not be marked `@IsOptional` (an omitted field would skip all its
@@ -23,7 +23,7 @@ export class TextOrAttachmentConstraint
 {
   validate(_value: unknown, args?: ValidationArguments): boolean {
     const obj = args?.object as TextOrAttachmentObject | undefined;
-    if (obj?.attachmentUrl) return true;
+    if (obj?.attachments && obj.attachments.length > 0) return true;
     if (obj?.envelope && typeof obj.envelope === 'object') return true;
     return (obj?.text ?? '').trim().length > 0;
   }

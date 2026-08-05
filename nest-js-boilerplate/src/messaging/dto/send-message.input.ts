@@ -6,12 +6,47 @@ import {
   IsUrl,
   IsUUID,
   IsObject,
+  IsArray,
   MaxLength,
   Validate,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { TextOrAttachmentConstraint } from './text-or-attachment.constraint';
 import { EnvelopeSizeConstraint } from './envelope-size.constraint';
+
+@InputType()
+class MessageAttachmentInput {
+  @Field()
+  @IsUrl({ require_tld: false })
+  @ApiProperty({
+    description: 'Attachment file URL (from POST /upload/attachment)',
+  })
+  url!: string;
+
+  @Field()
+  @IsString()
+  @MaxLength(50)
+  @ApiProperty({ description: 'Attachment MIME type' })
+  type!: string;
+
+  @Field()
+  @IsString()
+  @MaxLength(255)
+  @ApiProperty({ description: 'Original attachment file name' })
+  name!: string;
+
+  @Field(() => String, { nullable: true })
+  @IsObject()
+  @IsOptional()
+  @ApiProperty({
+    description:
+      'Server-side at-rest encryption envelope for the attachment blob (v/ct/nonce)',
+    required: false,
+  })
+  storageEnvelope?: Record<string, unknown>;
+}
 
 @InputType()
 export class SendMessageInput {
@@ -26,43 +61,24 @@ export class SendMessageInput {
   @MaxLength(5000)
   @Validate(TextOrAttachmentConstraint)
   @ApiProperty({
-    description: 'Message body (required when no attachment or envelope is sent)',
+    description:
+      'Message body (required when no attachment or envelope is sent)',
     maxLength: 5000,
     required: false,
   })
   text?: string;
 
-  @Field({ nullable: true })
-  @IsUrl({ require_tld: false })
+  @Field(() => [MessageAttachmentInput], { nullable: true })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MessageAttachmentInput)
   @IsOptional()
   @ApiProperty({
-    description: 'Attachment file URL (from POST /upload/attachment)',
+    description: 'Attachments (one or many files attached to this message)',
+    type: [MessageAttachmentInput],
     required: false,
   })
-  attachmentUrl?: string;
-
-  @Field({ nullable: true })
-  @IsString()
-  @MaxLength(50)
-  @IsOptional()
-  @ApiProperty({ description: 'Attachment MIME type', required: false })
-  attachmentType?: string;
-
-  @Field({ nullable: true })
-  @IsString()
-  @MaxLength(255)
-  @IsOptional()
-  @ApiProperty({ description: 'Original attachment file name', required: false })
-  attachmentName?: string;
-
-  @Field(() => String, { nullable: true })
-  @IsObject()
-  @IsOptional()
-  @ApiProperty({
-    description: 'Server-side at-rest encryption envelope for the attachment blob',
-    required: false,
-  })
-  attachmentEnvelope?: Record<string, unknown>;
+  attachments?: MessageAttachmentInput[];
 
   @Field(() => String, { nullable: true })
   @IsObject()
@@ -70,7 +86,7 @@ export class SendMessageInput {
   @Validate(EnvelopeSizeConstraint)
   @ApiProperty({
     description:
-      'E2EE envelope as JSON string (MessageEnvelopeV1). When present, body is stored as null and the message is encrypted.',
+      'E2EE envelope as JSON string (MessageEnvelopeV1). When present, the message is stored encrypted.',
     required: false,
   })
   envelope?: Record<string, unknown>;

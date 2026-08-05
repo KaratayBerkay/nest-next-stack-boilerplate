@@ -194,16 +194,6 @@ export class MessagingController {
     @Body(new ValidationPipe({ transform: true, whitelist: true }))
     body: SendMessageRestDto,
   ) {
-    const attachment =
-      body.attachmentUrl && body.attachmentType && body.attachmentName
-        ? {
-            url: body.attachmentUrl,
-            type: body.attachmentType,
-            name: body.attachmentName,
-            storageEnvelope: body.attachmentEnvelope as { v: string; nonce: string; ct: string } | null | undefined,
-          }
-        : undefined;
-
     // Client E2EE envelope passes through; when absent the service encrypts
     // the plaintext for at-rest storage itself (never plaintext).
     return this.ms.sendAndDeliverMessage(
@@ -211,9 +201,9 @@ export class MessagingController {
       recipientId,
       body.text,
       body._tempId,
-      attachment,
+      body.attachments,
       body.envelope,
-      { text: body.text, attachment },
+      { text: body.text, attachments: body.attachments },
     );
   }
 
@@ -261,43 +251,47 @@ export class MessagingController {
 
   /**
    * Decrypt a storage envelope in-place so HTTP clients receive plaintext
-   * bodies instead of raw StorageEnvelopeV1 ciphertext.
+   * bodies instead of raw ciphertext. The envelope is rebuilt from the
+   * flattened v/ct/nonce columns (there is no JsonB envelope column anymore).
    */
   private decryptMessageBody(
     message: Record<string, unknown>,
     userId: string,
   ): Record<string, unknown> {
-    if (message.envelope && !message.body) {
+    const envelope = this.storageCrypto.toEnvelope(message as {
+      v: string | null;
+      ct: string | null;
+      nonce: string | null;
+    });
+    if (!envelope) return message;
+    const { v: _v, ct: _ct, nonce: _nonce, ...rest } = message;
+    const attempt = (
+      decrypt: (e: unknown) => unknown,
+    ): Record<string, unknown> | null => {
       try {
-        // Try shared room key first (room messages use encryptForRoom).
-        const decrypted = this.storageCrypto.decryptForRoom(
-          message.envelope,
-        ) as { text?: string; attachment?: unknown };
-        return { ...message, body: decrypted.text ?? '', envelope: undefined };
+        const decrypted = decrypt(envelope) as {
+          text?: string;
+          attachments?: unknown;
+        };
+        return { ...rest, body: decrypted.text ?? '' };
       } catch {
-        try {
-          // Fall back to sender's per-user key (legacy room messages or DMs
-          // encrypted with encryptForStorage(senderId, ...)).
-          const senderId = (message.senderId as string) || userId;
-          const decrypted = this.storageCrypto.decryptFromStorage(
-            senderId,
-            message.envelope,
-          ) as { text?: string; attachment?: unknown };
-          return { ...message, body: decrypted.text ?? '', envelope: undefined };
-        } catch {
-          try {
-            // Last resort: try reader's per-user key (DMs where reader is sender).
-            const decrypted = this.storageCrypto.decryptFromStorage(
-              userId,
-              message.envelope,
-            ) as { text?: string; attachment?: unknown };
-            return { ...message, body: decrypted.text ?? '', envelope: undefined };
-          } catch {
-            return message;
-          }
-        }
+        return null;
       }
-    }
-    return message;
+    };
+    return (
+      // Room key first (room messages use encryptForRoom).
+      attempt((e) => this.storageCrypto.decryptForRoom(e)) ??
+      // Then the sender's per-user key (legacy room messages or DMs
+      // encrypted with encryptForStorage(senderId, ...)).
+      attempt((e) =>
+        this.storageCrypto.decryptFromStorage(
+          (message.senderId as string) || userId,
+          e,
+        ),
+      ) ??
+      // Last resort: reader's per-user key (DMs where reader is sender).
+      attempt((e) => this.storageCrypto.decryptFromStorage(userId, e)) ??
+      message
+    );
   }
 }

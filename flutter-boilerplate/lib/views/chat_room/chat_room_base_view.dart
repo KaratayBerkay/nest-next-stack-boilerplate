@@ -129,23 +129,20 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
 
     final client = ref.read(realtimeProvider);
     final attachment = _pendingAttachment;
+    final attachments = attachment == null ? null : [attachment.toJson()];
     client.send(
       _isNamedRoom
           ? {
               'type': 'room-message',
               'room': _room,
               'text': text,
-              if (attachment != null) 'attachmentUrl': attachment.url,
-              if (attachment != null) 'attachmentType': attachment.type,
-              if (attachment != null) 'attachmentName': attachment.name,
+              if (attachments != null) 'attachments': attachments,
             }
           : {
               'type': 'direct-message',
               'recipientId': _room,
               'text': text,
-              if (attachment != null) 'attachmentUrl': attachment.url,
-              if (attachment != null) 'attachmentType': attachment.type,
-              if (attachment != null) 'attachmentName': attachment.name,
+              if (attachments != null) 'attachments': attachments,
             },
     );
     _messageController.clear();
@@ -248,9 +245,7 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
                       senderName: m.senderName,
                       senderAvatarUrl: m.avatar,
                       content: m.body,
-                      attachmentUrl: m.attachmentUrl,
-                      attachmentType: m.attachmentType,
-                      attachmentName: m.attachmentName,
+                      attachments: m.attachments,
                       createdAt: DateTime.parse(m.createdAt),
                       isRead: true,
                     ),

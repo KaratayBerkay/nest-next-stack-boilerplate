@@ -27,6 +27,11 @@ class UploadAttachmentServer {
       url: data['url'] as String,
       type: data['mimetype'] as String,
       name: data['originalname'] as String,
+      storageEnvelope: data['envelope'] == null
+          ? null
+          : StorageEnvelope.fromJson(
+              data['envelope'] as Map<String, dynamic>,
+            ),
     );
   }
 }

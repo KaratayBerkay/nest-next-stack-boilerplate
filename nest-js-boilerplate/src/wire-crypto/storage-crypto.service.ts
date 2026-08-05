@@ -61,6 +61,70 @@ export class StorageCryptoService {
     );
   }
 
+  /**
+   * Rebuild a StorageEnvelopeV1 from the flattened v/ct/nonce columns.
+   * Returns null when any piece is missing (e.g. a legacy row that never
+   * received an envelope) so callers can degrade to an empty preview.
+   */
+  toEnvelope(row: {
+    v: string | null;
+    ct: string | null;
+    nonce: string | null;
+  }): StorageEnvelopeV1 | null {
+    if (!row.v || !row.ct || !row.nonce) return null;
+    return { v: row.v, ct: row.ct, nonce: row.nonce };
+  }
+
+  /**
+   * Flatten a wire/client-supplied at-rest envelope into the v/ct/nonce
+   * columns. Returns null when the object is missing any of the three
+   * string fields (or isn't an object at all) — the caller then encrypts
+   * server-side instead of persisting a malformed envelope.
+   */
+  flattenEnvelope(
+    envelope: unknown,
+  ): { v: string; ct: string; nonce: string } | null {
+    if (!envelope || typeof envelope !== 'object') return null;
+    const { v, ct, nonce } = envelope as {
+      v?: unknown;
+      ct?: unknown;
+      nonce?: unknown;
+    };
+    if (
+      typeof v !== 'string' ||
+      typeof ct !== 'string' ||
+      typeof nonce !== 'string'
+    ) {
+      return null;
+    }
+    return { v, ct, nonce };
+  }
+
+  /**
+   * Convert a stored MessageAttachment row (flattened v/ct/nonce columns)
+   * into the wire/client shape `{url, type, name, storageEnvelope}`.
+   */
+  toWireAttachment(row: {
+    url: string;
+    type: string;
+    name: string;
+    v: string | null;
+    ct: string | null;
+    nonce: string | null;
+  }): {
+    url: string;
+    type: string;
+    name: string;
+    storageEnvelope: StorageEnvelopeV1 | null;
+  } {
+    return {
+      url: row.url,
+      type: row.type,
+      name: row.name,
+      storageEnvelope: this.toEnvelope(row),
+    };
+  }
+
   /** Encrypt a JSON-serializable payload for at-rest storage. */
   encryptForStorage(userId: string, payload: unknown): StorageEnvelopeV1 {
     const nonce = randomBytes(24);

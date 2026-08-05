@@ -16,10 +16,11 @@ export async function chatRoomHandleSend(
   user: { id: string; name?: string | null } | null,
   setInput: Dispatch<SetStateAction<string>>,
   scrollToBottom: () => void,
-  attachment?: MessageAttachment,
+  attachments?: MessageAttachment[],
 ) {
   const text = input.trim();
-  if ((!text && !attachment) || !realtime) return;
+  if ((!text && (!attachments || attachments.length === 0)) || !realtime)
+    return;
   const tempId = `temp-${nowMs()}`;
 
   if (user?.id) {
@@ -37,9 +38,7 @@ export async function chatRoomHandleSend(
             senderId: user.id,
             senderName: user.name ?? "Unknown",
             body: text,
-            attachmentUrl: attachment?.url,
-            attachmentType: attachment?.type,
-            attachmentName: attachment?.name,
+            attachments,
             createdAt: new Date().toISOString(),
             pending: true,
           },
@@ -53,13 +52,7 @@ export async function chatRoomHandleSend(
     room,
     text,
     tempId,
-    ...(attachment
-      ? {
-          attachmentUrl: attachment.url,
-          attachmentType: attachment.type,
-          attachmentName: attachment.name,
-        }
-      : {}),
+    ...(attachments && attachments.length > 0 ? { attachments } : {}),
   });
   setInput("");
   scrollToBottom();

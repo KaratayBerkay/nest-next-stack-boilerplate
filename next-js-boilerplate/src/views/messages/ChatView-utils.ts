@@ -11,7 +11,7 @@ export async function chatViewHandleSend(
   sendMessage: (
     recipientId: string,
     text: string,
-    attachment?: MessageAttachment,
+    attachments?: MessageAttachment[],
   ) => Promise<void>,
   setInput: Dispatch<SetStateAction<string>>,
   setMessageError: Dispatch<SetStateAction<string | null>>,
@@ -31,7 +31,11 @@ export async function chatViewHandleSend(
   }
   setMessageError(null);
   try {
-    await sendMessage(selectedUser.id, parsed.data.text, attachment);
+    await sendMessage(
+      selectedUser.id,
+      parsed.data.text,
+      attachment ? [attachment] : undefined,
+    );
     setInput("");
     setPendingAttachment(null);
     scrollToBottom();

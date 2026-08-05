@@ -57,25 +57,25 @@ describe('MessagingResolver', () => {
         undefined,
         undefined,
         undefined,
-        { text: 'hello', attachment: undefined },
+        { text: 'hello', attachments: undefined },
       );
       expect(result).toEqual({ id: 'm1', body: 'hello' });
     });
 
-    it('passes attachment fields through as a MessageAttachment', async () => {
+    it('passes attachments through as MessageAttachment array', async () => {
       const user = { userId: 'u1', email: 'a@b.com' };
-      const attachment = {
-        url: 'https://cdn.example.com/uuid.pdf',
-        type: 'application/pdf',
-        name: 'report.pdf',
-        storageEnvelope: undefined,
-      };
+      const attachments = [
+        {
+          url: 'https://cdn.example.com/uuid.pdf',
+          type: 'application/pdf',
+          name: 'report.pdf',
+          storageEnvelope: undefined,
+        },
+      ];
       await resolver.sendMessage(user, {
         recipientId: 'u2',
         text: 'hello',
-        attachmentUrl: 'https://cdn.example.com/uuid.pdf',
-        attachmentType: 'application/pdf',
-        attachmentName: 'report.pdf',
+        attachments,
       });
 
       expect(mockMs.sendAndDeliverMessage).toHaveBeenCalledWith(
@@ -83,9 +83,9 @@ describe('MessagingResolver', () => {
         'u2',
         'hello',
         undefined,
-        attachment,
+        attachments,
         undefined,
-        { text: 'hello', attachment },
+        { text: 'hello', attachments },
       );
     });
 
@@ -105,7 +105,7 @@ describe('MessagingResolver', () => {
         undefined,
         undefined,
         envelope,
-        { text: '', attachment: undefined },
+        { text: '', attachments: undefined },
       );
     });
   });

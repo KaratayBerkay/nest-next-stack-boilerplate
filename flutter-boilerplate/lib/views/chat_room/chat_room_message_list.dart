@@ -112,13 +112,13 @@ class ChatRoomMessageList extends StatelessWidget {
                           ),
                         ),
                       ),
-                    if (msg.attachmentUrl != null)
+                    for (final att in msg.attachments)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 4),
                         child: AttachmentPreview(
-                          url: msg.attachmentUrl!,
-                          type: msg.attachmentType,
-                          name: msg.attachmentName,
+                          url: att.url,
+                          type: att.type,
+                          name: att.name,
                         ),
                       ),
                     if (msg.content.isNotEmpty)

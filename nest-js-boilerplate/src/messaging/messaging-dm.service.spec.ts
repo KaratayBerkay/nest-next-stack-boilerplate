@@ -57,6 +57,8 @@ describe('MessagingDmService', () => {
         encryptForStorage: jest
           .fn()
           .mockReturnValue({ v: 'storage-v1', nonce: 'sn', ct: 'sc' }),
+        flattenEnvelope: jest.fn().mockReturnValue(null),
+        toEnvelope: jest.fn(),
       } as never,
     );
   });
@@ -69,6 +71,7 @@ describe('MessagingDmService', () => {
         recipientId: 'u2',
         body: 'hello',
         createdAt: new Date(),
+        attachments: [],
         sender: {
           id: 'u1',
           name: 'Alice',
@@ -98,14 +101,11 @@ describe('MessagingDmService', () => {
           senderId: 'u1',
           recipientId: 'u2',
           // Always encrypted at rest: plaintext never reaches the DB, and a
-          // missing caller envelope is encrypted server-side.
-          body: null,
-          encrypted: true,
-          algVersion: 1,
-          envelope: { v: 'storage-v1', nonce: 'sn', ct: 'sc' },
-          attachmentUrl: undefined,
-          attachmentType: undefined,
-          attachmentName: undefined,
+          // missing caller envelope is encrypted server-side into v/ct/nonce.
+          v: 'storage-v1',
+          ct: 'sc',
+          nonce: 'sn',
+          attachments: undefined,
         },
         include: {
           sender: {
@@ -126,6 +126,7 @@ describe('MessagingDmService', () => {
               hideAvatar: true,
             },
           },
+          attachments: true,
         },
       });
       expect(mockRealtime.emitToService).toHaveBeenCalled();
@@ -141,6 +142,7 @@ describe('MessagingDmService', () => {
         recipientId: 'u2',
         body: 'hi',
         createdAt: new Date(),
+        attachments: [],
         sender: {
           id: 'u1',
           name: 'Alice',
@@ -196,12 +198,11 @@ describe('MessagingDmService', () => {
           id: 'm1',
           senderId: 'u1',
           recipientId: 'u2',
-          body: null,
           createdAt: new Date('2026-08-05T10:00:00Z'),
           sender: { id: 'u1', name: 'Alice', email: 'a@b.com' },
           _tempId: 'temp-123',
         },
-        { text: 'hello', attachment: undefined },
+        { text: 'hello', attachments: undefined },
       );
 
       expect(delivery.recipientPayload).toEqual({
@@ -234,7 +235,6 @@ describe('MessagingDmService', () => {
           id: 'm1',
           senderId: 'u1',
           recipientId: 'u2',
-          body: null,
           createdAt: new Date('2026-08-05T10:00:00Z'),
           sender: { id: 'u1', name: 'Alice', email: 'a@b.com' },
         },
@@ -244,37 +244,40 @@ describe('MessagingDmService', () => {
       expect(delivery.recipientPayload.message).not.toHaveProperty('_tempId');
     });
 
-    it('includes attachment fields in both wire payloads when present', async () => {
+    it('includes attachments in both wire payloads when present', async () => {
       mockPrisma.message.count.mockResolvedValue(0);
+
+      const attachments = [
+        {
+          url: 'https://minio/x.png',
+          type: 'image/png',
+          name: 'x.png',
+        },
+        {
+          url: 'https://minio/b.pdf',
+          type: 'application/pdf',
+          name: 'b.pdf',
+          storageEnvelope: { v: 'storage-v1', nonce: 'an', ct: 'ac' },
+        },
+      ];
 
       const delivery = await service.deliverDirectMessage(
         {
           id: 'm1',
           senderId: 'u1',
           recipientId: 'u2',
-          body: null,
           createdAt: new Date('2026-08-05T10:00:00Z'),
           sender: { id: 'u1', name: 'Alice', email: 'a@b.com' },
-          attachmentUrl: 'https://minio/x.png',
-          attachmentType: 'image/png',
-          attachmentName: 'x.png',
+          attachments,
         },
-        { text: '', attachment: { url: 'https://minio/x.png' } },
+        { text: '', attachments: undefined },
       );
 
       expect(delivery.recipientPayload.message).toEqual(
-        expect.objectContaining({
-          attachmentUrl: 'https://minio/x.png',
-          attachmentType: 'image/png',
-          attachmentName: 'x.png',
-        }),
+        expect.objectContaining({ attachments }),
       );
       expect(delivery.senderPayload.message).toEqual(
-        expect.objectContaining({
-          attachmentUrl: 'https://minio/x.png',
-          attachmentType: 'image/png',
-          attachmentName: 'x.png',
-        }),
+        expect.objectContaining({ attachments }),
       );
     });
   });
@@ -289,6 +292,7 @@ describe('MessagingDmService', () => {
           recipientId: 'u1',
           body: 'hi',
           createdAt: new Date(),
+          attachments: [],
           sender: {
             id: 'u2',
             name: 'Bob',

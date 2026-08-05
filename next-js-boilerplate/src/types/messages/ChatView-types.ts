@@ -1,4 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
+import type { MessageAttachment } from "./MessageAttachment-types";
 
 export type UserInfo = {
   id: string;
@@ -12,14 +13,10 @@ export type Message = {
   senderId: string;
   recipientId: string;
   body: string | null;
-  algVersion?: number | null;
-  envelope?: Record<string, unknown> | null;
   createdAt: string;
   readAt: string | null;
   deliveredAt: string | null;
-  attachmentUrl?: string | null;
-  attachmentType?: string | null;
-  attachmentName?: string | null;
+  attachments?: MessageAttachment[];
   _tempId?: string;
   pending?: boolean;
   failed?: boolean;

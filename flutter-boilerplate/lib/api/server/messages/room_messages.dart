@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter_boilerplate/lib/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../types/messages/message_attachment.dart';
+
 final roomMessagesServerProvider =
     Provider((ref) => RoomMessagesServer(ref.read(dioProvider)));
 
@@ -38,9 +40,7 @@ class RoomMessage {
   final String senderName;
   final String avatar;
   final String body;
-  final String? attachmentUrl;
-  final String? attachmentType;
-  final String? attachmentName;
+  final List<MessageAttachment> attachments;
   final String createdAt;
 
   const RoomMessage({
@@ -49,9 +49,7 @@ class RoomMessage {
     required this.senderName,
     required this.avatar,
     required this.body,
-    this.attachmentUrl,
-    this.attachmentType,
-    this.attachmentName,
+    this.attachments = const [],
     required this.createdAt,
   });
 
@@ -62,9 +60,9 @@ class RoomMessage {
       senderName: json['senderName'] as String,
       avatar: json['avatar'] as String,
       body: json['body'] as String,
-      attachmentUrl: json['attachmentUrl'] as String?,
-      attachmentType: json['attachmentType'] as String?,
-      attachmentName: json['attachmentName'] as String?,
+      attachments: (json['attachments'] as List<dynamic>? ?? const [])
+          .map((e) => MessageAttachment.fromJson(e as Map<String, dynamic>))
+          .toList(),
       createdAt: json['createdAt'] as String,
     );
   }

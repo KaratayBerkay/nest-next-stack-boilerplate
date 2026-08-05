@@ -37,32 +37,19 @@ type AuthWs = WebSocket & {
 interface IncomingMessagePayload {
   text: string;
   tempId?: string;
-  attachmentUrl?: string;
-  attachmentType?: string;
-  attachmentName?: string;
-  attachmentEnvelope?: Record<string, unknown>;
+  attachments?: MessageAttachment[];
   envelope?: Record<string, unknown>;
 }
 
-function toAttachment(
-  data: IncomingMessagePayload,
-): MessageAttachment | undefined {
-  if (data.attachmentUrl && data.attachmentType && data.attachmentName) {
-    return {
-      url: data.attachmentUrl,
-      type: data.attachmentType,
-      name: data.attachmentName,
-      storageEnvelope:
-        (data.attachmentEnvelope as MessageAttachment['storageEnvelope']) ??
-        null,
-    };
-  }
-  return undefined;
+function toAttachments(data: IncomingMessagePayload): MessageAttachment[] {
+  return Array.isArray(data.attachments) ? data.attachments : [];
 }
 
 function hasTextOrAttachmentOrEnvelope(data: IncomingMessagePayload): boolean {
   if (data.envelope && typeof data.envelope === 'object') return true;
-  return Boolean((data.text ?? '').trim()) || Boolean(data.attachmentUrl);
+  return (
+    Boolean((data.text ?? '').trim()) || toAttachments(data).length > 0
+  );
 }
 
 /**
@@ -173,13 +160,14 @@ export class MessagingWsGateway implements OnModuleInit {
     }
 
     // Data is already decrypted by the gateway's centralized handleMessage.
-    const plaintext: { text?: string; attachment?: unknown } = {
+    const plaintext: { text?: string; attachments?: unknown } = {
       text: data.text,
-      attachment: toAttachment(data),
+      attachments: toAttachments(data),
     };
 
-    // Client-provided E2EE envelope is stored as-is; when absent the service
-    // encrypts the plaintext for at-rest storage itself (never plaintext).
+    // Client-provided E2EE envelope is flattened into v/ct/nonce columns;
+    // when absent the service encrypts the plaintext for at-rest storage
+    // itself (never plaintext).
     const storageEnvelope =
       data.envelope && typeof data.envelope === 'object'
         ? data.envelope
@@ -190,7 +178,7 @@ export class MessagingWsGateway implements OnModuleInit {
       data.recipientId,
       plaintext.text ?? '',
       undefined,
-      toAttachment(data),
+      toAttachments(data),
       storageEnvelope as unknown as Record<string, unknown>,
     );
     // Echo the client tempId back in the wire payloads so the sender's
@@ -341,13 +329,14 @@ export class MessagingWsGateway implements OnModuleInit {
     }
 
     // Data is already decrypted by the gateway's centralized handleMessage.
-    const plaintext: { text?: string; attachment?: unknown } = {
+    const plaintext: { text?: string; attachments?: unknown } = {
       text: data.text,
-      attachment: toAttachment(data),
+      attachments: toAttachments(data),
     };
 
-    // Client-provided E2EE envelope is stored as-is; when absent the service
-    // encrypts the plaintext with the shared room key itself (never plaintext).
+    // Client-provided E2EE envelope is flattened into v/ct/nonce columns;
+    // when absent the service encrypts the plaintext with the shared room
+    // key itself (never plaintext).
     const storageEnvelope =
       data.envelope && typeof data.envelope === 'object'
         ? data.envelope
@@ -357,7 +346,7 @@ export class MessagingWsGateway implements OnModuleInit {
       data.room,
       ws.userId,
       plaintext.text ?? '',
-      toAttachment(data),
+      toAttachments(data),
       storageEnvelope,
     );
 
@@ -373,9 +362,7 @@ export class MessagingWsGateway implements OnModuleInit {
         senderName,
         avatar: initials(senderName),
         body: plaintext.text ?? null,
-        attachmentUrl: saved.attachmentUrl,
-        attachmentType: saved.attachmentType,
-        attachmentName: saved.attachmentName,
+        attachments: saved.attachments ?? [],
         createdAt: saved.createdAt.toISOString(),
       },
       ...(data.tempId ? { tempId: data.tempId } : {}),

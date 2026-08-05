@@ -821,44 +821,66 @@ model RoomParticipant {
 }
 
 model Message {
-  id             String    @id @default(uuid(7)) @db.Uuid
-  senderId       String    @db.Uuid
-  sender         User      @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
-  recipientId    String    @db.Uuid
-  recipient      User      @relation("MessageRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
-  body           String?   @db.Text
-  encrypted      Boolean   @default(false)
-  algVersion     Int?
-  envelope       Json?     @db.JsonB
-   attachmentUrl  String?
-   attachmentType String?
-   attachmentName String?
-   attachmentEnvelope Json? @db.JsonB
-   deliveredAt    DateTime? @db.Timestamptz(6)
-   readAt         DateTime? @db.Timestamptz(6)
-   createdAt      DateTime  @default(now()) @db.Timestamptz(6)
+  id          String    @id @default(uuid(7)) @db.Uuid
+  senderId    String    @db.Uuid
+  sender      User      @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipientId String    @db.Uuid
+  recipient   User      @relation("MessageRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  v           String
+  ct          String    @db.Text
+  nonce       String
+  attachments MessageAttachment[]
+  deliveredAt DateTime? @db.Timestamptz(6)
+  readAt      DateTime? @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(6)
 
-   @@index([senderId, recipientId])
-   @@index([recipientId, readAt])
- }
+  @@index([senderId, recipientId])
+  @@index([recipientId, readAt])
+}
 
- model RoomMessage {
-   id             String   @id @default(uuid(7)) @db.Uuid
-   roomId         String
-   room           Room?    @relation(fields: [roomId], references: [slug], onDelete: Restrict)
-   senderId       String   @db.Uuid
-   sender         User     @relation("RoomMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
-   body           String?  @db.Text
-   encrypted      Boolean  @default(false)
-   algVersion     Int?
-   envelope       Json?    @db.JsonB
-   attachmentUrl  String?
-   attachmentType String?
-   attachmentName String?
-   attachmentEnvelope Json? @db.JsonB
-   createdAt      DateTime @default(now()) @db.Timestamptz(6)
+model MessageAttachment {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  messageId String   @db.Uuid
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  url       String
+  type      String
+  name      String
+  v         String?
+  ct        String?  @db.Text
+  nonce     String?
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([messageId])
+}
+
+model RoomMessage {
+  id          String                @id @default(uuid(7)) @db.Uuid
+  roomId      String
+  room        Room?                 @relation(fields: [roomId], references: [slug], onDelete: Restrict)
+  senderId    String                @db.Uuid
+  sender      User                  @relation("RoomMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  v           String
+  ct          String                @db.Text
+  nonce       String
+  attachments RoomMessageAttachment[]
+  createdAt   DateTime              @default(now()) @db.Timestamptz(6)
 
   @@index([roomId, createdAt])
+}
+
+model RoomMessageAttachment {
+  id            String      @id @default(uuid(7)) @db.Uuid
+  roomMessageId String      @db.Uuid
+  roomMessage   RoomMessage @relation(fields: [roomMessageId], references: [id], onDelete: Cascade)
+  url           String
+  type          String
+  name          String
+  v             String?
+  ct            String?     @db.Text
+  nonce         String?
+  createdAt     DateTime    @default(now()) @db.Timestamptz(6)
+
+  @@index([roomMessageId])
 }
 
 model Notification {

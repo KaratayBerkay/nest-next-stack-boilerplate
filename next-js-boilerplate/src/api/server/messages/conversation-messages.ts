@@ -1,16 +1,16 @@
 import { apiFetch } from "@/lib/api-client";
 import { MESSAGES_CONVERSATION_MESSAGES_PREFIX } from "@/constants/api/urls";
+import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
 
 export interface Message {
   id: string;
   senderId: string;
   recipientId: string;
   body: string | null;
-  algVersion?: number | null;
-  envelope?: Record<string, unknown> | null;
   createdAt: string;
   readAt: string | null;
   deliveredAt: string | null;
+  attachments?: MessageAttachment[];
 }
 
 export interface ConversationPage {

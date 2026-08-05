@@ -78,7 +78,7 @@ function ChatRoomContent({
       user,
       setInput,
       scrollToBottom,
-      pendingAttachment ?? undefined,
+      pendingAttachment ? [pendingAttachment] : undefined,
     );
     setPendingAttachment(null);
   }, [

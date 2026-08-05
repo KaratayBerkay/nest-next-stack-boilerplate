@@ -1,3 +1,5 @@
+import 'message_attachment.dart';
+
 class ChatMessage {
   final String id;
   final String conversationId;
@@ -5,9 +7,7 @@ class ChatMessage {
   final String senderName;
   final String? senderAvatarUrl;
   final String content;
-  final String? attachmentUrl;
-  final String? attachmentType;
-  final String? attachmentName;
+  final List<MessageAttachment> attachments;
   final DateTime createdAt;
   final bool isRead;
 
@@ -18,9 +18,7 @@ class ChatMessage {
     required this.senderName,
     this.senderAvatarUrl,
     required this.content,
-    this.attachmentUrl,
-    this.attachmentType,
-    this.attachmentName,
+    this.attachments = const [],
     required this.createdAt,
     this.isRead = false,
   });
@@ -33,9 +31,9 @@ class ChatMessage {
       senderName: json['senderName'] as String,
       senderAvatarUrl: json['senderAvatarUrl'] as String?,
       content: json['content'] as String,
-      attachmentUrl: json['attachmentUrl'] as String?,
-      attachmentType: json['attachmentType'] as String?,
-      attachmentName: json['attachmentName'] as String?,
+      attachments: (json['attachments'] as List<dynamic>? ?? const [])
+          .map((e) => MessageAttachment.fromJson(e as Map<String, dynamic>))
+          .toList(),
       createdAt: DateTime.parse(json['createdAt'] as String),
       isRead: json['isRead'] as bool? ?? false,
     );

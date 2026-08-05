@@ -21,7 +21,11 @@ class MessageActions {
     MessageAttachment? attachment,
   }) async {
     final server = _ref.read(sendMessageServerProvider);
-    await server.call(conversationId, content, attachment);
+    await server.call(
+      conversationId,
+      content,
+      attachment == null ? const [] : [attachment],
+    );
   }
 
   Future<MessageAttachment> uploadAttachment(

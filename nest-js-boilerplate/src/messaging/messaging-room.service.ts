@@ -239,34 +239,53 @@ export class MessagingRoomService {
     roomId: string,
     senderId: string,
     body = '',
-    attachment?: MessageAttachment,
+    attachments?: MessageAttachment[],
     envelope?: Record<string, unknown>,
   ) {
     if (!isValidRoom(roomId))
       throw new NotFoundException(`Unknown room: ${roomId}`);
     // Room messages are ALWAYS stored encrypted: a caller-supplied envelope
-    // is stored as-is, otherwise the server encrypts the plaintext with the
-    // shared room key — a plaintext body row is impossible.
-    const envelopeJson = (
-      envelope && typeof envelope === 'object'
-        ? envelope
-        : this.storageCrypto.encryptForRoom({ text: body, attachment })
-    ) as Prisma.InputJsonValue;
+    // is flattened into the v/ct/nonce columns as-is, otherwise the server
+    // encrypts the plaintext with the shared room key — a plaintext body row
+    // is impossible.
+    const envelopeFields = this.storageCrypto.flattenEnvelope(envelope);
+    const { v, ct, nonce } =
+      envelopeFields ??
+      this.storageCrypto.encryptForRoom({
+        text: body,
+        attachments,
+      });
     return this.prisma.roomMessage.create({
       data: {
         roomId,
         senderId,
-        body: null,
-        encrypted: true,
-        algVersion: 1,
-        envelope: envelopeJson,
-        attachmentUrl: attachment?.url,
-        attachmentType: attachment?.type,
-        attachmentName: attachment?.name,
-        attachmentEnvelope: attachment?.storageEnvelope as Prisma.InputJsonValue | undefined,
+        v,
+        ct,
+        nonce,
+        attachments:
+          attachments && attachments.length > 0
+            ? {
+                create: attachments.map((a) => ({
+                  url: a.url,
+                  type: a.type,
+                  name: a.name,
+                  v: a.storageEnvelope?.v ?? null,
+                  ct: a.storageEnvelope?.ct ?? null,
+                  nonce: a.storageEnvelope?.nonce ?? null,
+                })),
+              }
+            : undefined,
       },
-      include: { sender: { select: { name: true, email: true } } },
-    });
+      include: {
+        sender: { select: { name: true, email: true } },
+        attachments: true,
+      },
+    }).then((row) => ({
+      ...row,
+      attachments: row.attachments.map((a) =>
+        this.storageCrypto.toWireAttachment(a),
+      ),
+    }));
   }
 
   async getRoomMessages(roomId: string, before?: string, take = 30) {
@@ -278,7 +297,10 @@ export class MessagingRoomService {
       where,
       orderBy: { createdAt: 'desc' },
       take,
-      include: { sender: { select: { name: true, email: true } } },
+      include: {
+        sender: { select: { name: true, email: true } },
+        attachments: true,
+      },
     });
     return {
       messages: messages.reverse().map((m) => ({
@@ -286,12 +308,12 @@ export class MessagingRoomService {
         senderId: m.senderId,
         senderName: m.sender.name || m.sender.email || 'Unknown',
         avatar: initials(m.sender.name || m.sender.email || 'Unknown'),
-        body: m.body,
-        algVersion: m.algVersion,
-        envelope: m.envelope as Record<string, unknown> | null,
-        attachmentUrl: m.attachmentUrl,
-        attachmentType: m.attachmentType,
-        attachmentName: m.attachmentName,
+        v: m.v,
+        ct: m.ct,
+        nonce: m.nonce,
+        attachments: m.attachments.map((a) =>
+          this.storageCrypto.toWireAttachment(a),
+        ),
         createdAt: m.createdAt.toISOString(),
       })),
       hasMore: messages.length === take,

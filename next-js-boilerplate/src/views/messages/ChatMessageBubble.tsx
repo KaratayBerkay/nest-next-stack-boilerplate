@@ -17,7 +17,8 @@ export function ChatMessageBubble({
   dateDisplay,
 }: ChatMessageBubbleProps) {
   const t = useMessages("messages");
-  const decryptionFailed = msg.body == null || msg.body === "";
+  const decryptionFailed =
+    (msg.body == null || msg.body === "") && !msg.attachments?.length;
   return (
     <div
       className={`animate-fade-in-up flex items-end gap-2 ${isMe ? "flex-row-reverse" : ""}`}
@@ -35,13 +36,14 @@ export function ChatMessageBubble({
       <div
         className={`flex max-w-[70%] flex-col gap-0.5 ${isMe ? "items-end" : ""}`}
       >
-        {msg.attachmentUrl && (
+        {msg.attachments?.map((att) => (
           <AttachmentPreview
-            url={msg.attachmentUrl}
-            type={msg.attachmentType}
-            name={msg.attachmentName}
+            key={att.url}
+            url={att.url}
+            type={att.type}
+            name={att.name}
           />
-        )}
+        ))}
         {msg.body != null && msg.body !== "" ? (
           <span
             className={`inline-block rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${

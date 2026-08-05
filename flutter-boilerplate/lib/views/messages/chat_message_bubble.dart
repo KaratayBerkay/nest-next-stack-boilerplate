@@ -37,13 +37,13 @@ class ChatMessageBubble extends StatelessWidget {
                 ),
               ),
             ),
-          if (message.attachmentUrl != null)
+          for (final att in message.attachments)
             Padding(
               padding: const EdgeInsets.only(bottom: 4),
               child: AttachmentPreview(
-                url: message.attachmentUrl!,
-                type: message.attachmentType,
-                name: message.attachmentName,
+                url: att.url,
+                type: att.type,
+                name: att.name,
               ),
             ),
           Row(

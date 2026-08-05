@@ -35,17 +35,24 @@ export class MessagingDmService {
     return rest;
   }
 
-  /** Every message is stored encrypted (body is always NULL at rest), so the
-   *  preview is always recovered from the envelope — room key first, then the
-   *  sender's per-user key, then the reader's (legacy DM envelopes). */
+  /** Every message is stored encrypted (v/ct/nonce columns, no plaintext
+   *  body at rest), so the preview is always recovered from the storage
+   *  envelope — room key first, then the sender's per-user key, then the
+   *  reader's (legacy DM envelopes). */
   private decryptPreview(
-    msg: { body: string | null; envelope: unknown; senderId?: string },
+    msg: {
+      v: string | null;
+      ct: string | null;
+      nonce: string | null;
+      senderId?: string;
+    },
     userId: string,
   ): string {
-    if (!msg.envelope) return '';
+    const envelope = this.storageCrypto.toEnvelope(msg);
+    if (!envelope) return '';
     try {
       const decrypted = this.storageCrypto.decryptForRoom(
-        msg.envelope,
+        envelope,
       ) as { text?: string };
       return decrypted.text ?? '';
     } catch {}
@@ -53,14 +60,14 @@ export class MessagingDmService {
       const senderId = msg.senderId || userId;
       const decrypted = this.storageCrypto.decryptFromStorage(
         senderId,
-        msg.envelope,
+        envelope,
       ) as { text?: string };
       return decrypted.text ?? '';
     } catch {}
     try {
       const decrypted = this.storageCrypto.decryptFromStorage(
         userId,
-        msg.envelope,
+        envelope,
       ) as { text?: string };
       return decrypted.text ?? '';
     } catch {}
@@ -102,26 +109,28 @@ export class MessagingDmService {
     const sentMessages = await this.prisma.$queryRawUnsafe<
       Array<{
         id: string;
-        body: string | null;
         recipientId: string;
         createdAt: Date;
-        envelope: unknown;
+        v: string;
+        ct: string;
+        nonce: string;
       }>
     >(
-      `SELECT DISTINCT ON ("recipientId") id, body, "recipientId", "createdAt", envelope FROM "Message" WHERE "senderId" = $1::uuid AND "recipientId" = ANY($2::uuid[]) ORDER BY "recipientId", "createdAt" DESC`,
+      `SELECT DISTINCT ON ("recipientId") id, "recipientId", "createdAt", v, ct, nonce FROM "Message" WHERE "senderId" = $1::uuid AND "recipientId" = ANY($2::uuid[]) ORDER BY "recipientId", "createdAt" DESC`,
       userId,
       friendIds,
     );
     const receivedMessages = await this.prisma.$queryRawUnsafe<
       Array<{
         id: string;
-        body: string | null;
         senderId: string;
         createdAt: Date;
-        envelope: unknown;
+        v: string;
+        ct: string;
+        nonce: string;
       }>
     >(
-      `SELECT DISTINCT ON ("senderId") id, body, "senderId", "createdAt", envelope FROM "Message" WHERE "recipientId" = $1::uuid AND "senderId" = ANY($2::uuid[]) ORDER BY "senderId", "createdAt" DESC`,
+      `SELECT DISTINCT ON ("senderId") id, "senderId", "createdAt", v, ct, nonce FROM "Message" WHERE "recipientId" = $1::uuid AND "senderId" = ANY($2::uuid[]) ORDER BY "senderId", "createdAt" DESC`,
       userId,
       friendIds,
     );
@@ -223,10 +232,14 @@ export class MessagingDmService {
             hideAvatar: true,
           },
         },
+        attachments: true,
       },
     });
     const redacted = messages.map((m) => ({
       ...m,
+      attachments: m.attachments.map((a) =>
+        this.storageCrypto.toWireAttachment(a),
+      ),
       sender: this.redactAvatar(m.sender, userId),
       recipient: this.redactAvatar(m.recipient, userId),
     }));
@@ -239,7 +252,7 @@ export class MessagingDmService {
     text = '',
     areFriends: (a: string, b: string) => Promise<boolean>,
     friends?: string[],
-    attachment?: MessageAttachment,
+    attachments?: MessageAttachment[],
     envelope?: Record<string, unknown>,
   ) {
     if (senderId === recipientId) {
@@ -256,25 +269,36 @@ export class MessagingDmService {
       throw new ForbiddenException('You can only send messages to friends');
     }
     // Messages are ALWAYS stored encrypted: a caller-supplied envelope is
-    // stored as-is (client-side E2EE), and when none is provided the server
-    // encrypts the plaintext itself — a plaintext body row is impossible.
-    const envelopeJson = (
-      envelope && typeof envelope === 'object'
-        ? envelope
-        : this.storageCrypto.encryptForStorage(senderId, { text, attachment })
-    ) as Prisma.InputJsonValue;
+    // flattened into the v/ct/nonce columns as-is (client-side E2EE), and
+    // when none is provided the server encrypts the plaintext itself — a
+    // plaintext body row is impossible.
+    const envelopeFields = this.storageCrypto.flattenEnvelope(envelope);
+    const { v, ct, nonce } =
+      envelopeFields ??
+      this.storageCrypto.encryptForStorage(senderId, {
+        text,
+        attachments,
+      });
     const message = await this.prisma.message.create({
       data: {
         senderId,
         recipientId,
-        body: null,
-        encrypted: true,
-        algVersion: 1,
-        envelope: envelopeJson,
-        attachmentUrl: attachment?.url,
-        attachmentType: attachment?.type,
-        attachmentName: attachment?.name,
-        attachmentEnvelope: attachment?.storageEnvelope as Prisma.InputJsonValue | undefined,
+        v,
+        ct,
+        nonce,
+        attachments:
+          attachments && attachments.length > 0
+            ? {
+                create: attachments.map((a) => ({
+                  url: a.url,
+                  type: a.type,
+                  name: a.name,
+                  v: a.storageEnvelope?.v ?? null,
+                  ct: a.storageEnvelope?.ct ?? null,
+                  nonce: a.storageEnvelope?.nonce ?? null,
+                })),
+              }
+            : undefined,
       },
       include: {
         sender: {
@@ -295,6 +319,7 @@ export class MessagingDmService {
             hideAvatar: true,
           },
         },
+        attachments: true,
       },
     });
     this.logger.log(
@@ -307,6 +332,9 @@ export class MessagingDmService {
     const { hideAvatar: _senderHideAvatar, ...senderRest } = message.sender;
     return {
       ...message,
+      attachments: message.attachments.map((a) =>
+        this.storageCrypto.toWireAttachment(a),
+      ),
       sender: {
         ...senderRest,
         avatar: initials(message.sender.name || message.sender.email),
@@ -320,8 +348,6 @@ export class MessagingDmService {
       id: string;
       senderId: string;
       recipientId: string;
-      body: string | Record<string, unknown> | null;
-      envelope?: unknown;
       createdAt: Date;
       sender?: {
         id?: string;
@@ -329,12 +355,15 @@ export class MessagingDmService {
         email?: string;
         avatar?: string;
       };
+      attachments?: {
+        url: string;
+        type: string;
+        name: string;
+        storageEnvelope?: { v: string; nonce: string; ct: string } | null;
+      }[];
       _tempId?: string;
-      attachmentUrl?: string | null;
-      attachmentType?: string | null;
-      attachmentName?: string | null;
     },
-    deliveryPlaintext?: { text?: string; attachment?: unknown },
+    deliveryPlaintext?: { text?: string; attachments?: unknown },
   ): Promise<{
     recipientPayload: Record<string, unknown>;
     senderPayload: Record<string, unknown>;
@@ -385,12 +414,8 @@ export class MessagingDmService {
       body: deliveryPlaintext?.text ?? null,
       createdAt: message.createdAt,
       ...(message._tempId ? { _tempId: message._tempId } : {}),
-      ...(message.attachmentUrl
-        ? {
-            attachmentUrl: message.attachmentUrl,
-            attachmentType: message.attachmentType,
-            attachmentName: message.attachmentName,
-          }
+      ...(message.attachments && message.attachments.length > 0
+        ? { attachments: message.attachments }
         : {}),
     };
 
@@ -443,9 +468,9 @@ export class MessagingDmService {
     areFriends: (a: string, b: string) => Promise<boolean>,
     friends?: string[],
     tempId?: string,
-    attachment?: MessageAttachment,
+    attachments?: MessageAttachment[],
     storageEnvelope?: Record<string, unknown>,
-    deliveryPlaintext?: { text?: string; attachment?: unknown },
+    deliveryPlaintext?: { text?: string; attachments?: unknown },
   ) {
     const message = await this.sendMessage(
       senderId,
@@ -453,7 +478,7 @@ export class MessagingDmService {
       text,
       areFriends,
       friends,
-      attachment,
+      attachments,
       storageEnvelope,
     );
     if (tempId) (message as Record<string, unknown>)._tempId = tempId;

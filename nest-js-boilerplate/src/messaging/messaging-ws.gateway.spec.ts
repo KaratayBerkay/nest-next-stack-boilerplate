@@ -45,9 +45,7 @@ type GatewayInternal = {
       recipientId?: string;
       text?: string;
       tempId?: string;
-      attachmentUrl?: string;
-      attachmentType?: string;
-      attachmentName?: string;
+      attachments?: { url: string; type: string; name: string }[];
       envelope?: Record<string, unknown>;
     },
   ) => Promise<void>;
@@ -56,7 +54,7 @@ type GatewayInternal = {
     data: {
       room: string;
       text?: string;
-      attachmentUrl?: string;
+      attachments?: { url: string; type: string; name: string }[];
       envelope?: Record<string, unknown>;
     },
   ) => Promise<void>;
@@ -113,9 +111,7 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
         id: 'm1',
         senderId: 'u1',
         body: 'hello',
-        attachmentUrl: null,
-        attachmentType: null,
-        attachmentName: null,
+        attachments: [],
         createdAt: new Date(),
       }),
     };
@@ -260,12 +256,13 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
 
     it('allows direct-message with attachment only', async () => {
       const ws = createMockWs('MEDIUM');
+      const attachments = [
+        { url: 'https://minio/x.png', type: 'image/png', name: 'x.png' },
+      ];
       await (gateway as unknown as GatewayInternal).handleDirectMessage(ws, {
         recipientId: 'u2',
         text: '',
-        attachmentUrl: 'https://minio/x.png',
-        attachmentType: 'image/png',
-        attachmentName: 'x.png',
+        attachments,
       });
       // No client envelope → the service encrypts for storage itself.
       expect(mockMs.sendMessage).toHaveBeenCalledWith(
@@ -273,10 +270,31 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
         'u2',
         '',
         undefined,
-        expect.objectContaining({ url: 'https://minio/x.png' }),
+        attachments,
         undefined,
       );
       expect(mockMs.deliverDirectMessage).toHaveBeenCalled();
+    });
+
+    it('allows direct-message with many attachments', async () => {
+      const ws = createMockWs('MEDIUM');
+      const attachments = [
+        { url: 'https://minio/a.png', type: 'image/png', name: 'a.png' },
+        { url: 'https://minio/b.pdf', type: 'application/pdf', name: 'b.pdf' },
+      ];
+      await (gateway as unknown as GatewayInternal).handleDirectMessage(ws, {
+        recipientId: 'u2',
+        text: '',
+        attachments,
+      });
+      expect(mockMs.sendMessage).toHaveBeenCalledWith(
+        'u1',
+        'u2',
+        '',
+        undefined,
+        attachments,
+        undefined,
+      );
     });
 
     it('passes a client-provided E2EE envelope through untouched (DM)', async () => {
@@ -292,7 +310,7 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
         'u2',
         '',
         undefined,
-        undefined,
+        [],
         envelope,
       );
     });
@@ -308,7 +326,7 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
       expect(delivered).toHaveProperty('_tempId', 'temp-123');
       expect(mockMs.deliverDirectMessage).toHaveBeenCalledWith(
         expect.objectContaining({ _tempId: 'temp-123' }),
-        { text: 'hello', attachment: undefined },
+        { text: 'hello', attachments: [] },
       );
     });
 
@@ -335,7 +353,27 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
         'general',
         'u1',
         'hello',
+        [],
         undefined,
+      );
+    });
+
+    it('allows room-message with many attachments', async () => {
+      const ws = createMockWs('FREE');
+      const attachments = [
+        { url: 'https://minio/a.png', type: 'image/png', name: 'a.png' },
+        { url: 'https://minio/b.pdf', type: 'application/pdf', name: 'b.pdf' },
+      ];
+      await (gateway as unknown as GatewayInternal).handleRoomMessage(ws, {
+        room: 'general',
+        text: '',
+        attachments,
+      });
+      expect(mockMs.saveRoomMessage).toHaveBeenCalledWith(
+        'general',
+        'u1',
+        '',
+        attachments,
         undefined,
       );
     });
@@ -352,7 +390,7 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
         'general',
         'u1',
         '',
-        undefined,
+        [],
         envelope,
       );
     });

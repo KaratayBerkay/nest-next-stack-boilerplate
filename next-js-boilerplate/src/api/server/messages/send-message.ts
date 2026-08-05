@@ -8,18 +8,11 @@ export async function sendMessageServer(
   recipientId: string,
   text: string,
   tempId?: string,
-  attachment?: MessageAttachment,
+  attachments?: MessageAttachment[],
 ): Promise<Record<string, unknown>> {
   const body: Record<string, unknown> = { text };
   if (tempId) body._tempId = tempId;
-  if (attachment) {
-    body.attachmentUrl = attachment.url;
-    body.attachmentType = attachment.type;
-    body.attachmentName = attachment.name;
-    if (attachment.storageEnvelope) {
-      body.attachmentEnvelope = attachment.storageEnvelope;
-    }
-  }
+  if (attachments && attachments.length > 0) body.attachments = attachments;
   const res = await apiFetch(
     `${MESSAGES_CONVERSATIONS_PREFIX}${recipientId}/messages`,
     {

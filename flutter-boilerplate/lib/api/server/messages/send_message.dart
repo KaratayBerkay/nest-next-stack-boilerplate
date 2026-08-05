@@ -17,9 +17,12 @@ const _mutation = '''
       recipientId
       sender { id name avatarUrl }
       recipient { id name avatarUrl }
-      attachmentUrl
-      attachmentType
-      attachmentName
+      attachments {
+        url
+        type
+        name
+        storageEnvelope { v nonce ct }
+      }
       createdAt
       readAt
     }
@@ -34,7 +37,7 @@ class SendMessageServer {
   Future<ChatMessage> call(
     String recipientId,
     String text,
-    MessageAttachment? attachment,
+    List<MessageAttachment> attachments,
   ) async {
     final response = await _dio.post<dynamic>(
       '/graphql',
@@ -44,9 +47,7 @@ class SendMessageServer {
           'input': {
             'recipientId': recipientId,
             'text': text,
-            'attachmentUrl': attachment?.url,
-            'attachmentType': attachment?.type,
-            'attachmentName': attachment?.name,
+            'attachments': attachments.map((a) => a.toJson()).toList(),
           },
         },
       },
@@ -68,9 +69,9 @@ class SendMessageServer {
       senderName: sender?['name'] as String? ?? '',
       senderAvatarUrl: sender?['avatarUrl'] as String?,
       content: result['body'] as String,
-      attachmentUrl: result['attachmentUrl'] as String?,
-      attachmentType: result['attachmentType'] as String?,
-      attachmentName: result['attachmentName'] as String?,
+      attachments: (result['attachments'] as List<dynamic>? ?? const [])
+          .map((e) => MessageAttachment.fromJson(e as Map<String, dynamic>))
+          .toList(),
       createdAt: DateTime.parse(result['createdAt'] as String),
       isRead: result['readAt'] != null,
     );

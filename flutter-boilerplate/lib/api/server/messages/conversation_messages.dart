@@ -3,6 +3,7 @@ import 'package:flutter_boilerplate/lib/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../types/messages/message.dart';
+import '../../../types/messages/message_attachment.dart';
 
 final conversationMessagesServerProvider = Provider(
   (ref) => ConversationMessagesServer(ref.read(dioProvider)),
@@ -17,6 +18,12 @@ const _query = '''
       recipientId
       sender { id name avatarUrl }
       recipient { id name avatarUrl }
+      attachments {
+        url
+        type
+        name
+        storageEnvelope { v nonce ct }
+      }
       createdAt
       readAt
     }
@@ -57,6 +64,9 @@ class ConversationMessagesServer {
       senderName: sender?['name'] as String? ?? '',
       senderAvatarUrl: sender?['avatarUrl'] as String?,
       content: json['body'] as String,
+      attachments: (json['attachments'] as List<dynamic>? ?? const [])
+          .map((e) => MessageAttachment.fromJson(e as Map<String, dynamic>))
+          .toList(),
       createdAt: DateTime.parse(json['createdAt'] as String),
       isRead: json['readAt'] != null,
     );

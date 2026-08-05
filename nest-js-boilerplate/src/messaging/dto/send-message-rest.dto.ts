@@ -3,19 +3,50 @@ import {
   IsOptional,
   IsUrl,
   IsObject,
+  IsArray,
   MaxLength,
   Validate,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { TextOrAttachmentConstraint } from './text-or-attachment.constraint';
 import { EnvelopeSizeConstraint } from './envelope-size.constraint';
+
+class MessageAttachmentDto {
+  @IsUrl({ require_tld: false })
+  @ApiProperty({
+    description: 'Attachment file URL (from POST /upload/attachment)',
+  })
+  url!: string;
+
+  @IsString()
+  @MaxLength(50)
+  @ApiProperty({ description: 'Attachment MIME type' })
+  type!: string;
+
+  @IsString()
+  @MaxLength(255)
+  @ApiProperty({ description: 'Original attachment file name' })
+  name!: string;
+
+  @IsObject()
+  @IsOptional()
+  @ApiProperty({
+    description:
+      'Server-side at-rest encryption envelope for the attachment blob (v/ct/nonce)',
+    required: false,
+  })
+  storageEnvelope?: Record<string, unknown>;
+}
 
 export class SendMessageRestDto {
   @IsString()
   @MaxLength(5000)
   @Validate(TextOrAttachmentConstraint)
   @ApiProperty({
-    description: 'Message body (required when no attachment or envelope is sent)',
+    description:
+      'Message body (required when no attachment or envelope is sent)',
     maxLength: 5000,
     required: false,
   })
@@ -29,46 +60,23 @@ export class SendMessageRestDto {
   })
   _tempId?: string;
 
-  @IsUrl({ require_tld: false })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MessageAttachmentDto)
   @IsOptional()
   @ApiProperty({
-    description: 'Attachment file URL (from POST /upload/attachment)',
+    description: 'Attachments (one or many files attached to this message)',
+    type: [MessageAttachmentDto],
     required: false,
   })
-  attachmentUrl?: string;
-
-  @IsString()
-  @MaxLength(50)
-  @IsOptional()
-  @ApiProperty({
-    description: 'Attachment MIME type',
-    required: false,
-  })
-  attachmentType?: string;
-
-  @IsString()
-  @MaxLength(255)
-  @IsOptional()
-  @ApiProperty({
-    description: 'Original attachment file name',
-    required: false,
-  })
-  attachmentName?: string;
-
-  @IsObject()
-  @IsOptional()
-  @ApiProperty({
-    description: 'Server-side at-rest encryption envelope for the attachment blob',
-    required: false,
-  })
-  attachmentEnvelope?: Record<string, unknown>;
+  attachments?: MessageAttachmentDto[];
 
   @IsObject()
   @IsOptional()
   @Validate(EnvelopeSizeConstraint)
   @ApiProperty({
     description:
-      'E2EE envelope (MessageEnvelopeV1). When present, body is stored as null and the message is encrypted.',
+      'E2EE envelope (MessageEnvelopeV1). When present, the message is stored encrypted.',
     required: false,
   })
   envelope?: Record<string, unknown>;
