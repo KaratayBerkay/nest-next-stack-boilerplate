@@ -17,6 +17,21 @@ import { TextOrAttachmentConstraint } from './text-or-attachment.constraint';
 import { EnvelopeSizeConstraint } from './envelope-size.constraint';
 
 @InputType()
+class AttachmentEnvelopeInput {
+  @Field()
+  @IsString()
+  v!: string;
+
+  @Field()
+  @IsString()
+  nonce!: string;
+
+  @Field()
+  @IsString()
+  ct!: string;
+}
+
+@InputType()
 class MessageAttachmentInput {
   @Field()
   @IsUrl({ require_tld: false })
@@ -37,15 +52,16 @@ class MessageAttachmentInput {
   @ApiProperty({ description: 'Original attachment file name' })
   name!: string;
 
-  @Field(() => String, { nullable: true })
-  @IsObject()
+  @Field(() => AttachmentEnvelopeInput, { nullable: true })
+  @ValidateNested()
+  @Type(() => AttachmentEnvelopeInput)
   @IsOptional()
   @ApiProperty({
     description:
       'Server-side at-rest encryption envelope for the attachment blob (v/ct/nonce)',
     required: false,
   })
-  storageEnvelope?: Record<string, unknown>;
+  storageEnvelope?: AttachmentEnvelopeInput;
 }
 
 @InputType()

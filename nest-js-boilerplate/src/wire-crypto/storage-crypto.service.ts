@@ -62,15 +62,18 @@ export class StorageCryptoService {
   }
 
   /**
-   * Rebuild a StorageEnvelopeV1 from the flattened v/ct/nonce columns.
-   * Returns null when any piece is missing (e.g. a legacy row that never
-   * received an envelope) so callers can degrade to an empty preview.
+   * Rebuild a flattened envelope from the v/ct/nonce columns. Returns null
+   * when any piece is missing (e.g. a legacy row that never received an
+   * envelope) so callers can degrade to an empty preview. The `v` is an
+   * arbitrary string (client-supplied E2EE envelopes are stored verbatim),
+   * so the result is not typed as the `storage-v1` literal — decryption
+   * helpers validate `v` themselves.
    */
   toEnvelope(row: {
     v: string | null;
     ct: string | null;
     nonce: string | null;
-  }): StorageEnvelopeV1 | null {
+  }): { v: string; ct: string; nonce: string } | null {
     if (!row.v || !row.ct || !row.nonce) return null;
     return { v: row.v, ct: row.ct, nonce: row.nonce };
   }
@@ -115,7 +118,7 @@ export class StorageCryptoService {
     url: string;
     type: string;
     name: string;
-    storageEnvelope: StorageEnvelopeV1 | null;
+    storageEnvelope: { v: string; ct: string; nonce: string } | null;
   } {
     return {
       url: row.url,

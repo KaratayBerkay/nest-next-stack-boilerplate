@@ -13,6 +13,17 @@ import { ApiProperty } from '@nestjs/swagger';
 import { TextOrAttachmentConstraint } from './text-or-attachment.constraint';
 import { EnvelopeSizeConstraint } from './envelope-size.constraint';
 
+class AttachmentEnvelopeDto {
+  @IsString()
+  v!: string;
+
+  @IsString()
+  nonce!: string;
+
+  @IsString()
+  ct!: string;
+}
+
 class MessageAttachmentDto {
   @IsUrl({ require_tld: false })
   @ApiProperty({
@@ -30,14 +41,15 @@ class MessageAttachmentDto {
   @ApiProperty({ description: 'Original attachment file name' })
   name!: string;
 
-  @IsObject()
+  @ValidateNested()
+  @Type(() => AttachmentEnvelopeDto)
   @IsOptional()
   @ApiProperty({
     description:
       'Server-side at-rest encryption envelope for the attachment blob (v/ct/nonce)',
     required: false,
   })
-  storageEnvelope?: Record<string, unknown>;
+  storageEnvelope?: AttachmentEnvelopeDto;
 }
 
 export class SendMessageRestDto {
