@@ -32,7 +32,6 @@ import {
   type RealtimeRateLimiterConfig,
 } from './realtime-rate-limiter';
 import { WireCryptoService } from '../wire-crypto/wire-crypto.service';
-import type { WireEnvelopeV2 } from '../wire-crypto/wire-crypto.types';
 
 @Injectable()
 export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
@@ -581,6 +580,10 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       authWs.userId ?? null,
     );
     if (limit !== 'ok') {
+      const buckets = this.frameLimiter.snapshot(
+        authWs.socketId,
+        authWs.userId ?? null,
+      );
       this.logger.warn({
         category: 'websocket-exception',
         event: 'ws.rate_limited',
@@ -588,6 +591,9 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         sessionId: authWs.sessionId,
         socketId: authWs.socketId,
         scope: limit,
+        frameBytes: raw.length,
+        socketBucket: buckets.socket,
+        userBucket: buckets.user,
       });
       authWs.close(
         1008,

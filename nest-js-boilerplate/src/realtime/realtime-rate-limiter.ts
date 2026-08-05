@@ -12,6 +12,12 @@ interface BucketState {
   lastRefill: number;
 }
 
+export interface BucketSnapshot {
+  tokens: number;
+  capacity: number;
+  refillPerSec: number;
+}
+
 /**
  * In-memory token-bucket frame limiter for WebSocket inbound messages.
  * Buckets are per-socket and per-user (aggregated across the user's sockets),
@@ -61,6 +67,42 @@ export class RealtimeRateLimiter {
 
   releaseUser(userId: string): void {
     this.users.delete(userId);
+  }
+
+  /**
+   * Diagnostic snapshot of the socket and user buckets for a frame that
+   * tripped the limiter. Emitted with `ws.rate_limited` so the source of a
+   * burst can be confirmed from logs (EKS/ES): how many tokens were left,
+   * the capacity, and the refill rate.
+   */
+  snapshot(
+    socketId: string | undefined,
+    userId: string | null,
+  ): {
+    socket: BucketSnapshot | null;
+    user: BucketSnapshot | null;
+  } {
+    return {
+      socket: socketId ? this.snapshotOf(this.sockets, socketId) : null,
+      user: userId ? this.snapshotOf(this.users, userId) : null,
+    };
+  }
+
+  private snapshotOf(
+    buckets: Map<string, BucketState>,
+    key: string,
+  ): BucketSnapshot | null {
+    const state = buckets.get(key);
+    if (!state) return null;
+    return {
+      tokens: Math.round(state.tokens * 100) / 100,
+      capacity:
+        buckets === this.users ? this.cfg.userBurst : this.cfg.socketBurst,
+      refillPerSec:
+        buckets === this.users
+          ? this.cfg.userRatePerSec
+          : this.cfg.socketRatePerSec,
+    };
   }
 
   clear(): void {

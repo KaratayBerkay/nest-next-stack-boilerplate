@@ -73,4 +73,27 @@ describe('RealtimeRateLimiter', () => {
     limiter.clear();
     expect(limiter.check('s1', 'u1')).toBe('ok');
   });
+
+  it('snapshots bucket tokens for a rate-limited frame', () => {
+    for (let i = 0; i < 5; i++) limiter.check('s1', 'u1');
+    expect(limiter.check('s1', 'u1')).toBe('socket');
+    const snap = limiter.snapshot('s1', 'u1');
+    expect(snap.socket).toEqual({
+      tokens: 0,
+      capacity: 5,
+      refillPerSec: 10,
+    });
+    expect(snap.user).toEqual({
+      tokens: 5,
+      capacity: 10,
+      refillPerSec: 20,
+    });
+  });
+
+  it('snapshots null for untracked keys', () => {
+    expect(limiter.snapshot('nope', 'nobody')).toEqual({
+      socket: null,
+      user: null,
+    });
+  });
 });
