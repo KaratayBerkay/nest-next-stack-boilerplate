@@ -6,7 +6,6 @@ export interface Message {
   senderId: string;
   recipientId: string;
   body: string | null;
-  encrypted?: boolean;
   algVersion?: number | null;
   envelope?: Record<string, unknown> | null;
   createdAt: string;

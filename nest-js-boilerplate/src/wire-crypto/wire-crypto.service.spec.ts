@@ -69,6 +69,9 @@ function createRedisMock() {
     hget: jest.fn((key: string, field: string) =>
       Promise.resolve(store.get(key)?.[field] ?? null),
     ),
+    get: jest.fn((key: string) =>
+      Promise.resolve(counters.get(key)?.toString() ?? null),
+    ),
     exists: jest.fn((key: string) => Promise.resolve(store.has(key) ? 1 : 0)),
     expire: jest.fn(() => Promise.resolve(1)),
     del: jest.fn(() => Promise.resolve(1)),
@@ -232,5 +235,55 @@ describe('WireCryptoService', () => {
     await service.deleteForSession(SID);
     expect(redis._store.get(`crypto:session:${SID}`)).toBeUndefined();
     expect(await service.hasKeys(SID)).toBe(false);
+  });
+
+  it('returns 0 counters before any traffic and live counters after', async () => {
+    const { service } = buildService();
+    const serverPub = await service.createSessionKeys(SID);
+    const devicePriv = x25519.utils.randomSecretKey();
+    const devicePub = bytesToHex(x25519.getPublicKey(devicePriv));
+    await service.setPeerPublicKey(SID, devicePub);
+    const clientKey = clientSharedKey(bytesToHex(devicePriv), serverPub, SID);
+
+    const before = await service.getCounters(undefined, SID);
+    expect(before).toEqual({ c2sSeq: 0, s2cSeq: 0 });
+
+    // One s2c frame (encryptForSession) and one c2s frame (decryptFromClient).
+    await service.encryptForSession(SID, { text: 'a' });
+    const aadC2s = `${WIRE_CRYPTO_CONTEXT}|${SID}|c2s|1`;
+    const frame = encryptLikeClient(clientKey, aadC2s, { text: 'b' });
+    await service.decryptFromClient(SID, { v: 2, ...frame });
+
+    const after = await service.getCounters(undefined, SID);
+    expect(after).toEqual({ c2sSeq: 1, s2cSeq: 1 });
+    expect(await service.getSessionSeq(SID, 'c2s')).toBe(1);
+    expect(await service.getSessionSeq(SID, 's2c')).toBe(1);
+  });
+
+  it('resyncs a client ahead of the server counter without inventing traffic', async () => {
+    const { service } = buildService();
+    const serverPub = await service.createSessionKeys(SID);
+    const devicePriv = x25519.utils.randomSecretKey();
+    const devicePub = bytesToHex(x25519.getPublicKey(devicePriv));
+    await service.setPeerPublicKey(SID, devicePub);
+    const clientKey = clientSharedKey(bytesToHex(devicePriv), serverPub, SID);
+
+    // Client sends 5 frames (server processes them all), then the client
+    // reloads with a stale local seq of 2 — the handshake counters expose
+    // the truth so the client can adopt max(2, 5) = 5.
+    for (let i = 1; i <= 5; i++) {
+      const aad = `${WIRE_CRYPTO_CONTEXT}|${SID}|c2s|${i}`;
+      const frame = encryptLikeClient(clientKey, aad, { text: `m${i}` });
+      await service.decryptFromClient(SID, { v: 2, ...frame });
+    }
+    const { c2sSeq } = await service.getCounters(undefined, SID);
+    expect(c2sSeq).toBe(5);
+
+    // Next client frame must use seq 6, not the stale 3.
+    const aad6 = `${WIRE_CRYPTO_CONTEXT}|${SID}|c2s|6`;
+    const next = encryptLikeClient(clientKey, aad6, { text: 'after reload' });
+    await expect(
+      service.decryptFromClient(SID, { v: 2, ...next }),
+    ).resolves.toEqual({ text: 'after reload' });
   });
 });

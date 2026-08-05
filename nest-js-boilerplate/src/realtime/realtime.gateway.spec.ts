@@ -11,6 +11,8 @@ interface MockWs {
   send: jest.Mock;
   close: jest.Mock;
   tier?: string;
+  registeredServices?: string[];
+  tabClaims: Map<string, unknown>;
   [key: string]: unknown;
 }
 
@@ -24,6 +26,8 @@ function makeWs(overrides: Record<string, unknown> = {}): MockWs {
     deviceTokenHash: 'hash-1',
     authenticated: true,
     isAlive: true,
+    registeredServices: [],
+    tabClaims: new Map(),
     send,
     close,
     ...overrides,
@@ -38,17 +42,30 @@ function mockPresenceService(): RealtimePresenceService {
   } as unknown as RealtimePresenceService;
 }
 
+function mockRedisClient() {
+  return {
+    publish: jest.fn().mockResolvedValue(0),
+    multi: jest.fn().mockReturnValue({
+      hset: jest.fn().mockReturnThis(),
+      sadd: jest.fn().mockReturnThis(),
+      expire: jest.fn().mockReturnThis(),
+      del: jest.fn().mockReturnThis(),
+      srem: jest.fn().mockReturnThis(),
+      exec: jest.fn().mockResolvedValue([]),
+    }),
+  };
+}
+
 describe('RealtimeGateway — public methods', () => {
   let gateway: RealtimeGateway;
 
   beforeEach(() => {
-    const mockRedis = { publish: jest.fn().mockResolvedValue(0) };
     gateway = new RealtimeGateway(
       {} as never, // HttpAdapterHost
       {} as never, // CryptoService
       mockPresenceService(),
       { get: jest.fn().mockReturnValue(5) } as never, // ConfigService
-      mockRedis as never, // REDIS_CLIENT
+      mockRedisClient() as never, // REDIS_CLIENT
       {} as never, // REDIS_SUBSCRIBER
       {} as never, // SessionValidatorService
       {} as never, // WireCryptoService
@@ -214,6 +231,137 @@ describe('RealtimeGateway — public methods', () => {
       expect(() => gateway.registerHandler('chat', jest.fn())).toThrow(
         'Handler for frame type "chat" is already registered',
       );
+    });
+  });
+
+  describe('cleanupSocket', () => {
+    const internal = () =>
+      gateway as unknown as {
+        cleanupSocket: (ws: MockWs, opts?: { silent?: boolean }) => void;
+        userSockets: Map<string, Set<MockWs>>;
+        deviceSockets: Map<string, MockWs>;
+        onlineCount: Map<string, number>;
+      };
+
+    it('removes the socket from every index and decrements online count (last socket broadcasts user-offline)', () => {
+      const ws = makeWs({ socketId: 'ws-hash-1' });
+      const userSockets = internal().userSockets;
+      const deviceSockets = internal().deviceSockets;
+      userSockets.set('u1', new Set([ws]));
+      deviceSockets.set('ws-hash-1', ws);
+      internal().onlineCount.set('u1', 1);
+      const broadcastAll = jest
+        .spyOn(gateway, 'broadcastAll')
+        .mockImplementation(() => undefined);
+
+      internal().cleanupSocket(ws);
+
+      expect(broadcastAll).toHaveBeenCalledWith({
+        type: 'user-offline',
+        userId: 'u1',
+      });
+      expect(userSockets.has('u1')).toBe(false);
+      expect(deviceSockets.has('ws-hash-1')).toBe(false);
+      expect(internal().onlineCount.has('u1')).toBe(false);
+    });
+
+    it('does not broadcast user-offline when silent (device replacement)', () => {
+      const ws = makeWs({ socketId: 'ws-hash-1' });
+      const userSockets = internal().userSockets;
+      const deviceSockets = internal().deviceSockets;
+      userSockets.set('u1', new Set([ws]));
+      deviceSockets.set('ws-hash-1', ws);
+      internal().onlineCount.set('u1', 1);
+      const broadcastAll = jest
+        .spyOn(gateway, 'broadcastAll')
+        .mockImplementation(() => undefined);
+
+      internal().cleanupSocket(ws, { silent: true });
+
+      expect(broadcastAll).not.toHaveBeenCalled();
+      expect(userSockets.has('u1')).toBe(false);
+      expect(deviceSockets.has('ws-hash-1')).toBe(false);
+    });
+
+    it('keeps another online socket of the user online', () => {
+      const ws = makeWs({ socketId: 'ws-hash-1' });
+      const other = makeWs({ socketId: 'ws-hash-2' });
+      internal().userSockets.set('u1', new Set([ws, other]));
+      internal().deviceSockets.set('ws-hash-1', ws);
+      internal().onlineCount.set('u1', 2);
+      const broadcastAll = jest
+        .spyOn(gateway, 'broadcastAll')
+        .mockImplementation(() => undefined);
+
+      internal().cleanupSocket(ws);
+
+      expect(broadcastAll).not.toHaveBeenCalled();
+      expect(internal().onlineCount.get('u1')).toBe(1);
+      expect(internal().deviceSockets.has('ws-hash-1')).toBe(false);
+    });
+
+    it('is idempotent — a second call does not double-decrement', () => {
+      const ws = makeWs({ socketId: 'ws-hash-1' });
+      internal().userSockets.set('u1', new Set([ws]));
+      internal().deviceSockets.set('ws-hash-1', ws);
+      internal().onlineCount.set('u1', 1);
+      const broadcastAll = jest
+        .spyOn(gateway, 'broadcastAll')
+        .mockImplementation(() => undefined);
+
+      internal().cleanupSocket(ws);
+      internal().cleanupSocket(ws);
+
+      expect(broadcastAll).toHaveBeenCalledTimes(1);
+      expect(internal().onlineCount.has('u1')).toBe(false);
+    });
+  });
+
+  describe('replaceDeviceSocket (one-socket-per-device)', () => {
+    const internal = () =>
+      gateway as unknown as {
+        replaceDeviceSocket: (ws: MockWs) => MockWs | undefined;
+        deviceSockets: Map<string, MockWs>;
+        userSockets: Map<string, Set<MockWs>>;
+        onlineCount: Map<string, number>;
+      };
+
+    it('returns the previous socket and detaches+closes it', () => {
+      const oldWs = makeWs({
+        socketId: 'ws-hash-1',
+        userId: 'u1',
+        sessionId: 'sess-old',
+      });
+      const newWs = makeWs({
+        socketId: 'ws-hash-1',
+        userId: 'u1',
+        sessionId: 'sess-new',
+      });
+      internal().deviceSockets.set('ws-hash-1', oldWs);
+      internal().userSockets.set('u1', new Set([oldWs]));
+      internal().onlineCount.set('u1', 1);
+
+      const replaced = internal().replaceDeviceSocket(newWs);
+
+      expect(replaced).toBe(oldWs);
+      expect(oldWs.close).toHaveBeenCalledWith(1008, 'Device reconnected');
+      expect((oldWs as MockWs & { detached?: boolean }).detached).toBe(true);
+      // Old socket fully removed from indexes before the new one registers.
+      expect(internal().userSockets.has('u1')).toBe(false);
+      expect(internal().deviceSockets.has('ws-hash-1')).toBe(false);
+      expect(internal().onlineCount.has('u1')).toBe(false);
+    });
+
+    it('returns undefined when the device has no existing socket', () => {
+      const ws = makeWs({ socketId: 'ws-hash-1' });
+      expect(internal().replaceDeviceSocket(ws)).toBeUndefined();
+      expect(ws.close).not.toHaveBeenCalled();
+    });
+
+    it('returns undefined for a socket without a socketId (token-less fallback)', () => {
+      const ws = makeWs({ socketId: undefined });
+      expect(internal().replaceDeviceSocket(ws)).toBeUndefined();
+      expect(ws.close).not.toHaveBeenCalled();
     });
   });
 });

@@ -70,7 +70,11 @@ export class WireCryptoController {
       this.logger.debug(
         `device handshake deviceHash=${deviceHash} reKey=${alreadyHasKeys}`,
       );
-      return { serverPublicKey, ok: true, device: true };
+      const { c2sSeq, s2cSeq } = await this.wire.getCounters(
+        deviceHash,
+        sessionId,
+      );
+      return { serverPublicKey, ok: true, device: true, c2sSeq, s2cSeq };
     }
 
     // Session-based handshake (ephemeral fallback).
@@ -82,7 +86,13 @@ export class WireCryptoController {
     if (!serverPublicKey) {
       throw new NotFoundException('No session crypto keys registered');
     }
-    return { serverPublicKey, ok: true, device: false };
+    const counters = await this.wire.getCounters(undefined, sessionId);
+    return {
+      serverPublicKey,
+      ok: true,
+      device: false,
+      ...counters,
+    };
   }
 
   /**
@@ -129,13 +139,18 @@ export class WireCryptoController {
       if (!pub) {
         throw new NotFoundException('No device crypto keys registered');
       }
-      return { serverPublicKey: pub, device: true };
+      const { c2sSeq, s2cSeq } = await this.wire.getCounters(
+        deviceHash,
+        sessionId,
+      );
+      return { serverPublicKey: pub, device: true, c2sSeq, s2cSeq };
     }
 
     const serverPublicKey = await this.wire.getServerPublicKey(sessionId);
     if (!serverPublicKey) {
       throw new NotFoundException('No session crypto keys registered');
     }
-    return { serverPublicKey, device: false };
+    const counters = await this.wire.getCounters(undefined, sessionId);
+    return { serverPublicKey, device: false, ...counters };
   }
 }

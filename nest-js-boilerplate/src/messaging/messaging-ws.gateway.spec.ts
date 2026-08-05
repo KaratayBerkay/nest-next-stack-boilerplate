@@ -5,7 +5,6 @@ import { PrismaService } from '../prisma/prisma.service';
 import { MessagingService } from './messaging.service';
 import { PushNotificationService } from '../push-notification/push-notification.service';
 import { WireCryptoService } from '../wire-crypto/wire-crypto.service';
-import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
 
 interface MockWs {
   userId: string;
@@ -68,6 +67,10 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
     broadcastToRoom: jest.Mock;
     broadcastAll: jest.Mock;
     emitToPageEncrypted: jest.Mock;
+    emitToUserEncrypted: jest.Mock;
+    emitToRoomEncrypted: jest.Mock;
+    registerRoomSocket: jest.Mock;
+    leaveRoomSocket: jest.Mock;
   };
   let mockMs: {
     joinRoom: jest.Mock;
@@ -86,6 +89,10 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
       broadcastToRoom: jest.fn(),
       broadcastAll: jest.fn(),
       emitToPageEncrypted: jest.fn().mockResolvedValue(1),
+      emitToUserEncrypted: jest.fn().mockResolvedValue(1),
+      emitToRoomEncrypted: jest.fn().mockResolvedValue(1),
+      registerRoomSocket: jest.fn(),
+      leaveRoomSocket: jest.fn(),
     };
     mockMs = {
       joinRoom: jest.fn().mockReturnValue([]),
@@ -124,12 +131,6 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
           useValue: {
             decryptFromClient: jest.fn().mockResolvedValue({ text: 'hello' }),
             encryptForSession: jest.fn().mockResolvedValue({ v: 2, nonce: 'bn', ct: 'bc' }),
-          },
-        },
-        {
-          provide: StorageCryptoService,
-          useValue: {
-            encryptForStorage: jest.fn().mockResolvedValue({ v: 'storage-v1', nonce: 'sn', ct: 'sc' }),
           },
         },
       ],
@@ -265,15 +266,34 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
         attachmentType: 'image/png',
         attachmentName: 'x.png',
       });
+      // No client envelope → the service encrypts for storage itself.
       expect(mockMs.sendMessage).toHaveBeenCalledWith(
         'u1',
         'u2',
         '',
         undefined,
         expect.objectContaining({ url: 'https://minio/x.png' }),
-        expect.objectContaining({ v: 'storage-v1' }),
+        undefined,
       );
       expect(mockMs.deliverDirectMessage).toHaveBeenCalled();
+    });
+
+    it('passes a client-provided E2EE envelope through untouched (DM)', async () => {
+      const ws = createMockWs('MEDIUM');
+      const envelope = { v: 'e2ee-v1', nonce: 'n', ct: 'c' };
+      await (gateway as unknown as GatewayInternal).handleDirectMessage(ws, {
+        recipientId: 'u2',
+        text: '',
+        envelope,
+      });
+      expect(mockMs.sendMessage).toHaveBeenCalledWith(
+        'u1',
+        'u2',
+        '',
+        undefined,
+        undefined,
+        envelope,
+      );
     });
 
     it('rejects room-message with empty text and no attachment', async () => {
@@ -294,12 +314,30 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
         room: 'general',
         text: 'hello',
       });
+      // No client envelope → the service encrypts for storage itself.
       expect(mockMs.saveRoomMessage).toHaveBeenCalledWith(
         'general',
         'u1',
         'hello',
         undefined,
-        expect.objectContaining({ v: 'storage-v1' }),
+        undefined,
+      );
+    });
+
+    it('passes a client-provided E2EE envelope through untouched (room)', async () => {
+      const ws = createMockWs('FREE');
+      const envelope = { v: 'e2ee-v1', nonce: 'n', ct: 'c' };
+      await (gateway as unknown as GatewayInternal).handleRoomMessage(ws, {
+        room: 'general',
+        text: '',
+        envelope,
+      });
+      expect(mockMs.saveRoomMessage).toHaveBeenCalledWith(
+        'general',
+        'u1',
+        '',
+        undefined,
+        envelope,
       );
     });
 

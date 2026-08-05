@@ -15,7 +15,7 @@ export const ChatRoomMessageList = forwardRef<
   ref,
 ) {
   const hasDecryptionFailure = messages.some(
-    (m) => m.encrypted && (m.body == null || m.body === ""),
+    (m) => m.body == null || m.body === "",
   );
 
   return (
@@ -48,8 +48,7 @@ export const ChatRoomMessageList = forwardRef<
       )}
       {messages.map((msg, i) => {
         const isMe = msg.senderId === userId;
-        const decryptionFailed =
-          msg.encrypted && (msg.body == null || msg.body === "");
+        const decryptionFailed = msg.body == null || msg.body === "";
         return (
           <div
             key={msg.id}

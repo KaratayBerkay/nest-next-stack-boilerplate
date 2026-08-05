@@ -19,6 +19,7 @@ export class MessagingService {
   readonly rooms: MessagingRoomService;
   readonly dm: MessagingDmService;
   readonly friends: MessagingFriendService;
+  readonly realtime: RealtimeGateway;
 
   constructor(
     prisma: PrismaService,
@@ -31,7 +32,8 @@ export class MessagingService {
     @Inject(REDIS_CLIENT) redis: Redis,
     storageCrypto: StorageCryptoService,
   ) {
-    this.rooms = new MessagingRoomService(prisma, redis);
+    this.realtime = realtime;
+    this.rooms = new MessagingRoomService(prisma, redis, storageCrypto);
     this.dm = new MessagingDmService(prisma, cache, realtime, push, storageCrypto);
     this.friends = new MessagingFriendService(
       prisma,
@@ -84,7 +86,7 @@ export class MessagingService {
     );
   }
 
-  sendAndDeliverMessage(
+  async sendAndDeliverMessage(
     senderId: string,
     recipientId: string,
     text = '',
@@ -93,7 +95,7 @@ export class MessagingService {
     storageEnvelope?: Record<string, unknown>,
     deliveryPlaintext?: { text?: string; attachment?: unknown },
   ) {
-    return this.dm.sendAndDeliverMessage(
+    const result = await this.dm.sendAndDeliverMessage(
       senderId,
       recipientId,
       text,
@@ -104,6 +106,18 @@ export class MessagingService {
       storageEnvelope,
       deliveryPlaintext,
     );
+    // REST/GraphQL send path — the WS hub emits these itself. Push the
+    // plaintext `direct-message` payload to every device of both peers so
+    // the open conversation updates live without a refetch.
+    await this.realtime.emitToUserEncrypted(
+      result.message.recipientId,
+      result.delivery.recipientPayload,
+    );
+    await this.realtime.emitToUserEncrypted(
+      result.message.senderId,
+      result.delivery.senderPayload,
+    );
+    return result;
   }
 
   markConversationRead(readerId: string, peerId: string) {

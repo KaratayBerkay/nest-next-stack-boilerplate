@@ -204,22 +204,16 @@ export class MessagingController {
           }
         : undefined;
 
-    const storageEnvelope = body.envelope
-      ? body.envelope
-      : body.text || attachment
-        ? await this.storageCrypto.encryptForStorage(user.userId, {
-            text: body.text,
-            attachment,
-          })
-        : undefined;
-
+    // Client E2EE envelope passes through; when absent the service encrypts
+    // the plaintext for at-rest storage itself (never plaintext).
     return this.ms.sendAndDeliverMessage(
       user.userId,
       recipientId,
       body.text,
       body._tempId,
       attachment,
-      storageEnvelope as Record<string, unknown> | undefined,
+      body.envelope,
+      { text: body.text, attachment },
     );
   }
 
@@ -273,7 +267,7 @@ export class MessagingController {
     message: Record<string, unknown>,
     userId: string,
   ): Record<string, unknown> {
-    if (message.encrypted && message.envelope && !message.body) {
+    if (message.envelope && !message.body) {
       try {
         // Try shared room key first (room messages use encryptForRoom).
         const decrypted = this.storageCrypto.decryptForRoom(

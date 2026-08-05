@@ -35,35 +35,35 @@ export class MessagingDmService {
     return rest;
   }
 
+  /** Every message is stored encrypted (body is always NULL at rest), so the
+   *  preview is always recovered from the envelope — room key first, then the
+   *  sender's per-user key, then the reader's (legacy DM envelopes). */
   private decryptPreview(
-    msg: { body: string | null; encrypted: boolean; envelope: unknown; senderId?: string },
+    msg: { body: string | null; envelope: unknown; senderId?: string },
     userId: string,
   ): string {
-    if (msg.body) return msg.body;
-    if (msg.encrypted && msg.envelope) {
-      try {
-        const decrypted = this.storageCrypto.decryptForRoom(
-          msg.envelope,
-        ) as { text?: string };
-        return decrypted.text ?? '';
-      } catch {}
-      try {
-        const senderId = msg.senderId || userId;
-        const decrypted = this.storageCrypto.decryptFromStorage(
-          senderId,
-          msg.envelope,
-        ) as { text?: string };
-        return decrypted.text ?? '';
-      } catch {}
-      try {
-        const decrypted = this.storageCrypto.decryptFromStorage(
-          userId,
-          msg.envelope,
-        ) as { text?: string };
-        return decrypted.text ?? '';
-      } catch {}
-      return '';
-    }
+    if (!msg.envelope) return '';
+    try {
+      const decrypted = this.storageCrypto.decryptForRoom(
+        msg.envelope,
+      ) as { text?: string };
+      return decrypted.text ?? '';
+    } catch {}
+    try {
+      const senderId = msg.senderId || userId;
+      const decrypted = this.storageCrypto.decryptFromStorage(
+        senderId,
+        msg.envelope,
+      ) as { text?: string };
+      return decrypted.text ?? '';
+    } catch {}
+    try {
+      const decrypted = this.storageCrypto.decryptFromStorage(
+        userId,
+        msg.envelope,
+      ) as { text?: string };
+      return decrypted.text ?? '';
+    } catch {}
     return '';
   }
 
@@ -105,11 +105,10 @@ export class MessagingDmService {
         body: string | null;
         recipientId: string;
         createdAt: Date;
-        encrypted: boolean;
         envelope: unknown;
       }>
     >(
-      `SELECT DISTINCT ON ("recipientId") id, body, "recipientId", "createdAt", encrypted, envelope FROM "Message" WHERE "senderId" = $1::uuid AND "recipientId" = ANY($2::uuid[]) ORDER BY "recipientId", "createdAt" DESC`,
+      `SELECT DISTINCT ON ("recipientId") id, body, "recipientId", "createdAt", envelope FROM "Message" WHERE "senderId" = $1::uuid AND "recipientId" = ANY($2::uuid[]) ORDER BY "recipientId", "createdAt" DESC`,
       userId,
       friendIds,
     );
@@ -119,11 +118,10 @@ export class MessagingDmService {
         body: string | null;
         senderId: string;
         createdAt: Date;
-        encrypted: boolean;
         envelope: unknown;
       }>
     >(
-      `SELECT DISTINCT ON ("senderId") id, body, "senderId", "createdAt", encrypted, envelope FROM "Message" WHERE "recipientId" = $1::uuid AND "senderId" = ANY($2::uuid[]) ORDER BY "senderId", "createdAt" DESC`,
+      `SELECT DISTINCT ON ("senderId") id, body, "senderId", "createdAt", envelope FROM "Message" WHERE "recipientId" = $1::uuid AND "senderId" = ANY($2::uuid[]) ORDER BY "senderId", "createdAt" DESC`,
       userId,
       friendIds,
     );
@@ -257,15 +255,22 @@ export class MessagingDmService {
       );
       throw new ForbiddenException('You can only send messages to friends');
     }
-    const isEncrypted = envelope && typeof envelope === 'object';
+    // Messages are ALWAYS stored encrypted: a caller-supplied envelope is
+    // stored as-is (client-side E2EE), and when none is provided the server
+    // encrypts the plaintext itself — a plaintext body row is impossible.
+    const envelopeJson = (
+      envelope && typeof envelope === 'object'
+        ? envelope
+        : this.storageCrypto.encryptForStorage(senderId, { text, attachment })
+    ) as Prisma.InputJsonValue;
     const message = await this.prisma.message.create({
       data: {
         senderId,
         recipientId,
-        body: isEncrypted ? null : (text ?? ''),
-        encrypted: isEncrypted,
-        algVersion: isEncrypted ? ((envelope.v as number) ?? 1) : null,
-        envelope: isEncrypted ? (envelope as Prisma.InputJsonValue) : undefined,
+        body: null,
+        encrypted: true,
+        algVersion: 1,
+        envelope: envelopeJson,
         attachmentUrl: attachment?.url,
         attachmentType: attachment?.type,
         attachmentName: attachment?.name,
@@ -316,7 +321,6 @@ export class MessagingDmService {
       senderId: string;
       recipientId: string;
       body: string | Record<string, unknown> | null;
-      encrypted?: boolean;
       envelope?: unknown;
       createdAt: Date;
       sender?: {
@@ -339,8 +343,9 @@ export class MessagingDmService {
     const senderAvatar = message.sender?.avatar ?? '';
     const senderEmail = message.sender?.email ?? '';
 
-    // Preview: use plaintext when available (server is trusted), else legacy
-    const lastMessage = deliveryPlaintext?.text ?? message.body ?? '';
+    // Preview: the server is the trusted decryptor of the storage envelope,
+    // so the plaintext preview comes from the delivery payload.
+    const lastMessage = deliveryPlaintext?.text ?? '';
 
     this.realtime.emitToService(message.recipientId, 'MESSAGE', {
       renew: 'Messages',
@@ -365,13 +370,14 @@ export class MessagingDmService {
 
     // Page-scoped payloads — the gateway encrypts these per-connection.
     // Include the plaintext body so the recipient can display it directly
-    // after wire-decryption (no need to decrypt the storage envelope).
+    // after wire-decryption (no need to decrypt the storage envelope). All
+    // messages are stored encrypted; the body here is the decrypted
+    // plaintext delivered by the trusted server.
     const baseMessage: Record<string, unknown> = {
       id: message.id,
       senderId: message.senderId,
       sender: message.sender,
-      body: deliveryPlaintext?.text ?? (typeof message.body === 'string' ? message.body : null),
-      encrypted: false,
+      body: deliveryPlaintext?.text ?? null,
       createdAt: message.createdAt,
     };
 
@@ -379,8 +385,7 @@ export class MessagingDmService {
       !this.realtime.hasServiceConnection(message.recipientId, 'MESSAGE') &&
       !this.realtime.hasServiceConnection(message.recipientId, 'NOTIFICATION')
     ) {
-      const pushBody = deliveryPlaintext?.text
-        ?? (typeof message.body === 'string' ? message.body : '');
+      const pushBody = deliveryPlaintext?.text ?? '';
       this.push
         .sendToUser(
           message.recipientId,

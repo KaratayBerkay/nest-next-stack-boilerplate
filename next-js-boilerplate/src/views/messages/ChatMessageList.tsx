@@ -18,7 +18,7 @@ export function ChatMessageList({
   t,
 }: ChatMessageListProps) {
   const hasDecryptionFailure = conversationMessages.some(
-    (m) => m.encrypted && (m.body == null || m.body === ""),
+    (m) => m.body == null || m.body === "",
   );
 
   return (

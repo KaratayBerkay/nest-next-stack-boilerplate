@@ -337,6 +337,48 @@ export class WireCryptoService {
 
   // ── Sequence counter helpers ──────────────────────────────────────────
 
+  /**
+   * Read the current device counter for a direction WITHOUT incrementing.
+   * Used by the handshake to let clients resync their local sendSeq/recvSeq
+   * after multi-tab divergence or dropped frames. Returns 0 when the device
+   * has never sent/received in that direction.
+   */
+  async getDeviceSeq(
+    deviceHash: string,
+    direction: WireDirection,
+  ): Promise<number> {
+    const raw = await this.redis.get(this.deviceSeqKey(deviceHash, direction));
+    const n = raw ? Number(raw) : 0;
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }
+
+  /** Read the current session counter for a direction WITHOUT incrementing. */
+  async getSessionSeq(
+    sessionId: string,
+    direction: WireDirection,
+  ): Promise<number> {
+    const raw = await this.redis.get(this.seqKey(sessionId, direction));
+    const n = raw ? Number(raw) : 0;
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }
+
+  /** Current c2s/s2c counters for the key material a connection will use. */
+  async getCounters(
+    deviceHash: string | undefined,
+    sessionId: string,
+  ): Promise<{ c2sSeq: number; s2cSeq: number }> {
+    if (deviceHash) {
+      return {
+        c2sSeq: await this.getDeviceSeq(deviceHash, 'c2s'),
+        s2cSeq: await this.getDeviceSeq(deviceHash, 's2c'),
+      };
+    }
+    return {
+      c2sSeq: await this.getSessionSeq(sessionId, 'c2s'),
+      s2cSeq: await this.getSessionSeq(sessionId, 's2c'),
+    };
+  }
+
   private async nextSeqWithKey(key: string): Promise<number> {
     const pipe = this.redis.multi();
     pipe.incr(key);

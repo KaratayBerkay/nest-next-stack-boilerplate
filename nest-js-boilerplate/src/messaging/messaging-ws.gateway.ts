@@ -10,10 +10,10 @@ import type { RoomMember } from './messaging.types';
 import { initials, type MessageAttachment } from './messaging.types';
 import { PushNotificationService } from '../push-notification/push-notification.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
+import type { AuthWs as RealtimeAuthWs } from '../realtime/realtime.types';
 import { tierRank, MIN_TIER_FOR_VIP } from '../authorization/tier-rank';
 import { MAX_ENVELOPE_JSON_BYTES } from './dto/envelope-size.constraint';
 import { WireCryptoService } from '../wire-crypto/wire-crypto.service';
-import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
 
 type AuthWs = WebSocket & {
   userId?: string;
@@ -51,7 +51,9 @@ function toAttachment(
       url: data.attachmentUrl,
       type: data.attachmentType,
       name: data.attachmentName,
-      storageEnvelope: (data.attachmentEnvelope as MessageAttachment['storageEnvelope']) ?? null,
+      storageEnvelope:
+        (data.attachmentEnvelope as MessageAttachment['storageEnvelope']) ??
+        null,
     };
   }
   return undefined;
@@ -80,51 +82,6 @@ function isEnvelopeTooLarge(data: IncomingMessagePayload): boolean {
   return serialized.length > MAX_ENVELOPE_JSON_BYTES;
 }
 
-interface SavedRoomMessage {
-  id: string;
-  senderId: string;
-  body: string | null;
-  encrypted: boolean;
-  algVersion: number | null;
-  envelope: unknown;
-  attachmentUrl: string | null;
-  attachmentType: string | null;
-  attachmentName: string | null;
-  createdAt: Date;
-}
-
-function buildRoomMessagePayload(
-  saved: SavedRoomMessage,
-  ws: AuthWs,
-  data: IncomingMessagePayload & { room: string; tempId?: string },
-): Record<string, unknown> {
-  const senderName =
-    (ws.useNickname && ws.chatNickname) || ws.userName || 'Unknown';
-  const message: Record<string, unknown> = {
-    id: saved.id,
-    senderId: saved.senderId,
-    senderName,
-    avatar: initials(senderName),
-    body: saved.body,
-    encrypted: saved.encrypted,
-    attachmentUrl: saved.attachmentUrl,
-    attachmentType: saved.attachmentType,
-    attachmentName: saved.attachmentName,
-    createdAt: saved.createdAt.toISOString(),
-  };
-  if (saved.encrypted && saved.envelope) {
-    message.envelope = saved.envelope;
-    message.algVersion = saved.algVersion;
-  }
-  const payload: Record<string, unknown> = {
-    type: 'room-message',
-    room: data.room,
-    message,
-  };
-  if (data.tempId) payload.tempId = data.tempId;
-  return payload;
-}
-
 @Injectable()
 export class MessagingWsGateway implements OnModuleInit {
   private readonly logger = new Logger(MessagingWsGateway.name);
@@ -135,7 +92,6 @@ export class MessagingWsGateway implements OnModuleInit {
     private readonly ms: MessagingService,
     private readonly push: PushNotificationService,
     private readonly wireCrypto: WireCryptoService,
-    private readonly storageCrypto: StorageCryptoService,
   ) {}
 
   onModuleInit() {
@@ -221,10 +177,11 @@ export class MessagingWsGateway implements OnModuleInit {
       attachment: toAttachment(data),
     };
 
-    // Encrypt for at-rest storage.
+    // Client-provided E2EE envelope is stored as-is; when absent the service
+    // encrypts the plaintext for at-rest storage itself (never plaintext).
     const storageEnvelope =
-      plaintext.text || plaintext.attachment
-        ? await this.storageCrypto.encryptForStorage(ws.userId, plaintext)
+      data.envelope && typeof data.envelope === 'object'
+        ? data.envelope
         : undefined;
 
     const message = await this.ms.sendMessage(
@@ -232,20 +189,19 @@ export class MessagingWsGateway implements OnModuleInit {
       data.recipientId,
       plaintext.text ?? '',
       undefined,
-      toAttachment(data as IncomingMessagePayload),
+      toAttachment(data),
       storageEnvelope as unknown as Record<string, unknown>,
     );
     const delivery = await this.ms.deliverDirectMessage(message, plaintext);
 
-    // Per-connection encrypted emit — each connection has its own shared key.
-    await this.realtime.emitToPageEncrypted(
+    // Per-connection encrypted emit to EVERY socket of the recipient and
+    // sender (all devices), regardless of which page each socket is on.
+    await this.realtime.emitToUserEncrypted(
       message.recipientId,
-      'messages',
       delivery.recipientPayload,
     );
-    await this.realtime.emitToPageEncrypted(
+    await this.realtime.emitToUserEncrypted(
       message.senderId,
-      'messages',
       delivery.senderPayload,
     );
   }
@@ -294,6 +250,7 @@ export class MessagingWsGateway implements OnModuleInit {
   private leavePreviousRoom(ws: AuthWs, nextRoom: string): void {
     if (!ws.room || ws.room === nextRoom || !ws.socketId) return;
     const oldMembers = this.ms.leaveRoom(ws.room, ws.socketId);
+    this.realtime.leaveRoomSocket(ws.room, ws.socketId);
     this.realtime.broadcastToRoom(ws.room, {
       type: 'user-left',
       room: ws.room,
@@ -319,6 +276,10 @@ export class MessagingWsGateway implements OnModuleInit {
     };
     const members = this.ms.joinRoom(data.room, member);
     void this.ms.persistJoin(data.room, ws.userId);
+    this.realtime.registerRoomSocket(
+      data.room,
+      ws as unknown as RealtimeAuthWs,
+    );
     this.realtime.broadcastToRoom(data.room, {
       type: 'user-joined',
       room: data.room,
@@ -335,6 +296,7 @@ export class MessagingWsGateway implements OnModuleInit {
     if (!ws.userId || !ws.socketId) return;
     ws.room = undefined;
     const members = this.ms.leaveRoom(data.room, ws.socketId);
+    this.realtime.leaveRoomSocket(data.room, ws.socketId);
     void this.ms.persistLeave(data.room, ws.userId);
     this.realtime.broadcastToRoom(data.room, {
       type: 'user-left',
@@ -377,18 +339,19 @@ export class MessagingWsGateway implements OnModuleInit {
       attachment: toAttachment(data),
     };
 
-    // Encrypt for at-rest storage (shared room key, readable by all members).
+    // Client-provided E2EE envelope is stored as-is; when absent the service
+    // encrypts the plaintext with the shared room key itself (never plaintext).
     const storageEnvelope =
-      plaintext.text || plaintext.attachment
-        ? this.storageCrypto.encryptForRoom(plaintext)
+      data.envelope && typeof data.envelope === 'object'
+        ? data.envelope
         : undefined;
 
     const saved = await this.ms.saveRoomMessage(
       data.room,
       ws.userId,
       plaintext.text ?? '',
-      toAttachment(data as IncomingMessagePayload),
-      storageEnvelope as unknown as Record<string, unknown>,
+      toAttachment(data),
+      storageEnvelope,
     );
 
     // Broadcast per-connection encrypted to all room members.
@@ -403,7 +366,6 @@ export class MessagingWsGateway implements OnModuleInit {
         senderName,
         avatar: initials(senderName),
         body: plaintext.text ?? null,
-        encrypted: false,
         attachmentUrl: saved.attachmentUrl,
         attachmentType: saved.attachmentType,
         attachmentName: saved.attachmentName,
@@ -412,17 +374,11 @@ export class MessagingWsGateway implements OnModuleInit {
       ...(data.tempId ? { tempId: data.tempId } : {}),
     });
 
-    // For room messages, encrypt per room-member connection.
-    // Use getRoomUserIds (Redis-backed) for cross-instance delivery.
-    const userIds = await this.ms.getRoomUserIds(data.room);
+    // For room messages, encrypt per room-member connection. One Redis
+    // fan-out (vs. one publish per member): each replica encrypts and
+    // delivers to its own sockets joined to `data.room`.
     const basePayload = buildPayload();
-    for (const uid of userIds) {
-      await this.realtime.emitToPageEncrypted(
-        uid,
-        'chat-room',
-        basePayload,
-      );
-    }
+    await this.realtime.emitToRoomEncrypted(data.room, basePayload);
   }
 
   private handleGetRoomCounts(ws: AuthWs) {
@@ -475,6 +431,7 @@ export class MessagingWsGateway implements OnModuleInit {
     };
     const members = this.ms.joinRoom(room, member);
     void this.ms.persistJoin(room, ws.userId);
+    this.realtime.registerRoomSocket(room, ws as unknown as RealtimeAuthWs);
     this.realtime.broadcastToRoom(room, {
       type: 'user-joined',
       room,
@@ -491,6 +448,7 @@ export class MessagingWsGateway implements OnModuleInit {
     if (!ws.userId || !ws.socketId || !params.room) return;
     ws.room = undefined;
     const members = this.ms.leaveRoom(params.room, ws.socketId);
+    this.realtime.leaveRoomSocket(params.room, ws.socketId);
     void this.ms.persistLeave(params.room, ws.userId);
     this.realtime.broadcastToRoom(params.room, {
       type: 'user-left',

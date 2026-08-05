@@ -52,7 +52,12 @@ describe('MessagingDmService', () => {
       mockCache as never,
       mockRealtime as never,
       mockPush as never,
-      { decryptFromStorage: jest.fn() } as never,
+      {
+        decryptFromStorage: jest.fn(),
+        encryptForStorage: jest
+          .fn()
+          .mockReturnValue({ v: 'storage-v1', nonce: 'sn', ct: 'sc' }),
+      } as never,
     );
   });
 
@@ -92,10 +97,12 @@ describe('MessagingDmService', () => {
         data: {
           senderId: 'u1',
           recipientId: 'u2',
-          body: 'hello',
-          encrypted: undefined,
-          algVersion: null,
-          envelope: undefined,
+          // Always encrypted at rest: plaintext never reaches the DB, and a
+          // missing caller envelope is encrypted server-side.
+          body: null,
+          encrypted: true,
+          algVersion: 1,
+          envelope: { v: 'storage-v1', nonce: 'sn', ct: 'sc' },
           attachmentUrl: undefined,
           attachmentType: undefined,
           attachmentName: undefined,

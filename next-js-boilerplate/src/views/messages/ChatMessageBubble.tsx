@@ -17,8 +17,7 @@ export function ChatMessageBubble({
   dateDisplay,
 }: ChatMessageBubbleProps) {
   const t = useMessages("messages");
-  const decryptionFailed =
-    msg.encrypted && (msg.body == null || msg.body === "");
+  const decryptionFailed = msg.body == null || msg.body === "";
   return (
     <div
       className={`animate-fade-in-up flex items-end gap-2 ${isMe ? "flex-row-reverse" : ""}`}

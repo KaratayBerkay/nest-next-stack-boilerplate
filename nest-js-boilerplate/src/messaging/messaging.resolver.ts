@@ -55,22 +55,16 @@ export class MessagingResolver {
           }
         : undefined;
 
-    const storageEnvelope = input.envelope
-      ? input.envelope
-      : input.text || attachment
-        ? await this.storageCrypto.encryptForStorage(user.userId, {
-            text: input.text,
-            attachment,
-          })
-        : undefined;
-
+    // Client E2EE envelope passes through; when absent the service encrypts
+    // the plaintext for at-rest storage itself (never plaintext).
     return this.ms.sendAndDeliverMessage(
       user.userId,
       input.recipientId,
       input.text,
       undefined,
       attachment,
-      storageEnvelope as Record<string, unknown> | undefined,
+      input.envelope,
+      { text: input.text, attachment },
     );
   }
 
@@ -87,7 +81,7 @@ export class MessagingResolver {
     message: Record<string, unknown>,
     userId: string,
   ): Record<string, unknown> {
-    if (message.encrypted && message.envelope && !message.body) {
+    if (message.envelope && !message.body) {
       try {
         const decrypted = this.storageCrypto.decryptForRoom(
           message.envelope,

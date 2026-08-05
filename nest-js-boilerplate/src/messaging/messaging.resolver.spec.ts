@@ -47,23 +47,29 @@ describe('MessagingResolver', () => {
         text: 'hello',
       });
 
-      expect(mockStorageCrypto.encryptForStorage).toHaveBeenCalledWith(
-        'u1',
-        { text: 'hello', attachment: undefined },
-      );
+      // No client envelope → no encryption here; the service encrypts the
+      // plaintext for at-rest storage itself.
+      expect(mockStorageCrypto.encryptForStorage).not.toHaveBeenCalled();
       expect(mockMs.sendAndDeliverMessage).toHaveBeenCalledWith(
         'u1',
         'u2',
         'hello',
         undefined,
         undefined,
-        expect.objectContaining({ v: 'storage-v1' }),
+        undefined,
+        { text: 'hello', attachment: undefined },
       );
       expect(result).toEqual({ id: 'm1', body: 'hello' });
     });
 
     it('passes attachment fields through as a MessageAttachment', async () => {
       const user = { userId: 'u1', email: 'a@b.com' };
+      const attachment = {
+        url: 'https://cdn.example.com/uuid.pdf',
+        type: 'application/pdf',
+        name: 'report.pdf',
+        storageEnvelope: undefined,
+      };
       await resolver.sendMessage(user, {
         recipientId: 'u2',
         text: 'hello',
@@ -77,12 +83,29 @@ describe('MessagingResolver', () => {
         'u2',
         'hello',
         undefined,
-        {
-          url: 'https://cdn.example.com/uuid.pdf',
-          type: 'application/pdf',
-          name: 'report.pdf',
-        },
-        expect.objectContaining({ v: 'storage-v1' }),
+        attachment,
+        undefined,
+        { text: 'hello', attachment },
+      );
+    });
+
+    it('passes a client-provided E2EE envelope through untouched', async () => {
+      const user = { userId: 'u1', email: 'a@b.com' };
+      const envelope = { v: 'e2ee-v1', nonce: 'n', ct: 'c' };
+      await resolver.sendMessage(user, {
+        recipientId: 'u2',
+        text: '',
+        envelope,
+      });
+
+      expect(mockMs.sendAndDeliverMessage).toHaveBeenCalledWith(
+        'u1',
+        'u2',
+        '',
+        undefined,
+        undefined,
+        envelope,
+        { text: '', attachment: undefined },
       );
     });
   });

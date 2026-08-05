@@ -27,6 +27,10 @@ import type {
 } from './realtime.types';
 import { RealtimePresenceService } from './realtime-presence.service';
 import { RealtimePageManager } from './realtime-page.manager';
+import {
+  RealtimeRateLimiter,
+  type RealtimeRateLimiterConfig,
+} from './realtime-rate-limiter';
 import { WireCryptoService } from '../wire-crypto/wire-crypto.service';
 import type { WireEnvelopeV2 } from '../wire-crypto/wire-crypto.types';
 
@@ -35,6 +39,20 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
   private static readonly MAX_SOCKETS_PER_USER = 20;
   private static readonly MAX_PENDING_PER_IP = 50;
   private static readonly WS_CHANNEL = 'ws:broadcast';
+  /** Socket-registry key TTL (s); heartbeat refreshes it for live sockets. */
+  private static readonly SOCKET_REGISTRY_TTL = 300;
+  /** Stable id for THIS replica, stored in the socket registry. */
+  private static readonly INSTANCE_ID =
+    process.env.INSTANCE_ID ?? process.env.HOSTNAME ?? `pid:${process.pid}`;
+  /** Default inbound-frame limits (overridable via env). */
+  private static readonly FRAME_LIMITS: RealtimeRateLimiterConfig = {
+    socketRatePerSec: 10,
+    socketBurst: 50,
+    userRatePerSec: 30,
+    userBurst: 120,
+  };
+  /** Min interval between plaintext crypto-resync signals per device. */
+  private static readonly RESYNC_THROTTLE_MS = 5_000;
 
   // Deliberately NOT this app's own env-prefixed cookie-name helpers
   // (access-cookie.ts etc. return __Secure-prefixed names in production).
@@ -61,6 +79,17 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
   private serviceConnections = new Map<string, Set<WebSocket>>();
   private serviceDeviceIndex = new Map<string, Set<string>>();
   private userSockets = new Map<string, Set<AuthWs>>();
+  /**
+   * socketId (`ws-<deviceTokenHash>`) → AuthWs. One socket per device, so this
+   * is a 1:1 map giving O(1) device→socket lookup — no per-user scan needed
+   * once a device-token hash is known. Also drives the one-socket-per-device
+   * replace policy (a reconnect with the same device token supersedes the old
+   * connection).
+   */
+  private deviceSockets = new Map<string, AuthWs>();
+  /** roomId → socketId → AuthWs. Room-targeted delivery uses this index
+   *  instead of scanning every client on the instance. */
+  private roomSockets = new Map<string, Map<string, AuthWs>>();
   private pendingByIp = new Map<string, number>();
   private handlers = new Map<string, FrameHandler>();
   private redisFailureCount = 0;
@@ -69,6 +98,46 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
    *  Used to skip redundant local delivery when the subscriber echoes
    *  the message back. Entries auto-expire after 5 s. */
   private recentlyPublished = new Map<string, ReturnType<typeof setTimeout>>();
+  /** deviceHash|sessionId → last crypto-resync sent at (ms). */
+  private lastResyncSignal = new Map<string, number>();
+
+  /**
+   * Allocates a unique publish id and remembers it for 5s so that when the
+   * Redis subscriber echoes this instance's own publish, the local delivery
+   * is skipped (no duplicate frames on the originating replica).
+   */
+  private newPublishEid(): string {
+    const eid = crypto.randomBytes(8).toString('hex');
+    const timer = setTimeout(() => {
+      this.recentlyPublished.delete(eid);
+    }, 5_000);
+    this.recentlyPublished.set(eid, timer);
+    return eid;
+  }
+
+  /** Returns true when `eid` marks one of this instance's own publishes. */
+  private skipPublished(eid?: string): boolean {
+    if (!eid || !this.recentlyPublished.has(eid)) return false;
+    clearTimeout(this.recentlyPublished.get(eid));
+    this.recentlyPublished.delete(eid);
+    return true;
+  }
+
+  /**
+   * Send a plaintext crypto-resync control frame (throttled per device) after
+   * a c2s decrypt failure. The client re-runs the handshake and adopts the
+   * server's sequence counters — no key material is invalidated.
+   */
+  private signalCryptoResync(authWs: AuthWs): void {
+    const key = authWs.deviceTokenHash ?? authWs.sessionId;
+    if (!key) return;
+    const now = Date.now();
+    const last = this.lastResyncSignal.get(key) ?? 0;
+    if (now - last < RealtimeGateway.RESYNC_THROTTLE_MS) return;
+    this.lastResyncSignal.set(key, now);
+    authWs.send(JSON.stringify({ type: 'crypto-resync' }));
+  }
+  private readonly frameLimiter: RealtimeRateLimiter;
 
   constructor(
     private readonly adapterHost: HttpAdapterHost,
@@ -79,7 +148,26 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     @Inject(REDIS_SUBSCRIBER) private readonly subscriber: Redis,
     private readonly validator: SessionValidatorService,
     private readonly wireCrypto: WireCryptoService,
-  ) {}
+  ) {
+    this.frameLimiter = new RealtimeRateLimiter({
+      socketRatePerSec: this.config.get<number>(
+        'WS_SOCKET_FRAME_RATE',
+        RealtimeGateway.FRAME_LIMITS.socketRatePerSec,
+      ),
+      socketBurst: this.config.get<number>(
+        'WS_SOCKET_FRAME_BURST',
+        RealtimeGateway.FRAME_LIMITS.socketBurst,
+      ),
+      userRatePerSec: this.config.get<number>(
+        'WS_USER_FRAME_RATE',
+        RealtimeGateway.FRAME_LIMITS.userRatePerSec,
+      ),
+      userBurst: this.config.get<number>(
+        'WS_USER_FRAME_BURST',
+        RealtimeGateway.FRAME_LIMITS.userBurst,
+      ),
+    });
+  }
 
   private safeRedis<T>(
     label: string,
@@ -155,11 +243,17 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         .digest('hex');
       authWs.registeredServices = [];
       authWs.watchedTopics = [];
-      authWs.socketId =
-        session.userId +
-        ':' +
-        Date.now().toString(36) +
-        this.crypto.randomToken(5);
+      // Socket id is DERIVED from the device token: `ws-<deviceTokenHash>`.
+      // Only one socket is allowed per device, so this is the stable key used
+      // to find (and replace) the device's existing connection in O(1).
+      // Token-less clients fall back to a random id so they can never collide
+      // with — or accidentally replace — one another.
+      authWs.socketId = req.deviceToken
+        ? `ws-${authWs.deviceTokenHash}`
+        : session.userId +
+          ':' +
+          Date.now().toString(36) +
+          this.crypto.randomToken(5);
       authWs.authenticated = true;
 
       this.logger.log({
@@ -176,6 +270,13 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         this.userSockets.set(session.userId, sockets);
       }
       sockets.add(authWs);
+
+      // One socket per device: a fresh connection carrying a device token
+      // that is already connected here supersedes that device's previous
+      // socket. Its cleanup runs synchronously BEFORE this socket registers
+      // anywhere, so the shared deterministic socketId cannot clobber the new
+      // connection's state (registry, room membership, frame bucket).
+      const replaced = this.replaceDeviceSocket(authWs);
       while (sockets.size > RealtimeGateway.MAX_SOCKETS_PER_USER) {
         const oldest = sockets.values().next().value as AuthWs;
         sockets.delete(oldest);
@@ -186,14 +287,18 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       }
 
       this.trackUserIp(session.userId, authWs.clientIp);
+      if (authWs.socketId) this.deviceSockets.set(authWs.socketId, authWs);
+      this.registerSocketRegistry(authWs);
 
-      authWs.send(JSON.stringify({ type: 'authenticated', sessionId: authWs.sessionId }));
+      authWs.send(
+        JSON.stringify({ type: 'authenticated', sessionId: authWs.sessionId }),
+      );
       authWs.send(JSON.stringify({ type: 'room-counts', rooms: {} }));
       const onlineUsers = Array.from(this.onlineCount.keys())
         .filter((id) => id !== session.userId)
         .map((id) => ({ id }));
       authWs.send(JSON.stringify({ type: 'online-users', users: onlineUsers }));
-      this.handleOnline(authWs);
+      this.handleOnline(authWs, { silent: !!replaced });
 
       ws.on('message', (raw: Buffer) => {
         this.handleMessage(authWs, raw).catch((err) =>
@@ -220,24 +325,14 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
           userId: uid,
           socketId: authWs.socketId,
         });
-        this.cleanupServiceConnections(authWs);
-        this.pageManager.cleanupPageClaim(authWs);
-        this.pageManager.cleanupTopicWatches(authWs);
-        if (uid) {
-          const sockets = this.userSockets.get(uid);
-          if (sockets) {
-            sockets.delete(authWs);
-            if (sockets.size === 0) this.userSockets.delete(uid);
-          }
-          const prev = this.onlineCount.get(uid) || 1;
-          if (prev <= 1) {
-            this.onlineCount.delete(uid);
-            this.broadcastAll({ type: 'user-offline', userId: uid });
-          } else {
-            this.onlineCount.set(uid, prev - 1);
-          }
-          this.untrackUserIp(uid, authWs.clientIp);
+        if (authWs.detached) {
+          // Replaced by a newer socket for the same device — its cleanup ran
+          // synchronously during the replacement. Running it again here would
+          // remove the replacement socket's registry/room/bucket under the
+          // same deterministic socketId.
+          return;
         }
+        this.cleanupSocket(authWs);
       });
     });
 
@@ -264,6 +359,18 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         void this.safeRedis('refreshPresenceTTL', () =>
           this.presence.refreshPresenceTTL(this.pageManager.pageClaims),
         );
+        void this.safeRedis('refreshSocketRegistryTTL', async () => {
+          const pipe = this.redis.pipeline();
+          for (const c of this.wss.clients) {
+            const sid = (c as AuthWs).socketId;
+            if (sid)
+              pipe.expire(
+                this.socketKey(sid),
+                RealtimeGateway.SOCKET_REGISTRY_TTL,
+              );
+          }
+          await pipe.exec();
+        });
       }
     }, 30000);
 
@@ -277,7 +384,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
 
     this.subscriber.on('message', (_channel, raw) => {
       try {
-            const { target, userId, service, room, topic, page, frame, eid } =
+        const { target, userId, service, room, topic, page, frame, eid } =
           JSON.parse(raw) as {
             target:
               | 'broadcastAll'
@@ -286,7 +393,9 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
               | 'emitToService'
               | 'emitToUser'
               | 'emitToPage'
-              | 'emitToPageEncrypted';
+              | 'emitToPageEncrypted'
+              | 'emitToUserEncrypted'
+              | 'emitToRoomEncrypted';
             frame: Record<string, unknown>;
             userId?: string;
             service?: string;
@@ -299,32 +408,30 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         try {
           switch (target) {
             case 'broadcastAll':
-              this.broadcastAll(frame);
+              if (!this.skipPublished(eid)) this.broadcastAll(frame);
               break;
             case 'broadcastToRoom':
-              if (room) this.broadcastToRoom(room, frame);
+              if (room && !this.skipPublished(eid)) this.broadcastToRoom(room, frame);
               break;
             case 'emitToTopic':
-              if (topic) this.emitToTopic(topic, frame);
+              if (topic && !this.skipPublished(eid)) this.emitToTopic(topic, frame);
               break;
             case 'emitToService':
-              if (userId && service) this.emitToService(userId, service, frame);
+              if (userId && service && !this.skipPublished(eid)) {
+                this.emitToService(userId, service, frame);
+              }
               break;
             case 'emitToUser':
-              if (userId) this.emitToUser(userId, frame);
+              if (userId && !this.skipPublished(eid)) this.emitToUser(userId, frame);
               break;
             case 'emitToPage':
-              if (userId && page) this.emitToPage(userId, page, frame);
+              if (userId && page && !this.skipPublished(eid)) {
+                this.emitToPage(userId, page, frame);
+              }
               break;
             case 'emitToPageEncrypted':
               if (userId && page && frame) {
-                // Skip if this instance already delivered locally (eid present
-                // in recentlyPublished → published by us → local delivery done).
-                if (eid && this.recentlyPublished.has(eid)) {
-                  clearTimeout(this.recentlyPublished.get(eid));
-                  this.recentlyPublished.delete(eid);
-                  break;
-                }
+                if (this.skipPublished(eid)) break;
                 void this.pageManager.emitToPageWith(
                   userId,
                   page,
@@ -335,6 +442,18 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
                       dth,
                     ) as unknown as Promise<Record<string, unknown>>,
                 );
+              }
+              break;
+            case 'emitToUserEncrypted':
+              if (userId && frame) {
+                if (this.skipPublished(eid)) break;
+                void this.emitToUserEncrypted(userId, frame);
+              }
+              break;
+            case 'emitToRoomEncrypted':
+              if (room && frame) {
+                if (this.skipPublished(eid)) break;
+                void this.emitToRoomEncrypted(room, frame);
               }
               break;
           }
@@ -349,6 +468,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
 
   onModuleDestroy() {
     if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
+    this.frameLimiter.clear();
     void this.safeRedis('unsubscribe', () =>
       this.subscriber.unsubscribe(RealtimeGateway.WS_CHANNEL),
     );
@@ -453,6 +573,28 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
   // ==================== Message routing ====================
 
   private async handleMessage(authWs: AuthWs, raw: Buffer): Promise<void> {
+    const limit = this.frameLimiter.check(
+      authWs.socketId,
+      authWs.userId ?? null,
+    );
+    if (limit !== 'ok') {
+      this.logger.warn({
+        category: 'websocket-exception',
+        event: 'ws.rate_limited',
+        userId: authWs.userId,
+        sessionId: authWs.sessionId,
+        socketId: authWs.socketId,
+        scope: limit,
+      });
+      authWs.close(
+        1008,
+        limit === 'socket'
+          ? 'Frame rate limit exceeded'
+          : 'Account frame rate limit exceeded',
+      );
+      return;
+    }
+
     let data: Record<string, unknown>;
     try {
       data = JSON.parse(raw.toString()) as Record<string, unknown>;
@@ -472,7 +614,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       try {
         const decrypted = (await this.wireCrypto.decryptFromClient(
           authWs.sessionId,
-          data as unknown as WireEnvelopeV2,
+          data,
           authWs.deviceTokenHash,
         )) as Record<string, unknown>;
         if (decrypted && typeof decrypted === 'object') {
@@ -489,6 +631,11 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
           deviceHash: authWs.deviceTokenHash,
           reason: (err as Error)?.message,
         });
+        // Tell the client its c2s seq is desynced. The client re-handshakes
+        // and adopts the server's counters (max of local vs server), which
+        // restores encryption without flushing any keys. Throttled so a
+        // stuck client can't be spammed on every dropped frame.
+        this.signalCryptoResync(authWs);
         return;
       }
     }
@@ -555,10 +702,13 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     );
   }
 
-  private handleOnline(ws: AuthWs) {
+  private handleOnline(ws: AuthWs, opts: { silent?: boolean } = {}) {
     const prev = this.onlineCount.get(ws.userId!) || 0;
     this.onlineCount.set(ws.userId!, prev + 1);
-    if (prev === 0) {
+    // `silent` suppresses the user-online broadcast for device-token replaces:
+    // the user never actually went offline, so announcing it would flicker
+    // the presence for every other peer.
+    if (prev === 0 && !opts.silent) {
       this.broadcastAll({
         type: 'user-online',
         user: { id: ws.userId, name: ws.userName },
@@ -568,6 +718,67 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       .filter((id) => id !== ws.userId)
       .map((id) => ({ id }));
     ws.send(JSON.stringify({ type: 'online-users', users: onlineUsers }));
+  }
+
+  /**
+   * Fully removes a socket from every index it may be registered in. Guarded
+   * to be effectively idempotent: the per-user bookkeeping (online count, IP
+   * tracking, userSockets entry) runs exactly once, because it is gated on the
+   * identity-based Set delete. Pass `{ silent: true }` when the offline
+   * broadcast must be suppressed (one-socket-per-device replacement).
+   */
+  private cleanupSocket(ws: AuthWs, opts: { silent?: boolean } = {}): void {
+    this.cleanupServiceConnections(ws);
+    this.pageManager.cleanupPageClaim(ws);
+    this.pageManager.cleanupTopicWatches(ws);
+    this.leaveAllRoomSockets(ws.socketId);
+    this.unregisterSocketRegistry(ws);
+    this.frameLimiter.releaseSocket(ws.socketId);
+    if (ws.socketId && this.deviceSockets.get(ws.socketId) === ws) {
+      this.deviceSockets.delete(ws.socketId);
+    }
+    const uid = ws.userId;
+    if (!uid) return;
+    const sockets = this.userSockets.get(uid);
+    if (!sockets?.delete(ws)) return;
+    if (sockets.size === 0) {
+      this.userSockets.delete(uid);
+      this.frameLimiter.releaseUser(uid);
+    }
+    const prev = this.onlineCount.get(uid) || 1;
+    if (prev <= 1) {
+      this.onlineCount.delete(uid);
+      if (!opts.silent) {
+        this.broadcastAll({ type: 'user-offline', userId: uid });
+      }
+    } else {
+      this.onlineCount.set(uid, prev - 1);
+    }
+    this.untrackUserIp(uid, ws.clientIp);
+  }
+
+  /**
+   * One-socket-per-device replace policy. Returns the previous socket for the
+   * same device (already detached and closed) or undefined when no replacement
+   * is needed. Called on connect, BEFORE the new socket registers anywhere, so
+   * the superseded socket's shared deterministic socketId can't wipe the new
+   * connection's registry, room membership, or frame bucket.
+   */
+  private replaceDeviceSocket(ws: AuthWs): AuthWs | undefined {
+    if (!ws.socketId) return undefined;
+    const existing = this.deviceSockets.get(ws.socketId);
+    if (!existing || existing === ws) return undefined;
+    this.logger.log({
+      category: 'session',
+      event: 'ws.device_replaced',
+      userId: ws.userId,
+      socketId: ws.socketId,
+      previousSessionId: existing.sessionId,
+    });
+    existing.detached = true;
+    this.cleanupSocket(existing, { silent: true });
+    existing.close(1008, 'Device reconnected');
+    return existing;
   }
 
   private cleanupServiceConnections(ws: AuthWs) {
@@ -610,7 +821,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       void this.safeRedis('publish', () =>
         this.redis.publish(
           RealtimeGateway.WS_CHANNEL,
-          JSON.stringify({ target: 'emitToUser', userId, frame }),
+          JSON.stringify({ target: 'emitToUser', userId, frame, eid: this.newPublishEid() }),
         ),
       );
     }
@@ -644,7 +855,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       void this.safeRedis('publish', () =>
         this.redis.publish(
           RealtimeGateway.WS_CHANNEL,
-          JSON.stringify({ target: 'emitToService', userId, service, frame }),
+          JSON.stringify({ target: 'emitToService', userId, service, frame, eid: this.newPublishEid() }),
         ),
       );
     }
@@ -666,7 +877,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       void this.safeRedis('publish', () =>
         this.redis.publish(
           RealtimeGateway.WS_CHANNEL,
-          JSON.stringify({ target: 'emitToTopic', topic, frame }),
+          JSON.stringify({ target: 'emitToTopic', topic, frame, eid: this.newPublishEid() }),
         ),
       );
     }
@@ -688,6 +899,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
             userId,
             page: pageKey,
             frame,
+            eid: this.newPublishEid(),
           }),
         ),
       );
@@ -722,11 +934,6 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         ) as unknown as Promise<Record<string, unknown>>,
     );
     if (!this.forwardingFromRedis) {
-      const eid = crypto.randomBytes(8).toString('hex');
-      const timer = setTimeout(() => {
-        this.recentlyPublished.delete(eid);
-      }, 5_000);
-      this.recentlyPublished.set(eid, timer);
       void this.safeRedis('publish', () =>
         this.redis.publish(
           RealtimeGateway.WS_CHANNEL,
@@ -735,12 +942,186 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
             userId,
             page: pageKey,
             frame: payload,
-            eid,
+            eid: this.newPublishEid(),
           }),
         ),
       );
     }
     return local;
+  }
+
+  /**
+   * Per-connection encrypted emit to EVERY socket of a user, regardless of
+   * page or room. One Redis publish; other replicas resolve their own local
+   * sockets for that user (so every device gets a copy). Used for DMs —
+   * compared to emitToPage (which only reaches sockets that claimed a page).
+   */
+  async emitToUserEncrypted(
+    userId: string,
+    payload: Record<string, unknown>,
+  ): Promise<number> {
+    const sockets = this.userSockets.get(userId);
+    let sent = 0;
+    if (sockets) {
+      for (const ws of sockets) {
+        if (ws.readyState !== WebSocket.OPEN || !ws.sessionId) continue;
+        try {
+          const enc = (await this.wireCrypto.encryptForSession(
+            ws.sessionId,
+            payload,
+            ws.deviceTokenHash ?? '',
+          )) as unknown as Record<string, unknown>;
+          ws.send(JSON.stringify(enc));
+          sent++;
+        } catch {
+          /* per-connection failure — skip */
+        }
+      }
+    }
+    if (!this.forwardingFromRedis) {
+      void this.safeRedis('publish', () =>
+        this.redis.publish(
+          RealtimeGateway.WS_CHANNEL,
+          JSON.stringify({
+            target: 'emitToUserEncrypted',
+            userId,
+            frame: payload,
+            eid: this.newPublishEid(),
+          }),
+        ),
+      );
+    }
+    return sent;
+  }
+
+  /**
+   * Per-connection encrypted emit to every socket currently joined to a room.
+   * Uses the roomSockets index (not a client scan). One Redis publish; every
+   * replica encrypts and delivers to its own room members locally.
+   */
+  async emitToRoomEncrypted(
+    room: string,
+    payload: Record<string, unknown>,
+  ): Promise<number> {
+    let sent = 0;
+    const sockets = this.roomSockets.get(room);
+    if (sockets) {
+      for (const sock of sockets.values()) {
+        const ws = sock;
+        if (ws.readyState !== WebSocket.OPEN || !ws.sessionId) continue;
+        try {
+          const enc = (await this.wireCrypto.encryptForSession(
+            ws.sessionId,
+            payload,
+            ws.deviceTokenHash ?? '',
+          )) as unknown as Record<string, unknown>;
+          ws.send(JSON.stringify(enc));
+          sent++;
+        } catch {
+          /* per-connection failure — skip */
+        }
+      }
+    }
+    if (!this.forwardingFromRedis) {
+      void this.safeRedis('publish', () =>
+        this.redis.publish(
+          RealtimeGateway.WS_CHANNEL,
+          JSON.stringify({
+            target: 'emitToRoomEncrypted',
+            room,
+            frame: payload,
+            eid: this.newPublishEid(),
+          }),
+        ),
+      );
+    }
+    return sent;
+  }
+
+  // ==================== Room socket index ====================
+
+  registerRoomSocket(room: string, ws: AuthWs): void {
+    const sid = ws.socketId;
+    if (!room || !sid) return;
+    let sockets = this.roomSockets.get(room);
+    if (!sockets) {
+      sockets = new Map<string, AuthWs>();
+      this.roomSockets.set(room, sockets);
+    }
+    sockets.set(sid, ws);
+    void this.safeRedis('socketRegistryRoom', () =>
+      this.redis.hset(this.socketKey(sid), 'room', room),
+    );
+  }
+
+  leaveRoomSocket(room: string, socketId: string | undefined): void {
+    if (!room || !socketId) return;
+    const sockets = this.roomSockets.get(room);
+    if (!sockets) return;
+    sockets.delete(socketId);
+    if (sockets.size === 0) this.roomSockets.delete(room);
+  }
+
+  leaveAllRoomSockets(socketId: string | undefined): void {
+    if (!socketId) return;
+    for (const [room, sockets] of this.roomSockets) {
+      if (sockets.has(socketId)) {
+        sockets.delete(socketId);
+        if (sockets.size === 0) this.roomSockets.delete(room);
+      }
+    }
+  }
+
+  getRoomSockets(room: string): AuthWs[] {
+    const sockets = this.roomSockets.get(room);
+    if (!sockets) return [];
+    return [...sockets.values()];
+  }
+
+  // ==================== Socket registry (Redis) ====================
+
+  private socketKey(socketId: string): string {
+    return `socket:${socketId}`;
+  }
+
+  private userSocketsSetKey(userId: string): string {
+    return `user:${userId}:sockets`;
+  }
+
+  private registerSocketRegistry(ws: AuthWs): void {
+    const sid = ws.socketId;
+    const userId = ws.userId;
+    if (!sid || !userId) return;
+    void this.safeRedis('socketRegistryWrite', () =>
+      this.redis
+        .multi()
+        .hset(this.socketKey(sid), {
+          userId,
+          sessionId: ws.sessionId ?? '',
+          deviceHash: ws.deviceTokenHash ?? '',
+          userName: ws.userName ?? '',
+          tier: ws.tier ?? 'FREE',
+          instanceId: RealtimeGateway.INSTANCE_ID,
+          ip: ws.clientIp ?? '',
+          connectedAt: new Date().toISOString(),
+        })
+        .sadd(this.userSocketsSetKey(userId), sid)
+        .expire(this.socketKey(sid), RealtimeGateway.SOCKET_REGISTRY_TTL)
+        .exec(),
+    );
+  }
+
+  private unregisterSocketRegistry(ws: AuthWs): void {
+    const sid = ws.socketId;
+    const userId = ws.userId;
+    if (!sid) return;
+    void this.safeRedis('socketRegistryRemoval', () =>
+      this.redis
+        .multi()
+        .del(this.socketKey(sid))
+        .srem(userId ? this.userSocketsSetKey(userId) : '', sid)
+        .exec(),
+    );
   }
 
   hasServiceConnection(userId: string, service: string): boolean {
@@ -757,7 +1138,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       void this.safeRedis('publish', () =>
         this.redis.publish(
           RealtimeGateway.WS_CHANNEL,
-          JSON.stringify({ target: 'broadcastAll', frame }),
+          JSON.stringify({ target: 'broadcastAll', frame, eid: this.newPublishEid() }),
         ),
       );
     }
@@ -765,16 +1146,17 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
 
   broadcastToRoom(room: string, payload: Record<string, unknown>): void {
     const msg = JSON.stringify(payload);
-    this.wss.clients.forEach((c) => {
-      const client = c as AuthWs;
-      if (client.room === room && client.readyState === WebSocket.OPEN)
-        client.send(msg);
-    });
+    const sockets = this.roomSockets.get(room);
+    if (sockets) {
+      for (const client of sockets.values()) {
+        if (client.readyState === WebSocket.OPEN) client.send(msg);
+      }
+    }
     if (!this.forwardingFromRedis) {
       void this.safeRedis('publish', () =>
         this.redis.publish(
           RealtimeGateway.WS_CHANNEL,
-          JSON.stringify({ target: 'broadcastToRoom', room, frame: payload }),
+          JSON.stringify({ target: 'broadcastToRoom', room, frame: payload, eid: this.newPublishEid() }),
         ),
       );
     }
@@ -825,7 +1207,8 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         closed++;
       }
     }
-    this.userSockets.delete(userId);
+    // No direct userSockets.delete here: each socket's close handler clears
+    // itself (and, for the last one, the user's bucket + online presence).
     return closed;
   }
 

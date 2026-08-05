@@ -124,17 +124,22 @@ export async function performHandshake(
   const deviceHash = bytesToHex(sha256(new TextEncoder().encode(deviceToken)));
 
   // Exchange public keys with the server via the REST proxy.
-  const { serverPublicKey } = await apiFetchJson<{ serverPublicKey: string }>(
-    "/api/rest/crypto/handshake",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-device-token": deviceToken,
-      },
-      body: JSON.stringify({ publicKey: clientPubHex }),
+  // The response carries the server's current c2s/s2c counters so a
+  // reconnect can resync its local seq after multi-tab divergence or
+  // dropped frames (see the incident: local sendSeq far behind the
+  // server's Redis counter → every AAD mismatch → wire.decrypt_fail).
+  const { serverPublicKey, c2sSeq, s2cSeq } = await apiFetchJson<{
+    serverPublicKey: string;
+    c2sSeq?: number;
+    s2cSeq?: number;
+  }>("/api/rest/crypto/handshake", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-device-token": deviceToken,
     },
-  );
+    body: JSON.stringify({ publicKey: clientPubHex }),
+  });
 
   // Derive the shared secret — must match server's setDevicePeerPublicKey().
   const shared = x25519.getSharedSecret(privKey, hexToBytes(serverPublicKey));
@@ -146,9 +151,13 @@ export async function performHandshake(
     deviceHash,
     sharedKey: derived,
     clientPubKey: clientPubHex,
-    sendSeq: keys?.sendSeq ?? 0,
-    recvSeq: keys?.recvSeq ?? 0,
+    // Never go backwards: the server counter is monotonic per device, so
+    // the max() is a safe resync (skipped seqs were dropped frames).
+    sendSeq: Math.max(keys?.sendSeq ?? 0, c2sSeq ?? 0),
+    recvSeq: Math.max(keys?.recvSeq ?? 0, s2cSeq ?? 0),
   };
+
+  persistSeq();
 
   // Notify React hooks that a session is now active.
   if (typeof window !== "undefined") {

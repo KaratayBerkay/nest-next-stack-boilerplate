@@ -4,7 +4,6 @@ export interface ChatRoomMessage {
   senderName: string;
   avatar?: string;
   body: string | null;
-  encrypted?: boolean;
   algVersion?: number | null;
   envelope?: Record<string, unknown> | null;
   attachmentUrl?: string | null;

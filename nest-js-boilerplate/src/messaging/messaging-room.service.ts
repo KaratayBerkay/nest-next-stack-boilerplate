@@ -2,6 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import Redis from 'ioredis';
 import { PrismaService } from '../prisma/prisma.service';
+import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
 import {
   type RoomMember,
   type MessageAttachment,
@@ -56,6 +57,7 @@ export class MessagingRoomService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly redis: Redis | null,
+    private readonly storageCrypto: StorageCryptoService,
   ) {
     void this.seedRooms().then(() =>
       refreshDbRoomSlugs(this.prisma),
@@ -242,15 +244,22 @@ export class MessagingRoomService {
   ) {
     if (!isValidRoom(roomId))
       throw new NotFoundException(`Unknown room: ${roomId}`);
-    const encrypted = !!envelope;
+    // Room messages are ALWAYS stored encrypted: a caller-supplied envelope
+    // is stored as-is, otherwise the server encrypts the plaintext with the
+    // shared room key — a plaintext body row is impossible.
+    const envelopeJson = (
+      envelope && typeof envelope === 'object'
+        ? envelope
+        : this.storageCrypto.encryptForRoom({ text: body, attachment })
+    ) as Prisma.InputJsonValue;
     return this.prisma.roomMessage.create({
       data: {
         roomId,
         senderId,
-        body: encrypted ? null : (body ?? ''),
-        encrypted,
-        algVersion: encrypted ? 1 : null,
-        envelope: (envelope as Prisma.InputJsonValue) ?? undefined,
+        body: null,
+        encrypted: true,
+        algVersion: 1,
+        envelope: envelopeJson,
         attachmentUrl: attachment?.url,
         attachmentType: attachment?.type,
         attachmentName: attachment?.name,
@@ -278,7 +287,6 @@ export class MessagingRoomService {
         senderName: m.sender.name || m.sender.email || 'Unknown',
         avatar: initials(m.sender.name || m.sender.email || 'Unknown'),
         body: m.body,
-        encrypted: m.encrypted,
         algVersion: m.algVersion,
         envelope: m.envelope as Record<string, unknown> | null,
         attachmentUrl: m.attachmentUrl,

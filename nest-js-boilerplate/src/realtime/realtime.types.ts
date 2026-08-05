@@ -14,6 +14,11 @@ export type AuthWs = WebSocket & {
   room?: string;
   authenticated: boolean;
   isAlive: boolean;
+  /** Set when this socket was replaced by a newer connection for the same
+   *  device. Its cleanup already ran synchronously during the replacement;
+   *  the close handler must not run it again (the shared deterministic
+   *  socketId would clobber the replacement socket's state). */
+  detached?: boolean;
   deviceTokenHash?: string;
   registeredServices?: string[];
   watchedTopics?: string[];

@@ -109,6 +109,21 @@ export class RealtimeClient {
             return;
           }
 
+          // Server detected a c2s decrypt failure (seq desync). Resync via a
+          // fresh handshake — this adopts the server's counters (max of local
+          // vs server) WITHOUT flushing keys, unlike an s2c failure's reKey.
+          if (raw.type === "crypto-resync") {
+            if (!this.rekeyInProgress && this.lastSessionId) {
+              this.rekeyInProgress = true;
+              performHandshake(this.lastSessionId)
+                .catch(() => {})
+                .finally(() => {
+                  this.rekeyInProgress = false;
+                });
+            }
+            return;
+          }
+
           this.onFrame(raw);
         } catch {
           /* ignore malformed frames */
