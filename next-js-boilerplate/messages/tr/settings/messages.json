@@ -155,5 +155,12 @@
   },
   "cancelPendingChange": "{date} tarihinde {tier} planına geçişiniz planlandı — önce bunu iptal edin",
   "cancelPendingChangeSuccess": "Planlanan plan değişikliği iptal edildi",
-  "cancelPendingChangeFailed": "Planlanan plan değişikliği iptal edilemedi"
+  "cancelPendingChangeFailed": "Planlanan plan değişikliği iptal edilemedi",
+  "usageTab": "Kullanım",
+  "usageStored": "Saklanan",
+  "usageOf": "/",
+  "usageLetters": "harf",
+  "usageMonth": "bu ay",
+  "usageLimitReached": "Depolama limitinize ulaştınız.",
+  "usageUpgradeHint": "Her plan yükseltmesi mesaj depolama alanınızı ikiye katlar."
 }

@@ -1282,6 +1282,13 @@ export type I18nMessages = {
       "cancelPendingChange": string;
       "cancelPendingChangeSuccess": string;
       "cancelPendingChangeFailed": string;
+      "usageTab": string;
+      "usageStored": string;
+      "usageOf": string;
+      "usageLetters": string;
+      "usageMonth": string;
+      "usageLimitReached": string;
+      "usageUpgradeHint": string;
     }
 
   "share": {

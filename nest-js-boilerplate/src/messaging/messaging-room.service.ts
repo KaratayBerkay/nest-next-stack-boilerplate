@@ -3,6 +3,7 @@ import type { Prisma } from '@prisma/client';
 import Redis from 'ioredis';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
+import { countLetters } from '../common/utils/letter-count';
 import {
   type RoomMember,
   type MessageAttachment,
@@ -262,6 +263,7 @@ export class MessagingRoomService {
         v,
         ct,
         nonce,
+        letterCount: countLetters(body),
         attachments:
           attachments && attachments.length > 0
             ? {

@@ -48,6 +48,7 @@ import { MailModule } from './mail/mail.module';
 import { MfaModule } from './mfa/mfa.module';
 import { MessagingModule } from './messaging/messaging.module';
 import { RealtimeModule } from './realtime/realtime.module';
+import { UsageModule } from './usage/usage.module';
 import { OpenapiModule } from './openapi/openapi.module';
 import { MiddlewareModule } from './middleware/middleware.module';
 import { OutboxModule } from './outbox/outbox.module';
@@ -160,6 +161,7 @@ const CORE_MODULES = [
   MfaModule,
   MessagingModule,
   RealtimeModule,
+  UsageModule,
   ProfileModule,
   SessionsModule,
   ApiKeysModule,

@@ -6,6 +6,7 @@ import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { PushNotificationService } from '../push-notification/push-notification.service';
 import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
 import { displayName } from '../common/utils/display-name';
+import { countLetters } from '../common/utils/letter-count';
 import { initials, type MessageAttachment } from './messaging.types';
 
 export class MessagingDmService {
@@ -286,6 +287,7 @@ export class MessagingDmService {
         v,
         ct,
         nonce,
+        letterCount: countLetters(text),
         attachments:
           attachments && attachments.length > 0
             ? {

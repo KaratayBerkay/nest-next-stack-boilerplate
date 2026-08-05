@@ -155,5 +155,12 @@
   },
   "cancelPendingChange": "You have a change to {tier} scheduled for {date} — cancel that first",
   "cancelPendingChangeSuccess": "Pending plan change cancelled",
-  "cancelPendingChangeFailed": "Failed to cancel pending plan change"
+  "cancelPendingChangeFailed": "Failed to cancel pending plan change",
+  "usageTab": "Usage",
+  "usageStored": "Stored",
+  "usageOf": "of",
+  "usageLetters": "letters",
+  "usageMonth": "this month",
+  "usageLimitReached": "You have reached your storage limit.",
+  "usageUpgradeHint": "Each plan upgrade doubles your message storage."
 }

@@ -114,3 +114,4 @@ export const VAULT_SECRET_PATH =
 export const NOTIFICATIONS_URL = "/api/notifications" as const;
 export const NOTIFICATIONS_UNREAD_COUNT_URL =
   "/api/notifications/unread-count" as const;
+export const USAGE_MESSAGES_URL = "/api/usage/messages" as const;

@@ -829,6 +829,7 @@ model Message {
   v           String
   ct          String    @db.Text
   nonce       String
+  letterCount Int       @default(0)
   attachments MessageAttachment[]
   deliveredAt DateTime? @db.Timestamptz(6)
   readAt      DateTime? @db.Timestamptz(6)
@@ -862,6 +863,7 @@ model RoomMessage {
   v           String
   ct          String                @db.Text
   nonce       String
+  letterCount Int                   @default(0)
   attachments RoomMessageAttachment[]
   createdAt   DateTime              @default(now()) @db.Timestamptz(6)
 
