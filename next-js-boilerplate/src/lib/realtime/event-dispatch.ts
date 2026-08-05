@@ -25,11 +25,37 @@ export async function dispatchEvent(
     const msg = frame.message as Record<string, unknown> & {
       id: string;
       senderId: string;
-      recipientId: string;
+      recipientId?: string;
     };
-    if (!msg?.id) return;
+    if (!msg?.id || !msg.senderId) return;
 
-    const peerId = msg.senderId === ownUserId ? msg.recipientId : msg.senderId;
+    // The recipient is whoever is NOT the sender — the wire payload carries
+    // senderId (+ recipientId since the deliverDirectMessage fix), so the
+    // recipient side never has to wait for the cache or a recipientId.
+    const isMine = msg.senderId === ownUserId;
+    const peerId = isMine ? (msg.recipientId ?? activePeerId) : msg.senderId;
+
+    // Recipient-side delivery semantics fire regardless of cache state —
+    // the server expects the delivered-ack and the auto mark-read even when
+    // the ["messages", peerId] query hasn't been fetched yet.
+    if (!isMine && sendFrame) {
+      sendFrame({ type: "delivered-ack", messageId: msg.id });
+    }
+    if (!isMine && msg.senderId === activePeerId) {
+      qc.setQueryData(["conversations"], (old: unknown) => {
+        const list = (old ?? []) as Record<string, unknown>[];
+        return list.map((c) => {
+          const u = c.user as Record<string, unknown> | undefined;
+          if (u?.id === msg.senderId) {
+            return { ...c, unread: 0 };
+          }
+          return c;
+        });
+      });
+      markMessagesReadServer(msg.senderId).catch(() => {});
+    }
+
+    if (!peerId) return;
     if (!qc.getQueryData(["messages", peerId])) {
       qc.invalidateQueries({ queryKey: ["messages", peerId] });
       return;
@@ -54,9 +80,6 @@ export async function dispatchEvent(
       pages[0] = first;
       return { ...data, pages };
     });
-    if (msg.recipientId === ownUserId && sendFrame) {
-      sendFrame({ type: "delivered-ack", messageId: msg.id });
-    }
     // Keep the sidebar preview in sync for both sides: the recipient's row
     // is normally updated by the server's Conversation renew, while the
     // sender's row only gets this echo frame (the REST/WS send paths emit
@@ -71,23 +94,6 @@ export async function dispatchEvent(
       },
       { insertIfMissing: false },
     );
-    if (
-      msg.recipientId === ownUserId &&
-      msg.senderId &&
-      msg.senderId === activePeerId
-    ) {
-      qc.setQueryData(["conversations"], (old: unknown) => {
-        const list = (old ?? []) as Record<string, unknown>[];
-        return list.map((c) => {
-          const u = c.user as Record<string, unknown> | undefined;
-          if (u?.id === msg.senderId) {
-            return { ...c, unread: 0 };
-          }
-          return c;
-        });
-      });
-      markMessagesReadServer(msg.senderId).catch(() => {});
-    }
   }
 
   if (t === "message-read" && ownUserId) {

@@ -380,6 +380,7 @@ export class MessagingDmService {
     const baseMessage: Record<string, unknown> = {
       id: message.id,
       senderId: message.senderId,
+      recipientId: message.recipientId,
       sender: message.sender,
       body: deliveryPlaintext?.text ?? null,
       createdAt: message.createdAt,

@@ -208,6 +208,8 @@ describe('MessagingDmService', () => {
         type: 'direct-message',
         message: expect.objectContaining({
           id: 'm1',
+          senderId: 'u1',
+          recipientId: 'u2',
           body: 'hello',
           _tempId: 'temp-123',
         }),
@@ -216,6 +218,8 @@ describe('MessagingDmService', () => {
         type: 'direct-message',
         message: expect.objectContaining({
           id: 'm1',
+          senderId: 'u1',
+          recipientId: 'u2',
           body: 'hello',
           _tempId: 'temp-123',
         }),

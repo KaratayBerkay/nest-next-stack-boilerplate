@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { QueryClient } from "@tanstack/react-query";
-import { dispatchEvent, trackTempId } from "./event-dispatch";
+import { dispatchEvent, trackTempId, setActivePeerId } from "./event-dispatch";
+
+vi.mock("@/api/server/messages/mark-read", () => ({
+  markMessagesReadServer: vi.fn().mockResolvedValue({}),
+}));
+
+import { markMessagesReadServer } from "@/api/server/messages/mark-read";
 
 function createQueryClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -11,6 +17,8 @@ describe("dispatchEvent", () => {
 
   beforeEach(() => {
     qc = createQueryClient();
+    setActivePeerId(null);
+    vi.clearAllMocks();
   });
 
   describe("direct-message", () => {
@@ -95,6 +103,99 @@ describe("dispatchEvent", () => {
       expect(invalidateSpy).toHaveBeenCalledWith({
         queryKey: ["messages", "peer-1"],
       });
+    });
+
+    it("sends delivered-ack when the wire message omits recipientId", async () => {
+      qc.setQueryData(["messages", "sender-1"], {
+        pages: [{ messages: [] }],
+        pageParams: [undefined],
+      });
+
+      const sendFrame = vi.fn();
+      await dispatchEvent(
+        qc,
+        {
+          type: "direct-message",
+          message: { id: "m1", senderId: "sender-1", body: "hello" },
+        },
+        "user-1",
+        sendFrame,
+      );
+
+      expect(sendFrame).toHaveBeenCalledWith({
+        type: "delivered-ack",
+        messageId: "m1",
+      });
+    });
+
+    it("auto-marks-read without recipientId when the thread is open", async () => {
+      setActivePeerId("sender-1");
+      qc.setQueryData(["messages", "sender-1"], {
+        pages: [{ messages: [] }],
+        pageParams: [undefined],
+      });
+      qc.setQueryData(
+        ["conversations"],
+        [{ user: { id: "sender-1" }, unread: 1 }],
+      );
+
+      await dispatchEvent(
+        qc,
+        {
+          type: "direct-message",
+          message: { id: "m1", senderId: "sender-1", body: "hello" },
+        },
+        "user-1",
+      );
+
+      expect(markMessagesReadServer).toHaveBeenCalledWith("sender-1");
+      const conversations = qc.getQueryData(["conversations"]) as {
+        user: { id: string };
+        unread: number;
+      }[];
+      expect(conversations[0].unread).toBe(0);
+    });
+
+    it("reconciles the sender echo without recipientId via the active peer", async () => {
+      setActivePeerId("recip-1");
+      trackTempId("temp-123");
+      qc.setQueryData(["messages", "recip-1"], {
+        pages: [
+          {
+            messages: [
+              {
+                id: "temp-123",
+                senderId: "user-1",
+                body: "hello",
+                pending: true,
+              },
+            ],
+          },
+        ],
+        pageParams: [undefined],
+      });
+
+      await dispatchEvent(
+        qc,
+        {
+          type: "direct-message",
+          message: {
+            id: "real-uuid",
+            senderId: "user-1",
+            body: "hello",
+            _tempId: "temp-123",
+            pending: false,
+          },
+        },
+        "user-1",
+      );
+
+      const data = qc.getQueryData(["messages", "recip-1"]) as {
+        pages: { messages: Record<string, unknown>[] }[];
+      };
+      expect(data.pages[0].messages).toHaveLength(1);
+      expect(data.pages[0].messages[0].id).toBe("real-uuid");
+      expect(data.pages[0].messages[0].pending).toBe(false);
     });
 
     it("does nothing when ownUserId is not provided", async () => {
