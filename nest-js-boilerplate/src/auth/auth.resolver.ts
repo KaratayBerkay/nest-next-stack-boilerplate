@@ -119,9 +119,7 @@ export class AuthResolver {
 
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Mutation(() => String)
-  resendLoginCode(
-    @Args('mfaToken') mfaToken: string,
-  ): Promise<string> {
+  resendLoginCode(@Args('mfaToken') mfaToken: string): Promise<string> {
     return this.auth.resendLoginCode(mfaToken);
   }
 

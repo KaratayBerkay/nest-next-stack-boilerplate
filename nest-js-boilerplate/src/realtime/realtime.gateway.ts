@@ -411,10 +411,12 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
               if (!this.skipPublished(eid)) this.broadcastAll(frame);
               break;
             case 'broadcastToRoom':
-              if (room && !this.skipPublished(eid)) this.broadcastToRoom(room, frame);
+              if (room && !this.skipPublished(eid))
+                this.broadcastToRoom(room, frame);
               break;
             case 'emitToTopic':
-              if (topic && !this.skipPublished(eid)) this.emitToTopic(topic, frame);
+              if (topic && !this.skipPublished(eid))
+                this.emitToTopic(topic, frame);
               break;
             case 'emitToService':
               if (userId && service && !this.skipPublished(eid)) {
@@ -422,7 +424,8 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
               }
               break;
             case 'emitToUser':
-              if (userId && !this.skipPublished(eid)) this.emitToUser(userId, frame);
+              if (userId && !this.skipPublished(eid))
+                this.emitToUser(userId, frame);
               break;
             case 'emitToPage':
               if (userId && page && !this.skipPublished(eid)) {
@@ -821,7 +824,12 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       void this.safeRedis('publish', () =>
         this.redis.publish(
           RealtimeGateway.WS_CHANNEL,
-          JSON.stringify({ target: 'emitToUser', userId, frame, eid: this.newPublishEid() }),
+          JSON.stringify({
+            target: 'emitToUser',
+            userId,
+            frame,
+            eid: this.newPublishEid(),
+          }),
         ),
       );
     }
@@ -855,7 +863,13 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       void this.safeRedis('publish', () =>
         this.redis.publish(
           RealtimeGateway.WS_CHANNEL,
-          JSON.stringify({ target: 'emitToService', userId, service, frame, eid: this.newPublishEid() }),
+          JSON.stringify({
+            target: 'emitToService',
+            userId,
+            service,
+            frame,
+            eid: this.newPublishEid(),
+          }),
         ),
       );
     }
@@ -877,7 +891,12 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       void this.safeRedis('publish', () =>
         this.redis.publish(
           RealtimeGateway.WS_CHANNEL,
-          JSON.stringify({ target: 'emitToTopic', topic, frame, eid: this.newPublishEid() }),
+          JSON.stringify({
+            target: 'emitToTopic',
+            topic,
+            frame,
+            eid: this.newPublishEid(),
+          }),
         ),
       );
     }
@@ -1138,7 +1157,11 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       void this.safeRedis('publish', () =>
         this.redis.publish(
           RealtimeGateway.WS_CHANNEL,
-          JSON.stringify({ target: 'broadcastAll', frame, eid: this.newPublishEid() }),
+          JSON.stringify({
+            target: 'broadcastAll',
+            frame,
+            eid: this.newPublishEid(),
+          }),
         ),
       );
     }
@@ -1156,7 +1179,12 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       void this.safeRedis('publish', () =>
         this.redis.publish(
           RealtimeGateway.WS_CHANNEL,
-          JSON.stringify({ target: 'broadcastToRoom', room, frame: payload, eid: this.newPublishEid() }),
+          JSON.stringify({
+            target: 'broadcastToRoom',
+            room,
+            frame: payload,
+            eid: this.newPublishEid(),
+          }),
         ),
       );
     }

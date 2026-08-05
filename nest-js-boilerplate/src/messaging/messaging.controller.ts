@@ -182,7 +182,9 @@ export class MessagingController {
     );
     return {
       ...result,
-      messages: result.messages.map((m) => this.decryptMessageBody(m, user.userId)),
+      messages: result.messages.map((m) =>
+        this.decryptMessageBody(m, user.userId),
+      ),
     };
   }
 
@@ -245,7 +247,9 @@ export class MessagingController {
     );
     return {
       ...result,
-      messages: result.messages.map((m: Record<string, unknown>) => this.decryptMessageBody(m, user.userId)),
+      messages: result.messages.map((m: Record<string, unknown>) =>
+        this.decryptMessageBody(m, user.userId),
+      ),
     };
   }
 
@@ -258,11 +262,13 @@ export class MessagingController {
     message: Record<string, unknown>,
     userId: string,
   ): Record<string, unknown> {
-    const envelope = this.storageCrypto.toEnvelope(message as {
-      v: string | null;
-      ct: string | null;
-      nonce: string | null;
-    });
+    const envelope = this.storageCrypto.toEnvelope(
+      message as {
+        v: string | null;
+        ct: string | null;
+        nonce: string | null;
+      },
+    );
     if (!envelope) return message;
     const { v: _v, ct: _ct, nonce: _nonce, ...rest } = message;
     const attempt = (

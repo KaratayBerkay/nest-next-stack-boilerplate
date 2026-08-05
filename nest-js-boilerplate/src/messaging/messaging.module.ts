@@ -5,6 +5,7 @@ import { NotificationModule } from '../notification/notification.module';
 import { PushNotificationModule } from '../push-notification/push-notification.module';
 import { RealtimeModule } from '../realtime/realtime.module';
 import { RedisModule } from '../redis/redis.module';
+import { UsageModule } from '../usage/usage.module';
 import { WireCryptoModule } from '../wire-crypto/wire-crypto.module';
 import { MessagingResolver } from './messaging.resolver';
 import { MessagingService } from './messaging.service';
@@ -20,6 +21,7 @@ import { MessagingController } from './messaging.controller';
     RealtimeModule,
     RedisModule,
     WireCryptoModule,
+    UsageModule,
   ],
   controllers: [MessagingController],
   providers: [MessagingResolver, MessagingService, MessagingWsGateway],

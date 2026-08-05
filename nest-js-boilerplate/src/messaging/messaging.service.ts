@@ -12,6 +12,7 @@ import { MessagingRoomService } from './messaging-room.service';
 import { MessagingDmService } from './messaging-dm.service';
 import { MessagingFriendService } from './messaging-friend.service';
 import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
+import { UsageService } from '../usage/usage.service';
 import type { RoomMember, MessageAttachment } from './messaging.types';
 
 @Injectable()
@@ -31,10 +32,18 @@ export class MessagingService {
     push: PushNotificationService,
     @Inject(REDIS_CLIENT) redis: Redis,
     storageCrypto: StorageCryptoService,
+    usage: UsageService,
   ) {
     this.realtime = realtime;
-    this.rooms = new MessagingRoomService(prisma, redis, storageCrypto);
-    this.dm = new MessagingDmService(prisma, cache, realtime, push, storageCrypto);
+    this.rooms = new MessagingRoomService(prisma, redis, storageCrypto, usage);
+    this.dm = new MessagingDmService(
+      prisma,
+      cache,
+      realtime,
+      push,
+      storageCrypto,
+      usage,
+    );
     this.friends = new MessagingFriendService(
       prisma,
       cache,
@@ -128,7 +137,9 @@ export class MessagingService {
 
   deliverDirectMessage(
     message: Parameters<MessagingDmService['deliverDirectMessage']>[0],
-    deliveryPlaintext?: Parameters<MessagingDmService['deliverDirectMessage']>[1],
+    deliveryPlaintext?: Parameters<
+      MessagingDmService['deliverDirectMessage']
+    >[1],
   ) {
     return this.dm.deliverDirectMessage(message, deliveryPlaintext);
   }

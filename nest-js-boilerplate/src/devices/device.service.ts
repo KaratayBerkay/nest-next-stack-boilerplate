@@ -32,7 +32,13 @@ interface CookieCarrier {
   signedCookies?: Record<string, string | undefined>;
 }
 
-type PrismaDeviceType = 'WEB' | 'MOBILE_IOS' | 'MOBILE_ANDROID' | 'DESKTOP' | 'API' | 'CLI';
+type PrismaDeviceType =
+  | 'WEB'
+  | 'MOBILE_IOS'
+  | 'MOBILE_ANDROID'
+  | 'DESKTOP'
+  | 'API'
+  | 'CLI';
 
 @Injectable()
 export class DeviceService {
@@ -48,7 +54,10 @@ export class DeviceService {
     const parsed = parseDeviceType(userAgent ?? undefined);
     switch (parsed) {
       case 'mobile':
-        if (userAgent?.toLowerCase().includes('iphone') || userAgent?.toLowerCase().includes('ipad')) {
+        if (
+          userAgent?.toLowerCase().includes('iphone') ||
+          userAgent?.toLowerCase().includes('ipad')
+        ) {
           return 'MOBILE_IOS';
         }
         return 'MOBILE_ANDROID';

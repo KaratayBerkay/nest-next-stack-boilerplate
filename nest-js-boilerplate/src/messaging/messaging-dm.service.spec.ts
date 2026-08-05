@@ -60,6 +60,9 @@ describe('MessagingDmService', () => {
         flattenEnvelope: jest.fn().mockReturnValue(null),
         toEnvelope: jest.fn(),
       } as never,
+      {
+        assertCanSendMessage: jest.fn().mockResolvedValue(undefined),
+      } as never,
     );
   });
 
@@ -105,6 +108,7 @@ describe('MessagingDmService', () => {
           v: 'storage-v1',
           ct: 'sc',
           nonce: 'sn',
+          letterCount: 5,
           attachments: undefined,
         },
         include: {

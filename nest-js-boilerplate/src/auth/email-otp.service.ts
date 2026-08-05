@@ -41,7 +41,10 @@ export class EmailOtpService {
     const codeHash = this.crypto.sha256(code);
 
     await this.tokenStore.writeEmailOtp(purpose, userId, codeHash, email);
-    await this.tokenStore.setOtpResendCooldown(cooldownKey, RESEND_COOLDOWN_SECONDS);
+    await this.tokenStore.setOtpResendCooldown(
+      cooldownKey,
+      RESEND_COOLDOWN_SECONDS,
+    );
 
     await this.mail.enqueue({
       to: email,

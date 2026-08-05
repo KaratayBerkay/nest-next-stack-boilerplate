@@ -156,7 +156,9 @@ export class WireCryptoService {
       privHex = await this.redis.hget(this.deviceKey(deviceHash), 'priv');
     }
     if (!privHex) {
-      this.logger.error(`setDevicePeerPublicKey: failed to create keys for ${deviceHash}`);
+      this.logger.error(
+        `setDevicePeerPublicKey: failed to create keys for ${deviceHash}`,
+      );
       return;
     }
     const shared = x25519.getSharedSecret(

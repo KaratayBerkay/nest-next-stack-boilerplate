@@ -244,7 +244,10 @@ export class RealtimePageManager {
   async emitToPageWith(
     userId: string,
     pageKey: string,
-    encryptFn: (sessionId: string, deviceHash?: string) => Promise<Record<string, unknown>>,
+    encryptFn: (
+      sessionId: string,
+      deviceHash?: string,
+    ) => Promise<Record<string, unknown>>,
   ): Promise<number> {
     const prefix = `page:${pageKey}:${userId}:`;
     let sent = 0;

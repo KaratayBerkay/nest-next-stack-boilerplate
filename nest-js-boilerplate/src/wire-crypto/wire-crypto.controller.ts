@@ -118,8 +118,7 @@ export class WireCryptoController {
 
   @Get('server-key')
   @ApiOperation({
-    summary:
-      'Fetch the current server public key (re-handshake after reload)',
+    summary: 'Fetch the current server public key (re-handshake after reload)',
   })
   async getServerKey(
     @CurrentUser() user: JwtUser,

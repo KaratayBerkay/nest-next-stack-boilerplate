@@ -165,7 +165,8 @@ export class UploadController {
     envelope?: { v: string; nonce: string; ct: string };
   }> {
     const extension =
-      ATTACHMENT_EXTENSIONS[file.mimetype] ?? this.extFromName(file.originalname);
+      ATTACHMENT_EXTENSIONS[file.mimetype] ??
+      this.extFromName(file.originalname);
     const objectName = `${randomUUID()}${extension}`;
 
     const envelope = this.storageCrypto.encryptBytes(

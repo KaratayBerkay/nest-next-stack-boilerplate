@@ -47,9 +47,7 @@ function toAttachments(data: IncomingMessagePayload): MessageAttachment[] {
 
 function hasTextOrAttachmentOrEnvelope(data: IncomingMessagePayload): boolean {
   if (data.envelope && typeof data.envelope === 'object') return true;
-  return (
-    Boolean((data.text ?? '').trim()) || toAttachments(data).length > 0
-  );
+  return Boolean((data.text ?? '').trim()) || toAttachments(data).length > 0;
 }
 
 /**
@@ -179,7 +177,7 @@ export class MessagingWsGateway implements OnModuleInit {
       plaintext.text ?? '',
       undefined,
       toAttachments(data),
-      storageEnvelope as unknown as Record<string, unknown>,
+      storageEnvelope,
     );
     // Echo the client tempId back in the wire payloads so the sender's
     // optimistic entry can be replaced (mirrors sendAndDeliverMessage's

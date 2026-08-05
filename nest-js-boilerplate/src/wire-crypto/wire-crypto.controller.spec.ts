@@ -21,9 +21,7 @@ describe('WireCryptoController', () => {
       createSessionKeys: jest.fn().mockResolvedValue('a'.repeat(64)),
       setPeerPublicKey: jest.fn().mockResolvedValue(undefined),
       getServerPublicKey: jest.fn().mockResolvedValue('b'.repeat(64)),
-      getCounters: jest
-        .fn()
-        .mockResolvedValue({ c2sSeq: 0, s2cSeq: 0 }),
+      getCounters: jest.fn().mockResolvedValue({ c2sSeq: 0, s2cSeq: 0 }),
     };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [WireCryptoController],

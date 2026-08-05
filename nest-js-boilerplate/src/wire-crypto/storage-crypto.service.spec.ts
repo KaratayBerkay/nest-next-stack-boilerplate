@@ -42,9 +42,7 @@ describe('StorageCryptoService', () => {
 
   it('rejects malformed envelopes', () => {
     const service = buildService();
-    expect(() =>
-      service.decryptFromStorage('u1', { v: 'v1' }),
-    ).toThrow();
+    expect(() => service.decryptFromStorage('u1', { v: 'v1' })).toThrow();
     expect(() => service.decryptFromStorage('u1', null)).toThrow();
   });
 

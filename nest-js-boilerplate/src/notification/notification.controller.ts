@@ -49,7 +49,8 @@ export class NotificationController {
                 (n.actor as Record<string, unknown>).hideAvatar
                   ? null
                   : ((n.actor as Record<string, unknown>).avatarUrl as
-                      string | null),
+                      | string
+                      | null),
             }
           : null,
       })),

@@ -4,6 +4,7 @@ import Redis from 'ioredis';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
 import { countLetters } from '../common/utils/letter-count';
+import { UsageService } from '../usage/usage.service';
 import {
   type RoomMember,
   type MessageAttachment,
@@ -59,10 +60,9 @@ export class MessagingRoomService {
     private readonly prisma: PrismaService,
     private readonly redis: Redis | null,
     private readonly storageCrypto: StorageCryptoService,
+    private readonly usage: UsageService,
   ) {
-    void this.seedRooms().then(() =>
-      refreshDbRoomSlugs(this.prisma),
-    );
+    void this.seedRooms().then(() => refreshDbRoomSlugs(this.prisma));
   }
 
   private async seedRooms(): Promise<void> {
@@ -245,6 +245,7 @@ export class MessagingRoomService {
   ) {
     if (!isValidRoom(roomId))
       throw new NotFoundException(`Unknown room: ${roomId}`);
+    await this.usage.assertCanSendMessage(senderId, countLetters(body));
     // Room messages are ALWAYS stored encrypted: a caller-supplied envelope
     // is flattened into the v/ct/nonce columns as-is, otherwise the server
     // encrypts the plaintext with the shared room key — a plaintext body row
@@ -256,38 +257,40 @@ export class MessagingRoomService {
         text: body,
         attachments,
       });
-    return this.prisma.roomMessage.create({
-      data: {
-        roomId,
-        senderId,
-        v,
-        ct,
-        nonce,
-        letterCount: countLetters(body),
-        attachments:
-          attachments && attachments.length > 0
-            ? {
-                create: attachments.map((a) => ({
-                  url: a.url,
-                  type: a.type,
-                  name: a.name,
-                  v: a.storageEnvelope?.v ?? null,
-                  ct: a.storageEnvelope?.ct ?? null,
-                  nonce: a.storageEnvelope?.nonce ?? null,
-                })),
-              }
-            : undefined,
-      },
-      include: {
-        sender: { select: { name: true, email: true } },
-        attachments: true,
-      },
-    }).then((row) => ({
-      ...row,
-      attachments: row.attachments.map((a) =>
-        this.storageCrypto.toWireAttachment(a),
-      ),
-    }));
+    return this.prisma.roomMessage
+      .create({
+        data: {
+          roomId,
+          senderId,
+          v,
+          ct,
+          nonce,
+          letterCount: countLetters(body),
+          attachments:
+            attachments && attachments.length > 0
+              ? {
+                  create: attachments.map((a) => ({
+                    url: a.url,
+                    type: a.type,
+                    name: a.name,
+                    v: a.storageEnvelope?.v ?? null,
+                    ct: a.storageEnvelope?.ct ?? null,
+                    nonce: a.storageEnvelope?.nonce ?? null,
+                  })),
+                }
+              : undefined,
+        },
+        include: {
+          sender: { select: { name: true, email: true } },
+          attachments: true,
+        },
+      })
+      .then((row) => ({
+        ...row,
+        attachments: row.attachments.map((a) =>
+          this.storageCrypto.toWireAttachment(a),
+        ),
+      }));
   }
 
   async getRoomMessages(roomId: string, before?: string, take = 30) {

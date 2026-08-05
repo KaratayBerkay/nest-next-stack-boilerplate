@@ -71,11 +71,13 @@ export class MessagingResolver {
     message: Record<string, unknown>,
     userId: string,
   ): Record<string, unknown> {
-    const envelope = this.storageCrypto.toEnvelope(message as {
-      v: string | null;
-      ct: string | null;
-      nonce: string | null;
-    });
+    const envelope = this.storageCrypto.toEnvelope(
+      message as {
+        v: string | null;
+        ct: string | null;
+        nonce: string | null;
+      },
+    );
     if (!envelope) return message;
     const { v: _v, ct: _ct, nonce: _nonce, ...rest } = message;
     const attempt = (

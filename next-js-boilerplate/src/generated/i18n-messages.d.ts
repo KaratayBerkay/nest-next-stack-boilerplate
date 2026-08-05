@@ -1062,6 +1062,8 @@ export type I18nMessages = {
       "failedToLoad": string;
       "signInRequired": string;
       "decryptionFailed": string;
+      "storageLimitReached": string;
+      "storageLimitUpgradeHint": string;
     }
 
   "notification": {

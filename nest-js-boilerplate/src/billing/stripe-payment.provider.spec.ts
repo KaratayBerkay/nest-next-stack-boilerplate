@@ -139,9 +139,7 @@ describe('StripePaymentProvider', () => {
 
       const result = await provider.cancelSubscription('sub_old');
 
-      expect(stripeService.cancelSubscription).toHaveBeenCalledWith(
-        'sub_old',
-      );
+      expect(stripeService.cancelSubscription).toHaveBeenCalledWith('sub_old');
       expect(result).toEqual({ currency: 'TRY' });
     });
   });

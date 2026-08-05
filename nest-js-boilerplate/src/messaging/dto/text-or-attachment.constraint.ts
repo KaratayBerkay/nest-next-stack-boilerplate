@@ -18,9 +18,7 @@ interface TextOrAttachmentObject {
  * validators and silently bypass the check).
  */
 @ValidatorConstraint({ name: 'text-or-attachment', async: false })
-export class TextOrAttachmentConstraint
-  implements ValidatorConstraintInterface
-{
+export class TextOrAttachmentConstraint implements ValidatorConstraintInterface {
   validate(_value: unknown, args?: ValidationArguments): boolean {
     const obj = args?.object as TextOrAttachmentObject | undefined;
     if (obj?.attachments && obj.attachments.length > 0) return true;

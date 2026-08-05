@@ -112,9 +112,7 @@ describe('AuthService', () => {
         {
           provide: WireCryptoService,
           useValue: {
-            createSessionKeys: jest.fn().mockResolvedValue(
-              'a'.repeat(64),
-            ),
+            createSessionKeys: jest.fn().mockResolvedValue('a'.repeat(64)),
             deleteForSession: jest.fn().mockResolvedValue(undefined),
             touchTTL: jest.fn().mockResolvedValue(undefined),
           },

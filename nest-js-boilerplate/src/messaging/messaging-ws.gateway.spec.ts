@@ -127,7 +127,9 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
           provide: WireCryptoService,
           useValue: {
             decryptFromClient: jest.fn().mockResolvedValue({ text: 'hello' }),
-            encryptForSession: jest.fn().mockResolvedValue({ v: 2, nonce: 'bn', ct: 'bc' }),
+            encryptForSession: jest
+              .fn()
+              .mockResolvedValue({ v: 2, nonce: 'bn', ct: 'bc' }),
           },
         },
       ],
@@ -247,10 +249,7 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
 
     it('rejects direct-message with omitted text and no attachment', async () => {
       const ws = createMockWs('MEDIUM');
-      await (gateway as unknown as GatewayInternal).handleDirectMessage(
-        ws,
-        {} as { text: string },
-      );
+      await (gateway as unknown as GatewayInternal).handleDirectMessage(ws, {});
       expect(mockMs.sendMessage).not.toHaveBeenCalled();
     });
 

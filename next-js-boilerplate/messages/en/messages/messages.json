@@ -18,5 +18,7 @@
   "loading": "Loading...",
   "failedToLoad": "Failed to load messages",
   "signInRequired": "Sign in to start messaging",
-  "decryptionFailed": "Could not decrypt messages. Sign out and back in to restore messaging."
+  "decryptionFailed": "Could not decrypt messages. Sign out and back in to restore messaging.",
+  "storageLimitReached": "You have reached your storage limit.",
+  "storageLimitUpgradeHint": "Each plan upgrade doubles your message storage."
 }

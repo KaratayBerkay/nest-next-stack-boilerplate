@@ -16,9 +16,7 @@ describe('envelope size validation', () => {
         header: { dhPub: 'c'.repeat(64), pn: 0, n: 0 },
       };
       const errors = await validate(dto);
-      expect(errors.some((e) => e.constraints?.['envelope-size'])).toBe(
-        false,
-      );
+      expect(errors.some((e) => e.constraints?.['envelope-size'])).toBe(false);
     });
 
     it('rejects an envelope over the size cap', async () => {
@@ -33,9 +31,7 @@ describe('envelope size validation', () => {
       const dto = new SendMessageRestDto();
       dto.text = 'hello';
       const errors = await validate(dto);
-      expect(errors.some((e) => e.constraints?.['envelope-size'])).toBe(
-        false,
-      );
+      expect(errors.some((e) => e.constraints?.['envelope-size'])).toBe(false);
     });
   });
 

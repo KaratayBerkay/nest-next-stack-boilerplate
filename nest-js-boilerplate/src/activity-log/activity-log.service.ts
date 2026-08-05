@@ -21,7 +21,9 @@ export class ActivityLogService {
 
   logEvents(events: FrontendEventDto[], req: Request): void {
     const ip = req.ip ?? null;
-    const user = (req as Request & { user?: { userId?: string; sessionId?: string } }).user;
+    const user = (
+      req as Request & { user?: { userId?: string; sessionId?: string } }
+    ).user;
 
     for (const event of events) {
       this.logger.log({

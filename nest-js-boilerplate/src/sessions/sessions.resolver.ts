@@ -49,9 +49,7 @@ function mapSessionInfo(
   session: SessionUser,
   deviceMap: Map<string, DeviceEnrichment>,
 ) {
-  const device = session.deviceId
-    ? deviceMap.get(session.deviceId)
-    : undefined;
+  const device = session.deviceId ? deviceMap.get(session.deviceId) : undefined;
   return {
     sessionId: session.sessionId,
     deviceId: session.deviceId ?? '',
@@ -101,9 +99,7 @@ export class SessionsResolver {
     }
     const deviceMap = new Map(devices.map((d) => [d.id, d]));
 
-    return entries.map(({ session }) =>
-      mapSessionInfo(session, deviceMap),
-    );
+    return entries.map(({ session }) => mapSessionInfo(session, deviceMap));
   }
 
   @Mutation(() => Boolean)
@@ -139,12 +135,8 @@ export class SessionsResolver {
 
   @Mutation(() => Boolean)
   async trustCurrentDevice(@CurrentUser() user: JwtUser) {
-    const entries = await this.tokenStore.listSessionsWithKeys(
-      user.userId,
-    );
-    const current = entries.find(
-      (e) => e.session.sessionId === user.sessionId,
-    );
+    const entries = await this.tokenStore.listSessionsWithKeys(user.userId);
+    const current = entries.find((e) => e.session.sessionId === user.sessionId);
     if (!current?.session.deviceId) return false;
 
     await this.prisma.device.update({

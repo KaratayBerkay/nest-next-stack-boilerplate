@@ -7,6 +7,7 @@ import { PushNotificationService } from '../push-notification/push-notification.
 import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
 import { displayName } from '../common/utils/display-name';
 import { countLetters } from '../common/utils/letter-count';
+import { UsageService } from '../usage/usage.service';
 import { initials, type MessageAttachment } from './messaging.types';
 
 export class MessagingDmService {
@@ -18,6 +19,7 @@ export class MessagingDmService {
     private readonly realtime: RealtimeGateway,
     private readonly push: PushNotificationService,
     private readonly storageCrypto: StorageCryptoService,
+    private readonly usage: UsageService,
   ) {}
 
   /**
@@ -52,9 +54,9 @@ export class MessagingDmService {
     const envelope = this.storageCrypto.toEnvelope(msg);
     if (!envelope) return '';
     try {
-      const decrypted = this.storageCrypto.decryptForRoom(
-        envelope,
-      ) as { text?: string };
+      const decrypted = this.storageCrypto.decryptForRoom(envelope) as {
+        text?: string;
+      };
       return decrypted.text ?? '';
     } catch {}
     try {
@@ -269,6 +271,7 @@ export class MessagingDmService {
       );
       throw new ForbiddenException('You can only send messages to friends');
     }
+    await this.usage.assertCanSendMessage(senderId, countLetters(text));
     // Messages are ALWAYS stored encrypted: a caller-supplied envelope is
     // flattened into the v/ct/nonce columns as-is (client-side E2EE), and
     // when none is provided the server encrypts the plaintext itself — a
@@ -484,7 +487,10 @@ export class MessagingDmService {
       storageEnvelope,
     );
     if (tempId) (message as Record<string, unknown>)._tempId = tempId;
-    const delivery = await this.deliverDirectMessage(message, deliveryPlaintext);
+    const delivery = await this.deliverDirectMessage(
+      message,
+      deliveryPlaintext,
+    );
     return { message, delivery };
   }
 

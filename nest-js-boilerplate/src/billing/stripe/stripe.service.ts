@@ -12,10 +12,7 @@ export class StripeService {
   // a live API round-trip on every price read (e.g. every getSubscription
   // call) while still being the single real source of truth instead of a
   // hand-maintained env var table.
-  private readonly priceInfoCache = new Map<
-    string,
-    Promise<Stripe.Price>
-  >();
+  private readonly priceInfoCache = new Map<string, Promise<Stripe.Price>>();
 
   constructor(private readonly config: ConfigService) {
     const key = this.config.getOrThrow<string>('STRIPE_SECRET_KEY');
@@ -200,7 +197,8 @@ export class StripeService {
     currency?: string,
   ): Promise<{ cents: number; currency: string }> {
     const priceId = this.getPriceIdForTier(tier);
-    if (!priceId) return { cents: 0, currency: (currency ?? 'USD').toUpperCase() };
+    if (!priceId)
+      return { cents: 0, currency: (currency ?? 'USD').toUpperCase() };
 
     const price = await this.retrievePrice(priceId);
     const wanted = currency?.toLowerCase();

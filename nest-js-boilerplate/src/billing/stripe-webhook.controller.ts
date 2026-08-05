@@ -155,9 +155,7 @@ export class StripeWebhookController {
           subscriptionPeriodEnd: periodEnd,
           // Never null out an existing subscription with a non-subscription
           // invoice (e.g. a setup intent invoice).
-          ...(subscriptionId
-            ? { stripeSubscriptionId: subscriptionId }
-            : {}),
+          ...(subscriptionId ? { stripeSubscriptionId: subscriptionId } : {}),
         },
       });
     }
@@ -170,7 +168,7 @@ export class StripeWebhookController {
         data: { subscriptionTier: billedTier as never },
       });
       await this.tokenStore.rewriteFieldsForUser(user.id, {
-        tier: billedTier as never,
+        tier: billedTier,
       });
       this.logger.log(
         {

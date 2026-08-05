@@ -1,8 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  BadRequestException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { EmailOtpService } from './email-otp.service';
 import { MailService } from '../mail/mail.service';
 import { TokenStoreService } from './token-store.service';
@@ -63,18 +60,15 @@ describe('EmailOtpService', () => {
       const result = await service.verify(userId, '123456', purpose);
 
       expect(result).toBe(true);
-      expect(tokenStore.consumeEmailOtp).toHaveBeenCalledWith(
-        purpose,
-        userId,
-      );
+      expect(tokenStore.consumeEmailOtp).toHaveBeenCalledWith(purpose, userId);
     });
 
     it('throws when no OTP is stored (expired)', async () => {
       tokenStore.peekEmailOtp.mockResolvedValue(null);
 
-      await expect(
-        service.verify(userId, '123456', purpose),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(service.verify(userId, '123456', purpose)).rejects.toThrow(
+        UnauthorizedException,
+      );
       expect(tokenStore.consumeEmailOtp).not.toHaveBeenCalled();
     });
 
@@ -85,9 +79,9 @@ describe('EmailOtpService', () => {
         attempts: 0,
       });
 
-      await expect(
-        service.verify(userId, '000000', purpose),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.verify(userId, '000000', purpose)).rejects.toThrow(
+        BadRequestException,
+      );
       expect(tokenStore.incrementOtpAttempts).toHaveBeenCalledWith(
         purpose,
         userId,
@@ -102,13 +96,10 @@ describe('EmailOtpService', () => {
         attempts: 5,
       });
 
-      await expect(
-        service.verify(userId, '123456', purpose),
-      ).rejects.toThrow(BadRequestException);
-      expect(tokenStore.deleteEmailOtp).toHaveBeenCalledWith(
-        purpose,
-        userId,
+      await expect(service.verify(userId, '123456', purpose)).rejects.toThrow(
+        BadRequestException,
       );
+      expect(tokenStore.deleteEmailOtp).toHaveBeenCalledWith(purpose, userId);
       expect(tokenStore.consumeEmailOtp).not.toHaveBeenCalled();
     });
   });
@@ -133,19 +124,16 @@ describe('EmailOtpService', () => {
 
       await service.resend(userId, email, purpose);
 
-      expect(tokenStore.deleteEmailOtp).toHaveBeenCalledWith(
-        purpose,
-        userId,
-      );
+      expect(tokenStore.deleteEmailOtp).toHaveBeenCalledWith(purpose, userId);
       expect(tokenStore.writeEmailOtp).toHaveBeenCalled();
     });
 
     it('blocks resend within cooldown', async () => {
       tokenStore.getOtpResendCooldown.mockResolvedValue(45);
 
-      await expect(
-        service.resend(userId, email, purpose),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.resend(userId, email, purpose)).rejects.toThrow(
+        BadRequestException,
+      );
       expect(tokenStore.writeEmailOtp).not.toHaveBeenCalled();
     });
   });
