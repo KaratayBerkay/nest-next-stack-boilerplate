@@ -49,6 +49,12 @@ function createRedisMock() {
             return [null, n];
           });
         },
+        set: (key: string, value: string | number) => {
+          ops.push(() => {
+            counters.set(key, Number(value));
+            return [null, 'OK'];
+          });
+        },
         del: (key: string) => {
           ops.push(() => {
             const ok = store.has(key);
@@ -197,10 +203,14 @@ describe('WireCryptoService', () => {
       service.decryptFromClient(SID, tampered),
     ).rejects.toBeInstanceOf(UnauthorizedException);
 
-    // Replay of the exact same frame: server seq already advanced → AAD mismatch.
+    // The intact original frame was never ACCEPTED (the tampered attempt
+    // consumed seq 1 and was rejected), so under the loss-recovery semantics
+    // it is now a legitimate delayed frame — the server walks the window and
+    // delivers it. True replay protection (re-accepting an already-accepted
+    // frame) is asserted in the dedicated replay-gate test below.
     await expect(
       service.decryptFromClient(SID, { v: 2, ...frame }),
-    ).rejects.toBeInstanceOf(UnauthorizedException);
+    ).resolves.toEqual({ text: 'do not tamper' });
   });
 
   it('rejects malformed envelopes', async () => {
@@ -285,5 +295,97 @@ describe('WireCryptoService', () => {
     await expect(
       service.decryptFromClient(SID, { v: 2, ...next }),
     ).resolves.toEqual({ text: 'after reload' });
+  });
+
+  it('recovers a client ahead of the server counter (lost frames) and realigns', async () => {
+    const { service } = buildService();
+    const serverPub = await service.createSessionKeys(SID);
+    const devicePriv = x25519.utils.randomSecretKey();
+    const devicePub = bytesToHex(x25519.getPublicKey(devicePriv));
+    await service.setPeerPublicKey(SID, devicePub);
+    const clientKey = clientSharedKey(bytesToHex(devicePriv), serverPub, SID);
+
+    // Server processes frames 1..2, then frames 3..5 are LOST in transit
+    // (e.g. a deploy killed the socket). The client's local sendSeq is 5
+    // while the server counter is 2 — the pre-fix behavior rejected every
+    // later frame forever (max-adoption keeps the inflated local seq).
+    for (let i = 1; i <= 2; i++) {
+      const aad = `${WIRE_CRYPTO_CONTEXT}|${SID}|c2s|${i}`;
+      const frame = encryptLikeClient(clientKey, aad, { text: `m${i}` });
+      await service.decryptFromClient(SID, { v: 2, ...frame });
+    }
+
+    // The client's next frame uses its local seq 6; the server must walk
+    // back to 6-...-4, land on the true seq, realign, and ACCEPT it.
+    const aad6 = `${WIRE_CRYPTO_CONTEXT}|${SID}|c2s|6`;
+    const frame6 = encryptLikeClient(clientKey, aad6, {
+      text: 'in-flight lost frame',
+    });
+    await expect(
+      service.decryptFromClient(SID, { v: 2, ...frame6 }),
+    ).resolves.toEqual({ text: 'in-flight lost frame' });
+
+    // Counter realigned to 6 — the client's next frame (seq 7) matches
+    // exactly, session continues seamlessly with no resync round-trip.
+    const { c2sSeq } = await service.getCounters(undefined, SID);
+    expect(c2sSeq).toBe(6);
+    const aad7 = `${WIRE_CRYPTO_CONTEXT}|${SID}|c2s|7`;
+    const frame7 = encryptLikeClient(clientKey, aad7, { text: 'after heal' });
+    await expect(
+      service.decryptFromClient(SID, { v: 2, ...frame7 }),
+    ).resolves.toEqual({ text: 'after heal' });
+  });
+
+  it('rejects replays even when they land inside the lookback window', async () => {
+    const { service } = buildService();
+    const serverPub = await service.createSessionKeys(SID);
+    const devicePriv = x25519.utils.randomSecretKey();
+    const devicePub = bytesToHex(x25519.getPublicKey(devicePriv));
+    await service.setPeerPublicKey(SID, devicePub);
+    const clientKey = clientSharedKey(bytesToHex(devicePriv), serverPub, SID);
+
+    const aad1 = `${WIRE_CRYPTO_CONTEXT}|${SID}|c2s|1`;
+    const frame1 = encryptLikeClient(clientKey, aad1, { text: 'original' });
+    await expect(
+      service.decryptFromClient(SID, { v: 2, ...frame1 }),
+    ).resolves.toEqual({ text: 'original' });
+
+    // Replaying the exact frame would walk back to seq 1 and "match" — the
+    // last-accepted-seq gate must reject it instead of delivering a dup.
+    await expect(
+      service.decryptFromClient(SID, { v: 2, ...frame1 }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+
+    // A fresh frame on the realigned counter still works.
+    const aad2 = `${WIRE_CRYPTO_CONTEXT}|${SID}|c2s|2`;
+    const frame2 = encryptLikeClient(clientKey, aad2, { text: 'fresh' });
+    await expect(
+      service.decryptFromClient(SID, { v: 2, ...frame2 }),
+    ).resolves.toEqual({ text: 'fresh' });
+  });
+
+  it('does not recover when the gap exceeds the lookback window', async () => {
+    const { service } = buildService();
+    const serverPub = await service.createSessionKeys(SID);
+    const devicePriv = x25519.utils.randomSecretKey();
+    const devicePub = bytesToHex(x25519.getPublicKey(devicePriv));
+    await service.setPeerPublicKey(SID, devicePub);
+    const clientKey = clientSharedKey(bytesToHex(devicePriv), serverPub, SID);
+
+    // Server at counter 1; the client jumped 64 seqs ahead (large loss) —
+    // outside the 16-wide window, so the frame is rejected and the client
+    // recovers via the crypto-resync → handshake path instead.
+    const aad1 = `${WIRE_CRYPTO_CONTEXT}|${SID}|c2s|1`;
+    await service.decryptFromClient(SID, {
+      v: 2,
+      ...encryptLikeClient(clientKey, aad1, { text: 'm1' }),
+    });
+    const aad65 = `${WIRE_CRYPTO_CONTEXT}|${SID}|c2s|65`;
+    await expect(
+      service.decryptFromClient(SID, {
+        v: 2,
+        ...encryptLikeClient(clientKey, aad65, { text: 'too far' }),
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 });

@@ -1,6 +1,23 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { RealtimeClient, type RealtimeStatus } from "./realtime-client";
 
+// Message frames are encrypted at flush time by the crypto session; the unit
+// under test here is the queue/control-frame logic, so stub the crypto module.
+const sessionMocks = vi.hoisted(() => ({
+  encryptForServer: vi.fn((data: unknown) => ({
+    v: 2,
+    nonce: "mock-nonce",
+    ct: JSON.stringify(data),
+  })),
+  hasSession: vi.fn(() => true),
+  performHandshake: vi.fn(async () => {}),
+  decryptFromServer: vi.fn((frame: unknown) => frame),
+  destroySession: vi.fn(() => {}),
+  reKey: vi.fn(() => {}),
+}));
+
+vi.mock("@/lib/crypto/session", () => sessionMocks);
+
 class MockWebSocket {
   static instances: MockWebSocket[] = [];
   static nextId = 0;
@@ -52,6 +69,8 @@ const eventListeners: Record<string, ((...args: unknown[]) => void)[]> = {};
 
 beforeEach(() => {
   MockWebSocket.reset();
+  sessionMocks.hasSession.mockReturnValue(true);
+  sessionMocks.encryptForServer.mockClear();
   vi.stubGlobal("WebSocket", MockWebSocket);
   vi.stubGlobal("window", {
     addEventListener: vi.fn((event: string, handler: () => void) => {
@@ -159,20 +178,40 @@ describe("RealtimeClient", () => {
       expect(ws.sent).toHaveLength(0);
     });
 
-    it("flushes queue on authenticated", () => {
+    it("flushes queue on authenticated: messages encrypted, control frames plaintext", () => {
       const { client } = createClient();
       client.connect();
-      client.send({ type: "ping" });
+      client.send({ type: "ping", text: "hi" });
       client.send({ type: "watch", topic: "feed" });
       const ws = MockWebSocket.instances[0];
       ws.simulateOpen();
       ws.simulateMessage({ type: "authenticated" });
       expect(ws.sent).toHaveLength(2);
-      expect(JSON.parse(ws.sent[0])).toEqual({ type: "ping" });
+      expect(sessionMocks.encryptForServer).toHaveBeenCalledWith({
+        type: "ping",
+        text: "hi",
+      });
+      expect(JSON.parse(ws.sent[0])).toEqual({
+        v: 2,
+        nonce: "mock-nonce",
+        ct: JSON.stringify({ type: "ping", text: "hi" }),
+      });
       expect(JSON.parse(ws.sent[1])).toEqual({ type: "watch", topic: "feed" });
     });
 
-    it("sends immediately when open", () => {
+    it("holds message frames queued while the crypto session is unavailable (never plaintext)", () => {
+      sessionMocks.hasSession.mockReturnValue(false);
+      const { client } = createClient();
+      client.connect();
+      client.send({ type: "ping", text: "hi" });
+      const ws = MockWebSocket.instances[0];
+      ws.simulateOpen();
+      ws.simulateMessage({ type: "authenticated" });
+      expect(ws.sent).toHaveLength(0);
+      expect(sessionMocks.encryptForServer).not.toHaveBeenCalled();
+    });
+
+    it("sends immediately when open (message frames go through encryption)", () => {
       const { client } = createClient();
       client.connect();
       const ws = MockWebSocket.instances[0];
@@ -180,7 +219,26 @@ describe("RealtimeClient", () => {
       ws.simulateMessage({ type: "authenticated" });
       client.send({ type: "ping" });
       expect(ws.sent).toHaveLength(1);
-      expect(JSON.parse(ws.sent[0])).toEqual({ type: "ping" });
+      expect(sessionMocks.encryptForServer).toHaveBeenCalledWith({
+        type: "ping",
+      });
+      expect(JSON.parse(ws.sent[0])).toEqual({
+        v: 2,
+        nonce: "mock-nonce",
+        ct: JSON.stringify({ type: "ping" }),
+      });
+    });
+
+    it("sends control frames plaintext even when the crypto session is unavailable", () => {
+      sessionMocks.hasSession.mockReturnValue(false);
+      const { client } = createClient();
+      client.connect();
+      client.send({ type: "watch", topic: "feed" });
+      const ws = MockWebSocket.instances[0];
+      ws.simulateOpen();
+      ws.simulateMessage({ type: "authenticated" });
+      expect(ws.sent).toHaveLength(1);
+      expect(JSON.parse(ws.sent[0])).toEqual({ type: "watch", topic: "feed" });
     });
   });
 

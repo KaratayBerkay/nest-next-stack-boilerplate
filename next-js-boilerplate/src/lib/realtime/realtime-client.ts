@@ -21,6 +21,25 @@ import {
 
 const TOPIC_ALLOWLIST = /^(feed|post:[a-z0-9]+)$/;
 
+/** Control frames are always sent plaintext — the server routes them. */
+function isControlFrame(data: Record<string, unknown>): boolean {
+  return (
+    data.type === "watch" ||
+    data.type === "unwatch" ||
+    data.type === "register" ||
+    data.type === "page"
+  );
+}
+
+/** True when a frame is already a server-bound WireEnvelopeV2. */
+function isWireEnvelope(data: Record<string, unknown>): boolean {
+  return (
+    data.v === 2 &&
+    typeof data.nonce === "string" &&
+    typeof data.ct === "string"
+  );
+}
+
 export class RealtimeClient {
   private ws: WebSocket | null = null;
   private status: RealtimeStatus = "idle";
@@ -166,23 +185,27 @@ export class RealtimeClient {
 
   send(data: Record<string, unknown>): void {
     // Control frames are never encrypted — the server routes them.
-    const isControl =
-      data.type === "watch" ||
-      data.type === "unwatch" ||
-      data.type === "register" ||
-      data.type === "page";
+    const isControl = isControlFrame(data);
 
-    if (isControl || !hasSession()) {
+    if (isControl) {
       this.rawSend(data);
       return;
     }
 
-    // Message frames: encrypt the entire payload as WireEnvelopeV2.
+    // Message frames: encrypt the entire payload as WireEnvelopeV2. Without
+    // a session yet, queue the RAW payload — it is encrypted at flush time
+    // (after the handshake), never sent plaintext.
+    if (!hasSession()) {
+      this.sendQueue.push(data);
+      return;
+    }
+
     try {
-      const envelope = encryptForServer(data);
-      this.rawSend(envelope as unknown as Record<string, unknown>);
+      this.rawSend(
+        encryptForServer(data) as unknown as Record<string, unknown>,
+      );
     } catch {
-      /* session not ready yet — queue as-is (will be replayed after handshake) */
+      /* session not ready yet — queue as-is (will be encrypted on flush) */
       this.sendQueue.push(data);
     }
   }
@@ -268,10 +291,32 @@ export class RealtimeClient {
 
   private flushQueue(): void {
     if (this.sendQueue.length > 0 && this.ws?.readyState === WebSocket.OPEN) {
+      const pending: Record<string, unknown>[] = [];
       for (const msg of this.sendQueue) {
-        this.ws.send(JSON.stringify(msg));
+        // Pre-encrypted envelopes (queued by rawSend while the socket was
+        // closed) go out as-is; control frames are always plaintext; raw
+        // message payloads are encrypted now that the handshake completed.
+        if (isWireEnvelope(msg)) {
+          this.ws.send(JSON.stringify(msg));
+        } else if (isControlFrame(msg)) {
+          this.ws.send(JSON.stringify(msg));
+        } else if (hasSession()) {
+          try {
+            this.ws.send(
+              JSON.stringify(
+                encryptForServer(msg) as unknown as Record<string, unknown>,
+              ),
+            );
+          } catch {
+            pending.push(msg);
+          }
+        } else {
+          // Session still not established (degraded mode) — hold, don't
+          // leak plaintext message frames.
+          pending.push(msg);
+        }
       }
-      this.sendQueue = [];
+      this.sendQueue = pending;
     }
   }
 

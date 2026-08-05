@@ -126,8 +126,12 @@ export async function performHandshake(
   // Exchange public keys with the server via the REST proxy.
   // The response carries the server's current c2s/s2c counters so a
   // reconnect can resync its local seq after multi-tab divergence or
-  // dropped frames (see the incident: local sendSeq far behind the
-  // server's Redis counter → every AAD mismatch → wire.decrypt_fail).
+  // dropped frames. The server counter is authoritative: the client can
+  // only be AHEAD of it when frames were lost in transit (e.g. a deploy
+  // killing an open socket), and those frames will never decrypt — keeping
+  // the inflated local seq (max-adoption) deadlocks every later frame in a
+  // permanent wire.decrypt_fail loop. Skipped seqs are lost frames; the app
+  // layer surfaces the failed send and the user retries.
   const { serverPublicKey, c2sSeq, s2cSeq } = await apiFetchJson<{
     serverPublicKey: string;
     c2sSeq?: number;
@@ -151,10 +155,11 @@ export async function performHandshake(
     deviceHash,
     sharedKey: derived,
     clientPubKey: clientPubHex,
-    // Never go backwards: the server counter is monotonic per device, so
-    // the max() is a safe resync (skipped seqs were dropped frames).
-    sendSeq: Math.max(keys?.sendSeq ?? 0, c2sSeq ?? 0),
-    recvSeq: Math.max(keys?.recvSeq ?? 0, s2cSeq ?? 0),
+    // Adopt the server's counters EXACTLY. Walking forward is safe (the
+    // server's seqs are monotonic); walking back is equally safe because a
+    // higher local value can only mean frames the server never received.
+    sendSeq: c2sSeq ?? keys?.sendSeq ?? 0,
+    recvSeq: s2cSeq ?? keys?.recvSeq ?? 0,
   };
 
   persistSeq();
@@ -239,9 +244,14 @@ let persistTimer: ReturnType<typeof setTimeout> | null = null;
 
 function persistSeq(): void {
   if (!state) return;
-  const { deviceToken, sendSeq, recvSeq } = state;
+  // Snapshot only the token; read sendSeq/recvSeq at write time so a
+  // handshake that adopted new server counters in between isn't clobbered
+  // by a stale snapshot (which would re-inflate the deadlocked seq).
+  const { deviceToken } = state;
   if (persistTimer) clearTimeout(persistTimer);
   persistTimer = setTimeout(() => {
+    if (!state || state.deviceToken !== deviceToken) return;
+    const { sendSeq, recvSeq } = state;
     void loadKeys(deviceToken).then((keys) => {
       void storeKeys(deviceToken, {
         clientPrivKey: keys?.clientPrivKey ?? "",

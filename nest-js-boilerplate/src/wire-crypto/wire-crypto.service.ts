@@ -28,6 +28,24 @@ const DEVICE_KEY_PREFIX = 'crypto:device:';
 const DEVICE_SEQ_PREFIX = 'crypto:device-seq:';
 const DEVICE_KEY_TTL_DAYS = 90;
 
+/**
+ * How many seq numbers `decryptFromClient` scans back on an AEAD failure
+ * before giving up. Frames lost in transit (deploys killing open sockets,
+ * dropped packets) leave the client's sendSeq ahead of the server counter;
+ * a match within this window is realigned transparently instead of dropping
+ * every subsequent frame. Bounded so a garbage-flooding client can't turn
+ * one frame into an unbounded decrypt loop.
+ */
+const C2S_LOOKBACK_WINDOW = 16;
+
+/**
+ * Highest TRUE c2s seq accepted per device/session. The raw counter above
+ * advances on every received frame (even failed decrypts), so it can't tell
+ * a replay from a lost-frame recovery — this key can. Written on every
+ * successful decrypt, read only on lookback matches.
+ */
+const LAST_C2S_PREFIX = 'crypto:last-c2s:';
+
 export type WireDirection = 'c2s' | 's2c';
 
 /**
@@ -77,6 +95,21 @@ export class WireCryptoService {
 
   private seqKey(sessionId: string, direction: WireDirection): string {
     return `${SEQ_PREFIX}${sessionId}:${direction}`;
+  }
+
+  /** Key holding the highest TRUE c2s seq accepted for a device/session. */
+  private lastC2sKey(
+    deviceHash: string | undefined,
+    sessionId: string,
+  ): string {
+    return deviceHash
+      ? `${LAST_C2S_PREFIX}${deviceHash}`
+      : `${LAST_C2S_PREFIX}${sessionId}`;
+  }
+
+  /** TTL for seq counters / replay gates — device keys outlive sessions. */
+  private seqTtl(deviceHash: string | undefined): number {
+    return deviceHash ? this.deviceTtl : this.ttl;
   }
 
   // ── Device-based key management (persistent) ─────────────────────────
@@ -300,18 +333,76 @@ export class WireCryptoService {
       ? this.deviceSeqKey(deviceHash, 'c2s')
       : this.seqKey(sessionId, 'c2s');
     const seq = await this.nextSeqWithKey(seqKey);
-    const aad = this.buildAad(aadContext, 'c2s', seq);
-    try {
-      const cipher = xchacha20poly1305(
-        hexToBytes(keyHex),
-        Buffer.from(wire.nonce, 'base64'),
-        new TextEncoder().encode(aad),
-      );
-      const plain = cipher.decrypt(Buffer.from(wire.ct, 'base64'));
-      return JSON.parse(Buffer.from(plain).toString('utf8')) as unknown;
-    } catch {
-      throw new UnauthorizedException('Wire message decryption failed');
+
+    // The AAD is bound to an exact seq, so the counter must be incremented
+    // BEFORE decryption (the frame's own seq is unknowable until it
+    // decrypts). Frames lost in transit (a deploy killing an open socket,
+    // dropped packets) leave the client's sendSeq AHEAD of the counter —
+    // the exact seq fails, and without recovery every later frame fails AEAD
+    // forever (max-adoption keeps the inflated local seq and each retry only
+    // burns the counter further). Scan a window around the counter:
+    //   • ahead  (seq+k): the common lost-frame case — the true seq is
+    //     higher than the counter because the server never saw the gap.
+    //   • behind (seq-k): a stale client / multi-tab lag.
+    // A match at M ≠ seq means the in-between seqs never arrived. Realign
+    // the counter to M so the client's next frame (M+1) decrypts exactly,
+    // and accept this frame — the in-flight message is delivered instead of
+    // dropped. Matches at or below the last ACCEPTED seq are replays and
+    // stay rejected (each decrypt attempt is ~µs, and the window is bounded,
+    // so a garbage-flooding client can't turn this into a decrypt bomb).
+    const keyBytes = hexToBytes(keyHex);
+    const nonce = Buffer.from(wire.nonce, 'base64');
+    const ct = Buffer.from(wire.ct, 'base64');
+    const candidates: number[] = [seq];
+    for (let k = 1; k <= C2S_LOOKBACK_WINDOW; k++) candidates.push(seq + k);
+    for (let k = 1; k <= C2S_LOOKBACK_WINDOW && seq - k >= 1; k++) {
+      candidates.push(seq - k);
     }
+    for (const s of candidates) {
+      const cipher = xchacha20poly1305(
+        keyBytes,
+        nonce,
+        new TextEncoder().encode(this.buildAad(aadContext, 'c2s', s)),
+      );
+      let plain: Uint8Array;
+      try {
+        plain = cipher.decrypt(ct);
+      } catch {
+        continue;
+      }
+      if (s !== seq) {
+        const last = Number(
+          (await this.redis.get(this.lastC2sKey(deviceHash, sessionId))) ?? 0,
+        );
+        if (s <= last) {
+          throw new UnauthorizedException('Wire message decryption failed');
+        }
+        // Realign the counter to the frame's true seq + persist it as the
+        // highest accepted seq, atomically.
+        const pipe = this.redis.multi();
+        pipe.set(seqKey, String(s));
+        pipe.expire(seqKey, this.seqTtl(deviceHash));
+        pipe.set(this.lastC2sKey(deviceHash, sessionId), String(s));
+        pipe.expire(
+          this.lastC2sKey(deviceHash, sessionId),
+          this.seqTtl(deviceHash),
+        );
+        await pipe.exec();
+      } else {
+        // Exact match — fresh by construction (the counter only realigns to
+        // an accepted seq, so the next exact seq is always above it).
+        // Persist as the highest accepted seq for replay gating.
+        const pipe = this.redis.multi();
+        pipe.set(this.lastC2sKey(deviceHash, sessionId), String(s));
+        pipe.expire(
+          this.lastC2sKey(deviceHash, sessionId),
+          this.seqTtl(deviceHash),
+        );
+        await pipe.exec();
+      }
+      return JSON.parse(Buffer.from(plain).toString('utf8')) as unknown;
+    }
+    throw new UnauthorizedException('Wire message decryption failed');
   }
 
   // ── TTL management ───────────────────────────────────────────────────
