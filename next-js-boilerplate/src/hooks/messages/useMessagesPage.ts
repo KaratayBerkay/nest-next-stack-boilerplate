@@ -108,6 +108,9 @@ export function useMessagesPage({
 
   useEffect(() => {
     setActivePeerId(selectedUser?.id ?? null);
+    // Leaving the messages page must clear the peer so realtime frames
+    // received elsewhere (e.g. the feed page) are not auto-marked read.
+    return () => setActivePeerId(null);
   }, [selectedUser]);
 
   const openConversation = useCallback(
