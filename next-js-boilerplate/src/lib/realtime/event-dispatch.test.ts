@@ -156,6 +156,54 @@ describe("dispatchEvent", () => {
       expect(conversations[0].unread).toBe(0);
     });
 
+    it("does not auto-mark-read when a different conversation is open", async () => {
+      setActivePeerId("other-peer");
+      qc.setQueryData(
+        ["conversations"],
+        [{ user: { id: "sender-1" }, unread: 1 }],
+      );
+
+      await dispatchEvent(
+        qc,
+        {
+          type: "direct-message",
+          message: { id: "m1", senderId: "sender-1", body: "hello" },
+        },
+        "user-1",
+      );
+
+      expect(markMessagesReadServer).not.toHaveBeenCalled();
+      const conversations = qc.getQueryData(["conversations"]) as {
+        user: { id: string };
+        unread: number;
+      }[];
+      expect(conversations[0].unread).toBe(1);
+    });
+
+    it("does not auto-mark-read when no thread is open (user on another page)", async () => {
+      setActivePeerId(null);
+      qc.setQueryData(
+        ["conversations"],
+        [{ user: { id: "sender-1" }, unread: 1 }],
+      );
+
+      await dispatchEvent(
+        qc,
+        {
+          type: "direct-message",
+          message: { id: "m1", senderId: "sender-1", body: "hello" },
+        },
+        "user-1",
+      );
+
+      expect(markMessagesReadServer).not.toHaveBeenCalled();
+      const conversations = qc.getQueryData(["conversations"]) as {
+        user: { id: string };
+        unread: number;
+      }[];
+      expect(conversations[0].unread).toBe(1);
+    });
+
     it("reconciles the sender echo without recipientId via the active peer", async () => {
       setActivePeerId("recip-1");
       trackTempId("temp-123");

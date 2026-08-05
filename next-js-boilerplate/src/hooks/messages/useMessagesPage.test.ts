@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { useMessagesPage } from "@/hooks/messages/useMessagesPage";
+import { setActivePeerId } from "@/lib/realtime/event-dispatch";
 
 const mockUseMessagesData = vi.hoisted(() => vi.fn());
 
@@ -25,9 +26,14 @@ vi.mock("@/hooks/useConnectionState", () => ({
 vi.mock("@/hooks/usePresence", () => ({
   usePresence: () => new Set<string>(),
 }));
-vi.mock("@/lib/realtime/event-dispatch", () => ({
-  setActivePeerId: vi.fn(),
-}));
+vi.mock("@/lib/realtime/event-dispatch", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/realtime/event-dispatch")>();
+  return {
+    ...actual,
+    setActivePeerId: vi.fn(actual.setActivePeerId),
+  };
+});
 vi.mock("@/hooks/messages/useMessagesSearch", () => ({
   useMessagesSearch: () => ({
     search: "",
@@ -63,6 +69,28 @@ function conversation(avatarUrl: string | null) {
 }
 
 describe("useMessagesPage selectedUser freshness", () => {
+  it("clears the realtime active peer on unmount so frames elsewhere aren't auto-marked read", () => {
+    mockUseMessagesData.mockReturnValue({
+      friends: [],
+      conversations: conversation("https://cdn.example/avatar.png"),
+      convsError: false,
+    });
+
+    const { result, rerender, unmount } = renderHook(() => useMessagesPage({}));
+
+    result.current.openConversation({
+      id: PEER_ID,
+      name: "Peer",
+      email: "peer@example.com",
+      avatarUrl: "https://cdn.example/avatar.png",
+    });
+    rerender();
+    expect(setActivePeerId).toHaveBeenLastCalledWith(PEER_ID);
+
+    unmount();
+    expect(setActivePeerId).toHaveBeenLastCalledWith(null);
+  });
+
   it("overlays live avatarUrl from `conversations` instead of the stale click-time snapshot", () => {
     mockUseMessagesData.mockReturnValue({
       friends: [],
