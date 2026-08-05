@@ -1,11 +1,13 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 import { trackTempId } from "@/lib/realtime/event-dispatch";
 import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
 
 export function useMessageActions() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const realtime = useRealtime();
 
   const sendMessage = async (
     recipientId: string,
@@ -38,6 +40,27 @@ export function useMessageActions() {
         pages[0] = first;
         return { ...data, pages };
       });
+    }
+
+    // Preferred path: send over the wire like chat-room. The gateway echoes
+    // the message back (plaintext body, _tempId) which event-dispatch uses
+    // to replace the optimistic entry — no REST response round-trip, so the
+    // stored encrypted row (body: null) never lands in the query cache.
+    if (realtime && realtime.status === "open") {
+      realtime.send({
+        type: "direct-message",
+        recipientId,
+        text,
+        tempId,
+        ...(attachment
+          ? {
+              attachmentUrl: attachment.url,
+              attachmentType: attachment.type,
+              attachmentName: attachment.name,
+            }
+          : {}),
+      });
+      return;
     }
 
     let message: Record<string, unknown> | undefined;
@@ -77,7 +100,13 @@ export function useMessageActions() {
         const pages = data.pages.map((page) => ({
           ...page,
           messages: page.messages.map((m) =>
-            m._tempId === tempId ? { ...message, pending: false } : m,
+            m._tempId === tempId
+              ? {
+                  ...message,
+                  body: message.body ?? text,
+                  pending: false,
+                }
+              : m,
           ),
         }));
         return { ...data, pages };

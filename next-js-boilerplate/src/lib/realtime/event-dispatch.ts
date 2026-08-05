@@ -1,5 +1,6 @@
 import type { useQueryClient } from "@tanstack/react-query";
 import { markMessagesReadServer } from "@/api/server/messages/mark-read";
+import { patchConversationList } from "@/lib/realtime/renew-dispatch";
 
 const sentTempIds = new Set<string>();
 let activePeerId: string | null = null;
@@ -56,6 +57,20 @@ export async function dispatchEvent(
     if (msg.recipientId === ownUserId && sendFrame) {
       sendFrame({ type: "delivered-ack", messageId: msg.id });
     }
+    // Keep the sidebar preview in sync for both sides: the recipient's row
+    // is normally updated by the server's Conversation renew, while the
+    // sender's row only gets this echo frame (the REST/WS send paths emit
+    // no renew to the sender). Never insert — the peer is already in the
+    // list whenever a thread is open.
+    patchConversationList(
+      qc,
+      {
+        user: { id: peerId },
+        lastMessage: typeof msg.body === "string" ? (msg.body as string) : "",
+        lastTime: msg.createdAt as string,
+      },
+      { insertIfMissing: false },
+    );
     if (
       msg.recipientId === ownUserId &&
       msg.senderId &&

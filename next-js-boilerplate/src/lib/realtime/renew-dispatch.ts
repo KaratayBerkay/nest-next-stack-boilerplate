@@ -1,5 +1,57 @@
 import type { useQueryClient } from "@tanstack/react-query";
 
+type ConversationPatch = Record<string, unknown> & {
+  user?: { id?: string };
+};
+
+export function patchConversationList(
+  qc: ReturnType<typeof useQueryClient>,
+  conversation: ConversationPatch,
+  opts?: { insertIfMissing?: boolean },
+): void {
+  const peerId = (conversation.user as { id?: string } | undefined)?.id;
+  if (!peerId) return;
+
+  // Never decrypt previews here — the server delivers plaintext
+  // bodies in the conversation list. Encrypted envelopes stay as
+  // objects; the sidebar renders them as "🔒 Encrypted".
+  const rawLastMessage = conversation.lastMessage;
+
+  qc.setQueryData(["conversations"], (old: unknown[] | undefined) => {
+    const list = (old ?? []) as Record<string, unknown>[];
+    const idx = list.findIndex(
+      (c) => (c.user as Record<string, unknown>)?.id === peerId,
+    );
+    if (idx >= 0) {
+      const updated = [...list];
+      const merged: Record<string, unknown> = {
+        ...(updated[idx] as Record<string, unknown>),
+      };
+      for (const [k, v] of Object.entries(conversation)) {
+        if (v !== undefined && v !== null && v !== "") {
+          merged[k] =
+            k === "user" && typeof v === "object"
+              ? { ...(merged.user as object), ...(v as object) }
+              : v;
+        }
+      }
+      updated[idx] = merged;
+      return updated.sort(
+        (a, b) =>
+          (new Date((b.lastTime as string) ?? "").getTime() || 0) -
+          (new Date((a.lastTime as string) ?? "").getTime() || 0),
+      );
+    }
+    // A partial update for a peer not yet in the cached list (e.g.
+    // the unread-reset push above, which has no lastMessage/lastTime)
+    // isn't enough to render a real conversation row — drop it rather
+    // than inserting a broken stub.
+    if (opts?.insertIfMissing === false || rawLastMessage === undefined)
+      return list;
+    return [conversation, ...list];
+  });
+}
+
 export async function dispatchRenew(
   qc: ReturnType<typeof useQueryClient>,
   frame: Record<string, unknown>,
@@ -37,45 +89,11 @@ export async function dispatchRenew(
       // Companion to event-dispatch.ts's direct-message handler which patches
       // the open thread's cache and auto-marks-read for the active conversation.
       if (frame.type === "Conversation") {
-        const conv = frame.conversation as Record<string, unknown> & {
+        const conv = frame.conversation as ConversationPatch & {
           user: { id: string };
           lastMessage?: string | Record<string, unknown>;
         };
-
-        // Never decrypt previews here — the server delivers plaintext
-        // bodies in the conversation list. Encrypted envelopes stay as
-        // objects; the sidebar renders them as "🔒 Encrypted".
-        const rawLastMessage = conv.lastMessage;
-
-        qc.setQueryData(["conversations"], (old: unknown[] | undefined) => {
-          const list = (old ?? []) as Record<string, unknown>[];
-          const idx = list.findIndex(
-            (c) => (c.user as Record<string, unknown>)?.id === conv.user.id,
-          );
-          if (idx >= 0) {
-            const updated = [...list];
-            const merged: Record<string, unknown> = {
-              ...(updated[idx] as Record<string, unknown>),
-            };
-            for (const [k, v] of Object.entries(conv)) {
-              if (v !== undefined && v !== null && v !== "") {
-                merged[k] = v;
-              }
-            }
-            updated[idx] = merged;
-            return updated.sort(
-              (a, b) =>
-                (new Date((b.lastTime as string) ?? "").getTime() || 0) -
-                (new Date((a.lastTime as string) ?? "").getTime() || 0),
-            );
-          }
-          // A partial update for a peer not yet in the cached list (e.g.
-          // the unread-reset push above, which has no lastMessage/lastTime)
-          // isn't enough to render a real conversation row — drop it rather
-          // than inserting a broken stub.
-          if (rawLastMessage === undefined) return list;
-          return [conv, ...list];
-        });
+        patchConversationList(qc, conv, { insertIfMissing: true });
       }
       break;
     }

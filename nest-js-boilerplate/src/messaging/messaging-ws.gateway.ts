@@ -36,6 +36,7 @@ type AuthWs = WebSocket & {
 
 interface IncomingMessagePayload {
   text: string;
+  tempId?: string;
   attachmentUrl?: string;
   attachmentType?: string;
   attachmentName?: string;
@@ -192,6 +193,12 @@ export class MessagingWsGateway implements OnModuleInit {
       toAttachment(data),
       storageEnvelope as unknown as Record<string, unknown>,
     );
+    // Echo the client tempId back in the wire payloads so the sender's
+    // optimistic entry can be replaced (mirrors sendAndDeliverMessage's
+    // _tempId stamp for the REST path).
+    if (data.tempId) {
+      (message as Record<string, unknown>)._tempId = data.tempId;
+    }
     const delivery = await this.ms.deliverDirectMessage(message, plaintext);
 
     // Per-connection encrypted emit to EVERY socket of the recipient and

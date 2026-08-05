@@ -187,6 +187,94 @@ describe('MessagingDmService', () => {
     });
   });
 
+  describe('deliverDirectMessage', () => {
+    it('echoes _tempId and the plaintext body in both wire payloads', async () => {
+      mockPrisma.message.count.mockResolvedValue(0);
+
+      const delivery = await service.deliverDirectMessage(
+        {
+          id: 'm1',
+          senderId: 'u1',
+          recipientId: 'u2',
+          body: null,
+          createdAt: new Date('2026-08-05T10:00:00Z'),
+          sender: { id: 'u1', name: 'Alice', email: 'a@b.com' },
+          _tempId: 'temp-123',
+        },
+        { text: 'hello', attachment: undefined },
+      );
+
+      expect(delivery.recipientPayload).toEqual({
+        type: 'direct-message',
+        message: expect.objectContaining({
+          id: 'm1',
+          body: 'hello',
+          _tempId: 'temp-123',
+        }),
+      });
+      expect(delivery.senderPayload).toEqual({
+        type: 'direct-message',
+        message: expect.objectContaining({
+          id: 'm1',
+          body: 'hello',
+          _tempId: 'temp-123',
+        }),
+      });
+    });
+
+    it('omits _tempId when the message has none', async () => {
+      mockPrisma.message.count.mockResolvedValue(0);
+
+      const delivery = await service.deliverDirectMessage(
+        {
+          id: 'm1',
+          senderId: 'u1',
+          recipientId: 'u2',
+          body: null,
+          createdAt: new Date('2026-08-05T10:00:00Z'),
+          sender: { id: 'u1', name: 'Alice', email: 'a@b.com' },
+        },
+        { text: 'hello' },
+      );
+
+      expect(delivery.recipientPayload.message).not.toHaveProperty('_tempId');
+    });
+
+    it('includes attachment fields in both wire payloads when present', async () => {
+      mockPrisma.message.count.mockResolvedValue(0);
+
+      const delivery = await service.deliverDirectMessage(
+        {
+          id: 'm1',
+          senderId: 'u1',
+          recipientId: 'u2',
+          body: null,
+          createdAt: new Date('2026-08-05T10:00:00Z'),
+          sender: { id: 'u1', name: 'Alice', email: 'a@b.com' },
+          attachmentUrl: 'https://minio/x.png',
+          attachmentType: 'image/png',
+          attachmentName: 'x.png',
+        },
+        { text: '', attachment: { url: 'https://minio/x.png' } },
+      );
+
+      expect(delivery.recipientPayload.message).toEqual(
+        expect.objectContaining({
+          attachmentUrl: 'https://minio/x.png',
+          attachmentType: 'image/png',
+          attachmentName: 'x.png',
+        }),
+      );
+      expect(delivery.senderPayload.message).toEqual(
+        expect.objectContaining({
+          attachmentUrl: 'https://minio/x.png',
+          attachmentType: 'image/png',
+          attachmentName: 'x.png',
+        }),
+      );
+    });
+  });
+
   describe('getMessages', () => {
     it('withholds avatarUrl and the raw hideAvatar flag for a peer who has hidden it', async () => {
       areFriendsMock.mockResolvedValue(true);

@@ -44,6 +44,7 @@ type GatewayInternal = {
     data: {
       recipientId?: string;
       text?: string;
+      tempId?: string;
       attachmentUrl?: string;
       attachmentType?: string;
       attachmentName?: string;
@@ -293,6 +294,21 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
         undefined,
         undefined,
         envelope,
+      );
+    });
+
+    it('echoes the client tempId in the wire payloads so the optimistic entry can be replaced', async () => {
+      const ws = createMockWs('MEDIUM');
+      await (gateway as unknown as GatewayInternal).handleDirectMessage(ws, {
+        recipientId: 'u2',
+        text: 'hello',
+        tempId: 'temp-123',
+      });
+      const delivered = mockMs.deliverDirectMessage.mock.calls[0][0];
+      expect(delivered).toHaveProperty('_tempId', 'temp-123');
+      expect(mockMs.deliverDirectMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ _tempId: 'temp-123' }),
+        { text: 'hello', attachment: undefined },
       );
     });
 

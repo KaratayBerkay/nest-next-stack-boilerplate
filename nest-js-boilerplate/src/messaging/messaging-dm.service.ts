@@ -329,6 +329,10 @@ export class MessagingDmService {
         email?: string;
         avatar?: string;
       };
+      _tempId?: string;
+      attachmentUrl?: string | null;
+      attachmentType?: string | null;
+      attachmentName?: string | null;
     },
     deliveryPlaintext?: { text?: string; attachment?: unknown },
   ): Promise<{
@@ -379,6 +383,14 @@ export class MessagingDmService {
       sender: message.sender,
       body: deliveryPlaintext?.text ?? null,
       createdAt: message.createdAt,
+      ...(message._tempId ? { _tempId: message._tempId } : {}),
+      ...(message.attachmentUrl
+        ? {
+            attachmentUrl: message.attachmentUrl,
+            attachmentType: message.attachmentType,
+            attachmentName: message.attachmentName,
+          }
+        : {}),
     };
 
     if (

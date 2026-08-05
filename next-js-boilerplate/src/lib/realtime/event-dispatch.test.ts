@@ -132,6 +132,121 @@ describe("dispatchEvent", () => {
       const data = qc.getQueryData(["messages", "recip-1"]);
       expect(data).toBeDefined();
     });
+
+    it("reconciles the sender echo tempId by replacing the pending entry", async () => {
+      trackTempId("temp-123");
+      qc.setQueryData(["messages", "recip-1"], {
+        pages: [
+          {
+            messages: [
+              {
+                id: "temp-123",
+                senderId: "user-1",
+                body: "hello",
+                pending: true,
+              },
+            ],
+          },
+        ],
+        pageParams: [undefined],
+      });
+
+      await dispatchEvent(
+        qc,
+        {
+          type: "direct-message",
+          message: {
+            id: "real-uuid",
+            senderId: "user-1",
+            recipientId: "recip-1",
+            body: "hello",
+            _tempId: "temp-123",
+            pending: false,
+          },
+        },
+        "user-1",
+      );
+
+      const data = qc.getQueryData(["messages", "recip-1"]) as {
+        pages: { messages: Record<string, unknown>[] }[];
+      };
+      expect(data.pages[0].messages).toHaveLength(1);
+      expect(data.pages[0].messages[0].id).toBe("real-uuid");
+      expect(data.pages[0].messages[0].pending).toBe(false);
+      expect(data.pages[0].messages[0].body).toBe("hello");
+    });
+
+    it("patches the sender's conversation list preview from the echo frame", async () => {
+      qc.setQueryData(
+        ["conversations"],
+        [
+          {
+            user: { id: "recip-1", name: "Bob", email: "b@b.com" },
+            lastMessage: "older",
+            lastTime: "2026-08-04T10:00:00Z",
+          },
+        ],
+      );
+      qc.setQueryData(["messages", "recip-1"], {
+        pages: [{ messages: [] }],
+        pageParams: [undefined],
+      });
+
+      await dispatchEvent(
+        qc,
+        {
+          type: "direct-message",
+          message: {
+            id: "m2",
+            senderId: "user-1",
+            recipientId: "recip-1",
+            body: "hi from me",
+            createdAt: "2026-08-05T10:00:00Z",
+          },
+        },
+        "user-1",
+      );
+
+      const data = qc.getQueryData(["conversations"]) as {
+        user: Record<string, unknown>;
+        lastMessage: string;
+        lastTime: string;
+      }[];
+      expect(data).toHaveLength(1);
+      expect(data[0].user).toEqual({
+        id: "recip-1",
+        name: "Bob",
+        email: "b@b.com",
+      });
+      expect(data[0].lastMessage).toBe("hi from me");
+      expect(data[0].lastTime).toBe("2026-08-05T10:00:00Z");
+    });
+
+    it("does not insert a conversation row for a peer missing from the sidebar list", async () => {
+      qc.setQueryData(["conversations"], []);
+      qc.setQueryData(["messages", "recip-1"], {
+        pages: [{ messages: [] }],
+        pageParams: [undefined],
+      });
+
+      await dispatchEvent(
+        qc,
+        {
+          type: "direct-message",
+          message: {
+            id: "m2",
+            senderId: "recip-1",
+            recipientId: "user-1",
+            body: "hello",
+            createdAt: "2026-08-05T10:00:00Z",
+          },
+        },
+        "user-1",
+      );
+
+      const data = qc.getQueryData(["conversations"]);
+      expect(data).toHaveLength(0);
+    });
   });
 
   describe("message-read", () => {
