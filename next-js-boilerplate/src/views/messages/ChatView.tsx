@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
 import { useConversation } from "@/lib/realtime/useConversation";
@@ -8,6 +9,7 @@ import { ScrollToBottomButton } from "@/components/ui/ScrollToBottomButton";
 import { ConnectionUnstable } from "@/components/ConnectionUnstable";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
+import { messageUsageQueryOptions } from "@/api/client/usage/query";
 import type { ChatViewProps } from "@/types/messages/ChatView-types";
 import {
   useMessageActions,
@@ -21,6 +23,7 @@ import {
 import { ChatViewHeader } from "@/views/messages/ChatViewHeader";
 import { ChatInputBar } from "@/views/messages/ChatInputBar";
 import { ChatMessageList } from "@/views/messages/ChatMessageList";
+import { StorageLimitNotice } from "@/views/messages/StorageLimitNotice";
 import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
 
 export function ChatView({
@@ -39,6 +42,9 @@ export function ChatView({
   const [pendingAttachment, setPendingAttachment] =
     useState<MessageAttachment | null>(null);
   const [attaching, setAttaching] = useState(false);
+  const { data: messageUsage } = useQuery(messageUsageQueryOptions());
+  const storageLimitReached =
+    !!messageUsage && messageUsage.bytes >= messageUsage.limitBytes;
 
   const {
     data: conversationData,
@@ -150,22 +156,26 @@ export function ChatView({
         <ScrollToBottomButton onClick={scrollToBottom} />
       )}
 
-      <ChatInputBar
-        input={input}
-        setInput={setInput}
-        messageError={messageError}
-        handleSend={handleSend}
-        connectionState={connectionState}
-        inputPlaceholder={t.inputPlaceholder}
-        connectingLabel={t.connecting}
-        recipientId={selectedUser.id}
-        onTypingStart={sendTypingStart}
-        onTypingStop={sendTypingStop}
-        attaching={attaching}
-        pendingAttachment={pendingAttachment}
-        onAttachFile={handleAttachFile}
-        onRemoveAttachment={handleRemoveAttachment}
-      />
+      {storageLimitReached ? (
+        <StorageLimitNotice />
+      ) : (
+        <ChatInputBar
+          input={input}
+          setInput={setInput}
+          messageError={messageError}
+          handleSend={handleSend}
+          connectionState={connectionState}
+          inputPlaceholder={t.inputPlaceholder}
+          connectingLabel={t.connecting}
+          recipientId={selectedUser.id}
+          onTypingStart={sendTypingStart}
+          onTypingStop={sendTypingStop}
+          attaching={attaching}
+          pendingAttachment={pendingAttachment}
+          onAttachFile={handleAttachFile}
+          onRemoveAttachment={handleRemoveAttachment}
+        />
+      )}
     </div>
   );
 }

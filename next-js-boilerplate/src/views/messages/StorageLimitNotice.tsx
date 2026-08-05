@@ -1,7 +1,7 @@
 "use client";
 
+import { IconAlertCircle } from "@tabler/icons-react";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
-import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/cn";
 import type { StorageLimitNoticeProps } from "@/types/messages/StorageLimitNotice-types";
 
@@ -9,17 +9,13 @@ export function StorageLimitNotice({ className }: StorageLimitNoticeProps) {
   const t = useMessages("messages");
   return (
     <div
-      className={cn(
-        "flex h-full w-full items-center justify-center p-6",
-        className,
-      )}
+      className={cn("flex flex-col gap-0.5 border-t px-5 py-3.5", className)}
     >
-      <Card variant="surface" className="max-w-sm p-6 text-center">
-        <h2 className="text-fg text-lg font-semibold">
-          {t.storageLimitReached}
-        </h2>
-        <p className="text-muted mt-2 text-sm">{t.storageLimitUpgradeHint}</p>
-      </Card>
+      <p className="text-error flex items-center gap-2 text-sm font-medium">
+        <IconAlertCircle size={16} className="shrink-0" />
+        {t.storageLimitReached}
+      </p>
+      <p className="text-muted pl-6 text-xs">{t.storageLimitUpgradeHint}</p>
     </div>
   );
 }

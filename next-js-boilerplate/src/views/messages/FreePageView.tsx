@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { MessagesViewFallback } from "@/fallbacks";
 import { LoadingAuth } from "@/components/LoadingAuth";
@@ -9,11 +8,9 @@ import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
 import { cn } from "@/lib/cn";
 import type { MessagesViewProps } from "@/types/messages/MessagesView-types";
 import { useMessagesPage } from "@/hooks/messages/useMessagesPage";
-import { messageUsageQueryOptions } from "@/api/client/usage/query";
 import { MessagesSidebar } from "./MessagesSidebar";
 import { ChatView } from "./ChatView";
 import { EmptyChatState } from "./EmptyChatState";
-import { StorageLimitNotice } from "./StorageLimitNotice";
 
 export function FreePageView({
   initialUser,
@@ -68,27 +65,9 @@ function MessagesPageContent({
     connectionState,
     messagesUser,
   } = useMessagesPage({ initialUser, initialFriends });
-  const { data: messageUsage } = useQuery(messageUsageQueryOptions());
-  const storageLimitReached =
-    !!messageUsage && messageUsage.bytes >= messageUsage.limitBytes;
 
   if (loading) return <LoadingAuth />;
   if (!user) return <UnauthenticatedMessage message={t.signInRequired} />;
-
-  const chatPane = selectedUser ? (
-    storageLimitReached ? (
-      <StorageLimitNotice />
-    ) : (
-      <ChatView
-        selectedUser={selectedUser}
-        user={messagesUser}
-        setSelectedUser={setSelectedUser}
-        setSidebarOpen={setSidebarOpen}
-        onlineUsers={onlineUsers}
-        connectionState={connectionState}
-      />
-    )
-  ) : null;
 
   return (
     <div
@@ -129,10 +108,32 @@ function MessagesPageContent({
       />
 
       <div className="hidden min-h-0 flex-1 md:flex">
-        {chatPane ?? <EmptyChatState />}
+        {selectedUser ? (
+          <ChatView
+            selectedUser={selectedUser}
+            user={messagesUser}
+            setSelectedUser={setSelectedUser}
+            setSidebarOpen={setSidebarOpen}
+            onlineUsers={onlineUsers}
+            connectionState={connectionState}
+          />
+        ) : (
+          <EmptyChatState />
+        )}
       </div>
 
-      <div className="flex min-h-0 flex-1 md:hidden">{chatPane}</div>
+      <div className="flex min-h-0 flex-1 md:hidden">
+        {selectedUser ? (
+          <ChatView
+            selectedUser={selectedUser}
+            user={messagesUser}
+            setSelectedUser={setSelectedUser}
+            setSidebarOpen={setSidebarOpen}
+            onlineUsers={onlineUsers}
+            connectionState={connectionState}
+          />
+        ) : null}
+      </div>
     </div>
   );
 }
