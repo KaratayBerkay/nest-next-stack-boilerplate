@@ -37,7 +37,7 @@ export class UsageService {
       where: { id: userId },
       select: { subscriptionTier: true },
     });
-    const tier = user?.subscriptionTier ?? SubscriptionTier.FREE;
+    const tier = (user?.subscriptionTier ?? SubscriptionTier.FREE) as SubscriptionTier;
     const { from, to } = UsageService.currentMonthRange();
     const usage = await this.getMessageUsage(userId, tier, from, to);
     const projectedBytes = Math.round(
