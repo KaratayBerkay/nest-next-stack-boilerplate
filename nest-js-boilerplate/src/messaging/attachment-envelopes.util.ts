@@ -29,6 +29,7 @@ export async function resolveAttachmentEnvelopes(
     if (!stored) return a;
     return {
       ...a,
+      size: stored.size,
       storageEnvelope: {
         v: stored.v,
         nonce: stored.nonce,

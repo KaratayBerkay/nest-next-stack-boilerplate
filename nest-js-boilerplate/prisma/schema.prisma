@@ -846,6 +846,7 @@ model MessageAttachment {
   url       String
   type      String
   name      String
+  size      Int      @default(0)
   v         String?
   ct        String?  @db.Text
   nonce     String?
@@ -877,6 +878,7 @@ model RoomMessageAttachment {
   url           String
   type          String
   name          String
+  size          Int         @default(0)
   v             String?
   ct            String?     @db.Text
   nonce         String?

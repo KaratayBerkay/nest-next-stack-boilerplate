@@ -109,9 +109,6 @@ export function toMessageAttachment(
     url: result.url,
     type: result.mimetype,
     name: result.originalname,
-    // The at-rest envelope is intentionally NOT carried: it is generated and
-    // persisted server-side at upload time (PendingUpload) and resolved at
-    // message-save time. Shipping the full-file ciphertext in a WS frame
-    // exceeds the socket's 64 KiB maxPayload and kills the server.
+    size: result.size,
   };
 }

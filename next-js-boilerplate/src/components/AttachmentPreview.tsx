@@ -31,15 +31,24 @@ function serveUrl(url: string): string {
   return `/api/upload/serve/${objectName}`;
 }
 
+function formatBytes(bytes: number): string {
+  if (!bytes) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export function AttachmentPreview({
   url,
   type,
   name,
+  size,
   className,
 }: AttachmentPreviewProps) {
   const label = name || "Attachment";
   const isImage = type?.startsWith("image/") || isImageByExtension(name);
   const href = serveUrl(url);
+  const ext = fileExtension(name);
 
   if (isImage) {
     return (
@@ -48,8 +57,9 @@ export function AttachmentPreview({
         target="_blank"
         rel="noreferrer"
         aria-label={label}
+        title={label}
         className={cn(
-          "inline-block max-h-48 w-auto max-w-[240px] overflow-hidden rounded-lg",
+          "bg-surface border-border hover:bg-surface-hover flex items-center gap-3 rounded-lg border p-2 transition-colors",
           className,
         )}
       >
@@ -57,13 +67,17 @@ export function AttachmentPreview({
           src={href}
           alt={label}
           loading="lazy"
-          className="max-h-48 w-auto max-w-[240px] rounded-lg object-cover"
+          className="bg-surface-hover size-12 shrink-0 rounded-md object-cover"
         />
+        <div className="min-w-0 flex-1">
+          <span className="text-fg block truncate text-sm">{label}</span>
+          {size ? (
+            <span className="text-muted text-xs">{formatBytes(size)}</span>
+          ) : null}
+        </div>
       </a>
     );
   }
-
-  const ext = fileExtension(name);
 
   return (
     <a
@@ -73,16 +87,26 @@ export function AttachmentPreview({
       aria-label={label}
       title={label}
       className={cn(
-        "bg-surface-hover text-muted hover:bg-surface flex size-16 shrink-0 flex-col items-center justify-center gap-1 rounded-xl transition-colors",
+        "bg-surface border-border hover:bg-surface-hover flex items-center gap-3 rounded-lg border p-2 transition-colors",
         className,
       )}
     >
-      <IconFileText size={24} />
-      {ext && (
-        <span className="max-w-[90%] truncate text-[9px] font-semibold tracking-wide uppercase">
-          {ext}
-        </span>
-      )}
+      <div className="bg-surface-hover text-muted flex size-12 shrink-0 items-center justify-center rounded-md">
+        <IconFileText size={20} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <span className="text-fg block truncate text-sm">{label}</span>
+        <div className="flex items-center gap-2">
+          {ext ? (
+            <span className="text-muted text-[10px] font-semibold uppercase">
+              {ext}
+            </span>
+          ) : null}
+          {size ? (
+            <span className="text-muted text-xs">{formatBytes(size)}</span>
+          ) : null}
+        </div>
+      </div>
     </a>
   );
 }

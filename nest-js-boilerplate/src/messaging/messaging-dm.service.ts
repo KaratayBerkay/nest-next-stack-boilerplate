@@ -305,6 +305,7 @@ export class MessagingDmService {
                   url: a.url,
                   type: a.type,
                   name: a.name,
+                  size: a.size,
                   v: a.storageEnvelope?.v ?? null,
                   ct: a.storageEnvelope?.ct ?? null,
                   nonce: a.storageEnvelope?.nonce ?? null,
@@ -371,6 +372,7 @@ export class MessagingDmService {
         url: string;
         type: string;
         name: string;
+        size?: number;
         storageEnvelope?: { v: string; nonce: string; ct?: string } | null;
       }[];
       _tempId?: string;

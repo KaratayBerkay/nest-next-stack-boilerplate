@@ -280,6 +280,7 @@ export class MessagingRoomService {
                     url: a.url,
                     type: a.type,
                     name: a.name,
+                    size: a.size,
                     v: a.storageEnvelope?.v ?? null,
                     ct: a.storageEnvelope?.ct ?? null,
                     nonce: a.storageEnvelope?.nonce ?? null,

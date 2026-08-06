@@ -116,6 +116,7 @@ export class StorageCryptoService {
     url: string;
     type: string;
     name: string;
+    size?: number;
     v: string | null;
     ct: string | null;
     nonce: string | null;
@@ -123,6 +124,7 @@ export class StorageCryptoService {
     url: string;
     type: string;
     name: string;
+    size: number;
     storageEnvelope: { v: string; nonce: string } | null;
   } {
     const env = this.toEnvelope(row);
@@ -130,6 +132,7 @@ export class StorageCryptoService {
       url: row.url,
       type: row.type,
       name: row.name,
+      size: row.size ?? 0,
       storageEnvelope: env ? { v: env.v, nonce: env.nonce } : null,
     };
   }
