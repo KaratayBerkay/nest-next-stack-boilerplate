@@ -2,10 +2,27 @@ import { IconFileText } from "@tabler/icons-react";
 import { cn } from "@/lib/cn";
 import type { AttachmentPreviewProps } from "@/types/components/AttachmentPreview-types";
 
+const IMAGE_EXTENSIONS = new Set([
+  "png",
+  "jpg",
+  "jpeg",
+  "gif",
+  "webp",
+  "svg",
+  "bmp",
+  "ico",
+  "avif",
+  "tiff",
+]);
+
 function fileExtension(name: string | null | undefined): string {
   if (!name) return "";
   const parts = name.split(".");
-  return parts.length > 1 ? (parts.pop() ?? "").toUpperCase() : "";
+  return parts.length > 1 ? (parts.pop() ?? "").toLowerCase() : "";
+}
+
+function isImageByExtension(name: string | null | undefined): boolean {
+  return IMAGE_EXTENSIONS.has(fileExtension(name));
 }
 
 export function AttachmentPreview({
@@ -15,7 +32,7 @@ export function AttachmentPreview({
   className,
 }: AttachmentPreviewProps) {
   const label = name || "Attachment";
-  const isImage = type?.startsWith("image/");
+  const isImage = type?.startsWith("image/") || isImageByExtension(name);
 
   if (isImage) {
     return (
@@ -55,7 +72,7 @@ export function AttachmentPreview({
     >
       <IconFileText size={24} />
       {ext && (
-        <span className="max-w-[90%] truncate text-[9px] font-semibold tracking-wide">
+        <span className="max-w-[90%] truncate text-[9px] font-semibold tracking-wide uppercase">
           {ext}
         </span>
       )}

@@ -73,14 +73,18 @@ export const ChatRoomMessageList = forwardRef<
                   {msg.senderName}
                 </p>
               )}
-              {msg.attachments?.map((att) => (
-                <AttachmentPreview
-                  key={att.url}
-                  url={att.url}
-                  type={att.type}
-                  name={att.name}
-                />
-              ))}
+              {msg.attachments?.length ? (
+                <div className="flex flex-wrap gap-2">
+                  {msg.attachments.map((att) => (
+                    <AttachmentPreview
+                      key={att.url}
+                      url={att.url}
+                      type={att.type}
+                      name={att.name}
+                    />
+                  ))}
+                </div>
+              ) : null}
               {msg.body != null && msg.body !== "" ? (
                 <span
                   className={`inline-block rounded-xl px-3 py-1.5 text-sm ${

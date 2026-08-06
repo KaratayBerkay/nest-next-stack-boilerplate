@@ -36,14 +36,18 @@ export function ChatMessageBubble({
       <div
         className={`flex max-w-[70%] flex-col gap-0.5 ${isMe ? "items-end" : ""}`}
       >
-        {msg.attachments?.map((att) => (
-          <AttachmentPreview
-            key={att.url}
-            url={att.url}
-            type={att.type}
-            name={att.name}
-          />
-        ))}
+        {msg.attachments?.length ? (
+          <div className="flex flex-wrap gap-2">
+            {msg.attachments.map((att) => (
+              <AttachmentPreview
+                key={att.url}
+                url={att.url}
+                type={att.type}
+                name={att.name}
+              />
+            ))}
+          </div>
+        ) : null}
         {msg.body != null && msg.body !== "" ? (
           <span
             className={`inline-block rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
