@@ -40,6 +40,8 @@ export const PUSH_UNSUBSCRIBE_URL = "/api/push/unsubscribe" as const;
 
 export const UPLOAD_URL = "/api/upload" as const;
 export const UPLOAD_ATTACHMENT_URL = "/api/upload/attachment" as const;
+export const UPLOAD_ATTACHMENT_STREAM_URL =
+  "/api/upload/attachment-stream" as const;
 
 export const ROOMS_URL = "/api/messages/rooms" as const;
 

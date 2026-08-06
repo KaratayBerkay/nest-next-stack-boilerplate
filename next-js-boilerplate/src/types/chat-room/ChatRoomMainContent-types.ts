@@ -1,6 +1,6 @@
 import type { Dispatch, RefObject, SetStateAction } from "react";
 import type { ChatRoomMessage } from "./ChatRoomMessage-types";
-import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
+import type { UploadItem } from "@/types/messages/AttachmentModal-types";
 
 export interface ChatRoomMainContentProps {
   useNativeControls: boolean;
@@ -14,7 +14,7 @@ export interface ChatRoomMainContentProps {
   msgsError: boolean;
   input: string;
   attaching: boolean;
-  pendingAttachment: MessageAttachment | null;
+  uploadItems: UploadItem[];
   bottomRef: RefObject<HTMLDivElement | null>;
   messagesRef: RefObject<HTMLDivElement | null>;
   isAtBottom: boolean;
@@ -23,6 +23,8 @@ export interface ChatRoomMainContentProps {
   onSetSidebarOpen: (open: boolean) => void;
   onSetInput: Dispatch<SetStateAction<string>>;
   onSend: () => void;
-  onAttachFile: (file: File) => void;
-  onRemoveAttachment: () => void;
+  onAttachFiles: (files: File[]) => void;
+  onRemoveUploadItem: (id: string) => void;
+  onCancelUploads: () => void;
+  onSendAttachments: () => void;
 }

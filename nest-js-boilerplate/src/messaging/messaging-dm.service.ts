@@ -9,6 +9,7 @@ import { displayName } from '../common/utils/display-name';
 import { countLetters } from '../common/utils/letter-count';
 import { UsageService } from '../usage/usage.service';
 import { initials, type MessageAttachment } from './messaging.types';
+import { resolveAttachmentEnvelopes } from './attachment-envelopes.util';
 
 export class MessagingDmService {
   private readonly logger = new Logger(MessagingDmService.name);
@@ -283,6 +284,12 @@ export class MessagingDmService {
         text,
         attachments,
       });
+    // Attachment envelopes come from the server-side upload store, not the
+    // client frame (the full-file ciphertext must never ride the WS).
+    const storedAttachments = await resolveAttachmentEnvelopes(
+      this.prisma,
+      attachments ?? [],
+    );
     const message = await this.prisma.message.create({
       data: {
         senderId,
@@ -292,9 +299,9 @@ export class MessagingDmService {
         nonce,
         letterCount: countLetters(text),
         attachments:
-          attachments && attachments.length > 0
+          storedAttachments.length > 0
             ? {
-                create: attachments.map((a) => ({
+                create: storedAttachments.map((a) => ({
                   url: a.url,
                   type: a.type,
                   name: a.name,

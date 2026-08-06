@@ -214,6 +214,11 @@ export type I18nMessages = {
       "removeAttachment": string;
       "uploading": string;
       "decryptionFailed": string;
+      "attachmentsTitle": string;
+      "files": string;
+      "cancel": string;
+      "uploaded": string;
+      "uploadFailed": string;
     }
 
   "checkout": {
@@ -1064,6 +1069,11 @@ export type I18nMessages = {
       "decryptionFailed": string;
       "storageLimitReached": string;
       "storageLimitUpgradeHint": string;
+      "attachmentsTitle": string;
+      "files": string;
+      "cancel": string;
+      "uploaded": string;
+      "uploadFailed": string;
     }
 
   "notification": {

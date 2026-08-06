@@ -20,12 +20,11 @@ import {
   selectChatRoom,
 } from "@/views/chat-room/ChatRoomHandlers";
 import { useChatRoomRealtime } from "@/views/chat-room/useChatRoomRealtime";
-import { useMessageUpload } from "@/api/client/messages/actions";
+import { useAttachmentUploads } from "@/hooks/messages/useAttachmentUploads";
 import { ChatRoomHeader } from "@/views/chat-room/ChatRoomHeader";
 import { ChatRoomSidebar } from "@/views/chat-room/ChatRoomSidebar";
 import { ChatRoomMainContent } from "@/views/chat-room/ChatRoomMainContent";
 import type { ChatRoomBaseViewProps } from "@/types/chat-room/ChatRoomBaseView-types";
-import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
 
 function ChatRoomContent({
   initialRoom = "general",
@@ -43,9 +42,6 @@ function ChatRoomContent({
   const [room, setRoom] = useState<string>(initialRoom);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [input, setInput] = useState("");
-  const [pendingAttachment, setPendingAttachment] =
-    useState<MessageAttachment | null>(null);
-  const [attaching, setAttaching] = useState(false);
   const [roomCounts, setRoomCounts] = useState<Record<string, number>>({});
   const [roomMembers, setRoomMembers] = useState<
     {
@@ -64,12 +60,20 @@ function ChatRoomContent({
   } = useRoom(room);
   const messagesRef = useYSwipeGesture<HTMLDivElement>();
   const { bottomRef, scrollToBottom, isAtBottom } = useAutoScroll(messages);
-  const { uploadAttachment } = useMessageUpload();
+  const {
+    items: uploadItems,
+    startUploads,
+    removeItem: removeUploadItem,
+    cancelAll: cancelUploads,
+    clear: clearUploads,
+    doneAttachments,
+    anyUploading,
+  } = useAttachmentUploads();
 
   const handleSend = useCallback(() => {
-    // Block send while the attachment upload is in flight — sending early
-    // silently drops the attachment (F35).
-    if (attaching) return;
+    // Block send while attachments are pending — WhatsApp-style, the modal's
+    // Send is the only path that ships them together.
+    if (anyUploading || uploadItems.length > 0) return;
     void chatRoomHandleSend(
       input,
       realtime,
@@ -78,9 +82,7 @@ function ChatRoomContent({
       user,
       setInput,
       scrollToBottom,
-      pendingAttachment ? [pendingAttachment] : undefined,
     );
-    setPendingAttachment(null);
   }, [
     input,
     realtime,
@@ -88,29 +90,40 @@ function ChatRoomContent({
     queryClient,
     user,
     scrollToBottom,
-    pendingAttachment,
-    attaching,
+    anyUploading,
+    uploadItems.length,
   ]);
 
-  const handleAttachFile = useCallback(
-    async (file: File) => {
-      if (!user) return;
-      setAttaching(true);
-      try {
-        const attachment = await uploadAttachment(file);
-        setPendingAttachment(attachment);
-      } catch {
-        setPendingAttachment(null);
-      } finally {
-        setAttaching(false);
-      }
-    },
-    [user, uploadAttachment],
-  );
+  const handleSendAttachments = useCallback(() => {
+    void chatRoomHandleSend(
+      input,
+      realtime,
+      room,
+      queryClient,
+      user,
+      setInput,
+      scrollToBottom,
+      doneAttachments(),
+    );
+    clearUploads();
+  }, [
+    input,
+    realtime,
+    room,
+    queryClient,
+    user,
+    scrollToBottom,
+    doneAttachments,
+    clearUploads,
+  ]);
 
-  const handleRemoveAttachment = useCallback(() => {
-    setPendingAttachment(null);
-  }, []);
+  const handleAttachFiles = useCallback(
+    (files: File[]) => {
+      if (!user) return;
+      startUploads(files);
+    },
+    [user, startUploads],
+  );
 
   const connectionState = useConnectionState();
   const onlineUserIds = useMemo(
@@ -181,8 +194,8 @@ function ChatRoomContent({
           msgsLoading={msgsLoading}
           msgsError={msgsError}
           input={input}
-          attaching={attaching}
-          pendingAttachment={pendingAttachment}
+          attaching={anyUploading}
+          uploadItems={uploadItems}
           bottomRef={bottomRef}
           messagesRef={
             messagesRef as unknown as React.RefObject<HTMLDivElement | null>
@@ -193,8 +206,10 @@ function ChatRoomContent({
           onSetSidebarOpen={setSidebarOpen}
           onSetInput={setInput}
           onSend={handleSend}
-          onAttachFile={handleAttachFile}
-          onRemoveAttachment={handleRemoveAttachment}
+          onAttachFiles={handleAttachFiles}
+          onRemoveUploadItem={removeUploadItem}
+          onCancelUploads={cancelUploads}
+          onSendAttachments={handleSendAttachments}
         />
       </div>
     </div>

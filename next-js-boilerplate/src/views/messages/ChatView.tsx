@@ -11,10 +11,8 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { messageUsageQueryOptions } from "@/api/client/usage/query";
 import type { ChatViewProps } from "@/types/messages/ChatView-types";
-import {
-  useMessageActions,
-  useMessageUpload,
-} from "@/api/client/messages/actions";
+import { useMessageActions } from "@/api/client/messages/actions";
+import { useAttachmentUploads } from "@/hooks/messages/useAttachmentUploads";
 import { useTypingUsers } from "@/hooks/useTypingUsers";
 import {
   chatViewHandleSend,
@@ -24,7 +22,7 @@ import { ChatViewHeader } from "@/views/messages/ChatViewHeader";
 import { ChatInputBar } from "@/views/messages/ChatInputBar";
 import { ChatMessageList } from "@/views/messages/ChatMessageList";
 import { StorageLimitNotice } from "@/views/messages/StorageLimitNotice";
-import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
+import { AttachmentModal } from "@/components/attachment-modal/AttachmentModal";
 
 export function ChatView({
   selectedUser,
@@ -39,9 +37,15 @@ export function ChatView({
   const messagesRef = useYSwipeGesture<HTMLDivElement>();
   const [input, setInput] = useState("");
   const [messageError, setMessageError] = useState<string | null>(null);
-  const [pendingAttachment, setPendingAttachment] =
-    useState<MessageAttachment | null>(null);
-  const [attaching, setAttaching] = useState(false);
+  const {
+    items: uploadItems,
+    startUploads,
+    removeItem: removeUploadItem,
+    cancelAll: cancelUploads,
+    clear: clearUploads,
+    doneAttachments,
+    anyUploading,
+  } = useAttachmentUploads();
   const { data: messageUsage } = useQuery(messageUsageQueryOptions());
   const storageLimitReached =
     !!messageUsage && messageUsage.bytes >= messageUsage.limitBytes;
@@ -67,7 +71,6 @@ export function ChatView({
 
   const { sendMessage } = useMessageActions();
   const { typingUsers, sendTypingStart, sendTypingStop } = useTypingUsers();
-  const { uploadAttachment } = useMessageUpload();
 
   const handleSend = useCallback(
     () =>
@@ -78,31 +81,37 @@ export function ChatView({
         setInput,
         setMessageError,
         scrollToBottom,
-        setPendingAttachment,
-        pendingAttachment ?? undefined,
       ),
-    [selectedUser, input, sendMessage, scrollToBottom, pendingAttachment],
+    [selectedUser, input, sendMessage, scrollToBottom],
   );
 
-  const handleAttachFile = useCallback(
-    async (file: File) => {
+  const handleSendAttachments = useCallback(() => {
+    void chatViewHandleSend(
+      selectedUser,
+      input,
+      sendMessage,
+      setInput,
+      setMessageError,
+      scrollToBottom,
+      doneAttachments(),
+    );
+    clearUploads();
+  }, [
+    selectedUser,
+    input,
+    sendMessage,
+    scrollToBottom,
+    doneAttachments,
+    clearUploads,
+  ]);
+
+  const handleAttachFiles = useCallback(
+    (files: File[]) => {
       if (!selectedUser) return;
-      setAttaching(true);
-      try {
-        const attachment = await uploadAttachment(file);
-        setPendingAttachment(attachment);
-      } catch {
-        setMessageError("Upload failed. Try again.");
-      } finally {
-        setAttaching(false);
-      }
+      startUploads(files);
     },
-    [selectedUser, uploadAttachment],
+    [selectedUser, startUploads],
   );
-
-  const handleRemoveAttachment = useCallback(() => {
-    setPendingAttachment(null);
-  }, []);
 
   const groupedMessages = useMemo(
     () => groupMessagesByDate(conversationMessages),
@@ -170,12 +179,20 @@ export function ChatView({
           recipientId={selectedUser.id}
           onTypingStart={sendTypingStart}
           onTypingStop={sendTypingStop}
-          attaching={attaching}
-          pendingAttachment={pendingAttachment}
-          onAttachFile={handleAttachFile}
-          onRemoveAttachment={handleRemoveAttachment}
+          attaching={anyUploading}
+          uploadItems={uploadItems}
+          onAttachFiles={handleAttachFiles}
         />
       )}
+
+      <AttachmentModal
+        open={uploadItems.length > 0}
+        items={uploadItems}
+        t={t}
+        onSend={handleSendAttachments}
+        onRemoveItem={removeUploadItem}
+        onCancel={cancelUploads}
+      />
     </div>
   );
 }

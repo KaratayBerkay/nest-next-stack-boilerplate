@@ -3,8 +3,6 @@ import { useId } from "react";
 import {
   IconPaperclip,
   IconX,
-  IconFileText,
-  IconPhoto,
   IconMenu2,
   IconCrown,
 } from "@tabler/icons-react";
@@ -22,7 +20,6 @@ import type {
   SendButtonProps,
   AttachButtonProps,
   EmojiButtonProps,
-  PendingAttachmentProps,
 } from "@/types/chat-room/ChatRoomSubComponent-types";
 
 export function SidebarCloseButton({
@@ -196,10 +193,10 @@ export function SendButton({
 
 function handleFileChange(
   e: ChangeEvent<HTMLInputElement>,
-  onAttachFile: (file: File) => void,
+  onAttachFile: (files: File[]) => void,
 ) {
-  const file = e.target.files?.[0];
-  if (file) onAttachFile(file);
+  const files = Array.from(e.target.files ?? []);
+  if (files.length > 0) onAttachFile(files);
   e.target.value = "";
 }
 
@@ -222,6 +219,7 @@ export function AttachButton({
         id={inputId}
         type="file"
         accept={ATTACHMENT_ACCEPT}
+        multiple
         disabled={disabled}
         className="sr-only"
         onChange={(e) => handleFileChange(e, onAttachFile)}
@@ -250,30 +248,5 @@ export function EmojiButton({
           : "size-9",
       )}
     />
-  );
-}
-
-export function PendingAttachmentChip({
-  attachment,
-  onRemove,
-  label,
-}: PendingAttachmentProps) {
-  return (
-    <div className="bg-surface border-border flex w-fit items-center gap-2 rounded-md border px-2 py-1 text-xs">
-      {attachment.type.startsWith("image/") ? (
-        <IconPhoto size={14} className="text-muted shrink-0" />
-      ) : (
-        <IconFileText size={14} className="text-muted shrink-0" />
-      )}
-      <span className="text-fg max-w-[140px] truncate">{attachment.name}</span>
-      <button
-        type="button"
-        onClick={onRemove}
-        aria-label={label}
-        className="text-muted hover:text-error transition-colors"
-      >
-        <IconX size={14} />
-      </button>
-    </div>
   );
 }

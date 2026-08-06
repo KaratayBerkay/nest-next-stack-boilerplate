@@ -16,8 +16,7 @@ export async function chatViewHandleSend(
   setInput: Dispatch<SetStateAction<string>>,
   setMessageError: Dispatch<SetStateAction<string | null>>,
   scrollToBottom: () => void,
-  setPendingAttachment: Dispatch<SetStateAction<MessageAttachment | null>>,
-  attachment?: MessageAttachment,
+  attachments: MessageAttachment[] = [],
 ) {
   if (!selectedUser) return;
   const parsed = sendMessageSchema.safeParse({ text: input });
@@ -25,7 +24,7 @@ export async function chatViewHandleSend(
     setMessageError(parsed.error.issues[0]?.message ?? "Invalid message");
     return;
   }
-  if (!parsed.data.text && !attachment) {
+  if (!parsed.data.text && attachments.length === 0) {
     setMessageError("Message cannot be empty");
     return;
   }
@@ -34,10 +33,9 @@ export async function chatViewHandleSend(
     await sendMessage(
       selectedUser.id,
       parsed.data.text,
-      attachment ? [attachment] : undefined,
+      attachments.length > 0 ? attachments : undefined,
     );
     setInput("");
-    setPendingAttachment(null);
     scrollToBottom();
   } catch {
     setMessageError("Failed to send message. Try again.");

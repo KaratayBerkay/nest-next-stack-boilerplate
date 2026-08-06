@@ -7,11 +7,11 @@ import {
   SendButton,
   AttachButton,
   EmojiButton,
-  PendingAttachmentChip,
 } from "@/views/chat-room/ChatRoomSubComponents";
 import { ChatRoomMessageList } from "@/views/chat-room/ChatRoomMessageList";
 import { ScrollToBottomButton } from "@/components/ui/ScrollToBottomButton";
 import { ConnectionUnstable } from "@/components/ConnectionUnstable";
+import { AttachmentModal } from "@/components/attachment-modal/AttachmentModal";
 import type { ChatRoomMainContentProps } from "@/types/chat-room/ChatRoomMainContent-types";
 
 function insertEmojiAtCursor(
@@ -45,7 +45,7 @@ export function ChatRoomMainContent({
   msgsError,
   input,
   attaching,
-  pendingAttachment,
+  uploadItems,
   bottomRef,
   messagesRef,
   isAtBottom,
@@ -54,8 +54,10 @@ export function ChatRoomMainContent({
   onSetSidebarOpen,
   onSetInput,
   onSend,
-  onAttachFile,
-  onRemoveAttachment,
+  onAttachFiles,
+  onRemoveUploadItem,
+  onCancelUploads,
+  onSendAttachments,
 }: ChatRoomMainContentProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -117,7 +119,7 @@ export function ChatRoomMainContent({
         <AttachButton
           useNativeControls={useNativeControls}
           disabled={connectionState !== "online" || attaching}
-          onAttachFile={onAttachFile}
+          onAttachFile={onAttachFiles}
           label={t.attachFile}
         />
         <EmojiButton
@@ -129,20 +131,6 @@ export function ChatRoomMainContent({
           label={t.openEmojiPicker}
         />
         <div className="flex flex-1 flex-col">
-          {pendingAttachment && (
-            <div className="mb-1 flex items-center gap-2">
-              <PendingAttachmentChip
-                attachment={pendingAttachment}
-                onRemove={onRemoveAttachment}
-                label={t.removeAttachment}
-              />
-              {attaching && (
-                <span className="text-muted animate-pulse text-xs">
-                  {t.uploading}
-                </span>
-              )}
-            </div>
-          )}
           <MessageInput
             useNativeControls={useNativeControls}
             value={input}
@@ -170,11 +158,21 @@ export function ChatRoomMainContent({
           disabled={
             connectionState !== "online" ||
             attaching ||
-            (!input.trim() && !pendingAttachment)
+            uploadItems.length > 0 ||
+            !input.trim()
           }
           label={t.send}
         />
       </div>
+
+      <AttachmentModal
+        open={uploadItems.length > 0}
+        items={uploadItems}
+        t={t}
+        onSend={onSendAttachments}
+        onRemoveItem={onRemoveUploadItem}
+        onCancel={onCancelUploads}
+      />
     </div>
   );
 }

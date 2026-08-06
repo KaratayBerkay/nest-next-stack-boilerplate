@@ -19,19 +19,18 @@ import { SessionValidatorService } from '../auth/session-validator.service';
 import { CryptoService } from '../common/crypto/crypto.service';
 import { displayName } from '../common/utils/display-name';
 import { parseDeviceType } from '../common/utils/device-type';
+import { RealtimePresenceService } from './realtime-presence.service';
+import { RealtimePageManager } from './realtime-page.manager';
+import { RealtimeRateLimiter } from './realtime-rate-limiter';
+import { WireCryptoService } from '../wire-crypto/wire-crypto.service';
+
 import type { ExceptionCode } from '../common/exceptions/exception-code';
+import type { RealtimeRateLimiterConfig } from './realtime-rate-limiter';
 import type {
   AuthWs,
   FrameHandler,
   VerifiedUpgradeRequest,
 } from './realtime.types';
-import { RealtimePresenceService } from './realtime-presence.service';
-import { RealtimePageManager } from './realtime-page.manager';
-import {
-  RealtimeRateLimiter,
-  type RealtimeRateLimiterConfig,
-} from './realtime-rate-limiter';
-import { WireCryptoService } from '../wire-crypto/wire-crypto.service';
 
 @Injectable()
 export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
@@ -203,6 +202,22 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     });
 
     this.wss.on('connection', (ws: WebSocket, req: VerifiedUpgradeRequest) => {
+      // A frame over `maxPayload` (or any other protocol violation) surfaces
+      // as an 'error' on the connection socket — without a listener it
+      // becomes an uncaught exception that kills the whole backend process.
+      // The socket is dead once this fires (ws terminates it); log and keep
+      // serving everyone else.
+      ws.on('error', (err: Error) => {
+        this.logger.warn(
+          {
+            event: 'websocket_error',
+            code: (err as Error & { code?: string }).code,
+            error: err.message,
+          },
+          `WebSocket error: ${err.message}`,
+        );
+      });
+
       const authWs = ws as AuthWs;
       const session = req.sessionUser;
       if (!session) {
@@ -211,7 +226,6 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         ws.close(1011, 'Internal error');
         return;
       }
-
       const ip = this.clientIp(req);
       authWs.clientIp = ip;
       authWs.isAlive = true;
@@ -381,6 +395,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       }
     });
 
+    // fallow-ignore-next-line complexity
     this.subscriber.on('message', (_channel, raw) => {
       try {
         const { target, userId, service, room, topic, page, frame, eid } =
@@ -574,6 +589,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
 
   // ==================== Message routing ====================
 
+  // fallow-ignore-next-line complexity
   private async handleMessage(authWs: AuthWs, raw: Buffer): Promise<void> {
     const limit = this.frameLimiter.check(
       authWs.socketId,

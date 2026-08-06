@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
-import type { MessageAttachment } from "./MessageAttachment-types";
+import type { UploadItem } from "./AttachmentModal-types";
 
 export interface ChatInputBarProps {
   input: string;
@@ -13,7 +13,6 @@ export interface ChatInputBarProps {
   onTypingStart: (recipientId: string) => void;
   onTypingStop: (recipientId: string) => void;
   attaching: boolean;
-  pendingAttachment: MessageAttachment | null;
-  onAttachFile: (file: File) => void;
-  onRemoveAttachment: () => void;
+  uploadItems: UploadItem[];
+  onAttachFiles: (files: File[]) => void;
 }

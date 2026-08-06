@@ -18,5 +18,10 @@
   "openEmojiPicker": "Insert emoji",
   "removeAttachment": "Remove attachment",
   "uploading": "Uploading…",
-  "decryptionFailed": "Could not decrypt messages. Sign out and back in to restore messaging."
+  "decryptionFailed": "Could not decrypt messages. Sign out and back in to restore messaging.",
+  "attachmentsTitle": "Send attachments",
+  "files": "attachments",
+  "cancel": "Cancel",
+  "uploaded": "Uploaded",
+  "uploadFailed": "Upload failed"
 }

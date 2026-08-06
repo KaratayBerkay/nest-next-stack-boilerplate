@@ -10,6 +10,7 @@ Related: [AUTH.md](AUTH.md) (token handshake), `docs/progress/archive/phase7.md`
 | Path | `/ws` |
 | Library | `ws` (raw WebSocket, **not** socket.io) |
 | Frame limit | 64 KiB (`maxPayload: 64 * 1024`) |
+| Oversized-frame handling | A frame over the limit surfaces as a per-connection `error` (code 1009 / `WS_ERR_UNSUPPORTED_MESSAGE_LENGTH`), logged and terminated — the process stays up (see §11) |
 | Auth timeout | 15 s — unauthenticated socket is closed |
 | Heartbeat | 30 s ping/pong; stale sockets terminated |
 | Per-user socket cap | 20 |
@@ -225,9 +226,17 @@ duplicate delivery.
 
 ## 11 — Hardening summary
 
+Attachment envelopes never ride the wire: `POST /upload/attachment` encrypts the
+file at rest, persists the envelope (v/ct/nonce) server-side in `PendingUpload`
+keyed by the MinIO object, and returns it to the caller. Message frames carry
+only `{url, type, name}` per attachment; at message-save time the messaging
+services resolve the envelope from `PendingUpload` and flatten it into the
+attachment's v/ct/nonce columns. Sending the full-file ciphertext in a frame
+would exceed `maxPayload` and (before the error listener) crash the backend.
+
 | Concern | Mitigation |
 | --- | --- |
-| Oversized frames | `maxPayload: 64 KiB` on WSS |
+| Oversized frames | `maxPayload: 64 KiB` on WSS + per-connection `error` listener (logs and terminates the offending socket instead of crashing the process) |
 | Rogue service names | Allowlist: `MESSAGE`, `NOTIFICATION`, `CHAT` |
 | Invalid page claims | Allowlist with required params validation |
 | Redis key spam | Presence TTL 120 s, refreshed every ~2 min |

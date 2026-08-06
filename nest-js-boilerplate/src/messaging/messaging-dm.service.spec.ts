@@ -16,6 +16,7 @@ describe('MessagingDmService', () => {
       findMany: jest.Mock;
       groupBy: jest.Mock;
     };
+    pendingUpload: { findMany: jest.Mock };
     user: { findMany: jest.Mock };
     $queryRawUnsafe: jest.Mock;
   };
@@ -38,6 +39,7 @@ describe('MessagingDmService', () => {
         groupBy: jest.fn().mockResolvedValue([]),
       },
       user: { findMany: jest.fn() },
+      pendingUpload: { findMany: jest.fn() },
       $queryRawUnsafe: jest.fn().mockResolvedValue([]),
     };
     mockCache = {
@@ -137,6 +139,79 @@ describe('MessagingDmService', () => {
       expect(result.message.id).toBe('m1');
       expect(result.delivery).toHaveProperty('recipientPayload');
       expect(result.delivery).toHaveProperty('senderPayload');
+    });
+
+    it('resolves attachment envelopes from the server-side upload store, not the frame', async () => {
+      const fakeMessage = {
+        id: 'm1',
+        senderId: 'u1',
+        recipientId: 'u2',
+        body: '',
+        createdAt: new Date(),
+        attachments: [],
+        sender: {
+          id: 'u1',
+          name: 'Alice',
+          email: 'a@b.com',
+          hideAvatar: false,
+        },
+        recipient: {
+          id: 'u2',
+          name: 'Bob',
+          email: 'b@b.com',
+          hideAvatar: false,
+        },
+      };
+      mockPrisma.message.create.mockResolvedValue(fakeMessage);
+      mockPrisma.message.count.mockResolvedValue(0);
+      areFriendsMock.mockResolvedValue(true);
+      mockPrisma.pendingUpload.findMany.mockResolvedValue([
+        {
+          objectName: 'file-1.png',
+          url: 'https://minio/uploads/file-1.png',
+          v: 'storage-v1',
+          nonce: 'n1',
+          ct: 'c1',
+          uploadedBy: 'u1',
+          createdAt: new Date(),
+        },
+      ]);
+
+      await service.sendAndDeliverMessage(
+        'u1',
+        'u2',
+        '',
+        areFriendsMock,
+        undefined,
+        undefined,
+        [
+          // The client frame no longer carries the full-file ciphertext —
+          // only the small metadata.
+          { url: 'https://minio/uploads/file-1.png', type: 'image/png', name: 'file-1.png' },
+        ],
+      );
+
+      expect(mockPrisma.pendingUpload.findMany).toHaveBeenCalledWith({
+        where: { url: { in: ['https://minio/uploads/file-1.png'] } },
+      });
+      expect(mockPrisma.message.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            attachments: {
+              create: [
+                {
+                  url: 'https://minio/uploads/file-1.png',
+                  type: 'image/png',
+                  name: 'file-1.png',
+                  v: 'storage-v1',
+                  ct: 'c1',
+                  nonce: 'n1',
+                },
+              ],
+            },
+          }),
+        }),
+      );
     });
 
     it('withholds the recipient avatarUrl when the recipient has hideAvatar set', async () => {

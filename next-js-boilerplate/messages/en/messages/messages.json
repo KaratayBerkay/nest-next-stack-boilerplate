@@ -20,5 +20,10 @@
   "signInRequired": "Sign in to start messaging",
   "decryptionFailed": "Could not decrypt messages. Sign out and back in to restore messaging.",
   "storageLimitReached": "You have reached your storage limit.",
-  "storageLimitUpgradeHint": "Each plan upgrade doubles your message storage."
+  "storageLimitUpgradeHint": "Each plan upgrade doubles your message storage.",
+  "attachmentsTitle": "Send attachments",
+  "files": "attachments",
+  "cancel": "Cancel",
+  "uploaded": "Uploaded",
+  "uploadFailed": "Upload failed"
 }

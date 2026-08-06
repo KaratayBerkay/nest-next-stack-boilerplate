@@ -20,7 +20,8 @@ export function useMessageActions() {
       trackTempId(tempId);
       queryClient.setQueryData(["messages", recipientId], (old: unknown) => {
         const data = old as
-          { pages: { messages: Record<string, unknown>[] }[] } | undefined;
+          | { pages: { messages: Record<string, unknown>[] }[] }
+          | undefined;
         if (!data?.pages?.length) return old;
         const pages = [...data.pages];
         const first = { ...pages[0] };
@@ -64,7 +65,8 @@ export function useMessageActions() {
       if (user?.id) {
         queryClient.setQueryData(["messages", recipientId], (old: unknown) => {
           const data = old as
-            { pages: { messages: Record<string, unknown>[] }[] } | undefined;
+            | { pages: { messages: Record<string, unknown>[] }[] }
+            | undefined;
           if (!data?.pages?.length) return old;
           const pages = data.pages.map((page) => ({
             ...page,
@@ -87,7 +89,8 @@ export function useMessageActions() {
     if (user?.id && message) {
       queryClient.setQueryData(["messages", recipientId], (old: unknown) => {
         const data = old as
-          { pages: { messages: Record<string, unknown>[] }[] } | undefined;
+          | { pages: { messages: Record<string, unknown>[] }[] }
+          | undefined;
         if (!data?.pages?.length) return old;
         const pages = data.pages.map((page) => ({
           ...page,
@@ -125,11 +128,25 @@ export function useMessageActions() {
   return { sendMessage, markRead };
 }
 
+export interface UploadAttachmentOptions {
+  onProgress?: (percent: number) => void;
+  signal?: AbortSignal;
+}
+
 export function useMessageUpload() {
-  const uploadAttachment = async (file: File): Promise<MessageAttachment> => {
-    const { uploadAttachmentServer, toMessageAttachment } =
+  const uploadAttachment = async (
+    file: File,
+    options?: UploadAttachmentOptions,
+  ): Promise<MessageAttachment> => {
+    const { uploadAttachmentStreamServer, toMessageAttachment } =
       await import("@/api/server/messages/upload-attachment");
-    return toMessageAttachment(await uploadAttachmentServer(file));
+    return toMessageAttachment(
+      await uploadAttachmentStreamServer(
+        file,
+        options?.onProgress,
+        options?.signal,
+      ),
+    );
   };
   return { uploadAttachment };
 }

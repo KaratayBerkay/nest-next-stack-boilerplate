@@ -10,6 +10,7 @@ import {
   type MessageAttachment,
   initials,
 } from './messaging.types';
+import { resolveAttachmentEnvelopes } from './attachment-envelopes.util';
 
 const ROOM_MEMBERS_PREFIX = 'room:';
 
@@ -257,6 +258,12 @@ export class MessagingRoomService {
         text: body,
         attachments,
       });
+    // Attachment envelopes come from the server-side upload store, not the
+    // client frame (the full-file ciphertext must never ride the WS).
+    const storedAttachments = await resolveAttachmentEnvelopes(
+      this.prisma,
+      attachments ?? [],
+    );
     return this.prisma.roomMessage
       .create({
         data: {
@@ -267,9 +274,9 @@ export class MessagingRoomService {
           nonce,
           letterCount: countLetters(body),
           attachments:
-            attachments && attachments.length > 0
+            storedAttachments.length > 0
               ? {
-                  create: attachments.map((a) => ({
+                  create: storedAttachments.map((a) => ({
                     url: a.url,
                     type: a.type,
                     name: a.name,

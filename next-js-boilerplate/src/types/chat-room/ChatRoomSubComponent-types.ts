@@ -1,5 +1,4 @@
 import type { ChangeEvent, KeyboardEvent, RefObject } from "react";
-import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
 
 export interface SidebarCloseButtonProps {
   useNativeControls: boolean;
@@ -43,7 +42,7 @@ export interface SendButtonProps {
 export interface AttachButtonProps {
   useNativeControls: boolean;
   disabled: boolean;
-  onAttachFile: (file: File) => void;
+  onAttachFile: (files: File[]) => void;
   label: string;
 }
 
@@ -51,11 +50,5 @@ export interface EmojiButtonProps {
   useNativeControls: boolean;
   disabled: boolean;
   onEmojiSelect: (emoji: string) => void;
-  label: string;
-}
-
-export interface PendingAttachmentProps {
-  attachment: MessageAttachment;
-  onRemove: () => void;
   label: string;
 }

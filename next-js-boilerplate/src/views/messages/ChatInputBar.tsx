@@ -11,13 +11,7 @@ import {
 } from "react";
 import { Button } from "@/components/ui/Button";
 import { EmojiPickerButton } from "@/components/ui/EmojiPickerButton";
-import {
-  IconPaperclip,
-  IconSend,
-  IconX,
-  IconFileText,
-  IconPhoto,
-} from "@tabler/icons-react";
+import { IconPaperclip, IconSend } from "@tabler/icons-react";
 import { ATTACHMENT_ACCEPT } from "@/constants/upload";
 import type { ChatInputBarProps } from "@/types/messages/ChatInputBar-types";
 
@@ -25,10 +19,10 @@ const TYPING_TIMEOUT_MS = 3000;
 
 function handleFileChange(
   e: ChangeEvent<HTMLInputElement>,
-  onAttachFile: (file: File) => void,
+  onAttachFile: (files: File[]) => void,
 ) {
-  const file = e.target.files?.[0];
-  if (file) onAttachFile(file);
+  const files = Array.from(e.target.files ?? []);
+  if (files.length > 0) onAttachFile(files);
   e.target.value = "";
 }
 
@@ -63,9 +57,8 @@ export function ChatInputBar({
   onTypingStart,
   onTypingStop,
   attaching,
-  pendingAttachment,
-  onAttachFile,
-  onRemoveAttachment,
+  uploadItems,
+  onAttachFiles,
 }: ChatInputBarProps) {
   const isTypingRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -112,12 +105,12 @@ export function ChatInputBar({
   );
 
   const doSend = useCallback(() => {
-    // Block send while the attachment upload is in flight — sending early
-    // silently drops the attachment (F35).
-    if (attaching) return;
+    // Block send while attachments are pending — WhatsApp-style, the modal's
+    // Send is the only path that ships them together.
+    if (attaching || uploadItems.length > 0) return;
     sendTypingStop();
     handleSend();
-  }, [attaching, sendTypingStop, handleSend]);
+  }, [attaching, uploadItems.length, sendTypingStop, handleSend]);
 
   const online = connectionState === "online";
 
@@ -128,9 +121,10 @@ export function ChatInputBar({
           id={attachInputId}
           type="file"
           accept={ATTACHMENT_ACCEPT}
+          multiple
           disabled={!online || attaching}
           className="sr-only"
-          onChange={(e) => handleFileChange(e, onAttachFile)}
+          onChange={(e) => handleFileChange(e, onAttachFiles)}
         />
         <label
           htmlFor={attachInputId}
@@ -150,33 +144,6 @@ export function ChatInputBar({
         />
       </div>
       <div className="flex flex-1 flex-col">
-        {pendingAttachment && (
-          <div className="mb-1.5 flex items-center gap-2">
-            <div className="bg-surface border-border flex w-fit items-center gap-2 rounded-md border px-2 py-1 text-xs">
-              {pendingAttachment.type.startsWith("image/") ? (
-                <IconPhoto size={14} className="text-muted shrink-0" />
-              ) : (
-                <IconFileText size={14} className="text-muted shrink-0" />
-              )}
-              <span className="text-fg max-w-[160px] truncate">
-                {pendingAttachment.name}
-              </span>
-              <button
-                type="button"
-                onClick={onRemoveAttachment}
-                aria-label="Remove attachment"
-                className="text-muted hover:text-error transition-colors"
-              >
-                <IconX size={14} />
-              </button>
-            </div>
-            {attaching && (
-              <span className="text-muted animate-pulse text-xs">
-                Uploading…
-              </span>
-            )}
-          </div>
-        )}
         <input
           ref={inputRef}
           value={input}
@@ -199,7 +166,9 @@ export function ChatInputBar({
         variant="primary"
         size="md"
         onClick={doSend}
-        disabled={!online || attaching || (!input.trim() && !pendingAttachment)}
+        disabled={
+          !online || attaching || uploadItems.length > 0 || !input.trim()
+        }
         className="flex shrink-0 items-center gap-2 rounded-lg px-4 py-3"
       >
         <span className="hidden sm:inline">Send</span>

@@ -131,6 +131,45 @@ export async function backendFormFetch<T = unknown>(
   return { ok: res.ok, status: res.status, data, headers: res.headers };
 }
 
+/**
+ * Like `backendFormFetch`, but for raw streaming uploads: the request body
+ * is piped straight to the backend (`duplex: "half"`), so the Next layer
+ * never buffers the file. The caller owns `Content-Type`/`x-filename`/
+ * `x-content-type` headers. Also forwards cookies/session tokens/IP/UA and
+ * an explicit bearerToken -> Authorization header like `backendFormFetch`.
+ */
+export async function backendStreamFetch<T = unknown>(
+  path: string,
+  options: RequestInit & { body?: BodyInit; duplex?: "half" },
+  bearerToken?: string,
+): Promise<BackendResponse<T>> {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+
+  const url = `${backendBaseUrl()}${path}`;
+  const res = await fetch(url, {
+    method: POST,
+    ...options,
+    headers: {
+      ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      ...(bearerToken ? bearerAuthHeader(bearerToken) : {}),
+      ...(await forwardedForHeader()),
+      ...(await userAgentHeader()),
+      ...(await sessionTokenHeaders()),
+      ...options.headers,
+    },
+  });
+
+  let data: T;
+  try {
+    data = (await res.json()) as T;
+  } catch {
+    data = null as unknown as T;
+  }
+
+  return { ok: res.ok, status: res.status, data, headers: res.headers };
+}
+
 interface GraphQlErrorField {
   field: string;
   msg: string;

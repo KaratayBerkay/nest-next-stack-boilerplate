@@ -2,6 +2,13 @@ export const JSON_CONTENT_TYPE_HEADER = {
   "Content-Type": "application/json",
 } as const;
 
+export const OCTET_STREAM_CONTENT_TYPE_HEADER = {
+  "Content-Type": "application/octet-stream",
+} as const;
+
+export const STREAM_FILENAME_HEADER = "x-filename" as const;
+export const STREAM_CONTENT_TYPE_HEADER = "x-content-type" as const;
+
 export const CSRF_TOKEN_HEADER = "x-csrf-token" as const;
 export const RBAC_TOKEN_HEADER = "x-rbac-token" as const;
 export const DEVICE_TOKEN_HEADER = "x-device-token" as const;

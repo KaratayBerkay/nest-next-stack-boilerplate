@@ -1,21 +1,27 @@
 import {
+  BadRequestException,
   Controller,
   FileTypeValidator,
   FileValidator,
+  Headers,
   MaxFileSizeValidator,
   ParseFilePipe,
+  PayloadTooLargeException,
   Post,
+  Req,
   UploadedFile,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import type { Request } from 'express';
 import { randomUUID } from 'node:crypto';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { ImageService, IMAGE_SIZES } from './image.service';
 import { MinioService } from './minio.service';
 import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { JwtUser } from '../auth/auth.types';
 
@@ -84,6 +90,7 @@ export class UploadController {
     private readonly minio: MinioService,
     private readonly images: ImageService,
     private readonly storageCrypto: StorageCryptoService,
+    private readonly prisma: PrismaService,
   ) {}
 
   @Post('single')
@@ -180,6 +187,22 @@ export class UploadController {
       undefined,
       'application/octet-stream',
     );
+    // The envelope is generated server-side, so persist it here keyed by the
+    // object name. Messaging services resolve it from the attachment `url`
+    // at message-save time, which keeps the full-file ciphertext off the WS
+    // frame (the socket is capped at 64 KiB per frame).
+    await this.prisma.pendingUpload.upsert({
+      where: { objectName },
+      create: {
+        objectName,
+        url,
+        v: envelope.v,
+        ct: envelope.ct,
+        nonce: envelope.nonce,
+        uploadedBy: user.userId,
+      },
+      update: {},
+    });
     return {
       url,
       originalname: file.originalname,
@@ -187,6 +210,115 @@ export class UploadController {
       size: file.size,
       envelope,
     };
+  }
+
+  /**
+   * Streaming attachment upload. The client sends `application/octet-stream`
+   * straight as the request body (no multipart), and the server reads the
+   * in-flight stream in chunks instead of buffering through multer. The file
+   * is still encrypted whole-buffer server-side after the stream completes,
+   * so the at-rest envelope format (`storage-v1`) and the `PendingUpload`
+   * store are unchanged. This endpoint is what powers the WhatsApp-style
+   * byte-level progress bar on the web client.
+   */
+  @Post('attachment-stream')
+  async attachmentStream(
+    @CurrentUser() user: JwtUser,
+    @Req() req: Request,
+    @Headers('x-filename') rawFilename?: string,
+    @Headers('x-content-type') contentType?: string,
+  ): Promise<{
+    url: string;
+    originalname: string;
+    mimetype: string;
+    size: number;
+  }> {
+    // Reject oversized uploads up front when the client announced a size.
+    const announced = Number(req.headers['content-length'] ?? 0);
+    if (announced > MAX_FILE_SIZE_BYTES) {
+      throw new PayloadTooLargeException(
+        'File exceeds the 10 MB attachment limit',
+      );
+    }
+
+    const buffer = await this.readBodyStream(req);
+    if (buffer.length > MAX_FILE_SIZE_BYTES) {
+      throw new PayloadTooLargeException(
+        'File exceeds the 10 MB attachment limit',
+      );
+    }
+
+    let originalname = 'file';
+    if (rawFilename) {
+      try {
+        originalname = decodeURIComponent(rawFilename).slice(0, 255);
+      } catch {
+        // Malformed percent-encoding isn't worth failing the upload for.
+      }
+    }
+    const mimetype = contentType || 'application/octet-stream';
+
+    // FileTypeValidator only reads `buffer` + `mimetype` (magic bytes sniff),
+    // so a plain object stands in for the multer file here.
+    const fake = { originalname, mimetype, buffer, size: buffer.length } as
+      Express.Multer.File;
+
+    const validator = new ChatAttachmentTypeValidator({
+      fileType: ALLOWED_ATTACHMENT_TYPES,
+    });
+    if (!validator.isValid(fake)) {
+      throw new BadRequestException(validator.buildErrorMessage(fake));
+    }
+
+    const extension =
+      ATTACHMENT_EXTENSIONS[mimetype] ?? this.extFromName(originalname);
+    const objectName = `${randomUUID()}${extension}`;
+
+    const envelope = this.storageCrypto.encryptBytes(
+      user.userId,
+      new Uint8Array(buffer),
+    );
+
+    const url = await this.minio.upload(
+      objectName,
+      Buffer.from(envelope.ct, 'base64'),
+      undefined,
+      'application/octet-stream',
+    );
+    await this.prisma.pendingUpload.upsert({
+      where: { objectName },
+      create: {
+        objectName,
+        url,
+        v: envelope.v,
+        ct: envelope.ct,
+        nonce: envelope.nonce,
+        uploadedBy: user.userId,
+      },
+      update: {},
+    });
+    return {
+      url,
+      originalname,
+      mimetype,
+      size: buffer.length,
+    };
+  }
+
+  private async readBodyStream(req: Request): Promise<Buffer> {
+    const chunks: Buffer[] = [];
+    let size = 0;
+    for await (const chunk of req) {
+      const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      size += buf.length;
+      if (size > MAX_FILE_SIZE_BYTES) {
+        throw new PayloadTooLargeException(
+          'File exceeds the 10 MB attachment limit',
+        );
+      }
+      chunks.push(buf);
+    }
+    return Buffer.concat(chunks);
   }
 
   private extFromName(originalname: string): string {

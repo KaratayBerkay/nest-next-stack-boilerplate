@@ -18,5 +18,10 @@
   "openEmojiPicker": "Emoji ekle",
   "removeAttachment": "Eki kaldır",
   "uploading": "Yükleniyor…",
-  "decryptionFailed": "Mesajlar deşifre edilemedi. Mesajlaşmayı geri yüklemek için çıkış yapıp tekrar giriş yapın."
+  "decryptionFailed": "Mesajlar deşifre edilemedi. Mesajlaşmayı geri yüklemek için çıkış yapıp tekrar giriş yapın.",
+  "attachmentsTitle": "Ekleri gönder",
+  "files": "ek",
+  "cancel": "İptal",
+  "uploaded": "Yüklendi",
+  "uploadFailed": "Yükleme başarısız"
 }
