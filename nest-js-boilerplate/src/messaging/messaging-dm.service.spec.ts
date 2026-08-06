@@ -16,7 +16,7 @@ describe('MessagingDmService', () => {
       findMany: jest.Mock;
       groupBy: jest.Mock;
     };
-    pendingUpload: { findMany: jest.Mock };
+    pendingUpload: { findMany: jest.Mock; updateMany: jest.Mock };
     user: { findMany: jest.Mock };
     $queryRawUnsafe: jest.Mock;
   };
@@ -39,7 +39,10 @@ describe('MessagingDmService', () => {
         groupBy: jest.fn().mockResolvedValue([]),
       },
       user: { findMany: jest.fn() },
-      pendingUpload: { findMany: jest.fn() },
+      pendingUpload: {
+        findMany: jest.fn(),
+        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+      },
       $queryRawUnsafe: jest.fn().mockResolvedValue([]),
     };
     mockCache = {

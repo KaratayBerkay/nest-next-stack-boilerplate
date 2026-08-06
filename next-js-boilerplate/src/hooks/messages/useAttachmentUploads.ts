@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useMessageUpload } from "@/api/client/messages/actions";
 import type { UploadItem } from "@/types/messages/AttachmentModal-types";
 import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
+import type { UploadScope } from "@/types/messages/UploadScope-types";
 
 const MAX_UPLOADS = 10;
 
@@ -31,7 +32,7 @@ export function useAttachmentUploads() {
   }, [items]);
 
   const startUploads = useCallback(
-    (files: File[]) => {
+    (files: File[], scope?: UploadScope) => {
       if (files.length === 0) return;
       const slots = Math.max(MAX_UPLOADS - itemsRef.current.length, 0);
       const accepted = files.slice(0, slots);
@@ -48,7 +49,7 @@ export function useAttachmentUploads() {
       for (const item of newItems) {
         const controller = new AbortController();
         controllersRef.current.set(item.id, controller);
-        void uploadAttachment(item.file, {
+        void uploadAttachment(item.file, scope, {
           onProgress: (percent) =>
             setItems((prev) =>
               applyItemUpdate(prev, item.id, (it) => ({

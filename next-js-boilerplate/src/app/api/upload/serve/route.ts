@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { getAccessToken } from "@/store/ssr-cookies";
 import { sessionTokenHeaders } from "@/lib/backend";
+import { UPLOAD_SERVE_URL } from "@/constants/api/urls";
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ objectName: string }> },
-) {
-  const { objectName } = await params;
+export async function GET(request: NextRequest) {
+  const objectName = request.nextUrl.searchParams.get("objectName");
+  if (!objectName) {
+    return new NextResponse(null, { status: 400 });
+  }
   const token = await getAccessToken();
   const stHeaders = await sessionTokenHeaders();
   const headers: Record<string, string> = {
@@ -16,7 +17,7 @@ export async function GET(
   };
 
   const res = await fetch(
-    `${serverEnv().APP_URL}/api/upload/serve/${encodeURIComponent(objectName)}`,
+    `${serverEnv().APP_URL}${UPLOAD_SERVE_URL}?objectName=${encodeURIComponent(objectName)}`,
     { headers },
   );
 

@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 import { trackTempId } from "@/lib/realtime/event-dispatch";
 import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
+import type { UploadScope } from "@/types/messages/UploadScope-types";
 
 export function useMessageActions() {
   const queryClient = useQueryClient();
@@ -20,8 +21,7 @@ export function useMessageActions() {
       trackTempId(tempId);
       queryClient.setQueryData(["messages", recipientId], (old: unknown) => {
         const data = old as
-          | { pages: { messages: Record<string, unknown>[] }[] }
-          | undefined;
+          { pages: { messages: Record<string, unknown>[] }[] } | undefined;
         if (!data?.pages?.length) return old;
         const pages = [...data.pages];
         const first = { ...pages[0] };
@@ -65,8 +65,7 @@ export function useMessageActions() {
       if (user?.id) {
         queryClient.setQueryData(["messages", recipientId], (old: unknown) => {
           const data = old as
-            | { pages: { messages: Record<string, unknown>[] }[] }
-            | undefined;
+            { pages: { messages: Record<string, unknown>[] }[] } | undefined;
           if (!data?.pages?.length) return old;
           const pages = data.pages.map((page) => ({
             ...page,
@@ -89,8 +88,7 @@ export function useMessageActions() {
     if (user?.id && message) {
       queryClient.setQueryData(["messages", recipientId], (old: unknown) => {
         const data = old as
-          | { pages: { messages: Record<string, unknown>[] }[] }
-          | undefined;
+          { pages: { messages: Record<string, unknown>[] }[] } | undefined;
         if (!data?.pages?.length) return old;
         const pages = data.pages.map((page) => ({
           ...page,
@@ -136,6 +134,7 @@ export interface UploadAttachmentOptions {
 export function useMessageUpload() {
   const uploadAttachment = async (
     file: File,
+    scope: UploadScope | undefined,
     options?: UploadAttachmentOptions,
   ): Promise<MessageAttachment> => {
     const { uploadAttachmentStreamServer, toMessageAttachment } =
@@ -143,6 +142,7 @@ export function useMessageUpload() {
     return toMessageAttachment(
       await uploadAttachmentStreamServer(
         file,
+        scope,
         options?.onProgress,
         options?.signal,
       ),

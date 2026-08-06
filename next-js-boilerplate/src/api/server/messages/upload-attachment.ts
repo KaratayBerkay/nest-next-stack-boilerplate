@@ -8,8 +8,11 @@ import {
   OCTET_STREAM_CONTENT_TYPE_HEADER,
   STREAM_CONTENT_TYPE_HEADER,
   STREAM_FILENAME_HEADER,
+  UPLOAD_SCOPE_ID_HEADER,
+  UPLOAD_SCOPE_KIND_HEADER,
 } from "@/constants/api/headers";
 import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
+import type { UploadScope } from "@/types/messages/UploadScope-types";
 
 export interface UploadAttachmentResult {
   url: string;
@@ -19,14 +22,24 @@ export interface UploadAttachmentResult {
   envelope?: { v: string; nonce: string; ct: string };
 }
 
+function scopeHeaders(scope?: UploadScope): Record<string, string> {
+  if (!scope) return {};
+  return {
+    [UPLOAD_SCOPE_KIND_HEADER]: scope.kind,
+    [UPLOAD_SCOPE_ID_HEADER]: scope.id,
+  };
+}
+
 export async function uploadAttachmentServer(
   file: File,
+  scope?: UploadScope,
 ): Promise<UploadAttachmentResult> {
   const form = new FormData();
   form.append("file", file);
   return apiFetchJson<UploadAttachmentResult>(UPLOAD_ATTACHMENT_URL, {
     method: POST,
     body: form,
+    ...(scope ? { headers: scopeHeaders(scope) } : {}),
   });
 }
 
@@ -42,6 +55,7 @@ export async function uploadAttachmentServer(
  */
 export async function uploadAttachmentStreamServer(
   file: File,
+  scope?: UploadScope,
   onProgress?: (percent: number) => void,
   signal?: AbortSignal,
 ): Promise<UploadAttachmentResult> {
@@ -63,6 +77,9 @@ export async function uploadAttachmentStreamServer(
         STREAM_CONTENT_TYPE_HEADER,
         file.type || OCTET_STREAM_CONTENT_TYPE_HEADER["Content-Type"],
       );
+      for (const [name, value] of Object.entries(scopeHeaders(scope))) {
+        xhr.setRequestHeader(name, value);
+      }
       xhr.responseType = "json";
 
       xhr.upload.onprogress = (e) => {

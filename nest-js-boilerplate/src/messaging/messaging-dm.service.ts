@@ -338,6 +338,15 @@ export class MessagingDmService {
     this.logger.log(
       `Message ${message.id} created: ${senderId} → ${recipientId}`,
     );
+    // Trace which persisted message each attachment was finally attached to —
+    // the PendingUpload row is the upload-time record, this links it to the
+    // message so uploads are traceable from the DB end-to-end.
+    if (storedAttachments.length > 0) {
+      await this.prisma.pendingUpload.updateMany({
+        where: { url: { in: storedAttachments.map((a) => a.url) } },
+        data: { messageId: message.id },
+      });
+    }
     await Promise.all([
       this.cache.del(`conversations:${senderId}`),
       this.cache.del(`conversations:${recipientId}`),

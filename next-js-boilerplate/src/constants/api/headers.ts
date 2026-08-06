@@ -8,6 +8,8 @@ export const OCTET_STREAM_CONTENT_TYPE_HEADER = {
 
 export const STREAM_FILENAME_HEADER = "x-filename" as const;
 export const STREAM_CONTENT_TYPE_HEADER = "x-content-type" as const;
+export const UPLOAD_SCOPE_KIND_HEADER = "x-scope-kind" as const;
+export const UPLOAD_SCOPE_ID_HEADER = "x-scope-id" as const;
 
 export const CSRF_TOKEN_HEADER = "x-csrf-token" as const;
 export const RBAC_TOKEN_HEADER = "x-rbac-token" as const;

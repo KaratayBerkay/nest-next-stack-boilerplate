@@ -9,6 +9,7 @@ import {
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { UPLOAD_SERVE_URL } from "@/constants/api/urls";
 import type { AttachmentPreviewProps } from "@/types/components/AttachmentPreview-types";
 
 const IMAGE_EXTENSIONS = new Set([
@@ -41,9 +42,9 @@ function isPdfByExtension(name: string | null | undefined): boolean {
 }
 
 function serveUrl(url: string): string {
-  const segments = url.split("/");
-  const objectName = segments[segments.length - 1].split("?")[0];
-  return `/api/upload/serve/${objectName}`;
+  const pathname = new URL(url).pathname;
+  const objectName = pathname.replace(/^\//, "");
+  return `${UPLOAD_SERVE_URL}?objectName=${encodeURIComponent(objectName)}`;
 }
 
 function formatBytes(bytes: number): string {

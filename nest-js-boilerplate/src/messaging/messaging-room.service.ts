@@ -293,12 +293,23 @@ export class MessagingRoomService {
           attachments: true,
         },
       })
-      .then((row) => ({
-        ...row,
-        attachments: row.attachments.map((a) =>
-          this.storageCrypto.toWireAttachment(a),
-        ),
-      }));
+      .then(async (row) => {
+        // Link each attachment back to the room message it shipped in so the
+        // upload is traceable from PendingUpload (kind/scopeId written at
+        // upload time + roomMessageId backfilled here).
+        if (row.attachments.length > 0) {
+          await this.prisma.pendingUpload.updateMany({
+            where: { url: { in: row.attachments.map((a) => a.url) } },
+            data: { roomMessageId: row.id },
+          });
+        }
+        return {
+          ...row,
+          attachments: row.attachments.map((a) =>
+            this.storageCrypto.toWireAttachment(a),
+          ),
+        };
+      });
   }
 
   async getRoomMessages(roomId: string, before?: string, take = 30) {

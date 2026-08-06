@@ -120,9 +120,9 @@ function ChatRoomContent({
   const handleAttachFiles = useCallback(
     (files: File[]) => {
       if (!user) return;
-      startUploads(files);
+      startUploads(files, { kind: "chat-room", id: room });
     },
-    [user, startUploads],
+    [user, startUploads, room],
   );
 
   const connectionState = useConnectionState();

@@ -108,7 +108,7 @@ export function ChatView({
   const handleAttachFiles = useCallback(
     (files: File[]) => {
       if (!selectedUser) return;
-      startUploads(files);
+      startUploads(files, { kind: "messages", id: selectedUser.id });
     },
     [selectedUser, startUploads],
   );

@@ -55,6 +55,11 @@ enum SubscriptionTier {
   PREMIUM
 }
 
+enum UploadKind {
+  MESSAGES
+  CHAT_ROOM
+}
+
 enum AuthProviderType {
   CREDENTIALS
   GOOGLE
@@ -903,9 +908,22 @@ model PendingUpload {
   // upload time so per-user upload-storage usage can be summed without
   // stat() calls against MinIO.
   size       Int       @default(0)
+  // Upload trace — where the object landed in R2 (`uploads/messages/<userId>/…`
+  // or `uploads/chat-room/<roomId>/…`) and which message it was finally
+  // attached to. `messageId`/`roomMessageId` are backfilled by the messaging
+  // services at message-save time; `kind`/`scopeId`/`filename`/`mimetype` are
+  // written at upload time so uploads are traceable from the DB even when the
+  // message itself was never persisted.
+  kind       UploadKind @default(MESSAGES)
+  scopeId    String?
+  filename   String?
+  mimetype   String?
+  messageId  String?    @db.Uuid
+  roomMessageId String? @db.Uuid
   createdAt  DateTime  @default(now()) @db.Timestamptz(6)
 
   @@index([uploadedBy, createdAt])
+  @@index([kind, scopeId, createdAt])
 }
 
 model Notification {

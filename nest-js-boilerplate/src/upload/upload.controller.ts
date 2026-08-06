@@ -7,10 +7,10 @@ import {
   Headers,
   MaxFileSizeValidator,
   NotFoundException,
-  Param,
   ParseFilePipe,
   PayloadTooLargeException,
   Post,
+  Query,
   Req,
   Res,
   UploadedFile,
@@ -45,6 +45,47 @@ const ALLOWED_IMAGE_TYPES = /^image\/(jpeg|png|webp|gif|avif)$/;
 const ALLOWED_ATTACHMENT_TYPES =
   /^(image\/(jpeg|png|webp|gif|avif)|application\/pdf|application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document|text\/plain)$/;
 const MAX_FILES = 10;
+
+// Object-storage foldering: chat attachments land under
+// `uploads/messages/<userId>/…` (DM) or `uploads/chat-room/<room>/…` (rooms)
+// so the bucket stays browsable and per-scope quotas/cleanup can target a
+// prefix. The client announces the target on the request headers so the one
+// upload endpoint can serve both composers.
+const SCOPE_KIND_HEADER = 'x-scope-kind';
+const SCOPE_ID_HEADER = 'x-scope-id';
+const ROOM_SLUG_RE = /^[a-z0-9-]{1,64}$/;
+
+interface UploadScope {
+  kind: 'MESSAGES' | 'CHAT_ROOM';
+  scopeId: string;
+  prefix: string;
+}
+
+function resolveUploadScope(
+  user: JwtUser,
+  scopeKind: string | undefined,
+  scopeId: string | undefined,
+): UploadScope {
+  if (scopeKind === 'chat-room') {
+    const roomId = (scopeId ?? '').trim();
+    if (!roomId || !ROOM_SLUG_RE.test(roomId)) {
+      throw new BadRequestException(
+        'Invalid chat-room upload scope — x-scope-id must be a room slug',
+      );
+    }
+    return {
+      kind: 'CHAT_ROOM',
+      scopeId: roomId,
+      prefix: `uploads/chat-room/${roomId}/`,
+    };
+  }
+  // Direct-message uploads always land in the uploader's own folder.
+  return {
+    kind: 'MESSAGES',
+    scopeId: user.userId,
+    prefix: `uploads/messages/${user.userId}/`,
+  };
+}
 
 const ATTACHMENT_EXTENSIONS: Record<string, string> = {
   'image/jpeg': '.jpg',
@@ -170,6 +211,8 @@ export class UploadController {
 
   @Post('attachment')
   @UseInterceptors(FileInterceptor('file'))
+  @Post('attachment')
+  @UseInterceptors(FileInterceptor('file'))
   async attachment(
     @CurrentUser() user: JwtUser,
     @UploadedFile(
@@ -186,6 +229,8 @@ export class UploadController {
       }),
     )
     file: Express.Multer.File,
+    @Headers(SCOPE_KIND_HEADER) scopeKind?: string,
+    @Headers(SCOPE_ID_HEADER) scopeId?: string,
   ): Promise<{
     url: string;
     originalname: string;
@@ -193,10 +238,11 @@ export class UploadController {
     size: number;
     envelope?: { v: string; nonce: string; ct: string };
   }> {
+    const scope = resolveUploadScope(user, scopeKind, scopeId);
     const extension =
       ATTACHMENT_EXTENSIONS[file.mimetype] ??
       this.extFromName(file.originalname);
-    const objectName = `${randomUUID()}${extension}`;
+    const objectName = `${scope.prefix}${randomUUID()}${extension}`;
 
     await this.assertUploadStorageCapacity(user, file.size);
 
@@ -225,6 +271,10 @@ export class UploadController {
         nonce: envelope.nonce,
         uploadedBy: user.userId,
         size: file.size,
+        kind: scope.kind,
+        scopeId: scope.scopeId,
+        filename: file.originalname,
+        mimetype: file.mimetype,
       },
       update: {},
     });
@@ -252,6 +302,8 @@ export class UploadController {
     @Req() req: Request,
     @Headers('x-filename') rawFilename?: string,
     @Headers('x-content-type') contentType?: string,
+    @Headers(SCOPE_KIND_HEADER) scopeKind?: string,
+    @Headers(SCOPE_ID_HEADER) scopeId?: string,
   ): Promise<{
     url: string;
     originalname: string;
@@ -295,9 +347,10 @@ export class UploadController {
       throw new BadRequestException(validator.buildErrorMessage(fake));
     }
 
+    const scope = resolveUploadScope(user, scopeKind, scopeId);
     const extension =
       ATTACHMENT_EXTENSIONS[mimetype] ?? this.extFromName(originalname);
-    const objectName = `${randomUUID()}${extension}`;
+    const objectName = `${scope.prefix}${randomUUID()}${extension}`;
 
     await this.assertUploadStorageCapacity(user, buffer.length);
 
@@ -322,6 +375,10 @@ export class UploadController {
         nonce: envelope.nonce,
         uploadedBy: user.userId,
         size: buffer.length,
+        kind: scope.kind,
+        scopeId: scope.scopeId,
+        filename: originalname,
+        mimetype,
       },
       update: {},
     });
@@ -338,14 +395,20 @@ export class UploadController {
    * this endpoint looks up the PendingUpload envelope, decrypts with the
    * uploader's per-user key, and streams the plaintext back with the correct
    * Content-Type so <img> / <a> tags can consume it directly.
+   *
+   * `objectName` travels as a query param (percent-encoded) because after
+   * foldering it contains slashes, which a path segment cannot hold.
    */
-  @Get('serve/:objectName')
+  @Get('serve')
   @UseGuards(SessionAuthGuard)
   async serve(
     @CurrentUser() user: JwtUser,
-    @Param('objectName') objectName: string,
     @Res() res: Response,
+    @Query('objectName') objectName?: string,
   ) {
+    if (!objectName || !objectName.trim()) {
+      throw new BadRequestException('Missing objectName query parameter');
+    }
     const pending = await this.prisma.pendingUpload.findUnique({
       where: { objectName },
     });
