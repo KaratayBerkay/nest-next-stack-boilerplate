@@ -16,7 +16,7 @@ export interface MessageAttachment {
   /** Original file name, e.g. "report.pdf" */
   name: string;
   /** Server-side at-rest encryption envelope for this attachment blob. */
-  storageEnvelope?: { v: string; nonce: string; ct: string } | null;
+  storageEnvelope?: { v: string; nonce: string; ct?: string } | null;
 }
 
 export function initials(name: string): string {

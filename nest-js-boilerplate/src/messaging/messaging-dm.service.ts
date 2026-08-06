@@ -371,7 +371,7 @@ export class MessagingDmService {
         url: string;
         type: string;
         name: string;
-        storageEnvelope?: { v: string; nonce: string; ct: string } | null;
+        storageEnvelope?: { v: string; nonce: string; ct?: string } | null;
       }[];
       _tempId?: string;
     },

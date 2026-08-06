@@ -106,6 +106,11 @@ export class StorageCryptoService {
   /**
    * Convert a stored MessageAttachment row (flattened v/ct/nonce columns)
    * into the wire/client shape `{url, type, name, storageEnvelope}`.
+   *
+   * The full-file ciphertext (`ct`) is deliberately omitted — it can be
+   * megabytes for large uploads and would blow past the 64 KiB WS frame
+   * cap.  The serve endpoint (`GET /upload/serve/:objectName`) reads the
+   * envelope directly from PendingUpload, so the client never needs `ct`.
    */
   toWireAttachment(row: {
     url: string;
@@ -118,13 +123,14 @@ export class StorageCryptoService {
     url: string;
     type: string;
     name: string;
-    storageEnvelope: { v: string; ct: string; nonce: string } | null;
+    storageEnvelope: { v: string; nonce: string } | null;
   } {
+    const env = this.toEnvelope(row);
     return {
       url: row.url,
       type: row.type,
       name: row.name,
-      storageEnvelope: this.toEnvelope(row),
+      storageEnvelope: env ? { v: env.v, nonce: env.nonce } : null,
     };
   }
 
