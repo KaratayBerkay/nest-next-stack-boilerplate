@@ -17,8 +17,7 @@ const LANG_COOKIE_OPTS = {
   sameSite: "lax" as const,
 };
 
-const ASSET_HOST =
-  process.env.NEXT_PUBLIC_ASSET_HOST ?? "https://minio.eys.gen.tr";
+const ASSET_HOST = process.env.NEXT_PUBLIC_ASSET_HOST ?? "";
 
 /**
  * Builds a strict, nonce-based Content-Security-Policy (per the Next.js CSP guide).

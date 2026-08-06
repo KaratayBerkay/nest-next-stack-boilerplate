@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { getAccessToken } from "@/store/ssr-cookies";
 import { sessionTokenHeaders } from "@/lib/backend";
-import { UPLOAD_SERVE_URL } from "@/constants/api/urls";
+
+const BACKEND_SERVE_PATH = "/upload/serve";
 
 export async function GET(request: NextRequest) {
   const objectName = request.nextUrl.searchParams.get("objectName");
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
   };
 
   const res = await fetch(
-    `${serverEnv().APP_URL}${UPLOAD_SERVE_URL}?objectName=${encodeURIComponent(objectName)}`,
+    `${serverEnv().APP_URL}${BACKEND_SERVE_PATH}?objectName=${encodeURIComponent(objectName)}`,
     { headers },
   );
 

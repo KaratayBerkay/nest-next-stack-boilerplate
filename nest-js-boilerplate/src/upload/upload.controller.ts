@@ -211,8 +211,6 @@ export class UploadController {
 
   @Post('attachment')
   @UseInterceptors(FileInterceptor('file'))
-  @Post('attachment')
-  @UseInterceptors(FileInterceptor('file'))
   async attachment(
     @CurrentUser() user: JwtUser,
     @UploadedFile(
