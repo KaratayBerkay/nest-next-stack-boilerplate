@@ -191,6 +191,7 @@ export function ChatView({
         t={t}
         onSend={handleSendAttachments}
         onRemoveItem={removeUploadItem}
+        onAddFiles={handleAttachFiles}
         onCancel={cancelUploads}
       />
     </div>

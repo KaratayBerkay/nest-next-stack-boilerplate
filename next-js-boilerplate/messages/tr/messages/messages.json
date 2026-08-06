@@ -25,5 +25,6 @@
   "files": "ek",
   "cancel": "İptal",
   "uploaded": "Yüklendi",
-  "uploadFailed": "Yükleme başarısız"
+  "uploadFailed": "Yükleme başarısız",
+  "addMore": "Daha fazla ekle"
 }

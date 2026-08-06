@@ -16,5 +16,6 @@ export interface AttachmentModalProps {
   t: Record<string, string>;
   onSend: () => void;
   onRemoveItem: (id: string) => void;
+  onAddFiles: (files: File[]) => void;
   onCancel: () => void;
 }

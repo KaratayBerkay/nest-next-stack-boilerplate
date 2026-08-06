@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
-import { IconFileText, IconX } from "@tabler/icons-react";
+import { useEffect, useId, useMemo, type ChangeEvent } from "react";
+import { IconFileText, IconPlus, IconX } from "@tabler/icons-react";
 import {
   Dialog,
   DialogBody,
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
+import { ATTACHMENT_ACCEPT } from "@/constants/upload";
 import type {
   AttachmentModalProps,
   UploadItem,
@@ -23,6 +24,15 @@ function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function handleFileChange(
+  e: ChangeEvent<HTMLInputElement>,
+  onAddFiles: (files: File[]) => void,
+) {
+  const files = Array.from(e.target.files ?? []);
+  if (files.length > 0) onAddFiles(files);
+  e.target.value = "";
 }
 
 function itemStatusLabel(
@@ -70,8 +80,10 @@ export function AttachmentModal({
   t,
   onSend,
   onRemoveItem,
+  onAddFiles,
   onCancel,
 }: AttachmentModalProps) {
+  const addMoreId = useId();
   const allDone = items.length > 0 && items.every((it) => it.status === "done");
 
   return (
@@ -89,6 +101,21 @@ export function AttachmentModal({
           </DialogDescription>
         </DialogHeader>
         <DialogBody className="flex max-h-[55vh] flex-col gap-2 overflow-y-auto">
+          <input
+            id={addMoreId}
+            type="file"
+            accept={ATTACHMENT_ACCEPT}
+            multiple
+            className="sr-only"
+            onChange={(e) => handleFileChange(e, onAddFiles)}
+          />
+          <label
+            htmlFor={addMoreId}
+            className="text-muted hover:bg-surface-hover hover:text-fg flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed px-3 py-2.5 text-sm transition-colors"
+          >
+            <IconPlus size={16} />
+            {t.addMore ?? "Add more"}
+          </label>
           {items.map((item) => {
             return (
               <div

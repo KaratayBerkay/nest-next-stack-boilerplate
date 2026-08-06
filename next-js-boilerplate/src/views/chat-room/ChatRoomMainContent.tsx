@@ -171,6 +171,7 @@ export function ChatRoomMainContent({
         t={t}
         onSend={onSendAttachments}
         onRemoveItem={onRemoveUploadItem}
+        onAddFiles={onAttachFiles}
         onCancel={onCancelUploads}
       />
     </div>

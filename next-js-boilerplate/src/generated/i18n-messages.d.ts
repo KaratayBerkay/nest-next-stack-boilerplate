@@ -219,6 +219,7 @@ export type I18nMessages = {
       "cancel": string;
       "uploaded": string;
       "uploadFailed": string;
+      "addMore": string;
     }
 
   "checkout": {
@@ -1074,6 +1075,7 @@ export type I18nMessages = {
       "cancel": string;
       "uploaded": string;
       "uploadFailed": string;
+      "addMore": string;
     }
 
   "notification": {

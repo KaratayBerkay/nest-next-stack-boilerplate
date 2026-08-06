@@ -25,5 +25,6 @@
   "files": "attachments",
   "cancel": "Cancel",
   "uploaded": "Uploaded",
-  "uploadFailed": "Upload failed"
+  "uploadFailed": "Upload failed",
+  "addMore": "Add more"
 }

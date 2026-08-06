@@ -1,5 +1,12 @@
-import { IconFileText, IconExternalLink } from "@tabler/icons-react";
+import { IconFileText } from "@tabler/icons-react";
+import { cn } from "@/lib/cn";
 import type { AttachmentPreviewProps } from "@/types/components/AttachmentPreview-types";
+
+function fileExtension(name: string | null | undefined): string {
+  if (!name) return "";
+  const parts = name.split(".");
+  return parts.length > 1 ? (parts.pop() ?? "").toUpperCase() : "";
+}
 
 export function AttachmentPreview({
   url,
@@ -17,7 +24,10 @@ export function AttachmentPreview({
         target="_blank"
         rel="noreferrer"
         aria-label={label}
-        className={className}
+        className={cn(
+          "inline-block max-h-48 w-auto max-w-[240px] overflow-hidden rounded-lg",
+          className,
+        )}
       >
         <img
           src={url}
@@ -29,19 +39,26 @@ export function AttachmentPreview({
     );
   }
 
+  const ext = fileExtension(name);
+
   return (
     <a
       href={url}
       target="_blank"
       rel="noreferrer"
       aria-label={label}
-      className={`bg-surface border-border text-fg hover:bg-surface-hover flex w-fit items-center gap-2 rounded-lg border px-3 py-2 transition-colors ${className ?? ""}`}
+      title={label}
+      className={cn(
+        "bg-surface-hover text-muted hover:bg-surface flex size-16 shrink-0 flex-col items-center justify-center gap-1 rounded-xl transition-colors",
+        className,
+      )}
     >
-      <IconFileText size={18} className="text-muted shrink-0" />
-      <span className="max-w-[180px] truncate text-xs font-medium">
-        {label}
-      </span>
-      <IconExternalLink size={14} className="text-muted shrink-0" />
+      <IconFileText size={24} />
+      {ext && (
+        <span className="max-w-[90%] truncate text-[9px] font-semibold tracking-wide">
+          {ext}
+        </span>
+      )}
     </a>
   );
 }
