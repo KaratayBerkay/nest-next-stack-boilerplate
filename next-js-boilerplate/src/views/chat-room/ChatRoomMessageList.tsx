@@ -74,7 +74,7 @@ export const ChatRoomMessageList = forwardRef<
                 </p>
               )}
               {msg.attachments?.length ? (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap gap-2">
                   {msg.attachments.map((att) => (
                     <AttachmentPreview
                       key={att.url}

@@ -37,7 +37,7 @@ export function ChatMessageBubble({
         className={`flex max-w-[70%] flex-col gap-0.5 ${isMe ? "items-end" : ""}`}
       >
         {msg.attachments?.length ? (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap gap-2">
             {msg.attachments.map((att) => (
               <AttachmentPreview
                 key={att.url}
