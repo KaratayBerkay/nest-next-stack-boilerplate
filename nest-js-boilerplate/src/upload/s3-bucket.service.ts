@@ -22,22 +22,26 @@ export class S3BucketService implements OnModuleInit {
   constructor(private readonly config: ConfigService) {}
 
   async onModuleInit() {
-    const endpoint = this.config.get<string>(
-      'R2_ENDPOINT',
-      'https://<ACCOUNT_ID>.r2.cloudflarestorage.com',
-    );
+    const endpoint = this.config.get<string>('R2_ENDPOINT', '');
     const accessKey = this.config.get<string>('R2_ACCESS_KEY_ID', '');
     const secretKey = this.config.get<string>('R2_SECRET_ACCESS_KEY', '');
     this.bucket = this.config.get<string>('R2_BUCKET', 'uploads');
     this.publicUrl = this.config.get<string>('R2_PUBLIC_URL', endpoint);
+
+    let url: URL;
+    try {
+      url = new URL(endpoint);
+    } catch {
+      throw new Error(
+        `Invalid R2_ENDPOINT "${endpoint}" — set it to https://<account-id>.r2.cloudflarestorage.com in the backend Vault secret`,
+      );
+    }
 
     if (!accessKey || !secretKey) {
       this.logger.warn(
         'R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY not set — uploads will fail',
       );
     }
-
-    const url = new URL(endpoint);
     this.client = new Minio.Client({
       endPoint: url.hostname,
       port: Number(url.port) || (url.protocol === 'https:' ? 443 : 80),
