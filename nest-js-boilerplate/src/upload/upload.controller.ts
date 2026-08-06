@@ -24,6 +24,11 @@ import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { JwtUser } from '../auth/auth.types';
+import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
+import {
+  FREE_UPLOAD_STORAGE_BYTES,
+  TIER_STORAGE_MULTIPLIER,
+} from '../usage/usage.constants';
 
 interface ImageUrls {
   badge: string;
@@ -176,6 +181,8 @@ export class UploadController {
       this.extFromName(file.originalname);
     const objectName = `${randomUUID()}${extension}`;
 
+    await this.assertUploadStorageCapacity(user, file.size);
+
     const envelope = this.storageCrypto.encryptBytes(
       user.userId,
       new Uint8Array(file.buffer),
@@ -200,6 +207,7 @@ export class UploadController {
         ct: envelope.ct,
         nonce: envelope.nonce,
         uploadedBy: user.userId,
+        size: file.size,
       },
       update: {},
     });
@@ -274,6 +282,8 @@ export class UploadController {
       ATTACHMENT_EXTENSIONS[mimetype] ?? this.extFromName(originalname);
     const objectName = `${randomUUID()}${extension}`;
 
+    await this.assertUploadStorageCapacity(user, buffer.length);
+
     const envelope = this.storageCrypto.encryptBytes(
       user.userId,
       new Uint8Array(buffer),
@@ -294,6 +304,7 @@ export class UploadController {
         ct: envelope.ct,
         nonce: envelope.nonce,
         uploadedBy: user.userId,
+        size: buffer.length,
       },
       update: {},
     });
@@ -324,6 +335,30 @@ export class UploadController {
   private extFromName(originalname: string): string {
     const match = /\.([a-z0-9]{1,10})$/i.exec(originalname);
     return match ? `.${match[1].toLowerCase()}` : '';
+  }
+
+  /**
+   * Rejects the upload when persisting it would push the user past their
+   * tier's upload-storage allowance (250 MB for FREE, doubled per upgrade).
+   * PendingUpload is the authoritative source — it is append-only and every
+   * chat attachment upload writes exactly one row.
+   */
+  private async assertUploadStorageCapacity(
+    user: JwtUser,
+    additionalBytes: number,
+  ): Promise<void> {
+    const tier = (user.tier as SubscriptionTier) ?? SubscriptionTier.FREE;
+    const multiplier = TIER_STORAGE_MULTIPLIER[tier] ?? 1;
+    const agg = await this.prisma.pendingUpload.aggregate({
+      _sum: { size: true },
+      where: { uploadedBy: user.userId },
+    });
+    const used = agg._sum.size ?? 0;
+    if (used + additionalBytes > FREE_UPLOAD_STORAGE_BYTES * multiplier) {
+      throw new PayloadTooLargeException(
+        'Upload storage limit reached — upgrade your plan or remove files',
+      );
+    }
   }
 
   private async processImage(file: Express.Multer.File): Promise<ImageUrls> {

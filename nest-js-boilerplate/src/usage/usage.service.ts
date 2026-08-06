@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import {
   BYTES_PER_LETTER,
   FREE_MONTHLY_STORAGE_BYTES,
+  FREE_UPLOAD_STORAGE_BYTES,
   TIER_STORAGE_MULTIPLIER,
 } from './usage.constants';
 
@@ -15,6 +16,14 @@ export interface MessageUsageResult {
   multiplier: number;
   from: string;
   to: string;
+}
+
+export interface UploadStorageUsageResult {
+  bytes: number;
+  fileCount: number;
+  limitBytes: number;
+  tier: SubscriptionTier;
+  multiplier: number;
 }
 
 @Injectable()
@@ -50,6 +59,47 @@ export class UsageService {
         key: 'usage.errors.limitReached',
       });
     }
+  }
+
+  async assertCanUploadBytes(
+    userId: string,
+    additionalBytes: number,
+    tier: SubscriptionTier,
+  ): Promise<void> {
+    const usage = await this.getUploadStorageUsage(userId, tier);
+    if (usage.bytes + additionalBytes > usage.limitBytes) {
+      throw new ForbiddenException({
+        exc: 'EX_UPLOAD_STORAGE_LIMIT_REACHED',
+        msg: 'Upload storage limit reached',
+        key: 'usage.errors.uploadLimitReached',
+      });
+    }
+  }
+
+  /**
+   * Total bytes of files this user has uploaded through the chat attachment
+   * endpoints (PendingUpload rows are the authoritative set — the store is
+   * append-only, every upload persists one row and messages only reference
+   * them). Cumulative, unlike the monthly message-storage budget.
+   */
+  async getUploadStorageUsage(
+    userId: string,
+    tier: SubscriptionTier,
+  ): Promise<UploadStorageUsageResult> {
+    const agg = await this.prisma.pendingUpload.aggregate({
+      _sum: { size: true },
+      _count: { _all: true },
+      where: { uploadedBy: userId },
+    });
+    const multiplier = TIER_STORAGE_MULTIPLIER[tier] ?? 1;
+
+    return {
+      bytes: agg._sum.size ?? 0,
+      fileCount: agg._count._all,
+      limitBytes: FREE_UPLOAD_STORAGE_BYTES * multiplier,
+      tier,
+      multiplier,
+    };
   }
 
   async getMessageUsage(

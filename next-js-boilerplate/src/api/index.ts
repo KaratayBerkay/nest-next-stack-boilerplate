@@ -74,6 +74,7 @@ export { sessionsListQueryOptions } from "./client/sessions/query";
 export { apiKeyListQueryOptions } from "./client/api-keys/query";
 export { premiumStatsQueryOptions } from "./client/premium/query";
 export { messageUsageQueryOptions } from "./client/usage/query";
+export { storageUsageQueryOptions } from "./client/usage/query";
 
 // client — mutations / actions
 export { useMarkNotificationRead } from "./client/notifications/mark-read";

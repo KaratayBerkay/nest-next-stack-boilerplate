@@ -28,4 +28,12 @@ export class UsageController {
       toDate,
     );
   }
+
+  @Get('usage/storage')
+  async uploadStorage(@CurrentUser() user: JwtUser) {
+    return this.usage.getUploadStorageUsage(
+      user.userId,
+      (user.tier as SubscriptionTier) ?? SubscriptionTier.FREE,
+    );
+  }
 }

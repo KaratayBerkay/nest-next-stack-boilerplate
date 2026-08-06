@@ -897,7 +897,13 @@ model PendingUpload {
   ct         String    @db.Text
   nonce      String
   uploadedBy String    @db.Uuid
+  // Decompressed (client-visible) byte size of the uploaded file. Written at
+  // upload time so per-user upload-storage usage can be summed without
+  // stat() calls against MinIO.
+  size       Int       @default(0)
   createdAt  DateTime  @default(now()) @db.Timestamptz(6)
+
+  @@index([uploadedBy, createdAt])
 }
 
 model Notification {

@@ -18,6 +18,7 @@ export { settingsPrivacyPageInfo } from "./settings-privacy";
 export { settingsSecurityPageInfo } from "./settings-security";
 export { settingsSessionsPageInfo } from "./settings-sessions";
 export { settingsApiKeysPageInfo } from "./settings-api-keys";
+export { settingsUsagePageInfo } from "./settings-usage";
 export { adminPageInfo } from "./admin";
 export { adminAuditLogsPageInfo } from "./admin-audit-logs";
 export { boomPageInfo } from "./boom";

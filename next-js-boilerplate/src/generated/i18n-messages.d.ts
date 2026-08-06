@@ -1294,8 +1294,14 @@ export type I18nMessages = {
       "cancelPendingChange": string;
       "cancelPendingChangeSuccess": string;
       "cancelPendingChangeFailed": string;
-      "usageTab": string;
       "usageStored": string;
+      "usageHeading": string;
+      "navUsage": string;
+      "uploadStorageTitle": string;
+      "uploadStorageFiles": string;
+      "uploadStorageMultiplier": string;
+      "uploadStorageLimitReached": string;
+      "uploadStorageUpgradeHint": string;
       "usageOf": string;
       "usageLetters": string;
       "usageMonth": string;

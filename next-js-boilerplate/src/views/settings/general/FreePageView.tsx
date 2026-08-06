@@ -25,7 +25,6 @@ import {
   saveSettings,
 } from "@/lib/settings/handlers";
 import { SettingsSelect } from "./SettingsSelect";
-import { UsageTab } from "./UsageTab";
 import { formatDateLong, formatDateShort, toISOString } from "@/lib/date-time";
 import type { CurrencyCode } from "@/constants/currency";
 import type { DateDisplayFormat } from "@/constants/date-display";
@@ -69,7 +68,6 @@ export function FreePageView({ className }: ClassNameProps) {
       <Tabs defaultValue="general" className="flex w-full flex-col gap-6">
         <TabsList className="w-fit">
           <TabsTrigger value="general">{t.navGeneral}</TabsTrigger>
-          <TabsTrigger value="usage">{t.usageTab}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="flex flex-col gap-4">
@@ -133,10 +131,6 @@ export function FreePageView({ className }: ClassNameProps) {
           >
             {saving ? t.saving : t.save}
           </Button>
-        </TabsContent>
-
-        <TabsContent value="usage">
-          <UsageTab />
         </TabsContent>
       </Tabs>
     </div>
