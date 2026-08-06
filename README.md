@@ -22,8 +22,8 @@ everything also works with plain `docker compose`.
 
 First-run notes:
 - `nest-js-boilerplate/logs/` must be writable by uid 1000 (`chmod 777 nest-js-boilerplate/logs` or `chown 1000`).
-- The `migrate` and `minio-setup` services run once and exit — check their logs if the app won't start.
-- Default credentials are **dev-only** (user `nest` / password `nest`; MinIO `minioadmin`/`minioadmin`). Override in the copied `.env` files for production — see `requirements.md` for what each variable does and how to generate the secrets.
+- The `migrate` service runs once and exits — check its logs if the app won't start.
+- Default credentials are **dev-only** (user `nest` / password `nest`). Override in the copied `.env` files for production — see `requirements.md` for what each variable does and how to generate the secrets.
 
 ## How the frontend build gets its public env vars
 
@@ -58,7 +58,6 @@ call `docker compose` directly — both work identically now.
 | Mongo (profile) | `27017` | `mongo:27017` | |
 | Elasticsearch | `9200` | `elasticsearch:9200` | |
 | Kibana | `5601` | `kibana:5601` | |
-| MinIO | `9000` | `minio:9000` | console `9001` |
 | fluent-bit forward | `24224` | `fluent-bit:24224` | |
 
 ## Flutter (mobile) APK
@@ -88,7 +87,7 @@ cd flutter-boilerplate && flutter build apk --release
 
 | Profile | Includes |
 |---|---|
-| `core` (default) | postgres, redis, migrate, app, nextjs, elasticsearch, kibana, fluent-bit, minio, minio-setup |
+| `core` (default) | postgres, redis, migrate, app, nextjs, elasticsearch, kibana, fluent-bit |
 | `brokers` | + rabbitmq, nats, mqtt |
 | `kafka` | + kafka |
 | `mongo` | + mongo |

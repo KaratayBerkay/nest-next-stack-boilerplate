@@ -16,7 +16,6 @@ reads its own file via `env_file: ./.vault-envs/<service>.env`.
 | `.vault-envs/frontend.env` | No (gitignored) | Frontend (Next.js) — read by `nextjs` service at runtime; `NEXT_PUBLIC_*` vars also merged into root `.env` for build args |
 | `.vault-envs/postgres.env` | No (gitignored) | Postgres credentials |
 | `.vault-envs/redis-commander.env` | No (gitignored) | Redis Commander login |
-| `.vault-envs/minio.env` | No (gitignored) | MinIO root credentials |
 | `.vault-envs/elasticsearch.env` | No (gitignored) | Elasticsearch config |
 | `.vault-envs/kafka.env` | No (gitignored) | Kafka config |
 | `.vault-envs/kibana.env` | No (gitignored) | Kibana config |
@@ -60,7 +59,7 @@ working defaults or a no-op fallback.
 | `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` | Outbound email via real SMTP | Takes priority over `RESEND_API_KEY` when set. **Always connects on port 465 with implicit TLS** — this is hardcoded in `mail.transport.ts`. |
 | `RESEND_API_KEY` | Outbound email via Resend (fallback if `SMTP_HOST` unset) | From resend.com. If neither this nor `SMTP_HOST` is set, mail just logs to console. |
 | `MAIL_FROM` / `MAIL_REPLY_TO` | From/reply-to address for outbound mail | Defaults to a placeholder Resend address |
-| `MINIO_ACCESS_KEY` / `MINIO_SECRET_KEY` / `MINIO_BUCKET` | Object storage (uploads) | Dev defaults `minioadmin`/`minioadmin` — change for anything beyond local dev |
+| `R2_ENDPOINT` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_BUCKET` / `R2_PUBLIC_URL` | Object storage (uploads) via Cloudflare R2 (`S3BucketService`) | `R2_ENDPOINT` is `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`; API token from the R2 dashboard ("Object Read & Write"); `R2_PUBLIC_URL` is a public bucket domain (custom domain or r2.dev) so avatar URLs resolve in the browser — falls back to `R2_ENDPOINT` |
 | `KAFKA_BROKER` | Frontend event indexing pipeline | Off by default (`KAFKA_BROKER=disabled`); the `kafka` compose profile must also be started |
 | `LOG_LEVEL` | Logging verbosity | Defaults are fine |
 

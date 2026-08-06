@@ -9,7 +9,6 @@ SERVICES="
   frontend
   kafka
   kibana
-  minio
   mobile
   mongo
   postgres

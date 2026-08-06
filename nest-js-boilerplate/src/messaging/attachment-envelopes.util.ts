@@ -4,7 +4,7 @@ import type { MessageAttachment } from './messaging.types';
 /**
  * Resolves the at-rest storage envelope (v/ct/nonce) for each attachment from
  * the server-side PendingUpload store, keyed by the attachment `url` (the
- * MinIO object the upload endpoint encrypted and persisted).
+ * R2 object the upload endpoint encrypted and persisted).
  *
  * Message payloads carried over WS/REST must stay lean — the full-file
  * ciphertext never rides a message frame — so the envelope a client echoes

@@ -23,7 +23,7 @@ import type { Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { ImageService, IMAGE_SIZES } from './image.service';
-import { MinioService } from './minio.service';
+import { S3BucketService } from './s3-bucket.service';
 import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -109,7 +109,7 @@ class ChatAttachmentTypeValidator extends FileValidator<{
 @Controller('upload')
 export class UploadController {
   constructor(
-    private readonly minio: MinioService,
+    private readonly s3bucket: S3BucketService,
     private readonly images: ImageService,
     private readonly storageCrypto: StorageCryptoService,
     private readonly prisma: PrismaService,
@@ -205,7 +205,7 @@ export class UploadController {
       new Uint8Array(file.buffer),
     );
 
-    const url = await this.minio.upload(
+    const url = await this.s3bucket.upload(
       objectName,
       Buffer.from(envelope.ct, 'base64'),
       undefined,
@@ -306,7 +306,7 @@ export class UploadController {
       new Uint8Array(buffer),
     );
 
-    const url = await this.minio.upload(
+    const url = await this.s3bucket.upload(
       objectName,
       Buffer.from(envelope.ct, 'base64'),
       undefined,
@@ -334,7 +334,7 @@ export class UploadController {
   }
 
   /**
-   * Serve a decrypted attachment. The MinIO bucket stores encrypted blobs;
+   * Serve a decrypted attachment. The R2 bucket stores encrypted blobs;
    * this endpoint looks up the PendingUpload envelope, decrypts with the
    * uploader's per-user key, and streams the plaintext back with the correct
    * Content-Type so <img> / <a> tags can consume it directly.
@@ -428,19 +428,19 @@ export class UploadController {
     );
 
     const [badge, medium, full] = await Promise.all([
-      this.minio.upload(
+      this.s3bucket.upload(
         `${base}-badge${ext}`,
         badgeBuf,
         undefined,
         'image/webp',
       ),
-      this.minio.upload(
+      this.s3bucket.upload(
         `${base}-medium${ext}`,
         mediumBuf,
         undefined,
         'image/webp',
       ),
-      this.minio.upload(`${base}-full${ext}`, fullBuf, undefined, 'image/webp'),
+      this.s3bucket.upload(`${base}-full${ext}`, fullBuf, undefined, 'image/webp'),
     ]);
 
     return { badge, medium, full };
