@@ -3,19 +3,23 @@ import {
   Controller,
   FileTypeValidator,
   FileValidator,
+  Get,
   Headers,
   MaxFileSizeValidator,
+  NotFoundException,
+  Param,
   ParseFilePipe,
   PayloadTooLargeException,
   Post,
   Req,
+  Res,
   UploadedFile,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { ImageService, IMAGE_SIZES } from './image.service';
@@ -60,6 +64,19 @@ const ATTACHMENT_EXTENSIONS: Record<string, string> = {
 // (F36).
 const LEGACY_DOC_TYPES =
   /^(application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document|text\/plain)$/;
+
+const EXT_MIME: Record<string, string> = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+  gif: 'image/gif',
+  avif: 'image/avif',
+  pdf: 'application/pdf',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  txt: 'text/plain',
+};
 
 class ChatAttachmentTypeValidator extends FileValidator<{
   fileType: string | RegExp;
@@ -314,6 +331,46 @@ export class UploadController {
       mimetype,
       size: buffer.length,
     };
+  }
+
+  /**
+   * Serve a decrypted attachment. The MinIO bucket stores encrypted blobs;
+   * this endpoint looks up the PendingUpload envelope, decrypts with the
+   * uploader's per-user key, and streams the plaintext back with the correct
+   * Content-Type so <img> / <a> tags can consume it directly.
+   */
+  @Get('serve/:objectName')
+  @UseGuards(SessionAuthGuard)
+  async serve(
+    @CurrentUser() user: JwtUser,
+    @Param('objectName') objectName: string,
+    @Res() res: Response,
+  ) {
+    const pending = await this.prisma.pendingUpload.findUnique({
+      where: { objectName },
+    });
+    if (!pending) throw new NotFoundException('Attachment not found');
+
+    let plain: Uint8Array;
+    try {
+      plain = this.storageCrypto.decryptBytes(pending.uploadedBy, {
+        v: pending.v,
+        ct: pending.ct,
+        nonce: pending.nonce,
+      });
+    } catch {
+      throw new NotFoundException('Attachment not found');
+    }
+
+    const ext = objectName.split('.').pop()?.toLowerCase() ?? '';
+    const contentType = EXT_MIME[ext] ?? 'application/octet-stream';
+
+    res.set({
+      'Content-Type': contentType,
+      'Content-Length': String(plain.length),
+      'Cache-Control': 'public, max-age=31536000, immutable',
+    });
+    res.end(Buffer.from(plain));
   }
 
   private async readBodyStream(req: Request): Promise<Buffer> {

@@ -25,6 +25,12 @@ function isImageByExtension(name: string | null | undefined): boolean {
   return IMAGE_EXTENSIONS.has(fileExtension(name));
 }
 
+function serveUrl(url: string): string {
+  const segments = url.split("/");
+  const objectName = segments[segments.length - 1].split("?")[0];
+  return `/api/upload/serve/${objectName}`;
+}
+
 export function AttachmentPreview({
   url,
   type,
@@ -33,11 +39,12 @@ export function AttachmentPreview({
 }: AttachmentPreviewProps) {
   const label = name || "Attachment";
   const isImage = type?.startsWith("image/") || isImageByExtension(name);
+  const href = serveUrl(url);
 
   if (isImage) {
     return (
       <a
-        href={url}
+        href={href}
         target="_blank"
         rel="noreferrer"
         aria-label={label}
@@ -47,7 +54,7 @@ export function AttachmentPreview({
         )}
       >
         <img
-          src={url}
+          src={href}
           alt={label}
           loading="lazy"
           className="max-h-48 w-auto max-w-[240px] rounded-lg object-cover"
@@ -60,7 +67,7 @@ export function AttachmentPreview({
 
   return (
     <a
-      href={url}
+      href={href}
       target="_blank"
       rel="noreferrer"
       aria-label={label}
